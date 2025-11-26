@@ -17,7 +17,7 @@ import { Producer } from 'kafkajs'
 import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { type Card } from '@hcengineering/card'
 import { MessageID, MessageType } from '@hcengineering/communication-types'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 import core, {
   type Blob,
   type MeasureContext,
@@ -222,7 +222,7 @@ async function saveMessageToSpaces (
       const channel = await channelCache.getOrCreateChannel(spaceId, participants, recipient.email, recipient.socialId)
       if (threadId === undefined) {
         const newThreadId = await client.createDoc(
-          chat.masterTag.Thread,
+          communication.type.Thread,
           spaceId,
           {
             title: subject,
@@ -234,7 +234,7 @@ async function saveMessageToSpaces (
             modifiedBy,
             parent: channel,
             createdOn: createdDate + MessageTimeShift.ThreadCard // Add a small shift to ensure correct ordering
-          },
+          } as any,
           generateId(),
           createdDate + MessageTimeShift.ThreadCard,
           modifiedBy
@@ -283,7 +283,7 @@ async function createMailThread (
     type: MessageEventType.CreateMessage,
     messageType: MessageType.Text,
     cardId: data.channel,
-    cardType: chat.masterTag.Thread,
+    cardType: communication.type.Thread,
     content: data.subject,
     socialId: data.modifiedBy,
     date: new Date(data.created.getTime() + MessageTimeShift.Subject),
@@ -303,7 +303,7 @@ async function createMailThread (
     operation: {
       opcode: 'attach',
       threadId: data.threadId,
-      threadType: chat.masterTag.Thread
+      threadType: communication.type.Thread
     },
     socialId: data.modifiedBy,
     date: new Date(data.created.getTime() + MessageTimeShift.Thread)
@@ -324,7 +324,7 @@ async function createMailMessage (
     type: MessageEventType.CreateMessage,
     messageType: MessageType.Text,
     cardId: threadId,
-    cardType: chat.masterTag.Thread,
+    cardType: communication.type.Thread,
     content: data.content,
     socialId: data.modifiedBy,
     date: data.created,
@@ -396,7 +396,7 @@ async function addCollaborators (
   const addCollaboratorsEvent: AddCollaboratorsEvent = {
     type: NotificationEventType.AddCollaborators,
     cardId: threadId,
-    cardType: chat.masterTag.Thread,
+    cardType: communication.type.Thread,
     collaborators: [data.recipient.uuid as AccountUuid],
     socialId: data.modifiedBy,
     date: new Date(data.created.getTime() + MessageTimeShift.Collaborator)

@@ -17,7 +17,7 @@
   import { SortingOrder, WithLookup } from '@hcengineering/core'
   import { createMessagesQuery } from '@hcengineering/presentation'
 
-  import chat from '@hcengineering/chat'
+  import communication from '@hcengineering/communication'
   import { ExtendedMessagePreview, labelsStore } from '@hcengineering/communication-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@hcengineering/ui'
@@ -43,7 +43,7 @@
   let messages: Message[] = []
 
   // Check if the card is a thread type
-  $: isThreadCard = card._class === chat.masterTag.Thread
+  $: isThreadCard = card._class === communication.type.Thread
 
   // Only query messages if this is a thread card
   $: if (isThreadCard) {

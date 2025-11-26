@@ -93,6 +93,8 @@
     "Translate": "Übersetzen",
     "WriteMessageEllipsis": "Nachricht schreiben...",
     "EditMessageEllipsis": "Nachricht bearbeiten...",
-    "ArrowDownMessages": "↓ Neueste Nachrichten"
+    "ArrowDownMessages": "↓ Neueste Nachrichten",
+    "Thread": "Thread",
+    "Threads": "Threads"
   }
 }

@@ -13,8 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card } from '@hcengineering/card'
-  import chat from '@hcengineering/chat'
+  import { Card } from '@hcengineering/card'
   import communication, { GuestCommunicationSettings } from '@hcengineering/communication'
   import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
   import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
@@ -36,7 +35,6 @@
   import {
     Breadcrumb,
     Button,
-    Component,
     deviceOptionsStore as deviceInfo,
     DropdownLabels,
     type DropdownTextItem,
@@ -406,15 +404,16 @@
 
               <div class="flex-row-center flex-gap-4">
                 <Label label={settingsRes.string.GuestChannelsDescription} />
-                <Component
-                  is={card.component.CardArrayEditor}
-                  props={{
-                    _class: chat.masterTag.Thread,
-                    value: existingGuestChatSettings !== undefined ? existingGuestChatSettings.allowedCards : [],
-                    label: settingsRes.string.GuestChannelsArrayLabel,
-                    onChange: onAllowedCardsChange
-                  }}
-                />
+                <!--                TODO: FIXME-->
+                <!--                <Component-->
+                <!--                  is={card.component.CardArrayEditor}-->
+                <!--                  props={{-->
+                <!--                    _class: chat.masterTag.Thread,-->
+                <!--                    value: existingGuestChatSettings !== undefined ? existingGuestChatSettings.allowedCards : [],-->
+                <!--                    label: settingsRes.string.GuestChannelsArrayLabel,-->
+                <!--                    onChange: onAllowedCardsChange-->
+                <!--                  }}-->
+                <!--                />-->
               </div>
             </div>
           {/if}

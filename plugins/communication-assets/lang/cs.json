@@ -93,6 +93,8 @@
     "Translate": "Přeložit",
     "WriteMessageEllipsis": "Napište zprávu...",
     "EditMessageEllipsis": "Upravit zprávu...",
-    "ArrowDownMessages": "↓ Poslední zprávy"
+    "ArrowDownMessages": "↓ Poslední zprávy",
+    "Thread": "Vlákno",
+    "Threads": "Vlákna"
   }
 }

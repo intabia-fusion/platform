@@ -11,24 +11,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AttachedDoc, Ref, AccountUuid } from '@hcengineering/core'
+import { AttachedDoc, Ref, AccountUuid, Doc, Class } from '@hcengineering/core'
 import { PersonSpace } from '@hcengineering/contact'
 import { MessageID } from '@hcengineering/communication-types'
-import { Card } from '@hcengineering/card'
 
-export interface PollAnswer extends AttachedDoc<Poll> {
-  options: string[]
-  space: Ref<PersonSpace>
+export type OptionID = string & { __type: 'OptionID' }
+
+export interface PollVotedOption {
+  id: OptionID
+  label: string
+  votedAt: Date
 }
 
-export interface UserVote {
-  account: AccountUuid
-  options: { id: string, label: string, votedAt: Date }[]
-}
-
-export interface Poll extends Card {
+export interface Poll extends Doc {
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
+
+  question: string
   totalVotes: number
 
-  userVotes?: UserVote[]
+  // Users votes
+  [key: AccountUuid]: PollVotedOption[]
+
+  [key: OptionID]: number
+}
+
+export interface PollAnonymousAnswer extends AttachedDoc<Poll> {
+  options: PollVotedOption[]
+  space: Ref<PersonSpace>
 }

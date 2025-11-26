@@ -13,18 +13,15 @@
 
 import {
   type Data,
+  type Doc,
   fillDefaults,
   generateId,
   getCurrentAccount,
-  type MarkupBlobRef,
   type Ref,
-  SortingOrder,
   type Timestamp
 } from '@hcengineering/core'
-import { type Poll, type PollAnswer } from '@hcengineering/communication'
-import { getClient, getCommunicationClient } from '@hcengineering/presentation'
-import card, { type Card } from '@hcengineering/card'
-import { makeRank } from '@hcengineering/rank'
+import { type OptionID, type Poll, type PollAnonymousAnswer, type PollVotedOption } from '@hcengineering/communication'
+import { getClient } from '@hcengineering/presentation'
 import { type AppletAttachment, type MessageID } from '@hcengineering/communication-types'
 
 import communication from './plugin'
@@ -47,7 +44,7 @@ export interface PollConfig {
 export type PollMode = 'single' | 'multiple'
 
 export interface PollOption {
-  id: string
+  id: OptionID
   label: string
 }
 
@@ -57,7 +54,7 @@ export function getEmptyPollConfig (): PollConfig {
     question: '',
     options: [
       {
-        id: generateId(),
+        id: generateId() as any as OptionID,
         label: ''
       }
     ],
@@ -67,26 +64,20 @@ export function getEmptyPollConfig (): PollConfig {
   }
 }
 
-export async function createPoll (parent: Card, message: MessageID, params: PollConfig): Promise<void> {
+export async function createPoll (doc: Doc, message: MessageID, params: PollConfig): Promise<void> {
   const client = getClient()
-  const communicationClient = getCommunicationClient()
   const hierarchy = client.getHierarchy()
-  const lastOne = await client.findOne(card.class.Card, {}, { sort: { rank: SortingOrder.Descending } })
 
   const data: Data<Poll> = {
-    title: params.question,
-    rank: makeRank(lastOne?.rank, undefined),
-    content: '' as MarkupBlobRef,
-    parentInfo: [],
-    blobs: {},
+    question: params.question,
     totalVotes: 0,
-    messageId: message,
-    userVotes: []
+    docId: doc._id,
+    docClass: doc._class,
+    messageId: message
   }
-  const filledData = fillDefaults(hierarchy, data, communication.type.Poll)
+  const filledData = fillDefaults(hierarchy, data, communication.class.Poll)
 
-  await client.createDoc(communication.type.Poll, parent.space, filledData, params.id)
-  await communicationClient.attachThread(parent._id, message, params.id, communication.type.Poll)
+  await client.createDoc(communication.class.Poll, doc.space, filledData, params.id)
 }
 
 export function getPollTitle (attachment: AppletAttachment): string {
@@ -94,12 +85,17 @@ export function getPollTitle (attachment: AppletAttachment): string {
   return params.question
 }
 
-export function isVotedByMe (result: Poll | undefined, anonymous: boolean = false, answers: PollAnswer[] = []): boolean {
+export function isVotedByMe (
+  result: Poll | undefined,
+  anonymous: boolean = false,
+  answers: PollAnonymousAnswer[] = []
+): boolean {
   if (result == null) return false
   if (anonymous) {
-    return answers.some((it: PollAnswer) => it.options.length > 0) ?? false
+    return answers.some((it: PollAnonymousAnswer) => it.options.length > 0) ?? false
   }
   const me = getCurrentAccount()
 
-  return result.userVotes?.some((it) => it.account === me.uuid && it.options.length > 0) ?? false
+  const myOptions: PollVotedOption[] = result[me.uuid] ?? []
+  return myOptions.length > 0 || false
 }

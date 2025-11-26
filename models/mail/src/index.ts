@@ -15,8 +15,7 @@
 
 import core, { ClassifierKind } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
-import chat from '@hcengineering/chat'
-
+import communication from '@hcengineering/communication'
 import card from '@hcengineering/card'
 import mail from '@hcengineering/mail'
 
@@ -28,7 +27,7 @@ export function createModel (builder: Builder): void {
     card.class.Tag,
     core.space.Model,
     {
-      extends: chat.masterTag.Thread,
+      extends: communication.type.Thread,
       label: mail.string.MailTag,
       kind: ClassifierKind.MIXIN,
       icon: mail.icon.Mail

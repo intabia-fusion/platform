@@ -12,14 +12,14 @@
 // limitations under the License.
 
 import { AppletAttachment, AppletParams, AppletType, Message, MessageID } from '@hcengineering/communication-types'
-import { AttachedDoc, Configuration, Doc, Ref, AccountUuid } from '@hcengineering/core'
+import { Configuration, Doc, Ref } from '@hcengineering/core'
 import { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { Card, MasterTag } from '@hcengineering/card'
 import { AnyComponent } from '@hcengineering/ui'
-import { PersonSpace } from '@hcengineering/contact'
 
 export * from './poll'
 export * from './direct'
+export * from './thread'
 
 export type MessageActionFunction = (
   message: Message,
@@ -66,23 +66,6 @@ export type AppletCreateFnResource = Resource<AppletCreateFn>
 
 export type AppletGetTitleFn = (attachment: AppletAttachment) => string
 export type AppletGetTitleFnResource = Resource<AppletGetTitleFn>
-
-export interface PollAnswer extends AttachedDoc<Poll> {
-  options: string[]
-  space: Ref<PersonSpace>
-}
-
-export interface UserVote {
-  account: AccountUuid
-  options: { id: string, label: string, votedAt: Date }[]
-}
-
-export interface Poll extends Card {
-  messageId: MessageID
-  totalVotes: number
-
-  userVotes?: UserVote[]
-}
 
 export interface GuestCommunicationSettings extends Configuration {
   allowedCards: Ref<Card>[]

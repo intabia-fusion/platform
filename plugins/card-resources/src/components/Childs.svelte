@@ -15,7 +15,6 @@
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
   import { Card, CardEvents, cardId } from '@hcengineering/card'
-  import { chatId } from '@hcengineering/chat'
   import { Data, Doc, fillDefaults, MarkupBlobRef, SortingOrder, WithLookup } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
@@ -127,12 +126,13 @@
     Analytics.handleEvent(CardEvents.CardCreated)
 
     const loc = getCurrentLocation()
-    if (loc.path[2] === chatId) {
-      loc.path[3] = encodeObjectURI(_id, card.class.Card)
-    } else {
-      loc.path[2] = cardId
-      loc.path[3] = _id
-    }
+    // TODO: FIXME
+    // if (loc.path[2] === chatId) {
+    //   loc.path[3] = encodeObjectURI(_id, card.class.Card)
+    // } else {
+    loc.path[2] = cardId
+    loc.path[3] = _id
+    // }
     loc.path.length = 4
     navigate(loc)
   }

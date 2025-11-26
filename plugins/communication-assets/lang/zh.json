@@ -93,6 +93,8 @@
     "Translate": "翻译",
     "WriteMessageEllipsis": "编写消息...",
     "EditMessageEllipsis": "编辑消息...",
-    "ArrowDownMessages": "↓ 最新消息"
+    "ArrowDownMessages": "↓ 最新消息",
+    "Thread": "线程",
+    "Threads": "线程"
   }
 }

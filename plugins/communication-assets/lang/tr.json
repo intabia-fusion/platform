@@ -93,6 +93,8 @@
     "Translate": "Çevir",
     "WriteMessageEllipsis": "Mesaj yaz...",
     "EditMessageEllipsis": "Mesajı düzenle...",
-    "ArrowDownMessages": "↓ Son mesajlar"
+    "ArrowDownMessages": "↓ Son mesajlar",
+    "Thread": "Başlık",
+    "Threads": "Başlıklar"
   }
 }

@@ -13,38 +13,22 @@
 // limitations under the License.
 //
 
-import { Ref } from '@hcengineering/core'
 import { plugin, IntlString, type Plugin, Asset } from '@hcengineering/platform'
-import { MasterTag } from '@hcengineering/card'
 
 export const chatId = 'chat' as Plugin
 
 const chat = plugin(chatId, {
   string: {
-    Channel: '' as IntlString,
-    Channels: '' as IntlString,
     Chat: '' as IntlString,
     Description: '' as IntlString,
     Loading: '' as IntlString,
     MessageIn: '' as IntlString,
-    Thread: '' as IntlString,
-    Threads: '' as IntlString,
     Title: '' as IntlString,
-    Inbox: '' as IntlString,
-    All: '' as IntlString,
-    ClearAll: '' as IntlString,
-    InboxIsClear: '' as IntlString,
-    YouDontHaveAnyNewMessages: '' as IntlString,
-    ReactedToYourMessage: '' as IntlString
+    All: '' as IntlString
   },
   icon: {
     ChatBubble: '' as Asset,
-    Thread: '' as Asset,
-    Inbox: '' as Asset,
     All: '' as Asset
-  },
-  masterTag: {
-    Thread: '' as Ref<MasterTag>
   }
 })
 

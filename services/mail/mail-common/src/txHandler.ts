@@ -23,7 +23,7 @@ import core, {
   MeasureContext
 } from '@hcengineering/core'
 import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 
 import { MessageType } from '@hcengineering/communication-types'
 import { Card } from '@hcengineering/card'
@@ -44,7 +44,7 @@ export function toMessageEvent (tx: Tx): CreateMessageEvent | undefined {
     return undefined
   }
   const event: CreateMessageEvent = domainTx.event
-  const isMessage = event.cardType === chat.masterTag.Thread && event.messageType === MessageType.Text
+  const isMessage = event.cardType === communication.type.Thread && event.messageType === MessageType.Text
   if (!isMessage) {
     return undefined
   }
@@ -56,7 +56,7 @@ export function isNewChannelTx (tx: Tx): boolean {
     return false
   }
   const createTx = tx as TxCreateDoc<any>
-  return createTx.objectClass === chat.masterTag.Thread
+  return createTx.objectClass === communication.type.Thread
 }
 
 export async function getChannel (client: TxOperations, email: string): Promise<Card | undefined> {

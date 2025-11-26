@@ -12,29 +12,29 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Applet, Poll, PollAnswer, UserVote } from '@hcengineering/communication'
+  import { Applet, Poll, PollAnonymousAnswer, PollVotedOption } from '@hcengineering/communication'
   import { AppletAttachment } from '@hcengineering/communication-types'
   import { DAY, getEventPositionElement, Label, Menu, showPopup, ticker, TimeSince } from '@hcengineering/ui'
   import contact, { getCurrentEmployeeSpace } from '@hcengineering/contact'
   import { employeeByAccountStore, CombineAvatars } from '@hcengineering/contact-resources'
-  import { notEmpty, getCurrentAccount, isOtherDay, Timestamp, getDay } from '@hcengineering/core'
+  import { notEmpty, getCurrentAccount, isOtherDay, Timestamp, getDay, AccountUuid } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
+  import { openDoc } from '@hcengineering/view-resources'
+  import { IntlString } from '@hcengineering/platform'
 
   import communication from '../../plugin'
   import { isVotedByMe, PollConfig, PollOption } from '../../poll'
   import PollOptionPresenter from './PollOptionPresenter.svelte'
   import PollResults from './PollResults.svelte'
-  import { openDoc } from '@hcengineering/view-resources'
-  import { IntlString } from '@hcengineering/platform'
 
   export let applet: Applet
   export let attachment: AppletAttachment<PollConfig>
 
   const query = createQuery()
-  const privateAnswersQuery = createQuery()
+  const anonymousAnswersQuery = createQuery()
 
   let result: Poll | undefined = undefined
-  let privateAnswers: PollAnswer[] = []
+  let anonymousAnswers: PollAnonymousAnswer[] = []
 
   let isLoadingPoll = true
   let isLoadingPrivateAnswers = true
@@ -42,7 +42,7 @@
   $: isLoading = isLoadingPoll || isLoadingPrivateAnswers
 
   $: query.query(
-    communication.type.Poll,
+    communication.class.Poll,
     { _id: attachment.params.id },
     (res) => {
       result = res[0] as Poll
@@ -52,13 +52,13 @@
   )
 
   $: if (params.anonymous === true) {
-    privateAnswersQuery.query(
-      communication.class.PollAnswer,
+    anonymousAnswersQuery.query(
+      communication.class.PollAnonymousAnswer,
       {
         attachedTo: attachment.params.id
       },
       (res) => {
-        privateAnswers = res
+        anonymousAnswers = res
         isLoadingPrivateAnswers = false
       }
     )
@@ -68,9 +68,11 @@
 
   $: params = attachment.params
   $: votedEmployees =
-    (result?.userVotes ?? [])?.map((it) => $employeeByAccountStore.get(it.account)).filter(notEmpty) ?? []
+    Object.keys(result ?? {})
+      .map((it) => $employeeByAccountStore.get(it as AccountUuid))
+      .filter(notEmpty) ?? []
 
-  $: voted = isVotedByMe(result, params.anonymous, privateAnswers)
+  $: voted = isVotedByMe(result, params.anonymous, anonymousAnswers)
 
   function showResults (): void {
     showPopup(PollResults, { params, result }, 'center')
@@ -107,27 +109,27 @@
         await op.update(result, { $inc: { [opt.id]: 1 } })
       }
 
+      const date = new Date()
+      const votedOptions: PollVotedOption[] = selectedOptions.map((it) => ({
+        id: it.id,
+        votedAt: date,
+        label: it.label
+      }))
+
       if (params.anonymous === true) {
         const space = getCurrentEmployeeSpace()
-
-        await op.createDoc(communication.class.PollAnswer, space, {
+        await op.createDoc(communication.class.PollAnonymousAnswer, space, {
           attachedTo: result._id,
           attachedToClass: result._class,
-          options: selectedOptions.map((it) => it.id),
-          collection: 'privateAnswers'
+          options: votedOptions,
+          collection: 'anonymousAnswers'
         })
       } else {
-        const date = new Date()
-        const myVote: UserVote = {
-          account: me.uuid,
-          options: selectedOptions.map((it) => ({ id: it.id, votedAt: date, label: it.label }))
+        const myVote: Record<AccountUuid, PollVotedOption[]> = {
+          [me.uuid]: votedOptions
         }
 
-        await op.update(result, {
-          $push: {
-            userVotes: myVote
-          }
-        })
+        await op.update(result, myVote)
       }
 
       await op.commit()
@@ -197,31 +199,35 @@
     })
 
     if (params.anonymous === true) {
-      if (privateAnswers.length === 0) return
-      for (const answer of privateAnswers) {
+      if (anonymousAnswers.length === 0) return
+      for (const answer of anonymousAnswers) {
         if (answer.space === mySpace) {
           await op.remove(answer)
           for (const option of answer.options) {
             await op.update(result, {
               $inc: {
-                [option]: -1
+                [option.id]: -1
               }
             })
           }
         }
       }
     } else {
-      const myVote = result.userVotes?.find((it) => it.account === me.uuid)
-      if (myVote == null) return
+      const myVotes: PollVotedOption[] = result[me.uuid] ?? []
+      if (myVotes.length === 0) return
 
-      for (const option of myVote.options) {
+      for (const option of myVotes) {
         await op.update(result, {
           $inc: {
             [option.id]: -1
           }
         })
       }
-      await op.update(result, { userVotes: result.userVotes?.filter((it) => it.account !== me.uuid) ?? [] })
+
+      const myVote: Record<AccountUuid, PollVotedOption[]> = {
+        [me.uuid]: []
+      }
+      await op.update(result, myVote)
     }
 
     await op.commit()
@@ -296,7 +302,7 @@
         answer={params.quizAnswer}
         {started}
         {ended}
-        {privateAnswers}
+        {anonymousAnswers}
         anonymous={params.anonymous ?? false}
         on:toggle={() => {
           toggleOption(option)

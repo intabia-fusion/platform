@@ -11,9 +11,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrOf, type Builder, Model, TypeAny, TypeNumber, TypeRef } from '@hcengineering/model'
+import { ArrOf, type Builder, Model, TypeRef } from '@hcengineering/model'
 import core, { TAttachedDoc, TConfiguration, TDoc } from '@hcengineering/model-core'
-import { type Class, type Domain, DOMAIN_MODEL, type Ref } from '@hcengineering/core'
+import {
+  AccountRole,
+  type AccountUuid,
+  type Class,
+  type Doc,
+  type Domain,
+  DOMAIN_MODEL,
+  type Ref
+} from '@hcengineering/core'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import {
   type Applet,
@@ -21,14 +29,16 @@ import {
   type MessageActionFunctionResource,
   type MessageActionVisibilityTesterResource,
   type AppletCreateFnResource,
-  type PollAnswer,
   type Poll,
   type CustomActivityPresenter,
   type GuestCommunicationSettings,
-  type AppletGetTitleFnResource
+  type AppletGetTitleFnResource,
+  type PollAnonymousAnswer,
+  PollVotedOption,
+  type OptionID
 } from '@hcengineering/communication'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
-import { type AppletType } from '@hcengineering/communication-types'
+import { type MessageID, type AppletType } from '@hcengineering/communication-types'
 import card, { createSystemType } from '@hcengineering/model-card'
 import type { AnyComponent } from '@hcengineering/ui'
 import contact, { type PersonSpace } from '@hcengineering/contact'
@@ -64,9 +74,25 @@ class TApplet extends TDoc implements Applet {
   createFn?: AppletCreateFnResource
 }
 
-@Model(communication.class.PollAnswer, core.class.Doc, DOMAIN_POLL)
-class TPollAnswer extends TAttachedDoc implements PollAnswer {
-  options!: string[]
+@Model(communication.class.Poll, core.class.Doc, DOMAIN_POLL)
+class TPoll extends TAttachedDoc implements Poll {
+  docId!: Ref<Doc>
+  docClass!: Ref<Class<Doc>>
+  messageId!: MessageID
+
+  question!: string
+  totalVotes!: number;
+
+  // Voted options count
+  [key: OptionID]: number
+
+  // Users votes for public poll
+  [key: AccountUuid]: PollVotedOption[]
+}
+
+@Model(communication.class.PollAnonymousAnswer, core.class.Doc, DOMAIN_POLL)
+class TPollAnonymousAnswer extends TAttachedDoc implements PollAnonymousAnswer {
+  options!: PollVotedOption[]
   declare attachedTo: Ref<Poll>
   declare attachedToClass: Ref<Class<Poll>>
   declare space: Ref<PersonSpace>
@@ -85,10 +111,35 @@ export class TGuestCommunicationSettings extends TConfiguration implements Guest
 }
 
 export function buildTypes (builder: Builder): void {
-  builder.createModel(TMessageAction, TApplet, TPollAnswer, TCustomActivityPresenter, TGuestCommunicationSettings)
+  builder.createModel(
+    TMessageAction,
+    TApplet,
+    TPoll,
+    TPollAnonymousAnswer,
+    TCustomActivityPresenter,
+    TGuestCommunicationSettings
+  )
 
   defineDirect(builder)
-  definePoll(builder)
+  defineThread(builder)
+}
+
+function defineThread (builder: Builder): void {
+  createSystemType(
+    builder,
+    communication.type.Thread,
+    communication.icon.Thread,
+    communication.string.Thread,
+    communication.string.Threads,
+    {
+      defaultSection: communication.ids.CardMessagesSection
+    },
+    PaletteColorIndexes.Houseplant
+  )
+
+  builder.mixin(communication.type.Thread, core.class.Class, core.mixin.TxAccessLevel, {
+    updateAccessLevel: AccountRole.Guest
+  })
 }
 
 function defineDirect (builder: Builder): void {
@@ -124,48 +175,5 @@ function defineDirect (builder: Builder): void {
 
   builder.mixin(communication.type.Direct, core.class.Class, view.mixin.IgnoreActions, {
     actions: [view.action.Delete, card.action.PublicLink]
-  })
-}
-
-function definePoll (builder: Builder): void {
-  createSystemType(
-    builder,
-    communication.type.Poll,
-    communication.icon.Poll,
-    communication.string.Poll,
-    communication.string.Polls,
-    undefined,
-    PaletteColorIndexes.Cerulean
-  )
-
-  builder.createDoc(core.class.Attribute, core.space.Model, {
-    name: 'totalVotes',
-    attributeOf: communication.type.Poll,
-    type: TypeNumber(),
-    label: communication.string.TotalVotes,
-    readonly: true
-  })
-
-  builder.createDoc(
-    core.class.Attribute,
-    core.space.Model,
-    {
-      name: 'userVotes',
-      attributeOf: communication.type.Poll,
-      type: TypeAny(
-        communication.poll.UserVotesPresenter,
-        communication.string.Voted,
-        communication.poll.UserVotesPresenter
-      ),
-      label: communication.string.Voted,
-      readonly: true
-    },
-    communication.ids.UserVotesAttribute
-  )
-
-  builder.createDoc(communication.class.CustomActivityPresenter, core.space.Model, {
-    attribute: 'userVotes',
-    type: communication.type.Poll,
-    component: communication.poll.UserVoteActivityPresenter
   })
 }

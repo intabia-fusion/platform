@@ -12,10 +12,19 @@
 // limitations under the License.
 
 import { Asset, IntlString, Metadata, plugin, Plugin } from '@hcengineering/platform'
-import { CardSection, MasterTag } from '@hcengineering/card'
+import { CardSection } from '@hcengineering/card'
 import { Class, Ref } from '@hcengineering/core'
 
-import { GuestCommunicationSettings, Applet, CustomActivityPresenter, MessageAction, PollAnswer } from './types'
+import {
+  GuestCommunicationSettings,
+  Applet,
+  CustomActivityPresenter,
+  MessageAction,
+  PollAnonymousAnswer,
+  Poll,
+  Direct,
+  Thread
+} from './types'
 
 export * from './types'
 
@@ -28,20 +37,23 @@ export default plugin(communicationId, {
   class: {
     MessageAction: '' as Ref<Class<MessageAction>>,
     Applet: '' as Ref<Class<Applet>>,
-    PollAnswer: '' as Ref<Class<PollAnswer>>,
+    Poll: '' as Ref<Class<Poll>>,
+    PollAnonymousAnswer: '' as Ref<Class<PollAnonymousAnswer>>,
+    // TODO: need it?
     CustomActivityPresenter: '' as Ref<Class<CustomActivityPresenter>>,
     GuestCommunicationSettings: '' as Ref<Class<GuestCommunicationSettings>>
   },
   type: {
-    Poll: '' as Ref<MasterTag>,
-    Direct: '' as Ref<MasterTag>
+    Direct: '' as Ref<Class<Direct>>,
+    Thread: '' as Ref<Class<Thread>>
   },
   icon: {
     Bell: '' as Asset,
     BellCrossed: '' as Asset,
     File: '' as Asset,
     MessageMultiple: '' as Asset,
-    Poll: '' as Asset
+    Poll: '' as Asset,
+    Thread: '' as Asset
   },
   metadata: {
     Enabled: '' as Metadata<boolean>
@@ -88,7 +100,9 @@ export default plugin(communicationId, {
     VotedFor: '' as IntlString,
     RevokedVote: '' as IntlString,
     AnonymousQuiz: '' as IntlString,
-    ArrowDownMessages: '' as IntlString
+    ArrowDownMessages: '' as IntlString,
+    Thread: '' as IntlString,
+    Threads: '' as IntlString
   },
   ids: {
     CardMessagesSection: '' as Ref<CardSection>,

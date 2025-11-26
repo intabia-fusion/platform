@@ -15,7 +15,7 @@
 
 import { MeasureContext, PersonId, Ref, Space, TxOperations, WorkspaceUuid, generateId } from '@hcengineering/core'
 import { type Card } from '@hcengineering/card'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 import mail from '@hcengineering/mail'
 import { SyncMutex } from './mutex'
 import { MessageTimeShift, normalizeEmail } from './utils'
@@ -132,7 +132,7 @@ export class ChannelCache {
       // Create new channel if it doesn't exist
       this.ctx.info('Creating new channel', { me: normalizedEmail, space, personId })
       const channelId = await this.client.createDoc(
-        chat.masterTag.Thread,
+        communication.type.Thread,
         space,
         {
           title: normalizedEmail,
@@ -141,7 +141,7 @@ export class ChannelCache {
           archived: false,
           createdBy: personId,
           modifiedBy: personId
-        },
+        } as any,
         generateId(),
         Date.now() + MessageTimeShift.Channel,
         personId
@@ -150,7 +150,7 @@ export class ChannelCache {
       this.ctx.info('Creating mixin', { me: normalizedEmail, space, personId, channelId })
       await this.client.createMixin(
         channelId,
-        chat.masterTag.Thread,
+        communication.type.Thread,
         space,
         mail.tag.MailThread,
         {},

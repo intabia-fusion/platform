@@ -1675,9 +1675,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -7976,9 +7973,9 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chat':
+      '@hcengineering/communication':
         specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -15213,9 +15210,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
       '@hcengineering/communication':
         specifier: workspace:^0.7.0
         version: link:../communication
@@ -15741,9 +15735,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
       '@hcengineering/communication':
         specifier: workspace:^0.7.0
         version: link:../communication
@@ -35310,15 +35301,15 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client-resources
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/communication
       '@hcengineering/communication-rest-client':
         specifier: workspace:^0.7.12
         version: link:../../../foundations/communication/packages/rest-client
@@ -35627,9 +35618,9 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
+      '@hcengineering/communication':
         specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
+        version: link:../../../plugins/communication
       '@hcengineering/communication-rest-client':
         specifier: workspace:^0.7.12
         version: link:../../../foundations/communication/packages/rest-client
@@ -35869,9 +35860,9 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
+      '@hcengineering/communication':
         specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
+        version: link:../../../plugins/communication
       '@hcengineering/communication-rest-client':
         specifier: workspace:^0.7.12
         version: link:../../../foundations/communication/packages/rest-client

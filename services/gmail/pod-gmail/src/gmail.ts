@@ -42,7 +42,7 @@ import {
   getMailHeaders,
   isSyncedMessage
 } from '@hcengineering/mail-common'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 
 import { encode64 } from './base64'
 import config from './config'
@@ -425,7 +425,7 @@ export class GmailClient {
         }
       }
       const email = await this.getEmail()
-      const thread = await this.client.findOne<Card>(chat.masterTag.Thread, { _id: message.cardId })
+      const thread = await this.client.findOne<Card>(communication.type.Thread, { _id: message.cardId })
       const mailChannel = await this.getMailChannel()
       if (mailChannel === undefined) {
         this.ctx.error('Mail channel is not defined', { email, workspace: this.workspace })

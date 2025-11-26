@@ -93,6 +93,8 @@
     "Translate": "Перевести",
     "WriteMessageEllipsis": "Написать сообщение...",
     "EditMessageEllipsis": "Редактировать сообщение...",
-    "ArrowDownMessages": "↓ Последние сообщения"
+    "ArrowDownMessages": "↓ Последние сообщения",
+    "Thread": "Тред",
+    "Threads": "Треды"
   }
 }

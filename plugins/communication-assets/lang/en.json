@@ -93,6 +93,8 @@
     "Translate": "Translate",
     "WriteMessageEllipsis": "Write a message...",
     "EditMessageEllipsis": "Edit message...",
-    "ArrowDownMessages": "↓ Latest messages"
+    "ArrowDownMessages": "↓ Latest messages",
+    "Thread": "Thread",
+    "Threads": "Threads"
   }
 }

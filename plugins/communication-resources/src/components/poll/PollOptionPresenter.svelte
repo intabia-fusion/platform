@@ -14,7 +14,7 @@
 <script lang="ts">
   import { CheckBox, Loading } from '@hcengineering/ui'
   import { getCurrentAccount, WithLookup } from '@hcengineering/core'
-  import { Poll, PollAnswer } from '@hcengineering/communication'
+  import { Poll, PollAnonymousAnswer, PollVotedOption } from '@hcengineering/communication'
   import { createEventDispatcher } from 'svelte'
 
   import { PollOption } from '../../poll'
@@ -22,7 +22,7 @@
   export let option: PollOption
   export let result: WithLookup<Poll> | undefined
   export let isLoading: boolean
-  export let privateAnswers: PollAnswer[]
+  export let anonymousAnswers: PollAnonymousAnswer[]
   export let answer: string | undefined
   export let anonymous: boolean
   export let isVoted: boolean
@@ -40,18 +40,22 @@
     return Math.round((votes / total) * 100)
   }
 
-  function isOptionVotedByMe (optionId: string, result?: WithLookup<Poll>, privateAnswers: PollAnswer[] = []): boolean {
+  function isOptionVotedByMe (
+    optionId: string,
+    result?: WithLookup<Poll>,
+    anonymousAnswers: PollAnonymousAnswer[] = []
+  ): boolean {
     if (result == null) return false
     if (anonymous) {
-      return privateAnswers.some((it: PollAnswer) => it.options.includes(optionId)) ?? false
+      return anonymousAnswers.some((it: PollAnonymousAnswer) => it.options.some((it) => it.id === optionId)) ?? false
     }
-    const myVote = result.userVotes?.find((it) => it.account === me.uuid)
-    if (myVote == null) return false
-    return myVote.options.some((it) => it.id === optionId)
+    const myVotes: PollVotedOption[] = result[me.uuid] ?? []
+    if (myVotes == null) return false
+    return myVotes.some((it) => it.id === optionId)
   }
 
   $: percentage = getOptionPercentage(option.id, result)
-  $: isVotedByMe = isOptionVotedByMe(option.id, result, privateAnswers)
+  $: isVotedByMe = isOptionVotedByMe(option.id, result, anonymousAnswers)
   $: voteKind = getVoteKind(option.id, result)
 
   function getVoteKind (optionId: string, result: Poll | undefined): 'todo' | 'positive' | 'negative' {

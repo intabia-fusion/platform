@@ -35,9 +35,7 @@ export default mergeIds(communicationId, communication, {
     CreatePoll: '' as AnyComponent,
     PollPreview: '' as AnyComponent,
     CreatePollFn: '' as AppletCreateFnResource,
-    GetPollTitleFn: '' as AppletGetTitleFnResource,
-    UserVoteActivityPresenter: '' as AnyComponent,
-    UserVotesPresenter: '' as AnyComponent
+    GetPollTitleFn: '' as AppletGetTitleFnResource
   },
   string: {
     Added: '' as IntlString,

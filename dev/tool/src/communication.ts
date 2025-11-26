@@ -59,7 +59,6 @@ import {
 import { type AccountClient } from '@hcengineering/account-client'
 import cardPlugin, { type Card, type CardSpace, DOMAIN_CARD } from '@hcengineering/card'
 import { makeRank } from '@hcengineering/rank'
-import chat from '@hcengineering/chat'
 import { DOMAIN_CONTACT } from '@hcengineering/model-contact'
 import { markupToMarkdown } from '@hcengineering/text-markdown'
 import { markupToJSON, markupToText } from '@hcengineering/text'
@@ -153,7 +152,7 @@ async function migrateChannel (
       archived: doc.archived,
       autoJoin: doc.autoJoin,
       owners: doc.owners,
-      types: [chat.masterTag.Thread],
+      types: [communication.type.Thread],
       type: cardPlugin.spaceType.SpaceType,
       space: cardPlugin.space.Default,
       modifiedBy: doc.modifiedBy,
@@ -187,7 +186,7 @@ async function migrateChannel (
         blobs: {},
         parentInfo: []
       },
-      chat.masterTag.Thread
+      communication.type.Thread
     )
 
     card = {
@@ -197,7 +196,7 @@ async function migrateChannel (
       modifiedOn: doc.modifiedOn,
       createdOn: doc.createdOn,
       createdBy: doc.createdBy,
-      _class: chat.masterTag.Thread,
+      _class: communication.type.Thread,
       _id
     }
 
@@ -448,7 +447,7 @@ async function convertChunterMessage (
         ],
         ...(peers.length > 0 ? { conversationId: message._id } : {})
       },
-      chat.masterTag.Thread
+      communication.type.Thread
     )
     thread = {
       ...data,
@@ -457,7 +456,7 @@ async function convertChunterMessage (
       modifiedOn: lastReply.modifiedOn,
       createdOn: firstReply.createdOn ?? message.createdOn,
       createdBy: firstReply.createdBy ?? message.createdBy,
-      _class: chat.masterTag.Thread,
+      _class: communication.type.Thread,
       _id: generateId<Card>()
     }
 

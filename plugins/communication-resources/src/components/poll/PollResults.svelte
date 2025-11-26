@@ -27,10 +27,14 @@
   $: total = result.totalVotes ?? 0
 
   function getVotedPersons (optionId: string, result: Poll, employeeByAccount: Map<AccountUuid, Employee>): Employee[] {
-    return (result.userVotes ?? [])
-      .filter((it) => it.options.some((it) => it.id === optionId))
-      .map((it) => employeeByAccount.get(it.account))
-      .filter(notEmpty)
+    const votedEmployees =
+      Object.keys(result ?? {})
+        .map((it) => employeeByAccount.get(it as AccountUuid))
+        .filter(notEmpty) ?? []
+
+    return votedEmployees.filter((it) =>
+      it.personUuid != null ? (result[it.personUuid] ?? []).some((it) => it.id === optionId) : false
+    )
   }
 
   function getOptionResult (optionId: string, result: Poll): number {

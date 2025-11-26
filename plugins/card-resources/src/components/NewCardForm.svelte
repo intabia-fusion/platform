@@ -22,11 +22,10 @@
   } from '@hcengineering/presentation'
   import { ButtonIcon, IconMinimize, IconSend, ModernButton, ModernEditbox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-
+  import communication from '@hcengineering/communication'
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import { Card, MasterTag, type CardSpace } from '@hcengineering/card'
-  import chat from '@hcengineering/chat'
   import { defaultMessageInputActions } from '@hcengineering/communication-resources'
   import { AttachmentID, BlobParams } from '@hcengineering/communication-types'
   import core, { Data, generateId, getCurrentAccount, Markup, Ref } from '@hcengineering/core'
@@ -47,7 +46,7 @@
   const dispatch = createEventDispatcher()
   const communicationClient = getCommunicationClient()
 
-  const threadMasterTag = chat.masterTag.Thread
+  const threadMasterTag = communication.type.Thread
 
   export let type: Ref<MasterTag> = threadMasterTag
   export let space: Ref<CardSpace> | undefined = undefined

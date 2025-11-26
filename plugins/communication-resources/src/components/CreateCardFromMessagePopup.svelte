@@ -70,7 +70,7 @@
       if (_class.label === undefined) continue
       if (_class.kind !== ClassifierKind.CLASS) continue
       if ((_class as MasterTag).removed === true) continue
-      if (hierarchy.isDerived(_id, communication.type.Direct) || hierarchy.isDerived(_id, communication.type.Poll)) {
+      if (hierarchy.isDerived(_id, communication.type.Direct)) {
         continue
       }
       added.add(_id)
@@ -82,10 +82,7 @@
         if (_class.label === undefined) continue
         if (_class.kind !== ClassifierKind.CLASS) continue
         if ((_class as MasterTag).removed === true) continue
-        if (
-          hierarchy.isDerived(desc, communication.type.Direct) ||
-          hierarchy.isDerived(desc, communication.type.Poll)
-        ) {
+        if (hierarchy.isDerived(desc, communication.type.Direct)) {
           continue
         }
         added.add(desc)
@@ -140,12 +137,3 @@
     <MessagePresenter {card} message={{ ..._message, reactions: {}, threads: [] }} readonly={true} padding="0" />
   </div>
 </Modal>
-
-<style lang="scss">
-  .footer-error {
-    display: flex;
-    color: var(--global-error-TextColor);
-    font-size: 0.875rem;
-    font-weight: 400;
-  }
-</style>

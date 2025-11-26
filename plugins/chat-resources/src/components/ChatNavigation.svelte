@@ -64,10 +64,10 @@
     limit: 5,
     labelFilter: [SubscriptionLabelID],
     preorder: [
-      { type: chat.masterTag.Thread, order: 1 },
+      { type: communication.type.Thread, order: 1 },
       { type: communication.type.Direct, order: 2 }
     ],
-    fixedTypes: [chat.masterTag.Thread, communication.type.Direct],
+    fixedTypes: [communication.type.Thread, communication.type.Direct],
     allowCreate: true,
     defaultSorting: 'recent',
     lookback: '2w',

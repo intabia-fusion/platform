@@ -46,7 +46,6 @@ import { getMetadata, getResource } from '@hcengineering/platform'
 import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
 import { getEmployeeBySocialId } from '@hcengineering/contact'
 import { makeRank } from '@hcengineering/rank'
-import chat from '@hcengineering/chat'
 import { markupToText } from '@hcengineering/text'
 import { get } from 'svelte/store'
 import { translate as aiTranslate } from '@hcengineering/ai-bot-resources'
@@ -110,7 +109,7 @@ export const replyInThread: MessageActionFunction = async (message: Message, par
     message,
     parentCard,
     createThreadTitle(message, parentCard),
-    chat.masterTag.Thread,
+    communication.type.Thread,
     `${parentCard._id}_${message.id}` as Ref<Card>
   )
 }

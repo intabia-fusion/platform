@@ -18,8 +18,6 @@ import { type Resources } from '@hcengineering/platform'
 import PollPresenter from './components/poll/PollPresenter.svelte'
 import CreatePoll from './components/poll/CreatePoll.svelte'
 import PollPreview from './components/poll/PollPreview.svelte'
-import UserVoteActivityPresenter from './components/poll/UserVoteActivityPresenter.svelte'
-import UserVotesPresenter from './components/poll/UserVotesPresenter.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import CreateDirect from './components/CreateDirect.svelte'
 
@@ -64,9 +62,7 @@ export default async (): Promise<Resources> => ({
     CreatePoll,
     PollPreview,
     CreatePollFn: createPoll,
-    GetPollTitleFn: getPollTitle,
-    UserVoteActivityPresenter,
-    UserVotesPresenter
+    GetPollTitleFn: getPollTitle
   },
   messageActionImpl: {
     AddReaction: addReaction,

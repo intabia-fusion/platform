@@ -1,4 +1,3 @@
-//
 // Copyright © 2025 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -11,13 +10,10 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-import { loadMetadata } from '@hcengineering/platform'
-import chat from '@hcengineering/chat'
+import { Card } from '@hcengineering/card'
+import { MessageID } from '@hcengineering/communication-types'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
-loadMetadata(chat.icon, {
-  ChatBubble: `${icons}#chat-bubble`,
-  All: `${icons}#all`
-})
+export interface Thread extends Card {
+  messageId?: MessageID
+}

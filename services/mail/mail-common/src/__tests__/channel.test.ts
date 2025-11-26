@@ -15,7 +15,7 @@
 
 import { PersonId, Ref, WorkspaceUuid, MeasureContext, TxOperations, Doc } from '@hcengineering/core'
 import { PersonSpace } from '@hcengineering/contact'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 import mail from '@hcengineering/mail'
 import { ChannelCache, ChannelCacheFactory } from '../channel'
 
@@ -95,7 +95,7 @@ describe('ChannelCache', () => {
       expect(result).toBe(generatedId)
       expect(mockClient.findOne).toHaveBeenCalledTimes(2)
       expect(mockClient.createDoc).toHaveBeenCalledWith(
-        chat.masterTag.Thread,
+        communication.type.Thread,
         spaceId,
         {
           title: emailAccount,
@@ -111,7 +111,7 @@ describe('ChannelCache', () => {
       )
       expect(mockClient.createMixin).toHaveBeenCalledWith(
         expect.any(String),
-        chat.masterTag.Thread,
+        communication.type.Thread,
         spaceId,
         mail.tag.MailThread,
         {},

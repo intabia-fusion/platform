@@ -23,7 +23,7 @@
     showPopup,
     DateTimePresenter
   } from '@hcengineering/ui'
-  import { Applet } from '@hcengineering/communication'
+  import { Applet, OptionID } from '@hcengineering/communication'
   import presentation from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { IntlString } from '@hcengineering/platform'
@@ -85,7 +85,7 @@
     if (lastOption.label.trim() !== '') {
       params = {
         ...params,
-        options: [...options, { id: generateId(), label: '' }]
+        options: [...options, { id: generateId() as any as OptionID, label: '' }]
       }
     } else if (
       lastOption != null &&

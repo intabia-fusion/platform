@@ -27,7 +27,7 @@ import {
 import { ConsumerHandle, PlatformQueue, QueueTopic } from '@hcengineering/server-core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
-import chat from '@hcengineering/chat'
+import communication from '@hcengineering/communication'
 import { Card } from '@hcengineering/card'
 import { LRUCache } from 'lru-cache'
 
@@ -209,11 +209,11 @@ export class MailWorker {
 
       try {
         const workspaceClient = await getWorkspaceClient(workspaceUuid)
-        const thread = await workspaceClient.findOne<Card>(chat.masterTag.Thread, { _id: message.cardId })
+        const thread = await workspaceClient.findOne<Card>(communication.type.Thread, { _id: message.cardId })
         if (thread?.parent == null) {
           return
         }
-        const channel = await workspaceClient.findOne<Card>(chat.masterTag.Thread, { _id: thread.parent })
+        const channel = await workspaceClient.findOne<Card>(communication.type.Thread, { _id: thread.parent })
         if (channel === undefined || !this.isHulyMailChannel(channel)) {
           return
         }

@@ -17,12 +17,8 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import workbench from '@hcengineering/model-workbench'
 import { chatId } from '@hcengineering/chat'
-import { createSystemType } from '@hcengineering/model-card'
-import communication from '@hcengineering/communication'
-import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 
 import chat from './plugin'
-import { AccountRole } from '@hcengineering/core'
 
 export { chatId } from '@hcengineering/chat'
 export { chatOperation } from './migration'
@@ -46,21 +42,4 @@ export function createModel (builder: Builder): void {
     },
     chat.app.Chat
   )
-
-  // TODO: move types to communication-plugin
-  createSystemType(
-    builder,
-    chat.masterTag.Thread,
-    chat.icon.Thread,
-    chat.string.Thread,
-    chat.string.Threads,
-    {
-      defaultSection: communication.ids.CardMessagesSection
-    },
-    PaletteColorIndexes.Houseplant
-  )
-
-  builder.mixin(chat.masterTag.Thread, core.class.Class, core.mixin.TxAccessLevel, {
-    updateAccessLevel: AccountRole.Guest
-  })
 }
