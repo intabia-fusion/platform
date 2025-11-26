@@ -1,9 +1,7 @@
 import { addLocation } from '@hcengineering/platform'
-import { serverActivityId } from '@hcengineering/server-activity'
 import { serverAttachmentId } from '@hcengineering/server-attachment'
 import { serverCardId } from '@hcengineering/server-card'
 import { serverCalendarId } from '@hcengineering/server-calendar'
-import { serverChunterId } from '@hcengineering/server-chunter'
 import { serverCollaborationId } from '@hcengineering/server-collaboration'
 import { serverContactId } from '@hcengineering/server-contact'
 import { serverDocumentsId } from '@hcengineering/server-controlled-documents'
@@ -16,7 +14,6 @@ import { serverHrId } from '@hcengineering/server-hr'
 import { serverInventoryId } from '@hcengineering/server-inventory'
 import { serverLeadId } from '@hcengineering/server-lead'
 import { serverLoveId } from '@hcengineering/server-love'
-import { serverNotificationId } from '@hcengineering/server-notification'
 import { serverRecruitId } from '@hcengineering/server-recruit'
 import { serverRequestId } from '@hcengineering/server-request'
 import { serverSettingId } from '@hcengineering/server-setting'
@@ -31,13 +28,10 @@ import { serverAiBotId } from '@hcengineering/server-ai-bot'
 import { serverProcessId } from '@hcengineering/server-process'
 
 export function registerServerPlugins (): void {
-  addLocation(serverActivityId, () => import('@hcengineering/server-activity-resources'))
   addLocation(serverAttachmentId, () => import('@hcengineering/server-attachment-resources'))
   addLocation(serverCollaborationId, () => import('@hcengineering/server-collaboration-resources'))
   addLocation(serverContactId, () => import('@hcengineering/server-contact-resources'))
-  addLocation(serverNotificationId, () => import('@hcengineering/server-notification-resources'))
   addLocation(serverSettingId, () => import('@hcengineering/server-setting-resources'))
-  addLocation(serverChunterId, () => import('@hcengineering/server-chunter-resources'))
   addLocation(serverInventoryId, () => import('@hcengineering/server-inventory-resources'))
   addLocation(serverLeadId, () => import('@hcengineering/server-lead-resources'))
   addLocation(serverRecruitId, () => import('@hcengineering/server-recruit-resources'))

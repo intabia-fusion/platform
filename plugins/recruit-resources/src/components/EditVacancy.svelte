@@ -16,9 +16,7 @@
 <script lang="ts">
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import { Data, Doc, type MarkupBlobRef, Mixin, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { Vacancy } from '@hcengineering/recruit'
   import survey from '@hcengineering/survey'
@@ -43,10 +41,11 @@
   let showAllMixins = false
 
   const dispatch = createEventDispatcher()
-  const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   onDestroy(async () => {
-    void inboxClient.then((client) => client.readDoc(_id))
+    // void inboxClient.then((client) => client.readDoc(_id))
   })
 
   const client = getClient()
@@ -59,7 +58,7 @@
       const prev = lastId
       lastId = _id
       if (prev !== undefined) {
-        void inboxClient.then((client) => client.readDoc(prev))
+        // void inboxClient.then((client) => client.readDoc(prev))
       }
       query.query(recruit.class.Vacancy, { _id }, (result) => {
         object = result[0] as Required<Vacancy>

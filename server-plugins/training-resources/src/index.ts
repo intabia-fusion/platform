@@ -14,14 +14,15 @@
 //
 
 import { TrainingRequestHTMLPresenter } from './functions/TrainingRequestHTMLPresenter'
-import { TrainingRequestNotificationTypeMatch } from './functions/TrainingRequestNotificationTypeMatch'
+// import { TrainingRequestNotificationTypeMatch } from './functions/TrainingRequestNotificationTypeMatch'
 import { TrainingRequestTextPresenter } from './functions/TrainingRequestTextPresenter'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
     TrainingRequestHTMLPresenter,
-    TrainingRequestNotificationTypeMatch,
+    // TODO: FIXME
+    // TrainingRequestNotificationTypeMatch,
     TrainingRequestTextPresenter
   }
 })

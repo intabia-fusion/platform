@@ -41,13 +41,11 @@
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/attachment": "workspace:^0.7.0",
     "@hcengineering/task": "workspace:^0.7.0",
     "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/tags": "workspace:^0.7.0",
     "@hcengineering/preference": "workspace:^0.7.0",
-    "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/time": "workspace:^0.7.0"
   }
 }

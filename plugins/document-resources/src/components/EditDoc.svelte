@@ -19,7 +19,6 @@
   import attachment, { Attachment } from '@hcengineering/attachment'
   import core, { Doc, Ref, WithLookup, generateId, type Blob } from '@hcengineering/core'
   import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import {
@@ -97,7 +96,8 @@
 
   let loadedDocumentContent = false
 
-  const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   $: read(_id)
   function read (_id: Ref<Doc>): void {
@@ -105,12 +105,12 @@
       loadedDocumentContent = false
       const prev = lastId
       lastId = _id
-      void notificationClient.then((client) => client.readDoc(prev))
+      // void notificationClient.then((client) => client.readDoc(prev))
     }
   }
 
   onDestroy(async () => {
-    void notificationClient.then((client) => client.readDoc(_id))
+    // void notificationClient.then((client) => client.readDoc(_id))
     clearTimeout(copyTimeout)
   })
 

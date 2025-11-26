@@ -23,12 +23,10 @@ import {
   setMetadata
 } from '@hcengineering/platform'
 
-import { activityId } from '@hcengineering/activity'
 import aiBot, { aiBotId } from '@hcengineering/ai-bot'
 import { attachmentId } from '@hcengineering/attachment'
 import calendar, { calendarId } from '@hcengineering/calendar'
 import { cardId } from '@hcengineering/card'
-import { chunterId } from '@hcengineering/chunter'
 import client, { clientId } from '@hcengineering/client'
 import contactPlugin, { contactId } from '@hcengineering/contact'
 import { documentsId } from '@hcengineering/controlled-documents'
@@ -46,7 +44,6 @@ import { imageCropperId } from '@hcengineering/image-cropper'
 import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
 import login, { loginId } from '@hcengineering/login'
-import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
 import presence, { presenceId } from '@hcengineering/presence'
 import { processId } from '@hcengineering/process'
@@ -83,12 +80,10 @@ import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
 import billingPlugin, { billingId } from '@hcengineering/billing'
 
-import '@hcengineering/activity-assets'
 import '@hcengineering/analytics-collector-assets'
 import '@hcengineering/attachment-assets'
 import '@hcengineering/calendar-assets'
 import '@hcengineering/card-assets'
-import '@hcengineering/chunter-assets'
 import '@hcengineering/contact-assets'
 import '@hcengineering/controlled-documents-assets'
 import '@hcengineering/desktop-preferences-assets'
@@ -105,7 +100,6 @@ import '@hcengineering/inventory-assets'
 import '@hcengineering/lead-assets'
 import '@hcengineering/login-assets'
 import '@hcengineering/love-assets'
-import '@hcengineering/notification-assets'
 import '@hcengineering/preference-assets'
 import '@hcengineering/print-assets'
 import '@hcengineering/process-assets'
@@ -194,13 +188,11 @@ function configureI18n (): void {
   addStringsLoader(mediaId, async (lang: string) => await import(`@hcengineering/media-assets/lang/${lang}.json`))
   addStringsLoader(uploaderId, async (lang: string) => await import(`@hcengineering/uploader-assets/lang/${lang}.json`))
   addStringsLoader(recorderId, async (lang: string) => await import(`@hcengineering/recorder-assets/lang/${lang}.json`))
-  addStringsLoader(activityId, async (lang: string) => await import(`@hcengineering/activity-assets/lang/${lang}.json`))
   addStringsLoader(
     attachmentId,
     async (lang: string) => await import(`@hcengineering/attachment-assets/lang/${lang}.json`)
   )
   addStringsLoader(calendarId, async (lang: string) => await import(`@hcengineering/calendar-assets/lang/${lang}.json`))
-  addStringsLoader(chunterId, async (lang: string) => await import(`@hcengineering/chunter-assets/lang/${lang}.json`))
   addStringsLoader(contactId, async (lang: string) => await import(`@hcengineering/contact-assets/lang/${lang}.json`))
   addStringsLoader(driveId, async (lang: string) => await import(`@hcengineering/drive-assets/lang/${lang}.json`))
   addStringsLoader(gmailId, async (lang: string) => await import(`@hcengineering/gmail-assets/lang/${lang}.json`))
@@ -211,10 +203,6 @@ function configureI18n (): void {
   )
   addStringsLoader(leadId, async (lang: string) => await import(`@hcengineering/lead-assets/lang/${lang}.json`))
   addStringsLoader(loginId, async (lang: string) => await import(`@hcengineering/login-assets/lang/${lang}.json`))
-  addStringsLoader(
-    notificationId,
-    async (lang: string) => await import(`@hcengineering/notification-assets/lang/${lang}.json`)
-  )
   addStringsLoader(onboardId, async (lang: string) => await import(`@hcengineering/onboard-assets/lang/${lang}.json`))
   addStringsLoader(
     preferenceId,
@@ -379,7 +367,8 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(calendar.metadata.CalendarServiceURL, config.CALENDAR_URL ?? 'http://localhost:8095')
   setMetadata(calendar.metadata.PublicScheduleURL, config.PUBLIC_SCHEDULE_URL)
   setMetadata(calendar.metadata.CalDavServerURL, config.CALDAV_SERVER_URL)
-  setMetadata(notification.metadata.PushPublicKey, config.PUSH_PUBLIC_KEY)
+  // TODO: FIXME
+  // setMetadata(notification.metadata.PushPublicKey, config.PUSH_PUBLIC_KEY)
 
   setMetadata(rekoni.metadata.RekoniUrl, config.REKONI_URL)
   setMetadata(contactPlugin.metadata.LastNameFirst, myBranding.lastNameFirst === 'true')
@@ -425,9 +414,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   addLocation(viewId, async () => await import('@hcengineering/view-resources'))
   addLocation(taskId, async () => await import('@hcengineering/task-resources'))
   addLocation(contactId, async () => await import('@hcengineering/contact-resources'))
-  addLocation(chunterId, async () => await import('@hcengineering/chunter-resources'))
   addLocation(recruitId, async () => await import('@hcengineering/recruit-resources'))
-  addLocation(activityId, async () => await import('@hcengineering/activity-resources'))
   addLocation(settingId, async () => await import('@hcengineering/setting-resources'))
   addLocation(leadId, async () => await import('@hcengineering/lead-resources'))
   addLocation(telegramId, async () => await import('@hcengineering/telegram-resources'))
@@ -436,7 +423,6 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   addLocation(imageCropperId, async () => await import('@hcengineering/image-cropper-resources'))
   addLocation(inventoryId, async () => await import('@hcengineering/inventory-resources'))
   addLocation(templatesId, async () => await import('@hcengineering/templates-resources'))
-  addLocation(notificationId, async () => await import('@hcengineering/notification-resources'))
   addLocation(tagsId, async () => await import('@hcengineering/tags-resources'))
   addLocation(calendarId, async () => await import('@hcengineering/calendar-resources'))
   addLocation(analyticsCollectorId, async () => await import('@hcengineering/analytics-collector-resources'))

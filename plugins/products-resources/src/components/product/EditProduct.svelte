@@ -19,7 +19,6 @@
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
   import core, { type Class, type Doc, type Ref, getCurrentAccount } from '@hcengineering/core'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { ActionContext, MessageViewer, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
@@ -39,7 +38,8 @@
 
   const client = getClient()
   const dispatch = createEventDispatcher()
-  const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   let object: Product | undefined
   let title = ''
@@ -49,14 +49,14 @@
   $: read(_id)
   function read (_id: Ref<Doc>): void {
     if (lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      void notificationClient.then((client) => client.readDoc(prev))
+      // void notificationClient.then((client) => client.readDoc(prev))
     }
   }
 
   onDestroy(async () => {
-    void notificationClient.then((client) => client.readDoc(_id))
+    // void notificationClient.then((client) => client.readDoc(_id))
   })
 
   const query = createQuery()

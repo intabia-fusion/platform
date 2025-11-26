@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import chunter from '@hcengineering/chunter'
   import type { Contact, Employee, Person } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
   import { EmployeeBox, ExpandRightDouble, UserBox } from '@hcengineering/contact-resources'
@@ -43,9 +42,9 @@
     getClient
   } from '@hcengineering/presentation'
   import { recruitId, type Applicant, type Candidate, type Vacancy, RecruitEvents } from '@hcengineering/recruit'
-  import task, { TaskType, getStates, makeRank } from '@hcengineering/task'
+  import { TaskType, getStates, makeRank } from '@hcengineering/task'
   import { TaskKindSelector, selectedTypeStore, typeStore } from '@hcengineering/task-resources'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
+  import { EmptyMarkup } from '@hcengineering/text'
   import ui, {
     Button,
     ColorPopup,
@@ -167,11 +166,12 @@
 
     await descriptionBox.createAttachments(undefined, ops)
 
-    if (_comment.trim().length > 0 && !isEmptyMarkup(_comment)) {
-      await ops.addCollection(chunter.class.ChatMessage, _space, doc._id, recruit.class.Applicant, 'comments', {
-        message: _comment
-      })
-    }
+    // TODO: FIXME
+    // if (_comment.trim().length > 0 && !isEmptyMarkup(_comment)) {
+    //   await ops.addCollection(chunter.class.ChatMessage, _space, doc._id, recruit.class.Applicant, 'comments', {
+    //     message: _comment
+    //   })
+    // }
     await ops.commit()
 
     Analytics.handleEvent(RecruitEvents.ApplicationCreated, {

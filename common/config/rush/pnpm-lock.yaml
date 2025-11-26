@@ -21,15 +21,6 @@ importers:
       '@hcengineering/achievement-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/achievement-resources
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/activity
-      '@hcengineering/activity-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/activity-assets
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/activity-resources
       '@hcengineering/ai-assistant':
         specifier: workspace:^0.7.0
         version: link:../plugins/ai-assistant
@@ -102,15 +93,6 @@ importers:
       '@hcengineering/chat-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/chat-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chunter
-      '@hcengineering/chunter-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chunter-assets
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chunter-resources
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../foundations/core/packages/client
@@ -333,15 +315,6 @@ importers:
       '@hcengineering/media-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/media-resources
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/notification
-      '@hcengineering/notification-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/notification-assets
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/notification-resources
       '@hcengineering/onboard':
         specifier: workspace:^0.7.0
         version: link:../plugins/onboard
@@ -933,15 +906,6 @@ importers:
       '@hcengineering/achievement-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/achievement-resources
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/activity-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity-assets
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity-resources
       '@hcengineering/ai-assistant':
         specifier: workspace:^0.7.0
         version: link:../../plugins/ai-assistant
@@ -1017,15 +981,6 @@ importers:
       '@hcengineering/chat-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chat-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/chunter-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter-assets
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter-resources
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -1242,15 +1197,6 @@ importers:
       '@hcengineering/media-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/media-resources
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/notification-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification-assets
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification-resources
       '@hcengineering/onboard':
         specifier: workspace:^0.7.0
         version: link:../../plugins/onboard
@@ -1353,12 +1299,6 @@ importers:
       '@hcengineering/request-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/request-resources
-      '@hcengineering/server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity-resources
       '@hcengineering/server-attachment':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/attachment
@@ -1371,12 +1311,6 @@ importers:
       '@hcengineering/server-calendar-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/calendar-resources
-      '@hcengineering/server-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter
-      '@hcengineering/server-chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter-resources
       '@hcengineering/server-collaboration':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/collaboration
@@ -1413,12 +1347,6 @@ importers:
       '@hcengineering/server-lead-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/lead-resources
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification-resources
       '@hcengineering/server-recruit':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/recruit
@@ -1732,9 +1660,6 @@ importers:
       '@hcengineering/account-service':
         specifier: workspace:^0.7.0
         version: link:../../server/account-service
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/api-client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/api-client
@@ -1753,9 +1678,6 @@ importers:
       '@hcengineering/chat':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chat
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -1807,9 +1729,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../models/activity
       '@hcengineering/model-all':
         specifier: workspace:^0.7.0
         version: link:../../models/all
@@ -1870,12 +1789,6 @@ importers:
       '@hcengineering/s3':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/s3
-      '@hcengineering/server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity-resources
       '@hcengineering/server-ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/ai-bot
@@ -1903,12 +1816,6 @@ importers:
       '@hcengineering/server-card-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/card-resources
-      '@hcengineering/server-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter
-      '@hcengineering/server-chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter-resources
       '@hcengineering/server-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/client
@@ -1969,12 +1876,6 @@ importers:
       '@hcengineering/server-lead-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/lead-resources
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification-resources
       '@hcengineering/server-pipeline':
         specifier: workspace:^0.7.0
         version: link:../../server/server-pipeline
@@ -5526,94 +5427,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../models/activity:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity-resources
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/model-presentation':
-        specifier: workspace:^0.7.0
-        version: link:../presentation
-      '@hcengineering/model-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../models/ai-assistant:
     dependencies:
       '@hcengineering/ai-assistant':
@@ -5759,9 +5572,6 @@ importers:
       '@hcengineering/model-achievement':
         specifier: workspace:^0.7.0
         version: link:../achievement
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-ai-assistant':
         specifier: workspace:^0.7.0
         version: link:../ai-assistant
@@ -5786,9 +5596,6 @@ importers:
       '@hcengineering/model-chat':
         specifier: workspace:^0.7.0
         version: link:../chat
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-communication':
         specifier: workspace:^0.7.0
         version: link:../communication
@@ -5852,9 +5659,6 @@ importers:
       '@hcengineering/model-media':
         specifier: workspace:^0.7.0
         version: link:../media
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -5888,9 +5692,6 @@ importers:
       '@hcengineering/model-request':
         specifier: workspace:^0.7.0
         version: link:../request
-      '@hcengineering/model-server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../server-activity
       '@hcengineering/model-server-ai-bot':
         specifier: workspace:^0.7.0
         version: link:../server-ai-bot
@@ -5903,9 +5704,6 @@ importers:
       '@hcengineering/model-server-card':
         specifier: workspace:^0.7.0
         version: link:../server-card
-      '@hcengineering/model-server-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../server-chunter
       '@hcengineering/model-server-collaboration':
         specifier: workspace:^0.7.0
         version: link:../server-collaboration
@@ -5942,9 +5740,6 @@ importers:
       '@hcengineering/model-server-love':
         specifier: workspace:^0.7.0
         version: link:../server-love
-      '@hcengineering/model-server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../server-notification
       '@hcengineering/model-server-process':
         specifier: workspace:^0.7.0
         version: link:../server-process
@@ -6087,36 +5882,21 @@ importers:
 
   ../../models/analytics-collector:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/analytics-collector':
         specifier: workspace:^0.7.0
         version: link:../../plugins/analytics-collector
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
@@ -6175,9 +5955,6 @@ importers:
 
   ../../models/attachment:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
@@ -6336,9 +6113,6 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
@@ -6357,9 +6131,6 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -6378,9 +6149,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -6442,18 +6210,12 @@ importers:
 
   ../../models/card:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
       '@hcengineering/card-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6640,109 +6402,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../models/chunter:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/attachment':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter-resources
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/model-attachment':
-        specifier: workspace:^0.7.0
-        version: link:../attachment
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/model-presentation':
-        specifier: workspace:^0.7.0
-        version: link:../presentation
-      '@hcengineering/model-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/model-workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../models/communication:
     dependencies:
       '@hcengineering/card':
@@ -6833,15 +6492,9 @@ importers:
 
   ../../models/contact:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6854,27 +6507,18 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
       '@hcengineering/model-card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
       '@hcengineering/model-guest':
         specifier: workspace:^0.7.0
         version: link:../guest
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -6887,9 +6531,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -6957,15 +6598,9 @@ importers:
 
   ../../models/controlled-documents:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
@@ -6990,18 +6625,12 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
@@ -7020,9 +6649,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -7254,9 +6880,6 @@ importers:
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -7303,9 +6926,6 @@ importers:
 
   ../../models/document:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
@@ -7324,24 +6944,15 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
       '@hcengineering/model-guest':
         specifier: workspace:^0.7.0
         version: link:../guest
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -7357,9 +6968,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -7427,12 +7035,6 @@ importers:
 
   ../../models/drive:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7679,9 +7281,6 @@ importers:
 
   ../../models/gmail:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -7709,15 +7308,9 @@ importers:
       '@hcengineering/model-love':
         specifier: workspace:^0.7.0
         version: link:../love
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -7873,9 +7466,6 @@ importers:
       '@hcengineering/model-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -7888,9 +7478,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -8098,12 +7685,6 @@ importers:
 
   ../../models/inventory:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -8119,9 +7700,6 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -8192,12 +7770,6 @@ importers:
 
   ../../models/lead:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8216,18 +7788,12 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-task':
         specifier: workspace:^0.7.0
         version: link:../task
@@ -8240,9 +7806,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -8307,15 +7870,9 @@ importers:
 
   ../../models/love:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8343,9 +7900,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -8355,9 +7909,6 @@ importers:
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -8422,18 +7973,12 @@ importers:
 
   ../../models/mail:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
       '@hcengineering/chat':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chat
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -8534,106 +8079,6 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../models/notification:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/model-attachment':
-        specifier: workspace:^0.7.0
-        version: link:../attachment
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/model-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/model-workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/preference
-      '@hcengineering/setting':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/setting
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -8990,9 +8435,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -9066,15 +8508,9 @@ importers:
 
   ../../models/products:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9251,9 +8687,6 @@ importers:
 
   ../../models/rating:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9415,12 +8848,6 @@ importers:
       '@anticrm/skillset':
         specifier: ^0.6.0
         version: 0.6.0
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9436,9 +8863,6 @@ importers:
       '@hcengineering/model-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -9448,9 +8872,6 @@ importers:
       '@hcengineering/model-gmail':
         specifier: workspace:^0.7.0
         version: link:../gmail
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
@@ -9469,9 +8890,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -9545,9 +8963,6 @@ importers:
 
   ../../models/request:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9557,21 +8972,12 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -9628,96 +9034,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../models/server-activity:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity-resources
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../models/server-ai-bot:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../plugins/ai-bot
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9727,30 +9048,18 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -9894,9 +9203,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -9964,79 +9270,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../models/server-chunter:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10162,9 +9395,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-templates':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/templates
@@ -10232,9 +9462,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -10247,9 +9474,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10381,9 +9605,6 @@ importers:
       '@hcengineering/server-document':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/document
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-view':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/view
@@ -10512,9 +9733,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -10524,9 +9742,6 @@ importers:
       '@hcengineering/server-gmail':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/gmail
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10658,9 +9873,6 @@ importers:
       '@hcengineering/server-hr':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/hr
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10725,9 +9937,6 @@ importers:
       '@hcengineering/server-inventory':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/inventory
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10789,9 +9998,6 @@ importers:
       '@hcengineering/model-lead':
         specifier: workspace:^0.7.0
         version: link:../lead
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -10801,9 +10007,6 @@ importers:
       '@hcengineering/server-lead':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/lead
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -10877,88 +10080,6 @@ importers:
       '@hcengineering/server-love':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/love
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../models/server-notification:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -11157,9 +10278,6 @@ importers:
       '@hcengineering/model-recruit':
         specifier: workspace:^0.7.0
         version: link:../recruit
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -11169,9 +10287,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-recruit':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/recruit
@@ -11236,18 +10351,12 @@ importers:
       '@hcengineering/model-request':
         specifier: workspace:^0.7.0
         version: link:../request
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-request':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/request
@@ -11309,9 +10418,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-setting':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/setting
@@ -11446,9 +10552,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-task':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/task
@@ -11510,18 +10613,12 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-telegram':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/telegram
@@ -11732,15 +10829,9 @@ importers:
       '@hcengineering/model-tracker':
         specifier: workspace:^0.7.0
         version: link:../tracker
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-tracker':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/tracker
@@ -11805,18 +10896,12 @@ importers:
       '@hcengineering/model-training':
         specifier: workspace:^0.7.0
         version: link:../training
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-training':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/training
@@ -11933,9 +11018,6 @@ importers:
 
   ../../models/setting:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11957,9 +11039,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12097,18 +11176,12 @@ importers:
 
   ../../models/survey:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -12191,9 +11264,6 @@ importers:
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12255,9 +11325,6 @@ importers:
 
   ../../models/task:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12267,15 +11334,9 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -12297,9 +11358,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12367,12 +11425,6 @@ importers:
 
   ../../models/telegram:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12394,12 +11446,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12467,9 +11513,6 @@ importers:
 
   ../../models/templates:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -12555,15 +11598,9 @@ importers:
 
   ../../models/test-management:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12573,9 +11610,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
@@ -12585,9 +11619,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -12606,9 +11637,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12755,9 +11783,6 @@ importers:
 
   ../../models/time:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
@@ -12791,9 +11816,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12873,12 +11895,6 @@ importers:
 
   ../../models/tracker:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12888,9 +11904,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
@@ -12900,9 +11913,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
@@ -12918,9 +11928,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12997,9 +12004,6 @@ importers:
 
   ../../models/training:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
@@ -13021,9 +12025,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/model-print':
         specifier: workspace:^0.7.0
         version: link:../print
@@ -13039,9 +12040,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -13750,9 +12748,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
@@ -13947,9 +12942,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -14093,15 +13085,9 @@ importers:
 
   ../../packages/panel:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -14281,9 +13267,6 @@ importers:
       '@hcengineering/hulypulse-client':
         specifier: workspace:^0.7.0
         version: link:../hulypulse-client
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -14826,237 +13809,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../plugins/activity:
-    dependencies:
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/activity-assets:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/activity-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/emoji':
-        specifier: workspace:^0.7.0
-        version: link:../emoji
-      '@hcengineering/emoji-resources':
-        specifier: workspace:^0.7.0
-        version: link:../emoji-resources
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../plugins/ai-assistant:
     dependencies:
       '@hcengineering/core':
@@ -15281,9 +14033,6 @@ importers:
 
   ../../plugins/ai-bot:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -15354,9 +14103,6 @@ importers:
       '@hcengineering/analytics-collector':
         specifier: workspace:^0.7.0
         version: link:../analytics-collector
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -15445,9 +14191,6 @@ importers:
 
   ../../plugins/analytics-collector:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -15561,12 +14304,6 @@ importers:
       '@hcengineering/analytics-collector':
         specifier: workspace:^0.7.0
         version: link:../analytics-collector
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -15759,9 +14496,6 @@ importers:
 
   ../../plugins/attachment-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -16111,9 +14845,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -16506,9 +15237,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -16883,282 +15611,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../plugins/chunter:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/chunter-assets:
-    dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/chunter-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
-      '@hcengineering/ai-bot':
-        specifier: workspace:^0.7.0
-        version: link:../ai-bot
-      '@hcengineering/ai-bot-resources':
-        specifier: workspace:^0.7.0
-        version: link:../ai-bot-resources
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/attachment':
-        specifier: workspace:^0.7.0
-        version: link:../attachment
-      '@hcengineering/attachment-resources':
-        specifier: workspace:^0.7.0
-        version: link:../attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/login':
-        specifier: workspace:^0.7.0
-        version: link:../login
-      '@hcengineering/love':
-        specifier: workspace:^0.7.0
-        version: link:../love
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/presence-resources':
-        specifier: workspace:^0.7.0
-        version: link:../presence-resources
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/text-editor':
-        specifier: workspace:^0.7.0
-        version: link:../text-editor
-      '@hcengineering/text-editor-resources':
-        specifier: workspace:^0.7.0
-        version: link:../text-editor-resources
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/workbench-resources':
-        specifier: workspace:^0.7.0
-        version: link:../workbench-resources
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/html-to-text':
-        specifier: ^8.1.1
-        version: 8.1.1
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../plugins/communication:
     dependencies:
       '@hcengineering/card':
@@ -17274,9 +15726,6 @@ importers:
 
   ../../plugins/communication-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../ai-bot
@@ -17565,9 +16014,6 @@ importers:
       '@hcengineering/achievement':
         specifier: workspace:^0.7.0
         version: link:../achievement
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -17589,9 +16035,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -17707,24 +16150,15 @@ importers:
 
   ../../plugins/controlled-documents:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -17853,21 +16287,12 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -17883,12 +16308,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -18232,9 +16651,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -18479,12 +16895,6 @@ importers:
 
   ../../plugins/devmodel-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -18798,9 +17208,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -18908,12 +17315,6 @@ importers:
 
   ../../plugins/document-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -18938,9 +17339,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -19881,9 +18279,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -20003,12 +18398,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -20027,9 +18416,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -20352,9 +18738,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -21031,21 +19414,12 @@ importers:
 
   ../../plugins/inbox-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/communication':
         specifier: workspace:^0.7.0
         version: link:../communication
@@ -21073,12 +19447,6 @@ importers:
       '@hcengineering/inbox':
         specifier: workspace:^0.7.0
         version: link:../inbox
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -21490,9 +19858,6 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -21508,12 +19873,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -21842,9 +20201,6 @@ importers:
       '@hcengineering/drive':
         specifier: workspace:^0.7.0
         version: link:../drive
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -21964,9 +20320,6 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../ai-bot
@@ -21979,12 +20332,6 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -22015,12 +20362,6 @@ importers:
       '@hcengineering/media-resources':
         specifier: workspace:^0.7.0
         version: link:../media-resources
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -22441,252 +20782,6 @@ importers:
       typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/notification:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/setting':
-        specifier: workspace:^0.7.0
-        version: link:../setting
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/notification-assets:
-    dependencies:
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/notification-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/attachment':
-        specifier: workspace:^0.7.0
-        version: link:../attachment
-      '@hcengineering/attachment-resources':
-        specifier: workspace:^0.7.0
-        version: link:../attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/emoji-resources':
-        specifier: workspace:^0.7.0
-        version: link:../emoji-resources
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3)))(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -23813,9 +21908,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -24573,9 +22665,6 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -24695,9 +22784,6 @@ importers:
 
   ../../plugins/recruit-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -24710,12 +22796,6 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -24731,12 +22811,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -24858,9 +22932,6 @@ importers:
 
   ../../plugins/request:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -24968,21 +23039,9 @@ importers:
 
   ../../plugins/request-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -25978,9 +24037,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -26088,9 +24144,6 @@ importers:
 
   ../../plugins/task-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -26100,12 +24153,6 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -26127,9 +24174,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -26236,18 +24280,12 @@ importers:
 
   ../../plugins/telegram:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -26370,9 +24408,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -26388,12 +24423,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -26704,9 +24733,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -26829,12 +24855,6 @@ importers:
 
   ../../plugins/test-management-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -26847,12 +24867,6 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -26871,12 +24885,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -27120,9 +25128,6 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
@@ -27486,12 +25491,6 @@ importers:
 
   ../../plugins/time-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -27640,9 +25639,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -27768,12 +25764,6 @@ importers:
 
   ../../plugins/tracker-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -27786,12 +25776,6 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
@@ -27810,12 +25794,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -28053,12 +26031,6 @@ importers:
 
   ../../plugins/training-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
@@ -28077,9 +26049,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -28530,9 +26499,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../packages/panel
@@ -28651,9 +26617,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -28797,12 +26760,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -29853,9 +27810,6 @@ importers:
       '@hcengineering/mongo':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/mongo
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -29886,9 +27840,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-pipeline':
         specifier: workspace:^0.7.0
         version: link:../../server/server-pipeline
@@ -30190,152 +28141,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../server-plugins/activity:
-    dependencies:
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../server-plugins/activity-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/server-card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/server-contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
-      '@hcengineering/text-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text-core
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../server-plugins/ai-bot:
     dependencies:
       '@hcengineering/ai-bot':
@@ -30396,33 +28201,21 @@ importers:
 
   ../../server-plugins/ai-bot-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../plugins/ai-bot
       '@hcengineering/analytics-collector':
         specifier: workspace:^0.7.0
         version: link:../../plugins/analytics-collector
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/server-ai-bot':
         specifier: workspace:^0.7.0
         version: link:../ai-bot
@@ -30548,9 +28341,6 @@ importers:
       '@hcengineering/analytics-collector':
         specifier: workspace:^0.7.0
         version: link:../../plugins/analytics-collector
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -30731,9 +28521,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -30804,9 +28591,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/token
@@ -30982,155 +28766,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../server-plugins/chunter:
-    dependencies:
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../server-plugins/chunter-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/login':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/server
-      '@hcengineering/server-contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/text-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text-core
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../server-plugins/collaboration:
     dependencies:
       '@hcengineering/core':
@@ -31255,9 +28890,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/server-templates':
         specifier: workspace:^0.7.0
         version: link:../templates
@@ -31319,9 +28951,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../plugins/login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -31389,9 +29018,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -31441,9 +29067,6 @@ importers:
 
   ../../server-plugins/controlled-documents-resources:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -31453,18 +29076,12 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/request':
         specifier: workspace:^0.7.0
         version: link:../../plugins/request
-      '@hcengineering/server-chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../chunter-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -31541,9 +29158,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -31779,9 +29393,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -31828,9 +29439,6 @@ importers:
 
   ../../server-plugins/gmail-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../plugins/ai-bot
@@ -31843,9 +29451,6 @@ importers:
       '@hcengineering/gmail':
         specifier: workspace:^0.7.0
         version: link:../../plugins/gmail
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -31855,12 +29460,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32029,9 +29628,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32090,9 +29686,6 @@ importers:
       '@hcengineering/hr':
         specifier: workspace:^0.7.0
         version: link:../../plugins/hr
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -32105,12 +29698,6 @@ importers:
       '@hcengineering/server-gmail-resources':
         specifier: workspace:^0.7.0
         version: link:../gmail-resources
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32157,9 +29744,6 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32221,9 +29805,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../../plugins/view
@@ -32279,9 +29860,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32407,9 +29985,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -32468,9 +30043,6 @@ importers:
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../plugins/love
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -32480,9 +30052,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../../plugins/view
@@ -32526,155 +30095,6 @@ importers:
       prettier-plugin-svelte:
         specifier: ^3.4.0
         version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../server-plugins/notification:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../server-plugins/notification-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/text-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text-core
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
       ts-jest:
         specifier: ^29.1.1
         version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
@@ -32946,9 +30366,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -33071,9 +30488,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -33120,36 +30534,24 @@ importers:
 
   ../../server-plugins/request-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/request':
         specifier: workspace:^0.7.0
         version: link:../../plugins/request
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/server-request':
         specifier: workspace:^0.7.0
         version: link:../request
@@ -33208,9 +30610,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/server-templates':
         specifier: workspace:^0.7.0
         version: link:../templates
@@ -33266,9 +30665,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -33440,9 +30836,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -33498,21 +30891,12 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../plugins/login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../../plugins/task
@@ -33565,24 +30949,15 @@ importers:
 
   ../../server-plugins/telegram:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/server-templates':
         specifier: workspace:^0.7.0
         version: link:../templates
@@ -33632,21 +31007,12 @@ importers:
 
   ../../server-plugins/telegram-resources:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -33656,12 +31022,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/server-telegram':
         specifier: workspace:^0.7.0
         version: link:../telegram
@@ -33848,9 +31208,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -33860,12 +31217,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
       '@hcengineering/server-time':
         specifier: workspace:^0.7.0
         version: link:../time
@@ -33933,9 +31284,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -33982,9 +31330,6 @@ importers:
 
   ../../server-plugins/tracker-resources:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -33994,9 +31339,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../plugins/login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -34006,9 +31348,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/server-task-resources':
         specifier: workspace:^0.7.0
         version: link:../task-resources
@@ -34076,9 +31415,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/training':
         specifier: workspace:^0.7.0
         version: link:../../plugins/training
@@ -34134,18 +31470,12 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
       '@hcengineering/training':
         specifier: workspace:^0.7.0
         version: link:../../plugins/training
@@ -34207,9 +31537,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -34708,9 +32035,6 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -35095,12 +32419,6 @@ importers:
 
   ../../server/server-pipeline:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity
-      '@hcengineering/activity-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/activity-assets
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
@@ -35125,12 +32443,6 @@ importers:
       '@hcengineering/chat-assets':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chat-assets
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
-      '@hcengineering/chunter-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter-assets
       '@hcengineering/communication':
         specifier: workspace:^0.7.0
         version: link:../../plugins/communication
@@ -35224,12 +32536,6 @@ importers:
       '@hcengineering/middleware':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/middleware
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/notification-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification-assets
       '@hcengineering/onboard':
         specifier: workspace:^0.7.0
         version: link:../../plugins/onboard
@@ -35266,12 +32572,6 @@ importers:
       '@hcengineering/server':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/server
-      '@hcengineering/server-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/activity-resources
       '@hcengineering/server-ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/ai-bot
@@ -35296,12 +32596,6 @@ importers:
       '@hcengineering/server-card-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/card-resources
-      '@hcengineering/server-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter
-      '@hcengineering/server-chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/chunter-resources
       '@hcengineering/server-collaboration':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/collaboration
@@ -35377,12 +32671,6 @@ importers:
       '@hcengineering/server-love-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/love-resources
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
-      '@hcengineering/server-notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification-resources
       '@hcengineering/server-preference':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/preference
@@ -35739,9 +33027,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
       '@hcengineering/server-pipeline':
         specifier: workspace:^0.7.0
         version: link:../server-pipeline
@@ -35945,9 +33230,6 @@ importers:
       '@hcengineering/billing-client':
         specifier: workspace:^0.7.0
         version: link:../../../packages/billing-client
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
@@ -35969,9 +33251,6 @@ importers:
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/love
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/openai':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/openai
@@ -36637,9 +33916,6 @@ importers:
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/love
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -36900,9 +34176,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../../../models/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -37033,15 +34306,9 @@ importers:
 
   ../../services/github/github:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -37170,24 +34437,12 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity-resources
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/analytics
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/attachment-resources
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
-      '@hcengineering/chunter-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter-resources
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
@@ -37209,9 +34464,6 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/login
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/panel':
         specifier: workspace:^0.7.0
         version: link:../../../packages/panel
@@ -37330,12 +34582,6 @@ importers:
 
   ../../services/github/model-github:
     dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -37351,24 +34597,15 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/model
-      '@hcengineering/model-activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../models/activity
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../../../models/attachment
-      '@hcengineering/model-chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../models/chunter
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../../../models/contact
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../../../models/core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../models/notification
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../../../models/preference
@@ -37390,9 +34627,6 @@ importers:
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../../../models/workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -37475,12 +34709,6 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity
-      '@hcengineering/activity-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity-assets
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/analytics
@@ -37499,12 +34727,6 @@ importers:
       '@hcengineering/calendar-assets':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/calendar-assets
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
-      '@hcengineering/chunter-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter-assets
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
@@ -37577,12 +34799,6 @@ importers:
       '@hcengineering/mongo':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/mongo
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
-      '@hcengineering/notification-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification-assets
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -37890,9 +35106,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../server-plugins/notification
       '@hcengineering/time':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/time
@@ -37954,9 +35167,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/model
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -37966,9 +35176,6 @@ importers:
       '@hcengineering/server-github':
         specifier: workspace:^0.7.0
         version: link:../server-github
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../server-plugins/notification
       '@hcengineering/time':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/time
@@ -38021,9 +35228,6 @@ importers:
 
   ../../services/github/server-github-resources:
     dependencies:
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -38816,9 +36020,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../../foundations/core/packages/core
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -39678,9 +36879,6 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../../foundations/core/packages/account-client
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/activity
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/analytics
@@ -39693,9 +36891,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/attachment
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chunter
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
@@ -39714,9 +36909,6 @@ importers:
       '@hcengineering/mongo':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/mongo
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -40286,9 +37478,6 @@ importers:
       '@hcengineering/api-client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/api-client
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -60965,7 +58154,7 @@ snapshots:
   node-loader@2.0.0(webpack@5.102.1):
     dependencies:
       loader-utils: 2.0.4
-      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      webpack: 5.102.1
 
   node-localstorage@2.2.1:
     dependencies:
@@ -63123,6 +60312,15 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.15.1
 
+  terser-webpack-plugin@5.3.14(webpack@5.102.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.3.3
+      serialize-javascript: 6.0.2
+      terser: 5.44.1
+      webpack: 5.102.1
+
   terser@5.44.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
@@ -63790,6 +60988,38 @@ snapshots:
       source-map: 0.6.1
 
   webpack-sources@3.3.3: {}
+
+  webpack@5.102.1:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.27.0
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.7.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.1
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.0
+      terser-webpack-plugin: 5.3.14(webpack@5.102.1)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.102.1(@swc/core@1.15.1):
     dependencies:

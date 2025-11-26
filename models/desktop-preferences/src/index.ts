@@ -14,9 +14,7 @@
 //
 
 import { Model, type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
-import notification from '@hcengineering/notification'
 
 import desktopPreferences, { type DesktopNotificationPreference } from '@hcengineering/desktop-preferences'
 
@@ -33,14 +31,15 @@ export class TDesktopNotificationPreference extends TPreference implements Deskt
 export function createModel (builder: Builder): void {
   builder.createModel(TDesktopNotificationPreference)
 
-  builder.createDoc(
-    notification.class.NotificationPreferencesGroup,
-    core.space.Model,
-    {
-      label: desktopPreferences.string.SoundAndAppearance,
-      icon: desktopPreferences.icon.NotificationMessage,
-      presenter: desktopPreferences.component.DesktopPreferencesPresenter
-    },
-    desktopPreferences.ids.DesktopNotificationPreferencesGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationPreferencesGroup,
+  //   core.space.Model,
+  //   {
+  //     label: desktopPreferences.string.SoundAndAppearance,
+  //     icon: desktopPreferences.icon.NotificationMessage,
+  //     presenter: desktopPreferences.component.DesktopPreferencesPresenter
+  //   },
+  //   desktopPreferences.ids.DesktopNotificationPreferencesGroup
+  // )
 }

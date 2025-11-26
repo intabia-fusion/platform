@@ -39,7 +39,6 @@
     "@types/crypto-js": "^4.2.2"
   },
   "dependencies": {
-    "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/attachment": "workspace:^0.7.0",
     "@hcengineering/attachment-resources": "workspace:^0.7.0",
@@ -47,7 +46,6 @@
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/image-cropper": "workspace:^0.7.0",
     "@hcengineering/login": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/panel": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/presentation": "workspace:^0.7.0",

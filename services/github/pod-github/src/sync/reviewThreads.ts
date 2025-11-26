@@ -3,7 +3,6 @@
 //
 import core, {
   PersonId,
-  AttachedData,
   Doc,
   DocumentUpdate,
   MeasureContext,
@@ -49,7 +48,8 @@ GithubReviewThread,
 | 'diffSide'
 | 'startLine'
 | 'isCollapsed'
-| 'isPinned'
+// TODO: FIXME
+// | 'isPinned'
 | 'isResolved'
 | 'isOutdated'
 | 'path'
@@ -411,7 +411,8 @@ export class ReviewThreadSyncManager implements DocSyncManager {
     account: PersonId
   ): Promise<void> {
     const _id: Ref<GithubReviewThread> = info._id as unknown as Ref<GithubReviewThread>
-    const value: AttachedData<GithubReviewThread> = {
+    // TODO: FIXME
+    const value: any = {
       ...messageData
     }
     await this.client.addCollection(
@@ -421,7 +422,7 @@ export class ReviewThreadSyncManager implements DocSyncManager {
       parent.objectClass,
       'activity',
       value,
-      _id,
+      _id as any,
       new Date(review.comments.nodes[0].createdAt ?? Date.now()).getTime(),
       account
     )

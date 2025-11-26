@@ -13,7 +13,6 @@ import {
   type MigrationIterator,
   type MigrationUpgradeClient
 } from '@hcengineering/model'
-import chunter from '@hcengineering/model-chunter'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
 import { DOMAIN_TASK } from '@hcengineering/model-task'
 import task from '@hcengineering/task'
@@ -118,14 +117,6 @@ async function migrateMissingStates (client: MigrationClient): Promise<void> {
   //
 }
 
-async function migrateDocSyncInfo (client: MigrationClient): Promise<void> {
-  await client.update(
-    DOMAIN_GITHUB,
-    { _class: github.class.DocSyncInfo, objectClass: 'chunter:class:Comment' },
-    { objectClass: chunter.class.ChatMessage }
-  )
-}
-
 export const githubOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, githubId, [
@@ -133,11 +124,6 @@ export const githubOperation: MigrateOperation = {
         state: 'pull-requests',
         mode: 'upgrade',
         func: migratePullRequests
-      },
-      {
-        state: 'update-doc-sync-info',
-        mode: 'upgrade',
-        func: migrateDocSyncInfo
       }
     ])
   },

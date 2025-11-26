@@ -21,7 +21,6 @@
     Project
   } from '@hcengineering/controlled-documents'
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
@@ -102,20 +101,21 @@
   let isTitlePressed: boolean = false
   let creating: boolean = false
 
-  const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   $: read(_id)
   function read (_id: Ref<Doc>): void {
     if (lastId !== _id) {
       const prev = lastId
       lastId = _id
-      void notificationClient.then((client) => client.readDoc(prev))
+      // void notificationClient.then((client) => client.readDoc(prev))
     }
   }
 
   onDestroy(async () => {
     controlledDocumentClosed()
-    void notificationClient.then((client) => client.readDoc(_id))
+    // void notificationClient.then((client) => client.readDoc(_id))
   })
 
   $: if (_id && _class && project) {

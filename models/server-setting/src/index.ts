@@ -17,7 +17,6 @@
 import { type Builder } from '@hcengineering/model'
 import serverCore from '@hcengineering/server-core'
 import core from '@hcengineering/core'
-import serverNotification from '@hcengineering/server-notification'
 import serverSetting from '@hcengineering/server-setting'
 import setting from '@hcengineering/setting'
 import serverTemplates from '@hcengineering/server-templates'
@@ -26,13 +25,14 @@ import templates from '@hcengineering/templates'
 export { serverSettingId } from '@hcengineering/server-setting'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(setting.class.Integration, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverSetting.function.IntegrationHTMLPresenter
-  })
-
-  builder.mixin(setting.class.Integration, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverSetting.function.IntegrationTextPresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(setting.class.Integration, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverSetting.function.IntegrationHTMLPresenter
+  // })
+  //
+  // builder.mixin(setting.class.Integration, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverSetting.function.IntegrationTextPresenter
+  // })
 
   builder.mixin(setting.templateField.Value, templates.class.TemplateField, serverTemplates.mixin.ServerTemplateField, {
     serverFunc: serverSetting.function.GetValue

@@ -14,71 +14,65 @@
 //
 
 import { type Builder } from '@hcengineering/model'
-import notification from '@hcengineering/model-notification'
-import core from '@hcengineering/model-core'
-import contact from '@hcengineering/model-contact'
-import chunter from '@hcengineering/chunter'
-import love from '@hcengineering/love'
-
-import telegram from './plugin'
 
 export function defineNotifications (builder: Builder): void {
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: telegram.string.Telegram,
-      icon: contact.icon.Telegram
-    },
-    telegram.ids.NotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationProvider,
-    core.space.Model,
-    {
-      label: telegram.string.Telegram,
-      icon: contact.icon.Telegram,
-      depends: notification.providers.InboxNotificationProvider,
-      defaultEnabled: false,
-      canDisable: true,
-      description: telegram.string.TelegramNotificationDescription,
-      presenter: telegram.component.NotificationProviderPresenter,
-      order: 400,
-      isAvailableFn: telegram.function.IsTelegramNotificationsAvailable
-    },
-    telegram.providers.TelegramNotificationProvider
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      label: telegram.string.NewMessage,
-      generated: false,
-      allowedForAuthor: true,
-      hidden: false,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: telegram.class.Message,
-      group: telegram.ids.NotificationGroup,
-      defaultEnabled: false
-    },
-    telegram.ids.NewMessageNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [telegram.ids.NewMessageNotification]
-  })
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: telegram.providers.TelegramNotificationProvider,
-    ignoredTypes: [
-      notification.ids.CollaboratoAddNotification,
-      love.ids.InviteNotification,
-      love.ids.KnockNotification
-    ],
-    enabledTypes: [chunter.ids.DMNotification, chunter.ids.ThreadNotification]
-  })
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: telegram.string.Telegram,
+  //     icon: contact.icon.Telegram
+  //   },
+  //   telegram.ids.NotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationProvider,
+  //   core.space.Model,
+  //   {
+  //     label: telegram.string.Telegram,
+  //     icon: contact.icon.Telegram,
+  //     depends: notification.providers.InboxNotificationProvider,
+  //     defaultEnabled: false,
+  //     canDisable: true,
+  //     description: telegram.string.TelegramNotificationDescription,
+  //     presenter: telegram.component.NotificationProviderPresenter,
+  //     order: 400,
+  //     isAvailableFn: telegram.function.IsTelegramNotificationsAvailable
+  //   },
+  //   telegram.providers.TelegramNotificationProvider
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     label: telegram.string.NewMessage,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     hidden: false,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: telegram.class.Message,
+  //     group: telegram.ids.NotificationGroup,
+  //     defaultEnabled: false
+  //   },
+  //   telegram.ids.NewMessageNotification
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [telegram.ids.NewMessageNotification]
+  // })
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: telegram.providers.TelegramNotificationProvider,
+  //   ignoredTypes: [
+  //     notification.ids.CollaboratoAddNotification,
+  //     love.ids.InviteNotification,
+  //     love.ids.KnockNotification
+  //   ],
+  //   enabledTypes: [chunter.ids.DMNotification, chunter.ids.ThreadNotification]
+  // })
 }

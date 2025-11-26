@@ -6,14 +6,12 @@ import { mergeIds, type IntlString, type Resource } from '@hcengineering/platfor
 import { githubId } from '@hcengineering/github'
 import github from '@hcengineering/github-resources/src/plugin'
 
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import { type Doc, type Ref, type Space } from '@hcengineering/core'
 import {
   type DocCreateFunction,
   type ObjectSearchCategory,
   type DocCreateAnalyticsPropsFunction
 } from '@hcengineering/model-presentation'
-import { type NotificationGroup } from '@hcengineering/notification'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type Viewlet } from '@hcengineering/view'
 
@@ -64,9 +62,10 @@ export default mergeIds(githubId, github, {
     GetCreateIssueAnalyticsProps: '' as Resource<DocCreateAnalyticsPropsFunction>
   },
   ids: {
-    AssigneeNotification: '' as Ref<Doc>,
-    GithubNotificationGroup: '' as Ref<NotificationGroup>,
-    GitHubPullRequestChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    AssigneeNotification: '' as Ref<Doc>
+    // TODO: FIXME
+    // GithubNotificationGroup: '' as Ref<NotificationGroup>,
+    // GitHubPullRequestChatMessageViewlet: '' as Ref<ChatMessageViewlet>
   },
   category: {
     Github: '' as Ref<ActionCategory>

@@ -38,8 +38,6 @@
   },
   "dependencies": {
     "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/activity": "workspace:^0.7.0",
-    "@hcengineering/activity-resources": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "svelte": "^4.2.20",
     "@hcengineering/ui": "workspace:^0.7.0",
@@ -51,7 +49,6 @@
     "@hcengineering/panel": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
     "@hcengineering/attachment": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/login": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/contact-resources": "workspace:^0.7.0",

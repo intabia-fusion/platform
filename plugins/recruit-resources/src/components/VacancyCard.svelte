@@ -23,7 +23,6 @@
   import { DocNavLink } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import VacancyIcon from './icons/Vacancy.svelte'
-  import chunter from '@hcengineering/chunter'
 
   export let vacancy: WithLookup<Vacancy> | undefined
   export let disabled: boolean = false
@@ -96,10 +95,11 @@
 
     <div class="footer">
       <div class="flex-row-center gap-2">
-        <Component
-          is={chunter.component.ChatMessagesPresenter}
-          props={{ value: vacancy, size: 'small', showCounter: true }}
-        />
+        <!--        TODO: FIXME-->
+        <!--        <Component-->
+        <!--          is={chunter.component.ChatMessagesPresenter}-->
+        <!--          props={{ value: vacancy, size: 'small', showCounter: true }}-->
+        <!--        />-->
         <Component
           is={attachment.component.AttachmentsPresenter}
           props={{ value: vacancy.attachments, object: vacancy, size: 'small', showCounter: true }}

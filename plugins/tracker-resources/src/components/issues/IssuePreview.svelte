@@ -15,7 +15,6 @@
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
   import { AttachmentDocList } from '@hcengineering/attachment-resources'
-  import { ChatMessagePopup } from '@hcengineering/chunter-resources'
   import { Ref } from '@hcengineering/core'
   import { IconForward, createQuery, getClient } from '@hcengineering/presentation'
   import { CollaborativeTextEditor } from '@hcengineering/text-editor-resources'
@@ -116,9 +115,10 @@
       <AttachmentDocList value={issue} />
     {/if}
     {#if issue.comments}
-      <div class="mt-6">
-        <ChatMessagePopup objectId={issue._id} object={issue} />
-      </div>
+      <!--      TODO: FIXME-->
+      <!--      <div class="mt-6">-->
+      <!--        <ChatMessagePopup objectId={issue._id} object={issue} />-->
+      <!--      </div>-->
     {/if}
     <div class="h-3 flex-no-shrink" />
   </Scroller>

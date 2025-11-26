@@ -81,7 +81,8 @@ export const addCommentFx = createEffect(
         resolved: false,
         index
       },
-      messageId
+      // TODO: FIXME
+      messageId as any
     )
 
     const comment = await client.findOne(documents.class.DocumentComment, { _id: messageId })

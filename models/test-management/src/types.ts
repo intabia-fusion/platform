@@ -29,7 +29,6 @@ import type {
 } from '@hcengineering/test-management'
 import { type Attachment } from '@hcengineering/attachment'
 import contact from '@hcengineering/contact'
-import chunter from '@hcengineering/chunter'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import {
   DateRangeMode,
@@ -185,8 +184,9 @@ export class TTestCase extends TAttachedDoc implements TestCase {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: CollectionSize<Attachment>
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 }
 
 @Model(testManagement.class.TestRun, core.class.Doc, DOMAIN_TEST_MANAGEMENT)
@@ -266,8 +266,9 @@ export class TTestResult extends TAttachedDoc implements TestResult {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: CollectionSize<Attachment>
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 }
 
 @Model(testManagement.class.TestPlan, core.class.Doc, DOMAIN_TEST_MANAGEMENT)

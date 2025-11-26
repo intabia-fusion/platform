@@ -1,6 +1,4 @@
 import { attach, sample } from 'effector'
-import { type Ref } from '@hcengineering/core'
-import { type ChatMessage } from '@hcengineering/chunter'
 import { type EditorMode, DocumentState } from '@hcengineering/controlled-documents'
 import { isDocumentCommentAttachedTo } from '../../utils'
 import {
@@ -50,7 +48,8 @@ export const addDocumentCommentFx = attach({
     payload: {
       nodeId?: string
       content: string
-      messageId?: Ref<ChatMessage>
+      // TODO: FIXME
+      messageId?: any
     },
     src
   ) => ({

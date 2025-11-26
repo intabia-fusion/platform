@@ -18,9 +18,7 @@
   import { Attachments } from '@hcengineering/attachment-resources'
   import { Card } from '@hcengineering/card'
   import { Doc, Mixin, Ref, WithLookup } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import {
     Button,
@@ -74,19 +72,20 @@
     isTitleEditing = false
   }
 
-  const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const notificationClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   $: read(_id)
   function read (_id: Ref<Doc>): void {
     if (lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      void notificationClient.then((client) => client.readDoc(prev))
+      // void notificationClient.then((client) => client.readDoc(prev))
     }
   }
 
   onDestroy(async () => {
-    void notificationClient.then((client) => client.readDoc(_id))
+    // void notificationClient.then((client) => client.readDoc(_id))
   })
 
   $: _id !== undefined &&

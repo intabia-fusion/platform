@@ -20,7 +20,6 @@
   import { Component, Label } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
   import recruit from '../plugin'
-  import chunter from '@hcengineering/chunter'
 
   export let candidate: Person | undefined
   export let disabled: boolean = false
@@ -62,10 +61,11 @@
     <div class="description overflow-label">{candidate.city ?? ''}</div>
     <div class="footer">
       <div class="flex-row-center gap-2">
-        <Component
-          is={chunter.component.ChatMessagesPresenter}
-          props={{ value: candidate, size: 'small', showCounter: true }}
-        />
+        <!--        TODOI: FIXME-->
+        <!--        <Component-->
+        <!--          is={chunter.component.ChatMessagesPresenter}-->
+        <!--          props={{ value: candidate, size: 'small', showCounter: true }}-->
+        <!--        />-->
         <Component
           is={attachment.component.AttachmentsPresenter}
           props={{ value: candidate.attachments, object: candidate, size: 'small', showCounter: true }}

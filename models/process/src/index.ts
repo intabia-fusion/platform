@@ -43,7 +43,6 @@ import presentation from '@hcengineering/model-presentation'
 import { TToDo } from '@hcengineering/model-time'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import {
   type CheckFunc,
@@ -301,27 +300,28 @@ export function createModel (builder: Builder): void {
     TEventButton
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: process.string.NewProcessToDo,
-      group: time.ids.TimeNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: process.class.ProcessToDo,
-      onlyOwn: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    process.ids.ProcessToDoCreated
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: process.string.NewProcessToDo,
+  //     group: time.ids.TimeNotificationGroup,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: process.class.ProcessToDo,
+  //     onlyOwn: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   process.ids.ProcessToDoCreated
+  // )
 
   createAction(builder, {
     action: view.actionImpl.Delete,

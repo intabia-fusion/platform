@@ -12,71 +12,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
-import notification from '@hcengineering/model-notification'
-import core from '@hcengineering/model-core'
-import contact from '@hcengineering/model-contact'
-import love from '@hcengineering/model-love'
 import { type Builder } from '@hcengineering/model'
 
-import gmail from './plugin'
-
 export function defineNotifications (builder: Builder): void {
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: gmail.string.Email,
-      icon: contact.icon.Email
-    },
-    gmail.ids.EmailNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      label: gmail.string.NewMessage,
-      generated: false,
-      hidden: false,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: gmail.class.Message,
-      group: gmail.ids.EmailNotificationGroup,
-      allowedForAuthor: true,
-      defaultEnabled: false
-    },
-    gmail.ids.EmailNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationProvider,
-    core.space.Model,
-    {
-      icon: contact.icon.Email,
-      label: gmail.string.Email,
-      description: gmail.string.EmailNotificationsDescription,
-      defaultEnabled: true,
-      canDisable: true,
-      depends: notification.providers.InboxNotificationProvider,
-      order: 300
-    },
-    gmail.providers.EmailNotificationProvider
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [gmail.ids.EmailNotification]
-  })
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: gmail.providers.EmailNotificationProvider,
-    ignoredTypes: [
-      gmail.ids.EmailNotification,
-      notification.ids.CollaboratoAddNotification,
-      love.ids.InviteNotification,
-      love.ids.KnockNotification
-    ],
-    enabledTypes: []
-  })
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: gmail.string.Email,
+  //     icon: contact.icon.Email
+  //   },
+  //   gmail.ids.EmailNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     label: gmail.string.NewMessage,
+  //     generated: false,
+  //     hidden: false,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: gmail.class.Message,
+  //     group: gmail.ids.EmailNotificationGroup,
+  //     allowedForAuthor: true,
+  //     defaultEnabled: false
+  //   },
+  //   gmail.ids.EmailNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationProvider,
+  //   core.space.Model,
+  //   {
+  //     icon: contact.icon.Email,
+  //     label: gmail.string.Email,
+  //     description: gmail.string.EmailNotificationsDescription,
+  //     defaultEnabled: true,
+  //     canDisable: true,
+  //     depends: notification.providers.InboxNotificationProvider,
+  //     order: 300
+  //   },
+  //   gmail.providers.EmailNotificationProvider
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [gmail.ids.EmailNotification]
+  // })
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: gmail.providers.EmailNotificationProvider,
+  //   ignoredTypes: [
+  //     gmail.ids.EmailNotification,
+  //     notification.ids.CollaboratoAddNotification,
+  //     love.ids.InviteNotification,
+  //     love.ids.KnockNotification
+  //   ],
+  //   enabledTypes: []
+  // })
 }

@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import {
   AccountRole,
@@ -28,7 +27,6 @@ import exportPlugin from '@hcengineering/export'
 import { Mixin, Model, UX, type Builder } from '@hcengineering/model'
 import core, { TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   DOMAIN_SETTING,
@@ -456,18 +454,19 @@ export function createModel (builder: Builder): void {
     setting.ids.SettingApp
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: setting.class.Integration,
-      icon: setting.icon.Integrations,
-      label: setting.string.IntegrationWith,
-      action: 'update',
-      hideIfRemoved: true
-    },
-    setting.ids.UpdateIntegrationActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: setting.class.Integration,
+  //     icon: setting.icon.Integrations,
+  //     label: setting.string.IntegrationWith,
+  //     action: 'update',
+  //     hideIfRemoved: true
+  //   },
+  //   setting.ids.UpdateIntegrationActivityViewlet
+  // )
 
   builder.mixin(core.class.TypeString, core.class.Class, view.mixin.ObjectEditor, {
     editor: setting.component.StringTypeEditor
@@ -645,40 +644,42 @@ export function createModel (builder: Builder): void {
     setting.templateField.OwnerPosition
   )
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: setting.string.Setting,
-      icon: setting.icon.Setting
-    },
-    setting.ids.SettingNotificationGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: setting.string.Setting,
+  //     icon: setting.icon.Setting
+  //   },
+  //   setting.ids.SettingNotificationGroup
+  // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: setting.string.IntegrationDisabledSetting,
-      group: setting.ids.SettingNotificationGroup,
-      field: 'disabled',
-      txClasses: [core.class.TxUpdateDoc],
-      txMatch: {
-        'operations.disabled': true
-      },
-      objectClass: setting.class.Integration,
-      allowedForAuthor: true,
-      templates: {
-        textTemplate: 'Integration with {doc} was disabled',
-        htmlTemplate: '<p>Integration with {doc} was disabled</p>',
-        subjectTemplate: 'Integration with {doc} was disabled'
-      },
-      defaultEnabled: true
-    },
-    setting.ids.IntegrationDisabledNotification
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: setting.string.IntegrationDisabledSetting,
+  //     group: setting.ids.SettingNotificationGroup,
+  //     field: 'disabled',
+  //     txClasses: [core.class.TxUpdateDoc],
+  //     txMatch: {
+  //       'operations.disabled': true
+  //     },
+  //     objectClass: setting.class.Integration,
+  //     allowedForAuthor: true,
+  //     templates: {
+  //       textTemplate: 'Integration with {doc} was disabled',
+  //       htmlTemplate: '<p>Integration with {doc} was disabled</p>',
+  //       subjectTemplate: 'Integration with {doc} was disabled'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   setting.ids.IntegrationDisabledNotification
+  // )
 
   builder.createDoc(
     setting.class.SettingsCategory,

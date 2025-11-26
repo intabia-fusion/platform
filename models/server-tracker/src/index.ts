@@ -16,26 +16,25 @@
 import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import tracker from '@hcengineering/model-tracker'
-import notification from '@hcengineering/notification'
 import serverCore from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
 import serverTracker from '@hcengineering/server-tracker'
 import serverView from '@hcengineering/server-view'
 
 export { serverTrackerId } from '@hcengineering/server-tracker'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverTracker.function.IssueHTMLPresenter
-  })
-
-  builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverTracker.function.IssueTextPresenter
-  })
-
-  builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.NotificationPresenter, {
-    presenter: serverTracker.function.IssueNotificationContentProvider
-  })
+  // TODO: FIXME
+  // builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverTracker.function.IssueHTMLPresenter
+  // })
+  //
+  // builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverTracker.function.IssueTextPresenter
+  // })
+  //
+  // builder.mixin(tracker.class.Issue, core.class.Class, serverNotification.mixin.NotificationPresenter, {
+  //   presenter: serverTracker.function.IssueNotificationContentProvider
+  // })
 
   builder.mixin(tracker.class.Issue, core.class.Class, serverView.mixin.ServerLinkIdProvider, {
     encode: serverTracker.function.IssueLinkIdProvider
@@ -73,12 +72,13 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(
-    tracker.ids.AssigneeNotification,
-    notification.class.NotificationType,
-    serverNotification.mixin.TypeMatch,
-    {
-      func: serverNotification.function.IsUserEmployeeInFieldValueTypeMatch
-    }
-  )
+  // TODO: FIXME
+  // builder.mixin(
+  //   tracker.ids.AssigneeNotification,
+  //   notification.class.NotificationType,
+  //   serverNotification.mixin.TypeMatch,
+  //   {
+  //     func: serverNotification.function.IsUserEmployeeInFieldValueTypeMatch
+  //   }
+  // )
 }

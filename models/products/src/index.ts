@@ -17,10 +17,8 @@ import documents, { TExternalSpace, TProject } from '@hcengineering/model-contro
 import type { Document } from '@hcengineering/controlled-documents'
 import type { Product, ProductVersionState, ProductVersion } from '@hcengineering/products'
 import { productsId } from '@hcengineering/products'
-import activity from '@hcengineering/activity'
 import { type Attachment } from '@hcengineering/attachment'
 import contact from '@hcengineering/contact'
-import chunter from '@hcengineering/chunter'
 import { getRoleAttributeProps } from '@hcengineering/setting'
 import type { Type, Ref, CollectionSize, Markup, RolesAssignment, Permission, Role } from '@hcengineering/core'
 import { IndexKind, AccountUuid } from '@hcengineering/core'
@@ -156,16 +154,17 @@ export class TProductTypeData extends TProduct implements RolesAssignment {
 function defineProduct (builder: Builder): void {
   builder.createModel(TProduct, TProductTypeData)
 
-  builder.mixin(products.class.Product, core.class.Class, activity.mixin.ActivityDoc, {})
+  // TODO: FIXME
+  // builder.mixin(products.class.Product, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.mixin(products.class.Product, core.class.Class, view.mixin.ObjectIdentifier, {
     provider: products.function.ProductIdentifierProvider
   })
 
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: products.class.Product,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: products.class.Product,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(products.class.Product, core.class.Class, view.mixin.ObjectEditor, {
     editor: products.component.EditProduct
@@ -300,12 +299,12 @@ function defineSpaceType (builder: Builder): void {
 function defineProductVersion (builder: Builder): void {
   builder.createModel(TProductVersion)
 
-  builder.mixin(products.class.ProductVersion, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: products.class.ProductVersion,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // builder.mixin(products.class.ProductVersion, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: products.class.ProductVersion,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(products.class.ProductVersion, core.class.Class, view.mixin.ObjectEditor, {
     editor: products.component.EditProductVersion

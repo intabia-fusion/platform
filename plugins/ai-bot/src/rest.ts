@@ -16,12 +16,12 @@
 import { Class, Doc, Markup, PersonId, Ref, Space, Timestamp } from '@hcengineering/core'
 import { Room, RoomLanguage } from '@hcengineering/love'
 import { Contact, Person } from '@hcengineering/contact'
-import { ChatMessage } from '@hcengineering/chunter'
 
 export interface AIEventRequest {
   message: string
-  messageClass: Ref<Class<ChatMessage>>
-  messageId: Ref<ChatMessage>
+  // TODO: FIXME
+  messageClass: Ref<Class<Doc>>
+  messageId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   objectId: Ref<Doc>
   objectSpace: Ref<Space>

@@ -1,9 +1,7 @@
 import { coreId } from '@hcengineering/core'
 import { addStringsLoader, platformId } from '@hcengineering/platform'
-import { activityId } from '@hcengineering/activity'
 import { attachmentId } from '@hcengineering/attachment'
 import { calendarId } from '@hcengineering/calendar'
-import { chunterId } from '@hcengineering/chunter'
 import { contactId } from '@hcengineering/contact'
 import { documentsId } from '@hcengineering/controlled-documents'
 import { documentId } from '@hcengineering/document'
@@ -15,7 +13,6 @@ import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
 import { loginId } from '@hcengineering/login'
 import { loveId } from '@hcengineering/love'
-import { notificationId } from '@hcengineering/notification'
 import { onboardId } from '@hcengineering/onboard'
 import { preferenceId } from '@hcengineering/preference'
 import { productsId } from '@hcengineering/products'
@@ -41,10 +38,8 @@ import { communicationId } from '@hcengineering/communication'
 import coreEng from '@hcengineering/core/lang/en.json'
 import loginEng from '@hcengineering/login-assets/lang/en.json'
 import platformEng from '@hcengineering/platform/lang/en.json'
-import activityEn from '@hcengineering/activity-assets/lang/en.json'
 import attachmentEn from '@hcengineering/attachment-assets/lang/en.json'
 import calendarEn from '@hcengineering/calendar-assets/lang/en.json'
-import chunterEn from '@hcengineering/chunter-assets/lang/en.json'
 import contactEn from '@hcengineering/contact-assets/lang/en.json'
 import documentsEn from '@hcengineering/controlled-documents-assets/lang/en.json'
 import documentEn from '@hcengineering/document-assets/lang/en.json'
@@ -55,7 +50,6 @@ import hrEn from '@hcengineering/hr-assets/lang/en.json'
 import inventoryEn from '@hcengineering/inventory-assets/lang/en.json'
 import leadEn from '@hcengineering/lead-assets/lang/en.json'
 import loveEn from '@hcengineering/love-assets/lang/en.json'
-import notificationEn from '@hcengineering/notification-assets/lang/en.json'
 import onboardEn from '@hcengineering/onboard-assets/lang/en.json'
 import preferenceEn from '@hcengineering/preference-assets/lang/en.json'
 import productsEn from '@hcengineering/products-assets/lang/en.json'
@@ -86,11 +80,9 @@ export function registerStringLoaders (): void {
 
   addStringsLoader(taskId, async (lang: string) => taskEn)
   addStringsLoader(viewId, async (lang: string) => viewEn)
-  addStringsLoader(chunterId, async (lang: string) => chunterEn)
   addStringsLoader(attachmentId, async (lang: string) => attachmentEn)
   addStringsLoader(contactId, async (lang: string) => contactEn)
   addStringsLoader(recruitId, async (lang: string) => recruitEn)
-  addStringsLoader(activityId, async (lang: string) => activityEn)
   addStringsLoader(settingId, async (lang: string) => settingEn)
   addStringsLoader(supportId, async (lang: string) => supportEn)
   addStringsLoader(telegramId, async (lang: string) => telegramEn)
@@ -99,7 +91,6 @@ export function registerStringLoaders (): void {
   addStringsLoader(workbenchId, async (lang: string) => workbenchEn)
   addStringsLoader(inventoryId, async (lang: string) => inventoryEn)
   addStringsLoader(templatesId, async (lang: string) => templatesEn)
-  addStringsLoader(notificationId, async (lang: string) => notificationEn)
   addStringsLoader(tagsId, async (lang: string) => tagsEn)
   addStringsLoader(calendarId, async (lang: string) => calendarEn)
   addStringsLoader(trackerId, async (lang: string) => trackerEn)

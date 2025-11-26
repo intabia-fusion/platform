@@ -18,7 +18,6 @@
   import { Channel, Contact } from '@hcengineering/contact'
   import { Ref, SortingOrder } from '@hcengineering/core'
   import { Message, SharedMessage } from '@hcengineering/gmail'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import plugin, { Button, Icon, IconShare, Label, Scroller } from '@hcengineering/ui'
 
@@ -42,7 +41,8 @@
   const messagesQuery = createQuery()
   const newMessageQuery = createQuery()
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
 
   newMessageQuery.query(
     gmail.class.NewMessage,
@@ -62,7 +62,7 @@
       { attachedTo: channelId },
       (res) => {
         plainMessages = res
-        inboxClient.readDoc(channelId)
+        // inboxClient.readDoc(channelId)
       },
       { sort: { sendOn: SortingOrder.Descending } }
     )
@@ -84,7 +84,7 @@
         messages: await convertMessages(object, channel, selectedMessages)
       }
     )
-    await inboxClient.readDoc(channel._id)
+    // await inboxClient.readDoc(channel._id)
     clear()
   }
 

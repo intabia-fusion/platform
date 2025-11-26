@@ -20,7 +20,6 @@ import core from '@hcengineering/core'
 import hr from '@hcengineering/hr'
 import serverCore from '@hcengineering/server-core'
 import serverHr from '@hcengineering/server-hr'
-import serverNotification from '@hcengineering/server-notification'
 
 export { serverHrId } from '@hcengineering/server-hr'
 
@@ -90,19 +89,20 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(hr.class.Request, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverHr.function.RequestHTMLPresenter
-  })
-
-  builder.mixin(hr.class.Request, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverHr.function.RequestTextPresenter
-  })
-
-  builder.mixin(hr.class.PublicHoliday, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverHr.function.PublicHolidayHTMLPresenter
-  })
-
-  builder.mixin(hr.class.PublicHoliday, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverHr.function.PublicHolidayTextPresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(hr.class.Request, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverHr.function.RequestHTMLPresenter
+  // })
+  //
+  // builder.mixin(hr.class.Request, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverHr.function.RequestTextPresenter
+  // })
+  //
+  // builder.mixin(hr.class.PublicHoliday, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverHr.function.PublicHolidayHTMLPresenter
+  // })
+  //
+  // builder.mixin(hr.class.PublicHoliday, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverHr.function.PublicHolidayTextPresenter
+  // })
 }

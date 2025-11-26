@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { AttachedData, getCurrentAccount, Markup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
@@ -56,38 +55,43 @@
     })
   }
 
-  let message: Markup = EmptyMarkup
-  let attachments: number | undefined = 0
+  const message: Markup = EmptyMarkup
+  const attachments: number | undefined = 0
 
-  async function onUpdate (event: CustomEvent<AttachedData<ChatMessage>>) {
-    message = event.detail.message
-    attachments = event.detail.attachments
+  // TODO: FIXME
+  async function onUpdate (
+    event: any
+    // event: CustomEvent<AttachedData<ChatMessage>>
+  ) {
+    // message = event.detail.message
+    // attachments = event.detail.attachments
   }
 
   async function saveComment (): Promise<void> {
-    const _id = await client.addCollection(
-      chunter.class.ChatMessage,
-      value.space,
-      value._id,
-      value._class,
-      'comments',
-      {
-        message,
-        attachments
-      }
-    )
-
-    await client.createMixin(_id, chunter.class.ChatMessage, value.space, request.mixin.RequestDecisionComment, {})
+    // TODO: FIXME
+    // const _id = await client.addCollection(
+    //   chunter.class.ChatMessage,
+    //   value.space,
+    //   value._id,
+    //   value._class,
+    //   'comments',
+    //   {
+    //     message,
+    //     attachments
+    //   }
+    // )
+    //
+    // await client.createMixin(_id, chunter.class.ChatMessage, value.space, request.mixin.RequestDecisionComment, {})
 
     refInput.createAttachments()
     loading = false
   }
 
   async function comment (): Promise<void> {
-    await client.addCollection(chunter.class.ChatMessage, value.space, value._id, value._class, 'comments', {
-      message,
-      attachments
-    })
+    // await client.addCollection(chunter.class.ChatMessage, value.space, value._id, value._class, 'comments', {
+    //   message,
+    //   attachments
+    // })
 
     loading = false
   }

@@ -3,7 +3,6 @@
 //
 import core, {
   PersonId,
-  AttachedData,
   Doc,
   DocumentUpdate,
   MeasureContext,
@@ -396,9 +395,10 @@ export class ReviewSyncManager implements DocSyncManager {
     account: PersonId
   ): Promise<void> {
     const _id: Ref<GithubReview> = info._id as unknown as Ref<GithubReview>
-    const value: AttachedData<GithubReview> = {
+    // TODO: FIXME
+    const value: any = {
       ...messageData
-    }
+    } as any
     await this.client.addCollection(
       github.class.GithubReview,
       info.space,
@@ -406,7 +406,8 @@ export class ReviewSyncManager implements DocSyncManager {
       parent.objectClass,
       'activity',
       value,
-      _id,
+      // TODO: FIXME
+      _id as any,
       new Date(review.submittedAt ?? review.createdAt ?? Date.now()).getTime(),
       account
     )

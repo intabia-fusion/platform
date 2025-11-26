@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
 import attachment, { type Attachment } from '@hcengineering/attachment'
 import core, { SortingOrder, type Markup, type ObjQueryType, type SortingQuery } from '@hcengineering/core'
 import { type IntlString, type Resources } from '@hcengineering/platform'
@@ -247,18 +246,7 @@ export async function DeleteAttachment (attach: Attachment): Promise<void> {
   )
 }
 
-export function attachmentsFilter (message: ActivityMessage): boolean {
-  if (message._class === activity.class.DocUpdateMessage) {
-    return (message as DocUpdateMessage).objectClass === attachment.class.Attachment
-  }
-
-  return false
-}
-
 export default async (): Promise<Resources> => ({
-  filter: {
-    AttachmentsFilter: attachmentsFilter
-  },
   component: {
     AttachmentsPresenter,
     AttachmentPresenter,

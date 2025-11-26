@@ -30,6 +30,7 @@ import {
   AccountRole,
   DateRangeMode,
   IndexKind,
+  type PersonId,
   type Class,
   type ClassCollaborators,
   type Data,
@@ -37,7 +38,6 @@ import {
   type Domain,
   type Hyperlink,
   type Markup,
-  type PersonId,
   type Ref,
   type Timestamp
 } from '@hcengineering/core'
@@ -55,20 +55,20 @@ import {
   type GithubPullRequest,
   type GithubPullRequestFileReview,
   type GithubPullRequestReview,
-  type GithubPullRequestReviewState,
   type GithubPullRequestState,
   type GithubRepositoryRef,
-  type GithubReview,
   type GithubReviewComment,
   type GithubReviewDecisionState,
-  type GithubReviewThread,
   type GithubTodo,
   type GithubUser,
   type GithubUserInfo,
   type LastReviewState,
   type MinimizeReason,
   type PullRequestMergeable,
-  githubIntegrationKind
+  githubIntegrationKind,
+  type GithubReview,
+  type GithubPullRequestReviewState,
+  type GithubReviewThread
 } from '@hcengineering/github'
 import contact, { TPerson } from '@hcengineering/model-contact'
 import presentation from '@hcengineering/model-presentation'
@@ -80,15 +80,9 @@ import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
 import task from '@hcengineering/task'
 
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
-
-import { type ActivityMessageControl } from '@hcengineering/activity'
-import activity, { TActivityMessage } from '@hcengineering/model-activity'
 import attachment, { TAttachment } from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
 import { TPreference } from '@hcengineering/model-preference'
 import { TToDo } from '@hcengineering/model-time'
-import notification from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import time from '@hcengineering/time'
 
@@ -497,8 +491,9 @@ export class TGithubPullRequestReview extends TAttachedDoc implements GithubPull
   files!: GithubPullRequestFileReview[]
 }
 
-@Model(github.class.GithubReview, activity.class.ActivityMessage)
-export class TGithubReview extends TActivityMessage implements GithubReview {
+// TODO: FIXME
+@Model(github.class.GithubReview, core.class.Doc, DOMAIN_GITHUB)
+export class TGithubReview extends TDoc implements GithubReview {
   @Prop(TypeString(), getEmbeddedLabel('State'))
     state!: GithubPullRequestReviewState
 
@@ -510,8 +505,9 @@ export class TGithubReview extends TActivityMessage implements GithubReview {
     comments!: string[]
 }
 
-@Model(github.class.GithubReviewThread, activity.class.ActivityMessage)
-export class TGithubReviewThread extends TActivityMessage implements GithubReviewThread {
+// TODO: FIXME
+@Model(github.class.GithubReviewThread, core.class.Doc, DOMAIN_GITHUB)
+export class TGithubReviewThread extends TDoc implements GithubReviewThread {
   line!: number
   startLine!: number
   isOutdated!: boolean
@@ -596,7 +592,7 @@ export function createModel (builder: Builder): void {
     presenter: github.component.PullRequestPresenter
   })
 
-  builder.mixin(github.class.GithubPullRequest, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(github.class.GithubPullRequest, core.class.Class, activity.mixin.ActivityDoc, {})
 
   classPresenter(
     builder,
@@ -613,9 +609,9 @@ export function createModel (builder: Builder): void {
     presenter: github.component.RepositoryPresenter
   })
 
-  builder.mixin(github.class.GithubPullRequest, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: github.component.PullRequestNotificationPresenter
-  })
+  // builder.mixin(github.class.GithubPullRequest, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: github.component.PullRequestNotificationPresenter
+  // })
 
   builder.mixin(github.class.GithubPullRequest, core.class.Class, view.mixin.ObjectEditorFooter, {
     editor: github.component.EditPullRequest
@@ -813,45 +809,45 @@ export function createModel (builder: Builder): void {
     ]
   })
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: github.string.Github,
-      icon: github.icon.Github,
-      objectClass: github.class.GithubPullRequest
-    },
-    github.ids.GithubNotificationGroup
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: github.string.Github,
+  //     icon: github.icon.Github,
+  //     objectClass: github.class.GithubPullRequest
+  //   },
+  //   github.ids.GithubNotificationGroup
+  // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: task.string.AssignedToMe,
-      group: github.ids.GithubNotificationGroup,
-      field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: github.class.GithubPullRequest,
-      templates: {
-        textTemplate: 'Pull request {doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p>',
-        subjectTemplate: 'Pull request {doc} was assigned to you'
-      },
-      defaultEnabled: true
-    },
-    github.ids.AssigneeNotification
-  )
-
-  generateClassNotificationTypes(
-    builder,
-    github.class.GithubPullRequest,
-    github.ids.GithubNotificationGroup,
-    [],
-    ['comments', 'status', 'assignee', 'milestone']
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: task.string.AssignedToMe,
+  //     group: github.ids.GithubNotificationGroup,
+  //     field: 'assignee',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: github.class.GithubPullRequest,
+  //     templates: {
+  //       textTemplate: 'Pull request {doc} was assigned to you by {sender}',
+  //       htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p>',
+  //       subjectTemplate: 'Pull request {doc} was assigned to you'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   github.ids.AssigneeNotification
+  // )
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   github.class.GithubPullRequest,
+  //   github.ids.GithubNotificationGroup,
+  //   [],
+  //   ['comments', 'status', 'assignee', 'milestone']
+  // )
 
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: tracker.extensions.IssueListHeader,
@@ -914,23 +910,23 @@ export function createModel (builder: Builder): void {
     searchDisabled: true
   })
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: github.class.GithubPullRequest,
-      label: chunter.string.LeftComment
-    },
-    github.ids.GitHubPullRequestChatMessageViewlet
-  )
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: github.class.GithubPullRequest,
-    components: {
-      input: { component: chunter.component.ChatMessageInput }
-    }
-  })
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: github.class.GithubPullRequest,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   github.ids.GitHubPullRequestChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: github.class.GithubPullRequest,
+  //   components: {
+  //     input: { component: chunter.component.ChatMessageInput }
+  //   }
+  // })
 
   builder.createDoc(
     task.class.ProjectTypeDescriptor,
@@ -976,18 +972,19 @@ export function createModel (builder: Builder): void {
   // Activity filters
 
   // We should skip activity github mixin stuff.
-  builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
-    objectClass: tracker.class.Issue,
-    skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubIssue }]
-  })
-
-  builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
-    objectClass: contact.class.Person,
-    skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubUser }]
-  })
-
-  builder.mixin(github.class.GithubReviewComment, core.class.Class, activity.mixin.IgnoreActivity, {})
-  builder.mixin(github.class.GithubPullRequestReview, core.class.Class, activity.mixin.IgnoreActivity, {})
+  // TODO: FIXME
+  // builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
+  //   objectClass: tracker.class.Issue,
+  //   skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubIssue }]
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
+  //   objectClass: contact.class.Person,
+  //   skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubUser }]
+  // })
+  //
+  // builder.mixin(github.class.GithubReviewComment, core.class.Class, activity.mixin.IgnoreActivity, {})
+  // builder.mixin(github.class.GithubPullRequestReview, core.class.Class, activity.mixin.IgnoreActivity, {})
   builder.mixin(github.class.GithubReview, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: github.component.GithubReviewPresenter
   })
@@ -996,44 +993,44 @@ export function createModel (builder: Builder): void {
     presenter: github.component.GithubReviewThreadPresenter
   })
 
-  builder.createDoc<ActivityMessageControl<GithubPullRequest>>(
-    activity.class.ActivityMessageControl,
-    core.space.Model,
-    {
-      objectClass: github.class.GithubPullRequest,
-      skip: [],
-      skipFields: [
-        'head',
-        'base',
-        'mergedAt',
-        'closedAt',
-        'commits',
-        'mergeable',
-        'reviews',
-        'reviewComments',
-        'latestReviews',
-        'reviewDecision',
-        'state'
-      ]
-    }
-  )
-
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: github.class.GithubPullRequest,
-    action: 'update',
-    icon: github.icon.PullRequest,
-    config: {
-      status: {
-        iconPresenter: tracker.component.IssueStatusIcon
-      },
-      priority: {
-        iconPresenter: tracker.component.PriorityIconPresenter
-      },
-      estimation: {
-        icon: tracker.icon.Estimation
-      }
-    }
-  })
+  // builder.createDoc<ActivityMessageControl<GithubPullRequest>>(
+  //   activity.class.ActivityMessageControl,
+  //   core.space.Model,
+  //   {
+  //     objectClass: github.class.GithubPullRequest,
+  //     skip: [],
+  //     skipFields: [
+  //       'head',
+  //       'base',
+  //       'mergedAt',
+  //       'closedAt',
+  //       'commits',
+  //       'mergeable',
+  //       'reviews',
+  //       'reviewComments',
+  //       'latestReviews',
+  //       'reviewDecision',
+  //       'state'
+  //     ]
+  //   }
+  // )
+  //
+  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
+  //   objectClass: github.class.GithubPullRequest,
+  //   action: 'update',
+  //   icon: github.icon.PullRequest,
+  //   config: {
+  //     status: {
+  //       iconPresenter: tracker.component.IssueStatusIcon
+  //     },
+  //     priority: {
+  //       iconPresenter: tracker.component.PriorityIconPresenter
+  //     },
+  //     estimation: {
+  //       icon: tracker.icon.Estimation
+  //     }
+  //   }
+  // })
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_GITHUB,

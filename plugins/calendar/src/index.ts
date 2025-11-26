@@ -25,7 +25,6 @@ import type {
   SystemSpace,
   Timestamp
 } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
 import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { Preference } from '@hcengineering/preference'
@@ -312,7 +311,6 @@ const calendarPlugin = plugin(calendarId, {
     EditScheduleExtensions: '' as ComponentExtensionId
   },
   ids: {
-    ReminderNotification: '' as Ref<NotificationType>,
     NoAttached: '' as Ref<Event>
   },
   function: {

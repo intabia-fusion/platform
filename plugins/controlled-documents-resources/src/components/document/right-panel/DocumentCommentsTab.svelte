@@ -13,7 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import chunter from '@hcengineering/chunter'
   import { Ref } from '@hcengineering/core'
   import { Button, Label, showPopup } from '@hcengineering/ui'
   import documents, { type DocumentComment } from '@hcengineering/controlled-documents'
@@ -68,7 +67,8 @@
 
 <RightPanelTabHeader>
   <div class="flex-between w-full">
-    <Label label={chunter.string.Comments} />
+    <!--    TODO: FIXME-->
+    <!--    <Label label={chunter.string.Comments} />-->
     <div class="configure-button">
       <Button icon={documents.icon.Configure} kind="ghost" on:click={handleOpenFilter} />
       {#if $isFilterDirty}

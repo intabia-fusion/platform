@@ -13,9 +13,6 @@
 // limitations under the License.
 //
 
-import { Channel } from '@hcengineering/chunter'
-import type { AccountUuid, WorkspaceUuid } from '@hcengineering/core'
-
 export enum AnalyticEventType {
   SetUser = 'setUser',
   SetAlias = 'setAlias',
@@ -31,14 +28,4 @@ export interface AnalyticEvent {
   properties: Record<string, any>
   timestamp: number
   distinct_id: string
-}
-
-export interface OnboardingChannel extends Channel {
-  workspaceId: WorkspaceUuid
-  workspaceName: string
-  workspaceUrl: string
-  account: AccountUuid
-  userName: string
-  disableAIReplies: boolean
-  showAIReplies: boolean
 }

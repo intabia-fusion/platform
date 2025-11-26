@@ -15,10 +15,8 @@
 <script lang="ts">
   import { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
 
   import ClassAttributeBar from './ClassAttributeBar.svelte'
-  import notification from '@hcengineering/notification'
 
   export let object: Doc
   export let mixins: Array<Mixin<Doc>> = []
@@ -31,9 +29,9 @@
   const hierarchy = client.getHierarchy()
 
   $: _allowedCollections = [...allowedCollections, 'collaborators']
-  $: _mixins = mixins.find((p) => p._id === notification.mixin.Collaborators)
-    ? mixins
-    : [...mixins, hierarchy.getClass(notification.mixin.Collaborators)]
+  // $: _mixins = mixins.find((p) => p._id === notification.mixin.Collaborators)
+  //   ? mixins
+  //   : [...mixins, hierarchy.getClass(notification.mixin.Collaborators)]
 </script>
 
 <ClassAttributeBar
@@ -47,20 +45,21 @@
   isMainClass
   on:update
 />
-{#each _mixins as mixin}
-  {@const to = !hierarchy.hasMixin(mixin, setting.mixin.UserMixin) ? object._class : mixin.extends}
-  {#if !hierarchy.hasMixin(mixin, setting.mixin.Editable) || hierarchy.as(mixin, setting.mixin.Editable).value}
-    {#key mixin._id}
-      <ClassAttributeBar
-        _class={mixin._id}
-        object={hierarchy.as(object, mixin._id)}
-        {ignoreKeys}
-        {to}
-        {readonly}
-        allowedCollections={_allowedCollections}
-        {showHeader}
-        on:update
-      />
-    {/key}
-  {/if}
-{/each}
+<!--TODO: FIXME-->
+<!--{#each _mixins as mixin}-->
+<!--  {@const to = !hierarchy.hasMixin(mixin, setting.mixin.UserMixin) ? object._class : mixin.extends}-->
+<!--  {#if !hierarchy.hasMixin(mixin, setting.mixin.Editable) || hierarchy.as(mixin, setting.mixin.Editable).value}-->
+<!--    {#key mixin._id}-->
+<!--      <ClassAttributeBar-->
+<!--        _class={mixin._id}-->
+<!--        object={hierarchy.as(object, mixin._id)}-->
+<!--        {ignoreKeys}-->
+<!--        {to}-->
+<!--        {readonly}-->
+<!--        allowedCollections={_allowedCollections}-->
+<!--        {showHeader}-->
+<!--        on:update-->
+<!--      />-->
+<!--    {/key}-->
+<!--  {/if}-->
+<!--{/each}-->

@@ -78,7 +78,6 @@ import {
   ReadOnly
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
-import chunter, { TChatMessage } from '@hcengineering/model-chunter'
 import core, {
   TAttachedDoc,
   TDoc,
@@ -276,8 +275,9 @@ export class TDocument extends TDoc implements Document {
   @Hidden()
     commentSequence!: number
 
-  @Prop(Collection(documents.class.DocumentComment), chunter.string.Comments)
-    comments?: CollectionSize<DocumentComment>
+  // TODO: FIXME
+  // @Prop(Collection(documents.class.DocumentComment), chunter.string.Comments)
+  comments?: CollectionSize<DocumentComment>
 
   @Prop(Collection(documents.class.DocumentSnapshot), documents.string.Snapshots)
     snapshots?: CollectionSize<DocumentSnapshot>
@@ -448,17 +448,18 @@ export class TControlledDocumentSnapshot extends TDocumentSnapshot implements Co
     controlledState!: ControlledDocumentState
 }
 
-@Model(documents.class.DocumentComment, chunter.class.ChatMessage)
-export class TDocumentComment extends TChatMessage implements DocumentComment {
-  @Prop(TypeString(), documents.string.ID)
-    nodeId?: string
-
-  @Prop(TypeBoolean(), documents.string.Resolve)
-    resolved?: boolean
-
-  @Prop(TypeNumber(), documents.string.Index)
-    index?: number
-}
+// TODO: FIXME
+// @Model(documents.class.DocumentComment, chunter.class.ChatMessage)
+// export class TDocumentComment extends TChatMessage implements DocumentComment {
+//   @Prop(TypeString(), documents.string.ID)
+//     nodeId?: string
+//
+//   @Prop(TypeBoolean(), documents.string.Resolve)
+//     resolved?: boolean
+//
+//   @Prop(TypeNumber(), documents.string.Index)
+//     index?: number
+// }
 
 @Model(documents.class.DocumentRequest, request.class.Request)
 @UX(documents.string.DocumentRequest)

@@ -13,7 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity from '@hcengineering/activity'
   import { ActivityCollaborativeChange } from '@hcengineering/communication-types'
   import ui, { Label } from '@hcengineering/ui'
   import { AttributeModel } from '@hcengineering/view'
@@ -23,7 +22,8 @@
   export let update: ActivityCollaborativeChange
   export let oneRow: boolean = false
 
-  $: isTooLarge = update.value === activity.string.ValueTooLarge || update.prevValue === activity.string.ValueTooLarge
+  // TODO: FIXME
+  // $: isTooLarge = update.value === activity.string.ValueTooLarge || update.prevValue === activity.string.ValueTooLarge
 
   let isDiffShown = false
 
@@ -35,16 +35,16 @@
 <div>
   {#if model !== undefined}
     <Label label={model.label} />
-    <span class="lower"><Label label={activity.string.Edited} /></span>
+    <!--    <span class="lower"><Label label={activity.string.Edited} /></span>-->
   {/if}
   {#if !oneRow}
-    {#if isTooLarge}
-      <Label label={activity.string.ValueTooLarge} />
-    {:else}
-      <span class="showMore" on:click={toggleShowMore}>
-        <Label label={isDiffShown ? ui.string.ShowLess : ui.string.ShowMore} />
-      </span>
-    {/if}
+    <!--{#if isTooLarge}-->
+    <!--  <Label label={activity.string.ValueTooLarge} />-->
+    <!--{:else}-->
+    <!--  <span class="showMore" on:click={toggleShowMore}>-->
+    <!--    <Label label={isDiffShown ? ui.string.ShowLess : ui.string.ShowMore} />-->
+    <!--  </span>-->
+    <!--{/if}-->
   {/if}
 </div>
 {#if isDiffShown}

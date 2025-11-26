@@ -34,7 +34,6 @@ import LexoRankBucket from 'lexorank/lib/lexoRank/lexoRankBucket'
 import documents from './plugin'
 
 import attachment, { Attachment } from '@hcengineering/attachment'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { Employee, getCurrentEmployee, Person } from '@hcengineering/contact'
 import { makeRank } from '@hcengineering/rank'
 import tags, { TagReference } from '@hcengineering/tags'
@@ -342,7 +341,8 @@ export interface DocumentBundle {
   ChangeControl: ChangeControl[]
   DocumentRequest: DocumentRequest[]
   DocumentSnapshot: DocumentSnapshot[]
-  ChatMessage: ChatMessage[]
+  // TODO: FIXME
+  ChatMessage: any[]
   TagReference: TagReference[]
   Attachment: Attachment[]
 }
@@ -376,7 +376,7 @@ export function compileBundles (all: DocumentBundle): {
 
   const relink = (ref: Ref<Doc>, prop: keyof DocumentBundle, obj: DocumentBundle[typeof prop][0]): void => {
     const meta = links.get(ref)
-    if (meta !== undefined) bundles.get(meta)?.[prop].push(obj as any)
+    if (meta !== undefined) bundles.get(meta)?.[prop].push(obj)
   }
 
   for (const m of all.DocumentMeta) links.set(m._id, m._id) // DocumentMeta -> DocumentMeta
@@ -456,18 +456,20 @@ export async function findAllDocumentBundles (
     'attachedTo',
     all.ControlledDocument.map((p) => p._id)
   )
-  await crawl(
-    documents.class.DocumentComment,
-    'ChatMessage',
-    'attachedTo',
-    all.ControlledDocument.map((p) => p._id)
-  )
-  await crawl(
-    chunter.class.ThreadMessage,
-    'ChatMessage',
-    'attachedTo',
-    all.ChatMessage.map((p) => p._id)
-  )
+  // TODO: FIXME
+  // await crawl(
+  //   documents.class.DocumentComment,
+  //   'ChatMessage',
+  //   'attachedTo',
+  //   all.ControlledDocument.map((p) => p._id)
+  // )
+  // TODO: FIXME
+  // await crawl(
+  //   chunter.class.ThreadMessage,
+  //   'ChatMessage',
+  //   'attachedTo',
+  //   all.ChatMessage.map((p) => p._id)
+  // )
   await crawl(
     tags.class.TagReference,
     'TagReference',
@@ -667,7 +669,8 @@ export interface DocumentApprovalState {
   role: 'author' | 'reviewer' | 'approver'
   state: 'approved' | 'rejected' | 'cancelled' | 'waiting'
   timestamp?: Timestamp
-  messages?: ChatMessage[]
+  // TODO: FIXME
+  messages?: any[]
 }
 
 export interface DocumentValidationState {
@@ -675,7 +678,8 @@ export interface DocumentValidationState {
   snapshot?: DocumentSnapshot
   document: ControlledDocument
   approvals: DocumentApprovalState[]
-  messages: ChatMessage[]
+  // TODO: FIXME
+  messages: any[]
   modifiedOn?: Timestamp
 }
 

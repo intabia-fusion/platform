@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
-import activity from '@hcengineering/activity'
 import calendarPlugin, { type Visibility } from '@hcengineering/calendar'
 import contactPlugin, { type Employee } from '@hcengineering/contact'
 import {
@@ -22,7 +20,6 @@ import {
   DateRangeMode,
   IndexKind,
   type Class,
-  type ClassCollaborators,
   type Domain,
   type Markup,
   type Ref,
@@ -51,7 +48,6 @@ import document from '@hcengineering/model-document'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification, { type NotificationGroup } from '@hcengineering/notification'
 import recruit from '@hcengineering/recruit'
 import tags from '@hcengineering/tags'
 import {
@@ -150,8 +146,9 @@ export class TTodoAutomationHelper extends TDoc implements TodoAutomationHelper 
 export function createModel (builder: Builder): void {
   builder.createModel(TWorkSlot, TItemPresenter, TToDo, TProjectToDo, TTypeToDoPriority, TTodoAutomationHelper)
 
-  builder.mixin(time.class.ToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
-  builder.mixin(time.class.ProjectToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
+  // TODO: FIXME
+  // builder.mixin(time.class.ToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
+  // builder.mixin(time.class.ProjectToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
 
   builder.mixin(time.class.TypeToDoPriority, core.class.Class, view.mixin.AttributeEditor, {
     inlineEditor: time.component.PriorityEditor
@@ -348,53 +345,55 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: time.string.ToDos,
-      icon: time.icon.Team,
-      objectClass: time.class.ToDo
-    },
-    time.ids.TimeNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: time.string.NewToDo,
-      group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: time.class.ProjectToDo,
-      onlyOwn: true,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    time.ids.ToDoCreated
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [time.ids.ToDoCreated]
-  })
-
-  builder.createDoc<ClassCollaborators<ToDo>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: time.class.ToDo,
-    fields: ['user']
-  })
-
-  builder.mixin(time.class.ToDo, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: time.component.NotificationToDoPresenter
-  })
+  // TODO: FIXME
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: time.string.ToDos,
+  //     icon: time.icon.Team,
+  //     objectClass: time.class.ToDo
+  //   },
+  //   time.ids.TimeNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: time.string.NewToDo,
+  //     group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: time.class.ProjectToDo,
+  //     onlyOwn: true,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   time.ids.ToDoCreated
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [time.ids.ToDoCreated]
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<ToDo>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: time.class.ToDo,
+  //   fields: ['user']
+  // })
+  //
+  // builder.mixin(time.class.ToDo, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: time.component.NotificationToDoPresenter
+  // })
 
   builder.mixin(time.class.ProjectToDo, core.class.Class, view.mixin.ObjectPanel, {
     component: view.component.AttachedDocPanel

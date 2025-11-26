@@ -5,7 +5,6 @@
 -->
 <script lang="ts">
   import documents, { DocumentComment } from '@hcengineering/controlled-documents'
-  import { ThreadView } from '@hcengineering/chunter-resources'
   import { Button, IconCheckCircle, Label } from '@hcengineering/ui'
   import {
     $canAddDocumentCommentsFeedback as canAddDocumentCommentsFeedback,
@@ -51,7 +50,8 @@
         </div>
       {/if}
     </div>
-    <ThreadView _id={value._id} showHeader={false} />
+    <!--TODO: FIXME-->
+    <!--    <ThreadView _id={value._id} showHeader={false} />-->
   </div>
 {/if}
 

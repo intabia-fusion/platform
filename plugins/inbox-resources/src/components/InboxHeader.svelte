@@ -26,13 +26,11 @@
   import { getCommunicationClient } from '@hcengineering/presentation'
   import { Analytics } from '@hcengineering/analytics'
   import view from '@hcengineering/view'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 
   import inbox from '../plugin'
   import InboxViewSettings from './InboxViewSettings.svelte'
 
   const communicationClient = getCommunicationClient()
-  const oldNotificationClient = InboxNotificationsClientImpl.getClient()
 
   let clearing = false
   let reading = false
@@ -42,10 +40,7 @@
     try {
       clearing = true
       const contexts = await communicationClient.findNotificationContexts({ order: SortingOrder.Ascending })
-      await Promise.all([
-        ...contexts.map((context) => communicationClient.removeNotificationContext(context.id)),
-        oldNotificationClient.removeAllNotifications()
-      ])
+      await Promise.all([...contexts.map((context) => communicationClient.removeNotificationContext(context.id))])
       clearing = false
     } catch (e: any) {
       clearing = false
@@ -58,10 +53,7 @@
     try {
       reading = true
       const contexts = await communicationClient.findNotificationContexts({ order: SortingOrder.Ascending })
-      await Promise.all([
-        ...contexts.map((context) => communicationClient.updateNotifications(context.id, {}, true)),
-        oldNotificationClient.readAllNotifications()
-      ])
+      await Promise.all([...contexts.map((context) => communicationClient.updateNotifications(context.id, {}, true))])
       reading = false
     } catch (e: any) {
       reading = false

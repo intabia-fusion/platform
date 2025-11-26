@@ -40,7 +40,6 @@ import {
   UX
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
 import contact, { TContact } from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
 import task, { TProject, TTask } from '@hcengineering/model-task'
@@ -62,8 +61,9 @@ export class TFunnel extends TProject implements Funnel {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 }
 
 @Model(lead.class.Lead, task.class.Task)

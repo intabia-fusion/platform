@@ -25,7 +25,6 @@ import {
   closePopup,
   createApp,
   getCurrentResolvedLocation,
-  Menu,
   navigate,
   parseLocation,
   pushRootBarProgressComponent,
@@ -33,11 +32,9 @@ import {
   showPopup
 } from '@hcengineering/ui'
 import { handleDownloadItem } from '@hcengineering/desktop-downloads'
-import notification, { notificationId } from '@hcengineering/notification'
 import { inboxId } from '@hcengineering/inbox'
 import workbench, { workbenchId, logOut } from '@hcengineering/workbench'
 import view, { Action, encodeObjectURI } from '@hcengineering/view'
-import { resolveLocation } from '@hcengineering/notification-resources'
 import { themeStore, ThemeVariant } from '@hcengineering/theme'
 import type { Application } from '@hcengineering/workbench'
 import { isAllowedToRole } from '@hcengineering/workbench-resources'
@@ -121,7 +118,9 @@ window.addEventListener('DOMContentLoaded', () => {
       ipcMain.rebuildJumpList({
         applications: tasks,
         settingsLabel: await translate(setting.string.Settings, {}),
-        inboxLabel: await translate(notification.string.Inbox, {})
+        // TODO: FIXME
+        // inboxLabel: await translate(notification.string.Inbox, {})
+        inboxLabel: '' as any
       })
     }
     : undefined
@@ -150,9 +149,10 @@ window.addEventListener('DOMContentLoaded', () => {
     openScreen(settingId)
   })
 
-  ipcMain.on(CommandOpenInbox, () => {
-    openScreen(notificationId)
-  })
+  // TODO: FIXME
+  // ipcMain.on(CommandOpenInbox, () => {
+  //   openScreen(notificationId)
+  // })
 
   ipcMain.on(CommandOpenOffice, () => {
     openScreen(loveId)
@@ -218,22 +218,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Support for old inbox with objectId + objectClass (legacy)
     if (notificationParams.objectId != null && notificationParams.objectClass != null) {
-      const encodedObjectURI = encodeObjectURI(notificationParams.objectId, notificationParams.objectClass)
-      const notificationLocation = {
-        path: [workbenchId, workspace, app, encodedObjectURI],
-        fragment: undefined,
-        query: undefined
-      }
+      // const encodedObjectURI = encodeObjectURI(notificationParams.objectId, notificationParams.objectClass)
+      // const notificationLocation = {
+      //   path: [workbenchId, workspace, app, encodedObjectURI],
+      //   fragment: undefined,
+      //   query: undefined
+      // }
 
-      void resolveLocation(notificationLocation).then((resolvedLocation) => {
-        if (resolvedLocation?.loc != null) {
-          navigate(resolvedLocation.loc)
-        } else {
-          navigateToUrl(`${workbenchId}/${workspace}/${app}/${encodedObjectURI}`)
-        }
-      }).catch(() => {
-        navigateToUrl(getBasicNotificationPath(workspace, app))
-      })
+      // TODO: FIXME
+      // void resolveLocation(notificationLocation).then((resolvedLocation) => {
+      //   if (resolvedLocation?.loc != null) {
+      //     navigate(resolvedLocation.loc)
+      //   } else {
+      //     navigateToUrl(`${workbenchId}/${workspace}/${app}/${encodedObjectURI}`)
+      //   }
+      // }).catch(() => {
+      //   navigateToUrl(getBasicNotificationPath(workspace, app))
+      // })
     } else {
       // Fallback to basic notification navigation
       navigateToUrl(getBasicNotificationPath(workspace, app))

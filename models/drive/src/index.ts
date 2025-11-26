@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import chunter from '@hcengineering/chunter'
 import core, {
   type Blob,
   type Class,
@@ -103,8 +101,9 @@ export class TResource extends TDoc implements Resource {
   @ReadOnly()
     path!: Ref<Resource>[]
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   @Prop(TypeRef(drive.class.FileVersion), drive.string.Version)
   @ReadOnly()
@@ -619,12 +618,13 @@ function defineFile (builder: Builder): void {
 
   // Activity
 
-  builder.mixin(drive.class.File, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: drive.class.File,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(drive.class.File, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: drive.class.File,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   // Search
 

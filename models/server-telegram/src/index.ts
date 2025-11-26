@@ -20,8 +20,6 @@ import core, { type Class, type Doc } from '@hcengineering/core'
 import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
 import serverTelegram from '@hcengineering/server-telegram'
 import telegram from '@hcengineering/telegram'
-import notification from '@hcengineering/notification'
-import serverNotification from '@hcengineering/server-notification'
 import serverTemplates from '@hcengineering/server-templates'
 import templates from '@hcengineering/templates'
 
@@ -45,14 +43,15 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(
-    telegram.ids.NewMessageNotification,
-    notification.class.NotificationType,
-    serverNotification.mixin.TypeMatch,
-    {
-      func: serverTelegram.function.IsIncomingMessageTypeMatch
-    }
-  )
+  // TODO: FIXME
+  // builder.mixin(
+  //   telegram.ids.NewMessageNotification,
+  //   notification.class.NotificationType,
+  //   serverNotification.mixin.TypeMatch,
+  //   {
+  //     func: serverTelegram.function.IsIncomingMessageTypeMatch
+  //   }
+  // )
 
   builder.mixin(
     telegram.templateField.CurrentEmployeeTelegram,
@@ -72,19 +71,20 @@ export function createModel (builder: Builder): void {
     }
   )
 
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverTelegram.trigger.NotificationsHandler,
-    isAsync: true,
-    txMatch: {
-      _class: core.class.TxCreateDoc,
-      objectClass: notification.class.InboxNotification
-    }
-  })
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverTelegram.trigger.ProviderSettingsHandler,
-    isAsync: true,
-    txMatch: {
-      objectClass: notification.class.NotificationProviderSetting
-    }
-  })
+  // TODO: FIXME
+  // builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+  //   trigger: serverTelegram.trigger.NotificationsHandler,
+  //   isAsync: true,
+  //   txMatch: {
+  //     _class: core.class.TxCreateDoc,
+  //     objectClass: notification.class.InboxNotification
+  //   }
+  // })
+  // builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+  //   trigger: serverTelegram.trigger.ProviderSettingsHandler,
+  //   isAsync: true,
+  //   txMatch: {
+  //     objectClass: notification.class.NotificationProviderSetting
+  //   }
+  // })
 }

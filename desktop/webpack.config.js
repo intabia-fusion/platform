@@ -28,7 +28,7 @@ module.exports = [
   {
     mode: dev ? 'development' : mode,
     entry: {
-      serviceWorker: '@hcengineering/notification/src/serviceWorker.ts'
+      // serviceWorker: '@hcengineering/notification/src/serviceWorker.ts'
     },
     module: {
       rules: [

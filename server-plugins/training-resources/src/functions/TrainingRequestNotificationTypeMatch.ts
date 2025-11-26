@@ -13,35 +13,28 @@
 // limitations under the License.
 //
 
-import { Person, type Employee } from '@hcengineering/contact'
-import { type PersonId, type Ref, type TxCUD } from '@hcengineering/core'
-import type { NotificationType } from '@hcengineering/notification'
-import type { TriggerControl } from '@hcengineering/server-core'
-import type { TrainingRequest } from '@hcengineering/training'
-import { isTxCreateDoc } from '../utils/isTxCreateDoc'
-import { isTxUpdateDoc } from '../utils/isTxUpdateDoc'
-
-export function TrainingRequestNotificationTypeMatch (
-  tx: TxCUD<TrainingRequest>,
-  doc: TrainingRequest,
-  person: Ref<Person>,
-  user: PersonId[],
-  type: NotificationType,
-  control: TriggerControl
-): boolean {
-  if (isTxCreateDoc(tx)) {
-    return doc.trainees.includes(person as Ref<Employee>)
-  }
-
-  if (isTxUpdateDoc(tx)) {
-    const pushed = tx.operations.$push?.trainees
-    if (pushed === undefined) {
-      return false
-    }
-
-    const newTrainees = typeof pushed === 'object' ? pushed.$each : [pushed]
-    return newTrainees.includes(person as Ref<Employee>)
-  }
-
-  return false
-}
+// TODO: FIXME
+// export function TrainingRequestNotificationTypeMatch (
+//   tx: TxCUD<TrainingRequest>,
+//   doc: TrainingRequest,
+//   person: Ref<Person>,
+//   user: PersonId[],
+//   type: NotificationType,
+//   control: TriggerControl
+// ): boolean {
+//   if (isTxCreateDoc(tx)) {
+//     return doc.trainees.includes(person as Ref<Employee>)
+//   }
+//
+//   if (isTxUpdateDoc(tx)) {
+//     const pushed = tx.operations.$push?.trainees
+//     if (pushed === undefined) {
+//       return false
+//     }
+//
+//     const newTrainees = typeof pushed === 'object' ? pushed.$each : [pushed]
+//     return newTrainees.includes(person as Ref<Employee>)
+//   }
+//
+//   return false
+// }

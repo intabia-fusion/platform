@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import notification, { type NotificationType } from '@hcengineering/notification'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import type { BuildModelKey, KeyFilterPreset, Viewlet, ViewletDescriptor } from '@hcengineering/view'
 import questions from '@hcengineering/model-questions'
@@ -80,23 +78,24 @@ function defineBase (builder: Builder): void {
     training.actionCategory.Training
   )
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: training.string.TrainingApplication,
-      icon: training.icon.TrainingApplication
-    },
-    training.notification.TrainingGroup
-  )
-
-  builder.createDoc(notification.class.ActivityNotificationViewlet, core.space.Model, {
-    messageMatch: {
-      _class: activity.class.DocUpdateMessage,
-      objectClass: training.class.TrainingRequest
-    },
-    presenter: training.component.TrainingRequestNotificationPresenter
-  })
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: training.string.TrainingApplication,
+  //     icon: training.icon.TrainingApplication
+  //   },
+  //   training.notification.TrainingGroup
+  // )
+  //
+  // builder.createDoc(notification.class.ActivityNotificationViewlet, core.space.Model, {
+  //   messageMatch: {
+  //     _class: activity.class.DocUpdateMessage,
+  //     objectClass: training.class.TrainingRequest
+  //   },
+  //   presenter: training.component.TrainingRequestNotificationPresenter
+  // })
 }
 
 function defineSpaceType (builder: Builder): void {
@@ -582,7 +581,8 @@ function defineTrainingRequest (builder: Builder): void {
     training.action.TrainingRequestCancel
   )
 
-  builder.mixin(training.class.TrainingRequest, core.class.Class, activity.mixin.ActivityDoc, {})
+  // TODO: FIXME
+  // builder.mixin(training.class.TrainingRequest, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.mixin(training.class.TrainingRequest, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: training.function.TrainingRequestObjectTitleProvider
@@ -593,26 +593,26 @@ function defineTrainingRequest (builder: Builder): void {
     fields: ['trainees']
   })
 
-  builder.createDoc<NotificationType>(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: training.string.TrainingRequest,
-      group: training.notification.TrainingGroup,
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: training.class.TrainingRequest,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} sent you a training request {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p>',
-        subjectTemplate: 'Training request {doc}'
-      }
-    },
-    training.notification.TrainingRequest
-  )
+  // builder.createDoc<NotificationType>(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: training.string.TrainingRequest,
+  //     group: training.notification.TrainingGroup,
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: training.class.TrainingRequest,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{sender} sent you a training request {doc}',
+  //       htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p>',
+  //       subjectTemplate: 'Training request {doc}'
+  //     }
+  //   },
+  //   training.notification.TrainingRequest
+  // )
 }
 
 function defineTrainingAttempt (builder: Builder): void {

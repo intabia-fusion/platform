@@ -42,7 +42,6 @@ import {
   tryUpgrade
 } from '@hcengineering/model'
 import { makeRank } from '@hcengineering/rank'
-import activity, { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import core, { getAccountsFromTxes, getSocialIdBySocialKey, getSocialKeyByOldEmail } from '@hcengineering/model-core'
 import { DOMAIN_VIEW } from '@hcengineering/model-view'
 import card, { type Card, DOMAIN_CARD } from '@hcengineering/card'
@@ -587,14 +586,6 @@ export const contactOperation: MigrateOperation = {
               { attachedToClass: contact.mixin.Employee }
             )
           }
-          await client.update(
-            DOMAIN_ACTIVITY,
-            {
-              _class: activity.class.ActivityReference,
-              srcDocClass: 'contact:class:Employee'
-            },
-            { srcDocClass: contact.mixin.Employee }
-          )
           await client.update(
             'tags' as Domain,
             { targetClass: 'contact:class:Employee' },

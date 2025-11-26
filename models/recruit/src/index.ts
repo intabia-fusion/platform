@@ -13,22 +13,18 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import { AccountRole, type ClassCollaborators, SortingOrder, type Lookup, type Ref } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import calendar from '@hcengineering/model-calendar'
-import chunter from '@hcengineering/model-chunter'
 import contact from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
 import gmail from '@hcengineering/model-gmail'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import tags from '@hcengineering/model-tags'
 import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction, showColorsViewOption, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench, { createNavigateAction, type Application } from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import { type IntlString } from '@hcengineering/platform'
 import { recruitId, type Applicant, RecruitEvents, type Vacancy } from '@hcengineering/recruit'
 import setting from '@hcengineering/setting'
@@ -49,25 +45,26 @@ export * from './types'
 export function createModel (builder: Builder): void {
   builder.createModel(TVacancy, TCandidate, TApplicant, TReview, TOpinion, TVacancyList, TApplicantMatch)
 
-  builder.mixin(recruit.class.Vacancy, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(recruit.class.Applicant, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(recruit.class.Review, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(recruit.mixin.Candidate, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: recruit.class.Vacancy,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: recruit.class.Applicant,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: recruit.class.Review,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(recruit.class.Vacancy, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(recruit.class.Applicant, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(recruit.class.Review, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(recruit.mixin.Candidate, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: recruit.class.Vacancy,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: recruit.class.Applicant,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: recruit.class.Review,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(recruit.class.Vacancy, core.class.Class, workbench.mixin.SpaceView, {
     view: {
@@ -1322,103 +1319,104 @@ export function createModel (builder: Builder): void {
     component: recruit.component.ApplicantFilter
   })
 
-  builder.mixin(recruit.class.Applicant, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: recruit.component.NotificationApplicantPresenter
-  })
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: recruit.string.Application,
-      icon: recruit.icon.Application,
-      objectClass: recruit.class.Applicant
-    },
-    recruit.ids.ApplicationNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: task.string.AssignedToMe,
-      group: recruit.ids.ApplicationNotificationGroup,
-      field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: recruit.class.Applicant,
-      templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
-        subjectTemplate: '{doc} was assigned to you'
-      },
-      defaultEnabled: true
-    },
-    recruit.ids.AssigneeNotification
-  )
-
-  generateClassNotificationTypes(
-    builder,
-    recruit.class.Applicant,
-    recruit.ids.ApplicationNotificationGroup,
-    [],
-    ['comments', 'status', 'dueDate']
-  )
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: recruit.string.Vacancy,
-      icon: recruit.icon.Vacancy,
-      objectClass: recruit.class.Vacancy
-    },
-    recruit.ids.VacancyNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: recruit.string.CreateApplication,
-      group: recruit.ids.VacancyNotificationGroup,
-      field: 'space',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: recruit.class.Applicant,
-      spaceSubscribe: true,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    recruit.ids.ApplicationCreateNotification
-  )
-
-  generateClassNotificationTypes(builder, recruit.class.Vacancy, recruit.ids.VacancyNotificationGroup, [], ['comments'])
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: recruit.string.Talent,
-      icon: recruit.icon.CreateCandidate,
-      objectClass: recruit.mixin.Candidate
-    },
-    recruit.ids.CandidateNotificationGroup
-  )
-
-  generateClassNotificationTypes(
-    builder,
-    recruit.mixin.Candidate,
-    recruit.ids.CandidateNotificationGroup,
-    ['vacancyMatch'],
-    ['comments']
-  )
+  // TODO: FIXME
+  // builder.mixin(recruit.class.Applicant, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: recruit.component.NotificationApplicantPresenter
+  // })
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: recruit.string.Application,
+  //     icon: recruit.icon.Application,
+  //     objectClass: recruit.class.Applicant
+  //   },
+  //   recruit.ids.ApplicationNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: task.string.AssignedToMe,
+  //     group: recruit.ids.ApplicationNotificationGroup,
+  //     field: 'assignee',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: recruit.class.Applicant,
+  //     templates: {
+  //       textTemplate: '{doc} was assigned to you by {sender}',
+  //       htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+  //       subjectTemplate: '{doc} was assigned to you'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   recruit.ids.AssigneeNotification
+  // )
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   recruit.class.Applicant,
+  //   recruit.ids.ApplicationNotificationGroup,
+  //   [],
+  //   ['comments', 'status', 'dueDate']
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: recruit.string.Vacancy,
+  //     icon: recruit.icon.Vacancy,
+  //     objectClass: recruit.class.Vacancy
+  //   },
+  //   recruit.ids.VacancyNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: recruit.string.CreateApplication,
+  //     group: recruit.ids.VacancyNotificationGroup,
+  //     field: 'space',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: recruit.class.Applicant,
+  //     spaceSubscribe: true,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p><p>{link}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   recruit.ids.ApplicationCreateNotification
+  // )
+  //
+  // generateClassNotificationTypes(builder, recruit.class.Vacancy, recruit.ids.VacancyNotificationGroup, [], ['comments'])
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: recruit.string.Talent,
+  //     icon: recruit.icon.CreateCandidate,
+  //     objectClass: recruit.mixin.Candidate
+  //   },
+  //   recruit.ids.CandidateNotificationGroup
+  // )
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   recruit.mixin.Candidate,
+  //   recruit.ids.CandidateNotificationGroup,
+  //   ['vacancyMatch'],
+  //   ['comments']
+  // )
 
   builder.createDoc(
     view.class.FilterMode,
@@ -1452,38 +1450,38 @@ export function createModel (builder: Builder): void {
     recruit.filter.None
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Vacancy,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.VacancyChatMessageViewlet
-  )
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: recruit.class.Vacancy,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   recruit.ids.VacancyChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: recruit.class.Applicant,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   recruit.ids.ApplicantChatMessageViewlet
+  // )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Applicant,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.ApplicantChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Review,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.ReviewChatMessageViewlet
-  )
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: recruit.class.Review,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   recruit.ids.ReviewChatMessageViewlet
+  // )
 
   // Allow to use fuzzy search for mixins
   builder.createDoc(core.class.FullTextSearchContext, core.space.Model, {
@@ -1522,20 +1520,20 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: recruit.class.Applicant,
-      action: 'update',
-      config: {
-        status: {
-          iconPresenter: task.component.StateIconPresenter
-        }
-      }
-    },
-    recruit.ids.ApplicantUpdatedActivityViewlet
-  )
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: recruit.class.Applicant,
+  //     action: 'update',
+  //     config: {
+  //       status: {
+  //         iconPresenter: task.component.StateIconPresenter
+  //       }
+  //     }
+  //   },
+  //   recruit.ids.ApplicantUpdatedActivityViewlet
+  // )
 
   createAction(
     builder,

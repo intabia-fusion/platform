@@ -872,26 +872,6 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chunter",
-      "projectFolder": "plugins/chunter",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/chunter-assets",
-      "projectFolder": "plugins/chunter-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/chunter-resources",
-      "projectFolder": "plugins/chunter-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-chunter",
-      "projectFolder": "models/chunter",
-      "shouldPublish": false
-    },
-    {
       "packageName": "@hcengineering/recruit",
       "projectFolder": "plugins/recruit",
       "shouldPublish": true
@@ -1045,26 +1025,6 @@
       "packageName": "@hcengineering/panel",
       "projectFolder": "packages/panel",
       "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/activity",
-      "projectFolder": "plugins/activity",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/activity-assets",
-      "projectFolder": "plugins/activity-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/activity-resources",
-      "projectFolder": "plugins/activity-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-activity",
-      "projectFolder": "models/activity",
-      "shouldPublish": false
     },
     {
       "packageName": "@hcengineering/setting",
@@ -1272,41 +1232,6 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-notification",
-      "projectFolder": "models/notification",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/notification",
-      "projectFolder": "plugins/notification",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/notification-assets",
-      "projectFolder": "plugins/notification-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/notification-resources",
-      "projectFolder": "plugins/notification-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-notification",
-      "projectFolder": "server-plugins/notification",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-server-notification",
-      "projectFolder": "models/server-notification",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-notification-resources",
-      "projectFolder": "server-plugins/notification-resources",
-      "shouldPublish": false
-    },
-    {
       "packageName": "@hcengineering/tags",
       "projectFolder": "plugins/tags",
       "shouldPublish": true
@@ -1324,21 +1249,6 @@
     {
       "packageName": "@hcengineering/model-tags",
       "projectFolder": "models/tags",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-chunter",
-      "projectFolder": "server-plugins/chunter",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-server-chunter",
-      "projectFolder": "models/server-chunter",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-chunter-resources",
-      "projectFolder": "server-plugins/chunter-resources",
       "shouldPublish": false
     },
     {
@@ -1669,21 +1579,6 @@
     {
       "packageName": "@hcengineering/server-view-resources",
       "projectFolder": "server-plugins/view-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-activity",
-      "projectFolder": "server-plugins/activity",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-server-activity",
-      "projectFolder": "models/server-activity",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-activity-resources",
-      "projectFolder": "server-plugins/activity-resources",
       "shouldPublish": false
     },
     {

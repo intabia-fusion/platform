@@ -15,7 +15,6 @@
 -->
 <script lang="ts">
   import { Class, Doc, Hierarchy, Mixin, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import {
@@ -50,7 +49,8 @@
 
   const pClient = getClient()
   const hierarchy = pClient.getHierarchy()
-  const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
   const linkProviders = pClient.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
   $: void parseLinkId(linkProviders, _id, _class).then((res) => {
@@ -65,19 +65,19 @@
 
   function read (_id?: Ref<Doc>): void {
     if (objectId && lastId && lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      void inboxClient.then(async (client) => {
-        await client.readDoc(prev)
-      })
+      // void inboxClient.then(async (client) => {
+      //   await client.readDoc(prev)
+      // })
     }
   }
 
   onDestroy(async () => {
-    await inboxClient.then(async (client) => {
-      if (objectId === undefined) return
-      await client.readDoc(objectId)
-    })
+    // await inboxClient.then(async (client) => {
+    //   if (objectId === undefined) return
+    //   await client.readDoc(objectId)
+    // })
   })
 
   const query = createQuery()

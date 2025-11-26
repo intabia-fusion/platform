@@ -13,10 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type DocUpdateMessageViewlet } from '@hcengineering/activity'
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import { type Doc, type DocManager, type Ref, type StatusCategory } from '@hcengineering/core'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
 import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
 import { type ProjectType } from '@hcengineering/task'
 import { trackerId } from '@hcengineering/tracker'
@@ -72,18 +69,19 @@ export default mergeIds(trackerId, tracker, {
     ProjectList: '' as Ref<Viewlet>
   },
   ids: {
-    TrackerNotificationGroup: '' as Ref<NotificationGroup>,
-    AssigneeNotification: '' as Ref<NotificationType>,
+    // TODO: FIXME
+    // TrackerNotificationGroup: '' as Ref<NotificationGroup>,
+    // AssigneeNotification: '' as Ref<NotificationType>,
     BaseProjectType: '' as Ref<ProjectType>,
-    IssueUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    IssueCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    IssueRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    MilestionUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    IssueTemplateUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    IssueChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    IssueTemplateChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    ComponentChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    MilestoneChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // IssueUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // IssueCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // IssueRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // MilestionUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // IssueTemplateUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // IssueChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // IssueTemplateChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // ComponentChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // MilestoneChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
     DefaultProjectType: '' as Ref<ProjectType>
   },
   actionImpl: {

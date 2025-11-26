@@ -13,10 +13,6 @@
 // limitations under the License.
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getAccountDB } from '@hcengineering/account'
-import calendar from '@hcengineering/calendar'
-import chunter, { type ChatMessage } from '@hcengineering/chunter'
-import { loadCollabYdoc, saveCollabYdoc, yDocToBuffer } from '@hcengineering/collaboration'
 import contact from '@hcengineering/contact'
 import core, {
   type ArrOf,
@@ -61,7 +57,6 @@ import core, {
   platformNow,
   platformNowDiff
 } from '@hcengineering/core'
-import activity, { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
 import recruitModel, { defaultApplicantStatuses } from '@hcengineering/model-recruit'
 import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
@@ -341,55 +336,6 @@ export async function cleanArchivedSpaces (workspaceId: WorkspaceUuid, transacto
     }
 
     console.log('total docs with remove', count)
-  } catch (err: any) {
-    console.trace(err)
-  } finally {
-    await connection.close()
-  }
-}
-
-export async function fixCommentDoubleIdCreate (workspaceId: WorkspaceUuid, transactorUrl: string): Promise<void> {
-  const connection = (await connect(transactorUrl, workspaceId, undefined, {
-    mode: 'backup'
-  })) as unknown as CoreClient & BackupClient
-  try {
-    const commentTxes = await connection.findAll(core.class.TxCreateDoc, {
-      objectClass: chunter.class.ChatMessage
-    })
-    const commentTxesRemoved = await connection.findAll(core.class.TxRemoveDoc, {
-      objectClass: chunter.class.ChatMessage
-    })
-    const removed = new Map(commentTxesRemoved.map((it) => [it.objectId, it]))
-    // Do not checked removed
-    const objSet = new Set<Ref<Doc>>()
-    const oldValue = new Map<Ref<Doc>, string>()
-    for (const c of commentTxes) {
-      const cid = c.objectId
-      if (removed.has(cid)) {
-        continue
-      }
-      const has = objSet.has(cid)
-      objSet.add(cid)
-      if (has) {
-        // We have found duplicate one, let's rename it.
-        const doc = TxProcessor.createDoc2Doc<ChatMessage>(c as unknown as TxCreateDoc<ChatMessage>)
-        if (doc.message !== '' && doc.message.trim() !== '<p></p>') {
-          await connection.clean(DOMAIN_TX, [c._id])
-          if (oldValue.get(cid) === doc.message.trim()) {
-            console.log('delete tx', cid, doc.message)
-          } else {
-            oldValue.set(doc._id, doc.message)
-            console.log('renaming', cid, doc.message)
-            // Remove previous transaction.
-            c.objectId = generateId()
-            doc._id = c.objectId as Ref<ChatMessage>
-            await connection.upload(DOMAIN_TX, [c])
-            // Also we need to create snapsot
-            await connection.upload(DOMAIN_ACTIVITY, [doc])
-          }
-        }
-      }
-    }
   } catch (err: any) {
     console.trace(err)
   } finally {

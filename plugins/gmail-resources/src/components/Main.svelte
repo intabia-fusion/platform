@@ -18,7 +18,6 @@
   import contact, { Channel, Contact, getName } from '@hcengineering/contact'
   import { Ref, SocialIdType, getCurrentAccount } from '@hcengineering/core'
   import { Message, SharedMessage } from '@hcengineering/gmail'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import setting, { Integration } from '@hcengineering/setting'
@@ -39,7 +38,8 @@
   export let messageId: Ref<Message> | undefined = undefined
 
   const client = getClient()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
 
   const messageQuery = createQuery()
 
@@ -52,7 +52,7 @@
   let integrations: Integration[] = []
   let selectedIntegration: Integration | undefined = undefined
 
-  channel && inboxClient.forceReadDoc(channel)
+  // channel && inboxClient.forceReadDoc(channel)
 
   const dispatch = createEventDispatcher()
 

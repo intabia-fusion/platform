@@ -51,12 +51,10 @@ import {
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import calendar from '@hcengineering/model-calendar'
-import chunter from '@hcengineering/model-chunter'
 import contact, { TEmployee } from '@hcengineering/model-contact'
 import core, { TAttachedDoc, TDoc, TType } from '@hcengineering/model-core'
 import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import hr from './plugin'
@@ -88,8 +86,9 @@ export class TDepartment extends TDoc implements Department {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   avatar?: string | null
 
@@ -159,8 +158,9 @@ export class TRequest extends TAttachedDoc implements Request {
   @Hidden()
     type!: Ref<RequestType>
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
@@ -454,99 +454,101 @@ export function createModel (builder: Builder): void {
     presenter: hr.component.RequestPresenter
   })
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: hr.string.HRApplication,
-      icon: hr.icon.HR
-    },
-    hr.ids.HRNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: hr.string.RequestCreated,
-      group: hr.ids.HRNotificationGroup,
-      // will be created with different trigger
-      txClasses: [],
-      objectClass: hr.class.Request,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'New request: {doc}',
-        htmlTemplate: 'New request: {doc}',
-        subjectTemplate: 'New request'
-      }
-    },
-    hr.ids.CreateRequestNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      group: hr.ids.HRNotificationGroup,
-      label: hr.string.RequestUpdated,
-      // will be created with different trigger
-      txClasses: [],
-      objectClass: hr.class.Request,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'Request updated: {doc}',
-        htmlTemplate: 'Request updated: {doc}',
-        subjectTemplate: 'Request updated'
-      }
-    },
-    hr.ids.UpdateRequestNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      group: hr.ids.HRNotificationGroup,
-      generated: false,
-      label: hr.string.RequestRemoved,
-      // will be created with different trigger
-      txClasses: [],
-      objectClass: hr.class.Request,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'Request removed: {doc}',
-        htmlTemplate: 'Request removed: {doc}',
-        subjectTemplate: 'Request removed'
-      }
-    },
-    hr.ids.RemoveRequestNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      group: hr.ids.HRNotificationGroup,
-      label: hr.string.PublicHoliday,
-      // will be created with different trigger
-      txClasses: [],
-      objectClass: hr.class.PublicHoliday,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'New public holiday: {doc}',
-        htmlTemplate: 'New public holiday: {doc}',
-        subjectTemplate: 'New public holiday'
-      }
-    },
-    hr.ids.CreatePublicHolidayNotification
-  )
+  // TODO: FIXME
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: hr.string.HRApplication,
+  //     icon: hr.icon.HR
+  //   },
+  //   hr.ids.HRNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: hr.string.RequestCreated,
+  //     group: hr.ids.HRNotificationGroup,
+  //     // will be created with different trigger
+  //     txClasses: [],
+  //     objectClass: hr.class.Request,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: 'New request: {doc}',
+  //       htmlTemplate: 'New request: {doc}',
+  //       subjectTemplate: 'New request'
+  //     }
+  //   },
+  //   hr.ids.CreateRequestNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     group: hr.ids.HRNotificationGroup,
+  //     label: hr.string.RequestUpdated,
+  //     // will be created with different trigger
+  //     txClasses: [],
+  //     objectClass: hr.class.Request,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: 'Request updated: {doc}',
+  //       htmlTemplate: 'Request updated: {doc}',
+  //       subjectTemplate: 'Request updated'
+  //     }
+  //   },
+  //   hr.ids.UpdateRequestNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     group: hr.ids.HRNotificationGroup,
+  //     generated: false,
+  //     label: hr.string.RequestRemoved,
+  //     // will be created with different trigger
+  //     txClasses: [],
+  //     objectClass: hr.class.Request,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: 'Request removed: {doc}',
+  //       htmlTemplate: 'Request removed: {doc}',
+  //       subjectTemplate: 'Request removed'
+  //     }
+  //   },
+  //   hr.ids.RemoveRequestNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     group: hr.ids.HRNotificationGroup,
+  //     label: hr.string.PublicHoliday,
+  //     // will be created with different trigger
+  //     txClasses: [],
+  //     objectClass: hr.class.PublicHoliday,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: 'New public holiday: {doc}',
+  //       htmlTemplate: 'New public holiday: {doc}',
+  //       subjectTemplate: 'New public holiday'
+  //     }
+  //   },
+  //   hr.ids.CreatePublicHolidayNotification
+  // )
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_HR,
     disabled: [{ modifiedOn: 1 }, { modifiedBy: 1 }, { createdBy: 1 }, { attachedToClass: 1 }, { createdOn: -1 }]

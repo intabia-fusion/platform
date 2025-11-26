@@ -12,23 +12,12 @@
 // limitations under the License.
 
 import { type Card } from '@hcengineering/card'
-import { type Class, type Doc, type Ref } from '@hcengineering/core'
+import { type Class, type Ref } from '@hcengineering/core'
 import { type NotificationContext } from '@hcengineering/communication-types'
-import { type DisplayInboxNotification, type DocNotifyContext } from '@hcengineering/notification'
 
-export type NavigationItem =
-  | {
-    type: 'modern'
-    _id: Ref<Card>
-    _class: Ref<Class<Card>>
-    context: NotificationContext
-    date: Date
-  }
-  | {
-    type: 'legacy'
-    _id: Ref<Doc>
-    _class: Ref<Class<Doc>>
-    context: DocNotifyContext
-    date: Date
-    notifications: DisplayInboxNotification[]
-  }
+export interface NavigationItem {
+  _id: Ref<Card>
+  _class: Ref<Class<Card>>
+  context: NotificationContext
+  date: Date
+}

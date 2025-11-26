@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { AccountClient } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
-import chunter from '@hcengineering/chunter'
 import { CollaboratorClient } from '@hcengineering/collaborator-client'
 import contact, {
   AvatarType,
@@ -419,10 +418,11 @@ export class GithubWorker implements IntegrationManager {
         _class: [github.class.GithubPullRequest],
         mapper: new PullRequestSyncManager(this._client, this.liveQuery, this.collaborator)
       },
-      {
-        _class: [chunter.class.ChatMessage],
-        mapper: new CommentSyncManager(this._client, this.liveQuery)
-      },
+      // TODO: FIXME
+      // {
+      //   _class: [chunter.class.ChatMessage],
+      //   mapper: new CommentSyncManager(this._client, this.liveQuery)
+      // },
       // {
       //   _class: [contact.class.PersonAccount],
       //   mapper: this.personMapper

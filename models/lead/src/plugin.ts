@@ -14,11 +14,9 @@
 // limitations under the License.
 //
 
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import type { Doc, Ref, Status } from '@hcengineering/core'
 import { leadId } from '@hcengineering/lead'
 import lead from '@hcengineering/lead-resources/src/plugin'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
 import type { IntlString } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import { type TaskTypeDescriptor } from '@hcengineering/task'
@@ -60,12 +58,13 @@ export default mergeIds(leadId, lead, {
     CreateGlobalLead: '' as Ref<Action<Doc, any>>
   },
   ids: {
-    LeadNotificationGroup: '' as Ref<NotificationGroup>,
-    CustomerNotificationGroup: '' as Ref<NotificationGroup>,
-    FunnelNotificationGroup: '' as Ref<NotificationGroup>,
-    LeadCreateNotification: '' as Ref<NotificationType>,
-    AssigneeNotification: '' as Ref<NotificationType>,
-    LeadChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    // TODO: FIXME
+    // LeadNotificationGroup: '' as Ref<NotificationGroup>,
+    // CustomerNotificationGroup: '' as Ref<NotificationGroup>,
+    // FunnelNotificationGroup: '' as Ref<NotificationGroup>,
+    // LeadCreateNotification: '' as Ref<NotificationType>,
+    // AssigneeNotification: '' as Ref<NotificationType>,
+    // LeadChatMessageViewlet: '' as Ref<ChatMessageViewlet>
   },
   descriptors: {
     Lead: '' as Ref<TaskTypeDescriptor>

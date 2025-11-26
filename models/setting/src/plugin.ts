@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
 import { type Doc, type Ref } from '@hcengineering/core'
 import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
 import { settingId } from '@hcengineering/setting'
@@ -21,15 +20,16 @@ import setting from '@hcengineering/setting-resources/src/plugin'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
 import { type TemplateFieldFunc } from '@hcengineering/templates'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
 
 export default mergeIds(settingId, setting, {
   ids: {
     EnumSetting: '' as Ref<Doc>,
-    Configure: '' as Ref<Doc>,
-    SettingNotificationGroup: '' as Ref<NotificationGroup>,
-    IntegrationDisabledNotification: '' as Ref<NotificationType>,
-    UpdateIntegrationActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    Configure: '' as Ref<Doc>
+    // TODO: FIXME
+    // SettingNotificationGroup: '' as Ref<NotificationGroup>,
+    // IntegrationDisabledNotification: '' as Ref<NotificationType>,
+    // TODO: FIXME
+    // UpdateIntegrationActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
   },
   component: {
     EnumSetting: '' as AnyComponent,

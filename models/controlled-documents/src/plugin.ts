@@ -21,7 +21,6 @@ import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type ViewAction } from '@hcengineering/view'
-import { type NotificationType, type NotificationGroup } from '@hcengineering/notification'
 import { type TextActionVisibleFunction, type TextActionFunction } from '@hcengineering/text-editor'
 
 export default mergeIds(documentsId, documents, {
@@ -85,8 +84,9 @@ export default mergeIds(documentsId, documents, {
     TableDocumentDomain: '' as Ref<Doc>
   },
   notification: {
-    DocumentsNotificationGroup: '' as Ref<NotificationGroup>,
-    ContentNotification: '' as Ref<NotificationType>,
-    StateNotification: '' as Ref<NotificationType>
+    // TODO: FIXME
+    // DocumentsNotificationGroup: '' as Ref<NotificationGroup>,
+    // ContentNotification: '' as Ref<NotificationType>,
+    // StateNotification: '' as Ref<NotificationType>
   }
 })

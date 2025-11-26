@@ -14,8 +14,6 @@
 -->
 <script lang="ts">
   import love, { MeetingMinutes } from '@hcengineering/love'
-  import { ChannelEmbeddedContent } from '@hcengineering/chunter-resources'
-  import { ActivityMessage } from '@hcengineering/activity'
   import { updateTabData, WidgetState } from '@hcengineering/workbench-resources'
 
   export let widgetState: WidgetState
@@ -23,22 +21,23 @@
   export let height: string
   export let width: string
 
-  function replyToThread (message: ActivityMessage): void {
-    updateTabData(love.ids.MeetingWidget, 'chat', { thread: message._id })
-  }
+  // TODO: FIXME
+  // function replyToThread (message: ActivityMessage): void {
+  //   updateTabData(love.ids.MeetingWidget, 'chat', { thread: message._id })
+  // }
 
   function closeThread (): void {
     updateTabData(love.ids.MeetingWidget, 'chat', { thread: undefined })
   }
 </script>
 
-<ChannelEmbeddedContent
-  {width}
-  {height}
-  object={meetingMinutes}
-  threadId={widgetState.tabs.find((tab) => tab.id === 'chat')?.data?.thread}
-  collection="messages"
-  on:channel={closeThread}
-  onReply={replyToThread}
-  on:close
-></ChannelEmbeddedContent>
+<!--<ChannelEmbeddedContent-->
+<!--  {width}-->
+<!--  {height}-->
+<!--  object={meetingMinutes}-->
+<!--  threadId={widgetState.tabs.find((tab) => tab.id === 'chat')?.data?.thread}-->
+<!--  collection="messages"-->
+<!--  on:channel={closeThread}-->
+<!--  onReply={replyToThread}-->
+<!--  on:close-->
+<!--&gt;</ChannelEmbeddedContent>-->

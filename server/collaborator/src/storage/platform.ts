@@ -13,13 +13,10 @@
 // limitations under the License.
 //
 
-import activity, { DocUpdateMessage } from '@hcengineering/activity'
 import { Analytics } from '@hcengineering/analytics'
 import { loadCollabJson, loadCollabYdoc, saveCollabJson, saveCollabYdoc } from '@hcengineering/collaboration'
 import { decodeDocumentId } from '@hcengineering/collaborator-client'
-import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import { ActivityCollaborativeChange, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
-import core, { AttachedData, Doc, MeasureContext, OperationDomain, Ref, Space, TxOperations } from '@hcengineering/core'
+import core, { MeasureContext, TxOperations } from '@hcengineering/core'
 import { StorageAdapter } from '@hcengineering/server-core'
 import { areEqualMarkups } from '@hcengineering/text'
 import { markupToYDoc } from '@hcengineering/text-ydoc'
@@ -28,7 +25,7 @@ import { Doc as YDoc } from 'yjs'
 import { Context } from '../context'
 import { CollabStorageAdapter } from './adapter'
 
-const activityMarkupLimit = 100 * 1024 // 100kb
+// const activityMarkupLimit = 100 * 1024 // 100kb
 
 export interface PlatformStorageAdapterOptions {
   retryCount?: number
@@ -259,79 +256,80 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
 
     await ctx.with('update', {}, () => client.diffUpdate(current, { [objectAttr]: blobId }))
 
-    const prevValue = prevMarkup.length > activityMarkupLimit ? activity.string.ValueTooLarge : prevMarkup
-    const currValue = currMarkup.length > activityMarkupLimit ? activity.string.ValueTooLarge : currMarkup
+    // TODO: FIXME
+    // const prevValue = prevMarkup.length > activityMarkupLimit ? activity.string.ValueTooLarge : prevMarkup
+    // const currValue = currMarkup.length > activityMarkupLimit ? activity.string.ValueTooLarge : currMarkup
 
-    await ctx.with(
-      'activity',
-      {},
-      async () => {
-        const space = hierarchy.isDerived(current._class, core.class.Space)
-          ? (current._id as Ref<Space>)
-          : current.space
-        await sendEvent(client, objectAttr, prevValue, currValue, current)
-        const data: AttachedData<DocUpdateMessage> = {
-          objectId,
-          objectClass,
-          action: 'update',
-          attributeUpdates: {
-            attrKey: objectAttr,
-            attrClass: core.class.TypeMarkup,
-            prevValue,
-            set: [currValue],
-            added: [],
-            removed: [],
-            isMixin: hierarchy.isMixin(objectClass)
-          }
-        }
-        return await client.addCollection(
-          activity.class.DocUpdateMessage,
-          space,
-          current._id,
-          current._class,
-          'docUpdateMessages',
-          data
-        )
-      },
-      {
-        workspace: context.wsIds.uuid,
-        documentName
-      }
-    )
+    // await ctx.with(
+    //   'activity',
+    //   {},
+    //   async () => {
+    //     const space = hierarchy.isDerived(current._class, core.class.Space)
+    //       ? (current._id as Ref<Space>)
+    //       : current.space
+    //     await sendEvent(client, objectAttr, prevValue, currValue, current)
+    //     const data: AttachedData<DocUpdateMessage> = {
+    //       objectId,
+    //       objectClass,
+    //       action: 'update',
+    //       attributeUpdates: {
+    //         attrKey: objectAttr,
+    //         attrClass: core.class.TypeMarkup,
+    //         prevValue,
+    //         set: [currValue],
+    //         added: [],
+    //         removed: [],
+    //         isMixin: hierarchy.isMixin(objectClass)
+    //       }
+    //     }
+    //     return await client.addCollection(
+    //       activity.class.DocUpdateMessage,
+    //       space,
+    //       current._id,
+    //       current._class,
+    //       'docUpdateMessages',
+    //       data
+    //     )
+    //   },
+    //   {
+    //     workspace: context.wsIds.uuid,
+    //     documentName
+    //   }
+    // )
 
     return markup.curr
   }
 }
 
-async function sendEvent (
-  client: Omit<TxOperations, 'close'>,
-  attrKey: string,
-  prevValue: string,
-  value: string,
-  doc: Doc
-): Promise<void> {
-  const eventData: ActivityCollaborativeChange = {
-    type: ActivityUpdateType.CollaborativeChange,
-    attrKey,
-    value,
-    prevValue
-  }
-  const event: CreateMessageEvent = {
-    type: MessageEventType.CreateMessage,
-    messageType: MessageType.Activity,
-    cardId: doc._id,
-    cardType: doc._class,
-    extra: {
-      action: 'update',
-      update: eventData
-    },
-    content: '',
-    socialId: client.txFactory.account,
-    date: new Date()
-  }
-
-  await client.domainRequest('communication' as OperationDomain, { event })
-}
+// async function sendEvent (
+//   client: Omit<TxOperations, 'close'>,
+//   attrKey: string,
+//   prevValue: string,
+//   value: string,
+//   doc: Doc
+// ): Promise<void> {
+//   const eventData: ActivityCollaborativeChange = {
+//     type: ActivityUpdateType.CollaborativeChange,
+//     attrKey,
+//     value,
+//     prevValue
+//   }
+//   const event: CreateMessageEvent = {
+//     type: MessageEventType.CreateMessage,
+//     messageType: MessageType.Activity,
+//     cardId: doc._id,
+//     cardType: doc._class,
+//     extra: {
+//       action: 'update',
+//       update: eventData
+//     },
+//     content: '',
+//     socialId: client.txFactory.account,
+//     date: new Date()
+//   }
+//
+//   await client.domainRequest('communication' as OperationDomain, { event })
+// }
 
 async function withRetry<T> (
   ctx: MeasureContext,

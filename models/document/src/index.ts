@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import type {
   ClassCollaborators,
   CollectionSize,
@@ -43,15 +42,12 @@ import {
   UX
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
 import core, { TDoc, TTypedSpace } from '@hcengineering/model-core'
 import { createPublicLinkAction } from '@hcengineering/model-guest'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import tracker from '@hcengineering/model-tracker'
 import view, { actionTemplates, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
@@ -93,15 +89,17 @@ export class TDocument extends TDoc implements Document, Todoable {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   @Prop(Collection(tags.class.TagReference), document.string.Labels)
     labels?: number
 
-  @Prop(Collection(activity.class.ActivityReference), document.string.Backlinks)
-  @Hidden()
-    references!: number
+  // TODO: FIXME
+  // @Prop(Collection(activity.class.ActivityReference), document.string.Backlinks)
+  // @Hidden()
+  references!: number
 
   @Prop(TypeString(), document.string.Icon)
   @Hidden()
@@ -397,67 +395,70 @@ function defineDocument (builder: Builder): void {
 
   // Notifications
 
-  builder.mixin(document.class.Document, core.class.Class, activity.mixin.ActivityDoc, {})
+  // TODO: FIXME
+  // builder.mixin(document.class.Document, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
     attachedTo: document.class.Document,
     fields: ['createdBy', 'modifiedBy']
   })
 
-  builder.mixin(document.class.Document, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: document.component.NotificationDocumentPresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(document.class.Document, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: document.component.NotificationDocumentPresenter
+  // })
 
   builder.mixin(document.class.Document, core.class.Class, view.mixin.IgnoreActions, {
     actions: [view.action.Open, view.action.OpenInNewTab, tracker.action.NewRelatedIssue]
   })
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: document.string.DocumentApplication,
-      icon: document.icon.DocumentApplication,
-      objectClass: document.class.Document
-    },
-    document.ids.DocumentNotificationGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: document.string.DocumentApplication,
+  //     icon: document.icon.DocumentApplication,
+  //     objectClass: document.class.Document
+  //   },
+  //   document.ids.DocumentNotificationGroup
+  // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: false,
-      label: document.string.Document,
-      group: document.ids.DocumentNotificationGroup,
-      field: 'content',
-      txClasses: [core.class.TxUpdateDoc],
-      objectClass: document.class.Document,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    document.ids.ContentNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [document.ids.ContentNotification]
-  })
-
-  generateClassNotificationTypes(
-    builder,
-    document.class.Document,
-    document.ids.DocumentNotificationGroup,
-    [],
-    ['attachments', 'comments']
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: false,
+  //     label: document.string.Document,
+  //     group: document.ids.DocumentNotificationGroup,
+  //     field: 'content',
+  //     txClasses: [core.class.TxUpdateDoc],
+  //     objectClass: document.class.Document,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   document.ids.ContentNotification
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [document.ids.ContentNotification]
+  // })
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   document.class.Document,
+  //   document.ids.DocumentNotificationGroup,
+  //   [],
+  //   ['attachments', 'comments']
+  // )
 
   // Activity & Inbox
 
@@ -465,10 +466,11 @@ function defineDocument (builder: Builder): void {
     titleProvider: document.function.DocumentTitleProvider
   })
 
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: document.class.Document,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: document.class.Document,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   // Search
 

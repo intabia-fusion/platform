@@ -13,17 +13,13 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import chunter from '@hcengineering/chunter'
 import { AccountRole, type ClassCollaborators, type Ref, type Status } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
 import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import pluginState, { type Issue, trackerId } from '@hcengineering/tracker'
 
@@ -122,46 +118,46 @@ function defineSortAndGrouping (builder: Builder): void {
 }
 
 function defineNotifications (builder: Builder): void {
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: tracker.string.Issues,
-      icon: tracker.icon.Issues,
-      objectClass: tracker.class.Issue
-    },
-    tracker.ids.TrackerNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: task.string.AssignedToMe,
-      group: tracker.ids.TrackerNotificationGroup,
-      field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: tracker.class.Issue,
-      onlyOwn: true,
-      templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
-        subjectTemplate: '{doc} was assigned to you'
-      },
-      defaultEnabled: true
-    },
-    tracker.ids.AssigneeNotification
-  )
-
-  generateClassNotificationTypes(
-    builder,
-    tracker.class.Issue,
-    tracker.ids.TrackerNotificationGroup,
-    [],
-    ['comments', 'status', 'priority', 'assignee', 'subIssues', 'blockedBy', 'milestone', 'dueDate']
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: tracker.string.Issues,
+  //     icon: tracker.icon.Issues,
+  //     objectClass: tracker.class.Issue
+  //   },
+  //   tracker.ids.TrackerNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: task.string.AssignedToMe,
+  //     group: tracker.ids.TrackerNotificationGroup,
+  //     field: 'assignee',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: tracker.class.Issue,
+  //     onlyOwn: true,
+  //     templates: {
+  //       textTemplate: '{doc} was assigned to you by {sender}',
+  //       htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+  //       subjectTemplate: '{doc} was assigned to you'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   tracker.ids.AssigneeNotification
+  // )
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   tracker.class.Issue,
+  //   tracker.ids.TrackerNotificationGroup,
+  //   [],
+  //   ['comments', 'status', 'priority', 'assignee', 'subIssues', 'blockedBy', 'milestone', 'dueDate']
+  // )
 }
 
 /**
@@ -200,18 +196,19 @@ function defineFilters (builder: Builder): void {
     provider: tracker.function.IssueIdentifierProvider
   })
 
-  builder.mixin(tracker.class.Issue, core.class.Class, chunter.mixin.ObjectChatPanel, {
-    ignoreKeys: [
-      'number',
-      'createdBy',
-      'attachedTo',
-      'title',
-      'collaborators',
-      'description',
-      'remainingTime',
-      'reportedTime'
-    ]
-  })
+  // TODO: FIXME
+  // builder.mixin(tracker.class.Issue, core.class.Class, chunter.mixin.ObjectChatPanel, {
+  //   ignoreKeys: [
+  //     'number',
+  //     'createdBy',
+  //     'attachedTo',
+  //     'title',
+  //     'collaborators',
+  //     'description',
+  //     'remainingTime',
+  //     'reportedTime'
+  //   ]
+  // })
 
   //
   // Issue Status
@@ -449,36 +446,38 @@ export function createModel (builder: Builder): void {
     TProjectTargetPreference
   )
 
-  builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(tracker.class.Issue, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(tracker.class.Milestone, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(tracker.class.Component, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(tracker.class.IssueTemplate, core.class.Class, activity.mixin.ActivityDoc, {})
+  // TODO: FIXME
+  // builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(tracker.class.Issue, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(tracker.class.Milestone, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(tracker.class.Component, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(tracker.class.IssueTemplate, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.LinkIdProvider, {
     encode: tracker.function.GetIssueId,
     decode: tracker.function.GetIssueIdByIdentifier
   })
 
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: tracker.class.Issue,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: tracker.class.Milestone,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: tracker.class.Component,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: tracker.class.IssueTemplate,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: tracker.class.Issue,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: tracker.class.Milestone,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: tracker.class.Component,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: tracker.class.IssueTemplate,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   defineViewlets(builder)
 
@@ -532,81 +531,82 @@ export function createModel (builder: Builder): void {
     component: tracker.component.EditIssueTemplate
   })
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: tracker.class.Issue,
-      action: 'update',
-      icon: tracker.icon.Issue,
-      config: {
-        status: {
-          iconPresenter: tracker.component.IssueStatusIcon
-        },
-        priority: {
-          iconPresenter: tracker.component.PriorityIconPresenter
-        },
-        estimation: {
-          icon: tracker.icon.Estimation
-        }
-      }
-    },
-    tracker.ids.IssueUpdatedActivityViewlet
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: tracker.class.Issue,
-      action: 'create',
-      icon: tracker.icon.Issue,
-      valueAttr: 'title'
-    },
-    tracker.ids.IssueCreatedActivityViewlet
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: tracker.class.Issue,
-      action: 'remove',
-      icon: tracker.icon.Issue,
-      valueAttr: 'title'
-    },
-    tracker.ids.IssueRemovedActivityViewlet
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: tracker.class.Milestone,
-      action: 'update',
-      config: {
-        status: {
-          iconPresenter: tracker.component.MilestoneStatusIcon
-        }
-      }
-    },
-    tracker.ids.MilestionUpdatedActivityViewlet
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: tracker.class.IssueTemplate,
-      action: 'update',
-      config: {
-        priority: {
-          iconPresenter: tracker.component.PriorityIconPresenter
-        }
-      }
-    },
-    tracker.ids.IssueTemplateUpdatedActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: tracker.class.Issue,
+  //     action: 'update',
+  //     icon: tracker.icon.Issue,
+  //     config: {
+  //       status: {
+  //         iconPresenter: tracker.component.IssueStatusIcon
+  //       },
+  //       priority: {
+  //         iconPresenter: tracker.component.PriorityIconPresenter
+  //       },
+  //       estimation: {
+  //         icon: tracker.icon.Estimation
+  //       }
+  //     }
+  //   },
+  //   tracker.ids.IssueUpdatedActivityViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: tracker.class.Issue,
+  //     action: 'create',
+  //     icon: tracker.icon.Issue,
+  //     valueAttr: 'title'
+  //   },
+  //   tracker.ids.IssueCreatedActivityViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: tracker.class.Issue,
+  //     action: 'remove',
+  //     icon: tracker.icon.Issue,
+  //     valueAttr: 'title'
+  //   },
+  //   tracker.ids.IssueRemovedActivityViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: tracker.class.Milestone,
+  //     action: 'update',
+  //     config: {
+  //       status: {
+  //         iconPresenter: tracker.component.MilestoneStatusIcon
+  //       }
+  //     }
+  //   },
+  //   tracker.ids.MilestionUpdatedActivityViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: tracker.class.IssueTemplate,
+  //     action: 'update',
+  //     config: {
+  //       priority: {
+  //         iconPresenter: tracker.component.PriorityIconPresenter
+  //       }
+  //     }
+  //   },
+  //   tracker.ids.IssueTemplateUpdatedActivityViewlet
+  // )
 
   defineApplication(builder, { myIssuesId, allIssuesId, issuesId, componentsId, milestonesId, templatesId, labelsId })
 
@@ -641,49 +641,50 @@ export function createModel (builder: Builder): void {
     order: 4000
   })
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: tracker.class.Issue,
-      label: chunter.string.LeftComment
-    },
-    tracker.ids.IssueChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: tracker.class.IssueTemplate,
-      label: chunter.string.LeftComment
-    },
-    tracker.ids.IssueTemplateChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: tracker.class.Component,
-      label: chunter.string.LeftComment
-    },
-    tracker.ids.ComponentChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: tracker.class.Milestone,
-      label: chunter.string.LeftComment
-    },
-    tracker.ids.MilestoneChatMessageViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: tracker.class.Issue,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   tracker.ids.IssueChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: tracker.class.IssueTemplate,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   tracker.ids.IssueTemplateChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: tracker.class.Component,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   tracker.ids.ComponentChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: tracker.class.Milestone,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   tracker.ids.MilestoneChatMessageViewlet
+  // )
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.ObjectIcon, {
     component: tracker.component.IssueStatusPresenter

@@ -17,7 +17,6 @@
   import contact, { getName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { WithLookup } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import recruit, { Applicant, Candidate } from '@hcengineering/recruit'
   import task from '@hcengineering/task'
@@ -26,7 +25,6 @@
   import { Component, DueDatePresenter } from '@hcengineering/ui'
   import { BuildModelKey } from '@hcengineering/view'
   import { DocNavLink, ObjectPresenter, enabledConfig, statusStore } from '@hcengineering/view-resources'
-  import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
 
   import ApplicationPresenter from './ApplicationPresenter.svelte'
 
@@ -78,11 +76,12 @@
       <div class="tool flex-row-center">
         {#if !dragged}
           <div class="mr-2">
-            <Component
-              showLoading={false}
-              is={notification.component.NotificationPresenter}
-              props={{ value: object }}
-            />
+            <!--            TODO: FIXME-->
+            <!--            <Component-->
+            <!--              showLoading={false}-->
+            <!--              is={notification.component.NotificationPresenter}-->
+            <!--              props={{ value: object }}-->
+            <!--            />-->
           </div>
         {/if}
       </div>
@@ -131,17 +130,18 @@
         {#if (object.attachments ?? 0) > 0 && enabledConfig(config, 'attachments')}
           <AttachmentsPresenter value={object.attachments} {object} />
         {/if}
+        <!--TODO: FIXME-->
         {#if enabledConfig(config, 'comments')}
-          <ChatMessagesPresenter value={object.comments} {object} kind="list" size="x-small" />
-          {#if object.$lookup?.attachedTo}
-            <ChatMessagesPresenter
-              value={object.$lookup?.attachedTo?.comments}
-              object={object.$lookup?.attachedTo}
-              withInput={false}
-              kind="list"
-              size="x-small"
-            />
-          {/if}
+          <!--          <ChatMessagesPresenter value={object.comments} {object} kind="list" size="x-small" />-->
+          <!--          {#if object.$lookup?.attachedTo}-->
+          <!--            <ChatMessagesPresenter-->
+          <!--              value={object.$lookup?.attachedTo?.comments}-->
+          <!--              object={object.$lookup?.attachedTo}-->
+          <!--              withInput={false}-->
+          <!--              kind="list"-->
+          <!--              size="x-small"-->
+          <!--            />-->
+          <!--          {/if}-->
         {/if}
       </div>
       {#if enabledConfig(config, 'assignee')}

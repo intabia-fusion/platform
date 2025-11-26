@@ -48,7 +48,6 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
-import notification from '@hcengineering/notification'
 import { setMetadata } from '@hcengineering/platform'
 import { createClient, getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import {
@@ -708,28 +707,29 @@ async function sendSuccessNotification (
   exportDrive: Ref<Drive>,
   archiveName: string
 ): Promise<void> {
-  const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-    objectId: exportDrive,
-    objectClass: drive.class.Drive,
-    objectSpace: core.space.Space,
-    user: account,
-    isPinned: false,
-    hidden: false
-  })
-
-  await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
-    user: account,
-    objectId: exportDrive,
-    objectClass: drive.class.Drive,
-    icon: exportPlugin.icon.Export,
-    message: exportPlugin.string.ExportCompleted,
-    props: {
-      fileName: archiveName
-    },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId
-  })
+  // TODO: FIXME
+  // const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
+  //   objectId: exportDrive,
+  //   objectClass: drive.class.Drive,
+  //   objectSpace: core.space.Space,
+  //   user: account,
+  //   isPinned: false,
+  //   hidden: false
+  // })
+  //
+  // await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+  //   user: account,
+  //   objectId: exportDrive,
+  //   objectClass: drive.class.Drive,
+  //   icon: exportPlugin.icon.Export,
+  //   message: exportPlugin.string.ExportCompleted,
+  //   props: {
+  //     fileName: archiveName
+  //   },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId
+  // })
 }
 
 async function sendFailureNotification (
@@ -740,34 +740,35 @@ async function sendFailureNotification (
   objectId?: Ref<Doc>,
   objectSpace?: Ref<Space>
 ): Promise<void> {
-  const _objectSpace = objectSpace ?? core.space.Space
-
-  if (objectId === undefined || objectClass === undefined) {
-    return
-  }
-
-  const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-    objectId,
-    objectClass,
-    objectSpace: _objectSpace,
-    user: account,
-    isPinned: false,
-    hidden: false
-  })
-
-  await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
-    user: account,
-    objectId,
-    objectClass,
-    icon: exportPlugin.icon.Export,
-    message: exportPlugin.string.ExportFailed,
-    props: {
-      error
-    },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId
-  })
+  // TODO: FIXME
+  // const _objectSpace = objectSpace ?? core.space.Space
+  //
+  // if (objectId === undefined || objectClass === undefined) {
+  //   return
+  // }
+  //
+  // const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
+  //   objectId,
+  //   objectClass,
+  //   objectSpace: _objectSpace,
+  //   user: account,
+  //   isPinned: false,
+  //   hidden: false
+  // })
+  //
+  // await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+  //   user: account,
+  //   objectId,
+  //   objectClass,
+  //   icon: exportPlugin.icon.Export,
+  //   message: exportPlugin.string.ExportFailed,
+  //   props: {
+  //     error
+  //   },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId
+  // })
 }
 
 async function sendExportNotification (
@@ -779,37 +780,38 @@ async function sendExportNotification (
   objectId?: Ref<Doc>,
   objectSpace?: Ref<Space>
 ): Promise<void> {
-  const _objectSpace = objectSpace ?? core.space.Space
-
-  if (objectId === undefined || objectClass === undefined) {
-    return
-  }
-
-  const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-    objectId,
-    objectClass,
-    objectSpace: _objectSpace,
-    user: account,
-    isPinned: false,
-    hidden: false
-  })
-
-  const message = result.errors.length > 0 ? exportPlugin.string.ExportFailed : exportPlugin.string.ExportCompleted
-
-  await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
-    user: account,
-    objectId,
-    objectClass,
-    icon: exportPlugin.icon.Export,
-    message,
-    props: {
-      exportedCount: result.exportedCount,
-      skippedCount: result.skippedCount,
-      errors: result.errors.map((e: { docId: string, error: string }) => `${e.docId}: ${e.error}`),
-      workspaceUrl
-    },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId
-  })
+  // TODO: FIXME
+  // const _objectSpace = objectSpace ?? core.space.Space
+  //
+  // if (objectId === undefined || objectClass === undefined) {
+  //   return
+  // }
+  //
+  // const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
+  //   objectId,
+  //   objectClass,
+  //   objectSpace: _objectSpace,
+  //   user: account,
+  //   isPinned: false,
+  //   hidden: false
+  // })
+  //
+  // const message = result.errors.length > 0 ? exportPlugin.string.ExportFailed : exportPlugin.string.ExportCompleted
+  //
+  // await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+  //   user: account,
+  //   objectId,
+  //   objectClass,
+  //   icon: exportPlugin.icon.Export,
+  //   message,
+  //   props: {
+  //     exportedCount: result.exportedCount,
+  //     skippedCount: result.skippedCount,
+  //     errors: result.errors.map((e: { docId: string, error: string }) => `${e.docId}: ${e.error}`),
+  //     workspaceUrl
+  //   },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId
+  // })
 }

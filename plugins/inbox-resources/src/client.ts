@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type InboxNotificationsClient } from '@hcengineering/notification'
 import { writable, derived, get } from 'svelte/store'
 import {
   createNotificationContextsQuery,
@@ -21,7 +20,6 @@ import {
 import { notEmpty, SortingOrder } from '@hcengineering/core'
 import cardPlugin from '@hcengineering/card'
 import { type NotificationContext, type Window } from '@hcengineering/communication-types'
-import { getDisplayInboxData, removeContextNotifications } from '@hcengineering/notification-resources'
 
 import { type NavigationItem } from './type'
 
@@ -49,7 +47,6 @@ export class NavigationClient {
       return contexts
         .map((context): NavigationItem => {
           return {
-            type: 'modern',
             _id: context.cardId,
             _class: cardPlugin.class.Card,
             context,
@@ -61,39 +58,13 @@ export class NavigationClient {
     [] as NavigationItem[]
   )
 
-  private readonly legacyNavigationItemsStore
-
   public readonly navigationItemsStore
   public readonly allNavigationItemsStore
 
-  constructor (private readonly oldClient: InboxNotificationsClient) {
-    this.legacyNavigationItemsStore = derived(
-      [this.oldClient.inboxNotificationsByContext, this.oldClient.contextById],
-      ([notificationsByContext, contextById]) => {
-        const inboxData = getDisplayInboxData(notificationsByContext)
-        return Array.from(inboxData.entries())
-          .map(([ctx, notifications]): NavigationItem | undefined => {
-            if (notifications.length === 0) return undefined
-            const context = contextById.get(ctx)
-            if (context == null) return undefined
-
-            return {
-              type: 'legacy',
-              _id: context.objectId,
-              _class: context.objectClass,
-              context,
-              date: new Date(notifications[0].createdOn ?? Date.now()),
-              notifications: notifications.slice(0, 3)
-            }
-          })
-          .filter(notEmpty)
-      }
-    )
-
+  constructor () {
     this.allNavigationItemsStore = derived(
-      [this.modernNavigationItemsStore, this.legacyNavigationItemsStore],
-      ([modern, legacy]): NavigationItem[] =>
-        [...modern, ...legacy].sort((a, b) => b.date.getTime() - a.date.getTime()),
+      [this.modernNavigationItemsStore],
+      ([modern]): NavigationItem[] => [...modern].sort((a, b) => b.date.getTime() - a.date.getTime()),
       [] as NavigationItem[]
     )
 
@@ -123,12 +94,8 @@ export class NavigationClient {
   }
 
   public async remove (item: NavigationItem): Promise<void> {
-    if (item.type === 'modern') {
-      const client = getCommunicationClient()
-      await client.removeNotificationContext(item.context.id)
-    } else {
-      await removeContextNotifications(item.context)
-    }
+    const client = getCommunicationClient()
+    await client.removeNotificationContext(item.context.id)
   }
 }
 

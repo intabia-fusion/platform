@@ -16,7 +16,6 @@
 
 import { Plugin, Resource, plugin } from '@hcengineering/platform'
 import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
-import { TypeMatchFunc } from '@hcengineering/server-notification'
 import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
 export * from './types'
@@ -35,7 +34,8 @@ export default plugin(serverTelegramId, {
     ProviderSettingsHandler: '' as Resource<TriggerFunc>
   },
   function: {
-    IsIncomingMessageTypeMatch: '' as TypeMatchFunc,
+    // TODO: FIXME
+    // IsIncomingMessageTypeMatch: '' as TypeMatchFunc,
     FindMessages: '' as Resource<ObjectDDParticipantFunc>,
     GetCurrentEmployeeTG: '' as Resource<TemplateFieldServerFunc>,
     GetIntegrationOwnerTG: '' as Resource<TemplateFieldServerFunc>

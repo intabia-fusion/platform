@@ -1,12 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-
-  import chunter, { type ChatMessage } from '@hcengineering/chunter'
-  import { Ref, generateId } from '@hcengineering/core'
   import { ReferenceInput } from '@hcengineering/text-editor-resources'
   import { popupstore as popups } from '@hcengineering/ui'
-
-  import { addDocumentCommentFx } from '../../../stores/editors/document'
 
   export let nodeId: string | undefined
   export let popupId: string | undefined
@@ -14,10 +9,11 @@
   const dispatch = createEventDispatcher()
 
   async function handleMessage (event: CustomEvent<string>): Promise<void> {
-    const messageId: Ref<ChatMessage> = generateId()
-    const comment = await addDocumentCommentFx({ content: event.detail, messageId, nodeId })
-
-    dispatch('close', comment)
+    // TODO: FIXME
+    // const messageId: Ref<ChatMessage> = generateId()
+    // const comment = await addDocumentCommentFx({ content: event.detail, messageId, nodeId })
+    //
+    // dispatch('close', comment)
   }
 
   let popup: HTMLDivElement | undefined
@@ -37,11 +33,6 @@
 <svelte:window on:click|capture={handleClick} />
 
 <div class="text-editor-popup w-85" bind:this={popup}>
-  <ReferenceInput
-    autofocus
-    focusable
-    kindSend="primary"
-    placeholder={chunter.string.AddCommentPlaceholder}
-    on:message={handleMessage}
-  />
+  <!--  placeholder={chunter.string.AddCommentPlaceholder}-->
+  <ReferenceInput autofocus focusable kindSend="primary" on:message={handleMessage} />
 </div>

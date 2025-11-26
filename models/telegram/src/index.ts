@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import { type Channel } from '@hcengineering/contact'
 import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@hcengineering/core'
 import {
@@ -125,18 +124,19 @@ export function createModel (builder: Builder): void {
     telegram.templateField.IntegrationOwnerTG
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: telegram.class.Message,
-      action: 'create',
-      icon: contact.icon.Telegram,
-      component: telegram.activity.TelegramMessageCreated,
-      label: telegram.string.SharedMessage
-    },
-    telegram.ids.TelegramMessageCreatedActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: telegram.class.Message,
+  //     action: 'create',
+  //     icon: contact.icon.Telegram,
+  //     component: telegram.activity.TelegramMessageCreated,
+  //     label: telegram.string.SharedMessage
+  //   },
+  //   telegram.ids.TelegramMessageCreatedActivityViewlet
+  // )
 
   builder.createDoc(
     contact.class.ChannelProvider,
@@ -171,19 +171,20 @@ export function createModel (builder: Builder): void {
     telegram.integrationType.Telegram
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: telegram.class.SharedMessages,
-      action: 'create',
-      icon: contact.icon.Telegram,
-      component: telegram.component.SharedMessages,
-      label: telegram.string.SharedMessages,
-      hideIfRemoved: true
-    },
-    telegram.ids.TelegramMessageSharedActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: telegram.class.SharedMessages,
+  //     action: 'create',
+  //     icon: contact.icon.Telegram,
+  //     component: telegram.component.SharedMessages,
+  //     label: telegram.string.SharedMessages,
+  //     hideIfRemoved: true
+  //   },
+  //   telegram.ids.TelegramMessageSharedActivityViewlet
+  // )
 
   builder.createDoc(core.class.FullTextSearchContext, core.space.Model, {
     toClass: telegram.class.Message

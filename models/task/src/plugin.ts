@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-import {} from '@hcengineering/notification'
 import type { Doc, Ref, Space } from '@hcengineering/core'
 import { mergeIds, type IntlString } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'

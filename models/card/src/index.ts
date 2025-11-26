@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import activity from '@hcengineering/activity'
 import {
   type CanCreateCardResource,
   type Card,
@@ -30,7 +29,6 @@ import {
   type Role,
   type Tag
 } from '@hcengineering/card'
-import chunter from '@hcengineering/chunter'
 import core, {
   AccountRole,
   type Blobs,
@@ -649,12 +647,13 @@ export function createModel (builder: Builder): void {
     arrayPresenter: card.component.CardArrayEditor
   })
 
-  builder.mixin(card.class.Card, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: card.class.Card,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(card.class.Card, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: card.class.Card,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(card.class.Card, core.class.Class, setting.mixin.Editable, {
     value: false

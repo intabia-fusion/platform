@@ -14,7 +14,8 @@
 //
 
 import type { Ref } from '@hcengineering/core'
-import { PushSubscription, type PushData } from '@hcengineering/notification'
+// TODO: FIXME
+// import { PushSubscription, type PushData } from '@hcengineering/notification'
 import type { Request, Response } from 'express'
 import webpush, { WebPushError } from 'web-push'
 import config from './config'
@@ -22,11 +23,9 @@ import { createServer, listen } from './server'
 import { Endpoint } from './types'
 
 const errorMessages = ['expired', 'Unregistered', 'No such subscription']
-async function sendPushToSubscription (
-  subscriptions: PushSubscription[],
-  data: PushData
-): Promise<Ref<PushSubscription>[]> {
-  const result: Ref<PushSubscription>[] = []
+// TODO: FIXME
+async function sendPushToSubscription (subscriptions: any[], data: any): Promise<Ref<any>[]> {
+  const result: Ref<any>[] = []
   for (const subscription of subscriptions) {
     try {
       await webpush.sendNotification(subscription, JSON.stringify(data))
@@ -77,7 +76,9 @@ export const main = async (): Promise<void> => {
         if (!checkAuth(req, res)) {
           return
         }
-        const data: PushData | undefined = req.body?.data
+        // TODO: FIXME
+        // const data: PushData | undefined = req.body?.data
+        const data: any | undefined = req.body?.data
         if (data === undefined) {
           res.status(400).send({ err: "'data' is missing" })
           return

@@ -22,8 +22,6 @@ import { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import setting from '@hcengineering/setting'
 import view, { type Viewlet } from '@hcengineering/view'
-import chunter from '@hcengineering/model-chunter'
-import activity from '@hcengineering/activity'
 
 import inventory from './plugin'
 export { inventoryId } from '@hcengineering/inventory'
@@ -79,24 +77,25 @@ export class TVariant extends TAttachedDoc implements Variant {
 export function createModel (builder: Builder): void {
   builder.createModel(TCategory, TProduct, TVariant)
 
-  builder.mixin(inventory.class.Product, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(inventory.class.Category, core.class.Class, activity.mixin.ActivityDoc, {})
-  builder.mixin(inventory.class.Variant, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: inventory.class.Product,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: inventory.class.Category,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: inventory.class.Variant,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(inventory.class.Product, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(inventory.class.Category, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(inventory.class.Variant, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: inventory.class.Product,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: inventory.class.Category,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: inventory.class.Variant,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(inventory.class.Category, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: inventory.component.CategoryPresenter
@@ -191,27 +190,28 @@ export function createModel (builder: Builder): void {
     inventory.category.Inventory
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: inventory.class.Product,
-      label: chunter.string.LeftComment
-    },
-    inventory.ids.ProductChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: inventory.class.Category,
-      label: chunter.string.LeftComment
-    },
-    inventory.ids.CategoryChatMessageViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: inventory.class.Product,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   inventory.ids.ProductChatMessageViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: inventory.class.Category,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   inventory.ids.CategoryChatMessageViewlet
+  // )
 
   createAction(builder, {
     label: inventory.string.CreateSubcategory,

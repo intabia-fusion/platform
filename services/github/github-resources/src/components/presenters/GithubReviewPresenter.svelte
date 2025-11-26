@@ -5,8 +5,6 @@
 <script lang="ts">
   import { WithLookup } from '@hcengineering/core'
   import { GithubPullRequestReviewState, GithubReview } from '@hcengineering/github'
-
-  import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { IntlString } from '@hcengineering/platform'
   import { MessageViewer } from '@hcengineering/presentation'
@@ -62,36 +60,37 @@
       ? getPlatformColor(presentationState.color, $themeStore.dark)
       : undefined}
   >
-    <ActivityMessageTemplate
-      message={value}
-      parentMessage={undefined}
-      {person}
-      {showNotify}
-      {isHighlighted}
-      {isSelected}
-      {shouldScroll}
-      {embedded}
-      viewlet={undefined}
-      {onClick}
-    >
-      <svelte:fragment slot="header">
-        <ActivityMessageHeader
-          message={value}
-          {person}
-          object={undefined}
-          parentObject={undefined}
-          isEdited={false}
-          label={presentationState.label}
-        />
-      </svelte:fragment>
-      <svelte:fragment slot="content">
-        <div class="flex-row-center">
-          <div class="customContent">
-            <MessageViewer message={value.body} />
-          </div>
-        </div>
-      </svelte:fragment>
-    </ActivityMessageTemplate>
+    <!--    TODO: FIXME-->
+    <!--    <ActivityMessageTemplate-->
+    <!--      message={value}-->
+    <!--      parentMessage={undefined}-->
+    <!--      {person}-->
+    <!--      {showNotify}-->
+    <!--      {isHighlighted}-->
+    <!--      {isSelected}-->
+    <!--      {shouldScroll}-->
+    <!--      {embedded}-->
+    <!--      viewlet={undefined}-->
+    <!--      {onClick}-->
+    <!--    >-->
+    <!--      <svelte:fragment slot="header">-->
+    <!--        <ActivityMessageHeader-->
+    <!--          message={value}-->
+    <!--          {person}-->
+    <!--          object={undefined}-->
+    <!--          parentObject={undefined}-->
+    <!--          isEdited={false}-->
+    <!--          label={presentationState.label}-->
+    <!--        />-->
+    <!--      </svelte:fragment>-->
+    <!--      <svelte:fragment slot="content">-->
+    <!--        <div class="flex-row-center">-->
+    <!--          <div class="customContent">-->
+    <!--            <MessageViewer message={value.body} />-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </svelte:fragment>-->
+    <!--    </ActivityMessageTemplate>-->
   </div>
 {/if}
 

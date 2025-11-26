@@ -13,9 +13,7 @@
 // limitations under the License.
 //
 
-import chunter from '@hcengineering/chunter'
 import core, { type Markup, type Timestamp, type PersonId, generateId, getCurrentAccount } from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
 import { type ActionContext } from '@hcengineering/presentation'
 import type { AnySvelteComponent } from '@hcengineering/ui'
 import { type Editor, Extension } from '@tiptap/core'
@@ -192,8 +190,9 @@ function initCommentDecoratorView (options: InlineCommentExtensionOptions, view:
     // hierarchy of almost all other packages. So any complex Svelte components have to be moved to other packages.
     // In the future, it might be worth considering putting text editor plugins in the text-editor-plugins
     // package so that one can create dependencies on packages such as activity and chunter.
-    const component = await getResource(chunter.component.InlineCommentThread)
-    view.dispatch(setMeta(view.state.tr, { component }))
+    // TODO: FIXME
+    // const component = await getResource(chunter.component.InlineCommentThread)
+    // view.dispatch(setMeta(view.state.tr, { component }))
   }
 
   void fetchComponent()

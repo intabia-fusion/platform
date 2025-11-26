@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { MeetingMinutes, Room } from '@hcengineering/love'
-  import { ChannelEmbeddedContent } from '@hcengineering/chunter-resources'
   import { WidgetState } from '@hcengineering/workbench-resources'
 
   export let widgetState: WidgetState
@@ -24,12 +23,13 @@
   export let width: string
 </script>
 
-<ChannelEmbeddedContent
-  {width}
-  {height}
-  readonly
-  object={meetingMinutes}
-  threadId={undefined}
-  collection="transcription"
-  on:close
-></ChannelEmbeddedContent>
+<!--TODO: FIXME-->
+<!--<ChannelEmbeddedContent-->
+<!--  {width}-->
+<!--  {height}-->
+<!--  readonly-->
+<!--  object={meetingMinutes}-->
+<!--  threadId={undefined}-->
+<!--  collection="transcription"-->
+<!--  on:close-->
+<!--&gt;</ChannelEmbeddedContent>-->

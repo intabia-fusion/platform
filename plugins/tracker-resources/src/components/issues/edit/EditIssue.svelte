@@ -41,7 +41,6 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocNavLink, ParentsNavigator, showMenu, RelationsEditor } from '@hcengineering/view-resources'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { Analytics } from '@hcengineering/analytics'
 
   import { createEventDispatcher, onDestroy } from 'svelte'
@@ -71,7 +70,8 @@
   let descriptionBox: AttachmentStyleBoxCollabEditor
   let showAllMixins: boolean
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
 
   let issueId: Ref<Issue> | undefined
 
@@ -87,15 +87,15 @@
 
   function read (_id?: Ref<Issue>): void {
     if (_id && lastId && lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      void inboxClient.readDoc(prev)
+      // void inboxClient.readDoc(prev)
     }
   }
 
   onDestroy(async () => {
-    if (issueId === undefined) return
-    void inboxClient.readDoc(issueId)
+    // if (issueId === undefined) return
+    // void inboxClient.readDoc(issueId)
   })
 
   $: if (issueId !== undefined && _class !== undefined) {

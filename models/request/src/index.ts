@@ -13,33 +13,13 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import type { Person } from '@hcengineering/contact'
 import contact from '@hcengineering/contact'
 import { type Timestamp, type Domain, type Ref, type Tx, type ClassCollaborators } from '@hcengineering/core'
-import {
-  ArrOf,
-  type Builder,
-  Collection,
-  Mixin,
-  Model,
-  Prop,
-  ReadOnly,
-  TypeRef,
-  TypeString,
-  UX
-} from '@hcengineering/model'
-import chunter, { TChatMessage } from '@hcengineering/model-chunter'
+import { ArrOf, type Builder, Mixin, Model, Prop, ReadOnly, TypeRef, TypeString, UX } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass } from '@hcengineering/model-core'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import view from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
-import {
-  type Request,
-  type RequestDecisionComment,
-  type RequestPresenter,
-  type RequestStatus
-} from '@hcengineering/request'
+import { type Request, type RequestPresenter, type RequestStatus } from '@hcengineering/request'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import request from './plugin'
 
@@ -75,12 +55,14 @@ export class TRequest extends TAttachedDoc implements Request {
   @ReadOnly()
     rejected?: Ref<Person>
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  //   comments?: number
 }
 
-@Mixin(request.mixin.RequestDecisionComment, chunter.class.ChatMessage)
-export class TRequestDecisionComment extends TChatMessage implements RequestDecisionComment {}
+// TODO: FIXME
+// @Mixin(request.mixin.RequestDecisionComment, chunter.class.ChatMessage)
+// export class TRequestDecisionComment extends TChatMessage implements RequestDecisionComment {}
 
 @Mixin(request.mixin.RequestPresenter, core.class.Class)
 export class TRequestPresenter extends TClass implements RequestPresenter {
@@ -88,9 +70,14 @@ export class TRequestPresenter extends TClass implements RequestPresenter {
 }
 
 export function createModel (builder: Builder): void {
-  builder.createModel(TRequest, TRequestDecisionComment, TRequestPresenter)
+  builder.createModel(
+    TRequest,
+    // TRequestDecisionComment,
+    TRequestPresenter
+  )
 
-  builder.mixin(request.class.Request, core.class.Class, activity.mixin.IgnoreActivity, {})
+  // TODO: FIXME
+  // builder.mixin(request.class.Request, core.class.Class, activity.mixin.IgnoreActivity, {})
 
   builder.mixin(request.class.Request, core.class.Class, view.mixin.ObjectEditor, {
     editor: request.component.EditRequest
@@ -100,9 +87,10 @@ export function createModel (builder: Builder): void {
     presenter: request.component.RequestPresenter
   })
 
-  builder.mixin(request.class.Request, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: request.component.NotificationRequestView
-  })
+  // TODO: FIXME
+  // builder.mixin(request.class.Request, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: request.component.NotificationRequestView
+  // })
 
   builder.mixin(request.class.Request, core.class.Class, request.mixin.RequestPresenter, {
     presenter: request.component.RequestView
@@ -113,78 +101,79 @@ export function createModel (builder: Builder): void {
     fields: ['requested', 'createdBy']
   })
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: request.string.Requests,
-      icon: request.icon.Requests,
-      objectClass: request.class.Request
-    },
-    request.ids.RequestNotificationGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: request.string.Requests,
+  //     icon: request.icon.Requests,
+  //     objectClass: request.class.Request
+  //   },
+  //   request.ids.RequestNotificationGroup
+  // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      objectClass: request.class.Request,
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      field: 'requested',
-      generated: false,
-      group: request.ids.RequestNotificationGroup,
-      label: request.string.NewRequest,
-      allowedForAuthor: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} sent you a request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a request for the {doc}</p>',
-        subjectTemplate: '{doc}'
-      }
-    },
-    request.ids.CreateRequestNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      objectClass: request.class.Request,
-      txClasses: [core.class.TxUpdateDoc],
-      field: 'requested',
-      generated: false,
-      group: request.ids.RequestNotificationGroup,
-      label: request.string.CancelRequest,
-      allowedForAuthor: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} canceled the request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> canceled the request for the {doc}</p>',
-        subjectTemplate: '{doc}'
-      }
-    },
-    request.ids.RemoveRequestNotification
-  )
-
-  builder.createDoc(notification.class.ActivityNotificationViewlet, core.space.Model, {
-    messageMatch: {
-      _class: activity.class.DocUpdateMessage,
-      objectClass: request.class.Request,
-      action: 'update',
-      'attributeUpdates.attrKey': 'requested'
-    },
-    presenter: request.component.RequestedChangedNotification
-  })
-
-  generateClassNotificationTypes(
-    builder,
-    request.class.Request,
-    request.ids.RequestNotificationGroup,
-    ['requested'],
-    ['comments']
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     objectClass: request.class.Request,
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     field: 'requested',
+  //     generated: false,
+  //     group: request.ids.RequestNotificationGroup,
+  //     label: request.string.NewRequest,
+  //     allowedForAuthor: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{sender} sent you a request for the {doc}',
+  //       htmlTemplate: '<p><b>{sender}</b> sent you a request for the {doc}</p>',
+  //       subjectTemplate: '{doc}'
+  //     }
+  //   },
+  //   request.ids.CreateRequestNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     objectClass: request.class.Request,
+  //     txClasses: [core.class.TxUpdateDoc],
+  //     field: 'requested',
+  //     generated: false,
+  //     group: request.ids.RequestNotificationGroup,
+  //     label: request.string.CancelRequest,
+  //     allowedForAuthor: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{sender} canceled the request for the {doc}',
+  //       htmlTemplate: '<p><b>{sender}</b> canceled the request for the {doc}</p>',
+  //       subjectTemplate: '{doc}'
+  //     }
+  //   },
+  //   request.ids.RemoveRequestNotification
+  // )
+  //
+  // builder.createDoc(notification.class.ActivityNotificationViewlet, core.space.Model, {
+  //   messageMatch: {
+  //     _class: activity.class.DocUpdateMessage,
+  //     objectClass: request.class.Request,
+  //     action: 'update',
+  //     'attributeUpdates.attrKey': 'requested'
+  //   },
+  //   presenter: request.component.RequestedChangedNotification
+  // })
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   request.class.Request,
+  //   request.ids.RequestNotificationGroup,
+  //   ['requested'],
+  //   ['comments']
+  // )
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_REQUEST,

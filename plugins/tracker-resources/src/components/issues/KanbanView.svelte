@@ -28,7 +28,6 @@
     WithLookup
   } from '@hcengineering/core'
   import { Item, Kanban as KanbanUI } from '@hcengineering/kanban'
-  import notification from '@hcengineering/notification'
   import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
   import { DocWithRank, getStates } from '@hcengineering/task'
@@ -39,7 +38,6 @@
     ColorDefinition,
     Component,
     defaultBackground,
-    getEventPositionElement,
     IconAdd,
     Label,
     Loading,
@@ -57,7 +55,6 @@
     getPresenter,
     groupBy,
     ListSelectionProvider,
-    Menu,
     noCategory,
     openDoc,
     SelectDirection,
@@ -65,7 +62,6 @@
     showMenu,
     statusStore
   } from '@hcengineering/view-resources'
-  import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'
@@ -408,7 +404,8 @@
               <ParentNamesPresenter value={issue} />
             </div>
             <div class="flex-row-center gap-2 reverse flex-no-shrink">
-              <Component is={notification.component.NotificationPresenter} props={{ value: object }} />
+              <!--              TODO: FIXME-->
+              <!--              <Component is={notification.component.NotificationPresenter} props={{ value: object }} />-->
               <AssigneeEditor object={issue} avatarSize={'card'} shouldShowName={false} />
             </div>
           </div>
@@ -479,12 +476,12 @@
                   {#if enabledConfig(config, 'attachments') && (object.attachments ?? 0) > 0}
                     <AttachmentsPresenter value={object.attachments} {object} />
                   {/if}
-                  <ChatMessagesPresenter value={object.comments} {object} />
-                  <ChatMessagesPresenter
-                    object={object.$lookup?.attachedTo}
-                    value={object.$lookup?.attachedTo?.comments}
-                    withInput={false}
-                  />
+                  <!--                  <ChatMessagesPresenter value={object.comments} {object} />-->
+                  <!--                  <ChatMessagesPresenter-->
+                  <!--                    object={object.$lookup?.attachedTo}-->
+                  <!--                    value={object.$lookup?.attachedTo?.comments}-->
+                  <!--                    withInput={false}-->
+                  <!--                  />-->
                 </div>
               </div>
             {:else}

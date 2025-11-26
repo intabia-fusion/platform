@@ -57,7 +57,6 @@
     "@hcengineering/client": "workspace:^0.7.18",
     "@hcengineering/client-resources": "workspace:^0.7.18",
     "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "cors": "^2.8.5",

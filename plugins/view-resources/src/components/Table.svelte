@@ -29,7 +29,6 @@
     getObjectValue,
     mergeQueries
   } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
   import ui, {
     Button,
@@ -461,10 +460,11 @@
                         />
                       </div>
                     {/if}
-                    <Component
-                      is={notification.component.NotificationPresenter}
-                      props={{ value: object, kind: enableChecking ? 'table' : 'block' }}
-                    />
+                    <!--                    TODO: FIXME-->
+                    <!--                    <Component-->
+                    <!--                      is={notification.component.NotificationPresenter}-->
+                    <!--                      props={{ value: object, kind: enableChecking ? 'table' : 'block' }}-->
+                    <!--                    />-->
                   </div>
                 {:else}
                   <div class="antiTable-cells__checkCell">

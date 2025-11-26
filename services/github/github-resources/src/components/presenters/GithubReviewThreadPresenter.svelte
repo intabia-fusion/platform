@@ -6,7 +6,6 @@
   import core, { PersonId, Ref, WithLookup, getCurrentAccount } from '@hcengineering/core'
   import { GithubPullRequest, GithubReviewComment, GithubReviewThread } from '@hcengineering/github'
 
-  import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
   import { Person } from '@hcengineering/contact'
   import { EmployeePresenter, getPersonByPersonId, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -38,41 +37,42 @@
 
   const commentsQuery = createQuery()
 
-  let comments: GithubReviewComment[] = []
+  const comments: GithubReviewComment[] = []
 
-  $: commentsQuery.query(
-    github.class.GithubReviewComment,
-    { attachedTo: value.attachedTo as Ref<GithubPullRequest>, reviewThreadId: value.threadId },
-    (res) => {
-      comments = res
-    }
-  )
-  let expanded = !value.isResolved
+  // TODO: FIXME
+  // $: commentsQuery.query(
+  //   github.class.GithubReviewComment,
+  //   { attachedTo: value.attachedTo as Ref<GithubPullRequest>, reviewThreadId: value.threadId },
+  //   (res) => {
+  //     comments = res
+  //   }
+  // )
+  const expanded = !value.isResolved
 
   async function onMessage (event: CustomEvent<string>): Promise<void> {
-    await getClient().addCollection(
-      github.class.GithubReviewComment,
-      value.space,
-      value.attachedTo,
-      value.attachedToClass,
-      'reviewComments',
-      {
-        body: event.detail,
-        diffHunk: '',
-        includesCreatedEdit: false,
-        isMinimized: false,
-        line: 0,
-        minimizedReason: null,
-        originalLine: 0,
-        originalStartLine: 0,
-        outdated: false,
-        path: value.path,
-        reviewThreadId: value.threadId,
-        reviewUrl: '',
-        startLine: 0,
-        url: ''
-      }
-    )
+    // await getClient().addCollection(
+    //   github.class.GithubReviewComment,
+    //   value.space,
+    //   value.attachedTo,
+    //   value.attachedToClass,
+    //   'reviewComments',
+    //   {
+    //     body: event.detail,
+    //     diffHunk: '',
+    //     includesCreatedEdit: false,
+    //     isMinimized: false,
+    //     line: 0,
+    //     minimizedReason: null,
+    //     originalLine: 0,
+    //     originalStartLine: 0,
+    //     outdated: false,
+    //     path: value.path,
+    //     reviewThreadId: value.threadId,
+    //     reviewUrl: '',
+    //     startLine: 0,
+    //     url: ''
+    //   }
+    // )
   }
   async function changeResolution (): Promise<void> {
     if (value.isResolved) {
@@ -90,90 +90,90 @@
   class:reviewUnresolved={!value.isResolved}
   style:border-color={!value.isResolved ? getPlatformColor(PaletteColorIndexes.Orange, $themeStore.dark) : undefined}
 >
-  <ActivityMessageTemplate
-    message={value}
-    parentMessage={undefined}
-    {person}
-    {showNotify}
-    {isHighlighted}
-    {isSelected}
-    {shouldScroll}
-    {embedded}
-    viewlet={undefined}
-    {onClick}
-  >
-    <svelte:fragment slot="header">
-      <ActivityMessageHeader
-        message={value}
-        {person}
-        object={undefined}
-        parentObject={undefined}
-        isEdited={false}
-        label={getEmbeddedLabel('reviewed')}
-      />
-    </svelte:fragment>
-    <svelte:fragment slot="content" let:readonly>
-      <div class="file-content">
-        {#if comments.length > 0}
-          <Component
-            is={diffview.component.InlineDiffView}
-            props={{
-              patch: comments?.[0]?.diffHunk ?? '',
-              fileName: value.path,
-              expandable: value.isResolved,
-              expanded,
-              onExpand: (value) => {
-                expanded = value
-              }
-            }}
-          />
-        {/if}
-        {#if expanded}
-          <div class="ml-4">
-            {#each comments as comment}
-              <ReviewCommentPresenter {comment} />
-            {/each}
-          </div>
-          {#if !readonly}
-            <div class="ml-4 mr-4">
-              <ReferenceInput showSend={true} showHeader showActions on:message={onMessage} />
-            </div>
-          {/if}
-          <div class="p-2 flex-row-center flex-grow">
-            {#if githubConfiguration.ResolveThreadSupported}
-              <Button
-                label={value.isResolved
-                  ? getEmbeddedLabel('Unresolve conversation')
-                  : getEmbeddedLabel('Resolve conversation')}
-                on:click={changeResolution}
-              />
-            {/if}
-            {#if value.isResolved && value.resolvedBy != null}
-              {#await getPersonByPersonId(value.resolvedBy) then resolvePerson}
-                {#if resolvePerson !== undefined}
-                  <div class="flex-row-center ml-4">
-                    <Label label={getEmbeddedLabel('resolved by')} />
+  <!--  <ActivityMessageTemplate-->
+  <!--    message={value}-->
+  <!--    parentMessage={undefined}-->
+  <!--    {person}-->
+  <!--    {showNotify}-->
+  <!--    {isHighlighted}-->
+  <!--    {isSelected}-->
+  <!--    {shouldScroll}-->
+  <!--    {embedded}-->
+  <!--    viewlet={undefined}-->
+  <!--    {onClick}-->
+  <!--  >-->
+  <!--    <svelte:fragment slot="header">-->
+  <!--      <ActivityMessageHeader-->
+  <!--        message={value}-->
+  <!--        {person}-->
+  <!--        object={undefined}-->
+  <!--        parentObject={undefined}-->
+  <!--        isEdited={false}-->
+  <!--        label={getEmbeddedLabel('reviewed')}-->
+  <!--      />-->
+  <!--    </svelte:fragment>-->
+  <!--    <svelte:fragment slot="content" let:readonly>-->
+  <!--      <div class="file-content">-->
+  <!--        {#if comments.length > 0}-->
+  <!--          <Component-->
+  <!--            is={diffview.component.InlineDiffView}-->
+  <!--            props={{-->
+  <!--              patch: comments?.[0]?.diffHunk ?? '',-->
+  <!--              fileName: value.path,-->
+  <!--              expandable: value.isResolved,-->
+  <!--              expanded,-->
+  <!--              onExpand: (value) => {-->
+  <!--                expanded = value-->
+  <!--              }-->
+  <!--            }}-->
+  <!--          />-->
+  <!--        {/if}-->
+  <!--        {#if expanded}-->
+  <!--          <div class="ml-4">-->
+  <!--            {#each comments as comment}-->
+  <!--              <ReviewCommentPresenter {comment} />-->
+  <!--            {/each}-->
+  <!--          </div>-->
+  <!--          {#if !readonly}-->
+  <!--            <div class="ml-4 mr-4">-->
+  <!--              <ReferenceInput showSend={true} showHeader showActions on:message={onMessage} />-->
+  <!--            </div>-->
+  <!--          {/if}-->
+  <!--          <div class="p-2 flex-row-center flex-grow">-->
+  <!--            {#if githubConfiguration.ResolveThreadSupported}-->
+  <!--              <Button-->
+  <!--                label={value.isResolved-->
+  <!--                  ? getEmbeddedLabel('Unresolve conversation')-->
+  <!--                  : getEmbeddedLabel('Resolve conversation')}-->
+  <!--                on:click={changeResolution}-->
+  <!--              />-->
+  <!--            {/if}-->
+  <!--            {#if value.isResolved && value.resolvedBy != null}-->
+  <!--              {#await getPersonByPersonId(value.resolvedBy) then resolvePerson}-->
+  <!--                {#if resolvePerson !== undefined}-->
+  <!--                  <div class="flex-row-center ml-4">-->
+  <!--                    <Label label={getEmbeddedLabel('resolved by')} />-->
 
-                    <div class="content ml-2 clear-mins">
-                      <div class="header clear-mins">
-                        {#if resolvePerson}
-                          <EmployeePresenter value={resolvePerson} shouldShowAvatar={true} />
-                        {:else}
-                          <div class="strong">
-                            <Label label={core.string.System} />
-                          </div>
-                        {/if}
-                      </div>
-                    </div>
-                  </div>
-                {/if}
-              {/await}
-            {/if}
-          </div>
-        {/if}
-      </div>
-    </svelte:fragment>
-  </ActivityMessageTemplate>
+  <!--                    <div class="content ml-2 clear-mins">-->
+  <!--                      <div class="header clear-mins">-->
+  <!--                        {#if resolvePerson}-->
+  <!--                          <EmployeePresenter value={resolvePerson} shouldShowAvatar={true} />-->
+  <!--                        {:else}-->
+  <!--                          <div class="strong">-->
+  <!--                            <Label label={core.string.System} />-->
+  <!--                          </div>-->
+  <!--                        {/if}-->
+  <!--                      </div>-->
+  <!--                    </div>-->
+  <!--                  </div>-->
+  <!--                {/if}-->
+  <!--              {/await}-->
+  <!--            {/if}-->
+  <!--          </div>-->
+  <!--        {/if}-->
+  <!--      </div>-->
+  <!--    </svelte:fragment>-->
+  <!--  </ActivityMessageTemplate></>-->
 </div>
 
 <style lang="scss">

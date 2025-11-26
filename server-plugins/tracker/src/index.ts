@@ -17,7 +17,6 @@ import { Doc } from '@hcengineering/core'
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { TriggerFunc } from '@hcengineering/server-core'
-import { Presenter, NotificationContentProvider } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -29,9 +28,10 @@ export const serverTrackerId = 'server-tracker' as Plugin
  */
 export default plugin(serverTrackerId, {
   function: {
-    IssueHTMLPresenter: '' as Resource<Presenter>,
-    IssueTextPresenter: '' as Resource<Presenter>,
-    IssueNotificationContentProvider: '' as Resource<NotificationContentProvider>,
+    // TODO: FIXME
+    // IssueHTMLPresenter: '' as Resource<Presenter>,
+    // IssueTextPresenter: '' as Resource<Presenter>,
+    // IssueNotificationContentProvider: '' as Resource<NotificationContentProvider>,
     IssueLinkIdProvider: '' as Resource<(doc: Doc) => Promise<string>>
   },
   trigger: {

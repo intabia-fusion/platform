@@ -15,7 +15,6 @@
 
 import type { Contact, Employee } from '@hcengineering/contact'
 import type { Arr, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Type } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
 import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { Viewlet } from '@hcengineering/view'
@@ -139,11 +138,12 @@ const hr = plugin(hrId, {
     PTO2: '' as Ref<RequestType>,
     Remote: '' as Ref<RequestType>,
     Overtime: '' as Ref<RequestType>,
-    Overtime2: '' as Ref<RequestType>,
-    CreateRequestNotification: '' as Ref<NotificationType>,
-    UpdateRequestNotification: '' as Ref<NotificationType>,
-    RemoveRequestNotification: '' as Ref<NotificationType>,
-    CreatePublicHolidayNotification: '' as Ref<NotificationType>
+    Overtime2: '' as Ref<RequestType>
+    // TODO: FIXME
+    // CreateRequestNotification: '' as Ref<NotificationType>,
+    // UpdateRequestNotification: '' as Ref<NotificationType>,
+    // RemoveRequestNotification: '' as Ref<NotificationType>,
+    // CreatePublicHolidayNotification: '' as Ref<NotificationType>
   },
   viewlet: {
     TableMember: '' as Ref<Viewlet>,

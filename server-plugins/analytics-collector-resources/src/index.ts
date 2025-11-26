@@ -13,7 +13,5 @@
 // limitations under the License.
 //
 
-export * from './utils'
-
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({})

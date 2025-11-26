@@ -18,9 +18,7 @@
   import { Ref } from '@hcengineering/core'
   import { Document } from '@hcengineering/document'
   import { createQuery } from '@hcengineering/presentation'
-  import { Label, Lazy, Scroller } from '@hcengineering/ui'
-  import activity, { ActivityReference } from '@hcengineering/activity'
-  import { ActivityReferencePresenter } from '@hcengineering/activity-resources'
+  import { Label } from '@hcengineering/ui'
 
   import document from '../../plugin'
 
@@ -28,17 +26,18 @@
 
   const query = createQuery()
 
-  let references: ActivityReference[] = []
-
-  $: query.query(
-    activity.class.ActivityReference,
-    {
-      attachedTo: doc
-    },
-    (res) => {
-      references = res
-    }
-  )
+    // TODO: FIXME
+    // let references: ActivityReference[] = []
+    //
+    // $: query.query(
+    //   activity.class.ActivityReference,
+    //   {
+    //     attachedTo: doc
+    //   },
+    //   (res) => {
+    //     references = res
+    //   }
+    // )
 </script>
 
 <div class="h-full flex-col clear-mins">
@@ -48,21 +47,21 @@
 
   <div class="divider" />
 
-  {#if references.length > 0}
-    <Scroller padding="0.75rem 0.25rem">
-      {#each references as reference}
-        <Lazy>
-          <ActivityReferencePresenter value={reference} hoverStyles="filledHover" hideLink />
-        </Lazy>
-      {/each}
-    </Scroller>
-  {:else}
-    <div class="flex-col justify-center flex-grow text-center">
-      <div class="label nowrap fs-bold">
-        <Label label={document.string.NoBacklinks} />
-      </div>
-    </div>
-  {/if}
+  <!--{#if references.length > 0}-->
+  <!--  <Scroller padding="0.75rem 0.25rem">-->
+  <!--    {#each references as reference}-->
+  <!--      <Lazy>-->
+  <!--        <ActivityReferencePresenter value={reference} hoverStyles="filledHover" hideLink />-->
+  <!--      </Lazy>-->
+  <!--    {/each}-->
+  <!--  </Scroller>-->
+  <!--{:else}-->
+  <!--  <div class="flex-col justify-center flex-grow text-center">-->
+  <!--    <div class="label nowrap fs-bold">-->
+  <!--      <Label label={document.string.NoBacklinks} />-->
+  <!--    </div>-->
+  <!--  </div>-->
+  <!--{/if}-->
 </div>
 
 <style lang="scss">

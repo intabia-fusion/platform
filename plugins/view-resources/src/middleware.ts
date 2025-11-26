@@ -23,7 +23,6 @@ import core, {
 import platform, { getResource, PlatformError, translate } from '@hcengineering/platform'
 import { BasePresentationMiddleware, type PresentationMiddleware } from '@hcengineering/presentation'
 import view, { type IAggregationManager } from '@hcengineering/view'
-import notification from '@hcengineering/notification'
 import { addNotification, NotificationSeverity } from '@hcengineering/ui'
 import ReadOnlyNotification from './components/ReadOnlyNotification.svelte'
 import ForbiddenNotification from './components/ForbiddenNotification.svelte'
@@ -128,35 +127,6 @@ export class AggregationMiddleware extends BasePresentationMiddleware implements
     return { unsubscribe: ret.unsubscribe }
   }
 
-  // TODO: rework notifications to avoid using Account and remove it
-  private shouldAggregate (attrClass: Ref<Class<Doc>>, _class: Ref<Class<Doc>>): boolean {
-    // TODO: FIXME
-    // if (attrClass !== core.class.Account) {
-    //   return true
-    // }
-
-    const h = this.client.getHierarchy()
-    const skipAccountAggregation = [
-      notification.class.BrowserNotification,
-      notification.class.InboxNotification,
-      notification.class.MentionInboxNotification,
-      notification.class.CommonInboxNotification,
-      notification.class.ActivityInboxNotification,
-      notification.class.DocNotifyContext
-    ]
-
-    for (const skipClass of skipAccountAggregation) {
-      if (_class === skipClass) {
-        return false
-      }
-
-      if (h.isDerived(_class, skipClass)) {
-        return false
-      }
-    }
-    return true
-  }
-
   private async getAggregationManager (_class: Ref<Class<Doc>>): Promise<IAggregationManager<any> | undefined> {
     let mgr = this.mgrs.get(_class)
 
@@ -216,10 +186,6 @@ export class AggregationMiddleware extends BasePresentationMiddleware implements
     for (const attr of allAttrs.values()) {
       try {
         if (attr.type._class !== core.class.RefTo) {
-          continue
-        }
-
-        if (!this.shouldAggregate((attr.type as RefTo<Doc>).to, _class)) {
           continue
         }
 

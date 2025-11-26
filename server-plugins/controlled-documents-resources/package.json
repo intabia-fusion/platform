@@ -38,15 +38,12 @@
     "@types/node": "^22.18.1"
   },
   "dependencies": {
-    "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/controlled-documents": "workspace:^0.7.0",
     "@hcengineering/server-contact": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/request": "workspace:^0.7.0",
-    "@hcengineering/server-chunter-resources": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/training": "workspace:^0.7.0",

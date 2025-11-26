@@ -17,7 +17,6 @@
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc, SearchPresenterProvider } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-notification'
 import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
 export * from './utils'
@@ -40,10 +39,11 @@ export default plugin(serverContactId, {
     OnSpaceTypeMembers: '' as Resource<TriggerFunc>
   },
   function: {
-    PersonHTMLPresenter: '' as Resource<Presenter>,
-    PersonTextPresenter: '' as Resource<Presenter>,
-    OrganizationHTMLPresenter: '' as Resource<Presenter>,
-    OrganizationTextPresenter: '' as Resource<Presenter>,
+    // TODO: FIXME
+    // PersonHTMLPresenter: '' as Resource<Presenter>,
+    // PersonTextPresenter: '' as Resource<Presenter>,
+    // OrganizationHTMLPresenter: '' as Resource<Presenter>,
+    // OrganizationTextPresenter: '' as Resource<Presenter>,
 
     ContactNameProvider: '' as Resource<SearchPresenterProvider>,
     GetCurrentEmployeeName: '' as Resource<TemplateFieldServerFunc>,

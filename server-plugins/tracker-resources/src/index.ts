@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { Person } from '@hcengineering/contact'
 import core, {
   concatLink,
@@ -29,11 +28,8 @@ import core, {
   TxUpdateDoc,
   WithLookup
 } from '@hcengineering/core'
-import { NotificationContent } from '@hcengineering/notification'
 import { getMetadata, IntlString } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { NOTIFICATION_BODY_SIZE } from '@hcengineering/server-notification'
-import { stripTags } from '@hcengineering/text-core'
 import tracker, {
   Component,
   Issue,
@@ -93,7 +89,7 @@ export async function getIssueNotificationContent (
   tx: TxCUD<Doc>,
   target: Ref<Person>,
   control: TriggerControl
-): Promise<NotificationContent> {
+): Promise<any> {
   const issue = doc as Issue
 
   const issueTitle = await issueTextPresenter(doc)
@@ -106,12 +102,13 @@ export async function getIssueNotificationContent (
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
   if (tx._class === core.class.TxCreateDoc) {
-    if (tx.objectClass === chunter.class.ChatMessage) {
-      const createTx = tx as TxCreateDoc<ChatMessage>
-      const message = createTx.attributes.message
-      const plainTextMessage = stripTags(message, NOTIFICATION_BODY_SIZE)
-      intlParams.message = plainTextMessage
-    }
+    // TODO: FIXME
+    // if (tx.objectClass === chunter.class.ChatMessage) {
+    //   const createTx = tx as TxCreateDoc<ChatMessage>
+    //   const message = createTx.attributes.message
+    //   const plainTextMessage = stripTags(message, NOTIFICATION_BODY_SIZE)
+    //   intlParams.message = plainTextMessage
+    // }
   } else if (tx._class === core.class.TxUpdateDoc) {
     const updateTx = tx as TxUpdateDoc<Issue>
 

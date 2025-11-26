@@ -4,7 +4,6 @@
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import chunter from '@hcengineering/chunter'
 import core, {
   BrandingMap,
   buildSocialIdString,
@@ -1259,18 +1258,19 @@ export class PlatformWorker {
       }
     })
     this.app.webhooks.on('issue_comment', async ({ payload, name, id }) => {
-      const repoWorker = this.getWorker(payload.installation?.id)
-      if (repoWorker !== undefined) {
-        catchEventError(
-          this.ctx.with(name, {}, (ctx) =>
-            repoWorker.handleEvent(ctx, chunter.class.ChatMessage, payload.installation?.id, payload)
-          ),
-          payload.action,
-          name,
-          id,
-          payload.repository.name
-        )
-      }
+      // TODO: FIXME
+      // const repoWorker = this.getWorker(payload.installation?.id)
+      // if (repoWorker !== undefined) {
+      //   catchEventError(
+      //     this.ctx.with(name, {}, (ctx) =>
+      //       repoWorker.handleEvent(ctx, chunter.class.ChatMessage, payload.installation?.id, payload)
+      //     ),
+      //     payload.action,
+      //     name,
+      //     id,
+      //     payload.repository.name
+      //   )
+      // }
     })
 
     this.app.webhooks.on('repository', async ({ payload, name, id }) => {

@@ -1,12 +1,10 @@
 <script lang="ts">
-  import chunter from '@hcengineering/chunter'
   import { Class, Doc, Ref, RelatedDocument, WithLookup } from '@hcengineering/core'
   import { IntlString, getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Issue } from '@hcengineering/tracker'
   import { Component, Icon, IconClose, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import activity from '@hcengineering/activity'
 
   import { issueLinkFragmentProvider, updateIssueRelation } from '../../issues'
   import tracker from '../../plugin'
@@ -45,7 +43,8 @@
       await updateIssueRelation(client, issueDoc, value, prop, '$pull')
     }
 
-    const update = await getResource(activity.backreference.Update)
+    // TODO: FIXME
+    // const update = await getResource(activity.backreference.Update)
 
     let docs: RelatedDocument[] = []
     let label: IntlString = tracker.string.RemoveRelation
@@ -68,7 +67,8 @@
     if (pos !== -1) {
       docs.splice(pos, 1)
     }
-    await update(value, type, docs, label)
+    // TODO: FIXME
+    // await update(value, type, docs, label)
   }
 
   async function handleRedirect (issue: Issue) {

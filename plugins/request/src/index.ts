@@ -18,7 +18,6 @@ import type { AttachedDoc, Class, Doc, Mixin, Ref, Timestamp, Tx } from '@hcengi
 import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
-import { ChatMessage } from '@hcengineering/chunter'
 
 /**
  * @public
@@ -38,7 +37,8 @@ export interface Request extends AttachedDoc {
 /**
  * @public
  */
-export interface RequestDecisionComment extends ChatMessage {}
+// TODO: FIXME
+export interface RequestDecisionComment extends Doc {}
 
 /**
  * @public

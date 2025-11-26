@@ -2,7 +2,6 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import chunter from '@hcengineering/chunter'
 import core, {
   Doc,
   DocumentUpdate,
@@ -221,7 +220,8 @@ async function updateDocSyncInfo (
 function isDocSyncUpdateRequired (h: Hierarchy, coll: TxCUD<Doc>): boolean {
   return (
     h.isDerived(coll.objectClass, tracker.class.Issue) ||
-    h.isDerived(coll.objectClass, chunter.class.ChatMessage) ||
+    // TODO: FIXME
+    // h.isDerived(coll.objectClass, chunter.class.ChatMessage) ||
     h.isDerived(coll.objectClass, github.class.GithubReviewComment) ||
     h.isDerived(coll.objectClass, github.class.GithubReview) ||
     h.isDerived(coll.objectClass, github.class.GithubReviewThread) ||

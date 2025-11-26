@@ -57,11 +57,6 @@
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
     "@hcengineering/emoji-resources": "workspace:^0.7.0",
-    "@hcengineering/activity": "workspace:^0.7.0",
-    "@hcengineering/activity-resources": "workspace:^0.7.0",
-    "@hcengineering/chunter": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/notification-resources": "workspace:^0.7.0",
     "fast-equals": "^5.2.2",
     "svelte": "^4.2.20"
   }

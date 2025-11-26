@@ -7,7 +7,6 @@
   * Add since to synchronization
 */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import activity from '@hcengineering/activity'
 import { Analytics } from '@hcengineering/analytics'
 import { CollaboratorClient } from '@hcengineering/collaborator-client'
 import contact, { Person } from '@hcengineering/contact'
@@ -242,16 +241,17 @@ export abstract class IssueSyncManagerBase {
     issueExternal: { url: string, number: number },
     repository: GithubIntegrationRepository
   ): Promise<void> {
-    await this.client.addCollection(activity.class.ActivityInfoMessage, prj, issueId, _class, 'activity', {
-      message: msg,
-      icon: github.icon.Github,
-      props: {
-        url: issueExternal.url,
-        repository: repository.url?.replace('api.github.com/repos', 'github.com'),
-        repoName: repository.name,
-        number: issueExternal.number
-      }
-    })
+    // TODO: FIXME
+    // await this.client.addCollection(activity.class.ActivityInfoMessage, prj, issueId, _class, 'activity', {
+    //   message: msg,
+    //   icon: github.icon.Github,
+    //   props: {
+    //     url: issueExternal.url,
+    //     repository: repository.url?.replace('api.github.com/repos', 'github.com'),
+    //     repoName: repository.name,
+    //     number: issueExternal.number
+    //   }
+    // })
   }
 
   stripGuestLink = async (data: MarkupNode): Promise<void> => {

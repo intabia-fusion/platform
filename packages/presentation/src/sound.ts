@@ -1,22 +1,22 @@
 import { type Class, type Doc, type Ref } from '@hcengineering/core'
-import { type Asset, getMetadata, getResource } from '@hcengineering/platform'
-import { getClient } from '.'
-import notification from '@hcengineering/notification'
+import { type Asset, getMetadata } from '@hcengineering/platform'
 
 const sounds = new Map<Asset, AudioBuffer>()
 const context = new AudioContext()
 
+// TODO: FIXME
 export async function isNotificationAllowed (_class?: Ref<Class<Doc>>): Promise<boolean> {
-  if (_class === undefined) return false
-  const client = getClient()
-  const notificationType = client
-    .getModel()
-    .findAllSync(notification.class.NotificationType, { objectClass: _class })[0]
-
-  if (notificationType === undefined) return false
-
-  const isAllowedFn = await getResource(notification.function.IsNotificationAllowed)
-  return isAllowedFn(notificationType, notification.providers.SoundNotificationProvider)
+  // if (_class === undefined) return false
+  // const client = getClient()
+  // const notificationType = client
+  //   .getModel()
+  //   .findAllSync(notification.class.NotificationType, { objectClass: _class })[0]
+  //
+  // if (notificationType === undefined) return false
+  //
+  // const isAllowedFn = await getResource(notification.function.IsNotificationAllowed)
+  // return isAllowedFn(notificationType, notification.providers.SoundNotificationProvider)
+  return false
 }
 
 export async function prepareSound (key: string): Promise<void> {

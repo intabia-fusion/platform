@@ -15,14 +15,12 @@
 
 // Import migrate operations.
 import { type MigrateOperation } from '@hcengineering/model'
-import { activityOperation } from '@hcengineering/model-activity'
 import { aiBotId, aiBotOperation } from '@hcengineering/model-ai-bot'
 import { analyticsCollectorOperation } from '@hcengineering/model-analytics-collector'
 import { attachmentOperation } from '@hcengineering/model-attachment'
 import { calendarOperation } from '@hcengineering/model-calendar'
 import { cardOperation } from '@hcengineering/model-card'
 import { chatId, chatOperation } from '@hcengineering/model-chat'
-import { chunterOperation } from '@hcengineering/model-chunter'
 import { communicationId, communicationOperation } from '@hcengineering/model-communication'
 import { contactOperation } from '@hcengineering/model-contact'
 import { documentsOperation } from '@hcengineering/model-controlled-documents'
@@ -37,7 +35,6 @@ import { inboxId, inboxOperation } from '@hcengineering/model-inbox'
 import { inventoryOperation } from '@hcengineering/model-inventory'
 import { leadOperation } from '@hcengineering/model-lead'
 import { loveId, loveOperation } from '@hcengineering/model-love'
-import { notificationOperation } from '@hcengineering/model-notification'
 import { preferenceOperation } from '@hcengineering/model-preference'
 import { processId, processOperation } from '@hcengineering/model-process'
 import { productsOperation } from '@hcengineering/model-products'
@@ -46,7 +43,6 @@ import { ratingOperation } from '@hcengineering/model-rating'
 import { recorderId, recorderOperation } from '@hcengineering/model-recorder'
 import { recruitOperation } from '@hcengineering/model-recruit'
 import { requestOperation } from '@hcengineering/model-request'
-import { activityServerOperation } from '@hcengineering/model-server-activity'
 import { settingOperation } from '@hcengineering/model-setting'
 import { surveyOperation } from '@hcengineering/model-survey'
 import { tagsOperation } from '@hcengineering/model-tags'
@@ -64,9 +60,7 @@ import { workbenchOperation } from '@hcengineering/model-workbench'
 export const migrateOperations: [string, MigrateOperation][] = [
   ['core', coreOperation],
   ['rating', ratingOperation],
-  ['activity', activityOperation],
   ['card', cardOperation],
-  ['chunter', chunterOperation],
   ['calendar', calendarOperation],
   ['gmail', gmailOperation],
   ['templates', templatesOperation],
@@ -95,10 +89,7 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['pre-time', githubOperationPreTime],
   ['time', timeOperation],
   [loveId, loveOperation],
-  ['activityServer', activityServerOperation],
   ['textEditorOperation', textEditorOperation],
-  // We should call notification migration after activityServer and chunter
-  ['notification', notificationOperation],
   ['analyticsCollector', analyticsCollectorOperation],
   ['workbench', workbenchOperation],
   ['testManagement', testManagementOperation],

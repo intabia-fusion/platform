@@ -2,7 +2,6 @@
 // Copyright © 2022-2023 Hardcore Engineering Inc.
 //
 import { Attachment } from '@hcengineering/attachment'
-import { ChatMessage } from '@hcengineering/chunter'
 import { Employee } from '@hcengineering/contact'
 import {
   type AttachedDoc,
@@ -266,7 +265,8 @@ export interface DocumentApprovalRequest extends DocumentRequest {}
  * Attached to Document
  * Could be attached to particular node or the whole document
  */
-export interface DocumentComment extends ChatMessage {
+// TODO: FIXME
+export interface DocumentComment extends Doc {
   nodeId?: string // If empty - attached to the whole document
   resolved?: boolean
   index?: number

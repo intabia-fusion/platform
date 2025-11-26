@@ -19,7 +19,6 @@ import serverCore, {
   type StorageConfiguration,
   type WorkspaceStatistics
 } from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken from '@hcengineering/server-token'
 import { join } from 'path'
@@ -80,9 +79,10 @@ setMetadata(serverCore.metadata.FrontUrl, config.frontUrl)
 setMetadata(serverCore.metadata.FilesUrl, config.filesUrl)
 setMetadata(serverToken.metadata.Secret, config.serverSecret)
 setMetadata(serverToken.metadata.Service, 'transactor')
-setMetadata(serverNotification.metadata.MailUrl, config.mailUrl ?? '')
-setMetadata(serverNotification.metadata.MailAuthToken, config.mailAuthToken)
-setMetadata(serverNotification.metadata.WebPushUrl, config.webPushUrl)
+// TODO: FIXME
+// setMetadata(serverNotification.metadata.MailUrl, config.mailUrl ?? '')
+// setMetadata(serverNotification.metadata.MailAuthToken, config.mailAuthToken)
+// setMetadata(serverNotification.metadata.WebPushUrl, config.webPushUrl)
 setMetadata(serverCalendar.metadata.EndpointURL, process.env.CALENDAR_URL)
 setMetadata(serverCard.metadata.CommunicationEnabled, process.env.COMMUNICATION_API_ENABLED === 'true')
 

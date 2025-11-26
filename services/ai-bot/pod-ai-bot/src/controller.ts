@@ -27,20 +27,18 @@ import {
   TranslateRequest,
   TranslateResponse
 } from '@hcengineering/ai-bot'
-import core, {
+import {
   AccountUuid,
   MeasureContext,
   PersonId,
   Ref,
   SocialId,
-  SortingOrder,
   toIdMap,
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import { Room } from '@hcengineering/love'
-import contact, { Person, Contact, getName, SocialIdentityRef } from '@hcengineering/contact'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
+import contact, { Contact, SocialIdentityRef } from '@hcengineering/contact'
 import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
@@ -51,7 +49,7 @@ import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengin
 import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
-import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
 import config from './config'
 import { tryAssignToWorkspace } from './utils/account'
 import { summarizeMessages, translateHtml } from './utils/openai'
@@ -155,28 +153,29 @@ export class AIControl {
       // Store gzipped WAV in storage
       await this.storageAdapter.put(this.ctx, wsClient.wsIds, blobId, gzipData, 'application/gzip', gzipData.length)
 
+      // TODO: FIXME
       // Create placeholder message for pending transcription (with spinner indicator)
-      let placeholderMessageId: Ref<ChatMessage> | undefined
-      if (roomId !== undefined) {
-        try {
-          placeholderMessageId = await wsClient.createTranscriptionPlaceholder(
-            this.ctx,
-            metadata.participant as Ref<Person>,
-            roomId,
-            metadata.startTimeSec,
-            metadata.endTimeSec,
-            blobId
-          )
-          this.ctx.info('Created transcription placeholder', {
-            placeholderMessageId,
-            participant: metadata.participant,
-            startTimeSec: metadata.startTimeSec
-          })
-        } catch (err: any) {
-          this.ctx.warn('Failed to create transcription placeholder', { error: err.message })
-          // Continue without placeholder - transcription will still work
-        }
-      }
+      // let placeholderMessageId: Ref<ChatMessage> | undefined
+      // if (roomId !== undefined) {
+      //   try {
+      //     placeholderMessageId = await wsClient.createTranscriptionPlaceholder(
+      //       this.ctx,
+      //       metadata.participant as Ref<Person>,
+      //       roomId,
+      //       metadata.startTimeSec,
+      //       metadata.endTimeSec,
+      //       blobId
+      //     )
+      //     this.ctx.info('Created transcription placeholder', {
+      //       placeholderMessageId,
+      //       participant: metadata.participant,
+      //       startTimeSec: metadata.startTimeSec
+      //     })
+      //   } catch (err: any) {
+      //     this.ctx.warn('Failed to create transcription placeholder', { error: err.message })
+      //     // Continue without placeholder - transcription will still work
+      //   }
+      // }
 
       // Create transcription task
       const task: TranscriptionTask = {
@@ -193,7 +192,7 @@ export class AIControl {
         sampleRate: metadata.sampleRate,
         channels: metadata.channels,
         bitsPerSample: metadata.bitsPerSample,
-        placeholderMessageId: placeholderMessageId as string | undefined
+        // placeholderMessageId: placeholderMessageId as string | undefined
       }
 
       // Queue for transcription with partition key based on workspace+participant
@@ -207,7 +206,7 @@ export class AIControl {
           participant: metadata.participant,
           durationSec: metadata.durationSec,
           hasSpeech: metadata.hasSpeech,
-          placeholderMessageId
+          // placeholderMessageId
         })
       } else {
         this.ctx.warn('Transcription producer not set, audio chunk stored but not queued', { blobId })
@@ -419,22 +418,23 @@ export class AIControl {
     const target = await client.findOne(req.targetClass, { _id: req.target })
     if (target === undefined) return
 
-    const messages = await client.findAll(
-      chunter.class.ChatMessage,
-      {
-        attachedTo: target._id,
-        collection: { $in: ['messages', 'transcription'] }
-      },
-      {
-        sort: { createdOn: SortingOrder.Ascending },
-        limit: 5000
-      }
-    )
+    // TODO: FIXME
+    // const messages = await client.findAll(
+    //   chunter.class.ChatMessage,
+    //   {
+    //     attachedTo: target._id,
+    //     collection: { $in: ['messages', 'transcription'] }
+    //   },
+    //   {
+    //     sort: { createdOn: SortingOrder.Ascending },
+    //     limit: 5000
+    //   }
+    // )
 
     const personIds = new Set<PersonId>()
-    for (const m of messages) {
-      if (m.createdBy !== undefined) personIds.add(m.createdBy)
-    }
+    // for (const m of messages) {
+    //   if (m.createdBy !== undefined) personIds.add(m.createdBy)
+    // }
     const identities = await client.findAll(contact.class.SocialIdentity, {
       _id: { $in: Array.from(personIds) as SocialIdentityRef[] }
     })
@@ -448,55 +448,55 @@ export class AIControl {
 
     const messagesToSummarize: PersonMessage[] = []
 
-    for (const m of messages) {
-      const author = m.createdBy
-      if (author === undefined) continue
-
-      const contact = contactByPersonId.get(author)
-      if (contact === undefined) continue
-
-      const personName = getName(client.getHierarchy(), contact)
-      const text = markupToMarkdown(markupToJSON(m.message))
-
-      const lastPiece = messagesToSummarize[messagesToSummarize.length - 1]
-      if (lastPiece?.personRef === contact._id) {
-        lastPiece.text += (m.collection === 'transcription' ? ' ' : '\n') + text
-      } else {
-        messagesToSummarize.push({
-          personRef: contact._id,
-          personName,
-          time: m.createdOn ?? 0,
-          text
-        })
-      }
-    }
+    // for (const m of messages) {
+    //   const author = m.createdBy
+    //   if (author === undefined) continue
+    //
+    //   const contact = contactByPersonId.get(author)
+    //   if (contact === undefined) continue
+    //
+    //   const personName = getName(client.getHierarchy(), contact)
+    //   const text = markupToMarkdown(markupToJSON(m.message))
+    //
+    //   const lastPiece = messagesToSummarize[messagesToSummarize.length - 1]
+    //   if (lastPiece?.personRef === contact._id) {
+    //     lastPiece.text += (m.collection === 'transcription' ? ' ' : '\n') + text
+    //   } else {
+    //     messagesToSummarize.push({
+    //       personRef: contact._id,
+    //       personName,
+    //       time: m.createdOn ?? 0,
+    //       text
+    //     })
+    //   }
+    // }
 
     const summary = await summarizeMessages(this.ctx, workspace, this.openai, messagesToSummarize, req.lang)
     if (summary === undefined) return
 
     const summaryMarkup = jsonToMarkup(markdownToMarkup(summary))
 
-    const lastMessage = await client.findOne(
-      chunter.class.ChatMessage,
-      {
-        attachedTo: target._id,
-        collection: { $in: ['messages', 'transcription', 'summary'] }
-      },
-      {
-        sort: { createdOn: SortingOrder.Descending },
-        limit: 1
-      }
-    )
+    // const lastMessage = await client.findOne(
+    //   chunter.class.ChatMessage,
+    //   {
+    //     attachedTo: target._id,
+    //     collection: { $in: ['messages', 'transcription', 'summary'] }
+    //   },
+    //   {
+    //     sort: { createdOn: SortingOrder.Descending },
+    //     limit: 1
+    //   }
+    // )
 
     const op = opClient.apply(undefined, 'AISummarizeMessagesRequestEvent')
-
-    if (lastMessage?.collection === 'summary' && lastMessage.createdBy === opClient.user) {
-      await op.update(lastMessage, { message: summaryMarkup, editedOn: Date.now() })
-    } else {
-      await op.addCollection(chunter.class.ChatMessage, core.space.Workspace, target._id, target._class, 'summary', {
-        message: summaryMarkup
-      })
-    }
+    //
+    // if (lastMessage?.collection === 'summary' && lastMessage.createdBy === opClient.user) {
+    //   await op.update(lastMessage, { message: summaryMarkup, editedOn: Date.now() })
+    // } else {
+    //   await op.addCollection(chunter.class.ChatMessage, core.space.Workspace, target._id, target._class, 'summary', {
+    //     message: summaryMarkup
+    //   })
+    // }
     await op.commit()
 
     return {

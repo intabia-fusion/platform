@@ -13,11 +13,9 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import { AccountRole } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
-import chunter from '@hcengineering/model-chunter'
 import view, { createAction, type Viewlet } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { surveyId } from '@hcengineering/survey'
@@ -95,12 +93,13 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.SurveyPresenter
   })
 
-  builder.mixin(survey.class.Survey, core.class.Class, activity.mixin.ActivityDoc, {})
+  // TODO: FIXME
+  // builder.mixin(survey.class.Survey, core.class.Class, activity.mixin.ActivityDoc, {})
 
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: survey.class.Survey,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: survey.class.Survey,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.createDoc<Viewlet>(
     view.class.Viewlet,
@@ -136,12 +135,13 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.PollPresenter
   })
 
-  builder.mixin(survey.class.Poll, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: survey.class.Poll,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(survey.class.Poll, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: survey.class.Poll,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(survey.class.Poll, core.class.Class, view.mixin.CollectionEditor, {
     editor: survey.component.PollCollection

@@ -13,12 +13,11 @@
 
 <script lang="ts">
   import cardPlugin from '@hcengineering/card'
-  import { Component, IconSize, Icon } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import communication from '@hcengineering/communication'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Doc } from '@hcengineering/core'
   import { ObjectIcon } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view'
 
   import NotifyMarker from './NotifyMarker.svelte'
 

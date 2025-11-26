@@ -17,7 +17,6 @@ import { Doc } from '@hcengineering/core'
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { TriggerFunc } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -29,10 +28,11 @@ export const serverRecruitId = 'server-recruit' as Plugin
  */
 export default plugin(serverRecruitId, {
   function: {
-    ApplicationHTMLPresenter: '' as Resource<Presenter>,
-    ApplicationTextPresenter: '' as Resource<Presenter>,
-    VacancyHTMLPresenter: '' as Resource<Presenter>,
-    VacancyTextPresenter: '' as Resource<Presenter>,
+    // TODO: FIXME
+    // ApplicationHTMLPresenter: '' as Resource<Presenter>,
+    // ApplicationTextPresenter: '' as Resource<Presenter>,
+    // VacancyHTMLPresenter: '' as Resource<Presenter>,
+    // VacancyTextPresenter: '' as Resource<Presenter>,
     LinkIdProvider: '' as Resource<(doc: Doc) => Promise<string>>
   },
   trigger: {

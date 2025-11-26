@@ -15,7 +15,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
 
-  import activity from '@hcengineering/activity'
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import { getClient } from '@hcengineering/presentation'
   import { Doc, Mixin, WithLookup } from '@hcengineering/core'
@@ -57,16 +56,17 @@
       placeholder={testManagement.string.DescriptionPlaceholder}
     />
   </div>
-  {#if !withoutActivity}
-    <div class="w-full mt-6 p-4">
-      <Component
-        is={activity.component.Activity}
-        props={{
-          object,
-          showCommenInput: true,
-          focusIndex: 1000
-        }}
-      />
-    </div>
-  {/if}
+  <!--  TODO: FIXME-->
+  <!--{#if !withoutActivity}-->
+  <!--  <div class="w-full mt-6 p-4">-->
+  <!--    <Component-->
+  <!--      is={activity.component.Activity}-->
+  <!--      props={{-->
+  <!--        object,-->
+  <!--        showCommenInput: true,-->
+  <!--        focusIndex: 1000-->
+  <!--      }}-->
+  <!--    />-->
+  <!--  </div>-->
+  <!--{/if}-->
 {/if}

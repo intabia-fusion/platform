@@ -16,12 +16,10 @@
 import core, { coreId, type Data, type PluginConfiguration, type Ref, type Tx, type Version } from '@hcengineering/core'
 
 import { Builder } from '@hcengineering/model'
-import { activityId, createModel as activityModel } from '@hcengineering/model-activity'
 import { aiBotId, createModel as aiBotModel } from '@hcengineering/model-ai-bot'
 import { attachmentId, createModel as attachmentModel } from '@hcengineering/model-attachment'
 import calendar, { calendarId, createModel as calendarModel } from '@hcengineering/model-calendar'
 import card, { cardId, createModel as cardModel } from '@hcengineering/model-card'
-import chunter, { chunterId, createModel as chunterModel } from '@hcengineering/model-chunter'
 import contact, { contactId, createModel as contactModel } from '@hcengineering/model-contact'
 import { createModel as coreModel } from '@hcengineering/model-core'
 import { desktopDownloadsId, createModel as desktopDownloadsModel } from '@hcengineering/model-desktop-downloads'
@@ -33,19 +31,16 @@ import hr, { hrId, createModel as hrModel } from '@hcengineering/model-hr'
 import inventory, { inventoryId, createModel as inventoryModel } from '@hcengineering/model-inventory'
 import lead, { leadId, createModel as leadModel } from '@hcengineering/model-lead'
 import { mediaId, createModel as mediaModel } from '@hcengineering/model-media'
-import notification, { notificationId, createModel as notificationModel } from '@hcengineering/model-notification'
 import { preferenceId, createModel as preferenceModel } from '@hcengineering/model-preference'
 import presentation, { presentationId, createModel as presentationModel } from '@hcengineering/model-presentation'
 import rating, { ratingId, createModel as ratingModel } from '@hcengineering/model-rating'
 import { recorderId, createModel as recorderModel } from '@hcengineering/model-recorder'
 import recruit, { recruitId, createModel as recruitModel } from '@hcengineering/model-recruit'
 import { requestId, createModel as requestModel } from '@hcengineering/model-request'
-import { serverActivityId, createModel as serverActivityModel } from '@hcengineering/model-server-activity'
 import { serverAiBotId, createModel as serverAiBotModel } from '@hcengineering/model-server-ai-bot'
 import { serverAttachmentId, createModel as serverAttachmentModel } from '@hcengineering/model-server-attachment'
 import { serverCalendarId, createModel as serverCalendarModel } from '@hcengineering/model-server-calendar'
 import { serverCardId, createModel as serverCardModel } from '@hcengineering/model-server-card'
-import { serverChunterId, createModel as serverChunterModel } from '@hcengineering/model-server-chunter'
 import {
   serverCollaborationId,
   createModel as serverCollaborationModel
@@ -58,7 +53,6 @@ import { serverGuestId, createModel as serverGuestModel } from '@hcengineering/m
 import { serverHrId, createModel as serverHrModel } from '@hcengineering/model-server-hr'
 import { serverInventoryId, createModel as serverInventoryModel } from '@hcengineering/model-server-inventory'
 import { serverLeadId, createModel as serverLeadModel } from '@hcengineering/model-server-lead'
-import { serverNotificationId, createModel as serverNotificationModel } from '@hcengineering/model-server-notification'
 import { serverRecruitId, createModel as serverRecruitModel } from '@hcengineering/model-server-recruit'
 import { serverRequestId, createModel as serverRequestModel } from '@hcengineering/model-server-request'
 import { serverSettingId, createModel as serveSettingModel } from '@hcengineering/model-server-setting'
@@ -155,7 +149,6 @@ export default function buildModel (): Builder {
     workbench.class.Application,
     presentation.class.ComponentPointExtension,
     presentation.class.ObjectSearchCategory,
-    notification.class.NotificationGroup,
     view.class.Action,
     contact.class.ChannelProvider,
     setting.class.IntegrationType,
@@ -166,7 +159,6 @@ export default function buildModel (): Builder {
 
   const builders: BuilderConfig[] = [
     [coreModel, coreId],
-    [activityModel, activityId],
     [attachmentModel, attachmentId],
     [guestModel, guestId],
     [tagsModel, tagsId],
@@ -195,18 +187,6 @@ export default function buildModel (): Builder {
         beta: false,
         icon: contact.icon.ContactApplication,
         classFilter: defaultFilter
-      }
-    ],
-    [
-      chunterModel,
-      chunterId,
-      {
-        label: chunter.string.ConfigLabel,
-        description: chunter.string.ConfigDescription,
-        enabled: true,
-        beta: false,
-        icon: chunter.icon.Chunter,
-        classFilter: [workbench.class.Application]
       }
     ],
     [taskModel, taskId],
@@ -287,7 +267,6 @@ export default function buildModel (): Builder {
     [uploaderModel, uploaderId],
     [recorderModel, recorderId],
     [mediaModel, mediaId],
-    [notificationModel, notificationId],
     [preferenceModel, preferenceId],
     [analyticsCollectorModel, analyticsCollectorId],
     [
@@ -502,7 +481,6 @@ export default function buildModel (): Builder {
     [serverCollaborationModel, serverCollaborationId],
     [serverContactModel, serverContactId],
     [serveSettingModel, serverSettingId],
-    [serverChunterModel, serverChunterId],
     [serverInventoryModel, serverInventoryId],
     [serverLeadModel, serverLeadId],
     [serverTagsModel, serverTagsId],
@@ -515,10 +493,8 @@ export default function buildModel (): Builder {
     [serverTemplatesModel, serverTemplatesId],
     [serverTelegramModel, serverTelegramId],
     [serverHrModel, serverHrId],
-    [serverNotificationModel, serverNotificationId],
     [serverRequestModel, serverRequestId],
     [serverViewModel, serverViewId],
-    [serverActivityModel, serverActivityId],
     [serverDocumentModel, serverDocumentId],
     [serverGithubModel, serverGithubId],
     [serverLoveModel, serverLoveId],

@@ -17,7 +17,6 @@
   import { afterUpdate, createEventDispatcher, SvelteComponent } from 'svelte'
   import { Writable, writable } from 'svelte/store'
 
-  import activity from '@hcengineering/activity'
   import { AccountRole, Doc, getCurrentAccount } from '@hcengineering/core'
   import {
     Component,
@@ -112,11 +111,11 @@
   }
 
   afterUpdate(async () => {
-    const fn = await getResource(activity.function.ShouldScrollToActivity)
-
-    if (showActivity && fn?.()) {
-      return
-    }
+    // const fn = await getResource(activity.function.ShouldScrollToActivity)
+    //
+    // if (showActivity && fn?.()) {
+    //   return
+    // }
 
     if (lastHref !== window.location.href) {
       startScrollHeightCheck()
@@ -252,14 +251,14 @@
   {#if $deviceInfo.isMobile}
     <div bind:this={content} class="popupPanel-body__mobile-content clear-mins" class:max={useMaxWidth}>
       <slot />
-      {#if showActivity}
-        {#key object._id}
-          <Component
-            is={activity.component.Activity}
-            props={{ object, showCommenInput: !withoutInput, shouldScroll: embedded, focusIndex: 1000 }}
-          />
-        {/key}
-      {/if}
+      <!--{#if showActivity}-->
+      <!--  {#key object._id}-->
+      <!--    <Component-->
+      <!--      is={activity.component.Activity}-->
+      <!--      props={{ object, showCommenInput: !withoutInput, shouldScroll: embedded, focusIndex: 1000 }}-->
+      <!--    />-->
+      <!--  {/key}-->
+      <!--{/if}-->
     </div>
   {:else if withoutContentScroll}
     <div
@@ -270,20 +269,20 @@
       style:--side-content-space={`${sideContentSpace}px`}
     >
       <slot />
-      {#if showActivity}
-        {#key object._id}
-          <Component
-            is={activity.component.Activity}
-            props={{
-              object,
-              showCommenInput: !withoutInput,
-              shouldScroll: embedded,
-              focusIndex: 1000,
-              boundary: content
-            }}
-          />
-        {/key}
-      {/if}
+      <!--{#if showActivity}-->
+      <!--  {#key object._id}-->
+      <!--    <Component-->
+      <!--      is={activity.component.Activity}-->
+      <!--      props={{-->
+      <!--        object,-->
+      <!--        showCommenInput: !withoutInput,-->
+      <!--        shouldScroll: embedded,-->
+      <!--        focusIndex: 1000,-->
+      <!--        boundary: content-->
+      <!--      }}-->
+      <!--    />-->
+      <!--  {/key}-->
+      <!--{/if}-->
     </div>
   {:else}
     <Scroller
@@ -304,21 +303,21 @@
         }}
       >
         <slot />
-        {#if showActivity}
-          {#key object._id}
-            <Component
-              is={activity.component.Activity}
-              bind:innerRef={activityRef}
-              props={{
-                object,
-                showCommenInput: !withoutInput,
-                shouldScroll: embedded,
-                focusIndex: 1000,
-                boundary: content
-              }}
-            />
-          {/key}
-        {/if}
+        <!--{#if showActivity}-->
+        <!--  {#key object._id}-->
+        <!--    <Component-->
+        <!--      is={activity.component.Activity}-->
+        <!--      bind:innerRef={activityRef}-->
+        <!--      props={{-->
+        <!--        object,-->
+        <!--        showCommenInput: !withoutInput,-->
+        <!--        shouldScroll: embedded,-->
+        <!--        focusIndex: 1000,-->
+        <!--        boundary: content-->
+        <!--      }}-->
+        <!--    />-->
+        <!--  {/key}-->
+        <!--{/if}-->
       </div>
     </Scroller>
   {/if}

@@ -15,12 +15,10 @@
 -->
 <script lang="ts">
   import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
-  import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
   import contact from '@hcengineering/contact'
   import { ContactPresenter } from '@hcengineering/contact-resources'
   import type { WithLookup } from '@hcengineering/core'
   import type { Lead } from '@hcengineering/lead'
-  import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { AssigneePresenter, StateRefPresenter } from '@hcengineering/task-resources'
@@ -54,7 +52,8 @@
     <div class="fs-title cursor-pointer" on:click={showLead}>{object.title}</div>
     <div class="flex-row-center">
       <div class="mr-2">
-        <Component is={notification.component.NotificationPresenter} props={{ value: object }} />
+        <!--        TODO: FIXME-->
+        <!--        <Component is={notification.component.NotificationPresenter} props={{ value: object }} />-->
       </div>
       <ActionIcon
         label={lead.string.More}
@@ -106,7 +105,8 @@
         <AttachmentsPresenter value={object.attachments} {object} />
       {/if}
       {#if enabledConfig(config, 'comments')}
-        <ChatMessagesPresenter value={object.comments} {object} />
+        <!--        TODO: FIXME-->
+        <!--        <ChatMessagesPresenter value={object.comments} {object} />-->
       {/if}
     </div>
     {#if enabledConfig(config, 'assignee')}

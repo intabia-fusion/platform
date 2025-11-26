@@ -13,12 +13,10 @@
 // limitations under the License.
 //
 import { ConnectMeetingRequest } from '@hcengineering/ai-bot'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
 import contact, { Person } from '@hcengineering/contact'
 import core, {
   concatLink,
   Doc,
-  generateId,
   Markup,
   MeasureContext,
   PersonId,
@@ -212,7 +210,8 @@ export class LoveController {
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
-  ): Promise<Ref<ChatMessage> | undefined> {
+  //   TODO: FIXME
+  ): Promise<Ref<any> | undefined> {
     this.ctx.info('Creating transcription placeholder', { person, roomId, startTimeSec, endTimeSec, blobId })
 
     const room = await this.getRoom(roomId)
@@ -252,26 +251,27 @@ export class LoveController {
     // 🎙️ indicates recording, ⏳ indicates processing
     const placeholderText = `🎙️ ⏳ ... (${timeRange})`
 
-    const messageId = generateId<ChatMessage>()
+    // const messageId = generateId<ChatMessage>()
 
     const op = this.client.apply(undefined, undefined, true)
 
-    await op.addCollection(
-      chunter.class.ChatMessage,
-      core.space.Workspace,
-      doc._id,
-      doc._class,
-      'transcription',
-      {
-        message: this.transcriptToMarkup(placeholderText)
-      },
-      messageId,
-      undefined,
-      socialId
-    )
-    await op.commit()
-
-    return messageId
+    // await op.addCollection(
+    //   chunter.class.ChatMessage,
+    //   core.space.Workspace,
+    //   doc._id,
+    //   doc._class,
+    //   'transcription',
+    //   {
+    //     message: this.transcriptToMarkup(placeholderText)
+    //   },
+    //   messageId,
+    //   undefined,
+    //   socialId
+    // )
+    // await op.commit()
+    //
+    // return messageId
+    return '' as any
   }
 
   /**
@@ -279,25 +279,26 @@ export class LoveController {
    * Or delete it if transcription is empty
    * @returns true if message was found and updated/deleted, false if not found
    */
-  async updateTranscriptionMessage (messageId: Ref<ChatMessage>, text: string | null): Promise<boolean> {
-    const message = await this.client.findOne(chunter.class.ChatMessage, { _id: messageId })
-
-    if (message === undefined) {
-      this.ctx.warn('Transcription placeholder message not found', { messageId })
-      return false
-    }
-
-    if (text === null || text.trim() === '') {
-      // Delete message if no transcription
-      await this.client.remove(message)
-      this.ctx.info('Deleted empty transcription placeholder', { messageId })
-    } else {
-      // Update with actual transcription
-      await this.client.update(message, {
-        message: this.transcriptToMarkup(text)
-      })
-      this.ctx.info('Updated transcription message', { messageId, textLength: text.length })
-    }
+  // TODO: FIXME
+  async updateTranscriptionMessage (messageId: Ref<any>, text: string | null): Promise<boolean> {
+    // const message = await this.client.findOne(chunter.class.ChatMessage, { _id: messageId })
+    //
+    // if (message === undefined) {
+    //   this.ctx.warn('Transcription placeholder message not found', { messageId })
+    //   return false
+    // }
+    //
+    // if (text === null || text.trim() === '') {
+    //   // Delete message if no transcription
+    //   await this.client.remove(message)
+    //   this.ctx.info('Deleted empty transcription placeholder', { messageId })
+    // } else {
+    //   // Update with actual transcription
+    //   await this.client.update(message, {
+    //     message: this.transcriptToMarkup(text)
+    //   })
+    //   this.ctx.info('Updated transcription message', { messageId, textLength: text.length })
+    // }
     return true
   }
 
@@ -330,22 +331,23 @@ export class LoveController {
       return false
     }
 
-    const op = this.client.apply(undefined, undefined, true)
-
-    await op.addCollection(
-      chunter.class.ChatMessage,
-      core.space.Workspace,
-      doc._id,
-      doc._class,
-      'transcription',
-      {
-        message: this.transcriptToMarkup(text)
-      },
-      undefined,
-      timestamp,
-      socialId
-    )
-    await op.commit()
+    // TODO: FIXME
+    // const op = this.client.apply(undefined, undefined, true)
+    //
+    // await op.addCollection(
+    //   chunter.class.ChatMessage,
+    //   core.space.Workspace,
+    //   doc._id,
+    //   doc._class,
+    //   'transcription',
+    //   {
+    //     message: this.transcriptToMarkup(text)
+    //   },
+    //   undefined,
+    //   timestamp,
+    //   socialId
+    // )
+    // await op.commit()
 
     this.ctx.info('Created fallback transcription message with timestamp', {
       roomId,
@@ -372,19 +374,20 @@ export class LoveController {
 
     const op = this.client.apply(undefined, undefined, true)
 
-    await op.addCollection(
-      chunter.class.ChatMessage,
-      core.space.Workspace,
-      doc._id,
-      doc._class,
-      'transcription',
-      {
-        message: this.transcriptToMarkup(text)
-      },
-      undefined,
-      undefined,
-      socialId
-    )
+    // TODO: FIXME
+    // await op.addCollection(
+    //   chunter.class.ChatMessage,
+    //   core.space.Workspace,
+    //   doc._id,
+    //   doc._class,
+    //   'transcription',
+    //   {
+    //     message: this.transcriptToMarkup(text)
+    //   },
+    //   undefined,
+    //   undefined,
+    //   socialId
+    // )
     await op.commit()
   }
 

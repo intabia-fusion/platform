@@ -51,7 +51,6 @@
     "@hcengineering/text": "workspace:^0.7.18",
     "@hcengineering/text-markdown": "workspace:^0.7.20",
     "@hcengineering/preference": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/presentation": "workspace:^0.7.0",
     "@hcengineering/card": "workspace:^0.7.0",
     "@hcengineering/setting": "workspace:^0.7.0",

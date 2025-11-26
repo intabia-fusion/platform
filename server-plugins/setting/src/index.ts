@@ -15,7 +15,6 @@
 
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import { Presenter } from '@hcengineering/server-notification'
 import { TriggerFunc } from '@hcengineering/server-core'
 import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
@@ -29,8 +28,9 @@ export const serverSettingId = 'server-setting' as Plugin
  */
 export default plugin(serverSettingId, {
   function: {
-    IntegrationHTMLPresenter: '' as Resource<Presenter>,
-    IntegrationTextPresenter: '' as Resource<Presenter>,
+    // TODO: FIXME
+    // IntegrationHTMLPresenter: '' as Resource<Presenter>,
+    // IntegrationTextPresenter: '' as Resource<Presenter>,
     GetValue: '' as Resource<TemplateFieldServerFunc>,
     GetFirstName: '' as Resource<TemplateFieldServerFunc>,
     GetLastName: '' as Resource<TemplateFieldServerFunc>,

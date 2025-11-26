@@ -1,7 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
 //
-import { ActivityMessage, ActivityMessageViewlet } from '@hcengineering/activity'
 import { Attachment } from '@hcengineering/attachment'
 import { Person } from '@hcengineering/contact'
 import {
@@ -225,7 +224,8 @@ export interface GithubPullRequestCommit extends AttachedDoc {
 /**
  * @public
  */
-export interface GithubReview extends ActivityMessage {
+// TODO: FIXME
+export interface GithubReview extends Doc {
   state: GithubPullRequestReviewState
   body: Markup
 
@@ -236,7 +236,8 @@ export interface GithubReview extends ActivityMessage {
 /**
  * @public
  */
-export interface GithubReviewViewlet extends ActivityMessageViewlet {
+// TODO: FIXME
+export interface GithubReviewViewlet extends Doc {
   label?: IntlString
 }
 
@@ -255,7 +256,8 @@ export interface GithubPullRequestReview extends AttachedDoc {
 /**
  * @public
  */
-export interface GithubReviewThread extends ActivityMessage {
+// TODO: FIXME
+export interface GithubReviewThread extends Doc {
   threadId: string
   line: number
   startLine: number

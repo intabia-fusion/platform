@@ -1,10 +1,8 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
 //
-import chunter, { ChatMessage } from '@hcengineering/chunter'
 import core, {
   PersonId,
-  AttachedData,
   Doc,
   DocumentUpdate,
   MeasureContext,
@@ -14,7 +12,6 @@ import core, {
 } from '@hcengineering/core'
 import github, { DocSyncInfo, GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
 import { LiveQuery } from '@hcengineering/query'
-import { deepEqual } from 'fast-equals'
 import {
   ContainerFocus,
   DocSyncManager,
@@ -24,7 +21,7 @@ import {
   githubExternalSyncVersion,
   githubSyncVersion
 } from '../types'
-import { collectUpdate, deleteObjects, errorToObj, getSince, isGHWriteAllowed } from './utils'
+import { deleteObjects, errorToObj, isGHWriteAllowed } from './utils'
 
 import { Analytics } from '@hcengineering/analytics'
 import { IssueComment, IssueCommentCreatedEvent, IssueCommentEvent } from '@octokit/webhooks-types'
@@ -175,7 +172,7 @@ export class CommentSyncManager implements DocSyncManager {
       return
     }
 
-    const account = (await this.provider.getAccountU(event.sender)) ?? core.account.System
+    // const account = (await this.provider.getAccountU(event.sender)) ?? core.account.System
     switch (event.action) {
       case 'created': {
         await this.createSyncData(event, derivedClient, repo)
@@ -193,35 +190,36 @@ export class CommentSyncManager implements DocSyncManager {
         break
       }
       case 'edited': {
-        const commentData = await this.client.findOne(github.class.DocSyncInfo, {
-          space: repo.githubProject as Ref<GithubProject>,
-          url: (event.comment.url ?? '').toLowerCase()
-        })
+        // const commentData = await this.client.findOne(github.class.DocSyncInfo, {
+        //   space: repo.githubProject as Ref<GithubProject>,
+        //   url: (event.comment.url ?? '').toLowerCase()
+        // })
+        //
+        // const messageData: MessageData = {
+        //   message: await this.provider.getMarkupSafe(integration, event.comment.body)
+        // }
 
-        const messageData: MessageData = {
-          message: await this.provider.getMarkupSafe(integration, event.comment.body)
-        }
-
-        if (commentData !== undefined) {
-          const chatMessage: ChatMessage | undefined = await this.client.findOne<ChatMessage>(commentData.objectClass, {
-            _id: commentData._id as unknown as Ref<ChatMessage>
-          })
-          if (chatMessage !== undefined) {
-            const lastModified = new Date(event.comment.updated_at).getTime()
-            await derivedClient.diffUpdate(
-              commentData,
-              {
-                external: event.comment,
-                current: messageData,
-                needSync: githubSyncVersion,
-                lastModified
-              },
-              lastModified
-            )
-            await this.client.diffUpdate(chatMessage, messageData, lastModified, account)
-            this.provider.sync()
-          }
-        }
+        // TODO: FIXME
+        // if (commentData !== undefined) {
+        //   const chatMessage: ChatMessage | undefined = await this.client.findOne<ChatMessage>(commentData.objectClass, {
+        //     _id: commentData._id as unknown as Ref<ChatMessage>
+        //   })
+        //   if (chatMessage !== undefined) {
+        //     const lastModified = new Date(event.comment.updated_at).getTime()
+        //     await derivedClient.diffUpdate(
+        //       commentData,
+        //       {
+        //         external: event.comment,
+        //         current: messageData,
+        //         needSync: githubSyncVersion,
+        //         lastModified
+        //       },
+        //       lastModified
+        //     )
+        //     await this.client.diffUpdate(chatMessage, messageData, lastModified, account)
+        //     this.provider.sync()
+        //   }
+        // }
         break
       }
     }
@@ -243,7 +241,9 @@ export class CommentSyncManager implements DocSyncManager {
         needSync: '',
         githubNumber: 0,
         repository: repo._id,
-        objectClass: chunter.class.ChatMessage,
+        // TODO: FIXME
+        // objectClass: chunter.class.ChatMessage,
+        objectClass: '' as any,
         external: createdEvent.comment as CommentExternalData,
         externalVersion: githubExternalSyncVersion,
         parent: (createdEvent.issue.url ?? '').toLocaleLowerCase(),
@@ -320,54 +320,50 @@ export class CommentSyncManager implements DocSyncManager {
     comment: CommentExternalData,
     account: PersonId
   ): Promise<void> {
-    const repository = await this.provider.getRepositoryById(info.repository)
-    if (repository === undefined) {
-      return
-    }
-
-    const existingComment = existing as ChatMessage
-
-    const previousData: MessageData = info.current ?? ({} as unknown as MessageData)
-
-    const update = collectUpdate<ChatMessage>(previousData, messageData, Object.keys(messageData))
-
-    const platformUpdate = collectUpdate<ChatMessage>(previousData, existing, Object.keys(messageData))
-
+    // const repository = await this.provider.getRepositoryById(info.repository)
+    // if (repository === undefined) {
+    //   return
+    // }
+    // TODO: FIXME
+    // const existingComment = existing as ChatMessage
+    // const previousData: MessageData = info.current ?? ({} as unknown as MessageData)
+    // const update = collectUpdate<ChatMessage>(previousData, messageData, Object.keys(messageData))
+    //
+    // const platformUpdate = collectUpdate<ChatMessage>(previousData, existing, Object.keys(messageData))
     // We should remove changes we already have from github changed.
-    for (const [k, v] of Object.entries(update)) {
-      if ((platformUpdate as any)[k] !== v) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (platformUpdate as any)[k]
-      }
-    }
-    // Remove current same values from update
-    for (const [k, v] of Object.entries(existingComment)) {
-      if ((update as any)[k] === v) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (update as any)[k]
-      }
-    }
-
-    if (Object.keys(platformUpdate).length > 0) {
-      // Check and update body with external
-      const okit = (await this.provider.getOctokit(ctx, existing.modifiedBy)) ?? container.container.octokit
-      const mdown = await this.provider.getMarkdown(existingComment.message)
-      if (mdown.trim().length > 0) {
-        await okit.rest.issues.updateComment({
-          owner: repository.owner?.login as string,
-          repo: repository.name,
-          issue_number: parent.githubNumber,
-          comment_id: comment.id,
-          body: mdown,
-          headers: {
-            'X-GitHub-Api-Version': '2022-11-28'
-          }
-        })
-      }
-    }
-    if (Object.keys(update).length > 0) {
-      await this.client.update(existing, update, false, new Date(comment.updated_at).getTime(), account)
-    }
+    // for (const [k, v] of Object.entries(update)) {
+    //   if ((platformUpdate as any)[k] !== v) {
+    //     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    //     delete (platformUpdate as any)[k]
+    //   }
+    // }
+    // // Remove current same values from update
+    // for (const [k, v] of Object.entries(existingComment)) {
+    //   if ((update as any)[k] === v) {
+    //     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    //     delete (update as any)[k]
+    //   }
+    // }
+    // if (Object.keys(platformUpdate).length > 0) {
+    //   // Check and update body with external
+    //   const okit = (await this.provider.getOctokit(ctx, existing.modifiedBy)) ?? container.container.octokit
+    //   const mdown = await this.provider.getMarkdown(existingComment.message)
+    //   if (mdown.trim().length > 0) {
+    //     await okit.rest.issues.updateComment({
+    //       owner: repository.owner?.login as string,
+    //       repo: repository.name,
+    //       issue_number: parent.githubNumber,
+    //       comment_id: comment.id,
+    //       body: mdown,
+    //       headers: {
+    //         'X-GitHub-Api-Version': '2022-11-28'
+    //       }
+    //     })
+    //   }
+    // }
+    // if (Object.keys(update).length > 0) {
+    //   await this.client.update(existing, update, false, new Date(comment.updated_at).getTime(), account)
+    // }
   }
 
   isHulyLinkComment (message: string): boolean {
@@ -381,27 +377,28 @@ export class CommentSyncManager implements DocSyncManager {
     comment: CommentExternalData,
     account: PersonId
   ): Promise<void> {
-    const _id: Ref<ChatMessage> = info._id as unknown as Ref<ChatMessage>
-    const value: AttachedData<ChatMessage> = {
-      ...messageData,
-      attachments: 0
-    }
-    // Check if it is Connected message.
-    if ((comment as any).performed_via_github_app !== undefined && this.isHulyLinkComment(comment.body)) {
-      // No need to create comment on platform.
-      return
-    }
-    await this.client.addCollection(
-      chunter.class.ChatMessage,
-      info.space,
-      parent._id,
-      parent.objectClass,
-      'comments',
-      value,
-      _id,
-      new Date(comment.created_at).getTime(),
-      account
-    )
+    // TODO: FIXME
+    // const _id: Ref<ChatMessage> = info._id as unknown as Ref<ChatMessage>
+    // const value: AttachedData<ChatMessage> = {
+    //   ...messageData,
+    //   attachments: 0
+    // }
+    // // Check if it is Connected message.
+    // if ((comment as any).performed_via_github_app !== undefined && this.isHulyLinkComment(comment.body)) {
+    //   // No need to create comment on platform.
+    //   return
+    // }
+    // await this.client.addCollection(
+    //   chunter.class.ChatMessage,
+    //   info.space,
+    //   parent._id,
+    //   parent.objectClass,
+    //   'comments',
+    //   value,
+    //   _id,
+    //   new Date(comment.created_at).getTime(),
+    //   account
+    // )
   }
 
   async createGithubComment (
@@ -422,35 +419,35 @@ export class CommentSyncManager implements DocSyncManager {
     if (parent === undefined) {
       return {}
     }
-    const chatMessage = existing as ChatMessage
-    const okit = (await this.provider.getOctokit(ctx, chatMessage.modifiedBy)) ?? container.container.octokit
+    // const chatMessage = existing as ChatMessage
+    // const okit = (await this.provider.getOctokit(ctx, chatMessage.modifiedBy)) ?? container.container.octokit
 
     // No external version yet, create it.
     try {
-      const mdown = await this.provider.getMarkdown(chatMessage.message)
-      if (mdown.trim().length > 0) {
-        const result = await okit.rest.issues.createComment({
-          owner: repo.owner?.login as string,
-          repo: repo.name,
-          issue_number: parent.githubNumber,
-          body: mdown,
-          headers: {
-            'X-GitHub-Api-Version': '2022-11-28'
-          }
-        })
-
-        const upd: DocumentUpdate<DocSyncInfo> = {
-          parent: (result?.data.html_url?.split('#')?.[0] ?? '').toLowerCase(),
-          url: (result?.data.url ?? '').toLowerCase(),
-          external: result?.data as CommentExternalData,
-          current: result?.data,
-          repository: repo._id,
-          needSync: githubSyncVersion
-        }
-
-        // We need to update in current promise, to prevent event changes.
-        await derivedClient.update(info, upd)
-      }
+      // const mdown = await this.provider.getMarkdown(chatMessage.message)
+      // if (mdown.trim().length > 0) {
+      //   const result = await okit.rest.issues.createComment({
+      //     owner: repo.owner?.login as string,
+      //     repo: repo.name,
+      //     issue_number: parent.githubNumber,
+      //     body: mdown,
+      //     headers: {
+      //       'X-GitHub-Api-Version': '2022-11-28'
+      //     }
+      //   })
+      //
+      //   const upd: DocumentUpdate<DocSyncInfo> = {
+      //     parent: (result?.data.html_url?.split('#')?.[0] ?? '').toLowerCase(),
+      //     url: (result?.data.url ?? '').toLowerCase(),
+      //     external: result?.data as CommentExternalData,
+      //     current: result?.data,
+      //     repository: repo._id,
+      //     needSync: githubSyncVersion
+      //   }
+      //
+      //   // We need to update in current promise, to prevent event changes.
+      //   await derivedClient.update(info, upd)
+      // }
       return { needSync: githubSyncVersion }
     } catch (err: any) {
       Analytics.handleError(err)
@@ -509,39 +506,40 @@ export class CommentSyncManager implements DocSyncManager {
       // Wait global project sync
       await integration.syncLock.get(prj._id)
 
-      const since = await getSince(this.client, chunter.class.ChatMessage, repo)
+      // const since = await getSince(this.client, chunter.class.ChatMessage, repo)
 
-      const i = integration.octokit.paginate.iterator(integration.octokit.rest.issues.listCommentsForRepo, {
-        owner: repo.owner?.login as string,
-        repo: repo.name,
-        state: 'all',
-        sort: 'updated',
-        direction: 'asc',
-        since,
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28'
-        }
-      })
-      try {
-        for await (const data of i) {
-          if (this.provider.isClosing()) {
-            break
-          }
-          const comments: CommentExternalData[] = data.data as any
-          ctx.info('retrieve comments for', {
-            repo: repo.name,
-            comments: comments.length,
-            used: data.headers['x-ratelimit-used'],
-            limit: data.headers['x-ratelimit-limit'],
-            workspace: this.provider.getWorkspaceId()
-          })
-          await this.syncComments(ctx, repo, comments, derivedClient)
-          this.provider.sync()
-        }
-      } catch (err: any) {
-        Analytics.handleError(err)
-        ctx.error(err)
-      }
+      // TODO: FIXME
+      // const i = integration.octokit.paginate.iterator(integration.octokit.rest.issues.listCommentsForRepo, {
+      //   owner: repo.owner?.login as string,
+      //   repo: repo.name,
+      //   state: 'all',
+      //   sort: 'updated',
+      //   direction: 'asc',
+      //   since,
+      //   headers: {
+      //     'X-GitHub-Api-Version': '2022-11-28'
+      //   }
+      // })
+      // try {
+      //   for await (const data of i) {
+      //     if (this.provider.isClosing()) {
+      //       break
+      //     }
+      //     const comments: CommentExternalData[] = data.data as any
+      //     ctx.info('retrieve comments for', {
+      //       repo: repo.name,
+      //       comments: comments.length,
+      //       used: data.headers['x-ratelimit-used'],
+      //       limit: data.headers['x-ratelimit-limit'],
+      //       workspace: this.provider.getWorkspaceId()
+      //     })
+      //     await this.syncComments(ctx, repo, comments, derivedClient)
+      //     this.provider.sync()
+      //   }
+      // } catch (err: any) {
+      //   Analytics.handleError(err)
+      //   ctx.error(err)
+      // }
       integration.synchronized.add(syncKey)
     }
   }
@@ -552,56 +550,58 @@ export class CommentSyncManager implements DocSyncManager {
     comments: CommentExternalData[],
     derivedClient: TxOperations
   ): Promise<void> {
-    if (repo.githubProject == null) {
-      return
-    }
-    const syncInfo = await this.client.findAll<DocSyncInfo>(github.class.DocSyncInfo, {
-      space: repo.githubProject,
-      // repository: repo._id, // If we skip repository, we will find orphaned comments, so we could connect them on.
-      objectClass: chunter.class.ChatMessage,
-      url: { $in: comments.map((it) => (it.url ?? '').toLowerCase()) }
-    })
-
-    for (const comment of comments) {
-      try {
-        const existing = syncInfo.find((it) => it.url === comment.url.toLowerCase())
-        const lastModified = new Date(comment.updated_at).getTime()
-        if (existing === undefined) {
-          await derivedClient.createDoc(github.class.DocSyncInfo, repo.githubProject, {
-            url: comment.url.toLowerCase(),
-            needSync: '',
-            githubNumber: 0,
-            objectClass: chunter.class.ChatMessage,
-            external: comment,
-            externalVersion: githubExternalSyncVersion,
-            parent: (comment.html_url.split('#')?.[0] ?? '').toLowerCase(),
-            repository: repo._id,
-            lastModified
-          })
-        } else {
-          if (
-            !deepEqual(existing.external, comment) ||
-            existing.externalVersion !== githubExternalSyncVersion ||
-            existing.repository !== repo._id
-          ) {
-            await derivedClient.diffUpdate(
-              existing,
-              {
-                needSync: '',
-                external: comment,
-                externalVersion: githubExternalSyncVersion,
-                lastModified,
-                repository: repo._id
-              },
-              lastModified
-            )
-            this.provider.sync()
-          }
-        }
-      } catch (err: any) {
-        Analytics.handleError(err)
-        ctx.error(err)
-      }
-    }
+    // TODO: FIXME
+    //     if (repo.githubProject == null) {
+    //       return
+    //     }
+    //     const syncInfo = await this.client.findAll<DocSyncInfo>(github.class.DocSyncInfo, {
+    //       space: repo.githubProject,
+    //       // repository: repo._id, // If we skip repository, we will find orphaned comments, so we could connect them on.
+    //       objectClass: chunter.class.ChatMessage,
+    //       url: { $in: comments.map((it) => (it.url ?? '').toLowerCase()) }
+    //     })
+    //
+    //     for (const comment of comments) {
+    //       try {
+    //         const existing = syncInfo.find((it) => it.url === comment.url.toLowerCase())
+    //         const lastModified = new Date(comment.updated_at).getTime()
+    //         if (existing === undefined) {
+    // // TODO: FIXME
+    //           // await derivedClient.createDoc(github.class.DocSyncInfo, repo.githubProject, {
+    //           //   url: comment.url.toLowerCase(),
+    //           //   needSync: '',
+    //           //   githubNumber: 0,
+    //           //   objectClass: chunter.class.ChatMessage,
+    //           //   external: comment,
+    //           //   externalVersion: githubExternalSyncVersion,
+    //           //   parent: (comment.html_url.split('#')?.[0] ?? '').toLowerCase(),
+    //           //   repository: repo._id,
+    //           //   lastModified
+    //           // })
+    //         } else {
+    //           if (
+    //             !deepEqual(existing.external, comment) ||
+    //             existing.externalVersion !== githubExternalSyncVersion ||
+    //             existing.repository !== repo._id
+    //           ) {
+    //             await derivedClient.diffUpdate(
+    //               existing,
+    //               {
+    //                 needSync: '',
+    //                 external: comment,
+    //                 externalVersion: githubExternalSyncVersion,
+    //                 lastModified,
+    //                 repository: repo._id
+    //               },
+    //               lastModified
+    //             )
+    //             this.provider.sync()
+    //           }
+    //         }
+    //       } catch (err: any) {
+    //         Analytics.handleError(err)
+    //         ctx.error(err)
+    //       }
+    //     }
   }
 }

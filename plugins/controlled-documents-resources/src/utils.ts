@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import chunter from '@hcengineering/chunter'
 import contact, { type Employee, type Person, getCurrentEmployee } from '@hcengineering/contact'
 import documents, {
   type ControlledDocument,
@@ -61,8 +60,7 @@ import core, {
 } from '@hcengineering/core'
 import { type IntlString, translate } from '@hcengineering/platform'
 import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-import request, { type Request, RequestStatus } from '@hcengineering/request'
-import { isEmptyMarkup } from '@hcengineering/text'
+import { type Request, RequestStatus } from '@hcengineering/request'
 import { type Location, getUserTimezone, showPopup } from '@hcengineering/ui'
 import { type KeyFilter } from '@hcengineering/view'
 
@@ -462,14 +460,15 @@ export async function completeRequest (
 }
 
 export async function saveComment (message: Markup | undefined, req: DocumentRequest): Promise<void> {
-  if (message === undefined || message === '' || isEmptyMarkup(message)) {
-    return
-  }
-  const client = getClient()
-  const id = await client.addCollection(chunter.class.ChatMessage, req.space, req._id, req._class, 'comments', {
-    message
-  })
-  await client.createMixin(id, chunter.class.ChatMessage, req.space, request.mixin.RequestDecisionComment, {})
+  // TODO: FIXME
+  // if (message === undefined || message === '' || isEmptyMarkup(message)) {
+  //   return
+  // }
+  // const client = getClient()
+  // const id = await client.addCollection(chunter.class.ChatMessage, req.space, req._id, req._class, 'comments', {
+  //   message
+  // })
+  // await client.createMixin(id, chunter.class.ChatMessage, req.space, request.mixin.RequestDecisionComment, {})
 }
 
 export async function rejectRequest (

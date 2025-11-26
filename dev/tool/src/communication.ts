@@ -36,7 +36,9 @@ import {
   type Markup,
   type WithLookup,
   RateLimiter,
-  type Doc
+  type Doc,
+  type Domain,
+  type Space
 } from '@hcengineering/core'
 import {
   type AttachmentDoc,
@@ -55,20 +57,12 @@ import {
   type Peer
 } from '@hcengineering/communication-types'
 import { type AccountClient } from '@hcengineering/account-client'
-import chunter, {
-  type Channel,
-  type ChunterSpace,
-  type ThreadMessage,
-  type DirectMessage
-} from '@hcengineering/chunter'
 import cardPlugin, { type Card, type CardSpace, DOMAIN_CARD } from '@hcengineering/card'
 import { makeRank } from '@hcengineering/rank'
 import chat from '@hcengineering/chat'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_CONTACT } from '@hcengineering/model-contact'
 import { markupToMarkdown } from '@hcengineering/text-markdown'
 import { markupToJSON, markupToText } from '@hcengineering/text'
-import activity, { type ActivityMessage } from '@hcengineering/activity'
 import communication, { type Direct } from '@hcengineering/communication'
 import { type Employee, formatName, type Person, type PersonSpace } from '@hcengineering/contact'
 import { withRetry, DEFAULT_RETRY_OPTIONS } from '@hcengineering/retry'
@@ -107,9 +101,9 @@ async function migrateChannels (
   accountClient: AccountClient,
   personUuidBySocialId: Map<PersonId, PersonUuid>
 ): Promise<void> {
-  const docs = await client.rawFindAll<Channel>(
+  const docs = await client.rawFindAll<any>(
     DOMAIN_SPACE,
-    { _class: chunter.class.Channel },
+    { _class: 'chunter:class:Channel' },
     { sort: { createdOn: SortingOrder.Ascending } }
   )
   const limiter = new RateLimiter(5)
@@ -143,14 +137,14 @@ async function migrateChannel (
   hulylake: HulylakeWorkspaceClient,
   accountClient: AccountClient,
   personUuidBySocialId: Map<PersonId, PersonUuid>,
-  doc: Channel
+  doc: any
 ): Promise<void> {
   const migratedToCard = doc.__migratedToCard
   const lastOne = (
     await client.rawFindAll<Card>(DOMAIN_CARD, {}, { sort: { rank: SortingOrder.Descending }, limit: 1 })
   )[0]
   let spaceId: Ref<CardSpace> = cardPlugin.space.Default
-  if (doc.private && migratedToCard?.space == null) {
+  if (doc.private === true && migratedToCard?.space == null) {
     const space: CardSpace = {
       name: doc.name,
       description: doc.description,
@@ -209,7 +203,7 @@ async function migrateChannel (
 
     await client.upload(ctx, DOMAIN_CARD, [{ ...card, __migratedFromChunter: true, __migratedFromDoc: doc._id } as any])
     await addCollaboratorsToDb(db, ws.uuid, card._id, card._class, doc.members)
-    await client.rawUpdate<Channel>(
+    await client.rawUpdate<any>(
       DOMAIN_SPACE,
       { _id: doc._id },
       { __migratedToCard: { card: card._id, space: spaceId } }
@@ -230,9 +224,9 @@ async function migrateDirects (
   accountClient: AccountClient,
   personUuidBySocialId: Map<PersonId, PersonUuid>
 ): Promise<void> {
-  const docs = await client.rawFindAll<DirectMessage>(
+  const docs = await client.rawFindAll<any>(
     DOMAIN_SPACE,
-    { _class: chunter.class.DirectMessage },
+    { _class: 'chunter:class:DirectMessage' },
     { sort: { createdOn: SortingOrder.Ascending } }
   )
   if (docs == null || docs.length === 0) return
@@ -264,7 +258,7 @@ async function migrateDirect (
   hulylake: HulylakeWorkspaceClient,
   accountClient: AccountClient,
   personUuidBySocialId: Map<PersonId, PersonUuid>,
-  doc: DirectMessage
+  doc: any
 ): Promise<void> {
   const migratedToCard = doc.__migratedToCard
 
@@ -355,7 +349,7 @@ async function migrateDirect (
       await addCollaboratorsToDb(db, ws.uuid, direct._id, direct._class, doc.members)
     }
     if (directs.length > 0) {
-      await client.rawUpdate<ChunterSpace>(
+      await client.rawUpdate<any>(
         DOMAIN_SPACE,
         { _id: doc._id },
         { __migratedToCard: { card: directs[0]._id, space: directs[0].space } }
@@ -418,15 +412,15 @@ async function convertChunterMessage (
 
   if ((message.replies ?? 0) > 0) {
     oldReplies = (
-      await client.rawFindAll<ThreadMessage>(
-        DOMAIN_ACTIVITY,
-        { _class: chunter.class.ThreadMessage, attachedTo: message._id },
+      await client.rawFindAll<any>(
+        'activity' as Domain,
+        { _class: 'chunter:class:ThreadMessage', attachedTo: message._id },
         {
           sort: { createdOn: SortingOrder.Ascending },
           lookup: {
             _id: {
               attachments: attachment.class.Attachment,
-              reactions: activity.class.Reaction
+              reactions: 'activity:class:Reaction' as any
             }
           }
         }
@@ -675,8 +669,8 @@ async function isMessageIndexExists (
 async function getActivityCursor (
   db: postgres.Sql,
   ws: WorkspaceUuid,
-  space: Ref<ChunterSpace>,
-  _class: Ref<Class<ActivityMessage>>,
+  space: Ref<Space>,
+  _class: Ref<Class<Doc>>,
   limit = 500,
   gte?: number
 ): Promise<AsyncIterable<postgres.Row[]>> {
@@ -741,7 +735,7 @@ async function migrateMessages (
   hulylake: HulylakeWorkspaceClient,
   accountClient: AccountClient,
   personUuidBySocialId: Map<PersonId, PersonUuid>,
-  doc: ChunterSpace,
+  doc: any,
   cards: Card[],
   peers: PeerInfo[] = []
 ): Promise<void> {
@@ -752,7 +746,14 @@ async function migrateMessages (
       await createGroupsBlob(hulylake, card._id)
     }
   }
-  const iterator = await getActivityCursor(db, ws.uuid, doc._id, chunter.class.ChatMessage, 400, doc.__migratedUntil)
+  const iterator = await getActivityCursor(
+    db,
+    ws.uuid,
+    doc._id,
+    'chunter:class:ChatMessage' as any,
+    400,
+    doc.__migratedUntil
+  )
 
   let prev: RawMessage[] = []
 
@@ -857,7 +858,7 @@ async function migrateMessages (
   }
 
   if (last != null) {
-    await client.rawUpdate<Channel>(DOMAIN_SPACE, { _id: doc._id }, { __migratedUntil: last?.createdOn })
+    await client.rawUpdate<any>(DOMAIN_SPACE, { _id: doc._id }, { __migratedUntil: last?.createdOn })
   }
 }
 
@@ -990,7 +991,7 @@ async function insertMessages (
   }
 }
 
-function toMessageID (_id: Ref<ActivityMessage>): MessageID {
+function toMessageID (_id: Ref<Doc>): MessageID {
   if (_id.length <= 22) {
     return _id as any as MessageID
   }
@@ -1184,7 +1185,7 @@ function toReaction (r: any): RawReaction | undefined {
   }
 }
 
-function threadMessageToRawMessage (r: WithLookup<ThreadMessage>): RawMessage {
+function threadMessageToRawMessage (r: WithLookup<any>): RawMessage {
   return {
     _id: r._id,
     modifiedBy: r.modifiedBy,
@@ -1230,7 +1231,7 @@ interface RawReaction {
 }
 
 interface RawMessage {
-  _id: Ref<ActivityMessage>
+  _id: Ref<any>
   modifiedBy: PersonId
   modifiedOn: number
   createdBy: PersonId

@@ -11,7 +11,6 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Label, Scroller } from '@hcengineering/ui'
 
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
   import documentsRes from '../../../plugin'
   import {
     $controlledDocument as controlledDocument,
@@ -28,7 +27,8 @@
   const hierarchy = client.getHierarchy()
 
   let requests: DocumentRequest[] = []
-  let messages: ChatMessage[] = []
+  // TODO: FIXME
+  const messages: any[] = []
 
   $: doc = $controlledDocument
   const requestQuery = createQuery()
@@ -40,9 +40,9 @@
 
   const messageQuery = createQuery()
   $: if (doc) {
-    messageQuery.query(chunter.class.ChatMessage, { attachedTo: { $in: requests.map((r) => r._id) } }, (r) => {
-      messages = r
-    })
+    // messageQuery.query(chunter.class.ChatMessage, { attachedTo: { $in: requests.map((r) => r._id) } }, (r) => {
+    //   messages = r
+    // })
   }
 
   let workflow: Map<Ref<ControlledDocument>, DocumentValidationState[]> | undefined

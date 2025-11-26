@@ -69,7 +69,6 @@
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/account": "workspace:^0.7.0",
     "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/model-all": "workspace:^0.7.0",
     "@hcengineering/model-attachment": "workspace:^0.7.0",
     "@hcengineering/model-core": "workspace:^0.7.0",

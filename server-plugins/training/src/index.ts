@@ -13,9 +13,7 @@
 // limitations under the License.
 //
 
-import { plugin, type Plugin, type Resource } from '@hcengineering/platform'
-import { type Presenter, TypeMatchFunc } from '@hcengineering/server-notification'
-import type { TrainingRequest } from '@hcengineering/training'
+import { plugin, type Plugin } from '@hcengineering/platform'
 
 /**
  * @public
@@ -27,8 +25,9 @@ export const serverTrainingId = 'server-training' as Plugin
  */
 export default plugin(serverTrainingId, {
   function: {
-    TrainingRequestHTMLPresenter: '' as Resource<Presenter<TrainingRequest>>,
-    TrainingRequestNotificationTypeMatch: '' as TypeMatchFunc,
-    TrainingRequestTextPresenter: '' as Resource<Presenter<TrainingRequest>>
+    // TODO: FIXME
+    // TrainingRequestHTMLPresenter: '' as Resource<Presenter<TrainingRequest>>,
+    // TrainingRequestNotificationTypeMatch: '' as TypeMatchFunc,
+    // TrainingRequestTextPresenter: '' as Resource<Presenter<TrainingRequest>>
   }
 })

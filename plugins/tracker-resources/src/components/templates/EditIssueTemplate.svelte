@@ -15,12 +15,11 @@
 <script lang="ts">
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
   import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
-  import tags, { type TagElement, type TagReference } from '@hcengineering/tags'
+  import tags, { type TagElement } from '@hcengineering/tags'
   import { IssueTemplate, IssueTemplateChild, Project } from '@hcengineering/tracker'
   import { Button, EditBox, IconMoreH, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
@@ -47,19 +46,20 @@
 
   let descriptionBox: AttachmentStyleBoxEditor
 
-  const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   $: read(_id)
   function read (_id: Ref<Doc>): void {
     if (lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      void inboxClient.then((client) => client.readDoc(prev))
+      // void inboxClient.then((client) => client.readDoc(prev))
     }
   }
 
   onDestroy(async () => {
-    void inboxClient.then((client) => client.readDoc(_id))
+    // void inboxClient.then((client) => client.readDoc(_id))
   })
 
   $: _id !== undefined &&

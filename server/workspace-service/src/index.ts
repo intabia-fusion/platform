@@ -26,7 +26,6 @@ import { type MigrateOperation } from '@hcengineering/model'
 import { setMetadata } from '@hcengineering/platform'
 import serverClientPlugin from '@hcengineering/server-client'
 import { QueueTopic, type PlatformQueue, type QueueWorkspaceMessage } from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
 import { createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken from '@hcengineering/server-token'
 import toolPlugin from '@hcengineering/server-tool'
@@ -121,7 +120,8 @@ export function serveWorkspaceAccount (
   setMetadata(toolPlugin.metadata.InitRepoDir, initRepoDir)
 
   setMetadata(serverClientPlugin.metadata.UserAgent, 'WorkspaceService')
-  setMetadata(serverNotification.metadata.InboxOnlyNotifications, true)
+  // TODO: FIXME
+  // setMetadata(serverNotification.metadata.InboxOnlyNotifications, true)
 
   const fulltextUrl = process.env.FULLTEXT_URL
   if (fulltextUrl === undefined) {

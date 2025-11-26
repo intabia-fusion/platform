@@ -16,7 +16,6 @@
 import { type Doc, type Ref } from '@hcengineering/core'
 import { hrId } from '@hcengineering/hr'
 import hr from '@hcengineering/hr-resources/src/plugin'
-import { type NotificationGroup } from '@hcengineering/notification'
 import { type IntlString, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
@@ -67,6 +66,7 @@ export default mergeIds(hrId, hr, {
     EditRequestType: '' as ViewAction
   },
   ids: {
-    HRNotificationGroup: '' as Ref<NotificationGroup>
+    // TODO: FIXME
+    // HRNotificationGroup: '' as Ref<NotificationGroup>
   }
 })

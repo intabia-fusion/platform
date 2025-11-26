@@ -68,12 +68,9 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
 import media from '@hcengineering/media'
-import notification from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
-import activity from '@hcengineering/activity'
-import chunter from '@hcengineering/chunter'
 import attachment from '@hcengineering/attachment'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
 
@@ -125,8 +122,9 @@ export class TRoom extends TDoc implements Room {
   @Prop(PropCollection(love.class.MeetingMinutes), love.string.MeetingMinutes)
     meetings?: number
 
-  @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
-    messages?: number
+  // TODO: FIXME
+  // @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
+  messages?: number
 }
 
 @Model(love.class.Office, love.class.Room)
@@ -212,11 +210,13 @@ export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Tod
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  @Prop(PropCollection(chunter.class.ChatMessage), love.string.Transcription)
-    transcription?: number
+  // TODO: FIXME
+  // @Prop(PropCollection(chunter.class.ChatMessage), love.string.Transcription)
+  transcription?: number
 
-  @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
-    messages?: number
+  // TODO: FIXME
+  // @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
+  messages?: number
 
   @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart, { editor: view.component.DateTimePresenter })
   @ReadOnly()
@@ -349,22 +349,24 @@ export function createModel (builder: Builder): void {
     love.ids.Settings
   )
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: love.string.Office,
-      icon: love.icon.Love
-    },
-    love.ids.LoveNotificationGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: love.string.Office,
+  //     icon: love.icon.Love
+  //   },
+  //   love.ids.LoveNotificationGroup
+  // )
 
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.SoundNotificationProvider,
-    excludeIgnore: [love.ids.KnockNotification],
-    ignoredTypes: [],
-    enabledTypes: []
-  })
+  // TODO: FIXME
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.SoundNotificationProvider,
+  //   excludeIgnore: [love.ids.KnockNotification],
+  //   ignoredTypes: [],
+  //   enabledTypes: []
+  // })
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_LOVE,
@@ -440,29 +442,29 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: love.class.Room,
-    components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: love.class.Office,
-    components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: love.class.MeetingMinutes,
-    components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  })
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: love.class.Room,
+  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: love.class.Office,
+  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: love.class.MeetingMinutes,
+  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
+  // })
 
   builder.mixin(love.class.ParticipantInfo, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest,
     updateAccessLevel: AccountRole.Guest
   })
 
-  builder.mixin(love.class.MeetingMinutes, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.mixin(love.class.Room, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.mixin(love.class.MeetingMinutes, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.mixin(love.class.Room, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: love.component.MeetingMinutesPresenter
@@ -581,37 +583,37 @@ export function createModel (builder: Builder): void {
     },
     love.viewlet.FloorMeetingMinutes
   )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      label: chunter.string.Chat,
-      generated: false,
-      hidden: false,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: chunter.class.ChatMessage,
-      attachedToClass: love.class.MeetingMinutes,
-      txMatch: {
-        'attributes.collection': 'messages'
-      },
-      defaultEnabled: false,
-      group: love.ids.LoveNotificationGroup
-    },
-    love.ids.MeetingMinutesChatNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification]
-  })
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.PushNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification]
-  })
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     label: chunter.string.Chat,
+  //     generated: false,
+  //     hidden: false,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: chunter.class.ChatMessage,
+  //     attachedToClass: love.class.MeetingMinutes,
+  //     txMatch: {
+  //       'attributes.collection': 'messages'
+  //     },
+  //     defaultEnabled: false,
+  //     group: love.ids.LoveNotificationGroup
+  //   },
+  //   love.ids.MeetingMinutesChatNotification
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [love.ids.MeetingMinutesChatNotification]
+  // })
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.PushNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [love.ids.MeetingMinutesChatNotification]
+  // })
 
   builder.createDoc<ClassCollaborators<MeetingMinutes>>(core.class.ClassCollaborators, core.space.Model, {
     attachedTo: love.class.MeetingMinutes,

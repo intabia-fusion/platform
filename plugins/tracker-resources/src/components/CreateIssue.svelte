@@ -13,7 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity from '@hcengineering/activity'
   import { Analytics } from '@hcengineering/analytics'
   import { Attachment } from '@hcengineering/attachment'
   import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
@@ -545,8 +544,9 @@
           if (client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
             await updateIssueRelation(operations, relatedTo as Issue, doc, 'relations', '$push')
           } else {
-            const update = await getResource(activity.backreference.Update)
-            await update(doc, 'relations', [relatedTo], tracker.string.AddedReference)
+            // TODO: FIXME
+            // const update = await getResource(activity.backreference.Update)
+            // await update(doc, 'relations', [relatedTo], tracker.string.AddedReference)
           }
         }
       }

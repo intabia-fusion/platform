@@ -15,7 +15,6 @@
 //
 
 import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@hcengineering/core'
-import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
 import { AnyComponent, type AnySvelteComponent, Location, ResolvedLocation } from '@hcengineering/ui'
@@ -176,9 +175,6 @@ export interface SpecialNavModel {
   // If defined, will be used to find spaces for visibleIf
   spaceClass?: Ref<Class<Space>>
   checkIsDisabled?: Resource<() => Promise<boolean>>
-  notificationsCountProvider?: Resource<
-  (inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>) => number
-  >
   navigationModel?: ParentsNavigationModel
   queryBuilder?: Resource<() => Promise<DocumentQuery<Doc>>>
 }

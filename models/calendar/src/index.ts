@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import {
   type AccessLevel,
   calendarId,
@@ -63,7 +62,6 @@ import attachment from '@hcengineering/model-attachment'
 import contact from '@hcengineering/model-contact'
 import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import workbench from '@hcengineering/model-workbench'
@@ -257,60 +255,61 @@ export function createModel (builder: Builder): void {
     },
     calendar.integrationType.Calendar
   )
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: calendar.string.Calendar,
-      icon: calendar.icon.Calendar
-    },
-    calendar.ids.CalendarNotificationGroup
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: calendar.string.Calendar,
+  //     icon: calendar.icon.Calendar
+  //   },
+  //   calendar.ids.CalendarNotificationGroup
+  // )
 
   builder.createDoc<ClassCollaborators<Event>>(core.class.ClassCollaborators, core.space.Model, {
     attachedTo: calendar.class.Event,
     fields: ['participants']
   })
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: calendar.string.Reminder,
-      group: calendar.ids.CalendarNotificationGroup,
-      txClasses: [],
-      objectClass: calendar.class.Event,
-      allowedForAuthor: true,
-      templates: {
-        textTemplate: 'Reminder: {doc}',
-        htmlTemplate: 'Reminder: {doc}',
-        subjectTemplate: 'Reminder: {doc}'
-      },
-      defaultEnabled: false
-    },
-    calendar.ids.ReminderNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [calendar.ids.ReminderNotification]
-  })
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: calendar.class.Event,
-      icon: calendar.icon.Reminder,
-      action: 'update',
-      hideIfRemoved: true
-    },
-    calendar.ids.UpdateRemainderActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: calendar.string.Reminder,
+  //     group: calendar.ids.CalendarNotificationGroup,
+  //     txClasses: [],
+  //     objectClass: calendar.class.Event,
+  //     allowedForAuthor: true,
+  //     templates: {
+  //       textTemplate: 'Reminder: {doc}',
+  //       htmlTemplate: 'Reminder: {doc}',
+  //       subjectTemplate: 'Reminder: {doc}'
+  //     },
+  //     defaultEnabled: false
+  //   },
+  //   calendar.ids.ReminderNotification
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [calendar.ids.ReminderNotification]
+  // })
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: calendar.class.Event,
+  //     icon: calendar.icon.Reminder,
+  //     action: 'update',
+  //     hideIfRemoved: true
+  //   },
+  //   calendar.ids.UpdateRemainderActivityViewlet
+  // )
 
   builder.createDoc(
     view.class.ViewletDescriptor,

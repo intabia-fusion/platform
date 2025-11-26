@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   DOMAIN_MODEL_TX,
   DOMAIN_STATUS,
@@ -33,7 +32,6 @@ import {
   tryMigrate,
   tryUpgrade
 } from '@hcengineering/model'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
 import { DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
 import tags from '@hcengineering/tags'
@@ -204,22 +202,6 @@ async function migrateDefaultStatuses (client: MigrationClient, logger: ModelLog
 
       if (project.defaultIssueStatus !== newDefaultIssueStatus) {
         await client.update(DOMAIN_SPACE, { _id: project._id }, { defaultIssueStatus: newDefaultIssueStatus })
-      }
-
-      const projectUpdateMessages = await client.find<DocUpdateMessage>(DOMAIN_ACTIVITY, {
-        _class: activity.class.DocUpdateMessage,
-        action: 'update',
-        objectId: project._id,
-        'attributeUpdates.attrKey': 'defaultIssueStatus'
-      })
-
-      for (const updateMessage of projectUpdateMessages) {
-        const statusSet = updateMessage.attributeUpdates?.set[0]
-        const newStatusSet = statusSet != null ? getNewStatus(statusSet as Ref<Status>) : statusSet
-
-        if (statusSet !== newStatusSet) {
-          await client.update(DOMAIN_ACTIVITY, { _id: updateMessage._id }, { 'attributeUpdates.set.0': newStatusSet })
-        }
       }
     }
   }

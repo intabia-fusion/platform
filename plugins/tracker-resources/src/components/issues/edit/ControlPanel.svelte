@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
-  import core, { Class, ClassifierKind, Doc, Mixin, Ref } from '@hcengineering/core'
+  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
   import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
   import { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
@@ -36,7 +36,6 @@
   import PriorityEditor from '../PriorityEditor.svelte'
   import RelationEditor from '../RelationEditor.svelte'
   import StatusEditor from '../StatusEditor.svelte'
-  import notification from '@hcengineering/notification'
 
   export let issue: Issue
   export let showAllMixins: boolean = false
@@ -74,13 +73,14 @@
     keys = filtredKeys.filter((key) => !isCollectionAttr(hierarchy, key))
   }
 
-  let mixins: Mixin<Doc>[] = []
+  const mixins: Mixin<Doc>[] = []
 
   $: _mixins = getDocMixins(issue, showAllMixins)
 
-  $: mixins = _mixins.find((p) => p._id === notification.mixin.Collaborators)
-    ? _mixins
-    : [..._mixins, hierarchy.getClass(notification.mixin.Collaborators)]
+  // TODO: FIXME
+  // $: mixins = _mixins.find((p) => p._id === notification.mixin.Collaborators)
+  //   ? _mixins
+  //   : [..._mixins, hierarchy.getClass(notification.mixin.Collaborators)]
 
   const allowedCollections = ['collaborators']
 

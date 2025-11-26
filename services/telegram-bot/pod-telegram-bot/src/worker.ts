@@ -13,12 +13,9 @@
 // limitations under the License.
 //
 
-import { AccountUuid, MeasureContext, PersonId, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { AccountUuid, MeasureContext, PersonId, WorkspaceUuid } from '@hcengineering/core'
 import { StorageAdapter, type StorageConfiguration } from '@hcengineering/server-core'
-import chunter, { ChunterSpace } from '@hcengineering/chunter'
-import { formatName } from '@hcengineering/contact'
 import { getAccountClient } from '@hcengineering/server-client'
-import { ActivityMessage } from '@hcengineering/activity'
 
 import {
   ChannelId,
@@ -136,7 +133,8 @@ export class PlatformWorker {
 
   async getFiles (
     workspace: WorkspaceUuid,
-    message: Ref<ActivityMessage>,
+    // TODO: FIXME
+    message: any,
     account: AccountUuid
   ): Promise<PlatformFileInfo[]> {
     const wsClient = await WorkspaceClient.create(workspace, account, this.ctx, this.storage)
@@ -157,7 +155,8 @@ export class PlatformWorker {
 
   async getMessageRecordByRef (
     account: AccountUuid,
-    messageId: Ref<ActivityMessage>
+    // TODO: FIXME
+    messageId: any
   ): Promise<MessageRecord | undefined> {
     return await this.db.getMessageByRef(account, messageId)
   }
@@ -172,22 +171,24 @@ export class PlatformWorker {
     text: string,
     files: TelegramFileInfo[]
   ): Promise<boolean> {
-    const client = await WorkspaceClient.create(messageRecord.workspace, integration.account, this.ctx, this.storage)
-    return await client.replyToMessage(integration.account, integration.socialId, messageRecord, text, files)
+    // const client = await WorkspaceClient.create(messageRecord.workspace, integration.account, this.ctx, this.storage)
+    // return await client.replyToMessage(integration.account, integration.socialId, messageRecord, text, files)
+    return false
   }
 
-  async getChannelName (client: WorkspaceClient, channel: ChunterSpace, account: AccountUuid): Promise<string> {
-    if (client.hierarchy.isDerived(channel._class, chunter.class.DirectMessage)) {
-      const persons = await client.getPersons(channel.members.filter((it) => it !== account))
-      return persons
-        .map(({ name }) => formatName(name))
-        .sort((a, b) => a.localeCompare(b))
-        .join(', ')
-    }
+  // TODO: FIXME
+  async getChannelName (client: WorkspaceClient, channel: any, account: AccountUuid): Promise<string> {
+    // if (client.hierarchy.isDerived(channel._class, chunter.class.DirectMessage)) {
+    //   const persons = await client.getPersons(channel.members.filter((it) => it !== account))
+    //   return persons
+    //     .map(({ name }) => formatName(name))
+    //     .sort((a, b) => a.localeCompare(b))
+    //     .join(', ')
+    // }
 
-    if (client.hierarchy.isDerived(channel._class, chunter.class.Channel)) {
-      return `#${channel.name}`
-    }
+    // if (client.hierarchy.isDerived(channel._class, chunter.class.Channel)) {
+    //   return `#${channel.name}`
+    // }
 
     return channel.name
   }
@@ -230,60 +231,60 @@ export class PlatformWorker {
     text: string,
     file?: TelegramFileInfo
   ): Promise<boolean> {
-    const client = await WorkspaceClient.create(channel.workspace, account, this.ctx, this.storage)
-    const _id = await client.sendMessage(channel, account, socialId, text, file)
-
-    if (_id === undefined) return false
-
-    await this.db.insertMessage({
-      workspace: channel.workspace,
-      account: channel.account,
-      messageId: _id,
-      telegramMessageId: telegramId
-    })
+    // const client = await WorkspaceClient.create(channel.workspace, account, this.ctx, this.storage)
+    // const _id = await client.sendMessage(channel, account, socialId, text, file)
+    //
+    // if (_id === undefined) return false
+    //
+    // await this.db.insertMessage({
+    //   workspace: channel.workspace,
+    //   account: channel.account,
+    //   messageId: _id,
+    //   telegramMessageId: telegramId
+    // })
 
     return true
   }
 
   async syncChannels (account: AccountUuid, workspace: WorkspaceUuid, onlyStarred: boolean): Promise<void> {
-    const client = await WorkspaceClient.create(workspace, account, this.ctx, this.storage)
-    const channels = await client.getChannels(account, onlyStarred)
-    const existingChannels = await this.db.getChannels(account, workspace)
-
-    const toInsert: Omit<ChannelRecord, 'rowId'>[] = []
-    const toDelete: ChannelRecord[] = []
-
-    for (const channel of channels) {
-      const existingChannel = existingChannels.find((c) => c._id === channel._id)
-      const name = await this.getChannelName(client, channel, account)
-      if (existingChannel === undefined) {
-        toInsert.push({ workspace, account, _id: channel._id, _class: channel._class, name })
-      } else if (existingChannel.name !== name) {
-        await this.db.updateChannelName(existingChannel.rowId, name)
-      }
-    }
-
-    for (const existingChannel of existingChannels) {
-      const channel = channels.find(({ _id }) => _id === existingChannel._id)
-      if (channel === undefined) {
-        toDelete.push(existingChannel)
-      }
-    }
-
-    if (toInsert.length > 0) {
-      await Promise.all(toInsert.map((it) => this.db.insertChannel(it)))
-    }
-
-    if (toDelete.length > 0) {
-      await this.db.removeChannels(toDelete.map((c) => c.rowId))
-    }
-
-    this.channelsByWorkspace.delete(`${account}:${workspace}`)
-    for (const [key, channel] of this.channelByRowId.entries()) {
-      if (channel.account === account) {
-        this.channelByRowId.delete(key)
-      }
-    }
+    // const client = await WorkspaceClient.create(workspace, account, this.ctx, this.storage)
+    // const channels = await client.getChannels(account, onlyStarred)
+    // const existingChannels = await this.db.getChannels(account, workspace)
+    //
+    // const toInsert: Omit<ChannelRecord, 'rowId'>[] = []
+    // const toDelete: ChannelRecord[] = []
+    //
+    // for (const channel of channels) {
+    //   const existingChannel = existingChannels.find((c) => c._id === channel._id)
+    //   const name = await this.getChannelName(client, channel, account)
+    //   if (existingChannel === undefined) {
+    //     toInsert.push({ workspace, account, _id: channel._id, _class: channel._class, name })
+    //   } else if (existingChannel.name !== name) {
+    //     await this.db.updateChannelName(existingChannel.rowId, name)
+    //   }
+    // }
+    //
+    // for (const existingChannel of existingChannels) {
+    //   const channel = channels.find(({ _id }) => _id === existingChannel._id)
+    //   if (channel === undefined) {
+    //     toDelete.push(existingChannel)
+    //   }
+    // }
+    //
+    // if (toInsert.length > 0) {
+    //   await Promise.all(toInsert.map((it) => this.db.insertChannel(it)))
+    // }
+    //
+    // if (toDelete.length > 0) {
+    //   await this.db.removeChannels(toDelete.map((c) => c.rowId))
+    // }
+    //
+    // this.channelsByWorkspace.delete(`${account}:${workspace}`)
+    // for (const [key, channel] of this.channelByRowId.entries()) {
+    //   if (channel.account === account) {
+    //     this.channelByRowId.delete(key)
+    //   }
+    // }
   }
 
   async getWorkspaceInfo (account: AccountUuid, workspaceId: WorkspaceUuid): Promise<WorkspaceInfo | undefined> {

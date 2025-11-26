@@ -34,21 +34,10 @@ import core, {
   toIdMap,
   Space
 } from '@hcengineering/core'
-import notification, { CommonInboxNotification } from '@hcengineering/notification'
 import { getResource } from '@hcengineering/platform'
 import type { TriggerControl } from '@hcengineering/server-core'
-import { getSocialStrings } from '@hcengineering/server-contact'
-import { ReceiverInfo, SenderInfo } from '@hcengineering/server-notification'
-import {
-  getCommonNotificationTxes,
-  getNotificationContent,
-  getNotificationProviderControl,
-  isShouldNotifyTx,
-  getSenderInfo
-} from '@hcengineering/server-notification-resources'
 import serverTime, { OnToDo, ToDoFactory } from '@hcengineering/server-time'
 import task, { makeRank } from '@hcengineering/task'
-import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@hcengineering/text-core'
 import time, { ProjectToDo, ToDo, ToDoPriority, TodoAutomationHelper, WorkSlot } from '@hcengineering/time'
 import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengineering/tracker'
 
@@ -282,58 +271,58 @@ export async function OnToDoCreate (txes: TxCUD<Doc>[], control: TriggerControl)
       continue
     }
 
-    const socialIds = await getSocialStrings(control, employee._id)
+    // const socialIds = await getSocialStrings(control, employee._id)
     const account = employee.personUuid
 
     if (account == null) {
       continue
     }
-
-    const receiverInfo: ReceiverInfo = {
-      account,
-      socialIds,
-      space: personSpace._id,
-      employee: employee._id,
-      role: employee.role
-    }
-
-    const senderInfo: SenderInfo = await getSenderInfo(control.ctx, tx.modifiedBy, control)
-    const notificationControl = await getNotificationProviderControl(control.ctx, control)
-    const notifyResult = await isShouldNotifyTx(control, createTx, todo, receiverInfo, true, false, notificationControl)
-    const content = await getNotificationContent(tx, employee._id, senderInfo, todo, control)
-    const data: Partial<Data<CommonInboxNotification>> = {
-      ...content,
-      header: time.string.ToDo,
-      headerIcon: time.icon.Planned,
-      headerObjectId: object._id,
-      headerObjectClass: object._class,
-      messageHtml: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
-    }
-
-    const txes = await getCommonNotificationTxes(
-      control.ctx,
-      control,
-      object,
-      data,
-      receiverInfo,
-      senderInfo,
-      object._id,
-      object._class,
-      object.space,
-      createTx.modifiedOn,
-      notifyResult,
-      notification.class.CommonInboxNotification,
-      tx
-    )
-
-    await control.apply(control.ctx, txes)
-
-    const ids = txes.map((it) => it._id)
-    control.ctx.contextData.broadcast.targets.notifications = async (it) => {
-      if (ids.includes(it._id)) {
-        return { target: [receiverInfo.account] }
-      }
-    }
+    //
+    // const receiverInfo: ReceiverInfo = {
+    //   account,
+    //   socialIds,
+    //   space: personSpace._id,
+    //   employee: employee._id,
+    //   role: employee.role
+    // }
+    //
+    // const senderInfo: SenderInfo = await getSenderInfo(control.ctx, tx.modifiedBy, control)
+    // const notificationControl = await getNotificationProviderControl(control.ctx, control)
+    // const notifyResult = await isShouldNotifyTx(control, createTx, todo, receiverInfo, true, false, notificationControl)
+    // const content = await getNotificationContent(tx, employee._id, senderInfo, todo, control)
+    // const data: Partial<Data<CommonInboxNotification>> = {
+    //   ...content,
+    //   header: time.string.ToDo,
+    //   headerIcon: time.icon.Planned,
+    //   headerObjectId: object._id,
+    //   headerObjectClass: object._class,
+    //   messageHtml: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+    // }
+    //
+    // const txes = await getCommonNotificationTxes(
+    //   control.ctx,
+    //   control,
+    //   object,
+    //   data,
+    //   receiverInfo,
+    //   senderInfo,
+    //   object._id,
+    //   object._class,
+    //   object.space,
+    //   createTx.modifiedOn,
+    //   notifyResult,
+    //   notification.class.CommonInboxNotification,
+    //   tx
+    // )
+    //
+    // await control.apply(control.ctx, txes)
+    //
+    // const ids = txes.map((it) => it._id)
+    // control.ctx.contextData.broadcast.targets.notifications = async (it) => {
+    //   if (ids.includes(it._id)) {
+    //     return { target: [receiverInfo.account] }
+    //   }
+    // }
   }
   return []
 }

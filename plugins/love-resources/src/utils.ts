@@ -2,7 +2,6 @@ import aiBot from '@hcengineering/ai-bot'
 import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
 import { Analytics } from '@hcengineering/analytics'
 import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
-import chunter from '@hcengineering/chunter'
 import { getName } from '@hcengineering/contact'
 import core, {
   AccountRole,
@@ -442,12 +441,13 @@ export function createMeetingWidget (widget: Widget, room: Ref<Room>, video: boo
           }
         ]
       : []),
-    {
-      id: 'chat',
-      label: chunter.string.Chat,
-      icon: view.icon.Bubble,
-      readonly: true
-    },
+    // TODO: FIXME
+    // {
+    //   id: 'chat',
+    //   label: chunter.string.Chat,
+    //   icon: view.icon.Bubble,
+    //   readonly: true
+    // },
     {
       id: 'transcription',
       label: love.string.Transcription,

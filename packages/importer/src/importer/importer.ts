@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 import attachment, { type Attachment, type Drawing } from '@hcengineering/attachment'
-import chunter, { type ChatMessage } from '@hcengineering/chunter'
 import { type Employee, type Person } from '@hcengineering/contact'
 import documents, {
   type ChangeControl,
@@ -663,33 +662,32 @@ export class WorkspaceImporter {
   }
 
   async createComment (issueId: Ref<Issue>, comment: ImportComment, projectId: Ref<Project>): Promise<void> {
-    const json = markdownToMarkup(comment.text ?? '')
-    const processedJson = this.preprocessor.process(json, issueId, projectId)
-    const markup = jsonToMarkup(processedJson)
-
-    const value: AttachedData<ChatMessage> = {
-      message: markup,
-      attachments: comment.attachments?.length
-    }
-
-    const commentId = generateId<ChatMessage>()
-    await this.client.addCollection(
-      chunter.class.ChatMessage,
-      projectId,
-      issueId,
-      tracker.class.Issue,
-      'comments',
-      value,
-      commentId,
-      comment.date,
-      comment.author
-    )
-
-    if (comment.attachments !== undefined) {
-      for (const attachment of comment.attachments) {
-        await this.importAttachment(commentId, chunter.class.ChatMessage, attachment, projectId)
-      }
-    }
+    // const json = markdownToMarkup(comment.text ?? '')
+    // const processedJson = this.preprocessor.process(json, issueId, projectId)
+    // const markup = jsonToMarkup(processedJson)
+    // const value: AttachedData<ChatMessage> = {
+    //   message: markup,
+    //   attachments: comment.attachments?.length
+    // }
+    //
+    // const commentId = generateId<ChatMessage>()
+    // await this.client.addCollection(
+    //   chunter.class.ChatMessage,
+    //   projectId,
+    //   issueId,
+    //   tracker.class.Issue,
+    //   'comments',
+    //   value,
+    //   commentId,
+    //   comment.date,
+    //   comment.author
+    // )
+    //
+    // if (comment.attachments !== undefined) {
+    //   for (const attachment of comment.attachments) {
+    //     await this.importAttachment(commentId, chunter.class.ChatMessage, attachment, projectId)
+    //   }
+    // }
   }
 
   private async importAttachment (

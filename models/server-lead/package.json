@@ -41,8 +41,6 @@
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/lead": "workspace:^0.7.0",
     "@hcengineering/model-lead": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/server-notification": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0"
   }
 }

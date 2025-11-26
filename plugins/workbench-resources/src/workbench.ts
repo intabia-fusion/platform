@@ -21,7 +21,6 @@ import core, {
   reduceCalls,
   type Ref
 } from '@hcengineering/core'
-import notification, { notificationId } from '@hcengineering/notification'
 import { type Asset, getMetadata, getResource, type IntlString, setMetadata, translate } from '@hcengineering/platform'
 import presentation, { configurationStore, getClient } from '@hcengineering/presentation'
 import {
@@ -29,7 +28,6 @@ import {
   getCurrentLocation,
   languageStore,
   type Location,
-  locationStorageKeyId,
   location as locationStore,
   locationToUrl,
   navigate,
@@ -37,7 +35,7 @@ import {
 } from '@hcengineering/ui'
 import view from '@hcengineering/view'
 import { parseLinkId } from '@hcengineering/view-resources'
-import { type Application, workbenchId, type WorkbenchTab } from '@hcengineering/workbench'
+import { type Application, type WorkbenchTab } from '@hcengineering/workbench'
 import { derived, get, writable } from 'svelte/store'
 
 import setting from '@hcengineering/setting'
@@ -85,7 +83,8 @@ const syncTabLoc = reduceCalls(async (): Promise<void> => {
 
     const tabLoc = getTabLocation(t)
     if (tabLoc.path[2] !== loc.path[2]) return false
-    if (tabLoc.path[2] === notificationId) return true
+    // TODO: FIXME
+    // if (tabLoc.path[2] === notificationId) return true
 
     return tabLoc.path[3] === loc.path[3]
   })
@@ -218,30 +217,31 @@ export async function closeCurrentTab (): Promise<void> {
 }
 
 export async function createTab (): Promise<void> {
-  const loc = getCurrentLocation()
-  const client = getClient()
-  let defaultUrl = `${workbenchId}/${loc.path[1]}/${notificationId}`
-
-  try {
-    const last = localStorage.getItem(`${locationStorageKeyId}_${notificationId}`)
-    const lastLocation: Location | undefined = last != null ? JSON.parse(last) : undefined
-    if (lastLocation != null && lastLocation.path[1] === loc.path[1] && lastLocation.path[2] === notificationId) {
-      defaultUrl = locationToUrl(lastLocation)
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  const name = await translate(notification.string.Inbox, {}, get(languageStore))
-  const tab = await client.createDoc(workbench.class.WorkbenchTab, core.space.Workspace, {
-    attachedTo: getCurrentAccount().uuid,
-    location: defaultUrl,
-    isPinned: false,
-    name
-  })
-
-  selectTab(tab)
-  navigate(getTabLocation({ location: defaultUrl }))
+  // TODO: FIXME
+  // const loc = getCurrentLocation()
+  // const client = getClient()
+  // let defaultUrl = `${workbenchId}/${loc.path[1]}/${notificationId}`
+  //
+  // try {
+  //   const last = localStorage.getItem(`${locationStorageKeyId}_${notificationId}`)
+  //   const lastLocation: Location | undefined = last != null ? JSON.parse(last) : undefined
+  //   if (lastLocation != null && lastLocation.path[1] === loc.path[1] && lastLocation.path[2] === notificationId) {
+  //     defaultUrl = locationToUrl(lastLocation)
+  //   }
+  // } catch (e) {
+  //   // ignore
+  // }
+  //
+  // const name = await translate(notification.string.Inbox, {}, get(languageStore))
+  // const tab = await client.createDoc(workbench.class.WorkbenchTab, core.space.Workspace, {
+  //   attachedTo: getCurrentAccount().uuid,
+  //   location: defaultUrl,
+  //   isPinned: false,
+  //   name
+  // })
+  //
+  // selectTab(tab)
+  // navigate(getTabLocation({ location: defaultUrl }))
 }
 
 export function canCloseTab (tab: WorkbenchTab): boolean {

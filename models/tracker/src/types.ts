@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import chunter from '@hcengineering/chunter'
 import contact, { type Employee, type Person } from '@hcengineering/contact'
 import {
   DOMAIN_MODEL,
@@ -309,8 +308,9 @@ export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Prop(ArrOf(TypeRef(tracker.class.IssueTemplate)), tracker.string.IssueTemplate)
     children!: IssueTemplateChild[]
 
-  @Prop(Collection(chunter.class.ChatMessage), tracker.string.Comments)
-    comments!: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), tracker.string.Comments)
+  comments!: number
 
   @Prop(Collection(attachment.class.Attachment), tracker.string.Attachments)
     attachments!: number
@@ -357,8 +357,9 @@ export class TComponent extends TDoc implements Component {
   @Prop(TypeRef(contact.mixin.Employee), tracker.string.ComponentLead)
     lead!: Ref<Employee> | null
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments!: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments!: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
@@ -383,8 +384,9 @@ export class TMilestone extends TDoc implements Milestone {
   @Index(IndexKind.Indexed)
     status!: MilestoneStatus
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments!: number
+  // TODO: FIXME
+  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments!: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

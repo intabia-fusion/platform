@@ -13,9 +13,7 @@
 // limitations under the License.
 //
 
-import { ActivityMessage } from '@hcengineering/activity'
-import { AccountUuid, Ref } from '@hcengineering/core'
-import { InboxNotification } from '@hcengineering/notification'
+import { AccountUuid } from '@hcengineering/core'
 
 export type TelegramQueueMessage = TelegramNotificationQueueMessage | TelegramWorkspaceSubscriptionQueueMessage
 
@@ -26,8 +24,9 @@ export enum TelegramQueueMessageType {
 
 export interface TelegramNotificationQueueMessage {
   type: TelegramQueueMessageType.Notification
-  notificationId: Ref<InboxNotification>
-  messageId?: Ref<ActivityMessage>
+  // TODO: FIXME
+  notificationId: any
+  messageId?: any
   attachments: boolean
   account: AccountUuid
   title: string

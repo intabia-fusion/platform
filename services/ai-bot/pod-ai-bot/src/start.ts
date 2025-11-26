@@ -30,7 +30,6 @@ import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/a
 import { newMetrics, type SocialId, type WorkspaceUuid, type Ref } from '@hcengineering/core'
 import { type Room } from '@hcengineering/love'
 import { type Person } from '@hcengineering/contact'
-import { type ChatMessage } from '@hcengineering/chunter'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import { updateDeepgramBilling } from './billing'
@@ -201,7 +200,8 @@ export const start = async (): Promise<void> => {
           ctx.error('Failed to get workspace client for updating message', { workspace })
           return false
         }
-        return await wsClient.updateTranscriptionMessage(ctx, messageId as Ref<ChatMessage>, text)
+        // TODO: FIXME
+        return await wsClient.updateTranscriptionMessage(ctx, messageId as Ref<any>, text)
       },
       // Callback to create message with timestamp (fallback when placeholder not found)
       async (

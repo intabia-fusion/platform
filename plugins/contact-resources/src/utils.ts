@@ -76,8 +76,7 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import login from '@hcengineering/login'
-import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
-import { getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
+import { getMetadata, type IntlString, translate } from '@hcengineering/platform'
 import presentation, { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { type TemplateDataProvider } from '@hcengineering/templates'
 import {
@@ -89,7 +88,7 @@ import {
   type TabItem
 } from '@hcengineering/ui'
 import view, { type Filter, type GrouppingManager } from '@hcengineering/view'
-import { accessDeniedStore, FilterQuery } from '@hcengineering/view-resources'
+import { accessDeniedStore } from '@hcengineering/view-resources'
 import { type LocationData } from '@hcengineering/workbench'
 import { derived, get, type Readable, writable } from 'svelte/store'
 
@@ -134,76 +133,80 @@ export async function employeeSort (client: TxOperations, value: Array<Ref<Emplo
 }
 
 export async function filterChannelHasMessagesResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
-  const result = await getRefs(filter, onUpdate, true)
-  return { $in: result }
+  // const result = await getRefs(filter, onUpdate, true)
+  // return { $in: result }
+  return {}
 }
 
 export async function filterChannelHasNewMessagesResult (
   filter: Filter,
   onUpdate: () => void
 ): Promise<ObjQueryType<any>> {
-  const inboxClient = (await getResource(notification.function.GetInboxNotificationsClient))()
-  const result = await getRefs(
-    filter,
-    onUpdate,
-    undefined,
-    get(inboxClient.contextByDoc),
-    get(inboxClient.inboxNotificationsByContext)
-  )
-  return { $in: result }
+  // const inboxClient = (await getResource(notification.function.GetInboxNotificationsClient))()
+  // const result = await getRefs(
+  //   filter,
+  //   onUpdate,
+  //   undefined,
+  //   get(inboxClient.contextByDoc),
+  //   get(inboxClient.inboxNotificationsByContext)
+  // )
+  // return { $in: result }
+  return {}
 }
 
 export async function filterChannelInResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
-  const result = await getRefs(filter, onUpdate)
-  return { $in: result }
+  // const result = await getRefs(filter, onUpdate)
+  // return { $in: result }
+  return {}
 }
 
 export async function filterChannelNinResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
-  const result = await getRefs(filter, onUpdate)
-  return { $nin: result }
+  // const result = await getRefs(filter, onUpdate)
+  // return { $nin: result }
+  return {}
 }
-
-export async function getRefs (
-  filter: Filter,
-  onUpdate: () => void,
-  hasMessages?: boolean,
-  docUpdates?: Map<Ref<Doc>, DocNotifyContext>,
-  inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, InboxNotification[]>
-): Promise<Array<Ref<Doc>>> {
-  const lq = FilterQuery.getLiveQuery(filter.index)
-  const client = getClient()
-  const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
-  if (mode === undefined) return []
-  const promise = new Promise<Array<Ref<Doc>>>((resolve, reject) => {
-    const hasMessagesQuery = hasMessages === true ? { items: { $gt: 0 } } : {}
-    const refresh = lq.query(
-      contact.class.Channel,
-      {
-        provider: { $in: filter.value },
-        ...hasMessagesQuery
-      },
-      (refs) => {
-        const filteredRefs =
-          docUpdates !== undefined && inboxNotificationsByContext !== undefined
-            ? refs.filter((channel) => {
-              const docUpdate = docUpdates.get(channel._id)
-              return docUpdate != null
-                ? inboxNotificationsByContext.get(docUpdate._id)?.some(({ isViewed }) => !isViewed)
-                : (channel.items ?? 0) > 0
-            })
-            : refs
-        const result = Array.from(new Set(filteredRefs.map((p) => p.attachedTo)))
-        FilterQuery.results.set(filter.index, result)
-        resolve(result)
-        onUpdate()
-      }
-    )
-    if (!refresh) {
-      resolve(FilterQuery.results.get(filter.index) ?? [])
-    }
-  })
-  return await promise
-}
+//
+// export async function getRefs (
+//   filter: Filter,
+//   onUpdate: () => void,
+//   hasMessages?: boolean,
+//   docUpdates?: Map<Ref<Doc>, DocNotifyContext>,
+//   inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, InboxNotification[]>
+// ): Promise<Array<Ref<Doc>>> {
+//   const lq = FilterQuery.getLiveQuery(filter.index)
+//   const client = getClient()
+//   const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
+//   if (mode === undefined) return []
+//   const promise = new Promise<Array<Ref<Doc>>>((resolve, reject) => {
+//     const hasMessagesQuery = hasMessages === true ? { items: { $gt: 0 } } : {}
+//     const refresh = lq.query(
+//       contact.class.Channel,
+//       {
+//         provider: { $in: filter.value },
+//         ...hasMessagesQuery
+//       },
+//       (refs) => {
+//         const filteredRefs =
+//           docUpdates !== undefined && inboxNotificationsByContext !== undefined
+//             ? refs.filter((channel) => {
+//               const docUpdate = docUpdates.get(channel._id)
+//               return docUpdate != null
+//                 ? inboxNotificationsByContext.get(docUpdate._id)?.some(({ isViewed }) => !isViewed)
+//                 : (channel.items ?? 0) > 0
+//             })
+//             : refs
+//         const result = Array.from(new Set(filteredRefs.map((p) => p.attachedTo)))
+//         FilterQuery.results.set(filter.index, result)
+//         resolve(result)
+//         onUpdate()
+//       }
+//     )
+//     if (!refresh) {
+//       resolve(FilterQuery.results.get(filter.index) ?? [])
+//     }
+//   })
+//   return await promise
+// }
 
 export async function getCurrentEmployeeName (): Promise<string> {
   const me = getCurrentEmployee()

@@ -15,13 +15,11 @@
 
 import platform, { type Plugin, addLocation, addStringsLoader, platformId } from '@hcengineering/platform'
 
-import { activityId } from '@hcengineering/activity'
 import aiBot, { aiBotId } from '@hcengineering/ai-bot'
 import analyticsCollector, { analyticsCollectorId } from '@hcengineering/analytics-collector'
 import { attachmentId } from '@hcengineering/attachment'
 import calendar, { calendarId } from '@hcengineering/calendar'
 import { cardId } from '@hcengineering/card'
-import { chunterId } from '@hcengineering/chunter'
 import client, { clientId } from '@hcengineering/client'
 import contactPlugin, { contactId } from '@hcengineering/contact'
 import { documentsId } from '@hcengineering/controlled-documents'
@@ -39,7 +37,6 @@ import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
 import login, { loginId } from '@hcengineering/login'
 import love, { loveId } from '@hcengineering/love'
-import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
 import presence, { presenceId } from '@hcengineering/presence'
 import print, { printId } from '@hcengineering/print'
@@ -80,12 +77,10 @@ import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
 
-import '@hcengineering/activity-assets'
 import '@hcengineering/analytics-collector-assets'
 import '@hcengineering/attachment-assets'
 import '@hcengineering/calendar-assets'
 import '@hcengineering/card-assets'
-import '@hcengineering/chunter-assets'
 import '@hcengineering/contact-assets'
 import '@hcengineering/controlled-documents-assets'
 import '@hcengineering/desktop-preferences-assets'
@@ -101,7 +96,6 @@ import '@hcengineering/inventory-assets'
 import '@hcengineering/lead-assets'
 import '@hcengineering/login-assets'
 import '@hcengineering/love-assets'
-import '@hcengineering/notification-assets'
 import '@hcengineering/preference-assets'
 import '@hcengineering/print-assets'
 import '@hcengineering/process-assets'
@@ -295,13 +289,11 @@ function configureI18n(): void {
   addStringsLoader(uploaderId, async (lang: string) => await import(`@hcengineering/uploader-assets/lang/${lang}.json`))
   addStringsLoader(recorderId, async (lang: string) => await import(`@hcengineering/recorder-assets/lang/${lang}.json`))
   addStringsLoader(mediaId, async (lang: string) => await import(`@hcengineering/media-assets/lang/${lang}.json`))
-  addStringsLoader(activityId, async (lang: string) => await import(`@hcengineering/activity-assets/lang/${lang}.json`))
   addStringsLoader(
     attachmentId,
     async (lang: string) => await import(`@hcengineering/attachment-assets/lang/${lang}.json`)
   )
   addStringsLoader(calendarId, async (lang: string) => await import(`@hcengineering/calendar-assets/lang/${lang}.json`))
-  addStringsLoader(chunterId, async (lang: string) => await import(`@hcengineering/chunter-assets/lang/${lang}.json`))
   addStringsLoader(contactId, async (lang: string) => await import(`@hcengineering/contact-assets/lang/${lang}.json`))
   addStringsLoader(driveId, async (lang: string) => await import(`@hcengineering/drive-assets/lang/${lang}.json`))
   addStringsLoader(gmailId, async (lang: string) => await import(`@hcengineering/gmail-assets/lang/${lang}.json`))
@@ -312,10 +304,6 @@ function configureI18n(): void {
   )
   addStringsLoader(leadId, async (lang: string) => await import(`@hcengineering/lead-assets/lang/${lang}.json`))
   addStringsLoader(loginId, async (lang: string) => await import(`@hcengineering/login-assets/lang/${lang}.json`))
-  addStringsLoader(
-    notificationId,
-    async (lang: string) => await import(`@hcengineering/notification-assets/lang/${lang}.json`)
-  )
   addStringsLoader(onboardId, async (lang: string) => await import(`@hcengineering/onboard-assets/lang/${lang}.json`))
   addStringsLoader(
     preferenceId,
@@ -497,7 +485,8 @@ export async function configurePlatform() {
   setMetadata(calendar.metadata.CalendarServiceURL, config.CALENDAR_URL ?? 'http://localhost:8095')
   setMetadata(calendar.metadata.PublicScheduleURL, config.PUBLIC_SCHEDULE_URL)
   setMetadata(calendar.metadata.CalDavServerURL, config.CALDAV_SERVER_URL)
-  setMetadata(notification.metadata.PushPublicKey, config.PUSH_PUBLIC_KEY)
+  // TODO: FIXME
+  // setMetadata(notification.metadata.PushPublicKey, config.PUSH_PUBLIC_KEY)
   setMetadata(analyticsCollector.metadata.EndpointURL, config.ANALYTICS_COLLECTOR_URL)
   setMetadata(aiBot.metadata.EndpointURL, config.AI_URL)
 
@@ -554,12 +543,7 @@ export async function configurePlatform() {
   addLocation(viewId, async () => await import(/* webpackChunkName: "view" */ '@hcengineering/view-resources'))
   addLocation(taskId, async () => await import(/* webpackChunkName: "task" */ '@hcengineering/task-resources'))
   addLocation(contactId, async () => await import(/* webpackChunkName: "contact" */ '@hcengineering/contact-resources'))
-  addLocation(chunterId, async () => await import(/* webpackChunkName: "chunter" */ '@hcengineering/chunter-resources'))
   addLocation(recruitId, async () => await import(/* webpackChunkName: "recruit" */ '@hcengineering/recruit-resources'))
-  addLocation(
-    activityId,
-    async () => await import(/* webpackChunkName: "activity" */ '@hcengineering/activity-resources')
-  )
   addLocation(settingId, async () => await import(/* webpackChunkName: "setting" */ '@hcengineering/setting-resources'))
   addLocation(leadId, async () => await import(/* webpackChunkName: "lead" */ '@hcengineering/lead-resources'))
   addLocation(
@@ -582,10 +566,6 @@ export async function configurePlatform() {
   addLocation(
     templatesId,
     async () => await import(/* webpackChunkName: "templates" */ '@hcengineering/templates-resources')
-  )
-  addLocation(
-    notificationId,
-    async () => await import(/* webpackChunkName: "notification" */ '@hcengineering/notification-resources')
   )
   addLocation(tagsId, async () => await import(/* webpackChunkName: "tags" */ '@hcengineering/tags-resources'))
   addLocation(

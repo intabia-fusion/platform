@@ -19,9 +19,7 @@ import { type IntlString, mergeIds, type Resource } from '@hcengineering/platfor
 import { gmailId } from '@hcengineering/gmail'
 import gmail from '@hcengineering/gmail-resources/src/plugin'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
 import { type Action } from '@hcengineering/view'
-import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(gmailId, gmail, {
   action: {
@@ -43,9 +41,10 @@ export default mergeIds(gmailId, gmail, {
     ConfigDescription: '' as IntlString
   },
   ids: {
-    EmailNotificationGroup: '' as Ref<NotificationGroup>,
-    GmailSharedMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    GmailWriteMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    // TODO: FIXME
+    // EmailNotificationGroup: '' as Ref<NotificationGroup>,
+    // GmailSharedMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // GmailWriteMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
   },
   activity: {
     GmailSharedMessage: '' as AnyComponent,

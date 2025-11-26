@@ -20,27 +20,27 @@ import contact from '@hcengineering/contact'
 import core from '@hcengineering/core'
 import serverContact from '@hcengineering/server-contact'
 import serverCore from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
 import serverTemplates from '@hcengineering/server-templates'
 import templates from '@hcengineering/templates'
 export { serverContactId } from '@hcengineering/server-contact'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(contact.class.Person, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverContact.function.PersonHTMLPresenter
-  })
-
-  builder.mixin(contact.class.Person, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverContact.function.PersonTextPresenter
-  })
-
-  builder.mixin(contact.class.Organization, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverContact.function.OrganizationHTMLPresenter
-  })
-
-  builder.mixin(contact.class.Organization, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverContact.function.OrganizationTextPresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(contact.class.Person, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverContact.function.PersonHTMLPresenter
+  // })
+  //
+  // builder.mixin(contact.class.Person, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverContact.function.PersonTextPresenter
+  // })
+  //
+  // builder.mixin(contact.class.Organization, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverContact.function.OrganizationHTMLPresenter
+  // })
+  //
+  // builder.mixin(contact.class.Organization, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverContact.function.OrganizationTextPresenter
+  // })
 
   builder.mixin(contact.class.Contact, core.class.Class, serverCore.mixin.SearchPresenter, {
     iconConfig: {

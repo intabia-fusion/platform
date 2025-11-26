@@ -14,7 +14,6 @@
 //
 
 import { type Client, type Doc, type Ref } from '@hcengineering/core'
-import { type NotificationType, type NotificationGroup } from '@hcengineering/notification'
 import { type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type ViewAction } from '@hcengineering/view'
@@ -48,9 +47,10 @@ export default mergeIds(loveId, love, {
     CopyGuestLink: '' as ViewAction
   },
   ids: {
-    Settings: '' as Ref<Doc>,
-    LoveNotificationGroup: '' as Ref<NotificationGroup>,
-    MeetingMinutesChatNotification: '' as Ref<NotificationType>
+    Settings: '' as Ref<Doc>
+    // TODO: FIXME
+    // LoveNotificationGroup: '' as Ref<NotificationGroup>,
+    // MeetingMinutesChatNotification: '' as Ref<NotificationType>
   },
   function: {
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>

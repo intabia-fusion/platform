@@ -13,10 +13,7 @@
 // limitations under the License.
 //
 
-import { type DocUpdateMessageViewlet } from '@hcengineering/activity'
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import type { Client, Doc, Ref, Status } from '@hcengineering/core'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
 import type { IntlString, Status as OperationStatus, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import { recruitId } from '@hcengineering/recruit'
@@ -87,17 +84,18 @@ export default mergeIds(recruitId, recruit, {
     ApplicantValidator: '' as Resource<<T extends Doc>(doc: T, client: Client) => Promise<OperationStatus>>
   },
   ids: {
-    VacancyNotificationGroup: '' as Ref<NotificationGroup>,
-    CandidateNotificationGroup: '' as Ref<NotificationGroup>,
-    ReviewNotificationGroup: '' as Ref<NotificationGroup>,
-    ApplicationNotificationGroup: '' as Ref<NotificationGroup>,
-    AssigneeNotification: '' as Ref<NotificationType>,
-    ApplicationCreateNotification: '' as Ref<NotificationType>,
-    ReviewCreateNotification: '' as Ref<NotificationType>,
-    ApplicantUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    ApplicantChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    VacancyChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    ReviewChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    // TODO: FIXME
+    // VacancyNotificationGroup: '' as Ref<NotificationGroup>,
+    // CandidateNotificationGroup: '' as Ref<NotificationGroup>,
+    // ReviewNotificationGroup: '' as Ref<NotificationGroup>,
+    // ApplicationNotificationGroup: '' as Ref<NotificationGroup>,
+    // AssigneeNotification: '' as Ref<NotificationType>,
+    // ApplicationCreateNotification: '' as Ref<NotificationType>,
+    // ReviewCreateNotification: '' as Ref<NotificationType>,
+    // ApplicantUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // ApplicantChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // VacancyChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
+    // ReviewChatMessageViewlet: '' as Ref<ChatMessageViewlet>
   },
   component: {
     CreateApplication: '' as AnyComponent,

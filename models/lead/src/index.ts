@@ -13,20 +13,15 @@
 // limitations under the License.
 //
 
-// To help typescript locate view plugin properly
-import activity from '@hcengineering/activity'
 import { AccountRole, type ClassCollaborators, SortingOrder, type FindOptions } from '@hcengineering/core'
 import { leadId, type Lead } from '@hcengineering/lead'
 import { type Builder } from '@hcengineering/model'
-import chunter from '@hcengineering/model-chunter'
 import contact from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import { type ViewOptionsModel } from '@hcengineering/view'
 
@@ -44,21 +39,22 @@ export * from './types'
 export function createModel (builder: Builder): void {
   builder.createModel(TFunnel, TLead, TCustomer)
 
-  builder.mixin(lead.class.Lead, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.mixin(lead.mixin.Customer, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.mixin(lead.class.Funnel, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: lead.class.Lead,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: lead.class.Funnel,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(lead.class.Lead, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.mixin(lead.mixin.Customer, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.mixin(lead.class.Funnel, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: lead.class.Lead,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: lead.class.Funnel,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(lead.class.Funnel, core.class.Class, workbench.mixin.SpaceView, {
     view: {
@@ -377,93 +373,94 @@ export function createModel (builder: Builder): void {
     lead.action.EditStatuses
   )
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: lead.string.Lead,
-      icon: lead.icon.Lead,
-      objectClass: lead.class.Lead
-    },
-    lead.ids.LeadNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: task.string.AssignedToMe,
-      group: lead.ids.LeadNotificationGroup,
-      field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: lead.class.Lead,
-      templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
-        subjectTemplate: '{doc} was assigned to you'
-      },
-      defaultEnabled: true
-    },
-    lead.ids.AssigneeNotification
-  )
-
-  generateClassNotificationTypes(builder, lead.class.Lead, lead.ids.LeadNotificationGroup, [], ['comments', 'status'])
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: lead.string.Customers,
-      icon: lead.icon.CreateCustomer,
-      objectClass: lead.mixin.Customer
-    },
-    lead.ids.CustomerNotificationGroup
-  )
-
-  generateClassNotificationTypes(
-    builder,
-    lead.mixin.Customer,
-    lead.ids.CustomerNotificationGroup,
-    [],
-    ['comments', 'attachments']
-  )
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: lead.string.Funnels,
-      icon: lead.icon.Funnel,
-      objectClass: lead.class.Funnel
-    },
-    lead.ids.FunnelNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: lead.string.LeadCreateLabel,
-      group: lead.ids.FunnelNotificationGroup,
-      field: 'space',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: lead.class.Funnel,
-      spaceSubscribe: true,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    lead.ids.LeadCreateNotification
-  )
-
-  generateClassNotificationTypes(builder, lead.class.Funnel, lead.ids.FunnelNotificationGroup, [], ['comments'])
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: lead.string.Lead,
+  //     icon: lead.icon.Lead,
+  //     objectClass: lead.class.Lead
+  //   },
+  //   lead.ids.LeadNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: task.string.AssignedToMe,
+  //     group: lead.ids.LeadNotificationGroup,
+  //     field: 'assignee',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: lead.class.Lead,
+  //     templates: {
+  //       textTemplate: '{doc} was assigned to you by {sender}',
+  //       htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+  //       subjectTemplate: '{doc} was assigned to you'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   lead.ids.AssigneeNotification
+  // )
+  //
+  // generateClassNotificationTypes(builder, lead.class.Lead, lead.ids.LeadNotificationGroup, [], ['comments', 'status'])
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: lead.string.Customers,
+  //     icon: lead.icon.CreateCustomer,
+  //     objectClass: lead.mixin.Customer
+  //   },
+  //   lead.ids.CustomerNotificationGroup
+  // )
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   lead.mixin.Customer,
+  //   lead.ids.CustomerNotificationGroup,
+  //   [],
+  //   ['comments', 'attachments']
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: lead.string.Funnels,
+  //     icon: lead.icon.Funnel,
+  //     objectClass: lead.class.Funnel
+  //   },
+  //   lead.ids.FunnelNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: lead.string.LeadCreateLabel,
+  //     group: lead.ids.FunnelNotificationGroup,
+  //     field: 'space',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: lead.class.Funnel,
+  //     spaceSubscribe: true,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p><p>{link}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   lead.ids.LeadCreateNotification
+  // )
+  //
+  // generateClassNotificationTypes(builder, lead.class.Funnel, lead.ids.FunnelNotificationGroup, [], ['comments'])
 
   builder.createDoc(
     view.class.Viewlet,
@@ -497,16 +494,16 @@ export function createModel (builder: Builder): void {
     lead.viewlet.DashboardLead
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: lead.class.Lead,
-      label: chunter.string.LeftComment
-    },
-    lead.ids.LeadChatMessageViewlet
-  )
+  // builder.createDoc(
+  //   chunter.class.ChatMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     messageClass: chunter.class.ChatMessage,
+  //     objectClass: lead.class.Lead,
+  //     label: chunter.string.LeftComment
+  //   },
+  //   lead.ids.LeadChatMessageViewlet
+  // )
 
   builder.mixin(lead.class.Lead, core.class.Class, task.mixin.KanbanCard, {
     card: lead.component.KanbanCard

@@ -15,19 +15,15 @@
 
 import { type Builder } from '@hcengineering/model'
 
-import core from '@hcengineering/core'
-import inventory from '@hcengineering/inventory'
-import serverInventory from '@hcengineering/server-inventory'
-import serverNotification from '@hcengineering/server-notification'
-
 export { serverInventoryId } from '@hcengineering/server-inventory'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(inventory.class.Product, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverInventory.function.ProductHTMLPresenter
-  })
-
-  builder.mixin(inventory.class.Product, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverInventory.function.ProductTextPresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(inventory.class.Product, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverInventory.function.ProductHTMLPresenter
+  // })
+  //
+  // builder.mixin(inventory.class.Product, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverInventory.function.ProductTextPresenter
+  // })
 }

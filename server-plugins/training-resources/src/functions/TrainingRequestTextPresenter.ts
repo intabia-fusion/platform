@@ -14,15 +14,12 @@
 //
 
 import type { TriggerControl } from '@hcengineering/server-core'
-import type { Presenter } from '@hcengineering/server-notification'
 import type { TrainingRequest } from '@hcengineering/training'
 import training from '@hcengineering/training'
 
 /** @public */
-export const TrainingRequestTextPresenter: Presenter<TrainingRequest> = async (
-  request: TrainingRequest,
-  control: TriggerControl
-) => {
+// TODO: FIXME
+export const TrainingRequestTextPresenter: any = async (request: TrainingRequest, control: TriggerControl) => {
   const trainingObject = (await control.findAll(control.ctx, training.class.Training, { _id: request.attachedTo }))[0]
 
   if (trainingObject === undefined) {

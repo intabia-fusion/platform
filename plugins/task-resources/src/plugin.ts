@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import {} from '@hcengineering/notification'
 import type { IntlString } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import task, { taskId } from '@hcengineering/task'

@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { AnyAttribute, Doc, getObjectValue } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { getClient, updateAttribute } from '@hcengineering/presentation'
   import { CheckBox, Component, IconCircles, tooltip, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { AttributeModel } from '@hcengineering/view'
@@ -116,11 +115,12 @@
           }}
         />
       </div>
-      <Component
-        is={notification.component.NotificationPresenter}
-        showLoading={false}
-        props={{ value: docObject, kind: 'table' }}
-      />
+      <!--      TODO: FIXME-->
+      <!--      <Component-->
+      <!--        is={notification.component.NotificationPresenter}-->
+      <!--        showLoading={false}-->
+      <!--        props={{ value: docObject, kind: 'table' }}-->
+      <!--      />-->
     </div>
   </div>
   {#each model.filter((p) => !(p.displayProps?.optional === true || p.displayProps?.compression === true || p.displayProps?.suffix === true)) as attributeModel, i}

@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import { type Channel } from '@hcengineering/contact'
 import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@hcengineering/core'
 import {
@@ -172,32 +171,33 @@ export function createModel (builder: Builder): void {
     gmail.integrationType.Gmail
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: gmail.class.Message,
-      icon: contact.icon.Email,
-      action: 'create',
-      component: gmail.activity.GmailWriteMessage,
-      label: gmail.string.HaveWrittenEmail
-    },
-    gmail.ids.GmailWriteMessageActivityViewlet
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: gmail.class.SharedMessages,
-      icon: contact.icon.Email,
-      action: 'create',
-      component: gmail.activity.GmailSharedMessage,
-      label: gmail.string.SharedMessages,
-      hideIfRemoved: true
-    },
-    gmail.ids.GmailSharedMessageActivityViewlet
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: gmail.class.Message,
+  //     icon: contact.icon.Email,
+  //     action: 'create',
+  //     component: gmail.activity.GmailWriteMessage,
+  //     label: gmail.string.HaveWrittenEmail
+  //   },
+  //   gmail.ids.GmailWriteMessageActivityViewlet
+  // )
+  //
+  // builder.createDoc(
+  //   activity.class.DocUpdateMessageViewlet,
+  //   core.space.Model,
+  //   {
+  //     objectClass: gmail.class.SharedMessages,
+  //     icon: contact.icon.Email,
+  //     action: 'create',
+  //     component: gmail.activity.GmailSharedMessage,
+  //     label: gmail.string.SharedMessages,
+  //     hideIfRemoved: true
+  //   },
+  //   gmail.ids.GmailSharedMessageActivityViewlet
+  // )
 
   createAction(
     builder,

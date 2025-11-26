@@ -23,8 +23,6 @@
   import { chatId } from '@hcengineering/chat'
   import { inboxId } from '@hcengineering/inbox'
   import { getMetadata, getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
   import { NotificationType } from '@hcengineering/communication-types'
 
   import AppItem from './AppItem.svelte'
@@ -103,20 +101,21 @@
     (it) => it.position === 'bottom' && !hiddenAppsIds.includes(it._id) && !excludedApps.includes(it.alias)
   )
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
+  // const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
-    undefined
-  let hasInboxNotifications = false
+  // let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
+  //   undefined
+  const hasInboxNotifications = false
 
-  void getResource(notification.function.HasInboxNotifications).then((f) => {
-    hasNotificationsFn = f
-  })
+  // void getResource(notification.function.HasInboxNotifications).then((f) => {
+  //   hasNotificationsFn = f
+  // })
 
-  $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
-    hasInboxNotifications = res
-  })
+  // $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
+  //   hasInboxNotifications = res
+  // })
 
   function showNotify (
     alias: string,

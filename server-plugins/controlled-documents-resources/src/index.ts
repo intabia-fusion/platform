@@ -19,7 +19,6 @@ import core, {
   type TxCUD,
   concatLink
 } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
 import { getEmployees, getSocialIds } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 
@@ -427,7 +426,8 @@ async function CoAuthorsTypeMatch (
   _doc: Doc,
   person: Ref<Person>,
   socialIds: PersonId[],
-  _type: NotificationType,
+  // TODO: FIXME
+  _type: any,
   control: TriggerControl
 ): Promise<boolean> {
   if (socialIds.includes(originTx.modifiedBy)) return false

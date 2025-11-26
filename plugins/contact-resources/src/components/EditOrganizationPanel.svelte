@@ -1,20 +1,11 @@
 <script lang="ts">
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, type KeyedAttribute } from '@hcengineering/presentation'
   import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
   import view, { AttributeCategory } from '@hcengineering/view'
-  import {
-    DocAttributeBar,
-    DocNavLink,
-    getCollectionCounter,
-    getDocAttrsInfo,
-    getDocMixins,
-    showMenu
-  } from '@hcengineering/view-resources'
+  import { DocAttributeBar, DocNavLink, getDocAttrsInfo, getDocMixins, showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { Organization } from '@hcengineering/contact'
 
@@ -30,7 +21,8 @@
   const query = createQuery()
 
   const dispatch = createEventDispatcher()
-  const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  // TODO: FIXME
+  // const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
 
   const ignoreKeys = ['comments', 'name', 'channels', 'description']
 
@@ -70,11 +62,11 @@
 
   function updateObject (_id: Ref<Organization>): void {
     if (lastId !== _id) {
-      const prev = lastId
+      // const prev = lastId
       lastId = _id
-      if (prev !== undefined) {
-        void inboxClient.then((client) => client.readDoc(prev))
-      }
+      // if (prev !== undefined) {
+      //   void inboxClient.then((client) => client.readDoc(prev))
+      // }
       query.query(contact.class.Organization, { _id }, (result) => {
         object = result[0]
       })
@@ -82,7 +74,7 @@
   }
 
   onDestroy(async () => {
-    void inboxClient.then((client) => client.readDoc(_id))
+    // void inboxClient.then((client) => client.readDoc(_id))
   })
 </script>
 
@@ -167,8 +159,8 @@
               object,
               space: object.space,
               key: editor.key,
-              readonly,
-              [editor.key.key]: getCollectionCounter(hierarchy, object, editor.key)
+              readonly
+              // [editor.key.key]: getCollectionCounter(hierarchy, object, editor.key)
             }}
           />
         </div>

@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@hcengineering/platform'
+import type { Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import { Presenter } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -27,7 +26,8 @@ export const serverLeadId = 'server-lead' as Plugin
  */
 export default plugin(serverLeadId, {
   function: {
-    LeadHTMLPresenter: '' as Resource<Presenter>,
-    LeadTextPresenter: '' as Resource<Presenter>
+    // TODO: FIXME
+    // LeadHTMLPresenter: '' as Resource<Presenter>,
+    // LeadTextPresenter: '' as Resource<Presenter>
   }
 })

@@ -13,8 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessagePreviewType, DisplayDocUpdateMessage } from '@hcengineering/activity'
-  import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
@@ -22,39 +20,40 @@
 
   import request from '../plugin'
 
-  export let message: DisplayDocUpdateMessage
-  export let type: ActivityMessagePreviewType = 'full'
+  // TODO: FIXME
+  // export let message: DisplayDocUpdateMessage
+  // export let type: ActivityMessagePreviewType = 'full'
 
   const me = getCurrentEmployee()
   const client = getClient()
 
-  $: isRemovedMe = message.attributeUpdates?.removed.includes(me) ?? false
-  $: isAddedMe = message.attributeUpdates?.added.includes(me) ?? false
+  // $: isRemovedMe = message.attributeUpdates?.removed.includes(me) ?? false
+  // $: isAddedMe = message.attributeUpdates?.added.includes(me) ?? false
 </script>
 
-<BaseMessagePreview {message} {type} on:click>
-  <slot name="content">
-    <div class="content overflow-label ml-1" class:preview={true}>
-      <span class="mr-1">
-        <Icon icon={client.getHierarchy().getClass(message.objectClass).icon ?? activity.icon.Activity} size="small" />
-      </span>
-      {#if isAddedMe}
-        <Label label={activity.string.New} />
-      {:else if isRemovedMe}
-        <Label label={request.string.Cancelled} />
-      {:else}
-        <Label label={activity.string.Updated} />
-      {/if}
-      <span class="lower">
-        <Label label={request.string.Requests} />
-      </span>
-      :
-      <span class="overflow-label values" class:preview={true}>
-        <ObjectPresenter objectId={message.objectId} _class={message.objectClass} shouldShowAvatar={false} />
-      </span>
-    </div>
-  </slot>
-</BaseMessagePreview>
+<!--<BaseMessagePreview {message} {type} on:click>-->
+<!--  <slot name="content">-->
+<!--    <div class="content overflow-label ml-1" class:preview={true}>-->
+<!--      <span class="mr-1">-->
+<!--        <Icon icon={client.getHierarchy().getClass(message.objectClass).icon ?? activity.icon.Activity} size="small" />-->
+<!--      </span>-->
+<!--      {#if isAddedMe}-->
+<!--        <Label label={activity.string.New} />-->
+<!--      {:else if isRemovedMe}-->
+<!--        <Label label={request.string.Cancelled} />-->
+<!--      {:else}-->
+<!--        <Label label={activity.string.Updated} />-->
+<!--      {/if}-->
+<!--      <span class="lower">-->
+<!--        <Label label={request.string.Requests} />-->
+<!--      </span>-->
+<!--      :-->
+<!--      <span class="overflow-label values" class:preview={true}>-->
+<!--        <ObjectPresenter objectId={message.objectId} _class={message.objectClass} shouldShowAvatar={false} />-->
+<!--      </span>-->
+<!--    </div>-->
+<!--  </slot>-->
+<!--</BaseMessagePreview>-->
 
 <style lang="scss">
   .content {

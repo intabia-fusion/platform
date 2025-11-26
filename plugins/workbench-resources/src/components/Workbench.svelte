@@ -27,8 +27,6 @@
     Space
   } from '@hcengineering/core'
   import login, { loginId } from '@hcengineering/login'
-  import notification, { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
-  import { BrowserNotificatator, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import inbox, { inboxId } from '@hcengineering/inbox'
   import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
   import {
@@ -269,20 +267,21 @@
 
   const workspaceId = $location.path[1]
 
-  const inboxClient = InboxNotificationsClientImpl.createClient()
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.createClient()
+  // const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
-    undefined
-  let hasInboxNotifications = false
+  // let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
+  //   undefined
+  const hasInboxNotifications = false
 
-  void getResource(notification.function.HasInboxNotifications).then((f) => {
-    hasNotificationsFn = f
-  })
-
-  $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
-    hasInboxNotifications = res
-  })
+  // void getResource(notification.function.HasInboxNotifications).then((f) => {
+  //   hasNotificationsFn = f
+  // })
+  //
+  // $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
+  //   hasInboxNotifications = res
+  // })
 
   let hasNewInboxNotifications = false
 
@@ -774,7 +773,8 @@
   let inboxPopup: PopupResult | undefined = undefined
   let lastLoc: Location | undefined = undefined
 
-  $: activeInboxId = isCommunicationEnabled ? inboxId : notificationId
+  // $: activeInboxId = isCommunicationEnabled ? inboxId : notificationId
+  $: activeInboxId = inboxId
 
   $: inboxProps = {
     selected: currentAppAlias === activeInboxId || inboxPopup !== undefined,
@@ -795,10 +795,7 @@
     }
   }
 
-  $: customAppProps = new Map([
-    [notificationId, inboxProps],
-    [inboxId, inboxProps]
-  ])
+  $: customAppProps = new Map([[inboxId, inboxProps]])
 
   defineSeparators('workbench', workbenchSeparators)
   defineSeparators('main', mainSeparators)
@@ -881,20 +878,20 @@
         </div>
         {#if !isExcludedApp(activeInboxId)}
           {#if !isCommunicationEnabled}
-            <NavLink
-              app={notificationId}
-              shrink={0}
-              disabled={!$deviceInfo.navigator.visible &&
-                $deviceInfo.navigator.float &&
-                currentAppAlias === notificationId}
-            >
-              <AppItem
-                icon={notification.icon.Notifications}
-                label={notification.string.Inbox}
-                {...inboxProps}
-                on:click={inboxProps.onClick}
-              />
-            </NavLink>
+            <!--            <NavLink-->
+            <!--              app={notificationId}-->
+            <!--              shrink={0}-->
+            <!--              disabled={!$deviceInfo.navigator.visible &&-->
+            <!--                $deviceInfo.navigator.float &&-->
+            <!--                currentAppAlias === notificationId}-->
+            <!--            >-->
+            <!--              <AppItem-->
+            <!--                icon={notification.icon.Notifications}-->
+            <!--                label={notification.string.Inbox}-->
+            <!--                {...inboxProps}-->
+            <!--                on:click={inboxProps.onClick}-->
+            <!--              />-->
+            <!--            </NavLink>-->
           {:else}
             <NavLink
               app={inboxId}
@@ -1131,7 +1128,7 @@
   <div class="hidden max-w-0 max-h-0">
     <ComponentExtensions extension={workbench.extensions.WorkbenchExtensions} />
   </div>
-  <BrowserNotificatator />
+  <!--  <BrowserNotificatator />-->
 {/if}
 
 <style lang="scss">

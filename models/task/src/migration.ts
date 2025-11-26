@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import {
   DOMAIN_MODEL_TX,
   DOMAIN_SEQUENCE,
@@ -42,7 +41,6 @@ import {
   type MigrationUpgradeClient,
   type ModelLogger
 } from '@hcengineering/model'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
 import tags from '@hcengineering/model-tags'
 import {
@@ -435,26 +433,6 @@ export async function migrateDefaultStatusesBase<T extends Task> (
   }
   logger.log('affectedBaseTasks updated: ', counter)
 
-  const baseTaskUpdateMessages = await client.find<DocUpdateMessage>(DOMAIN_ACTIVITY, {
-    _class: activity.class.DocUpdateMessage,
-    action: 'update',
-    objectClass: { $in: baseTaskClasses },
-    'attributeUpdates.attrKey': 'status',
-    'attributeUpdates.set.0.': { $in: statusIdsBeingMigrated }
-  })
-
-  logger.log('Base task update messages: ', baseTaskUpdateMessages.length)
-
-  counter = 0
-  for (const updateMessage of baseTaskUpdateMessages) {
-    const statusSet = updateMessage.attributeUpdates?.set[0]
-    const newStatusSet = statusSet != null ? getNewStatus(statusSet as Ref<Status>) : statusSet
-
-    if (statusSet !== newStatusSet) {
-      counter++
-      await client.update(DOMAIN_ACTIVITY, { _id: updateMessage._id }, { 'attributeUpdates.set.0': newStatusSet })
-    }
-  }
   logger.log('Base task update messages updated: ', counter)
 
   logger.log('Updating statuses themselves:', '')

@@ -30,7 +30,6 @@ import {
   SpaceTypeDescriptor,
   TypedSpace
 } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
 import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
@@ -282,7 +281,8 @@ const task = plugin(taskId, {
     CreateStatePopup: '' as AnyComponent
   },
   ids: {
-    AssigneedNotification: '' as Ref<NotificationType>,
+    // TODO: FIXME
+    // AssigneedNotification: '' as Ref<NotificationType>,
     ManageProjects: '' as Ref<Doc>
   },
   extensions: {

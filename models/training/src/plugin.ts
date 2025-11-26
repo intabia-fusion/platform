@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import type { NotificationGroup, NotificationType } from '@hcengineering/notification'
 import { trainingId } from '@hcengineering/training'
 import training from '@hcengineering/training-resources/src/plugin'
 import { mergeIds, type Resource } from '@hcengineering/platform'
@@ -30,8 +29,9 @@ export default mergeIds(trainingId, training, {
     Training: '' as Ref<ActionCategory>
   },
   notification: {
-    TrainingGroup: '' as Ref<NotificationGroup>,
-    TrainingRequest: '' as Ref<NotificationType>
+    // TODO: FIXME
+    // TrainingGroup: '' as Ref<NotificationGroup>,
+    // TrainingRequest: '' as Ref<NotificationType>
   },
 
   // TODO: Move function resources declarations to plugins/*-resources

@@ -45,7 +45,6 @@ import {
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import calendar, { TEvent } from '@hcengineering/model-calendar'
-import chunter from '@hcengineering/model-chunter'
 import contact, { TOrganization, TPerson } from '@hcengineering/model-contact'
 import core, { TAttachedDoc } from '@hcengineering/model-core'
 import tags from '@hcengineering/model-tags'
@@ -85,8 +84,9 @@ export class TVacancy extends TProject implements Vacancy {
   @Prop(TypeRef(contact.class.Organization), recruit.string.Company, { icon: contact.icon.Company })
     company?: Ref<Organization>
 
-  @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   @Prop(TypeString(), recruit.string.Vacancy)
   @Index(IndexKind.FullText)
@@ -238,8 +238,9 @@ export class TOpinion extends TAttachedDoc implements Opinion {
   })
     attachments?: number
 
-  @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
-    comments?: number
+  // TODO: FIXME
+  // @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
+  comments?: number
 
   @Prop(TypeMarkup(), recruit.string.Description)
     description!: Markup

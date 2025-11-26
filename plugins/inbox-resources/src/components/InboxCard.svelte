@@ -16,22 +16,18 @@
   import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
   import { CheckBox, Loading, Spinner } from '@hcengineering/ui'
   import { AccountRole, Doc, getCurrentAccount } from '@hcengineering/core'
-  import notification, { ActivityNotificationViewlet, InboxNotification } from '@hcengineering/notification'
   import { Card } from '@hcengineering/card'
   import { Notification, NotificationType } from '@hcengineering/communication-types'
 
   import InboxCardIcon from './InboxCardIcon.svelte'
   import InboxCardTitle from './InboxCardTitle.svelte'
   import ModernNotifications from './ModernNotifications.svelte'
-  import LegacyNotifications from './legacy/LegacyNotifications.svelte'
   import { NavigationItem } from '../type'
   import { NavigationClient } from '../client'
-  import { isReactionNotification } from '@hcengineering/notification-resources'
 
   export let navClient: NavigationClient
   export let navItem: NavigationItem
   export let selected: boolean = false
-  export let viewlets: ActivityNotificationViewlet[] = []
 
   const account = getCurrentAccount()
   const dispatch = createEventDispatcher()
@@ -39,7 +35,6 @@
   let total = 0
 
   const modernNotificationsQuery = createNotificationsQuery()
-  const legacyNotificationsQuery = createQuery()
   const query = createQuery()
 
   let doc: Doc | undefined = undefined
@@ -61,28 +56,12 @@
     isLoading = true
   }
 
-  $: if (navItem.type === 'modern') {
-    legacyNotificationsQuery.unsubscribe()
-    modernNotificationsQuery.query(
-      { limit: 1, total: true, read: false, strict: true, contextId: navItem.context.id },
-      (res) => {
-        total = res.getTotal()
-      }
-    )
-  } else {
-    modernNotificationsQuery.unsubscribe()
-    legacyNotificationsQuery.query(
-      notification.class.InboxNotification,
-      { isViewed: false, docNotifyContext: navItem.context._id },
-      (res) => {
-        total = res.total
-      },
-      {
-        total: true,
-        limit: 1
-      }
-    )
-  }
+  $: modernNotificationsQuery.query(
+    { limit: 1, total: true, read: false, strict: true, contextId: navItem.context.id },
+    (res) => {
+      total = res.getTotal()
+    }
+  )
 
   let isRemoving = false
   async function handleToggle (): Promise<void> {
@@ -98,7 +77,7 @@
     return doc as Card
   }
 
-  function onNotification (event: CustomEvent<InboxNotification | Notification>): void {
+  function onNotification (event: CustomEvent<Notification>): void {
     if (doc == null) return
     dispatch('select', { doc, notification: event.detail })
   }
@@ -108,21 +87,12 @@
     const messageHeightPx = 2
     const reactionsHeightPx = 4
     let res = base
-    if (navItem.type === 'modern') {
-      for (const n of navItem.context.notifications ?? []) {
-        if (n.type === NotificationType.Message) {
-          res += messageHeightPx
-        } else if (n.type === NotificationType.Reaction) {
-          res += reactionsHeightPx
-        }
-      }
-    } else {
-      for (const n of navItem.notifications) {
-        if (isReactionNotification(n)) {
-          res += reactionsHeightPx
-        } else {
-          res += messageHeightPx
-        }
+
+    for (const n of navItem.context.notifications ?? []) {
+      if (n.type === NotificationType.Message) {
+        res += messageHeightPx
+      } else if (n.type === NotificationType.Reaction) {
+        res += reactionsHeightPx
       }
     }
 
@@ -133,7 +103,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-  id={navItem.type === 'modern' ? navItem.context.id : navItem.context._id}
+  id={navItem.context.id}
   class="inbox-card"
   class:selected
   style:height={`${calcHeight(navItem)}rem`}
@@ -163,11 +133,7 @@
 
     <div class="inbox-card__content">
       <div class="inbox-card__notifications">
-        {#if navItem.type === 'modern'}
-          <ModernNotifications doc={asCard(doc)} context={navItem.context} on:click={onNotification} />
-        {:else}
-          <LegacyNotifications {doc} notifications={navItem.notifications} {viewlets} on:click={onNotification} />
-        {/if}
+        <ModernNotifications doc={asCard(doc)} context={navItem.context} on:click={onNotification} />
       </div>
     </div>
   {:else}

@@ -13,7 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocUpdateMessage } from '@hcengineering/activity'
   import { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Attachment } from '@hcengineering/attachment'
@@ -23,7 +22,8 @@
   import AttachmentPresenter from '../AttachmentPresenter.svelte'
   import AttachmentName from '../AttachmentName.svelte'
 
-  export let message: DocUpdateMessage
+  // TODO: FIXME
+  // export let message: DocUpdateMessage
   export let _id: Ref<Attachment>
   export let value: Attachment | undefined = undefined
   export let preview = false
@@ -36,8 +36,8 @@
     })
 </script>
 
-{#if preview || message.action === 'remove'}
-  <AttachmentName {value} />
-{:else}
-  <AttachmentPresenter {value} />
-{/if}
+<!--{#if preview || message.action === 'remove'}-->
+<!--  <AttachmentName {value} />-->
+<!--{:else}-->
+<AttachmentPresenter {value} />
+<!--{/if}-->

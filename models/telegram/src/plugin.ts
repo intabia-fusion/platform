@@ -14,14 +14,11 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@hcengineering/core'
 import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
 import { telegramId } from '@hcengineering/telegram'
 import telegram from '@hcengineering/telegram-resources/src/plugin'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
 import { type TemplateFieldFunc } from '@hcengineering/templates'
-import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(telegramId, telegram, {
   string: {
@@ -39,9 +36,10 @@ export default mergeIds(telegramId, telegram, {
     TelegramNotificationDescription: '' as IntlString
   },
   ids: {
-    NotificationGroup: '' as Ref<NotificationGroup>,
-    TelegramMessageSharedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    TelegramMessageCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    // TODO: FIXME
+    // NotificationGroup: '' as Ref<NotificationGroup>,
+    // TelegramMessageSharedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // TelegramMessageCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
   },
   function: {
     GetCurrentEmployeeTG: '' as Resource<TemplateFieldFunc>,

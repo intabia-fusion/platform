@@ -39,11 +39,9 @@
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/model": "workspace:^0.7.17",
     "@hcengineering/model-core": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/request": "workspace:^0.7.0",
     "@hcengineering/server-controlled-documents": "workspace:^0.7.0",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-notification": "workspace:^0.7.0"
+    "@hcengineering/server-core": "workspace:^0.7.18"
   }
 }

@@ -34,9 +34,7 @@ import {
   type MigrationDocumentQuery,
   type MigrationUpgradeClient
 } from '@hcengineering/model'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import core, { DOMAIN_SPACE, getAccountUuidBySocialKey, getSocialKeyByOldAccount } from '@hcengineering/model-core'
-import { DOMAIN_NOTIFICATION } from '@hcengineering/notification'
 import { type Asset } from '@hcengineering/platform'
 import { makeRank } from '@hcengineering/rank'
 
@@ -389,9 +387,6 @@ async function removeOldClasses (client: MigrationClient): Promise<void> {
 
   for (const _class of classes) {
     await client.deleteMany(DOMAIN_DOCUMENT, { _class })
-    await client.deleteMany(DOMAIN_ACTIVITY, { attachedToClass: _class })
-    await client.deleteMany(DOMAIN_ACTIVITY, { objectClass: _class })
-    await client.deleteMany(DOMAIN_NOTIFICATION, { attachedToClass: _class })
     await client.deleteMany(DOMAIN_TX, { objectClass: _class })
     await client.deleteMany(DOMAIN_TX, { 'tx.objectClass': _class })
   }
@@ -481,9 +476,6 @@ async function migrateEmbeddings (client: MigrationClient): Promise<void> {
 async function migrateEmbeddingsRefs (client: MigrationClient): Promise<void> {
   const _class = 'document:class:DocumentEmbedding'
 
-  await client.update(DOMAIN_ACTIVITY, { attachedToClass: _class }, { attachedToClass: attachment.class.Embedding })
-  await client.update(DOMAIN_ACTIVITY, { objectClass: _class }, { objectClass: attachment.class.Embedding })
-  await client.update(DOMAIN_NOTIFICATION, { attachedToClass: _class }, { attachedToClass: attachment.class.Embedding })
   await client.update(DOMAIN_TX, { objectClass: _class }, { objectClass: attachment.class.Embedding })
   await client.update(DOMAIN_TX, { 'tx.objectClass': _class }, { 'tx.objectClass': attachment.class.Embedding })
 }

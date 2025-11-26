@@ -15,29 +15,23 @@
 
 import { type Builder } from '@hcengineering/model'
 
-import core from '@hcengineering/core'
-import lead from '@hcengineering/model-lead'
-import notification from '@hcengineering/notification'
-import serverLead from '@hcengineering/server-lead'
-import serverNotification from '@hcengineering/server-notification'
-
 export { serverLeadId } from '@hcengineering/server-lead'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(lead.class.Lead, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverLead.function.LeadHTMLPresenter
-  })
-
-  builder.mixin(lead.class.Lead, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverLead.function.LeadTextPresenter
-  })
-
-  builder.mixin(
-    lead.ids.AssigneeNotification,
-    notification.class.NotificationType,
-    serverNotification.mixin.TypeMatch,
-    {
-      func: serverNotification.function.IsUserEmployeeInFieldValueTypeMatch
-    }
-  )
+  // TODO: FIXME
+  // builder.mixin(lead.class.Lead, core.class.Class, serverNotification.mixin.HTMLPresenter, {
+  //   presenter: serverLead.function.LeadHTMLPresenter
+  // })
+  //
+  // builder.mixin(lead.class.Lead, core.class.Class, serverNotification.mixin.TextPresenter, {
+  //   presenter: serverLead.function.LeadTextPresenter
+  // })
+  // builder.mixin(
+  //   lead.ids.AssigneeNotification,
+  //   notification.class.NotificationType,
+  //   serverNotification.mixin.TypeMatch,
+  //   {
+  //     func: serverNotification.function.IsUserEmployeeInFieldValueTypeMatch
+  //   }
+  // )
 }

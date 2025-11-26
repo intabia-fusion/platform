@@ -15,7 +15,6 @@
 
 import { Ref, Class, Data } from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
-import { NotificationPreferencesGroup } from '@hcengineering/notification'
 import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
@@ -75,6 +74,7 @@ export default plugin(desktopPreferencesId, {
     TotalNotificationsCount: '' as IntlString
   },
   ids: {
-    DesktopNotificationPreferencesGroup: '' as Ref<NotificationPreferencesGroup>
+    // TODO: FIXME
+    // DesktopNotificationPreferencesGroup: '' as Ref<NotificationPreferencesGroup>
   }
 })

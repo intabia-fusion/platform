@@ -13,11 +13,10 @@
 // limitations under the License.
 //
 
-import type { ActivityMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
 import { attachmentId } from '@hcengineering/attachment'
 import attachment from '@hcengineering/attachment-resources/src/plugin'
-import type { Ref, Doc } from '@hcengineering/core'
-import type { IntlString, Resource } from '@hcengineering/platform'
+import type { Ref } from '@hcengineering/core'
+import type { IntlString } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
 import type { ActionCategory } from '@hcengineering/view'
@@ -46,16 +45,14 @@ export default mergeIds(attachmentId, attachment, {
     ContentType: '' as IntlString
   },
   ids: {
-    AttachmentCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    AttachmentRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    // TODO: FIXME
+    // AttachmentCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
+    // AttachmentRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
   },
   activity: {
     AttachmentsUpdatedMessage: '' as AnyComponent
   },
   category: {
     Attachments: '' as Ref<ActionCategory>
-  },
-  filter: {
-    AttachmentsFilter: '' as Resource<(message: ActivityMessage, _class?: Ref<Doc>) => boolean>
   }
 })

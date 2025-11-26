@@ -16,16 +16,13 @@
 import { concatLink } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore, { type TriggerControl } from '@hcengineering/server-core'
-import type { Presenter } from '@hcengineering/server-notification'
 import { workbenchId } from '@hcengineering/workbench'
 import { trainingId, type TrainingRequest } from '@hcengineering/training'
 import { TrainingRequestTextPresenter } from './TrainingRequestTextPresenter'
 
 /** @public */
-export const TrainingRequestHTMLPresenter: Presenter<TrainingRequest> = async (
-  request: TrainingRequest,
-  control: TriggerControl
-) => {
+// TODO: FIXME
+export const TrainingRequestHTMLPresenter: any = async (request: TrainingRequest, control: TriggerControl) => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   // TODO: Don't hardcode URLs, find a way to share routes info between front and server resources, and DRY
   const path = `${workbenchId}/${control.workspace.url}/${trainingId}/requests/${request._id}`

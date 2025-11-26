@@ -1,10 +1,9 @@
 <script lang="ts">
   import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
-  import { getResource, IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, ObjectSearchPopup, ObjectSearchResult } from '@hcengineering/presentation'
   import { Issue } from '@hcengineering/tracker'
   import { Action, closePopup, Menu, showPopup } from '@hcengineering/ui'
-  import activity from '@hcengineering/activity'
 
   import { updateIssueRelation } from '../issues'
   import tracker from '../plugin'
@@ -41,7 +40,8 @@
 
       return
     }
-    const update = await getResource(activity.backreference.Update)
+    // TODO: FIXME
+    // const update = await getResource(activity.backreference.Update)
 
     let docs: RelatedDocument[] = []
     let label: IntlString = tracker.string.RemoveRelation
@@ -67,7 +67,7 @@
     if (operation === '$pull' && pos !== -1) {
       docs.splice(pos, 1)
     }
-    await update(value, type, docs, label)
+    // await update(value, type, docs, label)
   }
 
   const makeAddAction = (type: keyof typeof relations, placeholder: IntlString) => async () => {

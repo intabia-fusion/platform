@@ -14,20 +14,17 @@
 //
 
 import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/core'
-import serverCore from '@hcengineering/server-core'
-import serverAiBot from '@hcengineering/server-ai-bot'
-import chunter from '@hcengineering/chunter'
 
 export { serverAiBotId } from '@hcengineering/server-ai-bot'
 
 export function createModel (builder: Builder): void {
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverAiBot.trigger.OnMessageSend,
-    txMatch: {
-      _class: core.class.TxCreateDoc,
-      objectClass: chunter.class.ChatMessage
-    },
-    isAsync: true
-  })
+  // TODO: FIXME
+  // builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+  //   trigger: serverAiBot.trigger.OnMessageSend,
+  //   txMatch: {
+  //     _class: core.class.TxCreateDoc,
+  //     objectClass: chunter.class.ChatMessage
+  //   },
+  //   isAsync: true
+  // })
 }

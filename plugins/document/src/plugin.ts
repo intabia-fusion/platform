@@ -14,7 +14,6 @@
 //
 
 import type { Class, Doc, Mixin, Permission, Ref, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
-import { NotificationGroup, NotificationType } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
 import type { AnyComponent, Location, ResolvedLocation } from '@hcengineering/ui/src/types'
@@ -73,9 +72,10 @@ export const documentPlugin = plugin(documentId, {
     ForbidCreateTeamspacePermissionDescription: '' as IntlString
   },
   ids: {
-    NoParent: '' as Ref<Document>,
-    DocumentNotificationGroup: '' as Ref<NotificationGroup>,
-    ContentNotification: '' as Ref<NotificationType>
+    NoParent: '' as Ref<Document>
+    // TODO: FIXME
+    // DocumentNotificationGroup: '' as Ref<NotificationGroup>,
+    // ContentNotification: '' as Ref<NotificationType>
   },
   descriptor: {
     TeamspaceType: '' as Ref<SpaceTypeDescriptor>

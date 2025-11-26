@@ -16,7 +16,6 @@
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import view, { classPresenter } from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
 import tracker from './plugin'
 
 /**
@@ -30,9 +29,10 @@ export function definePresenters (builder: Builder): void {
     presenter: tracker.component.IssuePresenter
   })
 
-  builder.mixin(tracker.class.Issue, core.class.Class, notification.mixin.NotificationObjectPresenter, {
-    presenter: tracker.component.NotificationIssuePresenter
-  })
+  // TODO: FIXME
+  // builder.mixin(tracker.class.Issue, core.class.Class, notification.mixin.NotificationObjectPresenter, {
+  //   presenter: tracker.component.NotificationIssuePresenter
+  // })
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.PreviewPresenter, {
     presenter: tracker.component.IssuePreview

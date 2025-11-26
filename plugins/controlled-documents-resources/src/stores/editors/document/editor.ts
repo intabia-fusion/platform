@@ -25,7 +25,6 @@ import {
   type Project,
   type ProjectDocument
 } from '@hcengineering/controlled-documents'
-import chunter from '@hcengineering/chunter'
 import { type Ref } from '@hcengineering/core'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { type Training } from '@hcengineering/training'
@@ -355,13 +354,14 @@ export const $availableRightPanelTabs = combine($canViewDocumentComments, (canVi
     { id: RightPanelTab.INFO, icon: plugin.icon.Document, showTooltip: { label: plugin.string.GeneralInfo } }
   ]
 
-  if (canViewComments) {
-    tabs.push({
-      id: RightPanelTab.COMMENT,
-      icon: chunter.icon.Chunter,
-      showTooltip: { label: chunter.string.Comments }
-    })
-  }
+  // TODO: FIXME
+  // if (canViewComments) {
+  //   tabs.push({
+  //     id: RightPanelTab.COMMENT,
+  //     icon: chunter.icon.Chunter,
+  //     showTooltip: { label: chunter.string.Comments }
+  //   })
+  // }
 
   tabs.push({
     id: RightPanelTab.APPROVALS,

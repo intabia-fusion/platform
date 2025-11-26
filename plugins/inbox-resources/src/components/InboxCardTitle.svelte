@@ -13,9 +13,7 @@
 
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Component, Label, tooltip } from '@hcengineering/ui'
-  import notification from '@hcengineering/notification'
-  import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
+  import { Label, tooltip } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Doc } from '@hcengineering/core'
 
@@ -27,24 +25,7 @@
 
   const client = getClient()
 
-  $: presenterMixin = client
-    .getHierarchy()
-    .classHierarchyMixin(navItem._class, notification.mixin.NotificationContextPresenter)
-
-  let idTitle: string | undefined
   let title: string | undefined
-
-  $: navItem.type === 'legacy' &&
-    doc &&
-    getDocIdentifier(client, doc._id, doc._class, doc).then((res) => {
-      idTitle = res
-    })
-
-  $: navItem.type === 'legacy' &&
-    doc &&
-    getDocTitle(client, doc._id, doc._class, doc).then((res) => {
-      title = res
-    })
 
   function asCard (doc: Doc): Card {
     return doc as Card
@@ -63,28 +44,29 @@
       </span>
     {/if}
   {:else}
-    {#if presenterMixin?.labelPresenter && navItem.type === 'legacy'}
-      {#if doc}
-        <Component
-          is={presenterMixin.labelPresenter}
-          props={{ context: navItem.context, object: doc }}
-          showLoading={false}
-        />
-      {/if}
-    {:else if idTitle}
-      <span class="title--bold overflow-label clear-mins" use:tooltip={{ label: getEmbeddedLabel(idTitle) }}>
-        {idTitle}
-      </span>
-    {:else}
-      {@const label = client.getHierarchy().getClass(navItem._class).label}
-      <span class="title--bold overflow-label clear-mins" use:tooltip={{ label }}>
-        <Label {label} />
-      </span>
-    {/if}
-    {@const label = title != null ? getEmbeddedLabel(title) : client.getHierarchy().getClass(navItem._class).label}
-    <span class="title overflow-label clear-mins" use:tooltip={{ label }}>
-      <Label {label} />
-    </span>
+    <!--TODO: FIXME-->
+    <!--  {#if presenterMixin?.labelPresenter && navItem.type === 'legacy'}-->
+    <!--    {#if doc}-->
+    <!--      <Component-->
+    <!--        is={presenterMixin.labelPresenter}-->
+    <!--        props={{ context: navItem.context, object: doc }}-->
+    <!--        showLoading={false}-->
+    <!--      />-->
+    <!--    {/if}-->
+    <!--  {:else if idTitle}-->
+    <!--    <span class="title&#45;&#45;bold overflow-label clear-mins" use:tooltip={{ label: getEmbeddedLabel(idTitle) }}>-->
+    <!--      {idTitle}-->
+    <!--    </span>-->
+    <!--  {:else}-->
+    <!--    {@const label = client.getHierarchy().getClass(navItem._class).label}-->
+    <!--    <span class="title&#45;&#45;bold overflow-label clear-mins" use:tooltip={{ label }}>-->
+    <!--      <Label {label} />-->
+    <!--    </span>-->
+    <!--  {/if}-->
+    <!--  {@const label = title != null ? getEmbeddedLabel(title) : client.getHierarchy().getClass(navItem._class).label}-->
+    <!--  <span class="title overflow-label clear-mins" use:tooltip={{ label }}>-->
+    <!--    <Label {label} />-->
+    <!--  </span>-->
   {/if}
 </div>
 

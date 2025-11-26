@@ -30,8 +30,6 @@
   import { TreeNode } from '@hcengineering/view-resources'
   import { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'
@@ -80,25 +78,27 @@
     }
   }
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const notifyContextByDocStore = inboxClient.contextByDoc
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
 
-  function isChanged (
-    space: Space,
-    notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): boolean {
-    const context = notifyContextByDoc.get(space._id)
+  // const notifyContextByDocStore = inboxClient.contextByDoc
+  // const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-    if (context === undefined) {
-      return false
-    }
-
-    const inboxNotifications = inboxNotificationsByContext.get(context._id) ?? []
-
-    return inboxNotifications.filter(({ isViewed }) => !isViewed).length > 0
-  }
+  // function isChanged (
+  //   space: Space,
+  //   notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
+  //   inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  // ): boolean {
+  //   const context = notifyContextByDoc.get(space._id)
+  //
+  //   if (context === undefined) {
+  //     return false
+  //   }
+  //
+  //   const inboxNotifications = inboxNotificationsByContext.get(context._id) ?? []
+  //
+  //   return inboxNotifications.filter(({ isViewed }) => !isViewed).length > 0
+  // }
 
   function getParentActions (): Action[] {
     const result = hasSpaceBrowser ? [browseSpaces] : []
@@ -164,9 +164,10 @@
       {currentSpecial}
       {currentFragment}
       {deselect}
-      isChanged={isChanged(space, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
       spaceActions={[starSpace]}
     />
+    <!--    TODO: FIXME-->
+    <!--      isChanged={isChanged(space, $notifyContextByDocStore, $inboxNotificationsByContextStore)}-->
   {/each}
 
   <svelte:fragment slot="visible">
@@ -178,10 +179,10 @@
         {currentSpecial}
         {currentFragment}
         {deselect}
-        isChanged={isChanged(visibleSpace, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
         spaceActions={[starSpace]}
         forciblyСollapsed
       />
+      <!--              isChanged={isChanged(visibleSpace, $notifyContextByDocStore, $inboxNotificationsByContextStore)}-->
     {/if}
   </svelte:fragment>
 </TreeNode>

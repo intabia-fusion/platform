@@ -14,8 +14,7 @@
 //
 
 import postgres from 'postgres'
-import { AccountUuid, Ref, WorkspaceUuid } from '@hcengineering/core'
-import { ActivityMessage } from '@hcengineering/activity'
+import { AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 
 import config from './config'
 import { ChannelId, ChannelRecord, MessageRecord, OtpRecord, ReplyRecord } from './types'
@@ -162,7 +161,8 @@ export class PostgresDB {
     await this.client.unsafe(sql, [record.messageId, record.workspace, record.account, record.telegramMessageId])
   }
 
-  async getMessageByRef (account: AccountUuid, messageId: Ref<ActivityMessage>): Promise<MessageRecord | undefined> {
+  // TODO: FIXME
+  async getMessageByRef (account: AccountUuid, messageId: any): Promise<MessageRecord | undefined> {
     const sql = `
       SELECT * FROM ${messagesTable} WHERE account = $1::uuid AND message_id = $2::varchar LIMIT 1`
     const res = await this.client.unsafe(sql, [account, messageId])

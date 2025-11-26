@@ -13,36 +13,27 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import documentsPlugin, {
-  type ControlledDocument,
   documentsId,
   DocumentState,
   type Document,
-  type DocumentSpace,
-  type ProjectDocument,
-  type ChangeControl,
-  type DocumentRequest
+  type DocumentSpace
 } from '@hcengineering/controlled-documents'
 import exportPlugin, { type RelationDefinition } from '@hcengineering/export'
 import { type Builder } from '@hcengineering/model'
-import chunter from '@hcengineering/model-chunter'
 import core from '@hcengineering/model-core'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import print from '@hcengineering/model-print'
 import request from '@hcengineering/model-request'
 import tracker from '@hcengineering/model-tracker'
 import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
 import contacts from '@hcengineering/model-contact'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
-import textEditor from '@hcengineering/text-editor'
 
-import { AccountRole, type ClassCollaborators, type Class, type Doc, type Ref } from '@hcengineering/core'
+import { AccountRole, type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type Action } from '@hcengineering/view'
 import { definePermissions } from './permissions'
 import documents from './plugin'
@@ -54,7 +45,6 @@ import {
   TDocument,
   TDocumentApprovalRequest,
   TDocumentCategory,
-  TDocumentComment,
   TDocumentMeta,
   TDocumentRequest,
   TDocumentReviewRequest,
@@ -102,9 +92,10 @@ export function createModel (builder: Builder): void {
     TDocumentApprovalRequest,
 
     TTypeDocumentState,
-    TTypeControlledDocumentState,
+    TTypeControlledDocumentState
 
-    TDocumentComment
+    // TODO: FIXME
+    // TDocumentComment
   )
 
   builder.mixin(documents.class.ControlledDocument, core.class.Class, view.mixin.ObjectTitle, {
@@ -119,17 +110,18 @@ export function createModel (builder: Builder): void {
     presenter: documents.component.DocumentReviewRequestPresenter
   })
 
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: documents.class.DocumentApprovalRequest,
-    action: 'create',
-    icon: documents.icon.Document
-  })
-
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: documents.class.DocumentReviewRequest,
-    action: 'create',
-    icon: documents.icon.Document
-  })
+  // TODO: FIXME
+  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
+  //   objectClass: documents.class.DocumentApprovalRequest,
+  //   action: 'create',
+  //   icon: documents.icon.Document
+  // })
+  //
+  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
+  //   objectClass: documents.class.DocumentReviewRequest,
+  //   action: 'create',
+  //   icon: documents.icon.Document
+  // })
 
   builder.createDoc(
     workbench.class.Application,
@@ -598,12 +590,13 @@ export function createModel (builder: Builder): void {
     documentsPlugin.action.DeleteDocumentCategory
   )
 
-  builder.mixin(documents.class.DocumentCategory, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: documents.class.DocumentCategory,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
+  // TODO: FIXME
+  // builder.mixin(documents.class.DocumentCategory, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: documents.class.DocumentCategory,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
   builder.mixin(documents.class.DocumentCategory, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: documents.component.CategoryPresenter
@@ -710,14 +703,15 @@ export function createModel (builder: Builder): void {
     component: documents.component.DocumentReviewRequest
   })
 
-  builder.mixin(
-    documents.class.DocumentReviewRequest,
-    core.class.Class,
-    notification.mixin.NotificationObjectPresenter,
-    {
-      presenter: documents.component.DocumentReviewRequestPresenter
-    }
-  )
+  // TODO: FIXME
+  // builder.mixin(
+  //   documents.class.DocumentReviewRequest,
+  //   core.class.Class,
+  //   notification.mixin.NotificationObjectPresenter,
+  //   {
+  //     presenter: documents.component.DocumentReviewRequestPresenter
+  //   }
+  // )
 
   // DocumentApprovalRequest
   builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, view.mixin.ObjectEditor, {
@@ -732,14 +726,15 @@ export function createModel (builder: Builder): void {
     component: documents.component.DocumentApprovalRequest
   })
 
-  builder.mixin(
-    documents.class.DocumentApprovalRequest,
-    core.class.Class,
-    notification.mixin.NotificationObjectPresenter,
-    {
-      presenter: documents.component.DocumentApprovalRequestPresenter
-    }
-  )
+  // TODO: FIXME
+  // builder.mixin(
+  //   documents.class.DocumentApprovalRequest,
+  //   core.class.Class,
+  //   notification.mixin.NotificationObjectPresenter,
+  //   {
+  //     presenter: documents.component.DocumentApprovalRequestPresenter
+  //   }
+  // )
 
   builder.mixin(documents.class.DocumentSpace, core.class.Class, view.mixin.IgnoreActions, {
     actions: [tracker.action.EditRelatedTargets]
@@ -1041,158 +1036,159 @@ export function createModel (builder: Builder): void {
 }
 
 export function defineNotifications (builder: Builder): void {
-  builder.mixin(documents.class.ControlledDocument, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: documents.class.DocumentComment,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.Document,
-    fields: ['author', 'owner'],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<ProjectDocument>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ProjectDocument,
-    fields: [],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<ChangeControl>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ChangeControl,
-    fields: [],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<DocumentRequest>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.DocumentRequest,
-    fields: ['requested', 'createdBy'],
-    provideSecurity: true
-  })
-
-  builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, core.mixin.TxAccessLevel, {
-    updateAccessLevel: AccountRole.Guest
-  })
-
-  builder.createDoc<ClassCollaborators<ControlledDocument>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ControlledDocument,
-    fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
-    provideSecurity: true
-  })
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: documents.string.DocumentApplication,
-      icon: documents.icon.DocumentApplication
-    },
-    documents.notification.DocumentsNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: false,
-      label: documents.string.Document,
-      group: documents.notification.DocumentsNotificationGroup,
-      field: 'content',
-      txClasses: [core.class.TxUpdateDoc],
-      objectClass: documents.class.ControlledDocument,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    documents.notification.ContentNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: false,
-      label: documents.string.Status,
-      group: documents.notification.DocumentsNotificationGroup,
-      field: 'state',
-      txClasses: [core.class.TxUpdateDoc],
-      objectClass: documents.class.ControlledDocument,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{sender} changed {doc} status',
-        htmlTemplate: '<p>{sender} changed {doc} status</p>',
-        subjectTemplate: '{doc} status changed'
-      }
-    },
-    documents.notification.StateNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: false,
-      label: documents.string.CoAuthors,
-      group: documents.notification.DocumentsNotificationGroup,
-      field: 'coAuthors',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: documents.class.ControlledDocument,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} assigned you as a co-author of {doc}',
-        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p>',
-        subjectTemplate: 'Co-authoring assignment for {doc}'
-      }
-    },
-    documents.notification.CoAuthorsNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [documents.notification.StateNotification, documents.notification.ContentNotification]
-  })
-
-  generateClassNotificationTypes(
-    builder,
-    documents.class.ControlledDocument,
-    documents.notification.DocumentsNotificationGroup,
-    [
-      'state',
-      'code',
-      'prefix',
-      'seqNumber',
-      'major',
-      'minor',
-      'category',
-      'author',
-      'content',
-      'labels',
-      'abstract',
-      'snapshots',
-      'requests',
-      'reviewInterval',
-      'controlledState',
-      'effectiveDate',
-      'plannedEffectiveDate',
-      'changeControl',
-      'coAuthors',
-      'reviewers',
-      'approvers'
-    ],
-    ['owner', 'comments']
-  )
+  // TODO: FIXME
+  // builder.mixin(documents.class.ControlledDocument, core.class.Class, activity.mixin.ActivityDoc, {})
+  //
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: documents.class.DocumentComment,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: documents.class.Document,
+  //   fields: ['author', 'owner'],
+  //   provideSecurity: true
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<ProjectDocument>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: documents.class.ProjectDocument,
+  //   fields: [],
+  //   provideSecurity: true
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<ChangeControl>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: documents.class.ChangeControl,
+  //   fields: [],
+  //   provideSecurity: true
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<DocumentRequest>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: documents.class.DocumentRequest,
+  //   fields: ['requested', 'createdBy'],
+  //   provideSecurity: true
+  // })
+  //
+  // builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, core.mixin.TxAccessLevel, {
+  //   updateAccessLevel: AccountRole.Guest
+  // })
+  //
+  // builder.createDoc<ClassCollaborators<ControlledDocument>>(core.class.ClassCollaborators, core.space.Model, {
+  //   attachedTo: documents.class.ControlledDocument,
+  //   fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
+  //   provideSecurity: true
+  // })
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: documents.string.DocumentApplication,
+  //     icon: documents.icon.DocumentApplication
+  //   },
+  //   documents.notification.DocumentsNotificationGroup
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: false,
+  //     label: documents.string.Document,
+  //     group: documents.notification.DocumentsNotificationGroup,
+  //     field: 'content',
+  //     txClasses: [core.class.TxUpdateDoc],
+  //     objectClass: documents.class.ControlledDocument,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   documents.notification.ContentNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: false,
+  //     label: documents.string.Status,
+  //     group: documents.notification.DocumentsNotificationGroup,
+  //     field: 'state',
+  //     txClasses: [core.class.TxUpdateDoc],
+  //     objectClass: documents.class.ControlledDocument,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{sender} changed {doc} status',
+  //       htmlTemplate: '<p>{sender} changed {doc} status</p>',
+  //       subjectTemplate: '{doc} status changed'
+  //     }
+  //   },
+  //   documents.notification.StateNotification
+  // )
+  //
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: false,
+  //     label: documents.string.CoAuthors,
+  //     group: documents.notification.DocumentsNotificationGroup,
+  //     field: 'coAuthors',
+  //     txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+  //     objectClass: documents.class.ControlledDocument,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{sender} assigned you as a co-author of {doc}',
+  //       htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p>',
+  //       subjectTemplate: 'Co-authoring assignment for {doc}'
+  //     }
+  //   },
+  //   documents.notification.CoAuthorsNotification
+  // )
+  //
+  // builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+  //   provider: notification.providers.InboxNotificationProvider,
+  //   ignoredTypes: [],
+  //   enabledTypes: [documents.notification.StateNotification, documents.notification.ContentNotification]
+  // })
+  //
+  // generateClassNotificationTypes(
+  //   builder,
+  //   documents.class.ControlledDocument,
+  //   documents.notification.DocumentsNotificationGroup,
+  //   [
+  //     'state',
+  //     'code',
+  //     'prefix',
+  //     'seqNumber',
+  //     'major',
+  //     'minor',
+  //     'category',
+  //     'author',
+  //     'content',
+  //     'labels',
+  //     'abstract',
+  //     'snapshots',
+  //     'requests',
+  //     'reviewInterval',
+  //     'controlledState',
+  //     'effectiveDate',
+  //     'plannedEffectiveDate',
+  //     'changeControl',
+  //     'coAuthors',
+  //     'reviewers',
+  //     'approvers'
+  //   ],
+  //   ['owner', 'comments']
+  // )
 }
 
 export function defineSearch (builder: Builder): void {
@@ -1223,15 +1219,16 @@ export function defineSearch (builder: Builder): void {
 
 export function defineTextActions (builder: Builder): void {
   // Comment category
-  builder.createDoc(textEditor.class.TextEditorAction, core.space.Model, {
-    tags: ['text'],
-    action: documents.function.Comment,
-    icon: chunter.icon.Chunter,
-    visibilityTester: documents.function.IsCommentVisible,
-    label: chunter.string.Message,
-    category: 100,
-    index: 5
-  })
+  // TODO: FIXME
+  // builder.createDoc(textEditor.class.TextEditorAction, core.space.Model, {
+  //   tags: ['text'],
+  //   action: documents.function.Comment,
+  //   icon: chunter.icon.Chunter,
+  //   visibilityTester: documents.function.IsCommentVisible,
+  //   label: chunter.string.Message,
+  //   category: 100,
+  //   index: 5
+  // })
 }
 
 export { documentsOperation } from './migration'

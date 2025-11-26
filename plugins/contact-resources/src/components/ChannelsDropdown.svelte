@@ -16,9 +16,8 @@
 <script lang="ts">
   import type { Channel, ChannelProvider } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-  import { AttachedData, Doc, Ref, toIdMap } from '@hcengineering/core'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { Asset, IntlString, getResource } from '@hcengineering/platform'
+  import { AttachedData, Doc, Ref } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import {
     Action,
@@ -29,15 +28,12 @@
     Menu,
     closeTooltip,
     eventToHTMLElement,
-    getEventPopupPositionElement,
     getFocusManager,
-    getPopupPositionElement,
     showPopup
   } from '@hcengineering/ui'
   import view, { Action as ViewAction } from '@hcengineering/view'
-  import { ContextMenu, invokeAction } from '@hcengineering/view-resources'
-  import { createEventDispatcher, tick } from 'svelte'
-  import { readable, Readable, Writable, writable } from 'svelte/store'
+  import { invokeAction } from '@hcengineering/view-resources'
+  import { createEventDispatcher } from 'svelte'
   import { channelProviders } from '../utils'
   import ChannelEditor from './ChannelEditor.svelte'
 
@@ -52,14 +48,15 @@
   export let focusIndex = -1
   export let restricted: Ref<ChannelProvider>[] = []
 
-  let contextByDocStore: Writable<Map<Ref<Doc>, DocNotifyContext>> = writable(new Map())
-  let inboxNotificationsByContextStore: Readable<Map<Ref<DocNotifyContext>, InboxNotification[]>> = readable(new Map())
-
-  getResource(notification.function.GetInboxNotificationsClient).then((res) => {
-    const inboxClient = res()
-    contextByDocStore = inboxClient.contextByDoc
-    inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
-  })
+  // TODO: FIXME
+  // let contextByDocStore: Writable<Map<Ref<Doc>, DocNotifyContext>> = writable(new Map())
+  // let inboxNotificationsByContextStore: Readable<Map<Ref<DocNotifyContext>, InboxNotification[]>> = readable(new Map())
+  //
+  // getResource(notification.function.GetInboxNotificationsClient).then((res) => {
+  //   const inboxClient = res()
+  //   contextByDocStore = inboxClient.contextByDoc
+  //   inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  // })
 
   const dispatch = createEventDispatcher()
 
@@ -76,80 +73,80 @@
     notification: boolean
   }
 
-  function getProvider (
-    item: AttachedData<Channel>,
-    map: Map<Ref<ChannelProvider>, ChannelProvider>,
-    notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): Item | undefined {
-    const provider = map.get(item.provider)
-    if (provider) {
-      const notification =
-        (item as Channel)._id !== undefined
-          ? isNew(item as Channel, notifyContextByDoc, inboxNotificationsByContext)
-          : false
-      return {
-        label: provider.label,
-        icon: provider.icon as Asset,
-        value: item.value,
-        presenter: provider.presenter,
-        action: provider.action,
-        placeholder: provider.placeholder,
-        provider: provider._id,
-        channel: item,
-        notification,
-        integration: provider.integrationType !== undefined ? integrations.has(provider.integrationType) : false
-      }
-    }
-  }
-
-  function isNew (
-    item: Channel,
-    notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): boolean {
-    const notifyContext = notifyContextByDoc.get(item._id)
-
-    if (notifyContext === undefined) {
-      return (item.items ?? 0) > 0
-    }
-
-    const inboxNotifications = inboxNotificationsByContext.get(notifyContext._id) ?? []
-
-    return inboxNotifications.some(({ isViewed }) => !isViewed)
-  }
-
-  async function update (
-    value: AttachedData<Channel>[] | Channel | null,
-    notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>,
-    channelProviders: ChannelProvider[]
-  ) {
-    if (value == null) {
-      displayItems = []
-      return
-    }
-
-    const result: Item[] = []
-    const map = toIdMap(channelProviders)
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        const provider = getProvider(item, map, notifyContextByDoc, inboxNotificationsByContext)
-        if (provider !== undefined) {
-          result.push(provider)
-        }
-      }
-    } else {
-      const provider = getProvider(value, map, notifyContextByDoc, inboxNotificationsByContext)
-      if (provider !== undefined) {
-        result.push(provider)
-      }
-    }
-    displayItems = result
-    updateMenu(displayItems, channelProviders)
-  }
-
-  $: if (value) update(value, $contextByDocStore, $inboxNotificationsByContextStore, $channelProviders)
+  // function getProvider (
+  //   item: AttachedData<Channel>,
+  //   map: Map<Ref<ChannelProvider>, ChannelProvider>,
+  //   notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
+  //   inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  // ): Item | undefined {
+  //   const provider = map.get(item.provider)
+  //   if (provider) {
+  //     const notification =
+  //       (item as Channel)._id !== undefined
+  //         ? isNew(item as Channel, notifyContextByDoc, inboxNotificationsByContext)
+  //         : false
+  //     return {
+  //       label: provider.label,
+  //       icon: provider.icon as Asset,
+  //       value: item.value,
+  //       presenter: provider.presenter,
+  //       action: provider.action,
+  //       placeholder: provider.placeholder,
+  //       provider: provider._id,
+  //       channel: item,
+  //       notification,
+  //       integration: provider.integrationType !== undefined ? integrations.has(provider.integrationType) : false
+  //     }
+  //   }
+  // }
+  //
+  // function isNew (
+  //   item: Channel,
+  //   notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
+  //   inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  // ): boolean {
+  //   const notifyContext = notifyContextByDoc.get(item._id)
+  //
+  //   if (notifyContext === undefined) {
+  //     return (item.items ?? 0) > 0
+  //   }
+  //
+  //   const inboxNotifications = inboxNotificationsByContext.get(notifyContext._id) ?? []
+  //
+  //   return inboxNotifications.some(({ isViewed }) => !isViewed)
+  // }
+  //
+  // async function update (
+  //   value: AttachedData<Channel>[] | Channel | null,
+  //   notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
+  //   inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>,
+  //   channelProviders: ChannelProvider[]
+  // ) {
+  //   if (value == null) {
+  //     displayItems = []
+  //     return
+  //   }
+  //
+  //   const result: Item[] = []
+  //   const map = toIdMap(channelProviders)
+  //   if (Array.isArray(value)) {
+  //     for (const item of value) {
+  //       const provider = getProvider(item, map, notifyContextByDoc, inboxNotificationsByContext)
+  //       if (provider !== undefined) {
+  //         result.push(provider)
+  //       }
+  //     }
+  //   } else {
+  //     const provider = getProvider(value, map, notifyContextByDoc, inboxNotificationsByContext)
+  //     if (provider !== undefined) {
+  //       result.push(provider)
+  //     }
+  //   }
+  //   displayItems = result
+  //   updateMenu(displayItems, channelProviders)
+  // }
+  //
+  // $: if (value) update(value, $contextByDocStore, $inboxNotificationsByContextStore, $channelProviders)
 
   let displayItems: Item[] = []
   let actions: Action[] = []
@@ -163,29 +160,30 @@
   const focusManager = getFocusManager()
 
   const updateMenu = (_displayItems: Item[], providers: ChannelProvider[]): void => {
-    actions = providers.map((pr) => {
-      return {
-        icon: pr.icon ?? contact.icon.SocialEdit,
-        label: pr.label,
-        action: async () => {
-          const provider = getProvider(
-            { provider: pr._id, value: '' },
-            toIdMap(providers),
-            $contextByDocStore,
-            $inboxNotificationsByContextStore
-          )
-          if (provider !== undefined) {
-            displayItems = [..._displayItems, provider]
-            if (focusIndex !== -1) {
-              await tick()
-              focusManager?.setFocusPos(focusIndex + displayItems.length)
-              await tick()
-              editChannel(btns[displayItems.length - 1], displayItems.length - 1, provider)
-            }
-          }
-        }
-      }
-    })
+    actions = []
+    // actions = providers.map((pr) => {
+    //   return {
+    //     icon: pr.icon ?? contact.icon.SocialEdit,
+    //     label: pr.label,
+    //     action: async () => {
+    //       const provider = getProvider(
+    //         { provider: pr._id, value: '' },
+    //         toIdMap(providers),
+    //         $contextByDocStore,
+    //         $inboxNotificationsByContextStore
+    //       )
+    //       if (provider !== undefined) {
+    //         displayItems = [..._displayItems, provider]
+    //         if (focusIndex !== -1) {
+    //           await tick()
+    //           focusManager?.setFocusPos(focusIndex + displayItems.length)
+    //           await tick()
+    //           editChannel(btns[displayItems.length - 1], displayItems.length - 1, provider)
+    //         }
+    //       }
+    //     }
+    //   }
+    // })
   }
   $: updateMenu(displayItems, $channelProviders)
 

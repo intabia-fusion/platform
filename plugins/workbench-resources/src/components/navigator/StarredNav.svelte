@@ -13,9 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import type { Class, Ref, Space } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { TreeNode } from '@hcengineering/view-resources'
@@ -42,19 +40,20 @@
     return undefined
   }
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const notifyContextByDocStore = inboxClient.contextByDoc
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  // TODO: FIXME
+  // const inboxClient = InboxNotificationsClientImpl.getClient()
+  // const notifyContextByDocStore = inboxClient.contextByDoc
+  // const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-  function isChanged (
-    space: Space,
-    docUpdates: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): boolean {
-    const notifyContext = docUpdates.get(space._id)
-    if (notifyContext === undefined) return false
-    return !!inboxNotificationsByContext.get(notifyContext._id)?.length
-  }
+  // function isChanged (
+  //   space: Space,
+  //   docUpdates: Map<Ref<Doc>, DocNotifyContext>,
+  //   inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  // ): boolean {
+  //   const notifyContext = docUpdates.get(space._id)
+  //   if (notifyContext === undefined) return false
+  //   return !!inboxNotificationsByContext.get(notifyContext._id)?.length
+  // }
   $: visibleSpace = spaces.find((space) => currentSpace === space._id)
 </script>
 
@@ -68,15 +67,9 @@
 >
   {#each spaces as space (space._id)}
     {@const model = getSpaceModel(space._class)}
-    <StarredNavItem
-      {space}
-      {model}
-      {currentSpace}
-      {currentSpecial}
-      {currentFragment}
-      {deselect}
-      isChanged={isChanged(space, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
-    />
+    <StarredNavItem {space} {model} {currentSpace} {currentSpecial} {currentFragment} {deselect} />
+    <!--    TODO: FIXME-->
+    <!--    isChanged={isChanged(space, $notifyContextByDocStore, $inboxNotificationsByContextStore)}-->
   {/each}
 
   <svelte:fragment slot="visible">
@@ -89,9 +82,10 @@
         {currentSpecial}
         {currentFragment}
         {deselect}
-        isChanged={isChanged(visibleSpace, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
         forciblyСollapsed
       />
+      <!--      TODO: FIXME-->
+      <!--      isChanged={isChanged(visibleSpace, $notifyContextByDocStore, $inboxNotificationsByContextStore)}-->
     {/if}
   </svelte:fragment>
 </TreeNode>

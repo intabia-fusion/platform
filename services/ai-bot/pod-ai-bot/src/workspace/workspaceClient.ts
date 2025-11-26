@@ -19,7 +19,6 @@ import {
   IdentityResponse
 } from '@hcengineering/ai-bot'
 import attachment, { Attachment } from '@hcengineering/attachment'
-import chunter, { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
 import contact, {
   AvatarType,
   combineName,
@@ -28,7 +27,7 @@ import contact, {
   getLastName,
   Person
 } from '@hcengineering/contact'
-import core, {
+import {
   AccountRole,
   AccountUuid,
   Blob,
@@ -42,10 +41,7 @@ import core, {
   RateLimiter,
   Ref,
   SocialId,
-  SortingOrder,
-  Space,
   Timestamp,
-  toIdMap,
   Tx,
   TxCUD,
   TxOperations,
@@ -57,17 +53,11 @@ import love, { type MeetingMinutes, MeetingStatus, Room } from '@hcengineering/l
 import fs from 'fs'
 import { Tiktoken } from 'js-tiktoken'
 import OpenAI from 'openai'
-
-import { countTokens } from '@hcengineering/openai'
-import { getAccountClient } from '@hcengineering/server-client'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
-import { jsonToMarkup, markupToText } from '@hcengineering/text'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
-import tracker, { Issue } from '@hcengineering/tracker'
 import config from '../config'
 import { HistoryRecord } from '../types'
 import { getGlobalPerson } from '../utils/account'
-import { createChatCompletionWithTools, requestSummary } from '../utils/openai'
+import { requestSummary } from '../utils/openai'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 
@@ -365,175 +355,176 @@ export class WorkspaceClient {
   }
 
   async processMessageEvent (event: AIEventRequest, control?: ConsumerControl): Promise<void> {
-    if (this.openai === undefined) return
-
-    const { user, objectId, objectClass, messageClass } = event
-    const client = await this.opClient
-    const accountClient = getAccountClient(this.token)
-    const personUuid = this.personUuidBySocialId.get(user) ?? (await accountClient.findPersonBySocialId(user))
-
-    const contextMode = objectClass === chunter.class.DirectMessage ? 'direct' : 'thread'
-
-    if (personUuid === undefined) {
-      return
-    }
-
-    this.personUuidBySocialId.set(user, personUuid)
-
-    let promptText = markupToText(event.message)
-    const files = await this.getAttachments(client, event.messageId)
-    if (files.length > 0) {
-      promptText += '\n\nAttachments:'
-      for (const file of files) {
-        promptText += `\nName:${file.name} FileId:${file.file} Type:${file.type}`
-      }
-    }
-    const prompt: OpenAI.ChatCompletionMessageParam = { content: promptText, role: 'user' }
-    const promptTokens = countTokens([prompt], this.openaiEncoding)
-
-    const op = client.apply(undefined, 'AIMessageRequestEvent')
-    const hierarchy = client.getHierarchy()
-
-    const space = hierarchy.isDerived(objectClass, core.class.Space) ? (objectId as Ref<Space>) : event.objectSpace
-
-    const rawHistory = await this.getHistory(personUuid)
-    const history = this.toOpenAiHistory(rawHistory, promptTokens)
-
-    await this.pushHistory(personUuid, promptText, prompt.role, promptTokens, personUuid, objectId, objectClass)
-
-    let useHistory = history
-
-    if (contextMode !== 'direct') {
-      // Load a message itself
-      const msg = await this.client?.findOne<Doc>(objectClass, { _id: objectId })
-      if (msg !== undefined) {
-        useHistory = [
-          {
-            role: 'system',
-            content: 'Document type:' + msg?._class
-          }
-        ]
-        if (msg._class === chunter.class.ThreadMessage || msg._class === chunter.class.ChatMessage) {
-          useHistory.push({
-            role: 'system',
-            content: 'Content:' + markupToText((msg as ChatMessage).message)
-          })
-        }
-        if (msg._class === tracker.class.Issue) {
-          let _msg = ''
-          const is: Issue = msg as Issue
-
-          _msg += 'Issue title: ' + is.title + '\n'
-
-          if (is.description != null && is.description !== '') {
-            try {
-              const readable = await this.storage.read(this.ctx, this.wsIds, is.description)
-              const markup = Buffer.concat(readable as any).toString()
-              let textContent = markupToText(markup)
-              textContent = textContent
-                .split(/ +|\t+|\f+/)
-                .filter((it) => it)
-                .join(' ')
-                .split(/\n\n+/)
-                .join('\n')
-
-              _msg += 'Content:``` \n' + textContent + '\n ```'
-            } catch (err: any) {
-              this.ctx.error('failed to handle description', { _id: is.description, workspace: this.wsIds.uuid })
-            }
-
-            useHistory.push({
-              role: 'system',
-              content: _msg
-            })
-          }
-        }
-      }
-
-      const lastMessages =
-        (await this.client?.findAll(
-          chunter.class.ChatMessage,
-          { attachedTo: objectId, attachedToClass: objectClass },
-          { limit: 500, sort: { modifiedOn: SortingOrder.Descending } }
-        )) ?? []
-
-      lastMessages.sort((a, b) => a.modifiedOn - b.modifiedOn)
-
-      const personIds = new Set(lastMessages.map((it) => it.modifiedBy))
-
-      const socialIds = toIdMap(
-        (await this.client?.findAll(contact.class.SocialIdentity, { _id: { $in: Array.from(personIds) as any } })) ?? []
-      )
-
-      const employeesInChannel =
-        (await this.client?.findAll(contact.class.Person, {
-          _id: { $in: Array.from(socialIds.values()).map((it) => it.attachedTo) }
-        })) ?? []
-      const empAsMap = toIdMap(employeesInChannel.filter((it) => it.personUuid !== undefined))
-
-      for (const msg of lastMessages) {
-        let emp: Person | undefined
-        const sid = socialIds.get(msg.modifiedBy as any)
-        if (sid !== undefined) {
-          emp = empAsMap.get(sid.attachedTo)
-        }
-        useHistory.push({
-          role: this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user',
-          content: markupToText(msg.message),
-          name: emp?.name ?? 'Unknown'
-        })
-      }
-    }
-
-    const chatCompletion = await createChatCompletionWithTools(
-      this,
-      this.openai,
-      prompt,
-      contextMode,
-      rawHistory.assistantMemory,
-      rawHistory.userMemory,
-      rawHistory.sharedContext,
-      personUuid as AccountUuid,
-      useHistory
-    )
-    const response = chatCompletion?.completion
-
-    if (response == null) {
-      return
-    }
-    const responseTokens =
-      chatCompletion?.usage ?? countTokens([{ content: response, role: 'assistant' }], this.openaiEncoding)
-
-    await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
-
-    const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
-
-    if (messageClass === chunter.class.ChatMessage) {
-      await op.addCollection<Doc, ChatMessage>(
-        chunter.class.ChatMessage,
-        space,
-        objectId,
-        objectClass,
-        event.collection,
-        { message: parseResponse }
-      )
-    } else if (messageClass === chunter.class.ThreadMessage) {
-      const parent = await client.findOne<ChatMessage>(chunter.class.ChatMessage, {
-        _id: objectId as Ref<ChatMessage>
-      })
-
-      if (parent !== undefined) {
-        await op.addCollection<Doc, ThreadMessage>(
-          chunter.class.ThreadMessage,
-          space,
-          objectId,
-          objectClass,
-          event.collection,
-          { message: parseResponse, objectId: parent.attachedTo, objectClass: parent.attachedToClass }
-        )
-      }
-    }
-    await op.commit()
+    // TODO: FIXME
+    // if (this.openai === undefined) return
+    //
+    // const { user, objectId, objectClass, messageClass } = event
+    // const client = await this.opClient
+    // const accountClient = getAccountClient(this.token)
+    // const personUuid = this.personUuidBySocialId.get(user) ?? (await accountClient.findPersonBySocialId(user))
+    //
+    // const contextMode = objectClass === chunter.class.DirectMessage ? 'direct' : 'thread'
+    //
+    // if (personUuid === undefined) {
+    //   return
+    // }
+    //
+    // this.personUuidBySocialId.set(user, personUuid)
+    //
+    // let promptText = markupToText(event.message)
+    // const files = await this.getAttachments(client, event.messageId)
+    // if (files.length > 0) {
+    //   promptText += '\n\nAttachments:'
+    //   for (const file of files) {
+    //     promptText += `\nName:${file.name} FileId:${file.file} Type:${file.type}`
+    //   }
+    // }
+    // const prompt: OpenAI.ChatCompletionMessageParam = { content: promptText, role: 'user' }
+    // const promptTokens = countTokens([prompt], this.openaiEncoding)
+    //
+    // const op = client.apply(undefined, 'AIMessageRequestEvent')
+    // const hierarchy = client.getHierarchy()
+    //
+    // const space = hierarchy.isDerived(objectClass, core.class.Space) ? (objectId as Ref<Space>) : event.objectSpace
+    //
+    // const rawHistory = await this.getHistory(personUuid)
+    // const history = this.toOpenAiHistory(rawHistory, promptTokens)
+    //
+    // await this.pushHistory(personUuid, promptText, prompt.role, promptTokens, personUuid, objectId, objectClass)
+    //
+    // let useHistory = history
+    //
+    // if (contextMode !== 'direct') {
+    //   // Load a message itself
+    //   const msg = await this.client?.findOne<Doc>(objectClass, { _id: objectId })
+    //   if (msg !== undefined) {
+    //     useHistory = [
+    //       {
+    //         role: 'system',
+    //         content: 'Document type:' + msg?._class
+    //       }
+    //     ]
+    //     if (msg._class === chunter.class.ThreadMessage || msg._class === chunter.class.ChatMessage) {
+    //       useHistory.push({
+    //         role: 'system',
+    //         content: 'Content:' + markupToText((msg as ChatMessage).message)
+    //       })
+    //     }
+    //     if (msg._class === tracker.class.Issue) {
+    //       let _msg = ''
+    //       const is: Issue = msg as Issue
+    //
+    //       _msg += 'Issue title: ' + is.title + '\n'
+    //
+    //       if (is.description != null && is.description !== '') {
+    //         try {
+    //           const readable = await this.storage.read(this.ctx, this.wsIds, is.description)
+    //           const markup = Buffer.concat(readable as any).toString()
+    //           let textContent = markupToText(markup)
+    //           textContent = textContent
+    //             .split(/ +|\t+|\f+/)
+    //             .filter((it) => it)
+    //             .join(' ')
+    //             .split(/\n\n+/)
+    //             .join('\n')
+    //
+    //           _msg += 'Content:``` \n' + textContent + '\n ```'
+    //         } catch (err: any) {
+    //           this.ctx.error('failed to handle description', { _id: is.description, workspace: this.wsIds.uuid })
+    //         }
+    //
+    //         useHistory.push({
+    //           role: 'system',
+    //           content: _msg
+    //         })
+    //       }
+    //     }
+    //   }
+    //
+    //   const lastMessages =
+    //     (await this.client?.findAll(
+    //       chunter.class.ChatMessage,
+    //       { attachedTo: objectId, attachedToClass: objectClass },
+    //       { limit: 500, sort: { modifiedOn: SortingOrder.Descending } }
+    //     )) ?? []
+    //
+    //   lastMessages.sort((a, b) => a.modifiedOn - b.modifiedOn)
+    //
+    //   const personIds = new Set(lastMessages.map((it) => it.modifiedBy))
+    //
+    //   const socialIds = toIdMap(
+    //     (await this.client?.findAll(contact.class.SocialIdentity, { _id: { $in: Array.from(personIds) as any } })) ?? []
+    //   )
+    //
+    //   const employeesInChannel =
+    //     (await this.client?.findAll(contact.class.Person, {
+    //       _id: { $in: Array.from(socialIds.values()).map((it) => it.attachedTo) }
+    //     })) ?? []
+    //   const empAsMap = toIdMap(employeesInChannel.filter((it) => it.personUuid !== undefined))
+    //
+    //   for (const msg of lastMessages) {
+    //     let emp: Person | undefined
+    //     const sid = socialIds.get(msg.modifiedBy as any)
+    //     if (sid !== undefined) {
+    //       emp = empAsMap.get(sid.attachedTo)
+    //     }
+    //     useHistory.push({
+    //       role: this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user',
+    //       content: markupToText(msg.message),
+    //       name: emp?.name ?? 'Unknown'
+    //     })
+    //   }
+    // }
+    //
+    // const chatCompletion = await createChatCompletionWithTools(
+    //   this,
+    //   this.openai,
+    //   prompt,
+    //   contextMode,
+    //   rawHistory.assistantMemory,
+    //   rawHistory.userMemory,
+    //   rawHistory.sharedContext,
+    //   personUuid as AccountUuid,
+    //   useHistory
+    // )
+    // const response = chatCompletion?.completion
+    //
+    // if (response == null) {
+    //   return
+    // }
+    // const responseTokens =
+    //   chatCompletion?.usage ?? countTokens([{ content: response, role: 'assistant' }], this.openaiEncoding)
+    //
+    // await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
+    //
+    // const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
+    //
+    // if (messageClass === chunter.class.ChatMessage) {
+    //   await op.addCollection<Doc, ChatMessage>(
+    //     chunter.class.ChatMessage,
+    //     space,
+    //     objectId,
+    //     objectClass,
+    //     event.collection,
+    //     { message: parseResponse }
+    //   )
+    // } else if (messageClass === chunter.class.ThreadMessage) {
+    //   const parent = await client.findOne<ChatMessage>(chunter.class.ChatMessage, {
+    //     _id: objectId as Ref<ChatMessage>
+    //   })
+    //
+    //   if (parent !== undefined) {
+    //     await op.addCollection<Doc, ThreadMessage>(
+    //       chunter.class.ThreadMessage,
+    //       space,
+    //       objectId,
+    //       objectClass,
+    //       event.collection,
+    //       { message: parseResponse, objectId: parent.attachedTo, objectClass: parent.attachedToClass }
+    //     )
+    //   }
+    // }
+    // await op.commit()
   }
 
   async close (): Promise<void> {
@@ -608,7 +599,8 @@ export class WorkspaceClient {
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
-  ): Promise<Ref<ChatMessage> | undefined> {
+  //   TODO: FIXME
+  ): Promise<Ref<any> | undefined> {
     await this.opClient
 
     if (this.love === undefined) {
@@ -626,7 +618,7 @@ export class WorkspaceClient {
   @withContext('updateTranscriptionMessage')
   async updateTranscriptionMessage (
     ctx: MeasureContext,
-    messageId: Ref<ChatMessage>,
+    messageId: Ref<any>,
     text: string | null
   ): Promise<boolean> {
     await this.opClient

@@ -78,10 +78,11 @@
         <td><PersonRefPresenter value={requested.employee} /></td>
         <td><BooleanIcon value={requested.decision} /></td>
         <td>
-          {#if requested.comment}
-            <ShowMore limit={126} fixed>
-              <MessageViewer message={requested.comment.message} />
-            </ShowMore>{/if}
+          <!--          TODO: FIXME-->
+          <!--{#if requested.comment}-->
+          <!--  <ShowMore limit={126} fixed>-->
+          <!--    <MessageViewer message={requested.comment.message} />-->
+          <!--  </ShowMore>{/if}-->
         </td>
       </tr>
     {/each}
