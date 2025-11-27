@@ -99,7 +99,7 @@
         "SERVER_PROVIDER": "ws",
         "MODEL_VERSION": "0.7.320",
         // "version": "0.7.0",
-        "COMMUNICATION_API_ENABLED": "false",
+        "COMMUNICATION_API_ENABLED": "true",
         "ELASTIC_INDEX_NAME": "local_storage_index",
         "UPLOAD_URL": "/files",
         "AI_BOT_URL": "http://localhost:4010",
