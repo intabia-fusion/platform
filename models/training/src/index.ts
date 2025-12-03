@@ -38,6 +38,7 @@ import {
   type Ref
 } from '@hcengineering/core'
 import { Prop, type Builder } from '@hcengineering/model'
+import communication from '@hcengineering/communication'
 
 import contacts from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
@@ -581,8 +582,7 @@ function defineTrainingRequest (builder: Builder): void {
     training.action.TrainingRequestCancel
   )
 
-  // TODO: FIXME
-  // builder.mixin(training.class.TrainingRequest, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(training.class.TrainingRequest, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(training.class.TrainingRequest, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: training.function.TrainingRequestObjectTitleProvider

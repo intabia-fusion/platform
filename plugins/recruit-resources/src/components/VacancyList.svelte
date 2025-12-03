@@ -33,7 +33,7 @@
   }
   const config: (BuildModelKey | string)[] = [
     '',
-    'comments',
+    // 'comments',
     'attachments',
     {
       key: 'archived',

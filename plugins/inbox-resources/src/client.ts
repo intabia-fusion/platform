@@ -18,7 +18,6 @@ import {
   onCommunicationClient
 } from '@hcengineering/presentation'
 import { notEmpty, SortingOrder } from '@hcengineering/core'
-import cardPlugin from '@hcengineering/card'
 import { type NotificationContext, type Window } from '@hcengineering/communication-types'
 
 import { type NavigationItem } from './type'
@@ -30,7 +29,7 @@ const isLoadingStore = writable<boolean>(true)
 const contextsWindowStore = writable<Window<NotificationContext> | undefined>(undefined)
 const contextStore = writable<NotificationContext[]>([])
 
-const contextsQuery = createNotificationContextsQuery(true)
+// const contextsQuery = createNotificationContextsQuery(true)
 
 export class NavigationClient {
   private readonly contextStore = contextStore
@@ -47,8 +46,8 @@ export class NavigationClient {
       return contexts
         .map((context): NavigationItem => {
           return {
-            _id: context.cardId,
-            _class: cardPlugin.class.Card,
+            _id: context.docId,
+            _class: context.docClass,
             context,
             date: context.lastNotify ?? context.lastUpdate
           }
@@ -100,27 +99,27 @@ export class NavigationClient {
 }
 
 function updateContextsQuery (): void {
-  contextsQuery.query(
-    {
-      notifications: {
-        order: SortingOrder.Descending,
-        limit: 3
-      },
-      order: SortingOrder.Descending,
-      limit
-    },
-    (res) => {
-      contextsWindowStore.set(res)
-      const contexts = res.getResult().filter((it) => (it.notifications?.length ?? 0) > 0)
-      contextStore.set(contexts)
-      isLoadingStore.set(false)
-
-      if (contexts.length < limit && res.hasPrevPage()) {
-        void res.loadPrevPage()
-      }
-    },
-    { message: true }
-  )
+  // contextsQuery.query(
+  //   {
+  //     notifications: {
+  //       order: SortingOrder.Descending,
+  //       limit: 3
+  //     },
+  //     order: SortingOrder.Descending,
+  //     limit
+  //   },
+  //   (res) => {
+  //     contextsWindowStore.set(res)
+  //     const contexts = res.getResult().filter((it) => (it.notifications?.length ?? 0) > 0)
+  //     contextStore.set(contexts)
+  //     isLoadingStore.set(false)
+  //
+  //     if (contexts.length < limit && res.hasPrevPage()) {
+  //       void res.loadPrevPage()
+  //     }
+  //   },
+  //   { message: true }
+  // )
 }
 
 onCommunicationClient(() => {

@@ -40,7 +40,7 @@
   const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
   const favoritesQuery = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
+  // const contextsQuery = createNotificationContextsQuery()
 
   let favorites: WithLookup<FavoriteCard>[] = []
   let contexts: NotificationContext[] = []
@@ -68,24 +68,24 @@
   )
 
   $: if (favorites.length > 0) {
-    contextsQuery.query(
-      {
-        cardId: favorites.map((it) => it.attachedTo),
-        notifications: {
-          read: false,
-          type: NotificationType.Message,
-          order: SortingOrder.Descending,
-          limit: 1,
-          total: true
-        }
-      },
-      (res) => {
-        contexts = res.getResult()
-      }
-    )
+    // contextsQuery.query(
+    //   {
+    //     cardId: favorites.map((it) => it.attachedTo),
+    //     notifications: {
+    //       read: false,
+    //       type: NotificationType.Message,
+    //       order: SortingOrder.Descending,
+    //       limit: 1,
+    //       total: true
+    //     }
+    //   },
+    //   (res) => {
+    //     contexts = res.getResult()
+    //   }
+    // )
   } else {
     contexts = []
-    contextsQuery.unsubscribe()
+    // contextsQuery.unsubscribe()
   }
 
   function getCard (favorite: WithLookup<FavoriteCard>): Card | undefined {
@@ -115,44 +115,44 @@
   >
     <div class="mt-0-5" />
     {#each favorites as favorite (favorite.attachedTo)}
-      {@const card = getCard(favorite)}
-      {#if card}
-        {@const context = contexts.find((it) => it.cardId === card._id)}
-        <NavigatorCard {card} {context} {favorite} {applicationId} {selectedCard} {config} on:selectCard />
-      {/if}
+      <!--{@const card = getCard(favorite)}-->
+      <!--{#if card}-->
+      <!--  {@const context = contexts.find((it) => it.cardId === card._id)}-->
+      <!--  <NavigatorCard {card} {context} {favorite} {applicationId} {selectedCard} {config} on:selectCard />-->
+      <!--{/if}-->
     {/each}
 
     <svelte:fragment slot="visible" let:isOpen>
-      {@const visibleItem = favorites.find(({ attachedTo }) => attachedTo === selectedCard)}
-      {#if visibleItem !== undefined && !isOpen}
-        {@const card = getCard(visibleItem)}
-        {#if card}
-          {@const context = contexts.find((it) => it.cardId === card._id)}
-          <NavigatorCard
-            {card}
-            {context}
-            favorite={visibleItem}
-            {applicationId}
-            {selectedCard}
-            {config}
-            on:selectCard
-          />
-        {/if}
-      {/if}
+      <!--{@const visibleItem = favorites.find(({ attachedTo }) => attachedTo === selectedCard)}-->
+      <!--{#if visibleItem !== undefined && !isOpen}-->
+      <!--  {@const card = getCard(visibleItem)}-->
+      <!--  {#if card}-->
+      <!--    {@const context = contexts.find((it) => it.cardId === card._id)}-->
+      <!--    <NavigatorCard-->
+      <!--      {card}-->
+      <!--      {context}-->
+      <!--      favorite={visibleItem}-->
+      <!--      {applicationId}-->
+      <!--      {selectedCard}-->
+      <!--      {config}-->
+      <!--      on:selectCard-->
+      <!--    />-->
+      <!--  {/if}-->
+      <!--{/if}-->
     </svelte:fragment>
   </NavGroup>
 {/if}
 {#each types as type (type._id)}
-  <NavigatorCardsSection
-    {type}
-    {space}
-    {config}
-    {selectedType}
-    {selectedCard}
-    {applicationId}
-    labels={labels.filter((it) => hierarchy.isDerived(it.cardType, type._id))}
-    {favorites}
-    on:selectType
-    on:selectCard
-  />
+  <!--  <NavigatorCardsSection-->
+  <!--    {type}-->
+  <!--    {space}-->
+  <!--    {config}-->
+  <!--    {selectedType}-->
+  <!--    {selectedCard}-->
+  <!--    {applicationId}-->
+  <!--    labels={labels.filter((it) => hierarchy.isDerived(it.cardType, type._id))}-->
+  <!--    {favorites}-->
+  <!--    on:selectType-->
+  <!--    on:selectCard-->
+  <!--  />-->
 {/each}

@@ -13,18 +13,21 @@
 // limitations under the License.
 //
 
-import type {
+import {
   FindNotificationContextParams,
   FindNotificationsParams,
   NotificationContext,
   Notification,
   FindLabelsParams,
   Label,
-  FindCollaboratorsParams,
-  Collaborator,
-  FindPeersParams, Peer, CardID, FindMessagesMetaParams, MessageMeta, MessagesGroup, FindMessagesGroupParams
+  FindPeersParams,
+  Peer,
+  FindMessagesMetaParams,
+  MessageMeta,
+  MessagesGroup,
+  FindMessagesGroupParams
 } from '@hcengineering/communication-types'
-import type { Account, MeasureContext } from '@hcengineering/core'
+import type { Account, MeasureContext, Ref, Class, Hierarchy, Doc } from '@hcengineering/core'
 
 import type { EventResult, Event } from './events/event'
 
@@ -35,6 +38,7 @@ export type ContextData = {
 export interface SessionData {
   sessionId?: string
   account: Account
+  hierarchy: Hierarchy
   derived?: boolean
   isAsyncContext?: boolean
   contextData?: ContextData
@@ -57,13 +61,12 @@ export interface ServerApi {
   ) => Promise<Notification[]>
 
   findLabels: (session: SessionData, params: FindLabelsParams) => Promise<Label[]>
-  findCollaborators: (session: SessionData, params: FindCollaboratorsParams) => Promise<Collaborator[]>
   findPeers: (session: SessionData, params: FindPeersParams) => Promise<Peer[]>
 
   event: (session: SessionData, event: Event) => Promise<EventResult>
 
-  subscribeCard: (session: SessionData, cardId: CardID, subscription: number | string) => void
-  unsubscribeCard: (session: SessionData, cardId: CardID, subscription: number | string) => void
+  subscribeDoc: (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: number | string) => void
+  unsubscribeDoc: (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: number | string) => void
 
   closeSession: (sessionId: string) => Promise<void>
   close: () => Promise<void>

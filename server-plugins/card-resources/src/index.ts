@@ -45,15 +45,9 @@ import { TriggerControl } from '@hcengineering/server-core'
 import setting from '@hcengineering/setting'
 import view from '@hcengineering/view'
 import {
-  AddCollaboratorsEvent,
-  CardEventType,
   NotificationEventType,
   PeerEventType,
-  RemoveCardEvent,
-  UpdateCardTypeEvent,
-  CreatePeerEvent,
-  ThreadPatchEvent,
-  MessageEventType
+  CreatePeerEvent
 } from '@hcengineering/communication-sdk-types'
 import { getEmployee, getPersonSpaces } from '@hcengineering/server-contact'
 import contact, { Employee, formatName, Person } from '@hcengineering/contact'
@@ -312,16 +306,16 @@ async function OnCardRemove (ctx: TxRemoveDoc<Card>[], control: TriggerControl):
     res.push(control.txFactory.createTxRemoveDoc(favorite._class, favorite.space, favorite._id))
   }
 
-  const event: RemoveCardEvent = {
-    type: CardEventType.RemoveCard,
-    cardId: removedCard._id,
-    date: new Date(removeTx.createdOn ?? removeTx.modifiedOn),
-    socialId: removedCard.modifiedBy
-  }
-
-  await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
-    event
-  })
+  // const event: RemoveDocEvent = {
+  //   type: DocEventType.RemoveDoc,
+  //   cardId: removedCard._id,
+  //   date: new Date(removeTx.createdOn ?? removeTx.modifiedOn),
+  //   socialId: removedCard.modifiedBy
+  // }
+  //
+  // await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
+  //   event
+  // })
 
   return res
 }
@@ -395,18 +389,18 @@ async function OnCardUpdate (ctx: TxUpdateDoc<Card>[], control: TriggerControl):
   if (updateTx.operations.title !== undefined) {
     res.push(...(await updateParentInfoName(control, doc._id, updateTx.operations.title, doc._id)))
   }
-  if ((updateTx.operations as any)._class !== undefined) {
-    const event: UpdateCardTypeEvent = {
-      type: CardEventType.UpdateCardType,
-      cardId: doc._id,
-      cardType: (updateTx.operations as any)._class,
-      socialId: updateTx.createdBy ?? updateTx.modifiedBy,
-      date: new Date(updateTx.createdOn ?? updateTx.modifiedOn)
-    }
-    await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
-      event
-    })
-  }
+  // if ((updateTx.operations as any)._class !== undefined) {
+  //   const event: UpdateDocClassEvent = {
+  //     type: DocEventType.UpdateDocClass,
+  //     cardId: doc._id,
+  //     cardType: (updateTx.operations as any)._class,
+  //     socialId: updateTx.createdBy ?? updateTx.modifiedBy,
+  //     date: new Date(updateTx.createdOn ?? updateTx.modifiedOn)
+  //   }
+  //   await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
+  //     event
+  //   })
+  // }
 
   res.push(...(await updatePeers(control, doc, updateTx)))
 
@@ -446,22 +440,23 @@ async function addCollaborators (
   doc: Card,
   modifiedBy: PersonId
 ): Promise<void> {
-  if (collaboratorRefs.size > 0) {
-    const employees = await control.findAll(control.ctx, contact.mixin.Employee, {
-      _id: { $in: [...collaboratorRefs] }
-    })
-    const collaborators = employees.map((p) => p.personUuid).filter((p) => p != null)
-    const event: AddCollaboratorsEvent = {
-      type: NotificationEventType.AddCollaborators,
-      cardId: doc._id,
-      cardType: doc._class,
-      collaborators,
-      socialId: modifiedBy
-    }
-    await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
-      event
-    })
-  }
+  // if (collaboratorRefs.size > 0) {
+  //   const employees = await control.findAll(control.ctx, contact.mixin.Employee, {
+  //     _id: { $in: [...collaboratorRefs] }
+  //   })
+  //   const collaborators = employees.map((p) => p.personUuid).filter((p) => p != null)
+  //   const event: AddCollaboratorsEvent = {
+  //     type: NotificationEventType.AddCollaborators,
+  //     docId: doc._id,
+  //     docClass: doc._class,
+  //     collaborators,
+  //     date: new Date(doc.modifiedOn),
+  //     socialId: modifiedBy
+  //   }
+  //   await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
+  //     event
+  //   })
+  // }
 }
 
 async function updateCollaborators (
@@ -586,7 +581,7 @@ async function createThreadCardPeers (
   ).value[0]
   if (thread === undefined) return []
 
-  const messageId = thread.messageId
+  // const messageId = thread.messageId
   const directPeer = (
     (
       await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
@@ -628,19 +623,20 @@ async function createThreadCardPeers (
     const parentDirect = directPeer?.members?.find((m) => m.extra?.space === personSpace._id)
 
     if (parentDirect !== undefined) {
-      const threadPatchEvent: ThreadPatchEvent = {
-        type: MessageEventType.ThreadPatch,
-        cardId: parentDirect.cardId,
-        messageId,
-        operation: {
-          opcode: 'attach',
-          threadId: _id,
-          threadType: _class
-        },
-        socialId: doc.modifiedBy
-      }
+      // const threadPatchEvent: ThreadPatchEvent = {
+      //   type: MessageEventType.ThreadPatch,
+      //   docId: parentDirect.cardId,
+      //   docClass: parentDirect.
+      //   messageId,
+      //   operation: {
+      //     opcode: 'attach',
+      //     threadId: _id,
+      //     threadType: _class
+      //   },
+      //   socialId: doc.modifiedBy
+      // }
       await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
-        event: threadPatchEvent
+        event: {} as any
       })
     }
   }
@@ -656,7 +652,8 @@ async function createThreadCardPeers (
         value: peerId,
         extra: { space: spaceId },
         date: new Date(doc.modifiedOn),
-        options: { newValue }
+        options: { newValue },
+        socialId: doc.modifiedBy
       }
       await control.domainRequest(control.ctx, 'communication' as OperationDomain, { event })
       newValue = false
@@ -716,16 +713,16 @@ async function createDirectCardPeers (
       )
     )
 
-    const event: AddCollaboratorsEvent = {
-      type: NotificationEventType.AddCollaborators,
-      cardId: _id,
-      cardType: _class,
-      collaborators: accounts,
-      socialId: doc.modifiedBy,
-      date: new Date(doc.modifiedOn + 1)
-    }
-
-    await control.domainRequest(control.ctx, 'communication' as OperationDomain, { event })
+    // const event: AddCollaboratorsEvent = {
+    //   type: NotificationEventType.AddCollaborators,
+    //   docId: _id,
+    //   docClass: _class,
+    //   collaborators: accounts,
+    //   socialId: doc.modifiedBy,
+    //   date: new Date(doc.modifiedOn + 1)
+    // }
+    //
+    // await control.domainRequest(control.ctx, 'communication' as OperationDomain, { event })
   }
 
   if (cardIds.size > 1) {
@@ -739,7 +736,8 @@ async function createDirectCardPeers (
         value: peerId,
         extra: { space: spaceId },
         date: new Date(doc.modifiedOn),
-        options: { newValue }
+        options: { newValue },
+        socialId: doc.modifiedBy
       }
       await control.domainRequest(control.ctx, 'communication' as OperationDomain, { event })
       newValue = false
@@ -821,17 +819,17 @@ async function createCollaborators (control: TriggerControl, ctx: TxCreateDoc<Ca
     }
 
     if (collaborators.length === 0) continue
-    const event: AddCollaboratorsEvent = {
-      type: NotificationEventType.AddCollaborators,
-      cardId: tx.objectId,
-      cardType: tx.objectClass,
-      collaborators,
-      socialId: tx.createdBy ?? tx.modifiedBy,
-      date: new Date((tx.createdOn ?? tx.modifiedOn) + 1)
-    }
-    await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
-      event
-    })
+    // const event: AddCollaboratorsEvent = {
+    //   type: NotificationEventType.AddCollaborators,
+    //   docId: tx.objectId,
+    //   docClass: tx.objectClass,
+    //   collaborators,
+    //   socialId: tx.createdBy ?? tx.modifiedBy,
+    //   date: new Date((tx.createdOn ?? tx.modifiedOn) + 1)
+    // }
+    // await control.domainRequest(control.ctx, 'communication' as OperationDomain, {
+    //   event
+    // })
   }
 }
 

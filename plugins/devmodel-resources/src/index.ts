@@ -34,7 +34,8 @@ import core, {
   type SearchResult,
   type Tx,
   type TxResult,
-  type WithLookup
+  type WithLookup,
+  type TxDomainEvent
 } from '@hcengineering/core'
 import { getMetadata, type IntlString, type Resources } from '@hcengineering/platform'
 import { addTxListener } from '@hcengineering/presentation'
@@ -136,6 +137,19 @@ export class PresentationClientHook implements ClientHook {
         platformNowDiff(startTime),
         JSON.stringify(result).length,
         this.stackLine()
+      )
+    }
+    return result
+  }
+
+  async domainEventTx (client: Client, tx: TxDomainEvent): Promise<DomainResult> {
+    const result = await client.domainEventTx(tx)
+    if (this.notifyEnabled) {
+      console.debug(
+        'devmodel# domainEventTx=>',
+        testing ? JSON.stringify(cutObjectArray(tx)).slice(0, 160) : tx,
+        'result => ',
+        result
       )
     }
     return result

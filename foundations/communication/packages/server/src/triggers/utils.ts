@@ -13,43 +13,12 @@
 // limitations under the License.
 //
 
-import { type AccountUuid, type Markdown, type SocialID } from '@hcengineering/communication-types'
+import { type SocialID } from '@hcengineering/communication-types'
+import type { AccountUuid } from '@hcengineering/core'
 
 import { TriggerCtx } from '../types'
 
 export async function getNameBySocialID (ctx: TriggerCtx, id: SocialID): Promise<string> {
   const account = (await ctx.client.findPersonUuid(ctx, id, true)) as AccountUuid | undefined
   return account != null ? ((await ctx.client.db.getNameByAccount(account)) ?? 'System') : 'System'
-}
-
-export async function getAddCollaboratorsMessageContent (
-  ctx: TriggerCtx,
-  sender: AccountUuid | undefined,
-  collaborators: AccountUuid[]
-): Promise<Markdown> {
-  if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
-    return 'Joined card'
-  }
-
-  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.client.db.getNameByAccount(it)))).filter(
-    (it): it is string => it != null && it !== ''
-  )
-
-  return `Added ${collaboratorsNames.join(', ')}`
-}
-
-export async function getRemoveCollaboratorsMessageContent (
-  ctx: TriggerCtx,
-  sender: AccountUuid | undefined,
-  collaborators: AccountUuid[]
-): Promise<Markdown> {
-  if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
-    return 'Left card'
-  }
-
-  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.client.db.getNameByAccount(it)))).filter(
-    (it): it is string => it != null && it !== ''
-  )
-
-  return `Removed ${collaboratorsNames.join(', ')}`
 }

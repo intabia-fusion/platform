@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ClientConnectEvent, type DocChunk, generateId } from '..'
+import { ClientConnectEvent, type DocChunk, generateId, TxDomainEvent } from '..'
 import type { Class, Doc, Domain, Ref, Timestamp } from '../classes'
 import { type ClientConnection } from '../client'
 import core from '../component'
@@ -80,6 +80,10 @@ export async function connect (handler: (tx: Tx) => void): Promise<ClientConnect
       }
       const result = await Promise.all([model.tx(tx), transactions.tx(tx)])
       return result[0]
+    }
+
+    async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+      return await Promise.resolve({ domain: 'test' as Domain, value: null })
     }
 
     async domainRequest (): Promise<DomainResult> {

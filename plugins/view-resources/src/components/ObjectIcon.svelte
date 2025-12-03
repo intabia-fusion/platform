@@ -26,6 +26,7 @@
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let withObjectIcon = false
   export let showLoading = true
+  export let ignoreIconMixin = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -38,7 +39,7 @@
   $: iconMixin = hierarchy.classHierarchyMixin(value._class, view.mixin.ObjectIcon)
 </script>
 
-{#if iconMixin}
+{#if iconMixin && !ignoreIconMixin}
   <Component is={iconMixin.component} props={{ value, size }} {showLoading} />
 {:else}
   {@const objectIcon = icon ?? classIcon(client, value._class) ?? getObjectIcon(value)}

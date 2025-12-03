@@ -14,16 +14,16 @@
 import type { LabelEvent, LabelEventType } from './label'
 import type { MessageEventResult, MessageEventType, MessageEvent } from './message'
 import type { NotificationEventResult, NotificationEvent, NotificationEventType } from './notification'
-import type { CardEvent, CardEventType } from './card'
+import type { DocEvent, DocEventType } from './doc'
 import { PeerEvent, PeerEventType } from './peer'
 
 export * from './message'
 export * from './notification'
 export * from './label'
-export * from './card'
+export * from './doc'
 export * from './peer'
 
-export type EventType = MessageEventType | NotificationEventType | LabelEventType | CardEventType | PeerEventType
-export type Event = MessageEvent | NotificationEvent | LabelEvent | CardEvent | PeerEvent
+export type EventType = MessageEventType | NotificationEventType | LabelEventType | DocEventType | PeerEventType
+export type Event = MessageEvent | NotificationEvent | LabelEvent | DocEvent | PeerEvent
 // eslint-disable-next-line  @typescript-eslint/ban-types
 export type EventResult = MessageEventResult | NotificationEventResult | {}

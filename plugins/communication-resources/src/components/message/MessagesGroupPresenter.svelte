@@ -14,21 +14,23 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
   import { ActivityUpdateType, Message } from '@hcengineering/communication-types'
-  import { getCurrentAccount, isOtherHour, Timestamp } from '@hcengineering/core'
+  import { Doc, getCurrentAccount, isOtherHour, Timestamp } from '@hcengineering/core'
 
-  import { isActivityMessage } from '../../activity'
+  import aggregateMessages, { isActivityMessage } from '../../activity'
   import DateSeparator from '../DateSeparator.svelte'
   import MessagePresenter from './MessagePresenter.svelte'
   import MessagesSeparator from './MessagesSeparator.svelte'
+  import { ActivityDirection, DateFormat } from '../../types'
 
-  export let card: Card
+  export let doc: Doc
   export let date: Timestamp
   export let messages: Message[]
   export let separatorDate: Date | undefined = undefined
   export let separatorDiv: HTMLDivElement | undefined | null = undefined
   export let readonly = false
+  export let showDateSeparator: boolean = true
+  export let dateFormat: DateFormat | undefined = undefined
   export let customObserver: (node: HTMLDivElement) => { destroy: () => void } = () => {
     return { destroy: () => {} }
   }
@@ -42,35 +44,12 @@
       )
       : -1
 
-  $: mergedMessages = mergeMessages(messages)
-
-  function mergeMessages (messages: Message[]): Message[] {
-    const result: Message[] = []
-    for (let i = 0; i < messages.length; i++) {
-      const currentMessage = messages[i]
-      if (
-        isActivityMessage(currentMessage) &&
-        currentMessage.extra.update?.type === ActivityUpdateType.CollaborativeChange
-      ) {
-        for (let j = i + 1; j < messages.length; j++) {
-          const nextMessage = messages[j]
-          if (
-            currentMessage.creator === nextMessage.creator &&
-            isActivityMessage(nextMessage) &&
-            nextMessage.extra.update?.type === ActivityUpdateType.CollaborativeChange &&
-            nextMessage.created.getTime() - currentMessage.created.getTime() < 1000 * 60 * 10
-          ) {
-            currentMessage.extra.update.value = nextMessage.extra.update.value
-            currentMessage.created = nextMessage.created
-            i = j
-          } else {
-            break
-          }
-        }
-      }
-      result.push(currentMessage)
-    }
-    return result
+  function isCompactView (prev: Message | undefined, current: Message): boolean {
+    if (prev == null) return false
+    if (prev.creator !== current.creator) return false
+    if (prev.type !== current.type) return false
+    if (isOtherHour(prev.created.getTime(), current.created.getTime())) return false
+    return true
   }
 </script>
 
@@ -78,19 +57,17 @@
   {#if separatorIndex === 0}
     <MessagesSeparator bind:element={separatorDiv} />
   {/if}
+  {#if showDateSeparator}
   <DateSeparator {date} />
+    {/if}
   <div class="messages-group__messages">
-    {#each mergedMessages as message, index (message.id)}
+    {#each messages as message, index (message.id)}
       {@const previousMessage = messages[index - 1]}
-      {@const compact =
-        previousMessage !== undefined &&
-        previousMessage.creator === message.creator &&
-        previousMessage.type === message.type &&
-        !isOtherHour(previousMessage.created.getTime(), message.created.getTime())}
+      {@const compact = isCompactView(previousMessage, message)}
       {#if separatorIndex !== 0 && index === separatorIndex}
         <MessagesSeparator bind:element={separatorDiv} />
       {/if}
-      <MessagePresenter {message} {card} {readonly} {compact} />
+      <MessagePresenter {message} {doc} {readonly} {compact} {dateFormat}/>
     {/each}
   </div>
 </div>

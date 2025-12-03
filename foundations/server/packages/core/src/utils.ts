@@ -34,7 +34,7 @@ import core, {
   type Tx,
   type TxResult,
   type TxWorkspaceEvent,
-  type WorkspaceIds
+  type WorkspaceIds, type TxDomainEvent
 } from '@hcengineering/core'
 import { PlatformError, unknownError } from '@hcengineering/platform'
 import { createHash, type Hash } from 'crypto'
@@ -308,6 +308,9 @@ export function wrapPipeline (
         result.total
       )[0]
     },
+    domainEventTx: async (tx: TxDomainEvent) => {
+      return await pipeline.tx(ctx, [tx]) as DomainResult
+    },
     domainRequest: async (domain, params) => {
       return await pipeline.domainRequest(ctx, domain, params)
     },
@@ -358,6 +361,10 @@ export function wrapAdapterToClient (ctx: MeasureContext, storageAdapter: DbAdap
       options?: FindOptions<Doc>
     ): Promise<FindResult<T>> {
       return (await storageAdapter.findAll(ctx, _class, query, options)) as any
+    }
+
+    async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+      return { domain: tx.domain, value: null as any }
     }
 
     async domainRequest<T>(domain: OperationDomain, params: DomainParams): Promise<DomainResult<T>> {

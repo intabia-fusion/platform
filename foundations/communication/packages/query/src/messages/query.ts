@@ -23,7 +23,7 @@ import {
   SortingOrder
 } from '@hcengineering/communication-types'
 import {
-  CardEventType,
+  DocEventType,
   type CreateMessageEvent,
   type CreateMessageResult,
   type Event,
@@ -32,12 +32,13 @@ import {
   MessageEventType,
   type PagedQueryCallback,
   PatchEvent,
-  RemoveCardEvent,
+  RemoveDocEvent,
   TranslateMessageEvent
 } from '@hcengineering/communication-sdk-types'
-import { MessageProcessor } from '@hcengineering/communication-shared'
-import { v4 as uuid } from 'uuid'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import { v4 as uuid } from 'uuid'
+import { Hierarchy } from '@hcengineering/core'
+import { buildMessagesGroupsUrl, MessageProcessor } from '@hcengineering/communication-shared'
 
 import { QueryResult } from '../result'
 import {
@@ -77,13 +78,16 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private readonly tmpMessages = new Map<string, MessageID>()
-  private isCardRemoved = false
+  private isDocRemoved = false
 
   private readonly translateBlobs: BlobID[] = []
   private translatePromise: Promise<void> | undefined = undefined
 
+  private lastEventDate: Date | undefined = undefined
+
   constructor (
     private readonly client: FindClient,
+    private readonly hierarchy: Hierarchy,
     private readonly hulylake: HulylakeWorkspaceClient,
     public readonly id: QueryId,
     public readonly params: MessageQueryParams,
@@ -151,7 +155,8 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 
     const promise = (async (): Promise<MessagesGroup[]> => {
       try {
-        const res = await this.hulylake.getJson<MessagesGroupsDoc>(`${this.params.cardId}/messages/groups`, {
+        const domain = this.hierarchy.getDomain(this.params.docClass)
+        const res = await this.hulylake.getJson<MessagesGroupsDoc>(buildMessagesGroupsUrl(domain, this.params.docId), {
           maxRetries: 3,
           isRetryable: () => true,
           delayStrategy: {
@@ -160,7 +165,8 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
         })
         let groups = Object.values(res?.body ?? {})
           .map((it) => ({
-            cardId: this.params.cardId,
+            docId: this.params.docId,
+            docClass: this.params.docClass,
             count: it.count,
             blobId: it.blobId,
             fromDate: new Date(it.fromDate),
@@ -171,7 +177,13 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
         if (this.isOneMessageQuery(this.params)) {
           const blobId =
             this.params.blobId ??
-            (await this.client.findMessagesMeta({ cardId: this.params.cardId, id: this.params.id }))[0]?.blobId
+            (
+              await this.client.findMessagesMeta({
+                docClass: this.params.docClass,
+                docId: this.params.docId,
+                id: this.params.id
+              })
+            )[0]?.blobId
           if (blobId != null) {
             groups = groups.filter((it) => it.blobId === blobId)
           } else {
@@ -218,7 +230,14 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   async onEvent (event: Event): Promise<void> {
-    if (this.isCardRemoved) return
+    if (this.isDocRemoved) return
+
+    if (this.lastEventDate == null) {
+      this.lastEventDate = event.date
+    } else if (event.date != null && event.date.getTime() < this.lastEventDate.getTime()) {
+      await this.refresh()
+      return
+    }
 
     switch (event.type) {
       case MessageEventType.CreateMessage: {
@@ -231,22 +250,22 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
       case MessageEventType.UpdatePatch:
       case MessageEventType.RemovePatch:
       case MessageEventType.ThreadPatch:
-      case MessageEventType.BlobPatch:
       case MessageEventType.AttachmentPatch:
       case MessageEventType.ReactionPatch: {
         await this.onPatchEvent(event)
         break
       }
-      case CardEventType.RemoveCard:
-        await this.onCardRemoved(event)
+      case DocEventType.RemoveDoc:
+        await this.onDocRemoved(event)
         break
     }
   }
 
-  async onCardRemoved (event: RemoveCardEvent): Promise<void> {
+  async onDocRemoved (event: RemoveDocEvent): Promise<void> {
     if (this.result instanceof Promise) this.result = await this.result
-    if (this.params.cardId === event.cardId) {
-      this.isCardRemoved = true
+    const domain = this.hierarchy.getDomain(event.docClass)
+    if (this.params.docId === event.docId && this.hierarchy.getDomain(this.params.docClass) === domain) {
+      this.isDocRemoved = true
       this.result.deleteAll()
       this.result.setHead(true)
       this.result.setTail(true)
@@ -255,14 +274,14 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
       return
     }
 
-    if (this.options?.threads === true) {
+    if (this.options?.threads === true && domain === 'card') {
       const result = this.result.getResult()
       let isUpdated = false
       for (const message of result) {
-        if (message.threads.length > 0 && message.threads.some((it) => it.threadId === event.cardId)) {
+        if (message.threads.length > 0 && message.threads.some((it) => it.threadId === event.docId)) {
           this.result.update({
             ...message,
-            threads: message.threads.filter((it) => it.threadId !== event.cardId)
+            threads: message.threads.filter((it) => it.threadId !== event.docId)
           })
 
           isUpdated = true
@@ -276,7 +295,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   async onRequest (event: Event, promise: Promise<EventResult>): Promise<void> {
-    if (this.isCardRemoved) return
+    if (this.isDocRemoved) return
     switch (event.type) {
       case MessageEventType.CreateMessage: {
         await this.onCreateMessageRequest(event, promise as Promise<CreateMessageResult>)
@@ -286,7 +305,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   async onCreateMessageRequest (event: CreateMessageEvent, promise: Promise<CreateMessageResult>): Promise<void> {
-    if (this.params.cardId !== event.cardId) return
+    if (this.params.docId !== event.docId || this.hierarchy.getDomain(this.params.docClass) !== this.hierarchy.getDomain(event.docClass)) return
     if (this.options?.autoExpand !== true) return
 
     const eventId = event._id
@@ -345,15 +364,15 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   async subscribe (): Promise<void> {
-    await this.client.subscribeCard(this.params.cardId, this.id)
+    await this.client.subscribeDoc(this.params.docClass, this.params.docId, this.id)
   }
 
   async unsubscribe (): Promise<void> {
-    await this.client.unsubscribeCard(this.params.cardId, this.id)
+    await this.client.unsubscribeDoc(this.params.docClass, this.params.docId, this.id)
   }
 
   async requestLoadNextPage (notify = true): Promise<{ isDone: boolean }> {
-    if (this.isCardRemoved) return { isDone: true }
+    if (this.isDocRemoved) return { isDone: true }
     if (this.result instanceof Promise) this.result = await this.result
 
     if (this.result.isTail()) return { isDone: true }
@@ -372,7 +391,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   async requestLoadPrevPage (notify = true): Promise<{ isDone: boolean }> {
-    if (this.isCardRemoved) return { isDone: true }
+    if (this.isDocRemoved) return { isDone: true }
     if (this.result instanceof Promise) this.result = await this.result
     if (this.result.isHead()) return { isDone: true }
 
@@ -396,9 +415,10 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     if (lang == null) return
 
     const promise = async (): Promise<void> => {
+      const domain = this.hierarchy.getDomain(this.params.docClass)
       while (this.translateBlobs.length > 0) {
         const [blob] = this.translateBlobs.splice(0, 1)
-        const translates = await loadTranslatedMessages(this.hulylake, this.params.cardId, blob, lang)
+        const translates = await loadTranslatedMessages(this.hulylake, domain, this.params.docId, blob, lang)
         if (translates.length === 0) continue
         if (this.result instanceof Promise) this.result = await this.result
         for (const translate of translates) {
@@ -650,9 +670,10 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 
   private async loadMessagesFromBlob (blobId: BlobID): Promise<Message[]> {
     const params: FindMessagesParams = this.isOneMessageQuery(this.params)
-      ? { cardId: this.params.cardId, id: this.params.id, order: SortingOrder.Ascending }
-      : { cardId: this.params.cardId, order: SortingOrder.Ascending }
-    return await loadMessages(this.hulylake, this.params.cardId, blobId, params, this.options)
+      ? { docClass: this.params.docClass, docId: this.params.docId, id: this.params.id, order: SortingOrder.Ascending }
+      : { docClass: this.params.docClass, docId: this.params.docId, order: SortingOrder.Ascending }
+    const domain = this.hierarchy.getDomain(this.params.docClass)
+    return await loadMessages(this.hulylake, domain, this.params.docId, blobId, params, this.options)
   }
 
   private isOneMessageQuery (params: MessageQueryParams): params is OneMessageQueryParams {
@@ -668,7 +689,11 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private match (message: Message): boolean {
-    if (this.params.cardId !== message.cardId) {
+    if (this.params.docId !== message.docId) {
+      return false
+    }
+
+    if (this.hierarchy.getDomain(this.params.docClass) !== this.hierarchy.getDomain(message.docClass)) {
       return false
     }
 
@@ -688,7 +713,8 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private async onMessageCreatedEvent (event: CreateMessageEvent): Promise<void> {
-    if (this.params.cardId !== event.cardId || event.messageId == null) return
+    if (this.params.docId !== event.docId || this.hierarchy.getDomain(this.params.docClass) !== this.hierarchy.getDomain(event.docClass)) return
+    if (event.messageId == null) return
     if (this.result instanceof Promise) this.result = await this.result
 
     const limit = this.getLimit()
@@ -750,7 +776,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 
   private async onMessageTranslatedEvent (event: TranslateMessageEvent): Promise<void> {
     if (this.options?.language == null) return
-    if (this.params.cardId !== event.cardId || event.language !== this.options.language) return
+    if (this.params.docId !== event.docId || event.language !== this.options.language) return
     if (this.result instanceof Promise) this.result = await this.result
 
     const { messageId } = event
@@ -790,7 +816,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private async onPatchEvent (event: PatchEvent): Promise<void> {
-    if (this.params.cardId !== event.cardId) return
+    if (this.params.docId !== event.docId || this.hierarchy.getDomain(this.params.docClass) !== this.hierarchy.getDomain(event.docClass)) return
 
     const allowedPatchEvents = this.allowedPatchEvents()
     if (!allowedPatchEvents.includes(event.type)) return
@@ -845,7 +871,6 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     }
     if (this.options?.attachments === true) {
       result.push(MessageEventType.AttachmentPatch)
-      result.push(MessageEventType.BlobPatch)
     }
     if (this.options?.threads === true) {
       result.push(MessageEventType.ThreadPatch)

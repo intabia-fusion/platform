@@ -32,6 +32,7 @@ import workbench from '@hcengineering/model-workbench'
 import contacts from '@hcengineering/model-contact'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
+import communication from '@hcengineering/communication'
 
 import { AccountRole, type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type Action } from '@hcengineering/view'
@@ -590,13 +591,7 @@ export function createModel (builder: Builder): void {
     documentsPlugin.action.DeleteDocumentCategory
   )
 
-  // TODO: FIXME
-  // builder.mixin(documents.class.DocumentCategory, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: documents.class.DocumentCategory,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(documents.class.DocumentCategory, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(documents.class.DocumentCategory, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: documents.component.CategoryPresenter
@@ -1037,13 +1032,8 @@ export function createModel (builder: Builder): void {
 
 export function defineNotifications (builder: Builder): void {
   // TODO: FIXME
-  // builder.mixin(documents.class.ControlledDocument, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: documents.class.DocumentComment,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
+  builder.mixin(documents.class.ControlledDocument, core.class.Class, communication.mixin.Messageable, {})
+
   // builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
   //   attachedTo: documents.class.Document,
   //   fields: ['author', 'owner'],

@@ -15,30 +15,20 @@
 <script lang="ts">
   import { AttributeModel } from '@hcengineering/view'
   import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
-  import { Icon, IconEdit, Label } from '@hcengineering/ui'
+  import { IconEdit, Label } from '@hcengineering/ui'
 
   import ActivityAttributeValue from './ActivityAttributeValue.svelte'
-  import communication from '../../../plugin'
+  import communication from '../../../../plugin'
 
   export let model: AttributeModel
-  export let value: ActivityAttributeUpdate['set']
+  export let value: ActivityAttributeUpdate['added']
 
-  $: icon = model.icon ?? IconEdit
-  $: isUnset = value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)
+  $: icon = IconEdit
 </script>
 
-{#if isUnset}
-  <span class="flex-presenter">
-    <span class="mr-1"><Icon {icon} size="small" /></span>
-    <Label label={communication.string.Unset} />
-    <span class="lower"><Label label={model.label} /></span>
-  </span>
-{:else}
-  <ActivityAttributeValue {model} {icon} values={value}>
-    <svelte:fragment slot="text">
-      <Label label={model.label} />
-      <span class="lower"><Label label={communication.string.Set} /></span>
-      <span class="lower"><Label label={communication.string.To} /></span>
-    </svelte:fragment>
-  </ActivityAttributeValue>
-{/if}
+<ActivityAttributeValue {model} {icon} values={value}>
+  <svelte:fragment slot="text">
+    <Label label={model.label} />
+    <span class="lower"><Label label={communication.string.Added} />:</span>
+  </svelte:fragment>
+</ActivityAttributeValue>

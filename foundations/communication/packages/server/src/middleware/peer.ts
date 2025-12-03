@@ -20,6 +20,7 @@ import {
   PeerEventType,
   type SessionData
 } from '@hcengineering/communication-sdk-types'
+import { CardID } from '@hcengineering/communication-types'
 
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
 import { BaseMiddleware } from './base'
@@ -42,13 +43,14 @@ export class PeerMiddleware extends BaseMiddleware implements Middleware {
       case MessageEventType.RemovePatch:
       case MessageEventType.AttachmentPatch:
       case MessageEventType.ReactionPatch:
-      case MessageEventType.ThreadPatch:
-      case MessageEventType.BlobPatch: {
-        if (this.context.cadsWithPeers.has(event.cardId)) {
+      case MessageEventType.ThreadPatch: {
+        const domain = session.hierarchy.getDomain(event.docClass)
+        // TODO: check domain
+        if (domain === 'card' && this.context.cadsWithPeers.has(event.docId)) {
           event._eventExtra.peers =
             (await this.context.head?.findPeers(session, {
               workspaceId: this.context.workspace,
-              cardId: event.cardId
+              cardId: event.docId as CardID
             })) ?? []
         }
         break

@@ -69,6 +69,8 @@
     "Relations": "Relations",
     "AddRelation": "Add relation",
     "PersonId": "Person",
-    "AccountId": "Account"
+    "AccountId": "Account",
+    "Collaborators": "Collaborators",
+    "Collaborator": "Collaborator"
   }
 }

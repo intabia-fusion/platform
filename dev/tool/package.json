@@ -106,6 +106,8 @@
     "@hcengineering/server-calendar-resources": "workspace:^0.7.0",
     "@hcengineering/server-card": "workspace:^0.7.0",
     "@hcengineering/server-card-resources": "workspace:^0.7.0",
+    "@hcengineering/server-communication": "workspace:^0.7.0",
+    "@hcengineering/server-communication-resources": "workspace:^0.7.0",
     "@hcengineering/server-contact": "workspace:^0.7.0",
     "@hcengineering/server-contact-resources": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",

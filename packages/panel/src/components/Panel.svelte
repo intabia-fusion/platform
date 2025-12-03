@@ -29,6 +29,7 @@
   import type { ButtonItem } from '@hcengineering/ui'
   import { getResource } from '@hcengineering/platform'
   import presence from '@hcengineering/presence'
+  import communication from '@hcengineering/communication'
 
   export let title: string | undefined = undefined
   export let withoutActivity: boolean = false
@@ -117,9 +118,9 @@
     //   return
     // }
 
-    if (lastHref !== window.location.href) {
-      startScrollHeightCheck()
-    }
+    // if (lastHref !== window.location.href) {
+    //   startScrollHeightCheck()
+    // }
   })
 </script>
 
@@ -251,14 +252,14 @@
   {#if $deviceInfo.isMobile}
     <div bind:this={content} class="popupPanel-body__mobile-content clear-mins" class:max={useMaxWidth}>
       <slot />
-      <!--{#if showActivity}-->
-      <!--  {#key object._id}-->
-      <!--    <Component-->
-      <!--      is={activity.component.Activity}-->
-      <!--      props={{ object, showCommenInput: !withoutInput, shouldScroll: embedded, focusIndex: 1000 }}-->
-      <!--    />-->
-      <!--  {/key}-->
-      <!--{/if}-->
+      {#if showActivity}
+        {#key object._id}
+          <Component
+            is={communication.component.Activity}
+            props={{ object, showInput: !withoutInput, shouldScroll: embedded, focusIndex: 1000 }}
+          />
+        {/key}
+      {/if}
     </div>
   {:else if withoutContentScroll}
     <div
@@ -269,20 +270,20 @@
       style:--side-content-space={`${sideContentSpace}px`}
     >
       <slot />
-      <!--{#if showActivity}-->
-      <!--  {#key object._id}-->
-      <!--    <Component-->
-      <!--      is={activity.component.Activity}-->
-      <!--      props={{-->
-      <!--        object,-->
-      <!--        showCommenInput: !withoutInput,-->
-      <!--        shouldScroll: embedded,-->
-      <!--        focusIndex: 1000,-->
-      <!--        boundary: content-->
-      <!--      }}-->
-      <!--    />-->
-      <!--  {/key}-->
-      <!--{/if}-->
+      {#if showActivity}
+        {#key object._id}
+          <Component
+            is={communication.component.Activity}
+            props={{
+              object,
+              showInput: !withoutInput,
+              shouldScroll: embedded,
+              focusIndex: 1000,
+              boundary: content
+            }}
+          />
+        {/key}
+      {/if}
     </div>
   {:else}
     <Scroller
@@ -303,21 +304,21 @@
         }}
       >
         <slot />
-        <!--{#if showActivity}-->
-        <!--  {#key object._id}-->
-        <!--    <Component-->
-        <!--      is={activity.component.Activity}-->
-        <!--      bind:innerRef={activityRef}-->
-        <!--      props={{-->
-        <!--        object,-->
-        <!--        showCommenInput: !withoutInput,-->
-        <!--        shouldScroll: embedded,-->
-        <!--        focusIndex: 1000,-->
-        <!--        boundary: content-->
-        <!--      }}-->
-        <!--    />-->
-        <!--  {/key}-->
-        <!--{/if}-->
+        {#if showActivity}
+          {#key object._id}
+            <Component
+              is={communication.component.Activity}
+              bind:innerRef={activityRef}
+              props={{
+                object,
+                showInput: !withoutInput,
+                shouldScroll: embedded,
+                focusIndex: 1000,
+                boundary: content
+              }}
+            />
+          {/key}
+        {/if}
       </div>
     </Scroller>
   {/if}

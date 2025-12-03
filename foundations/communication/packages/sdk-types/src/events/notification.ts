@@ -14,24 +14,19 @@
 //
 
 import {
-  CardID,
   ContextID,
   MessageID,
-  AccountUuid,
-  CardType,
   NotificationType,
   NotificationContent,
   NotificationID,
   BlobID,
   SocialID
 } from '@hcengineering/communication-types'
+import type { Class, Doc, Ref, AccountUuid } from '@hcengineering/core'
 
 import type { BaseEvent } from './common'
 
 export enum NotificationEventType {
-  AddCollaborators = 'addCollaborators',
-  RemoveCollaborators = 'removeCollaborators',
-
   CreateNotification = 'createNotification',
   RemoveNotifications = 'removeNotifications',
   UpdateNotification = 'updateNotification',
@@ -42,11 +37,9 @@ export enum NotificationEventType {
 }
 
 export type NotificationEvent =
-  | AddCollaboratorsEvent
   | CreateNotificationContextEvent
   | CreateNotificationEvent
   | UpdateNotificationEvent
-  | RemoveCollaboratorsEvent
   | RemoveNotificationContextEvent
   | RemoveNotificationsEvent
   | UpdateNotificationContextEvent
@@ -58,14 +51,13 @@ export interface CreateNotificationEvent extends BaseEvent {
   notificationType: NotificationType
   read: boolean
   content: NotificationContent
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   contextId: ContextID
   messageId: MessageID
   creator: SocialID
   blobId: BlobID
   account: AccountUuid
-
-  date?: Date
 }
 
 export interface UpdateNotificationEvent extends BaseEvent {
@@ -81,7 +73,6 @@ export interface UpdateNotificationEvent extends BaseEvent {
     read: boolean
   }
 
-  date?: Date
   updated?: number
 }
 
@@ -90,29 +81,24 @@ export interface RemoveNotificationsEvent extends BaseEvent {
   contextId: ContextID
   account: AccountUuid
   ids: NotificationID[]
-
-  date?: Date
 }
 
 export interface CreateNotificationContextEvent extends BaseEvent {
   type: NotificationEventType.CreateNotificationContext
   contextId?: ContextID
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   account: AccountUuid
 
   lastView: Date
   lastUpdate: Date
   lastNotify: Date
-
-  date?: Date
 }
 
 export interface RemoveNotificationContextEvent extends BaseEvent {
   type: NotificationEventType.RemoveNotificationContext
   contextId: ContextID
   account: AccountUuid
-
-  date?: Date
 }
 
 export interface UpdateNotificationContextEvent extends BaseEvent {
@@ -124,28 +110,6 @@ export interface UpdateNotificationContextEvent extends BaseEvent {
     lastUpdate?: Date
     lastNotify?: Date
   }
-
-  date?: Date
-}
-
-export interface AddCollaboratorsEvent extends BaseEvent {
-  type: NotificationEventType.AddCollaborators
-  cardId: CardID
-  cardType: CardType
-  collaborators: AccountUuid[]
-
-  socialId: SocialID
-  date?: Date
-}
-
-export interface RemoveCollaboratorsEvent extends BaseEvent {
-  type: NotificationEventType.RemoveCollaborators
-  cardId: CardID
-  cardType: CardType
-  collaborators: AccountUuid[]
-
-  socialId: SocialID
-  date?: Date
 }
 
 // eslint-disable-next-line  @typescript-eslint/ban-types

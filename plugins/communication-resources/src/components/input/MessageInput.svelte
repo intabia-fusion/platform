@@ -14,10 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
   import { isAppletAttachment, isBlobAttachment } from '@hcengineering/communication-shared'
   import { BlobParams, LinkPreviewParams, Message, MessageID, BlobID } from '@hcengineering/communication-types'
-  import { generateId, getCurrentAccount, Markup, RateLimiter, Ref } from '@hcengineering/core'
+  import { generateId, getCurrentAccount, Markup, RateLimiter, Ref, Doc, Class } from '@hcengineering/core'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { clearTyping, setTyping } from '@hcengineering/presence-resources'
   import { deleteFile, getClient, isLinkPreviewEnabled, uploadFile } from '@hcengineering/presentation'
@@ -32,9 +31,7 @@
   import { type TextInputAction, AppletDraft, MessageDraft } from '../../types'
   import {
     defaultMessageInputActions,
-    isCardAllowedForCommunications,
     loadLinkPreviewParams,
-    showForbidden,
     toMarkdown,
     toMarkup
   } from '../../utils'
@@ -43,33 +40,40 @@
   import IconAttach from '../icons/Attach.svelte'
   import AttachmentsHeader from '../input/AttachmentsHeader.svelte'
   import { createMessage, updateMessage } from '../../actions'
+  import cardPlugin, { Card } from '@hcengineering/card'
+  import { FocusPosition } from '@tiptap/core'
 
-  export let card: Card
+  export let doc: Doc
   export let message: Message | undefined = undefined
+  export let autofocus: FocusPosition = 'end'
   export let onCancel: (() => void) | undefined = undefined
 
   const throttle = new ThrottledCaller(500)
   const dispatch = createEventDispatcher()
   const client = getClient()
+  const hierarchy = client.getHierarchy()
   const acc = getCurrentAccount()
 
   const maxLinkPreviewCount = 5
   const previewUrls = new Map<string, boolean>()
   const linksData = new Map<string, LinkPreviewParams | null>()
 
-  let prevCard: Ref<Card> | undefined = card._id
+  let prevDocId: Ref<Doc> | undefined = doc._id
+  let prevDocClass: Ref<Class<Doc>> | undefined = doc._class
+
   let prevMessage: MessageID | undefined = message?.id
 
-  let markup = message != null ? messageToDraft(message).content : getDraft(card._id).content
-  let attachmentsDraft: Omit<MessageDraft, 'content'> = message != null ? messageToDraft(message) : getDraft(card._id)
+  let markup = message != null ? messageToDraft(message).content : getDraft(doc._class, doc._id).content
+  let attachmentsDraft: Omit<MessageDraft, 'content'> = message != null ? messageToDraft(message) : getDraft(doc._class, doc._id)
 
   let inputElement: HTMLInputElement
   let refContainer: HTMLElement | undefined | null = undefined
 
   let progress = false
 
-  $: if (prevCard !== card._id) {
-    prevCard = card._id
+  $: if (prevDocClass !== doc._class || prevDocId !== doc._id) {
+    prevDocId = doc._id
+    prevDocClass = doc._class
     initDraft()
   }
 
@@ -81,7 +85,7 @@
   $: _saveDraft(markup, attachmentsDraft)
 
   function initDraft (): void {
-    const draft = message != null ? messageToDraft(message) : getDraft(card._id)
+    const draft = message != null ? messageToDraft(message) : getDraft(doc._class, doc._id)
     attachmentsDraft = draft
     markup = draft.content
     previewUrls.clear()
@@ -92,7 +96,7 @@
       previewUrls.set(link.url, true)
     }
     if (message === undefined) {
-      saveDraft(card._id, { ...draft, content: markup })
+      saveDraft(doc._class, doc._id, { ...draft, content: markup })
     }
   }
 
@@ -100,10 +104,11 @@
     event.preventDefault()
     event.stopPropagation()
 
-    if (!isCardAllowedForCommunications(card)) {
-      await showForbidden()
-      return
-    }
+    // TODO?: FIXME
+    // if (!isCardAllowedForCommunications(card)) {
+    //   await showForbidden()
+    //   return
+    // }
 
     const markup = event.detail
     const blobsToLoad = attachmentsDraft.blobs
@@ -114,20 +119,20 @@
     attachmentsDraft = getEmptyDraft()
     previewUrls.clear()
     if (message === undefined) {
-      removeDraft(card._id)
+      removeDraft(doc._class, doc._id)
     }
 
     const markdown = toMarkdown(markup)
 
     if (message === undefined) {
-      await createMessage(card, markdown, blobsToLoad, appletsToLoad, applets, linksToLoad, urlsToLoad, linksData)
+      await createMessage(doc, markdown, blobsToLoad, appletsToLoad, applets, linksToLoad, urlsToLoad, linksData)
       dispatch('sent')
     } else {
-      await updateMessage(card, message, markdown, blobsToLoad, appletsToLoad, applets, linksToLoad)
+      await updateMessage(doc, message, markdown, blobsToLoad, appletsToLoad, applets, linksToLoad)
       dispatch('edited')
     }
 
-    void clearTyping(acc.primarySocialId, card._id)
+    void clearTyping(acc.primarySocialId, doc._id)
   }
 
   async function fileSelected (): Promise<void> {
@@ -306,7 +311,12 @@
     if (message !== undefined) return
     if (!isEmptyMarkup(markup)) {
       throttle.call(() => {
-        void setTyping(acc.primarySocialId, card.peerId ? `peer:${card.peerId}` : card._id)
+        if (hierarchy.isDerived(doc._class, cardPlugin.class.Card)) {
+          const card = doc as Card
+          void setTyping(acc.primarySocialId, card.peerId ? `peer:${card.peerId}` : card._id)
+        } else {
+          void setTyping(acc.primarySocialId, doc._id)
+        }
       })
     }
   }
@@ -352,7 +362,7 @@
   })
 
   async function uploadWith (uploader: UploadHandlerDefinition): Promise<void> {
-    const cardId = card._id
+    const { _class, _id } = doc
 
     const onFileUploaded = async ({ uuid, name, file, metadata }: FileUploadCallbackParams): Promise<void> => {
       const blob = {
@@ -364,15 +374,15 @@
       }
 
       // We are probably in different card, update the draft in storage
-      let newDraft = getDraft(cardId)
+      let newDraft = getDraft(_class, _id)
       newDraft = {
         ...newDraft,
         blobs: [...newDraft.blobs, blob]
       }
-      saveDraft(cardId, newDraft, true)
+      saveDraft(_class, _id, newDraft, true)
 
       // In case we are in the same card, update the draft in memory
-      if (cardId === card._id) {
+      if (_id === doc._id) {
         attachmentsDraft = {
           ...attachmentsDraft,
           blobs: [...attachmentsDraft.blobs, blob]
@@ -381,7 +391,7 @@
     }
 
     const upload = await getResource(uploader.handler)
-    const target = { objectId: card._id, objectClass: card._class }
+    const target = { objectId: doc._id, objectClass: doc._class }
     await upload({ onFileUploaded, target })
   }
 
@@ -400,6 +410,11 @@
     if (event.key === 'ArrowUp') {
       if (isEmptyDraft() && $messageEditingStore === undefined) {
         dispatch('arrowUp')
+      }
+    }
+    if (event.key === 'ArrowDown') {
+      if (isEmptyDraft() && $messageEditingStore === undefined) {
+        dispatch('arrowDown')
       }
     }
     if (event.key === 'Escape') {
@@ -446,6 +461,10 @@
 
   $: blobs = attachmentsDraft.blobs
   $: ch = hasChanges(blobs, undefined, [])
+
+  function getPeerId (object: Doc): string | undefined {
+    return hierarchy.isDerived(object._class, cardPlugin.class.Card) ? (object as Card).peerId : undefined
+  }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -475,7 +494,7 @@
     actions={[...defaultMessageInputActions, attachAction, ...uploadActions, ...appletActions]}
     on:submit={handleSubmit}
     on:update={onUpdate}
-    autofocus="end"
+    {autofocus}
     onCancel={onCancel ? handleCancel : undefined}
     onPaste={pasteAction}
     onKeyDown={handleKeyDown}
@@ -499,7 +518,7 @@
 </div>
 
 {#if message === undefined}
-  <TypingPresenter cardId={card._id} peerId={card.peerId} />
+  <TypingPresenter objectId={doc._id} peerId={getPeerId(doc)} />
 {/if}
 
 <style lang="scss">

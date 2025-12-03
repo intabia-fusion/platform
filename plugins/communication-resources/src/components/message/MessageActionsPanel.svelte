@@ -18,11 +18,11 @@
   import { MessageAction } from '@hcengineering/communication'
   import { getResource } from '@hcengineering/platform'
   import { Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
   import view from '@hcengineering/view'
+  import { type Doc } from '@hcengineering/core'
 
   export let message: Message
-  export let card: Card
+  export let doc: Doc
   export let actions: MessageAction[]
   export let onClose: () => void
   export let onOpen: () => void
@@ -35,7 +35,7 @@
 
   async function handleAction (action: MessageAction, ev: MouseEvent): Promise<void> {
     const actionFn = await getResource(action.action)
-    await actionFn(message, card, ev, onOpen, onClose)
+    await actionFn(message, doc, ev, onOpen, onClose)
   }
 
   function showMenu (ev: MouseEvent): void {

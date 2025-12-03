@@ -22,7 +22,8 @@ import {
   type SearchOptions,
   type SearchQuery,
   type Tx,
-  toFindResult
+  toFindResult,
+  DomainResult
 } from '@hcengineering/core'
 import { LiveQuery as LQ } from '@hcengineering/query'
 import { BaseMiddleware } from '@hcengineering/server-core'
@@ -72,6 +73,9 @@ export class LiveQueryMiddleware extends BaseMiddleware implements Middleware {
           }),
           results.total
         )[0]
+      },
+      domainEventTx: async (tx) => {
+        return {domain: tx.domain, value: null as any}
       },
       domainRequest: async (domain, params) => {
         return await this.provideDomainRequest(metrics, domain, params)

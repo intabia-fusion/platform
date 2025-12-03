@@ -11,23 +11,18 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+import type { AccountUuid, Class, Doc, Ref } from '@hcengineering/core'
 
-import type { AccountUuid, BlobID, CardID, CardType, ID, SocialID } from './core'
+import type { BlobID, ID, SocialID } from './core'
 import type { Message, MessageID } from './message'
 
 export type ContextID = ID & { context: true }
 export type NotificationID = ID & { notification: true }
 
-export interface Collaborator {
-  cardId: CardID
-  cardType: CardType
-  account: AccountUuid
-}
-
 export interface Notification {
   id: NotificationID
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   contextId: ContextID
   account: AccountUuid
   type: NotificationType
@@ -58,7 +53,8 @@ export type ReactionNotificationContent = NotificationContent & {
 
 export interface NotificationContext {
   id: ContextID
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   account: AccountUuid
   lastUpdate: Date
   lastView: Date

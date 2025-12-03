@@ -42,7 +42,7 @@ import type {
   TxResult,
   WithLookup
 } from './storage'
-import { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
+import { type Tx, TxDomainEvent, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
 import { platformNow, platformNowDiff, toFindResult } from './utils'
 
 /**
@@ -72,6 +72,8 @@ export interface Client extends Storage, FulltextStorage {
     params: DomainParams,
     options?: DomainRequestOptions
   ) => Promise<DomainResult<T>>
+
+  domainEventTx: <T>(tx: TxDomainEvent<T>) => Promise<DomainResult<T>>
 }
 
 /**
@@ -113,6 +115,7 @@ export interface ClientConnection extends Storage, FulltextStorage, BackupClient
   getLastHash?: (ctx: MeasureContext) => Promise<string | undefined>
   pushHandler: (handler: TxHandler) => void
   domainRequest: (ctx: OperationDomain, params: DomainParams, options?: DomainRequestOptions) => Promise<DomainResult>
+  domainEventTx: (tx: TxDomainEvent) => Promise<DomainResult>
 }
 
 class ClientImpl implements Client, BackupClient {
@@ -161,6 +164,10 @@ class ClientImpl implements Client, BackupClient {
 
   async searchFulltext (query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
     return await this.conn.searchFulltext(query, options)
+  }
+
+  async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+    return await this.conn.domainEventTx(tx)
   }
 
   async domainRequest (

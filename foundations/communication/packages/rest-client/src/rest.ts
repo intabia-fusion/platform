@@ -19,8 +19,7 @@ import {
   type Event,
   type CreateMessageResult,
   type CreateMessageOptions,
-  UpdatePatchOptions,
-  MessageEventType
+  UpdatePatchOptions
 } from '@hcengineering/communication-sdk-types'
 import {
   type FindNotificationContextParams,
@@ -140,22 +139,23 @@ class RestClientImpl implements RestClient {
     messageId?: MessageID,
     options?: CreateMessageOptions
   ): Promise<CreateMessageResult> {
-    const result = await this.event(
-      {
-        type: MessageEventType.CreateMessage,
-        messageType: type,
-        cardId,
-        cardType,
-        content,
-        extra,
-        socialId,
-        date,
-        messageId,
-        options
-      },
-      socialId
-    )
-    return result as CreateMessageResult
+    // const result = await this.event(
+    //   {
+    //     type: MessageEventType.CreateMessage,
+    //     messageType: type,
+    //     cardId,
+    //     cardType,
+    //     content,
+    //     extra,
+    //     socialId,
+    //     date,
+    //     messageId,
+    //     options
+    //   },
+    //   socialId
+    // )
+    // return result as CreateMessageResult
+    return {} as any
   }
 
   async updateMessage (
@@ -167,32 +167,34 @@ class RestClientImpl implements RestClient {
     date?: Date,
     options?: UpdatePatchOptions
   ): Promise<void> {
-    await this.event(
-      {
-        type: MessageEventType.UpdatePatch,
-        cardId,
-        messageId,
-        content,
-        extra,
-        socialId,
-        date,
-        options
-      },
-      socialId
-    )
+    // await this.event(
+    //   {
+    //     type: MessageEventType.UpdatePatch,
+    //     cardId,
+    //     messageId,
+    //     content,
+    //     extra,
+    //     socialId,
+    //     date,
+    //     options
+    //   },
+    //   socialId
+    // )
+    return {} as any
   }
 
   async removeMessage (cardId: CardID, messageId: MessageID, socialId: SocialID, date?: Date): Promise<void> {
-    await this.event(
-      {
-        type: MessageEventType.RemovePatch,
-        cardId,
-        messageId,
-        socialId,
-        date
-      },
-      socialId
-    )
+    // await this.event(
+    //   {
+    //     type: MessageEventType.RemovePatch,
+    //     cardId,
+    //     messageId,
+    //     socialId,
+    //     date
+    //   },
+    //   socialId
+    // )
+    return {} as any
   }
 
   async addAttachments (
@@ -202,22 +204,23 @@ class RestClientImpl implements RestClient {
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    await this.event(
-      {
-        type: MessageEventType.AttachmentPatch,
-        cardId,
-        messageId,
-        operations: [
-          {
-            opcode: 'add',
-            attachments: data
-          }
-        ],
-        socialId,
-        date
-      },
-      socialId
-    )
+    // await this.event(
+    //   {
+    //     type: MessageEventType.AttachmentPatch,
+    //     cardId,
+    //     messageId,
+    //     operations: [
+    //       {
+    //         opcode: 'add',
+    //         attachments: data
+    //       }
+    //     ],
+    //     socialId,
+    //     date
+    //   },
+    //   socialId
+    // )
+    return {} as any
   }
 
   async removeAttachments (
@@ -227,22 +230,23 @@ class RestClientImpl implements RestClient {
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    await this.event(
-      {
-        type: MessageEventType.AttachmentPatch,
-        cardId,
-        messageId,
-        operations: [
-          {
-            opcode: 'remove',
-            ids
-          }
-        ],
-        socialId,
-        date
-      },
-      socialId
-    )
+    // await this.event(
+    //   {
+    //     type: MessageEventType.AttachmentPatch,
+    //     cardId,
+    //     messageId,
+    //     operations: [
+    //       {
+    //         opcode: 'remove',
+    //         ids
+    //       }
+    //     ],
+    //     socialId,
+    //     date
+    //   },
+    //   socialId
+    // )
+    return {} as any
   }
 
   async setAttachments (
@@ -252,22 +256,23 @@ class RestClientImpl implements RestClient {
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    await this.event(
-      {
-        type: MessageEventType.AttachmentPatch,
-        cardId,
-        messageId,
-        operations: [
-          {
-            opcode: 'set',
-            attachments: data
-          }
-        ],
-        socialId,
-        date
-      },
-      socialId
-    )
+    // await this.event(
+    //   {
+    //     type: MessageEventType.AttachmentPatch,
+    //     cardId,
+    //     messageId,
+    //     operations: [
+    //       {
+    //         opcode: 'set',
+    //         attachments: data
+    //       }
+    //     ],
+    //     socialId,
+    //     date
+    //   },
+    //   socialId
+    // )
+    return {} as any
   }
 
   async findNotificationContexts (params: FindNotificationContextParams): Promise<NotificationContext[]> {

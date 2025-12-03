@@ -48,6 +48,7 @@ import { type Action } from '@hcengineering/view'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
+import communication from '@hcengineering/communication'
 
 import products from './plugin'
 import { roles } from './roles'
@@ -154,17 +155,11 @@ export class TProductTypeData extends TProduct implements RolesAssignment {
 function defineProduct (builder: Builder): void {
   builder.createModel(TProduct, TProductTypeData)
 
-  // TODO: FIXME
-  // builder.mixin(products.class.Product, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(products.class.Product, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(products.class.Product, core.class.Class, view.mixin.ObjectIdentifier, {
     provider: products.function.ProductIdentifierProvider
   })
-
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: products.class.Product,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
 
   builder.mixin(products.class.Product, core.class.Class, view.mixin.ObjectEditor, {
     editor: products.component.EditProduct
@@ -299,12 +294,7 @@ function defineSpaceType (builder: Builder): void {
 function defineProductVersion (builder: Builder): void {
   builder.createModel(TProductVersion)
 
-  // builder.mixin(products.class.ProductVersion, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: products.class.ProductVersion,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(products.class.ProductVersion, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(products.class.ProductVersion, core.class.Class, view.mixin.ObjectEditor, {
     editor: products.component.EditProductVersion

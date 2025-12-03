@@ -29,6 +29,7 @@ export class SqlClient {
 
   async execute<T extends SqlRow>(query: string, params?: SqlParams, client?: postgres.TransactionSql): Promise<SqlResult<T>> {
     const convertedParams = convertArrayParams(params)
+
     return await (client ?? this.sql).unsafe<T[]>(query, convertedParams) as SqlResult<T>
   }
 

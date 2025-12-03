@@ -50,7 +50,7 @@ import core, {
   Timestamp,
   toFindResult,
   Tx,
-  TxApplyIf,
+  TxApplyIf, TxDomainEvent,
   TxHandler,
   TxResult,
   type WorkspaceUuid
@@ -865,6 +865,20 @@ class Connection implements ClientConnection {
 
   searchFulltext (query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
     return this.sendRequest({ method: 'searchFulltext', params: [query, options] })
+  }
+
+  domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+    return this.sendRequest({
+      method: 'tx',
+      params: [tx],
+      retry: async () => {
+        // if (tx._class === core.class.TxApplyIf) {
+        //   return (await this.findAll(core.class.Tx, { _id: (tx as TxApplyIf).txes[0]._id }, { limit: 1 })).length === 0
+        // }
+        // return (await this.findAll(core.class.Tx, { _id: tx._id }, { limit: 1 })).length === 0
+        return false
+      }
+    })
   }
 
   domainRequest (domain: OperationDomain, params: DomainParams, options?: DomainRequestOptions): Promise<DomainResult> {

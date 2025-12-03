@@ -13,7 +13,8 @@
 
 import { Asset, IntlString, Metadata, plugin, Plugin } from '@hcengineering/platform'
 import { CardSection } from '@hcengineering/card'
-import { Class, Ref } from '@hcengineering/core'
+import { Class, Mixin, Ref } from '@hcengineering/core'
+import type { AnyComponent } from '@hcengineering/ui'
 
 import {
   GuestCommunicationSettings,
@@ -25,8 +26,10 @@ import {
   Direct,
   Thread
 } from './types'
+import { ActivityControl, IgnoreActivity, Messageable } from './activity'
 
 export * from './types'
+export * from './activity'
 
 /**
  * @public
@@ -35,6 +38,7 @@ export const communicationId = 'communication' as Plugin
 
 export default plugin(communicationId, {
   class: {
+    ActivityControl: '' as Ref<Class<ActivityControl>>,
     MessageAction: '' as Ref<Class<MessageAction>>,
     Applet: '' as Ref<Class<Applet>>,
     Poll: '' as Ref<Class<Poll>>,
@@ -47,7 +51,12 @@ export default plugin(communicationId, {
     Direct: '' as Ref<Class<Direct>>,
     Thread: '' as Ref<Class<Thread>>
   },
+  mixin: {
+    Messageable: '' as Ref<Mixin<Messageable>>,
+    IgnoreActivity: '' as Ref<Mixin<IgnoreActivity>>
+  },
   icon: {
+    Activity: '' as Asset,
     Bell: '' as Asset,
     BellCrossed: '' as Asset,
     File: '' as Asset,
@@ -57,6 +66,9 @@ export default plugin(communicationId, {
   },
   metadata: {
     Enabled: '' as Metadata<boolean>
+  },
+  component: {
+    Activity: '' as AnyComponent
   },
   string: {
     Messages: '' as IntlString,
@@ -102,7 +114,14 @@ export default plugin(communicationId, {
     AnonymousQuiz: '' as IntlString,
     ArrowDownMessages: '' as IntlString,
     Thread: '' as IntlString,
-    Threads: '' as IntlString
+    Threads: '' as IntlString,
+    Activity: '' as IntlString,
+    Attributes: '' as IntlString,
+    CreatedObjectWithName: '' as IntlString,
+    AddedObjectWithName: '' as IntlString,
+    RemovedObjectWithName: '' as IntlString,
+    Comments: '' as IntlString,
+    ValueTooLarge: '' as IntlString
   },
   ids: {
     CardMessagesSection: '' as Ref<CardSection>,

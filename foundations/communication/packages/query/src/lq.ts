@@ -20,9 +20,7 @@ import {
   type Notification,
   type NotificationContext,
   type Label,
-  type FindLabelsParams,
-  FindCollaboratorsParams,
-  Collaborator
+  type FindLabelsParams
 } from '@hcengineering/communication-types'
 import { deepEqual } from 'fast-equals'
 import type {
@@ -39,7 +37,7 @@ import { MessagesQuery } from './messages/query'
 import { NotificationQuery } from './notifications/query'
 import { NotificationContextsQuery } from './notification-contexts/query'
 import { LabelsQuery } from './label/query'
-import { CollaboratorsQuery } from './collaborators/query'
+import { Hierarchy } from '@hcengineering/core'
 
 interface CreateQueryResult {
   unsubscribe: (force: boolean) => void
@@ -55,6 +53,7 @@ export class LiveQueries {
 
   constructor (
     private readonly client: FindClient,
+    private readonly hierarchy: Hierarchy,
     private readonly hulylake: HulylakeWorkspaceClient
   ) {
     this.client.onEvent = (event) => {
@@ -115,12 +114,6 @@ export class LiveQueries {
     )
   }
 
-  queryCollaborators (params: FindCollaboratorsParams, callback: any): CreateQueryResult {
-    return this.createAndStoreQuery<Collaborator, FindCollaboratorsParams, CollaboratorsQuery>(params, callback, undefined, CollaboratorsQuery, (params) =>
-      this.findCollaboratorsQuery(params)
-    )
-  }
-
   private createAndStoreQuery<T, P extends FindParams, Q extends AnyQuery>(
     params: P,
     callback: QueryCallback<T> | PagedQueryCallback<T>,
@@ -156,11 +149,11 @@ export class LiveQueries {
       } else {
         const result = exists.copyResult()
 
-        return new QueryClass(this.client, this.hulylake, id, params, options, callback, result)
+        return new QueryClass(this.client, this.hierarchy, this.hulylake, id, params, options, callback, result)
       }
     }
 
-    return new QueryClass(this.client, this.hulylake, id, params, options, callback, undefined)
+    return new QueryClass(this.client, this.hierarchy, this.hulylake, id, params, options, callback, undefined)
   }
 
   private findQuery<T extends AnyQuery>(params: FindParams, QueryClass: new (...args: any[]) => T, options?: QueryOptions): T | undefined {
@@ -187,16 +180,12 @@ export class LiveQueries {
     return this.findQuery(params, LabelsQuery)
   }
 
-  private findCollaboratorsQuery (params: FindCollaboratorsParams): CollaboratorsQuery | undefined {
-    return this.findQuery(params, CollaboratorsQuery)
-  }
-
   private compareParams (q1: FindParams, q2: FindParams): boolean {
-    return Object.keys(q1).length === Object.keys(q2).length && deepEqual(q1, q2)
+    return Object.keys(q1 ?? {}).length === Object.keys(q2 ?? {}).length && deepEqual(q1 ?? {}, q2 ?? {})
   }
 
   private compareOptions (q1: QueryOptions | undefined, q2: QueryOptions | undefined): boolean {
-    return Object.keys(q1 ?? {}).length === Object.keys(q2 ?? {}).length && deepEqual(q1, q2)
+    return Object.keys(q1 ?? {}).length === Object.keys(q2 ?? {}).length && deepEqual(q1 ?? {}, q2 ?? {})
   }
 
   private removeOldQueries (): void {

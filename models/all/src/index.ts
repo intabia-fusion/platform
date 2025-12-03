@@ -41,6 +41,7 @@ import { serverAiBotId, createModel as serverAiBotModel } from '@hcengineering/m
 import { serverAttachmentId, createModel as serverAttachmentModel } from '@hcengineering/model-server-attachment'
 import { serverCalendarId, createModel as serverCalendarModel } from '@hcengineering/model-server-calendar'
 import { serverCardId, createModel as serverCardModel } from '@hcengineering/model-server-card'
+import { serverCommunicationId, createModel as serverCommunicationModel } from '@hcengineering/model-server-communication'
 import {
   serverCollaborationId,
   createModel as serverCollaborationModel
@@ -215,6 +216,7 @@ export default function buildModel (): Builder {
       }
     ],
     [settingModel, settingId],
+    [emojiModel, emojiId],
     [
       telegramModel,
       telegramId,
@@ -436,7 +438,6 @@ export default function buildModel (): Builder {
     ],
     [inboxModel, inboxId],
     [achievementModel, achievementId],
-    [emojiModel, emojiId],
     [communicationModel, communicationId],
     [mailModel, mailId],
     [
@@ -487,6 +488,7 @@ export default function buildModel (): Builder {
     [serverTaskModel, serverTaskId],
     [serverTrackerModel, serverTrackerId],
     [serverCardModel, serverCardId],
+    [serverCommunicationModel, serverCommunicationId],
     [serverCalendarModel, serverCalendarId],
     [serverRecruitModel, serverRecruitId],
     [serverGmailModel, serverGmailId],

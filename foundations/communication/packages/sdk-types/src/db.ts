@@ -22,18 +22,13 @@ import {
   NotificationContext,
   SocialID,
   Notification,
-  AccountUuid,
-  Collaborator,
-  FindCollaboratorsParams,
   NotificationID,
   Label,
   FindLabelsParams,
   LabelID,
-  CardType,
   NotificationContent,
   NotificationType,
   WithTotal,
-  WorkspaceUuid,
   PeerKind,
   PeerExtra,
   FindPeersParams,
@@ -44,21 +39,19 @@ import {
   FindMessagesMetaParams,
   BlobID
 } from '@hcengineering/communication-types'
+import type { AccountUuid, WorkspaceUuid, Ref, Class, Doc } from '@hcengineering/core'
 
 export interface DbAdapter {
   // MessageMeta
   createMessageMeta: (
-    cardId: CardID,
-    id: MessageID,
-    creator: SocialID,
-    created: Date,
-    blob: BlobID
+    docClass: Ref<Class<Doc>>,
+    attrs: CreateMessageMetaAttrs,
   ) => Promise<boolean>
-  removeMessageMeta: (cardId: CardID, messageId: MessageID) => Promise<void>
+  removeMessageMeta: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID | null) => Promise<void>
   findMessagesMeta: (params: FindMessagesMetaParams) => Promise<MessageMeta[]>
 
   // ThreadsIndex
-  attachThreadMeta: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, socialId: SocialID, date: Date) => Promise<void>
+  attachThreadMeta: (docClass: Ref<Class<Doc>>, attrs: CreateThreadMetaAttrs) => Promise<void>
   removeThreadMeta: (query: ThreadMetaQuery) => Promise<void>
   updateThreadMeta: (query: ThreadMetaQuery, update: ThreadMetaUpdate) => Promise<void>
   findThreadMeta: (params: FindThreadMetaParams) => Promise<ThreadMeta[]>
@@ -80,11 +73,9 @@ export interface DbAdapter {
   findPeers: (params: FindPeersParams) => Promise<Peer[]>
 
   // Collaborators
-  addCollaborators: (cardId: CardID, cardType: CardType, collaborators: AccountUuid[], date: Date) => Promise<AccountUuid[]>
-  removeCollaborators: (query: CollaboratorQuery) => Promise<void>
-  updateCollaborators: (query: CollaboratorQuery, update: CollaboratorUpdate) => Promise<void>
-  getCollaboratorsCursor: (cardId: CardID, date: Date, size?: number) => AsyncIterable<Collaborator[]>
-  findCollaborators: (params: FindCollaboratorsParams) => Promise<Collaborator[]>
+  // TODO: FIXME
+  getCollaboratorsCursor: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>,
+    date: Date, size?: number) => AsyncIterable<any[]>
 
   // Notifications
   createNotification: (
@@ -102,9 +93,9 @@ export interface DbAdapter {
   findNotifications: (params: FindNotificationsParams) => Promise<WithTotal<Notification>>
 
   // NotificationContext
-  createNotificationContext: (
+  createNotificationContext: (docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
     account: AccountUuid,
-    cardId: CardID,
     lastUpdate: Date,
     lastView: Date,
     lastNotify: Date
@@ -114,25 +105,25 @@ export interface DbAdapter {
   findNotificationContexts: (params: FindNotificationContextParams) => Promise<NotificationContext[]>
 
   // Labels
-  createLabel: (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date) => Promise<void>
+  createLabel: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, labelId: LabelID, account: AccountUuid, created: Date) => Promise<void>
   removeLabels: (query: LabelQuery) => Promise<void>
   updateLabels: (query: LabelQuery, update: LabelUpdate) => Promise<void>
   findLabels: (params: FindLabelsParams) => Promise<Label[]>
 
   // Other
   getCardTitle: (cardId: CardID) => Promise<string | undefined>
-  getCardSpaceMembers: (cardId: CardID) => Promise<AccountUuid[]>
+  getDocSpaceMembers: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>) => Promise<AccountUuid[]>
   getAccountsByPersonIds: (ids: string[]) => Promise<AccountUuid[]>
   getNameByAccount: (id: AccountUuid) => Promise<string | undefined>
 
   close: () => void
 }
 
-export type ThreadMetaQuery = Partial<Pick<ThreadMeta, 'cardId' | 'threadId' | 'messageId'>>
+export type ThreadMetaQuery = Partial<Pick<ThreadMeta, 'docId' | 'docClass' | 'threadId' | 'threadType' | 'messageId'>>
 export type ThreadMetaUpdate = Partial<Pick<ThreadMeta, | 'threadType'>>
 
-export type LabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
-export type LabelUpdate = Partial<Pick<Label, 'cardType'>>
+export type LabelQuery = Partial<Pick<Label, 'docId' | 'docClass' | 'labelId' | 'account'>>
+export type LabelUpdate = Partial<Pick<Label, 'docClass'>>
 
 export type NotificationContextQuery = Partial<Pick<NotificationContext, 'account' | 'id'>>
 export type NotificationContextUpdate = Partial<Pick<NotificationContext, 'lastView' | 'lastUpdate' | 'lastNotify'>>
@@ -143,5 +134,5 @@ export type NotificationQuery = Partial<Pick<Notification, 'contextId' | 'accoun
 }
 export type NotificationUpdate = Pick<Notification, 'read'>
 
-export type CollaboratorQuery = Pick<Collaborator, 'cardId'> & { account?: AccountUuid | AccountUuid[] }
-export type CollaboratorUpdate = Partial<Collaborator>
+export type CreateMessageMetaAttrs = MessageMeta
+export type CreateThreadMetaAttrs = Omit<ThreadMeta, 'docClass'>

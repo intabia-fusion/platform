@@ -1822,6 +1822,12 @@ importers:
       '@hcengineering/server-collaboration-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/collaboration-resources
+      '@hcengineering/server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication
+      '@hcengineering/server-communication-resources':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/contact
@@ -2087,6 +2093,9 @@ importers:
       '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
+      '@hcengineering/core':
+        specifier: workspace:^0.7.24
+        version: link:../../../core/packages/core
       '@hcengineering/hulylake-client':
         specifier: workspace:^0.7.17
         version: link:../../../core/packages/hulylake-client
@@ -2148,6 +2157,9 @@ importers:
       '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
+      '@hcengineering/core':
+        specifier: workspace:^0.7.24
+        version: link:../../../core/packages/core
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
@@ -2215,6 +2227,9 @@ importers:
       '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
+      '@hcengineering/core':
+        specifier: workspace:^0.7.24
+        version: link:../../../core/packages/core
       '@hcengineering/hulylake-client':
         specifier: workspace:^0.7.17
         version: link:../../../core/packages/hulylake-client
@@ -2486,6 +2501,9 @@ importers:
       '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
+      '@hcengineering/core':
+        specifier: workspace:^0.7.24
+        version: link:../../../core/packages/core
       '@hcengineering/hulylake-client':
         specifier: workspace:^0.7.17
         version: link:../../../core/packages/hulylake-client
@@ -5704,6 +5722,9 @@ importers:
       '@hcengineering/model-server-collaboration':
         specifier: workspace:^0.7.0
         version: link:../server-collaboration
+      '@hcengineering/model-server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../server-communication
       '@hcengineering/model-server-contact':
         specifier: workspace:^0.7.0
         version: link:../server-contact
@@ -6213,6 +6234,9 @@ importers:
       '@hcengineering/card-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card-resources
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6492,6 +6516,9 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6601,6 +6628,9 @@ importers:
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6929,6 +6959,9 @@ importers:
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7032,6 +7065,9 @@ importers:
 
   ../../models/drive:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7135,12 +7171,6 @@ importers:
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
-      '@hcengineering/model-print':
-        specifier: workspace:^0.7.0
-        version: link:../print
-      '@hcengineering/model-tracker':
-        specifier: workspace:^0.7.0
-        version: link:../tracker
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
@@ -7153,9 +7183,6 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -7682,6 +7709,9 @@ importers:
 
   ../../models/inventory:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7767,6 +7797,9 @@ importers:
 
   ../../models/lead:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -7870,6 +7903,9 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8508,6 +8544,9 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8845,6 +8884,9 @@ importers:
       '@anticrm/skillset':
         specifier: ^0.6.0
         version: 0.6.0
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8960,6 +9002,9 @@ importers:
 
   ../../models/request:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -9325,6 +9370,73 @@ importers:
       '@hcengineering/server-collaboration':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/collaboration
+      '@hcengineering/server-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/server/packages/core
+    devDependencies:
+      '@hcengineering/platform-rig':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/utils/packages/platform-rig
+      '@types/jest':
+        specifier: ^29.5.5
+        version: 29.5.14
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.19.0
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.21.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.54.0
+        version: 8.57.1
+      eslint-config-standard-with-typescript:
+        specifier: ^40.0.0
+        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
+      eslint-plugin-import:
+        specifier: ^2.26.0
+        version: 2.32.0(eslint@8.57.1)
+      eslint-plugin-n:
+        specifier: ^15.4.0
+        version: 15.7.0(eslint@8.57.1)
+      eslint-plugin-promise:
+        specifier: ^6.1.1
+        version: 6.6.0(eslint@8.57.1)
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  ../../models/server-communication:
+    dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
+      '@hcengineering/communication-sdk-types':
+        specifier: workspace:^0.7.12
+        version: link:../../foundations/communication/packages/sdk-types
+      '@hcengineering/core':
+        specifier: workspace:^0.7.23
+        version: link:../../foundations/core/packages/core
+      '@hcengineering/model':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/model
+      '@hcengineering/platform':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -11173,6 +11285,9 @@ importers:
 
   ../../models/survey:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -11322,6 +11437,9 @@ importers:
 
   ../../models/task:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11598,6 +11716,9 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11783,6 +11904,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11892,6 +12016,9 @@ importers:
 
   ../../models/tracker:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11910,12 +12037,18 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-emoji':
+        specifier: workspace:^0.7.0
+        version: link:../emoji
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
+      '@hcengineering/model-print':
+        specifier: workspace:^0.7.0
+        version: link:../print
       '@hcengineering/model-task':
         specifier: workspace:^0.7.0
         version: link:../task
@@ -12004,6 +12137,9 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -13085,6 +13221,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -27828,6 +27967,9 @@ importers:
       '@hcengineering/server-card':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/card
+      '@hcengineering/server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -28823,6 +28965,137 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/server/packages/core
+    devDependencies:
+      '@hcengineering/platform-rig':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/utils/packages/platform-rig
+      '@types/jest':
+        specifier: ^29.5.5
+        version: 29.5.14
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.21.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.54.0
+        version: 8.57.1
+      eslint-config-standard-with-typescript:
+        specifier: ^40.0.0
+        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
+      eslint-plugin-import:
+        specifier: ^2.26.0
+        version: 2.32.0(eslint@8.57.1)
+      eslint-plugin-n:
+        specifier: ^15.4.0
+        version: 15.7.0(eslint@8.57.1)
+      eslint-plugin-promise:
+        specifier: ^6.1.1
+        version: 6.6.0(eslint@8.57.1)
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  ../../server-plugins/communication:
+    dependencies:
+      '@hcengineering/core':
+        specifier: workspace:^0.7.23
+        version: link:../../foundations/core/packages/core
+      '@hcengineering/platform':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/server/packages/core
+    devDependencies:
+      '@hcengineering/platform-rig':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/utils/packages/platform-rig
+      '@types/jest':
+        specifier: ^29.5.5
+        version: 29.5.14
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.19.0
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.21.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.54.0
+        version: 8.57.1
+      eslint-config-standard-with-typescript:
+        specifier: ^40.0.0
+        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
+      eslint-plugin-import:
+        specifier: ^2.26.0
+        version: 2.32.0(eslint@8.57.1)
+      eslint-plugin-n:
+        specifier: ^15.4.0
+        version: 15.7.0(eslint@8.57.1)
+      eslint-plugin-promise:
+        specifier: ^6.1.1
+        version: 6.6.0(eslint@8.57.1)
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  ../../server-plugins/communication-resources:
+    dependencies:
+      '@hcengineering/card':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/card
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
+      '@hcengineering/communication-sdk-types':
+        specifier: workspace:^0.7.12
+        version: link:../../foundations/communication/packages/sdk-types
+      '@hcengineering/communication-types':
+        specifier: workspace:^0.7.12
+        version: link:../../foundations/communication/packages/types
+      '@hcengineering/contact':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/contact
+      '@hcengineering/core':
+        specifier: workspace:^0.7.23
+        version: link:../../foundations/core/packages/core
+      '@hcengineering/measurements':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/measurements
+      '@hcengineering/platform':
+        specifier: workspace:^0.7.19
+        version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
+      '@hcengineering/server-contact':
+        specifier: workspace:^0.7.0
+        version: link:../contact
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -32041,6 +32314,9 @@ importers:
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/communication
       '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../../foundations/communication/packages/sdk-types
@@ -32593,6 +32869,12 @@ importers:
       '@hcengineering/server-collaboration-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/collaboration-resources
+      '@hcengineering/server-communication':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication
+      '@hcengineering/server-communication-resources':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/communication-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/contact
@@ -33117,7 +33399,7 @@ importers:
         version: 1.1.0
       '@livekit/agents':
         specifier: ^1.0.22
-        version: 1.0.22(@livekit/rtc-node@0.13.21)(bufferutil@4.0.9)(utf-8-validate@6.0.5)(zod@3.25.76)
+        version: 1.0.25(@livekit/rtc-node@0.13.21)(bufferutil@4.0.9)(utf-8-validate@6.0.5)(zod@3.25.76)
       '@livekit/rtc-node':
         specifier: ^0.13.21
         version: 0.13.21
@@ -34573,6 +34855,9 @@ importers:
 
   ../../services/github/model-github:
     dependencies:
+      '@hcengineering/communication':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -39061,8 +39346,8 @@ packages:
   '@lifeomic/attempt@3.1.0':
     resolution: {integrity: sha512-QZqem4QuAnAyzfz+Gj5/+SLxqwCAw2qmt7732ZXodr6VDWGeYLG6w1i/vYLa55JQM9wRuBKLmXmiZ2P0LtE5rw==}
 
-  '@livekit/agents@1.0.22':
-    resolution: {integrity: sha512-9uIC/S7IkFh55gZxennW+8QSdRCo44ec1cZ2RLY1LZF/xJgF5pa3j7yD3pRAEQdYXqUYpeSsN9YJrqnwESEnow==}
+  '@livekit/agents@1.0.25':
+    resolution: {integrity: sha512-vwI3kHtYAxg4psh61mKwuepXCz9r5wUu1EZA3HOxH+YLlQxDu4q/az+GqM+S1eWkV49Jg6IbqoQbe9P4v0Vtew==}
     peerDependencies:
       '@livekit/rtc-node': ^0.13.12
       zod: ^3.25.76 || ^4.1.8
@@ -39516,6 +39801,12 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
+  '@opentelemetry/exporter-logs-otlp-proto@0.54.2':
+    resolution: {integrity: sha512-agrzFbSNmIy6dhkyg41ERlEDUDqkaUJj2n/tVRFp9Tl+6wyNVPsqmwU5RWJOXpyK+lYH/znv6A47VpTeJF0lrw==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
   '@opentelemetry/exporter-metrics-otlp-grpc@0.203.0':
     resolution: {integrity: sha512-FCCj9nVZpumPQSEI57jRAA89hQQgONuoC35Lt+rayWY/mzCAc6BQT7RFyFaZKJ2B7IQ8kYjOCPsF/HGFWjdQkQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
@@ -39552,15 +39843,15 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/exporter-trace-otlp-http@0.54.2':
-    resolution: {integrity: sha512-BgWKKyD/h2zpISdmYHN/sapwTjvt1P4p5yx4xeBV8XAEqh4OQUhOtSGFG80+nPQ1F8of3mKOT1DDoDbJp1u25w==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/exporter-trace-otlp-proto@0.203.0':
     resolution: {integrity: sha512-1xwNTJ86L0aJmWRwENCJlH4LULMG2sOXWIVw+Szta4fkqKVY50Eo4HoVKKq6U9QEytrWCr8+zjw0q/ZOeXpcAQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
+  '@opentelemetry/exporter-trace-otlp-proto@0.54.2':
+    resolution: {integrity: sha512-XSmm1N2wAhoWDXP1q/N6kpLebWaxl6VIADv4WA5QWKHLRpF3gLz5NAWNJBR8ygsvv8jQcrwnXgwfnJ18H3v1fg==}
+    engines: {node: '>=14'}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
@@ -39762,6 +40053,12 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
+  '@opentelemetry/instrumentation-pino@0.43.0':
+    resolution: {integrity: sha512-jlOOgbODWRRNknWXY1VLgmqgG0SO4kLgU3XnejjO/3De4OisroAsMGk+1cRB5AQ6WZ8WLAMkMyTShaOe6j2Asw==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
   '@opentelemetry/instrumentation-pino@0.50.1':
     resolution: {integrity: sha512-pBbvuWiHA9iAumAuQ0SKYOXK7NRlbnVTf/qBV0nMdRnxBPrc/GZTbh0f7Y59gZfYsbCLhXLL1oRTEnS+PwS3CA==}
     engines: {node: ^18.19.0 || >=20.6.0}
@@ -39819,6 +40116,12 @@ packages:
   '@opentelemetry/instrumentation@0.203.0':
     resolution: {integrity: sha512-ke1qyM+3AK2zPuBPb6Hk/GCsc5ewbLvPNkEuELx/JmANeEp6ZjnZ+wypPAJSucTw0wvCGrUaibDSdcrGFoWxKQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
+  '@opentelemetry/instrumentation@0.54.2':
+    resolution: {integrity: sha512-go6zpOVoZVztT9r1aPd79Fr3OWiD4N24bCPJsIKkBses8oyFo12F/Ew3UBTdIu6hsW4HC4MVEJygG6TEyJI/lg==}
+    engines: {node: '>=14'}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
@@ -41282,6 +41585,9 @@ packages:
 
   '@types/serve-static@1.15.10':
     resolution: {integrity: sha512-tRs1dB+g8Itk72rlSI2ZrW6vZg0YrLI81iQSTkMmOqnqCaNr/8Ek4VwWcN5vZgCYWbg/JJSGBlUaYGAOP73qBw==}
+
+  '@types/shimmer@1.2.0':
+    resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
 
   '@types/snappyjs@0.7.1':
     resolution: {integrity: sha512-OxjzJ6cQZstysMh6PEwZWmK9qlKZyezHJKOkcUkZDooSFuog2votUEKkxMaTq51UQF3cJkXKQ+XGlj4FSl8JQQ==}
@@ -43576,8 +43882,8 @@ packages:
   fast-copy@3.0.2:
     resolution: {integrity: sha512-dl0O9Vhju8IrcLndv2eU4ldt1ftXMqqfgN4H1cpmGV7P6jeB9FwpN9a2c8DPGE1Ys88rNUJVYDHq73CGAGOPfQ==}
 
-  fast-copy@4.0.0:
-    resolution: {integrity: sha512-/oA0gx1xyXE9R2YlV4FXwZJXngFdm9Du0zN8FhY38jnLkhp1u35h6bCyKgRhlsA6C9I+1vfXE4KISdt7xc6M9w==}
+  fast-copy@4.0.1:
+    resolution: {integrity: sha512-+uUOQlhsaswsizHFmEFAQhB3lSiQ+lisxl50N6ZP0wywlZeWsIESxSi9ftPEps8UGfiBzyYP7x27zA674WUvXw==}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -43758,6 +44064,10 @@ packages:
 
   form-data@4.0.4:
     resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
+    engines: {node: '>= 6'}
+
+  form-data@4.0.5:
+    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
     engines: {node: '>= 6'}
 
   formdata-node@4.4.1:
@@ -45807,8 +46117,8 @@ packages:
       zod:
         optional: true
 
-  openai@6.9.1:
-    resolution: {integrity: sha512-vQ5Rlt0ZgB3/BNmTa7bIijYFhz3YBceAA3Z4JuoMSBftBF9YqFHIEhZakSs+O/Ad7EaoEimZvHxD5ylRjN11Lg==}
+  openai@6.10.0:
+    resolution: {integrity: sha512-ITxOGo7rO3XRMiKA5l7tQ43iNNu+iXGFAcf2t+aWVzzqRaS0i7m1K2BhxNdaveB+5eENhO0VY1FkiZzhBk4v3A==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -46941,6 +47251,9 @@ packages:
   shell-quote@1.8.3:
     resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
     engines: {node: '>= 0.4'}
+
+  shimmer@1.2.1:
+    resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
 
   side-channel-list@1.0.0:
     resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
@@ -50262,7 +50575,7 @@ snapshots:
 
   '@lifeomic/attempt@3.1.0': {}
 
-  '@livekit/agents@1.0.22(@livekit/rtc-node@0.13.21)(bufferutil@4.0.9)(utf-8-validate@6.0.5)(zod@3.25.76)':
+  '@livekit/agents@1.0.25(@livekit/rtc-node@0.13.21)(bufferutil@4.0.9)(utf-8-validate@6.0.5)(zod@3.25.76)':
     dependencies:
       '@ffmpeg-installer/ffmpeg': 1.1.0
       '@livekit/mutex': 1.1.1
@@ -50270,19 +50583,25 @@ snapshots:
       '@livekit/rtc-node': 0.13.21
       '@livekit/typed-emitter': 3.0.0
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/exporter-trace-otlp-http': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/api-logs': 0.54.2
+      '@opentelemetry/core': 2.2.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-logs-otlp-proto': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-trace-otlp-proto': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/instrumentation-pino': 0.43.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/otlp-exporter-base': 0.208.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-logs': 0.54.2(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
       '@types/pidusage': 2.0.5
       commander: 12.1.0
       fluent-ffmpeg: 2.1.3
+      form-data: 4.0.5
       heap-js: 2.7.1
       json-schema: 0.4.0
       livekit-server-sdk: 2.14.2
-      openai: 6.9.1(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76)
+      openai: 6.10.0(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76)
       pidusage: 4.0.1
       pino: 8.21.0
       pino-pretty: 11.3.0
@@ -50293,6 +50612,7 @@ snapshots:
       zod-to-json-schema: 3.25.0(zod@3.25.76)
     transitivePeerDependencies:
       - bufferutil
+      - supports-color
       - utf-8-validate
 
   '@livekit/krisp-noise-filter@0.3.4(livekit-client@2.15.14)':
@@ -50786,6 +51106,17 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
 
+  '@opentelemetry/exporter-logs-otlp-proto@0.54.2(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api-logs': 0.54.2
+      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/otlp-exporter-base': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/otlp-transformer': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-logs': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
+
   '@opentelemetry/exporter-metrics-otlp-grpc@0.203.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@grpc/grpc-js': 1.14.1
@@ -50844,15 +51175,6 @@ snapshots:
       '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
 
-  '@opentelemetry/exporter-trace-otlp-http@0.54.2(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/otlp-exporter-base': 0.54.2(@opentelemetry/api@1.9.0)
-      '@opentelemetry/otlp-transformer': 0.54.2(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 1.27.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
-
   '@opentelemetry/exporter-trace-otlp-proto@0.203.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -50861,6 +51183,15 @@ snapshots:
       '@opentelemetry/otlp-transformer': 0.203.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
+
+  '@opentelemetry/exporter-trace-otlp-proto@0.54.2(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/core': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/otlp-exporter-base': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/otlp-transformer': 0.54.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources': 1.27.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 1.27.0(@opentelemetry/api@1.9.0)
 
   '@opentelemetry/exporter-zipkin@2.0.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -51140,6 +51471,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@opentelemetry/instrumentation-pino@0.43.0(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api-logs': 0.54.2
+      '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/instrumentation': 0.54.2(@opentelemetry/api@1.9.0)
+    transitivePeerDependencies:
+      - supports-color
+
   '@opentelemetry/instrumentation-pino@0.50.1(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -51221,6 +51561,18 @@ snapshots:
       '@opentelemetry/api-logs': 0.203.0
       import-in-the-middle: 1.15.0
       require-in-the-middle: 7.5.2
+    transitivePeerDependencies:
+      - supports-color
+
+  '@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api-logs': 0.54.2
+      '@types/shimmer': 1.2.0
+      import-in-the-middle: 1.15.0
+      require-in-the-middle: 7.5.2
+      semver: 7.7.3
+      shimmer: 1.2.1
     transitivePeerDependencies:
       - supports-color
 
@@ -52963,6 +53315,8 @@ snapshots:
       '@types/http-errors': 2.0.5
       '@types/node': 22.19.0
       '@types/send': 0.17.6
+
+  '@types/shimmer@1.2.0': {}
 
   '@types/snappyjs@0.7.1': {}
 
@@ -55634,7 +55988,7 @@ snapshots:
 
   fast-copy@3.0.2: {}
 
-  fast-copy@4.0.0: {}
+  fast-copy@4.0.1: {}
 
   fast-deep-equal@3.1.3: {}
 
@@ -55831,6 +56185,14 @@ snapshots:
       safe-buffer: 5.2.1
 
   form-data@4.0.4:
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
+      mime-types: 2.1.35
+
+  form-data@4.0.5:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -58145,7 +58507,7 @@ snapshots:
   node-loader@2.0.0(webpack@5.102.1):
     dependencies:
       loader-utils: 2.0.4
-      webpack: 5.102.1
+      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
 
   node-localstorage@2.2.1:
     dependencies:
@@ -58313,7 +58675,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@6.9.1(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76):
+  openai@6.10.0(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76):
     optionalDependencies:
       ws: 8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       zod: 3.25.76
@@ -58628,7 +58990,7 @@ snapshots:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
-      fast-copy: 4.0.0
+      fast-copy: 4.0.1
       fast-safe-stringify: 2.1.1
       help-me: 5.0.0
       joycon: 3.1.1
@@ -59621,6 +59983,8 @@ snapshots:
 
   shell-quote@1.8.3: {}
 
+  shimmer@1.2.1: {}
+
   side-channel-list@1.0.0:
     dependencies:
       es-errors: 1.3.0
@@ -60303,15 +60667,6 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.15.1
 
-  terser-webpack-plugin@5.3.14(webpack@5.102.1):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      serialize-javascript: 6.0.2
-      terser: 5.44.1
-      webpack: 5.102.1
-
   terser@5.44.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
@@ -60979,38 +61334,6 @@ snapshots:
       source-map: 0.6.1
 
   webpack-sources@3.3.3: {}
-
-  webpack@5.102.1:
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.8
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      acorn-import-phases: 1.0.4(acorn@8.15.0)
-      browserslist: 4.27.0
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.3
-      es-module-lexer: 1.7.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.1
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.0
-      terser-webpack-plugin: 5.3.14(webpack@5.102.1)
-      watchpack: 2.4.4
-      webpack-sources: 3.3.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
 
   webpack@5.102.1(@swc/core@1.15.1):
     dependencies:

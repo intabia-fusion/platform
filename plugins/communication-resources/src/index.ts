@@ -20,6 +20,7 @@ import CreatePoll from './components/poll/CreatePoll.svelte'
 import PollPreview from './components/poll/PollPreview.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import CreateDirect from './components/CreateDirect.svelte'
+import Activity from './components/activity/Activity.svelte'
 
 import { unsubscribe, subscribe, canSubscribe, canUnsubscribe, canCreateDirect } from './utils'
 import {
@@ -55,7 +56,8 @@ export { default as MessagesSection } from './components/MessagesSection.svelte'
 export default async (): Promise<Resources> => ({
   component: {
     DirectIcon,
-    CreateDirect
+    CreateDirect,
+    Activity
   },
   poll: {
     PollPresenter,

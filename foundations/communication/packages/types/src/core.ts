@@ -13,9 +13,11 @@
 // limitations under the License.
 //
 
-import type { Ref, Blob, AccountUuid, WorkspaceUuid, PersonId, BlobMetadata, PersonUuid } from '@hcengineering/core'
-
-export type { AccountUuid, PersonUuid, WorkspaceUuid, BlobMetadata }
+import type {
+  Ref,
+  Blob,
+  PersonId
+} from '@hcengineering/core'
 
 export type BlobID = Ref<Blob>
 export type CardID = Ref<any>

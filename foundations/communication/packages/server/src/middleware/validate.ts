@@ -22,13 +22,10 @@ import {
   PeerEventType
 } from '@hcengineering/communication-sdk-types'
 import {
-  type AccountUuid,
   type BlobID,
   type CardID,
   type CardType,
-  type Collaborator,
   type ContextID,
-  type FindCollaboratorsParams,
   type FindLabelsParams,
   type FindMessagesGroupParams,
   type FindNotificationContextParams,
@@ -44,6 +41,7 @@ import {
 } from '@hcengineering/communication-types'
 import { z, ZodString, ZodType, ZodTypeDef } from 'zod'
 import { isBlobAttachmentType, isLinkPreviewAttachmentType } from '@hcengineering/communication-shared'
+import type { AccountUuid, Ref, Class, Doc } from '@hcengineering/core'
 
 import type { Enriched, Middleware, Subscription } from '../types'
 import { BaseMiddleware } from './base'
@@ -84,11 +82,6 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindLabels(session, validParams, queryId)
   }
 
-  async findCollaborators (session: SessionData, params: unknown): Promise<Collaborator[]> {
-    const validParams: FindCollaboratorsParams = this.validate(params, FindCollaboratorsParamsSchema)
-    return await this.provideFindCollaborators(session, validParams)
-  }
-
   async event (session: SessionData, event: Enriched<Event>, derived: boolean): Promise<EventResult> {
     if (derived) return await this.provideEvent(session, event, derived)
     switch (event.type) {
@@ -103,9 +96,6 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
         break
       case MessageEventType.ReactionPatch:
         this.validate(event, ReactionPatchEventSchema)
-        break
-      case MessageEventType.BlobPatch:
-        this.validate(event, BlobPatchEventSchema)
         break
       case MessageEventType.AttachmentPatch:
         this.validate(event, AttachmentPatchEventSchema)
@@ -123,12 +113,6 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
         break
       case MessageEventType.ThreadPatch:
         this.validate(event, ThreadPatchEventSchema)
-        break
-      case NotificationEventType.AddCollaborators:
-        this.validate(event, AddCollaboratorsEventSchema)
-        break
-      case NotificationEventType.RemoveCollaborators:
-        this.validate(event, RemoveCollaboratorsEventSchema)
         break
       case NotificationEventType.UpdateNotification:
         this.validate(event, UpdateNotificationsEventSchema)
@@ -158,6 +142,8 @@ const WorkspaceUuidSchema = z.string().uuid()
 const AccountUuidSchema = brandedString<AccountUuid>(z.string())
 const BlobIDSchema = brandedString<BlobID>(z.string().uuid())
 const AttachmentIDSchema = z.string().uuid()
+const DocIDSchema = brandedString<Ref<Doc>>(z.string().nonempty())
+const DocClassSchema = brandedString<Ref<Class<Doc>>>(z.string().nonempty())
 const CardIDSchema = brandedString<CardID>(z.string())
 const CardTypeSchema = brandedString<CardType>(z.string())
 const ContextIDSchema = brandedString<ContextID>(z.string())
@@ -197,14 +183,6 @@ const LinkPreviewParamsSchema = z
   })
   .strict()
 
-const UpdateBlobDataSchema = z.object({
-  blobId: BlobIDSchema,
-  mimeType: z.string().optional(),
-  fileName: z.string().optional(),
-  size: z.number().optional(),
-  metadata: z.record(z.string(), z.any()).optional()
-})
-
 const AttachmentDataSchema = z.object({
   id: AttachmentIDSchema,
   mimeType: z.string(),
@@ -228,7 +206,8 @@ const FindParamsSchema = z
 
 const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   id: ContextIDSchema.optional(),
-  cardId: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
+  docId: DocIDSchema.optional(),
+  docClass: DocClassSchema.optional(),
   lastNotify: DateOrRecordSchema.optional(),
   account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional(),
   notifications: z
@@ -243,7 +222,8 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
 }).strict()
 
 const FindMessagesGroupsParamsSchema = FindParamsSchema.extend({
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   id: MessageIDSchema.optional(),
   blobId: BlobIDSchema.optional(),
   fromDate: DateOrRecordSchema.optional(),
@@ -256,20 +236,16 @@ const FindNotificationsParamsSchema = FindParamsSchema.extend({
   read: z.boolean().optional(),
   created: DateOrRecordSchema.optional(),
   account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional(),
-  cardId: CardIDSchema.optional(),
+  docId: DocIDSchema.optional(),
+  docClass: DocClassSchema.optional(),
   total: z.boolean().optional()
 }).strict()
 
 const FindLabelsParamsSchema = FindParamsSchema.extend({
   labelId: z.union([LabelIDSchema, z.array(LabelIDSchema)]).optional(),
-  cardId: CardIDSchema.optional(),
-  cardType: z.union([CardTypeSchema, z.array(CardTypeSchema)]).optional(),
+  docId: DocIDSchema.optional(),
+  docClass: DocClassSchema.optional(),
   account: AccountUuidSchema.optional()
-}).strict()
-
-const FindCollaboratorsParamsSchema = FindParamsSchema.extend({
-  cardId: CardIDSchema,
-  account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional()
 }).strict()
 
 // Events
@@ -277,7 +253,9 @@ const FindCollaboratorsParamsSchema = FindParamsSchema.extend({
 const BaseEventSchema = z
   .object({
     _id: z.string().optional(),
-    _eventExtra: z.record(z.any()).optional()
+    _eventExtra: z.record(z.any()).optional(),
+    socialId: SocialIDSchema,
+    date: DateSchema
   })
   .strict()
 
@@ -285,8 +263,8 @@ const BaseEventSchema = z
 const CreateMessageEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.CreateMessage),
 
-  cardId: CardIDSchema,
-  cardType: CardTypeSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
 
   messageId: brandedString<MessageID>(z.string().max(22)).optional(),
   messageType: MessageTypeSchema,
@@ -294,8 +272,6 @@ const CreateMessageEventSchema = BaseEventSchema.extend({
   content: MarkdownSchema,
   extra: MessageExtraSchema.optional(),
 
-  socialId: SocialIDSchema,
-  date: DateSchema,
   language: z.string().optional(),
 
   options: z
@@ -309,15 +285,13 @@ const CreateMessageEventSchema = BaseEventSchema.extend({
 
 const UpdatePatchEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.UpdatePatch),
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   messageId: MessageIDSchema.optional(),
 
   content: MarkdownSchema.optional(),
   extra: z.record(z.any()).optional(),
   language: z.string().optional(),
-
-  socialId: SocialIDSchema,
-  date: DateSchema,
 
   options: z
     .object({
@@ -329,11 +303,10 @@ const UpdatePatchEventSchema = BaseEventSchema.extend({
 
 const RemovePatchEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.RemovePatch),
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   messageId: MessageIDSchema.optional(),
-
-  socialId: SocialIDSchema,
-  date: DateSchema
+  messageType: MessageTypeSchema.optional()
 }).strict()
 
 const ReactionOperationSchema = z.union([
@@ -343,34 +316,11 @@ const ReactionOperationSchema = z.union([
 
 const ReactionPatchEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.ReactionPatch),
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   messageId: MessageIDSchema,
   operation: ReactionOperationSchema,
-  personUuid: z.string(),
-  socialId: SocialIDSchema,
-  date: DateSchema
-}).strict()
-
-/**
- * @deprecated
- */
-const BlobOperationSchema = z.union([
-  z.object({ opcode: z.literal('attach'), blobs: z.array(BlobParamsSchema).nonempty() }),
-  z.object({ opcode: z.literal('detach'), blobIds: z.array(BlobIDSchema).nonempty() }),
-  z.object({ opcode: z.literal('set'), blobs: z.array(BlobParamsSchema).nonempty() }),
-  z.object({ opcode: z.literal('update'), blobs: z.array(UpdateBlobDataSchema).nonempty() })
-])
-
-/**
- * @deprecated
- */
-const BlobPatchEventSchema = BaseEventSchema.extend({
-  type: z.literal(MessageEventType.BlobPatch),
-  cardId: CardIDSchema,
-  messageId: MessageIDSchema,
-  operations: z.array(BlobOperationSchema).nonempty(),
-  socialId: SocialIDSchema,
-  date: DateSchema
+  personUuid: z.string()
 }).strict()
 
 const AttachmentOperationSchema = z.union([
@@ -382,21 +332,19 @@ const AttachmentOperationSchema = z.union([
 
 const AttachmentPatchEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.AttachmentPatch),
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   messageId: MessageIDSchema,
-  operations: z.array(AttachmentOperationSchema).nonempty(),
-  socialId: SocialIDSchema,
-  date: DateSchema
+  operations: z.array(AttachmentOperationSchema).nonempty()
 }).strict()
 
 const ThreadPatchEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.ThreadPatch),
-  cardId: CardIDSchema,
+  docId: DocIDSchema,
+  docClass: DocClassSchema,
   messageId: MessageIDSchema,
   operation: z.object({ opcode: z.literal('attach'), threadId: CardIDSchema, threadType: CardTypeSchema }),
-  socialId: SocialIDSchema,
-  personUuid: z.string(),
-  date: DateSchema
+  personUuid: z.string()
 }).strict()
 
 // Notification events
@@ -411,15 +359,13 @@ const UpdateNotificationsEventSchema = BaseEventSchema.extend({
   }),
   updates: z.object({
     read: z.boolean()
-  }),
-  date: DateSchema
+  })
 }).strict()
 
 const RemoveNotificationContextEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.RemoveNotificationContext),
   contextId: ContextIDSchema,
-  account: AccountUuidSchema,
-  date: DateSchema
+  account: AccountUuidSchema
 }).strict()
 
 const UpdateNotificationContextEventSchema = BaseEventSchema.extend({
@@ -428,26 +374,7 @@ const UpdateNotificationContextEventSchema = BaseEventSchema.extend({
   account: AccountUuidSchema,
   updates: z.object({
     lastView: DateSchema.optional()
-  }),
-  date: DateSchema
-}).strict()
-
-const AddCollaboratorsEventSchema = BaseEventSchema.extend({
-  type: z.literal(NotificationEventType.AddCollaborators),
-  cardId: CardIDSchema,
-  cardType: CardTypeSchema,
-  collaborators: z.array(AccountUuidSchema).nonempty(),
-  socialId: SocialIDSchema,
-  date: DateSchema
-}).strict()
-
-const RemoveCollaboratorsEventSchema = BaseEventSchema.extend({
-  type: z.literal(NotificationEventType.RemoveCollaborators),
-  cardId: CardIDSchema,
-  cardType: CardTypeSchema,
-  collaborators: z.array(AccountUuidSchema).nonempty(),
-  socialId: SocialIDSchema,
-  date: DateSchema
+  })
 }).strict()
 
 const CreatePeerEventSchema = BaseEventSchema.extend({
@@ -461,8 +388,7 @@ const CreatePeerEventSchema = BaseEventSchema.extend({
     .object({
       newValue: z.boolean().optional()
     })
-    .optional(),
-  date: DateSchema
+    .optional()
 }).strict()
 
 const RemovePeerEventSchema = BaseEventSchema.extend({
@@ -470,14 +396,15 @@ const RemovePeerEventSchema = BaseEventSchema.extend({
   workspaceId: WorkspaceUuidSchema,
   cardId: CardIDSchema,
   kind: z.string().nonempty(),
-  value: z.string().nonempty(),
-  date: DateSchema
+  value: z.string().nonempty()
 }).strict()
 
 function deserializeEvent (event: Enriched<Event>): Enriched<Event> {
   switch (event.type) {
     case NotificationEventType.UpdateNotificationContext:
       event.updates.lastView = deserializeDate(event.updates.lastView)
+      event.updates.lastNotify = deserializeDate(event.updates.lastNotify)
+      event.updates.lastUpdate = deserializeDate(event.updates.lastUpdate)
       break
     case NotificationEventType.UpdateNotification:
       event.query.untilDate = deserializeDate(event.query.untilDate)

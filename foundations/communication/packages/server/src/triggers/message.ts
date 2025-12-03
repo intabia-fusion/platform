@@ -17,77 +17,34 @@ import {
   CreateMessageEvent,
   type Event,
   MessageEventType,
-  NotificationEventType,
   PatchEvent,
   RemovePatchEvent,
   ThreadPatchEvent
 } from '@hcengineering/communication-sdk-types'
 import { CardPeer, MessageType, Peer } from '@hcengineering/communication-types'
-import { type AccountUuid, generateId } from '@hcengineering/core'
-import { extractReferences } from '@hcengineering/text-core'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { generateId } from '@hcengineering/core'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 import { generateMessageId } from '../messageId'
-
-async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
-  const { messageType, socialId, content, cardId, cardType, date } = event
-  if (messageType === MessageType.Activity) return []
-  const account = (await ctx.client.findPersonUuid(ctx, socialId, true)) as AccountUuid | undefined
-  const collaborators = new Set<AccountUuid>()
-
-  if (account !== undefined) {
-    collaborators.add(account)
-  }
-
-  if (event.options?.ignoreMentions !== true) {
-    const markup = markdownToMarkup(content)
-    const references = extractReferences(markup)
-    const personIds = references
-      .filter((it) => ['contact:class:Person', 'contact:mixin:Employee'].includes(it.objectClass))
-      .map((it) => it.objectId)
-      .filter((it) => it != null) as string[]
-    const accounts = await ctx.client.db.getAccountsByPersonIds(personIds)
-
-    if (accounts.length > 0) {
-      const spaceMembers = await ctx.client.db.getCardSpaceMembers(cardId)
-      for (const account of accounts) {
-        if (spaceMembers.includes(account)) {
-          collaborators.add(account)
-        }
-      }
-    }
-  }
-
-  if (collaborators.size === 0) {
-    return []
-  }
-
-  return [
-    {
-      type: NotificationEventType.AddCollaborators,
-      cardId,
-      cardType,
-      collaborators: Array.from(collaborators),
-      socialId,
-      date: new Date(date.getTime() - 1)
-    }
-  ]
-}
 
 async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
   if (event.messageType !== MessageType.Text || event.extra?.threadRoot === true) {
     return []
   }
-  const { cardId, socialId, date } = event
-  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
+  const { docClass, docId, socialId, date } = event
+
+  const domain = ctx.hierarchy.getDomain(docClass)
+  if (domain !== 'card') return []
+
+  const thread = (await ctx.client.db.findThreadMeta({ threadId: docId, limit: 1 }))[0]
 
   if (thread === undefined) return []
 
   return [
     {
       type: MessageEventType.ThreadPatch,
-      cardId: thread.cardId,
+      docClass: thread.docClass,
+      docId: thread.docId,
       messageId: thread.messageId,
       operation: {
         opcode: 'addReply',
@@ -100,14 +57,19 @@ async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEve
 }
 
 async function removeThreadReply (ctx: TriggerCtx, event: Enriched<RemovePatchEvent>): Promise<Event[]> {
-  const { cardId } = event
-  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
+  const { docClass, docId } = event
+
+  const domain = ctx.hierarchy.getDomain(docClass)
+  if (domain !== 'card') return []
+
+  const thread = (await ctx.client.db.findThreadMeta({ threadId: docId, limit: 1 }))[0]
   if (thread === undefined) return []
 
   return [
     {
       type: MessageEventType.ThreadPatch,
-      cardId: thread.cardId,
+      docClass,
+      docId,
       messageId: thread.messageId,
       operation: {
         opcode: 'removeReply',
@@ -121,7 +83,7 @@ async function removeThreadReply (ctx: TriggerCtx, event: Enriched<RemovePatchEv
 
 async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEvent>): Promise<Event[]> {
   if (event.operation.opcode !== 'attach') return []
-  const message = await ctx.client.findMessage(event.cardId, event.messageId, { attachments: true })
+  const message = await ctx.client.findMessage(event.docClass, event.docId, event.messageId, { attachments: true })
 
   if (message === undefined) return []
 
@@ -137,8 +99,8 @@ async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEve
     messageId,
     type: MessageEventType.CreateMessage,
     messageType: message.type,
-    cardId: event.operation.threadId,
-    cardType: event.operation.threadType,
+    docId: event.operation.threadId,
+    docClass: event.operation.threadType,
     content: message.content,
     extra: { ...message.extra, threadRoot: true },
     socialId: message.creator,
@@ -150,7 +112,8 @@ async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEve
 
   result.push({
     type: MessageEventType.AttachmentPatch,
-    cardId: event.operation.threadId,
+    docId: event.operation.threadId,
+    docClass: event.operation.threadType,
     messageId,
     operations: [
       {
@@ -170,6 +133,9 @@ async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEve
 }
 
 async function checkPeers (ctx: TriggerCtx, event: Enriched<CreateMessageEvent | PatchEvent>): Promise<Event[]> {
+  const domain = ctx.hierarchy.getDomain(event.docClass)
+  if (domain !== 'card') return []
+
   if (ctx.processedPeersEvents.has(event._id)) return []
   if (event.type === MessageEventType.CreateMessage) {
     if (event.messageType === MessageType.Activity) {
@@ -184,7 +150,7 @@ async function checkPeers (ctx: TriggerCtx, event: Enriched<CreateMessageEvent |
   const cardPeers = new Set(
     (((event._eventExtra.peers ?? []) as Peer[]).filter((it) => it.kind === 'card') as CardPeer[])
       .flatMap((it) => it.members)
-      .filter((it) => it.workspaceId === ctx.workspace && it.cardId !== event.cardId)
+      .filter((it) => it.workspaceId === ctx.workspace && it.cardId !== event.docId)
       .map((it) => it.cardId)
   )
 
@@ -207,8 +173,6 @@ async function checkPeers (ctx: TriggerCtx, event: Enriched<CreateMessageEvent |
 }
 
 const triggers: Triggers = [
-  ['add_collaborators_on_message_created', MessageEventType.CreateMessage, addCollaborators as TriggerFn],
-
   ['add_thread_reply_on_message_created', MessageEventType.CreateMessage, addThreadReply as TriggerFn],
   ['remove_reply_on_messages_removed', MessageEventType.RemovePatch, removeThreadReply as TriggerFn],
 
@@ -218,7 +182,6 @@ const triggers: Triggers = [
   ['check_peers_on_update_patch', MessageEventType.UpdatePatch, checkPeers as TriggerFn],
   ['check_peers_on_remove_patch', MessageEventType.RemovePatch, checkPeers as TriggerFn],
   ['check_peers_on_reaction_patch', MessageEventType.ReactionPatch, checkPeers as TriggerFn],
-  ['check_peers_on_blob_patch', MessageEventType.BlobPatch, checkPeers as TriggerFn],
   ['check_peers_on_attachment_patch', MessageEventType.AttachmentPatch, checkPeers as TriggerFn],
   ['check_peers_on_thread_patch', MessageEventType.ThreadPatch, checkPeers as TriggerFn]
 ]

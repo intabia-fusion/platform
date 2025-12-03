@@ -51,6 +51,8 @@ import workbench from '@hcengineering/model-workbench'
 import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
+import communication from '@hcengineering/communication'
+
 import { definePermissions } from './permissions'
 import document from './plugin'
 
@@ -396,7 +398,7 @@ function defineDocument (builder: Builder): void {
   // Notifications
 
   // TODO: FIXME
-  // builder.mixin(document.class.Document, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(document.class.Document, core.class.Class, communication.mixin.Messageable, {})
 
   builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
     attachedTo: document.class.Document,
@@ -465,12 +467,6 @@ function defineDocument (builder: Builder): void {
   builder.mixin(document.class.Document, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: document.function.DocumentTitleProvider
   })
-
-  // TODO: FIXME
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: document.class.Document,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
 
   // Search
 

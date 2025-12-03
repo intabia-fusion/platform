@@ -14,31 +14,45 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import cardPlugin, { type Card } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
   import { type ActivityMessage } from '@hcengineering/communication-types'
   import view from '@hcengineering/view'
-  import { DocNavLink, ObjectIcon } from '@hcengineering/view-resources'
+  import { DocNavLink, getDocTitle, ObjectIcon } from '@hcengineering/view-resources'
   import { Icon, Label } from '@hcengineering/ui'
+  import type { Class, Doc } from '@hcengineering/core'
 
   import communication from './../../../plugin'
 
   export let message: ActivityMessage
-  export let card: Card
+  export let doc: Doc
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  $: clazz = hierarchy.getClass(card._class)
-  $: objectPanel = hierarchy.classHierarchyMixin(card._class, view.mixin.ObjectPanel)
+  let title: string = ''
+
+  $: clazz = hierarchy.getClass(doc._class)
+  $: objectPanel = hierarchy.classHierarchyMixin(doc._class, view.mixin.ObjectPanel)
   $: action = message.extra.action
+
+  $:void updateTitle(doc, clazz)
+
+  async function updateTitle (doc: Doc, clazz: Class<Doc>): Promise<void> {
+    if (clazz.titleKey != null) {
+      title = (doc as any)[clazz.titleKey]
+      return
+    }
+
+    title = await getDocTitle(client, doc._id, doc._class, doc) ?? ''
+  }
 </script>
 
 <span class="container flex-gap-1 overflow-label">
   <span class="icon mr-1">
-    {#if hierarchy.isDerived(card._class, communication.type.Direct)}
+    {#if hierarchy.isDerived(doc._class, communication.type.Direct)}
       <Icon icon={clazz.icon ?? cardPlugin.icon.Card} size="small" />
     {:else}
-      <ObjectIcon value={card} size={'small'} />
+      <ObjectIcon value={doc} size={'small'} ignoreIconMixin={true}/>
     {/if}
   </span>
 
@@ -51,13 +65,15 @@
     <Label label={clazz.label} />:
   </span>
   <DocNavLink
-    object={card}
+    object={doc}
     disabled={action === 'remove'}
     accent={true}
     component={objectPanel?.component ?? view.component.EditDoc}
     shrink={1}
   >
-    {card.title}
+    {#if title !== ''}
+      {title}
+      {/if}
   </DocNavLink>
 </span>
 

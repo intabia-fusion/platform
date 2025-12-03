@@ -21,6 +21,8 @@ import core, { TAttachedDoc, TClass } from '@hcengineering/model-core'
 import view from '@hcengineering/model-view'
 import { type Request, type RequestPresenter, type RequestStatus } from '@hcengineering/request'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
+import communication from '@hcengineering/communication'
+
 import request from './plugin'
 
 export { requestOperation } from './migration'
@@ -76,8 +78,7 @@ export function createModel (builder: Builder): void {
     TRequestPresenter
   )
 
-  // TODO: FIXME
-  // builder.mixin(request.class.Request, core.class.Class, activity.mixin.IgnoreActivity, {})
+  builder.mixin(request.class.Request, core.class.Class, communication.mixin.IgnoreActivity, {})
 
   builder.mixin(request.class.Request, core.class.Class, view.mixin.ObjectEditor, {
     editor: request.component.EditRequest

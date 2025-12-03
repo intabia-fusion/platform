@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { SortingOrder } from '@hcengineering/core'
+import { type Class, type Doc, type Ref, SortingOrder, AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 
 import type { MessageID } from './message'
 import type { ContextID, NotificationID, NotificationType } from './notification'
-import type { AccountUuid, BlobID, CardID, CardType, SocialID, WorkspaceUuid } from './core'
+import type { BlobID, CardID, SocialID } from './core'
 import type { LabelID } from './label'
 import { PeerKind } from './peer'
 
@@ -44,18 +44,21 @@ interface FindParams {
 }
 
 export interface FindMessagesParams extends FindParams {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   id?: MessageID
 }
 
 export interface FindMessagesMetaParams extends FindParams {
-  cardId?: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   id?: MessageID
   creator?: SocialID
 }
 
 export interface FindMessagesGroupParams extends FindParams {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   id?: MessageID
   blobId?: BlobID
   fromDate?: Partial<Record<ComparisonOperator, Date>> | Date
@@ -70,7 +73,8 @@ export interface FindMessagesOptions {
 
 export interface FindNotificationContextParams extends FindParams {
   id?: ContextID
-  cardId?: CardID | CardID[]
+  docId?: Ref<Doc> | Ref<Doc>[]
+  docClass?: Ref<Class<Doc>>
   lastNotify?: Partial<Record<ComparisonOperator, Date>> | Date
   account?: AccountUuid | AccountUuid[]
   notifications?: {
@@ -90,24 +94,21 @@ export interface FindNotificationsParams extends FindParams {
   read?: boolean
   created?: Partial<Record<ComparisonOperator, Date>> | Date
   account?: AccountUuid | AccountUuid[]
-  cardId?: CardID
+  docId?: Ref<Doc>
+  docClass?: Ref<Class<Doc>>
   total?: boolean
-}
-
-export interface FindCollaboratorsParams extends FindParams {
-  cardId: CardID
-  account?: AccountUuid | AccountUuid[]
 }
 
 export interface FindLabelsParams extends FindParams {
   labelId?: LabelID | LabelID[]
-  cardId?: CardID
-  cardType?: CardType | CardType[]
+  docId?: Ref<Doc>
+  docClass?: Ref<Class<Doc>>
   account?: AccountUuid
 }
 
 export interface FindThreadMetaParams extends FindParams {
-  cardId?: CardID
+  docId?: Ref<Doc>
+  docClass?: Ref<Class<Doc>>
   messageId?: MessageID
   threadId?: CardID
 }

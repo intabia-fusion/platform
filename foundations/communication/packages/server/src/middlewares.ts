@@ -13,20 +13,21 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
+import { Class, MeasureContext, Ref, Doc, WorkspaceUuid } from '@hcengineering/core'
 import type { EventResult, Event, SessionData } from '@hcengineering/communication-sdk-types'
 import type {
-  CardID,
-  Collaborator,
-  FindCollaboratorsParams,
-  FindLabelsParams, FindMessagesGroupParams, FindMessagesMetaParams,
+  FindLabelsParams,
+  FindMessagesGroupParams,
+  FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   FindPeersParams,
-  Label, MessageMeta, MessagesGroup,
+  Label,
+  MessageMeta,
+  MessagesGroup,
   Notification,
-  NotificationContext, Peer,
-  WorkspaceUuid
+  NotificationContext,
+  Peer
 } from '@hcengineering/communication-types'
 
 import type {
@@ -48,6 +49,7 @@ import { IdentityMiddleware } from './middleware/indentity'
 import { IdMiddleware } from './middleware/id'
 import { PeerMiddleware } from './middleware/peer'
 import { LowLevelClient } from './client'
+import { ExtraMiddleware } from './middleware/extra'
 
 export async function buildMiddlewares (
   ctx: MeasureContext,
@@ -63,6 +65,7 @@ export async function buildMiddlewares (
     async (context, next) => new DateMiddleware(context, next),
     async (context, next) => new IdentityMiddleware(context, next),
     async (context, next) => new IdMiddleware(context, next),
+    async (context, next) => new ExtraMiddleware(context, next),
 
     // Validate events
     async (context, next) => new ValidateMiddleware(context, next),
@@ -166,24 +169,19 @@ export class Middlewares {
     return await this.head.findLabels(session, params)
   }
 
-  async findCollaborators (session: SessionData, params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    if (this.head === undefined) return []
-    return await this.head.findCollaborators(session, params)
-  }
-
   async findPeers (session: SessionData, params: FindPeersParams): Promise<Peer[]> {
     if (this.head === undefined) return []
     return await this.head.findPeers(session, params)
   }
 
-  subscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
+  subscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
     if (this.head === undefined) return
-    this.head?.subscribeCard(session, cardId, subscription)
+    this.head?.subscribeDoc(session, docId, docClass, subscription)
   }
 
-  unsubscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
+  unsubscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
     if (this.head === undefined) return
-    this.head?.unsubscribeCard(session, cardId, subscription)
+    this.head?.unsubscribeDoc(session, docId, docClass, subscription)
   }
 
   async event (session: SessionData, event: Event): Promise<EventResult> {

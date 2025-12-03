@@ -13,21 +13,14 @@
 
 import { get, writable, derived } from 'svelte/store'
 import { createLabelsQuery, createQuery, onClient, onCommunicationClient } from '@hcengineering/presentation'
-import {
-  MessageType,
-  type CardID,
-  type Label,
-  type LabelID,
-  type Message,
-  type MessageID
-} from '@hcengineering/communication-types'
-import core, { getCurrentAccount, type Markup, type Ref } from '@hcengineering/core'
+import { type CardID, type Label, type Message, type MessageID } from '@hcengineering/communication-types'
+import core, { type Markup, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
-import cardPlugin, { type Card } from '@hcengineering/card'
+import { type Card } from '@hcengineering/card'
 import communication from '@hcengineering/communication'
 import { translationStore } from '@hcengineering/contact-resources'
 
-import { toMarkup } from './utils'
+import { ActivityDirection } from './types'
 
 export const labelsStore = writable<Label[]>([])
 export const messageEditingStore = writable<MessageID | undefined>(undefined)
@@ -43,6 +36,32 @@ export const translateToStore = derived(translationStore, (translation) =>
 export const dontTranslateStore = derived(translationStore, (translation) =>
   translation?.enabled === true ? translation.dontTranslate : []
 )
+
+export const activityDirectionStore = writable<ActivityDirection | undefined>(undefined)
+
+const activityDirectionLocalStorageKey = 'activity-direction_v1'
+
+activityDirectionStore.subscribe((position) => {
+  if (position != null) {
+    localStorage.setItem(activityDirectionLocalStorageKey, position)
+  }
+})
+
+export function initActivityDirection (): void {
+  let direction: ActivityDirection
+  try {
+    const value = localStorage.getItem(activityDirectionLocalStorageKey) ?? ActivityDirection.Forward
+
+    if (value === ActivityDirection.Backward) {
+      direction = ActivityDirection.Backward
+    } else {
+      direction = ActivityDirection.Forward
+    }
+  } catch (err) {
+    direction = ActivityDirection.Forward
+  }
+  activityDirectionStore.set(direction)
+}
 
 export interface TranslateMessagesStatus {
   cardId: CardID
@@ -77,19 +96,20 @@ export function hasTranslate (
   dontTranslate: string[],
   translatedMessages: TranslateMessagesStatus[]
 ): boolean {
-  if (message.type !== MessageType.Text) return false
-  const manualTranslate = translatedMessages.find((it) => it.cardId === message.cardId && it.messageId === message.id)
-  if (manualTranslate?.result != null) return true
-
-  const me = getCurrentAccount()
-  if (me.socialIds.includes(message.creator)) return false
-
-  if (translateTo == null || translateTo === '') return false
-  if (message.language != null && dontTranslate.includes(message.language)) return false
-  const translated = message.translates?.[translateTo]
-  const res = typeof translated === 'string' ? translated.trim() : ''
-
-  return res !== ''
+  // if (message.type !== MessageType.Text) return false
+  // const manualTranslate = translatedMessages.find((it) => it.cardId === message.cardId && it.messageId === message.id)
+  // if (manualTranslate?.result != null) return true
+  //
+  // const me = getCurrentAccount()
+  // if (me.socialIds.includes(message.creator)) return false
+  //
+  // if (translateTo == null || translateTo === '') return false
+  // if (message.language != null && dontTranslate.includes(message.language)) return false
+  // const translated = message.translates?.[translateTo]
+  // const res = typeof translated === 'string' ? translated.trim() : ''
+  //
+  // return res !== ''
+  return false
 }
 
 export function isMessageTranslated (
@@ -99,8 +119,8 @@ export function isMessageTranslated (
   translatedMessages: TranslateMessagesStatus[],
   showOriginalMessage: Array<[CardID, MessageID]>
 ): boolean {
-  const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
-  if (showOriginal) return false
+  // const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
+  // if (showOriginal) return false
 
   return hasTranslate(message, translateTo, dontTranslate, translatedMessages)
 }
@@ -112,8 +132,8 @@ export function isMessageOriginalShown (
   translatedMessages: TranslateMessagesStatus[],
   showOriginalMessage: Array<[CardID, MessageID]>
 ): boolean {
-  const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
-  if (!showOriginal) return false
+  // const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
+  // if (!showOriginal) return false
 
   return hasTranslate(message, translateTo, dontTranslate, translatedMessages)
 }
@@ -125,37 +145,40 @@ export function getMessageTranslation (
   translatedMessages: TranslateMessagesStatus[],
   showOriginalMessage: Array<[CardID, MessageID]>
 ): Markup | undefined {
-  if (message.type !== MessageType.Text) return undefined
-  const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
+  // if (message.type !== MessageType.Text) return undefined
+  // const showOriginal = showOriginalMessage.some(([cId, mId]) => cId === message.cardId && mId === message.id)
+  //
+  // if (showOriginal) return undefined
+  //
+  // const manualTranslate = translatedMessages.find((it) => it.cardId === message.cardId && it.messageId === message.id)
+  //
+  // if (manualTranslate?.result != null) return manualTranslate.result
+  //
+  // const me = getCurrentAccount()
+  // if (me.socialIds.includes(message.creator)) return undefined
+  //
+  // if (translateTo == null || translateTo === '') return undefined
+  // if (message.language != null && dontTranslate.includes(message.language)) return undefined
+  // const translated = message.translates?.[translateTo]
+  // const res = typeof translated === 'string' ? translated.trim() : ''
+  //
+  // return res !== '' ? toMarkup(res) : undefined
 
-  if (showOriginal) return undefined
-
-  const manualTranslate = translatedMessages.find((it) => it.cardId === message.cardId && it.messageId === message.id)
-
-  if (manualTranslate?.result != null) return manualTranslate.result
-
-  const me = getCurrentAccount()
-  if (me.socialIds.includes(message.creator)) return undefined
-
-  if (translateTo == null || translateTo === '') return undefined
-  if (message.language != null && dontTranslate.includes(message.language)) return undefined
-  const translated = message.translates?.[translateTo]
-  const res = typeof translated === 'string' ? translated.trim() : ''
-
-  return res !== '' ? toMarkup(res) : undefined
+  return undefined
 }
 
 export function isCardSubscribed (cardId: Ref<Card>): boolean {
-  const me = getCurrentAccount()
-  const labelId = cardPlugin.label.Subscribed as string as LabelID
-  return get(labelsStore).some((it) => it.account === me.uuid && it.cardId === cardId && it.labelId === labelId)
+  // const me = getCurrentAccount()
+  // const labelId = cardPlugin.label.Subscribed as string as LabelID
+  // return get(labelsStore).some((it) => it.account === me.uuid && it.cardId === cardId && it.labelId === labelId)
+  return false
 }
-const query = createLabelsQuery(true)
+// const query = createLabelsQuery(true)
 
 onCommunicationClient(() => {
-  query.query({}, (res) => {
-    labelsStore.set(res)
-  })
+  // query.query({}, (res) => {
+  //   labelsStore.set(res)
+  // })
 })
 
 const guestCommunicationSettingsQuery = createQuery(true)
@@ -165,8 +188,8 @@ onClient(() => {
     communication.class.GuestCommunicationSettings,
     { space: core.space.Workspace },
     (res) => {
-      if (res.length === 0) return
-      guestCommunicationAllowedCards.set(res[0].allowedCards)
+      // if (res.length === 0) return
+      // guestCommunicationAllowedCards.set(res[0].allowedCards)
     }
   )
 })

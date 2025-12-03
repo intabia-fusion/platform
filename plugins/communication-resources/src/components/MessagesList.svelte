@@ -12,22 +12,15 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
   import {
     type Message,
-    type NotificationContext,
     MessageType,
-    NotificationType,
     Notification,
+    type NotificationContext,
     Window
   } from '@hcengineering/communication-types'
-  import {
-    createMessagesQuery,
-    createNotificationsQuery,
-    getCommunicationClient,
-    type MessageQueryParams
-  } from '@hcengineering/presentation'
-  import { SortingOrder, getCurrentAccount } from '@hcengineering/core'
+  import { createMessagesQuery, getCommunicationClient, type MessageQueryParams } from '@hcengineering/presentation'
+  import { Doc, getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
   import { deviceOptionsStore as deviceInfo, isAppFocusedStore } from '@hcengineering/ui'
   import { translationStore } from '@hcengineering/contact-resources'
@@ -36,8 +29,9 @@
   import MessagesGroupPresenter from './message/MessagesGroupPresenter.svelte'
   import MessagesLoading from './message/MessagesLoading.svelte'
   import { messageEditingStore } from '../stores'
+  import { ActivityDirection } from '../types'
 
-  export let card: Card
+  export let doc: Doc
   export let context: NotificationContext | undefined = undefined
   export let readonly = false
   export let scrollDiv: HTMLDivElement
@@ -48,7 +42,7 @@
   const me = getCurrentAccount()
   const communicationClient = getCommunicationClient()
   const query = createMessagesQuery()
-  const notificationsQuery = createNotificationsQuery()
+  // const notificationsQuery = createNotificationsQuery()
 
   const scrollToNewThreshold = 50
 
@@ -60,8 +54,8 @@
   let separatorDiv: HTMLDivElement | null | undefined = undefined
 
   let messages: Message[] = []
-  let reactionNotifications: Notification[] = []
-  let notifications: Notification[] = []
+  const reactionNotifications: Notification[] = []
+  const notifications: Notification[] = []
   let groups: MessagesGroup[] = []
   let window: Window<Message> | undefined = undefined
   let isLoading = true
@@ -80,7 +74,8 @@
   let bottomOffset: number = 0
   let topOffset: number = 0
 
-  const limit = $deviceInfo.isMobile ? 20 : 50
+  //TODO: FIX LIMIT
+  const limit = $deviceInfo.isMobile ? 20 : 20
   let queryDef = getBaseQuery()
 
   export function scrollDown (): void {
@@ -149,45 +144,45 @@
     }
   )
 
-  $: if (context !== undefined) {
-    void notificationsQuery.query(
-      {
-        contextId: context.id,
-        read: false
-      },
-      (res) => {
-        const result = res.getResult()
-        reactionNotifications = result.filter((notification) => notification.type === NotificationType.Reaction)
-        notifications = result.filter((notification) => notification.type !== NotificationType.Reaction)
-        if (reactionNotifications.length > 0) {
-          readViewport($isAppFocusedStore)
-        }
-      }
-    )
-  } else {
-    notificationsQuery.unsubscribe()
-  }
+  // $: if (context !== undefined) {
+  //   void notificationsQuery.query(
+  //     {
+  //       contextId: context.id,
+  //       read: false
+  //     },
+  //     (res) => {
+  //       const result = res.getResult()
+  //       reactionNotifications = result.filter((notification) => notification.type === NotificationType.Reaction)
+  //       notifications = result.filter((notification) => notification.type !== NotificationType.Reaction)
+  //       if (reactionNotifications.length > 0) {
+  //         readViewport($isAppFocusedStore)
+  //       }
+  //     }
+  //   )
+  // } else {
+  //   notificationsQuery.unsubscribe()
+  // }
 
   let ro: ResizeObserver | undefined = undefined
-  let prev: number = -1
+  const prev: number = -1
 
   function lastGroupObserver (node: HTMLDivElement): { destroy: () => void } {
     ro =
       ro ??
       new ResizeObserver(() => {
-        if (!isScrollInitialized) return
-        const diff = node.clientHeight - prev
-        prev = node.clientHeight
-        if (diff < 0 || window?.hasNextPage()) return
-
-        if (atBottom || bottomOffset - diff < 30) {
-          dispatch('action', { id: 'hideScrollBar' })
-          if (!$isAppFocusedStore) {
-            scrollToStartOfNew()
-          } else {
-            scrollToBottom(true)
-          }
-        }
+        // if (!isScrollInitialized) return
+        // const diff = node.clientHeight - prev
+        // prev = node.clientHeight
+        // if (diff < 0 || window?.hasNextPage()) return
+        //
+        // if (atBottom || bottomOffset - diff < 30) {
+        //   dispatch('action', { id: 'hideScrollBar' })
+        //   if (!$isAppFocusedStore) {
+        //     scrollToStartOfNew()
+        //   } else {
+        //     // scrollToBottom('lastGroupObserver', true)
+        //   }
+        // }
       })
     ro.observe(node)
 
@@ -205,7 +200,7 @@
     if (position === 'start' && isTopLoaded) return
 
     if (position === 'end' && isTailLoaded) {
-      scrollToBottom(true)
+      scrollToBottom('reinit', true)
     } else {
       window = undefined
       isPageLoading = false
@@ -223,7 +218,8 @@
   function getBaseQuery (): MessageQueryParams {
     if (position === 'start') {
       return {
-        cardId: card._id,
+        docClass: doc._class,
+        docId: doc._id,
         order: SortingOrder.Ascending,
         limit
       }
@@ -234,7 +230,8 @@
     const order = unread && !shouldScrollToEnd ? SortingOrder.Ascending : SortingOrder.Descending
 
     return {
-      cardId: card._id,
+      docClass: doc._class,
+      docId: doc._id,
       order,
       limit,
       from: unread && !shouldScrollToEnd && initialLastView != null ? initialLastView : undefined
@@ -308,8 +305,9 @@
     }
   }
 
-  function scrollToBottom (forced = false): void {
+  function scrollToBottom (reason: string, forced = false): void {
     if (!$isAppFocusedStore && !forced) return
+    console.log('scroll.bottom', reason)
     scrollDiv.scroll({ top: scrollDiv.scrollHeight, behavior: 'instant' })
   }
 
@@ -410,7 +408,7 @@
     if (!shouldScrollToNew) return
     updateSeparator($isAppFocusedStore, context)
     if (separatorDate == null) {
-      scrollToBottom(true)
+      scrollToBottom('scrollToStartOfNew 1', true)
       return
     }
 
@@ -430,7 +428,7 @@
     if (topOffset < 0) return
 
     if (bottomOffset < topOffset) {
-      scrollToBottom(true)
+      scrollToBottom('scrollToStartOfNew 2', true)
     } else {
       scrollDiv.scrollBy({ top: topOffset, behavior: 'instant' })
     }
@@ -461,7 +459,7 @@
       scrollToStartOfNew()
     } else if (shouldScrollToNew && prevCount > 0 && isScrollInitialized) {
       dispatch('action', { id: 'hideScrollBar' })
-      scrollToBottom()
+      scrollToBottom('onNewMessageReceived')
     }
   }
 
@@ -557,7 +555,7 @@
     if (separatorIndex === -1 || shouldScrollToEnd) {
       await tick() // Wait for the DOM to update
       shouldScrollToEnd = false
-      scrollToBottom(true)
+      scrollToBottom('scrollInitialize', true)
       shouldScrollToNew = true
       atBottom = true
       bottomOffset = getBottomOffset()
@@ -634,7 +632,7 @@
   {#if withSeparator}
     <MessagesGroupPresenter
       bind:separatorDiv
-      {card}
+      {doc}
       date={group.day}
       messages={group.messages}
       {readonly}
@@ -643,7 +641,7 @@
     />
   {:else}
     <MessagesGroupPresenter
-      {card}
+      {doc}
       date={group.day}
       messages={group.messages}
       {readonly}

@@ -12,14 +12,13 @@
 // limitations under the License.
 
 import { type Workspace } from '@hcengineering/account'
-import { type JsonPatch, type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 import type postgres from 'postgres'
 import {
   type AccountUuid,
   DOMAIN_SPACE,
   fillDefaults,
   generateId,
-  generateUuid,
   type Hierarchy,
   type LowLevelStorage,
   type MarkupBlobRef,
@@ -43,14 +42,11 @@ import {
 import {
   type AttachmentDoc,
   type AttachmentID,
-  type BlobID,
   type CardID,
   type CardType,
   type Emoji,
   type MessageDoc,
   type MessageID,
-  type MessagesDoc,
-  type MessagesGroupDoc,
   MessageType,
   type ThreadDoc,
   type CardPeer,
@@ -68,13 +64,13 @@ import { withRetry, DEFAULT_RETRY_OPTIONS } from '@hcengineering/retry'
 import attachment from '@hcengineering/attachment'
 
 const MAX_MESSAGES_BATCH = 200
-const MAX_MESSAGES_SIZE = 95 * 1024
+// const MAX_MESSAGES_SIZE = 95 * 1024
 
 const COLLABORATOR_TABLE = 'communication.collaborator'
 const LABEL_TABLE = 'communication.label'
 const PEER_TABLE = 'communication.peer'
 const MESSAGE_INDEX_TABLE = 'communication.message_index'
-const THREAD_INDEX_TABLE = 'communication.thread_index'
+// const THREAD_INDEX_TABLE = 'communication.thread_index'
 
 export async function migrateWorkspaceChat (
   ctx: MeasureContext,
@@ -896,54 +892,54 @@ async function createThread (
   }
 }
 
-async function insertMessageIndex (
-  db: postgres.Sql,
-  ws: WorkspaceUuid,
-  blobId: BlobID,
-  messages: MessageDoc[]
-): Promise<void> {
-  try {
-    if (messages.length === 0) return
-    const table = db(MESSAGE_INDEX_TABLE)
-    const rows = messages.map((it) => ({
-      workspace_id: ws,
-      card_id: it.cardId,
-      created: it.created,
-      creator: it.creator,
-      message_id: it.id,
-      blob_id: blobId
-    }))
-
-    await withRetry(async () => await db` INSERT INTO ${table} ${db(rows)} ON CONFLICT DO NOTHING`)
-  } catch (e) {
-    console.error(e)
-  }
-}
+// async function insertMessageIndex (
+//   db: postgres.Sql,
+//   ws: WorkspaceUuid,
+//   blobId: BlobID,
+//   messages: MessageDoc[]
+// ): Promise<void> {
+//   try {
+//     // if (messages.length === 0) return
+//     // const table = db(MESSAGE_INDEX_TABLE)
+//     // const rows = messages.map((it) => ({
+//     //   workspace_id: ws,
+//     //   card_id: it.cardId,
+//     //   created: it.created,
+//     //   creator: it.creator,
+//     //   message_id: it.id,
+//     //   blob_id: blobId
+//     // }))
+//     //
+//     // await withRetry(async () => await db` INSERT INTO ${table} ${db(rows)} ON CONFLICT DO NOTHING`)
+//   } catch (e) {
+//     console.error(e)
+//   }
+// }
 
 function sanitizeTitle (value: string): string {
   return value.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '')
 }
 
-async function insertThreadIndex (db: postgres.Sql, ws: WorkspaceUuid, messages: MessageDoc[]): Promise<void> {
-  const threads = messages.flatMap((it) => Object.values(it.threads).map((t) => [it.id, it.cardId, t] as const))
-  if (threads.length === 0) return
-  try {
-    const table = db(THREAD_INDEX_TABLE)
-    const rows = threads.map(([messageId, cardId, it]) => ({
-      workspace_id: ws,
-      card_id: cardId,
-      thread_id: it.threadId,
-      thread_type: it.threadType,
-      message_id: messageId,
-      replies_count: it.repliesCount,
-      last_reply: it.lastReplyDate ?? new Date().toISOString()
-    }))
-
-    await withRetry(async () => await db` INSERT INTO ${table} ${db(rows)} ON CONFLICT DO NOTHING`)
-  } catch (e) {
-    console.error(e)
-  }
-}
+// async function insertThreadIndex (db: postgres.Sql, ws: WorkspaceUuid, messages: MessageDoc[]): Promise<void> {
+//   // const threads = messages.flatMap((it) => Object.values(it.threads).map((t) => [it.id, it.cardId, t] as const))
+//   // if (threads.length === 0) return
+//   try {
+//     // const table = db(THREAD_INDEX_TABLE)
+//     // const rows = threads.map(([messageId, cardId, it]) => ({
+//     //   workspace_id: ws,
+//     //   card_id: cardId,
+//     //   thread_id: it.threadId,
+//     //   thread_type: it.threadType,
+//     //   message_id: messageId,
+//     //   replies_count: it.repliesCount,
+//     //   last_reply: it.lastReplyDate ?? new Date().toISOString()
+//     // }))
+//     //
+//     // await withRetry(async () => await db` INSERT INTO ${table} ${db(rows)} ON CONFLICT DO NOTHING`)
+//   } catch (e) {
+//     console.error(e)
+//   }
+// }
 
 async function insertMessages (
   ctx: MeasureContext,
@@ -953,41 +949,41 @@ async function insertMessages (
   card: Card,
   messages: MessageDoc[]
 ): Promise<void> {
-  const chunks = chunkMessagesBySize(ctx, messages)
-
-  for (const chunk of chunks) {
-    const fromDate = chunk.from
-    const toDate = chunk.to
-    const blobId = generateUuid() as BlobID
-    const newGroupDoc: MessagesGroupDoc = {
-      cardId: card._id,
-      blobId,
-      fromDate: fromDate.toISOString(),
-      toDate: toDate.toISOString(),
-      count: chunk.count
-    }
-    const newMessagesDoc: MessagesDoc = {
-      cardId: card._id,
-      fromDate: fromDate.toISOString(),
-      toDate: toDate.toISOString(),
-      messages: chunk.chunk,
-      language: 'original'
-    }
-
-    const jsonPatches: JsonPatch[] = [
-      {
-        hop: 'add',
-        path: `/${blobId}`,
-        value: newGroupDoc,
-        safe: true
-      } as const
-    ]
-
-    await insertMessageIndex(db, ws, blobId, Object.values(newMessagesDoc.messages))
-    await insertThreadIndex(db, ws, Object.values(newMessagesDoc.messages))
-    await hulylake.patchJson(`${card._id}/messages/groups`, jsonPatches, undefined, DEFAULT_RETRY_OPTIONS)
-    await hulylake.putJson(`${card._id}/messages/${blobId}`, newMessagesDoc, undefined, DEFAULT_RETRY_OPTIONS)
-  }
+  // const chunks = chunkMessagesBySize(ctx, messages)
+  //
+  // for (const chunk of chunks) {
+  //   const fromDate = chunk.from
+  //   const toDate = chunk.to
+  //   const blobId = generateUuid() as BlobID
+  //   const newGroupDoc: MessagesGroupDoc = {
+  //     cardId: card._id,
+  //     blobId,
+  //     fromDate: fromDate.toISOString(),
+  //     toDate: toDate.toISOString(),
+  //     count: chunk.count
+  //   }
+  //   const newMessagesDoc: MessagesDoc = {
+  //     cardId: card._id,
+  //     fromDate: fromDate.toISOString(),
+  //     toDate: toDate.toISOString(),
+  //     messages: chunk.chunk,
+  //     language: 'original'
+  //   }
+  //
+  //   const jsonPatches: JsonPatch[] = [
+  //     {
+  //       hop: 'add',
+  //       path: `/${blobId}`,
+  //       value: newGroupDoc,
+  //       safe: true
+  //     } as const
+  //   ]
+  //
+  //   await insertMessageIndex(db, ws, blobId, Object.values(newMessagesDoc.messages))
+  //   await insertThreadIndex(db, ws, Object.values(newMessagesDoc.messages))
+  //   await hulylake.patchJson(`${card._id}/messages/groups`, jsonPatches, undefined, DEFAULT_RETRY_OPTIONS)
+  //   await hulylake.putJson(`${card._id}/messages/${blobId}`, newMessagesDoc, undefined, DEFAULT_RETRY_OPTIONS)
+  // }
 }
 
 function toMessageID (_id: Ref<Doc>): MessageID {
@@ -1002,83 +998,83 @@ async function createGroupsBlob (hulylake: HulylakeWorkspaceClient, cardId: Card
   await hulylake.putJson(`${cardId}/messages/groups`, {}, undefined, DEFAULT_RETRY_OPTIONS)
 }
 
-function chunkMessagesBySize (
-  ctx: MeasureContext,
-  messages: MessageDoc[]
-): Array<{ chunk: Record<MessageID, MessageDoc>, from: Date, to: Date, count: number }> {
-  const chunks: Array<{ chunk: Record<MessageID, MessageDoc>, from: Date, to: Date, count: number }> = []
+// function chunkMessagesBySize (
+//   ctx: MeasureContext,
+//   messages: MessageDoc[]
+// ): Array<{ chunk: Record<MessageID, MessageDoc>, from: Date, to: Date, count: number }> {
+//   const chunks: Array<{ chunk: Record<MessageID, MessageDoc>, from: Date, to: Date, count: number }> = []
+//
+//   let current: { chunk: Record<MessageID, MessageDoc>, from?: Date, to?: Date, count: number } = {
+//     chunk: {},
+//     count: 0
+//   }
+//
+//   for (const msg of messages) {
+//     current.chunk[msg.id] = msg
+//
+//     if (sizeOfJson(current.chunk) <= MAX_MESSAGES_SIZE) {
+//       const d = new Date(msg.created)
+//       current.count += 1
+//       current.from = current.from != null ? (d < current.from ? d : current.from) : d
+//       current.to = current.to != null ? (d > current.to ? d : current.to) : d
+//       continue
+//     }
+//
+//     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+//     delete current.chunk[msg.id]
+//
+//     if (sizeOfJson(msg) > MAX_MESSAGES_SIZE) {
+//       ctx.warn('Message size is too big, skipping')
+//       continue
+//     }
+//
+//     if (Object.keys(current.chunk).length === 0) {
+//       ctx.warn('Message size is too big, skipping')
+//       continue
+//     }
+//
+//     if (current.from != null && current.to != null) {
+//       chunks.push({
+//         chunk: current.chunk,
+//         from: current.from,
+//         to: current.to,
+//         count: current.count
+//       })
+//     }
+//
+//     current = {
+//       chunk: {},
+//       count: 0
+//     }
+//     current.chunk[msg.id] = msg
+//
+//     if (sizeOfJson(current.chunk) <= MAX_MESSAGES_SIZE) {
+//       const d = new Date(msg.created)
+//       current.from = current.from != null ? (d < current.from ? d : current.from) : d
+//       current.to = current.to != null ? (d > current.to ? d : current.to) : d
+//       current.count = 1
+//     } else {
+//       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+//       delete current.chunk[msg.id]
+//       ctx.warn(`Message ${msg.id} still exceeds limit, skipping`)
+//     }
+//   }
+//
+//   if (current.from != null && current.to != null) {
+//     chunks.push({
+//       chunk: current.chunk,
+//       from: current.from,
+//       to: current.to,
+//       count: current.count
+//     })
+//   }
+//
+//   return chunks
+// }
 
-  let current: { chunk: Record<MessageID, MessageDoc>, from?: Date, to?: Date, count: number } = {
-    chunk: {},
-    count: 0
-  }
-
-  for (const msg of messages) {
-    current.chunk[msg.id] = msg
-
-    if (sizeOfJson(current.chunk) <= MAX_MESSAGES_SIZE) {
-      const d = new Date(msg.created)
-      current.count += 1
-      current.from = current.from != null ? (d < current.from ? d : current.from) : d
-      current.to = current.to != null ? (d > current.to ? d : current.to) : d
-      continue
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete current.chunk[msg.id]
-
-    if (sizeOfJson(msg) > MAX_MESSAGES_SIZE) {
-      ctx.warn('Message size is too big, skipping')
-      continue
-    }
-
-    if (Object.keys(current.chunk).length === 0) {
-      ctx.warn('Message size is too big, skipping')
-      continue
-    }
-
-    if (current.from != null && current.to != null) {
-      chunks.push({
-        chunk: current.chunk,
-        from: current.from,
-        to: current.to,
-        count: current.count
-      })
-    }
-
-    current = {
-      chunk: {},
-      count: 0
-    }
-    current.chunk[msg.id] = msg
-
-    if (sizeOfJson(current.chunk) <= MAX_MESSAGES_SIZE) {
-      const d = new Date(msg.created)
-      current.from = current.from != null ? (d < current.from ? d : current.from) : d
-      current.to = current.to != null ? (d > current.to ? d : current.to) : d
-      current.count = 1
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete current.chunk[msg.id]
-      ctx.warn(`Message ${msg.id} still exceeds limit, skipping`)
-    }
-  }
-
-  if (current.from != null && current.to != null) {
-    chunks.push({
-      chunk: current.chunk,
-      from: current.from,
-      to: current.to,
-      count: current.count
-    })
-  }
-
-  return chunks
-}
-
-function sizeOfJson (obj: unknown): number {
-  return Buffer.byteLength(JSON.stringify(obj), 'utf8')
-}
+// function sizeOfJson (obj: unknown): number {
+//   return Buffer.byteLength(JSON.stringify(obj), 'utf8')
+// }
 
 async function getPersonUuidBySocialId (
   accountClient: AccountClient,

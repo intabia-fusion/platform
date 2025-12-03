@@ -13,20 +13,17 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/core'
+import { Class, type Doc, Hierarchy, type MeasureContext, type Ref, WorkspaceUuid } from '@hcengineering/core'
 import type {
   FindNotificationContextParams,
   FindNotificationsParams,
   NotificationContext,
-  WorkspaceUuid,
   Notification,
   FindLabelsParams,
   Label,
-  FindCollaboratorsParams,
-  Collaborator,
   FindPeersParams,
   Peer,
-  CardID, FindMessagesMetaParams, MessageMeta, FindMessagesGroupParams, MessagesGroup
+  FindMessagesMetaParams, MessageMeta, FindMessagesGroupParams, MessagesGroup
 } from '@hcengineering/communication-types'
 import { createDbAdapter } from '@hcengineering/communication-cockroach'
 import type { EventResult, Event, ServerApi, SessionData } from '@hcengineering/communication-sdk-types'
@@ -46,15 +43,16 @@ export class Api implements ServerApi {
   static async create (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
+    hierarchy: Hierarchy,
     dbUrl: string,
     callbacks: CommunicationCallbacks
   ): Promise<Api> {
     const metadata = getMetadata()
-    const db = await createDbAdapter(dbUrl, workspace, ctx, {
+    const db = await createDbAdapter(dbUrl, workspace, hierarchy, ctx, {
       withLogs: process.env.COMMUNICATION_TIME_LOGGING_ENABLED === 'true'
     })
     const blob = new Blob(ctx, workspace, metadata)
-    const client: LowLevelClient = new LowLevelClient(db, blob, metadata, workspace)
+    const client: LowLevelClient = new LowLevelClient(db, blob, metadata, workspace, hierarchy)
     const middleware = await buildMiddlewares(ctx, workspace, metadata, client, callbacks)
 
     return new Api(ctx, middleware)
@@ -88,20 +86,16 @@ export class Api implements ServerApi {
     return await this.middlewares.findLabels(session, params)
   }
 
-  async findCollaborators (session: SessionData, params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return await this.middlewares.findCollaborators(session, params)
-  }
-
   async findPeers (session: SessionData, params: FindPeersParams): Promise<Peer[]> {
     return await this.middlewares.findPeers(session, params)
   }
 
-  subscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
-    this.middlewares.subscribeCard(session, cardId, subscription)
+  subscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
+    this.middlewares.subscribeDoc(session, docId, docClass, subscription)
   }
 
-  unsubscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
-    this.middlewares.unsubscribeCard(session, cardId, subscription)
+  unsubscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
+    this.middlewares.unsubscribeDoc(session, docId, docClass, subscription)
   }
 
   async event (session: SessionData, event: Event): Promise<EventResult> {

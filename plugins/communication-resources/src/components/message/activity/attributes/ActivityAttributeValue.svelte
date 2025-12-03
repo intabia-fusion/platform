@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconComponent } from '@hcengineering/ui'
+  import { Component, Icon, IconComponent } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { AttributeModel } from '@hcengineering/view'
   import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
 
-  import { getAttributeValues } from '../../../activity'
+  import { getAttributeValues } from '../../../../activity'
 
   type Values = ActivityAttributeUpdate['set' | 'added' | 'removed']
 
@@ -34,11 +34,17 @@
   $: void getAttributeValues(client, values, model._class).then((result) => {
     attributeValues = result
   })
+  $: _space = typeof attributeValues[0] === 'object' ? attributeValues[0]?.space : undefined
+  $: _icon = model.attribute?.icon ?? model.icon ?? icon
 </script>
 
 <span class="flex-center flex-gap-1 no-word-wrap">
   <span class="icon mr-1">
-    <Icon {icon} size="small" />
+    {#if model?.attribute?.iconComponent && attributeValues.length > 0}
+        <Component is={model.attribute.iconComponent} props={{ value: attributeValues[0], size: 'small', space: _space }} showLoading={false}/>
+      {:else}
+    <Icon icon={_icon} size="small" />
+      {/if}
   </span>
 
   <slot name="text" />

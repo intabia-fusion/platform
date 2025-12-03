@@ -16,33 +16,31 @@
 <script lang="ts">
   import { MessageViewer as MarkupMessageViewer } from '@hcengineering/presentation'
   import { Markdown, Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
   import { Person } from '@hcengineering/contact'
-  import { Markup } from '@hcengineering/core'
+  import { Markup, Doc } from '@hcengineering/core'
   import { ShowMore } from '@hcengineering/ui'
 
   import ActivityMessageViewer from './ActivityMessageViewer.svelte'
   import { toMarkup } from '../../utils'
   import { isActivityMessage } from '../../activity'
   import {
-    isShownManualTranslatedMessage,
     translateMessagesStore,
     showOriginalMessagesStore,
     getMessageTranslation,
     translateToStore,
     dontTranslateStore
   } from '../../stores'
-  import { translateMessage } from '../../actions'
 
-  export let card: Card
+  export let doc: Doc
   export let message: Message
   export let author: Person | undefined
   export let collapsible: boolean = true
   export let maxHeight: string = '30rem'
   export let isShowMoreActive: boolean = false
+  export let compact = false
 
   let displayMarkup: Markup = toMarkup(message.content)
-  let prevContent: Markdown | undefined = undefined
+  const prevContent: Markdown | undefined = undefined
 
   $: translatedMarkup = getMessageTranslation(
     message,
@@ -54,16 +52,16 @@
 
   $: displayMarkup = translatedMarkup ?? toMarkup(message.content)
 
-  $: if (prevContent !== message.content) {
-    prevContent = message.content
-    if (isShownManualTranslatedMessage(message.cardId, message.id)) {
-      void translateMessage(message, card)
-    } else {
-      translateMessagesStore.update((store) => {
-        return store.filter((it) => it.cardId !== message.cardId || it.messageId !== message.id)
-      })
-    }
-  }
+  // $: if (prevContent !== message.content) {
+  //   prevContent = message.content
+  //   if (isShownManualTranslatedMessage(message.cardId, message.id)) {
+  //     void translateMessage(message, card)
+  //   } else {
+  //     translateMessagesStore.update((store) => {
+  //       return store.filter((it) => it.cardId !== message.cardId || it.messageId !== message.id)
+  //     })
+  //   }
+  // }
 
   function getMaxSize (maxHeight: string): number {
     const remValue = parseFloat(maxHeight.replace('rem', ''))
@@ -74,10 +72,10 @@
   }
 </script>
 
-<ShowMore limit={getMaxSize(maxHeight)} ignore={!collapsible} bind:bigger={isShowMoreActive}>
+<!--<ShowMore limit={getMaxSize(maxHeight)} ignore={!collapsible} bind:bigger={isShowMoreActive}>-->
   {#if isActivityMessage(message)}
-    <ActivityMessageViewer {message} {card} {author} />
+    <ActivityMessageViewer {message} {doc} {author} {compact}/>
   {:else}
     <MarkupMessageViewer message={displayMarkup} />
   {/if}
-</ShowMore>
+<!--</ShowMore>-->

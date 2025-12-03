@@ -2570,6 +2570,21 @@
       "packageName": "@hcengineering/pod-stream",
       "projectFolder": "foundations/stream",
       "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/model-server-communication",
+      "projectFolder": "models/server-communication",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/server-communication",
+      "projectFolder": "server-plugins/communication",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/server-communication-resources",
+      "projectFolder": "server-plugins/communication-resources",
+      "shouldPublish": false
     }
     // ,
     // {

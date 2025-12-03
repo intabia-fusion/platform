@@ -15,11 +15,11 @@
 
 import { communicationId, type Poll } from '@hcengineering/communication'
 import communication from '@hcengineering/communication-resources/src/plugin'
-import { type Attribute, type Ref } from '@hcengineering/core'
-import {} from '@hcengineering/ui'
+import { type Attribute, type Ref, type Doc } from '@hcengineering/core'
 import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type ViewAction } from '@hcengineering/model-view'
-import { type Card } from '@hcengineering/card'
+import {} from '@hcengineering/ui'
+import {} from '@hcengineering/card'
 
 export default mergeIds(communicationId, communication, {
   action: {
@@ -27,8 +27,8 @@ export default mergeIds(communicationId, communication, {
     Subscribe: '' as ViewAction
   },
   function: {
-    CanSubscribe: '' as Resource<(doc: Card | Card[] | undefined) => Promise<boolean>>,
-    CanUnsubscribe: '' as Resource<(doc: Card | Card[] | undefined) => Promise<boolean>>
+    CanSubscribe: '' as Resource<(doc: Doc | Doc[] | undefined) => Promise<boolean>>,
+    CanUnsubscribe: '' as Resource<(doc: Doc | Doc[] | undefined) => Promise<boolean>>
   },
   ids: {
     UserVotesAttribute: '' as Ref<Attribute<Poll>>

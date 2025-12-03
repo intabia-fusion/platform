@@ -22,7 +22,8 @@ import {
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import { AccountRole, systemAccountUuid } from '@hcengineering/core'
-import type { AccountUuid, CardID, MessageID, SocialID } from '@hcengineering/communication-types'
+import type { MessageID, SocialID } from '@hcengineering/communication-types'
+import type { AccountUuid, Class, Doc, Ref } from '@hcengineering/core'
 
 import { ApiError } from '../error'
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
@@ -54,15 +55,12 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
         break
       case MessageEventType.RemovePatch:
       case MessageEventType.UpdatePatch:
-      case MessageEventType.BlobPatch:
       case MessageEventType.AttachmentPatch:
         this.checkSocialId(session, event.socialId)
-        await this.checkMessageAuthor(session, event.cardId, event.messageId)
+        await this.checkMessageAuthor(session, event.docClass, event.docId, event.messageId)
         break
       case MessageEventType.ReactionPatch:
       case MessageEventType.ThreadPatch:
-      case NotificationEventType.AddCollaborators:
-      case NotificationEventType.RemoveCollaborators:
         this.checkSocialId(session, event.socialId)
         break
       case NotificationEventType.RemoveNotifications:
@@ -85,10 +83,15 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
     return await this.provideEvent(session, event, derived)
   }
 
-  private async checkMessageAuthor (session: SessionData, cardId: CardID, messageId: MessageID): Promise<void> {
-    const meta = await this.context.client.getMessageMeta(cardId, messageId)
+  private async checkMessageAuthor (
+    session: SessionData,
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
+    messageId: MessageID
+  ): Promise<void> {
+    const meta = await this.context.client.getMessageMeta(docClass, docId, messageId)
     if (meta === undefined) {
-      throw ApiError.notFound(`message not found: cardId =${cardId}, messageId = ${messageId}`)
+      throw ApiError.notFound(`message not found: docId =${docId}, docClass=${docClass} messageId = ${messageId}`)
     }
 
     if (!session.account.socialIds.includes(meta.creator)) {

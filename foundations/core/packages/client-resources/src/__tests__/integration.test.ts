@@ -48,7 +48,8 @@ import core, {
   ClassifierKind,
   TxFactory,
   type Data,
-  type Obj
+  type Obj,
+  TxDomainEvent
 } from '@hcengineering/core'
 import type { IntlString } from '@hcengineering/platform'
 
@@ -236,6 +237,10 @@ export class MockClientConnection implements ClientConnection {
   async clean (domain: Domain, docs: Ref<Doc>[]): Promise<void> {}
 
   async sendForceClose (): Promise<void> {}
+
+  async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+    return { domain: tx.domain, value: null }
+  }
 
   async domainRequest (
     ctx: OperationDomain,

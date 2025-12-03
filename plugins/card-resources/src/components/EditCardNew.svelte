@@ -61,7 +61,7 @@
 
   const manager = createFocusManager()
   const query = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
+  // const contextsQuery = createNotificationContextsQuery()
 
   let doc: WithLookup<Card> | undefined
   let context: NotificationContext | undefined = undefined
@@ -91,10 +91,10 @@
     }
   })
 
-  $: contextsQuery.query({ cardId: _id, limit: 1 }, (res) => {
-    context = res.getResult()[0]
-    isContextLoaded = true
-  })
+  // $: contextsQuery.query({ docClass: card.class.Card, docId: _id, limit: 1 }, (res) => {
+  //   context = res.getResult()[0]
+  //   isContextLoaded = true
+  // })
 
   async function saveTitle (ev: Event): Promise<void> {
     ev.preventDefault()

@@ -13,10 +13,9 @@
 // limitations under the License.
 //
 
-import { parseMessagesDoc, parseTranslatedMessagesDoc } from '@hcengineering/communication-shared'
+import { buildMessagesBlobUrl, parseMessagesDoc, parseTranslatedMessagesDoc } from '@hcengineering/communication-shared'
 import {
   BlobID,
-  type CardID,
   FindMessagesOptions,
   FindMessagesParams,
   type FindNotificationsParams,
@@ -25,10 +24,11 @@ import {
   type Notification, TranslatedMessage, TranslatedMessagesDoc
 } from '@hcengineering/communication-types'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import { Doc, Domain, Ref } from '@hcengineering/core'
 
-export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID, lang: string): Promise<TranslatedMessage[]> {
+export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, domain: Domain, docId: Ref<Doc>, blobId: BlobID, lang: string): Promise<TranslatedMessage[]> {
   try {
-    const res = await client.getJson<TranslatedMessagesDoc>(`${cardId}/messages/${lang}/${blobId}`)
+    const res = await client.getJson<TranslatedMessagesDoc>(buildMessagesBlobUrl(domain, docId, blobId, lang))
     if (res?.body == null) return []
     return parseTranslatedMessagesDoc(res.body)
   } catch (e) {
@@ -37,8 +37,8 @@ export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, c
   }
 }
 
-export async function loadMessages (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID, params: FindMessagesParams, options?: FindMessagesOptions, cache?: Map<BlobID, Promise<MessagesDoc | undefined>>): Promise<Message[]> {
-  const doc = await loadMessagesDoc(client, cardId, blobId, cache)
+export async function loadMessages (client: HulylakeWorkspaceClient, domain: Domain, docId: Ref<Doc>, blobId: BlobID, params: FindMessagesParams, options?: FindMessagesOptions, cache?: Map<BlobID, Promise<MessagesDoc | undefined>>): Promise<Message[]> {
+  const doc = await loadMessagesDoc(client, domain, docId, blobId, cache)
 
   if (doc === undefined) {
     return []
@@ -47,8 +47,8 @@ export async function loadMessages (client: HulylakeWorkspaceClient, cardId: Car
   return parseMessagesDoc(doc, params, options)
 }
 
-async function requestMessagesDoc (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID): Promise<MessagesDoc | undefined> {
-  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, {
+async function requestMessagesDoc (client: HulylakeWorkspaceClient, domain: Domain, docId: Ref<Doc>, blobId: BlobID): Promise<MessagesDoc | undefined> {
+  const res = await client.getJson<MessagesDoc>(buildMessagesBlobUrl(domain, docId, blobId), {
     maxRetries: 3,
     isRetryable: () => true,
     delayStrategy: {
@@ -63,14 +63,14 @@ async function requestMessagesDoc (client: HulylakeWorkspaceClient, cardId: Card
 
 async function loadMessagesDoc (
   client: HulylakeWorkspaceClient,
-  cardId: CardID,
+  domain: Domain, docId: Ref<Doc>,
   blobId: BlobID,
   cache?: Map<BlobID, Promise<MessagesDoc | undefined>>
 ): Promise<MessagesDoc | undefined> {
   if (cache != null && cache.has(blobId)) {
     return await cache.get(blobId)
   }
-  const messagesPromise = requestMessagesDoc(client, cardId, blobId)
+  const messagesPromise = requestMessagesDoc(client, domain, docId, blobId)
   if (cache != null) {
     cache.set(blobId, messagesPromise)
   }
@@ -83,7 +83,7 @@ export function matchNotification (notification: Notification, params: FindNotif
   if (params.read !== undefined && params.read !== notification.read) return false
   if (params.id !== undefined && params.id !== notification.id) return false
   if (params.contextId !== undefined && params.contextId !== notification.contextId) return false
-  if (params.cardId !== undefined && params.cardId !== notification.cardId) return false
+  // if (params.cardId !== undefined && params.cardId !== notification.cardId) return false
 
   const created = notification.created.getTime()
 

@@ -58,7 +58,9 @@ export interface Task extends AttachedDoc {
   assignee: Ref<Person> | null
   dueDate: Timestamp | null
   comments?: number
+  activity?: number
   attachments?: number
+  collaborators?: number
   labels?: number
   identifier: string
   rank: Rank

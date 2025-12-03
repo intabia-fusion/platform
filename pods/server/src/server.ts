@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type BrandingMap, type MeasureContext, type Tx, type WorkspaceIds } from '@hcengineering/core'
+import { type BrandingMap, type Hierarchy, type MeasureContext, type Tx, type WorkspaceIds } from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
 
 import { startSessionManager } from '@hcengineering/server'
@@ -114,6 +114,7 @@ export function start (
   const communicationApiFactory = async (
     ctx: MeasureContext,
     workspace: WorkspaceIds,
+    hierarchy: Hierarchy,
     broadcastSessions: CommunicationCallbacks
   ): Promise<ServerApi> => {
     if (dbUrl.startsWith('mongodb') || !opt.communicationApiEnabled) {
@@ -121,12 +122,11 @@ export function start (
         findMessagesMeta: async () => [],
         findMessagesGroups: async () => [],
         findNotificationContexts: async () => [],
-        findCollaborators: async () => [],
         findNotifications: async () => [],
         findLabels: async () => [],
         findPeers: async () => [],
-        subscribeCard: () => {},
-        unsubscribeCard: () => {},
+        subscribeDoc: () => {},
+        unsubscribeDoc: () => {},
         event: async () => {
           return {}
         },
@@ -138,6 +138,7 @@ export function start (
     return await CommunicationApi.create(
       ctx.newChild('💬 communication api', {}, { span: false }),
       workspace.uuid,
+      hierarchy,
       dbUrl,
       broadcastSessions
     )

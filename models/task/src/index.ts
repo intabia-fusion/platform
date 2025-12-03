@@ -40,7 +40,8 @@ import {
   TypeRef,
   TypeString,
   UX,
-  type Builder
+  type Builder,
+  TypeNumber
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import core, {
@@ -77,6 +78,7 @@ import {
 } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
+import communication from '@hcengineering/communication'
 
 import task from './plugin'
 
@@ -120,9 +122,17 @@ export class TTask extends TAttachedDoc implements Task {
   @Prop(Collection(tags.class.TagReference, task.string.TaskLabels), task.string.TaskLabels)
     labels?: number
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  //   comments?: number
+  @Prop(Collection(core.class.Collaborator, core.string.Collaborator), core.string.Collaborators)
+    collaborators?: number
+
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

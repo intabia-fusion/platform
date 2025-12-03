@@ -43,7 +43,8 @@ import core, {
   type DomainRequestOptions,
   type DomainResult,
   type OperationDomain,
-  type TxHandler
+  type TxHandler,
+  TxDomainEvent
 } from '@hcengineering/core'
 import { genMinModel } from './minmodel'
 
@@ -101,6 +102,10 @@ FulltextStorage & {
       options?: FindOptions<T>
     ): Promise<T | undefined> {
       return (await this.findAll(_class, query, { ...options, limit: 1 })).shift()
+    }
+
+    async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+      return { domain: tx.domain, value: null }
     }
 
     async domainRequest (

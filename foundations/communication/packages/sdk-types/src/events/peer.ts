@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { CardID, PeerKind, PeerExtra } from '@hcengineering/communication-types'
+import type { WorkspaceUuid } from '@hcengineering/core'
 
 import type { BaseEvent } from './common'
-import { CardID, PeerKind, PeerExtra, WorkspaceUuid } from '@hcengineering/communication-types'
 
 // Peer events only for system
 export enum PeerEventType {
@@ -34,7 +35,6 @@ export interface CreatePeerEvent extends BaseEvent {
   options?: {
     newValue?: boolean
   }
-  date?: Date
 }
 
 export interface RemovePeerEvent extends BaseEvent {
@@ -43,5 +43,4 @@ export interface RemovePeerEvent extends BaseEvent {
   cardId: CardID
   kind: PeerKind
   value: string
-  date?: Date
 }

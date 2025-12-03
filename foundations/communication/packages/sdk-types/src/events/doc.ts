@@ -13,30 +13,27 @@
 // limitations under the License.
 //
 
-import type { CardID, CardType, SocialID } from '@hcengineering/communication-types'
+import type { SocialID } from '@hcengineering/communication-types'
+import type { Ref, Doc, Class } from '@hcengineering/core'
 
 import type { BaseEvent } from './common'
 
-export enum CardEventType {
-  UpdateCardType = 'updateCardType',
-  RemoveCard = 'removeCard'
+export enum DocEventType {
+  UpdateDocClass = 'updateDocClass',
+  RemoveDoc = 'removeDoc'
 }
 
-export type CardEvent = UpdateCardTypeEvent | RemoveCardEvent
+export type DocEvent = UpdateDocClassEvent | RemoveDocEvent
 
-export interface UpdateCardTypeEvent extends BaseEvent {
-  type: CardEventType.UpdateCardType
-  cardId: CardID
-  cardType: CardType
-
-  socialId: SocialID
-  date?: Date
+export interface UpdateDocClassEvent extends BaseEvent {
+  type: DocEventType.UpdateDocClass
+  docId: Ref<Doc>
+  prevClass: Ref<Class<Doc>>
+  newClass: Ref<Class<Doc>>
 }
 
-export interface RemoveCardEvent extends BaseEvent {
-  type: CardEventType.RemoveCard
-  cardId: CardID
-
-  socialId: SocialID
-  date?: Date
+export interface RemoveDocEvent extends BaseEvent {
+  type: DocEventType.RemoveDoc
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
 }

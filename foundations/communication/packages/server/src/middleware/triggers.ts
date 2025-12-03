@@ -57,6 +57,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       workspace: this.context.workspace,
       account: session.account,
       processedPeersEvents: this.processedPeersEvents,
+      hierarchy: session.hierarchy,
       derived,
       execute: async (event: Event) => {
         // Will be enriched in head

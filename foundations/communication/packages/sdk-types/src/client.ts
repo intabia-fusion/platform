@@ -14,16 +14,16 @@
 //
 
 import type {
-  CardID,
-  Collaborator, FindCollaboratorsParams,
   FindLabelsParams,
   FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   Label, MessageMeta,
   Notification,
-  NotificationContext, WithTotal
+  NotificationContext,
+  WithTotal
 } from '@hcengineering/communication-types'
+import { Class, Doc, Ref } from '@hcengineering/core'
 
 import type { EventResult, Event } from './events/event'
 
@@ -36,8 +36,7 @@ export interface FindClient {
   findNotificationContexts: (params: FindNotificationContextParams, queryId?: number) => Promise<NotificationContext[]>
   findNotifications: (params: FindNotificationsParams, queryId?: number) => Promise<WithTotal<Notification>>
   findLabels: (params: FindLabelsParams, queryId?: number) => Promise<Label[]>
-  findCollaborators: (params: FindCollaboratorsParams, queryId?: number) => Promise<Collaborator[]>
 
-  subscribeCard: (cardId: CardID, subscription: string | number) => Promise<void>
-  unsubscribeCard: (cardId: CardID, subscription: string | number) => Promise<void>
+  subscribeDoc: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, subscription: string | number) => Promise<void>
+  unsubscribeDoc: (docClass: Ref<Class<Doc>>, docId: Ref<Doc>,subscription: string | number) => Promise<void>
 }

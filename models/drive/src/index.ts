@@ -59,6 +59,7 @@ import tracker from '@hcengineering/model-tracker'
 import view, { type Viewlet, actionTemplates, classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { getEmbeddedLabel } from '@hcengineering/platform'
+import communication from '@hcengineering/communication'
 
 import drive from './plugin'
 import { definePermissions } from './permissions'
@@ -352,7 +353,7 @@ function defineResource (builder: Builder): void {
           sortingKey: 'title'
         },
         '$lookup.file.size',
-        'comments',
+        // 'comments',
         '$lookup.file.lastModified',
         'createdBy'
       ],
@@ -617,14 +618,7 @@ function defineFile (builder: Builder): void {
   })
 
   // Activity
-
-  // TODO: FIXME
-  // builder.mixin(drive.class.File, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: drive.class.File,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(drive.class.File, core.class.Class, communication.mixin.Messageable, {})
 
   // Search
 

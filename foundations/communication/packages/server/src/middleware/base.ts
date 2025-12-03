@@ -21,16 +21,14 @@ import type {
   Notification,
   FindLabelsParams,
   Label,
-  FindCollaboratorsParams,
-  Collaborator,
   FindPeersParams,
   Peer,
-  CardID,
   FindMessagesMetaParams,
   MessageMeta,
   FindMessagesGroupParams,
   MessagesGroup
 } from '@hcengineering/communication-types'
+import type { Class, Doc, Ref } from '@hcengineering/core'
 
 import type { Enriched, Middleware, MiddlewareContext, Subscription } from '../types'
 
@@ -68,10 +66,6 @@ export class BaseMiddleware implements Middleware {
     return await this.provideFindLabels(session, params, subscription)
   }
 
-  async findCollaborators (session: SessionData, params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return await this.provideFindCollaborators(session, params)
-  }
-
   async findPeers (session: SessionData, params: FindPeersParams): Promise<Peer[]> {
     return await this.provideFindPeers(session, params)
   }
@@ -84,15 +78,15 @@ export class BaseMiddleware implements Middleware {
     this.provideHandleBroadcast(session, events)
   }
 
-  subscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
+  subscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
     if (this.next !== undefined) {
-      this.next.subscribeCard(session, cardId, subscription)
+      this.next.subscribeDoc(session, docId, docClass, subscription)
     }
   }
 
-  unsubscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
+  unsubscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
     if (this.next !== undefined) {
-      this.next.unsubscribeCard(session, cardId, subscription)
+      this.next.unsubscribeDoc(session, docId, docClass, subscription)
     }
   }
 
@@ -155,16 +149,6 @@ export class BaseMiddleware implements Middleware {
   ): Promise<Label[]> {
     if (this.next !== undefined) {
       return await this.next.findLabels(session, params, subscription)
-    }
-    return []
-  }
-
-  protected async provideFindCollaborators (
-    session: SessionData,
-    params: FindCollaboratorsParams
-  ): Promise<Collaborator[]> {
-    if (this.next !== undefined) {
-      return await this.next.findCollaborators(session, params)
     }
     return []
   }

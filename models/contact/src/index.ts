@@ -88,6 +88,7 @@ import { type Action } from '@hcengineering/view'
 import contact from './plugin'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import preference, { TPreference } from '@hcengineering/model-preference'
+import communication from '@hcengineering/communication'
 
 export { contactId } from '@hcengineering/contact'
 export { contactOperation } from './migration'
@@ -330,45 +331,28 @@ export function createModel (builder: Builder): void {
     isIdentity: true
   })
 
-  // TODO: FIXME
-  // builder.mixin(contact.class.Contact, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.mixin(contact.class.Person, core.class.Class, activity.mixin.ActivityDoc, {
-  //   preposition: contact.string.For
-  // })
-  //
-  // builder.mixin(contact.mixin.Employee, core.class.Class, activity.mixin.ActivityDoc, {
-  //   preposition: contact.string.For
-  // })
-  //
-  // builder.mixin(contact.class.Organization, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.mixin(contact.class.Channel, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(contact.class.Contact, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(contact.class.Person, core.class.Class, communication.mixin.Messageable, {
+    // preposition: contact.string.For
+  })
+  builder.mixin(contact.mixin.Employee, core.class.Class, communication.mixin.Messageable, {
+    // preposition: contact.string.For
+  })
+  builder.mixin(contact.class.Organization, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(contact.class.Channel, core.class.Class, communication.mixin.Messageable, {})
+
+  builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.CollectionEditor, {
+    editor: contact.component.CollaboratorEditor,
+    inlineEditor: contact.component.CollaboratorEditor
+  })
+
+  builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: contact.component.CollaboratorPresenter
+  })
 
   builder.mixin(contact.class.Person, core.class.Class, view.mixin.ObjectIcon, {
     component: contact.component.PersonIcon
   })
-
-  // TODO: FIXME
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: contact.class.Contact,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: contact.class.Person,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: contact.class.Organization,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: contact.class.Member,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
 
   builder.mixin(contact.mixin.Employee, core.class.Class, view.mixin.ObjectFactory, {
     component: contact.component.CreateEmployee

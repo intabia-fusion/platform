@@ -14,7 +14,6 @@
 //
 
 import {
-  WorkspaceUuid,
   type CardID,
   PeerKind,
   PeerExtra,
@@ -23,6 +22,7 @@ import {
   Peer
 } from '@hcengineering/communication-types'
 import { Domain } from '@hcengineering/communication-sdk-types'
+import { WorkspaceUuid } from '@hcengineering/core'
 
 import { BaseDb } from './base'
 import { DbModel, DbModelFilter } from '../schema'

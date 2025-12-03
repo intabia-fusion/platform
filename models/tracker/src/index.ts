@@ -22,6 +22,7 @@ import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import setting from '@hcengineering/setting'
 import pluginState, { type Issue, trackerId } from '@hcengineering/tracker'
+import communication from '@hcengineering/communication'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -117,6 +118,7 @@ function defineSortAndGrouping (builder: Builder): void {
   })
 }
 
+// TODO: FIXME
 function defineNotifications (builder: Builder): void {
   // builder.createDoc(
   //   notification.class.NotificationGroup,
@@ -195,20 +197,6 @@ function defineFilters (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.ObjectIdentifier, {
     provider: tracker.function.IssueIdentifierProvider
   })
-
-  // TODO: FIXME
-  // builder.mixin(tracker.class.Issue, core.class.Class, chunter.mixin.ObjectChatPanel, {
-  //   ignoreKeys: [
-  //     'number',
-  //     'createdBy',
-  //     'attachedTo',
-  //     'title',
-  //     'collaborators',
-  //     'description',
-  //     'remainingTime',
-  //     'reportedTime'
-  //   ]
-  // })
 
   //
   // Issue Status
@@ -446,38 +434,16 @@ export function createModel (builder: Builder): void {
     TProjectTargetPreference
   )
 
-  // TODO: FIXME
-  // builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})
-  // builder.mixin(tracker.class.Issue, core.class.Class, activity.mixin.ActivityDoc, {})
-  // builder.mixin(tracker.class.Milestone, core.class.Class, activity.mixin.ActivityDoc, {})
-  // builder.mixin(tracker.class.Component, core.class.Class, activity.mixin.ActivityDoc, {})
-  // builder.mixin(tracker.class.IssueTemplate, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(tracker.class.Project, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(tracker.class.Issue, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(tracker.class.Milestone, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(tracker.class.Component, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(tracker.class.IssueTemplate, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.LinkIdProvider, {
     encode: tracker.function.GetIssueId,
     decode: tracker.function.GetIssueIdByIdentifier
   })
-
-  // TODO: FIXME
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: tracker.class.Issue,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: tracker.class.Milestone,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: tracker.class.Component,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: tracker.class.IssueTemplate,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
 
   defineViewlets(builder)
 
@@ -531,83 +497,6 @@ export function createModel (builder: Builder): void {
     component: tracker.component.EditIssueTemplate
   })
 
-  // TODO: FIXME
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: tracker.class.Issue,
-  //     action: 'update',
-  //     icon: tracker.icon.Issue,
-  //     config: {
-  //       status: {
-  //         iconPresenter: tracker.component.IssueStatusIcon
-  //       },
-  //       priority: {
-  //         iconPresenter: tracker.component.PriorityIconPresenter
-  //       },
-  //       estimation: {
-  //         icon: tracker.icon.Estimation
-  //       }
-  //     }
-  //   },
-  //   tracker.ids.IssueUpdatedActivityViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: tracker.class.Issue,
-  //     action: 'create',
-  //     icon: tracker.icon.Issue,
-  //     valueAttr: 'title'
-  //   },
-  //   tracker.ids.IssueCreatedActivityViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: tracker.class.Issue,
-  //     action: 'remove',
-  //     icon: tracker.icon.Issue,
-  //     valueAttr: 'title'
-  //   },
-  //   tracker.ids.IssueRemovedActivityViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: tracker.class.Milestone,
-  //     action: 'update',
-  //     config: {
-  //       status: {
-  //         iconPresenter: tracker.component.MilestoneStatusIcon
-  //       }
-  //     }
-  //   },
-  //   tracker.ids.MilestionUpdatedActivityViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: tracker.class.IssueTemplate,
-  //     action: 'update',
-  //     config: {
-  //       priority: {
-  //         iconPresenter: tracker.component.PriorityIconPresenter
-  //       }
-  //     }
-  //   },
-  //   tracker.ids.IssueTemplateUpdatedActivityViewlet
-  // )
-
   defineApplication(builder, { myIssuesId, allIssuesId, issuesId, componentsId, milestonesId, templatesId, labelsId })
 
   defineActions(builder, issuesId, componentsId, myIssuesId)
@@ -640,51 +529,6 @@ export function createModel (builder: Builder): void {
     role: AccountRole.Maintainer,
     order: 4000
   })
-
-  // TODO: FIXME
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: tracker.class.Issue,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   tracker.ids.IssueChatMessageViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: tracker.class.IssueTemplate,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   tracker.ids.IssueTemplateChatMessageViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: tracker.class.Component,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   tracker.ids.ComponentChatMessageViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: tracker.class.Milestone,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   tracker.ids.MilestoneChatMessageViewlet
-  // )
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.ObjectIcon, {
     component: tracker.component.IssueStatusPresenter

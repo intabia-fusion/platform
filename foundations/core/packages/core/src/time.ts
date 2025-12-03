@@ -57,7 +57,7 @@ export function isOtherHour (time1: Timestamp, time2: Timestamp): boolean {
   return getHour(time1) !== getHour(time2)
 }
 
-function isToday (time: number): boolean {
+export function isToday (time: number): boolean {
   const current = new Date()
   const target = new Date(time)
   return (

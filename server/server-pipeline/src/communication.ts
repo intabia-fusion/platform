@@ -22,14 +22,16 @@ import core, {
   type OperationDomain,
   type SessionData,
   type TxDomainEvent,
-  type WorkspaceIds
+  type WorkspaceIds,
+  type Hierarchy, type Tx
 } from '@hcengineering/core'
 import {
   type CommunicationCallbacks,
   type Middleware,
   type MiddlewareCreator,
   type PipelineContext,
-  BaseMiddleware
+  BaseMiddleware,
+  type TxMiddlewareResult
 } from '@hcengineering/server-core'
 
 export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
@@ -37,6 +39,7 @@ export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
 export type CommunicationApiFactory = (
   ctx: MeasureContext,
   ws: WorkspaceIds,
+  hierarchy: Hierarchy,
   callbacks: CommunicationCallbacks
 ) => Promise<ServerApi>
 
@@ -46,16 +49,19 @@ export type CommunicationApiFactory = (
 export class CommunicationMiddleware extends BaseMiddleware implements Middleware {
   constructor (
     readonly ctx: MeasureContext,
-    context: PipelineContext,
+    readonly context: PipelineContext,
     readonly next: Middleware | undefined,
-    readonly communicationApi: ServerApi
+    readonly communicationApi: ServerApi,
+    private readonly processingEvents = new Map<string, TxDomainEvent>()
   ) {
     super(context, next)
   }
 
   static create (communicationApiFactory: CommunicationApiFactory): MiddlewareCreator {
+    const processingTxes = new Map<string, TxDomainEvent>()
+
     return async (ctx, context, next): Promise<Middleware> => {
-      const communicationApi = await communicationApiFactory(ctx, context.workspace, {
+      const communicationApi = await communicationApiFactory(ctx, context.workspace, context.hierarchy, {
         registerAsyncRequest: (ctx, promise) => {
           const contextData = ctx.contextData as SessionData
           contextData.asyncRequests = [
@@ -69,7 +75,7 @@ export class CommunicationMiddleware extends BaseMiddleware implements Middlewar
           const contextData = ctx.contextData as SessionData
           contextData.hasDomainBroadcast = true
           for (const [sessionId, events] of Object.entries(result)) {
-            const txEvents = CommunicationMiddleware.wrapEvents(contextData, events)
+            const txEvents = CommunicationMiddleware.wrapEvents(contextData, events, processingTxes)
             contextData.broadcast.sessions[sessionId] = (contextData.broadcast.sessions[sessionId] ?? []).concat(
               txEvents
             )
@@ -77,26 +83,67 @@ export class CommunicationMiddleware extends BaseMiddleware implements Middlewar
         },
         enqueue: (ctx, result: Event[]) => {
           const contextData = ctx.contextData as SessionData
-          const txEvents = CommunicationMiddleware.wrapEvents(contextData, result)
+          const txEvents = CommunicationMiddleware.wrapEvents(contextData, result, processingTxes)
           contextData.hasDomainBroadcast = true
           contextData.broadcast.queue.push(...txEvents)
+          void context.derived?.tx(ctx, txEvents)
         }
       })
-      return new CommunicationMiddleware(ctx, context, next, communicationApi)
+      return new CommunicationMiddleware(ctx, context, next, communicationApi, processingTxes)
     }
   }
 
-  private static wrapEvents (ctx: SessionData, result: Event[]): TxDomainEvent[] {
-    return result.map((it) => ({
-      _id: generateId(),
-      space: core.space.Tx,
-      objectSpace: core.space.Domain,
-      _class: core.class.TxDomainEvent,
-      domain: COMMUNICATION_DOMAIN,
-      event: it,
-      modifiedBy: ctx.account.primarySocialId,
-      modifiedOn: Date.now()
-    }))
+  async tx (ctx: MeasureContext, tx: Tx[]): Promise<TxMiddlewareResult> {
+    const other: Tx[] = []
+    const domainResults: DomainResult[] = []
+
+    for (const t of tx) {
+      if (t._class === core.class.TxDomainEvent) {
+        const dTx = t as TxDomainEvent
+        if (dTx.domain === COMMUNICATION_DOMAIN && dTx.event?.done !== true) {
+          dTx.event._id = dTx.event._id ?? generateId()
+          this.processingEvents.set(dTx.event._id, dTx)
+          const res = await this.domainRequest(ctx, dTx.domain, { event: dTx.event })
+          domainResults.push(res)
+        } else {
+          other.push(t)
+        }
+      } else {
+        other.push(t)
+      }
+    }
+
+    if (domainResults.length > 0) {
+      await this.provideTx(ctx, other)
+
+      return domainResults.length === 1 ? domainResults[0] : domainResults
+    }
+
+    return await this.provideTx(ctx, other)
+  }
+
+  private static wrapEvents (ctx: SessionData, result: Event[], processingTxes: Map<string, TxDomainEvent>): TxDomainEvent[] {
+    return result.map((it) => {
+      const tx = it._id != null ? processingTxes.get(it._id) : undefined
+
+      if (tx != null) {
+        return {
+          ...tx,
+          event: it
+        }
+      }
+
+      return {
+        _id: generateId(),
+        space: core.space.Tx,
+        objectSpace: core.space.Domain,
+        _class: core.class.TxDomainEvent,
+        domain: COMMUNICATION_DOMAIN,
+        event: it,
+        modifiedBy: ctx.account.primarySocialId,
+        modifiedOn: Date.now()
+      }
+    })
   }
 
   async domainRequest (ctx: MeasureContext, domain: OperationDomain, params: DomainParams): Promise<DomainResult> {
@@ -137,22 +184,18 @@ export class CommunicationMiddleware extends BaseMiddleware implements Middlewar
       const { params } = args.findLabels
       return await this.communicationApi.findLabels(ctx, params)
     }
-    if (args.findCollaborators !== undefined) {
-      const { params } = args.findCollaborators
-      return await this.communicationApi.findCollaborators(ctx, params)
-    }
     if (args.findPeers !== undefined) {
       const { params } = args.findPeers
       return await this.communicationApi.findPeers(ctx, params)
     }
-    if (args.subscribeCard !== undefined) {
-      const { cardId, subscription } = args.subscribeCard
-      this.communicationApi.subscribeCard(ctx, cardId, subscription)
+    if (args.subscribeDoc !== undefined) {
+      const { docId, docClass, subscription } = args.subscribeDoc
+      this.communicationApi.subscribeDoc(ctx, docId, docClass, subscription)
       return
     }
-    if (args.unsubscribeCard !== undefined) {
-      const { cardId, subscription } = args.unsubscribeCard
-      this.communicationApi.unsubscribeCard(ctx, cardId, subscription)
+    if (args.unsubscribeDoc !== undefined) {
+      const { docId, docClass, subscription } = args.unsubscribeDoc
+      this.communicationApi.unsubscribeDoc(ctx, docId, docClass, subscription)
       return
     }
     if (args.event !== undefined) {
@@ -165,10 +208,10 @@ export class CommunicationMiddleware extends BaseMiddleware implements Middlewar
   private getCommunicationCtx (ctx: MeasureContext<SessionData>): CommunicationSession {
     return {
       ...ctx,
+      hierarchy: this.context.hierarchy,
       sessionId: ctx.contextData.sessionId,
       asyncData: [],
       derived: ctx.contextData.isTriggerCtx === true,
-      // TODO: We should decide what to do with communications package and remove this workaround
       account: ctx.contextData.account
     }
   }

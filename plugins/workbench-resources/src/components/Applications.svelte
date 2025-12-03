@@ -61,16 +61,16 @@
 
   let hasNewInboxNotifications = false
   let hasNewMessagesNotification = false
-  const notificationCountQuery = createNotificationsQuery()
-  const messageNotificationCountQuery = createNotificationsQuery()
+  // const notificationCountQuery = createNotificationsQuery()
+  // const messageNotificationCountQuery = createNotificationsQuery()
 
-  notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
-    hasNewInboxNotifications = res.getResult().length > 0
-  })
-
-  messageNotificationCountQuery.query({ read: false, type: NotificationType.Message, limit: 1 }, (res) => {
-    hasNewMessagesNotification = res.getResult().length > 0
-  })
+  // notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
+  //   hasNewInboxNotifications = res.getResult().length > 0
+  // })
+  //
+  // messageNotificationCountQuery.query({ read: false, type: NotificationType.Message, limit: 1 }, (res) => {
+  //   hasNewMessagesNotification = res.getResult().length > 0
+  // })
 
   function updateExcludedApps (): void {
     const me = getCurrentAccount()

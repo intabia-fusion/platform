@@ -264,7 +264,9 @@ export const contactPlugin = plugin(contactId, {
     PersonFilterValuePresenter: '' as AnyComponent,
     PersonIdFilter: '' as AnyComponent,
     AssigneePopup: '' as AnyComponent,
-    EmployeePresenter: '' as AnyComponent
+    EmployeePresenter: '' as AnyComponent,
+    CollaboratorEditor: '' as AnyComponent,
+    CollaboratorPresenter: '' as AnyComponent
   },
   channelProvider: {
     Email: '' as Ref<ChannelProvider>,

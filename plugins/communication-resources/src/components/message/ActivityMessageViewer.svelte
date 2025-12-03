@@ -15,19 +15,20 @@
 
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Card } from '@hcengineering/card'
   import { AttributeModel } from '@hcengineering/view'
-  import { ActivityMessage, ActivityMessageExtra } from '@hcengineering/communication-types'
+  import { ActivityMessage, ActivityMessageExtra, ActivityUpdateType } from '@hcengineering/communication-types'
   import { Person } from '@hcengineering/contact'
+  import { Doc } from '@hcengineering/core'
 
   import ActivityObjectValue from './activity/ActivityObjectValue.svelte'
   import ActivityUpdateViewer from './activity/ActivityUpdateViewer.svelte'
   import { getAttributeModel } from '../../activity'
+  import ActivityCollectionValue from './activity/collection/ActivityCollectionValue.svelte'
 
-  export let card: Card
+  export let doc: Doc
   export let message: ActivityMessage
   export let author: Person | undefined
-  export let oneRow: boolean = false
+  export let compact = false
 
   const client = getClient()
 
@@ -36,20 +37,22 @@
 
   $: extra = message.extra ?? {}
 
-  $: void getAttributeModel(client, message.extra?.update, card._class).then((model) => {
+  $: void getAttributeModel(client, message.extra?.update, doc._class).then((model) => {
     attributeModel = model
   })
 </script>
 
-{#if extra.action === 'create'}
-  <ActivityObjectValue {message} {card} />
+{#if extra.update?.type === ActivityUpdateType.Collection}
+<ActivityCollectionValue {message} {doc} />
+{:else if extra.action === 'create'}
+  <ActivityObjectValue {message} {doc} />
 {:else if extra.update && extra.action === 'update'}
   <ActivityUpdateViewer
     update={extra.update}
     model={attributeModel}
     content={message.content}
     {author}
-    {card}
-    {oneRow}
+    {doc}
+    {compact}
   />
 {/if}

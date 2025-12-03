@@ -31,6 +31,7 @@ import {
   type SearchQuery,
   type SearchResult,
   type Tx,
+  type TxDomainEvent,
   type TxResult,
   type WithLookup,
   type WorkspaceDataId,
@@ -75,6 +76,7 @@ export interface ClientHook {
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
 
+  domainEventTx: <T>(client: Client, tx: TxDomainEvent<T>) => Promise<DomainResult<T>>
   domainRequest: <T>(
     client: Client,
     domain: OperationDomain,

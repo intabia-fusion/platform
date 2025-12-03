@@ -11,13 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Card } from '@hcengineering/card'
-import { type Class, type Ref } from '@hcengineering/core'
+import { type Class, type Ref, type Doc } from '@hcengineering/core'
 import { type NotificationContext } from '@hcengineering/communication-types'
 
 export interface NavigationItem {
-  _id: Ref<Card>
-  _class: Ref<Class<Card>>
+  _id: Ref<Doc>
+  _class: Ref<Class<Doc>>
   context: NotificationContext
   date: Date
 }

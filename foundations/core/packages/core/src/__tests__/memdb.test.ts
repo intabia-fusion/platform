@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Client, type DomainParams, type DomainRequestOptions, type DomainResult } from '..'
+import { type Client, type DomainParams, type DomainRequestOptions, type DomainResult, TxDomainEvent } from '..'
 import type { Class, Doc, Obj, OperationDomain, Ref, Space } from '../classes'
 import core from '../component'
 import { Hierarchy } from '../hierarchy'
@@ -54,6 +54,10 @@ class ClientModel extends ModelDb implements Client {
 
   async searchFulltext (query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
     return { docs: [] }
+  }
+
+  async domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+    return { domain: tx.domain, value: null as any }
   }
 
   async domainRequest<T>(

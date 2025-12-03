@@ -34,7 +34,7 @@
 
   let total = 0
 
-  const modernNotificationsQuery = createNotificationsQuery()
+  // const modernNotificationsQuery = createNotificationsQuery()
   const query = createQuery()
 
   let doc: Doc | undefined = undefined
@@ -56,12 +56,12 @@
     isLoading = true
   }
 
-  $: modernNotificationsQuery.query(
-    { limit: 1, total: true, read: false, strict: true, contextId: navItem.context.id },
-    (res) => {
-      total = res.getTotal()
-    }
-  )
+  // $: modernNotificationsQuery.query(
+  //   { limit: 1, total: true, read: false, strict: true, contextId: navItem.context.id },
+  //   (res) => {
+  //     total = res.getTotal()
+  //   }
+  // )
 
   let isRemoving = false
   async function handleToggle (): Promise<void> {

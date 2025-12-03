@@ -15,9 +15,6 @@
 
 import {
   Attachment,
-  AttachmentID,
-  type Collaborator,
-  type FindCollaboratorsParams,
   type FindLabelsParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
@@ -35,10 +32,8 @@ import {
   MessagesGroup
 } from '@hcengineering/communication-types'
 import {
-  type AddCollaboratorsEvent,
   AttachmentPatchEvent,
-  BlobPatchEvent,
-  CardEventType,
+  DocEventType,
   type CreateLabelEvent,
   type CreateMessageEvent,
   CreateMessageResult,
@@ -53,7 +48,6 @@ import {
   NotificationEventType,
   PeerEventType,
   ReactionPatchEvent,
-  type RemoveCollaboratorsEvent,
   type RemoveLabelEvent,
   type RemoveNotificationContextEvent,
   type RemoveNotificationsEvent,
@@ -66,12 +60,6 @@ import {
   UpdatePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import { MessageProcessor } from '@hcengineering/communication-shared'
-import {
-  AddAttachmentsOperation,
-  RemoveAttachmentsOperation,
-  SetAttachmentsOperation,
-  UpdateAttachmentsOperation
-} from '@hcengineering/communication-sdk-types'
 
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
 import { BaseMiddleware } from './base'
@@ -100,15 +88,16 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async findMessagesGroups (session: SessionData, params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
+    const domain = session.hierarchy.getDomain(params.docClass)
     if (params.id != null) {
-      const meta = await this.context.client.getMessageMeta(params.cardId, params.id)
+      const meta = await this.context.client.getMessageMeta(params.docClass, params.docId, params.id)
       if (meta == null) return []
-      return await this.blob.findMessagesGroups({
+      return await this.blob.findMessagesGroups(domain, {
         ...params,
         blobId: params.blobId ?? meta.blobId
       })
     }
-    return await this.blob.findMessagesGroups(params)
+    return await this.blob.findMessagesGroups(domain, params)
   }
 
   async findNotificationContexts (
@@ -126,10 +115,6 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     return await this.db.findLabels(params)
   }
 
-  async findCollaborators (_: SessionData, params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return await this.db.findCollaborators(params)
-  }
-
   async findPeers (_: SessionData, params: FindPeersParams): Promise<Peer[]> {
     return await this.db.findPeers(params)
   }
@@ -144,6 +129,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     if (result.skipPropagate === true) {
       event.skipPropagate = true
     } else {
+      event.done = true
       await this.provideEvent(session, event, derived)
     }
 
@@ -154,20 +140,18 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     switch (event.type) {
       // Messages
       case MessageEventType.CreateMessage:
-        return await this.createMessage(event)
+        return await this.createMessage(event, session)
       case MessageEventType.UpdatePatch:
-        return await this.updatePatch(event)
+        return await this.updatePatch(event, session)
       case MessageEventType.RemovePatch:
-        return await this.removePatch(event)
+        return await this.removePatch(event, session)
       case MessageEventType.TranslateMessage:
         return {}
 
       case MessageEventType.ReactionPatch:
         return await this.reactionPatch(event, session)
-      case MessageEventType.BlobPatch:
-        return await this.blobPatch(event)
       case MessageEventType.AttachmentPatch:
-        return await this.attachmentPatch(event)
+        return await this.attachmentPatch(event, session)
       case MessageEventType.ThreadPatch:
         return await this.threadPatch(event, session)
 
@@ -178,8 +162,8 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         return await this.removeLabel(event)
 
       // Cards
-      case CardEventType.UpdateCardType:
-      case CardEventType.RemoveCard:
+      case DocEventType.UpdateDocClass:
+      case DocEventType.RemoveDoc:
         return {}
 
       // Peers
@@ -187,12 +171,6 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         return await this.removePeer(event)
       case PeerEventType.CreatePeer:
         return await this.createPeer(event)
-
-      // Collaborators
-      case NotificationEventType.AddCollaborators:
-        return await this.addCollaborators(event)
-      case NotificationEventType.RemoveCollaborators:
-        return await this.removeCollaborators(event)
 
       // Notifications
       case NotificationEventType.CreateNotification:
@@ -212,30 +190,16 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     }
   }
 
-  private async addCollaborators (event: Enriched<AddCollaboratorsEvent>): Promise<Result> {
-    const added = await this.db.addCollaborators(event.cardId, event.cardType, event.collaborators, event.date)
-
-    if (added.length === 0) return { skipPropagate: true }
-    event.collaborators = added
-    return {}
-  }
-
-  private async removeCollaborators (event: Enriched<RemoveCollaboratorsEvent>): Promise<Result> {
-    if (event.collaborators.length === 0) return { skipPropagate: true }
-    await this.db.removeCollaborators({ cardId: event.cardId, account: event.collaborators })
-
-    return {}
-  }
-
-  private async createMessage (event: Enriched<CreateMessageEvent>): Promise<Result> {
+  private async createMessage (event: Enriched<CreateMessageEvent>, session: SessionData): Promise<Result> {
     if (event.messageId == null) {
       throw new Error('Message id is required')
     }
 
-    const group = await this.blob.getMessageGroupByDate(event.cardId, event.date)
+    const domain = session.hierarchy.getDomain(event.docClass)
+    const group = await this.blob.getMessageGroupByDate(domain, event.docClass, event.docId, event.date)
     if (group == null) {
       throw new Error(
-        `Cannot create message, group not found: cardId = ${event.cardId}, messageId = ${event.messageId}, created = ${event.date.toISOString()}`
+        `Cannot create message, group not found: docClass=${event.docClass} docId = ${event.docId}, messageId = ${event.messageId}, created = ${event.date.toISOString()}`
       )
     }
     const result: CreateMessageResult = {
@@ -243,13 +207,14 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
       created: event.date,
       blobId: group.blobId
     }
-    const created = await this.db.createMessageMeta(
-      event.cardId,
-      event.messageId,
-      event.socialId,
-      event.date,
-      group.blobId
-    )
+    const created = await this.db.createMessageMeta(event.docClass, {
+      docId: event.docId,
+      id: event.messageId,
+      type: event.messageType,
+      creator: event.socialId,
+      created: event.date,
+      blobId: group.blobId
+    })
 
     if (!created) {
       return {
@@ -257,7 +222,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         result
       }
     }
-    await this.blob.insertMessage(event.cardId, group, MessageProcessor.create(event))
+    await this.blob.insertMessage(domain, event.docId, group, MessageProcessor.create(event))
 
     event._eventExtra.blobId = group.blobId
 
@@ -266,38 +231,40 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     }
   }
 
-  private async updatePatch (event: Enriched<UpdatePatchEvent>): Promise<Result> {
+  private async updatePatch (event: Enriched<UpdatePatchEvent>, session: SessionData): Promise<Result> {
     const data = {
       content: event.content,
       extra: event.extra,
       language: event.language
     }
-    const meta = await this.context.client.getMessageMeta(event.cardId, event.messageId)
+    const domain = session.hierarchy.getDomain(event.docClass)
+    const meta = await this.context.client.getMessageMeta(event.docClass, event.docId, event.messageId)
 
     if (meta === undefined) {
       return { skipPropagate: true }
     }
 
-    await this.blob.updateMessage(event.cardId, meta.blobId, event.messageId, data, event.date)
+    await this.blob.updateMessage(domain, event.docId, meta.blobId, event.messageId, data, event.date)
     event._eventExtra.blobId = meta.blobId
 
     return {}
   }
 
-  private async removePatch (event: Enriched<RemovePatchEvent>): Promise<Result> {
-    const meta = await this.context.client.getMessageMeta(event.cardId, event.messageId)
+  private async removePatch (event: Enriched<RemovePatchEvent>, session: SessionData): Promise<Result> {
+    const meta = await this.context.client.getMessageMeta(event.docClass, event.docId, event.messageId)
 
     if (meta === undefined) {
       return { skipPropagate: true }
     }
-    await this.blob.removeMessage(event.cardId, meta.blobId, event.messageId)
-    await this.context.client.removeMessageMeta(event.cardId, event.messageId)
+    const domain = session.hierarchy.getDomain(event.docClass)
+    await this.blob.removeMessage(domain, event.docId, meta.blobId, event.messageId)
+    await this.context.client.removeMessageMeta(event.docClass, event.docId, event.messageId)
     event._eventExtra.blobId = meta.blobId
     return {}
   }
 
   private async reactionPatch (event: Enriched<ReactionPatchEvent>, session: SessionData): Promise<Result> {
-    const meta = await this.context.client.getMessageMeta(event.cardId, event.messageId)
+    const meta = await this.context.client.getMessageMeta(event.docClass, event.docId, event.messageId)
 
     if (meta === undefined) {
       return { skipPropagate: true }
@@ -309,9 +276,11 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
       return { skipPropagate: true }
     }
 
+    const domain = session.hierarchy.getDomain(event.docClass)
     if (operation.opcode === 'add') {
       await this.blob.addReaction(
-        event.cardId,
+        domain,
+        event.docId,
         meta.blobId,
         event.messageId,
         operation.reaction,
@@ -319,83 +288,20 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         event.date
       )
     } else if (operation.opcode === 'remove') {
-      await this.blob.removeReaction(event.cardId, meta.blobId, event.messageId, operation.reaction, personUuid)
+      await this.blob.removeReaction(domain, event.docId, meta.blobId, event.messageId, operation.reaction, personUuid)
     }
 
     return {}
   }
 
-  private async blobPatch (event: Enriched<BlobPatchEvent>): Promise<Result> {
-    const { operations } = event
-
-    const attachmentOperations: (
-      | AddAttachmentsOperation
-      | RemoveAttachmentsOperation
-      | SetAttachmentsOperation
-      | UpdateAttachmentsOperation
-    )[] = []
-
-    for (const operation of operations) {
-      if (operation.opcode === 'attach') {
-        attachmentOperations.push({
-          opcode: 'add',
-          attachments: operation.blobs.map((b) => ({
-            id: b.blobId as any as AttachmentID,
-            mimeType: b.mimeType,
-            params: b
-          }))
-        })
-      } else if (operation.opcode === 'detach') {
-        attachmentOperations.push({
-          opcode: 'remove',
-          ids: operation.blobIds as any as AttachmentID[]
-        })
-      } else if (operation.opcode === 'set') {
-        attachmentOperations.push({
-          opcode: 'set',
-          attachments: operation.blobs.map((b) => ({
-            id: b.blobId as any as AttachmentID,
-            mimeType: b.mimeType,
-            params: b
-          }))
-        })
-      } else if (operation.opcode === 'update') {
-        attachmentOperations.push({
-          opcode: 'update',
-          attachments: operation.blobs.map((b) => ({
-            id: b.blobId as any as AttachmentID,
-            params: { ...b }
-          }))
-        })
-      }
-    }
-
-    if (attachmentOperations.length === 0) {
-      return { skipPropagate: true }
-    }
-
-    await this.attachmentPatch({
-      _id: event._id,
-      type: MessageEventType.AttachmentPatch,
-      cardId: event.cardId,
-      messageId: event.messageId,
-      operations: attachmentOperations,
-      socialId: event.socialId,
-      date: event.date,
-      _eventExtra: event._eventExtra
-    })
-
-    return {}
-  }
-
-  private async attachmentPatch (event: Enriched<AttachmentPatchEvent>): Promise<Result> {
-    const meta = await this.context.client.getMessageMeta(event.cardId, event.messageId)
+  private async attachmentPatch (event: Enriched<AttachmentPatchEvent>, session: SessionData): Promise<Result> {
+    const meta = await this.context.client.getMessageMeta(event.docClass, event.docId, event.messageId)
     if (meta === undefined) {
       return { skipPropagate: true }
     }
 
     const { operations } = event
-
+    const domain = session.hierarchy.getDomain(event.docClass)
     for (const operation of operations) {
       if (operation.opcode === 'add') {
         const attachments: Attachment[] = operation.attachments.map(
@@ -406,9 +312,9 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
               creator: event.socialId
             }) as any
         )
-        await this.blob.addAttachments(event.cardId, meta.blobId, event.messageId, attachments)
+        await this.blob.addAttachments(domain, event.docId, meta.blobId, event.messageId, attachments)
       } else if (operation.opcode === 'remove') {
-        await this.blob.removeAttachments(event.cardId, meta.blobId, event.messageId, operation.ids)
+        await this.blob.removeAttachments(domain, event.docId, meta.blobId, event.messageId, operation.ids)
       } else if (operation.opcode === 'set') {
         const attachments: Attachment[] = operation.attachments.map(
           (it) =>
@@ -418,9 +324,16 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
               creator: event.socialId
             }) as any
         )
-        await this.blob.setAttachments(event.cardId, meta.blobId, event.messageId, attachments)
+        await this.blob.setAttachments(domain, event.docId, meta.blobId, event.messageId, attachments)
       } else if (operation.opcode === 'update') {
-        await this.blob.updateAttachments(event.cardId, meta.blobId, event.messageId, operation.attachments, event.date)
+        await this.blob.updateAttachments(
+          domain,
+          event.docId,
+          meta.blobId,
+          event.messageId,
+          operation.attachments,
+          event.date
+        )
       }
     }
 
@@ -428,14 +341,16 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async threadPatch (event: Enriched<ThreadPatchEvent>, session: SessionData): Promise<Result> {
-    const meta = await this.context.client.getMessageMeta(event.cardId, event.messageId)
+    const meta = await this.context.client.getMessageMeta(event.docClass, event.docId, event.messageId)
     if (meta === undefined) {
       return { skipPropagate: true }
     }
 
+    const domain = session.hierarchy.getDomain(event.docClass)
     if (event.operation.opcode === 'attach') {
       const thread: Thread = {
-        cardId: event.operation.threadId,
+        docId: event.docId,
+        docClass: event.docClass,
         messageId: event.messageId,
         threadId: event.operation.threadId,
         threadType: event.operation.threadType,
@@ -443,18 +358,17 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         lastReplyDate: new Date(),
         repliedPersons: {}
       }
-      await this.db.attachThreadMeta(
-        event.cardId,
-        event.messageId,
-        thread.threadId,
-        thread.threadType,
-        event.socialId,
-        event.date
-      )
-      await this.blob.attachThread(event.cardId, meta.blobId, event.messageId, thread)
+      await this.db.attachThreadMeta(event.docClass, {
+        docId: event.docId,
+        messageId: event.messageId,
+        threadId: thread.threadId,
+        threadType: thread.threadType
+      })
+      await this.blob.attachThread(domain, event.docId, meta.blobId, event.messageId, thread)
     } else if (event.operation.opcode === 'update') {
       await this.blob.updateThread(
-        event.cardId,
+        domain,
+        event.docId,
         meta.blobId,
         event.messageId,
         event.operation.threadId,
@@ -470,7 +384,8 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
       )
       if (personUuid === undefined) return { skipPropagate: true }
       await this.blob.addThreadReply(
-        event.cardId,
+        domain,
+        event.docId,
         meta.blobId,
         event.messageId,
         event.operation.threadId,
@@ -488,7 +403,8 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
 
       if (personUuid === undefined) return { skipPropagate: true }
       await this.blob.removeThreadReply(
-        event.cardId,
+        domain,
+        event.docId,
         meta.blobId,
         event.messageId,
         event.operation.threadId,
@@ -547,8 +463,9 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
 
   private async createNotificationContext (event: Enriched<CreateNotificationContextEvent>): Promise<Result> {
     const id = await this.db.createNotificationContext(
+      event.docClass,
+      event.docId,
       event.account,
-      event.cardId,
       event.lastUpdate,
       event.lastView,
       event.lastNotify
@@ -583,7 +500,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async createLabel (event: Enriched<CreateLabelEvent>): Promise<Result> {
-    await this.db.createLabel(event.cardId, event.cardType, event.labelId, event.account, event.date)
+    await this.db.createLabel(event.docClass, event.docId, event.labelId, event.account, event.date)
 
     return {}
   }
@@ -591,7 +508,8 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
   private async removeLabel (event: Enriched<RemoveLabelEvent>): Promise<Result> {
     await this.db.removeLabels({
       labelId: event.labelId,
-      cardId: event.cardId,
+      docId: event.docId,
+      docClass: event.docClass,
       account: event.account
     })
 

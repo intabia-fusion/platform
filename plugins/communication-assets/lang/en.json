@@ -95,6 +95,14 @@
     "EditMessageEllipsis": "Edit message...",
     "ArrowDownMessages": "↓ Latest messages",
     "Thread": "Thread",
-    "Threads": "Threads"
+    "Threads": "Threads",
+    "Activity": "Activity",
+    "Attributes": "Attributes",
+    "Comments": "Comments",
+    "ValueTooLarge": "Value too large to display",
+
+    "CreatedObjectWithName": "{name} created {objectType}: {title}",
+    "AddedObjectWithName": "{name} added {objectType}: {title}",
+    "RemovedObjectWithName": "{name} removed {objectType}: {title}"
   }
 }

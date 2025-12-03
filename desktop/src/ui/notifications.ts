@@ -20,7 +20,6 @@ import { location } from '@hcengineering/ui'
 import workbench, { workbenchId } from '@hcengineering/workbench'
 import { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
 import { activePreferences } from '@hcengineering/desktop-preferences-resources'
-import { inboxId } from '@hcengineering/inbox'
 import communication from '@hcengineering/communication'
 import { ipcMainExposed } from './typesUtils'
 
@@ -135,51 +134,51 @@ export function configureNotifications (): void {
     const electronAPI = ipcMainExposed()
 
     // const inboxClient = InboxNotificationsClientImpl.getClient()
-    const notificationsQuery = createNotificationsQuery(true)
-    const notificationsCountQuery = createNotificationsQuery(true)
+    // const notificationsQuery = createNotificationsQuery(true)
+    // const notificationsCountQuery = createNotificationsQuery(true)
 
     const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
 
     if (isCommunicationEnabled) {
-      notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, res => {
-        newUnreadNotifications = res.getTotal()
-
-        if (preferences.showUnreadCounter) {
-          electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
-        }
-
-        if (preferences.bounceAppIcon) {
-          electronAPI.dockBounce()
-        }
-      })
+      // notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, res => {
+      //   newUnreadNotifications = res.getTotal()
+      //
+      //   if (preferences.showUnreadCounter) {
+      //     electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
+      //   }
+      //
+      //   if (preferences.bounceAppIcon) {
+      //     electronAPI.dockBounce()
+      //   }
+      // })
     }
 
     function startNotificationQuery (): void {
       if (!isCommunicationEnabled) return
-      notificationsQuery.query({
-        read: false,
-        limit: 1,
-        strict: true,
-        order: SortingOrder.Descending,
-        created: {
-          greaterOrEqual: new Date()
-        }
-      }, (res) => {
-        if (!preferences.showNotifications) return
-        const notification = res.getResult()[0]
-        if (notification !== undefined && !notificationHistory.has(notification.id)) {
-          notificationHistory.set(notification.id, notification.created.getTime())
-          electronAPI.sendNotification({
-            silent: !preferences.playSound,
-            application: inboxId,
-            title: notification.content.title,
-            body: `${notification.content.senderName}: ${notification.content.shortText}`,
-            cardId: notification.cardId,
-            objectId: notification.content.objectId,
-            objectClass: notification.content.objectClass
-          })
-        }
-      })
+      // notificationsQuery.query({
+      //   read: false,
+      //   limit: 1,
+      //   strict: true,
+      //   order: SortingOrder.Descending,
+      //   created: {
+      //     greaterOrEqual: new Date()
+      //   }
+      // }, (res) => {
+      //   if (!preferences.showNotifications) return
+      //   const notification = res.getResult()[0]
+      //   if (notification !== undefined && !notificationHistory.has(notification.id)) {
+      //     notificationHistory.set(notification.id, notification.created.getTime())
+      //     // electronAPI.sendNotification({
+      //     //   silent: !preferences.playSound,
+      //     //   application: inboxId,
+      //     //   title: notification.content.title,
+      //     //   body: `${notification.content.senderName}: ${notification.content.shortText}`,
+      //     //   cardId: notification.cardId,
+      //     //   objectId: notification.content.objectId,
+      //     //   objectClass: notification.content.objectClass
+      //     // })
+      //   }
+      // })
     }
 
     if (preferences.showNotifications) {

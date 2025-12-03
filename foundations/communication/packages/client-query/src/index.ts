@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { CollaboratorsQuery, LabelsQuery, MessagesQuery, NotificationContextsQuery, NotificationsQuery } from './query'
+import { LabelsQuery, MessagesQuery, NotificationContextsQuery, NotificationsQuery } from './query'
 
 export type { MessageQueryParams } from '@hcengineering/communication-query'
 export { initLiveQueries, refreshLiveQueries, closeLiveQueries } from './init'
@@ -32,8 +32,4 @@ export function createNotificationContextsQuery (dontDestroy?: boolean): Notific
 
 export function createLabelsQuery (dontDestroy?: boolean): LabelsQuery {
   return new LabelsQuery(dontDestroy)
-}
-
-export function createCollaboratorsQuery (dontDestroy?: boolean): CollaboratorsQuery {
-  return new CollaboratorsQuery(dontDestroy)
 }

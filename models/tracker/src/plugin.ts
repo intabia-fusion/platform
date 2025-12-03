@@ -40,10 +40,6 @@ export default mergeIds(trackerId, tracker, {
     MapRelatedIssues: '' as IntlString,
     Extensions: '' as IntlString
   },
-  activity: {
-    StatusIcon: '' as AnyComponent,
-    PriorityIcon: '' as AnyComponent
-  },
   component: {
     MilestoneSelector: '' as AnyComponent,
     IssueStatistics: '' as AnyComponent,

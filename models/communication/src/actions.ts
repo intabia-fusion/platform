@@ -45,18 +45,19 @@ export function buildMessageActions (builder: Builder): void {
     communication.messageAction.ReplyInThread
   )
 
-  builder.createDoc(
-    communication.class.MessageAction,
-    core.space.Model,
-    {
-      label: communication.string.CreateCard,
-      icon: card.icon.Card,
-      action: communication.messageActionImpl.CreateCard,
-      visibilityTester: communication.function.CanCreateCard,
-      order: 300
-    },
-    communication.messageAction.CreateCard
-  )
+  // Note: temporary disabled
+  // builder.createDoc(
+  //   communication.class.MessageAction,
+  //   core.space.Model,
+  //   {
+  //     label: communication.string.CreateCard,
+  //     icon: card.icon.Card,
+  //     action: communication.messageActionImpl.CreateCard,
+  //     visibilityTester: communication.function.CanCreateCard,
+  //     order: 300
+  //   },
+  //   communication.messageAction.CreateCard
+  // )
 
   builder.createDoc(
     communication.class.MessageAction,
@@ -114,31 +115,31 @@ export function buildMessageActions (builder: Builder): void {
 }
 
 export function buildCardActions (builder: Builder): void {
-  createAction(builder, {
-    action: communication.action.Subscribe,
-    label: communication.string.Subscribe,
-    icon: communication.icon.Bell,
-    visibilityTester: communication.function.CanSubscribe,
-    input: 'focus',
-    category: card.category.Card,
-    target: card.class.Card,
-    context: {
-      mode: ['context'],
-      group: 'associate'
-    }
-  })
-
-  createAction(builder, {
-    action: communication.action.Unsubscribe,
-    label: communication.string.Unsubscribe,
-    icon: communication.icon.BellCrossed,
-    visibilityTester: communication.function.CanUnsubscribe,
-    input: 'focus',
-    category: card.category.Card,
-    target: card.class.Card,
-    context: {
-      mode: ['context'],
-      group: 'associate'
-    }
-  })
+  // createAction(builder, {
+  //   action: communication.action.Subscribe,
+  //   label: communication.string.Subscribe,
+  //   icon: communication.icon.Bell,
+  //   visibilityTester: communication.function.CanSubscribe,
+  //   input: 'focus',
+  //   category: card.category.Card,
+  //   target: card.class.Card,
+  //   context: {
+  //     mode: ['context'],
+  //     group: 'associate'
+  //   }
+  // })
+  //
+  // createAction(builder, {
+  //   action: communication.action.Unsubscribe,
+  //   label: communication.string.Unsubscribe,
+  //   icon: communication.icon.BellCrossed,
+  //   visibilityTester: communication.function.CanUnsubscribe,
+  //   input: 'focus',
+  //   category: card.category.Card,
+  //   target: card.class.Card,
+  //   context: {
+  //     mode: ['context'],
+  //     group: 'associate'
+  //   }
+  // })
 }

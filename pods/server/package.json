@@ -83,6 +83,7 @@
     "@hcengineering/server-telegram": "workspace:^0.7.0",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/server-card": "workspace:^0.7.0",
+    "@hcengineering/server-communication": "workspace:^0.7.0",
     "utf-8-validate": "^6.0.4",
     "bufferutil": "^4.0.8",
     "msgpackr": "^1.11.2",

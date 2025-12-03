@@ -14,13 +14,16 @@
 //
 
 import {
-  type AccountUuid,
-  type CardID,
-  type CardType,
   type FindLabelsParams,
   type LabelID,
   type Label
 } from '@hcengineering/communication-types'
+import {
+  type AccountUuid,
+  Doc,
+  Ref,
+  Class
+} from '@hcengineering/core'
 import { Domain, LabelQuery, LabelUpdate } from '@hcengineering/communication-sdk-types'
 
 import { BaseDb } from './base'
@@ -29,22 +32,23 @@ import { DbModel, DbModelFilter, DbModelUpdate } from '../schema'
 
 export class LabelsDb extends BaseDb {
   async createLabel (
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
     label: LabelID,
-    card: CardID,
-    cardType: CardType,
     account: AccountUuid,
     created: Date
   ): Promise<void> {
     const db: DbModel<Domain.Label> = {
       workspace_id: this.workspace,
+      domain: this.hierarchy.getDomain(docClass),
+      doc_id: docId,
+      doc_class: docClass,
       label_id: label,
-      card_id: card,
-      card_type: cardType,
       account,
       created
     }
     const { sql, values } = this.getInsertSql(Domain.Label, db, [], {
-      conflictColumns: ['workspace_id', 'label_id', 'card_id', 'account'],
+      conflictColumns: ['workspace_id', 'domain', 'label_id', 'doc_id', 'account'],
       conflictAction: 'DO NOTHING'
     })
     await this.execute(sql, values, 'insert label')
@@ -53,18 +57,27 @@ export class LabelsDb extends BaseDb {
   async removeLabels (query: LabelQuery): Promise<void> {
     const filter: DbModelFilter<Domain.Label> = []
 
+    if (query.docClass != null) {
+      filter.push({
+        column: 'domain',
+        value: this.hierarchy.getDomain(query.docClass)
+      })
+    }
+
+    if (query.docId != null) {
+      filter.push({
+        column: 'doc_id',
+        value: query.docId
+      })
+    }
+
     if (query.labelId != null) {
       filter.push({
         column: 'label_id',
         value: query.labelId
       })
     }
-    if (query.cardId != null) {
-      filter.push({
-        column: 'card_id',
-        value: query.cardId
-      })
-    }
+
     if (query.account != null) {
       filter.push({
         column: 'account',
@@ -94,10 +107,17 @@ export class LabelsDb extends BaseDb {
       }
     ]
 
-    if (query.cardId != null) {
+    if (query.docClass != null) {
       filter.push({
-        column: 'card_id',
-        value: query.cardId
+        column: 'domain',
+        value: this.hierarchy.getDomain(query.docClass)
+      })
+    }
+
+    if (query.docId != null) {
+      filter.push({
+        column: 'doc_id',
+        value: query.docId
       })
     }
 
@@ -115,12 +135,12 @@ export class LabelsDb extends BaseDb {
       })
     }
 
-    if (update.cardType != null) {
-      dbUpdate.push({
-        column: 'card_type',
-        value: update.cardType
-      })
-    }
+    // if (update.docClass != null) {
+    //   dbUpdate.push({
+    //     column: 'doc_class',
+    //     value: update.docClass
+    //   })
+    // }
 
     if (dbUpdate.length === 0) return
 
@@ -152,6 +172,23 @@ export class LabelsDb extends BaseDb {
     where.push(`${prefix}workspace_id = $${index++}::uuid`)
     values.push(this.workspace)
 
+    if (params.docClass != null) {
+      const types = Array.isArray(params.docClass) ? params.docClass : [params.docClass]
+
+      if (types.length === 1) {
+        where.push(`${prefix}doc_class = $${index++}::varchar`)
+        values.push(types[0])
+      } else {
+        where.push(`${prefix}doc_class = ANY($${index++}::varchar[])`)
+        values.push(types)
+      }
+    }
+
+    if (params.docId != null) {
+      where.push(`${prefix}doc_id = $${index++}::varchar`)
+      values.push(params.docId)
+    }
+
     if (params.labelId != null) {
       const labels = Array.isArray(params.labelId) ? params.labelId : [params.labelId]
       if (labels.length === 1) {
@@ -160,23 +197,6 @@ export class LabelsDb extends BaseDb {
       } else {
         where.push(`${prefix}label_id = ANY($${index++}::varchar[])`)
         values.push(labels)
-      }
-    }
-
-    if (params.cardId != null) {
-      where.push(`${prefix}card_id = $${index++}::varchar`)
-      values.push(params.cardId)
-    }
-
-    if (params.cardType != null) {
-      const types = Array.isArray(params.cardType) ? params.cardType : [params.cardType]
-
-      if (types.length === 1) {
-        where.push(`${prefix}card_type = $${index++}::varchar`)
-        values.push(types[0])
-      } else {
-        where.push(`${prefix}card_type = ANY($${index++}::varchar[])`)
-        values.push(types)
       }
     }
 

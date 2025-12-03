@@ -322,7 +322,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
       - PULSE_URL=ws://huly.local:8099/ws
       - DATALAKE_URL=http://huly.local:4030
-      # - HULYLAKE_URL=http://huly.local:8096
+      - HULYLAKE_URL=http://huly.local:8096
       - AI_URL=http://huly.local:4010
       - LOVE_ENDPOINT=http://huly.local:8096
       - LIVEKIT_WS=ws://huly.local:7880
@@ -408,7 +408,7 @@ services:
       - REKONI_URL=http://huly.local:4004
       - ACCOUNTS_URL=http://huly.local:3000
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-      # - HULYLAKE_URL=http://huly.local:8096
+      - HULYLAKE_URL=http://huly.local:8096
   print:
     image: intabiafusion/print
     extra_hosts:
@@ -446,25 +446,25 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://huly.local:4900
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-  love:
-    image: intabiafusion/love
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    environment:
-      - PORT=8096
-      - SECRET=secret
-      - ACCOUNTS_URL=http://huly.local:3000
-      - DB_URL=${DB_URL_PG}
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - STORAGE_PROVIDER_NAME=minio
-      - LIVEKIT_HOST=ws://huly.local:7880
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      - BILLING_URL=http://huly.local:4041
-      - BILLING_POLL_INTERVAL=15
-    ports:
-      - 8096:8096
-    restart: unless-stopped
+#  love:
+#    image: intabiafusion/love
+#    extra_hosts:
+#      - 'huly.local:host-gateway'
+#    environment:
+#      - PORT=8096
+#      - SECRET=secret
+#      - ACCOUNTS_URL=http://huly.local:3000
+#      - DB_URL=${DB_URL_PG}
+#      - STORAGE_CONFIG=${STORAGE_CONFIG}
+#      - STORAGE_PROVIDER_NAME=minio
+#      - LIVEKIT_HOST=ws://huly.local:7880
+#      - LIVEKIT_API_KEY=devkey
+#      - LIVEKIT_API_SECRET=secret
+#      - BILLING_URL=http://huly.local:4041
+#      - BILLING_POLL_INTERVAL=15
+#    ports:
+#      - 8096:8096
+#    restart: unless-stopped
   aibot:
     image: intabiafusion/ai-bot
     ports:
@@ -605,7 +605,7 @@ services:
   #     - HULY_ACCOUNT_SERVICE=http://huly.local:3000
   #   restart: unless-stopped
   hulypulse:
-    image: intabiafusion/hulypulse
+    image: intabiafusion/hulypulse:v0.7.316
     depends_on:
       redis:
         condition: service_started
@@ -742,23 +742,23 @@ services:
       - BADGER_DIRECTORY_VALUE=/badger/data
       - BADGER_DIRECTORY_KEY=/badger/key
     restart: unless-stopped
-  love-agent:
-    image: intabiafusion/love-agent
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    depends_on:
-      - love
-      - aibot
-    environment:
-      - SERVER_SECRET=secret
-      - PLATFORM_URL=http://huly.local:4010
-      - LIVEKIT_URL=ws://huly.local:7880
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      - STT_PROVIDER=stream
-    ports:
-      - 4012:4012
-    restart: unless-stopped
+#  love-agent:
+#    image: intabiafusion/love-agent
+#    extra_hosts:
+#      - 'huly.local:host-gateway'
+#    depends_on:
+#      - love
+#      - aibot
+#    environment:
+#      - SERVER_SECRET=secret
+#      - PLATFORM_URL=http://huly.local:4010
+#      - LIVEKIT_URL=ws://huly.local:7880
+#      - LIVEKIT_API_KEY=devkey
+#      - LIVEKIT_API_SECRET=secret
+#      - STT_PROVIDER=stream
+#    ports:
+#      - 4012:4012
+#    restart: unless-stopped
   billing:
     image: intabiafusion/billing
     extra_hosts:

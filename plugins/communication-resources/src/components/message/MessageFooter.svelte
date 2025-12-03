@@ -77,7 +77,7 @@
   }
 
   async function removeLinkPreview (id: AttachmentID): Promise<void> {
-    await communicationClient.attachmentPatch(message.cardId, message.id, {
+    await communicationClient.attachmentPatch(message.docClass, message.docId, message.id, {
       remove: [id]
     })
   }

@@ -14,74 +14,72 @@
 //
 
 import {
-  type AccountUuid,
   type BlobID,
   type CardID,
   type ContextID,
   type MessageID,
   type SocialID,
-  type WorkspaceUuid,
   type NotificationID,
   type LabelID,
   type CardType,
   NotificationContent,
   NotificationType,
-  PeerKind, PeerExtra
+  PeerKind, PeerExtra, MessageType
 } from '@hcengineering/communication-types'
+import { Domain as ClassDomain, Ref, Class, Doc, AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
 export const schemas = {
   [Domain.MessageIndex]: {
     workspace_id: 'uuid',
-    card_id: 'varchar',
+    domain: 'varchar',
+    doc_id: 'varchar',
+    // doc_class: 'varchar',
     message_id: 'varchar',
+    message_type: 'varchar',
     created: 'timestamptz',
     creator: 'varchar',
     blob_id: 'uuid'
   },
   [Domain.ThreadIndex]: {
     workspace_id: 'uuid',
-    card_id: 'varchar',
+    domain: 'varchar',
+    doc_id: 'varchar',
+    doc_class: 'varchar',
     message_id: 'varchar',
     thread_id: 'varchar',
-    thread_type: 'varchar',
-    replies_count: 'int',
-    last_reply: 'timestamptz'
-  },
-  [Domain.Notification]: {
-    id: 'int8',
-    context_id: 'int8',
-    message_id: 'varchar',
-    creator: 'varchar',
-    blob_id: 'uuid',
-    created: 'timestamptz',
-    content: 'jsonb',
-    type: 'varchar',
-    read: 'bool'
-  },
-  [Domain.Collaborator]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    account: 'uuid',
-    date: 'timestamptz',
-    card_type: 'varchar'
-  },
-  [Domain.Label]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    card_type: 'varchar',
-    label_id: 'varchar',
-    account: 'uuid',
-    created: 'timestamptz'
+    thread_type: 'varchar'
   },
   [Domain.NotificationContext]: {
     workspace_id: 'uuid',
-    card_id: 'varchar',
-    id: 'int8',
+    domain: 'varchar',
+    context_id: 'uuid',
+    doc_id: 'varchar',
+    doc_class: 'varchar',
     account: 'uuid',
     last_view: 'timestamptz',
     last_update: 'timestamptz',
     last_notify: 'timestamptz'
+  },
+  [Domain.Notification]: {
+    notification_id: 'uuid',
+    context_id: 'uuid',
+    read: 'bool',
+    message_id: 'varchar',
+    created: 'timestamptz',
+    content: 'jsonb',
+    creator: 'varchar',
+    blob_id: 'uuid',
+    type: 'varchar'
+  },
+  [Domain.Label]: {
+    workspace_id: 'uuid',
+    domain: 'varchar',
+    doc_id: 'varchar',
+    doc_class: 'varchar',
+    label_id: 'varchar',
+    account: 'uuid',
+    created: 'timestamptz'
   },
   [Domain.Peer]: {
     workspace_id: 'uuid',
@@ -99,7 +97,6 @@ export interface DomainDbModel {
 
   [Domain.Notification]: NotificationDbModel
   [Domain.NotificationContext]: ContextDbModel
-  [Domain.Collaborator]: CollaboratorDbModel
 
   [Domain.Label]: LabelDbModel
   [Domain.Peer]: PeerDbModel
@@ -127,8 +124,11 @@ export type DbModelBatchUpdate<D extends Domain> = Array<{
 
 interface MessageIndexDbModel {
   workspace_id: WorkspaceUuid
-  card_id: CardID
+  domain: ClassDomain
+  doc_id: Ref<Doc>
+  // doc_class: Ref<Class<Doc>>
   message_id: MessageID
+  message_type: MessageType
   created: Date
   creator: SocialID
   blob_id: BlobID
@@ -136,49 +136,44 @@ interface MessageIndexDbModel {
 
 interface ThreadDbModel {
   workspace_id: WorkspaceUuid
-  card_id: CardID
+  domain: ClassDomain
+  doc_id: Ref<Doc>
+  doc_class: Ref<Class<Doc>>
   message_id: MessageID
   thread_id: CardID
   thread_type: CardType
-  replies_count: number
-  last_reply: Date
-}
-
-interface NotificationDbModel {
-  id: NotificationID
-  type: NotificationType
-  read: boolean
-  message_id: MessageID
-  creator: SocialID
-  blob_id: BlobID
-  context_id: ContextID
-  created: Date
-  content: NotificationContent
 }
 
 interface ContextDbModel {
-  id: ContextID
   workspace_id: WorkspaceUuid
-  card_id: CardID
+  domain: ClassDomain
+  context_id: ContextID
+  doc_id: Ref<Doc>
+  doc_class: Ref<Class<Doc>>
   account: AccountUuid
   last_update: Date
   last_view: Date
   last_notify: Date
 }
 
-interface CollaboratorDbModel {
-  workspace_id: WorkspaceUuid
-  card_id: CardID
-  card_type: CardType
-  account: AccountUuid
-  date: Date
+interface NotificationDbModel {
+  context_id: ContextID
+  notification_id: NotificationID
+  type: NotificationType
+  read: boolean
+  message_id: MessageID
+  creator: SocialID
+  blob_id: BlobID
+  created: Date
+  content: NotificationContent
 }
 
 interface LabelDbModel {
   workspace_id: WorkspaceUuid
+  domain: ClassDomain
   label_id: LabelID
-  card_id: CardID
-  card_type: CardType
+  doc_id: Ref<Doc>
+  doc_class: Ref<Class<Doc>>
   account: AccountUuid
   created: Date
 }

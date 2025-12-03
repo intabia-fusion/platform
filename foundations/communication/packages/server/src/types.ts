@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Account, MeasureContext } from '@hcengineering/core'
+import { Account, Class, Doc, Hierarchy, MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import type {
   EventResult,
   Event,
@@ -21,17 +21,16 @@ import type {
 } from '@hcengineering/communication-sdk-types'
 import type {
   CardID,
-  Collaborator,
-  FindCollaboratorsParams,
-  FindLabelsParams, FindMessagesGroupParams, FindMessagesMetaParams,
+  FindLabelsParams,
+  FindMessagesGroupParams,
+  FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   FindPeersParams,
   Label, MessageMeta, MessagesGroup,
   Notification,
   NotificationContext,
-  Peer,
-  WorkspaceUuid
+  Peer
 } from '@hcengineering/communication-types'
 
 import { LowLevelClient } from './client'
@@ -60,13 +59,12 @@ export interface Middleware {
   ) => Promise<Notification[]>
 
   findLabels: (session: SessionData, params: FindLabelsParams, subscription?: Subscription) => Promise<Label[]>
-  findCollaborators: (session: SessionData, params: FindCollaboratorsParams) => Promise<Collaborator[]>
   findPeers: (session: SessionData, params: FindPeersParams) => Promise<Peer[]>
 
   event: (session: SessionData, event: Enriched<Event>, derived: boolean) => Promise<EventResult>
 
-  subscribeCard: (session: SessionData, cardId: CardID, subscription: Subscription) => void
-  unsubscribeCard: (session: SessionData, cardId: CardID, subscription: Subscription) => void
+  subscribeDoc: (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription) => void
+  unsubscribeDoc: (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription) => void
 
   handleBroadcast: (session: SessionData, events: Enriched<Event>[]) => void
 
@@ -82,7 +80,7 @@ export interface MiddlewareContext {
 
   cadsWithPeers: Set<CardID>
 
-  derived?: Middleware
+  // derived?: Middleware
   head?: Middleware
 }
 
@@ -98,6 +96,7 @@ export interface TriggerCtx {
   ctx: MeasureContext
   metadata: Metadata
   client: LowLevelClient
+  hierarchy: Hierarchy
   workspace: WorkspaceUuid
   account: Account
   derived: boolean
@@ -113,5 +112,4 @@ export type Enriched<T> = T & {
   _eventExtra: Record<string, any>
 
   skipPropagate?: boolean
-  date: Date
 }

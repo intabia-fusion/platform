@@ -25,6 +25,7 @@ import { serverAiBotId } from '@hcengineering/server-ai-bot'
 import { serverAttachmentId } from '@hcengineering/server-attachment'
 import { serverCalendarId } from '@hcengineering/server-calendar'
 import { serverCardId } from '@hcengineering/server-card'
+import {serverCommunicationId} from '@hcengineering/server-communication'
 import { serverCollaborationId } from '@hcengineering/server-collaboration'
 import { serverContactId } from '@hcengineering/server-contact'
 import { serverDocumentId } from '@hcengineering/server-document'
@@ -55,6 +56,7 @@ addLocation(serverTaskId, () => import('@hcengineering/server-task-resources'))
 addLocation(serverTrackerId, () => import('@hcengineering/server-tracker-resources'))
 addLocation(serverTagsId, () => import('@hcengineering/server-tags-resources'))
 addLocation(serverCardId, () => import('@hcengineering/server-card-resources'))
+addLocation(serverCommunicationId, () => import('@hcengineering/server-communication-resources'))
 addLocation(serverCalendarId, () => import('@hcengineering/server-calendar-resources'))
 addLocation(serverGmailId, () => import('@hcengineering/server-gmail-resources'))
 addLocation(serverTelegramId, () => import('@hcengineering/server-telegram-resources'))

@@ -19,7 +19,6 @@ import {
   Notification,
   NotificationContext,
   NotificationID,
-  PersonUuid,
   Emoji,
   AttachmentData,
   SocialID,
@@ -29,22 +28,18 @@ import {
   CardType
 } from '@hcengineering/communication-types'
 import {
-  AddAttachmentsOperation,
   CreateMessageEvent,
   CreateNotificationContextEvent,
   CreateNotificationEvent,
   MessageEventType,
   PatchEvent,
-  RemoveAttachmentsOperation,
   RemoveNotificationContextEvent,
-  SetAttachmentsOperation,
-  UpdateAttachmentsOperation,
   UpdateNotificationContextEvent,
   ReactionPatchEvent,
   AttachmentPatchEvent,
-  BlobPatchEvent,
   ThreadPatchEvent
 } from '@hcengineering/communication-sdk-types'
+import type { PersonUuid } from '@hcengineering/core'
 
 import { withTotal } from './utils'
 
@@ -55,7 +50,8 @@ export class MessageProcessor {
     if (messageId == null) throw new Error('Message id is required')
     return {
       id: messageId,
-      cardId: event.cardId,
+      docId: event.docId,
+      docClass: event.docClass,
       type: event.messageType,
       content: event.content,
       extra: event.extra,
@@ -83,7 +79,8 @@ export class NotificationContextProcessor {
     }
     return {
       id: contextId,
-      cardId: event.cardId,
+      docId: event.docId,
+      docClass: event.docClass,
       account: event.account,
       lastView: event.lastView,
       lastUpdate: event.lastUpdate,
@@ -118,7 +115,8 @@ export class NotificationProcessor {
     }
     return {
       id: notificationId,
-      cardId: event.cardId,
+      docId: event.docId,
+      docClass: event.docClass,
       contextId: event.contextId,
       account: event.account,
       type: event.notificationType,
@@ -133,7 +131,9 @@ export class NotificationProcessor {
 }
 
 function applyPatchEvent (message: Message, event: PatchEvent): Message | undefined {
-  if (message.cardId !== event.cardId || message.id !== event.messageId) return message
+  if (message.docId !== event.docId || message.docClass !== event.docClass || message.id !== event.messageId) {
+    return message
+  }
   const date = event.date ?? new Date()
 
   switch (event.type) {
@@ -157,8 +157,6 @@ function applyPatchEvent (message: Message, event: PatchEvent): Message | undefi
       return patchReactions(message, event, date)
     case MessageEventType.AttachmentPatch:
       return patchAttachments(message, event, date)
-    case MessageEventType.BlobPatch:
-      return patchBlobs(message, event, date)
     case MessageEventType.ThreadPatch:
       return patchThread(message, event, date)
   }
@@ -218,60 +216,6 @@ function patchAttachments (message: Message, event: AttachmentPatchEvent, date: 
     }
   }
   return message
-}
-
-function patchBlobs (message: Message, event: BlobPatchEvent, date: Date): Message {
-  const operations: (
-    | AddAttachmentsOperation
-    | RemoveAttachmentsOperation
-    | SetAttachmentsOperation
-    | UpdateAttachmentsOperation
-  )[] = []
-  for (const op of event.operations) {
-    if (op.opcode === 'attach') {
-      operations.push({
-        opcode: 'add',
-        attachments: op.blobs.map((it) => ({
-          id: it.blobId as any as AttachmentID,
-          mimeType: it.mimeType ?? it.mimeType,
-          params: it
-        }))
-      })
-    } else if (op.opcode === 'detach') {
-      operations.push({
-        opcode: 'remove',
-        ids: op.blobIds as any as AttachmentID[]
-      })
-    } else if (op.opcode === 'set') {
-      operations.push({
-        opcode: 'set',
-        attachments: op.blobs.map((it) => ({
-          id: it.blobId as any as AttachmentID,
-          mimeType: it.mimeType ?? it.mimeType,
-          params: it
-        }))
-      })
-    } else if (op.opcode === 'update') {
-      operations.push({
-        opcode: 'update',
-        attachments: op.blobs.map((it) => ({
-          id: it.blobId as any as AttachmentID,
-          params: it
-        }))
-      })
-    }
-  }
-
-  const ev: AttachmentPatchEvent = {
-    type: MessageEventType.AttachmentPatch,
-    cardId: message.cardId,
-    messageId: message.id,
-    operations,
-    socialId: event.socialId,
-    date: event.date
-  }
-
-  return patchAttachments(message, ev, date)
 }
 
 function addAttachments (message: Message, data: AttachmentData[], creator: SocialID, created: Date): Message {
@@ -367,7 +311,8 @@ function attachThread (message: Message, threadId: CardID, threadType: CardType)
     threads: [
       ...message.threads,
       {
-        cardId: message.cardId,
+        docId: message.docId,
+        docClass: message.docClass,
         messageId: message.id,
         threadId,
         threadType,

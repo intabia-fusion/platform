@@ -14,17 +14,20 @@
 //
 
 import {
-  BlobID,
-  type CardID,
-  type CardType,
   FindMessagesMetaParams,
   FindThreadMetaParams,
   type MessageID,
   MessageMeta,
-  type SocialID,
   type ThreadMeta
 } from '@hcengineering/communication-types'
-import { Domain, ThreadMetaUpdate, ThreadMetaQuery } from '@hcengineering/communication-sdk-types'
+import { Doc, Ref, Class } from '@hcengineering/core'
+import {
+  Domain,
+  ThreadMetaUpdate,
+  ThreadMetaQuery,
+  CreateMessageMetaAttrs,
+  CreateThreadMetaAttrs
+} from '@hcengineering/communication-sdk-types'
 
 import { BaseDb } from './base'
 import { DbModel, DbModelFilter, schemas } from '../schema'
@@ -32,23 +35,19 @@ import { toMessageMeta, toThreadMeta } from './mapping'
 
 export class MessagesDb extends BaseDb {
   // Message Index
-  public async createMessageMeta (
-    cardId: CardID,
-    messageId: MessageID,
-    creator: SocialID,
-    created: Date,
-    blobId: BlobID
-  ): Promise<boolean> {
+  public async createMessageMeta (docClass: Ref<Class<Doc>>, attrs: CreateMessageMetaAttrs): Promise<boolean> {
     const model: DbModel<Domain.MessageIndex> = {
       workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      created,
-      creator,
-      blob_id: blobId
+      domain: this.hierarchy.getDomain(docClass),
+      doc_id: attrs.docId,
+      message_id: attrs.id,
+      message_type: attrs.type,
+      created: attrs.created,
+      creator: attrs.creator,
+      blob_id: attrs.blobId
     }
     const insertSql = this.getInsertSql(Domain.MessageIndex, model, [], {
-      conflictColumns: ['workspace_id', 'card_id', 'message_id'],
+      conflictColumns: ['workspace_id', 'domain', 'doc_id', 'message_id'],
       conflictAction: 'DO NOTHING'
     })
 
@@ -57,20 +56,28 @@ export class MessagesDb extends BaseDb {
     return result.count !== 0
   }
 
-  async removeMessageMeta (cardId: CardID, messageId: MessageID): Promise<void> {
+  async removeMessageMeta (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID | null): Promise<void> {
     const filter: DbModelFilter<Domain.MessageIndex> = [
       {
         column: 'workspace_id',
         value: this.workspace
       },
       {
-        column: 'card_id',
-        value: cardId
+        column: 'domain',
+        value: this.hierarchy.getDomain(docClass)
       },
       {
-        column: 'message_id',
-        value: messageId
-      }
+        column: 'doc_id',
+        value: docId
+      },
+      ...(messageId != null
+        ? [
+            {
+              column: 'message_id',
+              value: messageId
+            } as const
+          ]
+        : [])
     ]
 
     const { sql, values } = this.getDeleteSql(Domain.MessageIndex, filter)
@@ -101,9 +108,14 @@ export class MessagesDb extends BaseDb {
     where.push(`mi.workspace_id = $${index++}::${schema.workspace_id}`)
     values.push(this.workspace)
 
-    if (params.cardId != null) {
-      where.push(`mi.card_id = $${index++}::${schema.card_id}`)
-      values.push(params.cardId)
+    if (params.docClass != null) {
+      where.push(`mi.domain = $${index++}::${schema.domain}`)
+      values.push(this.hierarchy.getDomain(params.docClass))
+    }
+
+    if (params.docId != null) {
+      where.push(`mi.doc_id = $${index++}::${schema.doc_id}`)
+      values.push(params.docId)
     }
 
     if (params.id != null) {
@@ -120,15 +132,15 @@ export class MessagesDb extends BaseDb {
   }
 
   // Thread Index
-  async attachThreadMeta (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType): Promise<void> {
+  async attachThreadMeta (docClass: Ref<Class<Doc>>, attrs: CreateThreadMetaAttrs): Promise<void> {
     const db: DbModel<Domain.ThreadIndex> = {
       workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      thread_id: threadId,
-      thread_type: threadType,
-      replies_count: 0,
-      last_reply: new Date()
+      domain: this.hierarchy.getDomain(docClass),
+      doc_id: attrs.docId,
+      doc_class: docClass,
+      message_id: attrs.messageId,
+      thread_id: attrs.threadId,
+      thread_type: attrs.threadType
     }
 
     const { sql, values } = this.getInsertSql(Domain.ThreadIndex, db)
@@ -154,10 +166,17 @@ export class MessagesDb extends BaseDb {
     let where = `WHERE workspace_id = $${index++}::uuid`
 
     values.push(this.workspace)
-    if (query.cardId != null) {
-      where += ` AND card_id = $${index++}::varchar`
-      values.push(query.cardId)
+
+    if (query.docClass != null) {
+      where += ` AND domain= $${index++}::varchar`
+      values.push(this.hierarchy.getDomain(query.docClass))
     }
+
+    if (query.docId != null) {
+      where += ` AND doc_id = $${index++}::varchar`
+      values.push(query.docId)
+    }
+
     if (query.messageId != null) {
       where += ` AND message_id = $${index++}::varchar`
       values.push(query.messageId)
@@ -180,7 +199,9 @@ export class MessagesDb extends BaseDb {
       }
     ]
 
-    if (query.cardId != null) filter.push({ column: 'card_id', value: query.cardId })
+    if (query.docClass != null) filter.push({ column: 'domain', value: this.hierarchy.getDomain(query.docClass) })
+    if (query.docId != null) filter.push({ column: 'doc_id', value: query.docId })
+
     if (query.messageId != null) filter.push({ column: 'message_id', value: query.messageId })
     if (query.threadId != null) filter.push({ column: 'thread_id', value: query.threadId })
 
@@ -217,9 +238,9 @@ export class MessagesDb extends BaseDb {
     where.push(`${prefix}workspace_id = $${index++}::uuid`)
     values.push(this.workspace)
 
-    if (params.cardId != null) {
-      where.push(`${prefix}card_id = $${index++}::varchar`)
-      values.push(params.cardId)
+    if (params.docId != null) {
+      where.push(`${prefix}doc_id = $${index++}::varchar`)
+      values.push(params.docId)
     }
 
     if (params.messageId != null) {

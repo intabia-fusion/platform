@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Attribute, BlobMetadata, Class, Mixin, Ref } from '@hcengineering/core'
+import type { Attribute, BlobMetadata, Class, Doc, Mixin, Ref, PersonUuid } from '@hcengineering/core'
 
-import type { AccountUuid, BlobID, CardID, CardType, ID, Markdown, SocialID, PersonUuid } from './core'
+import type { BlobID, CardID, CardType, ID, Markdown, SocialID } from './core'
 
 // Message
 export type MessageID = ID & { message: true }
@@ -24,13 +24,17 @@ export type Emoji = string & { emoji: true }
 export enum MessageType {
   Text = 'text',
   Activity = 'activity'
+
+  // Forward = 'forward',
+  // Backlink = 'backlink',
 }
 
 export type MessageExtra = Record<string, any>
 
 export interface Message {
   id: MessageID
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
 
   type: MessageType
   content: Markdown
@@ -55,7 +59,7 @@ export interface EmojiData {
   date: Date
 }
 
-export type MessageMeta = Pick<Message, 'id' | 'cardId' | 'created' | 'creator'> & { blobId: BlobID }
+export type MessageMeta = Pick<Message, 'id' | 'docId' | 'type' | 'created' | 'creator'> & { blobId: BlobID }
 
 export interface ActivityMessage extends Message {
   type: MessageType.Activity
@@ -69,19 +73,21 @@ export interface ActivityMessageExtra {
 
 export type ActivityUpdate =
   | ActivityAttributeUpdate
+  | ActivityCollectionUpdate
   | ActivityTagUpdate
   | ActivityTypeUpdate
-  | ActivityCollaboratorsUpdate
   | ActivityProcess
   | ActivityCollaborativeChange
 
 export enum ActivityUpdateType {
   Attribute = 'attribute',
-  Tag = 'tag',
-  Collaborators = 'collaborators',
-  Type = 'type',
+  Collection = 'collection',
+  CollaborativeChange = 'collaborativeChange',
+
+  // Only for cards
   Process = 'process',
-  CollaborativeChange = 'collaborativeChange'
+  Tag = 'tag',
+  Type = 'type'
 }
 
 export interface ActivityProcess {
@@ -95,12 +101,6 @@ export interface ActivityTagUpdate {
   type: ActivityUpdateType.Tag
   tag: Ref<any>
   action: 'add' | 'remove'
-}
-
-export interface ActivityCollaboratorsUpdate {
-  type: ActivityUpdateType.Collaborators
-  added: AccountUuid[]
-  removed: AccountUuid[]
 }
 
 export interface ActivityTypeUpdate {
@@ -125,6 +125,15 @@ export interface ActivityAttributeUpdate {
   set?: AttributeValue | AttributeValue[]
   added?: AttributeValue[]
   removed?: AttributeValue[]
+}
+
+export interface ActivityCollectionUpdate {
+  type: ActivityUpdateType.Collection
+  collection: string
+  objectClass: Ref<Class<Doc>>
+  objectId: Ref<Doc>
+  title?: string
+  attributes?: Record<string, any>
 }
 
 // LinkPreview
@@ -194,7 +203,8 @@ export interface AttachmentUpdateData<P extends AttachmentParams = AttachmentPar
 
 // Thread
 export interface Thread {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
   threadId: CardID
   threadType: CardType
@@ -203,11 +213,12 @@ export interface Thread {
   repliedPersons: Record<PersonUuid, number>
 }
 
-export type ThreadMeta = Pick<Thread, 'cardId' | 'messageId' | 'threadId' | 'threadType'>
+export type ThreadMeta = Pick<Thread, 'docId' | 'docClass' | 'messageId' | 'threadId' | 'threadType'>
 
 // MessagesGroup
 export interface MessagesGroup {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   blobId: BlobID
   fromDate: Date
   toDate: Date

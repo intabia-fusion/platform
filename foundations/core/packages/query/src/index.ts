@@ -62,7 +62,8 @@ import core, {
   type DomainParams,
   type DomainRequestOptions,
   type DomainResult,
-  type OperationDomain
+  type OperationDomain,
+  TxDomainEvent
 } from '@hcengineering/core'
 import { PlatformError } from '@hcengineering/platform'
 import { deepEqual } from 'fast-equals'
@@ -232,6 +233,12 @@ export class LiveQuery implements WithTx, Client {
       q.result.clean()
     }
     return toFindResult(q.result.getClone(), q.total)
+  }
+
+  async domainEventTx<T>(
+    tx: TxDomainEvent<T>
+  ): Promise<DomainResult<T>> {
+    return await this.client.domainEventTx(tx)
   }
 
   async domainRequest<T>(

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, CardID, CardType } from './core'
+import type { AccountUuid, Ref, Class, Doc } from '@hcengineering/core'
 
 export type LabelID = string & { __label: true }
 
@@ -21,8 +21,8 @@ export const SubscriptionLabelID = 'card:label:Subscribed' as LabelID
 
 export interface Label {
   labelId: LabelID
-  cardId: CardID
-  cardType: CardType
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   account: AccountUuid
   created: Date
 }

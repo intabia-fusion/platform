@@ -24,6 +24,8 @@ import {
   type Builder
 } from '@hcengineering/model'
 import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
+import communication, { type ActivityControl } from '@hcengineering/communication'
+
 import github from './plugin'
 
 import {
@@ -592,7 +594,7 @@ export function createModel (builder: Builder): void {
     presenter: github.component.PullRequestPresenter
   })
 
-  // builder.mixin(github.class.GithubPullRequest, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(github.class.GithubPullRequest, core.class.Class, communication.mixin.Messageable, {})
 
   classPresenter(
     builder,
@@ -701,7 +703,7 @@ export function createModel (builder: Builder): void {
           presenter: tracker.component.SubIssuesSelector,
           props: {}
         },
-        { key: 'comments', displayProps: { key: 'comments', suffix: true } },
+        // { key: 'comments', displayProps: { key: 'comments', suffix: true } },
         { key: 'attachments', displayProps: { key: 'attachments', suffix: true } },
         { key: '', displayProps: { grow: true } },
         {
@@ -920,13 +922,6 @@ export function createModel (builder: Builder): void {
   //   },
   //   github.ids.GitHubPullRequestChatMessageViewlet
   // )
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: github.class.GithubPullRequest,
-  //   components: {
-  //     input: { component: chunter.component.ChatMessageInput }
-  //   }
-  // })
 
   builder.createDoc(
     task.class.ProjectTypeDescriptor,
@@ -972,19 +967,18 @@ export function createModel (builder: Builder): void {
   // Activity filters
 
   // We should skip activity github mixin stuff.
-  // TODO: FIXME
-  // builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
-  //   objectClass: tracker.class.Issue,
-  //   skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubIssue }]
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityMessageControl, core.space.Model, {
-  //   objectClass: contact.class.Person,
-  //   skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubUser }]
-  // })
-  //
-  // builder.mixin(github.class.GithubReviewComment, core.class.Class, activity.mixin.IgnoreActivity, {})
-  // builder.mixin(github.class.GithubPullRequestReview, core.class.Class, activity.mixin.IgnoreActivity, {})
+  builder.createDoc(communication.class.ActivityControl, core.space.Model, {
+    objectClass: tracker.class.Issue,
+    skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubIssue }]
+  })
+
+  builder.createDoc(communication.class.ActivityControl, core.space.Model, {
+    objectClass: contact.class.Person,
+    skip: [{ _class: core.class.TxMixin, mixin: github.mixin.GithubUser }]
+  })
+  builder.mixin(github.class.GithubReviewComment, core.class.Class, communication.mixin.IgnoreActivity, {})
+  builder.mixin(github.class.GithubPullRequestReview, core.class.Class, communication.mixin.IgnoreActivity, {})
+
   builder.mixin(github.class.GithubReview, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: github.component.GithubReviewPresenter
   })
@@ -993,28 +987,28 @@ export function createModel (builder: Builder): void {
     presenter: github.component.GithubReviewThreadPresenter
   })
 
-  // builder.createDoc<ActivityMessageControl<GithubPullRequest>>(
-  //   activity.class.ActivityMessageControl,
-  //   core.space.Model,
-  //   {
-  //     objectClass: github.class.GithubPullRequest,
-  //     skip: [],
-  //     skipFields: [
-  //       'head',
-  //       'base',
-  //       'mergedAt',
-  //       'closedAt',
-  //       'commits',
-  //       'mergeable',
-  //       'reviews',
-  //       'reviewComments',
-  //       'latestReviews',
-  //       'reviewDecision',
-  //       'state'
-  //     ]
-  //   }
-  // )
-  //
+  builder.createDoc<ActivityControl<GithubPullRequest>>(
+    communication.class.ActivityControl,
+    core.space.Model,
+    {
+      objectClass: github.class.GithubPullRequest,
+      skip: [],
+      skipFields: [
+        'head',
+        'base',
+        'mergedAt',
+        'closedAt',
+        'commits',
+        'mergeable',
+        'reviews',
+        'reviewComments',
+        'latestReviews',
+        'reviewDecision',
+        'state'
+      ]
+    }
+  )
+
   // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
   //   objectClass: github.class.GithubPullRequest,
   //   action: 'update',

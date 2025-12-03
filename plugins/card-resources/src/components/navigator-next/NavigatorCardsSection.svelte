@@ -34,19 +34,19 @@
   export let selectedCard: Ref<Card> | undefined = undefined
 
   const cardsQuery = createQuery()
-  const notificationContextsQuery = createNotificationContextsQuery()
+  // const notificationContextsQuery = createNotificationContextsQuery()
 
-  let cards: Card[] = []
+  const cards: Card[] = []
   let contextByCard = new Map<Ref<Card>, NotificationContext>()
-  let isLoading: boolean = true
-  let hasMore = false
+  const isLoading: boolean = true
+  const hasMore = false
 
   let sort: 'alphabetical' | 'recent' | undefined
   $: sort = config.specialSorting?.[type._id] ?? config.defaultSorting ?? 'alphabetical'
 
   let limit = config.limit
 
-  $: ids = (config.labelFilter?.length ?? 0) > 0 ? labels.map((it) => it.cardId) : undefined
+  // $: ids = (config.labelFilter?.length ?? 0) > 0 ? labels.map((it) => it.cardId) : undefined
 
   function parseLookbackDuration (input: string): Timestamp {
     if (input.length < 2) throw new Error('Invalid duration format')
@@ -71,55 +71,55 @@
     return value * multiplier
   }
 
-  $: cardIds = ids?.filter((it) => !favorites.some((fav) => fav.attachedTo === it))
+  // $: cardIds = ids?.filter((it) => !favorites.some((fav) => fav.attachedTo === it))
 
-  $: if ((cardIds && cardIds.length > 0) || (config.labelFilter?.length ?? 0) === 0) {
-    cardsQuery.query<Card>(
-      type._id,
-      {
-        // TODO: Should be join instead of $in. But for now labels and cards in different api.
-        ...(cardIds === undefined ? {} : { _id: { $in: cardIds } }),
-        ...(space !== undefined ? { space: space._id } : {}),
-        ...(config.lookback !== undefined
-          ? { modifiedOn: { $gte: Date.now() - parseLookbackDuration(config.lookback) } }
-          : {})
-      },
-      (res) => {
-        const cardsResult = res
-        hasMore = res.length === limit + 1
-        if (hasMore) {
-          cardsResult.pop()
-        }
-        cards = cardsResult
-        isLoading = false
-      },
-      {
-        limit: limit + 1,
-        sort: sort === 'alphabetical' ? { title: SortingOrder.Ascending } : { modifiedOn: SortingOrder.Descending }
-      }
-    )
-  } else if ((!ids || ids.length === 0) && (config.labelFilter?.length ?? 0) > 0) {
-    isLoading = false
-  }
+  // $: if ((cardIds && cardIds.length > 0) || (config.labelFilter?.length ?? 0) === 0) {
+  //   cardsQuery.query<Card>(
+  //     type._id,
+  //     {
+  //       // TODO: Should be join instead of $in. But for now labels and cards in different api.
+  //       ...(cardIds === undefined ? {} : { _id: { $in: cardIds } }),
+  //       ...(space !== undefined ? { space: space._id } : {}),
+  //       ...(config.lookback !== undefined
+  //         ? { modifiedOn: { $gte: Date.now() - parseLookbackDuration(config.lookback) } }
+  //         : {})
+  //     },
+  //     (res) => {
+  //       const cardsResult = res
+  //       hasMore = res.length === limit + 1
+  //       if (hasMore) {
+  //         cardsResult.pop()
+  //       }
+  //       cards = cardsResult
+  //       isLoading = false
+  //     },
+  //     {
+  //       limit: limit + 1,
+  //       sort: sort === 'alphabetical' ? { title: SortingOrder.Ascending } : { modifiedOn: SortingOrder.Descending }
+  //     }
+  //   )
+  // } else if ((!ids || ids.length === 0) && (config.labelFilter?.length ?? 0) > 0) {
+  //   isLoading = false
+  // }
 
   $: if (cards.length > 0) {
-    notificationContextsQuery.query(
-      {
-        cardId: cards.map((it) => it._id),
-        notifications: {
-          type: NotificationType.Message,
-          order: SortingOrder.Descending,
-          read: false,
-          limit: 1,
-          total: true
-        }
-      },
-      (res) => {
-        contextByCard = new Map(res.getResult().map((it) => [it.cardId, it]))
-      }
-    )
+    // notificationContextsQuery.query(
+    //   {
+    //     cardId: cards.map((it) => it._id),
+    //     notifications: {
+    //       type: NotificationType.Message,
+    //       order: SortingOrder.Descending,
+    //       read: false,
+    //       limit: 1,
+    //       total: true
+    //     }
+    //   },
+    //   (res) => {
+    //     contextByCard = new Map(res.getResult().map((it) => [it.cardId, it]))
+    //   }
+    // )
   } else {
-    notificationContextsQuery.unsubscribe()
+    // notificationContextsQuery.unsubscribe()
     contextByCard = new Map()
   }
 

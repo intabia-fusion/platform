@@ -1,5 +1,4 @@
-<!--
-// Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2025 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -11,21 +10,6 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
-<script lang="ts">
-  import { TxUpdateDoc } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { Issue } from '@hcengineering/tracker'
-  import { Icon } from '@hcengineering/ui'
-  import { issuePriorities } from '../../utils'
 
-  export let tx: TxUpdateDoc<Issue>
-  $: value = tx.operations.priority
-
-  let icon: Asset
-  $: if (value !== undefined) ({ icon } = issuePriorities[value])
-</script>
-
-<div class="icon">
-  <Icon {icon} size={'small'} />
-</div>
+export { getCollaborators } from './utils'
+export { ManageCollaboratorsTrigger } from './collaborators'

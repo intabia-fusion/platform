@@ -16,10 +16,9 @@ import { Producer } from 'kafkajs'
 
 import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { type Card } from '@hcengineering/card'
-import { MessageID, MessageType } from '@hcengineering/communication-types'
+import { AttachmentID, MessageID, MessageType } from '@hcengineering/communication-types'
 import communication from '@hcengineering/communication'
 import core, {
-  type Blob,
   type MeasureContext,
   type PersonId,
   type Ref,
@@ -34,8 +33,7 @@ import { type KeyValueClient } from '@hcengineering/kvs-client'
 
 import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import {
-  AddCollaboratorsEvent,
-  BlobPatchEvent,
+  AttachmentPatchEvent,
   CreateMessageEvent,
   MessageEventType,
   NotificationEventType,
@@ -282,8 +280,8 @@ async function createMailThread (
   const createSubjectEvent: CreateMessageEvent = {
     type: MessageEventType.CreateMessage,
     messageType: MessageType.Text,
-    cardId: data.channel,
-    cardType: communication.type.Thread,
+    docId: data.channel,
+    docClass: communication.type.Thread,
     content: data.subject,
     socialId: data.modifiedBy,
     date: new Date(data.created.getTime() + MessageTimeShift.Subject),
@@ -298,7 +296,8 @@ async function createMailThread (
 
   const threadEvent: ThreadPatchEvent = {
     type: MessageEventType.ThreadPatch,
-    cardId: data.channel,
+    docId: data.channel,
+    docClass: communication.type.Thread,
     messageId: subjectId,
     operation: {
       opcode: 'attach',
@@ -323,8 +322,8 @@ async function createMailMessage (
   const createMessageEvent: CreateMessageEvent = {
     type: MessageEventType.CreateMessage,
     messageType: MessageType.Text,
-    cardId: threadId,
-    cardType: communication.type.Thread,
+    docId: threadId,
+    docClass: communication.type.Thread,
     content: data.content,
     socialId: data.modifiedBy,
     date: data.created,
@@ -349,21 +348,26 @@ async function createFiles (
   messageId: MessageID
 ): Promise<void> {
   const fileData: Buffer[] = attachments.map((a) => {
-    const attachBlobEvent: BlobPatchEvent = {
-      type: MessageEventType.BlobPatch,
-      cardId: threadId,
+    const attachBlobEvent: AttachmentPatchEvent = {
+      type: MessageEventType.AttachmentPatch,
+      docId: threadId,
+      docClass: communication.type.Thread,
       messageId,
       socialId: messageData.modifiedBy,
+      date: messageData.created,
       operations: [
         {
-          opcode: 'attach',
-          blobs: [
+          opcode: 'add',
+          attachments: [
             {
-              blobId: a.id as Ref<Blob>,
+              id: a.id as AttachmentID,
               mimeType: a.contentType,
-              fileName: a.name,
-              size: a.data.length,
-              metadata: getBlobMetadata(ctx, a)
+              params: {
+                blobId: a.id,
+                fileName: a.name,
+                size: a.data.length,
+                metadata: getBlobMetadata(ctx, a)
+              }
             }
           ]
         }
@@ -390,19 +394,20 @@ async function addCollaborators (
   data: MessageData,
   threadId: Ref<Card>
 ): Promise<void> {
-  if (data.recipient.socialId === data.modifiedBy) {
-    return // Message author should be automatically added as a collaborator
-  }
-  const addCollaboratorsEvent: AddCollaboratorsEvent = {
-    type: NotificationEventType.AddCollaborators,
-    cardId: threadId,
-    cardType: communication.type.Thread,
-    collaborators: [data.recipient.uuid as AccountUuid],
-    socialId: data.modifiedBy,
-    date: new Date(data.created.getTime() + MessageTimeShift.Collaborator)
-  }
-  const createMessageData = toEventBuffer(addCollaboratorsEvent)
-  await sendToCommunicationTopic(producer, config, data, createMessageData)
+  // if (data.recipient.socialId === data.modifiedBy) {
+  //   return // Message author should be automatically added as a collaborator
+  // }
+  // TODO: FIXME
+  // const addCollaboratorsEvent: AddCollaboratorsEvent = {
+  //   type: NotificationEventType.AddCollaborators,
+  //   docId: threadId,
+  //   docClass: communication.type.Thread,
+  //   collaborators: [data.recipient.uuid as AccountUuid],
+  //   socialId: data.modifiedBy,
+  //   date: new Date(data.created.getTime() + MessageTimeShift.Collaborator)
+  // }
+  // const createMessageData = toEventBuffer(addCollaboratorsEvent)
+  //await sendToCommunicationTopic(producer, config, data, createMessageData)
 }
 
 async function sendToCommunicationTopic (

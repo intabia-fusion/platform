@@ -36,6 +36,7 @@ import { defaultQueryParams, NotificationQueryParams, type PagedQuery, type Quer
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
 import { matchNotification } from '../utils'
+import { Hierarchy } from '@hcengineering/core'
 
 export class NotificationQuery implements PagedQuery<Notification, NotificationQueryParams> {
   private result: QueryResult<Notification> | Promise<QueryResult<Notification>>
@@ -45,6 +46,7 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
   constructor (
     private readonly client: FindClient,
+    private readonly hierarchy: Hierarchy,
     private readonly hulylake: HulylakeWorkspaceClient,
     public readonly id: QueryId,
     public readonly params: NotificationQueryParams,

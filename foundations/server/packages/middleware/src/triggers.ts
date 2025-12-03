@@ -171,7 +171,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
 
     const triggers = await this.processSyncTriggers(ctx, txes, triggerControl, findAll)
 
-    const derived = [...removed, ...collections, ...moves, ...triggers]
+    const derived = [...removed, ...collections, ...moves, ...triggers].filter(it => it._class !== core.class.TxDomainEvent)
 
     if (derived.length > 0) {
       await this.processDerivedTxes(ctx, derived)

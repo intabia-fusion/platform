@@ -286,10 +286,10 @@
   let hasNewInboxNotifications = false
 
   $: if (isCommunicationEnabled) {
-    const notificationCountQuery = createNotificationsQuery()
-    notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
-      hasNewInboxNotifications = res.getResult().length > 0
-    })
+    // const notificationCountQuery = createNotificationsQuery()
+    // notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
+    //   hasNewInboxNotifications = res.getResult().length > 0
+    // })
   } else {
     hasNewInboxNotifications = false
   }

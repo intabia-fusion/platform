@@ -51,6 +51,7 @@ import core, {
   toFindResult,
   Tx,
   TxApplyIf,
+  TxDomainEvent,
   TxHandler,
   TxResult,
   type WorkspaceUuid
@@ -865,6 +866,16 @@ class Connection implements ClientConnection {
 
   searchFulltext (query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
     return this.sendRequest({ method: 'searchFulltext', params: [query, options] })
+  }
+
+  domainEventTx (tx: TxDomainEvent, options?: DomainRequestOptions): Promise<DomainResult> {
+    return this.sendRequest({
+      method: 'tx',
+      params: [tx],
+      retry: async () => {
+        return options?.retry ?? false
+      }
+    })
   }
 
   domainRequest (domain: OperationDomain, params: DomainParams, options?: DomainRequestOptions): Promise<DomainResult> {

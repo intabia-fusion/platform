@@ -72,7 +72,8 @@ export function extractUpdateMessageData (tx: Tx):
   if (event.content == null) return undefined
   if (blobId == null) return undefined
 
-  return { cardId: event.cardId, content: event.content, blobId, messageId: event.messageId }
+  // return { cardId: event.cardId, content: event.content, blobId, messageId: event.messageId }
+  return {} as any
 }
 
 export function extractRemoveMessageData (tx: Tx):
@@ -94,5 +95,6 @@ export function extractRemoveMessageData (tx: Tx):
 
   if (blobId == null) return undefined
 
-  return { messageId: event.messageId, blobId, cardId: event.cardId }
+  // return { messageId: event.messageId, blobId, cardId: event.cardId }
+  return {} as any
 }

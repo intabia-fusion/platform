@@ -17,8 +17,8 @@
   import { PersonPreviewProvider, Avatar } from '@hcengineering/contact-resources'
   import { formatName, Person } from '@hcengineering/contact'
   import { Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
   import { Label } from '@hcengineering/ui'
+  import type { Doc } from '@hcengineering/core'
 
   import communication from '../../plugin'
   import MessageInput from '../input/MessageInput.svelte'
@@ -35,8 +35,10 @@
     isMessageOriginalShown
   } from '../../stores'
   import { showOriginalMessage, translateMessage } from '../../actions'
+  import MessageTimestamp from './MessageTimestamp.svelte'
+  import { DateFormat } from '../../types'
 
-  export let card: Card
+  export let doc: Doc
   export let author: Person | undefined
   export let message: Message
   export let isEditing = false
@@ -46,21 +48,15 @@
   export let showThreads: boolean = true
   export let collapsible: boolean = true
   export let maxHeight: string = '30rem'
+  export let dateFormat: DateFormat | undefined = undefined
 
   let isShowMoreActive: boolean = false
-
-  function formatDate (date: Date): string {
-    return date.toLocaleTimeString('default', {
-      hour: 'numeric',
-      minute: 'numeric'
-    })
-  }
 
   let isManualTranslating = false
   let manualTranslateStatus: TranslateMessagesStatus | undefined = undefined
   let isTranslated = false
 
-  $: manualTranslateStatus = $translateMessagesStore.find((it) => it.cardId === card._id && it.messageId === message.id)
+  $: manualTranslateStatus = $translateMessagesStore.find((it) => it.cardId === doc._id && it.messageId === message.id)
   $: isManualTranslating = manualTranslateStatus?.inProgress === true
   $: isTranslated = isMessageTranslated(
     message,
@@ -84,7 +80,7 @@
       <div class="time-container">
         <div class="message__time message--time_hoverable">
           <div class="message__date">
-            {formatDate(message.created)}
+            <MessageTimestamp date={message.created} />
           </div>
         </div>
       </div>
@@ -93,11 +89,11 @@
     <div class="message__content">
       {#if !isEditing && message.content !== ''}
         <div class="message__text" class:with-showmore={isShowMoreActive}>
-          <MessageContentViewer {message} {card} {author} {collapsible} {maxHeight} bind:isShowMoreActive />
+          <MessageContentViewer {message} {doc} {author} {collapsible} {maxHeight} bind:isShowMoreActive />
         </div>
       {:else if isEditing}
         <MessageInput
-          {card}
+          {doc}
           {message}
           onCancel={() => {
             messageEditingStore.set(undefined)
@@ -129,7 +125,7 @@
           </div>
         </PersonPreviewProvider>
         <div class="message__date">
-          {formatDate(message.created)}
+          <MessageTimestamp date={message.created} format={dateFormat}/>
         </div>
         {#if message.modified}
           <div class="message__edited-marker">
@@ -141,22 +137,22 @@
             <Label label={communication.string.Translating} />
           </div>
         {:else if isTranslated}
-          <div class="message__show-original" on:click={() => showOriginalMessage(message, card)}>
+          <div class="message__show-original" on:click={() => showOriginalMessage(message, doc)}>
             <Label label={communication.string.ShowOriginal} />
           </div>
         {:else if isOriginalShown}
-          <div class="message__translate" on:click={() => translateMessage(message, card)}>
+          <div class="message__translate" on:click={() => translateMessage(message, doc)}>
             <Label label={communication.string.Translate} />
           </div>
         {/if}
       </div>
       {#if !isEditing}
         <div class="message__text" class:with-showmore={isShowMoreActive}>
-          <MessageContentViewer {message} {card} {author} {collapsible} {maxHeight} bind:isShowMoreActive />
+          <MessageContentViewer {message} {doc} {author} {collapsible} {maxHeight} bind:isShowMoreActive />
         </div>
       {:else if isEditing}
         <MessageInput
-          {card}
+          {doc}
           {message}
           onCancel={() => {
             messageEditingStore.set(undefined)

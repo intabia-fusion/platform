@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
+import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
 
@@ -26,9 +26,6 @@ export const serverCardId = 'server-card' as Plugin
  * @public
  */
 export default plugin(serverCardId, {
-  metadata: {
-    CommunicationEnabled: '' as Metadata<boolean>
-  },
   trigger: {
     OnAttribute: '' as Resource<TriggerFunc>,
     OnAttributeRemove: '' as Resource<TriggerFunc>,

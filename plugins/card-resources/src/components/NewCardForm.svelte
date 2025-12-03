@@ -160,10 +160,10 @@
     blobs: (BlobParams & { mimeType: string })[]
   ): Promise<void> {
     const markdown = markupToMarkdown(markupToJSON(markup))
-    const { messageId } = await communicationClient.createMessage(card, type, markdown)
+    const { messageId } = await communicationClient.createMessage(type, card, markdown)
 
     if (blobs.length > 0) {
-      void communicationClient.attachmentPatch<BlobParams>(card, messageId, {
+      void communicationClient.attachmentPatch<BlobParams>(type, card, messageId, {
         add: blobs.map((it) => ({
           id: it.blobId as any as AttachmentID,
           mimeType: it.mimeType,

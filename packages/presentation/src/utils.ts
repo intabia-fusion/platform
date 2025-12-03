@@ -49,6 +49,7 @@ import core, {
   type Tx,
   type TxApplyIf,
   type TxCUD,
+  type TxDomainEvent,
   TxOperations,
   TxProcessor,
   type TxResult,
@@ -329,6 +330,13 @@ class ClientHookImpl implements Client {
       return await this.hook.findAll(this.client, _class, query, options)
     }
     return await this.client.findAll(_class, query, options)
+  }
+
+  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    if (this.hook !== undefined) {
+      return await this.hook.domainEventTx(this.client, tx)
+    }
+    return await this.client.domainEventTx(tx)
   }
 
   async domainRequest<T>(

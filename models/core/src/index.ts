@@ -35,6 +35,7 @@ import {
   TClass,
   TClassCollaborators,
   TCollaborator,
+  TCollaborators,
   TCollection,
   TConfiguration,
   TConfigurationElement,
@@ -90,7 +91,17 @@ import {
 import { defineSpaceType } from './spaceType'
 import { TDomainStatusPlaceholder, TStatus, TStatusCategory } from './status'
 import { TUserStatus } from './transient'
-import { TTx, TTxApplyIf, TTxCreateDoc, TTxCUD, TTxMixin, TTxRemoveDoc, TTxUpdateDoc, TTxWorkspaceEvent } from './tx'
+import {
+  TTx,
+  TTxApplyIf,
+  TTxCreateDoc,
+  TTxCUD,
+  TTxDomainEvent,
+  TTxMixin,
+  TTxRemoveDoc,
+  TTxUpdateDoc,
+  TTxWorkspaceEvent
+} from './tx'
 
 export { coreId, DOMAIN_SPACE } from '@hcengineering/core'
 export * from './core'
@@ -181,7 +192,9 @@ export function createModel (builder: Builder): void {
     TBenchmarkDoc,
     TTransientConfiguration,
     TClassCollaborators,
-    TCollaborator
+    TCollaborator,
+    TCollaborators,
+    TTxDomainEvent
   )
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {

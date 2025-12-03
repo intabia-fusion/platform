@@ -16,7 +16,6 @@
 import { type Event, EventResult, MessageEventType, type SessionData } from '@hcengineering/communication-sdk-types'
 import { systemAccountUuid } from '@hcengineering/core'
 import type {
-  AccountUuid,
   FindLabelsParams,
   FindNotificationContextParams,
   FindNotificationsParams,
@@ -24,6 +23,7 @@ import type {
   Notification,
   NotificationContext
 } from '@hcengineering/communication-types'
+import type { AccountUuid } from '@hcengineering/core'
 
 import type { Enriched, Middleware, MiddlewareContext, Subscription } from '../types'
 import { BaseMiddleware } from './base'
@@ -52,6 +52,10 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
       }
       default:
         break
+    }
+
+    if (event.socialId == null || event.socialId === '') {
+      event.socialId = session.account.primarySocialId
     }
 
     return await this.provideEvent(session, event, derived)

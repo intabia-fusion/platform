@@ -25,7 +25,6 @@ import core, {
   docKey,
   type Domain,
   DOMAIN_COLLABORATOR,
-  DOMAIN_MODEL,
   type FullTextSearchContext,
   getFullTextIndexableAttributes,
   groupByArray,
@@ -66,16 +65,14 @@ import { type FullTextPipeline } from './types'
 import { blobPseudoClass, createIndexedDoc, createIndexedDocFromMessage, getContent, messagePseudoClass } from './utils'
 import {
   type AttachmentPatchEvent,
-  CardEventType,
   type CreateMessageEvent,
   type Event,
-  type EventType,
   MessageEventType,
-  type RemoveCardEvent,
+  type RemoveDocEvent,
   type RemovePatchEvent,
   type ServerApi as CommunicationApi,
   type SessionData as CommunicationSession,
-  type UpdateCardTypeEvent,
+  type UpdateDocClassEvent,
   type UpdatePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import {
@@ -86,13 +83,7 @@ import {
   type Message,
   type MessageID
 } from '@hcengineering/communication-types'
-import {
-  isBlobAttachment,
-  isBlobAttachmentType,
-  isLinkPreviewAttachment,
-  loadMessages,
-  loadMessagesGroups
-} from '@hcengineering/communication-shared'
+import { isBlobAttachment, isBlobAttachmentType, isLinkPreviewAttachment } from '@hcengineering/communication-shared'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
@@ -112,8 +103,8 @@ type IndexableCommunicationEvent =
   | QueueSourced<UpdatePatchEvent>
   | QueueSourced<AttachmentPatchEvent>
   | QueueSourced<RemovePatchEvent>
-  | QueueSourced<UpdateCardTypeEvent>
-  | QueueSourced<RemoveCardEvent>
+  | QueueSourced<UpdateDocClassEvent>
+  | QueueSourced<RemoveDocEvent>
 
 // Global Memory management configuration
 
@@ -242,7 +233,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     readonly listener?: FulltextListener
   ) {
     this.contexts = new Map(model.findAllSync(core.class.FullTextSearchContext, {}).map((it) => [it.toClass, it]))
-    this.communicationSession = { account: systemAccount, asyncData: [] }
+    this.communicationSession = { account: systemAccount, asyncData: [], hierarchy }
   }
 
   async getIndexClassess (): Promise<{ domain: Domain, classes: Ref<Class<Doc>>[] }[]> {
@@ -573,60 +564,62 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     card: Card,
     processedCommunication: number
   ): Promise<number> {
-    let processed = processedCommunication
-    const rateLimit = new RateLimiter(10)
-    let lastPrint = platformNow()
-    let messagesGroups = []
-    try {
-      messagesGroups = await loadMessagesGroups(this.hulylake, card._id)
-    } catch (err: any) {
-      ctx.error('Failed to get message groups', {
-        cardId: card._id,
-        error: err
-      })
-      Analytics.handleError(err)
-      return 0
-    }
-    for (const groupInfo of messagesGroups) {
-      if (this.cancelling) {
-        return processed
-      }
-      if (control !== undefined) {
-        await control.heartbeat()
-      }
-      try {
-        const messages = await loadMessages(
-          this.hulylake,
-          groupInfo.blobId,
-          { cardId: card._id },
-          { attachments: true }
-        )
-        for (const message of messages) {
-          await rateLimit.add(async () => {
-            await this.processCommunicationMessage(ctx, pushQueue, card._id, card.space, card._class, message)
-          })
-          processed += 1
-          const now = platformNow()
-          if (now - lastPrint > printThresholdMs) {
-            ctx.info('processed', {
-              processedCommunication: processed,
-              elapsed: Math.round(now - lastPrint),
-              workspace: this.workspace.uuid
-            })
-            lastPrint = now
-          }
-        }
-      } catch (err: any) {
-        ctx.error('Failed to process message group', {
-          cardId: groupInfo.cardId,
-          blobId: groupInfo.blobId,
-          error: err
-        })
-        Analytics.handleError(err)
-      }
-    }
-    await rateLimit.waitProcessing()
-    return processed
+    // let processed = processedCommunication
+    // const rateLimit = new RateLimiter(10)
+    // let lastPrint = platformNow()
+    // let messagesGroups = []
+    // try {
+    //   messagesGroups = await loadMessagesGroups(this.hulylake, card._id)
+    // } catch (err: any) {
+    //   ctx.error('Failed to get message groups', {
+    //     cardId: card._id,
+    //     error: err
+    //   })
+    //   Analytics.handleError(err)
+    //   return 0
+    // }
+    // // for (const groupInfo of messagesGroups) {
+    // //   if (this.cancelling) {
+    // //     return processed
+    // //   }
+    // //   if (control !== undefined) {
+    // //     await control.heartbeat()
+    // //   }
+    // //   try {
+    // //     // const messages = await loadMessages(
+    // //     //   this.hulylake,
+    // //     //   groupInfo.blobId,
+    // //     //   { cardId: card._id },
+    // //     //   { attachments: true }
+    // //     // )
+    // //     const messages = [] as any[]
+    // //     for (const message of messages) {
+    // //       await rateLimit.add(async () => {
+    // //         await this.processCommunicationMessage(ctx, pushQueue, card._id, card.space, card._class, message)
+    // //       })
+    // //       processed += 1
+    // //       const now = platformNow()
+    // //       if (now - lastPrint > printThresholdMs) {
+    // //         ctx.info('processed', {
+    // //           processedCommunication: processed,
+    // //           elapsed: Math.round(now - lastPrint),
+    // //           workspace: this.workspace.uuid
+    // //         })
+    // //         lastPrint = now
+    // //       }
+    // //     }
+    // //   } catch (err: any) {
+    // //     // ctx.error('Failed to process message group', {
+    // //     //   cardId: groupInfo.cardId,
+    // //     //   blobId: groupInfo.blobId,
+    // //     //   error: err
+    // //     // })
+    // //     Analytics.handleError(err)
+    // //   }
+    // // }
+    // await rateLimit.waitProcessing()
+    // return processed
+    return 0
   }
 
   public async processTransactions (
@@ -634,91 +627,92 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     result: (TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>)[],
     control: ConsumerControl
   ): Promise<void> {
-    const contextData = this.createContextData()
-    ctx.contextData = contextData
-
-    const indexableCommunicationEventTypes: Array<EventType> = [
-      MessageEventType.CreateMessage,
-      MessageEventType.UpdatePatch,
-      MessageEventType.AttachmentPatch,
-      MessageEventType.RemovePatch,
-      CardEventType.UpdateCardType,
-      CardEventType.RemoveCard
-    ]
-
-    const docEvents = result.filter((tx) => tx._class !== core.class.TxDomainEvent) as TxCUD<Doc>[]
-    const messageEvents = result.filter(
-      (tx) =>
-        tx._class === core.class.TxDomainEvent &&
-        (tx as TxDomainEvent<any>).domain === 'communication' &&
-        indexableCommunicationEventTypes.includes((tx as TxDomainEvent<QueueSourced<Event>>).event.type)
-    ) as any as TxDomainEvent<IndexableCommunicationEvent>[]
-
-    // We need to update hierarchy and local model if required.
-    for (const tx of docEvents) {
-      try {
-        this.hierarchy.tx(tx)
-        const domain = this.hierarchy.findDomain(tx.objectClass)
-        if (domain === DOMAIN_MODEL) {
-          await this.model.tx(tx)
-        }
-      } catch (err: any) {
-        ctx.error('failed to process tx', { err, tx })
-        Analytics.handleError(err)
-      }
-    }
-
-    const byClass = groupByArray<TxCUD<Doc>, Ref<Class<Doc>>>(docEvents, (it) => it.objectClass)
-
-    const pushQueue = new ElasticPushQueue(this.fulltextAdapter, this.workspace, ctx, control)
-
-    const toRemove: { _id: Ref<Doc>, _class: Ref<Class<Doc>> }[] = []
-
-    for (const [v, values] of byClass.entries()) {
-      if (!isClassIndexable(this.hierarchy, v, this.contexts)) {
-        // Skip non indexable classes
-        continue
-      }
-
-      try {
-        // We need to load documents from storage
-        const docs: Doc[] = await this.loadDocsFromTx(values, toRemove, ctx, v)
-
-        await this.indexDocuments(ctx, v, docs, pushQueue)
-      } catch (err: any) {
-        ctx.error('failed to index documents', { err, tx: v })
-        Analytics.handleError(err)
-      }
-    }
-
-    const messagesByCardId = groupByArray(messageEvents, (e) => e.event.cardId)
-    for (const [cardId, txes] of messagesByCardId) {
-      try {
-        await this.processCommunicationEvents(ctx, pushQueue, cardId, txes, toRemove)
-      } catch (err: any) {
-        ctx.error('failed to index communication', { err, cardId })
-        Analytics.handleError(err)
-      }
-    }
-
-    try {
-      if (toRemove.length !== 0) {
-        // We need to add broadcast information
-        for (const _cl of new Set(toRemove.values().map((it) => it._class))) {
-          this.broadcastClasses.add(_cl)
-        }
-        const ids = toRemove.map((it) => it._id)
-        if (this.listener?.onClean !== undefined) {
-          await this.listener.onClean(ids)
-        }
-        await this.fulltextAdapter.remove(ctx, this.workspace.uuid, ids)
-      }
-    } catch (err: any) {
-      Analytics.handleError(err)
-    }
-
-    await pushQueue.waitProcessing()
-    this.scheduleBroadcast()
+    // const contextData = this.createContextData()
+    // ctx.contextData = contextData
+    //
+    // const indexableCommunicationEventTypes: Array<EventType> = [
+    //   MessageEventType.CreateMessage,
+    //   MessageEventType.UpdatePatch,
+    //   MessageEventType.AttachmentPatch,
+    //   MessageEventType.RemovePatch,
+    //   DocEventType.UpdateDocClass,
+    //   DocEventType.RemoveDoc
+    // ]
+    //
+    // const docEvents = result.filter((tx) => tx._class !== core.class.TxDomainEvent) as TxCUD<Doc>[]
+    // // const messageEvents = result.filter(
+    // //   (tx) =>
+    // //     tx._class === core.class.TxDomainEvent &&
+    // //     (tx as TxDomainEvent<any>).domain === 'communication' &&
+    // //     indexableCommunicationEventTypes.includes((tx as TxDomainEvent<QueueSourced<Event>>).event.type)
+    // // ) as any as TxDomainEvent<IndexableCommunicationEvent>[]
+    //
+    // // We need to update hierarchy and local model if required.
+    // for (const tx of docEvents) {
+    //   try {
+    //     this.hierarchy.tx(tx)
+    //     const domain = this.hierarchy.findDomain(tx.objectClass)
+    //     if (domain === DOMAIN_MODEL) {
+    //       await this.model.tx(tx)
+    //     }
+    //   } catch (err: any) {
+    //     ctx.error('failed to process tx', { err, tx })
+    //     Analytics.handleError(err)
+    //   }
+    // }
+    //
+    // const byClass = groupByArray<TxCUD<Doc>, Ref<Class<Doc>>>(docEvents, (it) => it.objectClass)
+    //
+    // const pushQueue = new ElasticPushQueue(this.fulltextAdapter, this.workspace, ctx, control)
+    //
+    // const toRemove: { _id: Ref<Doc>, _class: Ref<Class<Doc>> }[] = []
+    //
+    // for (const [v, values] of byClass.entries()) {
+    //   if (!isClassIndexable(this.hierarchy, v, this.contexts)) {
+    //     // Skip non indexable classes
+    //     continue
+    //   }
+    //
+    //   try {
+    //     // We need to load documents from storage
+    //     const docs: Doc[] = await this.loadDocsFromTx(values, toRemove, ctx, v)
+    //
+    //     await this.indexDocuments(ctx, v, docs, pushQueue)
+    //   } catch (err: any) {
+    //     ctx.error('failed to index documents', { err, tx: v })
+    //     Analytics.handleError(err)
+    //   }
+    // }
+    //
+    // // const messagesByCardId = groupByArray(messageEvents, (e) => e.event.cardId)
+    // const messagesByCardId = new Map()
+    // for (const [cardId, txes] of messagesByCardId) {
+    //   try {
+    //     await this.processCommunicationEvents(ctx, pushQueue, cardId, txes, toRemove)
+    //   } catch (err: any) {
+    //     ctx.error('failed to index communication', { err, cardId })
+    //     Analytics.handleError(err)
+    //   }
+    // }
+    //
+    // try {
+    //   if (toRemove.length !== 0) {
+    //     // We need to add broadcast information
+    //     for (const _cl of new Set(toRemove.values().map((it) => it._class))) {
+    //       this.broadcastClasses.add(_cl)
+    //     }
+    //     const ids = toRemove.map((it) => it._id)
+    //     if (this.listener?.onClean !== undefined) {
+    //       await this.listener.onClean(ids)
+    //     }
+    //     await this.fulltextAdapter.remove(ctx, this.workspace.uuid, ids)
+    //   }
+    // } catch (err: any) {
+    //   Analytics.handleError(err)
+    // }
+    //
+    // await pushQueue.waitProcessing()
+    // this.scheduleBroadcast()
   }
 
   private async processCommunicationEvents (
@@ -733,32 +727,34 @@ export class FullTextIndexPipeline implements FullTextPipeline {
       return
     }
     const getMessage = async (cardId: CardID, msgId: MessageID): Promise<Message | undefined> => {
-      const meta = (
-        await communicationApi.findMessagesMeta(this.communicationSession, {
-          cardId,
-          id: msgId,
-          limit: 1
-        })
-      )[0]
+      // const meta = (
+      //   await communicationApi.findMessagesMeta(this.communicationSession, {
+      //     cardId,
+      //     id: msgId,
+      //     limit: 1
+      //   })
+      // )[0]
+      const meta: any = undefined
 
       if (meta === undefined) {
         return undefined
       }
-      return (
-        await loadMessages(
-          this.hulylake,
-          meta.blobId,
-          {
-            cardId,
-            id: msgId
-          },
-          {
-            attachments: true,
-            reactions: true,
-            threads: true
-          }
-        )
-      )[0]
+      // return (
+      //   await loadMessages(
+      //     this.hulylake,
+      //     meta.blobId,
+      //     {
+      //       cardId,
+      //       id: msgId
+      //     },
+      //     {
+      //       attachments: true,
+      //       reactions: true,
+      //       threads: true
+      //     }
+      //   )
+      // )[0]
+      return undefined
     }
     const cardDoc = (await this.storage.findAll(ctx, card.class.Card, { _id: cardId }))[0]
     // If message was already fully replaced, other transactions can skip the message
@@ -851,33 +847,35 @@ export class FullTextIndexPipeline implements FullTextPipeline {
       } else if (tx.event.type === MessageEventType.RemovePatch) {
         const event = tx.event
         messagesUpdated.add(event.messageId)
-        await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
-          _class: blobPseudoClass,
-          attachedTo: `${event.messageId}@${event.cardId}` as Ref<Doc>
-        })
-        toRemove.push({
-          _id: `${event.messageId}@${event.cardId}` as any,
-          _class: messagePseudoClass
-        })
-      } else if (tx.event.type === CardEventType.UpdateCardType) {
-        const event = tx.event
-        await this.fulltextAdapter.updateByQuery(
-          ctx,
-          this.workspace.uuid,
-          { _class: messagePseudoClass, attachedTo: event.cardId },
-          { attachedToClass: event.cardType }
-        )
-      } else if (tx.event.type === CardEventType.RemoveCard) {
-        const event = tx.event
-        await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
-          _class: messagePseudoClass,
-          attachedTo: event.cardId
-        })
-        await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
-          _class: blobPseudoClass,
-          attachedToCard: event.cardId
-        })
+        // await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
+        //   _class: blobPseudoClass,
+        //   attachedTo: `${event.messageId}@${event.cardId}` as Ref<Doc>
+        // })
+        // toRemove.push({
+        //   _id: `${event.messageId}@${event.cardId}` as any,
+        //   _class: messagePseudoClass
+        // })
       }
+      // else if (tx.event.type === DocEventType.UpdateDocClass) {
+      //   const event = tx.event
+      //   await this.fulltextAdapter.updateByQuery(
+      //     ctx,
+      //     this.workspace.uuid,
+      //     { _class: messagePseudoClass, attachedTo: event.cardId },
+      //     { attachedToClass: event.cardType }
+      //   )
+      // }
+      // else if (tx.event.type === DocEventType.RemoveDoc) {
+      //   const event = tx.event
+      //   await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
+      //     _class: messagePseudoClass,
+      //     attachedTo: event.cardId
+      //   })
+      //   await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, {
+      //     _class: blobPseudoClass,
+      //     attachedToCard: event.cardId
+      //   })
+      // }
     }
   }
 

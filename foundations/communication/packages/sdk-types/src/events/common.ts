@@ -13,7 +13,13 @@
 // limitations under the License.
 //
 
+import { SocialID } from '@hcengineering/communication-types'
+
 export interface BaseEvent {
   _id?: string
   _eventExtra?: Record<string, any>
+
+  done?: boolean
+  socialId: SocialID
+  date: Date
 }

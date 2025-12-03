@@ -18,10 +18,10 @@
   import { IconEdit, Label } from '@hcengineering/ui'
 
   import ActivityAttributeValue from './ActivityAttributeValue.svelte'
-  import communication from '../../../plugin'
+  import communication from '../../../../plugin'
 
   export let model: AttributeModel
-  export let value: ActivityAttributeUpdate['added']
+  export let value: ActivityAttributeUpdate['removed']
 
   $: icon = IconEdit
 </script>
@@ -29,6 +29,6 @@
 <ActivityAttributeValue {model} {icon} values={value}>
   <svelte:fragment slot="text">
     <Label label={model.label} />
-    <span class="lower"><Label label={communication.string.Added} />:</span>
+    <span class="lower"><Label label={communication.string.Removed} />:</span>
   </svelte:fragment>
 </ActivityAttributeValue>

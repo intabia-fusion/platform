@@ -14,118 +14,18 @@
 //
 
 import {
-  AddCollaboratorsEvent,
-  LabelEventType,
   MessageEventType,
   NotificationEventType,
   type Event,
   UpdateNotificationContextEvent,
-  RemovePatchEvent,
-  RemoveCollaboratorsEvent
+  RemovePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import {
-  type AccountUuid,
-  type ActivityCollaboratorsUpdate,
-  ActivityUpdateType,
-  MessageType,
-  NotificationType,
-  SubscriptionLabelID
+  NotificationType
 } from '@hcengineering/communication-types'
 import { groupByArray } from '@hcengineering/core'
 
 import type { TriggerCtx, TriggerFn, Triggers } from '../types'
-import { getAddCollaboratorsMessageContent, getRemoveCollaboratorsMessageContent } from './utils'
-
-async function onAddedCollaborators (ctx: TriggerCtx, event: AddCollaboratorsEvent): Promise<Event[]> {
-  const { cardId, cardType, collaborators } = event
-
-  if (collaborators.length === 0) return []
-  const result: Event[] = []
-
-  for (const collaborator of collaborators) {
-    result.push({
-      type: LabelEventType.CreateLabel,
-      cardId,
-      cardType,
-      account: collaborator,
-      labelId: SubscriptionLabelID,
-      date: event.date
-    })
-  }
-
-  const account = (await ctx.client.findPersonUuid(ctx, event.socialId, true)) as AccountUuid | undefined
-
-  const updateDate: ActivityCollaboratorsUpdate = {
-    type: ActivityUpdateType.Collaborators,
-    added: collaborators,
-    removed: []
-  }
-  result.push({
-    type: MessageEventType.CreateMessage,
-    messageType: MessageType.Activity,
-    cardId,
-    cardType,
-    content: await getAddCollaboratorsMessageContent(ctx, account, collaborators),
-    socialId: event.socialId,
-    date: event.date,
-    extra: {
-      action: 'update',
-      update: updateDate
-    }
-  })
-  return result
-}
-
-async function onRemovedCollaborators (ctx: TriggerCtx, event: RemoveCollaboratorsEvent): Promise<Event[]> {
-  const { cardId, collaborators } = event
-  if (collaborators.length === 0) return []
-  const result: Event[] = []
-  const contexts = await ctx.client.db.findNotificationContexts({ cardId, account: event.collaborators })
-  for (const collaborator of collaborators) {
-    const context = contexts.find((it) => it.account === collaborator)
-    result.push({
-      type: LabelEventType.RemoveLabel,
-      cardId,
-      account: collaborator,
-      labelId: SubscriptionLabelID,
-      date: event.date
-    })
-
-    if (context !== undefined && context.lastUpdate.getTime() > context.lastView.getTime()) {
-      result.push({
-        type: NotificationEventType.UpdateNotificationContext,
-        contextId: context.id,
-        account: collaborator,
-        updates: {
-          lastView: context.lastUpdate
-        },
-        date: new Date()
-      })
-    }
-  }
-
-  const updateDate: ActivityCollaboratorsUpdate = {
-    type: ActivityUpdateType.Collaborators,
-    added: [],
-    removed: collaborators
-  }
-  const account = (await ctx.client.findPersonUuid(ctx, event.socialId, true)) as AccountUuid | undefined
-  result.push({
-    type: MessageEventType.CreateMessage,
-    messageType: MessageType.Activity,
-    cardId,
-    cardType: event.cardType,
-    content: await getRemoveCollaboratorsMessageContent(ctx, account, collaborators),
-    socialId: event.socialId,
-    date: event.date,
-    extra: {
-      action: 'update',
-      update: updateDate
-    }
-  })
-
-  return result
-}
 
 async function onNotificationContextUpdated (ctx: TriggerCtx, event: UpdateNotificationContextEvent): Promise<Event[]> {
   const { contextId, updates } = event
@@ -146,7 +46,9 @@ async function onNotificationContextUpdated (ctx: TriggerCtx, event: UpdateNotif
     },
     updates: {
       read: true
-    }
+    },
+    date: event.date,
+    socialId: event.socialId
   })
 
   return result
@@ -154,7 +56,8 @@ async function onNotificationContextUpdated (ctx: TriggerCtx, event: UpdateNotif
 
 async function onMessagesRemoved (ctx: TriggerCtx, event: RemovePatchEvent): Promise<Event[]> {
   const notifications = await ctx.client.db.findNotifications({
-    cardId: event.cardId,
+    docClass: event.docClass,
+    docId: event.docId,
     messageId: event.messageId
   })
 
@@ -168,7 +71,9 @@ async function onMessagesRemoved (ctx: TriggerCtx, event: RemovePatchEvent): Pro
       type: NotificationEventType.RemoveNotifications,
       contextId: context,
       account: ns[0].account,
-      ids: notifications.map((it) => it.id)
+      ids: notifications.map((it) => it.id),
+      socialId: event.socialId,
+      date: event.date
     })
   }
 
@@ -181,8 +86,6 @@ const triggers: Triggers = [
     NotificationEventType.UpdateNotificationContext,
     onNotificationContextUpdated as TriggerFn
   ],
-  ['on_added_collaborators', NotificationEventType.AddCollaborators, onAddedCollaborators as TriggerFn],
-  ['on_removed_collaborators', NotificationEventType.RemoveCollaborators, onRemovedCollaborators as TriggerFn],
   ['remove_notifications_on_messages_removed', MessageEventType.RemovePatch, onMessagesRemoved as TriggerFn]
 ]
 

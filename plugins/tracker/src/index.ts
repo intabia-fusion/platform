@@ -172,7 +172,8 @@ export interface Milestone extends Doc {
 
   space: Ref<Project>
 
-  comments: number
+  comments?: number
+  activity?: number
   attachments?: number
 
   targetDate: Timestamp
@@ -290,7 +291,8 @@ export interface IssueTemplate extends Doc, IssueTemplateData {
   children: IssueTemplateChild[]
 
   // Discussion stuff
-  comments: number
+  comments?: number
+  activity?: number
   attachments?: number
 
   relations?: RelatedDocument[]
@@ -352,7 +354,8 @@ export interface Component extends Doc {
   description?: Markup
   lead: Ref<Employee> | null
   space: Ref<Project>
-  comments: number
+  comments?: number
+  activity?: number
   attachments?: number
 }
 

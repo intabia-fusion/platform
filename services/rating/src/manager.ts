@@ -42,8 +42,8 @@ export type QueueSourced<T extends Event> = Omit<T, 'date'> & { date: string }
 //   | QueueSourced<UpdatePatchEvent>
 //   | QueueSourced<AttachmentPatchEvent>
 //   | QueueSourced<RemovePatchEvent>
-//   | QueueSourced<UpdateCardTypeEvent>
-//   | QueueSourced<RemoveCardEvent>
+//   | QueueSourced<UpdateDocClassEvent>
+//   | QueueSourced<RemoveDocEvent>
 
 const ratingTopic = 'rating'
 

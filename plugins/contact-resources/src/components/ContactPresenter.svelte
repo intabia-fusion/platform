@@ -29,6 +29,7 @@
   export let accent: boolean = false
   export let maxWidth = ''
   export let avatarSize: IconSize = 'x-small'
+  export let shouldShowAvatar = true
 
   function isPerson (value: Contact): boolean {
     const client = getClient()
@@ -45,9 +46,9 @@
 </script>
 
 {#if isEmployee(value)}
-  <EmployeePresenter {disabled} value={toEmployee(value)} {inline} {accent} {avatarSize} />
+  <EmployeePresenter {disabled} value={toEmployee(value)} {inline} {accent} {avatarSize} {shouldShowAvatar}/>
 {:else if isPerson(value)}
-  <PersonPresenter {disabled} {value} {inline} {accent} {avatarSize} />
+  <PersonPresenter {disabled} {value} {inline} {accent} {avatarSize} {shouldShowAvatar} />
 {:else}
   <OrganizationPresenter value={toOrg(value)} {inline} {accent} {maxWidth} />
 {/if}

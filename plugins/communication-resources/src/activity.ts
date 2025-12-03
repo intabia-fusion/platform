@@ -19,11 +19,26 @@ import {
   type ActivityUpdate,
   ActivityUpdateType,
   type Message,
-  MessageType
+  MessageType,
+  type ActivityCollectionUpdate
 } from '@hcengineering/communication-types'
-import core, { type Class, type Client, type Doc, type Mixin, type Ref } from '@hcengineering/core'
+import core, {
+  type Collection,
+  type Attribute,
+  type Hierarchy,
+  type Class,
+  type Client,
+  type Doc,
+  type Mixin,
+  type Ref,
+  type AttachedDoc
+} from '@hcengineering/core'
 import view, { type AttributeModel } from '@hcengineering/view'
 import { buildRemovedDoc, getAttributePresenter } from '@hcengineering/view-resources'
+import { groupByArray, notEmpty, SortingOrder } from '@hcengineering/core'
+
+import { ActivityFilter, type ActivityFilterDef, type Aggregated } from './types'
+import communication from './plugin'
 
 const valueTypes: ReadonlyArray<Ref<Class<Doc>>> = [
   core.class.TypeString,
@@ -105,4 +120,294 @@ export async function getAttributeValues (
 
 export function isActivityMessage (message: Message): message is ActivityMessage {
   return message.type === MessageType.Activity
+}
+
+export const defaultEnabledFilters = [ActivityFilter.Attributes, ActivityFilter.Messages]
+
+export const filtersDef: ActivityFilterDef[] = [{
+  id: ActivityFilter.Attributes,
+  label: communication.string.Attributes,
+  filter: m => m.type === MessageType.Activity
+}, {
+  id: ActivityFilter.Messages,
+  label: communication.string.Messages,
+  filter: m => m.type === MessageType.Text
+}]
+
+export function filterMessages (messages: Message[], filters: ActivityFilter[]): Message[] {
+  const filterDefs = filtersDef.filter(it => filters.includes(it.id))
+  return messages.filter(it => filterDefs.some(def => def.filter(it)))
+}
+
+export function getCollectionAttribute (
+  hierarchy: Hierarchy,
+  objectClass: Ref<Class<Doc>>,
+  collection?: string
+): Attribute<Collection<AttachedDoc>> | undefined {
+  if (collection === undefined) {
+    return undefined
+  }
+
+  const descendants = hierarchy.getDescendants(objectClass)
+
+  for (const descendant of descendants) {
+    const collectionAttribute = hierarchy.findAttribute(descendant, collection)
+    if (collectionAttribute !== undefined) {
+      return collectionAttribute
+    }
+  }
+
+  return undefined
+}
+
+// Aggregation
+
+// function mergeMessages(messages: Message[]): Message[] {
+//   const result: Message[] = []
+//   for (let i = 0; i < messages.length; i++) {
+//     const currentMessage = messages[i]
+//     if (
+//       isActivityMessage(currentMessage) &&
+//       currentMessage.extra.update?.type === ActivityUpdateType.CollaborativeChange
+//     ) {
+//       for (let j = i + 1; j < messages.length; j++) {
+//         const nextMessage = messages[j]
+//         if (
+//           currentMessage.creator === nextMessage.creator &&
+//           isActivityMessage(nextMessage) &&
+//           nextMessage.extra.update?.type === ActivityUpdateType.CollaborativeChange &&
+//           nextMessage.created.getTime() - currentMessage.created.getTime() < 1000 * 60 * 10
+//         ) {
+//           currentMessage.extra.update.value = nextMessage.extra.update.value
+//           currentMessage.created = nextMessage.created
+//           i = j
+//         } else {
+//           break
+//         }
+//       }
+//     }
+//     result.push(currentMessage)
+//   }
+//   return result
+// }
+
+// Use 5 minutes to combine similar messages
+const combineThresholdMs = 5 * 60 * 1000
+
+function aggregateMessages (
+  messages: Message[],
+  sortingOrder: SortingOrder = SortingOrder.Ascending
+): Array<Aggregated<Message>> {
+  if (sortingOrder === SortingOrder.Descending) {
+    sortMessages(messages)
+  }
+  const result: Array<Aggregated<Message>> = []
+  const groupedByAggKey: Map<string, Message[]> = groupByArray(messages, getMessageAggregateKey)
+
+  for (const [, groupedMessages] of groupedByAggKey) {
+    if (groupedMessages.length === 1) {
+      result.push(...groupedMessages)
+    } else {
+      const forMerge = groupByTime(groupedMessages)
+
+      forMerge.forEach((timeGroup) => {
+        if (timeGroup[0]?.type !== MessageType.Activity) {
+          result.push(...timeGroup)
+        } else {
+          const aggregated = aggregateActivityMessages(sortMessages(timeGroup) as ActivityMessage[])
+          result.push(...aggregated)
+        }
+      })
+    }
+  }
+
+  return sortMessages(
+    result,
+    sortingOrder
+  )
+}
+
+export default aggregateMessages
+
+function sortMessages (
+  messages: Message[],
+  order: SortingOrder = SortingOrder.Ascending
+): Message[] {
+  return messages.sort((message1, message2) =>
+    order === SortingOrder.Ascending
+      ? activityMessagesComparator(message1, message2)
+      : activityMessagesComparator(message2, message1)
+  )
+}
+
+function canAggregateMessage (message: Message): boolean {
+  const hasReactions = Object.keys(message.reactions).length > 0
+  const hasThreads = message.threads.length > 0
+
+  return !hasReactions && !hasThreads
+}
+
+function groupByTime (messages: Message[]): Message[][] {
+  const result: Message[][] = []
+
+  for (const message1 of messages) {
+    if (result.some((forMerge) => forMerge.includes(message1))) {
+      continue
+    }
+
+    const forMerge: Message[] = [message1]
+
+    for (const message2 of messages) {
+      if (message1.id === message2.id) {
+        continue
+      }
+
+      const time1 = message1.created.getTime()
+      const time2 = message2.created.getTime()
+      const timeDiff = time2 - time1
+
+      if (timeDiff >= 0 && timeDiff < combineThresholdMs) {
+        forMerge.push(message2)
+      }
+    }
+
+    result.push(forMerge)
+  }
+
+  return result
+}
+
+function getMessageAggregateKey (message: Message): string {
+  if (message.type === MessageType.Text) {
+    return message.id
+  }
+
+  if (!canAggregateMessage(message)) return message.id
+
+  const activityMessage = message as ActivityMessage
+  const { extra } = activityMessage
+  if (extra.update?.type === ActivityUpdateType.Attribute) {
+    return [message.docId, message.creator, getAttributeAggregateKey(extra.update)].join('_')
+  }
+
+  if (extra.update?.type === ActivityUpdateType.Collection) {
+    return [message.docId, message.creator, extra.update.collection].join('_')
+  }
+
+  return message.id
+}
+
+function aggregateActivityAttributes (messages: ActivityMessage[]): Aggregated<ActivityMessage> | undefined {
+  const firstMessage = messages[0]
+  const lastMessage = messages[messages.length - 1]
+
+  let mergedUpdate = firstMessage.extra.update as ActivityAttributeUpdate
+
+  messages.forEach((message) => {
+    const update = message.extra.update as ActivityAttributeUpdate
+    if (message.id !== firstMessage.id && update !== undefined) {
+      mergedUpdate = mergeAttributeUpdates(update, mergedUpdate)
+    }
+  })
+
+  if (mergedUpdate === undefined) {
+    return undefined
+  }
+
+  const hasChanges =
+    (mergedUpdate.added ?? []).length > 0 ||
+    (mergedUpdate.removed ?? []).length > 0 ||
+    (Array.isArray(mergedUpdate.set) && mergedUpdate.set.length > 0) ||
+    (!Array.isArray(mergedUpdate.set) && mergedUpdate.set !== undefined)
+
+  if (!hasChanges) return undefined
+
+  return {
+    ...lastMessage,
+    extra: {
+      ...lastMessage.extra,
+      update: mergedUpdate
+    },
+    previous: messages.slice(0, -1)
+  }
+}
+
+function aggregateActivityMessages (messages: ActivityMessage[]): Array<Aggregated<ActivityMessage>> {
+  if (messages.length === 0) return []
+  if (messages.length === 1) return messages
+
+  if (messages[0].extra.action === 'update' && messages[0].extra.update?.type === ActivityUpdateType.Attribute) {
+    return [aggregateActivityAttributes(messages)].filter(notEmpty)
+  }
+
+  if (messages[0].extra.update?.type === ActivityUpdateType.Collection) {
+    const removeMessages = messages.filter(({ extra }) => extra.action === 'remove')
+    const createMessages = messages.filter(({ extra }) => extra.action === 'create')
+    const removedObjectIds = removeMessages.map(({ extra }) => (extra.update as ActivityCollectionUpdate).objectId)
+    const createdObjectIds = createMessages.map(({ extra }) => (extra.update as ActivityCollectionUpdate).objectId)
+
+    const createMessagesForMerge = createMessages.filter(
+      ({ extra }) => !removedObjectIds.includes((extra.update as ActivityCollectionUpdate).objectId)
+    )
+    const removeMessagesForMerge = removeMessages.filter(
+      ({ extra }) => !createdObjectIds.includes((extra.update as ActivityCollectionUpdate).objectId)
+    )
+
+    createMessagesForMerge.sort(activityMessagesComparator)
+    removeMessagesForMerge.sort(activityMessagesComparator)
+
+    const res: Array<Aggregated<ActivityMessage>> = []
+
+    if (createMessagesForMerge.length > 0) {
+      res.push({
+        ...createMessagesForMerge[createMessagesForMerge.length - 1],
+        previous: createMessagesForMerge.slice(0, -1)
+      })
+    }
+
+    if (removeMessagesForMerge.length > 0) {
+      res.push({
+        ...removeMessagesForMerge[removeMessagesForMerge.length - 1],
+        previous: removeMessagesForMerge.slice(0, -1)
+      })
+    }
+
+    return res
+  }
+
+  return messages
+}
+
+function mergeAttributeUpdates (
+  update: ActivityAttributeUpdate,
+  prevUpdate?: ActivityAttributeUpdate
+): ActivityAttributeUpdate {
+  if (prevUpdate === undefined) return update
+  if (update.attrKey !== prevUpdate.attrKey) return update
+
+  const added = (update.added ?? [])
+    .filter((item) => !(prevUpdate.removed ?? []).includes(item))
+    .concat((prevUpdate.added ?? []).filter((item) => !(update.removed ?? []).includes(item)))
+  const removed = (update.removed ?? [])
+    .filter((item) => !(prevUpdate.added ?? []).includes(item))
+    .concat((prevUpdate.removed ?? []).filter((item) => !(update.added ?? []).includes(item)))
+
+  return {
+    ...update,
+    added,
+    removed
+  }
+}
+
+function getAttributeAggregateKey (update: ActivityAttributeUpdate): string {
+  const { attrKey, attrClass, mixin } = update
+
+  return [attrKey, attrClass, mixin].join('-')
+}
+
+function activityMessagesComparator (message1: Message, message2: Message): number {
+  const time1 = message1.created.getTime()
+  const time2 = message2.created.getTime()
+
+  return time1 - time2
 }

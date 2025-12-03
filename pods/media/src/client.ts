@@ -36,6 +36,7 @@ import core, {
   SearchResult,
   systemAccountUuid,
   Tx,
+  TxDomainEvent,
   TxOperations,
   TxResult,
   WithLookup,
@@ -131,9 +132,12 @@ export class WorkspaceClient {
 
     const event: AttachmentPatchEvent = {
       type: MessageEventType.AttachmentPatch,
-      cardId: result.source.cardId,
+      docId: result.source.cardId,
+      // docClass: result.source.
+      docClass: '' as any,
       messageId: result.source.messageId,
       socialId: core.account.System,
+      date: new Date(),
       operations: [
         {
           opcode: 'update',
@@ -162,6 +166,10 @@ class RestClientAdapter implements Client {
     private readonly hierarchy: Hierarchy | undefined,
     private readonly model: ModelDb | undefined
   ) {}
+
+  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return await this.client.domainEventTx(tx)
+  }
 
   async domainRequest<T>(
     domain: OperationDomain,

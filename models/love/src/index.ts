@@ -73,6 +73,7 @@ import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
 import attachment from '@hcengineering/attachment'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
+import communication from '@hcengineering/communication'
 
 import love from './plugin'
 
@@ -442,29 +443,13 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: love.class.Room,
-  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: love.class.Office,
-  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  // })
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: love.class.MeetingMinutes,
-  //   components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
-  // })
-
   builder.mixin(love.class.ParticipantInfo, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest,
     updateAccessLevel: AccountRole.Guest
   })
 
-  // builder.mixin(love.class.MeetingMinutes, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.mixin(love.class.Room, core.class.Class, activity.mixin.ActivityDoc, {})
+  builder.mixin(love.class.MeetingMinutes, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(love.class.Room, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: love.component.MeetingMinutesPresenter

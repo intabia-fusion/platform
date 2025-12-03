@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrOf, type Builder, Model, TypeRef } from '@hcengineering/model'
-import core, { TAttachedDoc, TConfiguration, TDoc } from '@hcengineering/model-core'
+import { ArrOf, type Builder, Hidden, Mixin, Model, Prop, ReadOnly, TypeNumber, TypeRef } from '@hcengineering/model'
+import core, { TAttachedDoc, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import {
   AccountRole,
   type AccountUuid,
@@ -35,18 +35,19 @@ import {
   type AppletGetTitleFnResource,
   type PollAnonymousAnswer,
   PollVotedOption,
-  type OptionID
+  type OptionID,
+  type Messageable
 } from '@hcengineering/communication'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import { type MessageID, type AppletType } from '@hcengineering/communication-types'
-import card, { createSystemType } from '@hcengineering/model-card'
+import { createSystemType } from '@hcengineering/model-card'
 import type { AnyComponent } from '@hcengineering/ui'
 import contact, { type PersonSpace } from '@hcengineering/contact'
-import { type Card, type MasterTag } from '@hcengineering/card'
 import { DOMAIN_SETTING } from '@hcengineering/setting'
 import view from '@hcengineering/model-view'
 
 import communication from './plugin'
+import { Card } from '@hcengineering/card'
 
 export const DOMAIN_POLL = 'poll' as Domain
 
@@ -102,12 +103,28 @@ class TPollAnonymousAnswer extends TAttachedDoc implements PollAnonymousAnswer {
 class TCustomActivityPresenter extends TDoc implements CustomActivityPresenter {
   attribute!: string
   component!: AnyComponent
-  type!: Ref<MasterTag>
+  type!: Ref<Class<Doc>>
 }
 
 @Model(communication.class.GuestCommunicationSettings, core.class.Configuration, DOMAIN_SETTING)
 export class TGuestCommunicationSettings extends TConfiguration implements GuestCommunicationSettings {
   allowedCards!: Ref<Card>[]
+}
+
+@Mixin(communication.mixin.Messageable, core.class.Class)
+export class TMessageable extends TClass implements Messageable {
+
+}
+
+export class TMessagebaleDoc extends TDoc {
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 }
 
 export function buildTypes (builder: Builder): void {
@@ -117,7 +134,8 @@ export function buildTypes (builder: Builder): void {
     TPoll,
     TPollAnonymousAnswer,
     TCustomActivityPresenter,
-    TGuestCommunicationSettings
+    TGuestCommunicationSettings,
+    TMessageable
   )
 
   defineDirect(builder)
@@ -166,14 +184,14 @@ function defineDirect (builder: Builder): void {
   builder.mixin(communication.type.Direct, core.class.Class, view.mixin.ObjectIcon, {
     component: communication.component.DirectIcon
   })
-  builder.mixin(communication.type.Direct, core.class.Class, card.mixin.CreateCardExtension, {
-    component: communication.component.CreateDirect,
-    canCreate: communication.function.CanCreateDirect,
-    disableTitle: true,
-    hideSpace: true
-  })
-
-  builder.mixin(communication.type.Direct, core.class.Class, view.mixin.IgnoreActions, {
-    actions: [view.action.Delete, card.action.PublicLink]
-  })
+  // builder.mixin(communication.type.Direct, core.class.Class, card.mixin.CreateCardExtension, {
+  //   component: communication.component.CreateDirect,
+  //   canCreate: communication.function.CanCreateDirect,
+  //   disableTitle: true,
+  //   hideSpace: true
+  // })
+  //
+  // builder.mixin(communication.type.Direct, core.class.Class, view.mixin.IgnoreActions, {
+  //   actions: [view.action.Delete, card.action.PublicLink]
+  // })
 }

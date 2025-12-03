@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 import { type IntlString, type Plugin } from '@hcengineering/platform'
-import { ClientConnectEvent, type DocChunk } from '..'
+import { ClientConnectEvent, type DocChunk, TxDomainEvent } from '..'
 import type { Class, Data, Doc, Domain, PluginConfiguration, Ref, Space, Timestamp } from '../classes'
 import { ClassifierKind, DOMAIN_MODEL } from '../classes'
 import { type ClientConnection, createClient } from '../client'
@@ -130,6 +130,10 @@ describe('client', () => {
         isConnected = (): boolean => true
         findAll = findAll
         pushHandler = (): void => {}
+
+        domainEventTx (tx: TxDomainEvent): Promise<DomainResult> {
+          return Promise.resolve({ domain: 'test' as Domain, value: null })
+        }
 
         domainRequest (): Promise<DomainResult> {
           return Promise.resolve({ domain: 'test' as Domain, value: null })

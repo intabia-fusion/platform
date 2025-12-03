@@ -24,7 +24,9 @@ import {
   type ClassCollaborators,
   type ClassifierKind,
   type Collaborator,
+  type Collaborators,
   type Collection,
+  type CollectionSize,
   type Configuration,
   type ConfigurationElement,
   type CustomSequence,
@@ -62,6 +64,7 @@ import {
   type Version
 } from '@hcengineering/core'
 import {
+  Collection as TypeCollection,
   Hidden,
   Index,
   Mixin as MMixin,
@@ -417,6 +420,14 @@ export class TClassCollaborators extends TDoc implements ClassCollaborators<Doc>
 }
 
 @Model(core.class.Collaborator, core.class.Doc, DOMAIN_COLLABORATOR)
+@UX(core.string.Collaborator, undefined, undefined, undefined, undefined, core.string.Collaborators)
 export class TCollaborator extends TAttachedDoc implements Collaborator {
   collaborator!: AccountUuid
+}
+
+@MMixin(core.mixin.Collaborators, core.class.Doc)
+@UX(core.string.Collaborators)
+export class TCollaborators extends TDoc implements Collaborators {
+  @Prop(TypeCollection(core.class.Collaborator), core.string.Collaborators)
+    collaborators!: CollectionSize<Collaborator>
 }

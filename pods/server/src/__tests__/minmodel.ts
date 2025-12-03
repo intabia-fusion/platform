@@ -165,6 +165,14 @@ export function genMinModel (): TxCUD<Doc>[] {
   )
 
   txes.push(
+    createClass(core.class.TxDomainEvent, {
+      label: 'TxDomainEvent' as IntlString,
+      extends: core.class.Tx,
+      kind: ClassifierKind.CLASS
+    })
+  )
+
+  txes.push(
     createClass(test.mixin.TestMixin, {
       label: 'TestMixin' as IntlString,
       extends: core.class.Doc,

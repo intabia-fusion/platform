@@ -267,6 +267,7 @@ export interface Class<T extends Obj> extends Classifier {
   sortingKey?: string
   filteringKey?: string
   pluralLabel?: IntlString
+  titleKey?: string
 }
 
 /**
@@ -951,6 +952,10 @@ export interface ClassCollaborators<T extends Doc> extends Doc {
 
 export interface Collaborator extends AttachedDoc {
   collaborator: AccountUuid
+}
+
+export interface Collaborators extends Doc {
+  collaborators: CollectionSize<Collaborator>
 }
 
 /**

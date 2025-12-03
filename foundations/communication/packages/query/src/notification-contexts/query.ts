@@ -20,12 +20,11 @@ import {
   FindNotificationsParams,
   Message,
   MessageID,
-  MessagesDoc,
   type NotificationContext,
   SortingOrder
 } from '@hcengineering/communication-types'
 import {
-  CardEventType,
+  DocEventType,
   CreateMessageEvent,
   CreateNotificationContextEvent,
   CreateNotificationEvent,
@@ -35,23 +34,20 @@ import {
   NotificationEventType,
   type PagedQueryCallback,
   PatchEvent,
-  RemoveCardEvent,
+  RemoveDocEvent,
   RemoveNotificationContextEvent,
   RemoveNotificationsEvent,
   UpdateNotificationContextEvent,
   UpdateNotificationEvent
 } from '@hcengineering/communication-sdk-types'
-import {
-  MessageProcessor,
-  NotificationContextProcessor,
-  NotificationProcessor
-} from '@hcengineering/communication-shared'
+import { NotificationContextProcessor } from '@hcengineering/communication-shared'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { defaultQueryParams, NotificationContextQueryOptions, type PagedQuery, type QueryId } from '../types'
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
-import { matchNotification, loadMessages } from '../utils'
+import { matchNotification } from '../utils'
+import { Hierarchy } from '@hcengineering/core'
 
 export class NotificationContextsQuery implements PagedQuery<NotificationContext, FindNotificationContextParams> {
   private result: QueryResult<NotificationContext> | Promise<QueryResult<NotificationContext>>
@@ -61,10 +57,11 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   nexLoadedPagesCount = 0
   prevLoadedPagesCount = 0
 
-  private messagesBuffer: Message[] = []
+  private readonly messagesBuffer: Message[] = []
 
   constructor (
     private readonly client: FindClient,
+    private readonly hierarchy: Hierarchy,
     private readonly hulylake: HulylakeWorkspaceClient,
     public readonly id: QueryId,
     public readonly params: FindNotificationContextParams,
@@ -125,7 +122,6 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       case MessageEventType.CreateMessage:
         await this.onCreateMessageEvent(event)
         break
-      case MessageEventType.BlobPatch:
       case MessageEventType.AttachmentPatch:
       case MessageEventType.RemovePatch:
       case MessageEventType.UpdatePatch: {
@@ -156,7 +152,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
         await this.onUpdateNotificationEvent(event)
         break
       }
-      case CardEventType.RemoveCard:
+      case DocEventType.RemoveDoc:
         await this.onCardRemoved(event)
         break
     }
@@ -275,48 +271,51 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private async findMessage (cardId: CardID, blobId: BlobID, messageId: MessageID): Promise<Message | undefined> {
-    const fromBuffer = this.messagesBuffer.find((it) => it.cardId === cardId && it.id === messageId)
-    if (fromBuffer != null) {
-      return fromBuffer
-    }
-
-    return (await loadMessages(this.hulylake, cardId, blobId, { cardId, id: messageId }, { attachments: true }))[0]
+    // const fromBuffer = this.messagesBuffer.find((it) => it.cardId === cardId && it.id === messageId)
+    // if (fromBuffer != null) {
+    //   return fromBuffer
+    // }
+    //
+    // return (await loadMessages(this.hulylake, cardId, blobId, { cardId, id: messageId }, { attachments: true }))[0]
+    return undefined
   }
 
   async loadMessages (contexts: NotificationContext[]): Promise<NotificationContext[]> {
-    const cache = new Map<BlobID, Promise<MessagesDoc | undefined>>()
-    const newContexts = await Promise.all(
-      contexts.map(async (context) => {
-        const notifications = context.notifications ?? []
+    // const cache = new Map<BlobID, Promise<MessagesDoc | undefined>>()
+    // const newContexts = await Promise.all(
+    //   contexts.map(async (context) => {
+    //     const notifications = context.notifications ?? []
+    //
+    //     context.notifications = await Promise.all(
+    //       notifications.map(async (notification) => {
+    //         const message = (
+    //           await loadMessages(
+    //             this.hulylake,
+    //             context.cardId,
+    //             notification.blobId,
+    //             { cardId: context.cardId, id: notification.messageId },
+    //             { attachments: true },
+    //             cache
+    //           )
+    //         )[0]
+    //
+    //         if (message !== undefined) {
+    //           return {
+    //             ...notification,
+    //             message
+    //           }
+    //         }
+    //
+    //         return notification
+    //       })
+    //     )
+    //     return context
+    //   })
+    // )
+    // cache.clear()
+    // return newContexts
 
-        context.notifications = await Promise.all(
-          notifications.map(async (notification) => {
-            const message = (
-              await loadMessages(
-                this.hulylake,
-                context.cardId,
-                notification.blobId,
-                { cardId: context.cardId, id: notification.messageId },
-                { attachments: true },
-                cache
-              )
-            )[0]
-
-            if (message !== undefined) {
-              return {
-                ...notification,
-                message
-              }
-            }
-
-            return notification
-          })
-        )
-        return context
-      })
-    )
-    cache.clear()
-    return newContexts
+    return []
   }
 
   private async find (params: FindNotificationContextParams): Promise<NotificationContext[]> {
@@ -347,34 +346,34 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private async onCreateMessageEvent (event: CreateMessageEvent): Promise<void> {
-    if (this.params.notifications == null || this.options?.message !== true) return
-    if (this.forward instanceof Promise) this.forward = await this.forward
-    if (this.backward instanceof Promise) this.backward = await this.backward
-    if (this.result instanceof Promise) this.result = await this.result
-    const context = this.result.getResult().find((it) => it.cardId === event.cardId)
-    if (context === undefined) return
-    this.messagesBuffer.push(MessageProcessor.create(event))
-
-    const delay = 10 * 60 * 1000
-    this.messagesBuffer = this.messagesBuffer.filter((it) => it.created.getTime() - Date.now() < delay)
+    // if (this.params.notifications == null || this.options?.message !== true) return
+    // if (this.forward instanceof Promise) this.forward = await this.forward
+    // if (this.backward instanceof Promise) this.backward = await this.backward
+    // if (this.result instanceof Promise) this.result = await this.result
+    // const context = this.result.getResult().find((it) => it.cardId === event.cardId)
+    // if (context === undefined) return
+    // this.messagesBuffer.push(MessageProcessor.create(event))
+    //
+    // const delay = 10 * 60 * 1000
+    // this.messagesBuffer = this.messagesBuffer.filter((it) => it.created.getTime() - Date.now() < delay)
   }
 
   private async onCreatePatchEvent (event: PatchEvent): Promise<void> {
-    const isUpdated = await this.updateMessage(event.cardId, event.messageId, (message) =>
-      MessageProcessor.applyPatch(message, event)
-    )
-    if (isUpdated) {
-      void this.notify()
-    }
-
-    this.messagesBuffer = this.messagesBuffer
-      .map((it) => {
-        if (it.cardId === event.cardId && it.id === event.messageId) {
-          return MessageProcessor.applyPatch(it, event)
-        }
-        return it
-      })
-      .filter((it): it is Message => it != null)
+    // const isUpdated = await this.updateMessage(event.cardId, event.messageId, (message) =>
+    //   MessageProcessor.applyPatch(message, event)
+    // )
+    // if (isUpdated) {
+    //   void this.notify()
+    // }
+    //
+    // this.messagesBuffer = this.messagesBuffer
+    //   .map((it) => {
+    //     if (it.cardId === event.cardId && it.id === event.messageId) {
+    //       return MessageProcessor.applyPatch(it, event)
+    //     }
+    //     return it
+    //   })
+    //   .filter((it): it is Message => it != null)
   }
 
   private async onRemoveNotificationEvent (event: RemoveNotificationsEvent): Promise<void> {
@@ -522,53 +521,53 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private async onCreateNotificationEvent (event: CreateNotificationEvent): Promise<void> {
-    if (this.params.notifications == null || event.notificationId == null) return
-    if (this.forward instanceof Promise) this.forward = await this.forward
-    if (this.backward instanceof Promise) this.backward = await this.backward
-    if (this.result instanceof Promise) this.result = await this.result
-
-    const notification = NotificationProcessor.create(event)
-    const match = matchNotification(notification, {
-      type: this.params.notifications.type,
-      read: this.params.notifications.read
-    })
-    if (!match) return
-
-    const context = this.result.get(notification.contextId)
-    if ((context?.notifications ?? []).some((it) => it.id === notification.id)) return
-    if (context !== undefined) {
-      const message =
-        this.options?.message === true
-          ? await this.findMessage(context.cardId, notification.blobId, notification.messageId)
-          : undefined
-
-      const notifications = [
-        {
-          ...notification,
-          message
-        },
-        ...(context.notifications ?? [])
-      ]
-      if (notifications.length > this.params.notifications.limit) {
-        notifications.pop()
-      }
-      this.result.update({
-        ...context,
-        ...(this.params.notifications.total === true
-          ? { totalNotifications: (context.totalNotifications ?? 0) + 1 }
-          : {}),
-        notifications
-      })
-      void this.notify()
-    } else {
-      const newContext = (
-        await this.find({ id: notification.contextId, notifications: this.params.notifications, limit: 1 })
-      )[0]
-      if (newContext !== undefined) {
-        this.addContext(newContext, this.result)
-        void this.notify()
-      }
-    }
+    // if (this.params.notifications == null || event.notificationId == null) return
+    // if (this.forward instanceof Promise) this.forward = await this.forward
+    // if (this.backward instanceof Promise) this.backward = await this.backward
+    // if (this.result instanceof Promise) this.result = await this.result
+    //
+    // const notification = NotificationProcessor.create(event)
+    // const match = matchNotification(notification, {
+    //   type: this.params.notifications.type,
+    //   read: this.params.notifications.read
+    // })
+    // if (!match) return
+    //
+    // const context = this.result.get(notification.contextId)
+    // if ((context?.notifications ?? []).some((it) => it.id === notification.id)) return
+    // if (context !== undefined) {
+    //   const message =
+    //     this.options?.message === true
+    //       ? await this.findMessage(context.cardId, notification.blobId, notification.messageId)
+    //       : undefined
+    //
+    //   const notifications = [
+    //     {
+    //       ...notification,
+    //       message
+    //     },
+    //     ...(context.notifications ?? [])
+    //   ]
+    //   if (notifications.length > this.params.notifications.limit) {
+    //     notifications.pop()
+    //   }
+    //   this.result.update({
+    //     ...context,
+    //     ...(this.params.notifications.total === true
+    //       ? { totalNotifications: (context.totalNotifications ?? 0) + 1 }
+    //       : {}),
+    //     notifications
+    //   })
+    //   void this.notify()
+    // } else {
+    //   const newContext = (
+    //     await this.find({ id: notification.contextId, notifications: this.params.notifications, limit: 1 })
+    //   )[0]
+    //   if (newContext !== undefined) {
+    //     this.addContext(newContext, this.result)
+    //     void this.notify()
+    //   }
+    // }
   }
 
   private async onRemoveNotificationContextEvent (event: RemoveNotificationContextEvent): Promise<void> {
@@ -635,24 +634,24 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     void this.notify()
   }
 
-  async onCardRemoved (event: RemoveCardEvent): Promise<void> {
-    if (this.result instanceof Promise) this.result = await this.result
-    let updated = false
-    const result = this.result.getResult()
-    for (const context of result) {
-      if (context.cardId === event.cardId) {
-        this.result.delete(context.id)
-        updated = true
-      }
-    }
-
-    if (updated) {
-      if (this.params.limit != null && this.result.length < this.params.limit && result.length >= this.params.limit) {
-        const contexts = await this.find(this.params)
-        this.result = new QueryResult(contexts, (x) => x.id)
-      }
-      void this.notify()
-    }
+  async onCardRemoved (event: RemoveDocEvent): Promise<void> {
+    // if (this.result instanceof Promise) this.result = await this.result
+    // let updated = false
+    // const result = this.result.getResult()
+    // for (const context of result) {
+    //   if (context.cardId === event.cardId) {
+    //     this.result.delete(context.id)
+    //     updated = true
+    //   }
+    // }
+    //
+    // if (updated) {
+    //   if (this.params.limit != null && this.result.length < this.params.limit && result.length >= this.params.limit) {
+    //     const contexts = await this.find(this.params)
+    //     this.result = new QueryResult(contexts, (x) => x.id)
+    //   }
+    //   void this.notify()
+    // }
   }
 
   private addContext (context: NotificationContext, result: QueryResult<NotificationContext>): void {
@@ -681,50 +680,50 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private match (context: NotificationContext): boolean {
-    if (this.params.cardId !== undefined) {
-      const cards = Array.isArray(this.params.cardId) ? this.params.cardId : [this.params.cardId]
-      if (!cards.includes(context.cardId)) return false
-    }
-
-    if (this.params.id !== undefined && context.id !== this.params.id) {
-      return false
-    }
-
-    if (this.params.lastNotify !== undefined) {
-      if (
-        'greater' in this.params.lastNotify &&
-        this.params.lastNotify.greater != null &&
-        (context.lastNotify?.getTime() ?? 0) <= this.params.lastNotify.greater.getTime()
-      ) {
-        return false
-      }
-      if (
-        'less' in this.params.lastNotify &&
-        this.params.lastNotify.less != null &&
-        (context.lastNotify?.getTime() ?? 0) >= this.params.lastNotify.less.getTime()
-      ) {
-        return false
-      }
-      if (
-        'greaterOrEqual' in this.params.lastNotify &&
-        this.params.lastNotify.greaterOrEqual != null &&
-        (context.lastNotify?.getTime() ?? 0) < this.params.lastNotify.greaterOrEqual.getTime()
-      ) {
-        return false
-      }
-      if (
-        'lessOrEqual' in this.params.lastNotify &&
-        this.params.lastNotify.lessOrEqual != null &&
-        (context.lastNotify?.getTime() ?? 0) > this.params.lastNotify.lessOrEqual.getTime()
-      ) {
-        return false
-      }
-
-      if (this.params.lastNotify instanceof Date && this.params.lastNotify !== context.lastNotify) {
-        return false
-      }
-    }
-
+    // if (this.params.cardId !== undefined) {
+    //   const cards = Array.isArray(this.params.cardId) ? this.params.cardId : [this.params.cardId]
+    //   if (!cards.includes(context.cardId)) return false
+    // }
+    //
+    // if (this.params.id !== undefined && context.id !== this.params.id) {
+    //   return false
+    // }
+    //
+    // if (this.params.lastNotify !== undefined) {
+    //   if (
+    //     'greater' in this.params.lastNotify &&
+    //     this.params.lastNotify.greater != null &&
+    //     (context.lastNotify?.getTime() ?? 0) <= this.params.lastNotify.greater.getTime()
+    //   ) {
+    //     return false
+    //   }
+    //   if (
+    //     'less' in this.params.lastNotify &&
+    //     this.params.lastNotify.less != null &&
+    //     (context.lastNotify?.getTime() ?? 0) >= this.params.lastNotify.less.getTime()
+    //   ) {
+    //     return false
+    //   }
+    //   if (
+    //     'greaterOrEqual' in this.params.lastNotify &&
+    //     this.params.lastNotify.greaterOrEqual != null &&
+    //     (context.lastNotify?.getTime() ?? 0) < this.params.lastNotify.greaterOrEqual.getTime()
+    //   ) {
+    //     return false
+    //   }
+    //   if (
+    //     'lessOrEqual' in this.params.lastNotify &&
+    //     this.params.lastNotify.lessOrEqual != null &&
+    //     (context.lastNotify?.getTime() ?? 0) > this.params.lastNotify.lessOrEqual.getTime()
+    //   ) {
+    //     return false
+    //   }
+    //
+    //   if (this.params.lastNotify instanceof Date && this.params.lastNotify !== context.lastNotify) {
+    //     return false
+    //   }
+    // }
+    //
     return true
   }
 
@@ -747,23 +746,23 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     messageId: MessageID,
     updater: (message: Message) => Message | undefined
   ): Promise<boolean> {
-    if (this.params.notifications == null || this.options?.message !== true) return false
-    if (this.forward instanceof Promise) this.forward = await this.forward
-    if (this.backward instanceof Promise) this.backward = await this.backward
-    if (this.result instanceof Promise) this.result = await this.result
-    const context = this.result.getResult().find((it) => it.cardId === card)
-    if (context === undefined || (context.notifications ?? []).length === 0) return false
-
-    const hasMessage = context.notifications?.some((it) => it.messageId === messageId) ?? false
-    if (!hasMessage) return false
-
-    this.result.update({
-      ...context,
-      notifications: context.notifications?.map((it) => ({
-        ...it,
-        message: it.messageId === messageId && it.message != null ? updater(it.message) : it.message
-      }))
-    })
+    // if (this.params.notifications == null || this.options?.message !== true) return false
+    // if (this.forward instanceof Promise) this.forward = await this.forward
+    // if (this.backward instanceof Promise) this.backward = await this.backward
+    // if (this.result instanceof Promise) this.result = await this.result
+    // const context = this.result.getResult().find((it) => it.cardId === card)
+    // if (context === undefined || (context.notifications ?? []).length === 0) return false
+    //
+    // const hasMessage = context.notifications?.some((it) => it.messageId === messageId) ?? false
+    // if (!hasMessage) return false
+    //
+    // this.result.update({
+    //   ...context,
+    //   notifications: context.notifications?.map((it) => ({
+    //     ...it,
+    //     message: it.messageId === messageId && it.message != null ? updater(it.message) : it.message
+    //   }))
+    // })
 
     return true
   }

@@ -614,6 +614,10 @@ export class Hierarchy {
       .filter((it, idx, array) => array.findIndex((pt) => pt === it) === idx)
   }
 
+  classes (): Class<Doc>[] {
+    return Array.from(this.classifiers.values()).filter((it) => this.isClass(it) || this._isMixin(it)) as Class<Doc>[]
+  }
+
   getClassifierProp (cl: Ref<Class<Doc>>, prop: string): any | undefined {
     return this.classifierProperties.get(cl)?.get(prop)
   }

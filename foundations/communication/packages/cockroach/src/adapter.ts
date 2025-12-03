@@ -14,10 +14,7 @@
 //
 
 import {
-  type FindCollaboratorsParams,
-  type AccountUuid,
   type CardID,
-  type Collaborator,
   type ContextID,
   type FindNotificationContextParams,
   type FindNotificationsParams,
@@ -25,12 +22,10 @@ import {
   type Notification,
   type NotificationContext,
   type SocialID,
-  type WorkspaceUuid,
   type NotificationID,
   type Label,
   type FindLabelsParams,
   type LabelID,
-  type CardType,
   NotificationType,
   type NotificationContent,
   WithTotal,
@@ -39,19 +34,24 @@ import {
   FindPeersParams,
   Peer,
   FindThreadMetaParams,
-  MessageMeta, ThreadMeta, BlobID,
+  MessageMeta,
+  ThreadMeta,
+  BlobID,
   FindMessagesMetaParams
 } from '@hcengineering/communication-types'
+import { AccountUuid, WorkspaceUuid, Ref, Class, Doc, Hierarchy } from '@hcengineering/core'
 import type {
-  CollaboratorQuery,
-  CollaboratorUpdate,
+  CreateThreadMetaAttrs,
   DbAdapter,
   LabelQuery,
   LabelUpdate,
   NotificationContextQuery,
   NotificationContextUpdate,
   NotificationQuery,
-  NotificationUpdate, ThreadMetaQuery, ThreadMetaUpdate
+  NotificationUpdate,
+  ThreadMetaQuery,
+  ThreadMetaUpdate,
+  CreateMessageMetaAttrs
 } from '@hcengineering/communication-sdk-types'
 
 import { MessagesDb } from './db/message'
@@ -59,12 +59,12 @@ import { NotificationsDb } from './db/notification'
 import { connect } from './connection'
 import { type Logger, type Options } from './types'
 import { formatName } from './utils'
-import { initSchema } from './init'
+import { createPartitions, initSchema } from './init'
 import { LabelsDb } from './db/label'
 import { SqlClient } from './client'
 import { PeersDb } from './db/peer'
 
-export class CockroachAdapter implements DbAdapter {
+export class PostgresAdapter implements DbAdapter {
   private readonly message: MessagesDb
   private readonly notification: NotificationsDb
   private readonly label: LabelsDb
@@ -73,28 +73,27 @@ export class CockroachAdapter implements DbAdapter {
   constructor (
     private readonly sql: SqlClient,
     private readonly workspace: WorkspaceUuid,
+    private readonly hierarchy: Hierarchy,
     private readonly logger?: Logger,
     private readonly options?: Options
   ) {
-    this.message = new MessagesDb(this.sql, this.workspace, logger, options)
-    this.notification = new NotificationsDb(this.sql, this.workspace, logger, options)
-    this.label = new LabelsDb(this.sql, this.workspace, logger, options)
-    this.peer = new PeersDb(this.sql, this.workspace, logger, options)
+    this.message = new MessagesDb(this.sql, this.workspace, hierarchy, logger, options)
+    this.notification = new NotificationsDb(this.sql, this.workspace, hierarchy, logger, options)
+    this.label = new LabelsDb(this.sql, this.workspace, hierarchy, logger, options)
+    this.peer = new PeersDb(this.sql, this.workspace, hierarchy, logger, options)
   }
 
   // MessageMeta
   async createMessageMeta (
-    cardId: CardID,
-    id: MessageID,
-    creator: SocialID,
-    created: Date,
-    blobID: BlobID
+    docClass: Ref<Class<Doc>>,
+    attrs: CreateMessageMetaAttrs
   ): Promise<boolean> {
-    return await this.message.createMessageMeta(cardId, id, creator, created, blobID)
+    return await this.message.createMessageMeta(docClass, attrs)
   }
 
-  async removeMessageMeta (cardId: CardID, messageId: MessageID): Promise<void> {
-    await this.message.removeMessageMeta(cardId, messageId)
+  async removeMessageMeta (docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>, messageId: MessageID | null): Promise<void> {
+    await this.message.removeMessageMeta(docClass, docId, messageId)
   }
 
   async findMessagesMeta (params: FindMessagesMetaParams): Promise<MessageMeta[]> {
@@ -103,12 +102,9 @@ export class CockroachAdapter implements DbAdapter {
 
   // ThreadsIndex
   async attachThreadMeta (
-    cardId: CardID,
-    messageId: MessageID,
-    threadId: CardID,
-    threadType: CardType
+    docClass: Ref<Class<Doc>>, attrs: CreateThreadMetaAttrs
   ): Promise<void> {
-    await this.message.attachThreadMeta(cardId, messageId, threadId, threadType)
+    await this.message.attachThreadMeta(docClass, attrs)
   }
 
   async updateThreadMeta (query: ThreadMetaQuery, update: ThreadMetaUpdate): Promise<void> {
@@ -124,29 +120,9 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   // Collaborators
-  async addCollaborators (
-    card: CardID,
-    cardType: CardType,
-    collaborators: AccountUuid[],
-    date: Date
-  ): Promise<AccountUuid[]> {
-    return await this.notification.addCollaborators(card, cardType, collaborators, date)
-  }
-
-  async removeCollaborators (query: CollaboratorQuery): Promise<void> {
-    await this.notification.removeCollaborators(query)
-  }
-
-  async updateCollaborators (query: CollaboratorQuery, update: CollaboratorUpdate): Promise<void> {
-    await this.notification.updateCollaborators(query, update)
-  }
-
-  getCollaboratorsCursor (card: CardID, date: Date, size?: number): AsyncIterable<Collaborator[]> {
-    return this.notification.getCollaboratorsCursor(card, date, size)
-  }
-
-  async findCollaborators (params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return await this.notification.findCollaborators(params)
+  getCollaboratorsCursor (docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>, date: Date, size?: number): AsyncIterable<any[]> {
+    return this.notification.getCollaboratorsCursor(docClass, docId, date, size)
   }
 
   // Notifications
@@ -188,13 +164,14 @@ export class CockroachAdapter implements DbAdapter {
 
   // NotificationContext
   async createNotificationContext (
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
     account: AccountUuid,
-    card: CardID,
     lastUpdate: Date,
     lastView: Date,
     lastNotify: Date
   ): Promise<ContextID> {
-    return await this.notification.createContext(account, card, lastUpdate, lastView, lastNotify)
+    return await this.notification.createContext(docClass, docId, account, lastUpdate, lastView, lastNotify)
   }
 
   async updateContext (query: NotificationContextQuery, update: NotificationContextUpdate): Promise<void> {
@@ -210,8 +187,9 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   // Labels
-  createLabel (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date): Promise<void> {
-    return this.label.createLabel(labelId, cardId, cardType, account, created)
+  createLabel (docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>, labelId: LabelID, account: AccountUuid, created: Date): Promise<void> {
+    return this.label.createLabel(docClass, docId, labelId, account, created)
   }
 
   removeLabels (query: LabelQuery): Promise<void> {
@@ -284,7 +262,8 @@ export class CockroachAdapter implements DbAdapter {
     return result[0]?.title
   }
 
-  async getCardSpaceMembers (cardId: CardID): Promise<AccountUuid[]> {
+  // TODO: FIXME
+  async getDocSpaceMembers (cardId: CardID): Promise<AccountUuid[]> {
     const sql = `SELECT s.members
                  FROM public.space AS s
                  JOIN public.card AS c ON c."workspaceId" = s."workspaceId" AND c.space = s._id
@@ -303,14 +282,16 @@ export class CockroachAdapter implements DbAdapter {
 export async function createDbAdapter (
   connectionString: string,
   workspace: WorkspaceUuid,
+  hierarchy: Hierarchy,
   logger?: Logger,
   options?: Options
 ): Promise<DbAdapter> {
   const connection = connect(connectionString)
   const sql = await connection.getClient()
-  await initSchema(sql)
+  await initSchema(sql, hierarchy)
+  await createPartitions(sql, hierarchy)
 
   const client = new SqlClient(connection, sql)
 
-  return new CockroachAdapter(client, workspace, logger, options)
+  return new PostgresAdapter(client, workspace, hierarchy, logger, options)
 }

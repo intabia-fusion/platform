@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Mixin } from '@hcengineering/core'
+  import core, { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
 
   import ClassAttributeBar from './ClassAttributeBar.svelte'
@@ -29,9 +29,10 @@
   const hierarchy = client.getHierarchy()
 
   $: _allowedCollections = [...allowedCollections, 'collaborators']
-  // $: _mixins = mixins.find((p) => p._id === notification.mixin.Collaborators)
-  //   ? mixins
-  //   : [...mixins, hierarchy.getClass(notification.mixin.Collaborators)]
+
+  $: _mixins = mixins.find((p) => p._id === core.mixin.Collaborators)
+    ? mixins
+    : [...mixins, hierarchy.getClass(core.mixin.Collaborators)]
 </script>
 
 <ClassAttributeBar

@@ -15,12 +15,11 @@
 <script lang="ts">
   import { AttributeModel } from '@hcengineering/view'
   import { ActivityUpdate, ActivityUpdateType, Markdown } from '@hcengineering/communication-types'
+  import { Person } from '@hcengineering/contact'
+  import { Doc } from '@hcengineering/core'
 
   import ActivityUpdateTagViewer from './ActivityUpdateTagViewer.svelte'
-  import ActivityUpdateAttributeViewer from './ActivityUpdateAttributeViewer.svelte'
-  import ActivityUpdateCollaboratorsViewer from './ActivityUpdateCollaboratorsViewer.svelte'
-  import { Person } from '@hcengineering/contact'
-  import { Card } from '@hcengineering/card'
+  import ActivityUpdateAttributeViewer from './attributes/ActivityUpdateAttributeViewer.svelte'
   import ActivityUpdateTypeViewer from './ActivityUpdateTypeViewer.svelte'
   import ActivityUpdateProcessViewer from './ActivityUpdateProcessViewer.svelte'
   import ActivityCollaborativeContentViewer from './ActivityCollaborativeContentViewer.svelte'
@@ -28,21 +27,19 @@
   export let model: AttributeModel | undefined = undefined
   export let update: ActivityUpdate
   export let content: Markdown
-  export let card: Card
+  export let doc: Doc
   export let author: Person | undefined
-  export let oneRow: boolean = false
+  export let compact = false
 </script>
 
 {#if update.type === ActivityUpdateType.Attribute}
-  <ActivityUpdateAttributeViewer {model} {update} cardType={card._class} />
+  <ActivityUpdateAttributeViewer {model} {update} cardType={doc._class} />
 {:else if update.type === ActivityUpdateType.Tag}
   <ActivityUpdateTagViewer {update} {content} />
-{:else if update.type === ActivityUpdateType.Collaborators}
-  <ActivityUpdateCollaboratorsViewer {update} {card} {author} />
 {:else if update.type === ActivityUpdateType.Type}
   <ActivityUpdateTypeViewer {update} />
 {:else if update.type === ActivityUpdateType.Process}
   <ActivityUpdateProcessViewer {update} {content} />
 {:else if update.type === ActivityUpdateType.CollaborativeChange}
-  <ActivityCollaborativeContentViewer {model} {update} {oneRow} />
+  <ActivityCollaborativeContentViewer {model} {update} {compact}/>
 {/if}

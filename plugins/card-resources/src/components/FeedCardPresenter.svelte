@@ -48,7 +48,7 @@
   // Only query messages if this is a thread card
   $: if (isThreadCard) {
     messagesQuery.query(
-      { cardId: card._id, limit: 3, order: SortingOrder.Descending },
+      { docClass: card._class, docId: card._id, limit: 3, order: SortingOrder.Descending },
       (res) => {
         messages = res
           .getResult()
@@ -66,7 +66,8 @@
   }
 
   function hasNewMessages (labels: CardLabel[], cardId: CardID): boolean {
-    return labels.some((it) => (it.labelId as string) === cardPlugin.label.NewMessages && it.cardId === cardId)
+    // return labels.some((it) => (it.labelId as string) === cardPlugin.label.NewMessages && it.cardId === cardId)
+    return false
   }
 
   $: truncatedTitle = card.title.length > 300 ? card.title.substring(0, 300) + '...' : card.title

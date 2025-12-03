@@ -65,7 +65,7 @@
       .filter(notEmpty)
 
     if (accounts.length > 0) {
-      await communicationClient.addCollaborators(_id, type, accounts)
+      // await communicationClient.addCollaborators(_id, type, accounts)
     }
   }
 

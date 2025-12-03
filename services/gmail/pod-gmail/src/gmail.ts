@@ -18,6 +18,7 @@ import core, {
   Client,
   MeasureContext,
   PersonId,
+  Ref,
   SocialId,
   SocialIdType,
   TxOperations,
@@ -394,12 +395,13 @@ export class GmailClient {
   }
 
   async handleNewMessage (message: CreateMessageEvent): Promise<void> {
-    const messageKey = `v2-${this.user.workspace}-${this.socialId._id}-${message.messageId ?? message._id}-${message.cardId}`
+    const messageKey = `v2-${this.user.workspace}-${this.socialId._id}-${message.messageId ?? message._id}-${message.docId}-${message.docClass}`
 
     if (GmailClient.processingMessages.has(messageKey)) {
       this.ctx.info('Message already being processed, skipping duplicate', {
         messageKey,
-        cardId: message.cardId,
+        docId: message.docId,
+        docClass: message.docClass,
         email: this.email,
         workspace: this.user.workspace
       })
@@ -425,7 +427,7 @@ export class GmailClient {
         }
       }
       const email = await this.getEmail()
-      const thread = await this.client.findOne<Card>(communication.type.Thread, { _id: message.cardId })
+      const thread = await this.client.findOne<Card>(communication.type.Thread, { _id: message.docId as Ref<Card> })
       const mailChannel = await this.getMailChannel()
       if (mailChannel === undefined) {
         this.ctx.error('Mail channel is not defined', { email, workspace: this.workspace })

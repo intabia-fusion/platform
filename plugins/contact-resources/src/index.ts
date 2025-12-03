@@ -127,6 +127,8 @@ import IconMembers from './components/icons/Members.svelte'
 import ContactNamePresenter from './components/ContactNamePresenter.svelte'
 import PersonPreviewProvider from './components/person/PersonPreviewProvider.svelte'
 import TranslationSettings from './components/TranslationSettings.svelte'
+import CollaboratorEditor from './components/collaborator/CollaboratorEditor.svelte'
+import CollaboratorPresenter from './components/collaborator/CollaboratorPresenter.svelte'
 
 import { get } from 'svelte/store'
 import { canMergePersons, canResendInvitation } from './visibilityTester'
@@ -403,7 +405,9 @@ export default async (): Promise<Resources> => ({
     PersonIdFilter,
     AssigneePopup,
     TranslationSettings,
-    SocialIdentityPresenter
+    SocialIdentityPresenter,
+    CollaboratorEditor,
+    CollaboratorPresenter
   },
   completion: {
     EmployeeQuery: async (

@@ -14,7 +14,7 @@
 //
 
 import {
-  CardEventType,
+  DocEventType,
   type Event,
   EventResult,
   LabelEventType,
@@ -23,8 +23,7 @@ import {
   PeerEventType,
   type SessionData
 } from '@hcengineering/communication-sdk-types'
-import type {
-  AccountUuid,
+import {
   CardID,
   FindLabelsParams,
   FindNotificationContextParams,
@@ -33,13 +32,21 @@ import type {
   Notification,
   NotificationContext
 } from '@hcengineering/communication-types'
+import {
+  AccountUuid,
+  Domain,
+  Ref,
+  Doc,
+  Class,
+  Hierarchy
+} from '@hcengineering/core'
 
 import type { CommunicationCallbacks, Enriched, Middleware, MiddlewareContext, Subscription } from '../types'
 import { BaseMiddleware } from './base'
 
 interface SessionInfo {
   account: AccountUuid
-  subscriptions: Map<CardID, Set<Subscription>>
+  subscriptions: Map<Domain, Map<CardID, Set<Subscription>>>
 }
 
 export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
@@ -62,7 +69,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
 
     const result = await this.provideFindNotificationContexts(session, params, subscription)
     if (subscription != null && session.sessionId != null && session.sessionId !== '') {
-      this.subscribeContextsCard(session, subscription, result)
+      this.subscribeContextsDoc(session, subscription, result)
     }
     return result
   }
@@ -86,34 +93,41 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideEvent(session, event, derived)
   }
 
-  unsubscribeCard (session: SessionData, cardId: CardID, subscription: Subscription): void {
+  unsubscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: Subscription): void {
     if (session.sessionId == null) return
     const data = this.dataBySessionId.get(session.sessionId)
     if (data == null) return
 
-    const current = data.subscriptions.get(cardId)
+    const domain = session.hierarchy.getDomain(docClass)
+    const current = data.subscriptions.get(domain)?.get(docId)
     if (current == null) return
     current.delete(subscription)
 
-    data.subscriptions.set(cardId, current)
+    data.subscriptions.get(domain)?.set(docId, current)
   }
 
-  subscribeCard (session: SessionData, cardId: CardID, subscription: string | number): void {
+  subscribeDoc (session: SessionData, docId: Ref<Doc>, docClass: Ref<Class<Doc>>, subscription: string | number): void {
     if (session.sessionId == null) return
     const data = this.dataBySessionId.get(session.sessionId)
     if (data == null) return
 
-    const current = data.subscriptions.get(cardId) ?? new Set()
+    const domain = session.hierarchy.getDomain(docClass)
+    const current = data.subscriptions.get(domain)?.get(docId) ?? new Set()
     current.add(subscription)
-    data.subscriptions.set(cardId, current)
+
+    if (data.subscriptions.has(domain)) {
+      data.subscriptions.get(domain)?.set(docId, current)
+    } else {
+      data.subscriptions.set(domain, new Map([[docId, current]]))
+    }
   }
 
   handleBroadcast (session: SessionData, events: Enriched<Event>[]): void {
     if (events.length === 0) return
     const sessionIds: Record<string, Enriched<Event>[]> = {}
 
-    for (const [sessionId, session] of this.dataBySessionId.entries()) {
-      sessionIds[sessionId] = events.filter((it) => this.match(it, session))
+    for (const [sessionId, sessionInfo] of this.dataBySessionId.entries()) {
+      sessionIds[sessionId] = events.filter((it) => this.match(session.hierarchy, it, sessionInfo))
     }
 
     const ctx = this.context.ctx.newChild('enqueue', {})
@@ -142,12 +156,12 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     this.dataBySessionId.clear()
   }
 
-  private subscribeContextsCard (session: SessionData, queryId: Subscription, result: NotificationContext[]): void {
+  private subscribeContextsDoc (session: SessionData, queryId: Subscription, result: NotificationContext[]): void {
     const data = this.createSession(session)
     if (data == null) return
 
     for (const context of result) {
-      this.subscribeCard(session, context.cardId, queryId)
+      this.subscribeDoc(session, context.docId, context.docClass, queryId)
     }
   }
 
@@ -164,17 +178,18 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     return this.dataBySessionId.get(id)
   }
 
-  private match (event: Enriched<Event>, info: SessionInfo): boolean {
+  private match (hierarchy: Hierarchy, event: Enriched<Event>, info: SessionInfo): boolean {
     switch (event.type) {
       case MessageEventType.CreateMessage:
       case MessageEventType.ThreadPatch:
       case MessageEventType.ReactionPatch:
-      case MessageEventType.BlobPatch:
       case MessageEventType.AttachmentPatch:
       case MessageEventType.RemovePatch:
       case MessageEventType.UpdatePatch:
-      case MessageEventType.TranslateMessage:
-        return info.subscriptions.has(event.cardId)
+      case MessageEventType.TranslateMessage: {
+        const domain = hierarchy.getDomain(event.docClass)
+        return info.subscriptions.get(domain)?.has(event.docId) ?? false
+      }
       case NotificationEventType.RemoveNotifications:
       case NotificationEventType.CreateNotification:
       case NotificationEventType.UpdateNotification:
@@ -182,14 +197,11 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
       case NotificationEventType.UpdateNotificationContext:
       case NotificationEventType.CreateNotificationContext:
         return info.account === event.account
-      case NotificationEventType.RemoveCollaborators:
-      case NotificationEventType.AddCollaborators:
-        return true
       case LabelEventType.CreateLabel:
       case LabelEventType.RemoveLabel:
         return info.account === event.account
-      case CardEventType.UpdateCardType:
-      case CardEventType.RemoveCard:
+      case DocEventType.UpdateDocClass:
+      case DocEventType.RemoveDoc:
         return true
       case PeerEventType.RemovePeer:
       case PeerEventType.CreatePeer:

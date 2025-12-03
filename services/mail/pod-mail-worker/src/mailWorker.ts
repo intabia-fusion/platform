@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx } from '@hcengineering/core'
+import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx, Ref } from '@hcengineering/core'
 import {
   toMessageEvent,
   isNewChannelTx,
@@ -209,7 +209,9 @@ export class MailWorker {
 
       try {
         const workspaceClient = await getWorkspaceClient(workspaceUuid)
-        const thread = await workspaceClient.findOne<Card>(communication.type.Thread, { _id: message.cardId })
+        const thread = await workspaceClient.findOne<Card>(communication.type.Thread, {
+          _id: message.docId as Ref<Card>
+        })
         if (thread?.parent == null) {
           return
         }

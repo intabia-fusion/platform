@@ -12,9 +12,8 @@
 // limitations under the License.
 
 import { AppletAttachment, AppletParams, AppletType, Message, MessageID } from '@hcengineering/communication-types'
-import { Configuration, Doc, Ref } from '@hcengineering/core'
+import { Class, Configuration, Doc, Ref } from '@hcengineering/core'
 import { Asset, IntlString, Resource } from '@hcengineering/platform'
-import { Card, MasterTag } from '@hcengineering/card'
 import { AnyComponent } from '@hcengineering/ui'
 
 export * from './poll'
@@ -23,7 +22,7 @@ export * from './thread'
 
 export type MessageActionFunction = (
   message: Message,
-  card: Card,
+  doc: Doc,
   evt?: Event,
   onOpen?: () => void,
   onClose?: () => void
@@ -46,7 +45,7 @@ export interface MessageAction extends Doc {
 export interface CustomActivityPresenter extends Doc {
   attribute: string
   component: AnyComponent
-  type: Ref<MasterTag>
+  _class: Ref<Class<Doc>>
 }
 
 export interface Applet extends Doc {
@@ -61,12 +60,13 @@ export interface Applet extends Doc {
   createFn?: AppletCreateFnResource
 }
 
-export type AppletCreateFn = (parent: Card, message: MessageID, params: AppletParams) => Promise<void>
+export type AppletCreateFn = (parent: Doc, message: MessageID, params: AppletParams) => Promise<void>
 export type AppletCreateFnResource = Resource<AppletCreateFn>
 
 export type AppletGetTitleFn = (attachment: AppletAttachment) => string
 export type AppletGetTitleFnResource = Resource<AppletGetTitleFn>
 
 export interface GuestCommunicationSettings extends Configuration {
-  allowedCards: Ref<Card>[]
+  // TODO: FIXME
+  allowedCards: Ref<Doc>[]
 }

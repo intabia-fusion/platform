@@ -15,7 +15,6 @@
 import { closeLiveQueries, initLiveQueries, refreshLiveQueries } from '@hcengineering/communication-client-query'
 import {
   type AddAttachmentsOperation,
-  type AddCollaboratorsEvent,
   type AttachmentPatchEvent,
   type CreateMessageEvent,
   type CreateMessageResult,
@@ -25,7 +24,6 @@ import {
   NotificationEventType,
   type ReactionPatchEvent,
   type RemoveAttachmentsOperation,
-  type RemoveCollaboratorsEvent,
   type RemoveNotificationContextEvent,
   type RemovePatchEvent,
   type SetAttachmentsOperation,
@@ -37,12 +35,9 @@ import {
   type UpdatePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import {
-  type AccountUuid,
   type CardID,
   type CardType,
-  type Collaborator,
   type ContextID,
-  type FindCollaboratorsParams,
   type FindLabelsParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
@@ -74,7 +69,11 @@ import core, {
   SocialIdType,
   type Tx,
   type TxDomainEvent,
-  AccountRole
+  AccountRole,
+  type Ref,
+  type Doc,
+  type Class,
+  type AccountUuid
 } from '@hcengineering/core'
 import { onDestroy } from 'svelte'
 import { addNotification, NotificationSeverity, languageStore } from '@hcengineering/ui'
@@ -89,7 +88,6 @@ import { addTxListener, removeTxListener, type TxListener } from './utils'
 import presentation from './plugin'
 
 export {
-  createCollaboratorsQuery,
   createLabelsQuery,
   createMessagesQuery,
   createNotificationContextsQuery,
@@ -117,7 +115,7 @@ export async function setCommunicationClient (platformClient: PlatformClient): P
   const hulylakeUrl = getMetadata(presentation.metadata.HulylakeUrl) ?? ''
   const hulylake = getHulylakeClient(hulylakeUrl, getCurrentWorkspaceUuid(), token)
 
-  initLiveQueries(_client, hulylake, onDestroy)
+  initLiveQueries(_client, platformClient.getHierarchy(), hulylake, onDestroy)
   client = _client
   onClientListeners.forEach((fn) => {
     fn()
@@ -152,45 +150,62 @@ class Client {
   onEvent: (event: Event) => void = () => {}
   onRequest: (event: Event, eventPromise: Promise<EventResult>) => void = () => {}
 
-  async attachThread (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType): Promise<void> {
+  async attachThread (
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
+    messageId: MessageID,
+    threadId: CardID,
+    threadType: CardType
+  ): Promise<void> {
     const event: ThreadPatchEvent = {
       type: MessageEventType.ThreadPatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
       operation: {
         opcode: 'attach',
         threadId,
         threadType
       },
-      socialId: this.getSocialId()
+      socialId: this.getSocialId(),
+      date: new Date()
     }
 
     await this.sendEvent(event)
   }
 
-  async createMessage (cardId: CardID, cardType: CardType, content: Markdown): Promise<CreateMessageResult> {
+  async createMessage (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, content: Markdown): Promise<CreateMessageResult> {
     const event: CreateMessageEvent = {
       type: MessageEventType.CreateMessage,
       messageType: MessageType.Text,
-      cardId,
-      cardType,
+      docId,
+      docClass,
       content,
       socialId: this.getSocialId(),
+      date: new Date(),
       options: {
         skipLinkPreviews: true
       }
     }
     const result = await this.sendEvent(event)
+
     return result as CreateMessageResult
   }
 
-  async updateMessage (cardId: CardID, messageId: MessageID, content: Markdown): Promise<void> {
+  async updateMessage (
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
+    messageId: MessageID,
+    content: Markdown
+  ): Promise<void> {
     const event: UpdatePatchEvent = {
       type: MessageEventType.UpdatePatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
       content,
       socialId: this.getSocialId(),
+      date: new Date(),
       options: {
         skipLinkPreviewsUpdate: true
       }
@@ -198,46 +213,53 @@ class Client {
     await this.sendEvent(event)
   }
 
-  async removeMessage (cardId: CardID, messageId: MessageID): Promise<void> {
+  async removeMessage (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID): Promise<void> {
     const event: RemovePatchEvent = {
       type: MessageEventType.RemovePatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
-      socialId: this.getSocialId()
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
 
-  async addReaction (cardId: CardID, messageId: MessageID, emoji: Emoji): Promise<void> {
+  async addReaction (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID, emoji: Emoji): Promise<void> {
     const event: ReactionPatchEvent = {
       type: MessageEventType.ReactionPatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
       operation: {
         opcode: 'add',
         reaction: emoji
       },
-      socialId: this.getSocialId()
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
 
-  async removeReaction (cardId: CardID, messageId: MessageID, emoji: Emoji): Promise<void> {
+  async removeReaction (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID, emoji: Emoji): Promise<void> {
     const event: ReactionPatchEvent = {
       type: MessageEventType.ReactionPatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
       operation: {
         opcode: 'remove',
         reaction: emoji
       },
-      socialId: this.getSocialId()
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
 
   async attachmentPatch<P extends AttachmentParams>(
-    cardId: CardID,
+    docClass: Ref<Class<Doc>>,
+    docId: Ref<Doc>,
     messageId: MessageID,
     ops: {
       add?: Array<AttachmentDataWithOptionalId<P>>
@@ -288,32 +310,12 @@ class Client {
 
     const event: AttachmentPatchEvent = {
       type: MessageEventType.AttachmentPatch,
-      cardId,
+      docId,
+      docClass,
       messageId,
       operations,
-      socialId: this.getSocialId()
-    }
-    await this.sendEvent(event)
-  }
-
-  async addCollaborators (cardId: CardID, cardType: CardType, collaborators: AccountUuid[]): Promise<void> {
-    const event: AddCollaboratorsEvent = {
-      type: NotificationEventType.AddCollaborators,
-      cardId,
-      cardType,
-      collaborators,
-      socialId: this.getSocialId()
-    }
-    await this.sendEvent(event)
-  }
-
-  async removeCollaborators (cardId: CardID, cardType: CardType, collaborators: AccountUuid[]): Promise<void> {
-    const event: RemoveCollaboratorsEvent = {
-      type: NotificationEventType.RemoveCollaborators,
-      cardId,
-      cardType,
-      collaborators,
-      socialId: this.getSocialId()
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
@@ -325,7 +327,9 @@ class Client {
       account: this.getAccount(),
       updates: {
         lastView
-      }
+      },
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
@@ -334,7 +338,9 @@ class Client {
     const event: RemoveNotificationContextEvent = {
       type: NotificationEventType.RemoveNotificationContext,
       contextId,
-      account: this.getAccount()
+      account: this.getAccount(),
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
@@ -351,7 +357,9 @@ class Client {
       query,
       updates: {
         read
-      }
+      },
+      socialId: this.getSocialId(),
+      date: new Date()
     }
     await this.sendEvent(event)
   }
@@ -402,23 +410,15 @@ class Client {
     ).value
   }
 
-  async findCollaborators (params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return (
-      await this.connection.domainRequest<Collaborator[]>(COMMUNICATION, {
-        findCollaborators: { params }
-      })
-    ).value
-  }
-
-  async subscribeCard (cardId: CardID, subscription: string | number): Promise<void> {
+  async subscribeDoc (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, subscription: string | number): Promise<void> {
     await this.connection.domainRequest<Message[]>(COMMUNICATION, {
-      subscribeCard: { cardId, subscription }
+      subscribeDoc: { docClass, docId, subscription }
     })
   }
 
-  async unsubscribeCard (cardId: CardID, subscription: string | number): Promise<void> {
+  async unsubscribeDoc (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, subscription: string | number): Promise<void> {
     await this.connection.domainRequest<Message[]>(COMMUNICATION, {
-      unsubscribeCard: { cardId, subscription }
+      unsubscribeDoc: { docClass, docId, subscription }
     })
   }
 
@@ -442,10 +442,18 @@ class Client {
 
     const ev: Event = { ...event, _id: generateId() }
 
+    const tx: TxDomainEvent = {
+      _id: generateId(),
+      _class: core.class.TxDomainEvent,
+      space: core.space.Tx,
+      objectSpace: core.space.Workspace,
+      domain: COMMUNICATION,
+      event: ev,
+      modifiedBy: this.getSocialId(),
+      modifiedOn: Date.now()
+    }
     const eventPromise: Promise<EventResult> = this.connection
-      .domainRequest<EventResult>(COMMUNICATION, {
-      event: ev
-    })
+      .domainEventTx<EventResult>(tx)
       .then((result) => result.value)
     this.onRequest(ev, eventPromise)
     return await eventPromise

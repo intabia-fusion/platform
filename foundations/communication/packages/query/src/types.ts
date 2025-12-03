@@ -17,12 +17,12 @@ import { EventResult, Event } from '@hcengineering/communication-sdk-types'
 import {
   SortingOrder,
   type Window,
-  type CardID,
   type MessageID,
   FindNotificationsParams,
   FindMessagesOptions,
   BlobID
 } from '@hcengineering/communication-types'
+import type { Class, Doc, Ref } from '@hcengineering/core'
 
 import { QueryResult } from './result'
 
@@ -74,7 +74,8 @@ export interface Query<R = any, P = FindParams> extends BaseQuery<R, P> {
 export type AnyQuery = Query | PagedQuery
 
 interface BaseMessageQueryParams {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
 
   limit?: number
   order?: SortingOrder

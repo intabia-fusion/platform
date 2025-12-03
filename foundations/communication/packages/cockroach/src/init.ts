@@ -15,6 +15,7 @@
 
 import type postgres from 'postgres'
 import { Domain } from '@hcengineering/communication-sdk-types'
+import { Doc, Hierarchy, notEmpty, Ref, Mixin } from '@hcengineering/core'
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
@@ -27,7 +28,7 @@ export function isInitialized (): boolean {
   return isSchemaInitialized
 }
 
-export async function initSchema (sql: postgres.Sql): Promise<void> {
+export async function initSchema (sql: postgres.Sql, hierarchy: Hierarchy): Promise<void> {
   if (isInitialized()) return
 
   if (initPromise == null) {
@@ -58,6 +59,34 @@ export async function initSchema (sql: postgres.Sql): Promise<void> {
   }
 
   await initPromise
+}
+
+export async function createPartitions (sql: postgres.Sql, hierarchy: Hierarchy): Promise<void> {
+  console.log('Starting to create partitions...')
+  const classes = hierarchy.classes()
+  const domains = new Set(classes
+    .filter(it => hierarchy.classHierarchyMixin(it._id, 'communication:mixin:Messageable' as Ref<Mixin<Doc>>) != null)
+    .map((it) => it.domain)
+    .filter(notEmpty))
+  console.log('DOMAINS', domains)
+  const tables = [Domain.MessageIndex]
+
+  for (const table of tables) {
+    const tablename = table.replace('communication.', '')
+    for (const domain of domains) {
+      const domainTablename = `${tablename}_${domain}`
+      const partitionName = `"communication"."${domainTablename}"`
+
+      const selectSql = `SELECT 1 FROM pg_tables WHERE schemaname = 'communication' and tablename='${domainTablename}' LIMIT 1;`
+      const res = await sql.unsafe(selectSql)
+
+      if (res.length === 0) {
+        const partitionSql = `CREATE TABLE ${partitionName} PARTITION OF ${table} FOR VALUES IN ('${domain}');`
+        await sql.unsafe(partitionSql)
+      }
+    }
+  }
+  console.log('Finished creating partitions.')
 }
 
 function delay (ms: number): Promise<void> {
@@ -129,18 +158,18 @@ function migrationV1_2 (): [string, string] {
       CREATE TABLE ${Domain.MessageIndex}
       (
           workspace_id UUID         NOT NULL,
+          domain       VARCHAR(255) NOT NULL,
           doc_id       VARCHAR(255) NOT NULL,
-          doc_class    VARCHAR(255) NOT NULL,
           message_id   VARCHAR(22)  NOT NULL,
           message_type VARCHAR(255) NOT NULL,
           created      TIMESTAMPTZ  NOT NULL,
           creator      VARCHAR(255) NOT NULL,
           blob_id      UUID         NOT NULL,
-          PRIMARY KEY (workspace_id, doc_id, doc_class, message_id)
-      );
+          PRIMARY KEY (workspace_id, domain, doc_id, message_id)
+      ) PARTITION BY LIST (domain);
 
-      CREATE INDEX idx_messageindex_workspaceid_id_class ON ${Domain.MessageIndex} (workspace_id, doc_id, doc_class);
-      CREATE INDEX idx_messageindex_workspaceid_id_class_messageid ON ${Domain.MessageIndex} (workspace_id, doc_id, doc_class, message_id);
+      CREATE INDEX idx_messageindex_workspaceid_id_domain ON ${Domain.MessageIndex} (workspace_id, domain, doc_id);
+      CREATE INDEX idx_messageindex_workspaceid_id_domain_messageid ON ${Domain.MessageIndex} (workspace_id, domain, doc_id, message_id);
 
       -- ============================================================================
       -- TABLE: thread_index
@@ -149,20 +178,24 @@ function migrationV1_2 (): [string, string] {
       CREATE TABLE ${Domain.ThreadIndex}
       (
           workspace_id UUID         NOT NULL,
+          domain       VARCHAR(255) NOT NULL,
           doc_id       VARCHAR(255) NOT NULL,
           doc_class    VARCHAR(255) NOT NULL,
           message_id   VARCHAR(22)  NOT NULL,
           thread_id    VARCHAR(255) NOT NULL,
-          thread_class VARCHAR(255) NOT NULL,
-          PRIMARY KEY (workspace_id, thread_id, thread_class),
-          CONSTRAINT thread_unique_constraint UNIQUE (workspace_id, doc_id, doc_class, message_id)
+          thread_type VARCHAR(255) NOT NULL,
+          PRIMARY KEY (workspace_id, domain, doc_id, message_id),
+          CONSTRAINT thread_unique_constraint UNIQUE (workspace_id, thread_id, thread_type)
       );
 
       CREATE INDEX idx_threadindex_workspaceid_threadid
           ON ${Domain.ThreadIndex} (workspace_id, thread_id);
 
-      CREATE INDEX idx_threadindex_workspaceid_id_class_messageid
-          ON ${Domain.ThreadIndex} (workspace_id, doc_id, doc_class, message_id);
+      CREATE INDEX idx_threadindex_workspaceid_id_domain
+        ON ${Domain.ThreadIndex} (workspace_id, domain, doc_id);
+
+      CREATE INDEX idx_threadindex_workspaceid_id_domain_messageid
+          ON ${Domain.ThreadIndex} (workspace_id, domain, doc_id, message_id);
 
       -- ============================================================================
       -- TABLE: notification_context
@@ -170,6 +203,7 @@ function migrationV1_2 (): [string, string] {
       CREATE TABLE ${Domain.NotificationContext}
       (
           workspace_id UUID         NOT NULL,
+          domain       VARCHAR(255) NOT NULL,
           context_id   UUID         NOT NULL DEFAULT gen_random_uuid(),
           doc_id       VARCHAR(255) NOT NULL,
           doc_class    VARCHAR(255) NOT NULL,
@@ -178,11 +212,11 @@ function migrationV1_2 (): [string, string] {
           last_update  TIMESTAMPTZ  NOT NULL DEFAULT now(),
           last_notify  TIMESTAMPTZ  NOT NULL DEFAULT now(),
           PRIMARY KEY (context_id),
-          UNIQUE (workspace_id, doc_id, doc_class, account)
+          UNIQUE (workspace_id, domain, doc_id, account)
       );
 
       CREATE UNIQUE INDEX idx_notification_context_ws_doc_account
-          ON ${Domain.NotificationContext} (workspace_id, doc_id, doc_class, account)
+          ON ${Domain.NotificationContext} (workspace_id, domain, doc_id, account)
           INCLUDE 
           (last_view, last_update, last_notify);
 
@@ -191,7 +225,7 @@ function migrationV1_2 (): [string, string] {
       CREATE INDEX idx_notification_context_ws_last_notify
           ON ${Domain.NotificationContext} (workspace_id, account, last_notify DESC)
           INCLUDE 
-          (doc_id, doc_class, last_view, last_update, last_notify);
+          (domain, doc_id, last_view, last_update, last_notify);
 
       CREATE INDEX idx_notification_context_id ON ${Domain.NotificationContext} (context_id);
 
@@ -200,14 +234,15 @@ function migrationV1_2 (): [string, string] {
       -- ============================================================================
       CREATE TABLE ${Domain.Notification}
       (
-          notification_id UUID         NOT NULL DEFAULT gen_random_uuid(),
           context_id      UUID         NOT NULL,
+          notification_id UUID         NOT NULL DEFAULT gen_random_uuid(),
           read            BOOLEAN      NOT NULL DEFAULT false,
           message_id      VARCHAR(22)  NOT NULL,
           created         TIMESTAMPTZ  NOT NULL,
           content         JSONB        NOT NULL DEFAULT '{}',
           blob_id         UUID         NOT NULL,
           creator         VARCHAR(255) NOT NULL DEFAULT '',
+          type            VARCHAR(255) NOT NULL DEFAULT '',
           PRIMARY KEY (notification_id),
           FOREIGN KEY (context_id) REFERENCES ${Domain.NotificationContext} (context_id) ON DELETE CASCADE
       );
@@ -222,34 +257,22 @@ function migrationV1_2 (): [string, string] {
           ON ${Domain.Notification} (context_id, message_id);
 
       -- ============================================================================
-      -- TABLE: collaborator
-      -- ============================================================================
-      CREATE TABLE ${Domain.Collaborator}
-      (
-          workspace_id UUID         NOT NULL,
-          doc_id       VARCHAR(255) NOT NULL,
-          doc_class    VARCHAR(255) NOT NULL,
-          account      UUID         NOT NULL,
-          date         TIMESTAMPTZ  NOT NULL DEFAULT now(),
-          PRIMARY KEY (workspace_id, doc_id, doc_class, account)
-      );
-
-      -- ============================================================================
       -- TABLE: label
       -- ============================================================================
       CREATE TABLE ${Domain.Label}
       (
           workspace_id UUID         NOT NULL,
+          domain       VARCHAR(255) NOT NULL,
           label_id     VARCHAR(255) NOT NULL,
           doc_id       VARCHAR(255) NOT NULL,
           doc_class    VARCHAR(255) NOT NULL,
           account      UUID         NOT NULL,
           created      TIMESTAMPTZ  NOT NULL DEFAULT now(),
-          PRIMARY KEY (workspace_id, doc_id, doc_class, label_id, account)
+          PRIMARY KEY (workspace_id, domain, doc_id, label_id, account)
       );
 
-      CREATE INDEX idx_label_workspace_doc_class
-          ON ${Domain.Label} (workspace_id, doc_id, doc_class);
+      CREATE INDEX idx_label_workspace_domain
+          ON ${Domain.Label} (workspace_id, domain, doc_id);
 
       CREATE INDEX idx_label_workspace_account
           ON ${Domain.Label} (workspace_id, account);

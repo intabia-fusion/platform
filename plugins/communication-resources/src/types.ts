@@ -15,7 +15,12 @@
 
 import { type IntlString } from '@hcengineering/platform'
 import { type TextEditorHandler } from '@hcengineering/text-editor'
-import { type LinkPreviewParams, type BlobParams, type AppletType } from '@hcengineering/communication-types'
+import {
+  type LinkPreviewParams,
+  type BlobParams,
+  type AppletType,
+  type Message
+} from '@hcengineering/communication-types'
 import type { Markup, Ref } from '@hcengineering/core'
 import type { IconComponent } from '@hcengineering/ui'
 import { type Applet } from '@hcengineering/communication'
@@ -55,4 +60,29 @@ export interface MessageDraft {
   blobs: BlobDraft[]
   links: LinkPreviewDraft[]
   applets: AppletDraft[]
+}
+
+export enum ActivityDirection {
+  Forward = 'forward',
+  Backward = 'backward'
+}
+
+export enum ActivityFilter {
+  Attributes = 'attributes',
+  Messages = 'messages'
+}
+
+export interface ActivityFilterDef {
+  id: ActivityFilter
+  label: IntlString
+  filter: (message: Message) => boolean
+}
+
+export enum DateFormat {
+  Time = 'time',
+  Default = 'default'
+}
+
+export type Aggregated<T extends Message> = T & {
+  previous?: Message[]
 }

@@ -19,7 +19,8 @@ import {
   type SearchResult,
   type Tx,
   type TxResult,
-  type WithLookup
+  type WithLookup,
+  type TxDomainEvent
 } from '@hcengineering/core'
 import platform, { PlatformError, setPlatformStatus, unknownError, type Resource } from '@hcengineering/platform'
 
@@ -110,6 +111,10 @@ export class PresentationPipelineImpl implements PresentationPipeline {
       current = element(this.client, current)
     }
     return current
+  }
+
+  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return await this.tx(tx) as DomainResult<T>
   }
 
   async domainRequest<T>(

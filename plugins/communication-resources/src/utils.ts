@@ -39,13 +39,13 @@ import { type Employee } from '@hcengineering/contact'
 export async function unsubscribe (card: Card): Promise<void> {
   const client = getCommunicationClient()
   const me = getCurrentAccount()
-  await client.removeCollaborators(card._id, card._class, [me.uuid])
+  // await client.removeCollaborators(card._class, card._id, [me.uuid])
 }
 
 export async function subscribe (card: Card): Promise<void> {
   const client = getCommunicationClient()
   const me = getCurrentAccount()
-  await client.addCollaborators(card._id, card._class, [me.uuid])
+  // await client.addCollaborators(card._class, card._id, [me.uuid])
 }
 
 export async function canSubscribe (card: Card): Promise<boolean> {
@@ -107,9 +107,9 @@ export async function toggleReaction (message: Message, emoji: Emoji): Promise<v
   const communicationClient = getCommunicationClient()
   const alreadyAdded = (message.reactions[emoji] ?? []).some((it) => it.person === me.uuid)
   if (alreadyAdded) {
-    await communicationClient.removeReaction(message.cardId, message.id, emoji)
+    await communicationClient.removeReaction(message.docClass, message.docId, message.id, emoji)
   } else {
-    await communicationClient.addReaction(message.cardId, message.id, emoji)
+    await communicationClient.addReaction(message.docClass, message.docId, message.id, emoji)
   }
 }
 

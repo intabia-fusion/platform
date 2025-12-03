@@ -87,6 +87,7 @@
     "@hcengineering/model-request": "workspace:^0.7.0",
     "@hcengineering/model-support": "workspace:^0.7.0",
     "@hcengineering/model-server-card": "workspace:^0.7.0",
+    "@hcengineering/model-server-communication": "workspace:^0.7.0",
     "@hcengineering/model-server-request": "workspace:^0.7.0",
     "@hcengineering/model-server-view": "workspace:^0.7.0",
     "@hcengineering/model-drive": "workspace:^0.7.0",

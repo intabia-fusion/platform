@@ -54,13 +54,13 @@ export class Storage {
     const current = await client.getJson<TranslatedMessagesDoc>(`${cardId}/messages/${lang}/${blobId}`)
 
     if (current?.body == null) {
-      const initialJson: TranslatedMessagesDoc = {
-        cardId,
-        language: lang,
-        messages: {}
-      }
-
-      await client.putJson(`${cardId}/messages/${lang}/${blobId}`, initialJson, undefined, this.retryOptions)
+      // const initialJson: TranslatedMessagesDoc = {
+      //   cardId,
+      //   language: lang,
+      //   messages: {}
+      // }
+      //
+      // await client.putJson(`${cardId}/messages/${lang}/${blobId}`, initialJson, undefined, this.retryOptions)
     }
 
     const map = this.createdBlobs.get(ws) ?? new Map()

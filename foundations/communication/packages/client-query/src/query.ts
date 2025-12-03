@@ -27,9 +27,7 @@ import {
   type Label,
   type Message,
   type NotificationContext,
-  type Notification,
-  FindCollaboratorsParams,
-  Collaborator
+  type Notification
 } from '@hcengineering/communication-types'
 import { deepEqual } from 'fast-equals'
 import { getLiveQueries, getOnDestroy } from './init'
@@ -139,16 +137,5 @@ export class LabelsQuery extends BaseQuery<FindLabelsParams, QueryCallback<Label
       unsubscribe: (isUpdate: boolean) => void
     } {
     return getLiveQueries().queryLabels(params, callback)
-  }
-}
-
-export class CollaboratorsQuery extends BaseQuery<FindCollaboratorsParams, QueryCallback<Collaborator>> {
-  override createQuery (
-    params: FindCollaboratorsParams,
-    callback: QueryCallback<Collaborator>
-  ): {
-      unsubscribe: (isUpdate: boolean) => void
-    } {
-    return getLiveQueries().queryCollaborators(params, callback)
   }
 }

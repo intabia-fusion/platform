@@ -23,12 +23,14 @@ import {
   IndexKind,
   type Mixin,
   type MixinUpdate,
+  type OperationDomain,
   type Ref,
   type Space,
   type Tx,
   type TxApplyIf,
   type TxCreateDoc,
   type TxCUD,
+  TxDomainEvent,
   type TxMixin,
   type TxRemoveDoc,
   type TxUpdateDoc,
@@ -83,6 +85,12 @@ export class TTxUpdateDoc<T extends Doc> extends TTxCUD<T> implements TxUpdateDo
 
 @Model(core.class.TxRemoveDoc, core.class.TxCUD)
 export class TTxRemoveDoc<T extends Doc> extends TTxCUD<T> implements TxRemoveDoc<T> {}
+
+@Model(core.class.TxDomainEvent, core.class.Tx)
+export class TTxDomainEvent<T extends Doc> extends TTx implements TxDomainEvent<T> {
+  domain!: OperationDomain
+  event!: T
+}
 
 @Model(core.class.TxApplyIf, core.class.Tx)
 export class TTxApplyIf extends TTx implements TxApplyIf {

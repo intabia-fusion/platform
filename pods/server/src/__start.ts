@@ -12,7 +12,7 @@ import { setMetadata } from '@hcengineering/platform'
 import { setDBExtraOptions } from '@hcengineering/postgres'
 import { serverConfigFromEnv } from '@hcengineering/server'
 import serverCalendar from '@hcengineering/server-calendar'
-import serverCard from '@hcengineering/server-card'
+import serverCommunication from '@hcengineering/server-communication'
 import serverCore, {
   initStatisticsContext,
   loadBrandingMap,
@@ -84,7 +84,7 @@ setMetadata(serverToken.metadata.Service, 'transactor')
 // setMetadata(serverNotification.metadata.MailAuthToken, config.mailAuthToken)
 // setMetadata(serverNotification.metadata.WebPushUrl, config.webPushUrl)
 setMetadata(serverCalendar.metadata.EndpointURL, process.env.CALENDAR_URL)
-setMetadata(serverCard.metadata.CommunicationEnabled, process.env.COMMUNICATION_API_ENABLED === 'true')
+setMetadata(serverCommunication.metadata.Enabled, process.env.COMMUNICATION_API_ENABLED === 'true')
 
 const { shutdown, sessionManager } = start(metricsContext, config.dbUrl, {
   fulltextUrl: config.fulltextUrl,

@@ -175,7 +175,7 @@ export class RatingCalculator {
       throw new PlatformError(unknownError('Default adapter should be set'))
     }
     if (process.env.COMMUNICATION_API_ENABLED === 'true') {
-      result.communicationApi = await CommunicationApi.create(ctx, workspace.uuid, dbURL, {
+      result.communicationApi = await CommunicationApi.create(ctx, workspace.uuid, hierarchy, dbURL, {
         broadcast: () => {},
         enqueue: () => {},
         registerAsyncRequest: () => {}

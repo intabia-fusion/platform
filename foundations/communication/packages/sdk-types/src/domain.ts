@@ -18,7 +18,6 @@ export enum Domain {
   Notification = 'communication.notification',
   NotificationContext = 'communication.notification_context',
 
-  Collaborator = 'communication.collaborator',
   Label = 'communication.label',
   Peer = 'communication.peer'
 }

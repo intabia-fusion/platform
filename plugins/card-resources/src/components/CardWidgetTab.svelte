@@ -32,13 +32,13 @@
   const hierarchy = client.getHierarchy()
 
   const cardQuery = createQuery()
-  const notificationsQuery = createNotificationsQuery()
+  // const notificationsQuery = createNotificationsQuery()
 
   let card: Card | undefined
   let cardId: Ref<Card> = tab.id as Ref<Card>
   $: cardId = tab.id as Ref<Card>
 
-  let count: number = 0
+  const count: number = 0
 
   $: cardQuery.query(cardPlugin.class.Card, { _id: cardId }, (res) => {
     card = res[0]
@@ -47,12 +47,12 @@
     }
   })
 
-  $: notificationsQuery.query(
-    { cardId, limit: 1, read: false, order: SortingOrder.Descending, type: NotificationType.Message },
-    (res) => {
-      count = res.getResult().length
-    }
-  )
+  // $: notificationsQuery.query(
+  //   { cardId, limit: 1, read: false, order: SortingOrder.Descending, type: NotificationType.Message },
+  //   (res) => {
+  //     count = res.getResult().length
+  //   }
+  // )
 
   function handleMenu (event: CustomEvent<MouseEvent>): void {
     if (actions.length === 0) {

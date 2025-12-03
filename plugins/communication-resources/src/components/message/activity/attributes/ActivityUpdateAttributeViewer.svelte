@@ -23,7 +23,7 @@
   import ActivitySetAttributesViewer from './ActivitySetAttributeViewer.svelte'
   import ActivityAddAttributeViewer from './ActivityAddAttributeViewer.svelte'
   import ActivityRemoveAttributeViewer from './ActivityRemoveAttributeViewer.svelte'
-  import communication from '../../../plugin'
+  import communication from '../../../../plugin'
 
   export let model: AttributeModel | undefined
   export let update: ActivityAttributeUpdate

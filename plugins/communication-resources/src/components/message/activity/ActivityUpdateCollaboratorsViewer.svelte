@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ActivityCollaboratorsUpdate } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
+  import { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import contact, { Person } from '@hcengineering/contact'
   import { Icon, Label } from '@hcengineering/ui'
@@ -23,13 +23,13 @@
   import CollaboratorPresenter from '../../CollaboratorPresenter.svelte'
 
   export let update: ActivityCollaboratorsUpdate
-  export let card: Card
+  export let doc: Doc
   export let author: Person | undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  $: clazz = hierarchy.getClass(card._class)
+  $: clazz = hierarchy.getClass(doc._class)
   $: isAuthorJoined = author?.personUuid && update.added.length === 1 && update.added.includes(author.personUuid as any)
   $: isAuthorLeft =
     author?.personUuid && update.removed.length === 1 && update.removed.includes(author.personUuid as any)

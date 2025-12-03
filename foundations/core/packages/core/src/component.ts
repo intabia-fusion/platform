@@ -28,6 +28,7 @@ import type {
   ClassCollaborators,
   ClassPermission,
   Collaborator,
+  Collaborators,
   Collection,
   Configuration,
   ConfigurationElement,
@@ -199,7 +200,8 @@ export default plugin(coreId, {
     IndexConfiguration: '' as Ref<Mixin<IndexingConfiguration<Doc>>>,
     SpacesTypeData: '' as Ref<Mixin<Space>>,
     TransientConfiguration: '' as Ref<Mixin<TransientConfiguration>>,
-    TxAccessLevel: '' as Ref<Mixin<TxAccessLevel>>
+    TxAccessLevel: '' as Ref<Mixin<TxAccessLevel>>,
+    Collaborators: '' as Ref<Mixin<Collaborators>>
   },
   space: {
     Tx: '' as Ref<Space>,
@@ -293,7 +295,9 @@ export default plugin(coreId, {
     AutoJoin: '' as IntlString,
     AutoJoinDescr: '' as IntlString,
     RBAC: '' as IntlString,
-    RBACDescr: '' as IntlString
+    RBACDescr: '' as IntlString,
+    Collaborators: '' as IntlString,
+    Collaborator: '' as IntlString
   },
   descriptor: {
     SpacesType: '' as Ref<SpaceTypeDescriptor>

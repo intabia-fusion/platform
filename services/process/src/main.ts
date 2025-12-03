@@ -511,8 +511,8 @@ async function sendEvent (
   const event: CreateMessageEvent = {
     type: MessageEventType.CreateMessage,
     messageType: MessageType.Activity,
-    cardId: execution.card,
-    cardType: card._class,
+    docId: card._id,
+    docClass: card._class,
     extra: {
       action: 'update',
       update: eventData

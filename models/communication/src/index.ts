@@ -17,12 +17,16 @@ import communication from './plugin'
 import { buildTypes } from './types'
 import { buildCardActions, buildMessageActions } from './actions'
 import { buildApplets } from './applets'
+import { buildActivity } from './activity'
 
 export { communicationId } from '@hcengineering/communication'
 export * from './migration'
 
 export function createModel (builder: Builder): void {
   buildTypes(builder)
+
+  buildActivity(builder)
+
   buildMessageActions(builder)
   buildCardActions(builder)
   buildApplets(builder)

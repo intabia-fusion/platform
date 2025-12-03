@@ -34,7 +34,7 @@
   export let width: string
 
   const query = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
+  // const contextsQuery = createNotificationContextsQuery()
   const dispatch = createEventDispatcher()
 
   let doc: Card | undefined = undefined
@@ -65,11 +65,12 @@
       { limit: 1 }
     )
 
-  $: tab?.id &&
-    contextsQuery.query({ cardId: tab.id as Ref<Card>, limit: 1 }, (res) => {
-      context = res.getResult()[0]
-      isContextLoaded = true
-    })
+  // $: tab?.id &&
+    // TODO: CLASS
+    // contextsQuery.query({ docId: tab.id as Ref<Card>, limit: 1 }, (res) => {
+    //   context = res.getResult()[0]
+    //   isContextLoaded = true
+    // })
 
   async function saveTitle (ev: Event): Promise<void> {
     ev.preventDefault()

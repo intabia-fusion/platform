@@ -47,6 +47,7 @@ import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengine
 export async function OnTask (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const tx of txes) {
+    if (!TxProcessor.isExtendsCUD(tx._class)) continue
     const mixin = control.hierarchy.classHierarchyMixin<Class<Doc>, ToDoFactory>(
       tx.objectClass,
       serverTime.mixin.ToDoFactory

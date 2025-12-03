@@ -15,21 +15,19 @@
 
 import {
   type CardID,
-  type Collaborator,
   type ContextID,
   type MessageID,
   type Notification,
   type NotificationContext,
   type NotificationID,
   type Label,
-  type AccountUuid,
   Peer,
-  WorkspaceUuid,
   PeerExtra,
   MessageMeta,
   ThreadMeta,
   BlobID
 } from '@hcengineering/communication-types'
+import { AccountUuid, WorkspaceUuid, Ref, Class, Doc } from '@hcengineering/core'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
 import { DbModel } from '../schema'
@@ -45,7 +43,9 @@ type RawContext = DbModel<Domain.NotificationContext> & { id: ContextID, total?:
 export function toMessageMeta (raw: DbModel<Domain.MessageIndex>): MessageMeta {
   return {
     id: String(raw.message_id) as MessageID,
-    cardId: raw.card_id,
+    docId: raw.doc_id,
+    // docClass: raw.doc_class,
+    type: raw.message_type,
     created: new Date(raw.created),
     creator: raw.creator,
     blobId: String(raw.blob_id) as BlobID
@@ -54,7 +54,8 @@ export function toMessageMeta (raw: DbModel<Domain.MessageIndex>): MessageMeta {
 
 export function toThreadMeta (raw: DbModel<Domain.ThreadIndex>): ThreadMeta {
   return {
-    cardId: raw.card_id,
+    docId: raw.doc_id,
+    docClass: raw.doc_class,
     messageId: String(raw.message_id) as MessageID,
     threadId: raw.thread_id,
     threadType: raw.thread_type
@@ -64,54 +65,53 @@ export function toThreadMeta (raw: DbModel<Domain.ThreadIndex>): ThreadMeta {
 export function toNotificationContext (raw: RawContext): NotificationContext {
   const lastView = new Date(raw.last_view)
   return {
-    id: String(raw.id) as ContextID,
-    cardId: raw.card_id,
+    id: String(raw.context_id) as ContextID,
+    docId: raw.doc_id,
+    docClass: raw.doc_class,
     account: raw.account,
     lastView,
     lastUpdate: new Date(raw.last_update),
     lastNotify: raw.last_notify != null ? new Date(raw.last_notify) : undefined,
     notifications: (raw.notifications ?? [])
-      .filter((it) => it.id != null)
-      .map((it) => toNotificationRaw(raw.id, raw.card_id, { ...it, account: raw.account })),
+      .filter((it) => it.notification_id != null)
+      .map((it) => toNotificationRaw(raw.id, raw.doc_id, raw.doc_class, { ...it, account: raw.account })),
     totalNotifications: Number(raw.total ?? 0)
   }
 }
 
-function toNotificationRaw (id: ContextID, card: CardID, raw: RawNotification): Notification {
+function toNotificationRaw (
+  contextId: ContextID,
+  docId: Ref<Doc>,
+  docClass: Ref<Class<Doc>>,
+  raw: RawNotification
+): Notification {
   const created = new Date(raw.created)
 
   return {
-    id: String(raw.id) as NotificationID,
-    cardId: card,
+    id: String(raw.notification_id) as NotificationID,
+    docId,
+    docClass,
     account: raw.account,
     type: raw.type,
     read: Boolean(raw.read),
     messageId: String(raw.message_id) as MessageID,
     creator: raw.creator,
     created,
-    contextId: String(id) as ContextID,
+    contextId,
     content: raw.content,
     blobId: raw.blob_id ?? undefined
   }
 }
 
-export function toNotification (raw: RawNotification & { card_id: CardID }): Notification {
-  return toNotificationRaw(raw.context_id, raw.card_id, raw)
-}
-
-export function toCollaborator (raw: DbModel<Domain.Collaborator>): Collaborator {
-  return {
-    account: raw.account,
-    cardType: raw.card_type,
-    cardId: raw.card_id
-  }
+export function toNotification (raw: RawNotification & { doc_id: Ref<Doc>, doc_class: Ref<Class<Doc>> }): Notification {
+  return toNotificationRaw(raw.context_id, raw.doc_id, raw.doc_class, raw)
 }
 
 export function toLabel (raw: DbModel<Domain.Label>): Label {
   return {
     labelId: raw.label_id,
-    cardId: raw.card_id,
-    cardType: raw.card_type,
+    docId: raw.doc_id,
+    docClass: raw.doc_class,
     account: raw.account,
     created: new Date(raw.created)
   }

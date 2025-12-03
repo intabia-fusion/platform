@@ -73,10 +73,11 @@ import {
   type TimeReportDayType,
   type TimeSpendReport
 } from '@hcengineering/tracker'
-import tracker from './plugin'
 import { type TaskType } from '@hcengineering/task'
-
+import communication from '@hcengineering/communication'
 import preference, { TPreference } from '@hcengineering/model-preference'
+
+import tracker from './plugin'
 
 export const DOMAIN_TRACKER = 'tracker' as Domain
 
@@ -173,7 +174,7 @@ export function TypeEstimation (): Type<number> {
  * @public
  */
 @Model(tracker.class.Issue, task.class.Task)
-@UX(tracker.string.Issue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.Issues)
+@UX(tracker.string.Issue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.Issues, 'title')
 export class TIssue extends TTask implements Issue {
   @Prop(TypeRef(tracker.class.Issue), tracker.string.Parent)
   declare attachedTo: Ref<Issue>
@@ -188,13 +189,13 @@ export class TIssue extends TTask implements Issue {
 
   @Prop(TypeRef(tracker.class.IssueStatus), tracker.string.Status, {
     _id: tracker.attribute.IssueStatus,
-    iconComponent: tracker.activity.StatusIcon
+    iconComponent: tracker.component.IssueStatusIcon
   })
   @Index(IndexKind.Indexed)
   declare status: Ref<IssueStatus>
 
   @Prop(TypeIssuePriority(), tracker.string.Priority, {
-    iconComponent: tracker.activity.PriorityIcon
+    iconComponent: tracker.component.PriorityIconPresenter
   })
   @Index(IndexKind.Indexed)
     priority!: IssuePriority
@@ -239,7 +240,9 @@ export class TIssue extends TTask implements Issue {
   @Index(IndexKind.Indexed)
     milestone!: Ref<Milestone> | null
 
-  @Prop(TypeEstimation(), tracker.string.Estimation)
+  @Prop(TypeEstimation(), tracker.string.Estimation, {
+    icon: tracker.icon.Estimation
+  })
     estimation!: number
 
   @Prop(TypeReportedTime(), tracker.string.ReportedTime)
@@ -268,7 +271,8 @@ export class TIssue extends TTask implements Issue {
   'PROCESS',
   undefined,
   undefined,
-  tracker.string.IssueTemplates
+  tracker.string.IssueTemplates,
+  'title'
 )
 export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Prop(TypeString(), tracker.string.Title)
@@ -279,7 +283,9 @@ export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Index(IndexKind.FullText)
     description!: Markup
 
-  @Prop(TypeIssuePriority(), tracker.string.Priority)
+  @Prop(TypeIssuePriority(), tracker.string.Priority, {
+    iconComponent: tracker.component.PriorityIconPresenter
+  })
     priority!: IssuePriority
 
   @Prop(TypeRef(contact.class.Person), tracker.string.Assignee)
@@ -308,9 +314,14 @@ export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Prop(ArrOf(TypeRef(tracker.class.IssueTemplate)), tracker.string.IssueTemplate)
     children!: IssueTemplateChild[]
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), tracker.string.Comments)
-  comments!: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), tracker.string.Attachments)
     attachments!: number
@@ -345,7 +356,7 @@ export class TTimeSpendReport extends TAttachedDoc implements TimeSpendReport {
  */
 
 @Model(tracker.class.Component, core.class.Doc, DOMAIN_TRACKER)
-@UX(tracker.string.Component, tracker.icon.Component, 'COMPONENT', 'label', undefined, tracker.string.Components)
+@UX(tracker.string.Component, tracker.icon.Component, 'COMPONENT', 'label', undefined, tracker.string.Components, 'label')
 export class TComponent extends TDoc implements Component {
   @Prop(TypeString(), tracker.string.Title)
   @Index(IndexKind.FullText)
@@ -357,9 +368,14 @@ export class TComponent extends TDoc implements Component {
   @Prop(TypeRef(contact.mixin.Employee), tracker.string.ComponentLead)
     lead!: Ref<Employee> | null
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments!: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
@@ -371,7 +387,7 @@ export class TComponent extends TDoc implements Component {
  * @public
  */
 @Model(tracker.class.Milestone, core.class.Doc, DOMAIN_TRACKER)
-@UX(tracker.string.Milestone, tracker.icon.Milestone, '', 'label', undefined, tracker.string.Milestones)
+@UX(tracker.string.Milestone, tracker.icon.Milestone, '', 'label', undefined, tracker.string.Milestones, 'label')
 export class TMilestone extends TDoc implements Milestone {
   @Prop(TypeString(), tracker.string.Title)
   // @Index(IndexKind.FullText)
@@ -380,13 +396,20 @@ export class TMilestone extends TDoc implements Milestone {
   @Prop(TypeMarkup(), tracker.string.Description)
     description?: Markup
 
-  @Prop(TypeMilestoneStatus(), tracker.string.Status)
+  @Prop(TypeMilestoneStatus(), tracker.string.Status, {
+    iconComponent: tracker.component.MilestoneStatusIcon
+  })
   @Index(IndexKind.Indexed)
     status!: MilestoneStatus
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments!: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

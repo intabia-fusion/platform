@@ -31,12 +31,12 @@ import {
   MessagesGroup,
   MessagesGroupDoc,
   MessagesGroupsDoc,
-  type PersonUuid,
   SortingOrder,
   TranslatedMessage,
   TranslatedMessagesDoc,
   WithTotal
 } from '@hcengineering/communication-types'
+import type { Domain, Doc, PersonUuid, Ref } from '@hcengineering/core'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 const COUNTER_BITS = 10n
@@ -116,7 +116,8 @@ export async function loadMessagesGroups (client: HulylakeWorkspaceClient, cardI
 
 function deserializeMessageGroup (group: MessagesGroupDoc): MessagesGroup {
   return {
-    cardId: group.cardId,
+    docId: group.docId,
+    docClass: group.docClass,
     blobId: group.blobId,
     fromDate: new Date(group.fromDate),
     toDate: new Date(group.toDate),
@@ -124,14 +125,26 @@ function deserializeMessageGroup (group: MessagesGroupDoc): MessagesGroup {
   }
 }
 
+export function buildMessagesGroupsUrl (domain: Domain, docId: Ref<Doc>): string {
+  return `${domain}/${docId}/messages/groups`
+}
+
+export function buildMessagesBlobUrl (domain: Domain, docId: Ref<Doc>, blobId: BlobID, lang?: string): string {
+  if (lang != null) {
+    return `${domain}/${docId}/messages/${lang}/${blobId}`
+  }
+  return `${domain}/${docId}/messages/${blobId}`
+}
+
 export async function loadMessages (
   client: HulylakeWorkspaceClient,
+  domain: Domain,
   blobId: BlobID,
   params: FindMessagesParams,
   options?: FindMessagesOptions
 ): Promise<Message[]> {
-  const { cardId } = params
-  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, {
+  const { docId } = params
+  const res = await client.getJson<MessagesDoc>(buildMessagesBlobUrl(domain, docId, blobId), {
     maxRetries: 3,
     isRetryable: () => true,
     delayStrategy: {
@@ -169,7 +182,8 @@ export function parseMessagesDoc (
     if (params.limit != null && result.length >= params.limit) break
     const message: Message = {
       id: m.id,
-      cardId: m.cardId,
+      docId: json.docId,
+      docClass: json.docClass,
       created: new Date(m.created),
       creator: m.creator,
       type: m.type,
@@ -211,7 +225,8 @@ export function parseMessagesDoc (
     if (options?.threads === true) {
       for (const thread of Object.values(m.threads)) {
         message.threads.push({
-          cardId: m.cardId,
+          docId: json.docId,
+          docClass: json.docClass,
           messageId: m.id,
           threadId: thread.threadId,
           threadType: thread.threadType,

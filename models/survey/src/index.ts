@@ -19,6 +19,8 @@ import core from '@hcengineering/model-core'
 import view, { createAction, type Viewlet } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { surveyId } from '@hcengineering/survey'
+import communication from '@hcengineering/communication'
+
 import { TPoll, TSurvey } from './types'
 import survey from './plugin'
 
@@ -93,13 +95,7 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.SurveyPresenter
   })
 
-  // TODO: FIXME
-  // builder.mixin(survey.class.Survey, core.class.Class, activity.mixin.ActivityDoc, {})
-
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: survey.class.Survey,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(survey.class.Survey, core.class.Class, communication.mixin.Messageable, {})
 
   builder.createDoc<Viewlet>(
     view.class.Viewlet,
@@ -135,13 +131,7 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.PollPresenter
   })
 
-  // TODO: FIXME
-  // builder.mixin(survey.class.Poll, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: survey.class.Poll,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(survey.class.Poll, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(survey.class.Poll, core.class.Class, view.mixin.CollectionEditor, {
     editor: survey.component.PollCollection

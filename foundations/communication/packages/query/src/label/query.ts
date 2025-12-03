@@ -15,32 +15,35 @@
 
 import type { FindLabelsParams, Label } from '@hcengineering/communication-types'
 import {
-  CardEventType,
+  DocEventType,
   CreateLabelEvent,
   type Event,
   type EventResult,
   type FindClient,
   LabelEventType,
   type QueryCallback,
-  RemoveCardEvent,
+  RemoveDocEvent,
   RemoveLabelEvent,
-  UpdateCardTypeEvent
+  UpdateDocClassEvent
 } from '@hcengineering/communication-sdk-types'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { QueryResult } from '../result'
 import { type Query, type QueryId, QueryOptions } from '../types'
+import { Hierarchy } from '@hcengineering/core'
 
 function getId (label: Label): string {
-  return `${label.labelId}:${label.cardId}:${label.account}`
+  // return `${label.labelId}:${label.cardId}:${label.account}`
+  return ''
 }
 
 export class LabelsQuery implements Query<Label, FindLabelsParams> {
   private result: Promise<QueryResult<Label>> | QueryResult<Label>
-  private isCardRemoved = false
+  private readonly isDocRemoved = false
 
   constructor (
     private readonly client: FindClient,
+    private readonly hierarchy: Hierarchy,
     private readonly hulylake: HulylakeWorkspaceClient,
     public readonly id: QueryId,
     public readonly params: FindLabelsParams,
@@ -60,7 +63,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
   }
 
   async onEvent (event: Event): Promise<void> {
-    if (this.isCardRemoved) return
+    if (this.isDocRemoved) return
     switch (event.type) {
       case LabelEventType.CreateLabel:
         await this.onLabelCreated(event)
@@ -69,120 +72,120 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
         await this.onLabelRemoved(event)
         break
 
-      case CardEventType.UpdateCardType:
+      case DocEventType.UpdateDocClass:
         await this.onCardTypeUpdated(event)
         break
-      case CardEventType.RemoveCard:
+      case DocEventType.RemoveDoc:
         await this.onCardRemoved(event)
         break
     }
   }
 
   async onLabelCreated (event: CreateLabelEvent): Promise<void> {
-    if (this.result instanceof Promise) this.result = await this.result
-    if (this.params.limit != null && this.result.length >= this.params.limit) return
-    const label: Label = {
-      labelId: event.labelId,
-      cardId: event.cardId,
-      cardType: event.cardType,
-      account: event.account,
-      created: event.date ?? new Date()
-    }
-
-    const match = this.match(label)
-    if (!match) return
-    const existing = this.result.get(getId(label))
-    if (existing != null) return
-    this.result.push(label)
-    void this.notify()
+    // if (this.result instanceof Promise) this.result = await this.result
+    // if (this.params.limit != null && this.result.length >= this.params.limit) return
+    // const label: Label = {
+    //   labelId: event.labelId,
+    //   cardId: event.cardId,
+    //   cardType: event.cardType,
+    //   account: event.account,
+    //   created: event.date ?? new Date()
+    // }
+    //
+    // const match = this.match(label)
+    // if (!match) return
+    // const existing = this.result.get(getId(label))
+    // if (existing != null) return
+    // this.result.push(label)
+    // void this.notify()
   }
 
   async onLabelRemoved (event: RemoveLabelEvent): Promise<void> {
-    if (this.result instanceof Promise) this.result = await this.result
-
-    const existing = this.result
-      .getResult()
-      .find((it) => it.account === event.account && it.cardId === event.cardId && it.labelId === event.labelId)
-    if (existing === undefined) return
-    const prevLength = this.result.length
-    this.result.delete(getId(existing))
-
-    if (this.params.limit != null && this.result.length < this.params.limit && prevLength >= this.params.limit) {
-      const labels = await this.find(this.params)
-      this.result = new QueryResult(labels, getId)
-    }
-
-    void this.notify()
+    // if (this.result instanceof Promise) this.result = await this.result
+    //
+    // const existing = this.result
+    //   .getResult()
+    //   .find((it) => it.account === event.account && it.cardId === event.cardId && it.labelId === event.labelId)
+    // if (existing === undefined) return
+    // const prevLength = this.result.length
+    // this.result.delete(getId(existing))
+    //
+    // if (this.params.limit != null && this.result.length < this.params.limit && prevLength >= this.params.limit) {
+    //   const labels = await this.find(this.params)
+    //   this.result = new QueryResult(labels, getId)
+    // }
+    //
+    // void this.notify()
   }
 
-  async onCardTypeUpdated (event: UpdateCardTypeEvent): Promise<void> {
-    if (this.result instanceof Promise) this.result = await this.result
-
-    const result = this.result.getResult()
-    const currentLength = this.result.length
-    let updated = false
-
-    if (this.params.cardType != null) {
-      const cardTypes = Array.isArray(this.params.cardType) ? this.params.cardType : [this.params.cardType]
-      if (cardTypes.includes(event.cardType)) {
-        const labels = await this.find(this.params)
-        this.result = new QueryResult(labels, getId)
-        void this.notify()
-        return
-      }
-    }
-
-    for (const label of result) {
-      if (label.cardId === event.cardId) {
-        const updatedLabel: Label = { ...label, cardType: event.cardType }
-        const matched = this.match(updatedLabel)
-        if (matched) {
-          this.result.update(updatedLabel)
-        } else {
-          this.result.delete(getId(label))
-        }
-        updated = true
-      }
-    }
-
-    if (updated) {
-      const newLength = this.result.length
-      if (this.params.limit != null && newLength < currentLength && newLength >= this.params.limit) {
-        const labels = await this.find(this.params)
-        this.result = new QueryResult(labels, getId)
-      }
-
-      void this.notify()
-    }
+  async onCardTypeUpdated (event: UpdateDocClassEvent): Promise<void> {
+    // if (this.result instanceof Promise) this.result = await this.result
+    //
+    // const result = this.result.getResult()
+    // const currentLength = this.result.length
+    // let updated = false
+    //
+    // if (this.params.cardType != null) {
+    //   const cardTypes = Array.isArray(this.params.cardType) ? this.params.cardType : [this.params.cardType]
+    //   if (cardTypes.includes(event.cardType)) {
+    //     const labels = await this.find(this.params)
+    //     this.result = new QueryResult(labels, getId)
+    //     void this.notify()
+    //     return
+    //   }
+    // }
+    //
+    // for (const label of result) {
+    //   if (label.cardId === event.cardId) {
+    //     const updatedLabel: Label = { ...label, cardType: event.cardType }
+    //     const matched = this.match(updatedLabel)
+    //     if (matched) {
+    //       this.result.update(updatedLabel)
+    //     } else {
+    //       this.result.delete(getId(label))
+    //     }
+    //     updated = true
+    //   }
+    // }
+    //
+    // if (updated) {
+    //   const newLength = this.result.length
+    //   if (this.params.limit != null && newLength < currentLength && newLength >= this.params.limit) {
+    //     const labels = await this.find(this.params)
+    //     this.result = new QueryResult(labels, getId)
+    //   }
+    //
+    //   void this.notify()
+    // }
   }
 
-  async onCardRemoved (event: RemoveCardEvent): Promise<void> {
-    if (this.result instanceof Promise) this.result = await this.result
-
-    if (this.params.cardId === event.cardId) {
-      this.isCardRemoved = true
-      this.result.deleteAll()
-      void this.notify()
-      return
-    }
-
-    const result = this.result.getResult()
-    const prevLength = this.result.length
-    let deleted = false
-    for (const label of result) {
-      if (label.cardId === event.cardId) {
-        this.result.delete(label.labelId)
-        deleted = true
-      }
-    }
-
-    if (deleted) {
-      if (this.params.limit != null && this.result.length < this.params.limit && prevLength >= this.params.limit) {
-        const labels = await this.find(this.params)
-        this.result = new QueryResult(labels, getId)
-      }
-      void this.notify()
-    }
+  async onCardRemoved (event: RemoveDocEvent): Promise<void> {
+    // if (this.result instanceof Promise) this.result = await this.result
+    //
+    // if (this.params.cardId === event.cardId) {
+    //   this.isCardRemoved = true
+    //   this.result.deleteAll()
+    //   void this.notify()
+    //   return
+    // }
+    //
+    // const result = this.result.getResult()
+    // const prevLength = this.result.length
+    // let deleted = false
+    // for (const label of result) {
+    //   if (label.cardId === event.cardId) {
+    //     this.result.delete(label.labelId)
+    //     deleted = true
+    //   }
+    // }
+    //
+    // if (deleted) {
+    //   if (this.params.limit != null && this.result.length < this.params.limit && prevLength >= this.params.limit) {
+    //     const labels = await this.find(this.params)
+    //     this.result = new QueryResult(labels, getId)
+    //   }
+    //   void this.notify()
+    // }
   }
 
   async onRequest (event: Event, promise: Promise<EventResult>): Promise<void> {}
@@ -217,7 +220,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
   }
 
   private async find (params: FindLabelsParams): Promise<Label[]> {
-    if (this.isCardRemoved) return []
+    if (this.isDocRemoved) return []
     return await this.client.findLabels(params, this.id)
   }
 
@@ -229,25 +232,25 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
   }
 
   private match (label: Label): boolean {
-    if (this.params.account != null && this.params.account !== label.account) {
-      return false
-    }
-    if (this.params.cardId != null && this.params.cardId !== label.cardId) {
-      return false
-    }
-
-    if (this.params.labelId != null) {
-      const labels = Array.isArray(this.params.labelId) ? this.params.labelId : [this.params.labelId]
-      if (!labels.includes(label.labelId)) {
-        return false
-      }
-    }
-    if (this.params.cardType != null) {
-      const types = Array.isArray(this.params.cardType) ? this.params.cardType : [this.params.cardType]
-      if (!types.includes(label.cardType)) {
-        return false
-      }
-    }
+    // if (this.params.account != null && this.params.account !== label.account) {
+    //   return false
+    // }
+    // if (this.params.cardId != null && this.params.cardId !== label.cardId) {
+    //   return false
+    // }
+    //
+    // if (this.params.labelId != null) {
+    //   const labels = Array.isArray(this.params.labelId) ? this.params.labelId : [this.params.labelId]
+    //   if (!labels.includes(label.labelId)) {
+    //     return false
+    //   }
+    // }
+    // if (this.params.cardType != null) {
+    //   const types = Array.isArray(this.params.cardType) ? this.params.cardType : [this.params.cardType]
+    //   if (!types.includes(label.cardType)) {
+    //     return false
+    //   }
+    // }
     return true
   }
 

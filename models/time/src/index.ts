@@ -61,10 +61,11 @@ import {
   type WorkSlot
 } from '@hcengineering/time'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-
 import type { Resource } from '@hcengineering/platform'
 import type { Rank } from '@hcengineering/task'
 import task from '@hcengineering/task'
+import communication from '@hcengineering/communication'
+
 import time from './plugin'
 
 export { timeId } from '@hcengineering/time'
@@ -146,9 +147,8 @@ export class TTodoAutomationHelper extends TDoc implements TodoAutomationHelper 
 export function createModel (builder: Builder): void {
   builder.createModel(TWorkSlot, TItemPresenter, TToDo, TProjectToDo, TTypeToDoPriority, TTodoAutomationHelper)
 
-  // TODO: FIXME
-  // builder.mixin(time.class.ToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
-  // builder.mixin(time.class.ProjectToDo, core.class.Class, activity.mixin.IgnoreActivity, {})
+  builder.mixin(time.class.ToDo, core.class.Class, communication.mixin.IgnoreActivity, {})
+  builder.mixin(time.class.ProjectToDo, core.class.Class, communication.mixin.IgnoreActivity, {})
 
   builder.mixin(time.class.TypeToDoPriority, core.class.Class, view.mixin.AttributeEditor, {
     inlineEditor: time.component.PriorityEditor

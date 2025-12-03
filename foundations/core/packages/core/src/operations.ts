@@ -8,7 +8,8 @@ import {
   type MixinUpdate,
   type ModelDb,
   platformNow,
-  toFindResult
+  toFindResult,
+  TxDomainEvent
 } from '.'
 import type {
   AnyAttribute,
@@ -84,6 +85,10 @@ export class TxOperations implements Omit<Client, 'notify'> {
     options?: FindOptions<T> | undefined
   ): Promise<WithLookup<T> | undefined> {
     return this.client.findOne(_class, query, options)
+  }
+
+  domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return this.client.domainEventTx(tx)
   }
 
   domainRequest<T>(domain: OperationDomain, params: DomainParams): Promise<DomainResult<T>> {
@@ -476,6 +481,7 @@ export class ApplyOperations extends TxOperations {
       findAll: (_class, query, options?) => ops.client.findAll(_class, query, options),
       searchFulltext: (query, options) => ops.client.searchFulltext(query, options),
       domainRequest: (domain, params) => ops.client.domainRequest(domain, params),
+      domainEventTx: (tx) => ops.client.domainEventTx(tx),
       tx: async (tx): Promise<TxResult> => {
         if (TxProcessor.isExtendsCUD(tx._class)) {
           this.txes.push(tx as TxCUD<Doc>)
@@ -568,6 +574,7 @@ export class TxBuilder extends TxOperations {
       findAll: async (_class, query, options?) => toFindResult([]),
       searchFulltext: async (query, options) => ({ docs: [] }),
       domainRequest: async (domain, params) => ({ domain, value: null as any }),
+      domainEventTx: async (tx) => ({ domain: tx.domain, value: null as any }),
       tx: async (tx): Promise<TxResult> => {
         if (TxProcessor.isExtendsCUD(tx._class)) {
           this.txes.push(tx as TxCUD<Doc>)

@@ -23,6 +23,7 @@ import print from '@hcengineering/model-print'
 import tracker from '@hcengineering/model-tracker'
 import { type ViewOptionsModel } from '@hcengineering/view'
 import contact from '@hcengineering/contact'
+import communication from '@hcengineering/communication'
 
 import { testManagementId, type TestPlanItem, type TestResult } from '@hcengineering/test-management'
 
@@ -184,13 +185,7 @@ export function createModel (builder: Builder): void {
     TTestPlanItem
   )
 
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestProject, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestProject,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestProject, core.class.Class, communication.mixin.Messageable, {})
 
   defineTestSuite(builder)
   defineTestCase(builder)
@@ -262,13 +257,7 @@ function defineSpaceType (builder: Builder): void {
 }
 
 function defineTestSuite (builder: Builder): void {
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestSuite, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestSuite,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestSuite, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(testManagement.class.TestSuite, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestSuite
@@ -359,13 +348,7 @@ function defineTestSuite (builder: Builder): void {
 }
 
 function defineTestCase (builder: Builder): void {
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestCase, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestCase,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestCase, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(testManagement.class.TestCase, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestCase
@@ -457,13 +440,7 @@ function defineTestCase (builder: Builder): void {
 }
 
 function defineTestRun (builder: Builder): void {
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestRun, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestRun,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestRun, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(testManagement.class.TestRun, core.class.Class, view.mixin.ObjectPanel, {
     component: testManagement.component.EditTestRun
@@ -487,13 +464,7 @@ function defineTestResult (builder: Builder): void {
     presenter: testManagement.component.TestResultPresenter
   })
 
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestResult, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestResult,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestResult, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(testManagement.class.TestResult, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestResult
@@ -658,13 +629,7 @@ function defineTestResult (builder: Builder): void {
 }
 
 function defineTestPlan (builder: Builder): void {
-  // TODO: FIXME
-  // builder.mixin(testManagement.class.TestPlan, core.class.Class, activity.mixin.ActivityDoc, {})
-  //
-  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-  //   ofClass: testManagement.class.TestPlan,
-  //   components: { input: { component: chunter.component.ChatMessageInput } }
-  // })
+  builder.mixin(testManagement.class.TestPlan, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(testManagement.class.TestPlan, core.class.Class, view.mixin.ObjectPanel, {
     component: view.component.EditDoc

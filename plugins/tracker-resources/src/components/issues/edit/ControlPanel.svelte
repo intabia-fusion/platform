@@ -73,14 +73,13 @@
     keys = filtredKeys.filter((key) => !isCollectionAttr(hierarchy, key))
   }
 
-  const mixins: Mixin<Doc>[] = []
+  let mixins: Mixin<Doc>[] = []
 
   $: _mixins = getDocMixins(issue, showAllMixins)
 
-  // TODO: FIXME
-  // $: mixins = _mixins.find((p) => p._id === notification.mixin.Collaborators)
-  //   ? _mixins
-  //   : [..._mixins, hierarchy.getClass(notification.mixin.Collaborators)]
+  $: mixins = _mixins.find((p) => p._id === core.mixin.Collaborators)
+    ? _mixins
+    : [..._mixins, hierarchy.getClass(core.mixin.Collaborators)]
 
   const allowedCollections = ['collaborators']
 

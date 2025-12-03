@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import type { Class, Doc, PersonUuid, Ref } from '@hcengineering/core'
 
-import type { BlobID, CardID, CardType, Markdown, PersonUuid, SocialID } from './core'
+import type { BlobID, CardID, CardType, Markdown, SocialID } from './core'
 import { MessageID, MessageType, MessageExtra, AttachmentID, AttachmentParams, Emoji } from './message'
 
 export interface MessagesDoc {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   fromDate: string // ISO date
   toDate: string // ISO date
   messages: Record<MessageID, MessageDoc>
@@ -26,7 +28,6 @@ export interface MessagesDoc {
 
 export interface MessageDoc {
   id: MessageID
-  cardId: CardID
   created: string // ISO date
   creator: SocialID
   type: MessageType
@@ -60,7 +61,8 @@ export interface ThreadDoc {
 export type MessagesGroupsDoc = Record<BlobID, MessagesGroupDoc>
 
 export interface MessagesGroupDoc {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   blobId: BlobID
   fromDate: string // ISO date
   toDate: string // ISO date
@@ -68,7 +70,8 @@ export interface MessagesGroupDoc {
 }
 
 export interface TranslatedMessagesDoc {
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messages: Record<MessageID, MessageDoc>
   language: string
 }

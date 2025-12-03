@@ -37,6 +37,7 @@ import {
   type SearchResult,
   SocialIdType,
   type Tx,
+  TxDomainEvent,
   type TxResult,
   type WithLookup
 } from '@hcengineering/core'
@@ -306,6 +307,10 @@ export class RestClientImpl implements RestClient {
       throw new PlatformError(result.error)
     }
     return result
+  }
+
+  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return await this.tx(tx) as DomainResult<T>
   }
 
   async domainRequest<T>(

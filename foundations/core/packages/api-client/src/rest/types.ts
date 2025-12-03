@@ -31,6 +31,7 @@ import {
   type Ref,
   type SocialIdType,
   type Storage,
+  TxDomainEvent,
   type WithLookup
 } from '@hcengineering/core'
 
@@ -44,6 +45,8 @@ export interface RestClient extends Storage, FulltextStorage {
   ) => Promise<WithLookup<T> | undefined>
 
   getModel: () => Promise<{ hierarchy: Hierarchy, model: ModelDb }>
+
+  domainEventTx: <T>(tx: TxDomainEvent) => Promise<DomainResult<T>>
 
   domainRequest: <T>(
     domain: OperationDomain,

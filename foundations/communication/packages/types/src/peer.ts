@@ -10,8 +10,9 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import type { WorkspaceUuid } from '@hcengineering/core'
 
-import { CardID, WorkspaceUuid } from './core'
+import { CardID } from './core'
 
 export type PeerKind = 'card' | string
 export type PeerExtra = Record<string, any>

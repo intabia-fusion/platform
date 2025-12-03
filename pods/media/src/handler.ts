@@ -99,9 +99,9 @@ async function handleCommunicationTx (
     const event = tx.event
     const source: BlobSource = {
       source: BlobSourceType.Message,
-      cardId: event.cardId,
+      // cardId: event.cardId,
       messageId: event.messageId
-    }
+    } as any
 
     const attachments = event.operations
       .filter((it) => it.opcode === 'add' || it.opcode === 'set')

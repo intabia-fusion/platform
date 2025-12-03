@@ -12,8 +12,12 @@
 // limitations under the License.
 
 import {
+  Class,
+  Doc,
+  Domain,
   MeasureContext,
   PersonUuid,
+  Ref,
   SortingOrder,
   systemAccountUuid,
   WorkspaceUuid
@@ -43,16 +47,14 @@ import {
 import { v4 as uuid } from 'uuid'
 
 import { Metadata } from './types'
-
-const LOG_CARD_ID = '67ecc702f182d88819f0a726' as CardID
+import { buildMessagesBlobUrl, buildMessagesGroupsUrl } from '@hcengineering/communication-shared'
 
 export class Blob {
   private readonly client: HulylakeWorkspaceClient
   // Groups sored by fromDate
-  private readonly messageGroupsByCardId = new Map<CardID, MessagesGroup[]>()
-  private readonly messageGroupsPromises = new Map<CardID, Promise<MessagesGroup[]>>()
-
-  private readonly messageGroupCreationPromises = new Map<CardID, Promise<MessagesGroup>>()
+  private readonly messageGroupsByDocId = new Map<Domain, Map<Ref<Doc>, MessagesGroup[]>>()
+  private readonly messageGroupsPromises = new Map<Domain, Map<Ref<Doc>, Promise<MessagesGroup[]>>>()
+  private readonly messageGroupCreationPromises = new Map<Domain, Map<Ref<Doc>, Promise<MessagesGroup>>>()
 
   private readonly retryOptions = {
     maxRetries: 3,
@@ -66,9 +68,31 @@ export class Blob {
     this.client = getWorkspaceClient(metadata.hulylakeUrl, workspace, generateToken(systemAccountUuid, workspace, undefined, metadata.secret))
   }
 
-  public async findMessagesGroups (params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
-    const { cardId, fromDate, toDate, blobId, limit, order } = params
-    const groups = await this.getAllMessageGroups(cardId)
+  public async getMessageGroupByDate (domain: Domain, docClass: Ref<Class<Doc>>, docId: Ref<Doc>, date: Date, create = true): Promise<MessagesGroup | undefined> {
+    const all = await this.getAllMessageGroups(domain, docId)
+    const ts = date.getTime()
+    const match = all.find(g => g.fromDate.getTime() <= ts && g.toDate.getTime() >= ts)
+
+    if (match != null) return match
+
+    const lastGroup = all[all.length - 1]
+    if (lastGroup != null && lastGroup.fromDate.getTime() <= ts && lastGroup.count < this.metadata.messagesPerBlob) {
+      return lastGroup
+    }
+
+    const firstGroup = all[0]
+    if (firstGroup != null && firstGroup.fromDate.getTime() >= ts && firstGroup.count < this.metadata.messagesPerBlob) {
+      return firstGroup
+    }
+
+    if (create) return await this.createMessageGroup(domain, docClass, docId, date)
+
+    return undefined
+  }
+
+  public async findMessagesGroups (domain: Domain, params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
+    const { docId, fromDate, toDate, blobId, limit, order } = params
+    const groups = await this.getAllMessageGroups(domain, docId)
 
     if (order === SortingOrder.Ascending) {
       groups.sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
@@ -94,202 +118,19 @@ export class Blob {
     return result
   }
 
-  private async getAllMessageGroups (cardId: CardID): Promise<MessagesGroup[]> {
-    const createPromise = this.messageGroupCreationPromises.get(cardId)
+  public async updateDocClass (domain: Domain, docId: Ref<Doc>, newClass: Ref<Class<Doc>>): Promise<void> {
+    const patches: JsonPatch[] = [{
+      op: 'replace',
+      path: '/docClass',
+      value: newClass
+    }]
 
-    if (createPromise != null) {
-      await createPromise
-    }
+    const groups = await this.getAllMessageGroups(domain, docId)
 
-    if (this.messageGroupsByCardId.has(cardId)) {
-      return (this.messageGroupsByCardId.get(cardId) ?? []).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
-    }
-
-    const existingPromise = this.messageGroupsPromises.get(cardId)
-    if (existingPromise != null) return await existingPromise
-
-    const promise = (async () => {
-      try {
-        const res = await this.client.getJson<MessagesGroupsDoc>(`${cardId}/messages/groups`, this.retryOptions)
-        if (res.status === 404) {
-          await this.createMessagesGroupBlob(cardId)
-          this.messageGroupsByCardId.set(cardId, [])
-          return []
-        }
-
-        if (cardId === LOG_CARD_ID) {
-          this.ctx.info('Received groups', { groups: JSON.stringify(res.body ?? {}, undefined, 2) })
-        }
-
-        const groups = Object.values(res.body ?? {}).map(it => this.deserializeMessageGroup(it)).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
-        this.messageGroupsByCardId.set(cardId, groups)
-        return groups
-      } finally {
-        this.messageGroupsPromises.delete(cardId)
-      }
-    })()
-
-    this.messageGroupsPromises.set(cardId, promise)
-    return await promise
+    await Promise.all(groups.map(g => this.patchJson(domain, docId, g.blobId, patches)))
   }
 
-  public async getMessageGroupByDate (cardId: CardID, date: Date, create = true): Promise<MessagesGroup | undefined> {
-    const all = await this.getAllMessageGroups(cardId)
-    if (cardId === LOG_CARD_ID) {
-      this.ctx.info('all groups sorted', { cardId, sortedGroups: JSON.stringify(all, undefined, 2) })
-    }
-    const ts = date.getTime()
-
-    const match = all.find(g => g.fromDate.getTime() <= ts && g.toDate.getTime() >= ts)
-    if (match != null) {
-      if (cardId === LOG_CARD_ID) {
-        this.ctx.info('math group', { date, match: JSON.stringify(match, undefined, 2) })
-      }
-      return match
-    }
-
-    const lastGroup = all[all.length - 1]
-    if (lastGroup != null && lastGroup.fromDate.getTime() <= ts && lastGroup.count < this.metadata.messagesPerBlob) {
-      if (cardId === LOG_CARD_ID) {
-        this.ctx.info('last group', { date, match: JSON.stringify(match, undefined, 2) })
-      }
-      return lastGroup
-    }
-
-    const firstGroup = all[0]
-    if (firstGroup != null && firstGroup.fromDate.getTime() >= ts && firstGroup.count < this.metadata.messagesPerBlob) {
-      if (cardId === LOG_CARD_ID) {
-        this.ctx.info('first group', { date, match: JSON.stringify(match, undefined, 2) })
-      }
-      return firstGroup
-    }
-
-    if (create) return await this.createMessageGroup(cardId, date)
-
-    return undefined
-  }
-
-  private async createMessagesGroupBlob (cardId: CardID): Promise<void> {
-    await this.client.putJson(`${cardId}/messages/groups`, {}, undefined, this.retryOptions)
-  }
-
-  private async incrementMessagesCount (cardId: CardID, blobId: BlobID, toDate?: Date, fromDate?: Date): Promise<void> {
-    const groups = await this.getAllMessageGroups(cardId)
-    const group = groups.find((g) => g.blobId === blobId)
-
-    if (group == null) return
-
-    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count: g.count + 1, toDate: toDate ?? group.toDate, fromDate: fromDate ?? group.fromDate }) : g))
-
-    const patches: JsonPatch[] = [
-      {
-        hop: 'inc',
-        path: `/${blobId}/count`,
-        value: 1
-      },
-      ...toDate != null
-        ? [{
-            op: 'replace',
-            path: `/${blobId}/toDate`,
-            value: toDate
-          } as const]
-        : [],
-      ...fromDate != null
-        ? [{
-            hop: 'add',
-            path: `/${blobId}/fromDate`,
-            value: fromDate
-          } as const]
-        : []
-    ]
-    await this.client.patchJson(`${cardId}/messages/groups`, patches, undefined, this.retryOptions)
-  }
-
-  private async decrementMessagesCount (cardId: CardID, blobId: BlobID): Promise<void> {
-    const groups = await this.getAllMessageGroups(cardId)
-    const group = groups.find((g) => g.blobId === blobId)
-
-    if (group == null) return
-
-    const count = group.count - 1
-    group.count = count
-    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count }) : g))
-
-    const patches: JsonPatch[] = [
-      {
-        hop: 'inc',
-        path: `/${blobId}/count`,
-        value: -1
-      }
-    ]
-    await this.client.patchJson(`${cardId}/messages/groups`, patches, undefined, this.retryOptions)
-  }
-
-  private async createMessageGroup (cardId: CardID, date: Date): Promise<MessagesGroup> {
-    const createPromise = this.messageGroupCreationPromises.get(cardId)
-
-    if (createPromise != null) {
-      await createPromise
-      const group = await this.getMessageGroupByDate(cardId, date, false)
-      if (group != null) return group
-    }
-
-    const promise = (async () => {
-      try {
-        const groupDoc: MessagesGroupDoc = {
-          cardId,
-          blobId: uuid() as BlobID,
-          fromDate: date.toISOString(),
-          toDate: date.toISOString(),
-          count: 0
-        }
-        const patches: JsonPatch[] = [
-          {
-            hop: 'add',
-            path: `/${groupDoc.blobId}`,
-            value: groupDoc,
-            safe: true
-          }
-        ]
-
-        await this.client.patchJson(`${cardId}/messages/groups`, patches, undefined, this.retryOptions)
-        const group = this.deserializeMessageGroup(groupDoc)
-        if (this.messageGroupsByCardId.has(cardId)) {
-          this.messageGroupsByCardId.set(cardId,
-            [...this.messageGroupsByCardId.get(cardId) ?? [], group].sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
-          )
-        } else {
-          this.messageGroupsByCardId.set(cardId, [group])
-        }
-        await this.createMessagesBlob(cardId, groupDoc.blobId, date, date)
-
-        return group
-      } finally {
-        this.messageGroupCreationPromises.delete(cardId)
-      }
-    })()
-
-    this.messageGroupCreationPromises.set(cardId, promise)
-    return await promise
-  }
-
-  private async createMessagesBlob (cardId: CardID, blobId: BlobID, from: Date, to: Date): Promise<void> {
-    const initialJson: MessagesDoc = {
-      cardId,
-      fromDate: from.toISOString(),
-      toDate: to.toISOString(),
-      language: 'original',
-      messages: {}
-    }
-
-    await this.client.putJson(`${cardId}/messages/${blobId}`, initialJson, undefined, this.retryOptions)
-  }
-
-  async insertMessage (cardId: CardID, group: MessagesGroup, message: Message): Promise<void> {
-    if (cardId === LOG_CARD_ID && group.blobId === 'ad77d5d3-a073-4a14-960b-2f46e844bb6d"') {
-      this.ctx.error('SELECT WRONG GROUP!', { cardId, group, message, groups: this.messageGroupsByCardId.get(cardId) })
-      throw new Error('Select wrong group')
-    }
+  public async insertMessage (domain: Domain, docId: Ref<Doc>, group: MessagesGroup, message: Message): Promise<void> {
     const updateToDate = message.created.getTime() > group.toDate.getTime()
     const updateFromDate = message.created.getTime() < group.fromDate.getTime()
 
@@ -320,11 +161,11 @@ export class Blob {
           ]
         : [])
     ]
-    await this.patchJson(cardId, group.blobId, patches)
-    void this.incrementMessagesCount(cardId, group.blobId, updateToDate ? message.created : undefined, updateFromDate ? message.created : undefined)
+    await this.patchJson(domain, docId, group.blobId, patches)
+    void this.incrementMessagesCount(domain, docId, group.blobId, updateToDate ? message.created : undefined, updateFromDate ? message.created : undefined)
   }
 
-  async updateMessage (cardId: CardID, blobId: BlobID, messageId: MessageID, update: {
+  public async updateMessage (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, update: {
     language?: string
     content?: Markdown
     extra?: MessageExtra
@@ -365,10 +206,10 @@ export class Blob {
       })
     }
 
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async removeMessage (cardId: CardID, blobId: BlobID, messageId: MessageID): Promise<void> {
+  public async removeMessage (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'remove',
@@ -377,11 +218,11 @@ export class Blob {
       } as const
     ]
 
-    await this.patchJson(cardId, blobId, patches)
-    void this.decrementMessagesCount(cardId, blobId)
+    await this.patchJson(domain, docId, blobId, patches)
+    void this.decrementMessagesCount(domain, docId, blobId)
   }
 
-  async addReaction (cardId: CardID, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid, date: Date): Promise<void> {
+  public async addReaction (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid, date: Date): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'add',
@@ -399,10 +240,10 @@ export class Blob {
         safe: true
       }
     ]
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async removeReaction (cardId: CardID, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid): Promise<void> {
+  public async removeReaction (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'remove',
@@ -410,10 +251,10 @@ export class Blob {
         safe: true
       }
     ]
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async addAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, attachments: Attachment[]): Promise<void> {
+  public async addAttachments (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, attachments: Attachment[]): Promise<void> {
     const patches: JsonPatch[] = []
 
     for (const attachment of attachments) {
@@ -423,10 +264,10 @@ export class Blob {
         value: attachment
       })
     }
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async removeAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, attachmentIds: AttachmentID[]): Promise<void> {
+  public async removeAttachments (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, attachmentIds: AttachmentID[]): Promise<void> {
     const patches: JsonPatch[] = []
 
     for (const attachmentId of attachmentIds) {
@@ -436,10 +277,10 @@ export class Blob {
         safe: true
       })
     }
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async setAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, attachments: Attachment[]): Promise<void> {
+  public async setAttachments (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, attachments: Attachment[]): Promise<void> {
     const patches: JsonPatch[] = [{
       op: 'replace',
       path: `/messages/${messageId}/attachments`,
@@ -453,10 +294,10 @@ export class Blob {
         value: attachment
       })
     }
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async updateAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, updates: AttachmentUpdateData[], date: Date): Promise<void> {
+  public async updateAttachments (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, updates: AttachmentUpdateData[], date: Date): Promise<void> {
     const patches: JsonPatch[] = []
     for (const update of updates) {
       const keys = Object.keys(update.params)
@@ -475,10 +316,10 @@ export class Blob {
       })
     }
 
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async attachThread (cardId: CardID, blobId: BlobID, messageId: MessageID, thread: Thread): Promise<void> {
+  public async attachThread (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, thread: Thread): Promise<void> {
     const patches: JsonPatch[] = [
       {
         op: 'add',
@@ -486,10 +327,10 @@ export class Blob {
         value: thread
       }
     ]
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async updateThread (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, update: { threadType: CardType }): Promise<void> {
+  public async updateThread (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, threadId: CardID, update: { threadType: CardType }): Promise<void> {
     const patches: JsonPatch[] = [
       {
         op: 'add',
@@ -497,10 +338,10 @@ export class Blob {
         value: update.threadType
       }
     ]
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async addThreadReply (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid, date: Date): Promise<void> {
+  public async addThreadReply (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid, date: Date): Promise<void> {
     const patches: JsonPatch[] =
       [
         {
@@ -520,10 +361,10 @@ export class Blob {
         }
       ]
 
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async removeThreadReply (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid): Promise<void> {
+  public async removeThreadReply (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid): Promise<void> {
     const patches: JsonPatch[] =
       [
         {
@@ -538,10 +379,10 @@ export class Blob {
         }
       ]
 
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  async removeThread (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID): Promise<void> {
+  public async removeThread (domain: Domain, docId: Ref<Doc>, blobId: BlobID, messageId: MessageID, threadId: CardID): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'remove',
@@ -549,16 +390,200 @@ export class Blob {
         safe: true
       }
     ]
-    await this.patchJson(cardId, blobId, patches)
+    await this.patchJson(domain, docId, blobId, patches)
   }
 
-  private async patchJson (cardId: CardID, blobId: BlobID, patches: JsonPatch[]): Promise<void> {
-    await this.client.patchJson(`${cardId}/messages/${blobId}`, patches, undefined, this.retryOptions)
+  private async patchJson (domain: Domain, docId: Ref<Doc>, blobId: BlobID, patches: JsonPatch[]): Promise<void> {
+    await this.client.patchJson(buildMessagesBlobUrl(domain, docId, blobId), patches, undefined, this.retryOptions)
+  }
+
+  private setMessageGroups (domain: Domain, docId: Ref<Doc>, groups: MessagesGroup[]): void {
+    const sorted = groups.sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+    const map = this.messageGroupsByDocId.get(domain)
+    if (map != null) {
+      map.set(docId, sorted)
+    } else {
+      this.messageGroupsByDocId.set(domain, new Map([[docId, sorted]]))
+    }
+  }
+
+  private setMessageGroupsPromises (domain: Domain, docId: Ref<Doc>, promise: Promise<MessagesGroup[]>): void {
+    const map = this.messageGroupsPromises.get(domain)
+    if (map != null) {
+      map.set(docId, promise)
+    } else {
+      this.messageGroupsPromises.set(domain, new Map([[docId, promise]]))
+    }
+  }
+
+  private setMessageGroupCreationPromise (domain: Domain, docId: Ref<Doc>, promise: Promise<MessagesGroup>): void {
+    const map = this.messageGroupCreationPromises.get(domain)
+    if (map != null) {
+      map.set(docId, promise)
+    } else {
+      this.messageGroupCreationPromises.set(domain, new Map([[docId, promise]]))
+    }
+  }
+
+  private async getAllMessageGroups (domain: Domain, docId: Ref<Doc>): Promise<MessagesGroup[]> {
+    const createPromise = this.messageGroupCreationPromises.get(domain)?.get(docId)
+
+    if (createPromise != null) {
+      await createPromise
+    }
+
+    const alreadyLoadedGroups = this.messageGroupsByDocId.get(domain)?.get(docId) ?? []
+    if (alreadyLoadedGroups.length > 0) {
+      return alreadyLoadedGroups.sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+    }
+
+    const existingPromise = this.messageGroupsPromises.get(domain)?.get(docId)
+    if (existingPromise != null) return await existingPromise
+
+    const promise = (async () => {
+      try {
+        const res = await this.client.getJson<MessagesGroupsDoc>(buildMessagesGroupsUrl(domain, docId), this.retryOptions)
+        if (res.status === 404) {
+          await this.createMessagesGroupBlob(domain, docId)
+          this.setMessageGroups(domain, docId, [])
+          return []
+        }
+
+        const groups = Object.values(res.body ?? {}).map(it => this.deserializeMessageGroup(it)).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+        this.setMessageGroups(domain, docId, groups)
+        return groups
+      } finally {
+        this.messageGroupsPromises.get(domain)?.delete(docId)
+      }
+    })()
+
+    this.setMessageGroupsPromises(domain, docId, promise)
+    return await promise
+  }
+
+  private async createMessagesGroupBlob (domain: Domain, docId: Ref<Doc>): Promise<void> {
+    await this.client.putJson(buildMessagesGroupsUrl(domain, docId), {}, undefined, this.retryOptions)
+  }
+
+  private async incrementMessagesCount (domain: Domain, docId: Ref<Doc>, blobId: BlobID, toDate?: Date, fromDate?: Date): Promise<void> {
+    const groups = await this.getAllMessageGroups(domain, docId)
+    const group = groups.find((g) => g.blobId === blobId)
+
+    if (group == null) return
+
+    this.setMessageGroups(domain, docId, groups.map((g) => g.blobId === blobId ? ({ ...g, count: g.count + 1, toDate: toDate ?? group.toDate, fromDate: fromDate ?? group.fromDate }) : g))
+
+    const patches: JsonPatch[] = [
+      {
+        hop: 'inc',
+        path: `/${blobId}/count`,
+        value: 1
+      },
+      ...toDate != null
+        ? [{
+            op: 'replace',
+            path: `/${blobId}/toDate`,
+            value: toDate
+          } as const]
+        : [],
+      ...fromDate != null
+        ? [{
+            hop: 'add',
+            path: `/${blobId}/fromDate`,
+            value: fromDate
+          } as const]
+        : []
+    ]
+    await this.client.patchJson(buildMessagesGroupsUrl(domain, docId), patches, undefined, this.retryOptions)
+  }
+
+  private async decrementMessagesCount (domain: Domain, docId: Ref<Doc>, blobId: BlobID): Promise<void> {
+    const groups = await this.getAllMessageGroups(domain, docId)
+    const group = groups.find((g) => g.blobId === blobId)
+
+    if (group == null) return
+
+    const count = group.count - 1
+    group.count = count
+
+    this.setMessageGroups(domain, docId, groups.map((g) => g.blobId === blobId ? ({ ...g, count }) : g))
+
+    const patches: JsonPatch[] = [
+      {
+        hop: 'inc',
+        path: `/${blobId}/count`,
+        value: -1
+      }
+    ]
+    await this.client.patchJson(buildMessagesGroupsUrl(domain, docId), patches, undefined, this.retryOptions)
+  }
+
+  private async createMessageGroup (domain: Domain, docClass: Ref<Class<Doc>>, docId: Ref<Doc>, date: Date): Promise<MessagesGroup> {
+    const createPromise = this.messageGroupCreationPromises.get(domain)?.get(docId)
+
+    if (createPromise != null) {
+      await createPromise
+      const group = await this.getMessageGroupByDate(domain, docClass, docId, date, false)
+      if (group != null) return group
+    }
+
+    const promise = (async () => {
+      try {
+        const groupDoc: MessagesGroupDoc = {
+          docId,
+          docClass,
+          blobId: uuid() as BlobID,
+          fromDate: date.toISOString(),
+          toDate: date.toISOString(),
+          count: 0
+        }
+        const patches: JsonPatch[] = [
+          {
+            hop: 'add',
+            path: `/${groupDoc.blobId}`,
+            value: groupDoc,
+            safe: true
+          }
+        ]
+
+        await this.client.patchJson(buildMessagesGroupsUrl(domain, docId), patches, undefined, this.retryOptions)
+        const group = this.deserializeMessageGroup(groupDoc)
+
+        if ((this.messageGroupsByDocId.get(domain)?.has(docId)) === true) {
+          const groups = [...this.messageGroupsByDocId.get(domain)?.get(docId) ?? [], group]
+          this.setMessageGroups(domain, docId, groups)
+        } else {
+          this.setMessageGroups(domain, docId, [group])
+        }
+        await this.createMessagesBlob(domain, docClass, docId, groupDoc.blobId, date, date)
+
+        return group
+      } finally {
+        this.messageGroupCreationPromises.get(domain)?.delete(docId)
+      }
+    })()
+
+    this.setMessageGroupCreationPromise(domain, docId, promise)
+    return await promise
+  }
+
+  private async createMessagesBlob (domain: Domain, docClass: Ref<Class<Doc>>, docId: Ref<Doc>, blobId: BlobID, from: Date, to: Date): Promise<void> {
+    const initialJson: MessagesDoc = {
+      docId,
+      docClass,
+      fromDate: from.toISOString(),
+      toDate: to.toISOString(),
+      language: 'original',
+      messages: {}
+    }
+
+    await this.client.putJson(buildMessagesBlobUrl(domain, docId, blobId), initialJson, undefined, this.retryOptions)
   }
 
   private deserializeMessageGroup (group: MessagesGroupDoc): MessagesGroup {
     return {
-      cardId: group.cardId,
+      docId: group.docId,
+      docClass: group.docClass,
       blobId: group.blobId,
       fromDate: new Date(group.fromDate),
       toDate: new Date(group.toDate),

@@ -22,6 +22,9 @@ import workbench, { createNavigateAction } from '@hcengineering/model-workbench'
 import { type IntlString } from '@hcengineering/platform'
 import { TrackerEvents, trackerId } from '@hcengineering/tracker'
 import { type KeyBinding } from '@hcengineering/view'
+import emoji from '@hcengineering/model-emoji'
+import print from '@hcengineering/model-print'
+
 import tracker from './plugin'
 
 import tags from '@hcengineering/tags'
@@ -67,6 +70,10 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
     context: {
       mode: ['workbench', 'browser', 'editor', 'panel', 'popup']
     }
+  })
+
+  builder.mixin(emoji.class.CustomEmoji, core.class.Class, view.mixin.IgnoreActions, {
+    actions: [view.action.Open, view.action.OpenInNewTab, print.action.Print, tracker.action.NewRelatedIssue]
   })
 
   createAction(

@@ -166,6 +166,15 @@ export function genMinModel (): TxCUD<Doc>[] {
       kind: ClassifierKind.CLASS
     })
   )
+
+  txes.push(
+    createClass(core.class.TxDomainEvent, {
+      label: 'TxDomainEvent' as IntlString,
+      extends: core.class.Tx,
+      kind: ClassifierKind.CLASS
+    })
+  )
+
   txes.push(
     createClass(core.class.TxRemoveDoc, {
       label: 'TxRemoveDoc' as IntlString,

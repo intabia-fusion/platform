@@ -17,7 +17,7 @@ import communication, {
   type MessageActionFunction,
   type MessageActionVisibilityTester
 } from '@hcengineering/communication'
-import { languageStore, showPopup } from '@hcengineering/ui'
+import { showPopup } from '@hcengineering/ui'
 import emojiPlugin from '@hcengineering/emoji'
 import {
   type AppletParams,
@@ -40,36 +40,28 @@ import {
   getCurrentAccount,
   hasAccountRole,
   type MarkupBlobRef,
-  type Ref
+  type Ref,
+  type Doc
 } from '@hcengineering/core'
 import { getMetadata, getResource } from '@hcengineering/platform'
 import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
 import { getEmployeeBySocialId } from '@hcengineering/contact'
 import { makeRank } from '@hcengineering/rank'
-import { markupToText } from '@hcengineering/text'
 import { get } from 'svelte/store'
-import { translate as aiTranslate } from '@hcengineering/ai-bot-resources'
 import aiBot from '@hcengineering/ai-bot'
 import CreateCardFromMessagePopup from './components/CreateCardFromMessagePopup.svelte'
 import { Analytics } from '@hcengineering/analytics'
 import { isAppletAttachment, isBlobAttachment, isLinkPreviewAttachment } from '@hcengineering/communication-shared'
 
-import { isCardAllowedForCommunications, loadLinkPreviewParams, showForbidden, toggleReaction, toMarkup } from './utils'
-import {
-  isMessageManualTranslating,
-  messageEditingStore,
-  showOriginalMessagesStore,
-  threadCreateMessageStore,
-  translateMessagesStore,
-  translateToStore
-} from './stores'
+import { loadLinkPreviewParams, showForbidden, toggleReaction } from './utils'
+import { messageEditingStore, threadCreateMessageStore } from './stores'
 import { type AppletDraft, type BlobDraft, type LinkPreviewDraft } from './types'
 
-export const addReaction: MessageActionFunction = async (message, card: Card, evt, onOpen, onClose) => {
-  if (!isCardAllowedForCommunications(card)) {
-    await showForbidden()
-    return
-  }
+export const addReaction: MessageActionFunction = async (message, doc: Doc, evt, onOpen, onClose) => {
+  // if (!isCardAllowedForCommunications(doc)) {
+  //   await showForbidden()
+  //   return
+  // }
 
   if (onOpen !== undefined) onOpen()
 
@@ -88,11 +80,11 @@ export const addReaction: MessageActionFunction = async (message, card: Card, ev
   )
 }
 
-export const replyInThread: MessageActionFunction = async (message: Message, parentCard: Card): Promise<void> => {
-  if (!isCardAllowedForCommunications(parentCard)) {
-    await showForbidden()
-    return
-  }
+export const replyInThread: MessageActionFunction = async (message: Message, doc: Doc): Promise<void> => {
+  // if (!isCardAllowedForCommunications(doc)) {
+  //   await showForbidden()
+  //   return
+  // }
 
   const thread = message.threads[0]
   if (thread != null) {
@@ -107,16 +99,16 @@ export const replyInThread: MessageActionFunction = async (message: Message, par
 
   await attachCardToMessage(
     message,
-    parentCard,
-    createThreadTitle(message, parentCard),
+    doc,
+    createThreadTitle(message, doc),
     communication.type.Thread,
-    `${parentCard._id}_${message.id}` as Ref<Card>
+    `${doc._id}_${message.id}` as Ref<Card>
   )
 }
 
 export async function attachCardToMessage (
   message: Message,
-  parentCard: Card,
+  doc: Doc,
   title: string,
   type: Ref<MasterTag>,
   _id?: Ref<Card>
@@ -138,19 +130,20 @@ export async function attachCardToMessage (
       content: '' as MarkupBlobRef,
       blobs: {},
       parentInfo: [
-        {
-          _id: parentCard._id,
-          _class: parentCard._class,
-          title: parentCard.title
-        }
+        // {
+        //   _id: doc._id,
+        //   _class: doc._class,
+        //   title: doc.title
+        // }
       ]
     },
     type
   )
-  await client.createDoc(type, parentCard.space, data, threadCardID)
-  await communicationClient.attachThread(parentCard._id, message.id, threadCardID, type)
+  await client.createDoc(type, doc.space, data, threadCardID)
+  await communicationClient.attachThread(doc._class, doc._id, message.id, threadCardID, type)
   if (author?.active === true && author?.personUuid !== undefined) {
-    await communicationClient.addCollaborators(threadCardID, type, [author.personUuid])
+    // TODO: FIXME
+    // await communicationClient.addCollaborators(type, threadCardID, [author.personUuid])
   }
   const threadCard = await client.findOne(cardPlugin.class.Card, { _id: threadCardID })
   if (threadCard === undefined) return
@@ -158,11 +151,12 @@ export async function attachCardToMessage (
   await r(threadCard._id, threadCard)
 }
 
-function createThreadTitle (message: Message, parent: Card): string {
-  const markup = toMarkup(message.content)
-  const messageText = markupToText(markup).trim()
+function createThreadTitle (message: Message, doc: Doc): string {
+  // const markup = toMarkup(message.content)
+  // const messageText = markupToText(markup).trim()
 
-  return messageText.length > 0 ? messageText : `Thread from ${parent.title}`
+  // return messageText.length > 0 ? messageText : `Thread from ${doc.title}`
+  return ''
 }
 
 export const canReplyInThread: MessageActionVisibilityTester = (message: Message): boolean => {
@@ -170,44 +164,44 @@ export const canReplyInThread: MessageActionVisibilityTester = (message: Message
 }
 
 export const translateMessage: MessageActionFunction = async (message: Message): Promise<void> => {
-  const language = get(translateToStore) ?? get(languageStore)
-
-  if (isMessageManualTranslating(message.cardId, message.id)) return
-  const result = get(translateMessagesStore).find((it) => it.cardId === message.cardId && it.messageId === message.id)
-
-  showOriginalMessagesStore.update((store) =>
-    store.filter(([cId, mId]) => cId !== message.cardId || mId !== message.id)
-  )
-
-  if (result != null) return
-
-  translateMessagesStore.update((store) => {
-    store.push({ inProgress: true, messageId: message.id, cardId: message.cardId })
-    return store
-  })
-
-  const markup = toMarkup(message.content)
-  const currentTranslate = message?.translates?.[language] ?? ''
-  const response = currentTranslate !== '' ? toMarkup(currentTranslate) : (await aiTranslate(markup, language))?.text
-
-  if (response !== undefined) {
-    translateMessagesStore.update((store) => {
-      return store.map((it) => {
-        if (it.cardId === message.cardId && it.messageId === message.id) {
-          return {
-            ...it,
-            inProgress: false,
-            result: response
-          }
-        }
-        return it
-      })
-    })
-  } else {
-    translateMessagesStore.update((store) => {
-      return store.filter((it) => it.cardId !== message.cardId || it.messageId !== message.id)
-    })
-  }
+  // const language = get(translateToStore) ?? get(languageStore)
+  //
+  // // if (isMessageManualTranslating(message.cardId, message.id)) return
+  // const result = get(translateMessagesStore).find((it) => it.cardId === message.cardId && it.messageId === message.id)
+  //
+  // showOriginalMessagesStore.update((store) =>
+  //   store.filter(([cId, mId]) => cId !== message.cardId || mId !== message.id)
+  // )
+  //
+  // if (result != null) return
+  //
+  // translateMessagesStore.update((store) => {
+  //   store.push({ inProgress: true, messageId: message.id, cardId: message.cardId })
+  //   return store
+  // })
+  //
+  // const markup = toMarkup(message.content)
+  // const currentTranslate = message?.translates?.[language] ?? ''
+  // const response = currentTranslate !== '' ? toMarkup(currentTranslate) : (await aiTranslate(markup, language))?.text
+  //
+  // if (response !== undefined) {
+  //   translateMessagesStore.update((store) => {
+  //     return store.map((it) => {
+  //       if (it.cardId === message.cardId && it.messageId === message.id) {
+  //         return {
+  //           ...it,
+  //           inProgress: false,
+  //           result: response
+  //         }
+  //       }
+  //       return it
+  //     })
+  //   })
+  // } else {
+  //   translateMessagesStore.update((store) => {
+  //     return store.filter((it) => it.cardId !== message.cardId || it.messageId !== message.id)
+  //   })
+  // }
 }
 
 export const canTranslateMessage: MessageActionVisibilityTester = (message: Message): boolean => {
@@ -217,12 +211,12 @@ export const canTranslateMessage: MessageActionVisibilityTester = (message: Mess
 }
 
 export const showOriginalMessage: MessageActionFunction = async (message: Message): Promise<void> => {
-  const messageId = message.id
-
-  showOriginalMessagesStore.update((store) => {
-    store.push([message.cardId, messageId])
-    return store
-  })
+  // const messageId = message.id
+  //
+  // showOriginalMessagesStore.update((store) => {
+  //   store.push([message.cardId, messageId])
+  //   return store
+  // })
 }
 
 export const canShowOriginalMessage: MessageActionVisibilityTester = (message: Message): boolean => {
@@ -241,7 +235,7 @@ export const canEditMessage: MessageActionVisibilityTester = (message: Message):
 
 export const removeMessage: MessageActionFunction = async (message: Message): Promise<void> => {
   const communicationClient = getCommunicationClient()
-  await communicationClient.removeMessage(message.cardId, message.id)
+  await communicationClient.removeMessage(message.docClass, message.docId, message.id)
 }
 
 export const canRemoveMessage: MessageActionVisibilityTester = (message: Message): boolean => {
@@ -250,13 +244,13 @@ export const canRemoveMessage: MessageActionVisibilityTester = (message: Message
   return me.socialIds.includes(message.creator)
 }
 
-export const createCard: MessageActionFunction = async (message: Message, card: Card): Promise<void> => {
+export const createCard: MessageActionFunction = async (message: Message, doc: Doc): Promise<void> => {
   if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
     await showForbidden()
     return
   }
   threadCreateMessageStore.set(message)
-  showPopup(CreateCardFromMessagePopup, { message, card }, undefined, () => {
+  showPopup(CreateCardFromMessagePopup, { message, doc }, undefined, () => {
     threadCreateMessageStore.set(undefined)
   })
 }
@@ -303,7 +297,7 @@ async function filterActions (message: Message, actions: MessageAction[]): Promi
 }
 
 export async function createMessage (
-  card: Card,
+  doc: Doc,
   markdown: string,
   blobs: BlobDraft[],
   applets: AppletDraft[],
@@ -315,13 +309,13 @@ export async function createMessage (
   const communicationClient = getCommunicationClient()
   const client = getClient()
 
-  const { messageId } = await communicationClient.createMessage(card._id, card._class, markdown)
-  void client.update(card, {}, false, Date.now())
+  const { messageId } = await communicationClient.createMessage(doc._class, doc._id, markdown)
+  void client.update(doc, {}, false, Date.now())
 
-  void attachApplets(card, messageId, applets, appletModels)
+  void attachApplets(doc, messageId, applets, appletModels)
 
   if (blobs.length > 0) {
-    void communicationClient.attachmentPatch<BlobParams>(card._id, messageId, {
+    void communicationClient.attachmentPatch<BlobParams>(doc._class, doc._id, messageId, {
       add: blobs.map((it) => ({
         id: it.blobId as any as AttachmentID,
         mimeType: it.mimeType,
@@ -331,7 +325,7 @@ export async function createMessage (
   }
 
   if (links.length > 0) {
-    void communicationClient.attachmentPatch<LinkPreviewParams>(card._id, messageId, {
+    void communicationClient.attachmentPatch<LinkPreviewParams>(doc._class, doc._id, messageId, {
       add: links.map((it) => ({
         mimeType: linkPreviewType,
         params: it
@@ -345,7 +339,7 @@ export async function createMessage (
     if (fetchedData === null) continue
     const params = fetchedData ?? (await loadLinkPreviewParams(url))
     if (params === undefined) continue
-    void communicationClient.attachmentPatch<LinkPreviewParams>(card._id, messageId, {
+    void communicationClient.attachmentPatch<LinkPreviewParams>(doc._class, doc._id, messageId, {
       add: [
         {
           mimeType: linkPreviewType,
@@ -357,7 +351,7 @@ export async function createMessage (
 }
 
 export async function updateMessage (
-  card: Card,
+  doc: Doc,
   message: Message,
   markdown: string,
   blobs: BlobDraft[],
@@ -367,21 +361,21 @@ export async function updateMessage (
 ): Promise<void> {
   const communicationClient = getCommunicationClient()
 
-  await communicationClient.updateMessage(card._id, message.id, markdown)
+  await communicationClient.updateMessage(doc._class, doc._id, message.id, markdown)
 
   const attachBlobs = blobs.filter(
     (b) => !message.attachments.some((it) => isBlobAttachment(it) && it.params.blobId === b.blobId)
   )
 
   void attachApplets(
-    card,
+    doc,
     message.id,
     applets.filter((a) => !message.attachments.some((it) => it.id === a.id)),
     appletModels
   )
 
   if (attachBlobs.length > 0) {
-    void communicationClient.attachmentPatch<BlobParams>(card._id, message.id, {
+    void communicationClient.attachmentPatch<BlobParams>(doc._class, doc._id, message.id, {
       add: attachBlobs.map((it) => ({
         id: it.blobId as any as AttachmentID,
         mimeType: it.mimeType,
@@ -397,7 +391,7 @@ export async function updateMessage (
     detachBlobs.forEach((it) => {
       void deleteFile(it.params.blobId)
     })
-    void communicationClient.attachmentPatch(card._id, message.id, {
+    void communicationClient.attachmentPatch(doc._class, doc._id, message.id, {
       remove: detachBlobs.map((it) => it.id)
     })
   }
@@ -407,7 +401,7 @@ export async function updateMessage (
   )
 
   if (detachApplets.length > 0) {
-    void communicationClient.attachmentPatch(card._id, message.id, {
+    void communicationClient.attachmentPatch(doc._class, doc._id, message.id, {
       remove: detachApplets.map((it) => it.id)
     })
   }
@@ -416,7 +410,7 @@ export async function updateMessage (
     (l) => !message.attachments.some((it) => isLinkPreviewAttachment(it) && it.params.url === l.url)
   )
 
-  void communicationClient.attachmentPatch(card._id, message.id, {
+  void communicationClient.attachmentPatch(doc._class, doc._id, message.id, {
     add: attachLinks.map((it) => ({
       mimeType: linkPreviewType,
       params: it
@@ -425,7 +419,7 @@ export async function updateMessage (
 }
 
 async function attachApplets (
-  card: Card,
+  doc: Doc,
   messageId: MessageID,
   applets: AppletDraft[],
   models: Applet[]
@@ -443,7 +437,7 @@ async function attachApplets (
         continue
       }
       const r = await getResource(model.createFn)
-      await r(card, messageId, appletDraft.params)
+      await r(doc, messageId, appletDraft.params)
       toAttach.push(appletDraft)
     } catch (err: any) {
       Analytics.handleError(err)
@@ -451,7 +445,7 @@ async function attachApplets (
   }
 
   if (toAttach.length > 0) {
-    void communicationClient.attachmentPatch<AppletParams>(card._id, messageId, {
+    void communicationClient.attachmentPatch<AppletParams>(doc._class, doc._id, messageId, {
       add: toAttach.map((it) => ({
         mimeType: it.mimeType,
         params: it.params

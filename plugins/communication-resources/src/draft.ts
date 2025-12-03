@@ -11,10 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getCurrentAccount, type Ref, generateId } from '@hcengineering/core'
+import { getCurrentAccount, type Ref, generateId, type Doc, type Class } from '@hcengineering/core'
 import { derived, get } from 'svelte/store'
 import { type Location, location } from '@hcengineering/ui'
-import { type Card } from '@hcengineering/card'
 import { EmptyMarkup } from '@hcengineering/text'
 import { getClient } from '@hcengineering/presentation'
 import { type Applet } from '@hcengineering/communication'
@@ -27,11 +26,11 @@ import { toMarkup } from './utils'
 
 export const locationWorkspaceStore = derived(location, (loc: Location) => loc.path[1])
 
-function geLocalStorageKey (card: Ref<Card>): string | undefined {
+function geLocalStorageKey (_class: Ref<Class<Doc>>, _id: Ref<Doc>): string | undefined {
   const me = getCurrentAccount()
   const workspace = get(locationWorkspaceStore) ?? ''
   if (me == null || workspace === '') return undefined
-  return `${workspace}.${me.uuid}.${card}.message_draft.v2`
+  return `${workspace}.${me.uuid}.${_class}.${_id}.message_draft.v2`
 }
 
 export function getEmptyDraft (): MessageDraft {
@@ -44,8 +43,8 @@ export function getEmptyDraft (): MessageDraft {
   }
 }
 
-export function getDraft (card: Ref<Card>): MessageDraft {
-  const key = geLocalStorageKey(card)
+export function getDraft (_class: Ref<Class<Doc>>, _id: Ref<Doc>): MessageDraft {
+  const key = geLocalStorageKey(_class, _id)
 
   if (key === undefined) {
     return getEmptyDraft()
@@ -73,16 +72,16 @@ export function getDraft (card: Ref<Card>): MessageDraft {
 
 let timer: any | undefined
 
-export function removeDraft (card: Ref<Card>): void {
+export function removeDraft (_class: Ref<Class<Doc>>, _id: Ref<Doc>): void {
   if (timer !== undefined) clearTimeout(timer)
-  const key = geLocalStorageKey(card)
+  const key = geLocalStorageKey(_class, _id)
   if (key === undefined) return
   localStorage.removeItem(key)
 }
 
-export function saveDraft (card: Ref<Card>, draft: MessageDraft, force = false): void {
+export function saveDraft (_class: Ref<Class<Doc>>, _id: Ref<Doc>, draft: MessageDraft, force = false): void {
   if (timer !== undefined) clearTimeout(timer)
-  const key = geLocalStorageKey(card)
+  const key = geLocalStorageKey(_class, _id)
   if (key === undefined) return
 
   if (force) {

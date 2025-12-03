@@ -12,23 +12,21 @@
 // limitations under the License.
 
 import { DbAdapter } from '@hcengineering/communication-sdk-types'
-import type {
-  CardID, FindMessagesOptions,
+import {
+  FindMessagesOptions,
   Message,
   MessageID,
   MessageMeta,
-  PersonUuid,
-  SocialID,
-  WorkspaceUuid
+  SocialID
 } from '@hcengineering/communication-types'
 import { generateToken } from '@hcengineering/server-token'
-import { Account, MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { Account, Doc, MeasureContext, Ref, systemAccountUuid, Class, Hierarchy, PersonUuid, WorkspaceUuid } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { loadMessages } from '@hcengineering/communication-shared'
+import { getWorkspaceClient, HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { Blob } from './blob'
 import type { Metadata } from './types'
-import { getWorkspaceClient, HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 export class LowLevelClient {
   private readonly messageMetaCache = new Map<string, MessageMeta>()
@@ -39,19 +37,22 @@ export class LowLevelClient {
     readonly db: DbAdapter,
     readonly blob: Blob,
     private readonly metadata: Metadata,
-    private readonly workspace: WorkspaceUuid
+    private readonly workspace: WorkspaceUuid,
+    private readonly hierarchy: Hierarchy
   ) {
     this.lake = getWorkspaceClient(metadata.hulylakeUrl, workspace, generateToken(systemAccountUuid, workspace, undefined, metadata.secret))
   }
 
-  async findMessage (cardId: CardID, messageId: MessageID, options?: FindMessagesOptions): Promise<Message | undefined> {
-    const meta = await this.getMessageMeta(cardId, messageId)
+  async findMessage (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID, options?: FindMessagesOptions): Promise<Message | undefined> {
+    const meta = await this.getMessageMeta(docClass, docId, messageId)
     if (meta === undefined) {
       return undefined
     }
 
-    return (await loadMessages(this.lake, meta.blobId, {
-      cardId,
+    const domain = this.hierarchy.getDomain(docClass)
+    return (await loadMessages(this.lake, domain, meta.blobId, {
+      docId,
+      docClass,
       id: messageId
     }, options))[0]
   }
@@ -87,12 +88,12 @@ export class LowLevelClient {
     }
   }
 
-  async getMessageMeta (cardId: CardID, messageId: MessageID): Promise<MessageMeta | undefined> {
-    const key = this.getMessageMetaKey(cardId, messageId)
+  async getMessageMeta (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID): Promise<MessageMeta | undefined> {
+    const key = this.getMessageMetaKey(docClass, docId, messageId)
     if (this.messageMetaCache.has(key)) {
       return this.messageMetaCache.get(key)
     }
-    const meta = (await this.db.findMessagesMeta({ cardId, id: messageId }))[0]
+    const meta = (await this.db.findMessagesMeta({ docClass, docId, id: messageId }))[0]
     if (meta === undefined) {
       return undefined
     }
@@ -100,13 +101,18 @@ export class LowLevelClient {
     return meta
   }
 
-  private getMessageMetaKey (cardId: CardID, messageId: MessageID): string {
-    return `${cardId}-${messageId}`
+  private getMessageMetaKey (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID): string {
+    const domain = this.hierarchy.getDomain(docClass)
+    return `${domain}-${docId}-${messageId}`
   }
 
-  async removeMessageMeta (cardId: CardID, messageId: MessageID): Promise<void> {
-    await this.db.removeMessageMeta(cardId, messageId)
-    const key = this.getMessageMetaKey(cardId, messageId)
+  async removeMessageMeta (docClass: Ref<Class<Doc>>, docId: Ref<Doc>, messageId: MessageID): Promise<void> {
+    await this.db.removeMessageMeta(docClass, docId, messageId)
+    const key = this.getMessageMetaKey(docClass, docId, messageId)
     this.messageMetaCache.delete(key)
+  }
+
+  async removeAllDocMessageMeta (docClass: Ref<Class<Doc>>, docId: Ref<Doc>): Promise<void> {
+    await this.db.removeMessageMeta(docClass, docId, null)
   }
 }

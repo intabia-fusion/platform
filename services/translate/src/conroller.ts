@@ -13,14 +13,11 @@
 
 import core, {
   Doc,
-  Domain,
-  generateId,
   MeasureContext,
   notEmpty,
   systemAccountUuid,
   Tx,
   TxCreateDoc,
-  TxDomainEvent,
   TxProcessor,
   TxUpdateDoc,
   WorkspaceUuid
@@ -30,10 +27,8 @@ import { generateToken } from '@hcengineering/server-token'
 import { getTransactorEndpoint } from '@hcengineering/server-client'
 import contact, { Translation } from '@hcengineering/contact'
 import { BlobID, CardID, Markdown, Message, MessageID } from '@hcengineering/communication-types'
-import { withRetry } from '@hcengineering/retry'
 import { Analytics } from '@hcengineering/analytics'
 import OpenAI from 'openai'
-import { MessageEventType, TranslateMessageEvent, UpdatePatchEvent } from '@hcengineering/communication-sdk-types'
 
 import { Storage } from './storage'
 import config from './config'
@@ -110,26 +105,26 @@ export class Controller {
     return arrayLangs
   }
 
-  private getUpdateLanguageTx (cardId: CardID, messageId: MessageID, language: string): TxDomainEvent {
-    const event: UpdatePatchEvent = {
-      type: MessageEventType.UpdatePatch,
-      cardId,
-      messageId,
-      language,
-      socialId: core.account.System
-    }
-
-    return {
-      _id: generateId(),
-      _class: core.class.TxDomainEvent,
-      space: core.space.Tx,
-      objectSpace: core.space.Workspace,
-      modifiedOn: Date.now(),
-      modifiedBy: core.account.System,
-      domain: 'communication' as Domain,
-      event
-    }
-  }
+  // private getUpdateLanguageTx (cardId: CardID, messageId: MessageID, language: string): TxDomainEvent {
+  //   // const event: UpdatePatchEvent = {
+  //   //   type: MessageEventType.UpdatePatch,
+  //   //   cardId,
+  //   //   messageId,
+  //   //   language,
+  //   //   socialId: core.account.System
+  //   // }
+  //
+  //   return {
+  //     _id: generateId(),
+  //     _class: core.class.TxDomainEvent,
+  //     space: core.space.Tx,
+  //     objectSpace: core.space.Workspace,
+  //     modifiedOn: Date.now(),
+  //     modifiedBy: core.account.System,
+  //     domain: 'communication' as Domain,
+  //     event
+  //   }
+  // }
 
   async processMessageCreate (
     ctx: MeasureContext,
@@ -137,62 +132,62 @@ export class Controller {
     message: Message,
     blobId: BlobID
   ): Promise<void> {
-    const initialLanguage = message.language
-
-    const translateTo = await this.getLanguages(workspace)
-    if (translateTo.length === 0) return
-
-    let originalLanguage = initialLanguage
-
-    const txes: Tx[] = []
-    for (const lang of translateTo) {
-      try {
-        const result = await withRetry(() => this.translate(workspace, message.content, lang))
-        if (result == null) continue
-        const translation = result?.translation ?? ''
-
-        if (result?.original_language != null && result.original_language !== '') {
-          originalLanguage = result.original_language
-        }
-        if (translation !== '') {
-          await this.storage.insertMessage(workspace, message.cardId, blobId, lang, message, translation)
-          const event: TranslateMessageEvent = {
-            type: MessageEventType.TranslateMessage,
-            cardId: message.cardId,
-            messageId: message.id,
-            content: translation,
-            language: lang
-          }
-
-          const tx: TxDomainEvent = {
-            _id: generateId(),
-            _class: core.class.TxDomainEvent,
-            space: core.space.Tx,
-            objectSpace: core.space.Workspace,
-            modifiedOn: Date.now(),
-            modifiedBy: core.account.System,
-            domain: 'communication' as Domain,
-            event
-          }
-          txes.push(tx)
-        }
-      } catch (e) {
-        ctx.error('Failed to translate message', { error: e, messageId: message.id })
-        Analytics.handleError(e as Error)
-      }
-    }
-
-    if (originalLanguage != null && originalLanguage !== '' && originalLanguage !== initialLanguage) {
-      ctx.info('update original language', { originalLanguage, id: message.id, content: message.content.slice(0, 50) })
-      txes.unshift(this.getUpdateLanguageTx(message.cardId, message.id, originalLanguage))
-    }
-
-    if (txes.length > 0) {
-      const client = await this.getRestClient(workspace)
-      for (const tx of txes) {
-        await client.tx(tx)
-      }
-    }
+    // const initialLanguage = message.language
+    //
+    // const translateTo = await this.getLanguages(workspace)
+    // if (translateTo.length === 0) return
+    //
+    // let originalLanguage = initialLanguage
+    //
+    // const txes: Tx[] = []
+    // for (const lang of translateTo) {
+    //   try {
+    //     const result = await withRetry(() => this.translate(workspace, message.content, lang))
+    //     if (result == null) continue
+    //     const translation = result?.translation ?? ''
+    //
+    //     if (result?.original_language != null && result.original_language !== '') {
+    //       originalLanguage = result.original_language
+    //     }
+    //     if (translation !== '') {
+    //       await this.storage.insertMessage(workspace, message.cardId, blobId, lang, message, translation)
+    //       const event: TranslateMessageEvent = {
+    //         type: MessageEventType.TranslateMessage,
+    //         cardId: message.cardId,
+    //         messageId: message.id,
+    //         content: translation,
+    //         language: lang
+    //       }
+    //
+    //       const tx: TxDomainEvent = {
+    //         _id: generateId(),
+    //         _class: core.class.TxDomainEvent,
+    //         space: core.space.Tx,
+    //         objectSpace: core.space.Workspace,
+    //         modifiedOn: Date.now(),
+    //         modifiedBy: core.account.System,
+    //         domain: 'communication' as Domain,
+    //         event
+    //       }
+    //       txes.push(tx)
+    //     }
+    //   } catch (e) {
+    //     ctx.error('Failed to translate message', { error: e, messageId: message.id })
+    //     Analytics.handleError(e as Error)
+    //   }
+    // }
+    //
+    // if (originalLanguage != null && originalLanguage !== '' && originalLanguage !== initialLanguage) {
+    //   ctx.info('update original language', { originalLanguage, id: message.id, content: message.content.slice(0, 50) })
+    //   txes.unshift(this.getUpdateLanguageTx(message.cardId, message.id, originalLanguage))
+    // }
+    //
+    // if (txes.length > 0) {
+    //   const client = await this.getRestClient(workspace)
+    //   for (const tx of txes) {
+    //     await client.tx(tx)
+    //   }
+    // }
   }
 
   async processMessageUpdate (
@@ -204,58 +199,58 @@ export class Controller {
     blobId: BlobID,
     language?: string
   ): Promise<void> {
-    const translateTo = await this.getLanguages(workspace)
-    if (translateTo.length === 0) return
-    const txes: Tx[] = []
-
-    let originalLanguage = language
-
-    for (const lang of translateTo) {
-      try {
-        const result = await withRetry(() => this.translate(workspace, content, lang))
-        if (result == null) continue
-        const translation = result?.translation ?? ''
-        if (result?.original_language != null && result.original_language !== '') {
-          originalLanguage = result.original_language
-        }
-        if (translation !== '') {
-          await this.storage.updateMessage(workspace, cardId, blobId, messageId, lang, translation)
-          const event: TranslateMessageEvent = {
-            type: MessageEventType.TranslateMessage,
-            cardId,
-            messageId,
-            content: translation,
-            language: lang
-          }
-          const tx: TxDomainEvent = {
-            _id: generateId(),
-            _class: core.class.TxDomainEvent,
-            space: core.space.Tx,
-            objectSpace: core.space.Workspace,
-            modifiedOn: Date.now(),
-            modifiedBy: core.account.System,
-            domain: 'communication' as Domain,
-            event
-          }
-
-          txes.push(tx)
-        }
-      } catch (e) {
-        ctx.error('Failed to update message translation', { error: e, messageId })
-        Analytics.handleError(e as Error)
-      }
-    }
-
-    if (originalLanguage != null && originalLanguage !== '' && originalLanguage !== language) {
-      txes.unshift(this.getUpdateLanguageTx(cardId, messageId, originalLanguage))
-    }
-
-    if (txes.length > 0) {
-      const client = await this.getRestClient(workspace)
-      for (const tx of txes) {
-        await client.tx(tx)
-      }
-    }
+    // const translateTo = await this.getLanguages(workspace)
+    // if (translateTo.length === 0) return
+    // const txes: Tx[] = []
+    //
+    // let originalLanguage = language
+    //
+    // for (const lang of translateTo) {
+    //   try {
+    //     const result = await withRetry(() => this.translate(workspace, content, lang))
+    //     if (result == null) continue
+    //     const translation = result?.translation ?? ''
+    //     if (result?.original_language != null && result.original_language !== '') {
+    //       originalLanguage = result.original_language
+    //     }
+    //     if (translation !== '') {
+    //       await this.storage.updateMessage(workspace, cardId, blobId, messageId, lang, translation)
+    //       const event: TranslateMessageEvent = {
+    //         type: MessageEventType.TranslateMessage,
+    //         cardId,
+    //         messageId,
+    //         content: translation,
+    //         language: lang
+    //       }
+    //       const tx: TxDomainEvent = {
+    //         _id: generateId(),
+    //         _class: core.class.TxDomainEvent,
+    //         space: core.space.Tx,
+    //         objectSpace: core.space.Workspace,
+    //         modifiedOn: Date.now(),
+    //         modifiedBy: core.account.System,
+    //         domain: 'communication' as Domain,
+    //         event
+    //       }
+    //
+    //       txes.push(tx)
+    //     }
+    //   } catch (e) {
+    //     ctx.error('Failed to update message translation', { error: e, messageId })
+    //     Analytics.handleError(e as Error)
+    //   }
+    // }
+    //
+    // if (originalLanguage != null && originalLanguage !== '' && originalLanguage !== language) {
+    //   txes.unshift(this.getUpdateLanguageTx(cardId, messageId, originalLanguage))
+    // }
+    //
+    // if (txes.length > 0) {
+    //   const client = await this.getRestClient(workspace)
+    //   for (const tx of txes) {
+    //     await client.tx(tx)
+    //   }
+    // }
   }
 
   async processMessageRemove (

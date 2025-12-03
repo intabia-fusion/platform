@@ -16,13 +16,12 @@
 <script lang="ts">
   import { Person } from '@hcengineering/contact'
   import { employeeByPersonIdStore, getPersonByPersonId } from '@hcengineering/contact-resources'
-  import { Card } from '@hcengineering/card'
   import { getEventPositionElement, showPopup, Action, Menu } from '@hcengineering/ui'
   import type { SocialID } from '@hcengineering/communication-types'
   import { Message, MessageType } from '@hcengineering/communication-types'
   import { getResource } from '@hcengineering/platform'
   import { MessageAction } from '@hcengineering/communication'
-  import { Ref } from '@hcengineering/core'
+  import { Ref, Doc } from '@hcengineering/core'
 
   import MessageActionsPanel from './MessageActionsPanel.svelte'
   import MessageBody from './MessageBody.svelte'
@@ -38,8 +37,9 @@
   } from '../../stores'
   import { getMessageActions } from '../../actions'
   import communication from '../../plugin'
+  import { DateFormat } from '../../types'
 
-  export let card: Card
+  export let doc: Doc
   export let message: Message
   export let padding: string | undefined = undefined
   export let compact: boolean = false
@@ -49,6 +49,7 @@
   export let showThreads: boolean = true
   export let collapsible: boolean = true
   export let maxHeight: string = '30rem'
+  export let dateFormat: DateFormat | undefined = undefined
 
   let isEditing = false
   let author: Person | undefined
@@ -136,7 +137,7 @@
       icon: action.icon,
       action: async () => {
         const actionFn = await getResource(action.action)
-        await actionFn(message, card, event)
+        await actionFn(message, doc, event)
       }
     }))
 
@@ -159,11 +160,11 @@
   style:padding
 >
   {#if message.type === MessageType.Activity}
-    <OneRowMessageBody {message} {card} {author} {hideAvatar} {hideHeader} />
+    <OneRowMessageBody {message} {doc} {author} {hideAvatar} {hideHeader} {dateFormat} {compact}/>
   {:else}
     <MessageBody
       {message}
-      {card}
+      {doc}
       {author}
       {isEditing}
       compact={compact && message.threads.length === 0}
@@ -172,6 +173,7 @@
       {showThreads}
       {collapsible}
       {maxHeight}
+      {dateFormat}
     />
   {/if}
 
@@ -179,7 +181,7 @@
     <div class="message__actions" class:opened={isActionsPanelOpened}>
       <MessageActionsPanel
         {message}
-        {card}
+        {doc}
         {actions}
         onOpen={() => {
           isActionsPanelOpened = true

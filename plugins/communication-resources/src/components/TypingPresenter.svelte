@@ -13,18 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PersonId, getCurrentAccount } from '@hcengineering/core'
+  import { type PersonId, getCurrentAccount, Ref, Doc } from '@hcengineering/core'
   import { getName } from '@hcengineering/contact'
   import { getPersonsByPersonIds } from '@hcengineering/contact-resources'
   import { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { type TypingInfo, typing } from '@hcengineering/presence-resources'
-  import { CardID } from '@hcengineering/communication-types'
 
   import communication from '../plugin'
 
-  export let cardId: CardID
+  export let objectId: Ref<Doc>
   export let peerId: string | undefined
 
   const maxTypingPersons = 3
@@ -41,7 +40,7 @@
   let typingInfo = new Map<string, TypingInfo>()
   let typingGroups: TypingGroup[] = []
 
-  $: objectId = peerId ? `peer${peerId}` : cardId
+  $: _objectId = peerId ? `peer${peerId}` : objectId
 
   $: void updateTypingPersons(typingInfo)
 
@@ -94,7 +93,7 @@
   class="root h-4 mt-1 mb-1 ml-0-5 overflow-label"
   use:typing={{
     socialId: acc.primarySocialId,
-    objectId,
+    objectId: _objectId,
     onTyping: handleTyping
   }}
 >

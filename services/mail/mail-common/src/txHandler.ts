@@ -44,7 +44,7 @@ export function toMessageEvent (tx: Tx): CreateMessageEvent | undefined {
     return undefined
   }
   const event: CreateMessageEvent = domainTx.event
-  const isMessage = event.cardType === communication.type.Thread && event.messageType === MessageType.Text
+  const isMessage = event.docClass === communication.type.Thread && event.messageType === MessageType.Text
   if (!isMessage) {
     return undefined
   }

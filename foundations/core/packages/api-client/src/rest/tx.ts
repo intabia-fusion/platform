@@ -33,6 +33,7 @@ import {
   type SearchResult,
   toFindResult,
   type Tx,
+  TxDomainEvent,
   TxOperations,
   type TxResult,
   type WithLookup
@@ -75,6 +76,10 @@ class RestTxClient implements Client {
       return this.hierarchy.updateLookupMixin(_class, v, options)
     })
     return toFindResult(result, data.total)
+  }
+
+  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return await this.client.domainEventTx(tx)
   }
 
   async domainRequest<T>(

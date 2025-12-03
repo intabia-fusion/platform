@@ -7,13 +7,12 @@ import type {
   MessageType,
   CardType,
   MessageExtra,
-  BlobParams,
   AttachmentData,
   AttachmentID,
   AttachmentUpdateData,
-  Emoji,
-  PersonUuid
+  Emoji
 } from '@hcengineering/communication-types'
+import type { Ref, Class, Doc, PersonUuid } from '@hcengineering/core'
 
 import type { BaseEvent } from './common'
 
@@ -23,10 +22,6 @@ export enum MessageEventType {
   UpdatePatch = 'updatePatch',
   RemovePatch = 'removePatch',
   ReactionPatch = 'reactionPatch',
-  /**
-   * @deprecated Use AttachmentPatch instead
-   */
-  BlobPatch = 'blobPatch',
   AttachmentPatch = 'attachmentPatch',
   ThreadPatch = 'threadPatch',
   TranslateMessage = 'translateMessage'
@@ -36,7 +31,6 @@ export type PatchEvent =
   | UpdatePatchEvent
   | RemovePatchEvent
   | ReactionPatchEvent
-  | BlobPatchEvent
   | AttachmentPatchEvent
   | ThreadPatchEvent
 
@@ -60,8 +54,8 @@ export interface UpdatePatchOptions {
 export interface CreateMessageEvent extends BaseEvent {
   type: MessageEventType.CreateMessage
 
-  cardId: CardID
-  cardType: CardType
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
 
   messageId?: MessageID
   messageType: MessageType
@@ -70,16 +64,15 @@ export interface CreateMessageEvent extends BaseEvent {
   language?: string
   extra?: MessageExtra
 
-  socialId: SocialID
-  date?: Date
-
   options?: CreateMessageOptions
 }
 
 export interface TranslateMessageEvent extends BaseEvent {
   type: MessageEventType.TranslateMessage
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
+
   messageId: MessageID
   content: Markdown
   language: string
@@ -89,15 +82,13 @@ export interface TranslateMessageEvent extends BaseEvent {
 export interface UpdatePatchEvent extends BaseEvent {
   type: MessageEventType.UpdatePatch
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
 
   content?: Markdown
   extra?: MessageExtra
   language?: string
-
-  socialId: SocialID
-  date?: Date
 
   options?: UpdatePatchOptions
 }
@@ -106,11 +97,10 @@ export interface UpdatePatchEvent extends BaseEvent {
 export interface RemovePatchEvent extends BaseEvent {
   type: MessageEventType.RemovePatch
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
-
-  socialId: SocialID
-  date?: Date
+  messageType?: MessageType// Set by server
 }
 
 export interface AddReactionOperation {
@@ -127,51 +117,13 @@ export interface RemoveReactionOperation {
 export interface ReactionPatchEvent extends BaseEvent {
   type: MessageEventType.ReactionPatch
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
 
   operation: AddReactionOperation | RemoveReactionOperation
 
-  socialId: SocialID
   personUuid?: PersonUuid // Set by server
-  date?: Date
-}
-
-export interface AttachBlobsOperation {
-  opcode: 'attach'
-  blobs: (BlobParams & { mimeType: string })[]
-}
-
-export interface DetachBlobsOperation {
-  opcode: 'detach'
-  blobIds: BlobID[]
-}
-
-export interface SetBlobsOperation {
-  opcode: 'set'
-  blobs: (BlobParams & { mimeType: string })[]
-}
-
-export interface UpdateBlobsOperation {
-  opcode: 'update'
-  blobs: BlobUpdateData[]
-}
-
-export type BlobUpdateData = { blobId: BlobID, mimeType?: string } & Partial<BlobParams>
-
-/**
- * @deprecated Use AttachmentPatch instead
- */
-export interface BlobPatchEvent extends BaseEvent {
-  type: MessageEventType.BlobPatch
-
-  cardId: CardID
-  messageId: MessageID
-
-  operations: (AttachBlobsOperation | DetachBlobsOperation | SetBlobsOperation | UpdateBlobsOperation)[]
-
-  socialId: SocialID
-  date?: Date
 }
 
 export interface AddAttachmentsOperation {
@@ -198,7 +150,8 @@ export interface UpdateAttachmentsOperation {
 export interface AttachmentPatchEvent extends BaseEvent {
   type: MessageEventType.AttachmentPatch
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
 
   operations: (
@@ -207,9 +160,6 @@ export interface AttachmentPatchEvent extends BaseEvent {
     | SetAttachmentsOperation
     | UpdateAttachmentsOperation
   )[]
-
-  socialId: SocialID
-  date?: Date
 }
 
 // For any user
@@ -243,14 +193,13 @@ export interface RemoveReplyOperation {
 export interface ThreadPatchEvent extends BaseEvent {
   type: MessageEventType.ThreadPatch
 
-  cardId: CardID
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
   messageId: MessageID
 
   operation: AttachThreadOperation | UpdateThreadOperation | AddReplyOperation | RemoveReplyOperation
 
-  socialId: SocialID
   personUuid?: PersonUuid // Set by server
-  date?: Date
 }
 
 export interface CreateMessageResult {

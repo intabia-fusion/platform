@@ -26,8 +26,8 @@
 
   const client = getClient()
 
-  let labels: Label[] = []
-  $: labels = value ? $labelsStore.filter((it) => it.cardId === value?._id) : []
+  const labels: Label[] = []
+  // $: labels = value ? $labelsStore.filter((it) => it.docId === value?._id) : []
   let tags: TagElement[] = []
 
   $: client
