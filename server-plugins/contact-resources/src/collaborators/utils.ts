@@ -27,16 +27,14 @@ import core, {
   RefTo,
   Space,
   Tx,
-  TxCreateDoc,
   TxCUD,
-  TxUpdateDoc
+  TxUpdateDoc,
+  isMixinTx
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 import { MeasureContext } from '@hcengineering/measurements'
 import contact from '@hcengineering/contact'
-import { getAccountBySocialId, getEmployeesBySocialIds } from '@hcengineering/server-contact'
-
-import { isMixinTx } from '../utils'
+import { getAccountBySocialId, getAddCollaboratorsTxes, getEmployeesBySocialIds } from '@hcengineering/server-contact'
 
 async function getValueCollaborators (
   ctx: MeasureContext,
@@ -330,22 +328,9 @@ export async function getDocCollaboratorsByTx (
   })
 }
 
-export function getAddCollaboratorsTxes (
-  objectId: Ref<Doc>,
-  objectClass: Ref<Class<Doc>>,
-  objectSpace: Ref<Space>,
-  control: TriggerControl,
-  collaborators: AccountUuid[]
-): TxCreateDoc<Collaborator>[] {
-  const res: TxCreateDoc<Collaborator>[] = []
-  for (const collaborator of collaborators) {
-    const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
-      attachedTo: objectId,
-      attachedToClass: objectClass,
-      collaborator,
-      collection: 'collaborators'
-    })
-    res.push(tx)
-  }
-  return res
+export async function getDocSpace (control: TriggerControl, doc: Doc, cache: Map<Ref<Doc>, Doc>): Promise<Space> {
+  return control.hierarchy.isDerived(doc._class, core.class.Space)
+    ? (doc as Space)
+    : ((cache.get(doc.space) as Space) ??
+        (await control.findAll<Space>(control.ctx, core.class.Space, { _id: doc.space }, { limit: 1 }))[0])
 }

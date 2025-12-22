@@ -36,7 +36,8 @@ export default plugin(serverContactId, {
     OnEmployeeCreate: '' as Resource<TriggerFunc>,
     OnTypedSpaceCreate: '' as Resource<TriggerFunc>,
     OnPersonCreate: '' as Resource<TriggerFunc>,
-    OnSpaceTypeMembers: '' as Resource<TriggerFunc>
+    OnSpaceTypeMembers: '' as Resource<TriggerFunc>,
+    ManageCollaboratorsTrigger: '' as Resource<TriggerFunc>
   },
   function: {
     // TODO: FIXME

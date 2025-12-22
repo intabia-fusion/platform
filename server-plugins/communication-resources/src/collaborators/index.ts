@@ -11,5 +11,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { getCollaborators } from './utils'
-export { ManageCollaboratorsTrigger } from './collaborators'
+export { AddCollaboratorsOnMessageCreate } from './collaborators'

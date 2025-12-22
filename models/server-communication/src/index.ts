@@ -18,13 +18,19 @@ import core from '@hcengineering/core'
 import serverCore from '@hcengineering/server-core'
 import serverCommunication from '@hcengineering/server-communication'
 import { MessageEventType } from '@hcengineering/communication-sdk-types'
+import { MessageType } from '@hcengineering/communication-types'
 
 export { serverCommunicationId } from '@hcengineering/server-communication'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverCommunication.trigger.ManageCollaboratorsTrigger,
-    isAsync: false
+    trigger: serverCommunication.trigger.AddCollaboratorsOnMessageCreate,
+    txMatch: {
+      _class: core.class.TxDomainEvent,
+      'event.type': MessageEventType.CreateMessage,
+      'event.messageType': MessageType.Text
+    },
+    isAsync: true
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

@@ -1,4 +1,3 @@
-//
 // Copyright © 2025 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -11,18 +10,6 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-import { ActivityMessagesTrigger } from './activity'
-import { OnMessageCreate, OnMessageRemove } from './triggers'
-import { AddCollaboratorsOnMessageCreate } from './collaborators'
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export default async () => ({
-  trigger: {
-    ActivityMessagesTrigger,
-    AddCollaboratorsOnMessageCreate,
-    OnMessageCreate,
-    OnMessageRemove
-  }
-})
+export { getCollaborators } from './utils'
+export { ManageCollaboratorsTrigger } from './collaborators'

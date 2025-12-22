@@ -30,7 +30,7 @@ export default plugin(serverCommunicationId, {
     Enabled: '' as Metadata<boolean>
   },
   trigger: {
-    ManageCollaboratorsTrigger: '' as Resource<TriggerFunc>,
+    AddCollaboratorsOnMessageCreate: '' as Resource<TriggerFunc>,
     ActivityMessagesTrigger: '' as Resource<TriggerFunc>,
     OnMessageCreate: '' as Resource<TriggerFunc>,
     OnMessageRemove: '' as Resource<TriggerFunc>

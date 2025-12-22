@@ -59,6 +59,8 @@ import { getAccountBySocialId, getCurrentPerson } from '@hcengineering/server-co
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 
+import { ManageCollaboratorsTrigger } from './collaborators'
+
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const tx of txes) {
@@ -482,6 +484,8 @@ export async function getContactFirstName (
   }
 }
 
+export * from './collaborators/index'
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
@@ -490,7 +494,8 @@ export default async () => ({
     OnPersonCreate,
     OnContactDelete,
     OnChannelUpdate,
-    OnSpaceTypeMembers
+    OnSpaceTypeMembers,
+    ManageCollaboratorsTrigger
   },
   function: {
     PersonHTMLPresenter: personHTMLPresenter,

@@ -9425,6 +9425,9 @@ importers:
       '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../../foundations/communication/packages/sdk-types
+      '@hcengineering/communication-types':
+        specifier: workspace:^0.7.12
+        version: link:../../foundations/communication/packages/types
       '@hcengineering/core':
         specifier: workspace:^0.7.23
         version: link:../../foundations/core/packages/core
@@ -29215,6 +29218,9 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../plugins/login
+      '@hcengineering/measurements':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/measurements
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
