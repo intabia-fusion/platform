@@ -332,7 +332,7 @@ class ClientHookImpl implements Client {
     return await this.client.findAll(_class, query, options)
   }
 
-  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
     if (this.hook !== undefined) {
       return await this.hook.domainEventTx(this.client, tx)
     }

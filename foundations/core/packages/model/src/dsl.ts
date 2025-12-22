@@ -290,7 +290,7 @@ function _generateTx (tx: ClassTxes): Tx[] {
             sortingKey: tx.sortingKey,
             filteringKey: tx.filteringKey,
             pluralLabel: tx.pluralLabel,
-          titleKey: tx.titleKey
+            titleKey: tx.titleKey
           })
     },
     objectId

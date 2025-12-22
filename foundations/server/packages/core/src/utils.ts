@@ -34,7 +34,8 @@ import core, {
   type Tx,
   type TxResult,
   type TxWorkspaceEvent,
-  type WorkspaceIds, type TxDomainEvent
+  type WorkspaceIds,
+  type TxDomainEvent
 } from '@hcengineering/core'
 import { PlatformError, unknownError } from '@hcengineering/platform'
 import { createHash, type Hash } from 'crypto'
@@ -309,7 +310,7 @@ export function wrapPipeline (
       )[0]
     },
     domainEventTx: async (tx: TxDomainEvent) => {
-      return await pipeline.tx(ctx, [tx]) as DomainResult
+      return (await pipeline.tx(ctx, [tx])) as DomainResult
     },
     domainRequest: async (domain, params) => {
       return await pipeline.domainRequest(ctx, domain, params)

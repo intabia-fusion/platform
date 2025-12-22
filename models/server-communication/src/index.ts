@@ -17,7 +17,7 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/core'
 import serverCore from '@hcengineering/server-core'
 import serverCommunication from '@hcengineering/server-communication'
-import {MessageEventType} from '@hcengineering/communication-sdk-types'
+import { MessageEventType } from '@hcengineering/communication-sdk-types'
 
 export { serverCommunicationId } from '@hcengineering/server-communication'
 

@@ -32,7 +32,7 @@
   const account = getCurrentAccount()
   const dispatch = createEventDispatcher()
 
-  let total = 0
+  const total = 0
 
   // const modernNotificationsQuery = createNotificationsQuery()
   const query = createQuery()

@@ -42,12 +42,12 @@
   $: attribute = getCollectionAttribute(hierarchy, doc._class, collection)
 
   $: messages = (message.previous ?? []).concat(message) as ActivityMessage[]
-  $: createMessages = messages.filter(it => it.extra.action === 'create')
-  $: removeMessages = messages.filter(it => it.extra.action === 'remove')
+  $: createMessages = messages.filter((it) => it.extra.action === 'create')
+  $: removeMessages = messages.filter((it) => it.extra.action === 'remove')
   $: resultMessages = createMessages.length > 0 ? createMessages : removeMessages
-  $: objectIds = messages.map(it => (it.extra?.update as ActivityCollectionUpdate).objectId).filter(notEmpty)
+  $: objectIds = messages.map((it) => (it.extra?.update as ActivityCollectionUpdate).objectId).filter(notEmpty)
 
-  $:query.query(objectClass, { _id: { $in: objectIds } }, res => {
+  $: query.query(objectClass, { _id: { $in: objectIds } }, (res) => {
     objects = res
   })
 
@@ -78,22 +78,21 @@
   function getTitle (object: Doc, key: string, update: ActivityCollectionUpdate): string {
     return (object as any)[key] ?? update.title ?? ''
   }
-
 </script>
 
 <span class="content flex-gap-1 no-word-wrap flex-wrap">
   <span class="icon mr-1">
     <Icon {icon} size="small" />
   </span>
-  {#if createMessages.length > 0 }
-  <Label label={communication.string.New}/>
-    {:else if removeMessages.length > 0 }
-      <Label label={communication.string.Removed}/>
-    {/if}
-  <span class="lower"><Label label={label}/></span>:
-    {#each resultMessages as m, index}
-      {@const update = getCollectionUpdate(m)}
-      {@const object = objects.find(it => it._id === update.objectId)}
+  {#if createMessages.length > 0}
+    <Label label={communication.string.New} />
+  {:else if removeMessages.length > 0}
+    <Label label={communication.string.Removed} />
+  {/if}
+  <span class="lower"><Label {label} /></span>:
+  {#each resultMessages as m, index}
+    {@const update = getCollectionUpdate(m)}
+    {@const object = objects.find((it) => it._id === update.objectId)}
     {#if object}
       {#if clazz.titleKey}
         <DocNavLink
@@ -103,11 +102,16 @@
           component={objectPanel?.component ?? view.component.EditDoc}
           shrink={1}
         >
-      {getTitle(object, clazz.titleKey, update)}
-  </DocNavLink>
-        {:else }
-      <ObjectPresenter value={object} accent props={{ withShowMore: false }} shouldShowAvatar={update.objectClass === core.class.Collaborator}/>
-        {/if}
+          {getTitle(object, clazz.titleKey, update)}
+        </DocNavLink>
+      {:else}
+        <ObjectPresenter
+          value={object}
+          accent
+          props={{ withShowMore: false }}
+          shouldShowAvatar={update.objectClass === core.class.Collaborator}
+        />
+      {/if}
     {:else if update.title}
       <DocNavLink
         object={undefined}
@@ -116,20 +120,19 @@
         component={objectPanel?.component ?? view.component.EditDoc}
         shrink={1}
       >
-          {update.title}
-  </DocNavLink>
+        {update.title}
+      </DocNavLink>
     {:else if update.attributes}
       {@const obj = buildObject(m)}
       <ObjectPresenter value={obj} accent props={{ withShowMore: false }} />
     {/if}
-      {#if index < resultMessages.length - 1}
-        <span class="ml-1"/>
-        {/if}
-      {/each}
+    {#if index < resultMessages.length - 1}
+      <span class="ml-1" />
+    {/if}
+  {/each}
 </span>
 
 <style lang="scss">
-
   .content {
     display: flex;
     align-items: center;

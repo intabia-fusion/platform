@@ -46,7 +46,14 @@
       })
     }
     for (const collaborator of toRemove) {
-      await client.removeCollection(core.class.Collaborator, object.space, collaborator._id, object._id, object._class, 'collaborators' )
+      await client.removeCollection(
+        core.class.Collaborator,
+        object.space,
+        collaborator._id,
+        object._id,
+        object._class,
+        'collaborators'
+      )
     }
   }
 </script>

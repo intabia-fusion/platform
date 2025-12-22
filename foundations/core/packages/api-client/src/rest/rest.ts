@@ -309,8 +309,8 @@ export class RestClientImpl implements RestClient {
     return result
   }
 
-  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
-    return await this.tx(tx) as DomainResult<T>
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return (await this.tx(tx)) as DomainResult<T>
   }
 
   async domainRequest<T>(

@@ -132,7 +132,7 @@ export class AIControl {
     // Parse workspace and roomId from room name (format: workspaceUuid_roomName_roomId)
     const parsed = metadata.roomName.split('_')
     const workspace = parsed[0] as WorkspaceUuid | undefined
-    const roomId = parsed[parsed.length - 1] as Ref<Room> | undefined
+    // const roomId = parsed[parsed.length - 1] as Ref<Room> | undefined
 
     if (workspace === undefined) {
       this.ctx.error('Invalid room name format', { roomName: metadata.roomName })
@@ -191,7 +191,7 @@ export class AIControl {
         rmsAmplitude: metadata.rmsAmplitude,
         sampleRate: metadata.sampleRate,
         channels: metadata.channels,
-        bitsPerSample: metadata.bitsPerSample,
+        bitsPerSample: metadata.bitsPerSample
         // placeholderMessageId: placeholderMessageId as string | undefined
       }
 
@@ -205,7 +205,7 @@ export class AIControl {
           workspace,
           participant: metadata.participant,
           durationSec: metadata.durationSec,
-          hasSpeech: metadata.hasSpeech,
+          hasSpeech: metadata.hasSpeech
           // placeholderMessageId
         })
       } else {

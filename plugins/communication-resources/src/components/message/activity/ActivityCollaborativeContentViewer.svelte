@@ -24,7 +24,8 @@
   export let update: ActivityCollaborativeChange
   export let compact = false
 
-  $: isTooLarge = update.value === communication.string.ValueTooLarge || update.prevValue === communication.string.ValueTooLarge
+  $: isTooLarge =
+    update.value === communication.string.ValueTooLarge || update.prevValue === communication.string.ValueTooLarge
 
   let isDiffShown = false
 
@@ -33,25 +34,25 @@
   }
 </script>
 
-<span class="content" >
-<span class="label  flex-gap-1 no-word-wrap flex-wrap" class:compact>
-  {#if model !== undefined}
-    <Label label={model.label} />
-        <span class="lower"><Label label={communication.string.Edited} /></span>
-  {/if}
+<span class="content">
+  <span class="label flex-gap-1 no-word-wrap flex-wrap" class:compact>
+    {#if model !== undefined}
+      <Label label={model.label} />
+      <span class="lower"><Label label={communication.string.Edited} /></span>
+    {/if}
     {#if isTooLarge}
       <Label label={communication.string.ValueTooLarge} />
     {:else}
       <span class="showMore" on:click={toggleShowMore}>
-         <span class="triangle" class:left={!isDiffShown} class:down={isDiffShown} />
+        <span class="triangle" class:left={!isDiffShown} class:down={isDiffShown} />
         <Label label={isDiffShown ? ui.string.ShowLess : ui.string.ShowMore} />
       </span>
     {/if}
-</span>
-{#if isDiffShown}
-  <MarkupDiffPresenter value={update.value} prevValue={update.prevValue} showOnlyDiff withShowMore={false} />
-{/if}
   </span>
+  {#if isDiffShown}
+    <MarkupDiffPresenter value={update.value} prevValue={update.prevValue} showOnlyDiff withShowMore={false} />
+  {/if}
+</span>
 
 <style lang="scss">
   .content {

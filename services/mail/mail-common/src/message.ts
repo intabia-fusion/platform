@@ -24,7 +24,6 @@ import core, {
   type Ref,
   type TxDomainEvent,
   type TxOperations,
-  AccountUuid,
   generateId,
   RateLimiter,
   Space
@@ -36,7 +35,6 @@ import {
   AttachmentPatchEvent,
   CreateMessageEvent,
   MessageEventType,
-  NotificationEventType,
   ThreadPatchEvent
 } from '@hcengineering/communication-sdk-types'
 import { generateMessageId } from '@hcengineering/communication-shared'
@@ -407,7 +405,7 @@ async function addCollaborators (
   //   date: new Date(data.created.getTime() + MessageTimeShift.Collaborator)
   // }
   // const createMessageData = toEventBuffer(addCollaboratorsEvent)
-  //await sendToCommunicationTopic(producer, config, data, createMessageData)
+  // await sendToCommunicationTopic(producer, config, data, createMessageData)
 }
 
 async function sendToCommunicationTopic (

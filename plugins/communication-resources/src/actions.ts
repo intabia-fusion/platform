@@ -418,12 +418,7 @@ export async function updateMessage (
   })
 }
 
-async function attachApplets (
-  doc: Doc,
-  messageId: MessageID,
-  applets: AppletDraft[],
-  models: Applet[]
-): Promise<void> {
+async function attachApplets (doc: Doc, messageId: MessageID, applets: AppletDraft[], models: Applet[]): Promise<void> {
   if (applets.length === 0) return
 
   const communicationClient = getCommunicationClient()

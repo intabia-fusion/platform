@@ -167,7 +167,7 @@ class RestClientAdapter implements Client {
     private readonly model: ModelDb | undefined
   ) {}
 
-  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
     return await this.client.domainEventTx(tx)
   }
 

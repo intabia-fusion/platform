@@ -58,8 +58,8 @@
     <MessagesSeparator bind:element={separatorDiv} />
   {/if}
   {#if showDateSeparator}
-  <DateSeparator {date} />
-    {/if}
+    <DateSeparator {date} />
+  {/if}
   <div class="messages-group__messages">
     {#each messages as message, index (message.id)}
       {@const previousMessage = messages[index - 1]}
@@ -67,7 +67,7 @@
       {#if separatorIndex !== 0 && index === separatorIndex}
         <MessagesSeparator bind:element={separatorDiv} />
       {/if}
-      <MessagePresenter {message} {doc} {readonly} {compact} {dateFormat}/>
+      <MessagePresenter {message} {doc} {readonly} {compact} {dateFormat} />
     {/each}
   </div>
 </div>

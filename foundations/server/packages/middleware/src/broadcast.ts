@@ -65,7 +65,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
 
   tx (ctx: MeasureContext<SessionData>, tx: Tx[]): Promise<TxMiddlewareResult> {
     // We collect all broadcast information here, so we could send it later
-    const notDomainTx = tx.filter(it => it._class !== core.class.TxDomainEvent)
+    const notDomainTx = tx.filter((it) => it._class !== core.class.TxDomainEvent)
     ctx.contextData.broadcast.txes.push(...notDomainTx)
 
     return this.provideTx(ctx, tx)

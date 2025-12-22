@@ -73,9 +73,9 @@
 </script>
 
 <!--<ShowMore limit={getMaxSize(maxHeight)} ignore={!collapsible} bind:bigger={isShowMoreActive}>-->
-  {#if isActivityMessage(message)}
-    <ActivityMessageViewer {message} {doc} {author} {compact}/>
-  {:else}
-    <MarkupMessageViewer message={displayMarkup} />
-  {/if}
+{#if isActivityMessage(message)}
+  <ActivityMessageViewer {message} {doc} {author} {compact} />
+{:else}
+  <MarkupMessageViewer message={displayMarkup} />
+{/if}
 <!--</ShowMore>-->

@@ -41,10 +41,14 @@
 <span class="flex-center flex-gap-1 no-word-wrap">
   <span class="icon mr-1">
     {#if model?.attribute?.iconComponent && attributeValues.length > 0}
-        <Component is={model.attribute.iconComponent} props={{ value: attributeValues[0], size: 'small', space: _space }} showLoading={false}/>
-      {:else}
-    <Icon icon={_icon} size="small" />
-      {/if}
+      <Component
+        is={model.attribute.iconComponent}
+        props={{ value: attributeValues[0], size: 'small', space: _space }}
+        showLoading={false}
+      />
+    {:else}
+      <Icon icon={_icon} size="small" />
+    {/if}
   </span>
 
   <slot name="text" />

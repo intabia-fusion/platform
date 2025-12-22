@@ -30,7 +30,7 @@ import {
   type TxApplyIf,
   type TxCreateDoc,
   type TxCUD,
-  TxDomainEvent,
+  type TxDomainEvent,
   type TxMixin,
   type TxRemoveDoc,
   type TxUpdateDoc,

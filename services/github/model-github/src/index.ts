@@ -987,27 +987,23 @@ export function createModel (builder: Builder): void {
     presenter: github.component.GithubReviewThreadPresenter
   })
 
-  builder.createDoc<ActivityControl<GithubPullRequest>>(
-    communication.class.ActivityControl,
-    core.space.Model,
-    {
-      objectClass: github.class.GithubPullRequest,
-      skip: [],
-      skipFields: [
-        'head',
-        'base',
-        'mergedAt',
-        'closedAt',
-        'commits',
-        'mergeable',
-        'reviews',
-        'reviewComments',
-        'latestReviews',
-        'reviewDecision',
-        'state'
-      ]
-    }
-  )
+  builder.createDoc<ActivityControl<GithubPullRequest>>(communication.class.ActivityControl, core.space.Model, {
+    objectClass: github.class.GithubPullRequest,
+    skip: [],
+    skipFields: [
+      'head',
+      'base',
+      'mergedAt',
+      'closedAt',
+      'commits',
+      'mergeable',
+      'reviews',
+      'reviewComments',
+      'latestReviews',
+      'reviewDecision',
+      'state'
+    ]
+  })
 
   // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
   //   objectClass: github.class.GithubPullRequest,

@@ -12,12 +12,8 @@
 // limitations under the License.
 
 import { writable, derived, get } from 'svelte/store'
-import {
-  createNotificationContextsQuery,
-  getCommunicationClient,
-  onCommunicationClient
-} from '@hcengineering/presentation'
-import { notEmpty, SortingOrder } from '@hcengineering/core'
+import { getCommunicationClient, onCommunicationClient } from '@hcengineering/presentation'
+import { notEmpty } from '@hcengineering/core'
 import { type NotificationContext, type Window } from '@hcengineering/communication-types'
 
 import { type NavigationItem } from './type'

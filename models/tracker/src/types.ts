@@ -356,7 +356,15 @@ export class TTimeSpendReport extends TAttachedDoc implements TimeSpendReport {
  */
 
 @Model(tracker.class.Component, core.class.Doc, DOMAIN_TRACKER)
-@UX(tracker.string.Component, tracker.icon.Component, 'COMPONENT', 'label', undefined, tracker.string.Components, 'label')
+@UX(
+  tracker.string.Component,
+  tracker.icon.Component,
+  'COMPONENT',
+  'label',
+  undefined,
+  tracker.string.Components,
+  'label'
+)
 export class TComponent extends TDoc implements Component {
   @Prop(TypeString(), tracker.string.Title)
   @Index(IndexKind.FullText)

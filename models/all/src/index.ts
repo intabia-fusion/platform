@@ -41,7 +41,10 @@ import { serverAiBotId, createModel as serverAiBotModel } from '@hcengineering/m
 import { serverAttachmentId, createModel as serverAttachmentModel } from '@hcengineering/model-server-attachment'
 import { serverCalendarId, createModel as serverCalendarModel } from '@hcengineering/model-server-calendar'
 import { serverCardId, createModel as serverCardModel } from '@hcengineering/model-server-card'
-import { serverCommunicationId, createModel as serverCommunicationModel } from '@hcengineering/model-server-communication'
+import {
+  serverCommunicationId,
+  createModel as serverCommunicationModel
+} from '@hcengineering/model-server-communication'
 import {
   serverCollaborationId,
   createModel as serverCollaborationModel

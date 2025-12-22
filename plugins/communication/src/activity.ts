@@ -13,8 +13,7 @@
 
 import { Class, Doc, DocumentQuery, Ref, Tx } from '@hcengineering/core'
 
-export interface Messageable extends Class<Doc> {
-}
+export interface Messageable extends Class<Doc> {}
 
 export interface ActivityControl<T extends Doc = Doc> extends Doc {
   objectClass: Ref<Class<Doc>>

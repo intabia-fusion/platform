@@ -12,9 +12,9 @@
 // limitations under the License.
 
 import { get, writable, derived } from 'svelte/store'
-import { createLabelsQuery, createQuery, onClient, onCommunicationClient } from '@hcengineering/presentation'
+import { createQuery, getClient, onClient, onCommunicationClient } from '@hcengineering/presentation'
 import { type CardID, type Label, type Message, type MessageID } from '@hcengineering/communication-types'
-import core, { type Markup, type Ref } from '@hcengineering/core'
+import core, { type Doc, getCurrentAccount, type Markup, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
 import { type Card } from '@hcengineering/card'
 import communication from '@hcengineering/communication'
@@ -167,11 +167,11 @@ export function getMessageTranslation (
   return undefined
 }
 
-export function isCardSubscribed (cardId: Ref<Card>): boolean {
-  // const me = getCurrentAccount()
-  // const labelId = cardPlugin.label.Subscribed as string as LabelID
-  // return get(labelsStore).some((it) => it.account === me.uuid && it.cardId === cardId && it.labelId === labelId)
-  return false
+export async function isDocSubscribed (_id: Ref<Doc>): Promise<boolean> {
+  const client = getClient()
+  const me = getCurrentAccount()
+  const collaborator = await client.findOne(core.class.Collaborator, { collaborator: me.uuid, attachedTo: _id })
+  return collaborator != null
 }
 // const query = createLabelsQuery(true)
 

@@ -13,8 +13,7 @@
 
 <script lang="ts">
   import { LiteMessageViewer } from '@hcengineering/presentation'
-  import { Card } from '@hcengineering/card'
-  import { type WithLookup } from '@hcengineering/core'
+  import { Doc, type WithLookup } from '@hcengineering/core'
   import { Message, SocialID } from '@hcengineering/communication-types'
   import { Person } from '@hcengineering/contact'
   import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
@@ -27,7 +26,7 @@
   import ActivityMessageViewer from './message/ActivityMessageViewer.svelte'
   import AttachmentsPreview from './AttachmentsPreview.svelte'
 
-  export let card: Card
+  export let doc: Doc
   export let message: Message
   export let colorInherit: boolean = false
 
@@ -52,7 +51,7 @@
 
 <span class="message-preview overflow-label" use:tooltip={{ label: getTooltipLabel(message) }}>
   {#if isActivityMessage(message)}
-    <ActivityMessageViewer {message} {card} author={person} />
+    <ActivityMessageViewer {message} {doc} author={person} />
   {:else}
     <LiteMessageViewer message={markdownToMarkup(message.content)} {colorInherit} />
   {/if}

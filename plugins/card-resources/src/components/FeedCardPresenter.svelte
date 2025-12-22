@@ -151,7 +151,7 @@
       {#if isThreadCard && messages.length > 0}
         <div class="content-preview">
           {#each messages as message}
-            <ExtendedMessagePreview {card} {message} socialId={message.creator} date={message.created} />
+            <ExtendedMessagePreview doc={card} {message} socialId={message.creator} date={message.created} />
           {/each}
         </div>
       {:else if !isThreadCard && card.content}

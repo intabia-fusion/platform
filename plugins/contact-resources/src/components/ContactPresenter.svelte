@@ -46,7 +46,7 @@
 </script>
 
 {#if isEmployee(value)}
-  <EmployeePresenter {disabled} value={toEmployee(value)} {inline} {accent} {avatarSize} {shouldShowAvatar}/>
+  <EmployeePresenter {disabled} value={toEmployee(value)} {inline} {accent} {avatarSize} {shouldShowAvatar} />
 {:else if isPerson(value)}
   <PersonPresenter {disabled} {value} {inline} {accent} {avatarSize} {shouldShowAvatar} />
 {:else}

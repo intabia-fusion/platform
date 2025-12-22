@@ -59,8 +59,8 @@
     }
   )
 
-  let hasNewInboxNotifications = false
-  let hasNewMessagesNotification = false
+  const hasNewInboxNotifications = false
+  const hasNewMessagesNotification = false
   // const notificationCountQuery = createNotificationsQuery()
   // const messageNotificationCountQuery = createNotificationsQuery()
 

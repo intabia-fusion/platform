@@ -73,7 +73,7 @@
   <div class="section-messages">
     <MessagesList
       bind:this={list}
-      card={doc}
+      {doc}
       {readonly}
       {scrollDiv}
       {contentDiv}

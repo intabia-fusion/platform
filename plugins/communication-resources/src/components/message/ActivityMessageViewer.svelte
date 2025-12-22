@@ -43,7 +43,7 @@
 </script>
 
 {#if extra.update?.type === ActivityUpdateType.Collection}
-<ActivityCollectionValue {message} {doc} />
+  <ActivityCollectionValue {message} {doc} />
 {:else if extra.action === 'create'}
   <ActivityObjectValue {message} {doc} />
 {:else if extra.update && extra.action === 'update'}

@@ -462,9 +462,14 @@ export function createModel (builder: Builder): void {
         groupDepth: 1
       },
       options: lookupLeadOptions,
-      config: ['attachedTo', 'status', 'attachments',
+      config: [
+        'attachedTo',
+        'status',
+        'attachments',
         // 'comments',
-        'dueDate', 'assignee'],
+        'dueDate',
+        'assignee'
+      ],
       configOptions: {
         strict: true
       }

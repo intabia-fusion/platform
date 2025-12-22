@@ -38,7 +38,7 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import drive, { createFile, Drive } from '@hcengineering/drive'
-import exportPlugin, { type TransformConfig, type RelationDefinition } from '@hcengineering/export'
+import { type TransformConfig, type RelationDefinition } from '@hcengineering/export'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,

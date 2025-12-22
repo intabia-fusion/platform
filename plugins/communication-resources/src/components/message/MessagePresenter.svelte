@@ -160,7 +160,7 @@
   style:padding
 >
   {#if message.type === MessageType.Activity}
-    <OneRowMessageBody {message} {doc} {author} {hideAvatar} {hideHeader} {dateFormat} {compact}/>
+    <OneRowMessageBody {message} {doc} {author} {hideAvatar} {hideHeader} {dateFormat} {compact} />
   {:else}
     <MessageBody
       {message}

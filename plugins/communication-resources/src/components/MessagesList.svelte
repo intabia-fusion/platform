@@ -74,7 +74,7 @@
   let bottomOffset: number = 0
   let topOffset: number = 0
 
-  //TODO: FIX LIMIT
+  // TODO: FIX LIMIT
   const limit = $deviceInfo.isMobile ? 20 : 20
   let queryDef = getBaseQuery()
 

@@ -235,9 +235,7 @@ export class LiveQuery implements WithTx, Client {
     return toFindResult(q.result.getClone(), q.total)
   }
 
-  async domainEventTx<T>(
-    tx: TxDomainEvent<T>
-  ): Promise<DomainResult<T>> {
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
     return await this.client.domainEventTx(tx)
   }
 

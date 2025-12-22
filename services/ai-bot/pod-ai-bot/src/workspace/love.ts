@@ -210,7 +210,7 @@ export class LoveController {
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
-  //   TODO: FIXME
+    //   TODO: FIXME
   ): Promise<Ref<any> | undefined> {
     this.ctx.info('Creating transcription placeholder', { person, roomId, startTimeSec, endTimeSec, blobId })
 
@@ -239,21 +239,21 @@ export class LoveController {
     }
 
     // Format time as mm:ss
-    const formatTime = (sec: number): string => {
-      const minutes = Math.floor(sec / 60)
-      const seconds = Math.floor(sec % 60)
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`
-    }
+    // const formatTime = (sec: number): string => {
+    //   const minutes = Math.floor(sec / 60)
+    //   const seconds = Math.floor(sec % 60)
+    //   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    // }
 
-    const timeRange = `${formatTime(startTimeSec)} - ${formatTime(endTimeSec)}`
+    // const timeRange = `${formatTime(startTimeSec)} - ${formatTime(endTimeSec)}`
 
     // Create placeholder with spinning indicator emoji and audio link
     // 🎙️ indicates recording, ⏳ indicates processing
-    const placeholderText = `🎙️ ⏳ ... (${timeRange})`
+    // const placeholderText = `🎙️ ⏳ ... (${timeRange})`
 
     // const messageId = generateId<ChatMessage>()
 
-    const op = this.client.apply(undefined, undefined, true)
+    // const op = this.client.apply(undefined, undefined, true)
 
     // await op.addCollection(
     //   chunter.class.ChatMessage,

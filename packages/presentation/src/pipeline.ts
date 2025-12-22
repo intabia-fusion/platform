@@ -113,8 +113,8 @@ export class PresentationPipelineImpl implements PresentationPipeline {
     return current
   }
 
-  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
-    return await this.tx(tx) as DomainResult<T>
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+    return (await this.tx(tx)) as DomainResult<T>
   }
 
   async domainRequest<T>(

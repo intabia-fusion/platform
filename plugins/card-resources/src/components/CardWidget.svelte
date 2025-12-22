@@ -38,8 +38,8 @@
   const dispatch = createEventDispatcher()
 
   let doc: Card | undefined = undefined
-  let context: NotificationContext | undefined = undefined
-  let isContextLoaded = false
+  const context: NotificationContext | undefined = undefined
+  const isContextLoaded = false
 
   let title: string = ''
   let isTitleEditing = false
@@ -66,11 +66,11 @@
     )
 
   // $: tab?.id &&
-    // TODO: CLASS
-    // contextsQuery.query({ docId: tab.id as Ref<Card>, limit: 1 }, (res) => {
-    //   context = res.getResult()[0]
-    //   isContextLoaded = true
-    // })
+  // TODO: CLASS
+  // contextsQuery.query({ docId: tab.id as Ref<Card>, limit: 1 }, (res) => {
+  //   context = res.getResult()[0]
+  //   isContextLoaded = true
+  // })
 
   async function saveTitle (ev: Event): Promise<void> {
     ev.preventDefault()

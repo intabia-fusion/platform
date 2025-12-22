@@ -68,7 +68,12 @@
 </script>
 
 <div class="buttons-group small-gap pr-2">
-  <Button icon={$activityDirectionStore === ActivityDirection.Forward ? OrderAsc : OrderDesc} size={'small'} kind={'ghost'} on:click={togglePosition} />
+  <Button
+    icon={$activityDirectionStore === ActivityDirection.Forward ? OrderAsc : OrderDesc}
+    size={'small'}
+    kind={'ghost'}
+    on:click={togglePosition}
+  />
 </div>
 <div class="buttons-group small-gap pr-2">
   <Button icon={view.icon.Configure} size={'small'} kind={'ghost'} on:click={handleOptions} />

@@ -11,11 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-import core, { AccountUuid, Doc, Ref, Tx, TxCUD, TxMixin, TxRemoveDoc } from '@hcengineering/core'
-import type { TriggerControl } from '@hcengineering/server-core'
-import contact, { Employee, Person } from '@hcengineering/contact'
-
 // async function OnEmployeeDeactivate (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
 //   const result: Tx[] = []
 //   for (const tx of txes) {

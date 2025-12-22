@@ -48,13 +48,16 @@
 
   let context: NotificationContext | undefined = undefined
 
-  $:contextQuery.query({
-    docId: object._id,
-    docClass: object._class,
-    limit: 1
-  }, (res) => {
-    context = res.getResult()[0]
-  })
+  $: contextQuery.query(
+    {
+      docId: object._id,
+      docClass: object._class,
+      limit: 1
+    },
+    (res) => {
+      context = res.getResult()[0]
+    }
+  )
 
   onMount(() => {
     initActivityDirection()
@@ -63,14 +66,16 @@
 
 <Section label={communication.string.Activity} icon={communication.icon.Activity}>
   <svelte:fragment slot="header">
-    <ActivityHeader on:update={e => {
-      filters = e.detail
-    }} />
+    <ActivityHeader
+      on:update={(e) => {
+        filters = e.detail
+      }}
+    />
   </svelte:fragment>
 
   <svelte:fragment slot="content">
-    <span class="mt-2"/>
-    {#if showInput && $activityDirectionStore === ActivityDirection.Backward }
+    <span class="mt-2" />
+    {#if showInput && $activityDirectionStore === ActivityDirection.Backward}
       <div class="message-input backward">
         <MessageInput
           doc={object}

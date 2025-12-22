@@ -1,7 +1,7 @@
 import { addLocation } from '@hcengineering/platform'
 import { serverAttachmentId } from '@hcengineering/server-attachment'
 import { serverCardId } from '@hcengineering/server-card'
-import {serverCommunicationId} from '@hcengineering/server-communication'
+import { serverCommunicationId } from '@hcengineering/server-communication'
 import { serverCalendarId } from '@hcengineering/server-calendar'
 import { serverCollaborationId } from '@hcengineering/server-collaboration'
 import { serverContactId } from '@hcengineering/server-contact'

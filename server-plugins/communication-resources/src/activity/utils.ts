@@ -211,7 +211,7 @@ export async function getActivityCollectionUpdate (
 
   const attribute = getCollectionAttribute(control.hierarchy, attachedToDoc._class, tx.collection)
 
-  if (attribute == null  || attribute.hidden === true) {
+  if (attribute == null || attribute.hidden === true) {
     return undefined
   }
 
@@ -417,7 +417,11 @@ export async function getDocCached (
 //   return undefined
 // }
 
-export async function getActivityMarkdownContent (control: TriggerControl, extra: ActivityMessageExtra, doc: Doc): Promise<string> {
+export async function getActivityMarkdownContent (
+  control: TriggerControl,
+  extra: ActivityMessageExtra,
+  doc: Doc
+): Promise<string> {
   // const { action, update } = extra
   // const { hierarchy } = control
   // const clazz = hierarchy.getClass(doc._class)

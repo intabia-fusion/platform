@@ -44,11 +44,7 @@ import core, {
 import { TriggerControl } from '@hcengineering/server-core'
 import setting from '@hcengineering/setting'
 import view from '@hcengineering/view'
-import {
-  NotificationEventType,
-  PeerEventType,
-  CreatePeerEvent
-} from '@hcengineering/communication-sdk-types'
+import { PeerEventType, CreatePeerEvent } from '@hcengineering/communication-sdk-types'
 import { getEmployee, getPersonSpaces } from '@hcengineering/server-contact'
 import contact, { Employee, formatName, Person } from '@hcengineering/contact'
 import communication, { Direct } from '@hcengineering/communication'

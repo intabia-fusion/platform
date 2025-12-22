@@ -12,8 +12,7 @@
 // limitations under the License.
 
 import { type Builder } from '@hcengineering/model'
-import view, { createAction } from '@hcengineering/model-view'
-import card from '@hcengineering/model-card'
+import view from '@hcengineering/model-view'
 import core from '@hcengineering/model-core'
 import emoji from '@hcengineering/model-emoji'
 

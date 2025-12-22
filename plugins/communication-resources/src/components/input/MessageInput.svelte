@@ -29,12 +29,7 @@
   import communication from '../../plugin'
   import { messageEditingStore } from '../../stores'
   import { type TextInputAction, AppletDraft, MessageDraft } from '../../types'
-  import {
-    defaultMessageInputActions,
-    loadLinkPreviewParams,
-    toMarkdown,
-    toMarkup
-  } from '../../utils'
+  import { defaultMessageInputActions, loadLinkPreviewParams, toMarkdown, toMarkup } from '../../utils'
   import TextInput from '../TextInput.svelte'
   import TypingPresenter from '../TypingPresenter.svelte'
   import IconAttach from '../icons/Attach.svelte'
@@ -64,7 +59,8 @@
   let prevMessage: MessageID | undefined = message?.id
 
   let markup = message != null ? messageToDraft(message).content : getDraft(doc._class, doc._id).content
-  let attachmentsDraft: Omit<MessageDraft, 'content'> = message != null ? messageToDraft(message) : getDraft(doc._class, doc._id)
+  let attachmentsDraft: Omit<MessageDraft, 'content'> =
+    message != null ? messageToDraft(message) : getDraft(doc._class, doc._id)
 
   let inputElement: HTMLInputElement
   let refContainer: HTMLElement | undefined | null = undefined

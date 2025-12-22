@@ -41,5 +41,5 @@
 {:else if update.type === ActivityUpdateType.Process}
   <ActivityUpdateProcessViewer {update} {content} />
 {:else if update.type === ActivityUpdateType.CollaborativeChange}
-  <ActivityCollaborativeContentViewer {model} {update} {compact}/>
+  <ActivityCollaborativeContentViewer {model} {update} {compact} />
 {/if}

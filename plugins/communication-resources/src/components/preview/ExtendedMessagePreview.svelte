@@ -13,8 +13,7 @@
 
 <script lang="ts">
   import { LiteMessageViewer } from '@hcengineering/presentation'
-  import { Card } from '@hcengineering/card'
-  import { type WithLookup } from '@hcengineering/core'
+  import { Doc, type WithLookup } from '@hcengineering/core'
   import { Message, MessageType, SocialID } from '@hcengineering/communication-types'
   import { Person } from '@hcengineering/contact'
   import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
@@ -27,7 +26,7 @@
 
   import PreviewTemplate from './PreviewTemplate.svelte'
 
-  export let card: Card
+  export let doc: Doc
   export let message: Message | undefined = undefined
   export let socialId: SocialID
   export let date: Date
@@ -66,7 +65,7 @@
   <svelte:fragment slot="content">
     {#if message}
       {#if isActivityMessage(message)}
-        <ActivityMessageViewer {message} {card} author={person} oneRow />
+        <ActivityMessageViewer {message} {doc} author={person} />
       {:else}
         <LiteMessageViewer message={markdownToMarkup(message.content)} />
       {/if}

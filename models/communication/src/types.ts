@@ -47,7 +47,7 @@ import { DOMAIN_SETTING } from '@hcengineering/setting'
 import view from '@hcengineering/model-view'
 
 import communication from './plugin'
-import { Card } from '@hcengineering/card'
+import { type Card } from '@hcengineering/card'
 
 export const DOMAIN_POLL = 'poll' as Domain
 
@@ -112,9 +112,7 @@ export class TGuestCommunicationSettings extends TConfiguration implements Guest
 }
 
 @Mixin(communication.mixin.Messageable, core.class.Class)
-export class TMessageable extends TClass implements Messageable {
-
-}
+export class TMessageable extends TClass implements Messageable {}
 
 export class TMessagebaleDoc extends TDoc {
   @Prop(TypeNumber(0), communication.string.Comments)

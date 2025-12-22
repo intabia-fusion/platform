@@ -59,14 +59,14 @@
 
   function toggleItem (id: string): void {
     if (enabledItems.includes(id)) {
-      enabledItems = enabledItems.filter(it => it !== id)
+      enabledItems = enabledItems.filter((it) => it !== id)
     } else {
       enabledItems = [...enabledItems, id]
     }
     dispatch('update', enabledItems)
   }
 
-  $:console.log('enabled', enabledItems)
+  $: console.log('enabled', enabledItems)
 
   onMount(() => {
     if (btns[0] != null) {
@@ -100,7 +100,10 @@
           }}
         >
           <span class="flex-center justify-end mr-3 pointer-events-none">
-            <CheckBox checked={enabledItems.includes(item.id)} symbol={!enabledItems.includes(item.id) ? 'minus' : 'check'} />
+            <CheckBox
+              checked={enabledItems.includes(item.id)}
+              symbol={!enabledItems.includes(item.id) ? 'minus' : 'check'}
+            />
           </span>
           <span class="overflow-label">
             <Label label={item.label} />

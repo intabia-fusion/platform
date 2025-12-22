@@ -38,7 +38,12 @@ import { getAccountBySocialId, getEmployeesBySocialIds } from '@hcengineering/se
 
 import { isMixinTx } from '../utils'
 
-async function getValueCollaborators (ctx: MeasureContext, control: TriggerControl, value: any, attr: AnyAttribute): Promise<AccountUuid[]> {
+async function getValueCollaborators (
+  ctx: MeasureContext,
+  control: TriggerControl,
+  value: any,
+  attr: AnyAttribute
+): Promise<AccountUuid[]> {
   const hierarchy = control.hierarchy
   if (attr.type._class === core.class.RefTo) {
     const to = (attr.type as RefTo<Doc>).to
@@ -97,7 +102,8 @@ async function getValueCollaborators (ctx: MeasureContext, control: TriggerContr
   return []
 }
 
-async function getKeyCollaborators (ctx: MeasureContext,
+async function getKeyCollaborators (
+  ctx: MeasureContext,
   control: TriggerControl,
   docClass: Ref<Class<Doc>>,
   value: any,
@@ -134,7 +140,12 @@ export async function getCollaboratorsFromDocFields (
   })
 }
 
-export async function getCollaboratorsCached (ctx: MeasureContext, control: TriggerControl, _id: Ref<Doc>, cache: Map<Ref<Doc>, Collaborator[]>): Promise<Collaborator[]> {
+export async function getCollaboratorsCached (
+  ctx: MeasureContext,
+  control: TriggerControl,
+  _id: Ref<Doc>,
+  cache: Map<Ref<Doc>, Collaborator[]>
+): Promise<Collaborator[]> {
   const collaborators =
     cache.get(_id) ??
     (await control.findAll(ctx, core.class.Collaborator, {
@@ -145,15 +156,20 @@ export async function getCollaboratorsCached (ctx: MeasureContext, control: Trig
   return collaborators
 }
 
-export async function getDocCached (ctx: MeasureContext, control: TriggerControl, _class: Ref<Class<Doc>>, _id: Ref<Doc>, docCache: Map<Ref<Doc>, Doc>): Promise<Doc | undefined> {
+export async function getDocCached (
+  ctx: MeasureContext,
+  control: TriggerControl,
+  _class: Ref<Class<Doc>>,
+  _id: Ref<Doc>,
+  docCache: Map<Ref<Doc>, Doc>
+): Promise<Doc | undefined> {
   const cached = docCache.get(_id)
   if (cached !== undefined) return cached
 
   const doc = await ctx.with(
     'find-doc',
     { _class },
-    async (ctx) =>
-      (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
+    async (ctx) => (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
   )
 
   if (doc === undefined) return undefined
@@ -271,20 +287,23 @@ export async function getDocCollaboratorsByTx (
     const mixin = getClassCollaborators(control.modelDb, hierarchy, doc._class)
     if (mixin === undefined) {
       return {
-        added: [], removed: []
+        added: [],
+        removed: []
       }
     }
 
     if (tx._class === core.class.TxCreateDoc) {
       const collabs = await getCollaboratorsFromDocFields(ctx, control, doc, mixin)
       return {
-        added: collabs, removed: []
+        added: collabs,
+        removed: []
       }
     }
 
     if (tx._class === core.class.TxRemoveDoc) {
       return {
-        added: [], removed: []
+        added: [],
+        removed: []
       }
     }
 
@@ -299,12 +318,14 @@ export async function getDocCollaboratorsByTx (
       const removed = isSpace ? await getMembersRemovedFromSpace(ctx, control, ops, mixin, (doc as Space)._class) : []
 
       return {
-        added, removed
+        added,
+        removed
       }
     }
 
     return {
-      added: [], removed: []
+      added: [],
+      removed: []
     }
   })
 }

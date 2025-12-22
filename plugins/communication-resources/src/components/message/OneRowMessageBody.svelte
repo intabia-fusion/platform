@@ -34,57 +34,61 @@
 </script>
 
 {#if compact}
-  {@const today = isToday(message.created.getTime()) }
+  {@const today = isToday(message.created.getTime())}
   <div class="message__body compact">
-    <div class="w-10 min-w-10"/>
+    <div class="w-10 min-w-10" />
     <div class="message__username notVisible">
       {formatName(author?.name ?? '')}
     </div>
 
-    <div class="time-container" class:time={today || dateFormat === DateFormat.Time} class:default={!today && dateFormat === DateFormat.Default}>
+    <div
+      class="time-container"
+      class:time={today || dateFormat === DateFormat.Time}
+      class:default={!today && dateFormat === DateFormat.Default}
+    >
       <div class="message__time message--time_hoverable">
         <div class="message__date" class:compact>
-          <MessageTimestamp date={message.created}/>
+          <MessageTimestamp date={message.created} />
         </div>
       </div>
     </div>
 
     <div class="message__text">
-      <MessageContentViewer {message} {doc} {author} {compact}/>
+      <MessageContentViewer {message} {doc} {author} {compact} />
     </div>
   </div>
   <div class="message__footer">
     <MessageFooter {message} />
   </div>
-  {:else }
-<div class="message__body">
-  {#if !hideAvatar}
-    <div class="message__avatar">
-      <PersonPreviewProvider value={author}>
-        <Avatar name={author?.name} person={author} size="medium" />
-      </PersonPreviewProvider>
-    </div>
-  {/if}
-  {#if !hideHeader}
-    <div class="message__header">
-      <PersonPreviewProvider value={author}>
-        <div class="message__username">
-          {formatName(author?.name ?? '')}
-        </div>
-      </PersonPreviewProvider>
-      <div class="message__date">
-      <MessageTimestamp date={message.created} format={dateFormat}/>
+{:else}
+  <div class="message__body">
+    {#if !hideAvatar}
+      <div class="message__avatar">
+        <PersonPreviewProvider value={author}>
+          <Avatar name={author?.name} person={author} size="medium" />
+        </PersonPreviewProvider>
       </div>
-    </div>
-  {/if}
+    {/if}
+    {#if !hideHeader}
+      <div class="message__header">
+        <PersonPreviewProvider value={author}>
+          <div class="message__username">
+            {formatName(author?.name ?? '')}
+          </div>
+        </PersonPreviewProvider>
+        <div class="message__date">
+          <MessageTimestamp date={message.created} format={dateFormat} />
+        </div>
+      </div>
+    {/if}
 
-  <div class="message__text">
-    <MessageContentViewer {message} {doc} {author} />
+    <div class="message__text">
+      <MessageContentViewer {message} {doc} {author} />
+    </div>
   </div>
-</div>
-<div class="message__footer">
-  <MessageFooter {message} />
-</div>
+  <div class="message__footer">
+    <MessageFooter {message} />
+  </div>
 {/if}
 
 <style lang="scss">

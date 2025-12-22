@@ -124,19 +124,22 @@ export function isActivityMessage (message: Message): message is ActivityMessage
 
 export const defaultEnabledFilters = [ActivityFilter.Attributes, ActivityFilter.Messages]
 
-export const filtersDef: ActivityFilterDef[] = [{
-  id: ActivityFilter.Attributes,
-  label: communication.string.Attributes,
-  filter: m => m.type === MessageType.Activity
-}, {
-  id: ActivityFilter.Messages,
-  label: communication.string.Messages,
-  filter: m => m.type === MessageType.Text
-}]
+export const filtersDef: ActivityFilterDef[] = [
+  {
+    id: ActivityFilter.Attributes,
+    label: communication.string.Attributes,
+    filter: (m) => m.type === MessageType.Activity
+  },
+  {
+    id: ActivityFilter.Messages,
+    label: communication.string.Messages,
+    filter: (m) => m.type === MessageType.Text
+  }
+]
 
 export function filterMessages (messages: Message[], filters: ActivityFilter[]): Message[] {
-  const filterDefs = filtersDef.filter(it => filters.includes(it.id))
-  return messages.filter(it => filterDefs.some(def => def.filter(it)))
+  const filterDefs = filtersDef.filter((it) => filters.includes(it.id))
+  return messages.filter((it) => filterDefs.some((def) => def.filter(it)))
 }
 
 export function getCollectionAttribute (
@@ -221,18 +224,12 @@ function aggregateMessages (
     }
   }
 
-  return sortMessages(
-    result,
-    sortingOrder
-  )
+  return sortMessages(result, sortingOrder)
 }
 
 export default aggregateMessages
 
-function sortMessages (
-  messages: Message[],
-  order: SortingOrder = SortingOrder.Ascending
-): Message[] {
+function sortMessages (messages: Message[], order: SortingOrder = SortingOrder.Ascending): Message[] {
   return messages.sort((message1, message2) =>
     order === SortingOrder.Ascending
       ? activityMessagesComparator(message1, message2)

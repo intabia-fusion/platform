@@ -326,7 +326,11 @@ export function createModel (builder: Builder): void {
     {
       attachTo: recruit.class.Applicant,
       descriptor: view.viewlet.Table,
-      config: ['', '$lookup.space.name', '$lookup.space.$lookup.company', 'status'
+      config: [
+        '',
+        '$lookup.space.name',
+        '$lookup.space.$lookup.company',
+        'status'
         // , 'comments'
       ],
       configOptions: {

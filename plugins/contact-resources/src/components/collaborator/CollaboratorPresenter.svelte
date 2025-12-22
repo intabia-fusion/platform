@@ -35,9 +35,13 @@
 
   let person: Person | undefined = undefined
 
-  $:void updatePerson(value, $employeeByIdStore, $employeeRefByAccountUuidStore)
+  $: void updatePerson(value, $employeeByIdStore, $employeeRefByAccountUuidStore)
 
-  async function updatePerson (collaborator: Collaborator, employeeById: Map<Ref<Employee>, Employee>, employeeRefByAccountUuid: Map<AccountUuid, Ref<Employee>>): Promise<void> {
+  async function updatePerson (
+    collaborator: Collaborator,
+    employeeById: Map<Ref<Employee>, Employee>,
+    employeeRefByAccountUuid: Map<AccountUuid, Ref<Employee>>
+  ): Promise<void> {
     const empRef = employeeRefByAccountUuid.get(collaborator.collaborator)
 
     if (empRef != null) {
@@ -48,9 +52,8 @@
       person = await client.findOne(contact.class.Person, { personUuid: collaborator.collaborator })
     }
   }
-
 </script>
 
 {#if person}
-  <ContactPresenter value={person} {inline} {disabled} {accent} {maxWidth} {avatarSize} {shouldShowAvatar}/>
-  {/if}
+  <ContactPresenter value={person} {inline} {disabled} {accent} {maxWidth} {avatarSize} {shouldShowAvatar} />
+{/if}

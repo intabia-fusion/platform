@@ -134,6 +134,6 @@
       />
     </div>
     <div class="mt-4" />
-    <MessagePresenter {card} message={{ ..._message, reactions: {}, threads: [] }} readonly={true} padding="0" />
+    <MessagePresenter doc={card} message={{ ..._message, reactions: {}, threads: [] }} readonly={true} padding="0" />
   </div>
 </Modal>

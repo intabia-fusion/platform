@@ -78,7 +78,7 @@ class RestTxClient implements Client {
     return toFindResult(result, data.total)
   }
 
-  async domainEventTx<T> (tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
+  async domainEventTx<T>(tx: TxDomainEvent<T>): Promise<DomainResult<T>> {
     return await this.client.domainEventTx(tx)
   }
 

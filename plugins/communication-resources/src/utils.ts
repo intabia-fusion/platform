@@ -18,15 +18,23 @@ import {
   getCommunicationClient
 } from '@hcengineering/presentation'
 import { type Card } from '@hcengineering/card'
-import { AccountRole, type Data, getCurrentAccount, type Ref, type Space, type Markup } from '@hcengineering/core'
-import { getMetadata, translate } from '@hcengineering/platform'
+import core, {
+  AccountRole,
+  type Data,
+  getCurrentAccount,
+  type Ref,
+  type Space,
+  type Markup,
+  type Doc
+} from '@hcengineering/core'
+import { translate } from '@hcengineering/platform'
 import { addNotification, languageStore, NotificationSeverity, showPopup } from '@hcengineering/ui'
 import { type Emoji, type LinkPreviewParams, type Message } from '@hcengineering/communication-types'
 import emoji from '@hcengineering/emoji'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { jsonToMarkup, markupToJSON } from '@hcengineering/text'
 
-import { isCardSubscribed, guestCommunicationAllowedCards } from './stores'
+import { isDocSubscribed, guestCommunicationAllowedCards } from './stores'
 import IconAt from './components/icons/At.svelte'
 
 import communication from './plugin'
@@ -36,29 +44,45 @@ import view from '@hcengineering/view'
 import { type Direct } from '@hcengineering/communication'
 import { type Employee } from '@hcengineering/contact'
 
-export async function unsubscribe (card: Card): Promise<void> {
-  const client = getCommunicationClient()
+export async function unsubscribe (doc: Doc): Promise<void> {
+  const client = getClient()
   const me = getCurrentAccount()
-  // await client.removeCollaborators(card._class, card._id, [me.uuid])
+  const collaborator = await client.findOne(core.class.Collaborator, { collaborator: me.uuid, attachedTo: doc._id })
+  if (collaborator != null) {
+    await client.removeCollection(
+      core.class.Collaborator,
+      collaborator.space,
+      collaborator._id,
+      doc._id,
+      doc._class,
+      'collaborators'
+    )
+  }
 }
 
-export async function subscribe (card: Card): Promise<void> {
-  const client = getCommunicationClient()
+export async function subscribe (doc: Doc): Promise<void> {
+  const client = getClient()
   const me = getCurrentAccount()
-  // await client.addCollaborators(card._class, card._id, [me.uuid])
+  const collaborator = await client.findOne(core.class.Collaborator, { collaborator: me.uuid, attachedTo: doc._id })
+  if (collaborator == null) {
+    await client.addCollection(core.class.Collaborator, doc.space, doc._id, doc._class, 'collaborators', {
+      collaborator: me.uuid
+    })
+  }
 }
 
-export async function canSubscribe (card: Card): Promise<boolean> {
-  const isEnabled = getMetadata(communication.metadata.Enabled) === true
-  if (!isEnabled) return false
-
-  return !isCardSubscribed(card._id)
+export async function canSubscribe (doc: Doc): Promise<boolean> {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  if (!hierarchy.hasMixin(doc, core.mixin.Collaborators)) return false
+  return !(await isDocSubscribed(doc._id))
 }
 
-export async function canUnsubscribe (card: Card): Promise<boolean> {
-  const isEnabled = getMetadata(communication.metadata.Enabled) === true
-  if (!isEnabled) return false
-  return isCardSubscribed(card._id)
+export async function canUnsubscribe (doc: Doc): Promise<boolean> {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  if (!hierarchy.hasMixin(doc, core.mixin.Collaborators)) return false
+  return await isDocSubscribed(doc._id)
 }
 
 export const defaultMessageInputActions: TextInputAction[] = [

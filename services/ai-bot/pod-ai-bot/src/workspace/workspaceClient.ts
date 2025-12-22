@@ -599,7 +599,7 @@ export class WorkspaceClient {
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
-  //   TODO: FIXME
+    //   TODO: FIXME
   ): Promise<Ref<any> | undefined> {
     await this.opClient
 
@@ -616,11 +616,7 @@ export class WorkspaceClient {
    * @returns true if message was found and updated/deleted, false if not found
    */
   @withContext('updateTranscriptionMessage')
-  async updateTranscriptionMessage (
-    ctx: MeasureContext,
-    messageId: Ref<any>,
-    text: string | null
-  ): Promise<boolean> {
+  async updateTranscriptionMessage (ctx: MeasureContext, messageId: Ref<any>, text: string | null): Promise<boolean> {
     await this.opClient
 
     if (this.love === undefined) {

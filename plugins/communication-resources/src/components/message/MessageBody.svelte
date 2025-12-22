@@ -125,7 +125,7 @@
           </div>
         </PersonPreviewProvider>
         <div class="message__date">
-          <MessageTimestamp date={message.created} format={dateFormat}/>
+          <MessageTimestamp date={message.created} format={dateFormat} />
         </div>
         {#if message.modified}
           <div class="message__edited-marker">

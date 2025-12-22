@@ -29,4 +29,4 @@
   const hidePersonName = isViewSettingEnabled($viewSettingsStore, hideUserNamesSettingId)
 </script>
 
-<ExtendedMessagePreview {card} {message} {socialId} {date} {color} {kind} {padding} {hideHeader} {hidePersonName} />
+<ExtendedMessagePreview doc={card} {message} {socialId} {date} {color} {kind} {padding} {hideHeader} {hidePersonName} />

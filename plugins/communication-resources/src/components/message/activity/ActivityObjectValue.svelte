@@ -35,7 +35,7 @@
   $: objectPanel = hierarchy.classHierarchyMixin(doc._class, view.mixin.ObjectPanel)
   $: action = message.extra.action
 
-  $:void updateTitle(doc, clazz)
+  $: void updateTitle(doc, clazz)
 
   async function updateTitle (doc: Doc, clazz: Class<Doc>): Promise<void> {
     if (clazz.titleKey != null) {
@@ -43,7 +43,7 @@
       return
     }
 
-    title = await getDocTitle(client, doc._id, doc._class, doc) ?? ''
+    title = (await getDocTitle(client, doc._id, doc._class, doc)) ?? ''
   }
 </script>
 
@@ -52,7 +52,7 @@
     {#if hierarchy.isDerived(doc._class, communication.type.Direct)}
       <Icon icon={clazz.icon ?? cardPlugin.icon.Card} size="small" />
     {:else}
-      <ObjectIcon value={doc} size={'small'} ignoreIconMixin={true}/>
+      <ObjectIcon value={doc} size={'small'} ignoreIconMixin={true} />
     {/if}
   </span>
 
@@ -73,7 +73,7 @@
   >
     {#if title !== ''}
       {title}
-      {/if}
+    {/if}
   </DocNavLink>
 </span>
 

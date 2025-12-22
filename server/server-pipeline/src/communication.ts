@@ -23,7 +23,8 @@ import core, {
   type SessionData,
   type TxDomainEvent,
   type WorkspaceIds,
-  type Hierarchy, type Tx
+  type Hierarchy,
+  type Tx
 } from '@hcengineering/core'
 import {
   type CommunicationCallbacks,
@@ -122,7 +123,11 @@ export class CommunicationMiddleware extends BaseMiddleware implements Middlewar
     return await this.provideTx(ctx, other)
   }
 
-  private static wrapEvents (ctx: SessionData, result: Event[], processingTxes: Map<string, TxDomainEvent>): TxDomainEvent[] {
+  private static wrapEvents (
+    ctx: SessionData,
+    result: Event[],
+    processingTxes: Map<string, TxDomainEvent>
+  ): TxDomainEvent[] {
     return result.map((it) => {
       const tx = it._id != null ? processingTxes.get(it._id) : undefined
 
