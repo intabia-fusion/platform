@@ -1,9 +1,9 @@
 {
-  "name": "@hcengineering/communication-cockroach",
+  "name": "@hcengineering/communication-postgres",
   "entries": [
     {
       "version": "0.7.11",
-      "tag": "@hcengineering/communication-cockroach_v0.7.11",
+      "tag": "@hcengineering/communication-postgres_v0.7.11",
       "date": "Mon, 27 Oct 2025 16:28:25 GMT",
       "comments": {
         "dependency": [
@@ -18,7 +18,7 @@
     },
     {
       "version": "0.7.9",
-      "tag": "@hcengineering/communication-cockroach_v0.7.9",
+      "tag": "@hcengineering/communication-postgres_v0.7.9",
       "date": "Sat, 25 Oct 2025 22:20:35 GMT",
       "comments": {
         "patch": [
@@ -38,7 +38,7 @@
     },
     {
       "version": "0.7.4",
-      "tag": "@hcengineering/communication-cockroach_v0.7.4",
+      "tag": "@hcengineering/communication-postgres_v0.7.4",
       "date": "Tue, 14 Oct 2025 10:12:38 GMT",
       "comments": {
         "patch": [

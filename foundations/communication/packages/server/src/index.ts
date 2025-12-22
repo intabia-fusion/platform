@@ -25,7 +25,7 @@ import type {
   Peer,
   FindMessagesMetaParams, MessageMeta, FindMessagesGroupParams, MessagesGroup
 } from '@hcengineering/communication-types'
-import { createDbAdapter } from '@hcengineering/communication-cockroach'
+import { createDbAdapter } from '@hcengineering/communication-postgres'
 import type { EventResult, Event, ServerApi, SessionData } from '@hcengineering/communication-sdk-types'
 
 import { getMetadata } from './metadata'

@@ -1,5 +1,5 @@
 {
-  "name": "@hcengineering/communication-cockroach",
+  "name": "@hcengineering/communication-postgres",
   "version": "0.7.11",
   "main": "lib/index.js",
   "svelte": "src/index.ts",

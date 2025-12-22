@@ -30,7 +30,7 @@
 //   Peer
 // } from '@hcengineering/communication-types'
 // import { Event, EventResult, SessionData } from '@hcengineering/communication-sdk-types'
-// import { createDbAdapter } from '@hcengineering/communication-cockroach'
+// import { createDbAdapter } from '@hcengineering/communication-postgres'
 // import { Api } from '../index'
 // import { getMetadata } from '../metadata'
 // import { buildMiddlewares } from '../middlewares'
@@ -38,7 +38,7 @@
 // import { LowLevelClient } from '../client'
 //
 // // Mock dependencies
-// jest.mock('@hcengineering/communication-cockroach')
+// jest.mock('@hcengineering/communication-postgres')
 // jest.mock('../metadata')
 // jest.mock('../middlewares')
 // jest.mock('../blob')

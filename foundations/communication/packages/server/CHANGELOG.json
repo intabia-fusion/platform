@@ -42,7 +42,7 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/communication-cockroach\" from `^0.7.8` to `0.7.9`"
+            "comment": "Updating dependency \"@hcengineering/communication-postgres\" from `^0.7.8` to `0.7.9`"
           },
           {
             "comment": "Updating dependency \"@hcengineering/communication-sdk-types\" from `^0.7.8` to `0.7.9`"
@@ -74,7 +74,7 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/communication-cockroach\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@hcengineering/communication-postgres\" from `^0.7.3` to `0.7.4`"
           },
           {
             "comment": "Updating dependency \"@hcengineering/communication-sdk-types\" from `^0.7.3` to `0.7.4`"

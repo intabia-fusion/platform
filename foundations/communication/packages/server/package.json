@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/communication-cockroach": "workspace:^0.7.11",
+    "@hcengineering/communication-postgres": "workspace:^0.7.11",
     "@hcengineering/communication-sdk-types": "workspace:^0.7.12",
     "@hcengineering/communication-shared": "workspace:^0.7.11",
     "@hcengineering/communication-types": "workspace:^0.7.12",

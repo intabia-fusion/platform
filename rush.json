@@ -497,8 +497,8 @@
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-cockroach",
-      "projectFolder": "foundations/communication/packages/cockroach",
+      "packageName": "@hcengineering/communication-postgres",
+      "projectFolder": "foundations/communication/packages/postgres",
       "shouldPublish": true
     },
     {
