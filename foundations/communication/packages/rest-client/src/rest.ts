@@ -13,13 +13,14 @@
 // limitations under the License.
 //
 
-import core, { concatLink, generateId, OperationDomain, TxDomainEvent } from '@hcengineering/core'
+import core, { Class, concatLink, Doc, generateId, OperationDomain, Ref, TxDomainEvent } from '@hcengineering/core'
 import {
   type EventResult,
   type Event,
   type CreateMessageResult,
   type CreateMessageOptions,
-  UpdatePatchOptions
+  UpdatePatchOptions,
+  MessageEventType
 } from '@hcengineering/communication-sdk-types'
 import {
   type FindNotificationContextParams,
@@ -28,10 +29,8 @@ import {
   type Notification,
   type MessageID,
   type MessageMeta,
-  type CardID,
   type Markdown,
   type SocialID,
-  type CardType,
   type MessageType,
   type MessageExtra,
   AttachmentData,
@@ -129,8 +128,8 @@ class RestClientImpl implements RestClient {
   }
 
   async createMessage (
-    cardId: CardID,
-    cardType: CardType,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     content: Markdown,
     type: MessageType,
     extra: MessageExtra | undefined,
@@ -139,27 +138,27 @@ class RestClientImpl implements RestClient {
     messageId?: MessageID,
     options?: CreateMessageOptions
   ): Promise<CreateMessageResult> {
-    // const result = await this.event(
-    //   {
-    //     type: MessageEventType.CreateMessage,
-    //     messageType: type,
-    //     cardId,
-    //     cardType,
-    //     content,
-    //     extra,
-    //     socialId,
-    //     date,
-    //     messageId,
-    //     options
-    //   },
-    //   socialId
-    // )
-    // return result as CreateMessageResult
-    return {} as any
+    const result = await this.event(
+      {
+        type: MessageEventType.CreateMessage,
+        messageType: type,
+        docId,
+        docClass,
+        content,
+        extra,
+        socialId,
+        date: date ?? new Date(),
+        messageId,
+        options
+      },
+      socialId
+    )
+    return result as CreateMessageResult
   }
 
   async updateMessage (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     content: Markdown | undefined,
     extra: MessageExtra | undefined,
@@ -167,112 +166,121 @@ class RestClientImpl implements RestClient {
     date?: Date,
     options?: UpdatePatchOptions
   ): Promise<void> {
-    // await this.event(
-    //   {
-    //     type: MessageEventType.UpdatePatch,
-    //     cardId,
-    //     messageId,
-    //     content,
-    //     extra,
-    //     socialId,
-    //     date,
-    //     options
-    //   },
-    //   socialId
-    // )
-    return {} as any
+    await this.event(
+      {
+        type: MessageEventType.UpdatePatch,
+        docId,
+        docClass,
+        messageId,
+        content,
+        extra,
+        socialId,
+        date: date ?? new Date(),
+        options
+      },
+      socialId
+    )
   }
 
-  async removeMessage (cardId: CardID, messageId: MessageID, socialId: SocialID, date?: Date): Promise<void> {
-    // await this.event(
-    //   {
-    //     type: MessageEventType.RemovePatch,
-    //     cardId,
-    //     messageId,
-    //     socialId,
-    //     date
-    //   },
-    //   socialId
-    // )
-    return {} as any
+  async removeMessage (
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
+    messageId: MessageID,
+    socialId: SocialID,
+    date?: Date
+  ): Promise<void> {
+    await this.event(
+      {
+        type: MessageEventType.RemovePatch,
+        docId,
+        docClass,
+        messageId,
+        socialId,
+        date: date ?? new Date()
+      },
+      socialId
+    )
   }
 
   async addAttachments (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     data: AttachmentData[],
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    // await this.event(
-    //   {
-    //     type: MessageEventType.AttachmentPatch,
-    //     cardId,
-    //     messageId,
-    //     operations: [
-    //       {
-    //         opcode: 'add',
-    //         attachments: data
-    //       }
-    //     ],
-    //     socialId,
-    //     date
-    //   },
-    //   socialId
-    // )
-    return {} as any
+    await this.event(
+      {
+        type: MessageEventType.AttachmentPatch,
+        docId,
+        docClass,
+        messageId,
+        operations: [
+          {
+            opcode: 'add',
+            attachments: data
+          }
+        ],
+        socialId,
+        date: date ?? new Date()
+      },
+      socialId
+    )
   }
 
   async removeAttachments (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     ids: AttachmentID[],
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    // await this.event(
-    //   {
-    //     type: MessageEventType.AttachmentPatch,
-    //     cardId,
-    //     messageId,
-    //     operations: [
-    //       {
-    //         opcode: 'remove',
-    //         ids
-    //       }
-    //     ],
-    //     socialId,
-    //     date
-    //   },
-    //   socialId
-    // )
-    return {} as any
+    await this.event(
+      {
+        type: MessageEventType.AttachmentPatch,
+        docId,
+        docClass,
+        messageId,
+        operations: [
+          {
+            opcode: 'remove',
+            ids
+          }
+        ],
+        socialId,
+        date: date ?? new Date()
+      },
+      socialId
+    )
   }
 
   async setAttachments (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     data: AttachmentData[],
     socialId: SocialID,
     date?: Date
   ): Promise<void> {
-    // await this.event(
-    //   {
-    //     type: MessageEventType.AttachmentPatch,
-    //     cardId,
-    //     messageId,
-    //     operations: [
-    //       {
-    //         opcode: 'set',
-    //         attachments: data
-    //       }
-    //     ],
-    //     socialId,
-    //     date
-    //   },
-    //   socialId
-    // )
-    return {} as any
+    await this.event(
+      {
+        type: MessageEventType.AttachmentPatch,
+        docId,
+        docClass,
+        messageId,
+        operations: [
+          {
+            opcode: 'set',
+            attachments: data
+          }
+        ],
+        socialId,
+        date: date ?? new Date()
+      },
+      socialId
+    )
   }
 
   async findNotificationContexts (params: FindNotificationContextParams): Promise<NotificationContext[]> {

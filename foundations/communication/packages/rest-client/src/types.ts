@@ -31,8 +31,6 @@ import type {
   Markdown,
   SocialID,
   MessageType,
-  CardID,
-  CardType,
   MessageExtra,
   AttachmentData,
   AttachmentParams,
@@ -40,6 +38,7 @@ import type {
   MessagesGroup,
   FindMessagesGroupParams
 } from '@hcengineering/communication-types'
+import { Class, Doc, Ref } from '@hcengineering/core'
 
 export interface RestClient {
   findMessagesMeta: (params: FindMessagesMetaParams) => Promise<MessageMeta[]>
@@ -50,8 +49,8 @@ export interface RestClient {
   event: (event: Event, socialId: SocialID) => Promise<EventResult>
 
   createMessage: (
-    cardId: CardID,
-    cardType: CardType,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     content: Markdown,
     type: MessageType,
     extra: MessageExtra | undefined,
@@ -61,7 +60,8 @@ export interface RestClient {
     options?: CreateMessageOptions
   ) => Promise<CreateMessageResult>
   updateMessage: (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     content: Markdown | undefined,
     extra: MessageExtra | undefined,
@@ -69,24 +69,33 @@ export interface RestClient {
     date?: Date,
     options?: UpdatePatchOptions
   ) => Promise<void>
-  removeMessage: (cardId: CardID, messageId: MessageID, socialId: SocialID, date?: Date) => Promise<void>
+  removeMessage: (
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
+    messageId: MessageID,
+    socialId: SocialID,
+    date?: Date
+  ) => Promise<void>
 
   addAttachments: <P extends AttachmentParams>(
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     data: AttachmentData<P>[],
     socialId: SocialID,
     date?: Date
   ) => Promise<void>
   removeAttachments: (
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     ids: AttachmentID[],
     socialId: SocialID,
     date?: Date
   ) => Promise<void>
   setAttachments: <P extends AttachmentParams>(
-    cardId: CardID,
+    docId: Ref<Doc>,
+    docClass: Ref<Class<Doc>>,
     messageId: MessageID,
     data: AttachmentData<P>[],
     socialId: SocialID,
