@@ -14,7 +14,7 @@
 //
 
 import { ActivityMessagesTrigger } from './activity'
-import { OnMessageCreate, OnMessageRemove } from './triggers'
+import { OnMessageCreate, OnMessageRemove, OnDocRemove, OnClassChange } from './triggers'
 import { AddCollaboratorsOnMessageCreate } from './collaborators'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -23,6 +23,8 @@ export default async () => ({
     ActivityMessagesTrigger,
     AddCollaboratorsOnMessageCreate,
     OnMessageCreate,
-    OnMessageRemove
+    OnMessageRemove,
+    OnDocRemove,
+    OnClassChange
   }
 })

@@ -72,7 +72,7 @@ import {
   type RemovePatchEvent,
   type ServerApi as CommunicationApi,
   type SessionData as CommunicationSession,
-  type UpdateDocClassEvent,
+  type UpdateClassDocEvent,
   type UpdatePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import {
@@ -103,7 +103,7 @@ type IndexableCommunicationEvent =
   | QueueSourced<UpdatePatchEvent>
   | QueueSourced<AttachmentPatchEvent>
   | QueueSourced<RemovePatchEvent>
-  | QueueSourced<UpdateDocClassEvent>
+  | QueueSourced<UpdateClassDocEvent>
   | QueueSourced<RemoveDocEvent>
 
 // Global Memory management configuration

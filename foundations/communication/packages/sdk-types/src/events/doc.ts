@@ -13,22 +13,21 @@
 // limitations under the License.
 //
 
-import type { SocialID } from '@hcengineering/communication-types'
 import type { Ref, Doc, Class } from '@hcengineering/core'
 
 import type { BaseEvent } from './common'
 
 export enum DocEventType {
-  UpdateDocClass = 'updateDocClass',
+  UpdateClassDoc = 'updateClassDoc',
   RemoveDoc = 'removeDoc'
 }
 
-export type DocEvent = UpdateDocClassEvent | RemoveDocEvent
+export type DocEvent = UpdateClassDocEvent | RemoveDocEvent
 
-export interface UpdateDocClassEvent extends BaseEvent {
-  type: DocEventType.UpdateDocClass
+export interface UpdateClassDocEvent extends BaseEvent {
+  type: DocEventType.UpdateClassDoc
   docId: Ref<Doc>
-  prevClass: Ref<Class<Doc>>
+  docClass: Ref<Class<Doc>>
   newClass: Ref<Class<Doc>>
 }
 

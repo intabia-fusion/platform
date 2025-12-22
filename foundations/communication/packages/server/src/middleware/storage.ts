@@ -162,7 +162,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         return await this.removeLabel(event)
 
       // Cards
-      case DocEventType.UpdateDocClass:
+      case DocEventType.UpdateClassDoc:
       case DocEventType.RemoveDoc:
         return {}
 

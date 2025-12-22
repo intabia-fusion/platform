@@ -24,7 +24,7 @@ import {
   type QueryCallback,
   RemoveDocEvent,
   RemoveLabelEvent,
-  UpdateDocClassEvent
+  UpdateClassDocEvent
 } from '@hcengineering/communication-sdk-types'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
@@ -72,7 +72,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
         await this.onLabelRemoved(event)
         break
 
-      case DocEventType.UpdateDocClass:
+      case DocEventType.UpdateClassDoc:
         await this.onCardTypeUpdated(event)
         break
       case DocEventType.RemoveDoc:
@@ -118,7 +118,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
     // void this.notify()
   }
 
-  async onCardTypeUpdated (event: UpdateDocClassEvent): Promise<void> {
+  async onCardTypeUpdated (event: UpdateClassDocEvent): Promise<void> {
     // if (this.result instanceof Promise) this.result = await this.result
     //
     // const result = this.result.getResult()

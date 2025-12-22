@@ -28,15 +28,14 @@ import communication, { ActivityControl } from '@hcengineering/communication'
 import { ActivityMessageExtra, MessageType } from '@hcengineering/communication-types'
 import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
 
-import { isEnabled } from '../utils'
+import { isEnabled, isMessageableDoc } from '../utils'
 import {
   getActivityAction,
   getActivityAttributesUpdates,
   getActivityCollectionUpdate,
   getActivityMarkdownContent,
   getDocCached,
-  isActivityIgnored,
-  isMessageableDoc
+  isActivityIgnored
 } from './utils'
 import { ActivityMessagesTriggerCacheKey, DocsCache } from './types'
 

@@ -18,15 +18,15 @@ import {
   MessageEventType,
   NotificationEventType,
   type Event,
-  UpdateDocClassEvent,
+  UpdateClassDocEvent,
   RemoveDocEvent
 } from '@hcengineering/communication-sdk-types'
 import { type ActivityTypeUpdate, ActivityUpdateType, CardType, MessageType } from '@hcengineering/communication-types'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 
-async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: UpdateDocClassEvent): Promise<Event[]> {
-  const prevDomain = ctx.hierarchy.getDomain(event.prevClass)
+async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: UpdateClassDocEvent): Promise<Event[]> {
+  const prevDomain = ctx.hierarchy.getDomain(event.docClass)
   const newDomain = ctx.hierarchy.getDomain(event.newClass)
 
   if (prevDomain !== 'card' || newDomain !== 'card') return []
@@ -53,10 +53,10 @@ async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: UpdateDoc
   ]
 }
 
-async function onDocClassUpdate (ctx: TriggerCtx, event: Enriched<UpdateDocClassEvent>): Promise<Event[]> {
-  await ctx.client.db.updateLabels({ docClass: event.prevClass, docId: event.docId }, { docClass: event.newClass })
+async function onDocClassUpdate (ctx: TriggerCtx, event: Enriched<UpdateClassDocEvent>): Promise<Event[]> {
+  await ctx.client.db.updateLabels({ docClass: event.docClass, docId: event.docId }, { docClass: event.newClass })
 
-  const prevDomain = ctx.hierarchy.getDomain(event.prevClass)
+  const prevDomain = ctx.hierarchy.getDomain(event.docClass)
   const newDomain = ctx.hierarchy.getDomain(event.newClass)
 
   if (prevDomain !== 'card' || newDomain !== 'card') return []
@@ -130,8 +130,8 @@ async function removeNotificationContexts (ctx: TriggerCtx, event: RemoveDocEven
 }
 
 const triggers: Triggers = [
-  ['on_doc_type_updates', DocEventType.UpdateDocClass, onDocClassUpdate as TriggerFn],
-  ['create_activity_on_doc_type_updates', DocEventType.UpdateDocClass, createActivityOnCardTypeUpdate as TriggerFn],
+  ['on_doc_type_updates', DocEventType.UpdateClassDoc, onDocClassUpdate as TriggerFn],
+  ['create_activity_on_doc_type_updates', DocEventType.UpdateClassDoc, createActivityOnCardTypeUpdate as TriggerFn],
 
   ['remove_labels_on_doc_removed', DocEventType.RemoveDoc, removeCardLabels as TriggerFn],
   ['remove_threads_on_doc_removed', DocEventType.RemoveDoc, removeCardThreads as TriggerFn],

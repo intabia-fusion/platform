@@ -351,12 +351,6 @@ function getAttrClass (
   return clazz.type._class
 }
 
-export function isMessageableDoc (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
-  const mixin = hierarchy.classHierarchyMixin(_class, communication.mixin.Messageable)
-
-  return mixin !== undefined
-}
-
 export function isActivityIgnored (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
   return hierarchy.classHierarchyMixin(_class, communication.mixin.IgnoreActivity) !== undefined
 }

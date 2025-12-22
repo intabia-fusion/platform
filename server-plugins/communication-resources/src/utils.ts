@@ -1,7 +1,8 @@
 import serverCommunication from '@hcengineering/server-communication'
 import { getMetadata } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
-import core, { Doc, type Hierarchy, Ref, Space } from '@hcengineering/core'
+import core, { Class, Doc, type Hierarchy, Ref, Space } from '@hcengineering/core'
+import communication from '@hcengineering/communication'
 
 export function isEnabled (): boolean {
   return getMetadata(serverCommunication.metadata.Enabled) === true
@@ -16,4 +17,10 @@ export async function getDocSpace (control: TriggerControl, doc: Doc, cache: Map
 
 export function isSpace (space: Doc, hierarchy: Hierarchy): space is Space {
   return hierarchy.isDerived(space._class, core.class.Space)
+}
+
+export function isMessageableDoc (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
+  const mixin = hierarchy.classHierarchyMixin(_class, communication.mixin.Messageable)
+
+  return mixin !== undefined
 }

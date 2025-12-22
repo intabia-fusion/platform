@@ -17,14 +17,8 @@ import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
 
-/**
- * @public
- */
 export const serverCommunicationId = 'server-communication' as Plugin
 
-/**
- * @public
- */
 export default plugin(serverCommunicationId, {
   metadata: {
     Enabled: '' as Metadata<boolean>
@@ -33,6 +27,8 @@ export default plugin(serverCommunicationId, {
     AddCollaboratorsOnMessageCreate: '' as Resource<TriggerFunc>,
     ActivityMessagesTrigger: '' as Resource<TriggerFunc>,
     OnMessageCreate: '' as Resource<TriggerFunc>,
-    OnMessageRemove: '' as Resource<TriggerFunc>
+    OnMessageRemove: '' as Resource<TriggerFunc>,
+    OnDocRemove: '' as Resource<TriggerFunc>,
+    OnClassChange: '' as Resource<TriggerFunc>
   }
 })

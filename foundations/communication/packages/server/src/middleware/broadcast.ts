@@ -200,7 +200,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
       case LabelEventType.CreateLabel:
       case LabelEventType.RemoveLabel:
         return info.account === event.account
-      case DocEventType.UpdateDocClass:
+      case DocEventType.UpdateClassDoc:
       case DocEventType.RemoveDoc:
         return true
       case PeerEventType.RemovePeer:
