@@ -80,7 +80,6 @@ export interface MiddlewareContext {
 
   cadsWithPeers: Set<CardID>
 
-  // derived?: Middleware
   head?: Middleware
 }
 

@@ -27,6 +27,7 @@ import {
 import { type Customer, type Funnel, type Lead } from '@hcengineering/lead'
 import {
   Collection,
+  Hidden,
   Index,
   Mixin,
   Model,
@@ -35,6 +36,7 @@ import {
   TypeCollaborativeDoc,
   TypeDate,
   TypeMarkup,
+  TypeNumber,
   TypeRef,
   TypeString,
   UX
@@ -43,6 +45,7 @@ import attachment from '@hcengineering/model-attachment'
 import contact, { TContact } from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
 import task, { TProject, TTask } from '@hcengineering/model-task'
+import communication from '@hcengineering/communication'
 
 import lead from './plugin'
 import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -61,9 +64,14 @@ export class TFunnel extends TProject implements Funnel {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 }
 
 @Model(lead.class.Lead, task.class.Task)

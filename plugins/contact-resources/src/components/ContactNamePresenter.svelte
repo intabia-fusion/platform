@@ -17,7 +17,9 @@
   import contactPlugin, { getFirstName, getLastName } from '@hcengineering/contact'
   import { getMetadata } from '@hcengineering/platform'
 
+  export let value: string | null | undefined = undefined
   export let name: string | null | undefined = undefined
+  export let accent = false
 
   function getDisplayName (name: string | null | undefined): string {
     if (name == null) {
@@ -31,7 +33,13 @@
     return lastFirst ? lname + ' ' + fname : fname + ' ' + lname
   }
 
-  $: displayName = getDisplayName(name)
+  $: displayName = getDisplayName(value ?? name)
 </script>
 
-{displayName}
+{#if accent}
+  <span class="fs-bold">
+    {displayName}
+  </span>
+{:else}
+  {displayName}
+{/if}

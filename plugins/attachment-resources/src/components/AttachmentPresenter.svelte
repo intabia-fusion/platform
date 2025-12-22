@@ -38,6 +38,7 @@
   export let removable: boolean = false
   export let showPreview = false
   export let preview = false
+  export let disabled = false
 
   const dispatch = createEventDispatcher()
   let permissionsStore: Readable<PermissionsStore> | undefined = undefined
@@ -185,11 +186,11 @@
           <a
             class="no-line no-underline"
             style:flex-shrink={0}
-            href={valueRef.src}
-            download={value.name}
-            on:click={clickHandler}
-            on:mousedown={middleClickHandler}
-            on:dragstart={dragStart}
+            href={disabled ? undefined : valueRef.src}
+            download={disabled ? undefined : value.name}
+            on:click={disabled ? undefined : clickHandler}
+            on:mousedown={disabled ? undefined : middleClickHandler}
+            on:dragstart={disabled ? undefined : dragStart}
           >
             {#if showPreview && canShowImage}
               <img
@@ -208,33 +209,40 @@
           </a>
           <div class="flex-col info-container">
             <div class="name">
-              <a href={valueRef.src} download={value.name} on:click={clickHandler} on:mousedown={middleClickHandler}>
+              <a
+                href={disabled ? undefined : valueRef.src}
+                download={disabled ? undefined : value.name}
+                on:click={disabled ? undefined : clickHandler}
+                on:mousedown={disabled ? undefined : middleClickHandler}
+              >
                 {trimFilename(value.name)}
               </a>
             </div>
             <div class="info-content flex-row-center">
               {#if value.size != null && value.size !== 0}{filesize(value.size, { spacer: '' })}{/if}
-              <span class="actions inline-flex clear-mins ml-1 gap-1">
-                <span>•</span>
-                <a class="no-line colorInherit" href={valueRef.src} download={value.name} bind:this={download}>
-                  <Label label={presentation.string.Download} />
-                </a>
-                {#if canRemove}
+              {#if !disabled}
+                <span class="actions inline-flex clear-mins ml-1 gap-1">
                   <span>•</span>
-                  <!-- svelte-ignore a11y-click-events-have-key-events -->
-                  <!-- svelte-ignore a11y-no-static-element-interactions -->
-                  <span
-                    class="remove-link"
-                    on:click={(ev) => {
-                      ev.stopPropagation()
-                      ev.preventDefault()
-                      dispatch('remove', value)
-                    }}
-                  >
-                    <Label label={presentation.string.Delete} />
-                  </span>
-                {/if}
-              </span>
+                  <a class="no-line colorInherit" href={valueRef.src} download={value.name} bind:this={download}>
+                    <Label label={presentation.string.Download} />
+                  </a>
+                  {#if canRemove}
+                    <span>•</span>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <span
+                      class="remove-link"
+                      on:click={(ev) => {
+                        ev.stopPropagation()
+                        ev.preventDefault()
+                        dispatch('remove', value)
+                      }}
+                    >
+                      <Label label={presentation.string.Delete} />
+                    </span>
+                  {/if}
+                </span>
+              {/if}
             </div>
           </div>
         {/await}

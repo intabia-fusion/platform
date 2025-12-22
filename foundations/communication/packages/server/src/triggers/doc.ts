@@ -59,6 +59,7 @@ async function onDocClassUpdate (ctx: TriggerCtx, event: Enriched<UpdateClassDoc
   const prevDomain = ctx.hierarchy.getDomain(event.docClass)
   const newDomain = ctx.hierarchy.getDomain(event.newClass)
 
+  await ctx.client.blob.updateDocClass(prevDomain, event.docId, event.newClass)
   if (prevDomain !== 'card' || newDomain !== 'card') return []
 
   const thread = (await ctx.client.db.findThreadMeta({ threadId: event.docId, limit: 1 }))[0]

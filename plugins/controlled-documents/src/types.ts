@@ -128,7 +128,8 @@ export interface Document extends Doc<DocumentSpace> {
   labels?: CollectionSize<TagReference> // A collection of attached tags(labels)
   abstract?: string
   commentSequence: number // Used to enumerate the comments across revisions of the working copy of the document
-  comments?: CollectionSize<DocumentComment> // A collection of document comments to the working copy of the document
+  comments?: number // A collection of document comments to the working copy of the document
+  activity?: number
   snapshots?: CollectionSize<DocumentSnapshot> // A collection of document snapshots
   attachments?: CollectionSize<Attachment> // A collection of attachments inlined into the document. E.g. pictures/documents.
 }

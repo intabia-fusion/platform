@@ -69,6 +69,7 @@ export enum ActivityDirection {
 
 export enum ActivityFilter {
   Attributes = 'attributes',
+  Attachments = 'attachments',
   Messages = 'messages'
 }
 

@@ -16,7 +16,19 @@
 import type { Person } from '@hcengineering/contact'
 import contact from '@hcengineering/contact'
 import { type Timestamp, type Domain, type Ref, type Tx, type ClassCollaborators } from '@hcengineering/core'
-import { ArrOf, type Builder, Mixin, Model, Prop, ReadOnly, TypeRef, TypeString, UX } from '@hcengineering/model'
+import {
+  ArrOf,
+  type Builder,
+  Hidden,
+  Mixin,
+  Model,
+  Prop,
+  ReadOnly,
+  TypeNumber,
+  TypeRef,
+  TypeString,
+  UX
+} from '@hcengineering/model'
 import core, { TAttachedDoc, TClass } from '@hcengineering/model-core'
 import view from '@hcengineering/model-view'
 import { type Request, type RequestPresenter, type RequestStatus } from '@hcengineering/request'
@@ -57,9 +69,14 @@ export class TRequest extends TAttachedDoc implements Request {
   @ReadOnly()
     rejected?: Ref<Person>
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  //   comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 }
 
 // TODO: FIXME

@@ -37,6 +37,8 @@ import type { Project, ProjectType, ProjectTypeDescriptor, Task, TaskType } from
 export interface Funnel extends Project {
   fullDescription?: Markup
   attachments?: number
+  comments?: number
+  activity?: number
 }
 
 /**

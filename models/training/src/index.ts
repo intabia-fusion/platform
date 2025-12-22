@@ -79,7 +79,7 @@ function defineBase (builder: Builder): void {
     training.actionCategory.Training
   )
 
-  // TODO: FIXME
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   notification.class.NotificationGroup,
   //   core.space.Model,
@@ -90,6 +90,8 @@ function defineBase (builder: Builder): void {
   //   training.notification.TrainingGroup
   // )
   //
+
+  // TODO: FIXME LATER
   // builder.createDoc(notification.class.ActivityNotificationViewlet, core.space.Model, {
   //   messageMatch: {
   //     _class: activity.class.DocUpdateMessage,

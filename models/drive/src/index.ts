@@ -46,6 +46,7 @@ import {
   Prop,
   ReadOnly,
   TypeFileSize,
+  TypeNumber,
   TypeRecord,
   TypeRef,
   TypeString,
@@ -85,7 +86,7 @@ export class TDefaultDriveTypeData extends TDrive implements RolesAssignment {
 }
 
 @Model(drive.class.Resource, core.class.Doc, DOMAIN_DRIVE)
-@UX(drive.string.Resource)
+@UX(drive.string.Resource, undefined, undefined, undefined, undefined, undefined, 'title')
 export class TResource extends TDoc implements Resource {
   declare space: Ref<Drive>
 
@@ -102,9 +103,14 @@ export class TResource extends TDoc implements Resource {
   @ReadOnly()
     path!: Ref<Resource>[]
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(TypeRef(drive.class.FileVersion), drive.string.Version)
   @ReadOnly()

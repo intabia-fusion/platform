@@ -69,7 +69,6 @@ export class NormalizeTxMiddleware extends BaseMiddleware implements Middleware 
     for (const tx of txes) {
       const parsedTx = this.parseTx(tx)
       if (parsedTx === undefined) {
-        console.error('Invalid tx:', tx)
         throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
       }
       parsedTxes.push(parsedTx)

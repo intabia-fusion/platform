@@ -64,7 +64,7 @@ export { document as default }
 export const DOMAIN_DOCUMENT = 'document' as Domain
 
 @Model(document.class.Document, core.class.Doc, DOMAIN_DOCUMENT)
-@UX(document.string.Document, document.icon.Document, undefined, 'name', undefined, document.string.Documents)
+@UX(document.string.Document, document.icon.Document, undefined, 'name', undefined, document.string.Documents, 'title')
 export class TDocument extends TDoc implements Document, Todoable {
   @Prop(TypeString(), document.string.Name)
   @Index(IndexKind.FullText)
@@ -91,12 +91,17 @@ export class TDocument extends TDoc implements Document, Todoable {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
-
   @Prop(Collection(tags.class.TagReference), document.string.Labels)
     labels?: number
+
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   // TODO: FIXME
   // @Prop(Collection(activity.class.ActivityReference), document.string.Backlinks)

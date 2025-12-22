@@ -30,6 +30,7 @@ export interface Department extends Doc {
   teamLead: Ref<Employee> | null
   attachments?: number
   comments?: number
+  activity?: number
   channels?: number
   members: Ref<Employee>[]
   subscribers?: Arr<Ref<Contact>>
@@ -87,6 +88,7 @@ export interface Request extends AttachedDoc {
 
   description: Markup
   comments?: number
+  activity?: number
   attachments?: number
 
   // Date always in UTC

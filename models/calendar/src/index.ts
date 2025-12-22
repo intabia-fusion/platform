@@ -298,18 +298,6 @@ export function createModel (builder: Builder): void {
   //   ignoredTypes: [],
   //   enabledTypes: [calendar.ids.ReminderNotification]
   // })
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: calendar.class.Event,
-  //     icon: calendar.icon.Reminder,
-  //     action: 'update',
-  //     hideIfRemoved: true
-  //   },
-  //   calendar.ids.UpdateRemainderActivityViewlet
-  // )
 
   builder.createDoc(
     view.class.ViewletDescriptor,

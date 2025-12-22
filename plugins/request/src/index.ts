@@ -32,6 +32,7 @@ export interface Request extends AttachedDoc {
   tx: Tx
   rejectedTx?: Tx
   comments?: number
+  activity?: number
 }
 
 /**

@@ -24,7 +24,6 @@ import {
   type DocumentCategory,
   type DocumentRequest,
   type DocumentReviewRequest,
-  type DocumentComment,
   type DocumentSpace,
   type DocumentSpaceType,
   type DocumentSpaceTypeDescriptor,
@@ -90,6 +89,7 @@ import { getEmbeddedLabel } from '@hcengineering/platform'
 import tags, { type TagReference } from '@hcengineering/tags'
 import time, { type ToDo } from '@hcengineering/time'
 import training, { type Training, type TrainingRequest } from '@hcengineering/training'
+import communication from '@hcengineering/communication'
 
 import documents from './plugin'
 
@@ -216,7 +216,15 @@ export class TProjectDocument extends TAttachedDoc implements ProjectDocument {
 }
 
 @Model(documents.class.Document, core.class.Doc, DOMAIN_DOCUMENTS)
-@UX(documents.string.Document, documents.icon.Document)
+@UX(
+  documents.string.Document,
+  documents.icon.Document,
+  undefined,
+  undefined,
+  undefined,
+  documents.string.Documents,
+  'title'
+)
 export class TDocument extends TDoc implements Document {
   @Prop(TypeRef(core.class.Space), core.string.Space)
   @Index(IndexKind.Indexed)
@@ -275,9 +283,14 @@ export class TDocument extends TDoc implements Document {
   @Hidden()
     commentSequence!: number
 
-  // TODO: FIXME
-  // @Prop(Collection(documents.class.DocumentComment), chunter.string.Comments)
-  comments?: CollectionSize<DocumentComment>
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(documents.class.DocumentSnapshot), documents.string.Snapshots)
     snapshots?: CollectionSize<DocumentSnapshot>

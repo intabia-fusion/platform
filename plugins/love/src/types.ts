@@ -94,7 +94,8 @@ export interface Room extends Doc {
   description: MarkupBlobRef | null
   attachments?: number
   meetings?: number
-  messages?: number
+  comments?: number
+  activity?: number
 }
 
 export interface Office extends Room {
@@ -147,6 +148,7 @@ export interface MeetingMinutes extends AttachedDoc {
   meetingEnd?: Timestamp
 
   transcription?: number
-  messages?: number
+  comments?: number
+  activity?: number
   attachments?: number
 }

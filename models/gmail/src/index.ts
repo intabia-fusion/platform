@@ -171,7 +171,7 @@ export function createModel (builder: Builder): void {
     gmail.integrationType.Gmail
   )
 
-  // TODO: FIXME
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   activity.class.DocUpdateMessageViewlet,
   //   core.space.Model,
@@ -185,6 +185,7 @@ export function createModel (builder: Builder): void {
   //   gmail.ids.GmailWriteMessageActivityViewlet
   // )
   //
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   activity.class.DocUpdateMessageViewlet,
   //   core.space.Model,

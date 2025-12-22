@@ -37,6 +37,7 @@ export interface Vacancy extends Project {
   location?: string
   company?: Ref<Organization>
   comments?: number
+  activity?: number
   number: number
   polls?: Collection<Poll>
 }
@@ -111,6 +112,7 @@ export interface Opinion extends AttachedDoc {
   number: number
   attachedTo: Ref<Review>
   comments?: number
+  activity?: number
   attachments?: number
   description: Markup
   value: string

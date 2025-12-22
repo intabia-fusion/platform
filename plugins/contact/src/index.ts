@@ -139,6 +139,7 @@ export interface Contact extends Doc, AvatarInfo {
   name: string
   attachments?: number
   comments?: number
+  activity?: number
   channels?: number
   city?: string
 }

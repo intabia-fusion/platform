@@ -111,19 +111,6 @@ export function createModel (builder: Builder): void {
     presenter: documents.component.DocumentReviewRequestPresenter
   })
 
-  // TODO: FIXME
-  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-  //   objectClass: documents.class.DocumentApprovalRequest,
-  //   action: 'create',
-  //   icon: documents.icon.Document
-  // })
-  //
-  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-  //   objectClass: documents.class.DocumentReviewRequest,
-  //   action: 'create',
-  //   icon: documents.icon.Document
-  // })
-
   builder.createDoc(
     workbench.class.Application,
     core.space.Model,

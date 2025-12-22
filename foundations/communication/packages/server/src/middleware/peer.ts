@@ -45,7 +45,6 @@ export class PeerMiddleware extends BaseMiddleware implements Middleware {
       case MessageEventType.ReactionPatch:
       case MessageEventType.ThreadPatch: {
         const domain = session.hierarchy.getDomain(event.docClass)
-        // TODO: check domain
         if (domain === 'card' && this.context.cadsWithPeers.has(event.docId)) {
           event._eventExtra.peers =
             (await this.context.head?.findPeers(session, {

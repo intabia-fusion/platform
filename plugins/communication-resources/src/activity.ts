@@ -36,9 +36,11 @@ import core, {
 import view, { type AttributeModel } from '@hcengineering/view'
 import { buildRemovedDoc, getAttributePresenter } from '@hcengineering/view-resources'
 import { groupByArray, notEmpty, SortingOrder } from '@hcengineering/core'
+import attachment from '@hcengineering/attachment'
 
 import { ActivityFilter, type ActivityFilterDef, type Aggregated } from './types'
 import communication from './plugin'
+import { getClient } from '@hcengineering/presentation'
 
 const valueTypes: ReadonlyArray<Ref<Class<Doc>>> = [
   core.class.TypeString,
@@ -122,13 +124,18 @@ export function isActivityMessage (message: Message): message is ActivityMessage
   return message.type === MessageType.Activity
 }
 
-export const defaultEnabledFilters = [ActivityFilter.Attributes, ActivityFilter.Messages]
+export const defaultEnabledFilters = [ActivityFilter.Attributes, ActivityFilter.Attachments, ActivityFilter.Messages]
 
 export const filtersDef: ActivityFilterDef[] = [
   {
     id: ActivityFilter.Attributes,
     label: communication.string.Attributes,
-    filter: (m) => m.type === MessageType.Activity
+    filter: (m) => m.type === MessageType.Activity && !isAttachmentsMessage(m)
+  },
+  {
+    id: ActivityFilter.Attachments,
+    label: attachment.string.Attachments,
+    filter: isAttachmentsMessage
   },
   {
     id: ActivityFilter.Messages,
@@ -136,6 +143,22 @@ export const filtersDef: ActivityFilterDef[] = [
     filter: (m) => m.type === MessageType.Text
   }
 ]
+
+function isAttachmentsMessage (m: Message): boolean {
+  const isActivity = m.type === MessageType.Activity
+  const client = getClient()
+  const hierarcy = client.getHierarchy()
+  if (isActivity) {
+    const message = m as ActivityMessage
+    const { extra } = message
+    if (extra.update?.type !== ActivityUpdateType.Collection) return false
+    const { update } = extra
+
+    return hierarcy.isDerived(update.objectClass, attachment.class.Attachment)
+  }
+
+  return false
+}
 
 export function filterMessages (messages: Message[], filters: ActivityFilter[]): Message[] {
   const filterDefs = filtersDef.filter((it) => filters.includes(it.id))

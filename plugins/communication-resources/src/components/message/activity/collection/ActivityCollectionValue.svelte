@@ -16,17 +16,18 @@
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ActivityCollectionUpdate, ActivityMessage } from '@hcengineering/communication-types'
-  import core, { Doc, generateId, notEmpty, TxCreateDoc, TxProcessor } from '@hcengineering/core'
-  import { DocNavLink, ObjectPresenter } from '@hcengineering/view-resources'
+  import { Doc, notEmpty } from '@hcengineering/core'
   import { Icon, IconEdit, Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import attachment from '@hcengineering/attachment'
 
   import communication from '../../../../plugin'
   import { getCollectionAttribute } from '../../../../activity'
   import { Aggregated } from '../../../../types'
+  import CollectionItemPresenter from './CollectionItemPresenter.svelte'
 
   export let doc: Doc
   export let message: Aggregated<ActivityMessage>
+  export let compact = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -38,7 +39,6 @@
   $: collection = (message.extra.update as ActivityCollectionUpdate).collection
 
   $: clazz = hierarchy.getClass(objectClass)
-  $: objectPanel = hierarchy.classHierarchyMixin(doc._class, view.mixin.ObjectPanel)
   $: attribute = getCollectionAttribute(hierarchy, doc._class, collection)
 
   $: messages = (message.previous ?? []).concat(message) as ActivityMessage[]
@@ -51,23 +51,6 @@
     objects = res
   })
 
-  function buildObject (message: ActivityMessage): Doc {
-    const update = getCollectionUpdate(message)
-    const createTx: TxCreateDoc<Doc> = {
-      _id: generateId(),
-      _class: core.class.TxCreateDoc,
-      space: core.space.Workspace,
-      objectId: update.objectId,
-      objectClass: update.objectClass,
-      objectSpace: doc.space,
-      attributes: update.attributes ?? {},
-      modifiedBy: message.creator,
-      modifiedOn: message.created.getTime()
-    }
-
-    return TxProcessor.createDoc2Doc(createTx)
-  }
-
   $: label = attribute?.label ?? clazz.pluralLabel ?? clazz.label
   $: icon = attribute?.icon ?? clazz.icon ?? IconEdit
 
@@ -75,68 +58,70 @@
     return message.extra.update as ActivityCollectionUpdate
   }
 
-  function getTitle (object: Doc, key: string, update: ActivityCollectionUpdate): string {
-    return (object as any)[key] ?? update.title ?? ''
-  }
+  $: isColumn = hierarchy.isDerived(objectClass, attachment.class.Attachment)
 </script>
 
-<span class="content flex-gap-1 no-word-wrap flex-wrap">
-  <span class="icon mr-1">
-    <Icon {icon} size="small" />
-  </span>
-  {#if createMessages.length > 0}
-    <Label label={communication.string.New} />
-  {:else if removeMessages.length > 0}
-    <Label label={communication.string.Removed} />
-  {/if}
-  <span class="lower"><Label {label} /></span>:
-  {#each resultMessages as m, index}
-    {@const update = getCollectionUpdate(m)}
-    {@const object = objects.find((it) => it._id === update.objectId)}
-    {#if object}
-      {#if clazz.titleKey}
-        <DocNavLink
-          {object}
-          disabled={false}
-          accent={true}
-          component={objectPanel?.component ?? view.component.EditDoc}
-          shrink={1}
-        >
-          {getTitle(object, clazz.titleKey, update)}
-        </DocNavLink>
-      {:else}
-        <ObjectPresenter
-          value={object}
-          accent
-          props={{ withShowMore: false }}
-          shouldShowAvatar={update.objectClass === core.class.Collaborator}
-        />
+{#if isColumn}
+  <span class="content column no-word-wrap flex-wrap">
+    <span class="label flex-gap-1 no-word-wrap" class:h-10={!compact} class:h-6={compact} class:mb-2={compact}>
+      <span class="icon mr-1">
+        <Icon {icon} size="small" />
+      </span>
+      {#if createMessages.length > 0}
+        <Label label={communication.string.New} />
+      {:else if removeMessages.length > 0}
+        <Label label={communication.string.Removed} />
       {/if}
-    {:else if update.title}
-      <DocNavLink
-        object={undefined}
-        disabled={true}
-        accent={true}
-        component={objectPanel?.component ?? view.component.EditDoc}
-        shrink={1}
-      >
-        {update.title}
-      </DocNavLink>
-    {:else if update.attributes}
-      {@const obj = buildObject(m)}
-      <ObjectPresenter value={obj} accent props={{ withShowMore: false }} />
+      <span class="lower"><Label {label} /></span>:
+    </span>
+    <span class="content flex-gap-1 no-word-wrap flex-wrap">
+      {#each resultMessages as m, index}
+        {@const update = getCollectionUpdate(m)}
+        {@const object = objects.find((it) => it._id === update.objectId)}
+        <CollectionItemPresenter {doc} {object} {update} message={m} />
+        {#if index < resultMessages.length - 1}
+          <span class="ml-1" />
+        {/if}
+      {/each}
+    </span>
+  </span>
+{:else}
+  <span class="content flex-gap-1 no-word-wrap flex-wrap">
+    <span class="icon mr-1">
+      <Icon {icon} size="small" />
+    </span>
+    {#if createMessages.length > 0}
+      <Label label={communication.string.New} />
+    {:else if removeMessages.length > 0}
+      <Label label={communication.string.Removed} />
     {/if}
-    {#if index < resultMessages.length - 1}
-      <span class="ml-1" />
-    {/if}
-  {/each}
-</span>
+    <span class="lower"><Label {label} /></span>:
+    {#each resultMessages as m, index}
+      {@const update = getCollectionUpdate(m)}
+      {@const object = objects.find((it) => it._id === update.objectId)}
+      <CollectionItemPresenter {doc} {object} {update} message={m} />
+      {#if index < resultMessages.length - 1}
+        <span class="ml-1" />
+      {/if}
+    {/each}
+  </span>
+{/if}
 
 <style lang="scss">
   .content {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
+
+    &.column {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+
+  .label {
+    display: flex;
+    align-items: center;
   }
   .icon {
     display: flex;

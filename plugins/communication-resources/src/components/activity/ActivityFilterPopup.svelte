@@ -66,8 +66,6 @@
     dispatch('update', enabledItems)
   }
 
-  $: console.log('enabled', enabledItems)
-
   onMount(() => {
     if (btns[0] != null) {
       btns[0].focus()

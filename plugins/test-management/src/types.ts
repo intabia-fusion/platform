@@ -96,6 +96,7 @@ export interface TestCase extends AttachedDoc<TestSuite, 'testCases', TestProjec
   assignee: Ref<Employee>
   attachments?: CollectionSize<Attachment>
   comments?: number
+  activity?: number
 }
 
 /** @public */
@@ -125,6 +126,7 @@ export interface TestResult extends AttachedDoc<TestRun, 'results', TestProject>
   assignee?: Ref<Employee>
   attachments?: CollectionSize<Attachment>
   comments?: number
+  activity?: number
 }
 
 /** @public */

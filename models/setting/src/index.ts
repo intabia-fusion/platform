@@ -454,20 +454,6 @@ export function createModel (builder: Builder): void {
     setting.ids.SettingApp
   )
 
-  // TODO: FIXME
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: setting.class.Integration,
-  //     icon: setting.icon.Integrations,
-  //     label: setting.string.IntegrationWith,
-  //     action: 'update',
-  //     hideIfRemoved: true
-  //   },
-  //   setting.ids.UpdateIntegrationActivityViewlet
-  // )
-
   builder.mixin(core.class.TypeString, core.class.Class, view.mixin.ObjectEditor, {
     editor: setting.component.StringTypeEditor
   })

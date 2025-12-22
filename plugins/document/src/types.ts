@@ -31,6 +31,7 @@ export interface Document extends Doc, IconProps {
   snapshots?: number
   attachments?: number
   comments?: number
+  activity?: number
   embeddings?: number
   labels?: number
   references?: number

@@ -150,9 +150,14 @@ export class TContact extends TDoc implements Contact {
   })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(CollectionType(chunter.class.ChatMessage), chunter.string.Comments)
-  //   comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(TypeString(), contact.string.Location)
   @Index(IndexKind.FullText)
@@ -318,6 +323,8 @@ export function createModel (builder: Builder): void {
     TTranslation
   )
 
+  createAttributePresenter(builder, contact.component.ContactNamePresenter, contact.class.Contact, 'name', 'attribute')
+
   builder.mixin(contact.class.PersonSpace, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest
   })
@@ -332,12 +339,8 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(contact.class.Contact, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(contact.class.Person, core.class.Class, communication.mixin.Messageable, {
-    // preposition: contact.string.For
-  })
-  builder.mixin(contact.mixin.Employee, core.class.Class, communication.mixin.Messageable, {
-    // preposition: contact.string.For
-  })
+  builder.mixin(contact.class.Person, core.class.Class, communication.mixin.Messageable, {})
+  builder.mixin(contact.mixin.Employee, core.class.Class, communication.mixin.Messageable, {})
   builder.mixin(contact.class.Organization, core.class.Class, communication.mixin.Messageable, {})
   builder.mixin(contact.class.Channel, core.class.Class, communication.mixin.Messageable, {})
 
@@ -477,17 +480,6 @@ export function createModel (builder: Builder): void {
     label: contact.string.Contacts,
     index: 100
   })
-
-  // TODO: FIXME
-  // builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-  //   objectClass: contact.class.Person,
-  //   action: 'update',
-  //   config: {
-  //     name: {
-  //       presenter: contact.activity.NameChangedActivityMessage
-  //     }
-  //   }
-  // })
 
   builder.createDoc<Viewlet>(
     view.class.Viewlet,
@@ -1285,39 +1277,6 @@ export function createModel (builder: Builder): void {
   )
 
   // TODO: FIXME
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: contact.class.Person,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   contact.ids.PersonChatMessageViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: contact.mixin.Employee,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   contact.ids.EmployeeChatMessageViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   chunter.class.ChatMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     messageClass: chunter.class.ChatMessage,
-  //     objectClass: contact.class.Organization,
-  //     label: chunter.string.LeftComment
-  //   },
-  //   contact.ids.OrganizationChatMessageViewlet
-  // )
-  //
   // builder.createDoc(
   //   notification.class.NotificationGroup,
   //   core.space.Model,

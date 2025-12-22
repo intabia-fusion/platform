@@ -60,7 +60,8 @@ import {
   TypeString,
   UX,
   TypeBoolean,
-  Hidden
+  Hidden,
+  TypeNumber
 } from '@hcengineering/model'
 import calendar, { TEvent, TSchedule } from '@hcengineering/model-calendar'
 import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
@@ -83,7 +84,7 @@ export const DOMAIN_LOVE = 'love' as Domain
 export const DOMAIN_MEETING_MINUTES = 'meeting-minutes' as Domain
 
 @Model(love.class.Room, core.class.Doc, DOMAIN_LOVE)
-@UX(love.string.Room, love.icon.Love)
+@UX(love.string.Room, love.icon.Love, undefined, undefined, undefined, undefined, 'name')
 export class TRoom extends TDoc implements Room {
   @Prop(TypeString(), core.string.Name)
   @Index(IndexKind.FullText)
@@ -123,9 +124,14 @@ export class TRoom extends TDoc implements Room {
   @Prop(PropCollection(love.class.MeetingMinutes), love.string.MeetingMinutes)
     meetings?: number
 
-  // TODO: FIXME
-  // @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
-  messages?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 }
 
 @Model(love.class.Office, love.class.Room)
@@ -186,7 +192,8 @@ export class TMeeting extends TEvent implements Meeting {
   undefined,
   'createdOn',
   undefined,
-  love.string.MeetingsMinutes
+  love.string.MeetingsMinutes,
+  'title'
 )
 export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Todoable {
   @Prop(TypeRef(core.class.Doc), love.string.Room, { editor: love.component.MeetingMinutesDocEditor })
@@ -211,13 +218,18 @@ export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Tod
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(PropCollection(chunter.class.ChatMessage), love.string.Transcription)
-  transcription?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
 
-  // TODO: FIXME
-  // @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
-  messages?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    transcription?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart, { editor: view.component.DateTimePresenter })
   @ReadOnly()

@@ -39,6 +39,7 @@ import {
   TypeCollaborativeDoc,
   TypeDate,
   TypeMarkup,
+  TypeNumber,
   TypeRef,
   TypeString,
   UX
@@ -60,6 +61,7 @@ import type {
   VacancyList
 } from '@hcengineering/recruit'
 import survey, { type Poll } from '@hcengineering/survey'
+import communication from '@hcengineering/communication'
 import recruit from './plugin'
 
 @Model(recruit.class.Vacancy, task.class.Project)
@@ -84,9 +86,14 @@ export class TVacancy extends TProject implements Vacancy {
   @Prop(TypeRef(contact.class.Organization), recruit.string.Company, { icon: contact.icon.Company })
     company?: Ref<Organization>
 
-  // TODO: FIXME
-  // @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(TypeString(), recruit.string.Vacancy)
   @Index(IndexKind.FullText)
@@ -166,7 +173,10 @@ export class TApplicant extends TTask implements Applicant {
   @Index(IndexKind.Indexed)
   declare assignee: Ref<Employee> | null
 
-  @Prop(TypeRef(core.class.Status), task.string.TaskState, { _id: recruit.attribute.State })
+  @Prop(TypeRef(core.class.Status), task.string.TaskState, {
+    _id: recruit.attribute.State,
+    iconPresenter: task.component.StateIconPresenter
+  })
   @Index(IndexKind.Indexed)
   declare status: Ref<Status>
 
@@ -238,9 +248,14 @@ export class TOpinion extends TAttachedDoc implements Opinion {
   })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(TypeCollection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(TypeMarkup(), recruit.string.Description)
     description!: Markup

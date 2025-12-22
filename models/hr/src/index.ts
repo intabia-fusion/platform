@@ -47,7 +47,9 @@ import {
   TypeRef,
   TypeString,
   UX,
-  type Builder
+  type Builder,
+  TypeNumber,
+  ReadOnly
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import calendar from '@hcengineering/model-calendar'
@@ -57,6 +59,7 @@ import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import communication from '@hcengineering/communication'
 import hr from './plugin'
 
 export { hrId } from '@hcengineering/hr'
@@ -66,7 +69,7 @@ export { default } from './plugin'
 export const DOMAIN_HR = 'hr' as Domain
 
 @Model(hr.class.Department, core.class.Doc, DOMAIN_HR)
-@UX(hr.string.Department, hr.icon.Department)
+@UX(hr.string.Department, hr.icon.Department, undefined, undefined, undefined, hr.string.Departments, 'name')
 export class TDepartment extends TDoc implements Department {
   @Prop(TypeRef(hr.class.Department), hr.string.ParentDepartmentLabel)
   @Index(IndexKind.Indexed)
@@ -86,9 +89,14 @@ export class TDepartment extends TDoc implements Department {
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   avatar?: string | null
 
@@ -158,9 +166,14 @@ export class TRequest extends TAttachedDoc implements Request {
   @Hidden()
     type!: Ref<RequestType>
 
-  // TODO: FIXME
-  // @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
-  comments?: number
+  @Prop(TypeNumber(0), communication.string.Comments)
+  @ReadOnly()
+    comments?: number
+
+  @Prop(TypeNumber(0), communication.string.Activity)
+  @ReadOnly()
+  @Hidden()
+    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

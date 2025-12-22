@@ -145,39 +145,6 @@ export function createModel (builder: Builder): void {
     component: attachment.component.PreviewPopupActions
   })
 
-  // TODO: FIXME
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: attachment.class.Attachment,
-  //     action: 'create',
-  //     icon: attachment.icon.Attachment,
-  //     label: attachment.string.AddAttachment,
-  //     component: attachment.activity.AttachmentsUpdatedMessage
-  //   },
-  //   attachment.ids.AttachmentCreatedActivityViewlet
-  // )
-  //
-  // builder.createDoc(
-  //   activity.class.DocUpdateMessageViewlet,
-  //   core.space.Model,
-  //   {
-  //     objectClass: attachment.class.Attachment,
-  //     action: 'remove',
-  //     icon: attachment.icon.Attachment,
-  //     label: attachment.string.RemovedAttachment,
-  //     component: attachment.activity.AttachmentsUpdatedMessage
-  //   },
-  //   attachment.ids.AttachmentRemovedActivityViewlet
-  // )
-  //
-  // builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-  //   label: attachment.string.FilterAttachments,
-  //   position: 50,
-  //   filter: attachment.filter.AttachmentsFilter
-  // })
-
   builder.createDoc(
     view.class.ActionCategory,
     core.space.Model,

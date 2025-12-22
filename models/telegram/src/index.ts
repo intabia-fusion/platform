@@ -124,7 +124,7 @@ export function createModel (builder: Builder): void {
     telegram.templateField.IntegrationOwnerTG
   )
 
-  // TODO: FIXME
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   activity.class.DocUpdateMessageViewlet,
   //   core.space.Model,
@@ -171,7 +171,7 @@ export function createModel (builder: Builder): void {
     telegram.integrationType.Telegram
   )
 
-  // TODO: FIXME
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   activity.class.DocUpdateMessageViewlet,
   //   core.space.Model,

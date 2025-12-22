@@ -32,6 +32,7 @@ export interface Resource extends Doc {
   path: Ref<Resource>[]
 
   comments?: number
+  activity?: number
 
   // ugly but needed here to get version lookup work for Resource
   file?: Ref<FileVersion>
