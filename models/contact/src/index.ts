@@ -88,7 +88,6 @@ import { type Action } from '@hcengineering/view'
 import contact from './plugin'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import preference, { TPreference } from '@hcengineering/model-preference'
-import communication from '@hcengineering/communication'
 
 export { contactId } from '@hcengineering/contact'
 export { contactOperation } from './migration'
@@ -149,15 +148,6 @@ export class TContact extends TDoc implements Contact {
     shortLabel: attachment.string.Files
   })
     attachments?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(TypeString(), contact.string.Location)
   @Index(IndexKind.FullText)
@@ -337,12 +327,6 @@ export function createModel (builder: Builder): void {
     createAccessLevel: AccountRole.Guest,
     isIdentity: true
   })
-
-  builder.mixin(contact.class.Contact, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(contact.class.Person, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(contact.mixin.Employee, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(contact.class.Organization, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(contact.class.Channel, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.CollectionEditor, {
     editor: contact.component.CollaboratorEditor,

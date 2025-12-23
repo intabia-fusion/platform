@@ -46,7 +46,6 @@ import {
   Prop,
   ReadOnly,
   TypeFileSize,
-  TypeNumber,
   TypeRecord,
   TypeRef,
   TypeString,
@@ -60,7 +59,7 @@ import tracker from '@hcengineering/model-tracker'
 import view, { type Viewlet, actionTemplates, classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import drive from './plugin'
 import { definePermissions } from './permissions'
@@ -102,15 +101,6 @@ export class TResource extends TDoc implements Resource {
   @Prop(TypeRef(drive.class.Resource), drive.string.Path)
   @ReadOnly()
     path!: Ref<Resource>[]
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(TypeRef(drive.class.FileVersion), drive.string.Version)
   @ReadOnly()
@@ -359,7 +349,7 @@ function defineResource (builder: Builder): void {
           sortingKey: 'title'
         },
         '$lookup.file.size',
-        // 'comments',
+        'comments',
         '$lookup.file.lastModified',
         'createdBy'
       ],
@@ -624,7 +614,7 @@ function defineFile (builder: Builder): void {
   })
 
   // Activity
-  builder.mixin(drive.class.File, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, drive.class.File)
 
   // Search
 

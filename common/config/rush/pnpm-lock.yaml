@@ -6628,9 +6628,6 @@ importers:
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6652,6 +6649,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -6959,9 +6959,6 @@ importers:
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -6977,6 +6974,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -7065,9 +7065,6 @@ importers:
 
   ../../models/drive:
     dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7080,6 +7077,9 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -7712,9 +7712,6 @@ importers:
 
   ../../models/inventory:
     dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -7730,6 +7727,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -7800,9 +7800,6 @@ importers:
 
   ../../models/lead:
     dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -7821,6 +7818,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -7906,9 +7906,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -7933,6 +7930,9 @@ importers:
       '@hcengineering/model-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -8547,9 +8547,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8565,6 +8562,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-controlled-documents':
         specifier: workspace:^0.7.0
         version: link:../controlled-documents
@@ -8887,9 +8887,6 @@ importers:
       '@anticrm/skillset':
         specifier: ^0.6.0
         version: 0.6.0
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -8905,6 +8902,9 @@ importers:
       '@hcengineering/model-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -9432,7 +9432,7 @@ importers:
         specifier: workspace:^0.7.12
         version: link:../../foundations/communication/packages/types
       '@hcengineering/core':
-        specifier: workspace:^0.7.23
+        specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/model':
         specifier: workspace:^0.7.17
@@ -11291,15 +11291,15 @@ importers:
 
   ../../models/survey:
     dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
@@ -11722,9 +11722,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -11737,6 +11734,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -12022,9 +12022,6 @@ importers:
 
   ../../models/tracker:
     dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12037,6 +12034,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -12143,9 +12143,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -12158,6 +12155,9 @@ importers:
       '@hcengineering/model-attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
+      '@hcengineering/model-communication':
+        specifier: workspace:^0.7.0
+        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -25918,6 +25918,9 @@ importers:
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
+      '@hcengineering/communication-resources':
+        specifier: workspace:^0.7.0
+        version: link:../communication-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -29021,7 +29024,7 @@ importers:
   ../../server-plugins/communication:
     dependencies:
       '@hcengineering/core':
-        specifier: workspace:^0.7.23
+        specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
@@ -29091,7 +29094,7 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
       '@hcengineering/core':
-        specifier: workspace:^0.7.23
+        specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/measurements':
         specifier: workspace:^0.7.18

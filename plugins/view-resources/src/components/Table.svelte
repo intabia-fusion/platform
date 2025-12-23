@@ -491,6 +491,7 @@
                         <!-- {getOnChange(object, attribute) !== undefined} -->
                         <svelte:component
                           this={attribute.presenter}
+                          {object}
                           value={getValue(attribute, object)}
                           onChange={getOnChange(object, attribute)}
                           label={attribute.label}
@@ -508,6 +509,7 @@
                     {:else}
                       <svelte:component
                         this={attribute.presenter}
+                        {object}
                         value={getValue(attribute, object)}
                         onChange={getOnChange(object, attribute)}
                         label={attribute.label}

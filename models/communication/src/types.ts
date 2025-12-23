@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrOf, type Builder, Hidden, Mixin, Model, Prop, ReadOnly, TypeNumber, TypeRef } from '@hcengineering/model'
+import { ArrOf, type Builder, Mixin, Model, TypeRef } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import {
   AccountRole,
@@ -113,17 +113,6 @@ export class TGuestCommunicationSettings extends TConfiguration implements Guest
 
 @Mixin(communication.mixin.Messageable, core.class.Class)
 export class TMessageable extends TClass implements Messageable {}
-
-export class TMessagebaleDoc extends TDoc {
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
-}
 
 export function buildTypes (builder: Builder): void {
   builder.createModel(

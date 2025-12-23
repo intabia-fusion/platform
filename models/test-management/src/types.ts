@@ -57,14 +57,12 @@ import {
   Collection,
   ReadOnly,
   TypeDate,
-  Hidden,
-  TypeNumber
+  Hidden
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import core, { TAttachedDoc, TDoc, TType, TTypedSpace } from '@hcengineering/model-core'
 
 import testManagement from './plugin'
-import communication from '@hcengineering/communication'
 
 export { testManagementId } from '@hcengineering/test-management/src/index'
 
@@ -193,15 +191,6 @@ export class TTestCase extends TAttachedDoc implements TestCase {
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: CollectionSize<Attachment>
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 }
 
 @Model(testManagement.class.TestRun, core.class.Doc, DOMAIN_TEST_MANAGEMENT)
@@ -280,15 +269,6 @@ export class TTestResult extends TAttachedDoc implements TestResult {
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: CollectionSize<Attachment>
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 }
 
 @Model(testManagement.class.TestPlan, core.class.Doc, DOMAIN_TEST_MANAGEMENT)

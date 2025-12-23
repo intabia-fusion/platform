@@ -23,7 +23,7 @@ import print from '@hcengineering/model-print'
 import tracker from '@hcengineering/model-tracker'
 import { type ViewOptionsModel } from '@hcengineering/view'
 import contact from '@hcengineering/contact'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import { testManagementId, type TestPlanItem, type TestResult } from '@hcengineering/test-management'
 
@@ -185,7 +185,7 @@ export function createModel (builder: Builder): void {
     TTestPlanItem
   )
 
-  builder.mixin(testManagement.class.TestProject, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestProject)
 
   defineTestSuite(builder)
   defineTestCase(builder)
@@ -257,7 +257,7 @@ function defineSpaceType (builder: Builder): void {
 }
 
 function defineTestSuite (builder: Builder): void {
-  builder.mixin(testManagement.class.TestSuite, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestSuite)
 
   builder.mixin(testManagement.class.TestSuite, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestSuite
@@ -348,7 +348,7 @@ function defineTestSuite (builder: Builder): void {
 }
 
 function defineTestCase (builder: Builder): void {
-  builder.mixin(testManagement.class.TestCase, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestCase)
 
   builder.mixin(testManagement.class.TestCase, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestCase
@@ -440,7 +440,7 @@ function defineTestCase (builder: Builder): void {
 }
 
 function defineTestRun (builder: Builder): void {
-  builder.mixin(testManagement.class.TestRun, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestRun)
 
   builder.mixin(testManagement.class.TestRun, core.class.Class, view.mixin.ObjectPanel, {
     component: testManagement.component.EditTestRun
@@ -464,7 +464,7 @@ function defineTestResult (builder: Builder): void {
     presenter: testManagement.component.TestResultPresenter
   })
 
-  builder.mixin(testManagement.class.TestResult, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestResult)
 
   builder.mixin(testManagement.class.TestResult, core.class.Class, view.mixin.ObjectEditor, {
     editor: testManagement.component.EditTestResult
@@ -629,7 +629,7 @@ function defineTestResult (builder: Builder): void {
 }
 
 function defineTestPlan (builder: Builder): void {
-  builder.mixin(testManagement.class.TestPlan, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, testManagement.class.TestPlan)
 
   builder.mixin(testManagement.class.TestPlan, core.class.Class, view.mixin.ObjectPanel, {
     component: view.component.EditDoc

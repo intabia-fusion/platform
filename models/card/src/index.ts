@@ -74,7 +74,6 @@ import time, { type ToDo } from '@hcengineering/time'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type BuildModelKey } from '@hcengineering/view'
-import communication from '@hcengineering/communication'
 
 import { createActions } from './actions'
 import card from './plugin'
@@ -648,8 +647,6 @@ export function createModel (builder: Builder): void {
     presenter: card.component.CardRefPresenter,
     arrayPresenter: card.component.CardArrayEditor
   })
-
-  builder.mixin(card.class.Card, core.class.Class, communication.mixin.Messageable, {})
 
   builder.mixin(card.class.Card, core.class.Class, setting.mixin.Editable, {
     value: false

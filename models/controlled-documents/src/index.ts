@@ -18,7 +18,11 @@ import documentsPlugin, {
   documentsId,
   DocumentState,
   type Document,
-  type DocumentSpace
+  type DocumentSpace,
+  type ProjectDocument,
+  type ChangeControl,
+  type DocumentRequest,
+  type ControlledDocument
 } from '@hcengineering/controlled-documents'
 import exportPlugin, { type RelationDefinition } from '@hcengineering/export'
 import { type Builder } from '@hcengineering/model'
@@ -32,9 +36,9 @@ import workbench from '@hcengineering/model-workbench'
 import contacts from '@hcengineering/model-contact'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
-import { AccountRole, type Class, type Doc, type Ref } from '@hcengineering/core'
+import { AccountRole, type Class, type ClassCollaborators, type Doc, type Ref } from '@hcengineering/core'
 import { type Action } from '@hcengineering/view'
 import { definePermissions } from './permissions'
 import documents from './plugin'
@@ -578,7 +582,7 @@ export function createModel (builder: Builder): void {
     documentsPlugin.action.DeleteDocumentCategory
   )
 
-  builder.mixin(documents.class.DocumentCategory, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, documents.class.DocumentCategory)
 
   builder.mixin(documents.class.DocumentCategory, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: documents.component.CategoryPresenter
@@ -1018,43 +1022,43 @@ export function createModel (builder: Builder): void {
 }
 
 export function defineNotifications (builder: Builder): void {
-  // TODO: FIXME
-  builder.mixin(documents.class.ControlledDocument, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, documents.class.ControlledDocument)
 
-  // builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: documents.class.Document,
-  //   fields: ['author', 'owner'],
-  //   provideSecurity: true
-  // })
-  //
-  // builder.createDoc<ClassCollaborators<ProjectDocument>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: documents.class.ProjectDocument,
-  //   fields: [],
-  //   provideSecurity: true
-  // })
-  //
-  // builder.createDoc<ClassCollaborators<ChangeControl>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: documents.class.ChangeControl,
-  //   fields: [],
-  //   provideSecurity: true
-  // })
-  //
-  // builder.createDoc<ClassCollaborators<DocumentRequest>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: documents.class.DocumentRequest,
-  //   fields: ['requested', 'createdBy'],
-  //   provideSecurity: true
-  // })
-  //
-  // builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, core.mixin.TxAccessLevel, {
-  //   updateAccessLevel: AccountRole.Guest
-  // })
-  //
-  // builder.createDoc<ClassCollaborators<ControlledDocument>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: documents.class.ControlledDocument,
-  //   fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
-  //   provideSecurity: true
-  // })
-  //
+  builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: documents.class.Document,
+    fields: ['author', 'owner'],
+    provideSecurity: true
+  })
+
+  builder.createDoc<ClassCollaborators<ProjectDocument>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: documents.class.ProjectDocument,
+    fields: [],
+    provideSecurity: true
+  })
+
+  builder.createDoc<ClassCollaborators<ChangeControl>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: documents.class.ChangeControl,
+    fields: [],
+    provideSecurity: true
+  })
+
+  builder.createDoc<ClassCollaborators<DocumentRequest>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: documents.class.DocumentRequest,
+    fields: ['requested', 'createdBy'],
+    provideSecurity: true
+  })
+
+  builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, core.mixin.TxAccessLevel, {
+    updateAccessLevel: AccountRole.Guest
+  })
+
+  builder.createDoc<ClassCollaborators<ControlledDocument>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: documents.class.ControlledDocument,
+    fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
+    provideSecurity: true
+  })
+
+  // TODO: FIXME
   // builder.createDoc(
   //   notification.class.NotificationGroup,
   //   core.space.Model,

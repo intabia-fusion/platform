@@ -12,14 +12,18 @@
 // limitations under the License.
 
 import { type Builder } from '@hcengineering/model'
+import contact from '@hcengineering/contact'
+import card from '@hcengineering/card'
 
 import communication from './plugin'
 import { buildTypes } from './types'
 import { buildCardActions, buildMessageActions } from './actions'
 import { buildApplets } from './applets'
 import { buildActivity } from './activity'
+import { markClassMessageable } from './utils'
 
 export { communicationId } from '@hcengineering/communication'
+export { markClassMessageable } from './utils'
 export * from './migration'
 
 export function createModel (builder: Builder): void {
@@ -30,6 +34,10 @@ export function createModel (builder: Builder): void {
   buildMessageActions(builder)
   buildCardActions(builder)
   buildApplets(builder)
+
+  markClassMessageable(builder, card.class.Card)
+  markClassMessageable(builder, contact.class.Contact)
+  markClassMessageable(builder, contact.class.Channel)
 }
 
 export default communication

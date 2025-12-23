@@ -48,6 +48,8 @@ activityDirectionStore.subscribe((position) => {
 })
 
 export function initActivityDirection (): void {
+  if (get(activityDirectionStore) != null) return
+
   let direction: ActivityDirection
   try {
     const value = localStorage.getItem(activityDirectionLocalStorageKey) ?? ActivityDirection.Forward

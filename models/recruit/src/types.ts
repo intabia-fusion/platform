@@ -39,7 +39,6 @@ import {
   TypeCollaborativeDoc,
   TypeDate,
   TypeMarkup,
-  TypeNumber,
   TypeRef,
   TypeString,
   UX
@@ -61,7 +60,6 @@ import type {
   VacancyList
 } from '@hcengineering/recruit'
 import survey, { type Poll } from '@hcengineering/survey'
-import communication from '@hcengineering/communication'
 import recruit from './plugin'
 
 @Model(recruit.class.Vacancy, task.class.Project)
@@ -85,15 +83,6 @@ export class TVacancy extends TProject implements Vacancy {
 
   @Prop(TypeRef(contact.class.Organization), recruit.string.Company, { icon: contact.icon.Company })
     company?: Ref<Organization>
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(TypeString(), recruit.string.Vacancy)
   @Index(IndexKind.FullText)
@@ -247,15 +236,6 @@ export class TOpinion extends TAttachedDoc implements Opinion {
     shortLabel: attachment.string.Files
   })
     attachments?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(TypeMarkup(), recruit.string.Description)
     description!: Markup

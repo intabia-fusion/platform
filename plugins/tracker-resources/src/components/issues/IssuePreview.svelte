@@ -21,6 +21,7 @@
   import { Issue } from '@hcengineering/tracker'
   import { Label, Scroller, resizeObserver } from '@hcengineering/ui'
   import { getCollaborationUser } from '@hcengineering/view-resources'
+  import { MessagesPopup } from '@hcengineering/communication-resources'
 
   import tracker from '../../plugin'
   import AssigneeEditor from './AssigneeEditor.svelte'
@@ -115,10 +116,9 @@
       <AttachmentDocList value={issue} />
     {/if}
     {#if issue.comments}
-      <!--      TODO: FIXME-->
-      <!--      <div class="mt-6">-->
-      <!--        <ChatMessagePopup objectId={issue._id} object={issue} />-->
-      <!--      </div>-->
+      <div class="mt-6">
+        <MessagesPopup _id={issue._id} _class={issue._class} object={issue} />
+      </div>
     {/if}
     <div class="h-3 flex-no-shrink" />
   </Scroller>

@@ -89,7 +89,6 @@ import { getEmbeddedLabel } from '@hcengineering/platform'
 import tags, { type TagReference } from '@hcengineering/tags'
 import time, { type ToDo } from '@hcengineering/time'
 import training, { type Training, type TrainingRequest } from '@hcengineering/training'
-import communication from '@hcengineering/communication'
 
 import documents from './plugin'
 
@@ -282,15 +281,6 @@ export class TDocument extends TDoc implements Document {
   @Prop(TypeNumber(), documents.string.Number)
   @Hidden()
     commentSequence!: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(Collection(documents.class.DocumentSnapshot), documents.string.Snapshots)
     snapshots?: CollectionSize<DocumentSnapshot>

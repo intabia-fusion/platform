@@ -48,7 +48,7 @@ import { type Action } from '@hcengineering/view'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import products from './plugin'
 import { roles } from './roles'
@@ -155,7 +155,7 @@ export class TProductTypeData extends TProduct implements RolesAssignment {
 function defineProduct (builder: Builder): void {
   builder.createModel(TProduct, TProductTypeData)
 
-  builder.mixin(products.class.Product, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, products.class.Product)
 
   builder.mixin(products.class.Product, core.class.Class, view.mixin.ObjectIdentifier, {
     provider: products.function.ProductIdentifierProvider
@@ -294,7 +294,7 @@ function defineSpaceType (builder: Builder): void {
 function defineProductVersion (builder: Builder): void {
   builder.createModel(TProductVersion)
 
-  builder.mixin(products.class.ProductVersion, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, products.class.ProductVersion)
 
   builder.mixin(products.class.ProductVersion, core.class.Class, view.mixin.ObjectEditor, {
     editor: products.component.EditProductVersion

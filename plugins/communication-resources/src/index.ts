@@ -21,6 +21,7 @@ import PollPreview from './components/poll/PollPreview.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import CreateDirect from './components/CreateDirect.svelte'
 import Activity from './components/activity/Activity.svelte'
+import CommentsNumberPresenter from './components/CommentsNumberPresenter.svelte'
 
 import { unsubscribe, subscribe, canSubscribe, canUnsubscribe, canCreateDirect } from './utils'
 import {
@@ -52,12 +53,14 @@ export { default as MessagePreview } from './components/MessagePreview.svelte'
 export { default as ExtendedMessagePreview } from './components/preview/ExtendedMessagePreview.svelte'
 export { default as PreviewTemplate } from './components/preview/PreviewTemplate.svelte'
 export { default as MessagesSection } from './components/MessagesSection.svelte'
+export { default as MessagesPopup } from './components/MessagesPopup.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
     DirectIcon,
     CreateDirect,
-    Activity
+    Activity,
+    CommentsNumberPresenter
   },
   poll: {
     PollPresenter,

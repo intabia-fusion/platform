@@ -25,7 +25,8 @@ import {
   type Ref,
   type Space,
   type Timestamp,
-  type Type
+  type Type,
+  type ClassCollaborators
 } from '@hcengineering/core'
 import lead from '@hcengineering/lead'
 import {
@@ -386,10 +387,10 @@ export function createModel (builder: Builder): void {
   //   enabledTypes: [time.ids.ToDoCreated]
   // })
   //
-  // builder.createDoc<ClassCollaborators<ToDo>>(core.class.ClassCollaborators, core.space.Model, {
-  //   attachedTo: time.class.ToDo,
-  //   fields: ['user']
-  // })
+  builder.createDoc<ClassCollaborators<ToDo>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: time.class.ToDo,
+    fields: ['user']
+  })
   //
   // builder.mixin(time.class.ToDo, core.class.Class, notification.mixin.NotificationObjectPresenter, {
   //   presenter: time.component.NotificationToDoPresenter

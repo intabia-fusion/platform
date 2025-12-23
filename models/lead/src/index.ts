@@ -24,7 +24,7 @@ import view, { createAction, actionTemplates as viewTemplates } from '@hcenginee
 import workbench from '@hcengineering/model-workbench'
 import setting from '@hcengineering/setting'
 import { type ViewOptionsModel } from '@hcengineering/view'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import lead from './plugin'
 import { defineSpaceType } from './spaceType'
@@ -40,9 +40,8 @@ export * from './types'
 export function createModel (builder: Builder): void {
   builder.createModel(TFunnel, TLead, TCustomer)
 
-  builder.mixin(lead.class.Lead, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(lead.mixin.Customer, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(lead.class.Funnel, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, lead.class.Lead)
+  markClassMessageable(builder, lead.class.Funnel)
 
   builder.mixin(lead.class.Funnel, core.class.Class, workbench.mixin.SpaceView, {
     view: {
@@ -183,7 +182,7 @@ export function createModel (builder: Builder): void {
         '_class',
         'leads',
         'attachments',
-        // 'comments',
+        'comments',
         'modifiedOn',
         {
           key: '$lookup.channels',
@@ -212,7 +211,7 @@ export function createModel (builder: Builder): void {
         'assignee',
         'status',
         'attachments',
-        // 'comments',
+        'comments',
         {
           key: '',
           label: tracker.string.RelatedIssues,
@@ -307,7 +306,7 @@ export function createModel (builder: Builder): void {
           }
         },
         { key: 'attachments', displayProps: { key: 'attachments', suffix: true } },
-        // { key: 'comments', displayProps: { key: 'comments', suffix: true } },
+        { key: 'comments', displayProps: { key: 'comments', suffix: true } },
         {
           key: '',
           label: tracker.string.RelatedIssues,
@@ -462,14 +461,7 @@ export function createModel (builder: Builder): void {
         groupDepth: 1
       },
       options: lookupLeadOptions,
-      config: [
-        'attachedTo',
-        'status',
-        'attachments',
-        // 'comments',
-        'dueDate',
-        'assignee'
-      ],
+      config: ['attachedTo', 'status', 'attachments', 'comments', 'dueDate', 'assignee'],
       configOptions: {
         strict: true
       }

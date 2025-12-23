@@ -22,7 +22,7 @@ import { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import setting from '@hcengineering/setting'
 import view, { type Viewlet } from '@hcengineering/view'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import inventory from './plugin'
 export { inventoryId } from '@hcengineering/inventory'
@@ -78,9 +78,9 @@ export class TVariant extends TAttachedDoc implements Variant {
 export function createModel (builder: Builder): void {
   builder.createModel(TCategory, TProduct, TVariant)
 
-  builder.mixin(inventory.class.Product, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(inventory.class.Category, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(inventory.class.Variant, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, inventory.class.Product)
+  markClassMessageable(builder, inventory.class.Category)
+  markClassMessageable(builder, inventory.class.Variant)
 
   builder.mixin(inventory.class.Category, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: inventory.component.CategoryPresenter

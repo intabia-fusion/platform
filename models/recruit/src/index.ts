@@ -29,7 +29,7 @@ import { type IntlString } from '@hcengineering/platform'
 import { recruitId, type Applicant, RecruitEvents, type Vacancy } from '@hcengineering/recruit'
 import setting from '@hcengineering/setting'
 import { type KeyBinding, type ViewOptionModel, type ViewOptionsModel } from '@hcengineering/view'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import recruit from './plugin'
 import { createReviewModel, reviewTableConfig, reviewTableOptions } from './review'
@@ -46,10 +46,9 @@ export * from './types'
 export function createModel (builder: Builder): void {
   builder.createModel(TVacancy, TCandidate, TApplicant, TReview, TOpinion, TVacancyList, TApplicantMatch)
 
-  builder.mixin(recruit.class.Vacancy, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(recruit.class.Applicant, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(recruit.class.Review, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(recruit.mixin.Candidate, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, recruit.class.Vacancy)
+  markClassMessageable(builder, recruit.class.Applicant)
+  markClassMessageable(builder, recruit.class.Review)
 
   builder.mixin(recruit.class.Vacancy, core.class.Class, workbench.mixin.SpaceView, {
     view: {
@@ -277,7 +276,7 @@ export function createModel (builder: Builder): void {
         'city',
         'applications',
         'attachments',
-        // 'comments',
+        'comments',
         {
           // key: '$lookup.skills', // Required, since presenter require list of tag references or '' and TagsPopupPresenter
           key: '',
@@ -326,13 +325,7 @@ export function createModel (builder: Builder): void {
     {
       attachTo: recruit.class.Applicant,
       descriptor: view.viewlet.Table,
-      config: [
-        '',
-        '$lookup.space.name',
-        '$lookup.space.$lookup.company',
-        'status'
-        // , 'comments'
-      ],
+      config: ['', '$lookup.space.name', '$lookup.space.$lookup.company', 'status', 'comments'],
       configOptions: {
         sortable: true
       },
@@ -363,7 +356,7 @@ export function createModel (builder: Builder): void {
           key: '@applications',
           label: recruit.string.Applications
         },
-        // 'comments',
+        'comments',
         '$lookup.company',
         '$lookup.company.$lookup.channels',
         {
@@ -403,7 +396,7 @@ export function createModel (builder: Builder): void {
           key: '@applications',
           label: recruit.string.Applications
         },
-        // 'comments',
+        'comments',
         '$lookup.channels',
         {
           key: '@applications.modifiedOn',
@@ -438,7 +431,7 @@ export function createModel (builder: Builder): void {
         'assignee',
         'status',
         'attachments',
-        // 'comments',
+        'comments',
         'modifiedOn',
         {
           key: '$lookup.attachedTo.$lookup.channels',
@@ -499,7 +492,7 @@ export function createModel (builder: Builder): void {
         'assignee',
         'status',
         'attachments',
-        // 'comments',
+        'comments',
         {
           key: '',
           label: tracker.string.RelatedIssues,
@@ -625,7 +618,7 @@ export function createModel (builder: Builder): void {
           }
         },
         { key: 'attachments', displayProps: { key: 'attachments', suffix: true } },
-        // { key: 'comments', displayProps: { key: 'comments', suffix: true } },
+        { key: 'comments', displayProps: { key: 'comments', suffix: true } },
         {
           key: '',
           label: tracker.string.RelatedIssues,
@@ -691,7 +684,7 @@ export function createModel (builder: Builder): void {
           key: 'title',
           props: { kind: 'list', size: 'small', shouldShowName: false }
         },
-        // 'comments',
+        'comments',
         { key: '', displayProps: { grow: true } },
         {
           key: '$lookup.channels',
@@ -741,7 +734,7 @@ export function createModel (builder: Builder): void {
           label: recruit.string.Applications,
           props: { kind: 'list', size: 'small', shouldShowName: false }
         },
-        // 'comments',
+        'comments',
         {
           key: '$lookup.channels',
           label: contact.string.ContactInfo,
@@ -791,7 +784,7 @@ export function createModel (builder: Builder): void {
           label: recruit.string.Applications
         },
         'description',
-        // 'comments',
+        'comments',
         { key: '', displayProps: { grow: true } },
         {
           key: '$lookup.company',
@@ -844,7 +837,7 @@ export function createModel (builder: Builder): void {
         'status',
         'attachments',
         'dueDate',
-        // 'comments',
+        'comments',
         {
           key: 'company',
           label: recruit.string.Company

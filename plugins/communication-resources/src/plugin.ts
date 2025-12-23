@@ -28,7 +28,8 @@ export default mergeIds(communicationId, communication, {
   component: {
     CardMessagesSection: '' as AnyComponent,
     DirectIcon: '' as AnyComponent,
-    CreateDirect: '' as AnyComponent
+    CreateDirect: '' as AnyComponent,
+    CommentsNumberPresenter: '' as AnyComponent
   },
   poll: {
     PollPresenter: '' as AnyComponent,

@@ -490,6 +490,7 @@
     actions={[...defaultMessageInputActions, attachAction, ...uploadActions, ...appletActions]}
     on:submit={handleSubmit}
     on:update={onUpdate}
+    on:focus
     {autofocus}
     onCancel={onCancel ? handleCancel : undefined}
     onPaste={pasteAction}

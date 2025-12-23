@@ -74,7 +74,7 @@ import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
 import attachment from '@hcengineering/attachment'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import love from './plugin'
 
@@ -123,15 +123,6 @@ export class TRoom extends TDoc implements Room {
 
   @Prop(PropCollection(love.class.MeetingMinutes), love.string.MeetingMinutes)
     meetings?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 }
 
 @Model(love.class.Office, love.class.Room)
@@ -218,18 +209,9 @@ export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Tod
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
+  @Prop(TypeNumber(0), love.string.Transcription)
   @ReadOnly()
     transcription?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart, { editor: view.component.DateTimePresenter })
   @ReadOnly()
@@ -460,8 +442,8 @@ export function createModel (builder: Builder): void {
     updateAccessLevel: AccountRole.Guest
   })
 
-  builder.mixin(love.class.MeetingMinutes, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(love.class.Room, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, love.class.MeetingMinutes)
+  markClassMessageable(builder, love.class.Room)
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: love.component.MeetingMinutesPresenter

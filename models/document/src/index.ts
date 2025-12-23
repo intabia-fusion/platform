@@ -51,7 +51,7 @@ import workbench from '@hcengineering/model-workbench'
 import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import { definePermissions } from './permissions'
 import document from './plugin'
@@ -93,15 +93,6 @@ export class TDocument extends TDoc implements Document, Todoable {
 
   @Prop(Collection(tags.class.TagReference), document.string.Labels)
     labels?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   // TODO: FIXME
   // @Prop(Collection(activity.class.ActivityReference), document.string.Backlinks)
@@ -400,11 +391,9 @@ function defineDocument (builder: Builder): void {
     document.action.UnlockContent
   )
 
+  markClassMessageable(builder, document.class.Document)
+
   // Notifications
-
-  // TODO: FIXME
-  builder.mixin(document.class.Document, core.class.Class, communication.mixin.Messageable, {})
-
   builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
     attachedTo: document.class.Document,
     fields: ['createdBy', 'modifiedBy']

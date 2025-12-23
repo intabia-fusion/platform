@@ -22,7 +22,7 @@ import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import setting from '@hcengineering/setting'
 import pluginState, { type Issue, trackerId } from '@hcengineering/tracker'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -434,11 +434,11 @@ export function createModel (builder: Builder): void {
     TProjectTargetPreference
   )
 
-  builder.mixin(tracker.class.Project, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(tracker.class.Issue, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(tracker.class.Milestone, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(tracker.class.Component, core.class.Class, communication.mixin.Messageable, {})
-  builder.mixin(tracker.class.IssueTemplate, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, tracker.class.Project)
+  markClassMessageable(builder, tracker.class.Issue)
+  markClassMessageable(builder, tracker.class.Milestone)
+  markClassMessageable(builder, tracker.class.Component)
+  markClassMessageable(builder, tracker.class.IssueTemplate)
 
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.LinkIdProvider, {
     encode: tracker.function.GetIssueId,

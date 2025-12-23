@@ -47,9 +47,7 @@ import {
   TypeRef,
   TypeString,
   UX,
-  type Builder,
-  TypeNumber,
-  ReadOnly
+  type Builder
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import calendar from '@hcengineering/model-calendar'
@@ -59,7 +57,6 @@ import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
-import communication from '@hcengineering/communication'
 import hr from './plugin'
 
 export { hrId } from '@hcengineering/hr'
@@ -88,15 +85,6 @@ export class TDepartment extends TDoc implements Department {
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   avatar?: string | null
 
@@ -165,15 +153,6 @@ export class TRequest extends TAttachedDoc implements Request {
   @Prop(TypeRef(hr.class.RequestType), hr.string.RequestType)
   @Hidden()
     type!: Ref<RequestType>
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

@@ -220,6 +220,7 @@ export default function buildModel (): Builder {
     ],
     [settingModel, settingId],
     [emojiModel, emojiId],
+    [communicationModel, communicationId],
     [
       telegramModel,
       telegramId,
@@ -441,7 +442,6 @@ export default function buildModel (): Builder {
     ],
     [inboxModel, inboxId],
     [achievementModel, achievementId],
-    [communicationModel, communicationId],
     [mailModel, mailId],
     [
       billingModel,

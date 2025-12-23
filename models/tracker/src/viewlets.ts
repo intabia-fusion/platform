@@ -126,7 +126,7 @@ export function issueConfig (
       presenter: tracker.component.SubIssuesSelector,
       props: {}
     },
-    // { key: 'comments', displayProps: { key: key + 'comments', suffix: true } },
+    { key: 'comments', displayProps: { key: key + 'comments', suffix: true } },
     { key: 'attachments', displayProps: { key: key + 'attachments', suffix: true } },
     { key: '', displayProps: { grow: true } },
     {
@@ -488,8 +488,8 @@ export function defineViewlets (builder: Builder): void {
         'dueDate',
         'labels',
         'estimation',
-        'attachments'
-        // , 'comments'
+        'attachments',
+        'comments'
       ]
     },
     tracker.viewlet.IssueKanban

@@ -74,7 +74,6 @@ import {
   type TimeSpendReport
 } from '@hcengineering/tracker'
 import { type TaskType } from '@hcengineering/task'
-import communication from '@hcengineering/communication'
 import preference, { TPreference } from '@hcengineering/model-preference'
 
 import tracker from './plugin'
@@ -314,15 +313,6 @@ export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Prop(ArrOf(TypeRef(tracker.class.IssueTemplate)), tracker.string.IssueTemplate)
     children!: IssueTemplateChild[]
 
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
-
   @Prop(Collection(attachment.class.Attachment), tracker.string.Attachments)
     attachments!: number
 
@@ -376,15 +366,6 @@ export class TComponent extends TDoc implements Component {
   @Prop(TypeRef(contact.mixin.Employee), tracker.string.ComponentLead)
     lead!: Ref<Employee> | null
 
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
-
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
 
@@ -409,15 +390,6 @@ export class TMilestone extends TDoc implements Milestone {
   })
   @Index(IndexKind.Indexed)
     status!: MilestoneStatus
-
-  @Prop(TypeNumber(0), communication.string.Comments)
-  @ReadOnly()
-    comments?: number
-
-  @Prop(TypeNumber(0), communication.string.Activity)
-  @ReadOnly()
-  @Hidden()
-    activity?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number

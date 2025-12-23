@@ -19,7 +19,7 @@ import core from '@hcengineering/model-core'
 import view, { createAction, type Viewlet } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { surveyId } from '@hcengineering/survey'
-import communication from '@hcengineering/communication'
+import { markClassMessageable } from '@hcengineering/model-communication'
 
 import { TPoll, TSurvey } from './types'
 import survey from './plugin'
@@ -95,7 +95,7 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.SurveyPresenter
   })
 
-  builder.mixin(survey.class.Survey, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, survey.class.Survey)
 
   builder.createDoc<Viewlet>(
     view.class.Viewlet,
@@ -131,7 +131,7 @@ export function createModel (builder: Builder): void {
     presenter: survey.component.PollPresenter
   })
 
-  builder.mixin(survey.class.Poll, core.class.Class, communication.mixin.Messageable, {})
+  markClassMessageable(builder, survey.class.Poll)
 
   builder.mixin(survey.class.Poll, core.class.Class, view.mixin.CollectionEditor, {
     editor: survey.component.PollCollection
