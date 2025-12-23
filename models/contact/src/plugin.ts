@@ -114,10 +114,7 @@ export default mergeIds(contactId, contact, {
   ids: {
     // TODO: FIXME
     // OrganizationNotificationGroup: '' as Ref<NotificationGroup>,
-    // PersonNotificationGroup: '' as Ref<NotificationGroup>,
-    // OrganizationChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // PersonChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // EmployeeChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    // PersonNotificationGroup: '' as Ref<NotificationGroup>
   },
   action: {
     KickEmployee: '' as Ref<Action>,

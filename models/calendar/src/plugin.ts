@@ -66,7 +66,6 @@ export default mergeIds(calendarId, calendar, {
     CalendarEvent: '' as Ref<Viewlet>
   },
   ids: {
-    // UpdateRemainderActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
     // CalendarNotificationGroup: '' as Ref<NotificationGroup>,
     CalendarWidget: '' as Ref<Widget>,
     Settings: '' as Ref<Doc>

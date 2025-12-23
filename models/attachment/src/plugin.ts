@@ -44,11 +44,6 @@ export default mergeIds(attachmentId, attachment, {
     RemovedAttachment: '' as IntlString,
     ContentType: '' as IntlString
   },
-  ids: {
-    // TODO: FIXME
-    // AttachmentCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // AttachmentRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
-  },
   activity: {
     AttachmentsUpdatedMessage: '' as AnyComponent
   },

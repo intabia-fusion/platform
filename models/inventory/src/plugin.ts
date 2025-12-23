@@ -47,11 +47,6 @@ export default mergeIds(inventoryId, inventory, {
     ConfigLabel: '' as IntlString,
     ConfigDescription: '' as IntlString
   },
-  ids: {
-    // TODO: FIXME
-    // ProductChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // CategoryChatMessageViewlet: '' as Ref<ChatMessageViewlet>
-  },
   function: {
     ProductIdProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     CategoryIdProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>

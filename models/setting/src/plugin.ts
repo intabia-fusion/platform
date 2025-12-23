@@ -27,9 +27,7 @@ export default mergeIds(settingId, setting, {
     Configure: '' as Ref<Doc>
     // TODO: FIXME
     // SettingNotificationGroup: '' as Ref<NotificationGroup>,
-    // IntegrationDisabledNotification: '' as Ref<NotificationType>,
-    // TODO: FIXME
-    // UpdateIntegrationActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    // IntegrationDisabledNotification: '' as Ref<NotificationType>
   },
   component: {
     EnumSetting: '' as AnyComponent,

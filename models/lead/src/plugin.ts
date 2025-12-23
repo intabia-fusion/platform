@@ -63,8 +63,7 @@ export default mergeIds(leadId, lead, {
     // CustomerNotificationGroup: '' as Ref<NotificationGroup>,
     // FunnelNotificationGroup: '' as Ref<NotificationGroup>,
     // LeadCreateNotification: '' as Ref<NotificationType>,
-    // AssigneeNotification: '' as Ref<NotificationType>,
-    // LeadChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    // AssigneeNotification: '' as Ref<NotificationType>
   },
   descriptors: {
     Lead: '' as Ref<TaskTypeDescriptor>

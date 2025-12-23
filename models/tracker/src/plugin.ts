@@ -69,15 +69,6 @@ export default mergeIds(trackerId, tracker, {
     // TrackerNotificationGroup: '' as Ref<NotificationGroup>,
     // AssigneeNotification: '' as Ref<NotificationType>,
     BaseProjectType: '' as Ref<ProjectType>,
-    // IssueUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // IssueCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // IssueRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // MilestionUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // IssueTemplateUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // IssueChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // IssueTemplateChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // ComponentChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    // MilestoneChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
     DefaultProjectType: '' as Ref<ProjectType>
   },
   actionImpl: {

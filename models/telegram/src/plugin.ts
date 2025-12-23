@@ -37,9 +37,7 @@ export default mergeIds(telegramId, telegram, {
   },
   ids: {
     // TODO: FIXME
-    // NotificationGroup: '' as Ref<NotificationGroup>,
-    // TelegramMessageSharedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // TelegramMessageCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
+    // NotificationGroup: '' as Ref<NotificationGroup>
   },
   function: {
     GetCurrentEmployeeTG: '' as Resource<TemplateFieldFunc>,

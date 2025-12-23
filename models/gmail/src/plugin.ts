@@ -40,12 +40,6 @@ export default mergeIds(gmailId, gmail, {
     ConfigLabel: '' as IntlString,
     ConfigDescription: '' as IntlString
   },
-  ids: {
-    // TODO: FIXME
-    // EmailNotificationGroup: '' as Ref<NotificationGroup>,
-    // GmailSharedMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    // GmailWriteMessageActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
-  },
   activity: {
     GmailSharedMessage: '' as AnyComponent,
     GmailWriteMessage: '' as AnyComponent
