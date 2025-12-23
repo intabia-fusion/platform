@@ -26,6 +26,7 @@
   import { BuildModelKey } from '@hcengineering/view'
   import { enabledConfig, openDoc, showMenu, statusStore } from '@hcengineering/view-resources'
   import tracker from '@hcengineering/tracker'
+  import { CommentsNumberPresenter } from '@hcengineering/communication-resources'
 
   import lead from '../plugin'
   import LeadPresenter from './LeadPresenter.svelte'
@@ -105,8 +106,7 @@
         <AttachmentsPresenter value={object.attachments} {object} />
       {/if}
       {#if enabledConfig(config, 'comments')}
-        <!--        TODO: FIXME-->
-        <!--        <ChatMessagesPresenter value={object.comments} {object} />-->
+        <CommentsNumberPresenter value={object.comments} {object} />
       {/if}
     </div>
     {#if enabledConfig(config, 'assignee')}

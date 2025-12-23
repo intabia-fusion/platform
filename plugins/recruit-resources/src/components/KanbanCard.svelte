@@ -25,6 +25,7 @@
   import { Component, DueDatePresenter } from '@hcengineering/ui'
   import { BuildModelKey } from '@hcengineering/view'
   import { DocNavLink, ObjectPresenter, enabledConfig, statusStore } from '@hcengineering/view-resources'
+  import { CommentsNumberPresenter } from '@hcengineering/communication-resources'
 
   import ApplicationPresenter from './ApplicationPresenter.svelte'
 
@@ -130,18 +131,17 @@
         {#if (object.attachments ?? 0) > 0 && enabledConfig(config, 'attachments')}
           <AttachmentsPresenter value={object.attachments} {object} />
         {/if}
-        <!--TODO: FIXME-->
         {#if enabledConfig(config, 'comments')}
-          <!--          <ChatMessagesPresenter value={object.comments} {object} kind="list" size="x-small" />-->
-          <!--          {#if object.$lookup?.attachedTo}-->
-          <!--            <ChatMessagesPresenter-->
-          <!--              value={object.$lookup?.attachedTo?.comments}-->
-          <!--              object={object.$lookup?.attachedTo}-->
-          <!--              withInput={false}-->
-          <!--              kind="list"-->
-          <!--              size="x-small"-->
-          <!--            />-->
-          <!--          {/if}-->
+          <CommentsNumberPresenter value={object.comments} {object} kind="list" size="x-small" />
+          {#if object.$lookup?.attachedTo}
+            <CommentsNumberPresenter
+              value={object.$lookup?.attachedTo?.comments}
+              object={object.$lookup?.attachedTo}
+              readonly={true}
+              kind="list"
+              size="x-small"
+            />
+          {/if}
         {/if}
       </div>
       {#if enabledConfig(config, 'assignee')}

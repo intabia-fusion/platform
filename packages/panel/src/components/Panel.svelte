@@ -117,9 +117,9 @@
     // if (showActivity && fn?.()) {
     //   return
     // }
-    // if (lastHref !== window.location.href) {
-    //   startScrollHeightCheck()
-    // }
+    if (lastHref !== window.location.href) {
+      startScrollHeightCheck()
+    }
   })
 </script>
 

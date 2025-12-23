@@ -62,6 +62,7 @@
     showMenu,
     statusStore
   } from '@hcengineering/view-resources'
+  import { CommentsNumberPresenter } from '@hcengineering/communication-resources'
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'
@@ -476,12 +477,12 @@
                   {#if enabledConfig(config, 'attachments') && (object.attachments ?? 0) > 0}
                     <AttachmentsPresenter value={object.attachments} {object} />
                   {/if}
-                  <!--                  <ChatMessagesPresenter value={object.comments} {object} />-->
-                  <!--                  <ChatMessagesPresenter-->
-                  <!--                    object={object.$lookup?.attachedTo}-->
-                  <!--                    value={object.$lookup?.attachedTo?.comments}-->
-                  <!--                    withInput={false}-->
-                  <!--                  />-->
+                  <CommentsNumberPresenter value={object.comments} {object} />
+                  <CommentsNumberPresenter
+                    object={object.$lookup?.attachedTo}
+                    value={object.$lookup?.attachedTo?.comments}
+                    readonly={true}
+                  />
                 </div>
               </div>
             {:else}

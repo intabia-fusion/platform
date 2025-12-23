@@ -14,7 +14,7 @@
 //
 
 import type { Class, Doc, Ref } from '@hcengineering/core'
-import type { CardID, MessageID } from '@hcengineering/communication-types'
+import type { MessageID } from '@hcengineering/communication-types'
 
 export enum BlobSourceType {
   Doc = 'doc',
@@ -24,12 +24,13 @@ export enum BlobSourceType {
 export interface BlobSourceDoc {
   source: BlobSourceType.Doc
   objectClass: Ref<Class<Doc>>
-  objectId: string
+  objectId: Ref<Doc>
 }
 
 export interface BlobSourceMessage {
   source: BlobSourceType.Message
-  cardId: CardID
+  objectClass: Ref<Class<Doc>>
+  objectId: Ref<Doc>
   messageId: MessageID
 }
 

@@ -6516,9 +6516,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -19997,6 +19994,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/communication-resources':
+        specifier: workspace:^0.7.0
+        version: link:../communication-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -22935,6 +22935,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
+      '@hcengineering/communication-resources':
+        specifier: workspace:^0.7.0
+        version: link:../communication-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact

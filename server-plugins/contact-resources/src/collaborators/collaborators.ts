@@ -28,7 +28,8 @@ import core, {
   TxUpdateDoc
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
-import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
+import { getAddCollaboratorsTxes, getPersonSpaces } from '@hcengineering/server-contact'
+import contact from '@hcengineering/contact'
 
 import {
   getCollaboratorsCached,
@@ -73,6 +74,16 @@ async function setCollaboratorsOnDocCreate (
   docCache.set(doc._id, doc)
 
   const collaborators = await getCollaboratorsFromDocFields(ctx, control, doc, mixin)
+
+  const personSpaces = await getPersonSpaces(control)
+  const personSpace = personSpaces.find((it) => it._id === doc.space)
+
+  if (personSpace != null) {
+    const spacePerson = (await control.findAll(control.ctx, contact.class.Person, { _id: personSpace.person }))[0]
+    if (spacePerson?.personUuid != null) {
+      collaborators.push(spacePerson.personUuid as AccountUuid)
+    }
+  }
 
   res.push(...getAddCollaboratorsTxes(tx.objectId, tx.objectClass, tx.objectSpace, control, collaborators))
   res.push(...(await pushCollaboratorsToPublicSpace(control, doc, collaborators, docCache)))

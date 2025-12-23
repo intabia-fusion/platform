@@ -15,6 +15,7 @@
 <script lang="ts">
   import core, { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
 
   import ClassAttributeBar from './ClassAttributeBar.svelte'
 
@@ -46,21 +47,20 @@
   isMainClass
   on:update
 />
-<!--TODO: FIXME-->
-<!--{#each _mixins as mixin}-->
-<!--  {@const to = !hierarchy.hasMixin(mixin, setting.mixin.UserMixin) ? object._class : mixin.extends}-->
-<!--  {#if !hierarchy.hasMixin(mixin, setting.mixin.Editable) || hierarchy.as(mixin, setting.mixin.Editable).value}-->
-<!--    {#key mixin._id}-->
-<!--      <ClassAttributeBar-->
-<!--        _class={mixin._id}-->
-<!--        object={hierarchy.as(object, mixin._id)}-->
-<!--        {ignoreKeys}-->
-<!--        {to}-->
-<!--        {readonly}-->
-<!--        allowedCollections={_allowedCollections}-->
-<!--        {showHeader}-->
-<!--        on:update-->
-<!--      />-->
-<!--    {/key}-->
-<!--  {/if}-->
-<!--{/each}-->
+{#each _mixins as mixin}
+  {@const to = !hierarchy.hasMixin(mixin, setting.mixin.UserMixin) ? object._class : mixin.extends}
+  {#if !hierarchy.hasMixin(mixin, setting.mixin.Editable) || hierarchy.as(mixin, setting.mixin.Editable).value}
+    {#key mixin._id}
+      <ClassAttributeBar
+        _class={mixin._id}
+        object={hierarchy.as(object, mixin._id)}
+        {ignoreKeys}
+        {to}
+        {readonly}
+        allowedCollections={_allowedCollections}
+        {showHeader}
+        on:update
+      />
+    {/key}
+  {/if}
+{/each}

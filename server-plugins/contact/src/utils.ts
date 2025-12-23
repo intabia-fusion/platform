@@ -264,7 +264,7 @@ export function getAddCollaboratorsTxes (
   collaborators: AccountUuid[]
 ): TxCreateDoc<Collaborator>[] {
   const res: TxCreateDoc<Collaborator>[] = []
-  for (const collaborator of collaborators) {
+  for (const collaborator of new Set(collaborators)) {
     const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
       attachedTo: objectId,
       attachedToClass: objectClass,

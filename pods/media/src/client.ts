@@ -132,9 +132,8 @@ export class WorkspaceClient {
 
     const event: AttachmentPatchEvent = {
       type: MessageEventType.AttachmentPatch,
-      docId: result.source.cardId,
-      // docClass: result.source.
-      docClass: '' as any,
+      docId: result.source.objectId,
+      docClass: result.source.objectClass,
       messageId: result.source.messageId,
       socialId: core.account.System,
       date: new Date(),

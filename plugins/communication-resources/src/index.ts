@@ -54,6 +54,7 @@ export { default as ExtendedMessagePreview } from './components/preview/Extended
 export { default as PreviewTemplate } from './components/preview/PreviewTemplate.svelte'
 export { default as MessagesSection } from './components/MessagesSection.svelte'
 export { default as MessagesPopup } from './components/MessagesPopup.svelte'
+export { default as CommentsNumberPresenter } from './components/CommentsNumberPresenter.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
