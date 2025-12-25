@@ -110,6 +110,29 @@ class PlatformQueueImpl implements PlatformQueue {
     return result
   }
 
+  /**
+   * Create a consumer that processes messages in batches (per partition).
+   * The handler receives an ordered array of messages and the whole batch
+   * will be retried in case of failures.
+   */
+  createBatchConsumer<T>(
+    ctx: MeasureContext,
+    topic: QueueTopic | string,
+    groupId: string,
+    onMessage: (ctx: MeasureContext, msgs: ConsumerMessage<T>[], queue: ConsumerControl) => Promise<void>,
+    options?: {
+      fromBegining?: boolean
+      retryDelay?: number
+      maxRetryDelay?: number
+      batchSize?: number
+      batchTimeout?: number
+    }
+  ): ConsumerHandle {
+    const result = new PlatformQueueBatchConsumerImpl(ctx, this.kafka, this.config, topic, groupId, onMessage, options)
+    this.consumers.push(result)
+    return result
+  }
+
   async checkCreateTopic (topic: QueueTopic | string, topics: Set<string>, numPartitions?: number): Promise<void> {
     const kTopic = getKafkaTopicId(topic, this.config)
     if (!topics.has(kTopic)) {
@@ -306,6 +329,169 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
             }
           }
         }
+      }
+    })
+  }
+
+  async doConnect (): Promise<void> {
+    this.cc.on('consumer.connect', () => {
+      this.connected = true
+      this.ctx.info('consumer connected to queue')
+    })
+    this.cc.on('consumer.disconnect', () => {
+      this.connected = false
+      this.ctx.warn('consumer disconnected from queue')
+    })
+    await this.cc.connect()
+  }
+
+  async doSubscribe (): Promise<void> {
+    await this.cc.subscribe({
+      topic: getKafkaTopicId(this.topic, this.config),
+      fromBeginning: this.options?.fromBegining
+    })
+  }
+
+  isConnected (): boolean {
+    return this.connected
+  }
+
+  close (): Promise<void> {
+    return this.cc.disconnect()
+  }
+}
+
+/**
+ * Batch consumer implementation.
+ * Accumulates messages per partition and sends them to the provided handler
+ * as an ordered array. The entire batch is retried on error.
+ */
+class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
+  connected = false
+  cc: Consumer
+  constructor (
+    readonly ctx: MeasureContext,
+    readonly kafka: Kafka,
+    readonly config: QueueConfig,
+    private readonly topic: QueueTopic | string,
+    groupId: string,
+    private readonly onMessage: (
+      ctx: MeasureContext,
+      msgs: ConsumerMessage<any>[],
+      queue: ConsumerControl
+    ) => Promise<void>,
+    private readonly options?: {
+      fromBegining?: boolean
+      retryDelay?: number // Initial retry delay in milliseconds (default 1000)
+      maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
+      batchSize?: number
+      batchTimeout?: number
+    }
+  ) {
+    this.cc = this.kafka.consumer({
+      groupId: `${getKafkaTopicId(this.topic, this.config)}-${groupId}`,
+      allowAutoTopicCreation: true
+    })
+
+    void this.start().catch((err) => {
+      ctx.error('failed to consume', { err })
+    })
+  }
+
+  async start (): Promise<void> {
+    await this.doConnect()
+    await this.doSubscribe()
+
+    // Per-partition state
+    const partitionStates = new Map<number, {
+      messages: Array<{ workspace: WorkspaceUuid, value: any, meta: any }>
+      timer?: ReturnType<typeof setTimeout>
+      processing?: boolean
+      waiters: Array<{ resolve: () => void, reject: (err: any) => void }>
+    }>()
+
+    const batchSize = this.options?.batchSize ?? 1
+    const batchTimeout = this.options?.batchTimeout ?? 100
+
+    const flush = async (partitionNum: number, heartbeat: () => Promise<void>, pause: () => void): Promise<void> => {
+      const state = partitionStates.get(partitionNum)
+      // Be explicit about undefined checks to satisfy linters and avoid nullable boolean pitfalls
+      if (state === undefined || state.processing === true || state.messages.length === 0) return
+      state.processing = true
+      if (state.timer !== undefined) {
+        clearTimeout(state.timer)
+        state.timer = undefined
+      }
+      const batch = state.messages.splice(0, state.messages.length)
+      const batchWaiters = state.waiters.splice(0, batch.length)
+      const msgs = batch.map((m) => ({ workspace: m.workspace, value: m.value }))
+      const metas = batch.map((m) => m.meta)
+
+      const retryDelay = this.options?.retryDelay ?? 1000
+      const maxRetryDelay = this.options?.maxRetryDelay ?? 10
+      let to = 1
+      while (true) {
+        try {
+          // Pass simple metadata for batch processing (avoid passing raw array to meta field)
+          await this.ctx.with('handle-msg', {}, (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }), {}, { meta: { batchCount: metas.length } })
+          for (const w of batchWaiters) w.resolve()
+          state.processing = false
+          // If more messages arrived while processing, ensure they will be flushed
+          if (state.messages.length >= (this.options?.batchSize ?? 1)) {
+            void flush(partitionNum, heartbeat, pause)
+          } else if (state.messages.length > 0 && state.timer === undefined) {
+            state.timer = setTimeout(() => {
+              void flush(partitionNum, heartbeat, pause)
+            }, this.options?.batchTimeout ?? 100)
+          }
+          break
+        } catch (err: any) {
+          this.ctx.error('failed to process message batch', { err, partition: partitionNum, size: batch.length })
+          await heartbeat()
+          await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
+          if (to < maxRetryDelay) {
+            to++
+          }
+        }
+      }
+    }
+
+    await this.cc.run({
+      eachMessage: async ({ topic, partition, message, pause, heartbeat }) => {
+        const msgKey = message.key?.toString() ?? ''
+        const msgData = JSON.parse(message.value?.toString() ?? '{}')
+        const meta = JSON.parse(message.headers?.meta?.toString() ?? '{}')
+        const workspace = (message.headers?.workspace?.toString() ?? msgKey) as WorkspaceUuid
+
+        const partitionNum = partition ?? 0
+        let state = partitionStates.get(partitionNum)
+        if (state === undefined) {
+          state = { messages: [], waiters: [] }
+          partitionStates.set(partitionNum, state)
+        }
+
+        state.messages.push({ workspace, value: msgData, meta })
+
+        // Schedule flush if not already scheduled
+        if (state.timer === undefined) {
+          state.timer = setTimeout(() => {
+            void flush(partitionNum, heartbeat, pause)
+          }, batchTimeout)
+        }
+
+        // Trigger flush immediately if we reached batch size
+        if (state.messages.length >= batchSize && state.processing !== true) {
+          if (state.timer !== undefined) {
+            clearTimeout(state.timer)
+            state.timer = undefined
+          }
+          void flush(partitionNum, heartbeat, pause)
+        }
+
+        // Wait until this message is processed as part of a batch
+        await new Promise<void>((resolve, reject) => {
+          state.waiters.push({ resolve, reject })
+        })
       }
     })
   }
