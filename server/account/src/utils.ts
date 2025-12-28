@@ -570,12 +570,7 @@ export async function sendOtpEmail (
   otp: string,
   email: string
 ): Promise<void> {
-  const mailURL = getMetadata(accountPlugin.metadata.MAIL_URL)
-  if (mailURL === undefined || mailURL === '') {
-    ctx.error('Please provide email service url to enable email otp')
-    return
-  }
-  const mailAuth = getMetadata(accountPlugin.metadata.MAIL_AUTH_TOKEN)
+  const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
 
   const lang = branding?.language
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
@@ -585,22 +580,16 @@ export async function sendOtpEmail (
   const subject = await translate(accountPlugin.string.OtpSubject, { code: otp, app }, lang)
 
   const to = email
-  const response = await fetch(concatLink(mailURL, '/send'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-    },
-    body: JSON.stringify({
+
+  await notificationProducer?.send(ctx, '' as WorkspaceUuid, [{
+    type: 'email',
+    data: {
       text,
       html,
       subject,
       to
-    })
-  })
-  if (!response.ok) {
-    ctx.error(`Failed to send otp email: ${response.statusText}`, { to })
-  }
+    }
+  }], to)
 }
 
 export async function isOtpValid (db: AccountDB, socialId: PersonId, code: string): Promise<boolean> {
@@ -1249,13 +1238,7 @@ export async function sendEmailConfirmation (
   account: PersonUuid,
   email: string
 ): Promise<void> {
-  const mailURL = getMetadata(accountPlugin.metadata.MAIL_URL)
-  if (mailURL === undefined || mailURL === '') {
-    ctx.error('Please provide MAIL_URL to enable email confirmations.')
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
-  }
-
-  const mailAuth = getMetadata(accountPlugin.metadata.MAIL_AUTH_TOKEN)
+  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
 
   const front = branding?.front ?? getMetadata(accountPlugin.metadata.FrontURL)
   if (front === undefined || front === '') {
@@ -1275,22 +1258,15 @@ export async function sendEmailConfirmation (
   const html = await translate(accountPlugin.string.ConfirmationHTML, { name, link }, lang)
   const subject = await translate(accountPlugin.string.ConfirmationSubject, { name }, lang)
 
-  const response = await fetch(concatLink(mailURL, '/send'), {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-    },
-    body: JSON.stringify({
+  await mailQueue?.send(ctx, '' as WorkspaceUuid, [{
+    type: 'email',
+    data: {
       text,
       html,
       subject,
       to: email
-    })
-  })
-  if (!response.ok) {
-    ctx.error(`Failed to send email confirmation: ${response.statusText}`, { email })
-  }
+    }
+  }], email)
 }
 
 export async function confirmEmail (
@@ -1411,17 +1387,6 @@ export async function getSocialIdByKey (db: AccountDB, socialKey: string): Promi
 
 export async function getEmailSocialId (db: AccountDB, email: string): Promise<SocialId | null> {
   return await db.socialId.findOne({ type: SocialIdType.EMAIL, value: email })
-}
-
-export function getMailUrl (): { mailURL: string, mailAuth: string | undefined } {
-  const mailURL = getMetadata(accountPlugin.metadata.MAIL_URL)
-
-  if (mailURL === undefined || mailURL === '') {
-    throw new Error('Please provide email service url')
-  }
-  const mailAuth = getMetadata(accountPlugin.metadata.MAIL_AUTH_TOKEN)
-
-  return { mailURL, mailAuth }
 }
 
 export function getFrontUrl (branding: Branding | null): string {
@@ -1776,23 +1741,18 @@ interface EmailInfo {
 
 export async function sendEmail (info: EmailInfo, ctx: MeasureContext): Promise<void> {
   const { text, html, subject, to } = info
-  const { mailURL, mailAuth } = getMailUrl()
-  const response = await fetch(concatLink(mailURL, '/send'), {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-    },
-    body: JSON.stringify({
+
+  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
+
+  await mailQueue?.send(ctx, '' as WorkspaceUuid, [{
+    type: 'email',
+    data: {
       text,
       html,
       subject,
       to
-    })
-  })
-  if (!response.ok) {
-    ctx.error(`Failed to send mail: ${response.statusText}`, { to })
-  }
+    }
+  }], to)
 }
 
 export function sanitizeEmail (email: string): string {

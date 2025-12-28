@@ -66,6 +66,7 @@ export interface PlatformQueue {
       fromBegining?: boolean
       retryDelay?: number // Initial retry delay in milliseconds (default 1000)
       maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
+      sessionTimeout?: number // Maximum time in milliseconds between heartbeats/processing (optional)
     }
   ) => ConsumerHandle
 
@@ -85,6 +86,7 @@ export interface PlatformQueue {
       maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
       batchSize?: number // Number of messages to accumulate before flushing
       batchTimeout?: number // Maximum time in milliseconds to wait for batch to fill before flushing
+      sessionTimeout?: number // Maximum time in milliseconds between heartbeats/processing (optional)
     }
   ) => ConsumerHandle
 

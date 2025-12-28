@@ -83,7 +83,6 @@ import {
   getEndpointInfo,
   getFrontUrl,
   getInviteEmail,
-  getMailUrl,
   getPersonName,
   getRegions,
   getRolePower,
@@ -304,8 +303,9 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
   }
 
-  const mailURL = getMetadata(accountPlugin.metadata.MAIL_URL)
-  const forceConfirmation = mailURL !== undefined && mailURL !== ''
+  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
+  console.error('mailQueue', JSON.stringify(mailQueue))
+  const forceConfirmation = mailQueue !== undefined
   if (forceConfirmation) {
     const normalizedEmail = cleanEmail(email)
 
@@ -1308,7 +1308,7 @@ export async function requestPasswordReset (
     )
   }
 
-  const { mailURL, mailAuth } = getMailUrl()
+  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
   const front = getFrontUrl(branding)
 
   const token = generateToken(account.uuid, undefined, {
@@ -1321,28 +1321,17 @@ export async function requestPasswordReset (
   const html = await translate(accountPlugin.string.RecoveryHTML, { link }, lang)
   const subject = await translate(accountPlugin.string.RecoverySubject, {}, lang)
 
-  const response = await fetch(concatLink(mailURL, '/send'), {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-    },
-    body: JSON.stringify({
-      text,
-      html,
-      subject,
-      to: normalizedEmail
-    })
-  })
-  if (response.ok) {
-    ctx.info('Password reset email sent', { email, normalizedEmail, account: account.uuid })
-  } else {
-    ctx.error(`Failed to send reset password email: ${response.statusText}`, {
-      email,
-      normalizedEmail,
-      account: account.uuid
-    })
-  }
+  await mailQueue?.send(ctx, '' as WorkspaceUuid, [
+    {
+      type: 'email',
+      data: {
+        text,
+        html,
+        subject,
+        to: normalizedEmail
+      }
+    }
+  ], normalizedEmail)
 }
 
 export async function restorePassword (

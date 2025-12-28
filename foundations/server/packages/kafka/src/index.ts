@@ -282,10 +282,12 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
       fromBegining?: boolean
       retryDelay?: number // Initial retry delay in milliseconds (default 1000)
       maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
+      sessionTimeout?: number // Optional session timeout in milliseconds
     }
   ) {
     this.cc = this.kafka.consumer({
       groupId: `${getKafkaTopicId(this.topic, this.config)}-${groupId}`,
+      sessionTimeout: this.options?.sessionTimeout,
       allowAutoTopicCreation: true
     })
 
@@ -322,7 +324,12 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
             break
           } catch (err: any) {
             this.ctx.error('failed to process message', { err, msgKey, msgData, workspace })
-            await heartbeat()
+            try {
+              await heartbeat()
+            } catch (hbErr) {
+              // Ignore transient heartbeat errors during retry attempts to reduce flakiness.
+              this.ctx.warn('heartbeat failed during retry, ignoring transient error', { err: hbErr })
+            }
             await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
             if (to < maxRetryDelay) {
               to++
@@ -386,10 +393,12 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
       batchSize?: number
       batchTimeout?: number
+      sessionTimeout?: number // Optional session timeout in milliseconds
     }
   ) {
     this.cc = this.kafka.consumer({
       groupId: `${getKafkaTopicId(this.topic, this.config)}-${groupId}`,
+      sessionTimeout: this.options?.sessionTimeout,
       allowAutoTopicCreation: true
     })
 
@@ -447,7 +456,12 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
           break
         } catch (err: any) {
           this.ctx.error('failed to process message batch', { err, partition: partitionNum, size: batch.length })
-          await heartbeat()
+          try {
+            await heartbeat()
+          } catch (hbErr) {
+            // Ignore transient heartbeat errors during batch retry attempts to reduce flakiness.
+            this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', { err: hbErr, partition: partitionNum })
+          }
           await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
           if (to < maxRetryDelay) {
             to++

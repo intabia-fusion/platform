@@ -21,12 +21,13 @@ import { join } from 'path'
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { MeasureContext, newMetrics } from '@hcengineering/core'
-import { initStatisticsContext } from '@hcengineering/server-core'
+import { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
 
 import config from './config'
 import { MailClient } from './mail'
 import { createServer, listen } from './server'
-import { Endpoint } from './types'
+import { AccountNotification, EmailNotification, Endpoint } from './types'
+import { getPlatformQueue } from '@hcengineering/kafka'
 
 export const main = async (): Promise<void> => {
   configureAnalytics('mail', process.env.VERSION ?? '0.7.0')
@@ -47,6 +48,29 @@ export const main = async (): Promise<void> => {
   const client = new MailClient()
   measureCtx.info('Mail service has been started')
 
+  const platformQueue = getPlatformQueue('mail')
+
+  const notificationConsumer = platformQueue.createConsumer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue, 'mail-notifications',
+    async (ctx, message, control) => {
+      if (message.value.type === 'email') {
+        // Only emails are supported for now.
+        const emsg: SendMailOptions = {
+          ...(message.value.data as EmailNotification)
+        }
+        const fromAddress = config.source
+        // When sending system message, ensure we enable replying to a different domain as needed
+        if (config.replyTo !== undefined && fromAddress === config.source) {
+          emsg.replyTo = config.replyTo
+        }
+        emsg.from = fromAddress
+        try {
+          await client.sendMessage(emsg, ctx)
+        } catch (err: any) {
+          ctx.error(err.message)
+        }
+      }
+    })
+
   const endpoints: Endpoint[] = [
     {
       endpoint: '/send',
@@ -60,6 +84,8 @@ export const main = async (): Promise<void> => {
   const server = listen(createServer(endpoints), config.port)
 
   const shutdown = (): void => {
+    void notificationConsumer.close()
+    void platformQueue.shutdown()
     server.close(() => {
       process.exit()
     })

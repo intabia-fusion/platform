@@ -11,7 +11,9 @@ import account, {
   getAccountDB,
   getAllTransactors,
   getMethods,
-  cleanExpiredOtp
+  cleanExpiredOtp,
+  accountPlugin,
+  type AccountNotification
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -28,6 +30,9 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { migrateFromOldAccounts } from './migration/migration'
+
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { QueueTopic } from '@hcengineering/server-core'
 
 export * from './migration/utils'
 export * from './migration/types'
@@ -90,6 +95,11 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
+  const platformQueue = getPlatformQueue('account')
+
+  const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
+  setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
+
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
       case 'en':
@@ -100,9 +110,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
         return accountEn
     }
   })
-
-  const mailUrl = process.env.MAIL_URL
-  const mailAuthToken = process.env.MAIL_AUTH_TOKEN
 
   const frontURL = process.env.FRONT_URL
   const productName = process.env.PRODUCT_NAME
@@ -124,8 +131,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.ProductName, productName)
   setMetadata(account.metadata.OtpTimeToLiveSec, parseInt(process.env.OTP_TIME_TO_LIVE ?? '60'))
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
-  setMetadata(account.metadata.MAIL_URL, mailUrl)
-  setMetadata(account.metadata.MAIL_AUTH_TOKEN, mailAuthToken)
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
 
@@ -133,7 +138,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.WsLivenessDays, wsLivenessDays)
 
   setMetadata(serverToken.metadata.Secret, serverSecret)
-  // Force undefied, for user tokens do not include service
+  // Force undefined, for user tokens do not include service
   setMetadata(serverToken.metadata.Service, undefined)
 
   const hasSignUp = process.env.DISABLE_SIGNUP !== 'true'
@@ -458,6 +463,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const close = (): void => {
     onClose?.()
+    void notificationProducer.close()
+    void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()
     })

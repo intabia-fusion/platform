@@ -17,11 +17,20 @@ import { config as dotenvConfig } from 'dotenv'
 dotenvConfig()
 
 export interface Config {
-  port: number
+  /**
+   * queue - receive from a queue and send to smtp server
+   * server - receive from queue and push to providers
+   */
+  mode: 'queue' | 'server' | 'client'
+  port?: number
   source?: string
   replyTo?: string
   sesConfig?: SesConfig
   smtpConfig?: SmtpConfig
+
+  // client mode operations.
+  serverUrl?: string
+  serverToken?: string
 }
 
 export interface SesConfig {
@@ -81,7 +90,9 @@ const envMap = {
   SmtpPassword: 'SMTP_PASSWORD',
   SmtpTlsMode: 'SMTP_TLS_MODE', // TLS mode, see TlsOptions for possible values
   SmtpDebugLog: 'SMTP_DEBUG_LOG', // Enable debug logging for SMTP
-  SmtpAllowSelfSigned: 'SMTP_ALLOW_SELF_SIGNED' // Allow self-signed certificates (not recommended for production use)
+  SmtpAllowSelfSigned: 'SMTP_ALLOW_SELF_SIGNED', // Allow self-signed certificates (not recommended for production use)
+
+  Mode: 'MODE' // Default one, will listen for platform queue for sending messages.
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
