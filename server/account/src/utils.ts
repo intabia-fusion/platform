@@ -581,15 +581,22 @@ export async function sendOtpEmail (
 
   const to = email
 
-  await notificationProducer?.send(ctx, '' as WorkspaceUuid, [{
-    type: 'email',
-    data: {
-      text,
-      html,
-      subject,
-      to
-    }
-  }], to)
+  await notificationProducer?.send(
+    ctx,
+    '' as WorkspaceUuid,
+    [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to
+        }
+      }
+    ],
+    to
+  )
 }
 
 export async function isOtpValid (db: AccountDB, socialId: PersonId, code: string): Promise<boolean> {
@@ -1258,15 +1265,22 @@ export async function sendEmailConfirmation (
   const html = await translate(accountPlugin.string.ConfirmationHTML, { name, link }, lang)
   const subject = await translate(accountPlugin.string.ConfirmationSubject, { name }, lang)
 
-  await mailQueue?.send(ctx, '' as WorkspaceUuid, [{
-    type: 'email',
-    data: {
-      text,
-      html,
-      subject,
-      to: email
-    }
-  }], email)
+  await mailQueue?.send(
+    ctx,
+    '' as WorkspaceUuid,
+    [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to: email
+        }
+      }
+    ],
+    email
+  )
 }
 
 export async function confirmEmail (
@@ -1744,15 +1758,22 @@ export async function sendEmail (info: EmailInfo, ctx: MeasureContext): Promise<
 
   const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
 
-  await mailQueue?.send(ctx, '' as WorkspaceUuid, [{
-    type: 'email',
-    data: {
-      text,
-      html,
-      subject,
-      to
-    }
-  }], to)
+  await mailQueue?.send(
+    ctx,
+    '' as WorkspaceUuid,
+    [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to
+        }
+      }
+    ],
+    to
+  )
 }
 
 export function sanitizeEmail (email: string): string {

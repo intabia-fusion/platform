@@ -348,7 +348,9 @@ describe('ClisrServer and ClisrClient consistency', () => {
       const sent: any[] = []
       const cs = createFakeCS(sent)
       let closed = false
-      cs.close = () => { closed = true }
+      cs.close = () => {
+        closed = true
+      }
 
       const session = {
         hello: {},
@@ -367,7 +369,6 @@ describe('ClisrServer and ClisrClient consistency', () => {
       server.eventHandlers.push(async (sessionId, ev) => {
         calls.push({ ev, id: sessionId })
       })
-
       ;(server as any).sessions.set(session.sid, session)
 
       await server.handleTick()
@@ -401,8 +402,12 @@ describe('ClisrServer and ClisrClient consistency', () => {
     }
 
     let calledErr = false
-    server.eventHandlers.push(async () => { throw new Error('boom') })
-    jest.spyOn((server as any).ctx, 'error').mockImplementation(() => { calledErr = true })
+    server.eventHandlers.push(async () => {
+      throw new Error('boom')
+    })
+    jest.spyOn((server as any).ctx, 'error').mockImplementation(() => {
+      calledErr = true
+    })
 
     const helloReq: HelloRequest = {
       method: 'hello',
@@ -488,7 +493,9 @@ describe('ClisrServer and ClisrClient consistency', () => {
     sess.hello = {}
 
     // schedule clearing of backpressure on next tick
-    setImmediate(() => { ws.bufferedAmount = 0 })
+    setImmediate(() => {
+      ws.bufferedAmount = 0
+    })
 
     const msg = { id: 'test-id', result: { method: 'x', params: [], meta: {} }, time: Date.now() }
     await sess.socket.send((server as any).ctx, msg)
@@ -514,8 +521,10 @@ describe('ClisrServer and ClisrClient consistency', () => {
       terminate: jest.fn()
     }
     const compressSpy = jest.fn().mockResolvedValue(Buffer.from('x'))
-    const cs = createConnectionSocket(ws, { remoteAddress: '127.0.0.1', userAgent: '', language: '' }, rpc, { compress: compressSpy })
-    const errSpy = jest.spyOn((ctx as any), 'error')
+    const cs = createConnectionSocket(ws, { remoteAddress: '127.0.0.1', userAgent: '', language: '' }, rpc, {
+      compress: compressSpy
+    })
+    const errSpy = jest.spyOn(ctx as any, 'error')
     const analyticsSpy = jest.spyOn(Analytics, 'handleError').mockImplementation(() => {})
     const msg: any = { id: 'e1', result: { method: 'x', params: [], meta: {} }, time: Date.now() }
     await cs.send(ctx, msg)
@@ -541,8 +550,10 @@ describe('ClisrServer and ClisrClient consistency', () => {
       terminate: jest.fn()
     }
     const compressSpy = jest.fn().mockResolvedValue(Buffer.from('x'))
-    const cs = createConnectionSocket(ws, { remoteAddress: '127.0.0.1', userAgent: '', language: '' }, rpc, { compress: compressSpy })
-    const errSpy = jest.spyOn((ctx as any), 'error')
+    const cs = createConnectionSocket(ws, { remoteAddress: '127.0.0.1', userAgent: '', language: '' }, rpc, {
+      compress: compressSpy
+    })
+    const errSpy = jest.spyOn(ctx as any, 'error')
     const analyticsSpy = jest.spyOn(Analytics, 'handleError').mockImplementation(() => {})
     const id = 'e3'
     const result = { method: 'x', params: [], meta: {} }
@@ -564,7 +575,16 @@ describe('ClisrServer and ClisrClient consistency', () => {
 
   it('readRequest recognizes ping buffers and returns ping request', () => {
     const rpc = new RPCHandler()
-    const ws: any = { bufferedAmount: 0, readyState: 1, OPEN: 1, CLOSED: 2, CLOSING: 3, send: jest.fn(), close: jest.fn(), terminate: jest.fn() }
+    const ws: any = {
+      bufferedAmount: 0,
+      readyState: 1,
+      OPEN: 1,
+      CLOSED: 2,
+      CLOSING: 3,
+      send: jest.fn(),
+      close: jest.fn(),
+      terminate: jest.fn()
+    }
     const cs = createConnectionSocket(ws, { remoteAddress: '127.0.0.1', userAgent: '', language: '' }, rpc)
 
     const rr = cs.readRequest(Buffer.from([FRAME_PING]), false)

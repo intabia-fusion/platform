@@ -1,5 +1,12 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import { type ConsumerHandle, type PlatformQueue, type PlatformQueueProducer, type QueueTopic, type ConsumerMessage, type ConsumerControl } from './types'
+import {
+  type ConsumerHandle,
+  type PlatformQueue,
+  type PlatformQueueProducer,
+  type QueueTopic,
+  type ConsumerMessage,
+  type ConsumerControl
+} from './types'
 
 /**
  * A dummy implementation of PlatformQueueProducer for testing and development
@@ -38,11 +45,7 @@ export class DummyQueue implements PlatformQueue {
     ctx: MeasureContext,
     topic: QueueTopic | string,
     groupId: string,
-    onMessage: (
-      ctx: MeasureContext,
-      msg: ConsumerMessage<T>,
-      queue: ConsumerControl
-    ) => Promise<void>,
+    onMessage: (ctx: MeasureContext, msg: ConsumerMessage<T>, queue: ConsumerControl) => Promise<void>,
     options?: {
       fromBegining?: boolean
     }
@@ -61,11 +64,7 @@ export class DummyQueue implements PlatformQueue {
     ctx: MeasureContext,
     topic: QueueTopic | string,
     groupId: string,
-    onMessage: (
-      ctx: MeasureContext,
-      msgs: ConsumerMessage<T>[],
-      queue: ConsumerControl
-    ) => Promise<void>,
+    onMessage: (ctx: MeasureContext, msgs: ConsumerMessage<T>[], queue: ConsumerControl) => Promise<void>,
     options?: {
       batchSize?: number
       fromBegining?: boolean

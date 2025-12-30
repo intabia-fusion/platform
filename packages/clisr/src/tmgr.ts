@@ -10,15 +10,20 @@ import { ClisrClient } from './connection'
  */
 export class TMGRServer {
   srv: ClisrServer
-  constructor (readonly ctx: MeasureContext, port: number, token: string) {
-    this.srv = new ClisrServer(ctx, async (_token) => {
-      return token === _token
-    }, '1.0.0')
+  constructor (
+    readonly ctx: MeasureContext,
+    port: number,
+    token: string
+  ) {
+    this.srv = new ClisrServer(
+      ctx,
+      async (_token) => {
+        return token === _token
+      },
+      '1.0.0'
+    )
 
-    this.srv.eventHandlers.push(async (session, event) => {
-      // On reconnect, we need to re-send pending responses
-    })
-    void this.srv.start(ctx, port).catch(err => {
+    void this.srv.start(ctx, port).catch((err) => {
       ctx.logger.error(`TaskManagerServer failed to start: ${err.message}`)
     })
   }
@@ -31,10 +36,21 @@ export class TMGRServer {
 export class TMGRClient {
   client: ClisrClient
 
-  constructor (readonly ctx: MeasureContext, readonly url: string, readonly token: string) {
-    this.client = new ClisrClient(ctx, url, (data) => {}, () => this.token)
+  constructor (
+    readonly ctx: MeasureContext,
+    readonly url: string,
+    readonly token: string,
+    readonly executor: (task: string, args: any[]) => Promise<any>
+  ) {
+    this.client = new ClisrClient(
+      ctx,
+      url,
+      (data) => {},
+      () => this.token
+    )
     this.client.callbackHandler = async (method, args, send) => {
-      // Handle server-initiated tasks here
+      const result = await this.executor(method, args)
+      await send(result)
     }
   }
 }

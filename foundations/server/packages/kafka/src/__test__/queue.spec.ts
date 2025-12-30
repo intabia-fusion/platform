@@ -406,12 +406,16 @@ describe('queue', () => {
     try {
       let processed = 0
       let processingStartedResolve: (() => void) | undefined
-      const processingStartedP = new Promise<void>((_resolve) => { processingStartedResolve = _resolve })
+      const processingStartedP = new Promise<void>((_resolve) => {
+        processingStartedResolve = _resolve
+      })
 
       let consumerHandle: any
       const p = new Promise<void>((resolve, reject) => {
         // Shorten test timeout and make it more deterministic
-        const to = setTimeout(() => { reject(new Error('Timeout waiting for pause/heartbeat test')) }, 15000)
+        const to = setTimeout(() => {
+          reject(new Error('Timeout waiting for pause/heartbeat test'))
+        }, 15000)
         consumerHandle = queue.createConsumer<string>(
           testCtx,
           topic,
@@ -440,7 +444,7 @@ describe('queue', () => {
             resolve()
           },
           // Increase sessionTimeout to be safely above KafkaJS internal heartbeat interval.
-          ({ sessionTimeout: 15000, retryDelay: 50, maxRetryDelay: 3, fromBegining: true } as any)
+          { sessionTimeout: 15000, retryDelay: 50, maxRetryDelay: 3, fromBegining: true } as any
         )
       })
 

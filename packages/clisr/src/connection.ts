@@ -20,7 +20,6 @@ import {
   type ClientSocket,
   ClientSocketReadyState,
   pingConst,
-
   FRAME_PING,
   FRAME_PONG,
   FRAME_HELLO,
@@ -109,7 +108,7 @@ export class ClisrClient {
     } else {
       this.sessionId = randomUUID().toString()
     }
-    this.rpcHandler = opt?.useGlobalRPCHandler ?? true ? globalRPCHandler : new RPCHandler()
+    this.rpcHandler = (opt?.useGlobalRPCHandler ?? true) ? globalRPCHandler : new RPCHandler()
     this.pushHandler(handler)
     this.onConnect = opt?.onConnect
 
@@ -263,10 +262,11 @@ export class ClisrClient {
 
     const event = helloResp.reconnect === true ? ClientConnectEvent.Reconnected : ClientConnectEvent.Connected
     const onConnectP = this.onConnect?.(event, this.sessionId)
-    void onConnectP?.then(() => {
-    }).catch((err) => {
-      this.ctx.error('failed to call onConnect', { err })
-    })
+    void onConnectP
+      ?.then(() => {})
+      .catch((err) => {
+        this.ctx.error('failed to call onConnect', { err })
+      })
 
     this.schedulePing(socketId)
   }
@@ -387,7 +387,7 @@ export class ClisrClient {
         }
       }
     } else {
-      const txArr = Array.isArray(resp.result) ? (resp.result) : [resp.result]
+      const txArr = Array.isArray(resp.result) ? resp.result : [resp.result]
       this.handlers.forEach((handler) => {
         handler(txArr)
       })
@@ -411,7 +411,7 @@ export class ClisrClient {
         )
         try {
           const sendMsg = await this.compress(dta)
-          const out = new Uint8Array(1 + (sendMsg).length)
+          const out = new Uint8Array(1 + sendMsg.length)
           out[0] = FRAME_PACKED
           out.set(new Uint8Array(sendMsg), 1)
           this.websocket?.send(out)
@@ -461,19 +461,18 @@ export class ClisrClient {
     // Force binary mode for simplicity
     this.helloReceived = false
     // Use defined factory or browser default one.
-    const clientSocketFactory = this.opt?.socketFactory ??
-    ((url: string) => {
-      const s = new WebSocket(url)
-      // s.binaryType = 'arraybuffer'
-      return s as ClientSocket
-    })
+    const clientSocketFactory =
+      this.opt?.socketFactory ??
+      ((url: string) => {
+        const s = new WebSocket(url)
+        // s.binaryType = 'arraybuffer'
+        return s as ClientSocket
+      })
 
     if (socketId !== this.sockets) {
       return
     }
-    const wsocket = ctx.withSync('create-socket', {}, () =>
-      clientSocketFactory(this.url)
-    )
+    const wsocket = ctx.withSync('create-socket', {}, () => clientSocketFactory(this.url))
 
     if (socketId !== this.sockets) {
       wsocket.close()
@@ -753,10 +752,10 @@ export class ClisrClient {
                 try {
                   this.ctx.info('compressing request', { method: data.method, id, len: dta.byteLength })
                   const sendMsg = await this.compress(dta)
-                  const out = new Uint8Array(1 + (sendMsg).length)
+                  const out = new Uint8Array(1 + sendMsg.length)
                   out[0] = FRAME_PACKED
                   out.set(new Uint8Array(sendMsg), 1)
-                  this.ctx.info('compressed request', { method: data.method, id, compressedLen: (sendMsg).length ?? 0 })
+                  this.ctx.info('compressed request', { method: data.method, id, compressedLen: sendMsg.length ?? 0 })
                   this.websocket?.send(out)
                   this.ctx.info('[ClisrClient] sent request (compressed)', { method: data.method, id })
                 } catch (err: any) {

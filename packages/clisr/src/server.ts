@@ -28,7 +28,21 @@ import { compress, uncompress } from 'snappy'
 import { setImmediate } from 'timers/promises'
 import 'utf-8-validate'
 import { WebSocketServer, type RawData, type WebSocket } from 'ws'
-import { type ConnectionSocket, pingConst, pongConst, FRAME_PING, FRAME_PONG, FRAME_HELLO, FRAME_HELLO_RESP, FRAME_JSON, FRAME_PACKED, RequestPromise, type Session, type HelloRequest, type HelloResponse } from './types'
+import {
+  type ConnectionSocket,
+  pingConst,
+  pongConst,
+  FRAME_PING,
+  FRAME_PONG,
+  FRAME_HELLO,
+  FRAME_HELLO_RESP,
+  FRAME_JSON,
+  FRAME_PACKED,
+  RequestPromise,
+  type Session,
+  type HelloRequest,
+  type HelloResponse
+} from './types'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
 
@@ -66,12 +80,11 @@ export class ClisrServer {
   httpServer?: http.Server
   private tickTimer?: ReturnType<typeof setInterval>
 
-  constructor (readonly ctx: MeasureContext,
+  constructor (
+    readonly ctx: MeasureContext,
     readonly validateToken: (token: string) => Promise<boolean>,
     readonly serverVersion: string
-  ) {
-
-  }
+  ) {}
 
   async handleTick (): Promise<void> {
     const now = Date.now()
@@ -87,7 +100,7 @@ export class ClisrServer {
     }
     // Check and log hang requests
     for (const r of this.requests.values()) {
-      if (r.session !== undefined && (now - r.startTime > HangTimeout && (now - r.session.lastPing) > OperationTimeout)) {
+      if (r.session !== undefined && now - r.startTime > HangTimeout && now - r.session.lastPing > OperationTimeout) {
         // Operation is hang, send ping, maybe socket is broken.
         r.session.lastPing = now
         try {
@@ -142,11 +155,14 @@ export class ClisrServer {
     }
   }
 
-  private sendRequest (socket: Session, data: {
-    method: string
-    params: any[]
-    handleResult?: (result: any) => Promise<void>
-  }): Promise<any> {
+  private sendRequest (
+    socket: Session,
+    data: {
+      method: string
+      params: any[]
+      handleResult?: (result: any) => Promise<void>
+    }
+  ): Promise<any> {
     return this.ctx.with(
       'send-request',
       {},
@@ -195,10 +211,12 @@ export class ClisrServer {
       const num = this.cindex++
       const s = Array.from(this.sessions.values())[num % this.sessions.size]
       try {
-        return await ctx.with(method, {}, (ctx) => this.sendRequest(s, {
-          method,
-          params
-        }))
+        return await ctx.with(method, {}, (ctx) =>
+          this.sendRequest(s, {
+            method,
+            params
+          })
+        )
       } catch (err: any) {
         ctx.error('request send error', { err })
         await new Promise((resolve) => setTimeout(resolve, 100))
@@ -207,10 +225,7 @@ export class ClisrServer {
     }
   }
 
-  async start (
-    ctx: MeasureContext,
-    port: number
-  ): Promise<void> {
+  async start (ctx: MeasureContext, port: number): Promise<void> {
     ctx.info('starting server on', {
       port,
       parallel: os.availableParallelism()
@@ -241,7 +256,10 @@ export class ClisrServer {
     this.httpServer = http.createServer(app)
     this.wss = this.createWebsocketServer()
 
-    this.wss.on('connection', (ws, request) => { console.info('wss: connection event', { remote: request.socket.remoteAddress }); void this.handleConnection(ws, request) })
+    this.wss.on('connection', (ws, request) => {
+      console.info('wss: connection event', { remote: request.socket.remoteAddress })
+      void this.handleConnection(ws, request)
+    })
 
     const wss = this.wss
     this.httpServer.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
@@ -267,17 +285,17 @@ export class ClisrServer {
     })
   }
 
-  async handleConnection (
-    ws: WebSocket,
-    request: IncomingMessage
-  ): Promise<void> {
+  async handleConnection (ws: WebSocket, request: IncomingMessage): Promise<void> {
     console.info('handleConnection invoked', { url: request.url, remote: request.socket.remoteAddress })
     const data = {
       remoteAddress: request.socket.remoteAddress ?? '',
       userAgent: request.headers['user-agent'] ?? '',
       language: request.headers['accept-language'] ?? ''
     }
-    const cs: ConnectionSocket = createWebsocketClientSocket(ws, data, this.rpcHandler, { compress: this.compress, uncompress: this.uncompress })
+    const cs: ConnectionSocket = createWebsocketClientSocket(ws, data, this.rpcHandler, {
+      compress: this.compress,
+      uncompress: this.uncompress
+    })
 
     const sid = randomUUID().toString()
     const session: Session = this.createSession(sid, cs)
@@ -313,7 +331,7 @@ export class ClisrServer {
         return uncmp
       } else if (uncmp instanceof Uint8Array) {
         // Convert Uint8Array to Buffer (preserve bytes without assuming a specific backing ArrayBuffer)
-        return Buffer.from((uncmp).buffer, (uncmp).byteOffset, (uncmp).byteLength)
+        return Buffer.from(uncmp.buffer, uncmp.byteOffset, uncmp.byteLength)
       } else if (typeof uncmp === 'string') {
         // Unexpected but handle gracefully: convert UTF-8 string to Buffer so we can at least attempt parsing.
         return Buffer.from(uncmp, 'utf-8')
@@ -339,7 +357,12 @@ export class ClisrServer {
           // Inspect first byte frame type
           const ft = buff[0]
           if (ft === FRAME_PING || ft === FRAME_PONG) {
-            const request = { method: ft === FRAME_PING ? pingConst : pongConst, params: [], id: -1, time: Date.now() } as any
+            const request = {
+              method: ft === FRAME_PING ? pingConst : pongConst,
+              params: [],
+              id: -1,
+              time: Date.now()
+            } as any
             await this.handleRequest(session, request)
             return
           }
@@ -373,12 +396,17 @@ export class ClisrServer {
               if (Buffer.isBuffer(dec)) {
                 requestBuffer = dec
               } else if (dec instanceof Uint8Array) {
-                requestBuffer = Buffer.from((dec).buffer, (dec).byteOffset, (dec).byteLength)
+                requestBuffer = Buffer.from(dec.buffer, dec.byteOffset, dec.byteLength)
               } else {
                 throw new Error('decompress returned unexpected type')
               }
             } catch (err: any) {
-              this.ctx.error('failed to decompress incoming message', { err, len: buff.length, sid: session.sid, preview: buff.slice(0, Math.min(20, buff.length)).toString('hex') })
+              this.ctx.error('failed to decompress incoming message', {
+                err,
+                len: buff.length,
+                sid: session.sid,
+                preview: buff.slice(0, Math.min(20, buff.length)).toString('hex')
+              })
               session.socket.close()
               return
             }
@@ -394,7 +422,12 @@ export class ClisrServer {
             requestBuffer = await this.unpackMessage(buff)
           } catch (err: any) {
             // Log detailed context and close the socket to surface the protocol error.
-            this.ctx.error('failed to decompress incoming message', { err, len: buff.length, sid: session.sid, preview: buff.slice(0, Math.min(20, buff.length)).toString('hex') })
+            this.ctx.error('failed to decompress incoming message', {
+              err,
+              len: buff.length,
+              sid: session.sid,
+              preview: buff.slice(0, Math.min(20, buff.length)).toString('hex')
+            })
             session.socket.close()
             return
           }
@@ -506,7 +539,7 @@ export class ClisrServer {
 
   async checkHello (session: Session, hello: HelloRequest, cs: ConnectionSocket): Promise<void> {
     try {
-      if (!await this.validateToken(hello.token)) {
+      if (!(await this.validateToken(hello.token))) {
         throw new Error('Invalid token')
       }
       session.hello = hello

@@ -50,7 +50,10 @@ export const main = async (): Promise<void> => {
 
   const platformQueue = getPlatformQueue('mail')
 
-  const notificationConsumer = platformQueue.createConsumer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue, 'mail-notifications',
+  const notificationConsumer = platformQueue.createConsumer<AccountNotification>(
+    measureCtx,
+    QueueTopic.NotificationQueue,
+    'mail-notifications',
     async (ctx, message, control) => {
       if (message.value.type === 'email') {
         // Only emails are supported for now.
@@ -69,7 +72,8 @@ export const main = async (): Promise<void> => {
           ctx.error(err.message)
         }
       }
-    })
+    }
+  )
 
   const endpoints: Endpoint[] = [
     {

@@ -1321,17 +1321,22 @@ export async function requestPasswordReset (
   const html = await translate(accountPlugin.string.RecoveryHTML, { link }, lang)
   const subject = await translate(accountPlugin.string.RecoverySubject, {}, lang)
 
-  await mailQueue?.send(ctx, '' as WorkspaceUuid, [
-    {
-      type: 'email',
-      data: {
-        text,
-        html,
-        subject,
-        to: normalizedEmail
+  await mailQueue?.send(
+    ctx,
+    '' as WorkspaceUuid,
+    [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to: normalizedEmail
+        }
       }
-    }
-  ], normalizedEmail)
+    ],
+    normalizedEmail
+  )
 }
 
 export async function restorePassword (

@@ -129,7 +129,6 @@ export interface ConnectionSocket {
  * @public
  */
 export interface Session {
-
   hello?: HelloRequest
   createTime: number
 

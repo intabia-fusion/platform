@@ -123,10 +123,16 @@ describe('integration: real WebSocket connections', () => {
     let client: ClisrClient | undefined
     try {
       console.info('integration: creating client', { url: `ws://127.0.0.1:${port}` })
-      client = new ClisrClient(ctx, `ws://127.0.0.1:${port}`, () => {}, () => 'token-ok', {
-        socketFactory,
-        onConnect
-      })
+      client = new ClisrClient(
+        ctx,
+        `ws://127.0.0.1:${port}`,
+        () => {},
+        () => 'token-ok',
+        {
+          socketFactory,
+          onConnect
+        }
+      )
 
       // Wait for handshake to finish
       await onConnectP
@@ -142,7 +148,11 @@ describe('integration: real WebSocket connections', () => {
 
       // Now test server -> client request
       let gotServerOp: any = null
-      ;(client as any).operationHandler = async (method: string, params: any[], send: (response: any) => Promise<void>) => {
+      ;(client as any).operationHandler = async (
+        method: string,
+        params: any[],
+        send: (response: any) => Promise<void>
+      ) => {
         console.info('integration: client.operationHandler invoked', { method, params })
         gotServerOp = { method, params }
         await send({ answer: params[0] + '-from-client' })

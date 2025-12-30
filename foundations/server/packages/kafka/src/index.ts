@@ -412,12 +412,15 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
     await this.doSubscribe()
 
     // Per-partition state
-    const partitionStates = new Map<number, {
+    const partitionStates = new Map<
+    number,
+    {
       messages: Array<{ workspace: WorkspaceUuid, value: any, meta: any }>
       timer?: ReturnType<typeof setTimeout>
       processing?: boolean
       waiters: Array<{ resolve: () => void, reject: (err: any) => void }>
-    }>()
+    }
+    >()
 
     const batchSize = this.options?.batchSize ?? 1
     const batchTimeout = this.options?.batchTimeout ?? 100
@@ -442,7 +445,13 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       while (true) {
         try {
           // Pass simple metadata for batch processing (avoid passing raw array to meta field)
-          await this.ctx.with('handle-msg', {}, (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }), {}, { meta: { batchCount: metas.length } })
+          await this.ctx.with(
+            'handle-msg',
+            {},
+            (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }),
+            {},
+            { meta: { batchCount: metas.length } }
+          )
           for (const w of batchWaiters) w.resolve()
           state.processing = false
           // If more messages arrived while processing, ensure they will be flushed
@@ -460,7 +469,10 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
             await heartbeat()
           } catch (hbErr) {
             // Ignore transient heartbeat errors during batch retry attempts to reduce flakiness.
-            this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', { err: hbErr, partition: partitionNum })
+            this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', {
+              err: hbErr,
+              partition: partitionNum
+            })
           }
           await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
           if (to < maxRetryDelay) {

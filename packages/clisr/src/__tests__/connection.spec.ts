@@ -3,13 +3,7 @@
 // Comments are in English as per repository conventions.
 
 import { ClisrClient } from '../connection'
-import {
-  RequestPromise,
-  ClientSocketReadyState,
-  pingConst,
-  FRAME_PING,
-  FRAME_PONG
-} from '../types'
+import { RequestPromise, ClientSocketReadyState, pingConst, FRAME_PING, FRAME_PONG } from '../types'
 import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 
 describe('ClisrClient.handleMsg behavior', () => {
@@ -27,7 +21,13 @@ describe('ClisrClient.handleMsg behavior', () => {
         readyState: ClientSocketReadyState.CLOSED
       }
     })
-    return new ClisrClient(createFakeCtx(), 'ws://localhost', (_data: any[]) => {}, () => 'token', { socketFactory: fakeFactory, ...opts })
+    return new ClisrClient(
+      createFakeCtx(),
+      'ws://localhost',
+      (_data: any[]) => {},
+      () => 'token',
+      { socketFactory: fakeFactory, ...opts }
+    )
   }
 
   it('resolves a pending request when a normal response arrives', async () => {
@@ -114,7 +114,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     // - we logged a successful compressed send, or
     // - an error was logged because compression/send failed.
     const errSpy = jest.spyOn((client as any).ctx, 'error')
-    const sentOk = (wsSend).mock.calls.length > 0
+    const sentOk = wsSend.mock.calls.length > 0
     const infoLogged = infoSpy.mock.calls.some((c) => String(c[0]).includes('sent operation response (compressed)'))
     const errLogged = errSpy.mock.calls.some((c) => String(c[0]).includes('failed to compress/send operation response'))
     expect(sentOk || infoLogged || errLogged).toBe(true)
@@ -159,11 +159,15 @@ describe('ClisrClient.handleMsg behavior', () => {
     const realSetTimeout = global.setTimeout
     try {
       global.setTimeout = ((cb: any, _t?: number) => {
-        ;(cb)()
+        cb()
         return 0 as any
       }) as any
 
-      client.handleMsg(1, { id: '_rl', error: { code: 429, message: 'rate' }, rateLimit: { remaining: 0, retryAfter: 10, limit: 100 } } as any)
+      client.handleMsg(1, {
+        id: '_rl',
+        error: { code: 429, message: 'rate' },
+        rateLimit: { remaining: 0, retryAfter: 10, limit: 100 }
+      } as any)
 
       // Allow the immediate-setTimeout shim to call the retry callback
       await new Promise((resolve) => setImmediate(resolve))
@@ -186,7 +190,7 @@ describe('ClisrClient.handleMsg behavior', () => {
 
     expect(wsSend).toHaveBeenCalled()
     // ensure first byte is FRAME_PONG
-    const arg = (wsSend).mock.calls[0][0]
+    const arg = wsSend.mock.calls[0][0]
     expect(arg[0]).toBe(FRAME_PONG)
 
     await client.close()
@@ -198,7 +202,14 @@ describe('ClisrClient.handleMsg behavior', () => {
     const wsClose = jest.fn()
     ;(client as any).websocket = { close: wsClose, readyState: ClientSocketReadyState.OPEN }
 
-    client.handleMsg(1, { id: -1, result: 'hello', serverVersion: '1.2.3', sessionId: 's', reconnect: false, time: Date.now() } as any)
+    client.handleMsg(1, {
+      id: -1,
+      result: 'hello',
+      serverVersion: '1.2.3',
+      sessionId: 's',
+      reconnect: false,
+      time: Date.now()
+    } as any)
 
     // allow any async logic
     await new Promise((resolve) => setImmediate(resolve))
@@ -245,7 +256,6 @@ describe('ClisrClient.handleMsg behavior', () => {
     // No new requests were added
     expect((client as any).requests.size).toBe(before)
     await expect(p).resolves.toBeUndefined()
-
     ;(client as any).requests.clear()
     await client.close()
   })
@@ -277,7 +287,12 @@ describe('ClisrClient.handleMsg behavior', () => {
     const errSpy = jest.spyOn((client as any).ctx, 'error')
     // Provide a compression promise that we can reject on demand to avoid timing races
     let rejectCompress: (err?: any) => void = () => {}
-    const compressSpy = jest.spyOn(client as any, 'compress').mockImplementation(() => new Promise((_resolve, reject) => { rejectCompress = reject }))
+    const compressSpy = jest.spyOn(client as any, 'compress').mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectCompress = reject
+        })
+    )
 
     ;(client as any).sendRequest({ method: 'm-fail', params: [], overrideId: 100 })
     await new Promise((resolve) => setImmediate(resolve))
@@ -300,7 +315,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     const res = await (client as any).sendRequest({ method: pingConst, params: [] })
     expect(res).toBeUndefined()
     expect(wsSend).toHaveBeenCalled()
-    const arg = (wsSend).mock.calls[0][0]
+    const arg = wsSend.mock.calls[0][0]
     expect(arg[0]).toBe(FRAME_PING)
     await client.close()
   })
@@ -344,7 +359,6 @@ describe('ClisrClient.handleMsg behavior', () => {
 
     ;(client as any).websocket = { send: wsSend, close: jest.fn(), readyState: ClientSocketReadyState.OPEN }
     ;(client as any).helloReceived = true
-
     ;(client as any).slowDownTimer = 5
 
     const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('x'))
@@ -379,7 +393,12 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).helloReceived = true
     const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('x'))
 
-    const p = (client as any).sendRequest({ method: 'no-reconnect', params: [], allowReconnect: false, overrideId: 555 })
+    const p = (client as any).sendRequest({
+      method: 'no-reconnect',
+      params: [],
+      allowReconnect: false,
+      overrideId: 555
+    })
     await new Promise((resolve) => setImmediate(resolve))
     const id = Array.from((client as any).requests.keys())[0]
     const rp = (client as any).requests.get(id)

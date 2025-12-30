@@ -11,7 +11,7 @@ import { MeasureMetricsContext } from '@hcengineering/measurements'
  * Helper: create a minimal MeasureContext for tests.
  * We reuse the real MeasureMetricsContext to keep behavior close to production.
  */
-function createFakeCtx () {
+function createFakeCtx() {
   return new MeasureMetricsContext('clisr-ping-test', {})
 }
 
@@ -19,7 +19,7 @@ function createFakeCtx () {
  * Helper: create a minimal ClientSocket-like wrapper used by the client during tests.
  * The wrapper exposes the same mutable event handler properties used by the client.
  */
-function createWrapper () {
+function createWrapper() {
   const wrapper: any = {
     send: jest.fn(),
     close: jest.fn(),
@@ -35,7 +35,7 @@ function createWrapper () {
 /**
  * Helper: convert an ASCII string into an ArrayBuffer with exact length (no TextEncoder dependency).
  */
-function stringToArrayBuffer (s: string): ArrayBuffer {
+function stringToArrayBuffer(s: string): ArrayBuffer {
   const u = new Uint8Array(s.length)
   for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i)
   return u.buffer
@@ -56,7 +56,13 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
     const wrapper = createWrapper()
     const socketFactory = jest.fn(() => wrapper)
 
-    const client = new ClisrClient(ctx, 'ws://localhost', () => {}, () => 'token', { socketFactory })
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory }
+    )
 
     try {
       const helloResp = {
@@ -87,7 +93,13 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
     const wrapper = createWrapper()
     const socketFactory = jest.fn(() => wrapper)
 
-    const client = new ClisrClient(ctx, 'ws://localhost', () => {}, () => 'token', { socketFactory })
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory }
+    )
 
     try {
       const helloResp = {
@@ -115,7 +127,13 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
   it('updates pingResponse on receiving pong frame', async () => {
     const ctx = createFakeCtx()
     const wrapper = createWrapper()
-    const client = new ClisrClient(ctx, 'ws://localhost', () => {}, () => 'token', { socketFactory: () => wrapper })
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory: () => wrapper }
+    )
 
     try {
       const helloResp = {
@@ -141,7 +159,13 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
   it('updates pingResponse on receiving binary pong', async () => {
     const ctx = createFakeCtx()
     const wrapper = createWrapper()
-    const client = new ClisrClient(ctx, 'ws://localhost', () => {}, () => 'token', { socketFactory: () => wrapper })
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory: () => wrapper }
+    )
 
     try {
       const helloResp = {
@@ -151,7 +175,6 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
         sessionId: 'session-binary-pong'
       } as any
       client.handleMsg(1, helloResp)
-
       ;(client as any).pingResponse = 0
 
       const buf = Buffer.from([FRAME_PONG])
@@ -169,7 +192,13 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
 
     const ctx = createFakeCtx()
     const wrapper = createWrapper()
-    const client = new ClisrClient(ctx, 'ws://localhost', () => {}, () => 'token', { socketFactory: () => wrapper })
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory: () => wrapper }
+    )
 
     try {
       const helloResp = {
