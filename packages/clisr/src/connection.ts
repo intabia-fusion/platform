@@ -34,9 +34,18 @@ import {
   RequestPromise
 } from './types'
 import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
-import { compress, uncompress } from 'snappy'
 import { type MeasureContext } from '@hcengineering/measurements'
 import { randomUUID } from 'crypto'
+
+// Lazy-import snappy at runtime to avoid initializing native handles during test collection
+const lazyCompress = async (input: any): Promise<any> => {
+  const m = await import('snappy')
+  return await m.compress(input)
+}
+const lazyUncompress = async (input: any): Promise<any> => {
+  const m = await import('snappy')
+  return await m.uncompress(input)
+}
 
 const SECOND = 1000
 const pingTimeout = 10 * SECOND
@@ -80,8 +89,8 @@ export class ClisrClient {
   operationHandler?: (msg: string, args: any[], send: (response: any) => Promise<void>) => Promise<void>
 
   // Overridable compression functions (default to snappy). Tests can override instance methods.
-  compress: (input: any) => Promise<any> = compress
-  uncompress: (input: any) => Promise<any> = uncompress
+  compress: (input: any) => Promise<any> = lazyCompress
+  uncompress: (input: any) => Promise<any> = lazyUncompress
 
   constructor (
     private readonly ctx: MeasureContext,
@@ -492,7 +501,7 @@ export class ClisrClient {
     }
 
     wsocket.onmessage = async (event: MessageEvent) => {
-      console.info('[ClisrClient] onmessage', { type: typeof event.data })
+      /* onmessage received */
       if (this.closed) {
         return
       }
@@ -651,7 +660,7 @@ export class ClisrClient {
       if (this.websocket !== wsocket) {
         return
       }
-      console.info('[ClisrClient] socket opened')
+      /* socket opened */
       const helloRequest: HelloRequest = {
         method: 'hello',
         params: [],

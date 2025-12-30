@@ -36,7 +36,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).requests.set('_0', rp)
 
     // Simulate incoming response
-    client.handleMsg(1, { id: '_0', result: { ok: true }, time: Date.now() })
+    await client.handleMsg(1, { id: '_0', result: { ok: true }, time: Date.now() })
 
     const res = await rp.promise
     expect(res).toEqual({ ok: true })
@@ -56,7 +56,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     const rp = new RequestPromise('method-h', [], handleResult)
     ;(client as any).requests.set('_1', rp)
 
-    client.handleMsg(1, { id: '_1', result: { data: 42 }, time: Date.now() })
+    await client.handleMsg(1, { id: '_1', result: { data: 42 }, time: Date.now() })
 
     const res = await rp.promise
     expect(handleResult).toHaveBeenCalledWith({ data: 42 })
@@ -71,9 +71,9 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).requests.set('_2', rp)
 
     // First deliver second chunk (not final)
-    client.handleMsg(1, { id: '_2', result: [3], chunk: { index: 1, final: false }, time: Date.now() })
+    await client.handleMsg(1, { id: '_2', result: [3], chunk: { index: 1, final: false }, time: Date.now() })
     // Then deliver first chunk and mark final
-    client.handleMsg(1, { id: '_2', result: [1, 2], chunk: { index: 0, final: true }, time: Date.now() })
+    await client.handleMsg(1, { id: '_2', result: [1, 2], chunk: { index: 0, final: true }, time: Date.now() })
 
     const res = await rp.promise
     expect(res).toEqual([1, 2, 3])
@@ -96,7 +96,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     client.callbackHandler = opSpy
     const infoSpy = jest.spyOn((client as any).ctx, 'info')
 
-    client.handleMsg(1, {
+    await client.handleMsg(1, {
       id: '#abc',
       result: { method: 'call-me', params: ['p'], meta: {} },
       time: Date.now()
@@ -137,7 +137,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     const rp = new RequestPromise('m', [], undefined)
     ;(client as any).requests.set('_3', rp)
 
-    client.handleMsg(1, { id: '_3', error: { code: 42, message: 'bad' }, terminate: true } as any)
+    await client.handleMsg(1, { id: '_3', error: { code: 42, message: 'bad' }, terminate: true } as any)
 
     // Promise must reject with resp.error message embedded
     await expect(rp.promise).rejects.toThrow(/resp.error/)
@@ -163,7 +163,7 @@ describe('ClisrClient.handleMsg behavior', () => {
         return 0 as any
       }) as any
 
-      client.handleMsg(1, {
+      await client.handleMsg(1, {
         id: '_rl',
         error: { code: 429, message: 'rate' },
         rateLimit: { remaining: 0, retryAfter: 10, limit: 100 }
@@ -202,7 +202,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     const wsClose = jest.fn()
     ;(client as any).websocket = { close: wsClose, readyState: ClientSocketReadyState.OPEN }
 
-    client.handleMsg(1, {
+    await client.handleMsg(1, {
       id: -1,
       result: 'hello',
       serverVersion: '1.2.3',
@@ -226,7 +226,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     const client = createClient()
 
     const errSpy = jest.spyOn((client as any).ctx, 'error')
-    client.handleMsg(1, { id: '_does-not-exist', result: { foo: 'bar' }, time: Date.now() })
+    await client.handleMsg(1, { id: '_does-not-exist', result: { foo: 'bar' }, time: Date.now() })
 
     // log happened synchronously (or very soon)
     await new Promise((resolve) => setImmediate(resolve))

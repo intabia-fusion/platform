@@ -24,10 +24,10 @@ import express, { type Response as ExpressResponse, type NextFunction } from 'ex
 import http, { type IncomingMessage } from 'http'
 import morgan from 'morgan'
 import os from 'os'
-import { compress, uncompress } from 'snappy'
 import { setImmediate } from 'timers/promises'
 import 'utf-8-validate'
 import { WebSocketServer, type RawData, type WebSocket } from 'ws'
+
 import {
   type ConnectionSocket,
   pingConst,
@@ -45,6 +45,16 @@ import {
 } from './types'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
+
+// Lazy-import snappy at runtime to avoid initializing native handles during test collection
+const lazyCompress = async (input: any): Promise<any> => {
+  const m = await import('snappy')
+  return await m.compress(input)
+}
+const lazyUncompress = async (input: any): Promise<any> => {
+  const m = await import('snappy')
+  return await m.uncompress(input)
+}
 
 export type RequestHandler = (req: Request<any>, res: ExpressResponse, next?: NextFunction) => Promise<void>
 
@@ -69,8 +79,8 @@ export class ClisrServer {
 
   // Allow overriding compression functions (default to snappy).
   // Tests can override the instance methods instead of mocking the native module.
-  compress: (input: any) => Promise<any> = compress
-  uncompress: (input: any) => Promise<any> = uncompress
+  compress: (input: any) => Promise<any> = lazyCompress
+  uncompress: (input: any) => Promise<any> = lazyUncompress
 
   public eventHandlers: ((session: string, event: ConnectionEventType) => Promise<void>)[] = []
 
@@ -257,13 +267,11 @@ export class ClisrServer {
     this.wss = this.createWebsocketServer()
 
     this.wss.on('connection', (ws, request) => {
-      console.info('wss: connection event', { remote: request.socket.remoteAddress })
       void this.handleConnection(ws, request)
     })
 
     const wss = this.wss
     this.httpServer.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
-      console.info('http upgrade', { url: request.url, addr: request.socket.remoteAddress })
       wss.handleUpgrade(request, socket, head, (ws) => {
         void this.handleConnection(ws, request)
       })
@@ -286,7 +294,6 @@ export class ClisrServer {
   }
 
   async handleConnection (ws: WebSocket, request: IncomingMessage): Promise<void> {
-    console.info('handleConnection invoked', { url: request.url, remote: request.socket.remoteAddress })
     const data = {
       remoteAddress: request.socket.remoteAddress ?? '',
       userAgent: request.headers['user-agent'] ?? '',
@@ -671,7 +678,7 @@ export function createWebsocketClientSocket (
         await cs.backpressure(ctx)
       }
 
-      const compressed = await (opts?.compress ?? compress)(smsg)
+      const compressed = await (opts?.compress ?? lazyCompress)(smsg)
       const out = Buffer.concat([Buffer.from([FRAME_PACKED]), Buffer.from(compressed)])
       const st = performance.now()
       await new Promise<void>((resolve) => {
