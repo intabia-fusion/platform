@@ -36,6 +36,7 @@ import {
 import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
 import { type MeasureContext } from '@hcengineering/measurements'
 import { randomUUID } from 'crypto'
+import { sendFrame as sharedSendFrame } from './frame-utils'
 
 // Lazy-import snappy at runtime to avoid initializing native handles during test collection
 let _snappyCompress: ((input: any) => Promise<any>) | undefined
@@ -473,36 +474,18 @@ export class ClisrClient {
     }
   }
 
-  private async sendResponse(responseToSend: any, respId: ReqId): Promise<void> {
+  private async sendResponse (responseToSend: any, respId: ReqId): Promise<void> {
     try {
-      const dta = this.rpcHandler.serialize(responseToSend, true)
-      await this.sendFrame(dta, responseToSend.method, respId)
+      const sendFn = (data: Uint8Array): void => {
+        this.websocket?.send(data)
+      }
+      await sharedSendFrame(this.ctx, sendFn, responseToSend, this.compress, true)
 
       // Remove from pending responses after successful send
       this.pendingResponses.delete(respId)
     } catch (err: any) {
       this.ctx.error('failed to send operation response', { err })
       this.websocket?.close()
-    }
-  }
-
-  private async sendFrame(dta: Uint8Array, method: string, id: string | number): Promise<void> {
-    if (dta.byteLength > 1024) {
-      // Compress if message is larger than 1024 bytes
-      this.ctx.info('compressing request', { method, id, len: dta.byteLength })
-      const sendMsg = await this.compress(dta)
-      const out = new Uint8Array(1 + sendMsg.length)
-      out[0] = FRAME_MSGPACK_SNAPPY
-      out.set(new Uint8Array(sendMsg), 1)
-      this.websocket?.send(out)
-      this.ctx.info('[ClisrClient] sent request (compressed)', { method, id })
-    } else {
-      // Send without compression for smaller messages
-      const out = new Uint8Array(1 + dta.byteLength)
-      out[0] = FRAME_MSGPACK // Use msgpack frame for smaller messages
-      out.set(new Uint8Array(dta), 1)
-      this.websocket?.send(out)
-      this.ctx.info('[ClisrClient] sent request (uncompressed)', { method, id, len: dta.byteLength })
     }
   }
 
@@ -819,21 +802,20 @@ export class ClisrClient {
             promise.startTime = Date.now()
 
             if (data.method !== pingConst) {
-              const dta = this.rpcHandler.serialize(
-                {
-                  method: data.method,
-                  params: data.params,
-                  meta: ctx.extractMeta(),
-                  id,
-                  time: Date.now()
-                },
-                true
-              )
-
-              // Check size after serialization and send appropriate frame type
+              // Use shared sendFrame utility
               void (async () => {
                 try {
-                  await this.sendFrame(dta, data.method, id)
+                  const msg = {
+                    method: data.method,
+                    params: data.params,
+                    meta: ctx.extractMeta(),
+                    id,
+                    time: Date.now()
+                  }
+                  const sendFn = (data: Uint8Array): void => {
+                    this.websocket?.send(data)
+                  }
+                  await sharedSendFrame(this.ctx, sendFn, msg, this.compress, true)
                 } catch (err: any) {
                   this.ctx.error('failed to send request', { err })
                   this.websocket?.close()

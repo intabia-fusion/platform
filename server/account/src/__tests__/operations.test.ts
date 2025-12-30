@@ -24,7 +24,7 @@ import {
   type AccountUuid,
   systemAccountUuid
 } from '@hcengineering/core'
-import platform, { PlatformError, Status, Severity, getMetadata, setMetadata } from '@hcengineering/platform'
+import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
 import { decodeToken, decodeTokenVerbose } from '@hcengineering/server-token'
 
 import * as utils from '../utils'

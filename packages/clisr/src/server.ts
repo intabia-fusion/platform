@@ -45,6 +45,7 @@ import {
 } from './types'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
+import { sendFrame as sharedSendFrame } from './frame-utils'
 
 // Lazy-import snappy at runtime to avoid initializing native handles during test collection
 let _snappyCompress: ((input: any) => Promise<any>) | undefined
@@ -575,7 +576,7 @@ export class ClisrServer {
       if (oldSession !== undefined) {
         event = 'reconnect'
         // Transfer pending requests from old session to new session
-        if (oldSession.requests) {
+        if (oldSession.requests != null) {
           for (const [reqId, request] of oldSession.requests) {
             session.requests.set(reqId, request)
             // Update the session reference in the request
@@ -584,7 +585,7 @@ export class ClisrServer {
         }
         // Update the server's main requests map - replace requests that were from the old session
         // with references to the new session
-        for (const [reqId, request] of this.requests) {
+        for (const [, /* _reqId */ request] of this.requests) {
           if (request.session === oldSession) {
             request.session = session
           }
@@ -699,7 +700,6 @@ export function createWebsocketClientSocket (
     },
     // Send an RPC message, compressing only if larger than 1024 bytes
     send: async (ctx: MeasureContext, msg): Promise<void> => {
-      const smsg = rpcHandler.serialize(msg, true)
       if (ws.readyState !== ws.OPEN || cs.isClosed) {
         return
       }
@@ -709,21 +709,12 @@ export function createWebsocketClientSocket (
         await cs.backpressure(ctx)
       }
 
-      let out: Buffer
-      if (smsg.byteLength > 1024) {
-        // Compress if message is larger than 1024 bytes
-        const compressed = await (opts?.compress ?? lazyCompress)(smsg)
-        out = Buffer.concat([Buffer.from([FRAME_MSGPACK_SNAPPY]), Buffer.from(compressed)])
-        ctx.info('sent message (compressed)', { method: msg?.result?.method || (msg as any)?.method, len: smsg.byteLength, compressedLen: compressed.byteLength })
-      } else {
-        // Send without compression for smaller messages
-        out = Buffer.concat([Buffer.from([FRAME_MSGPACK]), Buffer.from(smsg)])
-        ctx.info('sent message (uncompressed)', { method: msg?.result?.method || (msg as any)?.method, len: smsg.byteLength })
-      }
-
-      const st = performance.now()
-      await new Promise<void>((resolve) => {
-        const handleErr = (err?: Error): void => {
+      // Use shared sendFrame utility
+      const compressFn = opts?.compress ?? lazyCompress
+      const sendFn = (data: Uint8Array): void => {
+        const out = Buffer.from(data)
+        const st = performance.now()
+        ws.send(out, { binary: true }, (err?: Error) => {
           ctx.measure('msg-send-delta', performance.now() - st)
           if (err != null) {
             if (!`${err.message}`.includes('WebSocket is not open')) {
@@ -731,10 +722,10 @@ export function createWebsocketClientSocket (
               Analytics.handleError(err)
             }
           }
-          resolve() // In any case we need to resolve.
-        }
-        ws.send(out, { binary: true }, handleErr)
-      })
+        })
+      }
+
+      await sharedSendFrame(ctx, sendFn, msg, compressFn, true)
     }
   }
   return cs

@@ -447,7 +447,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     await new Promise((resolve) => setImmediate(resolve))
     expect(wsSend).toHaveBeenCalled()
     // Assert that compressed send info was logged
-    const logged = infoSpy.mock.calls.some((c) => String(c[0]).includes('[ClisrClient] sent request (compressed)'))
+    const logged = infoSpy.mock.calls.some((c) => String(c[0]).includes('sent request (compressed)'))
     expect(logged).toBe(true)
 
     compressSpy.mockRestore()

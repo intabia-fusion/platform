@@ -22,7 +22,7 @@ describe('TMGR benchmark (integration-like)', () => {
         this.rate = rate
       }
 
-      async exec<T> (op: () => Promise<T>): Promise<T> {
+      async exec<T>(op: () => Promise<T>): Promise<T> {
         const processingId = this.idCounter++
         while (this.processing.size >= this.rate) {
           await new Promise<void>((resolve) => this.notify.push(resolve))

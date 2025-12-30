@@ -6,7 +6,7 @@
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../connection'
-import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
+import { MeasureMetricsContext } from '@hcengineering/measurements'
 import { ClientConnectEvent } from '../types'
 
 jest.setTimeout(30000)
@@ -29,7 +29,9 @@ describe('Server request handling after reconnect', () => {
 
       // Create a wrapper to intercept events
       const wrapper: any = {
-        send: (data: any) => ws.send(data),
+        send: (data: any) => {
+          ws.send(data)
+        },
         close: (code?: number) => {
           try {
             ws.close(code)
@@ -96,10 +98,10 @@ describe('Server request handling after reconnect', () => {
     client.callbackHandler = async (method, params, send) => {
       // Simulate work being done
       await new Promise((resolve) => setTimeout(resolve, 100))
-      
+
       // Indicate that execution has happened
       executionResolve?.()
-      
+
       // Send response back to server
       await send({ result: `processed: ${method}`, params })
     }
@@ -118,7 +120,7 @@ describe('Server request handling after reconnect', () => {
 
     // At this point, the client has received the request and is processing it
     // Now simulate a network disconnect/reconnect
-    if (currentWs) {
+    if (currentWs != null) {
       currentWs.close()
     }
 
@@ -132,7 +134,7 @@ describe('Server request handling after reconnect', () => {
         if (event === ClientConnectEvent.Reconnected) {
           resolve()
         }
-        if (originalOnConnect) {
+        if (originalOnConnect != null) {
           await originalOnConnect(event, data)
         }
       }
@@ -166,7 +168,9 @@ describe('Server request handling after reconnect', () => {
 
       // Create a wrapper to intercept events
       const wrapper: any = {
-        send: (data: any) => ws.send(data),
+        send: (data: any) => {
+          ws.send(data)
+        },
         close: (code?: number) => {
           try {
             ws.close(code)
@@ -228,7 +232,7 @@ describe('Server request handling after reconnect', () => {
     client.callbackHandler = async (method, params, send) => {
       // Simulate work being done
       await new Promise((resolve) => setTimeout(resolve, 50))
-      
+
       // Send response back to server
       const response = { result: `processed: ${method}`, params, id: params[0] }
       responses.push(response)
@@ -246,10 +250,10 @@ describe('Server request handling after reconnect', () => {
     const request2Promise = server.request(ctx, 'task-2', ['id-2', 'data-2'])
 
     // Wait a bit for the client to start processing
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Simulate a network disconnect/reconnect
-    if (currentWs) {
+    if (currentWs != null) {
       currentWs.close()
     }
 
@@ -263,7 +267,7 @@ describe('Server request handling after reconnect', () => {
         if (event === ClientConnectEvent.Reconnected) {
           resolve()
         }
-        if (originalOnConnect) {
+        if (originalOnConnect != null) {
           await originalOnConnect(event, data)
         }
       }
@@ -274,7 +278,7 @@ describe('Server request handling after reconnect', () => {
     // Both responses should still be delivered to the server after reconnect
     const result1 = await request1Promise
     const result2 = await request2Promise
-    
+
     expect(result1).toEqual({ result: 'processed: task-1', params: ['id-1', 'data-1'], id: 'id-1' })
     expect(result2).toEqual({ result: 'processed: task-2', params: ['id-2', 'data-2'], id: 'id-2' })
 
