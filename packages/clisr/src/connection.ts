@@ -79,6 +79,7 @@ interface OnConnectHandler {
 export class ClisrClient {
   private websocket: ClientSocket | null = null
   private readonly requests = new Map<ReqId, RequestPromise>()
+  private readonly pendingResponses = new Map<ReqId, { method: string, params: any[], meta: any }>()
   private lastId = 0
   private interval: any
   private dialTimer: any
@@ -116,7 +117,7 @@ export class ClisrClient {
     private readonly tokenProvider: () => string,
     readonly opt?: ClientFactoryOptions
   ) {
-    if (typeof sessionStorage !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
       // Find local session id in session storage only if user refresh a page.
       const sKey = 'session.id.' + this.url
       let sessionId = sessionStorage.getItem(sKey) ?? undefined
@@ -303,6 +304,22 @@ export class ClisrClient {
         this.ctx.error('failed to call onConnect', { err })
       })
 
+    // If this is a reconnection, send any pending responses that were not sent before disconnect
+    if (helloResp.reconnect === true && this.pendingResponses.size > 0) {
+      this.ctx.info('Sending pending responses after reconnect', { count: this.pendingResponses.size })
+      for (const [respId, response] of this.pendingResponses) {
+        const responseToSend = {
+          method: response.method,
+          params: response.params,
+          meta: response.meta,
+          id: respId,
+          time: Date.now()
+        }
+        // Send the response without waiting, as it's best effort
+        void this.sendResponse(responseToSend, respId)
+      }
+    }
+
     this.schedulePing(socketId)
   }
 
@@ -434,28 +451,42 @@ export class ClisrClient {
     if (handlerFn !== undefined) {
       const { method, params, meta } = resp.result ?? {}
       void handlerFn(method, params ?? [], async (result) => {
-        const dta = this.rpcHandler.serialize(
-          {
-            method: '##',
-            params: [result],
-            meta,
-            id: resp.id,
-            time: Date.now()
-          },
-          true
-        )
-        try {
-          const sendMsg = await this.compress(dta)
-          const out = new Uint8Array(1 + sendMsg.length)
-          out[0] = FRAME_PACKED
-          out.set(new Uint8Array(sendMsg), 1)
-          this.websocket?.send(out)
-          this.ctx.info('[ClisrClient] sent operation response (compressed)', { method: '##', id: resp.id })
-        } catch (err: any) {
-          this.ctx.error('failed to compress/send operation response', { err })
-          this.websocket?.close()
+        // Store the response to be sent
+        const responseToSend = {
+          method: '##',
+          params: [result],
+          meta,
+          id: resp.id,
+          time: Date.now()
         }
+
+        // Store in pending responses in case we need to resend after reconnect
+        this.pendingResponses.set(resp.id, {
+          method: '##',
+          params: [result],
+          meta
+        })
+
+        await this.sendResponse(responseToSend, resp.id)
       })
+    }
+  }
+
+  private async sendResponse(responseToSend: any, respId: ReqId): Promise<void> {
+    try {
+      const dta = this.rpcHandler.serialize(responseToSend, true)
+      const sendMsg = await this.compress(dta)
+      const out = new Uint8Array(1 + sendMsg.length)
+      out[0] = FRAME_PACKED
+      out.set(new Uint8Array(sendMsg), 1)
+      this.websocket?.send(out)
+      this.ctx.info('[ClisrClient] sent operation response (compressed)', { method: responseToSend.method, id: respId })
+
+      // Remove from pending responses after successful send
+      this.pendingResponses.delete(respId)
+    } catch (err: any) {
+      this.ctx.error('failed to compress/send operation response', { err })
+      this.websocket?.close()
     }
   }
 

@@ -12,3 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
+export { ClisrClient } from './connection'
+export { ClisrServer, type RequestHandler, type ConnectionEventType } from './server'
+export {
+  type ClientSocket,
+  ClientSocketReadyState,
+  type ClientFactoryOptions,
+  ClientConnectEvent,
+  type HelloRequest,
+  type HelloResponse,
+  type ConnectionSocket,
+  type Session,
+  FRAME_PING,
+  FRAME_PONG,
+  FRAME_HELLO,
+  FRAME_HELLO_RESP,
+  FRAME_JSON,
+  FRAME_PACKED
+} from './types'
+export { TMGRServer, TMGRClient } from './tmgr'

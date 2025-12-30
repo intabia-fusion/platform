@@ -575,6 +575,21 @@ export class ClisrServer {
       let event: ConnectionEventType = 'connected'
       if (oldSession !== undefined) {
         event = 'reconnect'
+        // Transfer pending requests from old session to new session
+        if (oldSession.requests) {
+          for (const [reqId, request] of oldSession.requests) {
+            session.requests.set(reqId, request)
+            // Update the session reference in the request
+            request.session = session
+          }
+        }
+        // Update the server's main requests map - replace requests that were from the old session
+        // with references to the new session
+        for (const [reqId, request] of this.requests) {
+          if (request.session === oldSession) {
+            request.session = session
+          }
+        }
         oldSession.socket.close() // Just in case
       }
       for (const eh of this.eventHandlers) {
