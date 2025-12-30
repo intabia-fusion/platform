@@ -24,8 +24,8 @@ import {
   FRAME_PONG,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
-  FRAME_JSON,
-  FRAME_PACKED,
+  FRAME_MSGPACK,
+  FRAME_MSGPACK_SNAPPY,
   ClientConnectEvent,
   type OperationHandler,
   type ClientFactoryOptions,
@@ -448,26 +448,27 @@ export class ClisrClient {
 
   private handleCallbackMsg (resp: Response<any>): void {
     const handlerFn = this.callbackHandler ?? this.operationHandler
-    if (handlerFn !== undefined) {
+    if (handlerFn !== undefined && resp.id !== undefined) {
       const { method, params, meta } = resp.result ?? {}
+      const id = resp.id // Capture id in a variable that TypeScript knows is defined
       void handlerFn(method, params ?? [], async (result) => {
         // Store the response to be sent
         const responseToSend = {
           method: '##',
           params: [result],
           meta,
-          id: resp.id,
+          id,
           time: Date.now()
         }
 
         // Store in pending responses in case we need to resend after reconnect
-        this.pendingResponses.set(resp.id, {
+        this.pendingResponses.set(id, {
           method: '##',
           params: [result],
           meta
         })
 
-        await this.sendResponse(responseToSend, resp.id)
+        await this.sendResponse(responseToSend, id)
       })
     }
   }
@@ -475,18 +476,33 @@ export class ClisrClient {
   private async sendResponse(responseToSend: any, respId: ReqId): Promise<void> {
     try {
       const dta = this.rpcHandler.serialize(responseToSend, true)
-      const sendMsg = await this.compress(dta)
-      const out = new Uint8Array(1 + sendMsg.length)
-      out[0] = FRAME_PACKED
-      out.set(new Uint8Array(sendMsg), 1)
-      this.websocket?.send(out)
-      this.ctx.info('[ClisrClient] sent operation response (compressed)', { method: responseToSend.method, id: respId })
+      await this.sendFrame(dta, responseToSend.method, respId)
 
       // Remove from pending responses after successful send
       this.pendingResponses.delete(respId)
     } catch (err: any) {
-      this.ctx.error('failed to compress/send operation response', { err })
+      this.ctx.error('failed to send operation response', { err })
       this.websocket?.close()
+    }
+  }
+
+  private async sendFrame(dta: Uint8Array, method: string, id: string | number): Promise<void> {
+    if (dta.byteLength > 1024) {
+      // Compress if message is larger than 1024 bytes
+      this.ctx.info('compressing request', { method, id, len: dta.byteLength })
+      const sendMsg = await this.compress(dta)
+      const out = new Uint8Array(1 + sendMsg.length)
+      out[0] = FRAME_MSGPACK_SNAPPY
+      out.set(new Uint8Array(sendMsg), 1)
+      this.websocket?.send(out)
+      this.ctx.info('[ClisrClient] sent request (compressed)', { method, id })
+    } else {
+      // Send without compression for smaller messages
+      const out = new Uint8Array(1 + dta.byteLength)
+      out[0] = FRAME_MSGPACK // Use msgpack frame for smaller messages
+      out.set(new Uint8Array(dta), 1)
+      this.websocket?.send(out)
+      this.ctx.info('[ClisrClient] sent request (uncompressed)', { method, id, len: dta.byteLength })
     }
   }
 
@@ -598,18 +614,18 @@ export class ClisrClient {
           }
           return
         }
-        if (ft === FRAME_JSON) {
+        if (ft === FRAME_MSGPACK) {
           try {
-            const text = new TextDecoder().decode(u8.subarray(1))
-            const obj = JSON.parse(text)
-            await this.handleMsg(socketId, obj)
+            // Direct msgpack frame (uncompressed)
+            const resp = this.rpcHandler.readResponse<any>(u8.subarray(1), true)
+            await this.handleMsg(socketId, resp)
           } catch (err: any) {
-            this.ctx.error('failed to parse json frame', { err })
+            this.ctx.error('failed to parse msgpack frame', { err })
             this.websocket?.close()
           }
           return
         }
-        if (ft === FRAME_PACKED) {
+        if (ft === FRAME_MSGPACK_SNAPPY) {
           try {
             const dec = await this.uncompress(u8.subarray(1))
             let buf: Uint8Array
@@ -621,7 +637,7 @@ export class ClisrClient {
             const resp = this.rpcHandler.readResponse<any>(buf, true)
             await this.handleMsg(socketId, resp)
           } catch (err: any) {
-            this.ctx.error('failed to parse packed frame', { err })
+            this.ctx.error('failed to parse msgpack-snappy frame', { err })
             this.websocket?.close()
           }
           return
@@ -814,19 +830,12 @@ export class ClisrClient {
                 true
               )
 
-              // Compress before sending and close on error (log before/after for debugging)
+              // Check size after serialization and send appropriate frame type
               void (async () => {
                 try {
-                  this.ctx.info('compressing request', { method: data.method, id, len: dta.byteLength })
-                  const sendMsg = await this.compress(dta)
-                  const out = new Uint8Array(1 + sendMsg.length)
-                  out[0] = FRAME_PACKED
-                  out.set(new Uint8Array(sendMsg), 1)
-                  this.ctx.info('compressed request', { method: data.method, id, compressedLen: sendMsg.length ?? 0 })
-                  this.websocket?.send(out)
-                  this.ctx.info('[ClisrClient] sent request (compressed)', { method: data.method, id })
+                  await this.sendFrame(dta, data.method, id)
                 } catch (err: any) {
-                  this.ctx.error('failed to compress/send request', { err })
+                  this.ctx.error('failed to send request', { err })
                   this.websocket?.close()
                 }
               })()

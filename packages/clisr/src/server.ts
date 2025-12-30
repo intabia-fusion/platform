@@ -36,8 +36,8 @@ import {
   FRAME_PONG,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
-  FRAME_JSON,
-  FRAME_PACKED,
+  FRAME_MSGPACK,
+  FRAME_MSGPACK_SNAPPY,
   RequestPromise,
   type Session,
   type HelloRequest,
@@ -399,21 +399,20 @@ export class ClisrServer {
             return
           }
 
-          if (ft === FRAME_JSON) {
-            // Short JSON payload
+          if (ft === FRAME_MSGPACK) {
+            // Direct msgpack frame (uncompressed)
             try {
-              const text = this.payloadToString(buff.slice(1))
-              const obj = JSON.parse(text)
-              await this.handleRequest(session, obj)
+              const request = session.socket.readRequest(buff.slice(1), true)
+              await this.handleRequest(session, request)
             } catch (err: any) {
-              this.ctx.error('failed to parse json frame', { err })
+              this.ctx.error('failed to parse msgpack frame', { err })
               session.socket.close()
             }
             return
           }
 
-          if (ft === FRAME_PACKED) {
-            // Body is compressed packed data - decompress first
+          if (ft === FRAME_MSGPACK_SNAPPY) {
+            // Body is compressed msgpack data - decompress first
             let requestBuffer: Buffer
             try {
               const dec = await this.uncompress(buff.slice(1))
@@ -698,7 +697,7 @@ export function createWebsocketClientSocket (
         ws.send(Buffer.from(buf as Buffer), { binary: true }, handleErr)
       })
     },
-    // Send an RPC message framed as compressed packed message (FRAME_PACKED)
+    // Send an RPC message, compressing only if larger than 1024 bytes
     send: async (ctx: MeasureContext, msg): Promise<void> => {
       const smsg = rpcHandler.serialize(msg, true)
       if (ws.readyState !== ws.OPEN || cs.isClosed) {
@@ -710,8 +709,18 @@ export function createWebsocketClientSocket (
         await cs.backpressure(ctx)
       }
 
-      const compressed = await (opts?.compress ?? lazyCompress)(smsg)
-      const out = Buffer.concat([Buffer.from([FRAME_PACKED]), Buffer.from(compressed)])
+      let out: Buffer
+      if (smsg.byteLength > 1024) {
+        // Compress if message is larger than 1024 bytes
+        const compressed = await (opts?.compress ?? lazyCompress)(smsg)
+        out = Buffer.concat([Buffer.from([FRAME_MSGPACK_SNAPPY]), Buffer.from(compressed)])
+        ctx.info('sent message (compressed)', { method: msg?.result?.method || (msg as any)?.method, len: smsg.byteLength, compressedLen: compressed.byteLength })
+      } else {
+        // Send without compression for smaller messages
+        out = Buffer.concat([Buffer.from([FRAME_MSGPACK]), Buffer.from(smsg)])
+        ctx.info('sent message (uncompressed)', { method: msg?.result?.method || (msg as any)?.method, len: smsg.byteLength })
+      }
+
       const st = performance.now()
       await new Promise<void>((resolve) => {
         const handleErr = (err?: Error): void => {

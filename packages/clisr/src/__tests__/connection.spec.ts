@@ -300,7 +300,9 @@ describe('ClisrClient.handleMsg behavior', () => {
         })
     )
 
-    ;(client as any).sendRequest({ method: 'm-fail', params: [], overrideId: 100 })
+    // Use a large payload to ensure compression is triggered (>1024 bytes)
+    const largePayload = 'x'.repeat(1025) // Ensure it's larger than 1024 bytes
+    ;(client as any).sendRequest({ method: 'm-fail', params: [largePayload], overrideId: 100 })
     await new Promise((resolve) => setImmediate(resolve))
 
     // Trigger compression failure
@@ -368,7 +370,9 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).slowDownTimer = 5
 
     const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('x'))
-    const p = (client as any).sendRequest({ method: 'slow', params: [] })
+    // Use a large payload to ensure compression is triggered (>1024 bytes)
+    const largePayload = 'x'.repeat(1025) // Ensure it's larger than 1024 bytes
+    const p = (client as any).sendRequest({ method: 'slow', params: [largePayload] })
 
     // Wait briefly to allow compression to execute (more stable than tight polling).
     // Use a small timeout to avoid flaky behavior while keeping tests fast.
@@ -437,7 +441,9 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).helloReceived = true
     const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('d'))
 
-    const p = (client as any).sendRequest({ method: 'log-me', params: ['x'], overrideId: 999 })
+    // Create a large payload to ensure compression is triggered (>1024 bytes)
+    const largePayload = 'x'.repeat(1025) // Ensure it's larger than 1024 bytes
+    const p = (client as any).sendRequest({ method: 'log-me', params: [largePayload], overrideId: 999 })
     await new Promise((resolve) => setImmediate(resolve))
     expect(wsSend).toHaveBeenCalled()
     // Assert that compressed send info was logged

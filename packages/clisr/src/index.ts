@@ -28,7 +28,7 @@ export {
   FRAME_PONG,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
-  FRAME_JSON,
-  FRAME_PACKED
+  FRAME_MSGPACK,
+  FRAME_MSGPACK_SNAPPY
 } from './types'
 export { TMGRServer, TMGRClient } from './tmgr'
