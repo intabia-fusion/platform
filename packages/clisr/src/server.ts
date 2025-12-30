@@ -47,13 +47,29 @@ import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
 
 // Lazy-import snappy at runtime to avoid initializing native handles during test collection
+let _snappyCompress: ((input: any) => Promise<any>) | undefined
+let _snappyUncompress: ((input: any) => Promise<any>) | undefined
 const lazyCompress = async (input: any): Promise<any> => {
-  const m = await import('snappy')
-  return await m.compress(input)
+  if (_snappyCompress === undefined) {
+    const m = await import('snappy')
+    _snappyCompress = m.compress.bind(m)
+    _snappyUncompress = m.uncompress.bind(m)
+  }
+  if (_snappyCompress === undefined) {
+    throw new Error('snappy compress function not available')
+  }
+  return await _snappyCompress(input)
 }
 const lazyUncompress = async (input: any): Promise<any> => {
-  const m = await import('snappy')
-  return await m.uncompress(input)
+  if (_snappyUncompress === undefined) {
+    const m = await import('snappy')
+    _snappyCompress = _snappyCompress ?? m.compress.bind(m)
+    _snappyUncompress = m.uncompress.bind(m)
+  }
+  if (_snappyUncompress === undefined) {
+    throw new Error('snappy uncompress function not available')
+  }
+  return await _snappyUncompress(input)
 }
 
 export type RequestHandler = (req: Request<any>, res: ExpressResponse, next?: NextFunction) => Promise<void>
