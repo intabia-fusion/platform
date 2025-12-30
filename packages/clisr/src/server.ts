@@ -260,6 +260,7 @@ export class ClisrServer {
     this.tickTimer = setInterval(() => {
       void this.handleTick()
     }, 1000)
+    // tickTimer will be cleared in `close()`; ensure tests call `server.close()` to cleanup timers
 
     const app = express()
     app.use(cors())

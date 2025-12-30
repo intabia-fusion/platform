@@ -31,16 +31,26 @@ describe('TMGR server-client task delivery with reconnects', () => {
       let msgHandler: any = null
 
       const wrapper: any = {
-        send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => { real.send(data as any) },
-        close: (code?: number) => { try { real.close(code) } catch (_err) {} },
+        send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
+          real.send(data as any)
+        },
+        close: (code?: number) => {
+          try {
+            real.close(code)
+          } catch (_err) {}
+        },
         onclose: null,
         onerror: null,
-        get readyState () { return real.readyState },
+        get readyState () {
+          return real.readyState
+        },
         bufferedAmount: 0
       }
 
       Object.defineProperty(wrapper, 'onopen', {
-        get () { return openHandler },
+        get () {
+          return openHandler
+        },
         set (fn: any) {
           openHandler = fn
           if (openEmitted && typeof openHandler === 'function') openHandler({} as any)
@@ -48,7 +58,9 @@ describe('TMGR server-client task delivery with reconnects', () => {
       })
 
       Object.defineProperty(wrapper, 'onmessage', {
-        get () { return msgHandler },
+        get () {
+          return msgHandler
+        },
         set (fn: any) {
           msgHandler = fn
           if (msgQueue.length > 0 && typeof msgHandler === 'function') {
@@ -78,18 +90,27 @@ describe('TMGR server-client task delivery with reconnects', () => {
 
     // Create client that defers send until test triggers it
     let resolveExec!: (v?: any) => void
-    const execPromise = new Promise<any>((resolve) => { resolveExec = resolve })
+    const execPromise = new Promise<any>((resolve) => {
+      resolveExec = resolve
+    })
     let callbackInvoked = false
 
     let onConnectResolve!: () => void
-    const onConnectP = new Promise<void>((resolve) => { onConnectResolve = resolve })
+    const onConnectP = new Promise<void>((resolve) => {
+      onConnectResolve = resolve
+    })
 
     const client = new ClisrClient(
       ctx,
       `ws://127.0.0.1:${port}`,
       () => {},
       () => 'token-ok',
-      { socketFactory, onConnect: async () => { onConnectResolve() } }
+      {
+        socketFactory,
+        onConnect: async () => {
+          onConnectResolve()
+        }
+      }
     )
     client.callbackHandler = async (_method, args, send) => {
       callbackInvoked = true

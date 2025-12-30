@@ -59,6 +59,13 @@ export interface ClientFactoryOptions {
   onDialTimeout?: () => void | Promise<void>
 
   useGlobalRPCHandler?: boolean
+
+  // Optional overrides for compression (useful in tests)
+  compress?: (input: any) => Promise<any>
+  uncompress?: (input: any) => Promise<any>
+
+  // If false, do not auto-open the connection; tests may set to false to avoid background timers
+  autoStart?: boolean
 }
 
 /**

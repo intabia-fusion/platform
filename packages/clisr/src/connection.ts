@@ -138,7 +138,14 @@ export class ClisrClient {
     this.pushHandler(handler)
     this.onConnect = opt?.onConnect
 
-    this.scheduleOpen(this.ctx, false)
+    // Apply optional compression overrides from factory options
+    this.compress = opt?.compress ?? this.compress
+    this.uncompress = opt?.uncompress ?? this.uncompress
+
+    // Auto-start connection by default, but allow tests to opt out for deterministic cleanup
+    if (opt?.autoStart ?? true) {
+      this.scheduleOpen(this.ctx, false)
+    }
   }
 
   pushHandler (handler: OperationHandler): void {
@@ -177,6 +184,7 @@ export class ClisrClient {
         clearInterval(this.interval)
       }
     }, pingTimeout)
+    // Timer will be cleared on close(); ensure tests call `client.close()` to cleanup timers
   }
 
   async close (): Promise<void> {
@@ -246,6 +254,7 @@ export class ClisrClient {
             this.openAction = undefined
             this.openConnection(ctx, socketId)
           }, this.delay * 1000)
+          // openAction will be cleared via clearTimeout in `close()` or overwritten by subsequent scheduleOpen calls
         }
       }
     }
@@ -515,6 +524,7 @@ export class ClisrClient {
           this.scheduleOpen(this.ctx, true)
         }
       }, dialTimeout)
+      // dialTimer will be cleared when socket receives hello or when client is closed
     }
 
     wsocket.onmessage = async (event: MessageEvent) => {

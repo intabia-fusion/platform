@@ -2,23 +2,22 @@
 // Tests for ClisrServer.checkHello and CLisrClient.handleMsg
 // Comments in tests are in English as per repository conventions.
 
-import { ClisrServer, createWebsocketClientSocket as createConnectionSocket } from '../server'
+import { Analytics } from '@hcengineering/analytics'
+import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
+import { RPCHandler } from '@hcengineering/rpc'
 import { ClisrClient } from '../connection'
+import { ClisrServer, createWebsocketClientSocket as createConnectionSocket } from '../server'
 import {
-  type HelloRequest,
-  type HelloResponse,
-  type ConnectionSocket,
-  type Session,
   ClientConnectEvent,
   ClientSocketReadyState,
-  pingConst,
-  FRAME_PING,
   FRAME_HELLO_RESP,
-  FRAME_PACKED
+  FRAME_PING,
+  pingConst,
+  type ConnectionSocket,
+  type HelloRequest,
+  type HelloResponse,
+  type Session
 } from '../types'
-import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
-import { Analytics } from '@hcengineering/analytics'
-import { RPCHandler } from '@hcengineering/rpc'
 
 describe('ClisrServer and ClisrClient consistency', () => {
   // Create a minimal fake MeasureContext to satisfy callers used in server / client.
@@ -58,6 +57,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
   it('checkHello sends useCompression and reconnect flags', async () => {
     const ctx = createFakeCtx()
     const server = new ClisrServer(ctx, async (token: string) => token === 'good-token', '1.0.0')
+    server.compress = async (x: any) => x
+    server.uncompress = async (x: any) => x
 
     const sent: any[] = []
     const cs = createFakeCS(sent)
@@ -99,6 +100,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
   it('checkHello sets reconnect true when old session present in reconnectQueue', async () => {
     const ctx = createFakeCtx()
     const server = new ClisrServer(ctx, async () => true, '1.0.0')
+    server.compress = async (x: any) => x
+    server.uncompress = async (x: any) => x
 
     const sent: any[] = []
     const cs = createFakeCS(sent)
@@ -152,6 +155,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
   it('checkHello closes session when token validation fails', async () => {
     const ctx = createFakeCtx()
     const server = new ClisrServer(ctx, async () => false, '1.0.0')
+    server.compress = async (x: any) => x
+    server.uncompress = async (x: any) => x
 
     const cs = createFakeCS()
     const session: Session = {
@@ -181,6 +186,9 @@ describe('ClisrServer and ClisrClient consistency', () => {
 
   it('CLisrClient.handleMsg processes hello response and calls onConnect', async () => {
     const ctx = createFakeCtx()
+    const server = new ClisrServer(ctx, async () => true, '1.0.0')
+    server.compress = async (x: any) => x
+    server.uncompress = async (x: any) => x
 
     // Provide a socketFactory that returns a minimal ClientSocket object to avoid real network usage.
     const fakeFactory = jest.fn((url: string) => {
@@ -211,7 +219,7 @@ describe('ClisrServer and ClisrClient consistency', () => {
     }
 
     // Simulate receiving the hello response
-    client.handleMsg(1, resp)
+    await client.handleMsg(1, resp)
 
     // Client should mark hello as received
     expect((client as any).helloReceived).toBe(true)
@@ -457,7 +465,7 @@ describe('ClisrServer and ClisrClient consistency', () => {
     const payload = Buffer.from([FRAME_PING])
     // call the registered 'message' listeners
     for (const fn of listeners.message ?? []) {
-      const maybe = fn(payload) as unknown
+      const maybe = (fn as any)(payload) as unknown
       if (maybe != null) {
         const maybePromise = Promise.resolve(maybe)
         await maybePromise
@@ -472,6 +480,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
   it('send waits for backpressure then sends binary data', async () => {
     const ctx = createFakeCtx()
     const server = new ClisrServer(ctx, async () => true, '1.0.0')
+    server.compress = async (x: any) => x
+    server.uncompress = async (x: any) => x
 
     // Fake ws that simulates backpressure first, then clears it
     const ws: any = {

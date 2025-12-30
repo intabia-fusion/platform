@@ -26,7 +26,13 @@ describe('ClisrClient.handleMsg behavior', () => {
       'ws://localhost',
       (_data: any[]) => {},
       () => 'token',
-      { socketFactory: fakeFactory, ...opts }
+      {
+        socketFactory: fakeFactory,
+        compress: async (x: any) => x,
+        uncompress: async (x: any) => x,
+        autoStart: false,
+        ...opts
+      }
     )
   }
 
