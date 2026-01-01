@@ -20,7 +20,7 @@ import { type ReqId, RPCHandler, type Response, type Request } from '@hcengineer
 
 import 'bufferutil'
 import cors from 'cors'
-import express, { type Response as ExpressResponse, type NextFunction } from 'express'
+import express, { type Express, type Response as ExpressResponse, type NextFunction } from 'express'
 import http, { type IncomingMessage } from 'http'
 import morgan from 'morgan'
 import os from 'os'
@@ -110,7 +110,8 @@ export class ClisrServer {
   constructor (
     readonly ctx: MeasureContext,
     readonly validateToken: (token: string) => Promise<boolean>,
-    readonly serverVersion: string
+    readonly serverVersion: string,
+    readonly app: Express = express()
   ) {}
 
   async handleTick (): Promise<void> {
@@ -262,26 +263,19 @@ export class ClisrServer {
       void this.handleTick()
     }, 1000)
     // tickTimer will be cleared in `close()`; ensure tests call `server.close()` to cleanup timers
-
-    const app = express()
-    app.use(cors())
-
-    const childLogger = ctx.logger.childLogger?.('requests', {
-      enableConsole: 'true'
-    })
-    const requests = ctx.newChild('requests', {}, { logger: childLogger, span: false })
+    this.app.use(cors())
 
     class MyStream {
       write (text: string): void {
-        requests.info(text)
+        ctx.info(text)
       }
     }
 
     const myStream = new MyStream()
 
-    app.use(morgan('short', { stream: myStream }))
+    this.app.use(morgan('short', { stream: myStream }))
 
-    this.httpServer = http.createServer(app)
+    this.httpServer = http.createServer(this.app)
     this.wss = this.createWebsocketServer()
 
     this.wss.on('connection', (ws, request) => {

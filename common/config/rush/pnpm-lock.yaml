@@ -38695,6 +38695,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/server/packages/core
+      '@intabiafusion/clisr':
+        specifier: workspace:^0.7.0
+        version: link:../../../packages/clisr
       '@types/nodemailer':
         specifier: ^6.4.17
         version: 6.4.21
