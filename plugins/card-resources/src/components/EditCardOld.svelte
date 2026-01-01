@@ -50,6 +50,7 @@
   import TagsEditor from './TagsEditor.svelte'
   import ParentNamesPresenter from './ParentNamesPresenter.svelte'
   import { permissionsStore } from '@hcengineering/contact-resources'
+  import CardVersionSelector from './CardVersionSelector.svelte'
 
   export let _id: Ref<Card>
   export let readonly: boolean = false
@@ -211,6 +212,7 @@
 
     <svelte:fragment slot="extra">
       <TagsEditor {doc} id={'cardHeader-tags'} />
+      <CardVersionSelector bind:value={doc} />
       <ComponentExtensions
         extension={card.extensions.EditCardHeaderExtension}
         props={{
