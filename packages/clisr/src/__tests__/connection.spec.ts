@@ -2,7 +2,7 @@
 // Tests for ClisrClient.handleMsg branches: responses, chunks, operationHandler, terminate, rate limit.
 // Comments are in English as per repository conventions.
 
-import { ClisrClient } from '../connection'
+import { ClisrClient } from '../client'
 import { RequestPromise, ClientSocketReadyState, pingConst, FRAME_PING, FRAME_PONG } from '../types'
 import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 

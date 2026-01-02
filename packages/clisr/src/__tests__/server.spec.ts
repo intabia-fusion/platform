@@ -5,7 +5,7 @@
 import { Analytics } from '@hcengineering/analytics'
 import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 import { RPCHandler } from '@hcengineering/rpc'
-import { ClisrClient } from '../connection'
+import { ClisrClient } from '../client'
 import { ClisrServer, createWebsocketClientSocket as createConnectionSocket } from '../server'
 import {
   ClientConnectEvent,

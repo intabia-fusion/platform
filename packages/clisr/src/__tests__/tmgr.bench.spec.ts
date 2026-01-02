@@ -3,7 +3,7 @@
 
 import { MeasureMetricsContext } from '@hcengineering/measurements'
 import { ClisrServer } from '../server'
-import { ClisrClient } from '../connection'
+import { ClisrClient } from '../client'
 
 jest.setTimeout(120000)
 

@@ -3,7 +3,7 @@
 
 import { type MeasureContext } from '@hcengineering/measurements'
 import { ClisrServer } from './server'
-import { ClisrClient } from './connection'
+import { ClisrClient } from './client'
 import express, { type Express } from 'express'
 
 /**

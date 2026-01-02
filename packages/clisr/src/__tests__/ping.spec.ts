@@ -3,7 +3,7 @@
 // Tests for ping/pong handling and timeouts.
 // Comments in tests are in English as per repository conventions.
 
-import { ClisrClient } from '../connection'
+import { ClisrClient } from '../client'
 import { pingConst, pongConst, ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
 import { MeasureMetricsContext } from '@hcengineering/measurements'
 

@@ -7,7 +7,7 @@
 
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
-import { ClisrClient } from '../connection'
+import { ClisrClient } from '../client'
 import { MeasureMetricsContext } from '@hcengineering/measurements'
 import type { ClientSocketFactory } from '../types'
 
