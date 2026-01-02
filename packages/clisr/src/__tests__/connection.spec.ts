@@ -95,9 +95,9 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).websocket = { send: wsSend, close: wsClose, readyState: ClientSocketReadyState.OPEN }
     ;(client as any).helloReceived = true
 
-    const opSpy = jest.fn(async (method: string, params: any[], send: (res: any) => Promise<void>) => {
+    const opSpy = jest.fn(async (method: string, params: any[]) => {
       // Simulate doing work then calling the provided send callback
-      await send({ answer: 'ok' })
+      return { answer: 'ok' }
     })
     client.callbackHandler = opSpy
     const infoSpy = jest.spyOn((client as any).ctx, 'info')
@@ -113,7 +113,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     // allow pending microtasks / native compression callbacks
     await new Promise((resolve) => setImmediate(resolve))
 
-    expect(opSpy).toHaveBeenCalledWith('call-me', ['p'], expect.any(Function))
+    expect(opSpy).toHaveBeenCalledWith('call-me', ['p'])
 
     // Accept several possible successful outcomes:
     // - wsSend was invoked, or

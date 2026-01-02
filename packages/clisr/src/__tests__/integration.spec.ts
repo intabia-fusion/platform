@@ -26,9 +26,9 @@ describe('integration: real WebSocket connections', () => {
 
     // Register a simple echo handler on server side
     let gotOp: any = null
-    server.handlers.push(async (op: any, respond: (data: any) => Promise<void>) => {
+    server.handlers.push(async (op: any) => {
       gotOp = op
-      await respond({ echo: op.params[0] })
+      return { echo: op.params[0] }
     })
 
     // Promise that resolves when client onConnect is invoked
@@ -148,14 +148,13 @@ describe('integration: real WebSocket connections', () => {
 
       // Now test server -> client request
       let gotServerOp: any = null
-      ;(client as any).operationHandler = async (
+      ;(client as any).callbackHandler = async (
         method: string,
-        params: any[],
-        send: (response: any) => Promise<void>
+        params: any[]
       ) => {
-        console.info('integration: client.operationHandler invoked', { method, params })
+        console.info('integration: client.callbackHandler invoked', { method, params })
         gotServerOp = { method, params }
-        await send({ answer: params[0] + '-from-client' })
+        return { answer: params[0] + '-from-client' }
       }
 
       console.info('integration: calling server.request to invoke client operation')

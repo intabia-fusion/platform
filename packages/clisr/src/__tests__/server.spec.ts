@@ -457,7 +457,7 @@ describe('ClisrServer and ClisrClient consistency', () => {
 
     // Register a handler that captures ping messages
     const pings: any[] = []
-    server.handlers.push(async (req, send) => {
+    server.handlers.push(async (req) => {
       if (req.method === pingConst) pings.push(req)
     })
 

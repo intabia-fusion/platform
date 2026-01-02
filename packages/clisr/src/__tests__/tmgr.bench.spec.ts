@@ -88,9 +88,9 @@ describe('TMGR benchmark (integration-like)', () => {
       client.uncompress = async (x: any) => x
 
       // 1ms executor
-      client.callbackHandler = async (_method, _args, send) => {
+      client.callbackHandler = async (_method, _args) => {
         await new Promise((resolve) => setTimeout(resolve, 1))
-        await send({ ok: true })
+        return { ok: true }
       }
 
       clients.push(client)

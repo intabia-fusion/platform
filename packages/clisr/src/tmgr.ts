@@ -40,9 +40,8 @@ export async function createCallbackClient (
     (data) => {},
     () => token
   )
-  client.callbackHandler = async (method, args, send) => {
-    const result = await executor(method, args)
-    await send(result)
+  client.callbackHandler = async (method, args) => {
+    return await executor(method, args)
   }
   return client
 }

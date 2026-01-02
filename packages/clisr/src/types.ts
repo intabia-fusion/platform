@@ -92,6 +92,8 @@ export const FRAME_HELLO_RESP = 3
 export const FRAME_MSGPACK = 4 // Serialized msgpack data (uncompressed)
 export const FRAME_MSGPACK_SNAPPY = 5 // Serialized msgpack data compressed with snappy
 
+export const callbackMethod = '##'
+
 export type OperationHandler = (data: any[]) => void
 
 /**

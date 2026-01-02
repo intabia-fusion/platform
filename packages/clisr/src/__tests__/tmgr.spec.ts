@@ -112,10 +112,10 @@ describe('TMGR server-client task delivery with reconnects', () => {
         }
       }
     )
-    client.callbackHandler = async (_method, args, send) => {
+    client.callbackHandler = async (_method, args) => {
       callbackInvoked = true
       const result = await execPromise
-      await send(result)
+      return result
     }
 
     await onConnectP

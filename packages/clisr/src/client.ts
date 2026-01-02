@@ -31,7 +31,8 @@ import {
   type ClientFactoryOptions,
   type HelloResponse,
   type HelloRequest,
-  RequestPromise
+  RequestPromise,
+  callbackMethod
 } from './types'
 import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
 import { type MeasureContext } from '@hcengineering/measurements'
@@ -104,8 +105,7 @@ export class ClisrClient {
   handlers: OperationHandler[] = []
 
   // Server callback handler (also support legacy `operationHandler` name)
-  callbackHandler?: (msg: string, args: any[], send: (response: any) => Promise<void>) => Promise<void>
-  operationHandler?: (msg: string, args: any[], send: (response: any) => Promise<void>) => Promise<void>
+  callbackHandler?: (msg: string, args: any[]) => Promise<any>
 
   // Overridable compression functions (default to snappy). Tests can override instance methods.
   compress: (input: any) => Promise<any> = lazyCompress
@@ -380,7 +380,9 @@ export class ClisrClient {
     if (resp.id !== undefined) {
       if (typeof resp.id === 'string' && resp.id.startsWith('#')) {
         // A request from server
-        this.handleCallbackMsg(resp)
+        void this.handleCallbackMsg(resp).catch(err => {
+          this.ctx.error('failed to process callback', { err })
+        })
         return
       }
 
@@ -447,35 +449,71 @@ export class ClisrClient {
     }
   }
 
-  private handleCallbackMsg (resp: Response<any>): void {
-    const handlerFn = this.callbackHandler ?? this.operationHandler
-    if (handlerFn !== undefined && resp.id !== undefined) {
+  private async handleCallbackMsg (resp: Response<any>): Promise<void> {
+    const handlerFn = this.callbackHandler
+    if (resp.id === undefined) {
+      return
+    }
+    if (handlerFn !== undefined) {
       const { method, params, meta } = resp.result ?? {}
       const id = resp.id // Capture id in a variable that TypeScript knows is defined
-      void handlerFn(method, params ?? [], async (result) => {
-        // Store the response to be sent
+
+      // Call the handler function and handle the result or error
+      try {
+        // Call the handler and await the result (handler should return a value or throw an error)
+        const result = await handlerFn(method, params ?? [])
+
+        // Store the response to be sent in [response, error] format
         const responseToSend = {
-          method: '##',
-          params: [result],
+          method: callbackMethod,
+          params: [result, undefined], // [response, error]
           meta,
           id,
           time: Date.now()
         }
 
         // Store in pending responses in case we need to resend after reconnect
-        this.pendingResponses.set(id, {
-          method: '##',
-          params: [result],
-          meta
-        })
+        this.pendingResponses.set(id, responseToSend)
 
         await this.sendResponse(responseToSend, id)
-      })
+      } catch (error: any) {
+        // Send error back to the server in [response, error] format
+        const message = { message: error.message ?? 'Unknown error', stack: error.stack }
+        await this.sendError(resp as any, message, {})
+      }
+    } else {
+      // Send error back to the server in [response, error] format
+      await this.sendError(resp as any, { message: 'No callback defined' }, {})
     }
+  }
+
+  private async sendError (resp: Response<any> & { id: ReqId }, message: any, meta: any): Promise<void> {
+    // Send error back to the server in [response, error] format
+    const errorResponse = {
+      method: callbackMethod,
+      params: [undefined, message], // [response, error]
+      meta,
+      id: resp.id,
+      time: Date.now()
+    }
+
+    // Store in pending responses in case we need to resend after reconnect
+    this.pendingResponses.set(resp.id, errorResponse)
+
+    await this.sendResponse(errorResponse, resp.id)
   }
 
   private async sendResponse (responseToSend: any, respId: ReqId): Promise<void> {
     try {
+      // Wait for connection to be ready before sending
+      if (this.websocket == null || this.websocket.readyState !== ClientSocketReadyState.OPEN) {
+        // Wait for connection to be established
+        const connectionPromise = this.waitOpenConnection(this.ctx)
+        if (connectionPromise instanceof Promise) {
+          await connectionPromise
+        }
+      }
+
       const sendFn = (data: Uint8Array): void => {
         this.websocket?.send(data)
       }

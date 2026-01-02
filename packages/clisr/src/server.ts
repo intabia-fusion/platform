@@ -41,11 +41,13 @@ import {
   RequestPromise,
   type Session,
   type HelloRequest,
-  type HelloResponse
+  type HelloResponse,
+  callbackMethod
 } from './types'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
 import { sendFrame as sharedSendFrame } from './frame-utils'
+import { unknownError } from '@hcengineering/platform'
 
 // Lazy-import snappy at runtime to avoid initializing native handles during test collection
 let _snappyCompress: ((input: any) => Promise<any>) | undefined
@@ -92,7 +94,7 @@ export class ClisrServer {
 
   private readonly requests = new Map<ReqId, RequestPromise>()
 
-  public handlers: ((op: any, response: (data: any) => Promise<void>) => Promise<void>)[] = []
+  public handlers: ((op: any) => Promise<any>)[] = []
 
   // Allow overriding compression functions (default to snappy).
   // Tests can override the instance methods instead of mocking the native module.
@@ -235,9 +237,17 @@ export class ClisrServer {
   // Perform a round robin call to one of the connected clients and wait for response from it
   // if client is not responding for a timeout, try next one client.
   async request (ctx: MeasureContext, method: string, params: any[]): Promise<any> {
-    while (true) {
+    while (true) { // Keep trying indefinitely
+      if (this.sessions.size === 0) {
+        // No sessions available, wait a bit and try again
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+
+      const sessionArray = Array.from(this.sessions.values())
+
       const num = this.cindex++
-      const s = Array.from(this.sessions.values())[num % this.sessions.size]
+      const s = sessionArray[num % sessionArray.length]
       try {
         return await ctx.with(method, {}, (ctx) =>
           this.sendRequest(s, {
@@ -489,12 +499,24 @@ export class ClisrServer {
     }
 
     // Handle responses to server's previous requests (client -> server reply to '#...' messages)
-    if (request.id !== undefined && request.method === '##') {
+    if (request.id !== undefined && request.method === callbackMethod) {
       const rr = this.requests.get(request.id)
       this.requests.delete(request.id)
       if (rr !== undefined) {
-        void rr.handleResult?.(request.params[0])
-        rr.resolve(request.params[0])
+        const [response, error] = request.params
+        if (error !== undefined) {
+          // Handle error response from client
+          const errorMessage = error.message ?? 'Unknown error from client callback'
+          const err = new Error(errorMessage)
+          if (error.stack !== undefined) {
+            err.stack = error.stack
+          }
+          rr.reject(err)
+        } else {
+          // Handle successful response
+          void rr.handleResult?.(response)
+          rr.resolve(response)
+        }
         rr.onDone?.()
         return
       }
@@ -503,12 +525,19 @@ export class ClisrServer {
     // Ok we authorized - invoke registered handlers
     for (let i = 0; i < this.handlers.length; i++) {
       const h = this.handlers[i]
-      void h(request, async (data: any) => {
+      void h(request).then(result => {
         const resp: Response<any> = {
           id: request.id,
-          result: data
+          result
         }
-        await session.socket.send(this.ctx, resp)
+        void session.socket.send(this.ctx, resp)
+      }).catch(err => {
+        const resp: Response<any> = {
+          id: request.id,
+          result: undefined,
+          error: unknownError(err)
+        }
+        void session.socket.send(this.ctx, resp)
       })
     }
   }
