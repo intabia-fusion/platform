@@ -237,7 +237,8 @@ export class ClisrServer {
   // Perform a round robin call to one of the connected clients and wait for response from it
   // if client is not responding for a timeout, try next one client.
   async request (ctx: MeasureContext, method: string, params: any[]): Promise<any> {
-    while (true) { // Keep trying indefinitely
+    while (true) {
+      // Keep trying indefinitely
       if (this.sessions.size === 0) {
         // No sessions available, wait a bit and try again
         await new Promise((resolve) => setTimeout(resolve, 100))
@@ -525,20 +526,22 @@ export class ClisrServer {
     // Ok we authorized - invoke registered handlers
     for (let i = 0; i < this.handlers.length; i++) {
       const h = this.handlers[i]
-      void h(request).then(result => {
-        const resp: Response<any> = {
-          id: request.id,
-          result
-        }
-        void session.socket.send(this.ctx, resp)
-      }).catch(err => {
-        const resp: Response<any> = {
-          id: request.id,
-          result: undefined,
-          error: unknownError(err)
-        }
-        void session.socket.send(this.ctx, resp)
-      })
+      void h(request)
+        .then((result) => {
+          const resp: Response<any> = {
+            id: request.id,
+            result
+          }
+          void session.socket.send(this.ctx, resp)
+        })
+        .catch((err) => {
+          const resp: Response<any> = {
+            id: request.id,
+            result: undefined,
+            error: unknownError(err)
+          }
+          void session.socket.send(this.ctx, resp)
+        })
     }
   }
 

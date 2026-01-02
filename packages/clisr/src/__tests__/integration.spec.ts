@@ -148,10 +148,7 @@ describe('integration: real WebSocket connections', () => {
 
       // Now test server -> client request
       let gotServerOp: any = null
-      ;(client as any).callbackHandler = async (
-        method: string,
-        params: any[]
-      ) => {
+      ;(client as any).callbackHandler = async (method: string, params: any[]) => {
         console.info('integration: client.callbackHandler invoked', { method, params })
         gotServerOp = { method, params }
         return { answer: params[0] + '-from-client' }

@@ -380,7 +380,7 @@ export class ClisrClient {
     if (resp.id !== undefined) {
       if (typeof resp.id === 'string' && resp.id.startsWith('#')) {
         // A request from server
-        void this.handleCallbackMsg(resp).catch(err => {
+        void this.handleCallbackMsg(resp).catch((err) => {
           this.ctx.error('failed to process callback', { err })
         })
         return
