@@ -274,7 +274,6 @@ export function start (
     disableSignUp?: string
     hideLocalLogin?: string
     streamUrl?: string
-    mailUrl?: string
     billingUrl?: string
     paymentUrl?: string
     pulseUrl?: string
@@ -353,7 +352,6 @@ export function start (
       PUSH_PUBLIC_KEY: config.pushPublicKey,
       DISABLE_SIGNUP: config.disableSignUp,
       HIDE_LOCAL_LOGIN: config.hideLocalLogin,
-      MAIL_URL: config.mailUrl,
       BILLING_URL: config.billingUrl,
       PAYMENT_URL: config.paymentUrl,
       PULSE_URL: config.pulseUrl,
