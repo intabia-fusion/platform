@@ -99,7 +99,6 @@ import {
   doReleaseSocialId,
   selectWorkspace,
   sendEmail,
-  sendEmailConfirmation,
   sendOtp,
   setPassword,
   setTimezone,
@@ -273,7 +272,7 @@ export async function loginOtp (
 }
 
 /**
- * Given an email, password, first name, and last name, creates a new account and sends a confirmation email.
+ * Given an email, password, first name, and last name, creates a new account, without email confirmation.
  * The email confirmation is not required if the email service is not configured.
  *
  * ---------DEPRECATED. Only to be used for dev setups without mail service. Use signUpOtp instead.
@@ -303,25 +302,15 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
   }
 
-  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
-  console.error('mailQueue', JSON.stringify(mailQueue))
-  const forceConfirmation = mailQueue !== undefined
-  if (forceConfirmation) {
-    const normalizedEmail = cleanEmail(email)
-
-    await sendEmailConfirmation(ctx, branding, account, normalizedEmail)
-  } else {
-    ctx.warn('Please provide MAIL_URL to enable sign up email confirmations.')
-    await confirmEmail(ctx, db, account, email)
-    await confirmHulyIds(ctx, db, account)
-  }
+  await confirmEmail(ctx, db, account, email)
+  await confirmHulyIds(ctx, db, account)
 
   void setTimezone(ctx, db, account, null, meta)
   return {
     account,
     name: getPersonName(person),
     socialId,
-    token: !forceConfirmation ? generateToken(account) : undefined
+    token: generateToken(account)
   }
 }
 

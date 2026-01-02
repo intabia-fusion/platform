@@ -81,13 +81,16 @@ const envMap = {
   Source: 'SOURCE',
   ReplyTo: 'REPLY_TO',
   DefaultProtocol: 'DEFAULT_PROTOCOL',
+
   SesAccessKey: 'SES_ACCESS_KEY',
   SesSecretKey: 'SES_SECRET_KEY',
   SesRegion: 'SES_REGION',
+
   SmtpHost: 'SMTP_HOST',
   SmtpPort: 'SMTP_PORT',
   SmtpUsername: 'SMTP_USERNAME',
   SmtpPassword: 'SMTP_PASSWORD',
+
   SmtpTlsMode: 'SMTP_TLS_MODE', // TLS mode, see TlsOptions for possible values
   SmtpDebugLog: 'SMTP_DEBUG_LOG', // Enable debug logging for SMTP
   SmtpAllowSelfSigned: 'SMTP_ALLOW_SELF_SIGNED', // Allow self-signed certificates (not recommended for production use)

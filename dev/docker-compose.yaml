@@ -198,6 +198,7 @@ services:
       - ./branding.json:/var/cfg/branding.json
     environment:
       - ACCOUNT_PORT=3000
+      - IGNORE_EMAIL_SIGNUP=false # Set to true if you want to disable email/otp confirmations
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
@@ -802,6 +803,62 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - USAGE_UPDATE_INTERVAL=3600
     restart: unless-stopped
+
+  mail_server:
+    image: intabiafusion/mail
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      - mailpit
+    ports:
+      - 8097:8097
+    environment:
+      - MODE=server
+      - PORT=8097
+      - SOURCE=hello@localhost
+      - REPLY_TO=hello@localhost
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION=
+      - API_KEY=naephea1Rai7eeth1noh
+      - SMTP_HOST=mailpit
+      - SMTP_USERNAME=platform
+      - SMTP_PASSWORD=platform
+      - SMTP_PORT=1025
+      - SMTP_TLS_MODE=ignore
+      - SMTP_ALLOW_SELF_SIGNED=true
+  mail_client:
+    image: intabiafusion/mail
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      - mail_server
+      - mailpit
+    environment:
+      - MODE=client
+      - PORT=8097
+      - SERVER_URL=ws://mail_server:8097
+      - API_KEY=naephea1Rai7eeth1noh
+      - SMTP_HOST=mailpit
+      - SMTP_USERNAME=platform
+      - SMTP_PASSWORD=platform
+      - SMTP_PORT=1025
+      - SMTP_TLS_MODE=ignore
+      - SMTP_ALLOW_SELF_SIGNED=true
+  mailpit:
+    image: axllent/mailpit
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    restart: unless-stopped
+    volumes:
+        - mailpit:/data
+    ports:
+        - 8025:8025
+        - 1025:1025
+    environment:
+        MP_MAX_MESSAGES: 5000
+        MP_DATABASE: /data/mailpit.db
+        MP_SMTP_AUTH_ACCEPT_ANY: 1
+        MP_SMTP_AUTH_ALLOW_INSECURE: 1
 volumes:
   db:
   dbpg:
@@ -810,3 +867,4 @@ volumes:
   redpanda:
   telemetry:
   pgbouncer_logs:
+  mailpit:
