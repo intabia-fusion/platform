@@ -58,7 +58,7 @@
 
   const signUpDisabled = getMetadata(login.metadata.DisableSignUp) ?? false
   const localLoginHidden = getMetadata(login.metadata.HideLocalLogin) ?? false
-  const useOTP = getMetadata(presentation.metadata.MailUrl) != null && getMetadata(presentation.metadata.MailUrl) !== ''
+  const useOTP = getMetadata(presentation.metadata.UseOTP) === true
   let navigateUrl: string | undefined
 
   onDestroy(location.subscribe(updatePageLoc))

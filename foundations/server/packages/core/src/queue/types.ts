@@ -25,7 +25,11 @@ export enum QueueTopic {
   AIQueue = 'ai-queue',
 
   // Queue for audio transcription tasks
-  TranscriptionQueue = 'transcription-queue'
+  TranscriptionQueue = 'transcription-queue',
+
+  // All OTP and notifications to mail/notify services are goes here first
+  // And services will take them and send to a proper places.
+  NotificationQueue = 'notifications'
 }
 
 export interface ConsumerHandle {
@@ -48,7 +52,10 @@ export interface PlatformQueue {
 
   /**
    * Create a consumer for a topic.
-   * return a function to close the reciever.
+   * Return a function to close the receiver.
+   *
+   * This is the single-message consumer API (original behaviour).
+   * For batch processing use `createBatchConsumer`.
    */
   createConsumer: <T>(
     ctx: MeasureContext,
@@ -59,6 +66,27 @@ export interface PlatformQueue {
       fromBegining?: boolean
       retryDelay?: number // Initial retry delay in milliseconds (default 1000)
       maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
+      sessionTimeout?: number // Maximum time in milliseconds between heartbeats/processing (optional)
+    }
+  ) => ConsumerHandle
+
+  /**
+   * Create a consumer that receives batches of messages.
+   * The handler gets an array of messages (in order for a partition).
+   * The batch will be retried as a whole in case of processing failures.
+   */
+  createBatchConsumer: <T>(
+    ctx: MeasureContext,
+    topic: QueueTopic | string,
+    groupId: string,
+    onMessage: (ctx: MeasureContext, msgs: ConsumerMessage<T>[], queue: ConsumerControl) => Promise<void>,
+    options?: {
+      fromBegining?: boolean
+      retryDelay?: number // Initial retry delay in milliseconds (default 1000)
+      maxRetryDelay?: number // Maximum retry delay in seconds (default 10)
+      batchSize?: number // Number of messages to accumulate before flushing
+      batchTimeout?: number // Maximum time in milliseconds to wait for batch to fill before flushing
+      sessionTimeout?: number // Maximum time in milliseconds between heartbeats/processing (optional)
     }
   ) => ConsumerHandle
 

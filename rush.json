@@ -2675,6 +2675,11 @@
       "packageName": "@hcengineering/pod-stream",
       "projectFolder": "foundations/stream",
       "shouldPublish": false
+    },
+    {
+      "packageName": "@intabiafusion/clisr",
+      "projectFolder": "packages/clisr",
+      "shouldPublish": false
     }
     // ,
     // {

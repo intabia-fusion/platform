@@ -17,11 +17,20 @@ import { config as dotenvConfig } from 'dotenv'
 dotenvConfig()
 
 export interface Config {
+  /**
+   * queue - receive from a queue and send to smtp server
+   * server - receive from queue and push to providers
+   */
+  mode: 'queue' | 'server' | 'client'
   port: number
   source?: string
   replyTo?: string
   sesConfig?: SesConfig
   smtpConfig?: SmtpConfig
+
+  // client mode operations.
+  serverUrl?: string
+  apiKey?: string
 }
 
 export interface SesConfig {
@@ -72,16 +81,23 @@ const envMap = {
   Source: 'SOURCE',
   ReplyTo: 'REPLY_TO',
   DefaultProtocol: 'DEFAULT_PROTOCOL',
+
   SesAccessKey: 'SES_ACCESS_KEY',
   SesSecretKey: 'SES_SECRET_KEY',
   SesRegion: 'SES_REGION',
+
   SmtpHost: 'SMTP_HOST',
   SmtpPort: 'SMTP_PORT',
   SmtpUsername: 'SMTP_USERNAME',
   SmtpPassword: 'SMTP_PASSWORD',
+
   SmtpTlsMode: 'SMTP_TLS_MODE', // TLS mode, see TlsOptions for possible values
   SmtpDebugLog: 'SMTP_DEBUG_LOG', // Enable debug logging for SMTP
-  SmtpAllowSelfSigned: 'SMTP_ALLOW_SELF_SIGNED' // Allow self-signed certificates (not recommended for production use)
+  SmtpAllowSelfSigned: 'SMTP_ALLOW_SELF_SIGNED', // Allow self-signed certificates (not recommended for production use)
+
+  Mode: 'MODE', // Default one, will listen for platform queue for sending messages.
+  ServerURL: 'SERVER_URL',
+  ApiKey: 'API_KEY' // An auth token used to accept requests.
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -144,24 +160,48 @@ const buildSmtpConfig = (): SmtpConfig => {
 }
 
 const config: Config = (() => {
+  let mode: Config['mode'] = 'queue'
+
+  switch ((process.env[envMap.Mode] ?? 'queue').toLowerCase()) {
+    case 'server':
+      mode = 'server'
+      break
+    case 'client':
+      mode = 'client'
+      break
+    default:
+      mode = 'queue'
+  }
+
   const port = parseNumber(process.env[envMap.Port])
   if (port === undefined) {
     throw Error('Missing env variable: Port')
   }
   const isSmtpConfig = !isEmpty(process.env[envMap.SmtpHost])
   const isSesConfig = !isEmpty(process.env[envMap.SesAccessKey])
-  if (isSmtpConfig && isSesConfig) {
+  if (isSmtpConfig && isSesConfig && mode !== 'server') {
     throw Error('Both SMTP and SES configuration are specified, please specify only one')
   }
-  if (!isSmtpConfig && !isSesConfig) {
+  if (!isSmtpConfig && !isSesConfig && mode !== 'server') {
     throw Error('Please specify SES or SMTP configuration')
   }
+
   const params: Config = {
+    mode,
     port,
+    serverUrl: process.env[envMap.ServerURL], // Only useful in client mode
+    apiKey: process.env[envMap.ApiKey], // Api key may be missing of local case, but not for server<->client case
     source: process.env[envMap.Source],
     replyTo: process.env[envMap.ReplyTo],
     sesConfig: isSesConfig ? buildSesConfig() : undefined,
     smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined
+  }
+
+  if ((mode === 'server' || mode === 'client') && params.apiKey === undefined) {
+    throw Error('API_KEY is required for server/client mode for security')
+  }
+  if (mode === 'client' && params.serverUrl === undefined) {
+    throw Error('SERVER_URL is required to connect to server, in format wss?://host:port')
   }
 
   return params

@@ -83,7 +83,6 @@ import {
   getEndpointInfo,
   getFrontUrl,
   getInviteEmail,
-  getMailUrl,
   getPersonName,
   getRegions,
   getRolePower,
@@ -100,7 +99,6 @@ import {
   doReleaseSocialId,
   selectWorkspace,
   sendEmail,
-  sendEmailConfirmation,
   sendOtp,
   setPassword,
   setTimezone,
@@ -274,7 +272,7 @@ export async function loginOtp (
 }
 
 /**
- * Given an email, password, first name, and last name, creates a new account and sends a confirmation email.
+ * Given an email, password, first name, and last name, creates a new account, without email confirmation.
  * The email confirmation is not required if the email service is not configured.
  *
  * ---------DEPRECATED. Only to be used for dev setups without mail service. Use signUpOtp instead.
@@ -304,24 +302,15 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
   }
 
-  const mailURL = getMetadata(accountPlugin.metadata.MAIL_URL)
-  const forceConfirmation = mailURL !== undefined && mailURL !== ''
-  if (forceConfirmation) {
-    const normalizedEmail = cleanEmail(email)
-
-    await sendEmailConfirmation(ctx, branding, account, normalizedEmail)
-  } else {
-    ctx.warn('Please provide MAIL_URL to enable sign up email confirmations.')
-    await confirmEmail(ctx, db, account, email)
-    await confirmHulyIds(ctx, db, account)
-  }
+  await confirmEmail(ctx, db, account, email)
+  await confirmHulyIds(ctx, db, account)
 
   void setTimezone(ctx, db, account, null, meta)
   return {
     account,
     name: getPersonName(person),
     socialId,
-    token: !forceConfirmation ? generateToken(account) : undefined
+    token: generateToken(account)
   }
 }
 
@@ -1308,7 +1297,7 @@ export async function requestPasswordReset (
     )
   }
 
-  const { mailURL, mailAuth } = getMailUrl()
+  const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
   const front = getFrontUrl(branding)
 
   const token = generateToken(account.uuid, undefined, {
@@ -1321,28 +1310,22 @@ export async function requestPasswordReset (
   const html = await translate(accountPlugin.string.RecoveryHTML, { link }, lang)
   const subject = await translate(accountPlugin.string.RecoverySubject, {}, lang)
 
-  const response = await fetch(concatLink(mailURL, '/send'), {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-    },
-    body: JSON.stringify({
-      text,
-      html,
-      subject,
-      to: normalizedEmail
-    })
-  })
-  if (response.ok) {
-    ctx.info('Password reset email sent', { email, normalizedEmail, account: account.uuid })
-  } else {
-    ctx.error(`Failed to send reset password email: ${response.statusText}`, {
-      email,
-      normalizedEmail,
-      account: account.uuid
-    })
-  }
+  await mailQueue?.send(
+    ctx,
+    '' as WorkspaceUuid,
+    [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to: normalizedEmail
+        }
+      }
+    ],
+    normalizedEmail
+  )
 }
 
 export async function restorePassword (

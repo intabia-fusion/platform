@@ -15,7 +15,6 @@
 
 import cors from 'cors'
 import express, { Express, NextFunction, Request, Response } from 'express'
-import { Server } from 'http'
 
 import { Endpoint, RequestHandler } from './types'
 import { ApiError } from './error'
@@ -58,12 +57,4 @@ export function createServer (endpoints: Endpoint[]): Express {
   })
 
   return app
-}
-
-export function listen (e: Express, port: number, host?: string): Server {
-  const cb = (): void => {
-    console.log(`Mail service has been started at ${host ?? '*'}:${port}`)
-  }
-
-  return host !== undefined ? e.listen(port, host, cb) : e.listen(port, cb)
 }

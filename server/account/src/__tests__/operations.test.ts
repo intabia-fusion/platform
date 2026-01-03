@@ -33,7 +33,6 @@ import {
   createInvite,
   createInviteLink,
   sendInvite,
-  resendInvite,
   getLoginInfoByToken,
   releaseSocialId,
   loginAsGuest,
@@ -328,17 +327,11 @@ describe('account operations', () => {
 
   describe('sendInvite', () => {
     const mockEmail = 'test@example.com'
-    const sesUrl = 'https://ses.example.com'
-    const sesAuth = 'test-auth-token'
 
     beforeEach(() => {
       global.fetch = jest.fn().mockResolvedValue({ ok: true })
       ;(getMetadata as jest.Mock).mockImplementation((key) => {
         switch (key) {
-          case accountPlugin.metadata.MAIL_URL:
-            return sesUrl
-          case accountPlugin.metadata.MAIL_AUTH_TOKEN:
-            return sesAuth
           case accountPlugin.metadata.FrontURL:
             return 'https://app.example.com'
           default:
@@ -359,16 +352,6 @@ describe('account operations', () => {
         role: AccountRole.User,
         expHours: 48
       })
-
-      expect(global.fetch).toHaveBeenCalledWith(`${sesUrl}/send`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sesAuth}`
-        },
-        body: expect.stringContaining(mockEmail)
-      })
-
       // Verify invite was created with correct parameters
       expect(mockDb.invite.insertOne).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -453,50 +436,6 @@ describe('account operations', () => {
 
       expect(actualCall.expiresOn).toBeGreaterThanOrEqual(minExpected - 1) // Allow 1ms tolerance
       expect(actualCall.expiresOn).toBeLessThanOrEqual(maxExpected)
-    })
-  })
-
-  describe('resendInvite', () => {
-    const mockEmail = 'test@example.com'
-
-    test('should resend existing invite', async () => {
-      const existingInvite = {
-        id: 'existing-invite-id',
-        workspaceUuid: mockWorkspace.uuid,
-        email: mockEmail
-      }
-      ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
-      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
-      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
-      ;(mockDb.invite.findOne as jest.Mock).mockResolvedValue(existingInvite)
-      global.fetch = jest.fn().mockResolvedValue({ ok: true })
-
-      await resendInvite(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail, role: AccountRole.User })
-
-      expect(mockDb.invite.update).toHaveBeenCalledWith(
-        { id: existingInvite.id },
-        expect.objectContaining({
-          expiresOn: expect.any(Number),
-          remainingUses: 1,
-          role: AccountRole.User
-        })
-      )
-      expect(global.fetch).toHaveBeenCalled()
-    })
-
-    test('should create new invite if none exists', async () => {
-      const newInviteId = 'new-invite-id'
-      ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
-      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
-      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
-      ;(mockDb.invite.findOne as jest.Mock).mockResolvedValue(null)
-      ;(mockDb.invite.insertOne as jest.Mock).mockResolvedValue(newInviteId)
-      global.fetch = jest.fn().mockResolvedValue({ ok: true })
-
-      await resendInvite(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail, role: AccountRole.User })
-
-      expect(mockDb.invite.insertOne).toHaveBeenCalled()
-      expect(global.fetch).toHaveBeenCalled()
     })
   })
 
@@ -1615,7 +1554,12 @@ describe('account operations', () => {
         jest.spyOn(utils, 'confirmEmail').mockResolvedValue(mockSocialId._id)
         jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
-        ;(getMetadata as jest.Mock).mockReturnValue('') // No mail service configured
+        ;(getMetadata as jest.Mock).mockImplementation((key) => {
+          if (key === accountPlugin.metadata.MailQueue) {
+            return undefined
+          }
+          return ''
+        })
 
         const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
@@ -1642,57 +1586,6 @@ describe('account operations', () => {
         )
         expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
         expect(utils.confirmHulyIds).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId)
-        expect(mockCtx.warn).toHaveBeenCalled()
-      })
-
-      test('should create account and send confirmation when email service configured', async () => {
-        const mockSocialId = {
-          _id: 'social-id' as PersonId,
-          personUuid: mockAccountId,
-          type: SocialIdType.EMAIL,
-          value: mockEmail,
-          key: `email:${mockEmail}`
-        }
-
-        const mockPerson = {
-          uuid: mockPersonId,
-          firstName: mockFirstName,
-          lastName: mockLastName
-        }
-
-        jest.spyOn(utils, 'signUpByEmail').mockResolvedValue({
-          account: mockAccountId,
-          socialId: mockSocialId._id
-        })
-        jest.spyOn(utils, 'sendEmailConfirmation').mockResolvedValue()
-        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
-        ;(getMetadata as jest.Mock).mockReturnValue('http://mail-service.com')
-
-        const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          password: mockPassword,
-          firstName: mockFirstName,
-          lastName: mockLastName
-        })
-
-        expect(result).toEqual({
-          account: mockAccountId,
-          name: 'John Doe',
-          socialId: mockSocialId._id,
-          token: undefined // No token until email confirmed
-        })
-
-        expect(utils.signUpByEmail).toHaveBeenCalledWith(
-          mockCtx,
-          mockDb,
-          mockBranding,
-          mockEmail,
-          mockPassword,
-          mockFirstName,
-          mockLastName
-        )
-        expect(utils.sendEmailConfirmation).toHaveBeenCalledWith(mockCtx, mockBranding, mockAccountId, mockEmail)
-        expect(mockCtx.warn).not.toHaveBeenCalled()
       })
 
       test('should fail with missing required fields', async () => {
@@ -2262,17 +2155,11 @@ describe('account operations', () => {
     })
 
     describe('requestPasswordReset', () => {
-      const mailUrl = 'https://mail.example.com'
-      const mailAuth = 'mail-auth-token'
       const frontUrl = 'https://front.example.com'
 
       beforeEach(() => {
         ;(getMetadata as jest.Mock).mockImplementation((key) => {
           switch (key) {
-            case accountPlugin.metadata.MAIL_URL:
-              return mailUrl
-            case accountPlugin.metadata.MAIL_AUTH_TOKEN:
-              return mailAuth
             case accountPlugin.metadata.FrontURL:
               return frontUrl
             default:
@@ -2301,14 +2188,14 @@ describe('account operations', () => {
           email: mockEmail
         })
 
-        expect(global.fetch).toHaveBeenCalledWith(`${mailUrl}/send`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${mailAuth}`
-          },
-          body: expect.stringContaining(mockEmail)
-        })
+        // expect(global.fetch).toHaveBeenCalledWith(`${mailUrl}/send`, {
+        //   method: 'post',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     Authorization: `Bearer ${mailAuth}`
+        //   },
+        //   body: expect.stringContaining(mockEmail)
+        // })
       })
 
       test('should fail if email not found', async () => {

@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,25 +13,7 @@
 // limitations under the License.
 //
 
-import { NextFunction, Request, Response } from 'express'
-
-export type RequestType = 'get' | 'post'
-
-export type RequestHandler = (req: Request, res: Response, next?: NextFunction) => Promise<void>
-
-export interface Endpoint {
-  endpoint: string
-  type: RequestType
-  handler: RequestHandler
-}
-
-export interface EmailNotification {
-  html: string
-  to: string
-  text: string
-  subject: string
-}
-export interface AccountNotification {
-  type: 'email'
-  data: any
-}
+export * from './client'
+export * from './server'
+export * from './types'
+export * from './tmgr'

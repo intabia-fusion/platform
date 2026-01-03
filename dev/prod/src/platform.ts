@@ -190,7 +190,7 @@ export interface Config {
   PUBLIC_SCHEDULE_URL?: string
   CALDAV_SERVER_URL?: string
   EXPORT_URL?: string
-  MAIL_URL?: string
+  USE_OTP?: string
   COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
@@ -473,7 +473,7 @@ export async function configurePlatform() {
   setMetadata(presentation.metadata.PreviewUrl, config.PREVIEW_URL)
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)
   setMetadata(presentation.metadata.LinkPreviewUrl, config.LINK_PREVIEW_URL)
-  setMetadata(presentation.metadata.MailUrl, config.MAIL_URL)
+  setMetadata(presentation.metadata.UseOTP, config.USE_OTP !== 'false')
 
   const disabledFeatures = (config.DISABLED_FEATURES ??'').split(',').map(it => it.trim()).filter(it => it.length > 0)
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))
