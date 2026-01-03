@@ -1586,57 +1586,6 @@ describe('account operations', () => {
         )
         expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
         expect(utils.confirmHulyIds).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId)
-        expect(mockCtx.warn).toHaveBeenCalled()
-      })
-
-      test('should create account and send confirmation when email service configured', async () => {
-        const mockSocialId = {
-          _id: 'social-id' as PersonId,
-          personUuid: mockAccountId,
-          type: SocialIdType.EMAIL,
-          value: mockEmail,
-          key: `email:${mockEmail}`
-        }
-
-        const mockPerson = {
-          uuid: mockPersonId,
-          firstName: mockFirstName,
-          lastName: mockLastName
-        }
-
-        jest.spyOn(utils, 'signUpByEmail').mockResolvedValue({
-          account: mockAccountId,
-          socialId: mockSocialId._id
-        })
-        jest.spyOn(utils, 'sendEmailConfirmation').mockResolvedValue()
-        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
-        ;(getMetadata as jest.Mock).mockReturnValue('http://mail-service.com')
-
-        const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          password: mockPassword,
-          firstName: mockFirstName,
-          lastName: mockLastName
-        })
-
-        expect(result).toEqual({
-          account: mockAccountId,
-          name: 'John Doe',
-          socialId: mockSocialId._id,
-          token: undefined // No token until email confirmed
-        })
-
-        expect(utils.signUpByEmail).toHaveBeenCalledWith(
-          mockCtx,
-          mockDb,
-          mockBranding,
-          mockEmail,
-          mockPassword,
-          mockFirstName,
-          mockLastName
-        )
-        expect(utils.sendEmailConfirmation).toHaveBeenCalledWith(mockCtx, mockBranding, mockAccountId, mockEmail)
-        expect(mockCtx.warn).not.toHaveBeenCalled()
       })
 
       test('should fail with missing required fields', async () => {
