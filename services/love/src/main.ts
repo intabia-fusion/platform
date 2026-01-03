@@ -290,7 +290,7 @@ export const main = async (): Promise<void> => {
     console.error(e)
   })
 
-  if (config.BillingUrl !== '') {
+  if (config.BillingUrl !== '' && config.UseGlobalLiveKit) {
     setInterval(
       () => {
         void updateLiveKitSessions(ctx).catch((error) => {

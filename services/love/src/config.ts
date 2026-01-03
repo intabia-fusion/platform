@@ -32,6 +32,7 @@ interface Config {
 
   BillingUrl: string
   BillingPollInterval: number
+  UseGlobalLiveKit: boolean
 }
 
 const envMap: { [key in keyof Config]: string } = {
@@ -52,7 +53,8 @@ const envMap: { [key in keyof Config]: string } = {
   RecordingPreset: 'RECORDING_PRESET',
 
   BillingUrl: 'BILLING_URL',
-  BillingPollInterval: 'BILLING_POLL_INTERVAL'
+  BillingPollInterval: 'BILLING_POLL_INTERVAL',
+  UseGlobalLiveKit: 'USE_GLOBAL_LIVEKIT'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -72,7 +74,8 @@ const config: Config = (() => {
     ServiceID: process.env[envMap.ServiceID] ?? 'love-service',
     RecordingPreset: process.env[envMap.RecordingPreset] ?? '720p',
     BillingUrl: process.env[envMap.BillingUrl] ?? '',
-    BillingPollInterval: parseNumber(process.env[envMap.BillingPollInterval]) ?? 15
+    BillingPollInterval: parseNumber(process.env[envMap.BillingPollInterval]) ?? 15,
+    UseGlobalLiveKit: process.env[envMap.UseGlobalLiveKit] === 'true'
   }
 
   const optional = ['StorageConfig', 'S3StorageConfig', 'LiveKitProject', 'BillingUrl']
