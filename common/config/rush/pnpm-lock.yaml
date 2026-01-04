@@ -15059,6 +15059,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../attachment
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card

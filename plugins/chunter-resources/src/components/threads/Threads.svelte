@@ -16,7 +16,7 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
-  import core, { Collaborator, getCurrentAccount, Ref, SortingOrder } from '@hcengineering/core'
+  import core, { Collaborator, getCurrentAccount, notEmpty, SortingOrder, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Lazy, Loading, Scroller } from '@hcengineering/ui'
 
@@ -26,7 +26,6 @@
   import Header from '../Header.svelte'
   import LoadingHistory from '../LoadingHistory.svelte'
 
-  const threadsQuery = createQuery()
   const client = getClient()
   const h = client.getHierarchy()
 
@@ -38,25 +37,15 @@
   let limit = 100
   let hasNextPage = true
 
-  let collabs: Collaborator[] = []
+  let collabs: WithLookup<Collaborator>[] = []
 
   const query = createQuery()
   query.query(
     core.class.Collaborator,
     {
       collaborator: getCurrentAccount().uuid,
-      attachedToClass: { $in: h.getDescendants(activity.class.ActivityMessage) }
-    },
-    (res) => {
-      collabs = res
-    }
-  )
-
-  $: threadsQuery.query(
-    activity.class.ActivityMessage,
-    {
-      replies: { $gte: 1 },
-      _id: { $in: collabs.map((c) => c.attachedTo as Ref<ActivityMessage>) }
+      attachedToClass: { $in: h.getDescendants(activity.class.ActivityMessage) },
+      '$lookup.attachedTo.replies': { $gte: 1 }
     },
     (res) => {
       if (res.length <= limit) {
@@ -64,17 +53,23 @@
       } else {
         res.pop()
       }
-      threads = res
+      collabs = res
+      threads = collabs.map((it) => it?.$lookup?.attachedTo as ActivityMessage).filter(notEmpty)
       isLoading = false
     },
     {
-      sort: { modifiedOn: SortingOrder.Descending },
       lookup: {
-        _id: {
-          attachments: attachment.class.Attachment,
-          reactions: activity.class.Reaction
-        }
+        attachedTo: [
+          activity.class.ActivityMessage,
+          {
+            _id: {
+              attachments: attachment.class.Attachment,
+              reactions: activity.class.Reaction
+            }
+          }
+        ]
       },
+      sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
       limit: limit + 1
     }
   )
@@ -89,7 +84,7 @@
   }
 </script>
 
-<Header icon={chunter.icon.Thread} intlLabel={chunter.string.Threads} titleKind={'breadcrumbs'} />
+<Header icon={chunter.icon.Thread} intlLabel={chunter.string.Threads} titleKind={'breadcrumbs'} withSearch={false} />
 
 <Scroller bind:divScroll padding="0.75rem 0.5rem" noStretch={threads.length > 0} onScroll={handleScroll}>
   {#if isLoading}

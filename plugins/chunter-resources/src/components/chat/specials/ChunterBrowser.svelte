@@ -62,6 +62,7 @@
   titleKind={'breadcrumbs'}
   bind:searchValue
   adaptive={'freezeActions'}
+  focusSearch
 >
   <svelte:fragment slot="search">
     <FilterButton _class={components[searchType].filterClass} />

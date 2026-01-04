@@ -96,28 +96,6 @@ export const chatSpecials: SpecialNavModel[] = [
     },
     position: 'top'
   }
-  // TODO: Should be reworked or removed
-  // {
-  //   id: 'archive',
-  //   component: workbench.component.Archive,
-  //   icon: view.icon.Archive,
-  //   label: workbench.string.Archive,
-  //   position: 'top',
-  //   componentProps: {
-  //     _class: notification.class.DocNotifyContext,
-  //     config: [
-  //       { key: '', label: chunter.string.ChannelName },
-  //       { key: 'attachedToClass', label: view.string.Type },
-  //       'modifiedOn'
-  //     ],
-  //     baseMenuClass: notification.class.DocNotifyContext,
-  //     query: {
-  //       _class: notification.class.DocNotifyContext,
-  //       hidden: true
-  //     }
-  //   },
-  //   visibleIf: notification.function.HasHiddenDocNotifyContext
-  // }
 ]
 
 export const chatNavGroupModels: ChatNavGroupModel[] = [

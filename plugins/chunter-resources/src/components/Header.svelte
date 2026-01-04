@@ -54,6 +54,7 @@
   export let titleKind: 'default' | 'breadcrumbs' = 'default'
   export let withFilters: boolean = false
   export let withSearch: boolean = true
+  export let focusSearch = false
   export let withPresence: boolean = true
   export let filters: Ref<ActivityMessagesFilter>[] = []
   export let adaptive: HeaderAdaptive = 'default'
@@ -66,7 +67,8 @@
   const dispatch = createEventDispatcher()
 
   export let searchValue: string = ''
-  userSearch.subscribe((v) => (searchValue = v))
+
+  $: searchValue = $userSearch
 </script>
 
 <Header
@@ -129,7 +131,8 @@
   <svelte:fragment slot="search" let:doubleRow>
     {#if withSearch}
       <SearchInput
-        collapsed
+        collapsed={!focusSearch}
+        autoFocus={focusSearch}
         bind:value={searchValue}
         on:change={(ev) => {
           userSearch.set(ev.detail)

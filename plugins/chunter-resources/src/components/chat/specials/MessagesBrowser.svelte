@@ -15,16 +15,22 @@
 <script lang="ts">
   import chunter, { ChatMessage } from '@hcengineering/chunter'
   import { DocumentQuery, SortingOrder } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { createQuery } from '@hcengineering/presentation'
   import { Label, Scroller, SearchEdit } from '@hcengineering/ui'
   import { FilterBar } from '@hcengineering/view-resources'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
+  import attachment from '@hcengineering/attachment'
+  import activity from '@hcengineering/activity'
 
   import plugin from '../../../plugin'
   import { openMessageFromSpecial } from '../../../navigation'
 
   export let withHeader: boolean = true
   export let search: string = ''
+
+  const query = createQuery()
+
+  let divScroll: HTMLElement | undefined | null = undefined
 
   let searchQuery: DocumentQuery<ChatMessage> = { $search: search }
 
@@ -34,25 +40,48 @@
 
   $: updateSearchQuery(search)
 
-  const client = getClient()
+  let hasNextPage = true
+  let limit = 100
   let messages: ChatMessage[] = []
 
   let resultQuery: DocumentQuery<ChatMessage> = { ...searchQuery }
 
-  async function updateMessages (resultQuery: DocumentQuery<ChatMessage>) {
-    messages = await client.findAll(
+  $: {
+    query.query(
       chunter.class.ChatMessage,
       {
         ...resultQuery
       },
+      (res) => {
+        if (res.length <= limit) {
+          hasNextPage = false
+        } else {
+          hasNextPage = true
+          res.pop()
+        }
+        messages = res
+      },
       {
         sort: { createdOn: SortingOrder.Descending },
-        limit: 100
+        lookup: {
+          _id: {
+            attachments: attachment.class.Attachment,
+            reactions: activity.class.Reaction
+          }
+        },
+        limit: limit + 1
       }
     )
   }
 
-  $: updateMessages(resultQuery)
+  function handleScroll (): void {
+    if (divScroll != null && hasNextPage && messages.length === limit) {
+      const isAtBottom = divScroll.scrollTop + divScroll.clientHeight >= divScroll.scrollHeight - 400
+      if (isAtBottom) {
+        limit += 100
+      }
+    }
+  }
 </script>
 
 {#if withHeader}
@@ -64,7 +93,6 @@
       value={search}
       on:change={() => {
         updateSearchQuery(search)
-        updateMessages(resultQuery)
       }}
     />
   </div>
@@ -76,7 +104,7 @@
   on:change={(e) => (resultQuery = e.detail)}
 />
 {#if messages.length > 0}
-  <Scroller padding={'1rem 0'} bottomPadding={'1rem'}>
+  <Scroller bind:divScroll padding={'1rem 0'} bottomPadding={'1rem'} onScroll={handleScroll}>
     {#each messages as message}
       <ActivityMessagePresenter
         value={message}

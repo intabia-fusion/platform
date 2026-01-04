@@ -16,6 +16,7 @@ import activity, { type ActivityMessage, type SavedMessage } from '@hcengineerin
 import core, { type Ref, SortingOrder, type WithLookup } from '@hcengineering/core'
 import { createQuery, onClient } from '@hcengineering/presentation'
 import { writable } from 'svelte/store'
+import attachment from '@hcengineering/attachment'
 
 export const savedMessagesStore = writable<Array<WithLookup<SavedMessage>>>([])
 export const messageInFocus = writable<Ref<ActivityMessage> | undefined>(undefined)
@@ -30,6 +31,19 @@ onClient(() => {
     (res) => {
       savedMessagesStore.set(res.filter(({ $lookup }) => $lookup?.attachedTo !== undefined))
     },
-    { lookup: { attachedTo: activity.class.ActivityMessage }, sort: { modifiedOn: SortingOrder.Descending } }
+    {
+      lookup: {
+        attachedTo: [
+          activity.class.ActivityMessage,
+          {
+            _id: {
+              attachments: attachment.class.Attachment,
+              reactions: activity.class.Reaction
+            }
+          }
+        ]
+      },
+      sort: { modifiedOn: SortingOrder.Descending }
+    }
   )
 })
