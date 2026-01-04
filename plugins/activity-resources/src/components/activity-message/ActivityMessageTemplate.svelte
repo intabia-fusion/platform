@@ -34,7 +34,7 @@
   import ActivityMessageActions from '../ActivityMessageActions.svelte'
   import MessageTimestamp from '../MessageTimestamp.svelte'
   import ReactionsPresenter from '../reactions/ReactionsPresenter.svelte'
-  import Replies from '../Replies.svelte'
+  import Replies from '../replies/Replies.svelte'
   import ActivityMessagePresenter from './ActivityMessagePresenter.svelte'
   import InlineAction from './InlineAction.svelte'
 

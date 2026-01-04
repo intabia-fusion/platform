@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Reaction } from '@hcengineering/activity'
   import { Doc, getCurrentAccount, PersonId, Ref, Blob } from '@hcengineering/core'
-  import { IconAdd, showPopup, tooltip } from '@hcengineering/ui'
+  import { Icon, showPopup, tooltip } from '@hcengineering/ui'
   import { includesAny } from '@hcengineering/contact'
   import emojiPlugin from '@hcengineering/emoji'
 
@@ -74,7 +74,7 @@
       class="hulyReactions-button"
       class:highlight={includesAny(emojiInfo.persons, me.socialIds)}
       class:readonly
-      use:tooltip={{ component: ReactionsTooltip, props: { socialIds: emojiInfo.persons } }}
+      use:tooltip={{ component: ReactionsTooltip, props: { socialIds: emojiInfo.persons, emoji } }}
       on:click={getClickHandler({ text: emoji, image: emojiInfo.image })}
     >
       <span class="emoji">
@@ -92,8 +92,8 @@
   {#if object && reactionsPersons.size > 0 && !readonly}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="hulyReactions-button withoutBackground" class:opened on:click={openEmojiPalette}>
-      <IconAdd size="small" />
+    <div class="hulyReactions-button add" class:opened on:click={openEmojiPalette}>
+      <Icon icon={emojiPlugin.icon.EmojiAdd} size="small" />
     </div>
   {/if}
 </div>
@@ -102,7 +102,7 @@
   .hulyReactions-container {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 0.125rem;
+    column-gap: 0.25rem;
     row-gap: 0.25rem;
     min-width: 0;
     min-height: 0;
@@ -120,11 +120,11 @@
       align-items: center;
       flex-shrink: 0;
       padding: 0 0.375rem;
-      min-height: 1.5rem;
+      min-height: 1.75rem;
       color: var(--theme-caption-color);
       background: var(--button-disabled-BackgroundColor);
       border: 1px solid var(--button-secondary-BorderColor);
-      border-radius: 0.75rem;
+      border-radius: 1rem;
       cursor: pointer;
 
       &.readonly {
@@ -132,7 +132,7 @@
       }
 
       .emoji {
-        font-size: 1rem;
+        font-size: 1.125rem;
       }
       .emoji > img {
         height: 1.05em;
@@ -152,11 +152,9 @@
         }
       }
 
-      &.withoutBackground {
+      &.add {
         padding: 0;
-        width: 1.5rem;
-        background: transparent;
-        border-color: transparent;
+        width: 1.75rem;
 
         &.opened,
         &:hover {
