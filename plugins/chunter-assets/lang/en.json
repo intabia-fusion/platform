@@ -133,6 +133,7 @@
     "OpenChatInSidebar": "Open chat in sidebar",
     "ResolveThread": "Resolve",
     "NoThreadsYet": "There are no threads yet.",
-    "SummarizeMessages": "Summarize discussion"
+    "SummarizeMessages": "Summarize discussion",
+    "DeleteMessageDescription": "Are you sure you want to delete this message? This cannot be undone."
   }
 }

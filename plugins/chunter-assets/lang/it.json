@@ -132,6 +132,7 @@
     "ViewingArchivedChannel": "Stai visualizzando un canale archiviato",
     "OpenChatInSidebar": "Apri chat nella barra laterale",
     "NoThreadsYet": "Non ci sono ancora discussioni.",
-    "SummarizeMessages": "Riassumere la discussione"
+    "SummarizeMessages": "Riassumere la discussione",
+    "DeleteMessageDescription": "Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata."
   }
 }

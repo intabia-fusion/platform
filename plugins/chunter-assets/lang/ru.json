@@ -133,6 +133,7 @@
     "OpenChatInSidebar": "Открыть чат в боковой панели",
     "ResolveThread": "Пометить завершенным",
     "NoThreadsYet": "Пока нет обсуждений.",
-    "SummarizeMessages": "Подвести итоги обсуждения"
+    "SummarizeMessages": "Подвести итоги обсуждения",
+    "DeleteMessageDescription": "Вы уверены, что хотите удалить это сообщение? Это действие нельзя отменить."
   }
 }

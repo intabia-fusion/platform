@@ -133,6 +133,7 @@
     "OpenChatInSidebar": "Sohbeti kenar çubuğunda aç",
     "ResolveThread": "Çöz",
     "NoThreadsYet": "Henüz başlık yok.",
-    "SummarizeMessages": "Tartışmayı özetle"
+    "SummarizeMessages": "Tartışmayı özetle",
+    "DeleteMessageDescription": "Bu mesajı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
   }
 }

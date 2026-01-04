@@ -14,7 +14,15 @@
 -->
 <script lang="ts">
   import { translate, type IntlString } from '@hcengineering/platform'
-  import { Button, FocusHandler, Label, createFocusManager } from '@hcengineering/ui'
+  import {
+    Button,
+    FocusHandler,
+    Label,
+    createFocusManager,
+    AnySvelteComponent,
+    Component,
+    type AnyComponent
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { HTMLViewer } from '..'
 
@@ -23,6 +31,8 @@
   export let labelStr: string | undefined = undefined
   export let message: IntlString
   export let richMessage: boolean = false
+  export let component: AnyComponent | AnySvelteComponent | undefined = undefined
+  export let componentProps: Record<string, any> | undefined = undefined
   export let params: Record<string, any> = {}
   export let okLabel: IntlString | undefined = undefined
   export let dangerous: boolean = false
@@ -64,6 +74,11 @@
       <Label label={message} {params} />
     {/if}
   </div>
+  {#if component}
+    <div class="component">
+      <Component is={component} props={componentProps ?? {}} />
+    </div>
+  {/if}
   <div class="footer">
     <Button
       focus={!dangerous}
@@ -116,8 +131,14 @@
     }
 
     .message {
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
       color: var(--theme-content-color);
+    }
+
+    .component {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1.5rem;
     }
     .footer {
       flex-shrink: 0;

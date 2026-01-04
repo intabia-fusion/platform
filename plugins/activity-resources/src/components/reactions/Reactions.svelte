@@ -73,7 +73,7 @@
     <div
       class="hulyReactions-button"
       class:highlight={includesAny(emojiInfo.persons, me.socialIds)}
-      class:cursor-pointer={!readonly}
+      class:readonly
       use:tooltip={{ component: ReactionsTooltip, props: { socialIds: emojiInfo.persons } }}
       on:click={getClickHandler({ text: emoji, image: emojiInfo.image })}
     >
@@ -127,6 +127,10 @@
       border-radius: 0.75rem;
       cursor: pointer;
 
+      &.readonly {
+        cursor: default;
+      }
+
       .emoji {
         font-size: 1rem;
       }
@@ -139,7 +143,7 @@
         border-color: var(--global-accent-SkyText);
       }
 
-      &:hover {
+      &:hover:not(.readonly) {
         background: var(--global-ui-highlight-BackgroundColor);
         border-color: var(--button-menu-active-BorderColor);
 

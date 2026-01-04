@@ -58,6 +58,7 @@
   export let compact = false
   export let readonly = false
   export let type: ActivityMessageViewType = 'default'
+  export let padding: string | null = null
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -267,6 +268,7 @@
     showDatePreposition={hideLink}
     {inlineActions}
     {type}
+    {padding}
     {onClick}
     {onReply}
   >

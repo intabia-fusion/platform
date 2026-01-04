@@ -14,11 +14,14 @@
 //
 
 import { type ActivityMessage } from '@hcengineering/activity'
-import chunter, { type Channel, type ChatMessage, type DirectMessage } from '@hcengineering/chunter'
+import { type Channel, type ChatMessage, type DirectMessage } from '@hcengineering/chunter'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { writable } from 'svelte/store'
+import view from '@hcengineering/view'
+
+import chunter from './plugin'
 
 import ChannelCreatedMessage from './components/activity/ChannelCreatedMessage.svelte'
 import MembersChangedMessage from './components/activity/MembersChangedMessage.svelte'
@@ -88,6 +91,7 @@ import {
   summarizeMessages,
   canSummarizeMessages
 } from './utils'
+import DeleteMessagePresenter from './components/DeleteMessagePresenter.svelte'
 
 export { default as ChannelEmbeddedContent } from './components/ChannelEmbeddedContent.svelte'
 export { default as ChatMessageInput } from './components/chat-message/ChatMessageInput.svelte'
@@ -148,7 +152,21 @@ export function chatMessagesFilter (message: ActivityMessage): boolean {
 export async function deleteChatMessage (message: ChatMessage): Promise<void> {
   const client = getClient()
 
-  await client.remove(message)
+  showPopup(
+    MessageBox,
+    {
+      label: chunter.string.DeleteMessage,
+      message: chunter.string.DeleteMessageDescription,
+      component: DeleteMessagePresenter,
+      componentProps: { value: message },
+      dangerous: true,
+      okLabel: view.string.Delete,
+      action: async () => {
+        await client.remove(message)
+      }
+    },
+    'center'
+  )
 }
 
 export { replyToThread } from './navigation'

@@ -40,6 +40,7 @@
   export let attachmentImageSize: AttachmentImageSize = 'x-large'
   export let videoPreload = false
   export let readonly = false
+  export let padding: string | null = null
   export let onClick: (() => void) | undefined = undefined
 
   const client = getClient()
@@ -74,6 +75,7 @@
     {withShowMore}
     {attachmentImageSize}
     {videoPreload}
+    {padding}
     {onClick}
     {readonly}
   />

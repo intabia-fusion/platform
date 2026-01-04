@@ -63,6 +63,7 @@
   export let inlineActions: MessageInlineAction[] = []
   export let excludedActions: Ref<ViewAction>[] = []
   export let readonly: boolean = false
+  export let padding: string | null = null
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
   export let embeddedActions: boolean = false
@@ -178,6 +179,7 @@
       class:actionsOpened={isActionsOpened}
       class:filledHover={hoverStyles === 'filledHover'}
       class:stale
+      style:padding
       on:click={onClick}
       on:contextmenu={handleContextMenu}
     >

@@ -40,6 +40,7 @@
   export let hideLink = false
   export let compact = false
   export let readonly = false
+  export let padding: string | null = null
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -75,6 +76,7 @@
       type,
       compact,
       readonly,
+      padding,
       onClick,
       onReply
     }}
