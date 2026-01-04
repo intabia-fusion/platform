@@ -152,6 +152,10 @@ export class ChannelPage extends CommonPage {
     await this.deleteMessageButton().click()
   }
 
+  async clickDeleteMessageConfirmationButton (): Promise<void> {
+    await this.deleteMessageButton().click()
+  }
+
   async clickSaveMessageTab (): Promise<void> {
     await this.saveMessageTab().click()
   }

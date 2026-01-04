@@ -306,6 +306,7 @@ test.describe('Channel tests', () => {
     await channelPage.sendMessage('Test message')
     await channelPage.clickOpenMoreButton('Test message')
     await channelPage.clickDeleteMessageButton()
+    await channelPage.clickDeleteMessageConfirmationButton()
     await channelPage.checkIfMessageExist(false, 'Test message')
   })
 
