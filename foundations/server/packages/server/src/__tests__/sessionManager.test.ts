@@ -901,7 +901,7 @@ describe('TSessionManager', () => {
 
       expect(map.size).toBe(2)
       expect(map.get('social-1' as any)).toEqual({
-        accontUuid: 'user-1',
+        accountUuid: 'user-1',
         role: AccountRole.User
       })
     })
@@ -923,7 +923,7 @@ describe('TSessionManager', () => {
 
       expect(map.size).toBe(1)
       expect(map.get('social-extra' as any)).toEqual({
-        accontUuid: 'user-extra',
+        accountUuid: 'user-extra',
         role: AccountRole.User
       })
     })

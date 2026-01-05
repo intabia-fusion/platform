@@ -38,7 +38,13 @@ import {
   SocialIdType,
   type Tx,
   type TxResult,
-  type WithLookup
+  type WithLookup,
+  Data,
+  Space,
+  Timestamp,
+  AttachedDoc,
+  AttachedData,
+  DocumentUpdate
 } from '@hcengineering/core'
 import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
 
@@ -364,5 +370,112 @@ export class RestClientImpl implements RestClient {
       throw new PlatformError(result.error)
     }
     return result
+  }
+
+  private async v1op<T extends Doc>(op: string, data: any): Promise<any> {
+    const requestUrl = concatLink(this.endpoint, `/api/v1/${op}/${this.workspace}`)
+    await this.checkRate()
+    const result = await withRetry<{ result?: Ref<T>, error?: Status }>(async () => {
+      const response = await fetch(requestUrl, {
+        method: 'POST',
+        headers: this.jsonHeaders(),
+        keepalive: true,
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        await this.checkRateLimits(response)
+        throw new PlatformError(unknownError(response.statusText))
+      }
+      this.updateRateLimit(response)
+      return await extractJson<TxResult>(response)
+    }, isRLE)
+    if (result.error !== undefined) {
+      throw new PlatformError(result.error)
+    }
+    return result.result as Ref<T>
+  }
+
+  createDoc<T extends Doc>(
+    _class: Ref<Class<T>>,
+    space: Ref<Space>,
+    attributes: Data<T>,
+    id?: Ref<T>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<Ref<T>> {
+    return this.v1op('create', {
+      _class,
+      space,
+      attributes,
+      id,
+      modifiedBy,
+      modifiedOn
+    })
+  }
+
+  addCollection<T extends Doc, P extends AttachedDoc>(
+    _class: Ref<Class<P>>,
+    space: Ref<Space>,
+    attachedTo: Ref<T>,
+    attachedToClass: Ref<Class<T>>,
+    collection: Extract<keyof T, string> | string,
+    attributes: AttachedData<P>,
+    id?: Ref<P>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<Ref<P>> {
+    return this.v1op('addCollection', {
+      _class,
+      space,
+      attachedTo,
+      attachedToClass,
+      collection,
+      attributes,
+      id,
+      modifiedBy,
+      modifiedOn
+    })
+  }
+
+  update<T extends Doc>(
+    doc: T,
+    update: DocumentUpdate<T>,
+    retrieve?: boolean,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    const req = {
+      _class: doc._class,
+      _id: doc._id,
+      space: doc.space,
+      update,
+      retrieve,
+      modifiedBy,
+      modifiedOn
+    }
+    const adoc = doc as any as AttachedDoc
+    if (adoc.attachedTo !== undefined && adoc.attachedToClass !== undefined && adoc.collection !== undefined) {
+      ;(req as any as AttachedDoc).attachedTo = adoc.attachedTo
+      ;(req as any as AttachedDoc).attachedToClass = adoc.attachedToClass
+      ;(req as any as AttachedDoc).collection = adoc.collection
+    }
+    return this.v1op('update', req)
+  }
+
+  remove<T extends Doc>(doc: T, modifiedOn?: Timestamp, modifiedBy?: PersonId): Promise<TxResult> {
+    const req = {
+      _class: doc._class,
+      _id: doc._id,
+      space: doc.space,
+      modifiedBy,
+      modifiedOn
+    }
+    const adoc = doc as any as AttachedDoc
+    if (adoc.attachedTo !== undefined && adoc.attachedToClass !== undefined && adoc.collection !== undefined) {
+      ;(req as any as AttachedDoc).attachedTo = adoc.attachedTo
+      ;(req as any as AttachedDoc).attachedToClass = adoc.attachedToClass
+      ;(req as any as AttachedDoc).collection = adoc.collection
+    }
+    return this.v1op('remove', req)
   }
 }

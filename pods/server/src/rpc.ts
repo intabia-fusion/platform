@@ -9,9 +9,13 @@ import contact, {
 import core, {
   buildSocialIdString,
   generateId,
+  type PersonId,
   pickPrimarySocialId,
+  type Space,
   systemAccountUuid,
+  type Timestamp,
   TxFactory,
+  TxOperations,
   TxProcessor,
   type AttachedData,
   type Class,
@@ -23,10 +27,17 @@ import core, {
   type SearchOptions,
   type SearchQuery,
   type TxCUD,
-  type TxDomainEvent
+  type TxDomainEvent,
+  type DocumentUpdate
 } from '@hcengineering/core'
 import { rpcJSONReplacer, type RateLimitInfo } from '@hcengineering/rpc'
-import type { ClientSessionCtx, ConnectionSocket, Session, SessionManager } from '@hcengineering/server-core'
+import {
+  wrapPipeline,
+  type ClientSessionCtx,
+  type ConnectionSocket,
+  type Session,
+  type SessionManager
+} from '@hcengineering/server-core'
 import { decodeToken } from '@hcengineering/server-token'
 
 import { createHash } from 'crypto'
@@ -280,6 +291,167 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         const result = await session.txRaw(ctx, tx)
         await sendJson(req, res, result.result, rateLimitToHeaders(rateLimit))
       }
+    })
+  })
+
+  app.post('/api/v1/create/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-create', async (ctx, session, rateLimit) => {
+      const request: {
+        _class: Ref<Class<any>>
+        space: Ref<Space>
+        attributes: Data<any>
+        id?: Ref<any>
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const ops = new TxOperations(client, pid)
+
+      await sendJson(
+        req,
+        res,
+        await ops.createDoc(
+          request._class,
+          request.space,
+          request.attributes,
+          request.id ?? generateId(),
+          request.modifiedOn,
+          request.modifiedBy ?? pid
+        ),
+        rateLimitToHeaders(rateLimit)
+      )
+    })
+  })
+
+  app.post('/api/v1/addCollection/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-addCollection', async (ctx, session, rateLimit) => {
+      const request: {
+        _class: Ref<Class<any>>
+        space: Ref<Space>
+        attachedTo: Ref<any>
+        attachedToClass: Ref<Class<any>>
+        collection: string
+        attributes: AttachedData<any>
+        id?: Ref<any>
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const ops = new TxOperations(client, pid)
+
+      await sendJson(
+        req,
+        res,
+        await ops.addCollection(
+          request._class,
+          request.space,
+          request.attachedTo,
+          request.attachedToClass,
+          request.collection,
+          request.attributes,
+          request.id ?? generateId(),
+          request.modifiedOn,
+          request.modifiedBy ?? pid
+        ),
+        rateLimitToHeaders(rateLimit)
+      )
+    })
+  })
+
+  app.post('/api/v1/update/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-update', async (ctx, session, rateLimit) => {
+      const request: {
+        _class: Ref<Class<any>>
+        _id: Ref<any>
+        space: Ref<Space>
+        attachedTo: Ref<any>
+        attachedToClass: Ref<Class<any>>
+        collection: string
+        update: DocumentUpdate<any>
+        retrieve?: boolean
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const rops = new TxOperations(client, pid)
+
+      const hierarchy = ctx.pipeline.context.hierarchy
+      async function doOp (): Promise<any> {
+        if (hierarchy.isDerived(request._class, core.class.AttachedDoc)) {
+          return await rops.updateCollection(
+            request._class,
+            request.space,
+            request._id,
+            request.attachedTo,
+            request.attachedToClass,
+            request.collection,
+            request.update,
+            request.retrieve,
+            request.modifiedOn,
+            request.modifiedBy ?? pid
+          )
+        }
+        return await rops.updateDoc(
+          request._class,
+          request.space,
+          request._id,
+          request.update,
+          request.retrieve,
+          request.modifiedOn,
+          request.modifiedBy ?? pid
+        )
+      }
+      await sendJson(req, res, await doOp(), rateLimitToHeaders(rateLimit))
+    })
+  })
+
+  app.post('/api/v1/remove/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-create', async (ctx, session, rateLimit) => {
+      const request: {
+        _class: Ref<Class<any>>
+        _id: Ref<any>
+        space: Ref<Space>
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+
+        attachedTo: Ref<any>
+        attachedToClass: Ref<Class<any>>
+        collection: string
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const ops = new TxOperations(client, pid)
+
+      if (ctx.pipeline.context.hierarchy.isDerived(request._class, core.class.AttachedDoc)) {
+        await sendJson(
+          req,
+          res,
+          await ops.removeCollection(
+            request._class,
+            request.space,
+            request._id,
+            request.attachedTo,
+            request.attachedToClass,
+            request.collection,
+            request.modifiedOn,
+            request.modifiedBy ?? pid
+          ),
+          rateLimitToHeaders(rateLimit)
+        )
+      }
+      await sendJson(
+        req,
+        res,
+        await ops.removeDoc(request._class, request.space, request._id),
+        rateLimitToHeaders(rateLimit)
+      )
     })
   })
 

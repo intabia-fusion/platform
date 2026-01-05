@@ -13,24 +13,16 @@
 // limitations under the License.
 
 import attachment, { Attachment } from '@hcengineering/attachment'
-import core, {
-  Client,
-  Data,
-  MeasureContext,
-  Ref,
-  systemAccountUuid,
-  TxOperations,
-  type WorkspaceUuid,
-  type Blob
-} from '@hcengineering/core'
+import core, { Data, MeasureContext, Ref, systemAccountUuid, type WorkspaceUuid, type Blob } from '@hcengineering/core'
 import drive, { createFile } from '@hcengineering/drive'
 import love, { MeetingMinutes } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
 import { getClient } from './client'
 import { RecordingPreset } from './preset'
+import { RestClient } from '@hcengineering/api-client'
 
 export class WorkspaceClient {
-  private client!: TxOperations
+  private client!: RestClient
 
   private constructor (
     private readonly workspace: WorkspaceUuid,
@@ -43,14 +35,11 @@ export class WorkspaceClient {
     return instance
   }
 
-  async close (): Promise<void> {
-    await this.client.close()
-  }
+  async close (): Promise<void> {}
 
-  private async initClient (workspace: WorkspaceUuid): Promise<Client> {
+  private async initClient (workspace: WorkspaceUuid): Promise<RestClient> {
     const token = generateToken(systemAccountUuid, workspace, { service: 'love' })
-    const client = await getClient(token)
-    this.client = new TxOperations(client, core.account.System)
+    this.client = await getClient(token, workspace)
     return this.client
   }
 

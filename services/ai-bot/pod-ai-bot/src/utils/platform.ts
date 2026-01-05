@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import core, { Client, Ref, TxOperations, AccountUuid } from '@hcengineering/core'
-import { createClient } from '@hcengineering/server-client'
+import core, { Ref, TxOperations, AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import contact, { Employee, Person } from '@hcengineering/contact'
 import chunter, { DirectMessage } from '@hcengineering/chunter'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import notification from '@hcengineering/notification'
+import { createRestClient, RestClient } from '@hcengineering/api-client'
 
-export async function connectPlatform (token: string, endpoint: string): Promise<Client> {
-  return await createClient(endpoint, token)
+export function connectPlatform (token: string, workspaceId: WorkspaceUuid, endpoint: string): RestClient {
+  return createRestClient(endpoint, workspaceId, token)
 }
 
 export async function getAccountBySocialKey (client: TxOperations, socialKey: string): Promise<AccountUuid | null> {

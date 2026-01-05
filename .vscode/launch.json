@@ -753,7 +753,7 @@
         "SERVICE_ID": "payment-service",
         "ACCOUNTS_URL": "http://huly.local:3000",
         "FRONT_URL": "http://huly.local:8087",
-        "USE_SANDBOX": "true",
+        "USE_SANDBOX": "true"
         // "POLAR_ACCESS_TOKEN": "polar_xxx",
         // "POLAR_WEBHOOK_SECRET": "whsec_xxx",
         // "POLAR_SUBSCRIPTION_PLANS": "common@tier:prod_1a,prod_1b;rare@tier:prod_2;epic@tier:prod_3;legendary@tier:prod_4"
@@ -829,7 +829,7 @@
         "ACCOUNTS_URL": "http://huly.local:3000",
         "PORT": "4010",
         "SERVER_SECRET": "secret",
-        "FIRST_NAME": "Jolie",
+        "FIRST_NAME": "Julia",
         "LAST_NAME": "AI",
         "PASSWORD": "password",
         "AVATAR_PATH": "./assets/avatar.png",
@@ -837,23 +837,24 @@
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "LOVE_ENDPOINT": "http://huly.local:8096",
         "QUEUE_CONFIG": "huly.local:19092",
+        "OPENAI_API_KEY": "changeme",
+        "OPENAI_BASE_URL": "http://localhost:1234/v1",
         "OPENAI_MODEL": "openai/gpt-oss-20b",
         "REGION": "",
         "QUEUE_REGION": "",
         // "STT_PROVIDER":"whisper-asr",
         // "WHISPER_ASR_URL":"http://huly.local:9007",
-        "STT_PROVIDER":"openai",
-        "STT_URL":"${OPENAI_AUDIO_API_URL}",
+        "STT_PROVIDER": "openai",
+        "STT_URL": "${OPENAI_AUDIO_API_URL}",
         // "STT_URL": "https://api.nexara.ru/api/",
         // "STT_URL":"http://huly.local:9007"
         // "STT_API_KEY":"",
-        "STT_API_KEY": "${OPENAI_AUDIO_API_KEY}"
-        "STT_MODEL":""
-
+        "STT_API_KEY": "${OPENAI_AUDIO_API_KEY}",
+        "STT_MODEL": ""
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "sourceMaps": true,
-      "runtimeVersion": "20",
+      "runtimeVersion": "24",
       "cwd": "./services/ai-bot/pod-ai-bot",
       "protocol": "inspector",
       "outputCapture": "std"

@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type DocumentQuery, type Rank, type Ref, SortingOrder, TxOperations } from '@hcengineering/core'
+import { type DocumentQuery, type Rank, type Ref, SortingOrder, Client } from '@hcengineering/core'
 
 import document from './plugin'
 import { type Document, type Teamspace } from './types'
 
 export async function getFirstRank (
-  client: TxOperations,
+  client: Pick<Client, 'findOne'>,
   space: Ref<Teamspace>,
   parent: Ref<Document>,
   sort: SortingOrder = SortingOrder.Descending,
