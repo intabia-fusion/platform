@@ -56,14 +56,14 @@
         attachedTo: core.class.CustomSequence
       })
       seq = newSeq
-      dispatch('change', { type: TypeIdentifier(newSeq), index: IndexKind.FullText, showInPresenter })
+      dispatch('change', { type: TypeIdentifier(newSeq), index: IndexKind.FullText, extra: { showInPresenter } })
     }
   }
 
   async function changeShowing () {
     if (seq === undefined) return
     const type = TypeIdentifier(seq)
-    dispatch('change', { type, index: IndexKind.FullText, showInPresenter })
+    dispatch('change', { type, index: IndexKind.FullText, extra: { showInPresenter } })
   }
 </script>
 
