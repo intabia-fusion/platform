@@ -1,0 +1,25 @@
+# Конфигурационный файл для запуска LiveKit в режиме разработки
+# livekit-dev-config.yaml
+
+port: 7880
+
+# Конфигурация вебхуков для отправки в сервис love
+webhook:
+  urls: ["http://127.0.0.1:8096/webhook"]
+  api_key: devkey
+
+# Отключение TURN сервера для разработки
+turn:
+  enabled: false
+
+rtc:
+    udp_port: 7882
+    tcp_port: 7881
+    use_external_ip: false
+    enable_loopback_candidate: false
+keys:
+    devkey: secret
+
+logging:
+    json: false
+    level: debug
