@@ -93,7 +93,7 @@ async function saveFile (
   }
   const converted = JSON.stringify(markdownToMarkup(content))
 
-  const client = await workspaceClient.opClient
+  const client = workspaceClient.client
   const fileId = uuid()
   await workspaceClient.storage.put(workspaceClient.ctx, workspaceClient.wsIds, fileId, converted, 'application/json')
 
@@ -133,7 +133,7 @@ async function getFoldersForDocuments (
   user: AccountUuid | undefined,
   args: Record<string, any>
 ): Promise<string> {
-  const client = await workspaceClient.opClient
+  const client = workspaceClient.client
   // TODO: need a set of user PersonIds here
   const spaces = await client.findAll(
     document.class.Teamspace,

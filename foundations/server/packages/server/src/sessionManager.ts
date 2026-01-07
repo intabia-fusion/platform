@@ -1316,7 +1316,7 @@ export class TSessionManager implements SessionManager {
   ): Map<
     PersonId,
     {
-      accontUuid: AccountUuid
+      accountUuid: AccountUuid
       role: AccountRole
     }
     > {
@@ -1327,7 +1327,7 @@ export class TSessionManager implements SessionManager {
     const res = new Map<
     PersonId,
     {
-      accontUuid: AccountUuid
+      accountUuid: AccountUuid
       role: AccountRole
     }
     >()
@@ -1339,7 +1339,7 @@ export class TSessionManager implements SessionManager {
       const userSocialIds = s.getUserSocialIds()
       for (const id of userSocialIds) {
         res.set(id, {
-          accontUuid: sessionAccount,
+          accountUuid: sessionAccount,
           role: s.getRawAccount().role
         })
       }

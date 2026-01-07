@@ -105,6 +105,7 @@ export const main = async (): Promise<void> => {
   app.post('/webhook', async (req, res) => {
     try {
       const event = await receiver.receive(req.body, req.get('Authorization'))
+      console.log('webhook', JSON.stringify(event))
       if (event.event === 'egress_ended' && event.egressInfo !== undefined) {
         for (const res of event.egressInfo.fileResults) {
           ctx.info('webhook event', { event: event.event, egress: event.egressInfo })
@@ -130,14 +131,6 @@ export const main = async (): Promise<void> => {
           // Ensure we don't fail the webhook if billing fails
         }
 
-        res.send()
-        return
-      } else if (event.event === 'room_started' && event.room !== undefined) {
-        const { sid, name } = event.room
-        ctx.info('webhook event', { event: event.event, room: { sid, name } })
-      } else if (event.event === 'room_finished' && event.room !== undefined) {
-        const { sid, name } = event.room
-        ctx.info('webhook event', { event: event.event, room: { sid, name } })
         res.send()
         return
       }

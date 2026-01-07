@@ -29,17 +29,19 @@ import {
 } from '@hcengineering/ai-bot'
 import core, {
   AccountUuid,
+  Doc,
   MeasureContext,
   PersonId,
   Ref,
   SocialId,
   SortingOrder,
   toIdMap,
+  TxCUD,
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import { Room } from '@hcengineering/love'
-import contact, { Person, Contact, getName, SocialIdentityRef } from '@hcengineering/contact'
+import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
@@ -56,8 +58,6 @@ import config from './config'
 import { tryAssignToWorkspace } from './utils/account'
 import { summarizeMessages, translateHtml } from './utils/openai'
 import { WorkspaceClient } from './workspace/workspaceClient'
-
-const CLOSE_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
 /** Audio chunk metadata from HTTP headers */
 export interface AudioChunkMetadata {
@@ -88,7 +88,6 @@ export interface SessionRecordingMetadata {
 
 export class AIControl {
   private readonly workspaces: Map<WorkspaceUuid, WorkspaceClient> = new Map<WorkspaceUuid, WorkspaceClient>()
-  private readonly closeWorkspaceTimeouts: Map<WorkspaceUuid, NodeJS.Timeout> = new Map<WorkspaceUuid, NodeJS.Timeout>()
   private readonly connectingWorkspaces = new Map<WorkspaceUuid, Promise<void>>()
 
   readonly storageAdapter: StorageAdapter
@@ -269,35 +268,6 @@ export class AIControl {
     }
   }
 
-  async closeWorkspaceClient (workspace: WorkspaceUuid): Promise<void> {
-    const timeoutId = this.closeWorkspaceTimeouts.get(workspace)
-
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId)
-      this.closeWorkspaceTimeouts.delete(workspace)
-    }
-
-    const client = this.workspaces.get(workspace)
-
-    if (client !== undefined) {
-      if (client.canClose()) {
-        await client.close()
-        this.workspaces.delete(workspace)
-      } else {
-        this.updateClearInterval(workspace)
-      }
-    }
-    this.connectingWorkspaces.delete(workspace)
-  }
-
-  updateClearInterval (workspace: WorkspaceUuid): void {
-    const newTimeoutId = setTimeout(() => {
-      void this.closeWorkspaceClient(workspace)
-    }, CLOSE_INTERVAL_MS)
-
-    this.closeWorkspaceTimeouts.set(workspace, newTimeoutId)
-  }
-
   async createWorkspaceClient (workspace: WorkspaceUuid): Promise<WorkspaceClient | undefined> {
     const isAssigned = await tryAssignToWorkspace(workspace, this.ctx)
 
@@ -352,13 +322,6 @@ export class AIControl {
           }
           this.workspaces.set(workspace, client)
         }
-
-        const timeoutId = this.closeWorkspaceTimeouts.get(workspace)
-        if (timeoutId !== undefined) {
-          clearTimeout(timeoutId)
-        }
-
-        this.updateClearInterval(workspace)
       } catch (err: any) {
         this.ctx.error('Unknown error', { err })
       } finally {
@@ -374,9 +337,6 @@ export class AIControl {
   async close (): Promise<void> {
     for (const workspace of this.workspaces.values()) {
       await workspace.close()
-    }
-    for (const timeoutId of this.closeWorkspaceTimeouts.values()) {
-      clearTimeout(timeoutId)
     }
     this.workspaces.clear()
   }
@@ -410,11 +370,7 @@ export class AIControl {
     const wsClient = await this.getWorkspaceClient(workspace)
     if (wsClient === undefined) return
 
-    const opClient = await wsClient.opClient
-    if (opClient === undefined) return
-
     const client = wsClient.client
-    if (client === undefined) return
 
     const target = await client.findOne(req.targetClass, { _id: req.target })
     if (target === undefined) return
@@ -455,7 +411,7 @@ export class AIControl {
       const contact = contactByPersonId.get(author)
       if (contact === undefined) continue
 
-      const personName = getName(client.getHierarchy(), contact)
+      const personName = contact.name
       const text = markupToMarkdown(markupToJSON(m.message))
 
       const lastPiece = messagesToSummarize[messagesToSummarize.length - 1]
@@ -488,16 +444,20 @@ export class AIControl {
       }
     )
 
-    const op = opClient.apply(undefined, 'AISummarizeMessagesRequestEvent')
-
-    if (lastMessage?.collection === 'summary' && lastMessage.createdBy === opClient.user) {
-      await op.update(lastMessage, { message: summaryMarkup, editedOn: Date.now() })
+    if (lastMessage?.collection === 'summary' && lastMessage.createdBy === wsClient.primarySocialId._id) {
+      await client.update(lastMessage, { message: summaryMarkup, editedOn: Date.now() })
     } else {
-      await op.addCollection(chunter.class.ChatMessage, core.space.Workspace, target._id, target._class, 'summary', {
-        message: summaryMarkup
-      })
+      await client.addCollection(
+        chunter.class.ChatMessage,
+        core.space.Workspace,
+        target._id,
+        target._class,
+        'summary',
+        {
+          message: summaryMarkup
+        }
+      )
     }
-    await op.commit()
 
     return {
       text: summaryMarkup,
@@ -505,8 +465,19 @@ export class AIControl {
     }
   }
 
+  async processTxes (workspace: WorkspaceUuid, txes: TxCUD<Doc>[], control?: ConsumerControl): Promise<void> {
+    // TODO: Move creation of ai-events here, instead of trigger.
+    const wsClient = await this.getWorkspaceClient(workspace)
+    if (wsClient === undefined) {
+      return
+    }
+    wsClient.love?.txHandler?.(txes)
+  }
+
   async processEvent (workspace: WorkspaceUuid, events: AIEventRequest[], control?: ConsumerControl): Promise<void> {
-    if (this.openai === undefined) return
+    if (this.openai === undefined) {
+      throw new Error('OpenAI not configured')
+    }
 
     const i1 = setInterval(() => {
       void control?.heartbeat()

@@ -265,6 +265,14 @@
     },
     {
       "commandKind": "global",
+      "name": "docker-love",
+      "summary": "Build docker with platform",
+      "description": "use to build all docker containers required for platform",
+      "safeForSimultaneousRushProcesses": true,
+      "shellCommand": "./common/scripts/docker-love.sh && rush docker:up:love"
+    },
+    {
+      "commandKind": "global",
       "name": "docker:up",
       "summary": "Up development build",
       "description": "Up development build",
@@ -278,6 +286,14 @@
       "description": "Up development build",
       "safeForSimultaneousRushProcesses": true,
       "shellCommand": "cd ./dev && docker compose up -d --force-recreate transactor"
+    },
+    {
+      "commandKind": "global",
+      "name": "docker:up:love",
+      "summary": "Up development build",
+      "description": "Up development build",
+      "safeForSimultaneousRushProcesses": true,
+      "shellCommand": "cd ./dev && docker compose up -d --force-recreate love aibot love-agent"
     },
     {
       "commandKind": "global",

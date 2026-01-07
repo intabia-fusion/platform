@@ -27,7 +27,6 @@ import core, {
   Timestamp,
   TxCreateDoc,
   TxCUD,
-  TxOperations,
   TxProcessor,
   TxUpdateDoc,
   WorkspaceUuid,
@@ -46,6 +45,7 @@ import love, {
 import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
 
 import config from '../config'
+import { RestClient } from '@hcengineering/api-client'
 
 export class LoveController {
   private readonly connectedRooms = new Set<Ref<Room>>()
@@ -54,12 +54,13 @@ export class LoveController {
   private rooms: Room[] = []
   private readonly socialIdByPerson = new Map<Ref<Person>, PersonId>()
   private meetingMinutes: MeetingMinutes[] = []
+  private initComplete = false
 
   constructor (
     private readonly workspace: WorkspaceUuid,
     private readonly ctx: MeasureContext,
     private readonly token: string,
-    private readonly client: TxOperations,
+    private readonly client: RestClient,
     private readonly currentPerson: Person
   ) {
     void this.initData()
@@ -76,9 +77,12 @@ export class LoveController {
   }
 
   txHandler (txes: TxCUD<Doc>[]): void {
-    const hierarchy = this.client.getHierarchy()
+    if (!this.initComplete) {
+      // Pass, since init is not yet complete
+      return
+    }
     for (const etx of txes) {
-      if (!hierarchy.isDerived(etx._class, core.class.TxCUD)) continue
+      if (!TxProcessor.isExtendsCUD(etx._class)) continue
       if (etx._class === core.class.TxCreateDoc) {
         if (etx.objectClass === love.class.ParticipantInfo) {
           this.participantsInfo.push(TxProcessor.createDoc2Doc(etx as TxCreateDoc<ParticipantInfo>))
@@ -120,6 +124,8 @@ export class LoveController {
         await this.client.remove(p)
       }
     }
+    this.initComplete = true
+    await this.checkConnection()
   }
 
   async checkConnection (): Promise<void> {
@@ -221,12 +227,6 @@ export class LoveController {
       return undefined
     }
 
-    const participant = await this.getRoomParticipant(roomId, person)
-    if (participant === undefined) {
-      this.ctx.warn('Participant not found for placeholder', { roomId, person })
-      return undefined
-    }
-
     const socialId = await this.getSocialId(person)
     if (socialId === undefined) {
       this.ctx.warn('SocialId not found for placeholder', { person })
@@ -254,9 +254,7 @@ export class LoveController {
 
     const messageId = generateId<ChatMessage>()
 
-    const op = this.client.apply(undefined, undefined, true)
-
-    await op.addCollection(
+    await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
       doc._id,
@@ -269,7 +267,6 @@ export class LoveController {
       undefined,
       socialId
     )
-    await op.commit()
 
     return messageId
   }
@@ -330,9 +327,7 @@ export class LoveController {
       return false
     }
 
-    const op = this.client.apply(undefined, undefined, true)
-
-    await op.addCollection(
+    await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
       doc._id,
@@ -345,7 +340,6 @@ export class LoveController {
       timestamp,
       socialId
     )
-    await op.commit()
 
     this.ctx.info('Created fallback transcription message with timestamp', {
       roomId,
@@ -370,9 +364,7 @@ export class LoveController {
     const doc = await this.getMeetingMinutes(room)
     if (doc === undefined) return
 
-    const op = this.client.apply(undefined, undefined, true)
-
-    await op.addCollection(
+    await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
       doc._id,
@@ -385,7 +377,6 @@ export class LoveController {
       undefined,
       socialId
     )
-    await op.commit()
     this.ctx.info('Added transcription message to meeting minutes', {
       roomId: room._id,
       meetingMinutes: doc._id,
@@ -456,15 +447,22 @@ export class LoveController {
     const x: number = place.x
     const y: number = place.y
 
-    return await this.client.createDoc(love.class.ParticipantInfo, core.space.Workspace, {
-      x,
-      y,
-      room: room._id,
-      person: this.currentPerson._id,
-      name: this.currentPerson.name,
-      account: (this.currentPerson.personUuid as AccountUuid) ?? null,
-      sessionId: null
-    })
+    const oid: Ref<ParticipantInfo> = generateId()
+    await this.client.createDoc(
+      love.class.ParticipantInfo,
+      core.space.Workspace,
+      {
+        x,
+        y,
+        room: room._id,
+        person: this.currentPerson._id,
+        name: this.currentPerson.name,
+        account: (this.currentPerson.personUuid as AccountUuid) ?? null,
+        sessionId: null
+      },
+      oid
+    )
+    return oid
   }
 
   transcriptToMarkup (transcript: string): Markup {

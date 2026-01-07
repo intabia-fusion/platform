@@ -68,7 +68,7 @@ export interface SessionData {
   socialStringsToUsers: Map<
   PersonId,
   {
-    accontUuid: AccountUuid
+    accountUuid: AccountUuid
     role: AccountRole
   }
   >

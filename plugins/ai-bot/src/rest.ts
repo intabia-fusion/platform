@@ -24,6 +24,7 @@ export interface AIEventRequest {
   messageId: Ref<ChatMessage>
   objectClass: Ref<Class<Doc>>
   objectId: Ref<Doc>
+  objectIdIsSpace: boolean
   objectSpace: Ref<Space>
   user: PersonId
   collection: string

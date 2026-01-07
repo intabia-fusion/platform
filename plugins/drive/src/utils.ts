@@ -40,7 +40,7 @@ export async function createFolder (
 
 /** @public */
 export async function createFile (
-  client: TxOperations,
+  client: Pick<TxOperations, 'addCollection' | 'createDoc' | 'findOne'>,
   space: Ref<Drive>,
   parent: Ref<Folder>,
   data: Omit<AttachedData<FileVersion>, 'version'>

@@ -196,7 +196,7 @@ export class SessionDataImpl implements SessionData {
     readonly socialStringsToUsers: Map<
     PersonId,
     {
-      accontUuid: AccountUuid
+      accountUuid: AccountUuid
       role: AccountRole
     }
     >,

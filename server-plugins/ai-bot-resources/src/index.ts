@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { AccountUuid, Doc, PersonId, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+import core, { AccountUuid, Doc, PersonId, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
 import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@hcengineering/chunter'
@@ -141,7 +141,8 @@ function getMessageData (doc: Doc, message: ChatMessage): AIEventRequest {
     messageClass: message._class,
     messageId: message._id,
     message: message.message,
-    user: message.createdBy ?? message.modifiedBy
+    user: message.createdBy ?? message.modifiedBy,
+    objectIdIsSpace: false
   }
 }
 
@@ -155,7 +156,8 @@ function getThreadMessageData (message: ThreadMessage): AIEventRequest {
     messageClass: message._class,
     message: message.message,
     messageId: message._id,
-    user: message.createdBy ?? message.modifiedBy
+    user: message.createdBy ?? message.modifiedBy,
+    objectIdIsSpace: false
   }
 }
 
@@ -206,6 +208,7 @@ async function onBotDirectMessageSend (
     } else {
       messageEvent = getMessageData(direct, message)
     }
+    messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   } else if (kind === 'mentioned') {
     let messageEvent: AIEventRequest
@@ -214,7 +217,7 @@ async function onBotDirectMessageSend (
     } else {
       messageEvent = getMessageData(message, message)
     }
-
+    messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   }
 }

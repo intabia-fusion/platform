@@ -33,27 +33,67 @@
   export let subtitle: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
 
-  let method: LoginMethods = useOTP ? LoginMethods.Otp : LoginMethods.Password
+  const LOGIN_METHOD_STORAGE_KEY = 'login-method'
+
+  let method: LoginMethods = LoginMethods.Password
+
+  // Persist chosen login method to localStorage
+  function platformTestingEnabled (): boolean {
+    try {
+      // Use optional chaining to safely access localStorage in all environments
+      return window?.localStorage?.getItem('#platform.testing.enabled') === 'true'
+    } catch {
+      return false
+    }
+  }
+
+  function setMethod (m: LoginMethods): void {
+    method = m
+    try {
+      // Only persist preference when platform testing flag is not enabled
+      if (!platformTestingEnabled() && window?.localStorage != null) {
+        localStorage.setItem(LOGIN_METHOD_STORAGE_KEY, m)
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+  }
 
   onMount(() => {
     signupStore.setSignUpFlow(false)
+
+    // Try to load persisted login method preference from localStorage if not in testing mode
+    try {
+      if (!platformTestingEnabled() && window?.localStorage != null) {
+        const stored = localStorage.getItem(LOGIN_METHOD_STORAGE_KEY)
+        if (stored === LoginMethods.Password || stored === LoginMethods.Otp) {
+          method = stored as LoginMethods
+          return
+        }
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+
+    // Fallback to prop if nothing persisted or in testing mode
+    method = useOTP ? LoginMethods.Otp : LoginMethods.Password
   })
 
   function changeMethod (event: CustomEvent<LoginMethods>): void {
-    method = event.detail
+    setMethod(event.detail)
   }
 
   const loginWithPasswordAction: BottomAction = {
     i18n: login.string.LoginWithPassword,
     func: () => {
-      method = LoginMethods.Password
+      setMethod(LoginMethods.Password)
     }
   }
 
   const loginWithCodeAction: BottomAction = {
     i18n: login.string.LoginWithCode,
     func: () => {
-      method = LoginMethods.Otp
+      setMethod(LoginMethods.Otp)
     }
   }
 

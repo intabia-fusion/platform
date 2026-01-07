@@ -28,12 +28,11 @@ import contact, {
   getLastName,
   Person
 } from '@hcengineering/contact'
-import core, {
+import {
   AccountRole,
   AccountUuid,
   Blob,
   Class,
-  Client,
   Doc,
   MeasureContext,
   PersonId,
@@ -46,9 +45,7 @@ import core, {
   Space,
   Timestamp,
   toIdMap,
-  Tx,
   TxCUD,
-  TxOperations,
   withContext,
   type Account,
   type WorkspaceIds
@@ -70,6 +67,7 @@ import { getGlobalPerson } from '../utils/account'
 import { createChatCompletionWithTools, requestSummary } from '../utils/openai'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
+import { RestClient } from '@hcengineering/api-client'
 
 interface PersonHistoryRecord {
   assistantMemory: string // Info about assistant: name, behavior style, how to address user
@@ -79,8 +77,7 @@ interface PersonHistoryRecord {
 }
 
 export class WorkspaceClient {
-  client: Client | undefined
-  opClient: Promise<TxOperations> | TxOperations
+  client: RestClient
 
   rate = new RateLimiter(1)
 
@@ -102,14 +99,12 @@ export class WorkspaceClient {
     readonly openai: OpenAI | undefined,
     readonly openaiEncoding: Tiktoken
   ) {
-    this.opClient = this.initClient()
-    void this.opClient.then((opClient) => {
-      this.opClient = opClient
-    })
+    this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
+    void this.initClient()
   }
 
-  private async ensureEmployee (client: Client): Promise<void> {
+  private async ensureEmployee (client: RestClient): Promise<void> {
     const me: Account = {
       uuid: this.personUuid,
       role: AccountRole.User,
@@ -120,32 +115,23 @@ export class WorkspaceClient {
     await ensureEmployee(this.ctx, me, client, this.socialIds, async () => await getGlobalPerson(this.token))
   }
 
-  private async initClient (): Promise<TxOperations> {
-    this.client = await connectPlatform(this.token, this.transactorUrl)
-    const opClient = new TxOperations(this.client, this.primarySocialId._id)
-
+  private async initClient (): Promise<void> {
     await this.ensureEmployee(this.client)
-    await this.checkEmployeeInfo(opClient)
+    await this.checkEmployeeInfo(this.client)
 
     if (this.aiPerson !== undefined && config.LoveEndpoint !== '') {
       this.love = new LoveController(
         this.wsIds.uuid,
         this.ctx.newChild('love', {}, { span: false }),
         this.token,
-        opClient,
+        this.client,
         this.aiPerson
       )
     }
-
-    this.client.notify = (...txes: Tx[]) => {
-      void this.txHandler(opClient, txes as TxCUD<Doc>[])
-    }
     this.ctx.info('Initialized workspace', { workspace: this.wsIds })
-
-    return opClient
   }
 
-  private async checkEmployeeInfo (client: TxOperations): Promise<void> {
+  private async checkEmployeeInfo (client: RestClient): Promise<void> {
     this.ctx.info('Upload avatar file', { workspace: this.wsIds })
 
     try {
@@ -168,7 +154,7 @@ export class WorkspaceClient {
     await this.checkPersonData(client)
   }
 
-  private async checkPersonData (client: TxOperations): Promise<void> {
+  private async checkPersonData (client: RestClient): Promise<void> {
     this.aiPerson = this.aiPerson ?? (await client.findOne(contact.class.Person, { personUuid: this.personUuid }))
 
     if (this.aiPerson === undefined) {
@@ -180,7 +166,7 @@ export class WorkspaceClient {
     const lastName = getLastName(this.aiPerson.name)
 
     if (lastName !== config.LastName || firstName !== config.FirstName) {
-      await client.update(this.aiPerson, {
+      await this.client.update(this.aiPerson, {
         name: combineName(config.FirstName, config.LastName)
       })
     }
@@ -195,8 +181,13 @@ export class WorkspaceClient {
       this.ctx.error('Cannot find file', { file: config.AvatarName, workspace: this.wsIds })
       return
     }
-
-    await client.diffUpdate(this.aiPerson, { avatar: config.AvatarName as Ref<Blob>, avatarType: AvatarType.IMAGE })
+    const pData = await client.findOne(this.aiPerson._class, { _id: this.aiPerson._id })
+    if (pData?.avatar !== config.AvatarName || pData.avatarType !== AvatarType.IMAGE) {
+      await client.update(this.aiPerson, {
+        avatar: config.AvatarName as Ref<Blob>,
+        avatarType: AvatarType.IMAGE
+      })
+    }
   }
 
   // TODO: In feature we also should use embeddings
@@ -360,7 +351,7 @@ export class WorkspaceClient {
     this.historyMap.set(personUuid, currentHistory)
   }
 
-  private async getAttachments (client: TxOperations, objectId: Ref<Doc>): Promise<Attachment[]> {
+  private async getAttachments (client: RestClient, objectId: Ref<Doc>): Promise<Attachment[]> {
     return await client.findAll(attachment.class.Attachment, { attachedTo: objectId })
   }
 
@@ -368,7 +359,6 @@ export class WorkspaceClient {
     if (this.openai === undefined) return
 
     const { user, objectId, objectClass, messageClass } = event
-    const client = await this.opClient
     const accountClient = getAccountClient(this.token)
     const personUuid = this.personUuidBySocialId.get(user) ?? (await accountClient.findPersonBySocialId(user))
 
@@ -381,7 +371,7 @@ export class WorkspaceClient {
     this.personUuidBySocialId.set(user, personUuid)
 
     let promptText = markupToText(event.message)
-    const files = await this.getAttachments(client, event.messageId)
+    const files = await this.getAttachments(this.client, event.messageId)
     if (files.length > 0) {
       promptText += '\n\nAttachments:'
       for (const file of files) {
@@ -391,10 +381,7 @@ export class WorkspaceClient {
     const prompt: OpenAI.ChatCompletionMessageParam = { content: promptText, role: 'user' }
     const promptTokens = countTokens([prompt], this.openaiEncoding)
 
-    const op = client.apply(undefined, 'AIMessageRequestEvent')
-    const hierarchy = client.getHierarchy()
-
-    const space = hierarchy.isDerived(objectClass, core.class.Space) ? (objectId as Ref<Space>) : event.objectSpace
+    const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
 
     const rawHistory = await this.getHistory(personUuid)
     const history = this.toOpenAiHistory(rawHistory, promptTokens)
@@ -509,7 +496,7 @@ export class WorkspaceClient {
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
 
     if (messageClass === chunter.class.ChatMessage) {
-      await op.addCollection<Doc, ChatMessage>(
+      await this.client.addCollection<Doc, ChatMessage>(
         chunter.class.ChatMessage,
         space,
         objectId,
@@ -518,12 +505,12 @@ export class WorkspaceClient {
         { message: parseResponse }
       )
     } else if (messageClass === chunter.class.ThreadMessage) {
-      const parent = await client.findOne<ChatMessage>(chunter.class.ChatMessage, {
+      const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
         _id: objectId as Ref<ChatMessage>
       })
 
       if (parent !== undefined) {
-        await op.addCollection<Doc, ThreadMessage>(
+        await this.client.addCollection<Doc, ThreadMessage>(
           chunter.class.ThreadMessage,
           space,
           objectId,
@@ -533,33 +520,19 @@ export class WorkspaceClient {
         )
       }
     }
-    await op.commit()
   }
 
   async close (): Promise<void> {
-    if (this.client !== undefined) {
-      await this.client.close()
-    }
-
-    if (this.opClient instanceof Promise) {
-      void this.opClient.then((opClient) => {
-        void opClient.close()
-      })
-    } else {
-      await this.opClient.close()
-    }
-
     this.ctx.info('Closed workspace client: ', { workspace: this.wsIds })
   }
 
-  private async txHandler (_: TxOperations, txes: TxCUD<Doc>[]): Promise<void> {
+  async txHandler (txes: TxCUD<Doc>[]): Promise<void> {
     if (this.love !== undefined) {
       this.love.txHandler(txes)
     }
   }
 
   async loveConnect (request: ConnectMeetingRequest): Promise<void> {
-    await this.opClient
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -568,9 +541,6 @@ export class WorkspaceClient {
   }
 
   async loveDisconnect (request: DisconnectMeetingRequest): Promise<void> {
-    // Just wait initialization
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -586,9 +556,6 @@ export class WorkspaceClient {
     participant: Ref<Person>,
     room: Ref<Room>
   ): Promise<void> {
-    // Just wait initialization
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -616,8 +583,6 @@ export class WorkspaceClient {
     endTimeSec: number,
     blobId: string
   ): Promise<Ref<ChatMessage> | undefined> {
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return undefined
@@ -636,8 +601,6 @@ export class WorkspaceClient {
     messageId: Ref<ChatMessage>,
     text: string | null
   ): Promise<boolean> {
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -657,8 +620,6 @@ export class WorkspaceClient {
     roomId: Ref<Room>,
     timestamp: Timestamp
   ): Promise<boolean> {
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -672,8 +633,6 @@ export class WorkspaceClient {
    */
   @withContext('getMeetingMinutesByRoom')
   async getMeetingMinutesByRoom (ctx: MeasureContext, roomId: Ref<Room>): Promise<MeetingMinutes | undefined> {
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return undefined
@@ -688,9 +647,6 @@ export class WorkspaceClient {
   }
 
   async getLoveIdentity (): Promise<IdentityResponse | undefined> {
-    // Just wait initialization
-    await this.opClient
-
     if (this.love === undefined) {
       this.ctx.error('Love is not initialized')
       return
@@ -717,10 +673,8 @@ export class WorkspaceClient {
     size: number,
     sessionNumber: number
   ): Promise<void> {
-    const client = await this.opClient
-
     // Find active meeting minutes for this room
-    const meetingMinutes = await client.findOne<MeetingMinutes>(love.class.MeetingMinutes, {
+    const meetingMinutes = await this.client.findOne<MeetingMinutes>(love.class.MeetingMinutes, {
       attachedTo: roomId,
       status: MeetingStatus.Active
     })
@@ -752,7 +706,7 @@ export class WorkspaceClient {
     // Using OGG container with Opus codec for browser compatibility
     const attachmentName = `${participantName}_${sessionNumber}_${startTimeStr}-${endTimeStr}.ogg`
 
-    await client.addCollection(
+    await this.client.addCollection(
       attachment.class.Attachment,
       meetingMinutes.space,
       meetingMinutes._id,
