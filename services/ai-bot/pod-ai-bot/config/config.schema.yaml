@@ -1,0 +1,78 @@
+# AI Bot Service Configuration Schema
+# This schema defines all configuration options for the AI Bot service
+
+# Account and Server Configuration
+accounts:
+  url: string  # URL of the accounts service
+  serverSecret: string  # Server secret for authentication
+  serviceId: string  # Service identifier (default: ai-bot-service)
+
+# Bot Identity Configuration
+bot:
+  firstName: string  # First name of the AI bot
+  lastName: string  # Last name of the AI bot
+  password: string  # Password for the bot account (default: password)
+  avatar:
+    path: string  # Path to avatar image (default: ./assets/avatar.png)
+    name: string  # Avatar name (default: huly_ai_bot_avatar)
+    contentType: string  # Avatar content type (default: image/png)
+
+# Port Configuration
+port: number  # Port number to run the service on (default: 4010)
+
+# LLM (Large Language Model) Configuration
+llm:
+  provider: string  # LLM provider type (openai, gigachat, etc.) (default: openai)
+  
+  # OpenAI Configuration
+  openai:
+    apiKey: string  # OpenAI API key
+    model: string  # OpenAI model to use (default: gpt-4o-mini)
+    baseUrl: string  # OpenAI base URL for custom endpoints (optional)
+    translateModel: string  # Model for translation tasks (default: same as model)
+    summaryModel: string  # Model for summary tasks (default: same as model)
+  
+  # GigaChat Configuration
+  gigachat:
+    credentials: string  # GigaChat credentials
+    scope: string  # GigaChat scope (default: GIGACHAT_API_PERS)
+    model: string  # GigaChat model (default: GigaChat)
+    baseUrl: string  # GigaChat base URL (default: official endpoint)
+    timeout: string  # GigaChat timeout in seconds (default: 600)
+
+# STT (Speech-to-Text) Configuration
+stt:
+  provider: string  # STT provider type (openai, deepgram, etc.) (default: wsr)
+  url: string  # STT API URL (optional)
+  apiKey: string  # STT API key (optional)
+  model: string  # STT model to use (optional)
+
+# Deepgram Configuration (for STT)
+deepgram:
+  apiKey: string  # Deepgram API key
+  projectId: string  # Deepgram project ID
+  tag: string  # Deepgram tag for requests (default: '')
+  pollIntervalMinutes: number  # Poll interval for transcription results (default: 60)
+
+# VAD (Voice Activity Detection) Configuration
+vad:
+  rmsThreshold: number  # RMS amplitude threshold for speech detection (default: 0.02)
+  speechRatioThreshold: number  # Speech ratio threshold (default: 0.1)
+
+# Service Integration Configuration
+services:
+  love:
+    endpoint: string  # Love service endpoint URL
+  billing:
+    url: string  # Billing service URL
+  datalab:
+    apiKey: string  # DataLab API key
+
+# Content and History Limits
+limits:
+  maxContentTokens: number  # Maximum content tokens (default: 12800)
+  maxHistoryRecords: number  # Maximum history records (default: 500)
+
+# Debug Configuration
+debug:
+  dir: string  # Directory to save debug audio files (optional)

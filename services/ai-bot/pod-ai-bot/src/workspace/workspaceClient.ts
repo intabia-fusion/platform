@@ -52,10 +52,10 @@ import {
 } from '@hcengineering/core'
 import love, { type MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
 import fs from 'fs'
-import { Tiktoken } from 'js-tiktoken'
-import OpenAI from 'openai'
+import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
+import { getTools } from '../utils/tools'
 
-import { countTokens } from '@hcengineering/openai'
+// Token counting and other LLM operations are delegated to the injected LLM provider
 import { getAccountClient } from '@hcengineering/server-client'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 import { jsonToMarkup, markupToText } from '@hcengineering/text'
@@ -64,10 +64,14 @@ import tracker, { Issue } from '@hcengineering/tracker'
 import config from '../config'
 import { HistoryRecord } from '../types'
 import { getGlobalPerson } from '../utils/account'
-import { createChatCompletionWithTools, requestSummary } from '../utils/openai'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 import { RestClient } from '@hcengineering/api-client'
+
+interface LLMHistoryRecord {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
 
 interface PersonHistoryRecord {
   assistantMemory: string // Info about assistant: name, behavior style, how to address user
@@ -96,8 +100,7 @@ export class WorkspaceClient {
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     readonly ctx: MeasureContext,
-    readonly openai: OpenAI | undefined,
-    readonly openaiEncoding: Tiktoken
+    readonly llm: LLMProvider | undefined
   ) {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
@@ -191,8 +194,8 @@ export class WorkspaceClient {
   }
 
   // TODO: In feature we also should use embeddings
-  private toOpenAiHistory (history: PersonHistoryRecord, promptTokens: number): OpenAI.ChatCompletionMessageParam[] {
-    const result: OpenAI.ChatCompletionMessageParam[] = []
+  private toLlmHistory (history: PersonHistoryRecord, promptTokens: number): Array<LLMHistoryRecord> {
+    const result: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = []
     let totalTokens = promptTokens
     const maxRecentMessages = 20 // Keep last 20 messages in full detail
 
@@ -205,7 +208,7 @@ export class WorkspaceClient {
 
       if (totalTokens + tokens > config.MaxContentTokens) break
 
-      result.unshift({ content: record.message, role: record.role as 'user' | 'assistant' })
+      result.unshift({ content: record.message, role: record.role as 'user' | 'assistant' | 'system' })
       totalTokens += tokens
     }
 
@@ -297,7 +300,7 @@ export class WorkspaceClient {
 
   async getHistorySummary (user: PersonUuid | undefined): Promise<string> {
     if (user === undefined) return 'No user context available'
-    if (this.openai === undefined) return 'Summary service not available'
+    if (this.llm === undefined) return 'Summary service not available'
 
     const currentHistory = await this.getHistory(user)
 
@@ -305,11 +308,9 @@ export class WorkspaceClient {
       return 'No conversation history available yet.'
     }
 
-    const { summary } = await requestSummary(
+    const { summary } = await this.llm.requestSummary(
       this.ctx,
       this.wsIds.uuid,
-      this.openai,
-      this.openaiEncoding,
       currentHistory.assistantMemory + '\n' + currentHistory.userMemory,
       currentHistory.history
     )
@@ -356,7 +357,7 @@ export class WorkspaceClient {
   }
 
   async processMessageEvent (event: AIEventRequest, control?: ConsumerControl): Promise<void> {
-    if (this.openai === undefined) return
+    if (this.llm === undefined) return
 
     const { user, objectId, objectClass, messageClass } = event
     const accountClient = getAccountClient(this.token)
@@ -378,32 +379,32 @@ export class WorkspaceClient {
         promptText += `\nName:${file.name} FileId:${file.file} Type:${file.type}`
       }
     }
-    const prompt: OpenAI.ChatCompletionMessageParam = { content: promptText, role: 'user' }
-    const promptTokens = countTokens([prompt], this.openaiEncoding)
+    const prompt: LLMChatMessage = { content: promptText, role: 'user' as const }
+    const promptTokens = this.llm?.countTokens([prompt]) ?? 0
 
     const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
 
     const rawHistory = await this.getHistory(personUuid)
-    const history = this.toOpenAiHistory(rawHistory, promptTokens)
+    const history = this.toLlmHistory(rawHistory, promptTokens)
 
-    await this.pushHistory(personUuid, promptText, prompt.role, promptTokens, personUuid, objectId, objectClass)
+    await this.pushHistory(personUuid, promptText, 'user', promptTokens, personUuid, objectId, objectClass)
 
-    let useHistory = history
+    const useHistory = history.filter((it) => it.role !== 'system')
+
+    const systemPrompts: LLMHistoryRecord[] = []
 
     if (contextMode !== 'direct') {
       // Load a message itself
       const msg = await this.client?.findOne<Doc>(objectClass, { _id: objectId })
       if (msg !== undefined) {
-        useHistory = [
-          {
-            role: 'system',
-            content: 'Document type:' + msg?._class
-          }
-        ]
+        systemPrompts.push({
+          role: 'system' as const,
+          content: 'Document type:' + msg?._class
+        })
         if (msg._class === chunter.class.ThreadMessage || msg._class === chunter.class.ChatMessage) {
-          useHistory.push({
-            role: 'system',
-            content: 'Content:' + markupToText((msg as ChatMessage).message)
+          systemPrompts.push({
+            role: 'system' as const,
+            content: 'Content: ' + markupToText((msg as ChatMessage).message)
           })
         }
         if (msg._class === tracker.class.Issue) {
@@ -429,8 +430,8 @@ export class WorkspaceClient {
               this.ctx.error('failed to handle description', { _id: is.description, workspace: this.wsIds.uuid })
             }
 
-            useHistory.push({
-              role: 'system',
+            systemPrompts.push({
+              role: 'system' as const,
               content: _msg
             })
           }
@@ -464,24 +465,26 @@ export class WorkspaceClient {
         if (sid !== undefined) {
           emp = empAsMap.get(sid.attachedTo)
         }
+        const msgRole: 'assistant' | 'user' = this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user'
         useHistory.push({
-          role: this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user',
-          content: markupToText(msg.message),
-          name: emp?.name ?? 'Unknown'
+          role: msgRole,
+          content: markupToText(msg.message)
         })
       }
     }
 
-    const chatCompletion = await createChatCompletionWithTools(
-      this,
-      this.openai,
+    const tools = getTools(this, contextMode, personUuid as AccountUuid)
+    const chatCompletion = await this.llm?.createChatCompletionWithTools(
+      tools,
       prompt,
       contextMode,
       rawHistory.assistantMemory,
       rawHistory.userMemory,
       rawHistory.sharedContext,
       personUuid as AccountUuid,
-      useHistory
+      this.ctx,
+      this.wsIds.uuid,
+      [...systemPrompts, ...useHistory]
     )
     const response = chatCompletion?.completion
 
@@ -489,7 +492,7 @@ export class WorkspaceClient {
       return
     }
     const responseTokens =
-      chatCompletion?.usage ?? countTokens([{ content: response, role: 'assistant' }], this.openaiEncoding)
+      chatCompletion?.usage ?? this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0
 
     await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
 

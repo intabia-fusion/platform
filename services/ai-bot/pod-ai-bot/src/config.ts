@@ -14,6 +14,8 @@
 //
 
 import OpenAI from 'openai'
+import fs from 'fs'
+import yaml from 'js-yaml'
 
 import { SttProviderType } from './transcription/types'
 
@@ -51,58 +53,194 @@ interface Config {
   VadRmsThreshold: number
   VadSpeechRatioThreshold: number
 
+  // GigaChat configuration
+  GigaChatCredentials: string
+  GigaChatScope: string
+  GigaChatModel: string
+  GigaChatBaseUrl: string
+  GigaChatTimeout: string
+
   // If specified all chunks will be saved to this directory, per user at a time.wav + transcription
   DebugDir?: string
+}
+
+// Define the YAML configuration structure
+interface YamlConfig {
+  accounts: {
+    url: string
+    serverSecret: string
+    serviceId?: string
+  }
+  bot: {
+    firstName: string
+    lastName: string
+    password?: string
+    avatar?: {
+      path?: string
+      name?: string
+      contentType?: string
+    }
+  }
+  port?: number
+  llm: {
+    provider?: string
+    openai?: {
+      apiKey?: string
+      model?: string
+      baseUrl?: string
+      translateModel?: string
+      summaryModel?: string
+    }
+    gigachat?: {
+      credentials?: string
+      scope?: string
+      model?: string
+      baseUrl?: string
+      timeout?: string
+    }
+  }
+  stt: {
+    provider?: string
+    url?: string
+    apiKey?: string
+    model?: string
+  }
+  deepgram?: {
+    apiKey?: string
+    projectId?: string
+    tag?: string
+    pollIntervalMinutes?: number
+  }
+  vad?: {
+    rmsThreshold?: number
+    speechRatioThreshold?: number
+  }
+  services: {
+    love: {
+      endpoint: string
+    }
+    billing: {
+      url: string
+    }
+    datalab?: {
+      apiKey?: string
+    }
+  }
+  limits?: {
+    maxContentTokens?: number
+    maxHistoryRecords?: number
+  }
+  debug?: {
+    dir?: string
+  }
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
 
 const config: Config = (() => {
-  const params: Partial<Config> = {
-    AccountsURL: process.env.ACCOUNTS_URL,
-    ServerSecret: process.env.SERVER_SECRET,
-    ServiceID: process.env.SERVICE_ID ?? 'ai-bot-service',
-    FirstName: process.env.FIRST_NAME,
-    LastName: process.env.LAST_NAME,
-    AvatarPath: process.env.AVATAR_PATH ?? './assets/avatar.png',
-    AvatarName: process.env.AVATAR_NAME ?? 'huly_ai_bot_avatar',
-    AvatarContentType: process.env.AVATAR_CONTENT_TYPE ?? 'image/png',
-    Password: process.env.PASSWORD ?? 'password',
-    OpenAIKey: process.env.OPENAI_API_KEY ?? '',
-    OpenAIModel: (process.env.OPENAI_MODEL ?? 'gpt-4o-mini') as OpenAI.ChatModel,
-    OpenAITranslateModel: (process.env.OPENAI_TRANSLATE_MODEL ??
-      process.env.OPENAI_MODEL ??
-      'gpt-4o-mini') as OpenAI.ChatModel,
-    OpenAISummaryModel: (process.env.OPENAI_SUMMARY_MODEL ??
-      process.env.OPENAI_MODEL ??
-      'gpt-4o-mini') as OpenAI.ChatModel,
-    OpenAIBaseUrl: process.env.OPENAI_BASE_URL ?? '',
-    MaxContentTokens: parseNumber(process.env.MAX_CONTENT_TOKENS) ?? 128 * 100,
-    MaxHistoryRecords: parseNumber(process.env.MAX_HISTORY_RECORDS) ?? 500,
-    Port: parseNumber(process.env.PORT) ?? 4010,
-    LoveEndpoint: process.env.LOVE_ENDPOINT ?? '',
-    DataLabApiKey: process.env.DATALAB_API_KEY ?? '',
-    BillingUrl: process.env.BILLING_URL ?? '',
-    DeepgramPollIntervalMinutes: parseNumber(process.env.DEEPGRAM_POLL_INTERVAL_MINUTES) ?? 60,
-    DeepgramApiKey: process.env.DEEPGRAM_API_KEY ?? '',
-    DeepgramProjectId: process.env.DEEPGRAM_PROJECT_ID ?? '',
-    DeepgramTag: process.env.DEEPGRAM_TAG ?? '',
-    // STT Transcription settings
-    SttProvider: (process.env.STT_PROVIDER ?? 'wsr') as SttProviderType,
-    SttUrl: process.env.STT_URL ?? '',
-    SttApiKey: process.env.STT_API_KEY ?? '',
-    SttModel: process.env.STT_MODEL ?? '',
-    // VAD settings
-    VadRmsThreshold: parseFloat(process.env.VAD_RMS_THRESHOLD ?? '0.02'),
-    VadSpeechRatioThreshold: parseFloat(process.env.VAD_SPEECH_RATIO_THRESHOLD ?? '0.1'),
+  // Try to load configuration from YAML file first
+  let yamlConfig: YamlConfig | null = null
 
-    DebugDir: process.env.DEBUG_DIR ?? ''
+  // Check if CONFIG_PATH environment variable is set
+  const configPath = process.env.CONFIG_PATH
+  if (configPath !== undefined && fs.existsSync(configPath)) {
+    try {
+      const configFileContent = fs.readFileSync(configPath, 'utf8')
+      yamlConfig = yaml.load(configFileContent) as YamlConfig
+    } catch (error) {
+      console.warn(`Failed to load YAML config from ${configPath}:`, error)
+    }
+  }
+
+  // Also check if CONFIG_YAML environment variable is set (with base64 encoded content)
+  const configYaml = process.env.CONFIG_YAML
+  if (configYaml !== undefined) {
+    try {
+      const decodedYaml = Buffer.from(configYaml, 'base64').toString('utf8')
+      yamlConfig = yaml.load(decodedYaml) as YamlConfig
+    } catch (error) {
+      console.warn('Failed to load YAML config from CONFIG_YAML environment variable:', error)
+    }
+  }
+
+  // Build the config object, prioritizing YAML config over environment variables
+  const params: Partial<Config> = {
+    // Accounts configuration
+    AccountsURL: yamlConfig?.accounts?.url ?? process.env.ACCOUNTS_URL,
+    ServerSecret: yamlConfig?.accounts?.serverSecret ?? process.env.SERVER_SECRET,
+    ServiceID: yamlConfig?.accounts?.serviceId ?? process.env.SERVICE_ID ?? 'ai-bot-service',
+
+    // Bot identity configuration
+    FirstName: yamlConfig?.bot?.firstName ?? process.env.FIRST_NAME,
+    LastName: yamlConfig?.bot?.lastName ?? process.env.LAST_NAME,
+    Password: yamlConfig?.bot?.password ?? process.env.PASSWORD ?? 'password',
+    AvatarPath: yamlConfig?.bot?.avatar?.path ?? process.env.AVATAR_PATH ?? './assets/avatar.png',
+    AvatarName: yamlConfig?.bot?.avatar?.name ?? process.env.AVATAR_NAME ?? 'huly_ai_bot_avatar',
+    AvatarContentType: yamlConfig?.bot?.avatar?.contentType ?? process.env.AVATAR_CONTENT_TYPE ?? 'image/png',
+
+    // Port configuration
+    Port: yamlConfig?.port ?? parseNumber(process.env.PORT) ?? 4010,
+
+    // LLM configuration
+    OpenAIKey: yamlConfig?.llm?.openai?.apiKey ?? process.env.OPENAI_API_KEY ?? '',
+    OpenAIModel: (yamlConfig?.llm?.openai?.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o-mini') as OpenAI.ChatModel,
+    OpenAIBaseUrl: yamlConfig?.llm?.openai?.baseUrl ?? process.env.OPENAI_BASE_URL ?? '',
+    OpenAITranslateModel: (yamlConfig?.llm?.openai?.translateModel ??
+      process.env.OPENAI_TRANSLATE_MODEL ??
+      process.env.OPENAI_MODEL ??
+      'gpt-4o-mini') as OpenAI.ChatModel,
+    OpenAISummaryModel: (yamlConfig?.llm?.openai?.summaryModel ??
+      process.env.OPENAI_SUMMARY_MODEL ??
+      process.env.OPENAI_MODEL ??
+      'gpt-4o-mini') as OpenAI.ChatModel,
+
+    // GigaChat configuration
+    GigaChatCredentials: yamlConfig?.llm?.gigachat?.credentials ?? process.env.GIGACHAT_CREDENTIALS ?? '',
+    GigaChatScope: yamlConfig?.llm?.gigachat?.scope ?? process.env.GIGACHAT_SCOPE ?? 'GIGACHAT_API_PERS',
+    GigaChatModel: yamlConfig?.llm?.gigachat?.model ?? process.env.GIGACHAT_MODEL ?? 'GigaChat',
+    GigaChatBaseUrl:
+      yamlConfig?.llm?.gigachat?.baseUrl ??
+      process.env.GIGACHAT_BASE_URL ??
+      'https://gigachat.devices.sberbank.ru/api/v1/',
+    GigaChatTimeout: yamlConfig?.llm?.gigachat?.timeout ?? process.env.GIGACHAT_TIMEOUT ?? '600',
+
+    // Limits
+    MaxContentTokens: yamlConfig?.limits?.maxContentTokens ?? parseNumber(process.env.MAX_CONTENT_TOKENS) ?? 128 * 100,
+    MaxHistoryRecords: yamlConfig?.limits?.maxHistoryRecords ?? parseNumber(process.env.MAX_HISTORY_RECORDS) ?? 500,
+
+    // Service endpoints
+    LoveEndpoint: yamlConfig?.services?.love?.endpoint ?? process.env.LOVE_ENDPOINT ?? '',
+    DataLabApiKey: yamlConfig?.services?.datalab?.apiKey ?? process.env.DATALAB_API_KEY ?? '',
+    BillingUrl: yamlConfig?.services?.billing?.url ?? process.env.BILLING_URL ?? '',
+
+    // Deepgram configuration
+    DeepgramPollIntervalMinutes:
+      yamlConfig?.deepgram?.pollIntervalMinutes ?? parseNumber(process.env.DEEPGRAM_POLL_INTERVAL_MINUTES) ?? 60,
+    DeepgramApiKey: yamlConfig?.deepgram?.apiKey ?? process.env.DEEPGRAM_API_KEY ?? '',
+    DeepgramProjectId: yamlConfig?.deepgram?.projectId ?? process.env.DEEPGRAM_PROJECT_ID ?? '',
+    DeepgramTag: yamlConfig?.deepgram?.tag ?? process.env.DEEPGRAM_TAG ?? '',
+
+    // STT configuration
+    SttProvider: (yamlConfig?.stt?.provider ?? process.env.STT_PROVIDER ?? 'wsr') as SttProviderType,
+    SttUrl: yamlConfig?.stt?.url ?? process.env.STT_URL ?? '',
+    SttApiKey: yamlConfig?.stt?.apiKey ?? process.env.STT_API_KEY ?? '',
+    SttModel: yamlConfig?.stt?.model ?? process.env.STT_MODEL ?? '',
+
+    // VAD configuration
+    VadRmsThreshold: yamlConfig?.vad?.rmsThreshold ?? parseFloat(process.env.VAD_RMS_THRESHOLD ?? '0.02'),
+    VadSpeechRatioThreshold:
+      yamlConfig?.vad?.speechRatioThreshold ?? parseFloat(process.env.VAD_SPEECH_RATIO_THRESHOLD ?? '0.1'),
+
+    // Debug configuration
+    DebugDir: yamlConfig?.debug?.dir ?? process.env.DEBUG_DIR ?? ''
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {
-    throw Error(`Missing env variables: ${missingEnv.join(', ')}`)
+    throw Error(
+      `Missing config values: ${missingEnv.join(', ')}. Values can be provided via YAML config file or environment variables.`
+    )
   }
 
   return params as Config

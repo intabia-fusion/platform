@@ -1,0 +1,77 @@
+# AI Bot Service Configuration File
+
+# Account and Server Configuration
+accounts:
+  url: "http://huly.local:3000"  # URL of the accounts service
+  serverSecret: "secret"  # Server secret for authentication
+  serviceId: "ai-bot-service"  # Service identifier (default: ai-bot-service)
+
+# Bot Identity Configuration
+bot:
+  firstName: "Julia"  # First name of the AI bot
+  lastName: "AI"  # Last name of the AI bot
+  password: "password"  # Password for the bot account (default: password)
+  avatar:
+    path: "./avatar.png"  # Path to avatar image (default: ./assets/avatar.png)
+    name: "huly_ai_bot_avatar"  # Avatar name (default: huly_ai_bot_avatar)
+    contentType: ".png"  # Avatar content type (default: image/png)
+
+# Port Configuration
+port: 4010  # Port number to run the service on (default: 4010)
+
+# LLM (Large Language Model) Configuration
+llm:
+  provider: "openai"  # LLM provider type (openai, gigachat, etc.) (default: openai)
+  
+  # OpenAI Configuration
+  openai:
+    apiKey: "token"  # OpenAI API key
+    model: "gpt-4o-mini"  # OpenAI model to use (default: gpt-4o-mini)
+    baseUrl: "http://huly.local:1234/v1/"  # OpenAI base URL for custom endpoints (optional)
+    translateModel: "openai/gpt-oss-20b"  # Model for translation tasks (default: same as model)
+    summaryModel: "openai/gpt-oss-20b"  # Model for summary tasks (default: same as model)
+  
+  # GigaChat Configuration
+  gigachat:
+    credentials: ""  # GigaChat credentials
+    scope: "GIGACHAT_API_PERS"  # GigaChat scope (default: GIGACHAT_API_PERS)
+    model: "GigaChat"  # GigaChat model (default: GigaChat)
+    baseUrl: "https://gigachat.devices.sberbank.ru/api/v1/"  # GigaChat base URL (default: official endpoint)
+    timeout: "600"  # GigaChat timeout in seconds (default: 600)
+
+# STT (Speech-to-Text) Configuration
+stt:
+  provider: "openai"  # STT provider type (openai, deepgram, etc.) (default: wsr)
+  url: "http://huly.local:9007"  # STT API URL (optional)
+  apiKey: "key"  # STT API key (optional)
+  model: ""  # STT model to use (optional)
+
+# Deepgram Configuration (for STT)
+deepgram:
+  apiKey: ""  # Deepgram API key
+  projectId: ""  # Deepgram project ID
+  tag: ""  # Deepgram tag for requests (default: '')
+  pollIntervalMinutes: 60  # Poll interval for transcription results (default: 60)
+
+# VAD (Voice Activity Detection) Configuration
+vad:
+  rmsThreshold: 0.02  # RMS amplitude threshold for speech detection (default: 0.02)
+  speechRatioThreshold: 0.1  # Speech ratio threshold (default: 0.1)
+
+# Service Integration Configuration
+services:
+  love:
+    endpoint: "http://huly.local:8096"  # Love service endpoint URL
+  billing:
+    url: "http://huly.local:4041"  # Billing service URL
+  datalab:
+    apiKey: ""  # DataLab API key
+
+# Content and History Limits
+limits:
+  maxContentTokens: 12800  # Maximum content tokens (default: 12800)
+  maxHistoryRecords: 500  # Maximum history records (default: 500)
+
+# Debug Configuration
+debug:
+  dir: ""  # Directory to save debug audio files (optional)

@@ -492,28 +492,66 @@ services:
       - 'huly.local:host-gateway'
     restart: unless-stopped
     environment:
-      - SERVER_SECRET=secret
-      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      # Account and Server Configuration
       - ACCOUNTS_URL=http://huly.local:3000
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - SERVER_SECRET=secret
+      - SERVICE_ID=ai-bot-service
+
+      # Bot Identity Configuration
       - FIRST_NAME=Julia
       - LAST_NAME=AI
       - PASSWORD=password
       - AVATAR_PATH=./avatar.png
       - AVATAR_CONTENT_TYPE=.png
-      - STATS_URL=http://huly.local:4900
-      - LOVE_ENDPOINT=http://huly.local:8096
-      - BILLING_URL=http://huly.local:4041
-      - OPENAI_API_KEY=token
-      - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
-      - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
-      - OPENAI_BASE_URL=http://huly.local:1234/v1/
+
+      # Port Configuration
+      - PORT=4010
+
+      # LLM Configuration
+      # - LLM_PROVIDER=openai
+      # - OPENAI_API_KEY=token
+      # - OPENAI_MODEL=gpt-4o-mini
+      # - OPENAI_BASE_URL=http://huly.local:1234/v1/
+      # - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
+      # - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
+
+      # GigaChat Configuration (only if using GigaChat)
+      - LLM_PROVIDER=gigachat
+      - GIGACHAT_CREDENTIALS=${GIGACHAT_AUTH_KEY}
+      - GIGACHAT_SCOPE=GIGACHAT_API_PERS
+      - GIGACHAT_MODEL=GigaChat-2
+      - GIGACHAT_BASE_URL=https://gigachat.devices.sberbank.ru/api/v1/
+      - GIGACHAT_TIMEOUT=600
+
+      # STT Configuration
       - STT_PROVIDER=openai
-      # - STT_URL=${OPENAI_AUDIO_API_URL}
       - STT_URL=http://huly.local:9007
-      # - STT_API_KEY=${OPENAI_AUDIO_API_KEY}
       - STT_API_KEY=key
       - STT_MODEL=
+
+      # Deepgram Configuration (only if using Deepgram)
+      # - DEEPGRAM_API_KEY=your-deepgram-api-key
+      # - DEEPGRAM_PROJECT_ID=your-project-id
+      # - DEEPGRAM_TAG=tag
+      # - DEEPGRAM_POLL_INTERVAL_MINUTES=60
+
+      # VAD Configuration
+      - VAD_RMS_THRESHOLD=0.02
+      - VAD_SPEECH_RATIO_THRESHOLD=0.1
+
+      # Service Integration Configuration
+      - LOVE_ENDPOINT=http://huly.local:8096
+      - BILLING_URL=http://huly.local:4041
+      - DATALAB_API_KEY=
+
+      # Content and History Limits
+      - MAX_CONTENT_TOKENS=12800
+      - MAX_HISTORY_RECORDS=500
+
+      # Additional environment variables
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - STATS_URL=http://huly.local:4900
   analytics:
     image: intabiafusion/analytics-collector
     extra_hosts:
@@ -801,7 +839,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=3600
+      - USAGE_UPDATE_INTERVAL=30
     restart: unless-stopped
 
   mail_server:
