@@ -14,12 +14,14 @@
 -->
 <script lang="ts">
   import { IntlString } from '@hcengineering/platform'
-  import { Label, PaletteColorIndexes, Progress, humanReadableFileSize } from '@hcengineering/ui'
+  import { Label, PaletteColorIndexes, Progress, humanReadableFileSize, humanReadableNumbers } from '@hcengineering/ui'
   import plugin from '../plugin'
 
   export let label: IntlString
   export let value: number // in bytes
   export let limit: number // in bytes
+
+  export let kind: 'bytes' | 'items' = 'bytes'
 
   $: color = value >= limit ? PaletteColorIndexes.Firework : undefined
 </script>
@@ -28,9 +30,17 @@
   <div class="flex-between text-md">
     <span class="pr-2"><Label {label} /></span>
     <span class="flex-row-center flex-gap-1">
-      {humanReadableFileSize(value, 10, 0)}
+      {#if kind === 'bytes'}
+        {humanReadableFileSize(value, 10, 0)}
+      {:else}
+        {humanReadableNumbers(value, 10, 0)}
+      {/if}
       <Label label={plugin.string.Of} />
-      {humanReadableFileSize(limit, 10, 0)}
+      {#if kind === 'bytes'}
+        {humanReadableFileSize(limit, 10, 0)}
+      {:else}
+        {humanReadableNumbers(limit, 10, 0)}
+      {/if}
     </span>
   </div>
   <Progress {color} {value} max={limit} fallback={100} />

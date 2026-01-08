@@ -176,7 +176,15 @@ export interface AccountClient {
     progress: number,
     message?: string
   ) => Promise<void>
-  listWorkspaces: (region?: string | null, mode?: WorkspaceMode | null) => Promise<WorkspaceInfoWithStatus[]>
+  /**
+   * Lists workspaces in the specified region and mode.
+   * If visited is set, all workspaces visited during visited days will be returned.
+   */
+  listWorkspaces: (
+    region?: string | null,
+    mode?: WorkspaceMode | null,
+    visited?: number
+  ) => Promise<WorkspaceInfoWithStatus[]>
   performWorkspaceOperation: (
     workspaceId: string | string[],
     event: WorkspaceUserOperation,
@@ -853,10 +861,14 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async listWorkspaces (region?: string | null, mode: WorkspaceMode | null = null): Promise<WorkspaceInfoWithStatus[]> {
+  async listWorkspaces (
+    region?: string | null,
+    mode: WorkspaceMode | null = null,
+    visited?: number
+  ): Promise<WorkspaceInfoWithStatus[]> {
     const request = {
       method: 'listWorkspaces' as const,
-      params: { region, mode }
+      params: { region, mode, visited }
     }
 
     return ((await this.rpc<any[]>(request)) ?? []).map((ws) => this.flattenStatus(ws))

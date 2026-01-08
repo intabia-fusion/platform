@@ -1687,7 +1687,8 @@ export async function getWorkspaces (
   db: AccountDB,
   isDisabled?: boolean | null,
   region?: string | null,
-  mode?: WorkspaceMode | null
+  mode?: WorkspaceMode | null,
+  visited?: number | null
 ): Promise<WorkspaceInfoWithStatus[]> {
   const statuses = await db.workspaceStatus.find({})
   const statusesMap = statuses.reduce<Record<string, WorkspaceStatus>>((sm, s) => {
@@ -1695,12 +1696,26 @@ export async function getWorkspaces (
     return sm
   }, {})
 
+  const nowD = Date.now() / (1000 * 60 * 60 * 24)
   const workspaces = (await db.workspace.find(region != null ? { region } : {})).filter((it) => {
     const status = statusesMap[it.uuid]
     if (isDisabled === true) {
       return status.isDisabled
     } else if (isDisabled === false) {
       return !status.isDisabled
+    }
+
+    const lastVisitDays = (status.lastVisit ?? 0) / (1000 * 60 * 60 * 24)
+
+    if (visited != null && visited >= 0) {
+      if (status.lastVisit === undefined) {
+        // Do not include workspaces with no visits
+        return false
+      }
+      // If the last visit was more recent than 'visited' days ago, exclude it
+      if (nowD - lastVisitDays > visited) {
+        return false
+      }
     }
 
     if (mode != null) {

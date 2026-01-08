@@ -149,13 +149,19 @@ function getTierPlan (tierId: string): string {
   return parts.length >= 3 ? parts[2].toLowerCase() : ''
 }
 
-export function calculateLimits (tier: Tier | undefined): { storageLimit: number, trafficLimit: number } {
+export function calculateLimits (tier: Tier | undefined): {
+  storageLimit: number
+  trafficLimit: number
+  tokenLimit: number
+} {
   const DEFAULT_STORAGE_GB = 10
   const DEFAULT_TRAFFIC_GB = 10
+  const DEFAULT_TOKEN = 20
 
   return {
     storageLimit: (tier?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
-    trafficLimit: (tier?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9
+    trafficLimit: (tier?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
+    tokenLimit: (tier?.tokenLimit ?? DEFAULT_TOKEN) * 1000
   }
 }
 

@@ -84,15 +84,25 @@ export function floorFractionDigits (n: number | string, amount: number): number
  * @public
  */
 export function humanReadableFileSize (size: number, base: 2 | 10 = 10, fractionDigits: number = 2): string {
+  return humanReadableNumbers(size, base, fractionDigits, 'B')
+}
+
+/**
+ * @public
+ */
+export function humanReadableNumbers (
+  size: number,
+  base: 2 | 10 = 10,
+  fractionDigits: number = 2,
+  prefix: string = ''
+): string {
   const units =
-    base === 10
-      ? ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-      : ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+    base === 10 ? ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'] : ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi']
   const kb = base === 10 ? 1000 : 1024
 
   const pow = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(kb))
   const val = (1.0 * size) / Math.pow(kb, pow)
-  return `${val.toFixed(fractionDigits)} ${units[pow]}`
+  return `${val.toFixed(fractionDigits)} ${units[pow]}${prefix}`
 }
 
 /**

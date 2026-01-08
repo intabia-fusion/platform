@@ -840,6 +840,15 @@
         "OPENAI_API_KEY": "changeme",
         "OPENAI_BASE_URL": "http://localhost:1234/v1",
         "OPENAI_MODEL": "openai/gpt-oss-20b",
+        "LLM_PROVIDER":"gigachat", // "openai" | "gigachat"
+        "GIGACHAT_CREDENTIALS":"${GIGACHAT_AUTH_KEY}",
+        "GIGACHAT_SCOPE":"GIGACHAT_API_PERS",
+        "GIGACHAT_MODEL":"GigaChat-2",
+        "GIGACHAT_BASE_URL":"https://gigachat.devices.sberbank.ru/api/v1/",
+        "GIGACHAT_TIMEOUT":"600",
+        "NODE_EXTRA_CA_CERTS":"./services/ai-bot/pod-ai-bot/certs",
+        "NODE_TLS_REJECT_UNAUTHORIZED":"0",
+
         "REGION": "",
         "QUEUE_REGION": "",
         // "STT_PROVIDER":"whisper-asr",

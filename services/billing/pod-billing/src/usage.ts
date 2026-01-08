@@ -68,7 +68,13 @@ export class UsageWorker {
   async recheckWorkspaces (ctx: MeasureContext): Promise<void> {
     const now = Date.now()
     const account = getAccountClient(this.config.AccountsUrl, undefined)
-    const workspaces = await account.listWorkspaces(undefined)
+
+    // We only need workspaces visited in last day or our update interval (whichever is smaller)
+    const workspaces = await account.listWorkspaces(
+      undefined,
+      undefined,
+      Math.min(1, Math.round(this.config.UsageUpdateInterval / 86400))
+    )
 
     ctx.info('rechecking workspaces', { count: workspaces.length })
 
@@ -134,7 +140,15 @@ export class UsageWorker {
     const storageBytes = storageUsage.size
 
     const usage: UsageStatus = {
-      usage: { livekitTrafficBytes, storageBytes },
+      usage: {
+        livekitTrafficBytes,
+        storageBytes,
+        transcript:
+          (await this.db.getAiTranscriptStats(ctx, workspace, periodStart, periodEnd))?.totalDurationSeconds ?? 0,
+        tokens: ((await this.db.getAiTokensStats(ctx, workspace, periodStart, periodEnd)) ?? [])
+          .map((it) => it.totalTokens)
+          .reduce((a, b) => a + b, 0)
+      },
       startTime: periodStart.getTime(),
       updateTime: periodEnd.getTime()
     }

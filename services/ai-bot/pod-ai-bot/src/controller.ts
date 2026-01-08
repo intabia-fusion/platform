@@ -46,17 +46,15 @@ import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
-import { encodingForModel, getEncoding } from 'js-tiktoken'
-import OpenAI from 'openai'
+import { createLLMFromConfig, type LLMProvider } from './llms'
 
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
 import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
-import config from './config'
 import { tryAssignToWorkspace } from './utils/account'
-import { summarizeMessages, translateHtml } from './utils/openai'
+/* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'
 
 /** Audio chunk metadata from HTTP headers */
@@ -93,32 +91,14 @@ export class AIControl {
   readonly storageAdapter: StorageAdapter
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
 
-  private readonly openai?: OpenAI
-
-  // Try to obtain the encoding for the configured model. If the model is not recognised by js-tiktoken
-  // (e.g. non-OpenAI models such as Together AI Llama derivatives) we gracefully fall back to the
-  // universal `cl100k_base` encoding. This prevents a runtime "Unknown model" error while still
-  // giving us a reasonable token count estimate for summaries.
-  private readonly openaiEncoding = (() => {
-    try {
-      return encodingForModel(config.OpenAIModel as any)
-    } catch (err) {
-      return getEncoding('cl100k_base')
-    }
-  })()
+  private readonly llm?: LLMProvider
 
   constructor (
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     private readonly ctx: MeasureContext
   ) {
-    this.openai =
-      config.OpenAIKey !== ''
-        ? new OpenAI({
-          apiKey: config.OpenAIKey,
-          baseURL: config.OpenAIBaseUrl === '' ? undefined : config.OpenAIBaseUrl
-        })
-        : undefined
+    this.llm = createLLMFromConfig(this.ctx)
     this.storageAdapter = buildStorageFromConfig(storageConfigFromEnv())
   }
 
@@ -303,8 +283,7 @@ export class AIControl {
       this.personUuid,
       this.socialIds,
       this.ctx.newChild('create-workspace', {}, { span: false }),
-      this.openai,
-      this.openaiEncoding
+      this.llm
     )
   }
 
@@ -348,11 +327,11 @@ export class AIControl {
   }
 
   async translate (workspace: WorkspaceUuid, req: TranslateRequest): Promise<TranslateResponse | undefined> {
-    if (this.openai === undefined) {
+    if (this.llm === undefined) {
       return undefined
     }
     const html = jsonToHTML(markupToJSON(req.text))
-    const result = await translateHtml(this.ctx, workspace, this.openai, html, req.lang)
+    const result = await this.llm.translateHtml(this.ctx, workspace, html, req.lang)
     const text = result !== undefined ? htmlToMarkup(result) : req.text
     return {
       text,
@@ -364,7 +343,7 @@ export class AIControl {
     workspace: WorkspaceUuid,
     req: SummarizeMessagesRequest
   ): Promise<SummarizeMessagesResponse | undefined> {
-    if (this.openai === undefined) return
+    if (this.llm === undefined) return
     if (req.target === undefined || req.targetClass === undefined) return
 
     const wsClient = await this.getWorkspaceClient(workspace)
@@ -427,7 +406,7 @@ export class AIControl {
       }
     }
 
-    const summary = await summarizeMessages(this.ctx, workspace, this.openai, messagesToSummarize, req.lang)
+    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, req.lang)
     if (summary === undefined) return
 
     const summaryMarkup = jsonToMarkup(markdownToMarkup(summary))
@@ -475,8 +454,8 @@ export class AIControl {
   }
 
   async processEvent (workspace: WorkspaceUuid, events: AIEventRequest[], control?: ConsumerControl): Promise<void> {
-    if (this.openai === undefined) {
-      throw new Error('OpenAI not configured')
+    if (this.llm === undefined) {
+      throw new Error('LLM provider not configured')
     }
 
     const i1 = setInterval(() => {
