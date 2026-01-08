@@ -18,7 +18,7 @@
  */
 
 import GigaChat from 'gigachat'
-import { encodingForModel, getEncoding } from 'js-tiktoken'
+import { encodingForModel, getEncoding, Tiktoken } from 'js-tiktoken'
 
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { PersonMessage } from '@hcengineering/ai-bot'
@@ -39,7 +39,7 @@ import { Usage } from 'gigachat/interfaces'
 
 export default class GigaChatProvider implements LLMProvider {
   private readonly client: GigaChat
-  private readonly encoding: any // js-tiktoken doesn't have a direct encoding for GigaChat models
+  private readonly encoding: Tiktoken // js-tiktoken doesn't have a direct encoding for GigaChat models
 
   constructor (readonly ctx: MeasureContext) {
     // Initialize GigaChat client with configuration

@@ -283,7 +283,7 @@ export default class OpenAIProvider implements LLMProvider {
       }
 
       const tu = this.toTokens(usage)
-      if (tu != null) {
+      if (tu !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,

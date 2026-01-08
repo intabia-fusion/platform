@@ -193,7 +193,6 @@ export class WorkspaceClient {
     }
   }
 
-  // TODO: In feature we also should use embeddings
   private toLlmHistory (history: PersonHistoryRecord, promptTokens: number): Array<LLMHistoryRecord> {
     const result: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = []
     let totalTokens = promptTokens

@@ -32,6 +32,7 @@ export class TTier extends TDoc implements Tier {
   description!: IntlString
   storageLimitGB!: number
   trafficLimitGB!: number
+  tokenLimit!: number
 
   priceMonthly!: number
   index!: number
