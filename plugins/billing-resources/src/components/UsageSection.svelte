@@ -25,6 +25,7 @@
 
   $: storageUsedBytes = usage?.usage?.storageBytes ?? 0
   $: trafficUsedBytes = usage?.usage?.livekitTrafficBytes ?? 0
+  $: tokensUsage = usage?.usage?.tokens ?? 0
   $: limits = calculateLimits(tier)
 </script>
 
@@ -36,4 +37,6 @@
   <UsageProgress label={plugin.string.StorageUsage} value={storageUsedBytes} limit={limits.storageLimit} />
 
   <UsageProgress label={plugin.string.TrafficUsage} value={trafficUsedBytes} limit={limits.trafficLimit} />
+
+  <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
 </div>

@@ -60,6 +60,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.CommonDescription,
       storageLimitGB: 10,
       trafficLimitGB: 10,
+      tokenLimit: 20,
       priceMonthly: 0,
       index: 0
     },
@@ -74,6 +75,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.RareDescription,
       storageLimitGB: 100,
       trafficLimitGB: 100,
+      tokenLimit: 200,
       priceMonthly: 19.99,
       index: 1,
       color: 'Sky'
@@ -89,6 +91,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.EpicDescription,
       storageLimitGB: 1000,
       trafficLimitGB: 500,
+      tokenLimit: 2000,
       priceMonthly: 99.99,
       index: 2,
       color: 'Orchid'
@@ -104,6 +107,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.LegendaryDescription,
       storageLimitGB: 10000,
       trafficLimitGB: 2000,
+      tokenLimit: 5000,
       priceMonthly: 399.99,
       index: 3,
       color: 'Orange'
