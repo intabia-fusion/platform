@@ -34,6 +34,10 @@ interface Config {
   OpenAIBaseUrl: string
   OpenAITranslateModel: OpenAI.ChatModel
   OpenAISummaryModel: OpenAI.ChatModel
+
+  // LLM selection (e.g. 'openai' | 'gigachat' or leave empty for auto)
+  LLMProvider: string
+
   MaxContentTokens: number
   MaxHistoryRecords: number
   Port: number
@@ -59,6 +63,10 @@ interface Config {
   GigaChatModel: string
   GigaChatBaseUrl: string
   GigaChatTimeout: string
+
+  StorageConfig: string
+
+  ChunkStorage: string // A blob temporal storage, for ogm and wav chunks.
 
   // If specified all chunks will be saved to this directory, per user at a time.wav + transcription
   DebugDir?: string
@@ -126,6 +134,10 @@ interface YamlConfig {
       apiKey?: string
     }
   }
+  storage?: {
+    config?: string
+    chunks?: string
+  }
   limits?: {
     maxContentTokens?: number
     maxHistoryRecords?: number
@@ -182,6 +194,7 @@ const config: Config = (() => {
     Port: yamlConfig?.port ?? parseNumber(process.env.PORT) ?? 4010,
 
     // LLM configuration
+    LLMProvider: yamlConfig?.llm?.provider ?? process.env.LLM_PROVIDER ?? '',
     OpenAIKey: yamlConfig?.llm?.openai?.apiKey ?? process.env.OPENAI_API_KEY ?? '',
     OpenAIModel: (yamlConfig?.llm?.openai?.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o-mini') as OpenAI.ChatModel,
     OpenAIBaseUrl: yamlConfig?.llm?.openai?.baseUrl ?? process.env.OPENAI_BASE_URL ?? '',
@@ -230,6 +243,12 @@ const config: Config = (() => {
     VadRmsThreshold: yamlConfig?.vad?.rmsThreshold ?? parseFloat(process.env.VAD_RMS_THRESHOLD ?? '0.02'),
     VadSpeechRatioThreshold:
       yamlConfig?.vad?.speechRatioThreshold ?? parseFloat(process.env.VAD_SPEECH_RATIO_THRESHOLD ?? '0.1'),
+
+    // Storage configuration
+    StorageConfig: yamlConfig?.storage?.config ?? process.env.STORAGE_CONFIG ?? undefined,
+
+    // Chunk storage configuration
+    ChunkStorage: yamlConfig?.storage?.chunks ?? process.env.CHUNK_STORAGE_CONFIG ?? undefined,
 
     // Debug configuration
     DebugDir: yamlConfig?.debug?.dir ?? process.env.DEBUG_DIR ?? ''

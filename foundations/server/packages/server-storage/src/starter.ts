@@ -39,8 +39,19 @@ export function storageConfigFromEnv (configEnv?: string): StorageConfiguration 
   return storageConfig
 }
 
+export function storageConfigFrom (config: string): StorageConfiguration {
+  const storageConfig: StorageConfiguration = { default: '', storages: [] }
+
+  parseStorageEnv(config, storageConfig)
+
+  if (storageConfig.storages.length === 0 || storageConfig.default === '') {
+    throw new Error('At least one storage config is required')
+  }
+  return storageConfig
+}
+
 export function parseStorageEnv (storageEnv: string, storageConfig: StorageConfiguration): void {
-  const storages = storageEnv.split(';')
+  const storages = storageEnv.trim().split(';')
   for (const st of storages) {
     if (st.trim().length === 0 || !st.includes('|')) {
       throw new Error('Invalid storage config:' + st)

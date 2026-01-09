@@ -14,6 +14,7 @@
 //
 
 import type { MeasureContext } from '@hcengineering/core'
+import config from '../config'
 
 import { createOpenAIProvider } from './openai'
 import { createGigaChatProvider } from './gigachat'
@@ -42,12 +43,13 @@ export { createGigaChatProvider } from './gigachat'
  *
  * Currently this delegates to OpenAI provider when OpenAI credentials are present,
  * or GigaChat when GigaChat credentials are present.
- * In future we can extend this to choose provider by name (e.g. process.env.LLM_PROVIDER)
+ * In future we can extend this to choose provider by name (e.g. config.LLMProvider)
  * or other configuration.
  */
 export function createLLMFromConfig (ctx: MeasureContext): LLMProvider | undefined {
-  // Check for explicit provider selection
-  const providerType = process.env.LLM_PROVIDER?.toLowerCase()
+  // Check for explicit provider selection (via config.LLMProvider)
+  const rawLlmProvider = config.LLMProvider ?? ''
+  const providerType = rawLlmProvider.trim() === '' ? undefined : rawLlmProvider.trim().toLowerCase()
 
   switch (providerType) {
     case 'gigachat': {

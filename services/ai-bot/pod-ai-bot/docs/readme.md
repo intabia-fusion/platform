@@ -92,6 +92,18 @@ vad:
   rmsThreshold: 0.02  # RMS amplitude threshold for speech detection (default: 0.02)
   speechRatioThreshold: 0.1  # Speech ratio threshold (default: 0.1)
 
+# Storage Configuration (required)
+# The AI Bot requires an explicit storage configuration to access workspace blob storage and a chunk storage config for parts.
+# Provide storage configuration either via YAML (preferred) under `storage.config`
+# or as the `STORAGE_CONFIG` environment variable. The configuration follows the
+# same format as server-storage and is a `kind|uri` string (e.g. minio or s3).
+# Example (Minio):
+# For chunks use CHUNK_STORAGE_CONFIG environment variable or `storage.chunk` in YAML.
+# Use rootBucket parameter to specify a different bucket for chunk storage.
+storage:
+  config: 'minio|minio:9000?accessKey=minioadmin&secretKey=minioadmin'
+  chunk: 'minio|minio:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=ai-bot-chunks'
+
 # Service Integration Configuration
 services:
   love:
@@ -113,7 +125,7 @@ debug:
 
 ## Backward Compatibility
 
-The service remains fully backward compatible with environment variable-based configuration. If no YAML configuration is provided, the service will fall back to reading configuration from environment variables as before.
+The service remains fully backward compatible with environment variable-based configuration for most settings. However, storage configuration must be provided explicitly via YAML (`storage.config`) or the `STORAGE_CONFIG` environment variable — implicit provider-specific environment variables (for example `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`) are not used to configure storage anymore. If storage configuration is missing the service will fail to start.
 
 ## Docker/Kubernetes Usage
 
@@ -139,9 +151,13 @@ services:
       - PORT=4010
 
       # LLM Configuration
-      - LLM_PROVIDER=openai
-      - OPENAI_API_KEY=your-openai-api-key
-      - OPENAI_MODEL=gpt-4o-mini
+      # - LLM_PROVIDER=openai
+      # - OPENAI_API_KEY=your-openai-api-key
+      # - OPENAI_MODEL=gpt-4o-mini
+
+      # Storage Configuration (required)
+      # - STORAGE_CONFIG=minio|minio:9000?accessKey=minioadmin&secretKey=minioadmin
+      # - CHUNK_STORAGE_CONFIG=minio|minio:9000?accessKey=minioadmin&secretKey=minio&rootBucket=ai-bot-chunks
       - OPENAI_BASE_URL=  # Optional: for custom OpenAI-compatible endpoints
       - OPENAI_SUMMARY_MODEL=gpt-4o-mini
       - OPENAI_TRANSLATE_MODEL=gpt-4o-mini

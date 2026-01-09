@@ -49,7 +49,8 @@ import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcenginee
 import { createLLMFromConfig, type LLMProvider } from './llms'
 
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import config from './config'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
@@ -88,7 +89,11 @@ export class AIControl {
   private readonly workspaces: Map<WorkspaceUuid, WorkspaceClient> = new Map<WorkspaceUuid, WorkspaceClient>()
   private readonly connectingWorkspaces = new Map<WorkspaceUuid, Promise<void>>()
 
+  // Workspace storage adapter
   readonly storageAdapter: StorageAdapter
+
+  // Chunk storage adapter
+  readonly chunkStorageAdapter: StorageAdapter
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
 
   private readonly llm?: LLMProvider
@@ -99,7 +104,9 @@ export class AIControl {
     private readonly ctx: MeasureContext
   ) {
     this.llm = createLLMFromConfig(this.ctx)
-    this.storageAdapter = buildStorageFromConfig(storageConfigFromEnv())
+
+    this.storageAdapter = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
+    this.chunkStorageAdapter = buildStorageFromConfig(storageConfigFrom(config.ChunkStorage))
   }
 
   setTranscriptionProducer (producer: PlatformQueueProducer<TranscriptionTask>): void {
@@ -132,7 +139,14 @@ export class AIControl {
 
     try {
       // Store gzipped WAV in storage
-      await this.storageAdapter.put(this.ctx, wsClient.wsIds, blobId, gzipData, 'application/gzip', gzipData.length)
+      await this.chunkStorageAdapter.put(
+        this.ctx,
+        wsClient.wsIds,
+        blobId,
+        gzipData,
+        'application/gzip',
+        gzipData.length
+      )
 
       // Create placeholder message for pending transcription (with spinner indicator)
       let placeholderMessageId: Ref<ChatMessage> | undefined
@@ -318,6 +332,9 @@ export class AIControl {
       await workspace.close()
     }
     this.workspaces.clear()
+
+    await this.storageAdapter.close()
+    await this.chunkStorageAdapter.close()
   }
 
   async getWorkspaceClient (workspace: WorkspaceUuid): Promise<WorkspaceClient | undefined> {

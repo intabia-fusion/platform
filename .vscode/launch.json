@@ -835,6 +835,7 @@
         "AVATAR_PATH": "./assets/avatar.png",
         "AVATAR_CONTENT_TYPE": ".png",
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
+        "CHUNK_STORAGE_CONFIG": "minio|localhost?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks",
         "LOVE_ENDPOINT": "http://huly.local:8096",
         "QUEUE_CONFIG": "huly.local:19092",
         "OPENAI_API_KEY": "changeme",

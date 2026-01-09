@@ -551,6 +551,7 @@ services:
       # Additional environment variables
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - CHUNK_STORAGE_CONFIG=${CHUNK_STORAGE_CONFIG}
       - STATS_URL=http://huly.local:4900
   analytics:
     image: intabiafusion/analytics-collector

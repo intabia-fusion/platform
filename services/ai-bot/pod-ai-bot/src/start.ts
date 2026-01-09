@@ -93,6 +93,12 @@ export const start = async (): Promise<void> => {
 
   const aiControl = new AIControl(personUuid, socialIds, ctx)
 
+  // Check and create bucket if missing.
+  await aiControl.chunkStorageAdapter.make(ctx, {
+    uuid: '' as WorkspaceUuid,
+    url: ''
+  })
+
   // Create a workspace consumer
   // Create queue consumer's
   //
@@ -186,7 +192,7 @@ export const start = async (): Promise<void> => {
     const transcriptionHandler = createTranscriptionConsumer(
       ctx,
       transcriptionConfig,
-      aiControl.storageAdapter,
+      aiControl.chunkStorageAdapter,
       // Callback to get workspace storage info
       async (workspace: WorkspaceUuid) => {
         const wsClient = await aiControl.getWorkspaceClient(workspace)
