@@ -1,0 +1,65 @@
+# LiveKit Egress config for local development
+# - Connects to self-hosted LiveKit at ws://huly.local:7880
+# - Redis is the redis container in dev compose (redis:6379)
+# - Uploads output to Minio running in dev compose (minio:9000)
+# - Buckets/credentials below are defaults for local Minio (minioadmin/minioadmin)
+# - Adjust endpoints/credentials as needed for your environment
+
+api_key: devkey
+api_secret: secret
+
+# Websocket URL for the running LiveKit server (as seen from containers)
+ws_url: ws://huly.local:7880
+
+# Allow insecure (non-wss / self-signed) connections in local dev
+insecure: true
+
+# Redis configuration used for egress job coordination.
+# - For the LiveKit server running on host we set host-side config to 127.0.0.1:6379
+# - For egress (running in Docker-compose) we point to the redis service name
+redis:
+  address: redis:6379
+  db: 0
+
+# Logging
+logging:
+  json: false
+  level: debug
+
+# HTTP ports used by egress for optional features
+template_port: 7980
+prometheus_port: 0
+health_port: 0
+debug_handler_port: 0
+
+# Storage configuration: upload recorded files to S3-compatible Minio in dev
+storage:
+  s3:
+    endpoint: http://minio:9000
+    access_key: minioadmin
+    secret: minioadmin
+    bucket: livekit-recordings
+    region: us-east-1
+    # Required for many S3-compatible endpoints (Minio)
+    forcePathStyle: false
+    # Retry tuning (optional)
+    max_retries: 3
+    min_retry_delay: 500ms
+    max_retry_delay: 5s
+
+# Limits for sessions / outputs (keeps recordings bounded in dev)
+session_limits:
+  file_output_max_duration: 3h
+  stream_output_max_duration: 90m
+  segment_output_max_duration: 3h
+
+# Dev-specific options
+debug:
+  enable_profiling: false
+
+# NOTE:
+# - Ensure the 'livekit-recordings' bucket exists in Minio (or create it on startup).
+# - When running egress as a container alongside docker-compose dev stack, this config
+#   should be mounted into the container and EGRESS_CONFIG_FILE should point to it.
+# - Make sure the host LiveKit server (run via run_livekit.sh) has Redis configured
+#   to the same Redis instance (127.0.0.1:6379) so egress can receive jobs.

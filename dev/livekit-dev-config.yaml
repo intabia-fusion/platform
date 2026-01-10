@@ -8,6 +8,10 @@ webhook:
   urls: ["http://127.0.0.1:8096/webhook"]
   api_key: devkey
 
+redis:
+  address: 127.0.0.1:6379
+  db: 0
+
 # Отключение TURN сервера для разработки
 turn:
   enabled: false

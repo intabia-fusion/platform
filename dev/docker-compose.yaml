@@ -475,7 +475,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - STORAGE_PROVIDER_NAME=minio
+      - S3_STORAGE_CONFIG=s3|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=love-recordings
       - LIVEKIT_HOST=ws://huly.local:7880
       - LIVEKIT_API_KEY=devkey
       - LIVEKIT_API_SECRET=secret
@@ -819,6 +819,19 @@ services:
       - STT_PROVIDER=stream
     ports:
       - 4012:4012
+    restart: unless-stopped
+
+  livekit-egress:
+    image: livekit/egress
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    volumes:
+      - './livekit-egress-config.yaml:/out/config.yaml:ro'
+    environment:
+      - EGRESS_CONFIG_FILE=/out/config.yaml
+    depends_on:
+      - redis
+      - minio
     restart: unless-stopped
   billing:
     image: intabiafusion/billing

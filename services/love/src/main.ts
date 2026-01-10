@@ -80,7 +80,7 @@ export const main = async (): Promise<void> => {
       )
   })
 
-  const storageConfig = storageConfigs.storages.findLast((p) => p.name === config.StorageProviderName)
+  const storageConfig = storageConfigs.storages[0]
   const s3storageConfig = s3StorageConfigs?.storages.findLast((p) => p.kind === 's3')
 
   const app = express()
@@ -323,6 +323,12 @@ const checkRecordAvailable = async (
 ): Promise<boolean> => {
   if (storageConfig !== undefined && storageConfig.kind === 's3') return true
   if (storageConfig !== undefined && storageConfig.kind === 'datalake' && s3storageConfig !== undefined) return true
+  console.log(
+    'NO S3 storage config storage:',
+    JSON.stringify(storageConfig),
+    's3storage:',
+    JSON.stringify(s3storageConfig)
+  )
   return false
 }
 
@@ -342,6 +348,8 @@ const startRecord = async (
   const uploadParams = await getS3UploadParams(ctx, wsIds, storageConfig, s3StorageConfig)
 
   const { filepath, endpoint, accessKey, secret, region, bucket } = uploadParams
+
+  console.warn('staring recording on', { filepath, endpoint, region, bucket })
   const output = new EncodedFileOutput({
     fileType: EncodedFileType.MP4,
     filepath,

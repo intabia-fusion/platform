@@ -14,8 +14,9 @@
 //
 
 // eslint-disable-next-line
-require('dotenv').config()
+import { config } from 'dotenv'
+config()
 // eslint-disable-next-line
-const { main } = require('./main')
+import { main } from './main'
 
 void main()

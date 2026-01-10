@@ -24,7 +24,6 @@ interface Config {
   ApiSecret: string
 
   StorageConfig: string
-  StorageProviderName: string
   S3StorageConfig: string
   Secret: string
 
@@ -45,7 +44,6 @@ const envMap: { [key in keyof Config]: string } = {
   ApiSecret: 'LIVEKIT_API_SECRET',
 
   StorageConfig: 'STORAGE_CONFIG',
-  StorageProviderName: 'STORAGE_PROVIDER_NAME',
   S3StorageConfig: 'S3_STORAGE_CONFIG',
   Secret: 'SECRET',
   ServiceID: 'SERVICE_ID',
@@ -68,7 +66,6 @@ const config: Config = (() => {
     ApiKey: process.env[envMap.ApiKey],
     ApiSecret: process.env[envMap.ApiSecret],
     StorageConfig: process.env[envMap.StorageConfig],
-    StorageProviderName: process.env[envMap.StorageProviderName] ?? 's3',
     S3StorageConfig: process.env[envMap.S3StorageConfig],
     Secret: process.env[envMap.Secret],
     ServiceID: process.env[envMap.ServiceID] ?? 'love-service',
