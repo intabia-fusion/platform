@@ -128,6 +128,33 @@ webhook:
 - Для генерации JWT токенов используйте ключ `devkey` и секрет `secret`
 - Пример генерации токена можно найти в документации LiveKit
 
+## Egress (Запись) и локальное тестирование
+
+Egress — отдельный сервис, который экспортирует и записывает сессии LiveKit (MP4, HLS, RTMP и т.д.) и загружает результаты в S3-совместимое хранилище. Для локальной разработки выполнены базовые настройки, позволяющие проверить запись в вашем окружении.
+
+Ключевые изменения и файлы:
+- Конфиг Egress: `foundation/dev/livekit-egress-config.yaml` (настроен на `ws://huly.local:7880`, `redis: redis:6379`, загрузка в Minio `minio:9000`, bucket `livekit-recordings`).
+- Обновлён LiveKit dev-config: `foundation/dev/livekit-dev-config.yaml` — добавлен блок `redis: 127.0.0.1:6379`, чтобы сервер LiveKit (запущенный на хосте) использовал тот же Redis, что и Egress.
+- Docker: в `dev/docker-compose.yaml` добавлен сервис `livekit-egress` (image `livekit/egress`), монтирующий конфиг и подключённый к `redis`/`minio`.
+
+Как проверить локально:
+1. Запусти LiveKit на хосте:
+   - `bash dev/run_livekit.sh` (сервер доступен на ws://localhost:7880)
+2. Подними необходимые сервисы:
+   - `docker-compose up -d redis minio love`
+   - и затем запусти egress: `docker-compose up -d livekit-egress` (или `docker-compose up -d` для всего стека)
+3. В приложении создай/присоединись к митингу. В триггерах платформы реализован автоматический вызов старта записи при создании митинга и остановки при завершении (см. `server-plugins/love-resources`), поэтому для проверки достаточно просто зайти и выйти из комнаты. При желании можно запускать вручную через UI или REST: `POST /startRecord` и `POST /stopRecord` на сервисе love.
+4. Следи за логами:
+   - `docker-compose logs -f livekit-egress`
+   - `docker-compose logs -f love`
+   - `docker logs livekit-server` (если LiveKit запущен в Docker)
+5. По завершении записи Egress загрузит MP4 в Minio (bucket `livekit-recordings`), а сервис `love` получит webhook `egress_ended`, скачает файл и прикрепит его к митингу как вложение.
+
+Советы по отладке:
+- Убедись, что Redis доступен и порт 6379 проброшен на хост (для LiveKit) и доступен в контейнерах как `redis:6379`.
+- Проверь, что в Minio существует bucket `livekit-recordings` (создай при необходимости).
+- Если запись не стартует — проверь логи Egress, LiveKit и Love; обычно проблемы связаны с доступом к Redis или с настройкой S3/Minio.
+
 ## Полезные команды
 
 - Проверка состояния LiveKit: `curl http://localhost:7881/debug/status`

@@ -266,6 +266,7 @@ export class DatalakeImpl implements Datalake {
 
     const head = await bucket.head(ctx, filename)
     if (head == null) {
+      ctx.error('failed to create blob from non existing file', { workspace, name, filename })
       return null
     }
 

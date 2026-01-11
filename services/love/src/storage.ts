@@ -84,7 +84,7 @@ async function getS3UploadParamsS3 (
   workspaceId: WorkspaceDataId,
   storageConfig: S3Config
 ): Promise<S3UploadParams> {
-  const endpoint = storageConfig.endpoint
+  const endpoint = storageConfig.endpoint + (storageConfig.port !== undefined ? `:${storageConfig.port}` : '')
   const accessKey = storageConfig.accessKey
   const secret = storageConfig.secretKey
   const region = storageConfig.region ?? 'auto'
@@ -112,7 +112,7 @@ async function getS3UploadParamsDatalake (
   const client = createDatalakeClient(config, token)
   const { bucket } = await client.getS3UploadParams(ctx, workspaceId)
 
-  const endpoint = s3config.endpoint
+  const endpoint = s3config.endpoint + (s3config.port !== undefined ? `:${s3config.port}` : '')
   const accessKey = s3config.accessKey
   const secret = s3config.secretKey
   const region = s3config.region ?? 'auto'
@@ -156,7 +156,7 @@ async function saveFileToDatalake (
   const prefix = rootPrefix(s3config, wsIds.uuid)
   const uuid = stripPrefix(prefix, filename)
 
-  await client.createFromS3(ctx, wsIds.uuid, uuid, { filename: uuid })
+  await client.createFromS3(ctx, wsIds.uuid, uuid, { filename })
 
   return await storageAdapter.stat(ctx, wsIds, uuid)
 }
