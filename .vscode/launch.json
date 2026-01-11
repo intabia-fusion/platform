@@ -53,7 +53,7 @@
         "MODEL_JSON": "../../models/all/bundle/model.json",
         // "SERVER_PROVIDER":"uweb"
         "SERVER_PROVIDER": "ws",
-        "MODEL_VERSION": "0.7.331",
+        "MODEL_VERSION": "0.7.343",
         // "version": "0.7.0",
         "COMMUNICATION_API_ENABLED": "false",
         "ELASTIC_INDEX_NAME": "local_storage_index",
