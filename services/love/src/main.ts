@@ -80,7 +80,7 @@ export const main = async (): Promise<void> => {
       )
   })
 
-  const storageConfig = storageConfigs.storages[0]
+  const storageConfig = storageConfigs.storages.find((it) => ['datalake', 's3'].includes(it.kind))
   const s3storageConfig = s3StorageConfigs?.storages.findLast((p) => p.kind === 's3')
 
   const app = express()
@@ -160,7 +160,7 @@ export const main = async (): Promise<void> => {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/checkRecordAvailable', async (_req, res) => {
-    res.send(await checkRecordAvailable(storageConfig, s3storageConfig))
+    res.send(await checkRecordAvailable(ctx, storageConfig, s3storageConfig))
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -318,17 +318,16 @@ const createToken = async (roomName: string, _id: string, participantName: strin
 }
 
 const checkRecordAvailable = async (
+  ctx: MeasureContext,
   storageConfig: StorageConfig | undefined,
   s3storageConfig: StorageConfig | undefined
 ): Promise<boolean> => {
   if (storageConfig !== undefined && storageConfig.kind === 's3') return true
   if (storageConfig !== undefined && storageConfig.kind === 'datalake' && s3storageConfig !== undefined) return true
-  console.log(
-    'NO S3 storage config storage:',
-    JSON.stringify(storageConfig),
-    's3storage:',
-    JSON.stringify(s3storageConfig)
-  )
+  ctx.error('NO S3 storage config storage:', {
+    storageConfig: storageConfig?.kind,
+    s3storageConfig: s3storageConfig?.kind
+  })
   return false
 }
 
@@ -349,7 +348,7 @@ const startRecord = async (
 
   const { filepath, endpoint, accessKey, secret, region, bucket } = uploadParams
 
-  console.warn('staring recording on', { filepath, endpoint, region, bucket })
+  ctx.info('staring recording on', { filepath, endpoint, region, bucket })
   const output = new EncodedFileOutput({
     fileType: EncodedFileType.MP4,
     filepath,

@@ -41,7 +41,7 @@ storage:
     bucket: livekit-recordings
     region: us-east-1
     # Required for many S3-compatible endpoints (Minio)
-    forcePathStyle: false
+    forcePathStyle: true
     # Retry tuning (optional)
     max_retries: 3
     min_retry_delay: 500ms
