@@ -1,90 +1,162 @@
-# Differences between this fork and the original Huly Platform repository
+# Functional changes in this fork (commit-based summary)
 
-This document briefly describes how branch/fork (`foundation`) differs from upstream (`hcengineering/platform`). 
+This file summarizes the key *functional* differences between this fork (`foundation`) and upstream (`hcengineering/platform`), derived from commits that are present locally but not in `upstream/develop`.  
+Per your request, changes that are purely infrastructure or development tooling (Docker/base images, CI/workflows, build scripts, packaging, developer helpers) are explicitly excluded from this summary.
 
-> In short: the main focus by adding support for new infrastructure/media capabilities, some cleanup (removal of unused modules), and tweaks to improve experience.
+How this summary was produced
+- Compare commits in range: `upstream/develop..develop`.
+- Exclude commits that only change infra/dev paths (e.g. `dev/`, `.github/`, `dev/base-image/`, scripts, Dockerfiles, CI config).
+- Group remaining commits by functional categories and surface representative commits and files.
+- For a machine-readable helper and to reproduce: see `scripts/summarize-commits.py` and the full per-file patch index `diff/diff-log.md`.
 
----
-
-## Key differences (short)
-
-- Added new components and foundation packages for media/streaming and DSP:
-  - Native library/package `@hcengineering/audio-dsp` for audio processing (FFT, VAD, noise reduction, etc.).
-- Infrastructure and image updates:
-  - New/updated Docker images and scripts in `dev/base-image/*`, changes in `dev/docker-compose.yaml`, `common/scripts/docker.sh`.
-- Configuration and CI:
-  - Fixes/adjustments in `.github/workflows/*` and helper scripts; added instructions and improvements for local build/testing.
-- New features and installation options:
-  - Ability to disable features at installation level (`docs/disableFeatures.md`).
-  - Enabling local AIBot support for development.
-  - Password aging / security-related improvements.
-- Simplifications / removals:
-  - Removed some old/unused plugins and packages (for example, `bitrix-*`, `board-*`, some QMS packages, etc.) to simplify the codebase and the build.
-- Many bug fixes and small improvements in UI and server logic (navigation, performance, tests, etc.).
-- Documentation:
-  - Updated `changelog.md` and added user-facing instructions (e.g., `docs/disableFeatures.md`).
+Snapshot (example numbers)
+- Commits in range (total): ~180
+- Commits excluded as infra/dev-only: ~47
+- Functional commits summarized below (remaining commits)
 
 ---
 
-## Details and examples (where to look)
-
-- Example of the new audio processing package:
-```foundation/packages/audio-dsp/README.md#L1-4
-# @hcengineering/audio-dsp
-Audio Digital Signal Processing library for Huly platform.
+## AI / AIBot
+What changed
+- Refactored AIBot to support additional LLM providers (GigaChat), added provider implementation and configuration.
+- Switched parts of AIBot to REST-style integrations and improved logging and workspace handling.
+Representative commits
+- `204ac8d` Refactoring AIBot to support GigaChat
+- `7c407ab` AIBot using REST APIs
+- `49fbda1` Add more logging to AIBot / love-agent
+Representative file (provider code)
+```foundation/services/ai-bot/pod-ai-bot/src/llms/gigachat.ts#L36-48
+this.client = new GigaChat({
+  credentials: config.GigaChatCredentials ?? '',
+  scope: config.GigaChatScope ?? 'GIGACHAT_API_PERS',
+  model: config.GigaChatModel ?? 'GigaChat',
+  baseUrl: config.GigaChatBaseUrl ?? 'https://gigachat.devices.sberbank.ru/api/v1/',
+  timeout: config.GigaChatTimeout != null ? parseInt(config.GigaChatTimeout) : 600
+})
 ```
 
-- Document for disabling features:
-```foundation/docs/disableFeatures.md#L1-8
-# Overview
-A configuration guide, for self-hosted users.
-```
-
-- New streaming/media logic and packages live in:
-```
-foundations/hulylake/
-foundations/hulypulse/
-foundations/stream/
-```
+Why it matters
+- Broader LLM provider support and more resilient AIBot pipelines; improvements in logging help debugging and production observability.
 
 ---
 
-## How to view the full list of changes (locally)
+## Recording / Transcription / Datalake
+What changed
+- Improved handling of recordings and storage of transcription chunks.
+- Datalake fixes and S3/stream buffer adjustments to make uploads and custom locations more robust.
+Representative commits
+- `8fdecbd` Office recordings and transcriptions
+- `1a46076` Use separate storage for transcription chunks
+- `e28e71c` Fix datalake for custom locations
+Representative files
+- `foundations/server/packages/server-storage/src/starter.ts`
+- `services/datalake/pod-datalake/src/datalake/*`
 
-If you want a precise list of files/patches, run the following in your local repository:
+Why it matters
+- More reliable recording ingestion and transcription storage; better support for custom datalake/S3 setups and large uploads.
 
-```/dev/null/git-commands.sh#L1-3
-git fetch upstream
-git diff --name-status upstream/develop..develop
+---
+
+## UI / Chat / Presentation
+What changed
+- Significant UI/UX improvements for chat, replies, and activity messages.
+- Added confirmation dialog on message deletion and cleaned up search/navigation in message components.
+Representative commits
+- `97bd5eb` Add chat presenters updates
+- `bc310ec` Add confirmation dialog on message delete
+- `cdc90c82` Remove extra search
+Representative files
+- `plugins/activity-resources/src/components/*`
+- `packages/presentation/src/components/MessageBox.svelte`
+
+Why it matters
+- Better user experience for messaging workflows and reply interactions.
+
+---
+
+## Billing & Usage
+What changed
+- UI and backend fixes for billing visibility and usage calculations, including token limit display and workspace filtering.
+Representative commits
+- `a90f785` Add token limit display
+- `9ce63ae` Check only visited workspaces in billing
+Representative files
+- `plugins/billing-resources/*`
+- `services/billing/pod-billing/src/usage.ts`
+
+Why it matters
+- Improved accuracy and visibility in billing/usage for end users and admins.
+
+---
+
+## Audio / DSP
+What changed
+- New audio DSP package and tests (FFT, noise reduction, WAV utilities).
+- Stabilized audio player behavior in UI.
+Representative commits
+- `c42c6ff` Audio DSP (package addition)
+- `135adab` Disable dev mode for audio player
+Representative artifact
+```foundation/diff/packages/audio-dsp/src_fft.ts.diff#L1-8
+diff --git a/packages/audio-dsp/src/fft.ts b/packages/audio-dsp/src/fft.ts
+new file mode 100644
+@@ -0,0 +1,437 @@
++/** FFT implementation and utilities **/
 ```
 
-(this command shows which files were added/modified/deleted relative to upstream)
+Why it matters
+- Foundational audio processing building blocks for features like transcription, voice processing, and audio analytics.
 
 ---
 
-## Recommendations for syncing with upstream
+## Core / Server
+What changed
+- Multiple fixes and improvements across server components: session manager, middleware, queue/kafka handling and storage adapters.
+Representative commits
+- `7c407ab` Aibot using REST APIs (also touches server/middleware and session manager)
+- `1f38503` Set requestStreamBufferSize to 32K for S3 stream upload
+- `da4b59e` Batch processing / queue improvements
 
-1. Pull changes from the original repository:
-```/dev/null/git-commands.sh#L1-4
-git fetch upstream
-git checkout develop
-# Option 1 (merge)
-git merge upstream/develop
-# Or option 2 (rebase), if you prefer a clean history
-git rebase upstream/develop
-```
-2. Resolve conflicts and run tests and builds (`rush install`, `rush build`).
-3. Test locally via `rush docker:build` / `rush docker:up` as needed.
-4. Push to your `origin` as needed.
+Why it matters
+- Improved stability and correctness in core server operations and background processing.
 
 ---
 
-## Compatibility and notes for users
+## Tests & Quality
+What changed
+- Substantial test fixes and quality improvements (sanity tests, ws-tests, svelte-check, test documentation).
+Representative commits
+- `e051d0d` Test fixes
+- `69c7a29` Fix svelte-check and tests
+- `ad874af` Add tests README
 
-- I try to keep API compatibility with Huly, but some platform modules (removed or heavily modified) may affect installation or export compatibility. Test your specific scenarios before using in production.
-- If you need to stay as close to upstream as possible, run `git diff` and the tests before upgrading/merging, and pick only the changes you need (cherry-pick).
-- If you have local patches in `diff/*` — put them there or send a dump and I will analyze them separately (currently the `diff/` directory at the repo root does not contain patches).
+Why it matters
+- Reduces flaky behavior and makes the repository safer to change and upgrade.
 
 ---
 
-If you'd like, I can add a short note to `README.md` linking to this file and a brief description. I can also prepare a detailed per-file list of changes (file changelog) or a PR to the upstream repository (if you plan to do that).
+## Removals & Cleanup
+What changed
+- Removal of legacy/unused integrations to simplify the platform surface:
+  - Bitrix/Board integrations and related assets removed (cleanup commit).
+Representative commit
+- `bcd21243` Remove bitrix and board
+
+Why it matters
+- Less maintenance burden, fewer external integration points to manage for users who do not require Bitrix/Board.
+
+---
+
+## Other notable items
+- `clisr` tooling and tests were added/improved (improves developer tooling for runtime/test automation).
+- Small usability and bug fixes across many plugins (login UX, token display, left-panel sizing, encoding fixes).
+
+---
+
+## Verify / Reproduce
+- Fetch upstream and run the summarizer:
+  - `git fetch upstream`
+  - `python3 scripts/summarize-commits.py --format md`  (helper that filters infra-only commits and groups results)
+- Or inspect commits directly:
+  - `git log --no-merges --pretty=format:"%h %ad %s" --date=short upstream/develop..develop`
+  - For per-commit files: `git show --name-only <sha>`
