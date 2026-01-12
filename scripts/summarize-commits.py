@@ -131,6 +131,13 @@ def get_commit_files(sha: str, repo_root: Optional[Path] = None) -> List[str]:
     return files
 
 
+def sanitize_subject(subject: str) -> str:
+    """
+    Remove 'Signed-off-by:' footers from commit subjects and trim whitespace.
+    """
+    return re.sub(r'\s*Signed-off-by:.*$', '', subject).strip()
+
+
 # -----------------------------------------------------------------------------
 # Categorization & infra checks
 # -----------------------------------------------------------------------------
@@ -263,6 +270,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             files = get_commit_files(sha, repo_root)
         except RuntimeError as e:
             print(f"[warn] skipping commit {sha[:7]} due to git error: {e}", file=sys.stderr)
+            continue
+
+        # Sanitize subject: remove Signed-off-by footers
+        subject = sanitize_subject(subject)
+
+        # Skip 'Merge remote-tracking' commits even when merges are included
+        if re.match(r'(?i)^merge remote-tracking', subject):
+            filtered_out += 1
             continue
 
         # Check infra-only

@@ -4,9 +4,219 @@ Changelog.
 
 ## [unreleased]
 
-* 🚀 FEATURES: · Default settings for meeting rooms ([#10293](https://github.com/hcengineering/platform/issues/10293)) · Export documents from one workspace to another ([#10283](https://github.com/hcengineering/platform/issues/10283)) 
-* 🐛 BUG FIXES: · Childs permissions ([#10284](https://github.com/hcengineering/platform/issues/10284)) · Workspace open for guest users ([#10292](https://github.com/hcengineering/platform/issues/10292)) · Hide huly-mail integration ([#10291](https://github.com/hcengineering/platform/issues/10291)) · Merge location ([#10295](https://github.com/hcengineering/platform/issues/10295)) · Permissions for mixins/tags ([#10294](https://github.com/hcengineering/platform/issues/10294)) · Card update process trigger ([#10296](https://github.com/hcengineering/platform/issues/10296)) 
-* ⚙️ MISCELLANEOUS TASKS: · Actions/cache from 4 to 5 ([#10297](https://github.com/hcengineering/platform/issues/10297)) 
+* ⚙️ CHORE: Small follow-ups since v0.7.318 — update summary and adjust git-diff output for changelog generation; filter out 'Merge remote-tracking' merge commits and strip 'Signed-off-by:' footers from commit entries.
+* All commits (filtered: 'Merge remote-tracking' commits excluded, 'Signed-off-by:' footers removed):
+  - d409a0e99 Update summary
+  - d533933b7 Update git diff to put into 2 level dir structure
+
+## [0.7.318] - 2026-01-11
+
+* 🚀 FEATURES: · Office recordings & transcriptions; separate storage for transcription chunks; Aibot (Gigachat) support and REST APIs; Type/tag permissions; Ability to copy issues and cards as tables; Card versioning and version selector for relations; Support for PGBouncer/Postgres improvements; Switch build and tests to Node 24; Various export and table improvements.
+* 🐛 BUG FIXES: · Fix exporter ancestor order; hide processes when missing; fix old card UI and card type export; fulltext index fix when communication api is disabled; numerous test, build and formatting fixes.
+* ⚙️ MISCELLANEOUS TASKS: · Bump model version; migrate only existing config; use separate storage for transcription chunks;
+
+All commits (generated from v0.7.317..v0.7.318; filtered: 'Merge remote-tracking' commits excluded, 'Signed-off-by:' footers removed):
+
+- 1052103ec Merge pull request #4 from intabia-fusion/office-recordings
+- cd0542d93 Review fixes
+- 8fdecbd6d Office recordings and transcriptions
+- ab9daa499 Show doc attrs and collaborators for cards (#10390)
+- ccab8a43e Rollback temporarly nodejs version
+- dcb25b2a0 Enhance ObjectBoxPopup to handle category presentation (#10389)
+- 3411597ca Fix exporter ancestor order (#10388)
+- cabc0b0a7 Hide processes if not exists (#10387)
+- 4751ae8bc Fix old card UI (#10386)
+- 0e89060f5 Fix card type export (#10385)
+- dcfc541f7 Switch build and tests to use node 24
+- 13d9a3ad0 fix: sort controlled documents by rank and title (#10383)
+- 42f2141d0 Add type/tag permissions (#10384)
+- 58f78b683 Update changelog (#10382)
+- 585358ea0 Fix exporter (#10378)
+- b24df45ba Bump model version (#10381)
+- 0f0790b78 Migrate only existing config (#10380)
+- d66209626 Fix social id search (#10379)
+- 1a46076c8 Use separate storage for transcription chunks
+- ad73f8762 Remove keybind to close current tab (problem with different keyboards) (#10375)
+- d8d301004 Merge pull request #3 from intabia-fusion/gigachat-support
+- ae496987a Review fixes
+- a90f785ed Add token limit display
+- 9ce63ae27 Check only visited workspaces in billing
+- 204ac8d80 Refactoring aibot to support gigachat
+- 5a3088070 Update local client configs in case of version change (#10377)
+- cdbc1959a Fix email notifications (#10376)
+- a7599bb3d Temporal debug loggin for notifications (#10374)
+- 90b93b97c Type export/import (#10373)
+- b89613780 Select relation when create new version (#10372)
+- 4c6020275 Fix fulltext index if communication api is not enabled (#10371)
+- c95dca13e Adjust QMS client for new TraceX (#10370)
+- 5e47a2fe9 Merge branch 'aibot-rest' into develop
+- 267d5bb40 update room events
+- adac5a2e9 Update some minor stuff
+- 7c407ab60 Aibot using rest APIs
+- e864a2e98 Remember last login method for user
+- 3a45f31ae Multiple user request input (#10367)
+- ebb3adbbf update browserslist
+- 214f61fb8 Fix outdated baseline warning (#10369)
+- 33acb80a2 Allow to get person info in export (#10368)
+- 7b1ed12ae Add ability to copy issues as table (#10366)
+- 8107341f0 Format space and type in cards table (#10365)
+- c6764b8cd Do not show title instead of labels (#10364)
+- 04a0f3b1d Format controlled docs table (#10363)
+- 6293de624 Fix viewlet settings loading for export (#10362)
+- d42e9c50d Load person names in docs table (#10361)
+- ea364db75 Allow open relations in new tab from context menu (#10359)
+- eec5c8f02 use versioning selector for relations (#10360)
+- faa562c7e Fix subprocess space (#10358)
+- c75c077e9 show boolean attributes in card title (#10354)
+- 1ab534165 Fix tests
+- 121d6afa7 Copy controlled docs table (#10357)
+- 97bd5ebdd Add chat presenters updates
+- be55b4a39 Fix exported table columns (#10356)
+- bc310ecdd Add confirmation dialog on message delete
+- cdc90c828 Remove extra search
+- e578d7e3e Add ability to copy cards as table (#10355)
+- defcd0eef Fix card spaces table (#10352)
+- 6b9e2b1e8 331 minor fixes (#10351)
+- b37c74185 Fix relationship table header order (#10353)
+- 1c9112dab Qfix: external approver (#10350)
+- 11d675332 Do not flood on livekit
+- 480a7f53d Merge pull request #2 from intabia-fusion/notifications-rework
+- 4b343905c Fix test
+- c91a19cae Improve custom employee ref (#10349)
+- bbdc3167e Fix USE_OTP
+- b17629d57 Fix rush check
+- 8a0909869 Fix formatting
+- 8530fcd04 Allow to error back propogation
+- afd8e59fd Rename connection->client
+- 216399e17 Mail with OTP in dev setup
+- c99c14672 Rework mail service
+- 87d421172 Use frame utils
+- 4f620325f Fix buffer logic
+- fc52dc159 Fix reconnect-logic
+- e62191145 Benchmark test
+- e051d0d66 Test fixes
+- 2a3d2a2f3 Caching of snappy imports
+- a2cb57d2d Fixes
+- 4522a529a apply formatting
+- e0e06d0e2 Socket ops
+- 1edd03aea Rename inner rush.json files
+- da4b59e09 Batch processing
+- cd178d213 Minor fixes (Execution autostart, show version for any mention, versioning handle in idpresenter) (#10347)
+- c8eebb0d9 Fix relation query (#10346)
+- 027e98d32 Version attribute migration (#10345)
+- 4eec6ea2d Show version as column (#10344)
+- 19963814b New version confirmation (#10343)
+- bc0567988 Relationship table fixes (#10342)
+- 5b3eeb4ff Update README.md
+- b270c4f7c Fix limits after workspace change (#10340)
+- 56e5d6f6d Make mail config optional in export (#10339)
+- 05e5c37a5 Add versioning support to fulltext (#10338)
+- 9bb0d35de Card versioning (#10336)
+- 2e72b1a5a Send mail to workspace owners after documents import (#10337)
+- 82d2a9815 Merge pull request #1 from intabia-fusion/pgbouncer-support
+- 4fcd1c11c Support PGBouncer by default
+- 51a876db5 Fix export notifications (#10333)
+- c8aec52f1 Postgress support (#10331)
+- d69af65ea Add missing translations (#10330)
+- 49fbda1d7 Add more logging to aibot and love-agent
+- 98055e4b5 Fix documents with notes and images (#10328)
+
+
+## [0.7.317] - 2025-12-24
+
+* 🚀 FEATURES: · Relationship table and a set of print/table fixes; i18n improvements (missing translations for fr/pt/de); ensure uniqueness for controlled document codes and sequences.
+* 🐛 BUG FIXES: · Fix token display, table print styles; disable mongodb tests in CI; remove/archived notifications handling; minor UI fixes.
+* ⚙️ MISCELLANEOUS TASKS: · Minor layout/logging adjustments.
+
+All commits:
+
+- 20e6bbd5d Relationship table (#10329)
+- f3794fcf6 fix tests
+- 1dcbf828f Revert hulypulse to allow use in-memory
+
+- d218d5646 remove notifications instaed of archive, fix infinity loading
+- f6f01ed3d Ensure controlled document codes and sequences are unique (#10324)
+- dbd74f7e7 Adjust left panel size
+- b6eda04a1 Add some logging
+- d48473867 Set autofocus for create channel input
+- 29c96ff9f Add missing French translations (#10327)
+- 4432bd337 Add missing portuguese translations (#10326)
+- 9d9fb1d78 Add missing german translations (#10325)
+- 59d634f3a Fix token display
+
+- 206b7513d Disable mongodb tests
+- 5d1038a85 fix: adjust table print styles (#10322)
+
+## [0.7.316] - 2025-12-22
+
+* 🚀 FEATURES: · Export documents from one workspace to another; Default settings for meeting rooms; Permission improvements (attribute permissions, permissions for mixins/tags); RBAC per class.
+* 🐛 BUG FIXES: · Permission checks; svelte-check and tests fixes; PostgreSQL support & build fixes; Process account/permission fixes; Various CI / pnpm / formatting fixes.
+* ⚙️ MISCELLANEOUS TASKS: · Bump actions/cache; Remove unused mongo dep; misc build and dependency updates.
+
+All commits:
+- 3e4bbce7b Update rush.js
+
+- bd464999d Remove mongo dep
+- b1b965152 Fix defaults for sub-issues
+- 214c68e45 Do not pull hulypulse
+- b214ce127 Fix copy as markdown action (#10321)
+- 788d064a5 Export document space to another workspace (#10320)
+
+
+- c0f877561 Show message if user doesn't have any workspaces with export permissions (#10319)
+- 33bb18050 Ability to show ids in title (#10318)
+- bc0a3e15c Fix not specified date (#10317)
+- f2e7b4906 Fix restricted space permission check (#10316)
+- b4540ece1 Remove last document check (#10315)
+- 69c7a2980 Fix svelte-check and tests
+- ec214db07 One more PostgreSQL fix
+- 7c56f5682 Fix Account PostgreSQL support
+- 711c4389b Fix build
+
+- 449626836 Fix merge error
+- 1f38503e3 Set requestStreamBufferSize to 32K for S3 stream upload
+- b49722b6b RBAC per class (#10314)
+- 67a3fadba Fix permission check for template deletion (#10313)
+- 18bd62f9e Fix pnpm lock
+
+- 36618eb11 Set draft status during document export (#10311)
+- a5af7fdd6 Configure permissions to import documents (#10310)
+- 07ea89f2f Fix organization tree layout (#10312)
+- d7ef30d8e Fix build and images
+- 8df7c2b55 Fix build
+- ba3d4abd6 Process use system account (#10308)
+- 73bc671e8 Fix permissions check (#10309)
+- d2d8fb74e Update dependencies (#10305)
+- f35779f0e Cleanup rollback (#10304)
+- 44b9bb2d9 System account bypass RBAC (#10306)
+- f31acfa97 Update images
+- a9567c346 Merge branch 'develop' into intabia_develop
+- 044d4d195 Ask process user input every time
+- bf59b4027 Merge branch 'hcengineering:develop' into develop
+- c10d128c6 Refresh collaborators after object change (#10303)
+- e28e71c64 Fix datalake for custom locations
+
+- fd8bcda72 Fix association freeze (#10299)
+- 38095d932 Update changelog
+- a4eddae17 Build fix
+
+- ba8cea10e Bump actions/cache from 4 to 5 (#10297)
+- 87db5a52b Rollback and custom events preparation (#10298)
+- 6d1bda5d5 Fix card update process trigger (#10296)
+- 1dd5db283 feat: Export documents from one workspace to another (#10283)
+- c59a12264 Add default settings for meeting rooms (#10293)
+
+- 0762a4292 Fix permissions for mixins/tags (#10294)
+- a10dde0b9 Fix merge location (#10295)
+- 479b6972b QFIX: Hide huly-mail integration (#10291)
+- c0f605b05 Fix workspace open for guest users (#10292)
+- 1de93b425 Enhance permission check logic in SpacePermissionsMiddleware (#10289)
+- 0b6ce4a67 Check permission in create card popup (#10288)
+- a4055d8a0 Password aging fix (#10287)
+- 669f05a09 Table attribute editors should respect rbac (#10275)
+- 83e110f4a Tracebility matrix preparation (#10286)
+
+- f8ca6086a Fix childs permissions (#10284)
 
 ## [0.7.315] - 2025-12-08
 

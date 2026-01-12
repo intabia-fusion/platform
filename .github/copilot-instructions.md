@@ -39,6 +39,20 @@ rush add -p PKG      # Add dependency
 
 `rush build` performs transpilation which may succeed even with type errors. Always use `diagnostics` to verify code correctness.
 
+## Changelog generation
+
+When generating changelogs (the "All commits" lists), follow these rules:
+
+- Exclude commits whose subject contains `Merge remote-tracking` (filter them out).
+- Strip `Signed-off-by:` footers from commit messages (remove the footer content and any lines that are only `Signed-off-by:`).
+- Recommended pipeline (example):
+```/dev/null/changelog-filter.sh#L1-3
+git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' | sed -E 's/\s*Signed-off-by:.*$//'
+```
+- Note: `git log --no-merges` removes all merge commits; use it only if you intentionally want to omit all merges.
+
+Apply these filters when updating `changelog.md` or generating release notes so the generated logs exclude noisy merge-tracking commits and signed-off-by lines.
+
 ## Patterns
 
 - Always handle errors (proper Error subclasses, catch promises)
