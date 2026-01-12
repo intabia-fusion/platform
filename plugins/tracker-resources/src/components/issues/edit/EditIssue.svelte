@@ -205,6 +205,7 @@
     withoutActivity={false}
     printAside={true}
     adaptive={'default'}
+    useMaxWidth
     bind:content
     bind:innerWidth
     on:open
