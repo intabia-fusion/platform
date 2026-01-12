@@ -39106,6 +39106,9 @@ importers:
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
+      stripe:
+        specifier: ^17.3.1
+        version: 17.7.0
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
@@ -39149,6 +39152,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^6.21.0
         version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      cross-env:
+        specifier: ~7.0.3
+        version: 7.0.3
       esbuild:
         specifier: ^0.25.10
         version: 0.25.12
@@ -50233,6 +50239,10 @@ packages:
   strip-json-comments@5.0.3:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
+
+  stripe@17.7.0:
+    resolution: {integrity: sha512-aT2BU9KkizY9SATf14WhhYVv2uOapBWX0OFWF4xvcj1mPaNotlSc2CsxpS4DS46ZueSppmCF5BX1sNYBtwBvfw==}
+    engines: {node: '>=12.*'}
 
   striptags@3.2.0:
     resolution: {integrity: sha512-g45ZOGzHDMe2bdYMdIvdAfCQkCTDMGBazSw1ypMowwGIee7ZQ5dU0rBJ8Jqgl+jAKIv4dbeE1jscZq9wid1Tkw==}
@@ -62987,6 +62997,11 @@ snapshots:
   strip-json-comments@3.1.1: {}
 
   strip-json-comments@5.0.3: {}
+
+  stripe@17.7.0:
+    dependencies:
+      '@types/node': 22.19.0
+      qs: 6.13.0
 
   striptags@3.2.0: {}
 
