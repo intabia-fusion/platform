@@ -91,6 +91,7 @@ export class WorkspaceClient {
 
   love: LoveController | undefined
   historyMap = new Map<PersonUuid, PersonHistoryRecord>()
+  initPromise: Promise<void> | undefined
 
   constructor (
     readonly storage: StorageAdapter,
@@ -104,7 +105,7 @@ export class WorkspaceClient {
   ) {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
-    void this.initClient()
+    this.initPromise = this.initClient()
   }
 
   private async ensureEmployee (client: RestClient): Promise<void> {
@@ -381,7 +382,7 @@ export class WorkspaceClient {
     const prompt: LLMChatMessage = { content: promptText, role: 'user' as const }
     const promptTokens = this.llm?.countTokens([prompt]) ?? 0
 
-    const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
+    const space = (event as any).objectIdIsSpace != null ? (objectId as Ref<Space>) : event.objectSpace
 
     const rawHistory = await this.getHistory(personUuid)
     const history = this.toLlmHistory(rawHistory, promptTokens)
@@ -529,12 +530,14 @@ export class WorkspaceClient {
   }
 
   async txHandler (txes: TxCUD<Doc>[]): Promise<void> {
+    await this.initPromise
     if (this.love !== undefined) {
       this.love.txHandler(txes)
     }
   }
 
   async loveConnect (request: ConnectMeetingRequest): Promise<void> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -543,6 +546,7 @@ export class WorkspaceClient {
   }
 
   async loveDisconnect (request: DisconnectMeetingRequest): Promise<void> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -558,6 +562,7 @@ export class WorkspaceClient {
     participant: Ref<Person>,
     room: Ref<Room>
   ): Promise<void> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -585,6 +590,7 @@ export class WorkspaceClient {
     endTimeSec: number,
     blobId: string
   ): Promise<Ref<ChatMessage> | undefined> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return undefined
@@ -603,6 +609,7 @@ export class WorkspaceClient {
     messageId: Ref<ChatMessage>,
     text: string | null
   ): Promise<boolean> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -622,6 +629,7 @@ export class WorkspaceClient {
     roomId: Ref<Room>,
     timestamp: Timestamp
   ): Promise<boolean> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -635,6 +643,7 @@ export class WorkspaceClient {
    */
   @withContext('getMeetingMinutesByRoom')
   async getMeetingMinutesByRoom (ctx: MeasureContext, roomId: Ref<Room>): Promise<MeetingMinutes | undefined> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return undefined
@@ -649,6 +658,7 @@ export class WorkspaceClient {
   }
 
   async getLoveIdentity (): Promise<IdentityResponse | undefined> {
+    await this.initPromise
     if (this.love === undefined) {
       this.ctx.error('Love is not initialized')
       return
