@@ -208,6 +208,15 @@ async function initializeClientMode (
   return await createCallbackClient(measureCtx, serverUrl, config.apiKey ?? '', async (method, data) => {
     if (method === 'send' && client !== undefined) {
       const msg: SendMailOptions = data[0]
+
+      if (config.source !== undefined) {
+        // Rewrite source
+        msg.from = config.source
+      }
+      if (config.replyTo !== undefined) {
+        // Rewrite reply-to
+        msg.replyTo = config.replyTo
+      }
       await client.sendMessage(msg, measureCtx)
     }
     return {}
