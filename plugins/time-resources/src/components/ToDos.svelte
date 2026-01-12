@@ -24,18 +24,7 @@
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import type { Project } from '@hcengineering/tracker'
   import tracker from '@hcengineering/tracker'
-  import {
-    ButtonIcon,
-    Header,
-    IconMenuClose,
-    IconMenuOpen,
-    Label,
-    Scroller,
-    areDatesEqual,
-    defaultSP,
-    deviceOptionsStore as deviceInfo,
-    todosSP
-  } from '@hcengineering/ui'
+  import { Header, Label, Scroller, areDatesEqual, defaultSP, todosSP } from '@hcengineering/ui'
   import view from '@hcengineering/view-resources/src/plugin'
   import type { ToDosMode } from '..'
   import time from '../plugin'
@@ -63,10 +52,6 @@
   let ids: Ref<ToDo>[] = []
 
   $: updateTags(mode, tag)
-
-  function togglePlannerNav (): void {
-    $deviceInfo.navigator.visible = !$deviceInfo.navigator.visible
-  }
 
   function updateTags (mode: ToDosMode, tag: Ref<TagElement> | undefined): void {
     if (mode !== 'tag' || tag === undefined) {
@@ -304,13 +289,6 @@
 
 <div class="toDos-container">
   <Header type={'type-panel'} hideSeparator adaptive={'disabled'}>
-    <ButtonIcon
-      icon={$deviceInfo.navigator.visible ? IconMenuClose : IconMenuOpen}
-      kind={'tertiary'}
-      size={'small'}
-      pressed={!$deviceInfo.navigator.visible}
-      on:click={togglePlannerNav}
-    />
     <div class="heading-bold-20 ml-4">
       {#if mode === 'date'}
         {getDateStr(currentDate)}
