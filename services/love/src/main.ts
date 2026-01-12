@@ -161,7 +161,8 @@ export const main = async (): Promise<void> => {
 
     if (config.Agents.length > 0) {
       const room = await roomClient.listRooms([roomName])
-      if (room === undefined) {
+      ctx.info('Checking room for agents', { roomName, exists: room.length })
+      if (room === undefined || room.length === 0) {
         try {
           await roomClient.createRoom({
             name: roomName,
