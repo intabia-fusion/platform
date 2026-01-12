@@ -70,7 +70,7 @@
     "@hcengineering/s3": "workspace:^0.7.17",
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/billing-client": "workspace:^0.7.0",
-    "livekit-server-sdk": "^2.13.3",
+    "livekit-server-sdk": "^2.15.0",
     "jwt-simple": "^0.5.6",
     "uuid": "^8.3.2",
     "dotenv": "^16.4.5",

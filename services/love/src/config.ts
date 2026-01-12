@@ -32,6 +32,10 @@ interface Config {
   BillingUrl: string
   BillingPollInterval: number
   UseGlobalLiveKit: boolean
+
+  Agents: string[] // A comma-separated list of agent types to run
+
+  WebHookUrl: string
 }
 
 const envMap: { [key in keyof Config]: string } = {
@@ -52,7 +56,9 @@ const envMap: { [key in keyof Config]: string } = {
 
   BillingUrl: 'BILLING_URL',
   BillingPollInterval: 'BILLING_POLL_INTERVAL',
-  UseGlobalLiveKit: 'USE_GLOBAL_LIVEKIT'
+  UseGlobalLiveKit: 'USE_GLOBAL_LIVEKIT',
+  Agents: 'AGENTS',
+  WebHookUrl: 'WEBHOOK_URL'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -72,7 +78,9 @@ const config: Config = (() => {
     RecordingPreset: process.env[envMap.RecordingPreset] ?? '720p',
     BillingUrl: process.env[envMap.BillingUrl] ?? '',
     BillingPollInterval: parseNumber(process.env[envMap.BillingPollInterval]) ?? 15,
-    UseGlobalLiveKit: process.env[envMap.UseGlobalLiveKit] === 'true'
+    UseGlobalLiveKit: process.env[envMap.UseGlobalLiveKit] === 'true',
+    Agents: (process.env[envMap.Agents] ?? '').split(','),
+    WebHookUrl: process.env[envMap.WebHookUrl] ?? ''
   }
 
   const optional = ['StorageConfig', 'S3StorageConfig', 'LiveKitProject', 'BillingUrl']

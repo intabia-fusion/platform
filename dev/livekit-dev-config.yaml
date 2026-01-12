@@ -3,10 +3,10 @@
 
 port: 7880
 
-# Конфигурация вебхуков для отправки в сервис love
-webhook:
-  urls: ["http://127.0.0.1:8096/webhook"]
-  api_key: devkey
+# # Конфигурация вебхуков для отправки в сервис love
+# webhook:
+#   urls: ["http://127.0.0.1:8096/webhook"]
+#   api_key: devkey
 
 redis:
   address: 127.0.0.1:6379

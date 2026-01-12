@@ -481,6 +481,8 @@ services:
       - LIVEKIT_API_SECRET=secret
       - BILLING_URL=http://huly.local:4041
       - BILLING_POLL_INTERVAL=15
+      - AGENTS=transcribe-dev
+      - WEBHOOK_URL=http://127.0.0.1:8096/webhook
     ports:
       - 8096:8096
     restart: unless-stopped
@@ -812,13 +814,29 @@ services:
       - aibot
     environment:
       - SERVER_SECRET=secret
+      - AGENT_NAME=transcribe-dev
       - PLATFORM_URL=http://huly.local:4010
       - LIVEKIT_URL=ws://huly.local:7880
       - LIVEKIT_API_KEY=devkey
       - LIVEKIT_API_SECRET=secret
       - STT_PROVIDER=stream
-    ports:
-      - 4012:4012
+    restart: unless-stopped
+
+  love-agent-prod:
+    image: intabiafusion/love-agent
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      - love
+      - aibot
+    environment:
+      - SERVER_SECRET=secret
+      - AGENT_NAME=transcribe-prod
+      - PLATFORM_URL=http://huly.local:4010
+      - LIVEKIT_URL=ws://huly.local:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      - STT_PROVIDER=stream
     restart: unless-stopped
 
   livekit-egress:

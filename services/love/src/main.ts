@@ -33,8 +33,10 @@ import {
   EgressClient,
   EncodedFileOutput,
   EncodedFileType,
+  RoomAgentDispatch,
   RoomServiceClient,
   S3Upload,
+  WebhookConfig,
   WebhookReceiver
 } from 'livekit-server-sdk'
 import { join } from 'path'
@@ -92,6 +94,7 @@ export const main = async (): Promise<void> => {
   const receiver = new WebhookReceiver(config.ApiKey, config.ApiSecret)
   const roomClient = new RoomServiceClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
   const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
+
   const dataByUUID = new Map<
   string,
   {
@@ -155,6 +158,21 @@ export const main = async (): Promise<void> => {
       res.status(401).send()
       return
     }
+
+    if (config.Agents.length > 0) {
+      const room = await roomClient.listRooms([roomName])
+      if (room === undefined) {
+        try {
+          await roomClient.createRoom({
+            name: roomName,
+            agents: config.Agents.map((it) => new RoomAgentDispatch({ agentName: it }))
+          })
+        } catch (err: any) {
+          console.error('Error creating room:', err)
+        }
+      }
+    }
+
     res.send(await createToken(roomName, _id, participantName))
   })
 
@@ -367,7 +385,23 @@ const startRecord = async (
   })
   const { preset } = getRecordingPreset(config.RecordingPreset)
   await updateMetadata(roomClient, roomName, { recording: true })
-  await egressClient.startRoomCompositeEgress(roomName, { file: output }, { layout: 'grid', encodingOptions: preset })
+  await egressClient.startRoomCompositeEgress(
+    roomName,
+    { file: output },
+    {
+      layout: 'grid',
+      encodingOptions: preset,
+      webhooks:
+        config.WebHookUrl !== ''
+          ? [
+              new WebhookConfig({
+                url: config.WebHookUrl,
+                signingKey: config.ApiKey
+              })
+            ]
+          : []
+    }
+  )
   return filepath
 }
 

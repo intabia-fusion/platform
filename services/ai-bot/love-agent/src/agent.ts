@@ -176,10 +176,11 @@ export function runAgent (): void {
   console.info(`File: ${fileURLToPath(import.meta.url)}`)
   cli.runApp(
     new ServerOptions({
-      jobMemoryLimitMB: 512,
+      jobMemoryLimitMB: parseInt(process.env.JOB_MEM_LIMIT ?? '512'),
       port: 8881,
       agent: fileURLToPath(import.meta.url),
-      requestFunc
+      requestFunc,
+      agentName: process.env.AGENT_NAME ?? 'transcription'
     })
   )
 }
