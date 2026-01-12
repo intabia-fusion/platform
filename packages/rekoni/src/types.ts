@@ -27,7 +27,6 @@ export interface ReconiDocument {
   email?: string
   phone?: string
   city?: string
-  skype?: string
   linkedin?: string
   github?: string
   facebook?: string

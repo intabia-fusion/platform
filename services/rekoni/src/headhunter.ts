@@ -108,8 +108,6 @@ export function parseHeadHunter (text: RekoniModel, resume: ReconiDocument): voi
         const value = line.slice(twoDots + 1).trim()
         if (first === 'проживает' || first === 'residential address' || first === 'reside in') {
           resume.city = value
-        } else if (first === 'skype') {
-          resume.skype = value
         } else if (first === 'linkedin') {
           resume.linkedin = value
         } else if (first === 'github') {

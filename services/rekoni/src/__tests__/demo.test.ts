@@ -35,7 +35,6 @@ describe('pdf-parse', () => {
     expect(resume.city).toBe('Томск')
     expect(resume.email).toBe('alexsneezy@gmail.com')
     expect(resume.phone).toBe('+7 953 920 11 22')
-    expect(resume.skype).toBe('https://join.skype.com/invite/hDFFG9b7tvRb')
     expect(resume.linkedin).toBe('http://linkedin.com/in/asizykh')
   })
   it('check hh4', async () => {
@@ -55,7 +54,6 @@ describe('pdf-parse', () => {
     expect(resume.firstName).toBe('Ильнур')
     expect(resume.lastName).toBe('Сербаев')
     expect(resume.phone).toBe('+7 917 049 18 13')
-    expect(resume.skype).toBe('serbaevilnur')
     expect(resume.city).toBe('Уфа')
     expect(resume.email).toBe('serbaevilnur@gmail.com')
   })

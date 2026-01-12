@@ -133,9 +133,6 @@ function parseAttribute (resume: ReconiDocument, first: string, value: string): 
   if (first === 'e-mail') {
     resume.email = value
   }
-  if (first === 'skype') {
-    resume.skype = value
-  }
   if (first === 'телефон') {
     resume.phone = value
   }

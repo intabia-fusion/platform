@@ -32,7 +32,6 @@ loadMetadata(contact.icon, {
   VK: `${icons}#vk`,
   Viber: `${icons}#viber`,
   WhatsApp: `${icons}#whatsapp`,
-  Skype: `${icons}#skype`,
   Youtube: `${icons}#youtube`,
   GitHub: `${icons}#github`,
   Edit: `${icons}#edit`,
