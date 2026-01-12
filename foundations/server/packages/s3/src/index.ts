@@ -214,12 +214,21 @@ export class S3Service implements StorageAdapter {
 
   @withContext('remove')
   async remove (ctx: MeasureContext, wsIds: WorkspaceIds, objectNames: string[]): Promise<void> {
-    await this.client.deleteObjects({
-      Bucket: this.getBucketId(wsIds),
-      Delete: {
-        Objects: objectNames.map((it) => ({ Key: this.getDocumentKey(wsIds, it) }))
+    // Always delete objects one-by-one to avoid compatibility issues with some S3 implementations.
+    for (const name of objectNames) {
+      try {
+        await this.client.deleteObject({
+          Bucket: this.getBucketId(wsIds),
+          Key: this.getDocumentKey(wsIds, name)
+        })
+      } catch (err: any) {
+        ctx.error('s3 deleteObject failed', {
+          wsIds,
+          name,
+          error: { name: err?.name, code: err?.Code ?? err?.code, message: err?.message, metadata: err?.$metadata }
+        })
       }
-    })
+    }
   }
 
   @withContext('delete')
