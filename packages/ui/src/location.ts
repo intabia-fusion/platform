@@ -208,9 +208,12 @@ export function navigate (location: PlatformLocation, replace = false): boolean 
     } else {
       history.pushState(data, '', _url)
     }
-    localStorage.setItem(locationStorageKeyId, JSON.stringify(location))
-    if (location.path[1] !== undefined) {
-      localStorage.setItem(`${locationStorageKeyId}_${location.path[1]}`, JSON.stringify(location))
+
+    if (location.path[2] != null) {
+      localStorage.setItem(locationStorageKeyId, JSON.stringify(location))
+      if (location.path[1] !== undefined) {
+        localStorage.setItem(`${locationStorageKeyId}_${location.path[1]}`, JSON.stringify(location))
+      }
     }
     locationWritable.set(location)
     Analytics.navigate(url)
