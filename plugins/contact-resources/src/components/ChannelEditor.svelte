@@ -15,9 +15,8 @@
 <script lang="ts">
   import { Channel } from '@hcengineering/contact'
   import { Data } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import { translateCB } from '@hcengineering/platform'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
+  import { translateCB, getMetadata, IntlString } from '@hcengineering/platform'
+  import presentation, { copyTextToClipboard } from '@hcengineering/presentation'
   import {
     Button,
     FocusHandler,
@@ -92,6 +91,11 @@
   afterUpdate(() => {
     fitEditor()
   })
+
+  const disabledFeatures = getMetadata(presentation.metadata.DisabledFeatures) ?? new Set<string>()
+  function areIntegrationsDisabled (): boolean {
+    return disabledFeatures.has('integration') || disabledFeatures.has('integrations')
+  }
 </script>
 
 <svelte:window on:resize={fitEditor} on:scroll={fitEditor} />
@@ -139,7 +143,7 @@
         dispatch('close', value)
       }}
     />
-    {#if openable}
+    {#if openable && !areIntegrationsDisabled()}
       <Button
         focusIndex={4}
         kind={'ghost'}

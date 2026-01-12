@@ -146,7 +146,11 @@
   function changeEmail (): void {
     const index = channels.findIndex((p) => p.provider === contact.channelProvider.Email)
     if (index !== -1) {
-      channels[index].value = email.trim()
+      if (email.trim().length === 0) {
+        channels.splice(index, 1)
+      } else {
+        channels[index].value = email.trim()
+      }
     } else {
       channels.push({
         provider: contact.channelProvider.Email,
@@ -154,6 +158,30 @@
       })
     }
     channels = channels
+  }
+
+  function onChannelSave (event: CustomEvent): void {
+    const data = event.detail as AttachedData<Channel>
+    const editedChannel = event.detail.channel as Channel | null
+
+    if (editedChannel != null && editedChannel.provider === contact.channelProvider.Email) {
+      const firstEmail = channels.find((it) => it.provider === contact.channelProvider.Email)
+      if (firstEmail !== undefined && firstEmail.value !== email) {
+        email = firstEmail.value
+      }
+    } else if (data.provider === contact.channelProvider.Email) {
+      const currentEmailChannel = channels.find((it) => it.provider === contact.channelProvider.Email)
+      if (currentEmailChannel != null) return
+      email = event.detail.value
+    }
+  }
+
+  function onChannelRemove (event: CustomEvent): void {
+    const ch = event.detail as AttachedData<Channel> | null
+
+    if (ch != null && ch.provider === contact.channelProvider.Email && email === ch.value) {
+      email = channels.find((it) => it.provider === contact.channelProvider.Email && it.value !== ch.value)?.value ?? ''
+    }
   }
 </script>
 
@@ -212,7 +240,8 @@
       kind={'regular'}
       size={'large'}
       editable
-      restricted={[contact.channelProvider.Email]}
+      on:save={onChannelSave}
+      on:remove={onChannelRemove}
     />
   </svelte:fragment>
 </Card>
