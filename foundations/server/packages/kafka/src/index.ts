@@ -168,12 +168,13 @@ class PlatformQueueImpl implements PlatformQueue {
       await admin.connect()
       const topics = new Set(await admin.listTopics())
       await this.checkCreateTopic(QueueTopic.Tx, topics, tx)
-      await this.checkCreateTopic(QueueTopic.Fulltext, topics, 1)
+      await this.checkCreateTopic(QueueTopic.Fulltext, topics, 5)
       await this.checkCreateTopic(QueueTopic.Workspace, topics, 1)
       await this.checkCreateTopic(QueueTopic.Users, topics, 1)
       await this.checkCreateTopic(QueueTopic.Process, topics, 1)
       await this.checkCreateTopic(QueueTopic.AIQueue, topics, 10)
       await this.checkCreateTopic(QueueTopic.TranscriptionQueue, topics, 10)
+      await this.checkCreateTopic(QueueTopic.NotificationQueue, topics, 2)
     } finally {
       await admin.disconnect()
     }
