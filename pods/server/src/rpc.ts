@@ -445,13 +445,14 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
           ),
           rateLimitToHeaders(rateLimit)
         )
+      } else {
+        await sendJson(
+          req,
+          res,
+          await ops.removeDoc(request._class, request.space, request._id),
+          rateLimitToHeaders(rateLimit)
+        )
       }
-      await sendJson(
-        req,
-        res,
-        await ops.removeDoc(request._class, request.space, request._id),
-        rateLimitToHeaders(rateLimit)
-      )
     })
   })
 
