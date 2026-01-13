@@ -17,7 +17,7 @@
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
   import chunter, { ChatMessage, ChunterEvents, ThreadMessage } from '@hcengineering/chunter'
-  import { Class, Doc, generateId, getCurrentAccount, Ref, type CommitResult } from '@hcengineering/core'
+  import { Class, Doc, generateId, getCurrentAccount, Ref, type CommitResult, Markup } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import { createEventDispatcher } from 'svelte'
@@ -114,7 +114,7 @@
     })
   }
 
-  function onUpdate (event: CustomEvent): void {
+  function onUpdate (event: CustomEvent<{ message: Markup, attachments: number }>): void {
     if (!isEmptyMarkup(event.detail.message)) {
       void updateTypingInfo()
     }

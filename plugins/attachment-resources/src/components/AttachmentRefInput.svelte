@@ -448,6 +448,8 @@
   async function uploadWith (uploader: UploadHandlerDefinition): Promise<void> {
     const upload = await getResource(uploader.handler)
     const target = { objectId: docId ?? objectId, objectClass: docClass ?? _class }
+    // save draft before recording
+    dispatch('update', { message: content, attachments: attachments.size })
     await upload({ onFileUploaded, target })
   }
 
