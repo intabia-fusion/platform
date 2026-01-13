@@ -20,7 +20,8 @@ import {
   type AvatarInfo,
   type Channel,
   type Contact,
-  type Person
+  type Person,
+  contactId
 } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -36,7 +37,7 @@ import {
 } from '@hcengineering/core'
 import login from '@hcengineering/login'
 import { getResource, type IntlString, type Resources } from '@hcengineering/platform'
-import { MessageBox, getBlobRef, getClient, type ObjectSearchResult } from '@hcengineering/presentation'
+import { MessageBox, getBlobRef, getClient, type ObjectSearchResult, isDisabled } from '@hcengineering/presentation'
 import {
   getPlatformAvatarColorByName,
   getPlatformAvatarColorForTextDef,
@@ -465,7 +466,9 @@ export default async (): Promise<Resources> => ({
     ChannelTitleProvider: channelTitleProvider,
     ChannelIdentifierProvider: channelIdentifierProvider,
     CanResendInvitation: canResendInvitation,
-    CanMergePersons: canMergePersons
+    CanMergePersons: canMergePersons,
+    PersonsSpecialVisibleIf: () => !isDisabled(`${contactId}.persons`),
+    CompaniesSpecialVisibleIf: () => !isDisabled(`${contactId}.companies`)
   },
   resolver: {
     Location: resolveLocation,

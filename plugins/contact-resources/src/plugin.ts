@@ -101,7 +101,9 @@ export default mergeIds(contactId, contact, {
     FilterChannelHasNewMessagesResult: '' as FilterFunction,
     PersonTooltipProvider: '' as Resource<(client: Client, doc?: Doc | null) => Promise<LabelAndProps | undefined>>,
     CanResendInvitation: '' as Resource<ViewActionAvailabilityFunction>,
-    CanMergePersons: '' as Resource<ViewActionAvailabilityFunction>
+    CanMergePersons: '' as Resource<ViewActionAvailabilityFunction>,
+    PersonsSpecialVisibleIf: '' as Resource<() => Promise<boolean>>,
+    CompaniesSpecialVisibleIf: '' as Resource<() => Promise<boolean>>
   },
   aggregation: {
     CreatePersonAggregationManager: '' as CreateAggregationManagerFunc,

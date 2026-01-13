@@ -458,6 +458,7 @@ export function createModel (builder: Builder): void {
             icon: contact.icon.Person,
             label: contact.string.Person,
             accessLevel: AccountRole.DocGuest,
+            visibleIf: contact.function.PersonsSpecialVisibleIf,
             componentProps: {
               _class: contact.class.Person,
               baseQuery: {
@@ -475,6 +476,7 @@ export function createModel (builder: Builder): void {
             icon: contact.icon.Company,
             label: contact.string.Organization,
             accessLevel: AccountRole.DocGuest,
+            visibleIf: contact.function.CompaniesSpecialVisibleIf,
             componentProps: {
               _class: contact.class.Organization,
               icon: contact.icon.Company,
