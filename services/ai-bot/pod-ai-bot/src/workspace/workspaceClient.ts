@@ -101,7 +101,7 @@ export class WorkspaceClient {
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     readonly ctx: MeasureContext,
-    readonly llm: LLMProvider | undefined
+    readonly llm?: LLMProvider
   ) {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
@@ -357,7 +357,9 @@ export class WorkspaceClient {
   }
 
   async processMessageEvent (event: AIEventRequest, control?: ConsumerControl): Promise<void> {
-    if (this.llm === undefined) return
+    if (this.llm === undefined) {
+      throw new Error('LLM provider is not configured')
+    }
 
     const { user, objectId, objectClass, messageClass } = event
     const accountClient = getAccountClient(this.token)

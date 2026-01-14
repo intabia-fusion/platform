@@ -17,19 +17,23 @@ jest.setTimeout(30000)
 describe('integration: real WebSocket connections', () => {
   it('performs handshake and RPC end-to-end', async () => {
     const ctx = new MeasureMetricsContext('clisr-integration', {})
-    const server = new ClisrServer(ctx, async (token: string) => token === 'token-ok', '1.0.0')
+    // Register a simple echo handler on server side
+    let gotOp: any = null
+    const server = new ClisrServer(
+      ctx,
+      async (token: string) => token === 'token-ok',
+      '1.0.0',
+      undefined,
+      async (_ctx: any, method: string, params: any[]) => {
+        gotOp = { method, params }
+        return { echo: params[0] }
+      }
+    )
 
     await server.start(ctx, 0)
     const addr = server.httpServer?.address() as any
     const port = addr?.port ?? 0
     console.info('integration: server started', { port })
-
-    // Register a simple echo handler on server side
-    let gotOp: any = null
-    server.handlers.push(async (op: any) => {
-      gotOp = op
-      return { echo: op.params[0] }
-    })
 
     // Promise that resolves when client onConnect is invoked
     let onConnectResolve!: () => void
@@ -148,7 +152,7 @@ describe('integration: real WebSocket connections', () => {
 
       // Now test server -> client request
       let gotServerOp: any = null
-      ;(client as any).callbackHandler = async (method: string, params: any[]) => {
+      ;(client as any).callbackHandler = async (_ctx: any, method: string, params: any[]) => {
         console.info('integration: client.callbackHandler invoked', { method, params })
         gotServerOp = { method, params }
         return { answer: params[0] + '-from-client' }
@@ -176,6 +180,385 @@ describe('integration: real WebSocket connections', () => {
       } catch (_err) {
         // ignore close errors
       }
+    }
+  })
+
+  it('handles client disconnect and reconnect with same sessionId', async () => {
+    const ctx = new MeasureMetricsContext('clisr-reconnect', {})
+    const server = new ClisrServer(
+      ctx,
+      async (token: string) => token === 'token-ok',
+      '1.0.0',
+      undefined,
+      async (_ctx: any, method: string, params: any[]) => {
+        return { echo: params[0] }
+      }
+    )
+
+    await server.start(ctx, 0)
+    const addr = server.httpServer?.address() as any
+    const port = addr?.port ?? 0
+
+    const socketFactory: ClientSocketFactory = (url: string) => {
+      const real = new WebSocket(url)
+      let openEmitted = false
+      let openHandler: any = null
+      const msgQueue: any[] = []
+      let msgHandler: any = null
+
+      const wrapper: any = {
+        send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
+          real.send(data as any)
+        },
+        close: (code?: number) => {
+          try {
+            real.close(code)
+          } catch (_err) {}
+        },
+        onclose: null as any,
+        onerror: null as any,
+        get readyState () {
+          return real.readyState
+        },
+        bufferedAmount: 0
+      }
+
+      Object.defineProperty(wrapper, 'onopen', {
+        get () {
+          return openHandler
+        },
+        set (fn: any) {
+          openHandler = fn
+          if (openEmitted && typeof openHandler === 'function') {
+            openHandler({} as any)
+          }
+        }
+      })
+
+      Object.defineProperty(wrapper, 'onmessage', {
+        get () {
+          return msgHandler
+        },
+        set (fn: any) {
+          msgHandler = fn
+          if (msgQueue.length > 0 && typeof msgHandler === 'function') {
+            for (const m of msgQueue) msgHandler(m)
+            msgQueue.length = 0
+          }
+        }
+      })
+
+      real.on('open', () => {
+        if (typeof openHandler === 'function') openHandler({} as any)
+        else openEmitted = true
+      })
+      real.on('message', (data) => {
+        const m = { data } as any
+        if (typeof msgHandler === 'function') msgHandler(m)
+        else msgQueue.push(m)
+      })
+      real.on('close', (code, reason) => {
+        wrapper.onclose?.(code, reason)
+      })
+      real.on('error', (err) => {
+        wrapper.onerror?.(err)
+      })
+
+      return wrapper
+    }
+
+    let client: ClisrClient | undefined
+    try {
+      let onConnectResolve!: () => void
+      const onConnectP = new Promise<void>((resolve) => {
+        onConnectResolve = resolve
+      })
+
+      client = new ClisrClient(
+        ctx,
+        `ws://127.0.0.1:${port}`,
+        () => {},
+        () => 'token-ok',
+        {
+          socketFactory,
+          onConnect: async () => {
+            onConnectResolve()
+          }
+        }
+      )
+
+      await onConnectP
+
+      // Make a request to verify connection works
+      const result = await (client as any).sendRequest({ method: 'test', params: ['data'] })
+      expect(result).toEqual({ echo: 'data' })
+    } finally {
+      if (client !== undefined) {
+        try {
+          await client.close()
+        } catch (_err) {}
+      }
+      try {
+        await server.close()
+      } catch (_err) {}
+    }
+  })
+
+  it('handles multiple concurrent requests', async () => {
+    const ctx = new MeasureMetricsContext('clisr-concurrent', {})
+    const server = new ClisrServer(
+      ctx,
+      async (token: string) => token === 'token-ok',
+      '1.0.0',
+      undefined,
+      async (_ctx: any, method: string, params: any[]) => {
+        // Simulate some async work
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return { method, value: params[0] }
+      }
+    )
+
+    await server.start(ctx, 0)
+    const addr = server.httpServer?.address() as any
+    const port = addr?.port ?? 0
+
+    const socketFactory: ClientSocketFactory = (url: string) => {
+      const real = new WebSocket(url)
+      let openEmitted = false
+      let openHandler: any = null
+      const msgQueue: any[] = []
+      let msgHandler: any = null
+
+      const wrapper: any = {
+        send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
+          real.send(data as any)
+        },
+        close: (code?: number) => {
+          try {
+            real.close(code)
+          } catch (_err) {}
+        },
+        onclose: null as any,
+        onerror: null as any,
+        get readyState () {
+          return real.readyState
+        },
+        bufferedAmount: 0
+      }
+
+      Object.defineProperty(wrapper, 'onopen', {
+        get () {
+          return openHandler
+        },
+        set (fn: any) {
+          openHandler = fn
+          if (openEmitted && typeof openHandler === 'function') {
+            openHandler({} as any)
+          }
+        }
+      })
+
+      Object.defineProperty(wrapper, 'onmessage', {
+        get () {
+          return msgHandler
+        },
+        set (fn: any) {
+          msgHandler = fn
+          if (msgQueue.length > 0 && typeof msgHandler === 'function') {
+            for (const m of msgQueue) msgHandler(m)
+            msgQueue.length = 0
+          }
+        }
+      })
+
+      real.on('open', () => {
+        if (typeof openHandler === 'function') openHandler({} as any)
+        else openEmitted = true
+      })
+      real.on('message', (data) => {
+        const m = { data } as any
+        if (typeof msgHandler === 'function') msgHandler(m)
+        else msgQueue.push(m)
+      })
+      real.on('close', (code, reason) => {
+        wrapper.onclose?.(code, reason)
+      })
+      real.on('error', (err) => {
+        wrapper.onerror?.(err)
+      })
+
+      return wrapper
+    }
+
+    let client: ClisrClient | undefined
+    try {
+      let onConnectResolve!: () => void
+      const onConnectP = new Promise<void>((resolve) => {
+        onConnectResolve = resolve
+      })
+
+      client = new ClisrClient(
+        ctx,
+        `ws://127.0.0.1:${port}`,
+        () => {},
+        () => 'token-ok',
+        {
+          socketFactory,
+          onConnect: async () => {
+            onConnectResolve()
+          }
+        }
+      )
+
+      await onConnectP
+
+      // Send multiple concurrent requests
+      const promises = [
+        (client as any).sendRequest({ method: 'method1', params: [1] }),
+        (client as any).sendRequest({ method: 'method2', params: [2] }),
+        (client as any).sendRequest({ method: 'method3', params: [3] })
+      ]
+
+      const results = await Promise.all(promises)
+      expect(results[0]).toEqual({ method: 'method1', value: 1 })
+      expect(results[1]).toEqual({ method: 'method2', value: 2 })
+      expect(results[2]).toEqual({ method: 'method3', value: 3 })
+    } finally {
+      if (client !== undefined) {
+        try {
+          await client.close()
+        } catch (_err) {}
+      }
+      try {
+        await server.close()
+      } catch (_err) {}
+    }
+  })
+
+  it('handles server-side errors gracefully', async () => {
+    const ctx = new MeasureMetricsContext('clisr-error', {})
+    const server = new ClisrServer(
+      ctx,
+      async (token: string) => token === 'token-ok',
+      '1.0.0',
+      undefined,
+      async (_ctx: any, method: string, _params: any[]) => {
+        if (method === 'fail') {
+          throw new Error('Intentional error')
+        }
+        return { ok: true }
+      }
+    )
+
+    await server.start(ctx, 0)
+    const addr = server.httpServer?.address() as any
+    const port = addr?.port ?? 0
+
+    const socketFactory: ClientSocketFactory = (url: string) => {
+      const real = new WebSocket(url)
+      let openEmitted = false
+      let openHandler: any = null
+      const msgQueue: any[] = []
+      let msgHandler: any = null
+
+      const wrapper: any = {
+        send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
+          real.send(data as any)
+        },
+        close: (code?: number) => {
+          try {
+            real.close(code)
+          } catch (_err) {}
+        },
+        onclose: null as any,
+        onerror: null as any,
+        get readyState () {
+          return real.readyState
+        },
+        bufferedAmount: 0
+      }
+
+      Object.defineProperty(wrapper, 'onopen', {
+        get () {
+          return openHandler
+        },
+        set (fn: any) {
+          openHandler = fn
+          if (openEmitted && typeof openHandler === 'function') {
+            openHandler({} as any)
+          }
+        }
+      })
+
+      Object.defineProperty(wrapper, 'onmessage', {
+        get () {
+          return msgHandler
+        },
+        set (fn: any) {
+          msgHandler = fn
+          if (msgQueue.length > 0 && typeof msgHandler === 'function') {
+            for (const m of msgQueue) msgHandler(m)
+            msgQueue.length = 0
+          }
+        }
+      })
+
+      real.on('open', () => {
+        if (typeof openHandler === 'function') openHandler({} as any)
+        else openEmitted = true
+      })
+      real.on('message', (data) => {
+        const m = { data } as any
+        if (typeof msgHandler === 'function') msgHandler(m)
+        else msgQueue.push(m)
+      })
+      real.on('close', (code, reason) => {
+        wrapper.onclose?.(code, reason)
+      })
+      real.on('error', (err) => {
+        wrapper.onerror?.(err)
+      })
+
+      return wrapper
+    }
+
+    let client: ClisrClient | undefined
+    try {
+      let onConnectResolve!: () => void
+      const onConnectP = new Promise<void>((resolve) => {
+        onConnectResolve = resolve
+      })
+
+      client = new ClisrClient(
+        ctx,
+        `ws://127.0.0.1:${port}`,
+        () => {},
+        () => 'token-ok',
+        {
+          socketFactory,
+          onConnect: async () => {
+            onConnectResolve()
+          }
+        }
+      )
+
+      await onConnectP
+
+      // Request that succeeds
+      const successResult = await (client as any).sendRequest({ method: 'success', params: [] })
+      expect(successResult).toEqual({ ok: true })
+
+      // Request that fails should reject
+      await expect((client as any).sendRequest({ method: 'fail', params: [] })).rejects.toThrow()
+    } finally {
+      if (client !== undefined) {
+        try {
+          await client.close()
+        } catch (_err) {}
+      }
+      try {
+        await server.close()
+      } catch (_err) {}
     }
   })
 })

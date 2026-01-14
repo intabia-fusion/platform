@@ -95,7 +95,7 @@ describe('Server request handling after reconnect', () => {
     )
 
     // Set up callback handler to process server requests
-    client.callbackHandler = async (method, params) => {
+    client.callbackHandler = async (_ctx, method, params) => {
       // Simulate work being done
       await new Promise((resolve) => setTimeout(resolve, 100))
 
@@ -229,7 +229,7 @@ describe('Server request handling after reconnect', () => {
 
     // Set up callback handler to process server requests
     const responses: any[] = []
-    client.callbackHandler = async (method, params) => {
+    client.callbackHandler = async (_ctx, method, params) => {
       // Simulate work being done
       await new Promise((resolve) => setTimeout(resolve, 50))
 

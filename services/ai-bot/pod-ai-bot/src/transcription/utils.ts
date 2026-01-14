@@ -1,5 +1,5 @@
 //
-// Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -12,16 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { config } from 'dotenv'
 
-import { startQueue } from './queue'
-import aibotConfig from './config'
-import { startClient } from './client'
+// Utils file is now empty - all audio processing is done in love-agent
+// Audio format is passed explicitly via TranscriptionQueueTask.audioFormat
 
-config()
-
-if (aibotConfig.Mode === 'queue') {
-  void startQueue()
-} else {
-  void startClient()
-}
+// Export empty object to make this a valid module
+export {}

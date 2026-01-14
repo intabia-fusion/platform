@@ -35,32 +35,17 @@ export async function sendFrame (
 
   if (dta.byteLength > 1024) {
     // Compress if message is larger than 1024 bytes
-    ctx.info('compressing request', {
-      method: (msg as any).method,
-      id: (msg as any).id,
-      len: dta.byteLength
-    })
-
     const compressed = await compressFn(dta)
     const out = new Uint8Array(1 + compressed.length)
     out[0] = FRAME_MSGPACK_SNAPPY // Use msgpack-snappy frame for compressed messages
     out.set(new Uint8Array(compressed), 1)
     sendFn(out)
-    ctx.info('sent request (compressed)', {
-      method: (msg as any).method,
-      id: (msg as any).id
-    })
   } else {
     // Send without compression for smaller messages
     const out = new Uint8Array(1 + dta.byteLength)
     out[0] = FRAME_MSGPACK // Use msgpack frame for smaller messages
     out.set(new Uint8Array(dta), 1)
     sendFn(out)
-    ctx.info('sent request (uncompressed)', {
-      method: (msg as any).method,
-      id: (msg as any).id,
-      len: dta.byteLength
-    })
   }
 }
 

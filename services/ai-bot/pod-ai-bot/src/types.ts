@@ -27,10 +27,15 @@ export interface HistoryRecord {
 }
 
 /**
+ * Audio format type
+ */
+export type AudioFormat = 'ogg' | 'wav'
+
+/**
  * Transcription task stored in queue
  */
 export interface TranscriptionTask {
-  /** Storage object name for gzipped WAV file */
+  /** Storage object name for audio file */
   blobId: string
   /** Room name from LiveKit (format: workspaceUuid_roomName_roomId) */
   roomName: string
@@ -56,6 +61,8 @@ export interface TranscriptionTask {
   channels: number
   /** Bits per sample */
   bitsPerSample: number
+  /** Audio format (ogg for Opus, wav for PCM) */
+  audioFormat: AudioFormat
   /** Placeholder message ID for pending transcription (created when speech starts) */
   placeholderMessageId?: string
 }

@@ -29,47 +29,68 @@ interface Config {
   AvatarName: string
   AvatarContentType: string
   Password: string
-  OpenAIKey: string
-  OpenAIModel: OpenAI.ChatModel
-  OpenAIBaseUrl: string
-  OpenAITranslateModel: OpenAI.ChatModel
-  OpenAISummaryModel: OpenAI.ChatModel
 
-  // LLM selection (e.g. 'openai' | 'gigachat' or leave empty for auto)
-  LLMProvider: string
+  Mode: 'queue' | 'client' // In queue mode we start server and listen for queue events and pass to providers or clients.
+  // In client mode we connect to accounts server and wait for requests.
+  ServerUrl: string
+  ApiToken: string // Api token for clients to handle server in LLMProvider and STT provider 'server' mode.
 
   MaxContentTokens: number
   MaxHistoryRecords: number
   Port: number
   LoveEndpoint: string
-  DataLabApiKey: string
   BillingUrl: string
-  DeepgramPollIntervalMinutes: number
-  DeepgramApiKey: string
-  DeepgramProjectId: string
-  DeepgramTag: string
-  // STT Transcription settings
-  SttProvider: SttProviderType
-  SttUrl: string
-  SttApiKey: string
-  SttModel: string
-  // VAD settings
-  VadRmsThreshold: number
-  VadSpeechRatioThreshold: number
 
+  StorageConfig: string
+  ChunkStorage: string // A blob temporal storage, for ogm and wav chunks.
+
+  // If specified all chunks will be saved to this directory, per user at a time.wav + transcription
+  DebugDir?: string
+
+  // LLM parameters
+  // LLM selection (e.g. 'openai' | 'gigachat' | 'server' or leave empty for auto)
+  LLMProvider: string // Could be 'server' to pass LLM requests to connected clients.
+  LLMProcessingBatch: number // Batch size for LLM request processing (1 = no batching)
+
+  // ******************
+  // Openai
+  OpenAIKey: string
+  OpenAIModel: OpenAI.ChatModel
+  OpenAIBaseUrl: string
+  OpenAITranslateModel: OpenAI.ChatModel
+  OpenAISummaryModel: OpenAI.ChatModel
+  // ******************
+
+  // ******************
   // GigaChat configuration
   GigaChatCredentials: string
   GigaChatScope: string
   GigaChatModel: string
   GigaChatBaseUrl: string
   GigaChatTimeout: string
+  // ******************
 
-  StorageConfig: string
+  DataLabApiKey: string
+  // ******************
 
-  ChunkStorage: string // A blob temporal storage, for ogm and wav chunks.
+  // STT Transcription settings
+  SttProvider: SttProviderType
+  SttProcessingBatch: number // If defined will consume messages by bulks and pass to transcriber
 
-  // If specified all chunks will be saved to this directory, per user at a time.wav + transcription
-  DebugDir?: string
+  // Transcription parameters
+  // ******************
+  SttUrl: string
+  SttApiKey: string
+  SttModel: string
+
+  DeepgramPollIntervalMinutes: number
+  DeepgramApiKey: string
+  DeepgramProjectId: string
+  DeepgramTag: string
+
+  // VAD settings
+  VadRmsThreshold: number
+  VadSpeechRatioThreshold: number
 }
 
 // Define the YAML configuration structure
@@ -92,6 +113,7 @@ interface YamlConfig {
   port?: number
   llm: {
     provider?: string
+    batch?: number
     openai?: {
       apiKey?: string
       model?: string
@@ -109,6 +131,7 @@ interface YamlConfig {
   }
   stt: {
     provider?: string
+    batch?: number
     url?: string
     apiKey?: string
     model?: string
@@ -182,6 +205,10 @@ const config: Config = (() => {
     ServerSecret: yamlConfig?.accounts?.serverSecret ?? process.env.SERVER_SECRET,
     ServiceID: yamlConfig?.accounts?.serviceId ?? process.env.SERVICE_ID ?? 'ai-bot-service',
 
+    Mode: (process.env.MODE ?? 'queue') as Config['Mode'],
+    ServerUrl: process.env.SERVER_URL ?? '',
+    ApiToken: process.env.API_TOKEN ?? '',
+
     // Bot identity configuration
     FirstName: yamlConfig?.bot?.firstName ?? process.env.FIRST_NAME,
     LastName: yamlConfig?.bot?.lastName ?? process.env.LAST_NAME,
@@ -195,6 +222,7 @@ const config: Config = (() => {
 
     // LLM configuration
     LLMProvider: yamlConfig?.llm?.provider ?? process.env.LLM_PROVIDER ?? '',
+    LLMProcessingBatch: yamlConfig?.llm?.batch ?? parseInt(process.env.LLM_BATCH ?? '1'),
     OpenAIKey: yamlConfig?.llm?.openai?.apiKey ?? process.env.OPENAI_API_KEY ?? '',
     OpenAIModel: (yamlConfig?.llm?.openai?.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o-mini') as OpenAI.ChatModel,
     OpenAIBaseUrl: yamlConfig?.llm?.openai?.baseUrl ?? process.env.OPENAI_BASE_URL ?? '',
@@ -235,6 +263,7 @@ const config: Config = (() => {
 
     // STT configuration
     SttProvider: (yamlConfig?.stt?.provider ?? process.env.STT_PROVIDER ?? 'wsr') as SttProviderType,
+    SttProcessingBatch: yamlConfig?.stt.batch ?? parseInt(process.env.STT_BATCH ?? '1'),
     SttUrl: yamlConfig?.stt?.url ?? process.env.STT_URL ?? '',
     SttApiKey: yamlConfig?.stt?.apiKey ?? process.env.STT_API_KEY ?? '',
     SttModel: yamlConfig?.stt?.model ?? process.env.STT_MODEL ?? '',
@@ -254,7 +283,11 @@ const config: Config = (() => {
     DebugDir: yamlConfig?.debug?.dir ?? process.env.DEBUG_DIR ?? ''
   }
 
-  const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
+  const keys =
+    params.Mode === 'queue'
+      ? (Object.keys(params) as Array<keyof Config>)
+      : (['ServerUrl', 'ApiToken'] as Array<keyof Config>)
+  const missingEnv = keys.filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {
     throw Error(

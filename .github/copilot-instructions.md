@@ -39,6 +39,17 @@ rush add -p PKG      # Add dependency
 
 `rush build` performs transpilation which may succeed even with type errors. Always use `diagnostics` to verify code correctness.
 
+## Formatting and Linting
+
+After making changes to a package, run formatting and linting in the modified package directory:
+
+```bash
+cd <package-directory>
+rushx format --force   # Format code and run linting
+```
+
+This ensures code style consistency and catches linting errors before commit.
+
 ## Changelog generation
 
 When generating changelogs (the "All commits" lists), follow these rules:
@@ -111,3 +122,25 @@ Key principles:
 - Focus changes propagate through `updateFocus()` 
 - Selection follows focus via provider delegation
 - Scroll happens automatically via `scrollIntoView()` on navigation
+
+
+# License: 
+
+For every new files please add a 2026 Intabia Fusion license header like this:
+
+```ts
+/**
+  Copyright © 2026 Intabia Fusion.
+
+  Licensed under the Eclipse Public License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may
+  obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+```

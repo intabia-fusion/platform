@@ -47,6 +47,7 @@ import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-c
 import { generateToken } from '@hcengineering/server-token'
 import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
 import { createLLMFromConfig, type LLMProvider } from './llms'
+import { ClisrServer } from '@intabiafusion/clisr'
 
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
@@ -57,6 +58,9 @@ import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown
 import { tryAssignToWorkspace } from './utils/account'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'
+
+/** Audio format type */
+export type AudioFormat = 'ogg' | 'wav'
 
 /** Audio chunk metadata from HTTP headers */
 export interface AudioChunkMetadata {
@@ -72,6 +76,7 @@ export interface AudioChunkMetadata {
   sampleRate: number
   channels: number
   bitsPerSample: number
+  audioFormat: AudioFormat
 }
 
 /** Session recording metadata from HTTP headers */
@@ -96,17 +101,22 @@ export class AIControl {
   readonly chunkStorageAdapter: StorageAdapter
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
 
-  private readonly llm?: LLMProvider
+  private llm?: LLMProvider
 
   constructor (
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     private readonly ctx: MeasureContext
   ) {
-    this.llm = createLLMFromConfig(this.ctx)
-
     this.storageAdapter = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.chunkStorageAdapter = buildStorageFromConfig(storageConfigFrom(config.ChunkStorage))
+  }
+
+  /**
+   * Initialize LLM provider. Can be called after construction to pass ClisrServer for server provider.
+   */
+  initLLM (clisrServer?: ClisrServer): void {
+    this.llm = createLLMFromConfig(this.ctx, clisrServer)
   }
 
   setTranscriptionProducer (producer: PlatformQueueProducer<TranscriptionTask>): void {
@@ -116,7 +126,7 @@ export class AIControl {
   /**
    * Process incoming audio chunk: store in storage and queue for transcription
    */
-  async processAudioChunk (gzipData: Buffer, metadata: AudioChunkMetadata): Promise<void> {
+  async processAudioChunk (audioData: Buffer, metadata: AudioChunkMetadata): Promise<void> {
     // Parse workspace and roomId from room name (format: workspaceUuid_roomName_roomId)
     const parsed = metadata.roomName.split('_')
     const workspace = parsed[0] as WorkspaceUuid | undefined
@@ -138,15 +148,9 @@ export class AIControl {
     }
 
     try {
-      // Store gzipped WAV in storage
-      await this.chunkStorageAdapter.put(
-        this.ctx,
-        wsClient.wsIds,
-        blobId,
-        gzipData,
-        'application/gzip',
-        gzipData.length
-      )
+      // Store audio in storage
+      const contentType = metadata.audioFormat === 'ogg' ? 'audio/ogg' : 'audio/wav'
+      await this.chunkStorageAdapter.put(this.ctx, wsClient.wsIds, blobId, audioData, contentType, audioData.length)
 
       // Create placeholder message for pending transcription (with spinner indicator)
       let placeholderMessageId: Ref<ChatMessage> | undefined
@@ -186,6 +190,7 @@ export class AIControl {
         sampleRate: metadata.sampleRate,
         channels: metadata.channels,
         bitsPerSample: metadata.bitsPerSample,
+        audioFormat: metadata.audioFormat,
         placeholderMessageId: placeholderMessageId as string | undefined
       }
 

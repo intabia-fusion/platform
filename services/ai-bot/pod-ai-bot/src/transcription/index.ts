@@ -19,6 +19,8 @@ import { createOpenAIWhisperProvider } from './providers/openai'
 
 import { analyzeAudio, parseWavHeader, getAudioDuration } from './vad'
 import { normalizeAudio, getAudioStats } from './normalize'
+import { ClisrServer } from '@intabiafusion/clisr'
+import { createServerProvider } from './providers/server'
 
 // Re-export types
 export type {
@@ -57,7 +59,11 @@ export {
  * @param config - Transcription configuration
  * @returns Configured transcription provider or undefined if misconfigured
  */
-export function createTranscriptionProvider (ctx: MeasureContext, config: TranscriptionConfig): TranscriptionProvider {
+export function createTranscriptionProvider (
+  ctx: MeasureContext,
+  config: TranscriptionConfig,
+  server?: ClisrServer
+): TranscriptionProvider {
   switch (config.provider) {
     case 'deepgram': {
       if (config.apiKey === undefined || config.apiKey === '') {
@@ -73,6 +79,13 @@ export function createTranscriptionProvider (ctx: MeasureContext, config: Transc
         throw new Error('OpenAI API key is not configured')
       }
       return createOpenAIWhisperProvider(ctx, config.apiKey, config.model ?? 'whisper-1', config.url)
+    }
+    case 'server': {
+      if (server === undefined) {
+        ctx.error('Clisr server instance is required for server transcription provider')
+        throw new Error('Clisr server instance is not provided')
+      }
+      return createServerProvider(ctx, server)
     }
 
     default: {

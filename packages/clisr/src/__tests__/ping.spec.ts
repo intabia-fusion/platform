@@ -4,7 +4,7 @@
 // Comments in tests are in English as per repository conventions.
 
 import { ClisrClient } from '../client'
-import { pingConst, pongConst, ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
+import { ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
 import { MeasureMetricsContext } from '@hcengineering/measurements'
 
 /**

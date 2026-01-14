@@ -19,20 +19,25 @@ import { Analytics } from '@hcengineering/analytics'
 import {
   type ClientSocket,
   ClientSocketReadyState,
-  pingConst,
   FRAME_PING,
   FRAME_PONG,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
   FRAME_MSGPACK,
   FRAME_MSGPACK_SNAPPY,
+  FRAME_BINARY,
+  FRAME_BINARY_RESP,
   ClientConnectEvent,
   type OperationHandler,
   type ClientFactoryOptions,
   type HelloResponse,
   type HelloRequest,
   RequestPromise,
-  callbackMethod
+  callbackMethod,
+  encodeBinaryRequest,
+  encodeBinaryResponse,
+  decodeBinaryResponse,
+  decodeBinaryRequest
 } from './types'
 import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
 import { type MeasureContext } from '@hcengineering/measurements'
@@ -90,6 +95,7 @@ export class ClisrClient {
   private openAction: any
 
   private readonly sessionId: string | undefined
+  private readonly clientHost: string | undefined
   private closed = false
 
   private pingResponse: number = Date.now()
@@ -105,7 +111,16 @@ export class ClisrClient {
   handlers: OperationHandler[] = []
 
   // Server callback handler (also support legacy `operationHandler` name)
-  callbackHandler?: (msg: string, args: any[]) => Promise<any>
+  callbackHandler?: (ctx: MeasureContext, msg: string, args: any[]) => Promise<any>
+
+  // Binary request handler for incoming binary requests from server
+  // Can return Uint8Array for binary response, or any other type for JSON response
+  binaryHandler?: (
+    ctx: MeasureContext,
+    method: string,
+    data: Uint8Array,
+    headers?: Record<string, any>
+  ) => Promise<Uint8Array | any>
 
   // Overridable compression functions (default to snappy). Tests can override instance methods.
   compress: (input: any) => Promise<any> = lazyCompress
@@ -143,6 +158,9 @@ export class ClisrClient {
     // Apply optional compression overrides from factory options
     this.compress = opt?.compress ?? this.compress
     this.uncompress = opt?.uncompress ?? this.uncompress
+
+    // Store client host for identification
+    this.clientHost = opt?.clientHost
 
     // Auto-start connection by default, but allow tests to opt out for deterministic cleanup
     if (opt?.autoStart ?? true) {
@@ -371,12 +389,6 @@ export class ClisrClient {
       }
       return
     }
-    if (resp.result === pingConst) {
-      void this.sendRequest({ method: pingConst, params: [] }).catch((err) => {
-        this.ctx.error('failed to send ping', { err })
-      })
-      return
-    }
     if (resp.id !== undefined) {
       if (typeof resp.id === 'string' && resp.id.startsWith('#')) {
         // A request from server
@@ -461,7 +473,15 @@ export class ClisrClient {
       // Call the handler function and handle the result or error
       try {
         // Call the handler and await the result (handler should return a value or throw an error)
-        const result = await handlerFn(method, params ?? [])
+        const result = await this.ctx.with(
+          'handle-callback',
+          {},
+          async (ctx) => await handlerFn(ctx, method, params ?? []),
+          {},
+          {
+            meta
+          }
+        )
 
         // Store the response to be sent in [response, error] format
         const responseToSend = {
@@ -619,6 +639,102 @@ export class ClisrClient {
           this.pingResponse = Date.now()
           return
         }
+        if (ft === FRAME_BINARY_RESP) {
+          // Handle binary response - use unified requests map
+          try {
+            const response = decodeBinaryResponse(u8.subarray(1))
+            const promise = this.requests.get(response.id)
+            if (promise !== undefined) {
+              this.requests.delete(response.id)
+              if (response.error !== undefined) {
+                promise.reject(new Error(response.error))
+              } else {
+                promise.resolve(response.data ?? new Uint8Array(0))
+              }
+            } else {
+              this.ctx.error('unknown binary response id', { id: response.id })
+            }
+          } catch (err: any) {
+            this.ctx.error('failed to parse binary response', { err })
+          }
+          return
+        }
+        if (ft === FRAME_BINARY) {
+          // Handle incoming binary request from server
+          try {
+            const {
+              id: reqId,
+              method: reqMethod,
+              data: reqData,
+              meta: reqMeta,
+              headers: reqHeaders
+            } = decodeBinaryRequest(u8.subarray(1))
+
+            if (this.binaryHandler !== undefined) {
+              try {
+                const result = await this.ctx.with(
+                  'handle-binary',
+                  {},
+                  async (ctx) => await this.binaryHandler?.(ctx, reqMethod, reqData, reqHeaders),
+                  {},
+                  {
+                    meta: reqMeta ?? {}
+                  }
+                )
+
+                // Check if result is binary (Uint8Array) or JSON
+                if (result instanceof Uint8Array) {
+                  // Send binary response
+                  const responseFrame = encodeBinaryResponse(reqId, result)
+                  this.websocket?.send(responseFrame)
+                } else {
+                  // Send JSON response using callbackMethod pattern (same as regular callbacks)
+                  const responseToSend = {
+                    method: callbackMethod,
+                    params: [result, undefined], // [response, error]
+                    id: reqId,
+                    time: Date.now()
+                  }
+                  await sharedSendFrame(
+                    this.ctx,
+                    (data) => this.websocket?.send(data),
+                    responseToSend,
+                    this.compress,
+                    true
+                  )
+                }
+              } catch (err: any) {
+                // Send error using callbackMethod pattern
+                const errorResponse = {
+                  method: callbackMethod,
+                  params: [undefined, { message: err.message ?? 'Unknown error' }],
+                  id: reqId,
+                  time: Date.now()
+                }
+                await sharedSendFrame(
+                  this.ctx,
+                  (data) => this.websocket?.send(data),
+                  errorResponse,
+                  this.compress,
+                  true
+                )
+              }
+            } else {
+              this.ctx.error('no binary handler registered', { method: reqMethod })
+              // Send error using callbackMethod pattern
+              const errorResponse = {
+                method: callbackMethod,
+                params: [undefined, { message: 'No binary handler registered' }],
+                id: reqId,
+                time: Date.now()
+              }
+              await sharedSendFrame(this.ctx, (data) => this.websocket?.send(data), errorResponse, this.compress, true)
+            }
+          } catch (err: any) {
+            this.ctx.error('failed to handle binary request', { err })
+          }
+          return
+        }
         if (ft === FRAME_HELLO_RESP || ft === FRAME_HELLO) {
           const payload = u8.subarray(1)
           try {
@@ -761,7 +877,8 @@ export class ClisrClient {
         params: [],
         id: -1,
         token: this.tokenProvider(),
-        sessionId: this.sessionId
+        sessionId: this.sessionId,
+        clientHost: this.clientHost
       }
       // Serialize as binary and send as FRAME_HELLO (no extra compression)
       const dta = this.rpcHandler.serialize(helloRequest, true)
@@ -778,14 +895,14 @@ export class ClisrClient {
     }
 
     // FIX: remove undefined variable 'opened'
-    wsocket.onerror = () => {
+    wsocket.onerror = (dta) => {
       if (this.websocket !== wsocket) {
         return
       }
       if (this.delay < 3) {
         this.delay += 1
       }
-      this.ctx.error('client websocket error', { socketId, url: this.url })
+      this.ctx.error('client websocket error', { socketId, url: this.url, dta })
     }
   }
 
@@ -832,42 +949,30 @@ export class ClisrClient {
         if (w instanceof Promise) {
           await w
         }
-        if (data.method !== pingConst) {
-          this.requests.set(id, promise)
-        }
+        this.requests.set(id, promise)
         promise.sendData = (): void => {
           if (this.websocket?.readyState === ClientSocketReadyState.OPEN) {
             promise.startTime = Date.now()
 
-            if (data.method !== pingConst) {
-              // Use shared sendFrame utility
-              void (async () => {
-                try {
-                  const msg = {
-                    method: data.method,
-                    params: data.params,
-                    meta: ctx.extractMeta(),
-                    id,
-                    time: Date.now()
-                  }
-                  const sendFn = (data: Uint8Array): void => {
-                    this.websocket?.send(data)
-                  }
-                  await sharedSendFrame(this.ctx, sendFn, msg, this.compress, true)
-                } catch (err: any) {
-                  this.ctx.error('failed to send request', { err })
-                  this.websocket?.close()
-                }
-              })()
-            } else {
-              // send a one-byte ping frame
+            // Use shared sendFrame utility
+            void (async () => {
               try {
-                this.websocket?.send(new Uint8Array([FRAME_PING]))
+                const msg = {
+                  method: data.method,
+                  params: data.params,
+                  meta: ctx.extractMeta(),
+                  id,
+                  time: Date.now()
+                }
+                const sendFn = (data: Uint8Array): void => {
+                  this.websocket?.send(data)
+                }
+                await sharedSendFrame(this.ctx, sendFn, msg, this.compress, true)
               } catch (err: any) {
-                this.ctx.error('failed to send ping', { err })
+                this.ctx.error('failed to send request', { err })
                 this.websocket?.close()
               }
-            }
+            })()
           }
         }
         if (data.allowReconnect ?? true) {
@@ -884,9 +989,7 @@ export class ClisrClient {
           }
         }
         promise.sendData()
-        if (data.method !== pingConst) {
-          return await promise.promise
-        }
+        return await promise.promise
       },
       { method: data.method },
       {
@@ -895,16 +998,52 @@ export class ClisrClient {
     )
   }
 
-  // tx (tx: Tx): Promise<TxResult> {
-  //   return this.sendRequest({
-  //     method: 'tx',
-  //     params: [tx],
-  //     retry: async () => {
-  //       if (tx._class === core.class.TxApplyIf) {
-  //         return (await this.findAll(core.class.Tx, { _id: (tx as TxApplyIf).txes[0]._id }, { limit: 1 })).length === 0
-  //       }
-  //       return (await this.findAll(core.class.Tx, { _id: tx._id }, { limit: 1 })).length === 0
-  //     }
-  //   })
-  // }
+  request<T = any>(method: string, params: any[], once: boolean = true): Promise<T> {
+    return this.sendRequest({
+      method,
+      params,
+      retry: async () => true,
+      once,
+      allowReconnect: true
+    }) as Promise<T>
+  }
+
+  /**
+   * Send a binary request to the server and wait for response.
+   * Response can be either binary (Uint8Array) or JSON, depending on server handler.
+   * @param method - method name to invoke
+   * @param data - binary payload
+   * @param headers - optional headers to pass to the server handler
+   * @returns Promise with response data (binary or JSON based on server handler)
+   */
+  async binaryRequest<T = Uint8Array>(method: string, data: Uint8Array, headers?: Record<string, any>): Promise<T> {
+    return await this.ctx.with('binary-request', { method }, async (ctx) => {
+      if (this.closed) {
+        throw new Error(`connection is closed, cannot send binary request ${method}`)
+      }
+
+      const w = this.waitOpenConnection(ctx)
+      if (w instanceof Promise) {
+        await w
+      }
+
+      const id = `_b${this.lastId++}`
+      const promise = new RequestPromise(method, [])
+
+      this.requests.set(id, promise)
+
+      // Pass meta separately from headers
+      const meta = ctx.extractMeta()
+
+      try {
+        const frame = encodeBinaryRequest(id, method, data, meta, headers)
+        this.websocket?.send(frame)
+      } catch (err: any) {
+        this.requests.delete(id)
+        throw err
+      }
+
+      return (await promise.promise) as T
+    })
+  }
 }

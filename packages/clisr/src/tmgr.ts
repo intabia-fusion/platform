@@ -32,16 +32,25 @@ export async function createCallbackClient (
   ctx: MeasureContext,
   url: string,
   token: string,
-  executor: (task: string, args: any[]) => Promise<any>
+  executor: {
+    callback?: (ctx: MeasureContext, task: string, args: any[]) => Promise<any>
+    binaryExecutor?: (
+      ctx: MeasureContext,
+      method: string,
+      data: Uint8Array,
+      headers?: Record<string, any>
+    ) => Promise<Uint8Array | any>
+    clientHost?: string
+  }
 ): Promise<ClisrClient> {
   const client = new ClisrClient(
     ctx,
     url,
     (data) => {},
-    () => token
+    () => token,
+    { clientHost: executor.clientHost }
   )
-  client.callbackHandler = async (method, args) => {
-    return await executor(method, args)
-  }
+  client.callbackHandler = executor.callback
+  client.binaryHandler = executor.binaryExecutor
   return client
 }

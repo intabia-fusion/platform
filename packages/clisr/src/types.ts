@@ -66,6 +66,9 @@ export interface ClientFactoryOptions {
 
   // If false, do not auto-open the connection; tests may set to false to avoid background timers
   autoStart?: boolean
+
+  // Client host identifier (e.g., hostname or service name) for server-side identification
+  clientHost?: string
 }
 
 /**
@@ -81,9 +84,6 @@ export enum ClientConnectEvent {
   Maintenance // In case workspace are in maintenance mode
 }
 
-export const pingConst = 'ping'
-export const pongConst = 'pong!'
-
 // Frame type codes for wire protocol
 export const FRAME_PING = 0
 export const FRAME_PONG = 1
@@ -91,8 +91,160 @@ export const FRAME_HELLO = 2
 export const FRAME_HELLO_RESP = 3
 export const FRAME_MSGPACK = 4 // Serialized msgpack data (uncompressed)
 export const FRAME_MSGPACK_SNAPPY = 5 // Serialized msgpack data compressed with snappy
+export const FRAME_BINARY = 6 // Binary request: method (string) + binary payload
+export const FRAME_BINARY_RESP = 7 // Binary response: id + binary payload
 
 export const callbackMethod = '##'
+
+/**
+ * Binary frame format:
+ * - 1 byte: frame type (FRAME_BINARY)
+ * - 4 bytes: id length (uint32 little-endian)
+ * - N bytes: id (utf-8 string)
+ * - 4 bytes: info JSON length (uint32 little-endian)
+ * - J bytes: info JSON (utf-8 string) - contains { method, meta?, headers? }
+ * - rest: binary payload
+ */
+export interface BinaryRequestInfo {
+  method: string
+  meta?: Record<string, any>
+  headers?: Record<string, any>
+}
+
+export interface BinaryRequest {
+  id: string
+  method: string
+  meta?: Record<string, any>
+  headers?: Record<string, any>
+  data: Uint8Array
+}
+
+/**
+ * Binary response frame format:
+ * - 1 byte: frame type (FRAME_BINARY_RESP)
+ * - 4 bytes: id length (uint32 little-endian)
+ * - N bytes: id (utf-8 string)
+ * - 1 byte: error flag (0 = success, 1 = error)
+ * - rest: binary payload (or error message if error flag is 1)
+ */
+export interface BinaryResponse {
+  id: string
+  error?: string
+  data?: Uint8Array
+}
+
+/**
+ * Encodes a binary request into a frame buffer
+ */
+export function encodeBinaryRequest (
+  id: string,
+  method: string,
+  data: Uint8Array,
+  meta?: Record<string, any>,
+  headers?: Record<string, any>
+): Uint8Array {
+  const idBytes = new TextEncoder().encode(id)
+
+  // Pack method, meta, headers into single JSON object
+  const info: BinaryRequestInfo = { method }
+  if (meta !== undefined && Object.keys(meta).length > 0) {
+    info.meta = meta
+  }
+  if (headers !== undefined && Object.keys(headers).length > 0) {
+    info.headers = headers
+  }
+  const infoBytes = new TextEncoder().encode(JSON.stringify(info))
+
+  const totalLength = 1 + 4 + idBytes.length + 4 + infoBytes.length + data.length
+  const buffer = new Uint8Array(totalLength)
+  const view = new DataView(buffer.buffer)
+
+  let offset = 0
+  buffer[offset++] = FRAME_BINARY
+
+  view.setUint32(offset, idBytes.length, true)
+  offset += 4
+  buffer.set(idBytes, offset)
+  offset += idBytes.length
+
+  view.setUint32(offset, infoBytes.length, true)
+  offset += 4
+  buffer.set(infoBytes, offset)
+  offset += infoBytes.length
+
+  buffer.set(data, offset)
+
+  return buffer
+}
+
+/**
+ * Decodes a binary request from a frame buffer (without frame type byte)
+ */
+export function decodeBinaryRequest (buffer: Uint8Array): BinaryRequest {
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+  let offset = 0
+
+  const idLength = view.getUint32(offset, true)
+  offset += 4
+  const id = new TextDecoder().decode(buffer.subarray(offset, offset + idLength))
+  offset += idLength
+
+  const infoLength = view.getUint32(offset, true)
+  offset += 4
+  const infoJson = new TextDecoder().decode(buffer.subarray(offset, offset + infoLength))
+  const info: BinaryRequestInfo = JSON.parse(infoJson)
+  offset += infoLength
+
+  const data = buffer.subarray(offset)
+
+  return { id, method: info.method, meta: info.meta, headers: info.headers, data }
+}
+
+/**
+ * Encodes a binary response into a frame buffer
+ */
+export function encodeBinaryResponse (id: string, data?: Uint8Array, error?: string): Uint8Array {
+  const idBytes = new TextEncoder().encode(id)
+  const hasError = error !== undefined
+  const payloadBytes = hasError ? new TextEncoder().encode(error) : (data ?? new Uint8Array(0))
+  const totalLength = 1 + 4 + idBytes.length + 1 + payloadBytes.length
+  const buffer = new Uint8Array(totalLength)
+  const view = new DataView(buffer.buffer)
+
+  let offset = 0
+  buffer[offset++] = FRAME_BINARY_RESP
+
+  view.setUint32(offset, idBytes.length, true)
+  offset += 4
+  buffer.set(idBytes, offset)
+  offset += idBytes.length
+
+  buffer[offset++] = hasError ? 1 : 0
+  buffer.set(payloadBytes, offset)
+
+  return buffer
+}
+
+/**
+ * Decodes a binary response from a frame buffer (without frame type byte)
+ */
+export function decodeBinaryResponse (buffer: Uint8Array): BinaryResponse {
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+  let offset = 0
+
+  const idLength = view.getUint32(offset, true)
+  offset += 4
+  const id = new TextDecoder().decode(buffer.subarray(offset, offset + idLength))
+  offset += idLength
+
+  const hasError = buffer[offset++] === 1
+  const payload = buffer.subarray(offset)
+
+  if (hasError) {
+    return { id, error: new TextDecoder().decode(payload) }
+  }
+  return { id, data: payload }
+}
 
 export type OperationHandler = (data: any[]) => void
 
@@ -102,6 +254,7 @@ export type OperationHandler = (data: any[]) => void
 export interface HelloRequest extends Request<any[]> {
   token: string
   sessionId?: string
+  clientHost?: string
 }
 /**
  * @public
@@ -147,10 +300,16 @@ export interface Session {
   // Session restore information
   sessionId: string
 
+  // Client host identifier (e.g., hostname or service name)
+  clientHost?: string
+
   requests: Map<string, RequestPromise>
 
   lastRequest: number
   lastPing: number
+
+  // Any user options, could be used to filter callbacks from server.
+  options: Record<string, any>
 }
 
 export class RequestPromise {

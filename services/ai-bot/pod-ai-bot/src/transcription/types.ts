@@ -1,10 +1,15 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
 /**
+ * Audio format type
+ */
+export type AudioFormat = 'ogg' | 'wav'
+
+/**
  * Transcription task from the queue (extended from base TranscriptionTask)
  */
 export interface TranscriptionQueueTask {
-  /** Storage object name for gzipped WAV file */
+  /** Storage object name for audio file */
   blobId: string
   /** Room name from LiveKit (format: workspaceUuid_roomName_roomId) */
   roomName: string
@@ -34,6 +39,8 @@ export interface TranscriptionQueueTask {
   channels: number
   /** Bits per sample (16) */
   bitsPerSample: number
+  /** Audio format (ogg for Opus, wav for PCM) */
+  audioFormat: AudioFormat
   /** Placeholder message ID for pending transcription (created when chunk received) */
   placeholderMessageId?: string
 }
@@ -92,6 +99,8 @@ export interface TranscriptionOptions {
   channels?: number
   /** Request word-level timestamps (needed for overlap handling) */
   wordTimestamps?: boolean
+  /** Audio format (ogg for Opus, wav for PCM) */
+  audioFormat: AudioFormat
 }
 
 /**
@@ -107,15 +116,16 @@ export interface TranscriptionProvider {
    * @param options - Transcription options
    * @returns Transcription result with text and optional timestamps
    */
-  transcribe: (audioData: Buffer, options?: TranscriptionOptions) => Promise<TranscriptionResult>
+  transcribe: (audioData: Buffer, options: TranscriptionOptions) => Promise<TranscriptionResult>
 }
 
 /**
  * Available STT provider types
  * - 'openai' - OpenAI Whisper API (also supports self-hosted OpenAI-compatible endpoints via url)
  * - 'deepgram' - Deepgram API
+ * - 'server' - Will host a clisr server, and call using round-robin to do a transcription on it.
  */
-export type SttProviderType = 'openai' | 'deepgram'
+export type SttProviderType = 'openai' | 'deepgram' | 'server'
 
 /**
  * VAD (Voice Activity Detection) analysis result
