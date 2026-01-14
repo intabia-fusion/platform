@@ -186,11 +186,17 @@
             options.maxWidth = `calc(${maxWidth}px - 1.5rem)`
             options.transform = 'translateY(-50%)'
           } else if (dir === 'bottom') {
-            const left = rectAnchor.x + rectAnchor.width / 2
-            const maxWidth = Math.min(left, docWidth - left)
+            const rightOffset = window.innerWidth - rectAnchor.right
+            let left = rectAnchor.x + rectAnchor.width / 2
+            let maxWidth = Math.min(left, docWidth - left)
+
+            if (rightOffset < 50 && maxWidth < clWidth && maxWidth < 100) {
+              maxWidth = Math.min(100, clWidth)
+              left = left - (left + maxWidth / 2 - window.innerWidth) - 5
+            }
 
             options.top = `calc(${rectAnchor.bottom}px + .5rem)`
-            options.left = rectAnchor.x + rectAnchor.width / 2 + 'px'
+            options.left = left + 'px'
             options.maxWidth = `calc(${maxWidth * 2}px - 1.5rem)`
             options.transform = 'translateX(-50%)'
           } else if (dir === 'top') {
