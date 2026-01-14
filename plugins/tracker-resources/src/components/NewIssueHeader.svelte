@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { AccountRole, Ref, Space } from '@hcengineering/core'
-  import { MultipleDraftController, createQuery, getClient } from '@hcengineering/presentation'
-  import { TrackerEvents } from '@hcengineering/tracker'
+  import { AccountRole, Ref, Space } from '@hcengineering/core'
+  import { MultipleDraftController, createQuery, getClient, isDisabled } from '@hcengineering/presentation'
+  import { TrackerEvents, trackerId } from '@hcengineering/tracker'
   import { HeaderButton, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
@@ -103,11 +103,15 @@
       keyBindingPromise: newIssueKeyBindingPromise,
       callback: newIssue
     },
-    {
-      id: tracker.string.Import,
-      label: tracker.string.Import,
-      accountRole: AccountRole.User,
-      callback: newIssue
-    }
+    ...(isDisabled(`${trackerId}.issueImport`)
+      ? []
+      : [
+          {
+            id: tracker.string.Import,
+            label: tracker.string.Import,
+            accountRole: AccountRole.User,
+            callback: newIssue
+          }
+        ])
   ]}
 />
