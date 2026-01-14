@@ -26,7 +26,7 @@
     IconSettings,
     IconToDetails
   } from '@hcengineering/ui'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
@@ -69,6 +69,10 @@
   export let searchValue: string = ''
 
   $: searchValue = $userSearch
+
+  onDestroy(() => {
+    userSearch.set('')
+  })
 </script>
 
 <Header
