@@ -34,15 +34,18 @@ import {
   hasAttributePresenter
 } from '@hcengineering/view-resources'
 import contact, { type Person } from '@hcengineering/contact'
-import { type IntlString } from '@hcengineering/platform'
+import { getResource, type IntlString } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui'
 import activity, {
   type ActivityMessage,
+  type ActivityMessagesFilter,
   type DisplayActivityMessage,
   type DisplayDocUpdateMessage,
   type DocAttributeUpdates,
   type DocUpdateMessage
 } from '@hcengineering/activity'
+
+import { ActivityDirection } from './types'
 
 // Use 5 minutes to combine similar messages
 const combineThresholdMs = 5 * 60 * 1000
@@ -477,10 +480,6 @@ export function pinnedFilter (message: ActivityMessage, _class?: Ref<Doc>): bool
   return message.isPinned === true
 }
 
-export function allFilter (): boolean {
-  return true
-}
-
 export interface LinkData {
   title?: string
   preposition: IntlString
@@ -550,4 +549,32 @@ export function isActivityMessageClass (_class?: Ref<Class<Doc>>): boolean {
   }
 
   return getClient().getHierarchy().isDerived(_class, activity.class.ActivityMessage)
+}
+
+export async function filterMessages (
+  _class: Ref<Class<Doc>>,
+  messages: ActivityMessage[],
+  filters: ActivityMessagesFilter[],
+  enabledFilters: Array<Ref<ActivityMessagesFilter>>,
+  direction: ActivityDirection
+): Promise<ActivityMessage[]> {
+  const sortOrder = direction === ActivityDirection.Backward ? SortingOrder.Descending : SortingOrder.Ascending
+  const baseComparator = (m1: ActivityMessage, m2: ActivityMessage): number =>
+    sortOrder === SortingOrder.Ascending ? activityMessagesComparator(m1, m2) : activityMessagesComparator(m2, m1)
+
+  const sorted = messages.sort((message1, message2) => {
+    const isPinned1 = message1.isPinned ?? false
+    const isPinned2 = message2.isPinned ?? false
+    return isPinned1 === isPinned2 ? baseComparator(message1, message2) : Number(isPinned2) - Number(isPinned1)
+  })
+
+  if (filters.every((it) => enabledFilters.includes(it._id))) return sorted
+
+  const selectedFilters = filters.filter((filter) => enabledFilters.includes(filter._id))
+  const filterActions: Array<(message: ActivityMessage, _class?: Ref<Doc>) => boolean> = []
+  for (const filter of selectedFilters) {
+    const fltr = await getResource(filter.filter)
+    filterActions.push(fltr)
+  }
+  return sorted.filter((message) => filterActions.some((f) => f(message, _class)))
 }

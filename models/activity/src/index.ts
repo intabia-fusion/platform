@@ -306,17 +306,6 @@ export function createModel (builder: Builder): void {
     presenter: activity.component.ActivityReferencePreview
   })
 
-  builder.createDoc(
-    activity.class.ActivityMessagesFilter,
-    core.space.Model,
-    {
-      label: activity.string.All,
-      position: 10,
-      filter: activity.filter.AllFilter
-    },
-    activity.ids.AllFilter
-  )
-
   builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
     label: activity.string.Attributes,
     position: 10,

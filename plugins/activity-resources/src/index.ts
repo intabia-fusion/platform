@@ -26,7 +26,7 @@ import DocUpdateMessagePreview from './components/doc-update-message/DocUpdateMe
 import ActivityReferencePreview from './components/activity-reference/ActivityReferencePreview.svelte'
 import ActivityInfoMessagePreview from './components/activity-info-message/ActivityInfoMessagePreview.svelte'
 
-import { attributesFilter, pinnedFilter, allFilter, referencesFilter } from './activityMessagesUtils'
+import { attributesFilter, pinnedFilter, referencesFilter } from './activityMessagesUtils'
 import { updateReferences } from './references'
 import {
   addReactionAction,
@@ -53,14 +53,14 @@ export { default as ActivityMessagePresenter } from './components/activity-messa
 export { default as ActivityExtension } from './components/ActivityExtension.svelte'
 export { default as ActivityDocLink } from './components/ActivityDocLink.svelte'
 export { default as ReactionPresenter } from './components/reactions/ReactionPresenter.svelte'
-export { default as ActivityFilter } from './components/ActivityFilter.svelte'
+// export { default as ActivityFilter } from './components/ActivityFilter.svelte'
 export { default as ActivityMessageNotificationLabel } from './components/activity-message/ActivityMessageNotificationLabel.svelte'
 export { default as ActivityMessageHeader } from './components/activity-message/ActivityMessageHeader.svelte'
-export { default as ActivityMessageAction } from './components/ActivityMessageAction.svelte'
-export { default as ActivityMessagesFilterPopup } from './components/FilterPopup.svelte'
+// export { default as ActivityMessageAction } from './components/ActivityMessageAction.svelte'
+export { default as ActivityMessagesFilterPopup } from './components/ActivityFilterPopup.svelte'
 export { default as ActivityReferencePresenter } from './components/activity-reference/ActivityReferencePresenter.svelte'
 export { default as ActivityMessagePreview } from './components/activity-message/ActivityMessagePreview.svelte'
-export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
+// export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
 export { default as BaseMessagePreview } from './components/activity-message/BaseMessagePreview.svelte'
 export { default as BasePreview } from './components/BasePreview.svelte'
 
@@ -80,7 +80,6 @@ export default async (): Promise<Resources> => ({
   filter: {
     AttributesFilter: attributesFilter,
     PinnedFilter: pinnedFilter,
-    AllFilter: allFilter,
     ReferencesFilter: referencesFilter
   },
   function: {

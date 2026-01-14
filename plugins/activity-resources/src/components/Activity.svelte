@@ -16,22 +16,24 @@
   import activity, {
     ActivityExtension,
     ActivityMessage,
+    ActivityMessagesFilter,
     ActivityReference,
-    DisplayActivityMessage,
     WithReferences
   } from '@hcengineering/activity'
   import { Class, Doc, getCurrentAccount, Ref, SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Grid, Lazy, location, Section, Spinner } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
 
   import { editingMessageStore, messageInFocus } from '../activity'
-  import { combineActivityMessages, sortActivityMessages } from '../activityMessagesUtils'
-  import { canGroupMessages, getActivityNewestFirst, getMessageFromLoc, getSpace } from '../utils'
+  import { combineActivityMessages, filterMessages } from '../activityMessagesUtils'
+  import { canGroupMessages, getMessageFromLoc, getSpace } from '../utils'
   import ActivityMessagePresenter from './activity-message/ActivityMessagePresenter.svelte'
   import ActivityExtensionComponent from './ActivityExtension.svelte'
-  import ActivityFilter from './ActivityFilter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import ActivityHeader from './ActivityHeader.svelte'
+  import { ActivityDirection } from '../types'
+  import { activityDirectionStore, initActivityDirection } from '../stores'
 
   export let object: WithReferences<Doc>
   export let showCommenInput: boolean = true
@@ -41,12 +43,17 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+  const filters = client
+    .getModel()
+    .findAllSync(activity.class.ActivityMessagesFilter, {})
+    .sort((a, b) => a.position - b.position)
+
   const activityMessagesQuery = createQuery()
   const refsQuery = createQuery()
 
+  let enabledFilters: Ref<ActivityMessagesFilter>[] = []
   let extensions: ActivityExtension[] = []
 
-  let filteredMessages: DisplayActivityMessage[] = []
   let allMessages: ActivityMessage[] = []
   let messages: ActivityMessage[] = []
   let refs: ActivityReference[] = []
@@ -64,6 +71,9 @@
 
   let prevContainerHeight = -1
   let prevContainerWidth = -1
+
+  let direction: ActivityDirection = $activityDirectionStore ?? initActivityDirection()
+  $: direction = $activityDirectionStore ?? initActivityDirection()
 
   const unsubscribe = messageInFocus.subscribe((id) => {
     if (id !== undefined) {
@@ -134,7 +144,7 @@
     const messagesElements = activityBox.getElementsByClassName('activityMessage')
     const msgElement = messagesElements[id as any] as HTMLElement | undefined
 
-    if (msgElement == null && filteredMessages.some((msg) => msg._id === id)) {
+    if (msgElement == null && allMessages.some((msg) => msg._id === id)) {
       tryScrollToMessage()
       return
     } else if (msgElement == null) {
@@ -171,8 +181,6 @@
     prevContainerHeight = container.clientHeight
     prevContainerWidth = container.clientWidth
   }
-
-  let isNewestFirst = getActivityNewestFirst()
 
   $: extensions = getExtensions(object._class)
 
@@ -213,7 +221,9 @@
     refsQuery.unsubscribe()
   }
 
-  $: allMessages = sortActivityMessages(messages.concat(refs))
+  $: void filterMessages(object._class, messages.concat(refs), filters, enabledFilters, direction).then((res) => {
+    allMessages = res
+  })
 
   function updateActivityMessages (objectId: Ref<Doc>, order: SortingOrder): void {
     isMessagesLoading = true
@@ -243,14 +253,17 @@
   }
 
   $: isLoading = isMessagesLoading || isRefsLoading
-  $: areMessagesLoaded = !isLoading && filteredMessages.length > 0
+  $: areMessagesLoaded = !isLoading && allMessages.length > 0
 
   $: if (activityBox && areMessagesLoaded) {
     shouldScroll = true
     void scrollToMessage(selectedMessageId)
   }
 
-  $: updateActivityMessages(object._id, isNewestFirst ? SortingOrder.Descending : SortingOrder.Ascending)
+  $: updateActivityMessages(
+    object._id,
+    direction === ActivityDirection.Backward ? SortingOrder.Descending : SortingOrder.Ascending
+  )
 
   export function editLastMessage (): void {
     if (isMessagesLoading) return
@@ -258,14 +271,14 @@
     const me = getCurrentAccount()
     const mySocialIds = new Set(me.socialIds)
 
-    const start = isNewestFirst ? 0 : filteredMessages.length - 1
-    const end = isNewestFirst ? filteredMessages.length : -1
-    const step = isNewestFirst ? 1 : -1
+    const start = direction === ActivityDirection.Backward ? 0 : allMessages.length - 1
+    const end = direction === ActivityDirection.Backward ? allMessages.length : -1
+    const step = direction === ActivityDirection.Backward ? 1 : -1
 
     let lastMessage: ActivityMessage | undefined
 
     for (let i = start; i !== end; i += step) {
-      const m = filteredMessages[i]
+      const m = allMessages[i]
       if (m.collection === 'comments' && m.createdBy != null && mySocialIds.has(m.createdBy)) {
         lastMessage = m
         break
@@ -281,7 +294,10 @@
   function handleKeyDown (e: KeyboardEvent): void {
     const key = e.key
 
-    if ((key === 'ArrowUp' && !isNewestFirst) || (key === 'ArrowDown' && isNewestFirst)) {
+    if (
+      (key === 'ArrowUp' && direction === ActivityDirection.Forward) ||
+      (key === 'ArrowDown' && direction === ActivityDirection.Backward)
+    ) {
       if ($editingMessageStore !== undefined) return
       editLastMessage()
     }
@@ -295,19 +311,17 @@
         <Spinner size="small" />
       </div>
     {/if}
-    <ActivityFilter
-      messages={allMessages}
-      {object}
-      on:update={(e) => {
-        filteredMessages = e.detail
+    <ActivityHeader
+      {filters}
+      on:update={(ev) => {
+        enabledFilters = ev.detail
       }}
-      bind:isNewestFirst
     />
   </svelte:fragment>
 
   <svelte:fragment slot="content">
-    {#if isNewestFirst && showCommenInput}
-      <div class="ref-input newest-first">
+    {#if direction === ActivityDirection.Backward && showCommenInput}
+      <div class="ref-input backward">
         <ActivityExtensionComponent
           kind="input"
           {extensions}
@@ -315,16 +329,11 @@
         />
       </div>
     {/if}
-    <div
-      class="p-activity select-text"
-      id={activity.string.Activity}
-      class:newest-first={isNewestFirst}
-      bind:this={activityBox}
-    >
-      {#if filteredMessages.length}
+    <div class="p-activity select-text {direction}" id={activity.string.Activity} bind:this={activityBox}>
+      {#if allMessages.length}
         <Grid column={1} rowGap={0}>
-          {#each filteredMessages as message, index (message._id)}
-            {@const canGroup = canGroupMessages(message, filteredMessages[index - 1])}
+          {#each allMessages as message, index (message._id)}
+            {@const canGroup = canGroupMessages(message, allMessages[index - 1])}
             {#if selectedMessageId}
               <ActivityMessagePresenter
                 value={message}
@@ -350,8 +359,8 @@
         </Grid>
       {/if}
     </div>
-    {#if showCommenInput && !isNewestFirst}
-      <div class="ref-input oldest-first">
+    {#if showCommenInput && direction === ActivityDirection.Forward}
+      <div class="ref-input forward">
         <ActivityExtensionComponent
           kind="input"
           {extensions}
@@ -365,21 +374,14 @@
 <style lang="scss">
   .ref-input {
     flex-shrink: 0;
-    &.newest-first {
-      margin-bottom: 1rem;
-      padding-top: 1rem;
-    }
-    &.oldest-first {
-      padding-bottom: 2.5rem;
+    &.backward {
+      margin-top: 1rem;
     }
   }
 
   .p-activity {
-    &.newest-first {
-      padding-bottom: 1.75rem;
-    }
-    &:not(.newest-first) {
-      margin: 1.75rem 0;
+    &.forward {
+      margin: 1rem 0;
     }
   }
 

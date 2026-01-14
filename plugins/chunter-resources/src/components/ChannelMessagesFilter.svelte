@@ -28,7 +28,7 @@
   const handleClick = (ev: MouseEvent): void => {
     showPopup(
       ActivityMessagesFilterPopup,
-      { filters, showToggle: false },
+      { filters, showDirectionSetting: false },
       eventToHTMLElement(ev),
       () => {},
       (res) => {
@@ -46,7 +46,7 @@
   icon={IconFilter}
   kind={'regular'}
   size={'medium'}
-  pressed={selectedFilters[0] !== activity.ids.AllFilter}
+  pressed={false}
   showTooltip={{ label: view.string.Filter }}
   on:click={handleClick}
 />

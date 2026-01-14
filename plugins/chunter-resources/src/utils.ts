@@ -282,13 +282,13 @@ export function filterChatMessages (
   filters: ActivityMessagesFilter[],
   filterResources: Map<Ref<ActivityMessagesFilter>, (message: ActivityMessage, _class?: Ref<Doc>) => boolean>,
   objectClass: Ref<Class<Doc>>,
-  selectedIds: Array<Ref<ActivityMessagesFilter>>
+  enabledFilters: Array<Ref<ActivityMessagesFilter>>
 ): DisplayActivityMessage[] {
-  if (selectedIds.length === 0 || selectedIds.includes(activity.ids.AllFilter)) {
+  if (enabledFilters.length === 0 || filters.every((it) => enabledFilters.includes(it._id))) {
     return messages
   }
 
-  const selectedFilters = filters.filter(({ _id }) => selectedIds.includes(_id))
+  const selectedFilters = filters.filter(({ _id }) => enabledFilters.includes(_id))
 
   if (selectedFilters.length === 0) {
     return messages

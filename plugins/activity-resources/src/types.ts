@@ -18,3 +18,8 @@ export interface MessageInlineAction {
   label: IntlString
   onClick?: () => Promise<void>
 }
+
+export enum ActivityDirection {
+  Forward = 'forward',
+  Backward = 'backward'
+}
