@@ -152,6 +152,7 @@
     "RoleLabel": "Role: {role}",
     "ForbidAttributeChanges": "Prohibir cambios: ",
     "AllowAttributeChanges": "Permitir cambios: ",
-    "RelationshipTable": "Tabla de relaciones"
+    "RelationshipTable": "Tabla de relaciones",
+    "GroupAndSort": "Agrupar y ordenar"
   }
 }

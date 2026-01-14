@@ -264,7 +264,8 @@ const view = plugin(viewId, {
     ForbidAttributeChanges: '' as IntlString,
     AllowAttributeChanges: '' as IntlString,
     NoCreatePermissionTitle: '' as IntlString,
-    CopyAsMarkdownTable: '' as IntlString
+    CopyAsMarkdownTable: '' as IntlString,
+    GroupAndSort: '' as IntlString
   },
   icon: {
     Table: '' as Asset,

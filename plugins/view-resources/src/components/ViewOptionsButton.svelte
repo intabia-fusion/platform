@@ -111,7 +111,7 @@
     size={'small'}
     hasMenu
     {pressed}
-    tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
+    tooltip={{ label: view.string.GroupAndSort, direction: 'bottom' }}
     dataId={'btn-viewOptions'}
     bind:element={btn}
     on:click={clickHandler}

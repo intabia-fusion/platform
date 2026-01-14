@@ -157,6 +157,7 @@
     "RoleLabel": "Role: {role}",
     "ForbidAttributeChanges": "Zakázat změny: ",
     "AllowAttributeChanges": "Povolit změny: ",
-    "RelationshipTable": "Tabulka vztahů"
+    "RelationshipTable": "Tabulka vztahů",
+    "GroupAndSort": "Seskupit a seřadit"
   }
 }
