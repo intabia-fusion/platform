@@ -1,20 +1,12 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
-import { gunzip as _gunzip } from 'zlib'
-
 import { MeasureContext, Ref, withContext, WorkspaceUuid, type WorkspaceIds } from '@hcengineering/core'
 import { Room } from '@hcengineering/love'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 
-import { TranscriptionQueueTask, TranscriptionProvider, TranscriptionConfig } from './types'
-import { analyzeAudio } from './vad'
-import { normalizeAudio } from './normalize'
-import { createTranscriptionProvider } from './index'
-import { promisify } from 'util'
+import { TranscriptionQueueTask, TranscriptionProvider, TranscriptionConfig, AudioFormat } from './types'
 import path from 'path'
 import { writeFile } from 'fs/promises'
-
-const gunzip = promisify(_gunzip)
 
 /**
  * Default retry configuration
@@ -227,12 +219,12 @@ function classifyError (err: Error): TranscriptionErrorType {
  * - Heartbeat during retries to keep queue healthy
  */
 export class TranscriptionConsumer {
-  private readonly provider: TranscriptionProvider
   private readonly retryConfig: RetryConfig
 
   constructor (
     private readonly ctx: MeasureContext,
     private readonly config: TranscriptionConfig,
+    private readonly provider: TranscriptionProvider,
     private readonly storageAdapter: StorageAdapter,
     private readonly getWorkspaceStorage: GetWorkspaceStorageCallback,
     private readonly sendTranscript: TranscriptSendCallback,
@@ -242,7 +234,6 @@ export class TranscriptionConsumer {
     private readonly debugDir?: string,
     retryConfig?: Partial<RetryConfig>
   ) {
-    this.provider = createTranscriptionProvider(ctx, config)
     this.retryConfig = { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
   }
 
@@ -272,9 +263,9 @@ export class TranscriptionConsumer {
         return
       }
 
-      // Load gzipped WAV from storage
-      const gzipData = await this.loadFromStorage(ctx, wsInfo.wsIds, task.blobId)
-      if (gzipData === undefined) {
+      // Load audio from storage (supports both gzip WAV and OGG Opus formats)
+      const rawAudioData = await this.loadFromStorage(ctx, wsInfo.wsIds, task.blobId)
+      if (rawAudioData === undefined) {
         // File not found - send to dead letter queue and log error
         const errorMsg = `Audio file not found in storage: ${task.blobId}`
         this.ctx.error(errorMsg, {
@@ -287,36 +278,18 @@ export class TranscriptionConsumer {
         return
       }
 
-      // Decompress gzip to WAV
-      let wavData: Buffer
-      try {
-        wavData = await gunzip(gzipData)
-      } catch (err: any) {
-        const errorMsg = `Failed to decompress audio: ${err.message}`
-        this.ctx.error(errorMsg, { workspace, blobId: task.blobId })
-        await this.handlePermanentError(ctx, workspace, task, errorMsg)
-        return
-      }
+      // Audio format is provided by love-agent
+      const audioFormat: AudioFormat = task.audioFormat ?? 'ogg'
+      const audioData = rawAudioData
 
-      // Verify speech presence with VAD (don't trust task.hasSpeech)
-      const vadResult = analyzeAudio(ctx, wavData, this.config.vadRmsThreshold, this.config.vadSpeechRatioThreshold)
-
-      if (!vadResult.hasSpeech) {
-        this.ctx.info('No speech detected by VAD, skipping transcription', {
-          workspace,
-          blobId: task.blobId,
-          participant: task.participant,
-          originalHasSpeech: task.hasSpeech,
-          vadRms: vadResult.rmsAmplitude.toFixed(4),
-          vadSpeechRatio: vadResult.speechRatio.toFixed(4)
-        })
-      }
-
-      // Normalize audio before transcription
-      const normalizedWavData = ctx.withSync('normalizeAudio', {}, () => normalizeAudio(wavData))
+      ctx.info('Processing audio for transcription', {
+        format: audioFormat,
+        size: audioData.length,
+        blobId: task.blobId
+      })
 
       // Transcribe audio with retry logic
-      const result = await this.transcribeWithRetry(ctx, normalizedWavData, task, workspace, control)
+      const result = await this.transcribeWithRetry(ctx, audioData, task, workspace, control)
 
       if (result === undefined) {
         // All retries exhausted, already handled in transcribeWithRetry
@@ -338,8 +311,9 @@ export class TranscriptionConsumer {
       if (this.debugDir !== '' && this.debugDir != null) {
         // We need to store chunk and transcription to testing file.
         const blName = path.join(this.debugDir, workspace, task.participant, `${task.blobId}_${Date.now()}`)
-        await writeFile(blName + '.wav', wavData)
-        await writeFile(blName + '.json', JSON.stringify({ result, finalText }))
+        const ext = audioFormat === 'ogg' ? '.ogg' : '.wav'
+        await writeFile(blName + ext, audioData)
+        await writeFile(blName + '.json', JSON.stringify({ result, finalText, format: audioFormat }))
       }
 
       if (finalText.trim() === '') {
@@ -457,7 +431,8 @@ export class TranscriptionConsumer {
           this.provider.transcribe(audioData, {
             wordTimestamps: true,
             sampleRate: task.sampleRate,
-            channels: task.channels
+            channels: task.channels,
+            audioFormat: task.audioFormat
           })
         )
         return result
@@ -672,6 +647,7 @@ export class TranscriptionConsumer {
 export function createTranscriptionConsumer (
   ctx: MeasureContext,
   config: TranscriptionConfig,
+  provider: TranscriptionProvider,
   storageAdapter: StorageAdapter,
   getWorkspaceStorage: GetWorkspaceStorageCallback,
   sendTranscript: TranscriptSendCallback,
@@ -684,6 +660,7 @@ export function createTranscriptionConsumer (
   return new TranscriptionConsumer(
     ctx,
     config,
+    provider,
     storageAdapter,
     getWorkspaceStorage,
     sendTranscript,

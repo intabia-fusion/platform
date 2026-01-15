@@ -20,7 +20,7 @@
     "docker:push": "../../../common/scripts/docker_tag.sh intabiafusion/love-agent",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts",
-    "format": "prettier --write src/**/*.ts && pnpm lint:fix",
+    "format": "prettier --write src/**/*.ts && rushx lint:fix && echo 'Formatted'",
     "_phase:format": "rushx format",
     "test": "jest --passWithNoTests --coverage",
     "dev": "node esbuild.config.cjs && node bundle/agent.js dev",

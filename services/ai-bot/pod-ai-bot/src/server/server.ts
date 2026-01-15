@@ -54,9 +54,11 @@ const wrapRequest = (fn: AsyncRequestHandler) => (req: Request, res: Response, n
   void handleRequest(fn, req, res, next)
 }
 
-export function createServer (controller: AIControl, ctx: MeasureContext): Express {
-  const app = express()
-  app.use(cors())
+export function createServer (controller: AIControl, ctx: MeasureContext, app?: Express): Express {
+  if (app === undefined) {
+    app = express()
+    app.use(cors())
+  }
   app.use((req, res, next) => {
     res.setHeader('Connection', 'keep-alive')
     res.setHeader('Keep-Alive', 'timeout=5, max=1000')
@@ -64,7 +66,8 @@ export function createServer (controller: AIControl, ctx: MeasureContext): Expre
   })
 
   // Raw body parser for /love/send_raw endpoint (must be before express.json())
-  app.use('/love/send_raw', raw({ type: 'application/octet-stream', limit: '10mb' }))
+  // Supports both legacy gzip (application/octet-stream) and new opus (audio/ogg) formats
+  app.use('/love/send_raw', raw({ type: ['application/octet-stream', 'audio/ogg'], limit: '10mb' }))
 
   // Note: /love/send_session uses streaming, no body parser needed
 
@@ -250,6 +253,7 @@ export function createServer (controller: AIControl, ctx: MeasureContext): Expre
       const sampleRate = parseInt((req.headers['x-sample-rate'] as string) ?? '16000', 10)
       const channels = parseInt((req.headers['x-channels'] as string) ?? '1', 10)
       const bitsPerSample = parseInt((req.headers['x-bits-per-sample'] as string) ?? '16', 10)
+      const audioFormat = ((req.headers['x-audio-format'] as string) ?? 'ogg') as 'ogg' | 'wav'
 
       if (roomName === undefined || participant === undefined) {
         throw new ApiError(400, 'Missing required headers: X-Room-Name, X-Participant')
@@ -267,7 +271,8 @@ export function createServer (controller: AIControl, ctx: MeasureContext): Expre
         rmsAmplitude,
         sampleRate,
         channels,
-        bitsPerSample
+        bitsPerSample,
+        audioFormat
       })
 
       res.status(200)

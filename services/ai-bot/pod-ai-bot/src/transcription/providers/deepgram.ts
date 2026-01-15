@@ -1,7 +1,7 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
 import { MeasureContext } from '@hcengineering/core'
-import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult } from '../types'
+import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult, AudioFormat } from '../types'
 
 /**
  * Deepgram pre-recorded API response structure
@@ -90,7 +90,18 @@ export class DeepgramProvider implements TranscriptionProvider {
     private readonly model: string = 'nova-2'
   ) {}
 
-  async transcribe (audioData: Buffer, options?: TranscriptionOptions): Promise<TranscriptionResult> {
+  /**
+   * Get content type and encoding for audio format
+   */
+  private getFormatInfo (format: AudioFormat): { contentType: string, encoding?: string } {
+    if (format === 'wav') {
+      return { contentType: 'audio/wav', encoding: 'linear16' }
+    }
+    // OGG Opus is the default format from love-agent
+    return { contentType: 'audio/ogg' }
+  }
+
+  async transcribe (audioData: Buffer, options: TranscriptionOptions): Promise<TranscriptionResult> {
     const startTime = Date.now()
 
     try {
@@ -109,24 +120,32 @@ export class DeepgramProvider implements TranscriptionProvider {
         params.set('detect_language', 'true')
       }
 
-      // Audio encoding parameters
-      if (options?.sampleRate !== undefined) {
-        params.set('sample_rate', options.sampleRate.toString())
-      }
-      if (options?.channels !== undefined) {
-        params.set('channels', options.channels.toString())
-      }
+      const { contentType, encoding } = this.getFormatInfo(options.audioFormat)
 
-      // Always request encoding=linear16 for WAV files
-      params.set('encoding', 'linear16')
+      // Audio encoding parameters (only for WAV)
+      if (encoding !== undefined) {
+        params.set('encoding', encoding)
+        if (options?.sampleRate !== undefined) {
+          params.set('sample_rate', options.sampleRate.toString())
+        }
+        if (options?.channels !== undefined) {
+          params.set('channels', options.channels.toString())
+        }
+      }
 
       const url = `${this.apiUrl}?${params.toString()}`
+
+      this.ctx.info('Sending audio to Deepgram', {
+        contentType,
+        size: audioData.length,
+        model: this.model
+      })
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           Authorization: `Token ${this.apiKey}`,
-          'Content-Type': 'audio/wav'
+          'Content-Type': contentType
         },
         body: new Uint8Array(audioData)
       })

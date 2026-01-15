@@ -21,7 +21,6 @@ import { AudioStream, RemoteParticipant, RemoteTrack, RemoteTrackPublication, Ro
 import { randomUUID } from 'crypto'
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, unlinkSync, writeSync } from 'fs'
 import { join } from 'path'
-import { gzipSync } from 'zlib'
 
 import { Stt } from '../type.js'
 import config from '../config.js'
@@ -43,7 +42,7 @@ import { analyzeAudioBuffer, isFrameSpeech } from './audio-analysis.js'
 
 import { createAdaptiveVADState, updateNoiseFloor, updateSpeechRate, findOptimalCutPoint } from './chunk-detection.js'
 
-import { createWavHeader, updateWavHeader, convertWavToOggOpus, sanitizePath } from './wav-utils.js'
+import { createWavHeader, updateWavHeader, convertWavToOggOpus, sanitizePath, normalizeWavAudio } from './wav-utils.js'
 
 /**
  * Get participant display name, handling empty string case
@@ -68,6 +67,7 @@ export class STT implements Stt {
   private readonly participantBySid = new Map<string, RemoteParticipant>()
   private readonly stoppedSids = new Set<string>()
   private readonly pendingFinalizations = new Map<string, Promise<void>>()
+  private readonly pendingChunkFinalizations = new Map<string, Promise<void>[]>()
 
   private readonly sessionBySid = new Map<string, any>()
   private readonly timingBySid = new Map<string, StreamTiming>()
@@ -192,7 +192,16 @@ export class STT implements Stt {
         ;(stream as any).close?.()
       }
 
+      // Start final chunk finalization
       this.finalizeChunk(sid)
+
+      // Wait for all pending chunk finalizations to complete
+      const pendingChunks = this.pendingChunkFinalizations.get(sid) ?? []
+      if (pendingChunks.length > 0) {
+        await Promise.all(pendingChunks)
+      }
+      this.pendingChunkFinalizations.delete(sid)
+
       // Wait for session finalization to complete (including ffmpeg conversion and upload)
       await this.finalizeSession(sid)
 
@@ -298,37 +307,31 @@ export class STT implements Stt {
           rmsAmplitude
         }
 
-        if (chunkState.chunkFilePath !== null) {
-          try {
-            const wavData = readFileSync(chunkState.chunkFilePath)
-            const gzippedData = gzipSync(wavData, { level: 6 })
+        const wavFilePath = chunkState.chunkFilePath
+        const chunkIndex = chunkState.chunkIndex
 
-            void this.sendChunkToPlatform(gzippedData, sid, metadata).catch((e) => {
-              console.error('Error sending chunk to platform', { error: e, sid })
-            })
+        if (wavFilePath !== null) {
+          // Start async conversion and upload, track the promise
+          const finalizationPromise = this.convertAndSendChunk(wavFilePath, sid, metadata, chunkIndex, chunkDurationMs)
 
-            if (!config.Debug) {
-              unlinkSync(chunkState.chunkFilePath)
-            }
-
-            console.info('Finalized chunk', {
-              sid,
-              chunkIndex: chunkState.chunkIndex,
-              filePath: chunkState.chunkFilePath,
-              dataLength: chunkState.chunkDataLength,
-              durationMs: chunkDurationMs,
-              participant: metadata.participant,
-              participantName: metadata.participantName,
-              endReason,
-              speechRatio: speechRatio.toFixed(2),
-              rmsAmplitude: rmsAmplitude.toFixed(4),
-              originalSize: wavData.length,
-              compressedSize: gzippedData.length,
-              compressionRatio: ((1 - gzippedData.length / wavData.length) * 100).toFixed(1) + '%'
-            })
-          } catch (e) {
-            console.error('Error compressing and sending chunk', { error: e, sid })
+          // Track pending chunk finalizations
+          let pending = this.pendingChunkFinalizations.get(sid)
+          if (pending === undefined) {
+            pending = []
+            this.pendingChunkFinalizations.set(sid, pending)
           }
+          pending.push(finalizationPromise)
+
+          // Remove from pending when done (fire-and-forget cleanup)
+          void finalizationPromise.finally(() => {
+            const currentPending = this.pendingChunkFinalizations.get(sid)
+            if (currentPending !== undefined) {
+              const index = currentPending.indexOf(finalizationPromise)
+              if (index > -1) {
+                void currentPending.splice(index, 1)
+              }
+            }
+          })
         }
       } catch (e) {
         console.error('Error finalizing chunk', { error: e, sid })
@@ -346,6 +349,73 @@ export class STT implements Stt {
       chunkState.consecutiveSpeechMs = 0
       chunkState.consecutiveSilenceMs = 0
       chunkState.chunkIndex++
+    }
+  }
+
+  private async convertAndSendChunk (
+    wavFilePath: string,
+    sid: string,
+    metadata: ChunkMetadata,
+    chunkIndex: number,
+    chunkDurationMs: number
+  ): Promise<void> {
+    const oggFilePath = wavFilePath.replace('.wav', '.ogg')
+
+    try {
+      // Read and normalize WAV before conversion
+      const rawWavData = readFileSync(wavFilePath)
+      const normalizedWavData = normalizeWavAudio(rawWavData)
+
+      // Write normalized WAV back if it changed
+      if (normalizedWavData !== rawWavData) {
+        const { writeFileSync } = await import('fs')
+        writeFileSync(wavFilePath, normalizedWavData)
+      }
+
+      // Convert normalized WAV to OGG Opus
+      await convertWavToOggOpus(wavFilePath, oggFilePath)
+
+      const wavSize = normalizedWavData.length
+      const oggData = readFileSync(oggFilePath)
+
+      // Send to platform
+      await this.sendChunkToPlatform(oggData, sid, metadata)
+
+      console.info('Finalized chunk (opus)', {
+        sid,
+        chunkIndex,
+        filePath: wavFilePath,
+        durationMs: chunkDurationMs,
+        participant: metadata.participant,
+        participantName: metadata.participantName,
+        endReason: metadata.endReason,
+        speechRatio: metadata.speechRatio.toFixed(2),
+        rmsAmplitude: metadata.rmsAmplitude.toFixed(4),
+        originalSize: wavSize,
+        compressedSize: oggData.length,
+        compressionRatio: ((1 - oggData.length / wavSize) * 100).toFixed(1) + '%'
+      })
+
+      // Cleanup files
+      if (!config.Debug) {
+        try {
+          unlinkSync(wavFilePath)
+        } catch {}
+        try {
+          unlinkSync(oggFilePath)
+        } catch {}
+      }
+    } catch (e) {
+      console.error('Error converting/sending chunk', { error: e, sid, chunkIndex })
+      // Cleanup on error
+      if (!config.Debug) {
+        try {
+          unlinkSync(wavFilePath)
+        } catch {}
+        try {
+          unlinkSync(oggFilePath)
+        } catch {}
+      }
     }
   }
 
@@ -840,13 +910,13 @@ export class STT implements Stt {
     })
   }
 
-  async sendChunkToPlatform (gzipData: Buffer, sid: string, metadata: ChunkMetadata): Promise<void> {
+  async sendChunkToPlatform (opusData: Buffer, sid: string, metadata: ChunkMetadata): Promise<void> {
     try {
       const response = await fetch(`${config.PlatformUrl}/love/send_raw`, {
         method: 'POST',
         keepalive: true,
         headers: {
-          'Content-Type': 'application/octet-stream',
+          'Content-Type': 'audio/ogg',
           Authorization: 'Bearer ' + this.token,
           'X-Room-Name': encodeURIComponent(this.room.name ?? ''),
           'X-Participant': metadata.participant,
@@ -857,9 +927,10 @@ export class STT implements Stt {
           'X-Sample-Rate': metadata.sampleRate.toString(),
           'X-Channels': metadata.channels.toString(),
           'X-Bits-Per-Sample': metadata.bitsPerSample.toString(),
-          'X-End-Reason': metadata.endReason
+          'X-End-Reason': metadata.endReason,
+          'X-Audio-Format': 'ogg'
         },
-        body: new Uint8Array(gzipData)
+        body: new Uint8Array(opusData)
       })
 
       if (!response.ok) {

@@ -1,7 +1,7 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
 import { concatLink, MeasureContext } from '@hcengineering/core'
-import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult } from '../types'
+import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult, AudioFormat } from '../types'
 
 /**
  * OpenAI Whisper API response with verbose JSON format
@@ -61,20 +61,39 @@ export class OpenAIWhisperProvider implements TranscriptionProvider {
     }
   }
 
-  async transcribe (audioData: Buffer, options?: TranscriptionOptions): Promise<TranscriptionResult> {
+  /**
+   * Get file info for audio format
+   */
+  private getFormatInfo (format: AudioFormat): { filename: string, contentType: string } {
+    if (format === 'wav') {
+      return { filename: 'audio.wav', contentType: 'audio/wav' }
+    }
+    // OGG Opus is the default format from love-agent
+    return { filename: 'audio.ogg', contentType: 'audio/ogg' }
+  }
+
+  async transcribe (audioData: Buffer, options: TranscriptionOptions): Promise<TranscriptionResult> {
     const startTime = Date.now()
 
     try {
+      const formatInfo = this.getFormatInfo(options.audioFormat)
+
+      this.ctx.info('Sending audio to OpenAI Whisper', {
+        format: formatInfo.filename,
+        size: audioData.length,
+        model: this.model
+      })
+
       // Build multipart form data
       const boundary = `----WebKitFormBoundary${Date.now().toString(16)}`
       const formParts: Buffer[] = []
 
-      // Add file field
+      // Add file field with detected format
       formParts.push(
         Buffer.from(
           `--${boundary}\r\n` +
-            'Content-Disposition: form-data; name="file"; filename="audio.wav"\r\n' +
-            'Content-Type: audio/wav\r\n\r\n'
+            `Content-Disposition: form-data; name="file"; filename="${formatInfo.filename}"\r\n` +
+            `Content-Type: ${formatInfo.contentType}\r\n\r\n`
         )
       )
       formParts.push(audioData)

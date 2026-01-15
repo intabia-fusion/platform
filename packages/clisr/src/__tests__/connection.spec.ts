@@ -3,7 +3,7 @@
 // Comments are in English as per repository conventions.
 
 import { ClisrClient } from '../client'
-import { RequestPromise, ClientSocketReadyState, pingConst, FRAME_PING, FRAME_PONG } from '../types'
+import { RequestPromise, ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
 import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 
 describe('ClisrClient.handleMsg behavior', () => {
@@ -95,7 +95,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     ;(client as any).websocket = { send: wsSend, close: wsClose, readyState: ClientSocketReadyState.OPEN }
     ;(client as any).helloReceived = true
 
-    const opSpy = jest.fn(async (method: string, params: any[]) => {
+    const opSpy = jest.fn(async (_ctx: MeasureContext, method: string, params: any[]) => {
       // Simulate doing work then calling the provided send callback
       return { answer: 'ok' }
     })
@@ -113,7 +113,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     // allow pending microtasks / native compression callbacks
     await new Promise((resolve) => setImmediate(resolve))
 
-    expect(opSpy).toHaveBeenCalledWith('call-me', ['p'])
+    expect(opSpy).toHaveBeenCalledWith(expect.anything(), 'call-me', ['p'])
 
     // Accept several possible successful outcomes:
     // - wsSend was invoked, or
@@ -315,19 +315,6 @@ describe('ClisrClient.handleMsg behavior', () => {
     await client.close()
   })
 
-  it('sendRequest ping sends ping and returns undefined', async () => {
-    const client = createClient()
-    const wsSend = jest.fn()
-    ;(client as any).websocket = { send: wsSend, close: jest.fn(), readyState: ClientSocketReadyState.OPEN }
-    ;(client as any).helloReceived = true
-    const res = await (client as any).sendRequest({ method: pingConst, params: [] })
-    expect(res).toBeUndefined()
-    expect(wsSend).toHaveBeenCalled()
-    const arg = wsSend.mock.calls[0][0]
-    expect(arg[0]).toBe(FRAME_PING)
-    await client.close()
-  })
-
   it('reconnect scheduling triggers sendData when retry allows', async () => {
     const client = createClient()
     const wsSend = jest.fn()
@@ -431,30 +418,5 @@ describe('ClisrClient.handleMsg behavior', () => {
     const res = (client as any).checkArrayBufferPing(pongArr)
     expect(res).toBe(true)
     expect((client as any).pingResponse).toBeGreaterThanOrEqual(before)
-  })
-
-  it('logs compressed request info on successful compressed send', async () => {
-    const client = createClient()
-    const infoSpy = jest.spyOn((client as any).ctx, 'info')
-    const wsSend = jest.fn()
-    ;(client as any).websocket = { send: wsSend, close: jest.fn(), readyState: ClientSocketReadyState.OPEN }
-    ;(client as any).helloReceived = true
-    const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('d'))
-
-    // Create a large payload to ensure compression is triggered (>1024 bytes)
-    const largePayload = 'x'.repeat(1025) // Ensure it's larger than 1024 bytes
-    const p = (client as any).sendRequest({ method: 'log-me', params: [largePayload], overrideId: 999 })
-    await new Promise((resolve) => setImmediate(resolve))
-    expect(wsSend).toHaveBeenCalled()
-    // Assert that compressed send info was logged
-    const logged = infoSpy.mock.calls.some((c) => String(c[0]).includes('sent request (compressed)'))
-    expect(logged).toBe(true)
-
-    compressSpy.mockRestore()
-    const id = Array.from((client as any).requests.keys())[0]
-    ;(client as any).requests.get(id).resolve({ ok: true })
-    await p
-    infoSpy.mockRestore()
-    await client.close()
   })
 })

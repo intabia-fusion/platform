@@ -21,7 +21,11 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "declarationDir": "./types",
-    "tsBuildInfoFile": ".build/build.tsbuildinfo"
+    "tsBuildInfoFile": ".build/build.tsbuildinfo",
+    "baseUrl": ".",
+    "paths": {
+      "@hcengineering/audio-dsp": ["../../../packages/audio-dsp/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

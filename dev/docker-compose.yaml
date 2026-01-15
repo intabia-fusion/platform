@@ -498,6 +498,8 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - SERVER_SECRET=secret
       - SERVICE_ID=ai-bot-service
+      - API_TOKEN=api-secret
+      - MODE=queue
 
       # Bot Identity Configuration
       - FIRST_NAME=Julia
@@ -518,18 +520,18 @@ services:
       # - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
 
       # GigaChat Configuration (only if using GigaChat)
-      - LLM_PROVIDER=gigachat
-      - GIGACHAT_CREDENTIALS=${GIGACHAT_AUTH_KEY}
-      - GIGACHAT_SCOPE=GIGACHAT_API_PERS
-      - GIGACHAT_MODEL=GigaChat-2
-      - GIGACHAT_BASE_URL=https://gigachat.devices.sberbank.ru/api/v1/
-      - GIGACHAT_TIMEOUT=600
+      - LLM_PROVIDER=server # gigachat
+      # - GIGACHAT_CREDENTIALS=${GIGACHAT_AUTH_KEY}
+      # - GIGACHAT_SCOPE=GIGACHAT_API_PERS
+      # - GIGACHAT_MODEL=GigaChat-2
+      # - GIGACHAT_BASE_URL=https://gigachat.devices.sberbank.ru/api/v1/
+      # - GIGACHAT_TIMEOUT=600
 
       # STT Configuration
-      - STT_PROVIDER=openai
-      - STT_URL=http://huly.local:9007
-      - STT_API_KEY=key
-      - STT_MODEL=
+      - STT_PROVIDER=server #openai
+      # - STT_URL=http://huly.local:9007
+      # - STT_API_KEY=key
+      # - STT_MODEL=
 
       # Deepgram Configuration (only if using Deepgram)
       # - DEEPGRAM_API_KEY=your-deepgram-api-key
@@ -554,6 +556,73 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - CHUNK_STORAGE_CONFIG=${CHUNK_STORAGE_CONFIG}
+      - STATS_URL=http://huly.local:4900
+  aibot_client_llm:
+    image: intabiafusion/ai-bot
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    restart: unless-stopped
+    environment:
+      - API_TOKEN=api-secret
+      - MODE=client
+      - SERVER_URL=ws://huly.local:4010
+      # LLM Configuration
+      - LLM_PROVIDER=openai
+      - OPENAI_API_KEY=token
+      # - OPENAI_MODEL=gpt-4o-mini
+      - OPENAI_BASE_URL=http://huly.local:1234/v1/
+      - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
+      - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
+
+      # GigaChat Configuration (only if using GigaChat)
+      # - LLM_PROVIDER=gigachat
+      # - GIGACHAT_CREDENTIALS=${GIGACHAT_AUTH_KEY}
+      # - GIGACHAT_SCOPE=GIGACHAT_API_PERS
+      # - GIGACHAT_MODEL=GigaChat-2
+      # - GIGACHAT_BASE_URL=https://gigachat.devices.sberbank.ru/api/v1/
+      # - GIGACHAT_TIMEOUT=600
+
+      # Content and History Limits
+      - MAX_CONTENT_TOKENS=12800
+      - MAX_HISTORY_RECORDS=500
+
+      - STATS_URL=http://huly.local:4900
+
+      - STT_PROVIDER=
+  aibot_client_stt:
+    image: intabiafusion/ai-bot
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    restart: unless-stopped
+    environment:
+      - API_TOKEN=api-secret
+      - MODE=client
+      - SERVER_URL=ws://huly.local:4010
+
+      - LLM_PROVIDER=none
+
+      # STT Configuration
+      - STT_PROVIDER=openai
+      - STT_URL=http://huly.local:9007
+      - STT_API_KEY=key
+      - STT_MODEL=
+
+      # Deepgram Configuration (only if using Deepgram)
+      # - DEEPGRAM_API_KEY=your-deepgram-api-key
+      # - DEEPGRAM_PROJECT_ID=your-project-id
+      # - DEEPGRAM_TAG=tag
+      # - DEEPGRAM_POLL_INTERVAL_MINUTES=60
+
+      # VAD Configuration
+      - VAD_RMS_THRESHOLD=0.02
+      - VAD_SPEECH_RATIO_THRESHOLD=0.1
+
+      - DATALAB_API_KEY=
+
+      # Content and History Limits
+      - MAX_CONTENT_TOKENS=12800
+      - MAX_HISTORY_RECORDS=500
+
       - STATS_URL=http://huly.local:4900
   analytics:
     image: intabiafusion/analytics-collector

@@ -30,19 +30,23 @@ import { WebSocketServer, type RawData, type WebSocket } from 'ws'
 
 import {
   type ConnectionSocket,
-  pingConst,
-  pongConst,
   FRAME_PING,
   FRAME_PONG,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
   FRAME_MSGPACK,
   FRAME_MSGPACK_SNAPPY,
+  FRAME_BINARY,
+  FRAME_BINARY_RESP,
   RequestPromise,
   type Session,
   type HelloRequest,
   type HelloResponse,
-  callbackMethod
+  callbackMethod,
+  decodeBinaryRequest,
+  encodeBinaryResponse,
+  encodeBinaryRequest,
+  decodeBinaryResponse
 } from './types'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
@@ -94,7 +98,14 @@ export class ClisrServer {
 
   private readonly requests = new Map<ReqId, RequestPromise>()
 
-  public handlers: ((op: any) => Promise<any>)[] = []
+  // Binary request handler for incoming binary requests from clients
+  // Can return Uint8Array for binary response, or any other type for JSON response
+  public binaryHandler?: (
+    session: Session,
+    method: string,
+    data: Uint8Array,
+    headers?: Record<string, any>
+  ) => Promise<Uint8Array | any>
 
   // Allow overriding compression functions (default to snappy).
   // Tests can override the instance methods instead of mocking the native module.
@@ -113,7 +124,8 @@ export class ClisrServer {
     readonly ctx: MeasureContext,
     readonly validateToken: (token: string) => Promise<boolean>,
     readonly serverVersion: string,
-    readonly app: Express = express()
+    readonly app: Express = express(),
+    readonly messageHandler?: (ctx: MeasureContext, method: string, params: any[], session: Session) => Promise<any>
   ) {}
 
   async handleTick (): Promise<void> {
@@ -147,7 +159,7 @@ export class ClisrServer {
     this.sessions.delete(sid)
     session.socket.close()
     this.reconnectQueue.set(sid, session)
-    this.ctx.info('session timed out', { sessionId: session.sessionId })
+    this.ctx.info('session timed out', { sessionId: session.sessionId, client: session.clientHost })
     for (const eh of this.eventHandlers) {
       try {
         await eh(session.sessionId, 'timeout')
@@ -160,10 +172,11 @@ export class ClisrServer {
   private async handleSessionDisconnect (sessionId: string, session: Session): Promise<void> {
     this.reconnectQueue.delete(sessionId)
     this.bySessionId.delete(session.sessionId)
-    this.ctx.info('session reconnect timed out', { sessionId: session.sessionId })
+    const clientInfo = session.clientHost ?? session.sessionId
+    this.ctx.info('session reconnect timed out', { sessionId: session.sessionId, client: session.clientHost })
 
     for (const rr of session.requests.values()) {
-      rr.reject(new Error('Session reconnect timeout'))
+      rr.reject(new Error(`Session reconnect timeout (client: ${clientInfo})`))
     }
 
     for (const eh of this.eventHandlers) {
@@ -237,18 +250,39 @@ export class ClisrServer {
   // Perform a round robin call to one of the connected clients and wait for response from it
   // if client is not responding for a timeout, try next one client.
   async request (ctx: MeasureContext, method: string, params: any[]): Promise<any> {
+    return await this.requestWithFilter(ctx, method, params)
+  }
+
+  /**
+   * Perform a round robin call to one of the connected clients that matches the filter.
+   * If sessionFilter is provided, only sessions that pass the filter will be considered.
+   * @param ctx - measure context
+   * @param method - method name to invoke
+   * @param params - parameters to pass to the method
+   * @param sessionFilter - optional filter function to select eligible sessions
+   * @returns Promise with response data
+   */
+  async requestWithFilter (
+    ctx: MeasureContext,
+    method: string,
+    params: any[],
+    sessionFilter?: (session: Session) => boolean
+  ): Promise<any> {
     while (true) {
       // Keep trying indefinitely
-      if (this.sessions.size === 0) {
+      let sessions = Array.from(this.sessions.values())
+      if (sessionFilter !== undefined) {
+        sessions = sessions.filter(sessionFilter)
+      }
+      if (sessions.length === 0) {
         // No sessions available, wait a bit and try again
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
 
-      const sessionArray = Array.from(this.sessions.values())
-
       const num = this.cindex++
-      const s = sessionArray[num % sessionArray.length]
+      const s = sessions[num % sessions.length]
+      const clientInfo = s.clientHost ?? s.sessionId
       try {
         return await ctx.with(method, {}, (ctx) =>
           this.sendRequest(s, {
@@ -257,7 +291,89 @@ export class ClisrServer {
           })
         )
       } catch (err: any) {
-        ctx.error('request send error', { err })
+        ctx.error('request send error', { err, client: clientInfo })
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+    }
+  }
+
+  /**
+   * Send a binary request to a specific session and wait for response.
+   * Response can be either binary (Uint8Array) or JSON, depending on client handler.
+   * @param session - target session
+   * @param method - method name to invoke
+   * @param data - binary payload
+   * @param headers - optional headers to pass to the client handler
+   * @returns Promise with response data (binary or JSON based on client handler)
+   */
+  private async sendBinaryRequest<T = Uint8Array>(
+    session: Session,
+    method: string,
+    data: Uint8Array,
+    headers?: Record<string, any>
+  ): Promise<T> {
+    return await this.ctx.with('binary-request', { method }, async (ctx) => {
+      const clientInfo = session.clientHost ?? session.sessionId
+      if (session.socket.isClosed) {
+        throw new Error(`session is closed (client: ${clientInfo}), cannot send binary request ${method}`)
+      }
+
+      const id = `#b${this.msgIndex++}`
+      const promise = new RequestPromise(method, [])
+      promise.session = session
+
+      this.requests.set(id, promise)
+
+      // Pass meta separately from headers
+      const meta = ctx.extractMeta()
+
+      try {
+        const frame = encodeBinaryRequest(id, method, data, meta, headers)
+        void session.socket.sendRaw(ctx, frame)
+      } catch (err: any) {
+        this.requests.delete(id)
+        throw err
+      }
+
+      return (await promise.promise) as T
+    })
+  }
+
+  /**
+   * Send a binary request to any connected session (round-robin) and wait for response.
+   * Response can be either binary (Uint8Array) or JSON, depending on client handler.
+   * @param ctx - measure context
+   * @param method - method name to invoke
+   * @param data - binary payload
+   * @param headers - optional headers to pass to the client handler
+   * @returns Promise with response data (binary or JSON based on client handler)
+   */
+  async binaryRequest<T = Uint8Array>(
+    ctx: MeasureContext,
+    method: string,
+    data: Uint8Array,
+    headers?: Record<string, any>,
+    sessionCheck?: (session: Session) => boolean
+  ): Promise<T> {
+    while (true) {
+      let sessions = Array.from(this.sessions.values())
+      if (sessionCheck !== undefined) {
+        sessions = sessions.filter(sessionCheck)
+      }
+      if (sessions.length === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+
+      const num = this.cindex++
+      const s = sessions[num % sessions.length]
+      const clientInfo = s.clientHost ?? s.sessionId
+
+      try {
+        return await this.sendBinaryRequest<T>(s, method, data, headers)
+      } catch (err: any) {
+        ctx.error('binary request send error', { err, client: clientInfo })
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
@@ -387,13 +503,15 @@ export class ClisrServer {
           // Inspect first byte frame type
           const ft = buff[0]
           if (ft === FRAME_PING || ft === FRAME_PONG) {
-            const request = {
-              method: ft === FRAME_PING ? pingConst : pongConst,
-              params: [],
-              id: -1,
-              time: Date.now()
-            } as any
-            await this.handleRequest(session, request)
+            session.lastPing = Date.now()
+            if (ft === FRAME_PING) {
+              // Send pong back
+              try {
+                session.socket.sendPong()
+              } catch (err: any) {
+                this.ctx.error('failed to send pong', { err })
+              }
+            }
             return
           }
 
@@ -402,6 +520,49 @@ export class ClisrServer {
             const payload = buff.slice(1)
             const request = session.socket.readRequest(payload, true)
             await this.handleRequest(session, request)
+            return
+          }
+
+          if (ft === FRAME_BINARY) {
+            // Handle incoming binary request from client
+            try {
+              const binaryRequest = decodeBinaryRequest(
+                new Uint8Array(buff.buffer, buff.byteOffset + 1, buff.byteLength - 1)
+              )
+              await this.handleBinaryRequest(
+                session,
+                binaryRequest.id,
+                binaryRequest.method,
+                binaryRequest.data,
+                binaryRequest.meta,
+                binaryRequest.headers
+              )
+            } catch (err: any) {
+              this.ctx.error('failed to handle binary request', { err })
+            }
+            return
+          }
+
+          if (ft === FRAME_BINARY_RESP) {
+            // Handle binary response from client (for server-initiated binary requests)
+            try {
+              const response = decodeBinaryResponse(
+                new Uint8Array(buff.buffer, buff.byteOffset + 1, buff.byteLength - 1)
+              )
+              const promise = this.requests.get(response.id)
+              if (promise !== undefined) {
+                this.requests.delete(response.id)
+                if (response.error !== undefined) {
+                  promise.reject(new Error(response.error))
+                } else {
+                  promise.resolve(response.data ?? new Uint8Array(0))
+                }
+              } else {
+                this.ctx.error('unknown binary response id', { id: response.id })
+              }
+            } catch (err: any) {
+              this.ctx.error('failed to parse binary response', { err })
+            }
             return
           }
 
@@ -478,19 +639,60 @@ export class ClisrServer {
     }
   }
 
-  private async handleRequest (session: Session, request: Request<any>): Promise<void> {
-    if (request.method === pingConst || request.method === pongConst) {
-      session.lastPing = Date.now()
-      if (request.method === pingConst) {
-        // Send pong back
-        try {
-          session.socket.sendPong()
-        } catch (err: any) {
-          this.ctx.error('failed to send pong', { err })
-        }
-      }
-      // Do not return here: allow registered handlers to also receive ping/pong requests
+  /**
+   * Handle incoming binary request from client
+   * Handler can return Uint8Array for binary response, or any other type for JSON response
+   */
+  private async handleBinaryRequest (
+    session: Session,
+    id: string,
+    method: string,
+    data: Uint8Array,
+    meta?: Record<string, any>,
+    headers?: Record<string, any>
+  ): Promise<void> {
+    session.lastRequest = Date.now()
+
+    const handler = this.binaryHandler
+    if (handler === undefined) {
+      this.ctx.error('no binary handler registered', { method })
+      const responseFrame = encodeBinaryResponse(id, undefined, 'No binary handler registered')
+      await session.socket.sendRaw(this.ctx, responseFrame)
+      return
     }
+
+    try {
+      const result = await this.ctx.with(
+        'handle-binary',
+        { method },
+        async () => await handler(session, method, data, headers),
+        {},
+        {
+          meta: meta ?? {}
+        }
+      )
+
+      // Check if result is binary (Uint8Array) or JSON
+      if (result instanceof Uint8Array) {
+        // Send binary response
+        const responseFrame = encodeBinaryResponse(id, result)
+        await session.socket.sendRaw(this.ctx, responseFrame)
+      } else {
+        // Send JSON response via standard RPC mechanism
+        const response: Response<any> = {
+          id,
+          result,
+          time: Date.now()
+        }
+        await session.socket.send(this.ctx, response)
+      }
+    } catch (err: any) {
+      const responseFrame = encodeBinaryResponse(id, undefined, err.message ?? 'Unknown error')
+      await session.socket.sendRaw(this.ctx, responseFrame)
+    }
+  }
+
+  private async handleRequest (session: Session, request: Request<any>): Promise<void> {
     // Check if hello is not received yet.
     if (session.hello === undefined) {
       // Assume request is hello one
@@ -524,37 +726,36 @@ export class ClisrServer {
     }
 
     // Ok we authorized - invoke registered handlers
-    for (let i = 0; i < this.handlers.length; i++) {
-      const h = this.handlers[i]
-      void h(request)
-        .then((result) => {
-          const resp: Response<any> = {
-            id: request.id,
-            result
-          }
-          void session.socket.send(this.ctx, resp)
-        })
-        .catch((err) => {
-          const resp: Response<any> = {
-            id: request.id,
-            result: undefined,
-            error: unknownError(err)
-          }
-          void session.socket.send(this.ctx, resp)
-        })
-    }
+    void this.messageHandler?.(this.ctx, request.method, request.params, session)
+      .then((result) => {
+        const resp: Response<any> = {
+          id: request.id,
+          result
+        }
+        void session.socket.send(this.ctx, resp)
+      })
+      .catch((err) => {
+        const resp: Response<any> = {
+          id: request.id,
+          result: undefined,
+          error: unknownError(err)
+        }
+        void session.socket.send(this.ctx, resp)
+      })
   }
 
-  private createSession (sid: string, cs: ConnectionSocket): Session {
+  private createSession (sid: string, cs: ConnectionSocket, clientHost?: string): Session {
     return {
       hello: undefined,
       createTime: Date.now(),
       sid,
       sessionId: sid,
+      clientHost,
       requests: new Map<string, any>(),
       lastRequest: Date.now(),
       lastPing: Date.now(),
-      socket: cs
+      socket: cs,
+      options: {}
     }
   }
 
@@ -594,6 +795,7 @@ export class ClisrServer {
       }
       session.hello = hello
       session.sessionId = hello.sessionId ?? session.sessionId
+      session.clientHost = hello.clientHost
 
       const oldSession = this.reconnectQueue.get(session.sessionId) ?? this.bySessionId.get(session.sessionId)
       this.reconnectQueue.delete(session.sessionId)
@@ -627,7 +829,13 @@ export class ClisrServer {
       }
 
       this.bySessionId.set(session.sessionId, session)
-      // Check if we reconnected
+
+      // Log client connection
+      this.ctx.info('client connected', {
+        sessionId: session.sessionId,
+        client: session.clientHost,
+        reconnect: oldSession !== undefined
+      })
 
       const resp: HelloResponse = {
         reconnect: oldSession !== undefined,
@@ -685,12 +893,6 @@ export function createWebsocketClientSocket (
       return true
     },
     readRequest: (buffer: Buffer, binary: boolean) => {
-      if (buffer.length === 1 && buffer[0] === FRAME_PING) {
-        return { method: pingConst, params: [], id: -1, time: Date.now() }
-      }
-      if (buffer.length === 1 && buffer[0] === FRAME_PONG) {
-        return { method: pongConst, params: [], id: -1, time: Date.now() }
-      }
       return rpcHandler.readRequest(buffer, binary)
     },
     data: () => data,

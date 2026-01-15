@@ -787,6 +787,8 @@
         "SERVER_SECRET": "secret",
         "FIRST_NAME": "Julia",
         "LAST_NAME": "AI",
+        "API_TOKEN":"api-secret",
+        "MODE":"queue",
         "PASSWORD": "password",
         "AVATAR_PATH": "./assets/avatar.png",
         "AVATAR_CONTENT_TYPE": ".png",
@@ -797,7 +799,7 @@
         "OPENAI_API_KEY": "changeme",
         "OPENAI_BASE_URL": "http://localhost:1234/v1",
         "OPENAI_MODEL": "openai/gpt-oss-20b",
-        "LLM_PROVIDER":"gigachat", // "openai" | "gigachat"
+        "LLM_PROVIDER": "server", // "gigachat", // "openai" | "gigachat"
         "GIGACHAT_CREDENTIALS":"${GIGACHAT_AUTH_KEY}",
         "GIGACHAT_SCOPE":"GIGACHAT_API_PERS",
         "GIGACHAT_MODEL":"GigaChat-2",
@@ -810,7 +812,7 @@
         "QUEUE_REGION": "",
         // "STT_PROVIDER":"whisper-asr",
         // "WHISPER_ASR_URL":"http://huly.local:9007",
-        "STT_PROVIDER": "openai",
+        "STT_PROVIDER": "server", //"openai",
         "STT_URL": "${OPENAI_AUDIO_API_URL}",
         // "STT_URL": "https://api.nexara.ru/api/",
         // "STT_URL":"http://huly.local:9007"
