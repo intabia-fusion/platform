@@ -111,18 +111,18 @@ export const loveOperation: MigrateOperation = {
         }
       },
       {
-        state: 'setup-defaults-settings-v2',
+        state: 'setup-defaults-settings-v3',
         mode: 'upgrade',
         func: async (client: MigrationClient) => {
           await client.update(
             DOMAIN_LOVE,
             { _class: love.class.Room, language: { $exists: false } },
-            { language: 'en' }
+            { language: 'ru' }
           )
           await client.update(
             DOMAIN_LOVE,
             { _class: love.class.Office, language: { $exists: false } },
-            { language: 'en' }
+            { language: 'ru' }
           )
           await client.update(
             DOMAIN_LOVE,
@@ -132,17 +132,17 @@ export const loveOperation: MigrateOperation = {
           await client.update(
             DOMAIN_LOVE,
             { _class: love.class.Room, startWithTranscription: { $exists: false } },
-            { startWithTranscription: false }
+            { startWithTranscription: true }
           )
           await client.update(
             DOMAIN_LOVE,
             { _class: love.class.Office, startWithTranscription: { $exists: false } },
-            { startWithTranscription: false }
+            { startWithTranscription: true }
           )
           await client.update(
             DOMAIN_LOVE,
             { _class: love.class.Room, type: RoomType.Video, startWithRecording: { $exists: false } },
-            { startWithRecording: true }
+            { startWithRecording: false }
           )
           await client.update(
             DOMAIN_LOVE,
