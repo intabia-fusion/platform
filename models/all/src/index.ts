@@ -179,7 +179,7 @@ export default function buildModel (): Builder {
         label: card.string.Cards,
         description: card.string.ConfigDescription,
         enabled: true,
-        beta: true,
+        beta: false,
         icon: card.icon.Card,
         classFilter: defaultFilter
       }
@@ -377,7 +377,7 @@ export default function buildModel (): Builder {
         label: processes.string.ConfigLabel,
         description: processes.string.ConfigDescription,
         enabled: true,
-        beta: true,
+        beta: false,
         icon: processes.icon.Process,
         classFilter: defaultFilter
       }
