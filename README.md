@@ -1,6 +1,6 @@
 # Foundation is a fork of hcengineering Platform targeting stability and enhancements in Tracker and other components.
 
-![GitHub License](https://img.shields.io/github/license/intabiafusion/foundation?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/intabia-fusion/foundation?style=for-the-badge)
 
 ⭐️ Your star shines on us. Star us on GitHub!
 
