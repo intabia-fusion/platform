@@ -5,6 +5,7 @@ import { type MeasureContext } from '@hcengineering/measurements'
 import { ClisrServer } from './server'
 import { ClisrClient } from './client'
 import express, { type Express } from 'express'
+import { type ClientConnectEvent } from './types'
 
 /**
  * An easy server -> client task scheduler using Clisr for communication.
@@ -41,6 +42,7 @@ export async function createCallbackClient (
       headers?: Record<string, any>
     ) => Promise<Uint8Array | any>
     clientHost?: string
+    onConnect?: (event: ClientConnectEvent, data: any) => Promise<void>
   }
 ): Promise<ClisrClient> {
   const client = new ClisrClient(
@@ -48,7 +50,7 @@ export async function createCallbackClient (
     url,
     (data) => {},
     () => token,
-    { clientHost: executor.clientHost }
+    { clientHost: executor.clientHost, onConnect: executor.onConnect }
   )
   client.callbackHandler = executor.callback
   client.binaryHandler = executor.binaryExecutor

@@ -68,6 +68,8 @@ export const startClient = async (): Promise<void> => {
 
   const methods: Record<string, ClisrClient['binaryHandler']> = {}
 
+  let transcriptionEnabled = false
+
   const client = await createCallbackClient(ctx, config.ServerUrl, config.ApiToken, {
     clientHost: `ai-bot-client@${os.hostname()}`,
     binaryExecutor: async (ctx, method, data, headers) => {
@@ -76,6 +78,12 @@ export const startClient = async (): Promise<void> => {
         throw new Error(`No handler for method ${method}`)
       }
       return await handler(ctx, method, data, headers)
+    },
+    onConnect: async (event) => {
+      if (transcriptionEnabled) {
+        // Inform aibot client is enabled for transcriptions
+        await client.request('transcription', [true])
+      }
     }
   })
 
@@ -87,6 +95,7 @@ export const startClient = async (): Promise<void> => {
       // OGG/Opus audio format - pass directly to provider
       return await provider.transcribe(Buffer.from(data), options)
     }
+    transcriptionEnabled = true
     // Inform aibot client is enabled for transcriptions
     await client.request('transcription', [true])
   } catch (err: any) {
