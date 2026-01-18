@@ -16,7 +16,7 @@
 import { getBadgeIconInfo } from '../../main/trayUtils'
 
 describe('getBadgeIconInfo', () => {
-  const baseTitle = 'Huly'
+  const baseTitle = 'Platform'
 
   it('count of 0', () => {
     const result = getBadgeIconInfo(0, baseTitle)

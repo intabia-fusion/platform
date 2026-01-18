@@ -216,7 +216,7 @@ Document content in Markdown...
 
 ```bash
 docker run \
-  -e FRONT_URL="https://huly.app" \
+  -e FRONT_URL="https://platform.intabia.ru" \
   -v /path/to/workspace:/data \
   intabiafusion/import-tool:latest \
   -- bundle.js import /data \

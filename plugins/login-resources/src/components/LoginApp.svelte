@@ -20,12 +20,14 @@
     Location,
     Popup,
     Scroller,
+    Label,
     deviceOptionsStore as deviceInfo,
     fetchMetadataLocalStorage,
     getCurrentLocation,
     location,
     setMetadataLocalStorage,
-    themeStore
+    themeStore,
+    desktopPlatform
   } from '@hcengineering/ui'
   import workbench from '@hcengineering/workbench'
   import { onDestroy, onMount } from 'svelte'
@@ -42,7 +44,9 @@
   import SelectWorkspace from './SelectWorkspace.svelte'
   import SignupForm from './SignupForm.svelte'
   import LoginIcon from './icons/LoginIcon.svelte'
+  import SelectDownloads from './SelectDownloads.svelte'
   import { Pages, getAccount, pages } from '..'
+  import { getHref, goTo } from '../utils'
   import login from '../plugin'
 
   import loginBack from '../../img/login_back.png'
@@ -79,7 +83,8 @@
       'autoJoin',
       'confirm',
       'confirmationSend',
-      'auth'
+      'auth',
+      'downloads'
     ]
     if (token === undefined ? !allowedUnauthPages.includes(page) : !pages.includes(page)) {
       const account = fetchMetadataLocalStorage(login.metadata.LastAccount)
@@ -168,6 +173,8 @@
               <PasswordRestore />
             {:else if page === 'selectWorkspace'}
               <SelectWorkspace {navigateUrl} />
+            {:else if page === 'downloads'}
+              <SelectDownloads />
             {:else if page === 'join'}
               <Join />
             {:else if page === 'autoJoin'}
@@ -182,6 +189,18 @@
               <ChangePassword />
             {/if}
           </div>
+          {#if !desktopPlatform && page !== 'downloads' && getMetadata(login.metadata.DesktopUpdatesUrl) != null && getMetadata(login.metadata.DesktopUpdatesUrl) !== ''}
+            <div class="mt-4 flex flex-row-reverse mr-4">
+              <a
+                href={getHref('downloads')}
+                on:click|preventDefault={() => {
+                  goTo('downloads')
+                }}
+              >
+                <Label label={login.string.Downloads} />
+              </a>
+            </div>
+          {/if}
         </Scroller>
       </div>
 

@@ -83,6 +83,8 @@
     "SignUpToCreateWorkspace": "Aucun espace de travail avec accès invité. Veuillez vous inscrire pour créer le vôtre.",
     "WhatIsYourName": "Quel est votre nom ?",
     "AccessExpired": "Le temps d'accès a expiré. Veuillez demander un nouveau lien d'accès.",
-    "AccessNotActive": "Le temps d'accès n'a pas encore commencé. Il commence dans : "
+    "AccessNotActive": "Le temps d'accès n'a pas encore commencé. Il commence dans : ",
+    "Downloads": "Télécharger l'application de bureau",
+    "BackLabel": "Retour"
   }
 }

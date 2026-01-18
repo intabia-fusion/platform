@@ -1,6 +1,6 @@
 {
   "name": "@hcengineering/desktop",
-  "version": "0.7.208",
+  "version": "0.7.323",
   "main": "dist/main/electron.js",
   "template": "@hcengineering/webpack-package",
   "scripts": {
@@ -52,7 +52,7 @@
     "typescript": "^5.9.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "electron": "^38.2.2",
+    "electron": "^40.0.0",
     "@types/node": "^22.18.1",
     "copy-webpack-plugin": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -280,8 +280,8 @@
     "@hcengineering/communication-types": "workspace:^0.7.12",
     "ws": "^8.18.2"
   },
-  "productName": "Huly Desktop",
-  "description": "Huly Desktop experience",
+  "productName": "Platform Desktop",
+  "description": "Platform Desktop experience",
   "keywords": [
     "electron",
     "typescript",

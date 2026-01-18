@@ -112,24 +112,24 @@ const devProxyTest = {
 
 const devHulyProxy = {
   '/account': {
-    target: 'https://account.huly.app/',
+    target: 'https://platform.intabia.ru/_account',
     changeOrigin: true,
     pathRewrite: { '^/account': '' },
     logLevel: 'debug'
   },
   '/api/v1': {
-    target: 'http://huly.app',
+    target: 'http://platform.intabia.ru',
     changeOrigin: true,
     logLevel: 'debug'
   },
   '/files': {
-    target: 'https://huly.app/files',
+    target: 'https://platform.intabia.ru/files',
     changeOrigin: true,
     pathRewrite: { '^/files': '' },
     logLevel: 'debug'
   },
   '/rekoni/recognize': {
-    target: 'https://rekoni.huly.app',
+    target: 'https://platform.intabia.ru/_rekoni',
     changeOrigin: true,
     pathRewrite: { '^/rekoni/recognize': '/recognize' },
     logLevel: 'debug'

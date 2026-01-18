@@ -12,7 +12,7 @@
 
 ```
 docker run \
-  -e FRONT_URL="https://huly.app" \
+  -e FRONT_URL="https://platform.intabia.ru" \
   -v /path/to/export:/data \
   intabiafusion/import-tool:latest \
   -- bundle.js import-clickup-tasks /data/tasks.csv \

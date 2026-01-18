@@ -40,7 +40,8 @@ export const pages = [
   'confirmationSend',
   'auth',
   'login-password',
-  'changePassword'
+  'changePassword',
+  'downloads'
 ] as const
 
 export type Pages = (typeof pages)[number]
@@ -59,7 +60,9 @@ export default plugin(loginId, {
       MinDigits: number
       MinUpperChars: number
       MinLowerChars: number
-    }>
+    }>,
+    DesktopUpdatesUrl: '' as Metadata<string>,
+    DesktopUpdatesChannel: '' as Metadata<string[][]>
   },
   component: {
     LoginApp: '' as AnyComponent,
@@ -89,7 +92,9 @@ export default plugin(loginId, {
     WorkspaceArchived: '' as IntlString,
     WorkspaceArchivedDesc: '' as IntlString,
     RestoreArchivedWorkspace: '' as IntlString,
-    PasswordExpiredDesc: '' as IntlString
+    PasswordExpiredDesc: '' as IntlString,
+    Downloads: '' as IntlString,
+    BackLabel: '' as IntlString
   },
   function: {
     SendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,

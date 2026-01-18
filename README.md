@@ -22,7 +22,7 @@ If you're primarily interested in self-hosting Foundation or moving from hcengin
 
 ## API Client
 
-If you want to interact with Foundation programmatically, please wait, packages will be ready soon. API mostly will be compativly with Huly on initial steps, 
+If you want to interact with Foundation programmatically, please wait, packages will be ready soon. API mostly will be compativly with Platform on initial steps, 
 and may stay same or with minimal changes for make it stable.
 
 ## Changelog

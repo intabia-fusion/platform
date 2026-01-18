@@ -78,6 +78,7 @@ export default mergeIds(loginId, login, {
     SignUpToCreateWorkspace: '' as IntlString,
     WhatIsYourName: '' as IntlString,
     AccessExpired: '' as IntlString,
-    AccessNotActive: '' as IntlString
+    AccessNotActive: '' as IntlString,
+    DesktopApp: '' as IntlString
   }
 })

@@ -2,7 +2,7 @@
   "name": "desktop",
   "version": "0.7.0",
   "main": "dist/main/electron.js",
-  "author": "Hardcore Engineering <hey@huly.io>",
+  "author": "Intabia Fusion <platform@intabia.ru>",
   "template": "@hcengineering/default-package",
   "scripts": {
     "_phase:package": "rushx package",
@@ -12,7 +12,10 @@
     "dist-signed": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=true NODE_ENV=production VERSION=$(node ../common/scripts/show_tag.js) MODEL_VERSION=$(node ../common/scripts/show_version.js) electron-builder build -c.afterSign=scripts/notarize.js -p onTag",
     "dist-mac-win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false NODE_ENV=production VERSION=$(node ../common/scripts/show_tag.js) MODEL_VERSION=$(node ../common/scripts/show_version.js) electron-builder build --windows --x64",
     "format": "echo done",
-    "bump": "bump-package-version"
+    "bump": "bump-package-version",
+    "bundle:server": "node ../common/scripts/esbuild.js --entry=src/server.ts --keep-names=true --sourcemap=external --minify",
+    "dist-docker-build": "rushx bundle:server && ../common/scripts/docker_build.sh intabiafusion/desktop-distro",
+    "dist-docker-push": "rushx bundle:server && rushx docker:build && ../common/scripts/docker_tag.sh intabiafusion/desktop-distro"
   },
   "devDependencies": {
     "@hcengineering/platform-rig": "workspace:^0.7.19",
@@ -21,7 +24,7 @@
     "node-loader": "~2.0.0",
     "cross-env": "~7.0.3",
     "typescript": "^5.9.3",
-    "electron": "^38.2.2",
+    "electron": "^40.0.0",
     "@types/node": "^22.18.1",
     "electron-builder": "^25.1.8",
     "@electron/notarize": "^2.3.2",
@@ -31,18 +34,20 @@
     "eslint-plugin-n": "^15.4.0",
     "eslint": "^8.54.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "eslint-config-standard-with-typescript": "^40.0.0"
+    "eslint-config-standard-with-typescript": "^40.0.0",
+    "esbuild": "^0.25.10"
   },
   "dependencies": {
     "electron-squirrel-startup": "~1.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0"
   },
-  "homepage": "https://huly.io/",
-  "productName": "Huly Desktop",
-  "description": "Huly Desktop experience",
+  "homepage": "https://platform.intabia.ru",
+  "productName": "Platform Desktop",
+  "description": "Platform Desktop experience",
   "build": {
-    "productName": "Huly",
-    "appId": "hc.hcengineering.Huly",
+    "productName": "Platform",
+    "appId": "intabia.Platform",
     "directories": {
       "output": "deploy"
     },
@@ -50,8 +55,11 @@
       "./dist/**"
     ],
     "mac": {
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.utilities",
-      "artifactName": "Huly-macos-${version}-${arch}.${ext}",
+      "artifactName": "Platform-macos-${version}-${arch}.${ext}",
       "target": "default",
       "icon": "./src/AppIcon.icns",
       "hardenedRuntime": true,
@@ -60,21 +68,20 @@
       "notarize": false,
       "publish": {
         "provider": "generic",
-        "url": "https://dist.huly.io",
+        "url": "https://platform.intabia.ru/_dist",
         "channel": "latest"
       }
     },
     "win": {
       "target": [
-        "zip",
         "nsis"
       ],
-      "artifactName": "Huly-windows-${version}.${ext}",
+      "artifactName": "Platform-windows-${version}-${arch}.${ext}",
       "verifyUpdateCodeSignature": false,
       "icon": "./src/AppIcon.ico",
       "publish": {
         "provider": "generic",
-        "url": "https://dist.huly.io",
+        "url": "https://platform.intabia.ru/_dist",
         "channel": "latest"
       },
       "extraResources": [
@@ -93,17 +100,16 @@
       "uninstallerIcon": "./src/AppIcon.ico"
     },
     "linux": {
-      "artifactName": "Huly-linux-${version}.${ext}",
+      "artifactName": "Platform-linux-${version}-${arch}.${ext}",
       "target": [
         "AppImage",
-        "deb",
         "zip"
       ],
       "icon": "./src/AppIcon.png",
       "category": "Utility",
       "publish": {
         "provider": "generic",
-        "url": "https://dist.huly.io",
+        "url": "https://platform.intabia.ru/_dist",
         "channel": "latest"
       }
     }

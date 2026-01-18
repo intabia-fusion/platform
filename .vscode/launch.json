@@ -46,6 +46,7 @@
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "SERVER_SECRET": "secret",
         "ENABLE_CONSOLE": "true",
+      },
         "COLLABORATOR_URL": "ws://localhost:3078",
         "REKONI_URL": "http://localhost:4004",
         "FRONT_URL": "http://localhost:8080",
@@ -989,7 +990,7 @@
       "cwd": "${workspaceRoot}/dev/import-tool"
     },
     {
-      "name": "Debug Huly import",
+      "name": "Debug Platform import",
       "type": "node",
       "request": "launch",
       "args": [
