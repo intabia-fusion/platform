@@ -760,12 +760,12 @@ jobs:
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
-          name: Platform-Linux-arm64.zip
+          name: Platform-Linux-arm64
           path: ./desktop-package/deploy/Platform-linux-*-arm64.zip
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
-          name: Platform-Linux-x64.zip
+          name: Platform-Linux-x64
           path: ./desktop-package/deploy/Platform-linux-*-x64.zip
 
       - name: List deploy contents
@@ -789,9 +789,9 @@ jobs:
         with:
           name: desktop-manifests
           path: |
-            ./desktop-package/*.yml
-            ./desktop-package/*.yaml
-            ./desktop-package/*.blockmap
+            ./desktop-package/deploy/*.yml
+            ./desktop-package/deploy/*.yaml
+            ./desktop-package/deploy/*.blockmap
 
       - name: Set release info
         id: release_info
@@ -820,12 +820,44 @@ jobs:
               }
             }
 
-      - name: Download all artifacts from dist-build
+      - name: Download Platform-MacOS-x64
         uses: actions/download-artifact@v4
         with:
-          path: ./desktop-package
+          name: Platform-MacOS-x64
+          path: ./desktop-package/deploy
+      - name: Download Platform-MacOS-arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-MacOS-arm64
+          path: ./desktop-package/deploy
+      - name: Download Platform-Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-Windows
+          path: ./desktop-package/deploy
+      - name: Download Platform-Linux-arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-Linux-arm64
+          path: ./desktop-package/deploy
+      - name: Download Platform-Linux-x64
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-Linux-x64
+          path: ./desktop-package/deploy
+      - name: Download server-bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: server-bundle
+          path: ./desktop-package/bundle
+      - name: Download desktop-manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-manifests
+          path: ./desktop-package/deploy
+
       - name: List downloaded artifacts
-        run: ls -R ./desktop-package || true
+        run: ls -R ./desktop-package/deploy || true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
