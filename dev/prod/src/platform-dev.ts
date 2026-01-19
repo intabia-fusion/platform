@@ -16,7 +16,7 @@
 import { devModelId } from '@hcengineering/devmodel'
 import { PresentationClientHook } from '@hcengineering/devmodel-resources'
 import login from '@hcengineering/login'
-import { addLocation, setMetadata } from '@hcengineering/platform'
+import platform, { addLocation, setMetadata } from '@hcengineering/platform'
 import presentation from '@hcengineering/presentation'
 
 export function configurePlatformDevServer () {
@@ -26,6 +26,7 @@ export function configurePlatformDevServer () {
 
 function enableDevModel () {
   setMetadata(presentation.metadata.ClientHook, new PresentationClientHook())
+  setMetadata(platform.metadata.DevModel, true)
   addLocation(
     devModelId,
     async () => await import(/* webpackChunkName: "devmodel" */ '@hcengineering/devmodel-resources')

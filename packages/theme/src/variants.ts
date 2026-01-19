@@ -19,3 +19,18 @@ export const ThemeVariant = {
 } as const
 
 export type ThemeVariantType = (typeof ThemeVariant)[keyof typeof ThemeVariant]
+
+export const AccentColor = {
+  Intabia: 'accent-intabia',
+  Huly: 'accent-huly',
+  Blue: 'accent-blue',
+  Purple: 'accent-purple',
+  Pink: 'accent-pink',
+  Red: 'accent-red',
+  Orange: 'accent-orange',
+  Yellow: 'accent-yellow',
+  Green: 'accent-green',
+  Graphite: 'accent-graphite'
+} as const
+
+export type AccentColorType = (typeof AccentColor)[keyof typeof AccentColor]

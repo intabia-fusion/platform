@@ -49,7 +49,15 @@ export type {
   IPanelState
 } from './types'
 
-export { themeStore, languageStore } from '@hcengineering/theme'
+export {
+  themeStore,
+  languageStore,
+  AccentColor,
+  type AccentColorType,
+  getCurrentAccentColor,
+  accentColorOptions,
+  type AccentColorOption
+} from '@hcengineering/theme'
 // export { applicationShortcutKey } from './utils'
 export { getCurrentLocation, locationToUrl, navigate, location, setLocationStorageKey } from './location'
 

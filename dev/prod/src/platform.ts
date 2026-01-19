@@ -488,6 +488,8 @@ export async function configurePlatform() {
   )
   setMetadata(presentation.metadata.CollaboratorUrl, config.COLLABORATOR_URL)
 
+  setMetadata(platform.metadata.DevModel, false)
+
   setMetadata(presentation.metadata.FrontUrl, config.FRONT_URL)
   setMetadata(presentation.metadata.PreviewUrl, config.PREVIEW_URL)
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)

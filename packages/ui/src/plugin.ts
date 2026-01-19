@@ -156,7 +156,8 @@ export const uis = plugin(uiId, {
 
     EmojiStyle: '' as IntlString,
     EmojiSystem: '' as IntlString,
-    EmojiNoto: '' as IntlString
+    EmojiNoto: '' as IntlString,
+    AccentColor: '' as IntlString
   },
   metadata: {
     DefaultApplication: '' as Metadata<AnyComponent>,

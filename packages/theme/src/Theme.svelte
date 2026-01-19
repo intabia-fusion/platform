@@ -17,7 +17,7 @@
   import platform, { loadPluginStrings, setMetadata } from '@hcengineering/platform'
   import { onMount, setContext } from 'svelte'
   import { writable } from 'svelte/store'
-  import { ThemeVariant } from './variants'
+  import { ThemeVariant, AccentColor, type AccentColorType } from './variants'
   import {
     ThemeOptions,
     getCurrentFontSize,
@@ -26,16 +26,26 @@
     isSystemThemeDark,
     isThemeDark,
     themeStore as themeOptions,
-    getCurrentEmoji
+    getCurrentEmoji,
+    getCurrentAccentColor
   } from './'
 
   const currentTheme = writable<string>(getCurrentTheme())
   const currentFontSize = writable<string>(getCurrentFontSize())
   const currentLanguage = writable<string>(getCurrentLanguage())
   const currentEmoji = writable<string>(getCurrentEmoji())
+  const currentAccent = writable<string>(getCurrentAccentColor())
 
-  const setOptions = (currentFont: string, theme: string, language: string, emoji: string) => {
-    themeOptions.set(new ThemeOptions(currentFont === 'normal-font' ? 16 : 14, isThemeDark(theme), language, emoji))
+  const setOptions = (currentFont: string, theme: string, language: string, emoji: string, accent: string) => {
+    themeOptions.set(
+      new ThemeOptions(
+        currentFont === 'normal-font' ? 16 : 14,
+        isThemeDark(theme),
+        language,
+        emoji,
+        accent as AccentColorType
+      )
+    )
   }
 
   const getRealTheme = (theme: string): string => (isThemeDark(theme) ? ThemeVariant.Dark : ThemeVariant.Light)
@@ -46,9 +56,9 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(theme)} ${getCurrentFontSize()} ${getCurrentEmoji()}`
+      `${getRealTheme(theme)} ${getCurrentFontSize()} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
     )
-    setOptions(getCurrentFontSize(), theme, getCurrentLanguage(), getCurrentEmoji())
+    setOptions(getCurrentFontSize(), theme, getCurrentLanguage(), getCurrentEmoji(), getCurrentAccentColor())
   }
   const setRootFontSize = (fontsize: string, set = true) => {
     currentFontSize.set(fontsize)
@@ -57,9 +67,9 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(getCurrentTheme())} ${fontsize} ${getCurrentEmoji()}`
+      `${getRealTheme(getCurrentTheme())} ${fontsize} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
     )
-    setOptions(fontsize, getCurrentTheme(), getCurrentLanguage(), getCurrentEmoji())
+    setOptions(fontsize, getCurrentTheme(), getCurrentLanguage(), getCurrentEmoji(), getCurrentAccentColor())
   }
   const setLanguage = async (language: string, set: boolean = true) => {
     currentLanguage.set(language)
@@ -69,7 +79,7 @@
     Analytics.setTag('language', language)
     setMetadata(platform.metadata.locale, $currentLanguage)
     await loadPluginStrings($currentLanguage, set)
-    setOptions(getCurrentFontSize(), getCurrentTheme(), language, getCurrentEmoji())
+    setOptions(getCurrentFontSize(), getCurrentTheme(), language, getCurrentEmoji(), getCurrentAccentColor())
   }
   const setEmoji = (emoji: string, set = true) => {
     currentEmoji.set(emoji)
@@ -78,9 +88,26 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(getCurrentTheme())} ${getCurrentFontSize()} ${emoji}`
+      `${getRealTheme(getCurrentTheme())} ${getCurrentFontSize()} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
     )
-    setOptions(getCurrentFontSize(), getCurrentTheme(), getCurrentLanguage(), emoji)
+    setOptions(getCurrentFontSize(), getCurrentTheme(), getCurrentLanguage(), emoji, getCurrentAccentColor())
+  }
+  const setAccent = (accent: string, set = true) => {
+    currentAccent.set(accent)
+    if (set) {
+      localStorage.setItem('accent', accent)
+    }
+    document.documentElement.setAttribute(
+      'class',
+      `${getRealTheme(getCurrentTheme())} ${getCurrentFontSize()} ${getCurrentEmoji()} ${accent}`
+    )
+    setOptions(
+      getCurrentFontSize(),
+      getCurrentTheme(),
+      getCurrentLanguage(),
+      getCurrentEmoji(),
+      accent as AccentColorType
+    )
   }
 
   setContext('theme', {
@@ -98,6 +125,10 @@
   setContext('emoji', {
     currentEmoji,
     setEmoji
+  })
+  setContext('accent', {
+    currentAccent,
+    setAccent
   })
 
   let remove: any = null
@@ -132,6 +163,7 @@
     void setLanguage($currentLanguage, false)
     void loadPluginStrings($currentLanguage)
     setDocumentLanguage()
+    setAccent($currentAccent, false)
   })
 </script>
 
