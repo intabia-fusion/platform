@@ -83,6 +83,8 @@
     "SignUpToCreateWorkspace": "Misafir erişimi olan çalışma alanı yok. Kendi alanınızı oluşturmak için lütfen kayıt olun.",
     "WhatIsYourName": "Adınız nedir?",
     "AccessExpired": "Erişim süresi doldu. Lütfen yeni bir erişim bağlantısı isteyin.",
-    "AccessNotActive": "Erişim süresi henüz başlamadı. Başlangıç zamanı: "
+    "AccessNotActive": "Erişim süresi henüz başlamadı. Başlangıç zamanı: ",
+    "Downloads": "Masaüstü uygulamasını indir",
+    "BackLabel": "Geri"
   }
 }

@@ -20,7 +20,7 @@ The api client package provides two main client variants: a WebSocket client and
 import { connect } from '@hcengineering/api-client'
 
 // Connect to Huly
-const client = await connect('https://huly.app', {
+const client = await connect('https://platform.intabia.ru', {
   email: 'johndoe@example.com',
   password: 'password',
   workspace: 'my-workspace',
@@ -39,7 +39,7 @@ await client.close()
 import { connectRest } from '@hcengineering/api-client'
 
 // Connect to Huly
-const client = await connectRest('https://huly.app', {
+const client = await connectRest('https://platform.intabia.ru', {
   email: 'johndoe@example.com',
   password: 'password',
   workspace: 'my-workspace'
@@ -59,9 +59,9 @@ When authenticated, the client will have access to the same resources as the use
 
 Parameters:
 
-- `url`: URL of the Huly instance, for Huly Cloud use `https://huly.app`
+- `url`: URL of the Huly instance, for Huly Cloud use `https://platform.intabia.ru`
 - `options`: Connection options
-  - `workspace`: Name of the workspace to connect to, the workspace name can be found in the URL of the workspace: `https://huly.app/workbench/<workspace-name>`
+  - `workspace`: Name of the workspace to connect to, the workspace name can be found in the URL of the workspace: `https://platform.intabia.ru/workbench/<workspace-name>`
   - `token`: Optional authentication token
   - `email`: Optional user email
   - `password`: Optional user password
@@ -71,7 +71,7 @@ Parameters:
 ```ts
 import { connect } from '@hcengineering/api-client'
 
-const client = await connect('https://huly.app', {
+const client = await connect('https://platform.intabia.ru', {
   email: 'johndoe@example.com',
   password: 'password',
   workspace: 'my-workspace'
@@ -87,7 +87,7 @@ await client.close()
 ```ts
 import { connect } from '@hcengineering/api-client'
 
-const client = await connect('https://huly.app', {
+const client = await connect('https://platform.intabia.ru', {
   token: '...',
   workspace: 'my-workspace'
 })

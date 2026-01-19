@@ -1,6 +1,6 @@
 {
   "huly.local:8080": {
-    "title": "Huly",
+    "title": "Platform",
     "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
     "defaultApplication": "tracker",
@@ -10,26 +10,26 @@
     "links": [
       {
         "rel": "manifest",
-        "href": "/huly/site.webmanifest"
+        "href": "/platform/site.webmanifest"
       },
       {
         "rel": "icon",
-        "href": "/huly/favicon.svg",
+        "href": "/platform/favicon.svg",
         "type": "image/svg+xml"
       },
       {
         "rel": "shortcut icon",
-        "href": "/huly/favicon.ico",
+        "href": "/platform/favicon.ico",
         "sizes": "any"
       },
       {
         "rel": "apple-touch-icon",
-        "href": "/huly/apple-touch-icon.png"
+        "href": "/platform/apple-touch-icon.png"
       }
     ]
   },
   "huly.local:8087": {
-    "title": "Huly",
+    "title": "Platform",
     "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
     "defaultApplication": "tracker",
@@ -39,21 +39,17 @@
     "links": [
       {
         "rel": "manifest",
-        "href": "/huly/site.webmanifest"
+        "href": "/platform/site.webmanifest"
       },
       {
         "rel": "icon",
-        "href": "/huly/favicon.svg",
+        "href": "/platform/favicon.svg",
         "type": "image/svg+xml"
       },
       {
         "rel": "shortcut icon",
-        "href": "/huly/favicon.ico",
+        "href": "/platform/favicon.ico",
         "sizes": "any"
-      },
-      {
-        "rel": "apple-touch-icon",
-        "href": "/huly/apple-touch-icon.png"
       }
     ]
   },

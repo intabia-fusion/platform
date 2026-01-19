@@ -15,7 +15,7 @@
 
 ```
 docker run \
-  -e FRONT_URL="https://huly.app" \
+  -e FRONT_URL="https://platform.intabia.ru" \
   -v /path/to/export:/data \
   intabiafusion/import-tool:latest \
   -- bundle.js import-notion-with-teamspaces /data \
@@ -28,7 +28,7 @@ docker run \
 
 ```
 docker run \
-  -e FRONT_URL="https://huly.app" \
+  -e FRONT_URL="https://platform.intabia.ru" \
   -v /path/to/export:/data \
   intabiafusion/import-tool:latest \
   -- bundle.js import-notion-to-teamspace /data \

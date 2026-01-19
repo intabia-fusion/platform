@@ -325,7 +325,7 @@ services:
       - PRINT_URL=http://huly.local:4005
       - SIGN_URL=http://huly.local:4006
       #      - ANALYTICS_COLLECTOR_URL=http://huly.local:4017
-      - DESKTOP_UPDATES_URL=https://dist.huly.io
+      - DESKTOP_UPDATES_URL=localhost
       - DESKTOP_UPDATES_CHANNEL=dev
       - DESKTOP_UPDATES_CHANNELS=dev;tracex:dev-tracex
       - BRANDING_URL=http://huly.local:8087/branding.json
@@ -998,6 +998,15 @@ services:
         MP_DATABASE: /data/mailpit.db
         MP_SMTP_AUTH_ACCEPT_ANY: 1
         MP_SMTP_AUTH_ALLOW_INSECURE: 1
+  desktop-dist:
+    image: intabiafusion/desktop-distro
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    ports:
+      - 4409:4409
+    environment:
+      - PORT=4409
+    restart: unless-stopped
 volumes:
   db:
   dbpg:

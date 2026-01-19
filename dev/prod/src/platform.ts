@@ -199,6 +199,10 @@ export interface Config {
   HULYLAKE_URL?: string
   DISABLED_FEATURES?: string
   SIGNUP_URL?: string
+
+  DESKTOP_UPDATES_URL?: string
+  DESKTOP_UPDATES_CHANNEL?: string
+  DESKTOP_UPDATES_CHANNELS?: string
 }
 
 export interface Branding {
@@ -466,6 +470,14 @@ export async function configurePlatform() {
   setMetadata(login.metadata.DisableSignUp, config.DISABLE_SIGNUP === 'true')
   setMetadata(login.metadata.HideLocalLogin, config.HIDE_LOCAL_LOGIN === 'true')
 
+
+  const updatesUrl = config.DESKTOP_UPDATES_URL
+  // NOTE: env format is: default_value;key1:value1;key2:value2...
+  const updatesChannels = (config.DESKTOP_UPDATES_CHANNELS ?? config.DESKTOP_UPDATES_CHANNEL ?? 'platform').split(';').map(c => c.trim().split(':'))
+
+  setMetadata(login.metadata.DesktopUpdatesUrl, updatesUrl)
+  setMetadata(login.metadata.DesktopUpdatesChannel, updatesChannels)
+
   setMetadata(login.metadata.PasswordValidations, PASSWORD_REQUIREMENTS[config.PASSWORD_STRICTNESS ?? 'none'])
 
   setMetadata(presentation.metadata.UploadURL, config.UPLOAD_URL)
@@ -481,7 +493,7 @@ export async function configurePlatform() {
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)
   setMetadata(presentation.metadata.LinkPreviewUrl, config.LINK_PREVIEW_URL)
   setMetadata(presentation.metadata.UseOTP, config.USE_OTP !== 'false')
-  setMetadata(presentation.metadata.SignupUrl, config.SIGNUP_URL ?? 'https://huly.io/signup')
+  setMetadata(presentation.metadata.SignupUrl, config.SIGNUP_URL ?? 'https://platform.intabia.ru/signup')
 
   const disabledFeatures = (config.DISABLED_FEATURES ??'').split(',').map(it => it.trim()).filter(it => it.length > 0)
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))

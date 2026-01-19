@@ -173,7 +173,7 @@ export interface LinkPreviewAttachment extends BaseAttachment<LinkPreviewParams>
 export interface BlobAttachment extends BaseAttachment<BlobParams> {}
 
 export type AppletParams = Record<string, any>
-export type AppletType = `application/vnd.huly.applet.${string}`
+export type AppletType = `application/vnd.platform.applet.${string}`
 
 export interface AppletAttachment<T extends AppletParams = AppletParams> extends BaseAttachment<T> {
   mimeType: AppletType

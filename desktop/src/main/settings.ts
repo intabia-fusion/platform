@@ -34,7 +34,7 @@ export class Settings {
 
   readServerUrl (): string {
     const url = this.extractUrl()
-    // Motivation: fix existing Huly installations (saved on disk URLs).
+    // Motivation: fix existing Platform installations (saved on disk URLs).
     return Settings.sanitizeUrl(url)
   }
 
@@ -75,7 +75,7 @@ export class Settings {
       (this.store as any).get(Settings.SETTINGS_KEY_SERVER) as string ??
       this.packedConfig?.server ??
       process.env.FRONT_URL ??
-      'https://huly.app'
+      'https://platform.intabia.ru'
     )
   }
 

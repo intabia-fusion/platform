@@ -26,6 +26,9 @@ export interface PackedConfig {
  * Reads a JSON config file, returning undefined on error.
  */
 function readConfigFile (filePath: string): PackedConfig | undefined {
+  if (!fs.existsSync(filePath)) {
+    return
+  }
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8')) as PackedConfig
   } catch (err) {

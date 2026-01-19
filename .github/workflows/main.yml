@@ -725,8 +725,8 @@ jobs:
         #   TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           cd desktop-package
-          node ../common/scripts/install-run-rushx.js dist --linux --x64
-          node ../common/scripts/install-run-rushx.js dist --windows --x64 --arm64
+          node ../common/scripts/install-run-rushx.js dist --linux --x64 --arm64
+          node ../common/scripts/install-run-rushx.js dist --windows --x64
           node ../common/scripts/install-run-rushx.js dist --macos --x64 --arm64
           # ./scripts/copy-publish-artifacts.sh ${{ env.PublishTempFolder}}
       # - name: Publish distribution assets and version
@@ -741,20 +741,48 @@ jobs:
       - name: Upload MacOS
         uses: actions/upload-artifact@v4
         with:
-          name: Huly-MacOS-x64
-          path: ./desktop-package/deploy/Huly-macos-*-x64.dmg
+          name: Platform-MacOS-x64
+          path: ./desktop-package/deploy/Platform-macos-*-x64.dmg
       - name: Upload MacOS arm64
         uses: actions/upload-artifact@v4
         with:
-          name: Huly-MacOS-arm64
-          path: ./desktop-package/deploy/Huly-macos-*-arm64.dmg
+          name: Platform-MacOS-arm64
+          path: ./desktop-package/deploy/Platform-macos-*-arm64.dmg
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
-          name: Huly-Windows
-          path: ./desktop-package/deploy/Huly-windows-*.zip
+          name: Platform-Windows
+          path: ./desktop-package/deploy/Platform-windows-*.zip
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
-          name: Huly-Linux
-          path: ./desktop-package/deploy/Huly-linux-*.zip
+          name: Platform-Linux
+          path: ./desktop-package/deploy/Platform-linux-*.zip
+
+      - name: List deploy contents
+        run: |
+          cd desktop-package
+          echo "Files in deploy directory:"
+          ls -la deploy/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: intabiafusion
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Build server bundle
+        run: |
+          cd desktop-package
+          node ../common/scripts/install-run-rushx.js bundle:server
+
+      - name: Build and push Docker image (via package script)
+        run: |
+          cd desktop-package
+          node ../common/scripts/install-run-rushx.js dist-docker-push
+        env:
+          DOCKER_CLI_HINTS: false
+          DOCKER_BUILDKIT: 1

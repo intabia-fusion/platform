@@ -84,6 +84,8 @@
     "SignUpToCreateWorkspace": "Neexistují žádné pracovní prostory s přístupem pro hosty. Prosím, zaregistrujte se a vytvořte si vlastní.",
     "WhatIsYourName": "Jak se jmenujete?",
     "AccessExpired": "Doba přístupu vypršela. Požádejte prosím o nový odkaz pro přístup.",
-    "AccessNotActive": "Doba přístupu ještě nezačala. Začíná za: "
+    "AccessNotActive": "Doba přístupu ještě nezačala. Začíná za: ",
+    "Downloads": "Stáhnout desktopovou aplikaci",
+    "BackLabel": "Zpět"
   }
 }

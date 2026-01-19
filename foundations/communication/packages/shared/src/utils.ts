@@ -68,7 +68,7 @@ export function generateMessageId (): MessageID {
 }
 
 export function isAppletAttachment (attachment: Attachment): attachment is AppletAttachment {
-  return attachment.mimeType.startsWith('application/vnd.huly.applet.')
+  return attachment.mimeType.startsWith('application/vnd.platform.applet.')
 }
 
 export function isLinkPreviewAttachmentType (mimeType: string): boolean {
@@ -76,7 +76,7 @@ export function isLinkPreviewAttachmentType (mimeType: string): boolean {
 }
 
 export function isAppletAttachmentType (mimeType: string): boolean {
-  return mimeType.startsWith('application/vnd.huly.applet.')
+  return mimeType.startsWith('application/vnd.platform.applet.')
 }
 
 export function isBlobAttachmentType (mimeType: string): boolean {

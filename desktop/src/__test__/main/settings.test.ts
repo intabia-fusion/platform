@@ -101,7 +101,7 @@ describe('Settings', () => {
 
       const result = systemUnderTest.readServerUrl()
 
-      expect(result).toBe('https://huly.app')
+      expect(result).toBe('https://platform.intabia.ru')
     })
 
     test('all (store, packed config, environment) options are available', () => {

@@ -98,7 +98,7 @@ export class TrayController {
   }
 }
 
-const BASE_TITLE = 'Huly'
+const BASE_TITLE = 'Platform'
 
 function createTray (activateWindow: WindowAction, quitApplication: WindowAction, icon: NativeImage): Tray {
   const tray = new Tray(icon)
