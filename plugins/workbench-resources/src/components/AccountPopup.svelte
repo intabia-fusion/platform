@@ -22,8 +22,8 @@
     createQuery,
     getCurrentWorkspaceUrl,
     hasResource,
-    isDisabled
-    , IconDownload
+    isDisabled,
+    IconDownload
   } from '@hcengineering/presentation'
   import setting, { settingId, SettingsCategory } from '@hcengineering/setting'
   import {
