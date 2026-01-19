@@ -16,6 +16,7 @@ cp $SRC_FOLDER/*.exe $TARGET_FOLDER
 cp $SRC_FOLDER/$CHANNEL.yml $TARGET_FOLDER
 cp $SRC_FOLDER/$CHANNEL-mac.yml $TARGET_FOLDER
 cp $SRC_FOLDER/$CHANNEL-linux.yml $TARGET_FOLDER
+cp $SRC_FOLDER/$CHANNEL-linux-arm64.yml $TARGET_FOLDER
 
 # Create version-specific description files
 rawVersion=$(node ../common/scripts/show_tag.js)
@@ -24,3 +25,4 @@ version=${rawVersion:1:${#rawVersion}-2}
 cp $SRC_FOLDER/$CHANNEL.yml $TARGET_FOLDER/${version}.yml
 cp $SRC_FOLDER/$CHANNEL-mac.yml $TARGET_FOLDER/${version}-mac.yml
 cp $SRC_FOLDER/$CHANNEL-linux.yml $TARGET_FOLDER/${version}-linux.yml
+cp $SRC_FOLDER/$CHANNEL-linux-arm64.yml $TARGET_FOLDER/${version}-linux-arm64.yml

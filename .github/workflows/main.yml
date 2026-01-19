@@ -663,6 +663,9 @@ jobs:
     needs: build
     runs-on: macos-latest
     timeout-minutes: 60
+    outputs:
+      release_tag: ${{ steps.release_info.outputs.release_tag }}
+      rev: ${{ steps.release_info.outputs.rev }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -671,17 +674,6 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Configure docker
-        uses: docker/setup-docker-action@v4
-        with:
-          daemon-config: |
-            {
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -764,12 +756,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Platform-Windows
-          path: ./desktop-package/deploy/Platform-windows-*.zip
+          path: ./desktop-package/deploy/Platform-windows-*.exe
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
-          name: Platform-Linux
-          path: ./desktop-package/deploy/Platform-linux-*.zip
+          name: Platform-Linux-arm64.zip
+          path: ./desktop-package/deploy/Platform-linux-*-arm64.zip
+      - name: Upload Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: Platform-Linux-x64.zip
+          path: ./desktop-package/deploy/Platform-linux-*-x64.zip
 
       - name: List deploy contents
         run: |
@@ -777,6 +774,58 @@ jobs:
           echo "Files in deploy directory:"
           ls -la deploy/
 
+      - name: Build server bundle (macOS only)
+        run: |
+          cd desktop-package
+          node ../common/scripts/install-run-rushx.js bundle:server
+
+      - name: Upload server bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-bundle
+          path: ./desktop-package/bundle
+      - name: Upload manifests (yml + blockmap)
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-manifests
+          path: |
+            ./desktop-package/*.yml
+            ./desktop-package/*.yaml
+            ./desktop-package/*.blockmap
+
+      - name: Set release info
+        id: release_info
+        run: |
+          echo "release_tag=$(node common/scripts/show_tag.js)" >> $GITHUB_OUTPUT
+          echo "rev=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+  dist-build-docker:
+    needs: dist-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: tree:0
+          submodules: recursive
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Configure docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Download all artifacts from dist-build
+        uses: actions/download-artifact@v4
+        with:
+          path: ./desktop-package
+      - name: List downloaded artifacts
+        run: ls -R ./desktop-package || true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -786,15 +835,14 @@ jobs:
           username: intabiafusion
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: Build server bundle
-        run: |
-          cd desktop-package
-          node ../common/scripts/install-run-rushx.js bundle:server
-
       - name: Build and push Docker image (via package script)
         run: |
+          set -euo pipefail
           cd desktop-package
-          node ../common/scripts/install-run-rushx.js dist-docker-push
+          ../common/scripts/docker_build.sh intabiafusion/desktop-distro
+          ../common/scripts/docker_tag.sh intabiafusion/desktop-distro
         env:
           DOCKER_CLI_HINTS: false
           DOCKER_BUILDKIT: 1
+          BUILD_REV: ${{ needs.dist-build.outputs.rev }}
+          RELEASE_TAG: ${{ needs.dist-build.outputs.release_tag }}
