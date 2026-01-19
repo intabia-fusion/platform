@@ -998,15 +998,15 @@ services:
         MP_DATABASE: /data/mailpit.db
         MP_SMTP_AUTH_ACCEPT_ANY: 1
         MP_SMTP_AUTH_ALLOW_INSECURE: 1
-  desktop-dist:
-    image: intabiafusion/desktop-distro
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    ports:
-      - 4409:4409
-    environment:
-      - PORT=4409
-    restart: unless-stopped
+  # desktop-dist:
+  #   image: intabiafusion/desktop-distro
+  #   extra_hosts:
+  #     - 'huly.local:host-gateway'
+  #   ports:
+  #     - 4409:4409
+  #   environment:
+  #     - PORT=4409
+  #   restart: unless-stopped
 volumes:
   db:
   dbpg:
