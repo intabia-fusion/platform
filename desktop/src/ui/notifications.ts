@@ -195,7 +195,7 @@ export function configureNotifications (): void {
     }
 
     async function handleNotifications (notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>): Promise<void> {
-      const inboxData = await getDisplayInboxData(notificationsByContext)
+      const inboxData = getDisplayInboxData(notificationsByContext)
 
       if (notificationHistory.size === 0) {
         for (const [, notifications] of inboxData) {
