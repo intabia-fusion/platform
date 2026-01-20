@@ -56,7 +56,8 @@
     ],
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.utilities",
       "artifactName": "Platform-macos-${version}-${arch}.${ext}",
@@ -74,7 +75,8 @@
     },
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "zip"
       ],
       "artifactName": "Platform-windows-${version}-${arch}.${ext}",
       "verifyUpdateCodeSignature": false,

@@ -729,7 +729,7 @@ jobs:
         #   TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           cd desktop-package
-          node ../common/scripts/install-run-rushx.js dist --linux --x64 --arm64
+          node ../common/scripts/install-run-rushx.js dist --linux --x64
           node ../common/scripts/install-run-rushx.js dist --windows --x64
           node ../common/scripts/install-run-rushx.js dist --macos --x64 --arm64
           # ./scripts/copy-publish-artifacts.sh ${{ env.PublishTempFolder}}
@@ -747,6 +747,11 @@ jobs:
         with:
           name: Platform-MacOS-x64
           path: ./desktop-package/deploy/Platform-macos-*-x64.dmg
+      - name: Upload MacOS Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Platform-MacOS-zip
+          path: ./desktop-package/deploy/Platform-macos*.zip
       - name: Upload MacOS arm64
         uses: actions/upload-artifact@v4
         with:
@@ -757,6 +762,11 @@ jobs:
         with:
           name: Platform-Windows
           path: ./desktop-package/deploy/Platform-windows-*.exe
+      - name: Upload Windows zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Platform-Windows-zip
+          path: ./desktop-package/deploy/Platform-windows-*.zip
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
@@ -767,6 +777,12 @@ jobs:
         with:
           name: Platform-Linux-x64
           path: ./desktop-package/deploy/Platform-linux-*-x64.zip
+
+      - name: Upload Linux App image
+        uses: actions/upload-artifact@v4
+        with:
+          name: Platform-Linux-Appimage
+          path: ./desktop-package/deploy/Platform-linux-*.AppImage
 
       - name: List deploy contents
         run: |
@@ -830,10 +846,20 @@ jobs:
         with:
           name: Platform-MacOS-arm64
           path: ./desktop-package/deploy
+      - name: Download Platform-MacOS-zip
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-MacOS-zip
+          path: ./desktop-package/deploy
       - name: Download Platform-Windows
         uses: actions/download-artifact@v4
         with:
           name: Platform-Windows
+          path: ./desktop-package/deploy
+      - name: Download Platform-Windows-zip
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-Windows-zip
           path: ./desktop-package/deploy
       - name: Download Platform-Linux-arm64
         uses: actions/download-artifact@v4
@@ -844,6 +870,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Platform-Linux-x64
+          path: ./desktop-package/deploy
+      - name: Download Platform-Linux-AppImage
+        uses: actions/download-artifact@v4
+        with:
+          name: Platform-Linux-AppImage
           path: ./desktop-package/deploy
       - name: Download server-bundle
         uses: actions/download-artifact@v4

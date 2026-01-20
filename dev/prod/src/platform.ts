@@ -473,7 +473,7 @@ export async function configurePlatform() {
 
   const updatesUrl = config.DESKTOP_UPDATES_URL
   // NOTE: env format is: default_value;key1:value1;key2:value2...
-  const updatesChannels = (config.DESKTOP_UPDATES_CHANNELS ?? config.DESKTOP_UPDATES_CHANNEL ?? 'platform').split(';').map(c => c.trim().split(':'))
+  const updatesChannels = (config.DESKTOP_UPDATES_CHANNELS ?? config.DESKTOP_UPDATES_CHANNEL ?? 'latest').split(';').map(c => c.trim().split(':'))
 
   setMetadata(login.metadata.DesktopUpdatesUrl, updatesUrl)
   setMetadata(login.metadata.DesktopUpdatesChannel, updatesChannels)

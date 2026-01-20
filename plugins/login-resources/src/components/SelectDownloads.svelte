@@ -270,6 +270,10 @@
       const dmg = all.filter((a) => extFromArtifact(a) === 'dmg')
       return dmg.length > 0 ? dmg : all
     }
+    if (p.platform === 'windows') {
+      const exe = all.filter((a) => extFromArtifact(a) === 'exe')
+      return exe.length > 0 ? exe : all
+    }
     return all
   }
 

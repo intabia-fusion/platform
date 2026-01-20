@@ -424,20 +424,37 @@ function loadDownloads(): { platforms: PlatformDownloads[]; lastUpdated: string 
 
         const f = (a.filename ?? '').toLowerCase()
 
-        // If manifest contains a variant, prefer it over filename heuristics
+        // If manifest contains a variant, use it as a hint but do not blindly
+        // prefer it over strong filename signals. It's common for manifests to
+        // be named e.g. `latest-windows-x64.yml` and still include artifacts
+        // that are for other architectures; in that case prefer filename
+        // heuristics (e.g. `-arm64` in the artifact name).
         if (variant) {
           const v = String(variant).toLowerCase()
-          if (/(arm64|aarch64)/.test(v)) {
+          const variantIsArm = /(arm64|aarch64)/.test(v)
+          const variantIsX64 = /(x64|x86_64|amd64)/.test(v)
+
+          // Detect if filename provides a stronger signal and contradicts the
+          // manifest-level variant. If so, skip using the manifest variant and
+          // fall back to filename-based heuristics below.
+          const filenameSuggestsArm = f.includes('arm') || f.includes('arm64') || f.includes('aarch64')
+          const filenameSuggestsX86 = f.includes('x86') && !f.includes('x64')
+          const filenameSuggestsX64 = f.includes('x64')
+
+          if (variantIsArm && !filenameSuggestsX64) {
             a.arch = 'arm64'
             a.archLabel = platform === 'mac' ? 'macOS - Apple Silicon' : `${platform.charAt(0).toUpperCase() + platform.slice(1)} - ARM64`
             return
           }
-          if (/(x64|x86_64|amd64)/.test(v)) {
+
+          if (variantIsX64 && !filenameSuggestsArm) {
             a.arch = 'x64'
             a.archLabel = platform === 'mac' ? 'macOS - Intel' : `${platform.charAt(0).toUpperCase() + platform.slice(1)} - x64`
             return
           }
-          // otherwise attach raw variant for UI
+
+          // Otherwise attach raw variant for UI and continue to filename
+          // heuristics below which will handle ambiguous or contradicting cases.
           a.variant = variant
         }
 
