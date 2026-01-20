@@ -861,11 +861,11 @@ jobs:
         with:
           name: Platform-Windows-zip
           path: ./desktop-package/deploy
-      - name: Download Platform-Linux-arm64
-        uses: actions/download-artifact@v4
-        with:
-          name: Platform-Linux-arm64
-          path: ./desktop-package/deploy
+      # - name: Download Platform-Linux-arm64
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: Platform-Linux-arm64
+      #     path: ./desktop-package/deploy
       - name: Download Platform-Linux-x64
         uses: actions/download-artifact@v4
         with:
