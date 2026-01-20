@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
-  import core, { Class, ClassifierKind, Doc, Mixin, Ref } from '@hcengineering/core'
+  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
   import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
   import { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
@@ -36,7 +36,6 @@
   import PriorityEditor from '../PriorityEditor.svelte'
   import RelationEditor from '../RelationEditor.svelte'
   import StatusEditor from '../StatusEditor.svelte'
-  import notification from '@hcengineering/notification'
 
   export let issue: Issue
   export let showAllMixins: boolean = false
@@ -67,22 +66,20 @@
     'identifier'
   ]
 
+  const allowedCollections = ['collaborators']
+
   let keys: KeyedAttribute[] = []
+  let collectionKeys: KeyedAttribute[] = []
 
   function updateKeys (_class: Ref<Class<Issue>>, ignoreKeys: string[]): void {
     const filtredKeys = getFiltredKeys(hierarchy, _class, ignoreKeys)
     keys = filtredKeys.filter((key) => !isCollectionAttr(hierarchy, key))
+    collectionKeys = filtredKeys.filter(
+      (key) => isCollectionAttr(hierarchy, key) && allowedCollections.includes(key.key)
+    )
   }
 
-  let mixins: Mixin<Doc>[] = []
-
-  $: _mixins = getDocMixins(issue, showAllMixins)
-
-  $: mixins = _mixins.find((p) => p._id === notification.mixin.Collaborators)
-    ? _mixins
-    : [..._mixins, hierarchy.getClass(notification.mixin.Collaborators)]
-
-  const allowedCollections = ['collaborators']
+  $: mixins = getDocMixins(issue, showAllMixins)
 
   function getMixinKeys (mixin: Ref<Mixin<Doc>>): KeyedAttribute[] {
     const mixinClass = hierarchy.getClass(mixin)
@@ -214,6 +211,21 @@
   {#if keys.length > 0}
     <div class="divider" />
     {#each keys as key (typeof key === 'string' ? key : key.key)}
+      <AttributeBarEditor
+        {readonly}
+        {key}
+        identifier={issue.identifier}
+        _class={issue._class}
+        object={issue}
+        showHeader={true}
+        size={'medium'}
+      />
+    {/each}
+  {/if}
+
+  {#if collectionKeys.length > 0}
+    <div class="divider" />
+    {#each collectionKeys as key (typeof key === 'string' ? key : key.key)}
       <AttributeBarEditor
         {readonly}
         {key}

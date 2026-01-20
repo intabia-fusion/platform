@@ -15,9 +15,9 @@
 
 import activity from '@hcengineering/activity'
 import chunter from '@hcengineering/chunter'
-import { AccountRole, type ClassCollaborators, type Ref, type Status } from '@hcengineering/core'
+import { AccountRole, type Ref, type Status } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
@@ -25,7 +25,7 @@ import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import notification from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
-import pluginState, { type Issue, trackerId } from '@hcengineering/tracker'
+import pluginState, { trackerId } from '@hcengineering/tracker'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -503,10 +503,7 @@ export function createModel (builder: Builder): void {
 
   defineSortAndGrouping(builder)
 
-  builder.createDoc<ClassCollaborators<Issue>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: tracker.class.Issue,
-    fields: ['createdBy', 'assignee']
-  })
+  defineCollaborators(builder, tracker.class.Issue, { fields: ['createdBy', 'assignee'] })
 
   builder.mixin(tracker.class.Issue, core.class.Class, setting.mixin.Editable, {
     value: true

@@ -418,6 +418,7 @@ export class TClassCollaborators extends TDoc implements ClassCollaborators<Doc>
   provideSecurity?: boolean
 }
 
+@UX(core.string.Collaborator, undefined, undefined, undefined, undefined, core.string.Collaborators)
 @Model(core.class.Collaborator, core.class.Doc, DOMAIN_COLLABORATOR)
 export class TCollaborator extends TAttachedDoc implements Collaborator {
   collaborator!: AccountUuid

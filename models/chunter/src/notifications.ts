@@ -15,23 +15,14 @@
 
 import { type Builder } from '@hcengineering/model'
 import notification from '@hcengineering/model-notification'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
 
 import chunter from './plugin'
-import { type ClassCollaborators } from '@hcengineering/core'
-import { type Channel, type DirectMessage } from '@hcengineering/chunter'
 
 export function defineNotifications (builder: Builder): void {
-  builder.createDoc<ClassCollaborators<DirectMessage>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: chunter.class.DirectMessage,
-    fields: ['members']
-  })
-
-  builder.createDoc<ClassCollaborators<Channel>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: chunter.class.Channel,
-    fields: ['members']
-  })
+  defineCollaborators(builder, chunter.class.DirectMessage, { fields: ['members'] })
+  defineCollaborators(builder, chunter.class.Channel, { fields: ['members'] })
 
   builder.mixin(chunter.class.DirectMessage, core.class.Class, notification.mixin.NotificationPreview, {
     presenter: chunter.component.ChannelPreview

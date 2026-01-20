@@ -172,11 +172,16 @@ export function createModel (builder: Builder): void {
     attachment.ids.AttachmentRemovedActivityViewlet
   )
 
-  builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-    label: attachment.string.FilterAttachments,
-    position: 50,
-    filter: attachment.filter.AttachmentsFilter
-  })
+  builder.createDoc(
+    activity.class.ActivityMessagesFilter,
+    core.space.Model,
+    {
+      label: attachment.string.FilterAttachments,
+      position: 50,
+      filter: attachment.filter.AttachmentsFilter
+    },
+    attachment.ids.AttachmentsActivityFilter
+  )
 
   builder.createDoc(
     view.class.ActionCategory,

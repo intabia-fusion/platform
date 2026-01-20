@@ -41,19 +41,15 @@ import core, {
 } from '@hcengineering/core'
 import notification, { DocNotifyContext, NotificationContent } from '@hcengineering/notification'
 import { getMetadata, IntlString, translate } from '@hcengineering/platform'
-import { getAccountBySocialId, getPerson } from '@hcengineering/server-contact'
+import { getAccountBySocialId, getAddCollaboratorsTxes, getPerson } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import {
-  createCollaboratorNotifications,
-  getAddCollaboratTxes,
-  getDocCollaborators
-} from '@hcengineering/server-notification-resources'
+import { createCollaboratorNotifications } from '@hcengineering/server-notification-resources'
 import { jsonToHTML, markupToJSON } from '@hcengineering/text'
 import { extractReferences, markupToText, stripTags } from '@hcengineering/text-core'
 import { workbenchId } from '@hcengineering/workbench'
-
 import { NOTIFICATION_BODY_SIZE } from '@hcengineering/server-notification'
 import { encodeObjectURI } from '@hcengineering/view'
+import { getCollaboratorsFromDocFields } from '@hcengineering/server-contact-resources'
 
 const updateChatInfoDelay = 12 * 60 * 60 * 1000 // 12 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -202,9 +198,9 @@ async function OnChatMessageCreated (ctx: MeasureContext, tx: TxCUD<Doc>, contro
   if (currentCollaborators.length === 0) {
     const mixin = getClassCollaborators(control.modelDb, control.hierarchy, targetDoc._class)
     if (mixin !== undefined) {
-      const collaborators = await getDocCollaborators(ctx, targetDoc, mixin, control)
+      const collaborators = await getCollaboratorsFromDocFields(ctx, control, targetDoc, mixin)
       currentCollaborators = collaborators
-      res.push(...getAddCollaboratTxes(tx.objectId, tx.objectClass, tx.objectSpace, control, collaborators))
+      res.push(...getAddCollaboratorsTxes(tx.objectId, tx.objectClass, tx.objectSpace, control, collaborators))
     }
   }
 

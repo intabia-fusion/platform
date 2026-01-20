@@ -14,6 +14,10 @@
 //
 
 import {
+  type Class,
+  type ClassCollaborators,
+  type Data,
+  type Doc,
   DOMAIN_BENCHMARK,
   DOMAIN_BLOB,
   DOMAIN_CONFIGURATION,
@@ -21,9 +25,10 @@ import {
   DOMAIN_SPACE,
   DOMAIN_STATUS,
   DOMAIN_TRANSIENT,
-  DOMAIN_TX
+  DOMAIN_TX,
+  type Ref
 } from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
+import { type Builder, Collection } from '@hcengineering/model'
 import { TBenchmarkDoc } from './benchmark'
 import core from './component'
 import {
@@ -299,5 +304,24 @@ export function createModel (builder: Builder): void {
   builder.mixin(core.class.MigrationState, core.class.Class, core.mixin.IndexConfiguration, {
     indexes: [],
     searchDisabled: true
+  })
+}
+
+export function defineCollaborators<T extends Doc> (
+  builder: Builder,
+  _class: Ref<Class<T>>,
+  data: Omit<Data<ClassCollaborators<T>>, 'attachedTo'>
+): void {
+  builder.createDoc<ClassCollaborators<T>>(core.class.ClassCollaborators, core.space.Model, {
+    attachedTo: _class,
+    ...data
+  })
+
+  builder.createDoc(core.class.Attribute, core.space.Model, {
+    name: 'collaborators',
+    attributeOf: _class,
+    type: Collection(core.class.Collaborator),
+    label: core.string.Collaborators,
+    rank: ''
   })
 }

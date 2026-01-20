@@ -21,23 +21,18 @@ import contact, { Employee, type Person } from '@hcengineering/contact'
 import core, {
   AccountUuid,
   AnyAttribute,
-  ArrOf,
   AttachedDoc,
   Class,
-  ClassCollaborators,
   Collaborator,
   Collection,
   combineAttributes,
   Data,
   Doc,
-  DocumentUpdate,
+  getClassCollaborators,
   MeasureContext,
-  MixinUpdate,
-  notEmpty,
   PersonId,
   readOnlyGuestAccountUuid,
   Ref,
-  RefTo,
   SortingOrder,
   Space,
   Timestamp,
@@ -47,8 +42,7 @@ import core, {
   TxMixin,
   TxProcessor,
   TxRemoveDoc,
-  TxUpdateDoc,
-  getClassCollaborators
+  TxUpdateDoc
 } from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
@@ -59,10 +53,11 @@ import notification, {
   NotificationType
 } from '@hcengineering/notification'
 import { getResource, translate } from '@hcengineering/platform'
-import { getAccountBySocialId, getEmployeesBySocialIds } from '@hcengineering/server-contact'
+import { getAccountBySocialId } from '@hcengineering/server-contact'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { NOTIFICATION_BODY_SIZE, ReceiverInfo, SenderInfo } from '@hcengineering/server-notification'
 import { markupToText, stripTags } from '@hcengineering/text-core'
+import { getCollaboratorsByTx } from '@hcengineering/server-contact-resources'
 
 import { PushNotificationsHandler } from './push'
 import {
@@ -83,7 +78,6 @@ import {
   getReceiversInfo,
   getSenderInfo,
   getTextPresenter,
-  isMixinTx,
   isShouldNotifyTx,
   isUserEmployeeInFieldValueTypeMatch,
   mentionTypeMatch,
@@ -167,9 +161,6 @@ function fillTemplate (
   return res
 }
 
-/**
- * @public
- */
 export async function getContentByTemplate (
   doc: Doc | undefined,
   sender: string,
@@ -225,120 +216,6 @@ export async function getContentByTemplate (
     html,
     subject
   }
-}
-
-async function getValueCollaborators (value: any, attr: AnyAttribute, control: TriggerControl): Promise<AccountUuid[]> {
-  const hierarchy = control.hierarchy
-  if (attr.type._class === core.class.RefTo) {
-    const to = (attr.type as RefTo<Doc>).to
-
-    if (hierarchy.isDerived(to, contact.class.Person)) {
-      const employee = await control.findAll(
-        control.ctx,
-        contact.mixin.Employee,
-        {
-          _id: value,
-          active: true
-        },
-        { limit: 1 }
-      )
-
-      return employee[0]?.personUuid != null ? [employee[0].personUuid] : []
-    }
-  } else if (attr.type._class === core.class.TypeAccountUuid) {
-    return [value]
-  } else if (attr.type._class === core.class.TypePersonId) {
-    const acc = await getAccountBySocialId(control, value)
-    return acc == null ? [] : [acc]
-  } else if (attr.type._class === core.class.ArrOf) {
-    const arrOf = (attr.type as ArrOf<RefTo<Doc>>).of
-
-    if (arrOf._class === core.class.RefTo) {
-      const to = (arrOf as RefTo<Doc>).to
-      if (hierarchy.isDerived(to, contact.class.Person)) {
-        if (!Array.isArray(value)) {
-          control.ctx.error('Expected array but got non-array value when getting value collaborators', { attr, value })
-          return []
-        }
-        if (value.length === 0) return []
-        if (value.every((it) => it === null)) {
-          control.ctx.error('Null-values array of person refs when getting value collaborators', { attr, value })
-        }
-
-        const employees = await control.findAll(control.ctx, contact.mixin.Employee, {
-          _id: { $in: value },
-          active: true
-        })
-
-        return employees.map((e) => e.personUuid).filter(notEmpty)
-      }
-    } else if (arrOf._class === core.class.TypeAccountUuid) {
-      return Array.isArray(value) ? value : [value]
-    } else if (arrOf._class === core.class.TypePersonId) {
-      const socialIds = Array.isArray(value) ? value : [value]
-      const personsBySocialIds = await getEmployeesBySocialIds(control, socialIds)
-
-      return Object.values(personsBySocialIds)
-        .map((p) => p?.personUuid)
-        .filter(notEmpty)
-    }
-  }
-  return []
-}
-
-async function getKeyCollaborators (
-  docClass: Ref<Class<Doc>>,
-  value: any,
-  field: string,
-  control: TriggerControl
-): Promise<AccountUuid[] | undefined> {
-  if (value !== undefined && value !== null) {
-    const attr = control.hierarchy.findAttribute(docClass, field)
-    if (attr !== undefined) {
-      const val = await getValueCollaborators(value, attr, control)
-      return val
-    }
-  }
-}
-
-/**
- * @public
- */
-export async function getDocCollaborators (
-  ctx: MeasureContext,
-  doc: Doc,
-  mixin: ClassCollaborators<Doc>,
-  control: TriggerControl
-): Promise<AccountUuid[]> {
-  const collaborators = new Set<AccountUuid>()
-  if (mixin.allFields !== true) {
-    for (const field of mixin.fields) {
-      const value = (doc as any)[field]
-      const newCollaborators = await ctx.with('getKeyCollaborators', {}, (ctx) =>
-        getKeyCollaborators(doc._class, value, field, control)
-      )
-      if (newCollaborators !== undefined) {
-        for (const newCollaborator of newCollaborators) {
-          collaborators.add(newCollaborator)
-        }
-      }
-    }
-  } else {
-    const attrs = control.hierarchy.getAllAttributes(doc._class)
-    // attr type will be checked into getKeyCollaborators
-    for (const [field] of attrs) {
-      const value = (doc as any)[field]
-      const newCollaborators = await ctx.with('getKeyCollaborators', {}, (ctx) =>
-        getKeyCollaborators(doc._class, value, field, control)
-      )
-      if (newCollaborators !== undefined) {
-        for (const newCollaborator of newCollaborators) {
-          collaborators.add(newCollaborator)
-        }
-      }
-    }
-  }
-  return Array.from(collaborators.values())
 }
 
 export async function pushInboxNotifications (
@@ -720,7 +597,6 @@ export async function createCollabDocInfo (
   object: Doc,
   activityMessages: ActivityMessage[],
   params: NotifyParams,
-  unsubscribe: AccountUuid[] = [],
   cache: Map<Ref<Doc>, Doc> = new Map<Ref<Doc>, Doc>()
 ): Promise<Tx[]> {
   let res: Tx[] = []
@@ -732,14 +608,6 @@ export async function createCollabDocInfo (
   const docMessages = activityMessages.filter((message) => message.attachedTo === object._id)
 
   if (docMessages.length === 0) {
-    if (unsubscribe.length > 0) {
-      const notifyContexts = await control.findAll(ctx, notification.class.DocNotifyContext, {
-        objectId: object._id,
-        user: { $in: unsubscribe }
-      })
-      await removeContexts(ctx, notifyContexts, unsubscribe, control)
-    }
-
     return res
   }
 
@@ -750,9 +618,6 @@ export async function createCollabDocInfo (
 
   if (notifyContexts.length > 0) {
     await updateContextsTimestamp(ctx, notifyContexts, tx.modifiedOn, control, tx.modifiedBy)
-  }
-  if (notifyContexts.length > 0 && unsubscribe.length > 0) {
-    await removeContexts(ctx, notifyContexts, unsubscribe, control)
   }
 
   const space = await getObjectSpace(control, object, cache)
@@ -821,75 +686,6 @@ export async function createCollabDocInfo (
   return res
 }
 
-/**
- * @public
- */
-export function getAddCollaboratTxes (
-  objectId: Ref<Doc>,
-  objectClass: Ref<Class<Doc>>,
-  objectSpace: Ref<Space>,
-  control: TriggerControl,
-  collaborators: AccountUuid[]
-): TxCreateDoc<Collaborator>[] {
-  const res: TxCreateDoc<Collaborator>[] = []
-  for (const collaborator of collaborators) {
-    const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
-      attachedTo: objectId,
-      attachedToClass: objectClass,
-      collaborator,
-      collection: 'collaborators'
-    })
-    res.push(tx)
-  }
-  return res
-}
-
-async function getTxCollabs (
-  ctx: MeasureContext,
-  tx: TxCUD<Doc>,
-  control: TriggerControl,
-  cache: Map<Ref<Doc>, Collaborator[]>,
-  doc: Doc
-): Promise<{
-    added: AccountUuid[]
-    removed: AccountUuid[]
-    result: AccountUuid[]
-  }> {
-  const { hierarchy } = control
-  const mixin = getClassCollaborators(control.modelDb, hierarchy, doc._class)
-  if (mixin === undefined) return { added: [], removed: [], result: [] }
-
-  if (tx._class === core.class.TxCreateDoc) {
-    const collabs = await getDocCollaborators(ctx, doc, mixin, control)
-    return { added: collabs, removed: [], result: collabs }
-  }
-
-  if (tx._class === core.class.TxRemoveDoc) {
-    return { added: [], removed: [], result: [] }
-  }
-
-  if ([core.class.TxUpdateDoc, core.class.TxMixin].includes(tx._class)) {
-    const collaborators =
-      cache.get(doc._id) ??
-      (await control.findAll(ctx, core.class.Collaborator, {
-        attachedTo: doc._id
-      }))
-    cache.set(doc._id, collaborators)
-    const collabs = collaborators.map((c) => c.collaborator)
-    const ops = isMixinTx(tx) ? tx.attributes : (tx as TxUpdateDoc<Doc>).operations
-    const newCollaborators = (await getNewCollaborators(ops, mixin, doc._class, control)).filter(
-      (p) => !collabs.includes(p)
-    )
-    const isSpace = control.hierarchy.isDerived(doc._class, core.class.Space)
-    const removedCollabs = isSpace ? await getRemovedMembers(ops, mixin, (doc as Space)._class, control) : []
-    const result = [...collabs, ...newCollaborators].filter((p) => !removedCollabs.includes(p))
-
-    return { added: newCollaborators, removed: removedCollabs, result }
-  }
-
-  return { added: [], removed: [], result: [] }
-}
-
 async function getSpaceCollabTxes (
   ctx: MeasureContext,
   control: TriggerControl,
@@ -926,35 +722,10 @@ async function getSpaceCollabTxes (
       doc,
       activityMessages,
       { isSpace: true, isOwn: false, shouldUpdateTimestamp: true },
-      [],
       docCache
     )
   }
   return []
-}
-
-async function pushCollaboratorsToPublicSpace (
-  control: TriggerControl,
-  doc: Doc,
-  collaborators: AccountUuid[],
-  cache: Map<Ref<Doc>, Doc>
-): Promise<Tx[]> {
-  const space = await getObjectSpace(control, doc, cache)
-  if (space === undefined) return []
-
-  cache.set(space._id, space)
-
-  if (control.hierarchy.isDerived(space._class, core.class.SystemSpace)) {
-    return []
-  }
-
-  if (space.private) {
-    return []
-  }
-
-  return collaborators
-    .filter((it) => !space.members.includes(it))
-    .map((it) => control.txFactory.createTxUpdateDoc(space._class, space.space, space._id, { $push: { members: it } }))
 }
 
 async function createCollaboratorDoc (
@@ -973,10 +744,12 @@ async function createCollaboratorDoc (
   }
 
   const doc = TxProcessor.createDoc2Doc(tx)
-  const collaborators = await ctx.with('get-collaborators', {}, (ctx) => getDocCollaborators(ctx, doc, mixin, control))
-  const mixinTx = getAddCollaboratTxes(tx.objectId, tx.objectClass, tx.objectSpace, control, collaborators)
-
-  res.push(...mixinTx)
+  const collaborators =
+    cache.get(doc._id) ??
+    (await control.findAll(ctx, core.class.Collaborator, {
+      attachedTo: doc._id
+    }))
+  cache.set(doc._id, collaborators)
 
   res.push(
     ...(await ctx.with('get-space-collabtxes', {}, (ctx) =>
@@ -984,13 +757,11 @@ async function createCollaboratorDoc (
     ))
   )
 
-  res.push(...(await pushCollaboratorsToPublicSpace(control, doc, collaborators, docCache)))
-
   const notificationTxes = await ctx.with('create-collabdocinfo', {}, (ctx) =>
     createCollabDocInfo(
       ctx,
       res,
-      collaborators,
+      collaborators.map((it) => it.collaborator),
       control,
       tx,
       doc,
@@ -1000,7 +771,6 @@ async function createCollaboratorDoc (
         isSpace: false,
         shouldUpdateTimestamp: true
       },
-      [],
       docCache
     )
   )
@@ -1059,14 +829,19 @@ async function collectionCollabDoc (
 
   docCache.set(doc._id, doc)
 
-  const collaborators = await ctx.with('get-collaborators', {}, (ctx) => getCollaborators(ctx, doc, control, tx, res))
+  const collaborators =
+    cache.get(doc._id) ??
+    (await control.findAll(ctx, core.class.Collaborator, {
+      attachedTo: doc._id
+    }))
+  cache.set(doc._id, collaborators)
 
   res = res.concat(
     await ctx.with('create-collab-doc-info', {}, (ctx) =>
       createCollabDocInfo(
         ctx,
         res,
-        collaborators,
+        collaborators.map((it) => it.collaborator),
         control,
         tx,
         doc,
@@ -1076,7 +851,6 @@ async function collectionCollabDoc (
           isSpace: false,
           shouldUpdateTimestamp: true
         },
-        [],
         docCache
       )
     )
@@ -1144,120 +918,6 @@ async function removeCollaboratorDoc (tx: TxRemoveDoc<Doc>, control: TriggerCont
   return res
 }
 
-async function getNewCollaborators (
-  ops: DocumentUpdate<Doc> | MixinUpdate<Doc, Doc>,
-  mixin: ClassCollaborators<Doc>,
-  docClass: Ref<Class<Doc>>,
-  control: TriggerControl
-): Promise<AccountUuid[]> {
-  const newCollaborators = new Set<AccountUuid>()
-  if (ops.$push !== undefined) {
-    for (const key in ops.$push) {
-      if (mixin.fields.includes(key as any) || mixin.allFields === true) {
-        let value = (ops.$push as any)[key]
-        if (typeof value !== 'string') {
-          value = value.$each
-        }
-        const newCollabs = await getKeyCollaborators(docClass, value, key, control)
-        if (newCollabs !== undefined) {
-          for (const newCollab of newCollabs) {
-            newCollaborators.add(newCollab)
-          }
-        }
-      }
-    }
-  }
-  for (const key in ops) {
-    if (key.startsWith('$')) continue
-    if (mixin.fields.includes(key as any) || mixin.allFields === true) {
-      const value = (ops as any)[key]
-      const newCollabs = await getKeyCollaborators(docClass, value, key, control)
-      if (newCollabs !== undefined) {
-        for (const newCollab of newCollabs) {
-          newCollaborators.add(newCollab)
-        }
-      }
-    }
-  }
-
-  return Array.from(newCollaborators)
-}
-
-async function getRemovedMembers (
-  ops: DocumentUpdate<Space> | MixinUpdate<Space, Space>,
-  mixin: ClassCollaborators<Doc>,
-  docClass: Ref<Class<Space>>,
-  control: TriggerControl
-): Promise<AccountUuid[]> {
-  const removedCollaborators: AccountUuid[] = []
-  if (ops.$pull !== undefined && 'members' in ops.$pull) {
-    const key = 'members'
-    if (mixin.fields.includes(key as any) || mixin.allFields === true) {
-      let value = (ops.$pull as any)[key]
-      if (typeof value !== 'string') {
-        value = value.$in
-      }
-      const collabs = await getKeyCollaborators(docClass, value, key, control)
-      if (collabs !== undefined) {
-        removedCollaborators.push(...collabs)
-      }
-    }
-  }
-
-  return Array.from(new Set(removedCollaborators))
-}
-
-async function createSyncCollaboratorsTxes (
-  ctx: MeasureContext,
-  control: TriggerControl,
-  cache: Map<Ref<Doc>, Collaborator[]>,
-  objectId: Ref<Doc>,
-  objectClass: Ref<Class<Doc>>,
-  objectSpace: Ref<Space>,
-  added: AccountUuid[],
-  removed: AccountUuid[]
-): Promise<{ txes: Tx[], toAdd: AccountUuid[] }> {
-  const res: Tx[] = []
-  let currentCollaborators =
-    cache.get(objectId) ??
-    (await control.findAll(ctx, core.class.Collaborator, {
-      attachedTo: objectId
-    }))
-
-  const toAdd = added.filter((p) => currentCollaborators.find((c) => c.collaborator === p) === undefined)
-
-  if (toAdd.length === 0 && removed.length === 0) return { txes: res, toAdd: [] }
-
-  if (toAdd.length > 0) {
-    const txes = getAddCollaboratTxes(objectId, objectClass, objectSpace, control, toAdd)
-    res.push(...txes)
-    txes.forEach((tx) => {
-      const collab = TxProcessor.createDoc2Doc(tx)
-      currentCollaborators.push(collab)
-    })
-  }
-
-  if (removed.length > 0) {
-    const toRemove: Collaborator[] = []
-    const collabs: Collaborator[] = []
-    for (const collab of currentCollaborators) {
-      if (removed.includes(collab.collaborator)) {
-        toRemove.push(collab)
-      } else {
-        collabs.push(collab)
-      }
-    }
-    for (const removedCollab of toRemove) {
-      res.push(control.txFactory.createTxRemoveDoc(core.class.Collaborator, removedCollab.space, removedCollab._id))
-    }
-    currentCollaborators = collabs
-  }
-
-  cache.set(objectId, currentCollaborators)
-
-  return { txes: res, toAdd }
-}
-
 async function updateCollaboratorDoc (
   ctx: MeasureContext,
   tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>,
@@ -1279,32 +939,24 @@ async function updateCollaboratorDoc (
   if (doc === undefined) return []
   docCache.set(doc._id, doc)
   const params: NotifyParams = { isOwn: true, isSpace: false, shouldUpdateTimestamp: true }
-  // we should handle change field and subscribe new collaborators
-  const collabsInfo = await ctx.with('get-tx-collaborators', {}, (ctx) => getTxCollabs(ctx, tx, control, cache, doc))
-  const sync = await createSyncCollaboratorsTxes(
-    ctx,
-    control,
-    cache,
-    doc._id,
-    doc._class,
-    doc.space,
-    collabsInfo.added,
-    collabsInfo.removed
-  )
-  res.push(...sync.txes)
+  const collaborators =
+    cache.get(doc._id) ??
+    (await control.findAll(ctx, core.class.Collaborator, {
+      attachedTo: doc._id
+    }))
+  cache.set(doc._id, collaborators)
 
   res = res.concat(
     await ctx.with('create-collab-docinfo', {}, (ctx) =>
       createCollabDocInfo(
         ctx,
         res,
-        collabsInfo.result,
+        collaborators.map((it) => it.collaborator),
         control,
         tx,
         doc,
         activityMessages,
         params,
-        collabsInfo.removed,
         docCache
       )
     )
@@ -1391,12 +1043,7 @@ export async function OnAttributeUpdate (txes: Tx[], control: TriggerControl): P
   return result
 }
 
-async function updateCollaborators (
-  ctx: MeasureContext,
-  control: TriggerControl,
-  tx: TxCUD<Doc>,
-  cache: Map<Ref<Doc>, Collaborator[]>
-): Promise<Tx[]> {
+async function updateCollaborators (ctx: MeasureContext, control: TriggerControl, tx: TxCUD<Doc>): Promise<Tx[]> {
   if (tx._class !== core.class.TxUpdateDoc && tx._class !== core.class.TxMixin) return []
 
   const hierarchy = control.hierarchy
@@ -1409,23 +1056,10 @@ async function updateCollaborators (
   const doc = (await control.findAll(ctx, tx.objectClass, { _id: tx.objectId }, { limit: 1 }))[0]
   if (doc === undefined) return []
 
-  const collabsResult = await getTxCollabs(ctx, tx, control, cache, doc)
+  const collabsResult = await getCollaboratorsByTx(ctx, control, tx, doc, new Map())
   if (collabsResult.added.length === 0 && collabsResult.removed.length === 0) return []
 
   const res: Tx[] = []
-
-  const { txes: collabTxes } = await createSyncCollaboratorsTxes(
-    ctx,
-    control,
-    cache,
-    doc._id,
-    doc._class,
-    doc.space,
-    collabsResult.added,
-    collabsResult.removed
-  )
-
-  res.push(...collabTxes)
 
   const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, { objectId: tx.attachedTo })
   const addedInfo = collabsResult.added.length > 0 ? await getReceiversInfo(ctx, collabsResult.added, control) : []
@@ -1440,8 +1074,29 @@ async function updateCollaborators (
     await createNotifyContext(ctx, control, doc._id, doc._class, doc.space, info, tx.modifiedBy, undefined, tx)
   }
 
-  if (collabsResult.removed.length > 0) {
-    await removeContexts(ctx, contexts, collabsResult.removed, control)
+  return res
+}
+
+async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control: TriggerControl): Promise<Tx[]> {
+  const res: Tx[] = []
+
+  for (const tx of txes) {
+    const collaborator = control.removedMap.get(tx._id) as Collaborator | undefined
+    if (collaborator === undefined) continue
+
+    const { attachedTo, attachedToClass } = collaborator
+
+    if (control.hierarchy.classHierarchyMixin(attachedToClass, activity.mixin.ActivityDoc) === undefined) return []
+
+    const doc = (await control.findAll(control.ctx, attachedToClass, { _id: attachedTo }, { limit: 1 }))[0]
+    if (doc === undefined) continue
+
+    const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
+      objectId: attachedTo,
+      user: collaborator.collaborator
+    })
+
+    await removeContexts(control.ctx, contexts, [collaborator.collaborator], control)
   }
 
   return res
@@ -1459,7 +1114,7 @@ export async function createCollaboratorNotifications (
 ): Promise<Tx[]> {
   if (tx.space === core.space.DerivedTx) {
     // do not forgot update collaborators for derived  tx
-    return await ctx.with('updateDerivedCollaborators', {}, (ctx) => updateCollaborators(ctx, control, tx, cache))
+    return await ctx.with('updateDerivedCollaborators', {}, (ctx) => updateCollaborators(ctx, control, tx))
   }
 
   if (activityMessages.length === 0) {
@@ -1480,10 +1135,9 @@ export async function createCollaboratorNotifications (
     }
     case core.class.TxUpdateDoc:
     case core.class.TxMixin: {
-      const res = await ctx.with('updateCollaboratorDoc', {}, (ctx) =>
+      return await ctx.with('updateCollaboratorDoc', {}, (ctx) =>
         updateCollaboratorDoc(ctx, tx as TxUpdateDoc<Doc>, control, activityMessages, cache, docCache)
       )
-      return res
     }
   }
 
@@ -1505,33 +1159,6 @@ export async function removeDocInboxNotifications (_id: Ref<ActivityMessage>, co
       inboxNotification._id
     )
   )
-}
-
-export async function getCollaborators (
-  ctx: MeasureContext,
-  doc: Doc,
-  control: TriggerControl,
-  tx: TxCUD<Doc>,
-  res: Tx[]
-): Promise<AccountUuid[]> {
-  const mixin = getClassCollaborators(control.modelDb, control.hierarchy, doc._class)
-
-  if (mixin === undefined) {
-    return []
-  }
-
-  const collaborators = await control.findAll(ctx, core.class.Collaborator, {
-    attachedTo: doc._id
-  })
-
-  if (collaborators.length > 0) {
-    return collaborators.map((p) => p.collaborator)
-  } else {
-    const collaborators = await getDocCollaborators(ctx, doc, mixin, control)
-
-    res.push(...getAddCollaboratTxes(tx.objectId, tx.objectClass, tx.objectSpace, control, collaborators))
-    return collaborators
-  }
 }
 
 function getDocNotifyContext (
@@ -1658,7 +1285,8 @@ export default async () => ({
     OnAttributeUpdate,
     OnDocRemove,
     OnEmployeeDeactivate,
-    PushNotificationsHandler
+    PushNotificationsHandler,
+    OnCollaboratorRemoved
   },
   function: {
     IsUserEmployeeInFieldValueTypeMatch: isUserEmployeeInFieldValueTypeMatch,

@@ -38,7 +38,6 @@ import {
 } from '@hcengineering/contact'
 import {
   AccountRole,
-  type ClassCollaborators,
   DOMAIN_MODEL,
   DateRangeMode,
   IndexKind,
@@ -77,7 +76,7 @@ import {
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import chunter from '@hcengineering/model-chunter'
-import core, { TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
+import core, { defineCollaborators, TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
 import { createPublicLinkAction } from '@hcengineering/model-guest'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
@@ -654,19 +653,13 @@ export function createModel (builder: Builder): void {
     inlineEditor: contact.component.ContactArrayEditor
   })
 
-  builder.createDoc<ClassCollaborators<Contact>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: contact.class.Contact,
-    fields: []
-  })
+  defineCollaborators(builder, contact.class.Contact, { fields: [] })
 
   builder.mixin(contact.class.Channel, core.class.Class, view.mixin.ObjectPanel, {
     component: contact.component.ChannelPanel
   })
 
-  builder.createDoc<ClassCollaborators<Channel>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: contact.class.Channel,
-    fields: ['modifiedBy']
-  })
+  defineCollaborators(builder, contact.class.Channel, { fields: ['modifiedBy'] })
 
   builder.mixin(contact.class.Channel, core.class.Class, notification.mixin.NotificationObjectPresenter, {
     presenter: contact.component.ActivityChannelPresenter
@@ -1418,5 +1411,10 @@ export function createModel (builder: Builder): void {
     role: AccountRole.Guest,
     feature: 'auto-translate',
     order: 1600
+  })
+
+  builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.CollectionEditor, {
+    editor: contact.component.CollaboratorEditor,
+    inlineEditor: contact.component.CollaboratorEditor
   })
 }

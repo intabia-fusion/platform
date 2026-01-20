@@ -17,7 +17,6 @@
   import { PermissionsStore } from '@hcengineering/contact'
   import { permissionsStore } from '@hcengineering/contact-resources'
   import core, { AnyAttribute, Class, Doc, Ref, toRank, TypedSpace } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
   import {
     AttributeBarEditor,
     createQuery,
@@ -83,7 +82,7 @@
   {#if showCollaborators}
     <AttributeBarEditor
       key={'collaborators'}
-      _class={notification.mixin.Collaborators}
+      _class={object._class}
       {object}
       {showHeader}
       {readonly}

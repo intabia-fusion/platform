@@ -70,6 +70,8 @@
     "AddRelation": "Přidat vztah",
     "PersonId": "Osoba",
     "AccountId": "Účet",
-    "Version": "Verze"
+    "Version": "Verze",
+    "Collaborator": "Spolupracovník",
+    "Collaborators": "Spolupracovníci"
   }
 }

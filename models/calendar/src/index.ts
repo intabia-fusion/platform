@@ -39,7 +39,6 @@ import {
   type Ref,
   type Timestamp,
   type PersonId,
-  type ClassCollaborators,
   AccountRole
 } from '@hcengineering/core'
 import {
@@ -61,7 +60,7 @@ import {
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import contact from '@hcengineering/model-contact'
-import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
+import core, { defineCollaborators, TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
 import notification from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
@@ -268,10 +267,7 @@ export function createModel (builder: Builder): void {
     calendar.ids.CalendarNotificationGroup
   )
 
-  builder.createDoc<ClassCollaborators<Event>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: calendar.class.Event,
-    fields: ['participants']
-  })
+  defineCollaborators(builder, calendar.class.Event, { fields: ['participants'] })
 
   builder.createDoc(
     notification.class.NotificationType,

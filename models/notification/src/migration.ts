@@ -27,7 +27,8 @@ import core, {
   DOMAIN_COLLABORATOR,
   type Collaborator,
   generateId,
-  DOMAIN_TRANSIENT
+  DOMAIN_TRANSIENT,
+  type Mixin
 } from '@hcengineering/core'
 import {
   migrateSpace,
@@ -43,8 +44,7 @@ import notification, {
   type PushSubscription,
   type BrowserNotification,
   type DocNotifyContext,
-  type InboxNotification,
-  type OldCollaborators
+  type InboxNotification
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 
@@ -56,6 +56,10 @@ import {
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY } from './index'
+
+interface OldCollaborators extends Doc {
+  collaborators: AccountUuid[]
+}
 
 export async function removeNotifications (
   client: MigrationClient,
@@ -265,7 +269,10 @@ async function migrateCollaborators (client: MigrationClient): Promise<void> {
         const collabs: Collaborator[] = []
 
         for (const doc of docs) {
-          const mixin = hierarchy.as(doc, notification.mixin.Collaborators) as any as OldCollaborators
+          const mixin = hierarchy.as(
+            doc,
+            'notification:mixin:Collaborators' as Ref<Mixin<Doc>>
+          ) as any as OldCollaborators
           const oldCollaborators = mixin.collaborators
 
           if (oldCollaborators === undefined || oldCollaborators.length === 0) continue
@@ -311,14 +318,6 @@ async function migrateCollaborators (client: MigrationClient): Promise<void> {
   client.logger.log('finished processing collaborators ', {})
 }
 
-async function migrateReactionNotifications (client: MigrationClient): Promise<void> {
-  /*
-    Do nothing for now, since previous implementation was very slow and caused issues in production.
-    Old inbox is used in production now, so later add a tool to migrate old reaction notifications if needed.
-    TODO: UBERF-14185
-  */
-}
-
 /**
  * Migrates old accounts to new accounts/social ids.
  * Should be applied to prodcution directly without applying migrateSocialIdsToAccountUuids
@@ -351,7 +350,10 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
         const collabs: Collaborator[] = []
 
         for (const doc of docs) {
-          const mixin = hierarchy.as(doc, notification.mixin.Collaborators) as any as OldCollaborators
+          const mixin = hierarchy.as(
+            doc,
+            'notification:mixin:Collaborators' as Ref<Mixin<Doc>>
+          ) as any as OldCollaborators
           const oldCollaborators = mixin.collaborators
 
           if (oldCollaborators === undefined || oldCollaborators.length === 0) continue
@@ -854,11 +856,6 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrate-collaborators-v2',
         mode: 'upgrade',
         func: migrateCollaborators
-      },
-      {
-        state: 'migrate-reaction-notifications',
-        mode: 'upgrade',
-        func: migrateReactionNotifications
       }
     ])
   },

@@ -70,6 +70,8 @@
     "AddRelation": "添加关系",
     "PersonId": "人员 ID",
     "AccountId": "帐户",
-    "Version": "版本"
+    "Version": "版本",
+    "Collaborator": "协作者",
+    "Collaborators": "协作者"
   }
 }

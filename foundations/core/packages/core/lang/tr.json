@@ -70,6 +70,8 @@
     "AddRelation": "İlişki ekle",
     "PersonId": "Kişi",
     "AccountId": "Hesap",
-    "Version": "Sürüm"
+    "Version": "Sürüm",
+    "Collaborator": "İşbirlikçi",
+    "Collaborators": "İşbirlikçiler"
   }
 }

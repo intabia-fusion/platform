@@ -306,23 +306,38 @@ export function createModel (builder: Builder): void {
     presenter: activity.component.ActivityReferencePreview
   })
 
-  builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-    label: activity.string.Attributes,
-    position: 10,
-    filter: activity.filter.AttributesFilter
-  })
+  builder.createDoc(
+    activity.class.ActivityMessagesFilter,
+    core.space.Model,
+    {
+      label: activity.string.Attributes,
+      position: 10,
+      filter: activity.filter.AttributesFilter
+    },
+    activity.ids.AttributesActivityFilter
+  )
 
-  builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-    label: activity.string.Pinned,
-    position: 20,
-    filter: activity.filter.PinnedFilter
-  })
+  builder.createDoc(
+    activity.class.ActivityMessagesFilter,
+    core.space.Model,
+    {
+      label: activity.string.Pinned,
+      position: 20,
+      filter: activity.filter.PinnedFilter
+    },
+    activity.ids.PinnedActivityFilter
+  )
 
-  builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-    label: activity.string.Mentions,
-    position: 60,
-    filter: activity.filter.ReferencesFilter
-  })
+  builder.createDoc(
+    activity.class.ActivityMessagesFilter,
+    core.space.Model,
+    {
+      label: activity.string.Mentions,
+      position: 60,
+      filter: activity.filter.ReferencesFilter
+    },
+    activity.ids.MentionsActivityFilter
+  )
 
   builder.createDoc(
     activity.class.DocUpdateMessageViewlet,
