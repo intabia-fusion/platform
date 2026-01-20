@@ -70,12 +70,19 @@ function getCorsHeaders(req: http.IncomingMessage): Record<string, string> {
 
 function sendJson(req: http.IncomingMessage, res: http.ServerResponse, statusCode: number, data: object, extraHeaders: Record<string, string> = {}): void {
   const json = JSON.stringify(data)
-  res.writeHead(statusCode, {
+  const headers = {
     ...getCorsHeaders(req),
     'Content-Type': 'application/json',
     'Content-Length': Buffer.byteLength(json),
     ...extraHeaders
-  })
+  }
+
+  // Respect HEAD requests: send headers only and no body.
+  res.writeHead(statusCode, headers)
+  if (req.method === 'HEAD') {
+    res.end()
+    return
+  }
   res.end(json)
 }
 
@@ -84,37 +91,150 @@ function sendFile(req: http.IncomingMessage, res: http.ServerResponse, filePath:
     const stats = statSync(filePath)
     const contentType = getContentType(filePath)
 
-    if (range !== undefined && typeof range === 'string') {
-      // Handle range requests for large files
-      const parts = range.replace(/bytes=/, '').split('-')
-      const start = parseInt(parts[0], 10)
-      const end = parts[1] !== '' ? parseInt(parts[1], 10) : stats.size - 1
-      const chunkSize = end - start + 1
+    // Generate validators for conditional requests
+    const fileEtag = `\"${crypto.createHash('sha1').update(`${stats.size}-${stats.mtimeMs}`).digest('hex')}\"`
+    const lastModified = stats.mtime.toUTCString()
 
-      res.writeHead(206, {
-        ...getCorsHeaders(req),
+    // Conditional GET support: If-None-Match / If-Modified-Since
+    const ifNoneMatchHeader = req.headers['if-none-match'] as string | undefined
+    const ifModifiedSinceHeader = req.headers['if-modified-since'] as string | undefined
+
+    if (ifNoneMatchHeader) {
+      const tokens = ifNoneMatchHeader.split(',').map((t) => t.trim())
+      if (tokens.includes(fileEtag) || tokens.includes(fileEtag.replace(/"/g, ''))) {
+        res.writeHead(304, { ...getCorsHeaders(req), 'ETag': fileEtag, 'Last-Modified': lastModified })
+        res.end()
+        return
+      }
+    } else if (ifModifiedSinceHeader) {
+      const ims = new Date(ifModifiedSinceHeader)
+      if (!isNaN(ims.getTime()) && stats.mtime.getTime() <= ims.getTime()) {
+        res.writeHead(304, { ...getCorsHeaders(req), 'ETag': fileEtag, 'Last-Modified': lastModified })
+        res.end()
+        return
+      }
+    }
+
+    // Determine cache control based on extension
+    const ext = path.extname(filePath).toLowerCase()
+    const cacheControl = ext === '.yml' || ext === '.yaml' ? 'public, max-age=300' : 'public, max-age=3600'
+
+    const corsHeaders = getCorsHeaders(req)
+
+    // Handle If-Range: only honor Range if If-Range matches current validators.
+    if (range !== undefined && typeof range === 'string' && range.trim() !== '') {
+      const ifRange = req.headers['if-range'] as string | undefined
+      if (ifRange) {
+        const trimmed = ifRange.trim()
+        let ifRangeMatches = false
+        // If-Range may be an ETag (quoted) or a HTTP-date
+        if (trimmed === fileEtag || trimmed === fileEtag.replace(/"/g, '')) {
+          ifRangeMatches = true
+        } else {
+          const parsed = new Date(trimmed)
+          if (!isNaN(parsed.getTime())) {
+            // Only allow range if resource wasn't modified since client's date
+            ifRangeMatches = stats.mtime.getTime() <= parsed.getTime()
+          }
+        }
+        if (!ifRangeMatches) {
+          // Ignore Range and send full resource when If-Range doesn't match
+          range = undefined
+        }
+      }
+    }
+
+    // Handle Range requests
+    if (range !== undefined && typeof range === 'string' && range.trim() !== '') {
+      // We don't support multiple ranges; return 416 for such requests.
+      if (range.indexOf(',') !== -1) {
+        res.writeHead(416, { ...corsHeaders, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes */${stats.size}` })
+        res.end()
+        return
+      }
+
+      const match = /^bytes=(\d*)-(\d*)$/.exec(range)
+      if (!match) {
+        res.writeHead(416, { ...corsHeaders, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes */${stats.size}` })
+        res.end()
+        return
+      }
+
+      const startStr = match[1]
+      const endStr = match[2]
+      let start: number
+      let end: number
+
+      if (startStr === '' && endStr === '') {
+        // Invalid range: both missing
+        res.writeHead(416, { ...corsHeaders, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes */${stats.size}` })
+        res.end()
+        return
+      } else if (startStr === '') {
+        // Suffix range "-N": last N bytes
+        const suffix = parseInt(endStr, 10)
+        if (isNaN(suffix) || suffix <= 0) {
+          res.writeHead(416, { ...corsHeaders, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes */${stats.size}` })
+          res.end()
+          return
+        }
+        start = Math.max(stats.size - suffix, 0)
+        end = stats.size - 1
+      } else {
+        start = parseInt(startStr, 10)
+        end = endStr !== '' ? parseInt(endStr, 10) : stats.size - 1
+        if (isNaN(start) || isNaN(end) || start > end || start >= stats.size) {
+          res.writeHead(416, { ...corsHeaders, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes */${stats.size}` })
+          res.end()
+          return
+        }
+        end = Math.min(end, stats.size - 1)
+      }
+
+      const chunkSize = end - start + 1
+      const headers = {
+        ...corsHeaders,
         'Content-Range': `bytes ${start}-${end}/${stats.size}`,
         'Accept-Ranges': 'bytes',
-        'Content-Length': chunkSize,
-        'Content-Type': contentType
-      })
-
-      createReadStream(filePath, { start, end }).pipe(res)
-    } else {
-      // Determine cache control
-      const ext = path.extname(filePath).toLowerCase()
-      const cacheControl = ext === '.yml' || ext === '.yaml' ? 'public, max-age=300' : 'public, max-age=3600'
-
-      res.writeHead(200, {
-        ...getCorsHeaders(req),
+        'Content-Length': String(chunkSize),
         'Content-Type': contentType,
-        'Content-Length': stats.size,
-        'Accept-Ranges': 'bytes',
+        'ETag': fileEtag,
+        'Last-Modified': lastModified,
         'Cache-Control': cacheControl
-      })
+      }
 
-      createReadStream(filePath).pipe(res)
+      // HEAD should return headers only
+      if (req.method === 'HEAD') {
+        res.writeHead(206, headers)
+        res.end()
+        return
+      }
+
+      res.writeHead(206, headers)
+      createReadStream(filePath, { start, end }).pipe(res)
+      return
     }
+
+    // No Range requested - serve the whole file
+    const headers = {
+      ...corsHeaders,
+      'Content-Type': contentType,
+      'Content-Length': String(stats.size),
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': cacheControl,
+      'ETag': fileEtag,
+      'Last-Modified': lastModified
+    }
+
+    // HEAD should return headers only
+    if (req.method === 'HEAD') {
+      res.writeHead(200, headers)
+      res.end()
+      return
+    }
+
+    res.writeHead(200, headers)
+    createReadStream(filePath).pipe(res)
   } catch (error) {
     sendJson(req, res, 404, { error: 'File not found' })
   }
