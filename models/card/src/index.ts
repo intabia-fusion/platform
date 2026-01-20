@@ -38,7 +38,6 @@ import core, {
   AccountRole,
   type Blobs,
   type Class,
-  type ClassCollaborators,
   ClassifierKind,
   type CollectionSize,
   type Doc,
@@ -68,7 +67,7 @@ import {
   UX
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
-import { TRole as TBaseRole, TClass, TDoc, TMixin, TTypedSpace } from '@hcengineering/model-core'
+import { TRole as TBaseRole, TClass, TDoc, TMixin, TTypedSpace, defineCollaborators } from '@hcengineering/model-core'
 import { createPublicLinkAction } from '@hcengineering/model-guest'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
@@ -862,11 +861,7 @@ export function createModel (builder: Builder): void {
 
   createPublicLinkAction(builder, card.class.Card, card.action.PublicLink)
 
-  builder.createDoc<ClassCollaborators<Card>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: card.class.Card,
-    fields: ['modifiedBy'],
-    allFields: true
-  })
+  defineCollaborators(builder, card.class.Card, { fields: ['modifiedBy'], allFields: true })
 }
 
 function defineTabs (builder: Builder): void {

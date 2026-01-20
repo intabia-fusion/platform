@@ -31202,6 +31202,9 @@ importers:
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
+      '@hcengineering/server-contact-resources':
+        specifier: workspace:^0.7.0
+        version: link:../contact-resources
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -31452,6 +31455,9 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../../plugins/login
+      '@hcengineering/measurements':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/measurements
       '@hcengineering/notification':
         specifier: workspace:^0.7.0
         version: link:../../plugins/notification
@@ -32756,6 +32762,9 @@ importers:
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
+      '@hcengineering/server-contact-resources':
+        specifier: workspace:^0.7.0
+        version: link:../contact-resources
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -33277,6 +33286,9 @@ importers:
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
+      '@hcengineering/server-contact-resources':
+        specifier: workspace:^0.7.0
+        version: link:../contact-resources
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { ActivityMessage } from '@hcengineering/activity'
+import type { ActivityMessage, ActivityMessagesFilter } from '@hcengineering/activity'
 import { chunterId, type Channel } from '@hcengineering/chunter'
 import chunter from '@hcengineering/chunter-resources/src/plugin'
 import { type Client, type Doc, type Ref } from '@hcengineering/core'
@@ -94,7 +94,8 @@ export default mergeIds(chunterId, chunter, {
     Channels: '' as Ref<Viewlet>
   },
   ids: {
-    ChunterNotificationGroup: '' as Ref<NotificationGroup>
+    ChunterNotificationGroup: '' as Ref<NotificationGroup>,
+    ChatMessagesActivityFilter: '' as Ref<ActivityMessagesFilter>
   },
   space: {
     General: '' as Ref<Channel>,

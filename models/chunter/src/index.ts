@@ -282,11 +282,16 @@ export function createModel (builder: Builder): void {
     encode: chunter.function.GetThreadLink
   })
 
-  builder.createDoc(activity.class.ActivityMessagesFilter, core.space.Model, {
-    label: chunter.string.Comments,
-    position: 60,
-    filter: chunter.filter.ChatMessagesFilter
-  })
+  builder.createDoc(
+    activity.class.ActivityMessagesFilter,
+    core.space.Model,
+    {
+      label: chunter.string.Comments,
+      position: 60,
+      filter: chunter.filter.ChatMessagesFilter
+    },
+    chunter.ids.ChatMessagesActivityFilter
+  )
 
   builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
     ofClass: chunter.class.Channel,

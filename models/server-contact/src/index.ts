@@ -42,6 +42,11 @@ export function createModel (builder: Builder): void {
     presenter: serverContact.function.OrganizationTextPresenter
   })
 
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverContact.trigger.ManageCollaboratorsTrigger,
+    isAsync: false
+  })
+
   builder.mixin(contact.class.Contact, core.class.Class, serverCore.mixin.SearchPresenter, {
     iconConfig: {
       component: contact.component.AvatarRef,

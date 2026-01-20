@@ -70,6 +70,8 @@
     "AddRelation": "Добавить связь",
     "PersonId": "Персона",
     "AccountId": "Аккаунт",
-    "Version": "Версия"
+    "Version": "Версия",
+    "Collaborator": "Участник",
+    "Collaborators": "Участники"
   }
 }

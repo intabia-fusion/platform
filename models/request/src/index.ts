@@ -16,7 +16,7 @@
 import activity from '@hcengineering/activity'
 import type { Person } from '@hcengineering/contact'
 import contact from '@hcengineering/contact'
-import { type Timestamp, type Domain, type Ref, type Tx, type ClassCollaborators } from '@hcengineering/core'
+import { type Timestamp, type Domain, type Ref, type Tx } from '@hcengineering/core'
 import {
   ArrOf,
   type Builder,
@@ -30,7 +30,7 @@ import {
   UX
 } from '@hcengineering/model'
 import chunter, { TChatMessage } from '@hcengineering/model-chunter'
-import core, { TAttachedDoc, TClass } from '@hcengineering/model-core'
+import core, { defineCollaborators, TAttachedDoc, TClass } from '@hcengineering/model-core'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import view from '@hcengineering/model-view'
 import notification from '@hcengineering/notification'
@@ -108,10 +108,7 @@ export function createModel (builder: Builder): void {
     presenter: request.component.RequestView
   })
 
-  builder.createDoc<ClassCollaborators<Request>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: request.class.Request,
-    fields: ['requested', 'createdBy']
-  })
+  defineCollaborators(builder, request.class.Request, { fields: ['requested', 'createdBy'] })
 
   builder.createDoc(
     notification.class.NotificationGroup,

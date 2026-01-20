@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { activityId, type ActivityMessage, type DocUpdateMessageViewlet } from '@hcengineering/activity'
+import {
+  activityId,
+  type ActivityMessage,
+  type ActivityMessagesFilter,
+  type DocUpdateMessageViewlet
+} from '@hcengineering/activity'
 import activity from '@hcengineering/activity-resources/src/plugin'
 import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
 import { type Doc, type Ref } from '@hcengineering/core'
@@ -48,7 +53,10 @@ export default mergeIds(activityId, activity, {
     SaveForLaterAction: '' as Ref<Action>,
     RemoveFromLaterAction: '' as Ref<Action>,
     PinMessageAction: '' as Ref<Action>,
-    UnpinMessageAction: '' as Ref<Action>
+    UnpinMessageAction: '' as Ref<Action>,
+    AttributesActivityFilter: '' as Ref<ActivityMessagesFilter>,
+    PinnedActivityFilter: '' as Ref<ActivityMessagesFilter>,
+    MentionsActivityFilter: '' as Ref<ActivityMessagesFilter>
   },
   function: {
     GetFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,

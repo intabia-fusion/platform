@@ -41,8 +41,18 @@
     keys = filtredKeys
       .filter((key) => !isCollectionAttr(hierarchy, key) || allowedCollections.includes(key.key))
       .sort((a, b) => {
+        const isCollabA = a.key === 'collaborators'
+        const isCollabB = b.key === 'collaborators'
+
+        const hasRankA = a.attr.rank != null && a.attr.rank !== ''
+        const hasRankB = b.attr.rank != null && b.attr.rank !== ''
+
+        if (isCollabA && !hasRankA && !(isCollabB && !hasRankB)) return 1
+        if (isCollabB && !hasRankB && !(isCollabA && !hasRankA)) return -1
+
         const rankA = a.attr.rank ?? toRank(a.attr._id) ?? ''
         const rankB = b.attr.rank ?? toRank(b.attr._id) ?? ''
+
         return rankA.localeCompare(rankB)
       })
   }

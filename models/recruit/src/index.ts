@@ -14,12 +14,12 @@
 //
 
 import activity from '@hcengineering/activity'
-import { AccountRole, type ClassCollaborators, SortingOrder, type Lookup, type Ref } from '@hcengineering/core'
+import { AccountRole, SortingOrder, type Lookup, type Ref } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import calendar from '@hcengineering/model-calendar'
 import chunter from '@hcengineering/model-chunter'
 import contact from '@hcengineering/model-contact'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import gmail from '@hcengineering/model-gmail'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
@@ -30,7 +30,7 @@ import view, { createAction, showColorsViewOption, actionTemplates as viewTempla
 import workbench, { createNavigateAction, type Application } from '@hcengineering/model-workbench'
 import notification from '@hcengineering/notification'
 import { type IntlString } from '@hcengineering/platform'
-import { recruitId, type Applicant, RecruitEvents, type Vacancy } from '@hcengineering/recruit'
+import { recruitId, type Applicant, RecruitEvents } from '@hcengineering/recruit'
 import setting from '@hcengineering/setting'
 import { type KeyBinding, type ViewOptionModel, type ViewOptionsModel } from '@hcengineering/view'
 
@@ -85,10 +85,7 @@ export function createModel (builder: Builder): void {
     editor: recruit.component.VacancyList
   })
 
-  builder.createDoc<ClassCollaborators<Vacancy>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: recruit.class.Vacancy,
-    fields: ['createdBy']
-  })
+  defineCollaborators(builder, recruit.class.Vacancy, { fields: ['createdBy'] })
 
   builder.mixin(recruit.class.Vacancy, core.class.Class, view.mixin.AttributeEditor, {
     inlineEditor: recruit.component.VacancyEditor
@@ -98,10 +95,7 @@ export function createModel (builder: Builder): void {
     inlineEditor: view.component.ArrayEditor
   })
 
-  builder.createDoc<ClassCollaborators<Applicant>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: recruit.class.Applicant,
-    fields: ['createdBy', 'assignee']
-  })
+  defineCollaborators(builder, recruit.class.Applicant, { fields: ['createdBy', 'assignee'] })
 
   builder.mixin(recruit.mixin.Candidate, core.class.Mixin, view.mixin.ObjectFactory, {
     component: recruit.component.CreateCandidate

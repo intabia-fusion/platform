@@ -335,10 +335,6 @@ export async function updateNotifyContextsSpace (
   )
 }
 
-export function isMixinTx (tx: TxCUD<Doc>): tx is TxMixin<Doc, Doc> {
-  return tx._class === core.class.TxMixin
-}
-
 export function getHTMLPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): HTMLPresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverNotification.mixin.HTMLPresenter)
 }

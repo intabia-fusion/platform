@@ -22,7 +22,6 @@ import {
   DateRangeMode,
   IndexKind,
   type Class,
-  type ClassCollaborators,
   type Domain,
   type Markup,
   type Ref,
@@ -46,7 +45,7 @@ import {
   TypeMarkup
 } from '@hcengineering/model'
 import { TEvent } from '@hcengineering/model-calendar'
-import core, { TAttachedDoc, TClass, TDoc, TType } from '@hcengineering/model-core'
+import core, { defineCollaborators, TAttachedDoc, TClass, TDoc, TType } from '@hcengineering/model-core'
 import document from '@hcengineering/model-document'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction } from '@hcengineering/model-view'
@@ -387,10 +386,7 @@ export function createModel (builder: Builder): void {
     enabledTypes: [time.ids.ToDoCreated]
   })
 
-  builder.createDoc<ClassCollaborators<ToDo>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: time.class.ToDo,
-    fields: ['user']
-  })
+  defineCollaborators(builder, time.class.ToDo, { fields: ['user'] })
 
   builder.mixin(time.class.ToDo, core.class.Class, notification.mixin.NotificationObjectPresenter, {
     presenter: time.component.NotificationToDoPresenter

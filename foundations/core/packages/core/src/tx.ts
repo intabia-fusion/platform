@@ -604,3 +604,7 @@ export class TxFactory {
     }
   }
 }
+
+export function isMixinTx (tx: TxCUD<Doc>): tx is TxMixin<Doc, Doc> {
+  return tx._class === core.class.TxMixin
+}

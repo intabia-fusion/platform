@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountArrayEditor } from '@hcengineering/contact-resources'
   import core, { AccountUuid, Collaborator, Doc } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import notification from '../plugin'
+
+  import { AccountArrayEditor } from '../index'
 
   export let object: Doc
 
@@ -51,4 +51,4 @@
   }
 </script>
 
-<AccountArrayEditor label={notification.string.Collaborators} value={accounts} onChange={change} />
+<AccountArrayEditor label={core.string.Collaborators} value={accounts} onChange={change} />

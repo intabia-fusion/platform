@@ -70,6 +70,8 @@
     "AddRelation": "Beziehung hinzufügen",
     "PersonId": "Person",
     "AccountId": "Konto",
-    "Version": "Version"
+    "Version": "Version",
+    "Collaborator": "Mitarbeiter",
+    "Collaborators": "Mitarbeiter"
   }
 }

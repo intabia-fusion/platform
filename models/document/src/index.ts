@@ -14,16 +14,7 @@
 //
 
 import activity from '@hcengineering/activity'
-import type {
-  ClassCollaborators,
-  CollectionSize,
-  Domain,
-  MarkupBlobRef,
-  Rank,
-  Ref,
-  Role,
-  RolesAssignment
-} from '@hcengineering/core'
+import type { CollectionSize, Domain, MarkupBlobRef, Rank, Ref, Role, RolesAssignment } from '@hcengineering/core'
 import { AccountRole, AccountUuid, IndexKind } from '@hcengineering/core'
 import { type Document, type DocumentSnapshot, type Teamspace, documentId } from '@hcengineering/document'
 import {
@@ -44,7 +35,7 @@ import {
 } from '@hcengineering/model'
 import attachment from '@hcengineering/model-attachment'
 import chunter from '@hcengineering/model-chunter'
-import core, { TDoc, TTypedSpace } from '@hcengineering/model-core'
+import core, { defineCollaborators, TDoc, TTypedSpace } from '@hcengineering/model-core'
 import { createPublicLinkAction } from '@hcengineering/model-guest'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
@@ -399,10 +390,7 @@ function defineDocument (builder: Builder): void {
 
   builder.mixin(document.class.Document, core.class.Class, activity.mixin.ActivityDoc, {})
 
-  builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: document.class.Document,
-    fields: ['createdBy', 'modifiedBy']
-  })
+  defineCollaborators(builder, document.class.Document, { fields: ['createdBy', 'modifiedBy'] })
 
   builder.mixin(document.class.Document, core.class.Class, notification.mixin.NotificationObjectPresenter, {
     presenter: document.component.NotificationDocumentPresenter

@@ -16,19 +16,15 @@
 import activity from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import documentsPlugin, {
-  type ControlledDocument,
   documentsId,
   DocumentState,
   type Document,
-  type DocumentSpace,
-  type ProjectDocument,
-  type ChangeControl,
-  type DocumentRequest
+  type DocumentSpace
 } from '@hcengineering/controlled-documents'
 import exportPlugin, { type RelationDefinition } from '@hcengineering/export'
 import { type Builder } from '@hcengineering/model'
 import chunter from '@hcengineering/model-chunter'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
 import print from '@hcengineering/model-print'
@@ -42,7 +38,7 @@ import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
 import textEditor from '@hcengineering/text-editor'
 
-import { AccountRole, type ClassCollaborators, type Class, type Doc, type Ref } from '@hcengineering/core'
+import { AccountRole, type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type Action } from '@hcengineering/view'
 import { definePermissions } from './permissions'
 import documents from './plugin'
@@ -1068,38 +1064,20 @@ export function defineNotifications (builder: Builder): void {
     components: { input: { component: chunter.component.ChatMessageInput } }
   })
 
-  builder.createDoc<ClassCollaborators<Document>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.Document,
-    fields: ['author', 'owner'],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<ProjectDocument>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ProjectDocument,
-    fields: [],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<ChangeControl>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ChangeControl,
-    fields: [],
-    provideSecurity: true
-  })
-
-  builder.createDoc<ClassCollaborators<DocumentRequest>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.DocumentRequest,
+  defineCollaborators(builder, documents.class.Document, { fields: ['author', 'owner'], provideSecurity: true })
+  defineCollaborators(builder, documents.class.ProjectDocument, { fields: [], provideSecurity: true })
+  defineCollaborators(builder, documents.class.ChangeControl, { fields: [], provideSecurity: true })
+  defineCollaborators(builder, documents.class.DocumentRequest, {
     fields: ['requested', 'createdBy'],
+    provideSecurity: true
+  })
+  defineCollaborators(builder, documents.class.ControlledDocument, {
+    fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
     provideSecurity: true
   })
 
   builder.mixin(documents.class.DocumentApprovalRequest, core.class.Class, core.mixin.TxAccessLevel, {
     updateAccessLevel: AccountRole.Guest
-  })
-
-  builder.createDoc<ClassCollaborators<ControlledDocument>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: documents.class.ControlledDocument,
-    fields: ['author', 'owner', 'reviewers', 'approvers', 'coAuthors', 'externalApprovers'],
-    provideSecurity: true
   })
 
   builder.createDoc(

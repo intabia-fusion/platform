@@ -18,8 +18,6 @@ import activity, { type ActivityMessage, type Reaction } from '@hcengineering/ac
 import { type PersonSpace } from '@hcengineering/contact'
 import {
   AccountRole,
-  type Collaborator,
-  type CollectionSize,
   DOMAIN_MODEL,
   DOMAIN_TRANSIENT,
   IndexKind,
@@ -40,7 +38,6 @@ import {
   type TxCUD
 } from '@hcengineering/core'
 import {
-  Collection as CollectionType,
   Index,
   Mixin,
   Model,
@@ -51,7 +48,6 @@ import {
   TypeIntlString,
   TypeMarkup,
   TypeRef,
-  UX,
   type Builder
 } from '@hcengineering/model'
 import core, { TClass, TDoc } from '@hcengineering/model-core'
@@ -59,7 +55,6 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import view, { createAction, template } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import {
-  type Collaborators,
   DOMAIN_DOC_NOTIFY,
   DOMAIN_NOTIFICATION,
   DOMAIN_USER_NOTIFY,
@@ -157,13 +152,6 @@ export class TNotificationTypeSetting extends TPreference implements Notificatio
 export class TNotificationProviderSetting extends TPreference implements NotificationProviderSetting {
   declare attachedTo: Ref<TNotificationProvider>
   enabled!: boolean
-}
-
-@Mixin(notification.mixin.Collaborators, core.class.Doc)
-@UX(notification.string.Collaborators)
-export class TCollaborators extends TDoc implements Collaborators {
-  @Prop(CollectionType(core.class.Collaborator), notification.string.Collaborators)
-    collaborators!: CollectionSize<Collaborator>
 }
 
 @Mixin(notification.mixin.NotificationObjectPresenter, core.class.Class)
@@ -351,7 +339,6 @@ export const notificationActionTemplates = template({
 
 export function createModel (builder: Builder): void {
   builder.createModel(
-    TCollaborators,
     TBrowserNotification,
     TNotificationType,
     TNotificationGroup,
@@ -441,7 +428,7 @@ export function createModel (builder: Builder): void {
     {
       hidden: false,
       generated: false,
-      label: notification.string.Collaborators,
+      label: core.string.Collaborators,
       group: notification.ids.NotificationGroup,
       txClasses: [],
       objectClass: core.class.Collaborator,
@@ -473,11 +460,6 @@ export function createModel (builder: Builder): void {
     },
     notification.ids.CollaboratorsRemoveMessage
   )
-
-  builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.CollectionEditor, {
-    editor: notification.component.CollaboratorEditor,
-    inlineEditor: notification.component.CollaboratorEditor
-  })
 
   createAction(
     builder,

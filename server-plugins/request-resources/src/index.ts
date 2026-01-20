@@ -33,7 +33,6 @@ import request, { Request, RequestStatus } from '@hcengineering/request'
 import { pushDocUpdateMessages } from '@hcengineering/server-activity-resources'
 import type { TriggerControl } from '@hcengineering/server-core'
 import {
-  getCollaborators,
   getNotificationProviderControl,
   getNotificationTxes,
   getReceiversInfo,
@@ -41,6 +40,7 @@ import {
   getTextPresenter
 } from '@hcengineering/server-notification-resources'
 import { Person } from '@hcengineering/contact'
+import { getCollaborators } from '@hcengineering/server-contact-resources'
 
 /**
  * @public
@@ -151,7 +151,7 @@ async function getRequestNotificationTx (
   const messages = messagesTxes.map((messageTx) =>
     TxProcessor.createDoc2Doc(messageTx as TxCreateDoc<DocUpdateMessage>)
   )
-  const collaborators = await getCollaborators(control.ctx, request, control, tx, res)
+  const collaborators = await getCollaborators(control.ctx, control, request, tx, res)
 
   if (collaborators.length === 0) return res
 

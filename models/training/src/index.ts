@@ -31,18 +31,11 @@ import {
   TrainingSpecialIds
 } from '@hcengineering/training'
 
-import {
-  AccountRole,
-  ClassCollaborators,
-  type Data,
-  type FindOptions,
-  type Permission,
-  type Ref
-} from '@hcengineering/core'
+import { AccountRole, type Data, type FindOptions, type Permission, type Ref } from '@hcengineering/core'
 import { Prop, type Builder } from '@hcengineering/model'
 
 import contacts from '@hcengineering/model-contact'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import training from './plugin'
@@ -588,10 +581,7 @@ function defineTrainingRequest (builder: Builder): void {
     titleProvider: training.function.TrainingRequestObjectTitleProvider
   })
 
-  builder.createDoc<ClassCollaborators<TrainingRequest>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: training.class.TrainingRequest,
-    fields: ['trainees']
-  })
+  defineCollaborators(builder, training.class.TrainingRequest, { fields: ['trainees'] })
 
   builder.createDoc<NotificationType>(
     notification.class.NotificationType,

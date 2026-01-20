@@ -24,7 +24,7 @@
   export let filters: ActivityMessagesFilter[] = []
 
   const dispatch = createEventDispatcher()
-  const enabledFiltersLocalStorageKey = 'activity-filters_v1'
+  const enabledFiltersLocalStorageKey = 'activity-filters_v2'
 
   let enabledFilters: Ref<ActivityMessagesFilter>[] | null = null
 

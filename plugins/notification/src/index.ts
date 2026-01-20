@@ -30,9 +30,7 @@ import {
   Tx,
   TxCUD,
   TxOperations,
-  AccountUuid,
-  Collaborator,
-  CollectionSize
+  AccountUuid
 } from '@hcengineering/core'
 import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
@@ -197,20 +195,6 @@ export interface NotificationObjectPresenter extends Class<Doc> {
 /**
  * @public
  */
-export interface Collaborators extends Doc {
-  collaborators: CollectionSize<Collaborator>
-}
-
-/**
- * @public
- */
-export interface OldCollaborators extends Doc {
-  collaborators: AccountUuid[]
-}
-
-/**
- * @public
- */
 export const notificationId = 'notification' as Plugin
 
 /**
@@ -347,7 +331,6 @@ export type NotifyFunc = (title: string, body: string, _id?: string, onClick?: (
  */
 const notification = plugin(notificationId, {
   mixin: {
-    Collaborators: '' as Ref<Mixin<Collaborators>>,
     NotificationObjectPresenter: '' as Ref<Mixin<NotificationObjectPresenter>>,
     NotificationPreview: '' as Ref<Mixin<NotificationPreview>>,
     NotificationContextPresenter: '' as Ref<Mixin<NotificationContextPresenter>>
@@ -393,8 +376,7 @@ const notification = plugin(notificationId, {
     CollaboratorsChanged: '' as AnyComponent,
     DocNotifyContextPresenter: '' as AnyComponent,
     NotificationCollaboratorsChanged: '' as AnyComponent,
-    GeneralPreferencesGroup: '' as AnyComponent,
-    CollaboratorEditor: '' as AnyComponent
+    GeneralPreferencesGroup: '' as AnyComponent
   },
   action: {
     PinDocNotifyContext: '' as Ref<Action>,
@@ -443,7 +425,6 @@ const notification = plugin(notificationId, {
     Sound: '' as IntlString,
     NoAccessToObject: '' as IntlString,
     ViewIn: '' as IntlString,
-    Collaborators: '' as IntlString,
     Clear: '' as IntlString
   },
   function: {

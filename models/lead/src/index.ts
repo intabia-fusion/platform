@@ -15,12 +15,12 @@
 
 // To help typescript locate view plugin properly
 import activity from '@hcengineering/activity'
-import { AccountRole, type ClassCollaborators, SortingOrder, type FindOptions } from '@hcengineering/core'
+import { AccountRole, SortingOrder, type FindOptions } from '@hcengineering/core'
 import { leadId, type Lead } from '@hcengineering/lead'
 import { type Builder } from '@hcengineering/model'
 import chunter from '@hcengineering/model-chunter'
 import contact from '@hcengineering/model-contact'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
@@ -540,10 +540,7 @@ export function createModel (builder: Builder): void {
     filters: ['attachedTo']
   })
 
-  builder.createDoc<ClassCollaborators<Lead>>(core.class.ClassCollaborators, core.space.Model, {
-    attachedTo: lead.class.Lead,
-    fields: ['createdBy', 'assignee']
-  })
+  defineCollaborators(builder, lead.class.Lead, { fields: ['createdBy', 'assignee'] })
 
   builder.mixin(lead.mixin.Customer, core.class.Class, view.mixin.ClassFilters, {
     filters: ['_class']

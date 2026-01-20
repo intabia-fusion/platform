@@ -15,7 +15,19 @@
 
 import { TriggerControl } from '@hcengineering/server-core'
 import contact, { Employee, type Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
-import core, { AccountUuid, parseSocialIdString, PersonId, type Ref, SocialId, toIdMap } from '@hcengineering/core'
+import core, {
+  AccountUuid,
+  Class,
+  Collaborator,
+  Doc,
+  parseSocialIdString,
+  PersonId,
+  type Ref,
+  SocialId,
+  Space,
+  toIdMap,
+  TxCreateDoc
+} from '@hcengineering/core'
 
 export async function getCurrentPerson (control: TriggerControl): Promise<Person | undefined> {
   const { type, value } = parseSocialIdString(control.txFactory.account)
@@ -242,4 +254,24 @@ export async function getAccountBySocialKey (control: TriggerControl, socialKey:
 
 export async function getPersonSpaces (control: TriggerControl): Promise<Pick<PersonSpace, '_id' | 'person'>[]> {
   return await control.queryFind(control.ctx, contact.class.PersonSpace, {}, { projection: { _id: 1, person: 1 } })
+}
+
+export function getAddCollaboratorsTxes (
+  objectId: Ref<Doc>,
+  objectClass: Ref<Class<Doc>>,
+  objectSpace: Ref<Space>,
+  control: TriggerControl,
+  collaborators: AccountUuid[]
+): TxCreateDoc<Collaborator>[] {
+  const res: TxCreateDoc<Collaborator>[] = []
+  for (const collaborator of collaborators) {
+    const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
+      attachedTo: objectId,
+      attachedToClass: objectClass,
+      collaborator,
+      collection: 'collaborators'
+    })
+    res.push(tx)
+  }
+  return res
 }

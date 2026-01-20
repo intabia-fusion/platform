@@ -70,6 +70,8 @@
     "AddRelation": "関係を追加",
     "PersonId": "人物",
     "AccountId": "アカウント",
-    "Version": "バージョン"
+    "Version": "バージョン",
+    "Collaborator": "共同編集者",
+    "Collaborators": "共同編集者一覧"
   }
 }
