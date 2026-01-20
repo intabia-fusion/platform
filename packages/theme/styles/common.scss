@@ -429,6 +429,25 @@
   &:not(.selected) { cursor: pointer; }
 }
 
+/* Accent Color Selector */
+.accent-color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    border-color: var(--theme-dark-color);
+  }
+
+  &.selected {
+    border: 2px solid var(--theme-content-color);
+    box-shadow: 0 0 0 2px var(--theme-bg-color);
+  }
+}
+
 /* Basic */
 .antiGrid {
   display: flex;

@@ -171,6 +171,7 @@ export default plugin(presentationId, {
     UploadURL: '' as Metadata<string>,
     DatalakeUrl: '' as Metadata<string>,
     CollaboratorUrl: '' as Metadata<string>,
+    DevModel: '' as Metadata<boolean>,
     Token: '' as Metadata<string>,
     Endpoint: '' as Metadata<string>,
     WorkspaceUuid: '' as Metadata<WorkspaceUuid>,

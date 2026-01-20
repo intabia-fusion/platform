@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type IntlString, getMetadata } from '@hcengineering/platform'
+  import platform, { type IntlString, getMetadata } from '@hcengineering/platform'
   import { getContext } from 'svelte'
   import { type Readable } from 'svelte/store'
 
@@ -21,6 +21,7 @@
   import Language from './icons/Language.svelte'
 
   import ThemeButton from './ThemeButton.svelte'
+  import AccentPreview from './AccentPreview.svelte'
   import ui, {
     Html,
     Icon,
@@ -52,6 +53,11 @@
     setEmoji: (emoji: string) => void
   }>('emoji')
 
+  const { currentAccent, setAccent } = getContext<{
+    currentAccent: Readable<string>
+    setAccent: (accent: string) => void
+  }>('accent')
+
   const fontsizes: Array<{ id: string, label: IntlString, size: number }> = [
     { id: 'normal-font', label: ui.string.Spacious, size: 16 },
     { id: 'small-font', label: ui.string.Compact, size: 14 }
@@ -66,6 +72,19 @@
   const emojis: Array<{ id: string, label: IntlString }> = [
     { id: 'emoji-system', label: ui.string.EmojiSystem },
     { id: 'emoji-noto', label: ui.string.EmojiNoto }
+  ]
+
+  const accentColors: Array<{ id: string, name: string, color: string }> = [
+    { id: 'accent-intabia', name: 'Intabia', color: '#CF13A2' },
+    { id: 'accent-huly', name: 'Huly', color: '#5e6ad2' },
+    { id: 'accent-blue', name: 'Blue', color: '#3478F6' },
+    { id: 'accent-purple', name: 'Purple', color: '#8A4292' },
+    { id: 'accent-pink', name: 'Pink', color: '#E45C9C' },
+    { id: 'accent-red', name: 'Red', color: '#CE4745' },
+    { id: 'accent-orange', name: 'Orange', color: '#E8883A' },
+    { id: 'accent-yellow', name: 'Yellow', color: '#F6C94E' },
+    { id: 'accent-green', name: 'Green', color: '#78B856' },
+    { id: 'accent-graphite', name: 'Graphite', color: '#989898' }
   ]
 
   const uiLangs = new Set(getMetadata(ui.metadata.Languages))
@@ -115,10 +134,76 @@
     setEmoji(emoji)
   }
 
+  function selectAccent (accent: string): void {
+    if ($currentAccent === accent) return
+    setAccent(accent)
+  }
+
+  // Accent hover preview state
+  let hoveredAccent: { id: string, name: string, color: string } | null = null
+  let anchorRect: DOMRect | null = null
+  let previewVisible = false
+  let hidePreviewTimeout: number | undefined = undefined
+
+  function showAccentPreview (ev: Event | undefined, option: { id: string, name: string, color: string }): void {
+    if (getMetadata(platform.metadata.DevModel) !== true) {
+      return
+    }
+    if (ev && (ev.currentTarget as HTMLElement)) {
+      anchorRect = (ev.currentTarget as HTMLElement).getBoundingClientRect()
+    } else {
+      anchorRect = null
+    }
+    hoveredAccent = option
+    previewVisible = true
+    if (hidePreviewTimeout !== undefined) {
+      clearTimeout(hidePreviewTimeout)
+      hidePreviewTimeout = undefined
+    }
+  }
+
+  function scheduleHidePreview (): void {
+    if (hidePreviewTimeout !== undefined) {
+      clearTimeout(hidePreviewTimeout)
+    }
+    hidePreviewTimeout = window.setTimeout(() => {
+      previewVisible = false
+      hoveredAccent = null
+      anchorRect = null
+      hidePreviewTimeout = undefined
+    }, 150)
+  }
+
+  function cancelHidePreview (): void {
+    if (hidePreviewTimeout !== undefined) {
+      clearTimeout(hidePreviewTimeout)
+      hidePreviewTimeout = undefined
+    }
+    previewVisible = true
+  }
+
+  function hidePreview (): void {
+    if (hidePreviewTimeout !== undefined) {
+      clearTimeout(hidePreviewTimeout)
+      hidePreviewTimeout = undefined
+    }
+    previewVisible = false
+    hoveredAccent = null
+    anchorRect = null
+  }
+
+  function onPreviewSelect (accentId: string): void {
+    selectAccent(accentId)
+    hidePreview()
+    $modalStore = $modalStore
+  }
+
   $: $deviceInfo.theme = $currentTheme
   $: fontsize = fontsizes.find((fs) => fs.id === $currentFontSize) ?? fontsizes[0]
   $: language = langs.find((lang) => lang.id === $currentLanguage) ?? langs[0]
   $: emoji = emojis.find((e) => e.id === $currentEmoji) ?? emojis[0]
+  $: accent =
+    accentColors.find((a: { id: string, name: string, color: string }) => a.id === $currentAccent) ?? accentColors[0]
 </script>
 
 <div class="antiPopup thinStyle">
@@ -126,7 +211,7 @@
 
   <div class="ap-scroll">
     <div class="ap-box">
-      <div class="flex-row-center m-4">
+      <div class="flex-row-center m-4 flex-between">
         {#each themes as theme}
           {@const selected = $currentTheme === theme.id}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -142,6 +227,51 @@
             <span class="label overflow-label">
               <Label label={theme.label} />
             </span>
+          </div>
+        {/each}
+      </div>
+
+      <div class="ap-menuItem separator halfMargin" />
+
+      <div class="flex-row-center m-4">
+        {#each accentColors as option}
+          {@const selected = $currentAccent === option.id}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="statusPopup-option"
+            style={'margin-right: 5px;'}
+            class:selected
+            title={option.name}
+            tabindex="0"
+            role="button"
+            on:click={() => {
+              selectAccent(option.id)
+            }}
+            on:mouseenter={(ev) => {
+              showAccentPreview(ev, option)
+            }}
+            on:mouseleave={() => {
+              scheduleHidePreview()
+            }}
+            on:focus={(ev) => {
+              showAccentPreview(ev, option)
+            }}
+            on:blur={() => {
+              scheduleHidePreview()
+            }}
+            on:keydown={(ev) => {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault()
+                selectAccent(option.id)
+              }
+            }}
+          >
+            <div
+              class="accent-color-dot"
+              class:selected={$currentAccent === option.id}
+              style="background-color: {option.color}"
+            />
           </div>
         {/each}
       </div>
@@ -241,6 +371,28 @@
       </button>
     </div>
   </div>
+
+  {#if previewVisible && hoveredAccent}
+    <AccentPreview
+      accent={hoveredAccent}
+      {anchorRect}
+      on:select={(ev) => {
+        onPreviewSelect(ev.detail)
+      }}
+      on:enter={() => {
+        cancelHidePreview()
+      }}
+      on:leave={() => {
+        scheduleHidePreview()
+      }}
+      on:focusin={() => {
+        cancelHidePreview()
+      }}
+      on:focusout={() => {
+        scheduleHidePreview()
+      }}
+    />
+  {/if}
 
   <div class="ap-space" />
 </div>

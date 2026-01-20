@@ -8,6 +8,8 @@
   "scripts": {
     "build": "compile ui",
     "format": "format src",
+    "check:contrast": "node scripts/check-contrast.js",
+    "generate:button-tokens": "node scripts/generate-button-tokens.js",
     "build:watch": "compile ui",
     "_phase:build": "compile ui",
     "_phase:format": "format src",

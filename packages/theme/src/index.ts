@@ -16,11 +16,12 @@
 import { Analytics } from '@hcengineering/analytics'
 import '@hcengineering/platform-rig/profiles/ui/svelte'
 import { derived, writable } from 'svelte/store'
-import { ThemeVariant, type ThemeVariantType } from './variants'
+import { ThemeVariant, type ThemeVariantType, AccentColor, type AccentColorType } from './variants'
 
 export { default as Theme } from './Theme.svelte'
 export { default as InvertedTheme } from './InvertedTheme.svelte'
-export { ThemeVariant, type ThemeVariantType } from './variants'
+export { ThemeVariant, type ThemeVariantType, AccentColor, type AccentColorType } from './variants'
+export { accentColorOptions, type AccentColorOption, getAccentColorName } from './accent'
 
 /**
  * @public
@@ -66,6 +67,11 @@ export const getCurrentLanguage = (): string => {
  * @public
  */
 export const getCurrentEmoji = (): string => localStorage.getItem('emoji') ?? getDefaultProps('emoji', 'emoji-system')
+/**
+ * @public
+ */
+export const getCurrentAccentColor = (): string =>
+  localStorage.getItem('accent') ?? getDefaultProps('accent', AccentColor.Huly)
 
 export class ThemeOptions {
   readonly variant: ThemeVariantType
@@ -73,7 +79,8 @@ export class ThemeOptions {
     readonly fontSize: number,
     readonly dark: boolean,
     readonly language: string,
-    readonly emoji: string
+    readonly emoji: string,
+    readonly accent: AccentColorType = AccentColor.Intabia
   ) {
     this.variant = dark ? ThemeVariant.Dark : ThemeVariant.Light
   }
@@ -86,7 +93,8 @@ export function initThemeStore (): void {
       getCurrentFontSize() === 'normal-font' ? 16 : 14,
       isThemeDark(getCurrentTheme()),
       getCurrentLanguage(),
-      getCurrentEmoji()
+      getCurrentEmoji(),
+      getCurrentAccentColor() as AccentColorType
     )
   )
 }

@@ -14,25 +14,6 @@
   --global-ui-hover-OverlayColor: #15307226;
   --global-ui-active-OverlayColor: #15307233;
 
-  --button-accent-LabelColor: #fff;
-  --button-disabled-LabelColor: #8b97ad;
-  --button-accent-IconColor: #fff;
-  --button-disabled-IconColor: #8b97ad;
-  --button-primary-BackgroundColor: #3364e2;
-  --button-primary-BorderColor: #d1d5de1a;
-  --button-primary-hover-BackgroundColor: #6191fe;
-  --button-primary-active-BackgroundColor: #2553cf;
-  --button-primary-loading-LabelColor: #6191fe;
-  --button-negative-loading-LabelColor: #ff9187;
-  --button-negative-BackgroundColor: #CB4B42;
-  --button-negative-BorderColor: #d1d5de26;
-  --button-negative-hover-BackgroundColor: #DC5148;
-  --button-negative-active-BackgroundColor: #B34139;
-
-  --selector-active-BackgroundColor: #3364e2;
-  --selector-IconColor: #ffffff;
-  --selector-disabled-IconColor: #8b97ad;
-
   --tag-on-accent-PorpoiseText: #FFFFFF;
   --tag-accent-SunshineBackground: #FFBD2E;
 
@@ -120,13 +101,14 @@
   --input-error-BorderColor: #fb6863;
   --input-search-IconColor: #ffffff;
 
-  /** Checkboxes **/
-  --selector-BackgroundColor: #a5bdff0d;
-  --selector-BorderColor: #d9dee6;
-  --selector-off-BackgroundColor: #556178;
-  --selector-hover-overlay-BackgroundColor: #a5bdff1a;
-  --selector-disabled-BackgroundColor: #a5bdff1a;
-  --selector-disabled-BorderColor: #a5bdff0d;
+  /* Checkboxes tokens moved to accent overrides:
+     --selector-BackgroundColor: #a5bdff0d;
+     --selector-BorderColor: #d9dee6;
+     --selector-off-BackgroundColor: #556178;
+     --selector-hover-overlay-BackgroundColor: #a5bdff1a;
+     --selector-disabled-BackgroundColor: #a5bdff1a;
+     --selector-disabled-BorderColor: #a5bdff0d;
+  */
 
   --love-active-call-color-1: #5190EC;
   --love-active-call-color-2: #F47758;
@@ -217,10 +199,11 @@
   --input-error-BorderColor: #e34748;
   --input-search-IconColor: #0f121a;
 
-  /** Checkboxes **/
-  --selector-BackgroundColor: #1530720d;
-  --selector-BorderColor: #0f121a;
-  --selector-off-BackgroundColor: #cbd2dd;
+  /* Checkboxes tokens moved to accent overrides:
+     --selector-BackgroundColor: #1530720d;
+     --selector-BorderColor: #0f121a;
+     --selector-off-BackgroundColor: #cbd2dd;
+  */
   --selector-hover-overlay-BackgroundColor: #1530721a;
   --selector-disabled-BackgroundColor: #1530721a;
   --selector-disabled-BorderColor: #1530720d;

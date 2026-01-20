@@ -79,13 +79,7 @@
             label: mainAction.label,
             keys: mainAction.keyBinding
           }}
-        >
-          <div slot="content" class="draft-circle-container">
-            {#if mainAction.draft === true}
-              <div class="draft-circle" />
-            {/if}
-          </div>
-        </Button>
+        />
       {:else}
         <ButtonWithDropdown
           icon={IconAdd}
@@ -104,27 +98,8 @@
             label: mainAction.label,
             keys: mainAction.keyBinding
           }}
-        >
-          <div slot="content" class="draft-circle-container">
-            {#if mainAction.draft === true}
-              <div class="draft-circle" />
-            {/if}
-          </div>
-        </ButtonWithDropdown>
+        />
       {/if}
     </div>
   {/if}
 {/if}
-
-<style lang="scss">
-  .draft-circle-container {
-    margin-left: auto;
-    padding-right: 12px;
-  }
-  .draft-circle {
-    height: 6px;
-    width: 6px;
-    background-color: var(--primary-bg-color);
-    border-radius: 50%;
-  }
-</style>
