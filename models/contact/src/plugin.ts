@@ -23,7 +23,6 @@ import { type IntlString, mergeIds, type Resource } from '@hcengineering/platfor
 import { type TemplateFieldFunc } from '@hcengineering/templates'
 import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import { type LocationData } from '@hcengineering/workbench'
 
 export default mergeIds(contactId, contact, {
@@ -59,7 +58,8 @@ export default mergeIds(contactId, contact, {
     EmployeeFilterValuePresenter: '' as AnyComponent,
     ChannelIcon: '' as AnyComponent,
     PersonPreviewPresenter: '' as AnyComponent,
-    TranslationSettings: '' as AnyComponent
+    TranslationSettings: '' as AnyComponent,
+    CollaboratorPresenter: '' as AnyComponent
   },
   string: {
     SearchEmployee: '' as IntlString,
@@ -113,10 +113,7 @@ export default mergeIds(contactId, contact, {
   },
   ids: {
     OrganizationNotificationGroup: '' as Ref<NotificationGroup>,
-    PersonNotificationGroup: '' as Ref<NotificationGroup>,
-    OrganizationChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    PersonChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    EmployeeChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    PersonNotificationGroup: '' as Ref<NotificationGroup>
   },
   action: {
     KickEmployee: '' as Ref<Action>,

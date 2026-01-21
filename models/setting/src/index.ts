@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import {
   AccountRole,
@@ -450,19 +449,6 @@ export function createModel (builder: Builder): void {
       component: setting.component.Settings
     },
     setting.ids.SettingApp
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: setting.class.Integration,
-      icon: setting.icon.Integrations,
-      label: setting.string.IntegrationWith,
-      action: 'update',
-      hideIfRemoved: true
-    },
-    setting.ids.UpdateIntegrationActivityViewlet
   )
 
   builder.mixin(core.class.TypeString, core.class.Class, view.mixin.ObjectEditor, {

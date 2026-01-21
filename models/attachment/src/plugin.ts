@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { ActivityMessage, ActivityMessagesFilter, DocUpdateMessageViewlet } from '@hcengineering/activity'
+import type { ActivityMessage, ActivityMessagesFilter } from '@hcengineering/activity'
 import { attachmentId } from '@hcengineering/attachment'
 import attachment from '@hcengineering/attachment-resources/src/plugin'
 import type { Ref, Doc } from '@hcengineering/core'
@@ -46,12 +46,7 @@ export default mergeIds(attachmentId, attachment, {
     ContentType: '' as IntlString
   },
   ids: {
-    AttachmentCreatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    AttachmentRemovedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
     AttachmentsActivityFilter: '' as Ref<ActivityMessagesFilter>
-  },
-  activity: {
-    AttachmentsUpdatedMessage: '' as AnyComponent
   },
   category: {
     Attachments: '' as Ref<ActionCategory>

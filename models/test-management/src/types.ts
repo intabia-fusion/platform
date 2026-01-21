@@ -139,7 +139,15 @@ export class TTestSuite extends TDoc implements TestSuite {
  * @public
  */
 @Model(testManagement.class.TestCase, core.class.AttachedDoc, DOMAIN_TEST_MANAGEMENT)
-@UX(testManagement.string.TestCase, testManagement.icon.TestCase, testManagement.string.TestCase)
+@UX(
+  testManagement.string.TestCase,
+  testManagement.icon.TestCase,
+  testManagement.string.TestCase,
+  undefined,
+  undefined,
+  testManagement.string.TestCases,
+  'name'
+)
 export class TTestCase extends TAttachedDoc implements TestCase {
   @Prop(TypeRef(testManagement.class.TestProject), core.string.Space)
   @Index(IndexKind.Indexed)

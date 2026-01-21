@@ -38,6 +38,7 @@
   export let removable: boolean = false
   export let showPreview = false
   export let preview = false
+  export let disabled = false
 
   const dispatch = createEventDispatcher()
   let permissionsStore: Readable<PermissionsStore> | undefined = undefined
@@ -58,7 +59,7 @@
     value: Attachment | BlobType | undefined,
     permissionsStore: PermissionsStore | undefined
   ): boolean {
-    if (value === undefined || !removable) return false
+    if (value === undefined || !removable || disabled) return false
     if (!isAttachment(value)) return true
     if (permissionsStore === undefined) return false
     return (
@@ -84,7 +85,7 @@
   let useDefaultIcon = false
   const canLinkPreview = value?.type.includes('link-preview') ?? false
 
-  $: if (value !== undefined) {
+  $: if (value !== undefined && !disabled) {
     void canPreviewFile(value.type, $previewTypes).then((res) => {
       canPreview = res
     })
@@ -137,7 +138,7 @@
           <Spinner size="small" />
         {:then linkPreviewDetails}
           {#if linkPreviewDetails !== undefined}
-            <div class="flex-center icon image">
+            <div class="flex-center icon image" class:disabled>
               {#if linkPreviewDetails.icon !== undefined && !useDefaultIcon}
                 <img
                   src={linkPreviewDetails.icon}
@@ -152,7 +153,7 @@
               {/if}
             </div>
             <div class="flex-col info-container">
-              <div class="name">
+              <div class="name" class:disabled>
                 <a target="_blank" class="no-line" style:flex-shrink={0} href={linkPreviewDetails.url}
                   >{trimFilename(linkPreviewDetails?.title ?? value.name)}</a
                 >
@@ -185,11 +186,11 @@
           <a
             class="no-line no-underline"
             style:flex-shrink={0}
-            href={valueRef.src}
-            download={value.name}
-            on:click={clickHandler}
-            on:mousedown={middleClickHandler}
-            on:dragstart={dragStart}
+            href={disabled ? undefined : valueRef.src}
+            download={disabled ? undefined : value.name}
+            on:click={disabled ? undefined : clickHandler}
+            on:mousedown={disabled ? undefined : middleClickHandler}
+            on:dragstart={disabled ? undefined : dragStart}
           >
             {#if showPreview && canShowImage}
               <img
@@ -197,44 +198,52 @@
                 data-id={value.file}
                 srcset={valueRef.srcset}
                 class="flex-center icon image"
+                class:disabled
                 class:svg={value.type === 'image/svg+xml'}
                 alt={value.name}
               />
             {:else}
-              <div class="flex-center icon">
+              <div class="flex-center icon" class:disabled>
                 {iconLabel(value.name)}
               </div>
             {/if}
           </a>
           <div class="flex-col info-container">
-            <div class="name">
-              <a href={valueRef.src} download={value.name} on:click={clickHandler} on:mousedown={middleClickHandler}>
+            <div class="name" class:disabled>
+              <a
+                href={disabled ? undefined : valueRef.src}
+                download={disabled ? undefined : value.name}
+                on:click={disabled ? undefined : clickHandler}
+                on:mousedown={disabled ? undefined : middleClickHandler}
+              >
                 {trimFilename(value.name)}
               </a>
             </div>
             <div class="info-content flex-row-center">
               {#if value.size != null && value.size !== 0}{filesize(value.size, { spacer: '' })}{/if}
-              <span class="actions inline-flex clear-mins ml-1 gap-1">
-                <span>•</span>
-                <a class="no-line colorInherit" href={valueRef.src} download={value.name} bind:this={download}>
-                  <Label label={presentation.string.Download} />
-                </a>
-                {#if canRemove}
+              {#if !disabled}
+                <span class="actions inline-flex clear-mins ml-1 gap-1">
                   <span>•</span>
-                  <!-- svelte-ignore a11y-click-events-have-key-events -->
-                  <!-- svelte-ignore a11y-no-static-element-interactions -->
-                  <span
-                    class="remove-link"
-                    on:click={(ev) => {
-                      ev.stopPropagation()
-                      ev.preventDefault()
-                      dispatch('remove', value)
-                    }}
-                  >
-                    <Label label={presentation.string.Delete} />
-                  </span>
-                {/if}
-              </span>
+                  <a class="no-line colorInherit" href={valueRef.src} download={value.name} bind:this={download}>
+                    <Label label={presentation.string.Download} />
+                  </a>
+                  {#if canRemove}
+                    <span>•</span>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <span
+                      class="remove-link"
+                      on:click={(ev) => {
+                        ev.stopPropagation()
+                        ev.preventDefault()
+                        dispatch('remove', value)
+                      }}
+                    >
+                      <Label label={presentation.string.Delete} />
+                    </span>
+                  {/if}
+                </span>
+              {/if}
             </div>
           </div>
         {/await}
@@ -263,6 +272,10 @@
       border: 1px solid var(--theme-button-border);
       border-radius: 0.25rem 0 0 0.25rem;
       cursor: pointer;
+
+      &.disabled {
+        cursor: default;
+      }
 
       &:not(.image) {
         color: var(--primary-button-color);
@@ -299,6 +312,10 @@
       font-size: 0.8125rem;
       color: var(--theme-caption-color);
       cursor: pointer;
+
+      &.disabled {
+        cursor: default;
+      }
 
       &:hover ~ .info-content .actions {
         opacity: 1;

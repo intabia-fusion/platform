@@ -13,59 +13,74 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DisplayDocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component, Icon, IconAdd, IconDelete } from '@hcengineering/ui'
+  import { DisplayDocUpdateMessage, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import core, { Class, Doc, generateId, Ref, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnyComponent, Component } from '@hcengineering/ui'
   import view, { ObjectPanel } from '@hcengineering/view'
   import {
     buildRemovedDoc,
     checkIsObjectRemoved,
     DocNavLink,
-    getDocLinkTitle,
+    getDocTitle,
     isAttachedDoc
   } from '@hcengineering/view-resources'
 
-  export let attachedTo: DisplayDocUpdateMessage['attachedTo']
-  export let objectClass: DisplayDocUpdateMessage['objectClass']
-  export let objectId: DisplayDocUpdateMessage['objectId']
-  export let action: DisplayDocUpdateMessage['action']
+  export let message: DisplayDocUpdateMessage
   export let viewlet: DocUpdateMessageViewlet | undefined
-  export let withIcon: boolean = false
-  export let hasSeparator: boolean = false
+  export let doc: Doc | undefined
   export let preview = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const objectQuery = createQuery()
 
   let object: Doc | undefined = undefined
+  let isRemoved = false
 
-  $: objectPanel = hierarchy.classHierarchyMixin(objectClass, view.mixin.ObjectPanel)
-  $: objectPresenter = hierarchy.classHierarchyMixin(objectClass, view.mixin.ObjectPresenter)
+  $: objectPanel = hierarchy.classHierarchyMixin(message.objectClass, view.mixin.ObjectPanel)
+  $: objectPresenter = hierarchy.classHierarchyMixin(message.objectClass, view.mixin.ObjectPresenter)
+  $: clazz = hierarchy.findClass(message.objectClass)
 
-  async function getValue (object: Doc): Promise<string | undefined> {
-    if (viewlet?.valueAttr) {
-      return (object as any)[viewlet.valueAttr]
+  async function getValue (object: Doc, clazz?: Class<Doc>): Promise<string | undefined> {
+    if (clazz?.titleKey != null && clazz.titleKey !== '') {
+      return (object as any)[clazz.titleKey] ?? ''
     }
 
-    return await getDocLinkTitle(client, object._id, object._class, object)
+    return (await getDocTitle(client, object._id, object._class, object)) ?? ''
   }
 
-  async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, attachedTo: Ref<Doc>): Promise<void> {
-    const isRemoved = attachedTo === _id ? false : await checkIsObjectRemoved(client, _id, _class)
+  function buildObject (message: DocUpdateMessage): Doc | undefined {
+    if (message.attributes != null) return undefined
+
+    const createTx: TxCreateDoc<Doc> = {
+      _id: generateId(),
+      _class: core.class.TxCreateDoc,
+      space: core.space.Workspace,
+      objectId: message.objectId,
+      objectClass: message.objectClass,
+      objectSpace: message.space,
+      attributes: message.attributes ?? {},
+      modifiedBy: message.createdBy ?? message.modifiedBy,
+      modifiedOn: message.createdOn ?? message.modifiedOn
+    }
+
+    return TxProcessor.createDoc2Doc(createTx)
+  }
+
+  async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, attachedTo: Ref<Doc>, doc?: Doc): Promise<void> {
+    if (doc != null) {
+      object = doc
+      return
+    }
+
+    isRemoved = attachedTo === _id ? false : await checkIsObjectRemoved(client, _id, _class)
 
     if (isRemoved) {
-      object = await buildRemovedDoc(client, _id, _class)
-      objectQuery.unsubscribe()
-    } else {
-      objectQuery.query(_class, { _id }, (res) => {
-        object = res[0]
-      })
+      object = buildObject(message) ?? (await buildRemovedDoc(client, _id, _class))
     }
   }
 
-  $: void loadObject(objectId, objectClass, attachedTo)
+  $: void loadObject(message.objectId, message.objectClass, message.attachedTo, doc)
 
   function getPanelComponent (object: Doc, objectPanel?: ObjectPanel): AnyComponent {
     if (objectPanel !== undefined) {
@@ -80,54 +95,51 @@
   }
 </script>
 
-{#if object}
-  {#if withIcon && action === 'create'}
-    <Icon icon={IconAdd} size="x-small" />
-  {/if}
-  {#if withIcon && action === 'remove'}
-    <Icon icon={IconDelete} size="x-small" />
-  {/if}
-
-  {#if objectPresenter && !viewlet?.valueAttr}
-    <Component
-      is={objectPresenter.presenter}
-      props={{ value: object, accent: true, shouldShowAvatar: false, preview }}
-    />
-    {#if hasSeparator}
-      <span class="ml-1" />
-    {/if}
-  {:else}
-    {#await getValue(object) then value}
+{#if isRemoved && message.title}
+  <span class="valueLink">
+    <DocNavLink
+      object={undefined}
+      disabled={true}
+      colorInherit
+      component={objectPanel?.component ?? view.component.EditDoc}
+      shrink={1}
+    >
+      {message.title}
+    </DocNavLink>
+  </span>
+{:else if object}
+  {#await getValue(object, clazz) then value}
+    {#if value !== ''}
       <span class="valueLink">
         <DocNavLink
           {object}
           colorInherit
-          disabled={action === 'remove'}
+          disabled={message.action === 'remove'}
           component={getPanelComponent(object, objectPanel)}
           shrink={0}
         >
           <span class="overflow-label select-text">{value}</span>
         </DocNavLink>
-        {#if hasSeparator}
-          <span class="separator">,</span>
-        {/if}
       </span>
-    {/await}
-    {#if hasSeparator}
-      <span class="ml-1" />
+    {:else if objectPresenter}
+      <Component
+        is={objectPresenter.presenter}
+        disabled={message.action === 'remove'}
+        props={{
+          value: object,
+          accent: true,
+          shouldShowAvatar: false,
+          preview,
+          showPreview: message.action === 'create'
+        }}
+      />
     {/if}
-  {/if}
+  {/await}
 {/if}
 
 <style lang="scss">
   .valueLink {
     font-weight: 500;
     color: var(--global-primary-LinkColor);
-  }
-
-  .separator {
-    font-weight: 500;
-    color: var(--global-primary-LinkColor);
-    margin-left: -0.25rem;
   }
 </style>

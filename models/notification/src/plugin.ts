@@ -20,7 +20,6 @@ import { type IntlString, type Resource, mergeIds } from '@hcengineering/platfor
 import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
 import { type Application, type LocationData } from '@hcengineering/workbench'
-import { type DocUpdateMessageViewlet } from '@hcengineering/activity'
 
 export default mergeIds(notificationId, notification, {
   string: {
@@ -39,10 +38,6 @@ export default mergeIds(notificationId, notification, {
   app: {
     Notification: '' as Ref<Application>,
     Inbox: '' as Ref<Application>
-  },
-  ids: {
-    CollaboratorsAddMessage: '' as Ref<DocUpdateMessageViewlet>,
-    CollaboratorsRemoveMessage: '' as Ref<DocUpdateMessageViewlet>
   },
   component: {
     NotificationSettings: '' as AnyComponent,

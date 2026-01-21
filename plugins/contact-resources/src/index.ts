@@ -121,14 +121,14 @@ import UserInfo from './components/UserInfo.svelte'
 import UsersList from './components/UsersList.svelte'
 import UsersPopup from './components/UsersPopup.svelte'
 import ActivityChannelPresenter from './components/activity/ActivityChannelPresenter.svelte'
-import NameChangedActivityMessage from './components/activity/NameChangedActivityMessage.svelte'
 import IconAddMember from './components/icons/AddMember.svelte'
 import ExpandRightDouble from './components/icons/ExpandRightDouble.svelte'
 import IconMembers from './components/icons/Members.svelte'
 import ContactNamePresenter from './components/ContactNamePresenter.svelte'
 import PersonPreviewProvider from './components/person/PersonPreviewProvider.svelte'
 import TranslationSettings from './components/TranslationSettings.svelte'
-import CollaboratorEditor from './components/CollaboratorEditor.svelte'
+import CollaboratorEditor from './components/collaborator/CollaboratorEditor.svelte'
+import CollaboratorPresenter from './components/collaborator/CollaboratorPresenter.svelte'
 
 import { get } from 'svelte/store'
 import { canMergePersons, canResendInvitation } from './visibilityTester'
@@ -349,9 +349,6 @@ export default async (): Promise<Resources> => ({
     OpenChannel: openChannelURL,
     ResendInvite: resendInvite
   },
-  activity: {
-    NameChangedActivityMessage
-  },
   component: {
     CreateGuest,
     ContactArrayEditor,
@@ -406,7 +403,8 @@ export default async (): Promise<Resources> => ({
     AssigneePopup,
     TranslationSettings,
     SocialIdentityPresenter,
-    CollaboratorEditor
+    CollaboratorEditor,
+    CollaboratorPresenter
   },
   completion: {
     EmployeeQuery: async (

@@ -215,7 +215,6 @@ function returnClientTxes (txes: Tx[]): Tx[] {
     'activity:class:ActivityMessagesFilter' as Ref<Class<Doc>>,
     'view:class:ActionCategory' as Ref<Class<Doc>>,
     'activity:class:ActivityExtension' as Ref<Class<Doc>>,
-    'chunter:class:ChatMessageViewlet' as Ref<Class<Doc>>,
     'activity:class:ActivityMessageControl' as Ref<Class<Doc>>,
     'notification:class:ActivityNotificationViewlet' as Ref<Class<Doc>>,
     'setting:class:SettingsCategory' as Ref<Class<Doc>>,

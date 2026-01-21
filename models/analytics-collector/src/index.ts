@@ -101,14 +101,4 @@ export function createModel (builder: Builder): void {
       allowedFields: ['members']
     }
   )
-
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: analyticsCollector.class.OnboardingChannel,
-    action: 'update',
-    config: {
-      members: {
-        presenter: chunter.activity.MembersChangedMessage
-      }
-    }
-  })
 }

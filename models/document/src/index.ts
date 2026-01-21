@@ -57,7 +57,7 @@ export { document as default }
 export const DOMAIN_DOCUMENT = 'document' as Domain
 
 @Model(document.class.Document, core.class.Doc, DOMAIN_DOCUMENT)
-@UX(document.string.Document, document.icon.Document, undefined, 'name', undefined, document.string.Documents)
+@UX(document.string.Document, document.icon.Document, undefined, 'name', undefined, document.string.Documents, 'title')
 export class TDocument extends TDoc implements Document, Todoable {
   @Prop(TypeString(), document.string.Name)
   @Index(IndexKind.FullText)

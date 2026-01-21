@@ -269,10 +269,10 @@ export function combineActivityMessages (
     const forMerge = groupByTime(canMerge)
 
     forMerge.forEach((messagesForMerge) => {
-      const mergedNotification = mergeDocUpdateMessages(messagesForMerge)
+      const merged = mergeDocUpdateMessages(messagesForMerge)
 
-      if (mergedNotification !== undefined) {
-        result.push(mergedNotification)
+      if (merged !== undefined) {
+        result.push(...merged)
       }
     })
     result.push(...cantMerge)
@@ -333,13 +333,7 @@ function groupByTime<T extends ActivityMessage> (messages: T[]): T[][] {
 
 function getDocUpdateMessageKey (message: DocUpdateMessage): string {
   if (message.action === 'update') {
-    return [
-      message._class,
-      message.attachedTo,
-      message.action,
-      message.createdBy,
-      getAttributeUpdatesKey(message)
-    ].join('_')
+    return [message._class, message.attachedTo, message.createdBy, getAttributeUpdatesKey(message)].join('_')
   }
 
   return [
@@ -383,17 +377,18 @@ function mergeDocUpdateAttributes (messages: DocUpdateMessage[]): DisplayDocUpda
   }
 }
 
-function mergeDocUpdateMessages (messages: DocUpdateMessage[]): DisplayDocUpdateMessage | undefined {
+function mergeDocUpdateMessages (messages: DocUpdateMessage[]): DisplayDocUpdateMessage[] {
   if (messages.length === 0) {
-    return undefined
+    return []
   }
 
   if (messages[0].action === 'update') {
-    return mergeDocUpdateAttributes(messages)
+    const merged = mergeDocUpdateAttributes(messages)
+    return merged != null ? [merged] : []
   }
 
   if (messages.length === 1) {
-    return messages[0]
+    return messages
   }
 
   const removeMessages = messages.filter(({ action }) => action === 'remove')
@@ -401,22 +396,31 @@ function mergeDocUpdateMessages (messages: DocUpdateMessage[]): DisplayDocUpdate
   const removedObjectIds = removeMessages.map(({ objectId }) => objectId)
   const createdObjectIds = createMessages.map(({ objectId }) => objectId)
 
-  const forMerge = [
-    ...createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId)),
-    ...removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
-  ]
+  const createMessagesForMerge = createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId))
+  const removeMessagesForMerge = removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
 
-  forMerge.sort(activityMessagesComparator)
+  createMessagesForMerge.sort(activityMessagesComparator)
+  removeMessagesForMerge.sort(activityMessagesComparator)
 
-  if (forMerge.length === 0) {
-    return undefined
+  const res: DisplayDocUpdateMessage[] = []
+
+  if (createMessagesForMerge.length > 0) {
+    res.push({
+      ...createMessagesForMerge[createMessagesForMerge.length - 1],
+      previousMessages: createMessagesForMerge.slice(0, -1),
+      combinedMessagesIds: createMessagesForMerge.map(({ _id }) => _id)
+    })
   }
 
-  return {
-    ...forMerge[forMerge.length - 1],
-    previousMessages: forMerge.slice(0, -1),
-    combinedMessagesIds: messages.map(({ _id }) => _id)
+  if (removeMessagesForMerge.length > 0) {
+    res.push({
+      ...removeMessagesForMerge[removeMessagesForMerge.length - 1],
+      previousMessages: removeMessagesForMerge.slice(0, -1),
+      combinedMessagesIds: removeMessagesForMerge.map(({ _id }) => _id)
+    })
   }
+
+  return res
 }
 
 function mergeAttributeUpdates (

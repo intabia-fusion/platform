@@ -16,6 +16,10 @@
   import { Icon, Label } from '@hcengineering/ui'
   import { Asset, IntlString } from '@hcengineering/platform'
   import activity, { DisplayDocUpdateMessage, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { Doc } from '@hcengineering/core'
+  import attachment from '@hcengineering/attachment'
+  import view from '@hcengineering/view'
 
   import DocUpdateMessageObjectValue from './DocUpdateMessageObjectValue.svelte'
 
@@ -26,81 +30,100 @@
   export let objectIcon: Asset | undefined
   export let preview = false
 
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const objectsQuery = createQuery()
+
   const isOwn = message.objectId === message.attachedTo
 
   let valueMessages: DocUpdateMessage[] = []
+  let objects: Doc[] = []
 
   $: valueMessages = message.previousMessages?.length ? [...message.previousMessages, message] : [message]
-  $: hasDifferentActions = message.previousMessages?.some(({ action }) => action !== message.action)
+
+  $: objectsQuery.query(message.objectClass, { _id: { $in: valueMessages.map((it) => it.objectId) } }, (res) => {
+    objects = res
+  })
+
+  $: isColumn = hierarchy.isDerived(message.objectClass, attachment.class.Attachment)
+  $: _icon = viewlet?.icon ?? objectIcon ?? activity.icon.Activity
+  $: clazz = hierarchy.findClass(message.objectClass)
 </script>
 
-<div class="content overflow-label" class:preview>
-  <span class="mr-1">
-    <Icon icon={viewlet?.icon ?? objectIcon ?? activity.icon.Activity} size="small" />
-  </span>
-  {#if hasDifferentActions}
-    <Label label={activity.string.UpdatedCollection} />
-  {:else if message.action === 'create'}
-    <Label label={activity.string.New} />
-  {:else if message.action === 'remove' && message.updateCollection}
-    <Label label={activity.string.Removed} />
-  {/if}
-  <span class="lower">
-    {#if collectionName && (message.previousMessages?.length || !isOwn)}
-      <Label label={collectionName} />:
-    {:else if objectName}
-      <Label label={objectName} />:
-    {/if}
-  </span>
-
-  <span class="overflow-label values" class:preview>
-    {#if hasDifferentActions}
-      {@const removeMessages = valueMessages.filter(({ action }) => action === 'remove')}
-      {@const createMessages = valueMessages.filter(({ action }) => action === 'create')}
-
-      {@const createMessagesLen = createMessages.length}
-      {@const removeMessagesLen = removeMessages.length}
-
-      {#each createMessages as valueMessage, index}
-        <DocUpdateMessageObjectValue
-          attachedTo={valueMessage.attachedTo}
-          objectClass={valueMessage.objectClass}
-          objectId={valueMessage.objectId}
-          action={valueMessage.action}
-          {viewlet}
-          withIcon={index === 0}
-          hasSeparator={createMessagesLen > 1 && index !== createMessagesLen - 1}
-          {preview}
+{#if isColumn}
+  <span class="content column no-word-wrap flex-wrap">
+    <span class="label flex-gap-1 no-word-wrap h-10">
+      <span class="icon mr-1">
+        <Icon
+          icon={_icon === view.ids.IconWithEmoji ? IconWithEmoji : _icon}
+          iconProps={_icon === view.ids.IconWithEmoji ? { color: clazz?.color ?? 0 } : {}}
+          size="small"
         />
-      {/each}
-      {#each removeMessages as valueMessage, index}
-        <DocUpdateMessageObjectValue
-          attachedTo={valueMessage.attachedTo}
-          objectClass={valueMessage.objectClass}
-          objectId={valueMessage.objectId}
-          action={valueMessage.action}
-          {viewlet}
-          withIcon={index === 0}
-          hasSeparator={removeMessagesLen > 1 && index !== removeMessagesLen - 1}
-          {preview}
-        />
-      {/each}
-    {:else}
-      {@const len = valueMessages.length}
+      </span>
+      {#if message.action === 'create'}
+        <Label label={activity.string.New} />
+      {:else if message.action === 'remove' && message.updateCollection}
+        <Label label={activity.string.Removed} />
+      {/if}
+      <span class="lower">
+        {#if collectionName && (message.previousMessages?.length || !isOwn)}
+          <Label label={collectionName} />:
+        {:else if objectName}
+          <Label label={objectName} />:
+        {/if}
+      </span>
+    </span>
+    <span class="content flex-gap-1 no-word-wrap flex-wrap">
       {#each valueMessages as valueMessage, index}
         <DocUpdateMessageObjectValue
-          attachedTo={valueMessage.attachedTo}
-          objectClass={valueMessage.objectClass}
-          objectId={valueMessage.objectId}
-          action={valueMessage.action}
+          message={valueMessage}
           {viewlet}
-          hasSeparator={len > 1 && index !== len - 1}
           {preview}
+          doc={objects.find((it) => it._id === valueMessage.objectId)}
         />
+        {#if index < valueMessages.length - 1}
+          <span class="ml-1" />
+        {/if}
       {/each}
-    {/if}
+    </span>
   </span>
-</div>
+{:else}
+  <div class="content overflow-label" class:preview>
+    <span class="mr-1">
+      <Icon
+        icon={_icon === view.ids.IconWithEmoji ? IconWithEmoji : _icon}
+        iconProps={_icon === view.ids.IconWithEmoji ? { icon: clazz?.color ?? 0 } : {}}
+        size="small"
+      />
+    </span>
+    {#if message.action === 'create'}
+      <Label label={activity.string.New} />
+    {:else if message.action === 'remove' && message.updateCollection}
+      <Label label={activity.string.Removed} />
+    {/if}
+    <span class="lower">
+      {#if collectionName && (message.previousMessages?.length || !isOwn)}
+        <Label label={collectionName} />:
+      {:else if objectName}
+        <Label label={objectName} />:
+      {/if}
+    </span>
+
+    <span class="overflow-label values" class:preview>
+      {#each valueMessages as valueMessage, index}
+        <DocUpdateMessageObjectValue
+          message={valueMessage}
+          {viewlet}
+          {preview}
+          doc={objects.find((it) => it._id === valueMessage.objectId)}
+        />
+        {#if index < valueMessages.length - 1}
+          <span class="ml-1" />
+        {/if}
+      {/each}
+    </span>
+  </div>
+{/if}
 
 <style lang="scss">
   .content {
@@ -110,9 +133,19 @@
     flex-wrap: wrap;
     color: var(--global-primary-TextColor);
 
+    &.column {
+      align-items: start;
+      flex-direction: column;
+    }
+
     &.preview {
       flex-wrap: nowrap;
     }
+  }
+
+  .label {
+    display: flex;
+    align-items: center;
   }
 
   .values {

@@ -339,19 +339,6 @@ export function createModel (builder: Builder): void {
     activity.ids.MentionsActivityFilter
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: activity.class.Reaction,
-      action: 'create',
-      component: activity.component.ReactionPresenter,
-      label: activity.string.Reacted,
-      onlyWithParent: true
-    },
-    activity.ids.ReactionAddedActivityViewlet
-  )
-
   builder.mixin(activity.class.ActivityMessage, core.class.Class, view.mixin.ObjectPanel, {
     component: view.component.AttachedDocPanel
   })

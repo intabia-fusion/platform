@@ -191,28 +191,6 @@ export function createModel (builder: Builder): void {
     inventory.category.Inventory
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: inventory.class.Product,
-      label: chunter.string.LeftComment
-    },
-    inventory.ids.ProductChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: inventory.class.Category,
-      label: chunter.string.LeftComment
-    },
-    inventory.ids.CategoryChatMessageViewlet
-  )
-
   createAction(builder, {
     label: inventory.string.CreateSubcategory,
     icon: inventory.icon.Categories,

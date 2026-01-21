@@ -346,6 +346,8 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(contact.class.Channel, core.class.Class, activity.mixin.ActivityDoc, {})
 
+  createAttributePresenter(builder, contact.component.ContactNamePresenter, contact.class.Contact, 'name', 'attribute')
+
   builder.mixin(contact.class.Person, core.class.Class, view.mixin.ObjectIcon, {
     component: contact.component.PersonIcon
   })
@@ -494,16 +496,6 @@ export function createModel (builder: Builder): void {
     component: contact.component.Contacts,
     label: contact.string.Contacts,
     index: 100
-  })
-
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: contact.class.Person,
-    action: 'update',
-    config: {
-      name: {
-        presenter: contact.activity.NameChangedActivityMessage
-      }
-    }
   })
 
   builder.createDoc<Viewlet>(
@@ -1284,39 +1276,6 @@ export function createModel (builder: Builder): void {
   )
 
   builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: contact.class.Person,
-      label: chunter.string.LeftComment
-    },
-    contact.ids.PersonChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: contact.mixin.Employee,
-      label: chunter.string.LeftComment
-    },
-    contact.ids.EmployeeChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: contact.class.Organization,
-      label: chunter.string.LeftComment
-    },
-    contact.ids.OrganizationChatMessageViewlet
-  )
-
-  builder.createDoc(
     notification.class.NotificationGroup,
     core.space.Model,
     {
@@ -1416,5 +1375,9 @@ export function createModel (builder: Builder): void {
   builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.CollectionEditor, {
     editor: contact.component.CollaboratorEditor,
     inlineEditor: contact.component.CollaboratorEditor
+  })
+
+  builder.mixin(core.class.Collaborator, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: contact.component.CollaboratorPresenter
   })
 }

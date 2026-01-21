@@ -6,7 +6,6 @@ import { mergeIds, type IntlString, type Resource } from '@hcengineering/platfor
 import { githubId } from '@hcengineering/github'
 import github from '@hcengineering/github-resources/src/plugin'
 
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import { type Doc, type Ref, type Space } from '@hcengineering/core'
 import {
   type DocCreateFunction,
@@ -65,8 +64,7 @@ export default mergeIds(githubId, github, {
   },
   ids: {
     AssigneeNotification: '' as Ref<Doc>,
-    GithubNotificationGroup: '' as Ref<NotificationGroup>,
-    GitHubPullRequestChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    GithubNotificationGroup: '' as Ref<NotificationGroup>
   },
   category: {
     Github: '' as Ref<ActionCategory>

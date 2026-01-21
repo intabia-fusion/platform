@@ -1,14 +1,14 @@
 //
 // Copyright © 2021 Anticrm Platform Contributors.
-// 
+//
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// 
+//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
@@ -21,27 +21,27 @@ a {
   text-decoration: none;
   color: var(--theme-content-color);
   outline: none;
-  
+
   &:hover {
     color: var(--theme-caption-color);
-    
+
     &:not(:has(button)):not(.stealth):not(.no-underline) {
       text-decoration: underline;
     }
   }
-  
+
   &:active {
     color: var(--theme-content-color);
-    
+
     &:not(:has(button)):not(.stealth):not(.no-underline) {
       text-decoration: underline;
     }
   }
-  
-  &:visited { 
-    color: var(--theme-content-color); 
+
+  &:visited {
+    color: var(--theme-content-color);
   }
-  
+
   &.stealth {
     display: inline-flex;
     align-items: center;
@@ -78,9 +78,9 @@ audio, canvas, embed, iframe, img, object, svg, video {
   vertical-align: middle;
 }
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
+input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
-input:-webkit-autofill, 
+input:-webkit-autofill,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
@@ -93,7 +93,7 @@ select:-webkit-autofill:focus {
 }
 
 // Fix for iOS (disable zooming on input fields)
-@media screen and (-webkit-min-device-pixel-ratio: 0) and (max-width: 480px) { 
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (max-width: 480px) {
   select,
   textarea,
   input,
@@ -125,7 +125,7 @@ li {
 
 p {
   user-select:inherit;
-  
+
   a {
     // word-break: break-all;
     // word-break: break-word;
@@ -134,7 +134,7 @@ p {
 
     &:hover,
     &:active,
-    &:visited { color: var(--theme-link-color); }  
+    &:visited { color: var(--theme-link-color); }
   }
 }
 p:first-child { margin-block-start: 0; } // First and last padding
@@ -313,7 +313,7 @@ input.search {
   &:last-child { justify-content: flex-end; }
 }
 
-.flex-break {  
+.flex-break {
   flex-basis: 100%;
   height: 0;
 }
@@ -705,6 +705,7 @@ input.search {
 .h-7 { height: 1.75rem; }
 .h-8 { height: 2rem; }
 .h-9 { height: 2.25rem; }
+.h-10 { height: 2.5rem; }
 .h-12 { height: 3rem; }
 .h-14 { height: 3.5rem; }
 .h-16 { height: 4rem; }
@@ -966,11 +967,11 @@ a.no-line {
 }
 .lines-limit-2 {
   -webkit-line-clamp: 2;
-  line-clamp: 2;  
+  line-clamp: 2;
 }
 .lines-limit-4 {
   -webkit-line-clamp: 4;
-  line-clamp: 4;  
+  line-clamp: 4;
 }
 
 .focused-button {
@@ -1095,7 +1096,7 @@ a.no-line {
     border-radius: 0.25rem;
   }
 
-  
+
   input:checked {
     background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><polygon fill="white" points="7.3,11.5 4,8.3 5,7.4 7.3,9.7 11.8,5.1 12.7,6.1 " /></svg>');
     background-color: var(--primary-bg-color);
