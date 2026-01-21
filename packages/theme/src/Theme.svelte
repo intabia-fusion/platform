@@ -17,7 +17,7 @@
   import platform, { loadPluginStrings, setMetadata } from '@hcengineering/platform'
   import { onMount, setContext } from 'svelte'
   import { writable } from 'svelte/store'
-  import { ThemeVariant, AccentColor, type AccentColorType } from './variants'
+  import { ThemeVariant, type AccentColorType } from './variants'
   import {
     ThemeOptions,
     getCurrentFontSize,

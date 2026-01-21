@@ -71,7 +71,7 @@ export const getCurrentEmoji = (): string => localStorage.getItem('emoji') ?? ge
  * @public
  */
 export const getCurrentAccentColor = (): string =>
-  localStorage.getItem('accent') ?? getDefaultProps('accent', AccentColor.Huly)
+  localStorage.getItem('accent') ?? getDefaultProps('accent', AccentColor.Intabia)
 
 export class ThemeOptions {
   readonly variant: ThemeVariantType

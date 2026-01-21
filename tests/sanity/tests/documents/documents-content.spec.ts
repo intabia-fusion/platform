@@ -83,6 +83,7 @@ test.describe('Content in the Documents tests', () => {
     }
     for (const line of contents) {
       await documentContentPage.assignToDo(`${newUser2.lastName} ${newUser2.firstName}`, line)
+      await page.waitForTimeout(25)
     }
 
     await leftSideMenuSecondPage.clickDocuments()
