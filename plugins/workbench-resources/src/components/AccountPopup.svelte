@@ -171,22 +171,25 @@
       group: 'end'
     })
 
-    actions.push({
-      icon: IconDownload,
-      label: presentation.string.Download,
-      action: async () => {
-        // Navigate to the dedicated downloads page instead of showing an inline popup
-        closePopup()
-        const loc = getCurrentResolvedLocation()
-        loc.fragment = undefined
-        loc.query = undefined
-        loc.path[0] = loginId
-        loc.path[1] = 'downloads'
-        loc.path.length = 2
-        navigate(loc)
-      },
-      group: 'end'
-    })
+    // Hide downloads action on mobile phones (small viewport + mobile detection)
+    if (!($deviceInfo.isMobile && $deviceInfo.minWidth)) {
+      actions.push({
+        icon: IconDownload,
+        label: presentation.string.Download,
+        action: async () => {
+          // Navigate to the dedicated downloads page instead of showing an inline popup
+          closePopup()
+          const loc = getCurrentResolvedLocation()
+          loc.fragment = undefined
+          loc.query = undefined
+          loc.path[0] = loginId
+          loc.path[1] = 'downloads'
+          loc.path.length = 2
+          navigate(loc)
+        },
+        group: 'end'
+      })
+    }
 
     if (account.role === AccountRole.ReadOnlyGuest) {
       if ($allowGuestSignUpStore) {
