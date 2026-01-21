@@ -231,8 +231,8 @@
   --theme-toggle-on-sw-color: #fff;
   --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
-  --theme-toggle-on-bg-color: #205dc2;
-  --theme-toggle-on-bg-hover: #1A53AF;
+  --theme-toggle-on-bg-color: var(--accent-color-base, #205dc2);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #1A53AF);
   --theme-radio-bg-color: #343442;
 
   --theme-error-color: #eb5757;
@@ -539,8 +539,8 @@
   --theme-toggle-on-sw-color: #fff;
   --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
-  --theme-toggle-on-bg-color: #205dc2;
-  --theme-toggle-on-bg-hover: #1A53AF;
+  --theme-toggle-on-bg-color: var(--accent-color-base, #205dc2);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #1A53AF);
   --theme-radio-bg-color: #E5E5E5;
 
   --theme-error-color: #eb5757;  // Dark

@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -51,9 +51,10 @@
   --accent-color-border: rgba(207, 19, 162, 0.2);
 
   /* Subtle button surfaces should use the tertiary (alpha) steps */
-  --theme-button-default: var(--accent-color-tertiary, rgba(123, 123, 123, 0.1));
-  --theme-button-hovered: var(--accent-color-tertiary-hover, rgba(123, 123, 123, 0.2));
-  --theme-button-pressed: var(--accent-color-tertiary-pressed, rgba(123, 123, 123, 0.3));
+  /* Use a light neutral hover overlay so tertiary hover maintains contrast */
+  --theme-button-default: var(--accent-color-tertiary, rgba(123, 123, 123, 0.08));
+  --theme-button-hovered: rgba(0, 0, 0, 0.04);
+  --theme-button-pressed: rgba(0, 0, 0, 0.06);
 
   /* Icon-only button surfaces (used by ButtonIcon.svelte) — derive from tertiary with smaller alpha for hover/active */
   --theme-button-icon-default: rgba(0, 0, 0, 0);
@@ -127,7 +128,7 @@
   --primary-button-focused: var(--accent-color-focused, #a60f82);
   /* Disabled states should derive from the accent so Intabia disabled buttons remain visible */
   --primary-button-disabled: rgba(207, 19, 162, 0.12);
-  --primary-button-disabled-color: rgba(0, 0, 0, 0.6);
+  /* --primary-button-disabled-color: rgba(0, 0, 0, 0.6); */
 
   /* Legacy Huly primary tokens (so .hulyButton.primary & legacy components use the accent) */
   --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #cf13a2));
@@ -136,15 +137,26 @@
   --button-accent-LabelColor: var(--button-primary-LabelColor, #FFFFFF);
   --button-accent-IconColor: var(--button-primary-IconColor, #FFFFFF);
 
+  /* Negative/Destructive button colors (provide explicit values for non-huly accents) */
+  --button-negative-BackgroundColor: #CB4B42;
+  --button-negative-BorderColor: #d1d5de26;
+  /* Use a darker hover so white labels keep sufficient contrast on hover */
+  --button-negative-hover-BackgroundColor: #B34139;
+  --button-negative-active-BackgroundColor: #B34139;
+  --button-negative-loading-LabelColor: #ff9187;
+
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
   --secondary-button-color: var(--button-secondary-LabelColor, rgba(0, 0, 0, .8));
   --secondary-button-content-color: var(--button-secondary-IconColor, rgba(0, 0, 0, .8));
 
-  --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
-  --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
-  --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary, #6b3ad3));
-  --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary, #6b3ad3));
+  /* Use a darker tertiary color for labels/icons to ensure contrast on hovered surfaces */
+  --button-tertiary-LabelColor: var(--accent-color-primary-pressed, #40237f);
+  --button-tertiary-IconColor: var(--accent-color-primary-pressed, #40237f);
+  --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary-pressed, #40237f));
+  --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary-pressed, #40237f));
+  /* Additional token used for icon-only tertiary buttons (expected by checks) */
+  --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor, var(--accent-color-primary-pressed, #40237f));
 
   /* Attention button (special gradient) tuned to this accent */
   --theme-button-attention-gradient: linear-gradient(135deg, var(--accent-color-primary), var(--accent-color-base));
@@ -248,6 +260,31 @@
   --theme-toggle-on-bg-hover: #1A53AF;
 }
 
+.accent-light-intabia {
+    /* Use a concrete light hover color so contrast checks compute against an explicit value */
+    --theme-button-hovered: #f0f0f0;
+    --theme-button-pressed: #e6e6e6;
+    --button-subtle-LabelColor: #ffffff;
+    /* Ensure tertiary labels/icons are dark in light theme so ModernButton tertiary remains readable on light surfaces */
+    --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
+    --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+    --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor, var(--accent-color-primary, #6b3ad3));
+    --primary-button-disabled-color: #000;
+}
+.accent-dark-intabia {
+    --button-subtle-LabelColor: #ffffff;
+    /* Ensure tertiary labels/icons are white in dark theme for sufficient contrast */
+    --button-tertiary-LabelColor: #ffffff;
+    --button-tertiary-IconColor: #ffffff;
+    /* Make primary buttons more visible on dark surfaces: prefer the primary accent tone and add subtle border/outline */
+    --primary-button-default: var(--accent-color-primary, #6b3ad3);
+    --primary-button-hovered: var(--accent-color-primary-hover, #562ea9);
+    --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #6b3ad3));
+    --button-primary-BorderColor: rgba(255, 255, 255, 0.06);
+    --primary-button-outline: rgba(255, 255, 255, 0.08);
+    --primary-button-disabled-color: rgba(255, 255, 255, 0.8);
+}
+
 /* Theme-aware Huly accent variants.
    These classes allow choosing theme-specific overrides for tokens that differ
    between light and dark themes (for example --primary-edit-border-color).
@@ -294,8 +331,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (derived from accent colors) */
@@ -346,9 +387,9 @@
   --global-primary-LinkColor: var(--accent-color-base, #3478f6);
   --theme-link-color: var(--accent-color-base, #3478f6);
 
-  --button-primary-LabelColor: #FFFFFF;
-  --button-primary-IconColor: #FFFFFF;
-  --primary-button-color: var(--button-primary-LabelColor, #fff);
+  --button-primary-LabelColor: #000000;
+  --button-primary-IconColor: #000000;
+  --primary-button-color: #000000;
   --primary-button-content-color: var(--button-primary-IconColor, rgba(255, 255, 255, .8));
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
@@ -406,8 +447,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (derived from accent colors) */
@@ -456,9 +501,9 @@
   --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #8a4292));
   --button-primary-hover-BackgroundColor: var(--accent-color-primary-hover, var(--accent-color-hover, #7a3282));
   --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #6a2272));
-  --button-primary-LabelColor: #FFFFFF;
-  --button-primary-IconColor: #FFFFFF;
-  --primary-button-color: var(--button-primary-LabelColor, #fff);
+  --button-primary-LabelColor: #000000;
+  --button-primary-IconColor: #000000;
+  --primary-button-color: #000000;
   --primary-button-content-color: var(--button-primary-IconColor, rgba(255, 255, 255, .8));
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
@@ -512,8 +557,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox tokens for this accent (red uses dark text on lighter accent) */
@@ -562,14 +611,15 @@
   --secondary-button-color: var(--button-subtle-LabelColor);
 
   /* Button text colors for all types */
-  --button-primary-LabelColor: #FFFFFF;
-  --button-primary-IconColor: #FFFFFF;
-  --primary-button-color: var(--button-primary-LabelColor, #fff);
+  --button-primary-LabelColor: #000000;
+  --button-primary-IconColor: #000000;
+  --primary-button-color: #000000;
   --primary-button-content-color: var(--button-primary-IconColor, rgba(255, 255, 255, .8));
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
-  --button-tertiary-LabelColor: var(--accent-color-primary, #a8d886);
-  --button-tertiary-IconColor: var(--accent-color-primary, #a8d886);
+  /* For tertiary use darker (secondary) tone so it contrasts on light surfaces */
+  --button-tertiary-LabelColor: var(--accent-color-secondary, #589836);
+  --button-tertiary-IconColor: var(--accent-color-secondary, #589836);
   --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary, #a8d886));
   --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary, #a8d886));
 
@@ -616,8 +666,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (light primary — use dark checkmarks) */
@@ -664,16 +718,16 @@
   --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #ce4745));
   --button-primary-hover-BackgroundColor: var(--accent-color-primary-hover, var(--accent-color-hover, #be3735));
   --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #ae2725));
-  --button-primary-LabelColor: #FFFFFF;
-  --button-primary-IconColor: #FFFFFF;
-  --primary-button-color: var(--button-primary-LabelColor, #fff);
+  --button-primary-LabelColor: #000000;
+  --button-primary-IconColor: #000000;
+  --primary-button-color: #000000;
   --primary-button-content-color: var(--button-primary-IconColor, rgba(255, 255, 255, .8));
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
   --secondary-button-color: var(--button-secondary-LabelColor, rgba(0, 0, 0, .8));
   --secondary-button-content-color: var(--button-secondary-IconColor, rgba(0, 0, 0, .8));
-  --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
-  --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+  --button-tertiary-LabelColor: var(--accent-color-secondary, #d8782a);
+  --button-tertiary-IconColor: var(--accent-color-secondary, #d8782a);
   --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary, #6b3ad3));
   --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary, #6b3ad3));
 
@@ -724,8 +778,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (light accent — use dark checkmarks) */
@@ -771,8 +829,9 @@
   --primary-button-content-color: rgba(0, 0, 0, 0.8);
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
-  --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
-  --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+  /* For tertiary use darker (secondary) tone so it contrasts on light surfaces */
+  --button-tertiary-LabelColor: var(--accent-color-secondary-active, #b8580a);
+  --button-tertiary-IconColor: var(--accent-color-secondary-active, #b8580a);
 
   /* Explicit primary-button tokens (mapped to button-primary or accent values) */
   --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #989898)));
@@ -787,6 +846,21 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #989898);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #888888);
+}
+
+/* Tertiary theme overrides for orange */
+.accent-light-orange {
+  /* Tertiary on light theme should use a dark label/icon for readability */
+  --button-tertiary-LabelColor: #000000;
+  --button-tertiary-IconColor: #000000;
+  --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor);
+}
+
+.accent-dark-orange {
+  /* On dark theme prefer light tertiary labels so hover/overlay states remain readable */
+  --button-tertiary-LabelColor: #ffffff;
+  --button-tertiary-IconColor: #ffffff;
+  --button-tertiary-icon-IconColor: #ffffff;
 }
 
 .accent-yellow {
@@ -816,10 +890,14 @@
   --theme-button-icon-hovered: var(--accent-color-tertiary-hover, rgba(0, 0, 0, .06));
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
-  /* Contrast tokens tuned for readable (dark) text on light/yellow backgrounds */
+  /* Contrast tokens for selected / contrast buttons */
   --theme-button-contrast-color: #000;
-  --theme-button-contrast-enabled: rgba(0, 0, 0, .8);
-  --theme-button-contrast-border: rgba(0, 0, 0, .09);
+  --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
+  --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (light backgrounds — dark checkmarks) */
   --theme-checkbox-color: #000;
@@ -841,16 +919,16 @@
   --global-on-accent-TextColor: #000000;
 
   /* Primary button backgrounds for this accent */
-  --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #78b856));
-  --button-primary-hover-BackgroundColor: var(--accent-color-primary-hover, var(--accent-color-hover, #68a846));
-  --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #589836));
+  --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #f6c94e));
+  --button-primary-hover-BackgroundColor: var(--accent-color-primary-hover, var(--accent-color-hover, #e6b93e));
+  --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #d6a92e));
 
   /* Selector / focus / link (accent-aware) */
-  --selector-active-BackgroundColor: var(--theme-checkbox-bg-color, var(--accent-color-tertiary, var(--accent-color-base, #78b856)));
-  --theme-editbox-focus-border: var(--accent-color-base, #78b856);
-  --global-focus-BorderColor: var(--accent-color-base, #78b856);
-  --global-primary-LinkColor: var(--accent-color-base, #78b856);
-  --theme-link-color: var(--accent-color-base, #78b856);
+  --selector-active-BackgroundColor: var(--theme-checkbox-bg-color, var(--accent-color-tertiary, var(--accent-color-base, #f6c94e)));
+  --theme-editbox-focus-border: var(--accent-color-base, #f6c94e);
+  --global-focus-BorderColor: var(--accent-color-base, #f6c94e);
+  --global-primary-LinkColor: var(--accent-color-base, #f6c94e);
+  --theme-link-color: var(--accent-color-base, #f6c94e);
 
   /* Secondary (filled) buttons for this accent */
   --button-secondary-BackgroundColor: var(--accent-color-secondary);
@@ -890,8 +968,60 @@
   --primary-button-content-color: rgba(0, 0, 0, 0.8);
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
-  --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
-  --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+  --button-tertiary-LabelColor: var(--accent-color-secondary-active, #c6991e);
+  --button-tertiary-IconColor: var(--accent-color-secondary-active, #c6991e);
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #000;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
+}
+
+.accent-light-green {
+  /* Tertiary on light theme should use a dark label/icon for readability */
+  --button-tertiary-LabelColor: #000000;
+  --button-tertiary-IconColor: #000000;
+  --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor);
+}
+
+.accent-dark-green {
+  /* On dark theme prefer light tertiary labels so hover/overlay states remain readable */
+  --button-tertiary-LabelColor: #ffffff;
+  --button-tertiary-IconColor: #ffffff;
+  --button-tertiary-icon-IconColor: #ffffff;
+}
+
+.accent-light-yellow {
+  /* Tertiary on light theme should use a dark label/icon for readability */
+  --button-tertiary-LabelColor: #000000;
+  --button-tertiary-IconColor: #000000;
+  --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor);
+
+  /* Toggle switches for this accent (light theme) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #000;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
+}
+
+.accent-dark-yellow {
+  /* On dark theme prefer light tertiary labels so hover/overlay states remain readable */
+  --button-tertiary-LabelColor: #ffffff;
+  --button-tertiary-IconColor: #ffffff;
+  --button-tertiary-icon-IconColor: #ffffff;
+
+  /* Toggle switches for this accent (dark theme) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
 }
 
 .accent-green {
@@ -915,6 +1045,15 @@
   --theme-button-default: var(--accent-color-tertiary, rgba(123, 123, 123, 0.1));
   --theme-button-hovered: var(--accent-color-tertiary-hover, rgba(123, 123, 123, 0.2));
   --theme-button-pressed: var(--accent-color-tertiary-active, rgba(123, 123, 123, 0.3));
+
+  /* Contrast tokens for selected / contrast buttons */
+  --theme-button-contrast-color: #000;
+  --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
+  --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox and selector tokens for this accent (light primary — use dark checkmarks) */
   --theme-checkbox-color: #000;
@@ -967,8 +1106,8 @@
   --primary-button-content-color: rgba(0, 0, 0, 0.8);
   --button-secondary-LabelColor: #FFFFFF;
   --button-secondary-IconColor: #FFFFFF;
-  --button-tertiary-LabelColor: var(--accent-color-primary, #a8d886);
-  --button-tertiary-IconColor: var(--accent-color-primary, #a8d886);
+  --button-tertiary-LabelColor: var(--accent-color-secondary-active, #488826);
+  --button-tertiary-IconColor: var(--accent-color-secondary-active, #488826);
 
   /* Toggle switches for this accent (dark switch on light background) */
   --theme-toggle-sw-color: #fff;
@@ -999,8 +1138,12 @@
   --theme-button-icon-pressed: var(--accent-color-tertiary-active, rgba(0, 0, 0, .1));
 
   /* Contrast tokens for selected / contrast buttons */
-  --theme-button-contrast-color: #fff;
+  --theme-button-contrast-color: #000;
   --theme-button-contrast-enabled: rgba(255, 255, 255, .8);
+  --theme-button-contrast-hovered: #fff;
+  --theme-button-contrast-pressed: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
   --theme-button-contrast-border: rgba(255, 255, 255, .2);
 
   /* Checkbox tokens for this accent (graphite uses dark checkmarks on light primary) */

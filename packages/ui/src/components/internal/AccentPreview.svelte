@@ -32,17 +32,17 @@
     hexToRgb,
     rgbToHex,
     IconCheckmark,
-    IconChevronDown,
     IconActivity,
     IconAttachment
   } from '../..'
   import Loading from '../Loading.svelte'
   import ModernToggle from '../ModernToggle.svelte'
   import ButtonIcon from '../ButtonIcon.svelte'
-  import AccordionItem from '../AccordionItem.svelte'
   import ButtonGroup from '../ButtonGroup.svelte'
   import Toggle from '../Toggle.svelte'
   import MiniToggle from '../MiniToggle.svelte'
+  import ModernButton from '../ModernButton.svelte'
+  import { getCurrentTheme, themeStore } from '@hcengineering/theme'
 
   interface AccentOption {
     id: string
@@ -61,6 +61,8 @@
   const LABEL_PRIMARY: IntlString = getEmbeddedLabel('Primary')
   const LABEL_REGULAR: IntlString = getEmbeddedLabel('Regular')
   const LABEL_SECONDARY: IntlString = getEmbeddedLabel('Secondary')
+  const LABEL_TERTIARY: IntlString = getEmbeddedLabel('Tertiary')
+  const LABEL_NEGATIVE: IntlString = getEmbeddedLabel('Negative')
   const LABEL_YES: IntlString = getEmbeddedLabel('Yes')
   const LABEL_NO: IntlString = getEmbeddedLabel('No')
   const LABEL_ATTENTION: IntlString = getEmbeddedLabel('Attention')
@@ -187,7 +189,7 @@
 
 <div
   bind:this={previewEl}
-  class="accent-preview {accent?.id ?? 'accent-default'}"
+  class="accent-preview {accent?.id ?? 'accent-huly'} {`accent-${$themeStore.dark ? 'dark' : 'light'}-${(accent?.id ?? 'accent-huly').replace('accent-', '')}`}"
   role="dialog"
   aria-label="Accent preview"
   on:mouseenter={handleMouseEnter}
@@ -223,10 +225,29 @@
 
     <div class="row btn-row small">
       <Button kind="positive" label={LABEL_YES} />
+      <Button kind="positive" pressed label={LABEL_YES} />
+      <Button kind="positive" pressed disabled label={LABEL_YES} />
       <Button kind="negative" label={LABEL_NO} />
+      <Button kind="negative" pressed label={LABEL_NO} />
+      <Button kind="negative" pressed disabled label={LABEL_NO} />
+    </div>
+    <div class="row btn-row small">
       <Button kind="attention" label={LABEL_ATTENTION} />
+      <Button kind="attention" pressed label={LABEL_ATTENTION} />
+      <Button kind="attention" disabled label={LABEL_ATTENTION} />
+      <Button kind="attention" pressed disabled label={LABEL_ATTENTION} />
+    </div>
+    <div class="row btn-row small">
       <Button kind="dangerous" label={LABEL_DANGEROUS} />
+      <Button kind="dangerous" pressed label={LABEL_DANGEROUS} />
+      <Button kind="dangerous" disabled label={LABEL_DANGEROUS} />
+      <Button kind="dangerous" pressed disabled label={LABEL_DANGEROUS} />
+    </div>
+    <div class="row btn-row small">
       <Button kind="contrast" label={LABEL_CONTRAST} />
+      <Button kind="contrast" pressed label={LABEL_CONTRAST} />
+      <Button kind="contrast" disabled label={LABEL_CONTRAST} />
+      <Button kind="contrast" pressed disabled label={LABEL_CONTRAST} />
     </div>
 
     <div class="row btn-row small">
@@ -238,6 +259,13 @@
     </div>
 
     <div class="row btn-row small">
+      <ModernButton kind="primary" label={LABEL_PRIMARY} />
+      <ModernButton kind="secondary" label={LABEL_SECONDARY} />
+      <ModernButton kind="tertiary" label={LABEL_TERTIARY} />
+      <ModernButton kind="negative" label={LABEL_NEGATIVE} />
+    </div>
+
+    <div class="row btn-row small">
       <Button kind="primary" label={LABEL_PRIMARY} />
       <ButtonMenu label={LABEL_PRIMARY} items={menuItems} />
       <ButtonWithDropdown {dropdownItems} label={LABEL_PRIMARY} />
@@ -245,7 +273,13 @@
 
     <div class="row btn-row small">
       <ButtonIcon kind="primary" icon={IconCheckmark} size={'small'} />
-      <ButtonIcon kind="primary" pressed icon={IconCheckmark} size={'small'} />
+      <ButtonIcon kind="primary" pressed icon={IconCheckmark} size={'small'} />\
+      <ButtonIcon kind="secondary" icon={IconCheckmark} size={'small'} />
+      <ButtonIcon kind="secondary" pressed icon={IconCheckmark} size={'small'} />
+      <ButtonIcon kind="tertiary" icon={IconCheckmark} size={'small'} noPrint />
+      <ButtonIcon kind="tertiary" pressed icon={IconCheckmark} size={'small'} />
+      <ButtonIcon kind="negative" icon={IconCheckmark} size={'small'} />
+      <ButtonIcon kind="negative" pressed icon={IconCheckmark} size={'small'} />
       <ButtonGroup
         items={[
           { id: 'b1', icon: IconActivity },

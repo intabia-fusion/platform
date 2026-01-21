@@ -128,13 +128,13 @@
     border-color: transparent;
     background-color: transparent;
 
-    &:not(.inheritColor) .icon { color: var(--button-subtle-IconColor); }
+    &:not(.inheritColor) .icon { color: var(--button-tertiary-icon-IconColor, var(--button-tertiary-IconColor, var(--button-subtle-IconColor))); }
     &.inheritColor {
       color: inherit;
 
       .icon { color: currentColor; }
     }
-    span { color: var(--button-subtle-LabelColor); }
+    span { color: var(--button-tertiary-LabelColor, var(--button-subtle-LabelColor)); }
 
     &:not(.disabled, :disabled):hover { background-color: var(--button-tertiary-hover-BackgroundColor); }
     &:not(.disabled, :disabled):active,
@@ -196,7 +196,7 @@
       border-color: var(--theme-button-attention-hover-border);
       transform: translateY(-2px);
       box-shadow: var(--theme-button-attention-hover-shadow);
-      
+
       &::before { left: 100%; }
     }
 
@@ -223,7 +223,7 @@
 
     &.loading {
       background: var(--theme-button-attention-active-gradient);
-      
+
       span { color: var(--button-accent-LabelColor); }
     }
   }
@@ -619,7 +619,7 @@
       border-color: var(--theme-button-attention-hover-border);
       transform: translateY(-2px);
       box-shadow: var(--theme-button-attention-hover-shadow);
-      
+
       &::before { left: 100%; }
     }
 
@@ -934,7 +934,7 @@
     }
     &.disabled {
       background-color: var(--button-disabled-BackgroundColor);
-      
+
       button {
         color: var(--button-disabled-LabelColor);
         background-color: transparent;
@@ -949,7 +949,7 @@
 
     button {
       color: var(--primary-button-color);
-      
+
       &:enabled {
         &:hover {
           background-color: var(--primary-button-hovered);
@@ -969,7 +969,7 @@
     }
     &.disabled {
       background-color: var(--primary-button-disabled);
-      
+
       button {
         color: var(--primary-button-disabled-color);
         background-color: transparent;
@@ -983,7 +983,7 @@
 
   &.disabled {
     border-color: transparent;
-    
+
     button {
       color: var(--theme-darker-color);
       cursor: not-allowed;
