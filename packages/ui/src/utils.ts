@@ -55,9 +55,44 @@ export function fetchMetadataLocalStorage<T> (id: Metadata<T>): T | null {
 
 /**
  * @public
+ *
+ * Improved mobile detection:
+ * - Prefer `navigator.userAgentData.mobile` when available (most reliable)
+ * - Treat Android as mobile only when 'Mobile' is present in the UA (avoids treating tablets as phones)
+ * - Explicitly treat iPhone/iPod and other mobile-only indicators as mobile
+ * - Avoid classifying iPad/tablets as mobile by default
+ * - Fallback to small viewport heuristic as a last resort
  */
 export function checkMobile (): boolean {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|Mobile|Opera Mini/i.test(navigator.userAgent)
+  try {
+    if (typeof navigator === 'undefined') return false
+
+    // Prefer User-Agent Client Hints API if available (typed to avoid `any`)
+    const nav = navigator as unknown as { userAgentData?: { mobile?: boolean } }
+    const uaData = nav.userAgentData
+    if (uaData?.mobile === true) return true
+
+    const ua = navigator.userAgent ?? ''
+
+    // iPhone / iPod are clearly mobile
+    if (/iPhone|iPod/i.test(ua)) return true
+
+    // Android devices: require 'Mobile' to avoid matching tablets
+    if (/Android/i.test(ua) && /Mobile/i.test(ua)) return true
+
+    // Other mobile-specific indicators
+    if (/IEMobile|Opera Mini|BlackBerry|Mobile/i.test(ua)) return true
+
+    // Fallback: small viewport heuristic (typical phone sizes)
+    if (typeof window !== 'undefined') {
+      const smallSide = Math.min(window.innerWidth, window.innerHeight)
+      if (smallSide <= 480) return true
+    }
+
+    return false
+  } catch {
+    return false
+  }
 }
 
 /**

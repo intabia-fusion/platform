@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+import './svg.d.ts'
 
 import type { IntlString, StatusCode } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
