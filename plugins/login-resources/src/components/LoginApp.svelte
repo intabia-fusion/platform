@@ -45,19 +45,18 @@
   import SignupForm from './SignupForm.svelte'
   import LoginIcon from './icons/LoginIcon.svelte'
   import SelectDownloads from './SelectDownloads.svelte'
-  import InstallApp from './InstallApp.svelte'
   import { Pages, getAccount, pages } from '..'
   import { getHref, goTo } from '../utils'
   import login from '../plugin'
 
   // Resolve static asset URLs at runtime to avoid requiring image module declarations
   // (prevents TypeScript / diagnostics errors when module types are missing)
-  const loginBack = new URL('../../img/login_back.png', import.meta.url).href
-  const loginBack2x = new URL('../../img/login_back_2x.png', import.meta.url).href
-  const loginBackAvif = new URL('../../img/login_back.avif', import.meta.url).href
-  const loginBack2xAvif = new URL('../../img/login_back_2x.avif', import.meta.url).href
-  const loginBackWebp = new URL('../../img/login_back.webp', import.meta.url).href
-  const loginBack2xWebp = new URL('../../img/login_back_2x.webp', import.meta.url).href
+  import loginBack from '../../img/login_back.png'
+  import loginBack2x from '../../img/login_back_2x.png'
+  import loginBackAvif from '../../img/login_back.avif'
+  import loginBack2xAvif from '../../img/login_back_2x.avif'
+  import loginBackWebp from '../../img/login_back.webp'
+  import loginBack2xWebp from '../../img/login_back_2x.webp'
   import AdminWorkspaces from './AdminWorkspaces.svelte'
   import ChangePassword from './ChangePassword.svelte'
 
