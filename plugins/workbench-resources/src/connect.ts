@@ -105,24 +105,33 @@ export async function connect (title: string): Promise<Client | undefined> {
   const selectWorkspace = await getResource(login.function.SelectWorkspace)
   let workspaceLoginInfo: WorkspaceLoginInfo | undefined
 
+  let retryCounter = 5
   while (true) {
     const selectResult = await ctx.with('select-workspace', {}, async () => await selectWorkspace(wsUrl, null))
     workspaceLoginInfo = selectResult[1] ?? undefined
     if (!selectResult[2]) {
       // Connection error happen, wait and retry
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 25))
       continue
     }
 
     // OK but unauthorized - we need to login
     if (workspaceLoginInfo == null) {
-      console.error(
-        `Error selecting workspace ${wsUrl}. There might be something wrong with the token. Please try to log in again.`
-      )
-      // something went wrong with selecting workspace with the selected token
-      await logOut()
-      navigate({ path: [loginId] })
-      return
+      if (retryCounter <= 0) {
+        console.error(
+          `Error selecting workspace ${wsUrl}. There might be something wrong with the token. Please try to log in again.`
+        )
+        // something went wrong with selecting workspace with the selected token
+        await logOut()
+        navigate({ path: [loginId] })
+        return
+      } else {
+        retryCounter--
+        await new Promise((resolve) => {
+          setTimeout(resolve, 25 * (retryCounter + 1))
+        })
+        continue
+      }
     }
     break
   }
