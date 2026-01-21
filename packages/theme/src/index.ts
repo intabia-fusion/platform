@@ -73,6 +73,21 @@ export const getCurrentEmoji = (): string => localStorage.getItem('emoji') ?? ge
 export const getCurrentAccentColor = (): string =>
   localStorage.getItem('accent') ?? getDefaultProps('accent', AccentColor.Intabia)
 
+/**
+ * @public
+ *
+ * Build composite accent class name of form `accent-{theme}-{accent}`.
+ * `theme` is expected to be the full theme class (e.g. 'theme-light' or 'theme-dark')
+ * and `accent` is the accent class (e.g. 'accent-huly'). Returns an empty string
+ * when `accent` is null/undefined or an empty string.
+ */
+export const getCompositeAccentClass = (theme: string, accent?: string): string => {
+  if (accent === undefined || accent === null || accent === '') return ''
+  const themeShort = isThemeDark(theme) ? 'dark' : 'light'
+  const accentShort = accent.replace(/^accent-/, '')
+  return `accent-${themeShort}-${accentShort}`
+}
+
 export class ThemeOptions {
   readonly variant: ThemeVariantType
   constructor (

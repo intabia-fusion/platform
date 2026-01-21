@@ -49,6 +49,25 @@
   }
 
   const getRealTheme = (theme: string): string => (isThemeDark(theme) ? ThemeVariant.Dark : ThemeVariant.Light)
+
+  // Helper: return short theme name ('light'|'dark') derived from full theme class
+  const getThemeShort = (theme: string): string => getRealTheme(theme).replace(/^theme-/, '')
+
+  // Helper: build composite accent class `accent-{themeShort}-{accentShort}`
+  // e.g. theme='theme-light', accent='accent-huly' => 'accent-light-huly'
+  const makeCompositeAccent = (theme: string, accent: string): string => {
+    if (!accent) return ''
+    const themeShort = getThemeShort(theme)
+    const accentShort = accent.replace(/^accent-/, '')
+    return `accent-${themeShort}-${accentShort}`
+  }
+
+  // Helper: centralised root class builder so all setters apply same classlist
+  const buildRootClass = (theme: string, fontsize: string, emoji: string, accent: string) => {
+    const realTheme = getRealTheme(theme)
+    const composite = makeCompositeAccent(theme, accent)
+    return `${realTheme} ${fontsize} ${emoji} ${accent} ${composite}`.trim()
+  }
   const setRootColors = (theme: string, set = true) => {
     currentTheme.set(theme)
     if (set) {
@@ -56,7 +75,7 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(theme)} ${getCurrentFontSize()} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
+      buildRootClass(theme, getCurrentFontSize(), getCurrentEmoji(), getCurrentAccentColor())
     )
     setOptions(getCurrentFontSize(), theme, getCurrentLanguage(), getCurrentEmoji(), getCurrentAccentColor())
   }
@@ -67,7 +86,7 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(getCurrentTheme())} ${fontsize} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
+      buildRootClass(getCurrentTheme(), fontsize, getCurrentEmoji(), getCurrentAccentColor())
     )
     setOptions(fontsize, getCurrentTheme(), getCurrentLanguage(), getCurrentEmoji(), getCurrentAccentColor())
   }
@@ -88,7 +107,7 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(getCurrentTheme())} ${getCurrentFontSize()} ${getCurrentEmoji()} ${getCurrentAccentColor()}`
+      buildRootClass(getCurrentTheme(), getCurrentFontSize(), getCurrentEmoji(), getCurrentAccentColor())
     )
     setOptions(getCurrentFontSize(), getCurrentTheme(), getCurrentLanguage(), emoji, getCurrentAccentColor())
   }
@@ -99,7 +118,7 @@
     }
     document.documentElement.setAttribute(
       'class',
-      `${getRealTheme(getCurrentTheme())} ${getCurrentFontSize()} ${getCurrentEmoji()} ${accent}`
+      buildRootClass(getCurrentTheme(), getCurrentFontSize(), getCurrentEmoji(), accent)
     )
     setOptions(
       getCurrentFontSize(),

@@ -16,6 +16,7 @@
 // Accent color variants (Intabia-inspired)
 .accent-intabia {
   --accent-color-base: #cf13a2;
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #a60f82;
   --accent-color-focused: #a60f82;
   --accent-color-pressed: #7c0b61;
@@ -169,6 +170,7 @@
    We intentionally avoid applying overrides so the base theme defaults are used. */
 .accent-huly {
     --primary-button-color: #fff;
+    --primary-edit-border-color: var(--button-primary-BackgroundColor, #3364e2);
     --primary-button-content-color: rgba(255, 255, 255, .8);
     --primary-button-border: rgba(255, 255, 255, .09);
     --primary-button-outline: #5190EC;
@@ -246,8 +248,23 @@
   --theme-toggle-on-bg-hover: #1A53AF;
 }
 
+/* Theme-aware Huly accent variants.
+   These classes allow choosing theme-specific overrides for tokens that differ
+   between light and dark themes (for example --primary-edit-border-color).
+   A composite class `accent-{theme}-{accent}` (e.g. `accent-light-huly`) will be
+   applied to the root element alongside the regular accent class when both
+   theme and accent are active. */
+.accent-light-huly {
+  --primary-edit-border-color: #2161dc;
+}
+
+.accent-dark-huly {
+  --primary-edit-border-color: #6499ff;
+}
+
 .accent-blue {
   --accent-color-base: #3478f6; /* Blue accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #2a69e6;
   --accent-color-active: #2059d6;
   --accent-color-light: rgba(52, 120, 246, 0.1);
@@ -359,6 +376,7 @@
 
 .accent-purple {
   --accent-color-base: #8a4292; /* Purple accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #7a3282;
   --accent-color-active: #6a2272;
   --accent-color-light: rgba(138, 66, 146, 0.1);
@@ -468,6 +486,7 @@
 
 .accent-pink {
   --accent-color-base: #e45c9c; /* Pink accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #d44b8c;
   --accent-color-active: #c43a7c;
   --accent-color-light: rgba(228, 92, 156, 0.1);
@@ -571,6 +590,7 @@
 
 .accent-red {
   --accent-color-base: #ce4745; /* Red accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #be3735;
   --accent-color-active: #ae2725;
   --accent-color-light: rgba(206, 71, 69, 0.1);
@@ -674,6 +694,7 @@
 
 .accent-orange {
   --accent-color-base: #e8883a; /* Orange accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #d8782a;
   --accent-color-active: #c8681a;
   --accent-color-light: rgba(232, 136, 58, 0.1);
@@ -770,6 +791,7 @@
 
 .accent-yellow {
   --accent-color-base: #f6c94e; /* Yellow accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #e6b93e;
   --accent-color-active: #d6a92e;
   --accent-color-light: rgba(246, 201, 78, 0.1);
@@ -874,6 +896,7 @@
 
 .accent-green {
   --accent-color-base: #78b856; /* Green accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #68a846;
   --accent-color-active: #589836;
   --accent-color-light: rgba(120, 184, 86, 0.1);
@@ -958,6 +981,7 @@
 
 .accent-graphite {
   --accent-color-base: #989898; /* Graphite accent */
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
   --accent-color-hover: #888888;
   --accent-color-active: #787878;
   --accent-color-light: rgba(152, 152, 152, 0.1);

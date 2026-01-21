@@ -175,8 +175,9 @@
     }
     &.selection,
     &.checked.selection {
-      box-shadow: 0 0 1px 1px var(--primary-button-default);
-      animation: anim-border 1s ease-in-out;
+      /* Use accent-aware edit border and inset box-shadow so the animated border uses
+         the same accent token that the theme provides (avoids abrupt color jumps). */
+      box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color, var(--primary-button-default));
 
       &:hover {
         background-color: var(--highlight-hover);
@@ -190,15 +191,8 @@
       cursor: grab;
     }
     &.dragged {
-      background-color: var(--theme-bg-accent-color);
-    }
-  }
-  @keyframes anim-border {
-    from {
-      box-shadow: 0 0 1px 1px var(--primary-edit-border-color);
-    }
-    to {
-      box-shadow: 0 0 1px 1px var(--primary-bg-color);
+      /* Prefer an explicit accent surface when available, otherwise fall back to the theme accent surface. */
+      background-color: var(--accent-bg-color, var(--theme-bg-accent-color));
     }
   }
 </style>

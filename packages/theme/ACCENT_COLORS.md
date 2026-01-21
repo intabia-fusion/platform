@@ -84,6 +84,7 @@ Accent colors automatically apply to:
 - Links (`--global-primary-LinkColor`, `--theme-link-color`)
 - Active states (`--selector-active-BackgroundColor`)
 - Input focus borders (`--theme-editbox-focus-border`, `--global-focus-BorderColor`)
+- Input/edit focus border (`--primary-edit-border-color`) is now provided per-accent in the accent stylesheet (for Huly there are also theme-specific composite overrides `accent-light-huly`/`accent-dark-huly`).
 - Accent text (`--global-accent-TextColor`)
 - Status indicators and tags
 - Primary accent colors (`--global-primary-accent-Color`)
@@ -92,8 +93,22 @@ Accent colors automatically apply to:
 
 Special cases:
 
-- **Huly** — legacy brand color. Selecting Huly does not apply any accent overrides; the theme falls back to the pre-accent default tokens (no variables are intentionally overridden).
+- **Huly** — legacy brand color. Selecting Huly does not apply most accent overrides; however, some tokens historically differ between light and dark themes (for example `--primary-edit-border-color`). To support these cases the theme system now supports theme-aware composite accent classes and a helper function (see below).
 - **Intabia** — special accent. In addition to standard accent variables, Intabia sets additional theme tokens for core elements (buttons, state colors, etc.) to provide a richer branded appearance.
+
+Theme-aware composite classes:
+
+- Format: `accent-{themeShort}-{accentShort}` where `{themeShort}` is `light` or `dark` and `{accentShort}` is the accent id without the `accent-` prefix (for example `accent-light-huly` or `accent-dark-huly`).
+- Usage: The Theme provider applies the composite class to the document root automatically for the currently active theme and accent. This allows CSS to target theme-and-accent-specific tokens (for example `.accent-dark-huly { --primary-edit-border-color: #6499ff; }`).
+- Helper: You can build the composite class programmatically using the helper exported by the theme package:
+
+```typescript
+import { getCompositeAccentClass } from '@hcengineering/theme'
+
+const cls = getCompositeAccentClass('theme-light', 'accent-huly') // 'accent-light-huly'
+```
+
+- Previewing alternate themes: For UI previews that need to show an accent in a different theme than the current one, compute the composite class and add it to the preview container so the preview reflects the theme-specific appearance.
 
 ## Available Types
 

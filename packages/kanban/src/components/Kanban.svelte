@@ -461,15 +461,6 @@
     min-width: 0;
   }
 
-  @keyframes anim-border {
-    from {
-      box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color);
-    }
-    to {
-      box-shadow: inset 0 0 1px 1px var(--primary-bg-color);
-    }
-  }
-
   .panel-container {
     display: flex;
     flex-direction: column;
