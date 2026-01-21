@@ -154,6 +154,14 @@
   --theme-button-attention-hover-shadow: 0 8px 24px rgba(107, 58, 211, 0.4);
   --theme-button-attention-active-shadow: 0 4px 12px rgba(107, 58, 211, 0.6);
   --theme-button-attention-focus-shadow: 0 0 0 3px rgba(107, 58, 211, 0.3);
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #cf13a2);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #a60f82);
 }
 
 
@@ -229,6 +237,13 @@
   --selector-IconColor: #ffffff;
   --selector-disabled-IconColor: #8b97ad;
 
+  /* Toggle switches for Huly accent (legacy Lumia colors) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: #205dc2;
+  --theme-toggle-on-bg-hover: #1A53AF;
 }
 
 .accent-blue {
@@ -332,6 +347,14 @@
   --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #2a69e6)));
   --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #2059d6)));
   --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #2a69e6));
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #3478f6);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #2a69e6);
 }
 
 .accent-purple {
@@ -433,6 +456,14 @@
   --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #7a3282)));
   --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #6a2272)));
   --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #7a3282));
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #8a4292);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #7a3282);
 }
 
 .accent-pink {
@@ -528,6 +559,14 @@
   --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #d44b8c)));
   --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #c43a7c)));
   --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #d44b8c));
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #e45c9c);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #d44b8c);
 }
 
 .accent-red {
@@ -623,6 +662,14 @@
   --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #be3735)));
   --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #ae2725)));
   --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #be3735));
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #ce4745);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #be3735);
 }
 
 .accent-orange {
@@ -707,10 +754,18 @@
   --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
 
   /* Explicit primary-button tokens (mapped to button-primary or accent values) */
-  --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #e8883a)));
-  --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #d8782a)));
-  --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #c8681a)));
-  --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #d8782a));
+  --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #989898)));
+  --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #888888)));
+  --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #787878)));
+  --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #888888));
+
+  /* Toggle switches for this accent (dark switch on light background) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #000;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #989898);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #888888);
 }
 
 .accent-yellow {
@@ -891,6 +946,14 @@
   --button-secondary-IconColor: #FFFFFF;
   --button-tertiary-LabelColor: var(--accent-color-primary, #a8d886);
   --button-tertiary-IconColor: var(--accent-color-primary, #a8d886);
+
+  /* Toggle switches for this accent (dark switch on light background) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #000;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #78b856);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #68a846);
 }
 
 .accent-graphite {
@@ -972,8 +1035,25 @@
   --button-tertiary-IconColor: var(--accent-color-primary, #b8b8b8);
 
   /* Explicit primary-button tokens (mapped to button-primary or accent values) */
-  --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #989898)));
-  --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #888888)));
-  --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #787878)));
-  --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #888888));
+  --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #f6c94e)));
+  --primary-button-hovered: var(--button-primary-hover-BackgroundColor, var(--accent-color-primary-hover, var(--accent-color-hover, #e6b93e)));
+  --primary-button-pressed: var(--button-primary-active-BackgroundColor, var(--accent-color-primary-active, var(--accent-color-active, #d6a92e)));
+  --primary-button-focused: var(--accent-color-primary-hover, var(--accent-color-hover, #e6b93e));
+
+  --button-primary-LabelColor: #000000;
+  --button-primary-IconColor: #000000;
+  --primary-button-color: #000000;
+  --primary-button-content-color: rgba(0, 0, 0, 0.8);
+  --button-secondary-LabelColor: #FFFFFF;
+  --button-secondary-IconColor: #FFFFFF;
+  --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
+  --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+
+  /* Toggle switches for this accent (dark switch on light background) */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #000;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
 }

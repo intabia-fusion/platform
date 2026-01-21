@@ -41,6 +41,8 @@
   import ButtonIcon from '../ButtonIcon.svelte'
   import AccordionItem from '../AccordionItem.svelte'
   import ButtonGroup from '../ButtonGroup.svelte'
+  import Toggle from '../Toggle.svelte'
+  import MiniToggle from '../MiniToggle.svelte'
 
   interface AccentOption {
     id: string
@@ -263,6 +265,12 @@
         <IconCheck size="medium" fill={base} />
       </div>
       <ModernToggle />
+      <Toggle on={true} />
+      <Toggle />
+      <div class="mini-toggle-wrapper">
+        <MiniToggle on={true} label={getEmbeddedLabel('On')} />
+        <MiniToggle label={getEmbeddedLabel('Off')} />
+      </div>
     </div>
 
     <div class="row extras">
@@ -387,6 +395,13 @@
       .checks {
         display: flex;
         gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .mini-toggle-wrapper {
+        display: flex;
+        gap: 1rem;
         align-items: center;
       }
 
