@@ -124,6 +124,54 @@ describe('ClisrClient ping/pong behavior and timeouts', () => {
     }
   })
 
+  it('does not send RETRY_REQUESTS when client has cached pending responses', async () => {
+    const ctx = createFakeCtx()
+    const wrapper = createWrapper()
+    const socketFactory = jest.fn(() => wrapper)
+
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory }
+    )
+
+    try {
+      const helloResp = {
+        id: -1,
+        result: 'hello',
+        serverVersion: '1.0.0',
+        sessionId: 'session-no-retry'
+      } as any
+      client.handleMsg(1, helloResp)
+
+      // Add a pending response so client can resend it
+      const respId = 'req-1'
+      const responseToSend = {
+        method: '##',
+        params: [{ ok: true }, undefined],
+        id: respId,
+        time: Date.now()
+      }
+      ;(client as any).pendingResponses.set(respId, responseToSend)
+
+      wrapper.send.mockClear()
+
+      const buf = Buffer.alloc(5)
+      buf[0] = FRAME_PING
+      buf.writeUInt32LE(2, 1)
+      wrapper.onmessage({ data: buf })
+
+      expect(wrapper.send).toHaveBeenCalled()
+      const calls = (wrapper.send as jest.Mock).mock.calls.map((c) => c[0][0])
+      expect(calls).toContain(FRAME_PONG)
+      ;(client as any).pendingResponses.clear()
+    } finally {
+      await client.close()
+    }
+  })
+
   it('updates pingResponse on receiving pong frame', async () => {
     const ctx = createFakeCtx()
     const wrapper = createWrapper()

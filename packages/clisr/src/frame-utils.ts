@@ -15,6 +15,7 @@
 
 import { type MeasureContext } from '@hcengineering/measurements'
 import { type Response, type Request, RPCHandler } from '@hcengineering/rpc'
+import { Analytics } from '@hcengineering/analytics'
 import { FRAME_MSGPACK, FRAME_MSGPACK_SNAPPY, FRAME_PING, FRAME_PONG, FRAME_HELLO, FRAME_HELLO_RESP } from './types'
 
 // Shared RPC handler for serialization/deserialization
@@ -39,13 +40,37 @@ export async function sendFrame (
     const out = new Uint8Array(1 + compressed.length)
     out[0] = FRAME_MSGPACK_SNAPPY // Use msgpack-snappy frame for compressed messages
     out.set(new Uint8Array(compressed), 1)
-    sendFn(out)
+
+    // The underlying send function may throw synchronously (for example,
+    // when the socket isn't connected yet). Guard against that so a
+    // synchronous throw here doesn't bubble out of the caller (which
+    // previously caused "Send before connected" to abort processing).
+    try {
+      sendFn(out)
+    } catch (err: any) {
+      ctx.error('send error', { err })
+      const msg = `${err?.message ?? ''}`
+      // Ignore expected "not open" / "send before connected" noise for analytics,
+      // but still log via ctx.error so it's visible in metrics.
+      if (!msg.includes('WebSocket is not open') && !msg.includes('Send before connected')) {
+        Analytics.handleError(err)
+      }
+    }
   } else {
     // Send without compression for smaller messages
     const out = new Uint8Array(1 + dta.byteLength)
     out[0] = FRAME_MSGPACK // Use msgpack frame for smaller messages
     out.set(new Uint8Array(dta), 1)
-    sendFn(out)
+
+    try {
+      sendFn(out)
+    } catch (err: any) {
+      ctx.error('send error', { err })
+      const msg = `${err?.message ?? ''}`
+      if (!msg.includes('WebSocket is not open') && !msg.includes('Send before connected')) {
+        Analytics.handleError(err)
+      }
+    }
   }
 }
 
@@ -63,7 +88,16 @@ export function sendHelloFrame (
   const out = new Uint8Array(1 + jsonBytes.length)
   out[0] = frameType
   out.set(jsonBytes, 1)
-  sendFn(out)
+
+  // Guard against synchronous throws from the transport send function.
+  try {
+    sendFn(out)
+  } catch (err: any) {
+    const msg = `${err?.message ?? ''}`
+    if (!msg.includes('WebSocket is not open') && !msg.includes('Send before connected')) {
+      Analytics.handleError(err)
+    }
+  }
 }
 
 /**

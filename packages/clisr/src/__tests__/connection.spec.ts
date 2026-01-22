@@ -3,14 +3,116 @@
 // Comments are in English as per repository conventions.
 
 import { ClisrClient } from '../client'
-import { RequestPromise, ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
+import {
+  RequestPromise,
+  ClientSocketReadyState,
+  FRAME_PING,
+  FRAME_PONG,
+  FRAME_OP_STATUS,
+  FRAME_OP_STATUS_RESP
+} from '../types'
 import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 
 describe('ClisrClient.handleMsg behavior', () => {
   function createFakeCtx (): MeasureContext {
-    // Use a real production-like context to keep behaviour close to runtime.
+    // Use a real MeasureMetricsContext to keep behavior close to production.
     return new MeasureMetricsContext('clisr-test', {})
   }
+
+  it('responds to FRAME_OP_STATUS with executing=true when processing', async () => {
+    const ctx = createFakeCtx()
+    const wrapper = {
+      send: jest.fn(),
+      close: jest.fn(),
+      readyState: ClientSocketReadyState.OPEN,
+      onopen: null as any,
+      onmessage: null as any,
+      onclose: null as any,
+      onerror: null as any
+    }
+    const socketFactory = jest.fn(() => wrapper)
+
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory }
+    )
+
+    // perform initial hello/connected state
+    const helloResp = { id: -1, result: 'hello', serverVersion: '1.0.0', sessionId: 'session-op-status' } as any
+    await client.handleMsg(1, helloResp)
+
+    wrapper.send.mockClear()
+
+    // Mark an operation as currently processing on the client
+    const opId = '#op-1'
+    ;(client as any).processingRequests.add(opId)
+
+    // Build a FRAME_OP_STATUS request payload
+    const payload = JSON.stringify({ id: opId })
+    const buf = Buffer.alloc(1 + Buffer.byteLength(payload))
+    buf[0] = FRAME_OP_STATUS
+    buf.write(payload, 1, 'utf8')
+
+    // Simulate receiving op-status request frame
+    wrapper.onmessage({ data: buf })
+
+    // Client should send back an op-status response indicating it's executing
+    expect(wrapper.send).toHaveBeenCalled()
+    const out = wrapper.send.mock.calls[0][0]
+    expect(out[0]).toBe(FRAME_OP_STATUS_RESP)
+    const resp = JSON.parse(Buffer.from(out.slice(1)).toString('utf8'))
+    expect(resp.id).toBe(opId)
+    expect(resp.executing).toBe(true)
+  })
+
+  it('responds to FRAME_OP_STATUS with executing=false when not processing', async () => {
+    const ctx = createFakeCtx()
+    const wrapper = {
+      send: jest.fn(),
+      close: jest.fn(),
+      readyState: ClientSocketReadyState.OPEN,
+      onopen: null as any,
+      onmessage: null as any,
+      onclose: null as any,
+      onerror: null as any
+    }
+    const socketFactory = jest.fn(() => wrapper)
+
+    const client = new ClisrClient(
+      ctx,
+      'ws://localhost',
+      () => {},
+      () => 'token',
+      { socketFactory }
+    )
+
+    // perform initial hello/connected state
+    const helloResp = { id: -1, result: 'hello', serverVersion: '1.0.0', sessionId: 'session-op-status-2' } as any
+    await client.handleMsg(1, helloResp)
+
+    wrapper.send.mockClear()
+
+    // The client is NOT processing this operation id
+    const opId = '#op-2'
+
+    const payload = JSON.stringify({ id: opId })
+    const buf = Buffer.alloc(1 + Buffer.byteLength(payload))
+    buf[0] = FRAME_OP_STATUS
+    buf.write(payload, 1, 'utf8')
+
+    wrapper.onmessage({ data: buf })
+
+    // Client should send an op-status response indicating it's not executing
+    expect(wrapper.send).toHaveBeenCalled()
+    const out = wrapper.send.mock.calls[0][0]
+    expect(out[0]).toBe(FRAME_OP_STATUS_RESP)
+    const resp = JSON.parse(Buffer.from(out.slice(1)).toString('utf8'))
+    expect(resp.id).toBe(opId)
+    expect(resp.executing).toBe(false)
+  })
 
   function createClient (opts?: any): ClisrClient {
     // Provide a minimal socketFactory that returns a harmless socket object.
@@ -49,7 +151,11 @@ describe('ClisrClient.handleMsg behavior', () => {
     // request should be removed from map after processing
     expect((client as any).requests.has('_0')).toBe(false)
 
-    await client.close()
+    try {
+      await client.close()
+    } catch (_err) {
+      /* ignore */
+    }
   })
 
   it('delegates response to handleResult when provided and resolves', async () => {
@@ -68,7 +174,11 @@ describe('ClisrClient.handleMsg behavior', () => {
     expect(handleResult).toHaveBeenCalledWith({ data: 42 })
     expect(res).toEqual({ data: 42 })
 
-    await client.close()
+    try {
+      await client.close()
+    } catch (_err) {
+      /* ignore */
+    }
   })
 
   it('reassembles chunked responses out of order and resolves when final chunk arrives', async () => {
@@ -84,7 +194,94 @@ describe('ClisrClient.handleMsg behavior', () => {
     const res = await rp.promise
     expect(res).toEqual([1, 2, 3])
 
+    try {
+      await client.close()
+    } catch (_err) {
+      /* ignore */
+    }
+  })
+
+  it('returns undefined for duplicate once requests', async () => {
+    const client = createClient()
+    const rp = new RequestPromise('dupMethod', ['a'])
+    // Prevent unhandled rejection when client.close rejects pending requests
+    void rp.promise.catch(() => {})
+    ;(client as any).requests.set('_exist', rp)
+
+    const res = await client.request('dupMethod', ['a'], true)
+    expect(res).toBeUndefined()
+
+    try {
+      await client.close()
+    } catch (_err) {
+      /* ignore */
+    }
+  })
+
+  it('rejects requests when client is closed', async () => {
+    const client = createClient()
     await client.close()
+
+    await expect(client.request('x', [])).rejects.toThrow('connection is closed')
+  })
+
+  it('binaryRequest cleans up request and rejects when socket send throws', async () => {
+    const client = createClient()
+    ;(client as any).helloReceived = true
+    ;(client as any).websocket = {
+      send: jest.fn(() => {
+        throw new Error('send fail')
+      }),
+      close: jest.fn(),
+      readyState: ClientSocketReadyState.OPEN
+    }
+
+    try {
+      await expect(client.binaryRequest('bin', new Uint8Array([1, 2, 3]))).rejects.toThrow('send fail')
+    } finally {
+      const keys = Array.from((client as any).requests.keys())
+      const left = keys.filter((k) => String(k).startsWith('_b'))
+      expect(left.length).toBe(0)
+      try {
+        await client.close()
+      } catch (_err) {
+        /* ignore */
+      }
+    }
+  })
+
+  it('reconnect schedules retry and calls sendData', async () => {
+    const client = createClient()
+    const id = '_reconnect0'
+    const rp = new RequestPromise('rmethod', [])
+    rp.sendData = jest.fn()
+    ;(client as any).requests.set(id, rp)
+    // prevent unhandled rejections when client.close() rejects pending requests
+    void rp.promise.catch(() => {})
+
+    // Simulate reconnect scheduling like sendRequest does (use real timers)
+    rp.reconnect = () => {
+      const reconnectOp = async (): Promise<void> => {
+        if ((client as any).requests.has(id) === true) {
+          rp.sendData()
+        }
+      }
+      setTimeout(() => {
+        void reconnectOp()
+      }, 50)
+    }
+
+    rp.reconnect()
+    // Wait for the reconnectOp to run using real timers
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    expect(rp.sendData).toHaveBeenCalled()
+
+    // cleanup safely
+    try {
+      await client.close()
+    } catch (_err) {
+      /* ignore errors on close */
+    }
   })
 
   it('invokes operationHandler for server->client requests and sends back an operation response', async () => {
@@ -325,6 +522,8 @@ describe('ClisrClient.handleMsg behavior', () => {
     const compressSpy = jest.spyOn(client as any, 'compress').mockResolvedValue(Buffer.from('x'))
 
     const p = (client as any).sendRequest({ method: 'm-re', params: [], allowReconnect: true, retry: async () => true })
+    // avoid unhandled rejection if promise is later rejected during client.close()
+    void p.catch(() => {})
     await new Promise((resolve) => setImmediate(resolve))
     const id = Array.from((client as any).requests.keys())[0]
     const rp = (client as any).requests.get(id)
@@ -396,7 +595,8 @@ describe('ClisrClient.handleMsg behavior', () => {
       allowReconnect: false,
       overrideId: 555
     })
-    await new Promise((resolve) => setImmediate(resolve))
+    // avoid unhandled rejection if promise is later rejected during client.close
+    void p.catch(() => {})
     const id = Array.from((client as any).requests.keys())[0]
     const rp = (client as any).requests.get(id)
     expect(rp.reconnect).toBeUndefined()

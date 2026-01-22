@@ -38,6 +38,8 @@ import {
   FRAME_MSGPACK_SNAPPY,
   FRAME_BINARY,
   FRAME_BINARY_RESP,
+  FRAME_OP_STATUS,
+  FRAME_OP_STATUS_RESP,
   RequestPromise,
   type Session,
   type HelloRequest,
@@ -86,6 +88,13 @@ const backpressureSize = 100 * 1024
 const ReconnectTimeout = 10 * 1000 * 1000 // 10 seconds
 const OperationTimeout = 2 * 1000 * 1000 // 10 seconds
 const HangTimeout = 50 * 1000 * 1000 // 50 seconds
+
+// Operation status check threshold: if a server->client operation has been executing
+// longer than this, server will query the client whether it is still executing the operation.
+const OpStatusTimeout = 5 * 1000 // 5 seconds
+
+// Minimum interval between repeated status checks for the same request (ms)
+const OpStatusCheckInterval = 5 * 1000 // 5 seconds
 
 export type ConnectionEventType = 'connected' | 'reconnect' | 'disconnect' | 'timeout'
 
@@ -140,10 +149,11 @@ export class ClisrServer {
         await this.handleSessionTimeout(sid, session)
       }
     }
-    // Check and log hang requests
-    for (const r of this.requests.values()) {
+    // Check and log hang requests and query long-running operations' status
+    for (const [reqId, r] of this.requests.entries()) {
+      // Handle very long running operations (hang): send a ping with pending count
       if (r.session !== undefined && now - r.startTime > HangTimeout && now - r.session.lastPing > OperationTimeout) {
-        // Operation is hang, send ping, maybe socket is broken.
+        // Operation is hang, send simple ping (no payload) to check liveness of the socket.
         r.session.lastPing = now
         try {
           void r.session.socket.sendRaw(this.ctx, Buffer.from([FRAME_PING]))
@@ -151,6 +161,26 @@ export class ClisrServer {
           this.ctx.error('failed to send ping frame', { err })
         }
         this.ctx.warn('found hang request', { request: r.method, data: r.session.socket.data })
+      }
+
+      // For moderately long operations (> OpStatusTimeout), ask client whether it has the operation.
+      // We send a dedicated FRAME_OP_STATUS frame carrying the operation id and expect a FRAME_OP_STATUS_RESP
+      // from the client with { id, executing: boolean }.
+      if (r.session !== undefined && now - r.startTime > OpStatusTimeout) {
+        const lastCheck: number | undefined = (r as any).lastStatusCheck
+        if (lastCheck === undefined || now - lastCheck > OpStatusCheckInterval) {
+          ;(r as any).lastStatusCheck = now
+          try {
+            const payloadJson = JSON.stringify({ id: reqId })
+            const payloadBytes = Buffer.from(payloadJson, 'utf8')
+            const out = Buffer.alloc(1 + payloadBytes.length)
+            out[0] = FRAME_OP_STATUS
+            out.set(payloadBytes, 1)
+            void r.session.socket.sendRaw(this.ctx, out)
+          } catch (err: any) {
+            this.ctx.error('failed to send op status request', { err, id: reqId })
+          }
+        }
       }
     }
   }
@@ -511,6 +541,37 @@ export class ClisrServer {
               } catch (err: any) {
                 this.ctx.error('failed to send pong', { err })
               }
+            }
+            return
+          }
+
+          if (ft === FRAME_OP_STATUS_RESP) {
+            // Client reports operation execution status. Payload is JSON: { id: string, executing: boolean }
+            try {
+              const payload = buff.slice(1)
+              const obj = JSON.parse(payload.toString('utf8'))
+              const rid = obj?.id
+              const executing = obj?.executing
+              if (typeof rid === 'string') {
+                if (executing === false) {
+                  const rr = this.requests.get(rid)
+                  if (rr !== undefined) {
+                    try {
+                      rr.sendData()
+                      // bump startTime so we don't immediately re-check
+                      rr.startTime = Date.now()
+                    } catch (err: any) {
+                      this.ctx.error('failed to resend request after op status response', { err, id: rid })
+                    }
+                  } else {
+                    this.ctx.error('unknown op status response id', { id: rid })
+                  }
+                }
+              } else {
+                this.ctx.error('invalid op status response payload', { payload: obj })
+              }
+            } catch (err: any) {
+              this.ctx.error('failed to parse op status response', { err })
             }
             return
           }
@@ -901,7 +962,15 @@ export function createWebsocketClientSocket (
         return
       }
       const buf = Buffer.from([FRAME_PONG])
-      ws.send(buf, { binary: true })
+      try {
+        ws.send(buf, { binary: true })
+      } catch (err: any) {
+        const msg = `${err?.message ?? ''}`
+        // Ignore common benign errors (not open / send before connected), but report others
+        if (!msg.includes('WebSocket is not open') && !msg.includes('Send before connected')) {
+          Analytics.handleError(err)
+        }
+      }
     },
     // Send raw Uint8/Buffer frame (first byte is frame type)
     sendRaw: async (ctx: MeasureContext, buf: Uint8Array | Buffer): Promise<void> => {
@@ -916,14 +985,22 @@ export function createWebsocketClientSocket (
         const handleErr = (err?: Error): void => {
           ctx.measure('msg-send-delta', performance.now() - st)
           if (err != null) {
-            if (!`${err.message}`.includes('WebSocket is not open')) {
-              ctx.error('send error', { err })
+            // Always record the error in the context so metrics/alerts capture the event
+            ctx.error('send error', { err })
+            const msg = `${err?.message ?? ''}`
+            // Only report unexpected errors to analytics; ignore benign transport noise
+            if (!msg.includes('WebSocket is not open') && !msg.includes('Send before connected')) {
               Analytics.handleError(err)
             }
           }
           resolve()
         }
-        ws.send(Buffer.from(buf as Buffer), { binary: true }, handleErr)
+        try {
+          ws.send(Buffer.from(buf as Buffer), { binary: true }, handleErr)
+        } catch (err: any) {
+          // If ws.send throws synchronously, forward to the same handler so the promise resolves
+          handleErr(err)
+        }
       })
     },
     // Send an RPC message, compressing only if larger than 1024 bytes

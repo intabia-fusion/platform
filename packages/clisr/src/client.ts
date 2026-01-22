@@ -21,6 +21,8 @@ import {
   ClientSocketReadyState,
   FRAME_PING,
   FRAME_PONG,
+  FRAME_OP_STATUS,
+  FRAME_OP_STATUS_RESP,
   FRAME_HELLO,
   FRAME_HELLO_RESP,
   FRAME_MSGPACK,
@@ -87,6 +89,7 @@ export class ClisrClient {
   private websocket: ClientSocket | null = null
   private readonly requests = new Map<ReqId, RequestPromise>()
   private readonly pendingResponses = new Map<ReqId, { method: string, params: any[], meta: any }>()
+  private readonly processingRequests = new Set<ReqId>()
   private lastId = 0
   private interval: any
   private dialTimer: any
@@ -470,6 +473,9 @@ export class ClisrClient {
       const { method, params, meta } = resp.result ?? {}
       const id = resp.id // Capture id in a variable that TypeScript knows is defined
 
+      // Track that we are processing this operation so status checks can detect it.
+      this.processingRequests.add(id)
+
       // Call the handler function and handle the result or error
       try {
         // Call the handler and await the result (handler should return a value or throw an error)
@@ -500,6 +506,9 @@ export class ClisrClient {
         // Send error back to the server in [response, error] format
         const message = { message: error.message ?? 'Unknown error', stack: error.stack }
         await this.sendError(resp as any, message, {})
+      } finally {
+        // Operation finished processing (we either sent a response or an error)
+        this.processingRequests.delete(id)
       }
     } else {
       // Send error back to the server in [response, error] format
@@ -637,6 +646,30 @@ export class ClisrClient {
         }
         if (ft === FRAME_PONG) {
           this.pingResponse = Date.now()
+          return
+        }
+        if (ft === FRAME_OP_STATUS) {
+          // Operation status check from server: payload is JSON { id: string }
+          const payload = u8.subarray(1)
+          try {
+            const text = new TextDecoder().decode(payload)
+            const obj = JSON.parse(text)
+            const opId = obj?.id
+            const executing =
+              (this.processingRequests?.has(opId) ?? false) || (this.pendingResponses?.has(opId) ?? false)
+            const respObj = { id: opId, executing }
+            const respBytes = new TextEncoder().encode(JSON.stringify(respObj))
+            const out = new Uint8Array(1 + respBytes.length)
+            out[0] = FRAME_OP_STATUS_RESP
+            out.set(respBytes, 1)
+            try {
+              this.websocket?.send(out)
+            } catch (err: any) {
+              this.ctx.error('failed to send op status response', { err })
+            }
+          } catch (err: any) {
+            this.ctx.error('failed to parse op status request', { err })
+          }
           return
         }
         if (ft === FRAME_BINARY_RESP) {

@@ -21,6 +21,7 @@ import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measu
 import { RPCHandler, type Request, type Response } from '@hcengineering/rpc'
 import { sendFrame, sendHelloFrame, handleFrame } from '../frame-utils'
 import { FRAME_MSGPACK, FRAME_MSGPACK_SNAPPY, FRAME_PING, FRAME_PONG, FRAME_HELLO, FRAME_HELLO_RESP } from '../types'
+import { Analytics } from '@hcengineering/analytics'
 
 function createFakeCtx (): MeasureContext {
   return new MeasureMetricsContext('frame-utils-test', {})
@@ -80,6 +81,36 @@ describe('frame-utils', () => {
 
       expect(sentData.length).toBe(1)
       expect(sentData[0][0]).toBe(FRAME_MSGPACK)
+    })
+
+    it('catches synchronous sendFn errors for small messages and logs without throwing (Send before connected)', async () => {
+      const ctx = createFakeCtx()
+      const errorSpy = jest.spyOn(ctx, 'error')
+      const analyticsSpy = jest.spyOn(Analytics, 'handleError').mockImplementation(() => {})
+      const sendFn = (data: Uint8Array): void => {
+        throw new Error('Send before connected exception')
+      }
+      const compressFn = jest.fn()
+      const msg: Response<any> = { id: 2, result: { test: 'data' }, time: Date.now() }
+
+      await expect(sendFrame(ctx, sendFn, msg, compressFn, true)).resolves.toBeUndefined()
+      expect(errorSpy).toHaveBeenCalled()
+      expect(analyticsSpy).not.toHaveBeenCalled()
+    })
+
+    it('catches synchronous sendFn errors for small messages and reports unexpected errors', async () => {
+      const ctx = createFakeCtx()
+      const errorSpy = jest.spyOn(ctx, 'error')
+      const analyticsSpy = jest.spyOn(Analytics, 'handleError').mockImplementation(() => {})
+      const sendFn = (data: Uint8Array): void => {
+        throw new Error('unexpected send failure')
+      }
+      const compressFn = jest.fn()
+      const msg: Response<any> = { id: 3, result: { test: 'data' }, time: Date.now() }
+
+      await expect(sendFrame(ctx, sendFn, msg, compressFn, true)).resolves.toBeUndefined()
+      expect(errorSpy).toHaveBeenCalled()
+      expect(analyticsSpy).toHaveBeenCalled()
     })
   })
 

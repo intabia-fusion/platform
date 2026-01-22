@@ -84,7 +84,9 @@ export enum ClientConnectEvent {
   Maintenance // In case workspace are in maintenance mode
 }
 
-// Frame type codes for wire protocol
+/**
+ * Frame type codes for wire protocol
+ */
 export const FRAME_PING = 0
 export const FRAME_PONG = 1
 export const FRAME_HELLO = 2
@@ -93,8 +95,10 @@ export const FRAME_MSGPACK = 4 // Serialized msgpack data (uncompressed)
 export const FRAME_MSGPACK_SNAPPY = 5 // Serialized msgpack data compressed with snappy
 export const FRAME_BINARY = 6 // Binary request: method (string) + binary payload
 export const FRAME_BINARY_RESP = 7 // Binary response: id + binary payload
+export const FRAME_OP_STATUS = 8 // Server -> Client: operation status check (payload: { id: string })
 
 export const callbackMethod = '##'
+export const FRAME_OP_STATUS_RESP = 9 // Client -> Server: operation status response (payload: { id: string, executing: boolean })
 
 /**
  * Binary frame format:
