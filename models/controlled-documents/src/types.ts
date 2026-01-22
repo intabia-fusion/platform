@@ -287,7 +287,15 @@ export class TDocument extends TDoc implements Document {
 }
 
 @Model(documents.class.HierarchyDocument, documents.class.Document)
-@UX(documents.string.Document, documents.icon.Document)
+@UX(
+  documents.string.Document,
+  documents.icon.Document,
+  undefined,
+  undefined,
+  undefined,
+  documents.string.Documents,
+  'title'
+)
 export class THierarchyDocument extends TDocument implements HierarchyDocument {
   @Prop(TypeRef(documents.class.DocumentMeta), core.string.AttachedTo)
   @Index(IndexKind.Indexed)

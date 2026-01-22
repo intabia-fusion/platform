@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 
-import { type DocUpdateMessageViewlet } from '@hcengineering/activity'
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import type { Client, Doc, Ref, Status } from '@hcengineering/core'
 import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
 import type { IntlString, Status as OperationStatus, Resource } from '@hcengineering/platform'
@@ -93,11 +91,7 @@ export default mergeIds(recruitId, recruit, {
     ApplicationNotificationGroup: '' as Ref<NotificationGroup>,
     AssigneeNotification: '' as Ref<NotificationType>,
     ApplicationCreateNotification: '' as Ref<NotificationType>,
-    ReviewCreateNotification: '' as Ref<NotificationType>,
-    ApplicantUpdatedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
-    ApplicantChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    VacancyChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    ReviewChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    ReviewCreateNotification: '' as Ref<NotificationType>
   },
   component: {
     CreateApplication: '' as AnyComponent,

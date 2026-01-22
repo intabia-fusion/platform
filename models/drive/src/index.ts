@@ -86,7 +86,7 @@ export class TDefaultDriveTypeData extends TDrive implements RolesAssignment {
 }
 
 @Model(drive.class.Resource, core.class.Doc, DOMAIN_DRIVE)
-@UX(drive.string.Resource)
+@UX(drive.string.Resource, undefined, undefined, undefined, undefined, undefined, 'title')
 export class TResource extends TDoc implements Resource {
   declare space: Ref<Drive>
 

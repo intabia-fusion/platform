@@ -102,6 +102,8 @@ export interface DocUpdateMessage extends ActivityMessage {
   action: DocUpdateAction
   updateCollection?: string
   attributeUpdates?: DocAttributeUpdates
+  title?: string
+  attributes?: Record<string, any>
 }
 
 export interface ActivityReference extends ActivityMessage {
@@ -157,7 +159,6 @@ export interface ActivityMessageViewlet extends Doc {
  */
 export interface DocUpdateMessageViewlet extends ActivityMessageViewlet {
   action: DocUpdateAction
-  valueAttr?: string
 
   label?: IntlString
 

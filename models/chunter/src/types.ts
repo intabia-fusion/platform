@@ -29,28 +29,17 @@ import core, { TClass, TDoc, TSpace } from '@hcengineering/model-core'
 import type {
   Channel,
   ChatMessage,
-  ChatMessageViewlet,
   ChatSyncInfo,
   ChunterSpace,
   DirectMessage,
   ObjectChatPanel,
   ThreadMessage
 } from '@hcengineering/chunter'
-import {
-  type Class,
-  type Doc,
-  type Domain,
-  DOMAIN_MODEL,
-  IndexKind,
-  type Ref,
-  type Space,
-  type Timestamp
-} from '@hcengineering/core'
+import { type Class, type Doc, type Domain, IndexKind, type Ref, type Space, type Timestamp } from '@hcengineering/core'
 import contact, { type ChannelProvider as SocialChannelProvider, type Person } from '@hcengineering/contact'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { TActivityMessage } from '@hcengineering/model-activity'
 import attachment from '@hcengineering/model-attachment'
-import type { IntlString } from '@hcengineering/platform'
 import type { DocNotifyContext } from '@hcengineering/notification'
 
 import chunter from './plugin'
@@ -118,20 +107,6 @@ export class TThreadMessage extends TChatMessage implements ThreadMessage {
   @Prop(TypeRef(core.class.Class), core.string.Class)
   @Index(IndexKind.Indexed)
     objectClass!: Ref<Class<Doc>>
-}
-
-@Model(chunter.class.ChatMessageViewlet, core.class.Doc, DOMAIN_MODEL)
-export class TChatMessageViewlet extends TDoc implements ChatMessageViewlet {
-  @Prop(TypeRef(core.class.Doc), core.string.Class)
-  @Index(IndexKind.Indexed)
-    objectClass!: Ref<Class<Doc>>
-
-  @Prop(TypeRef(core.class.Doc), core.string.Class)
-  @Index(IndexKind.Indexed)
-    messageClass!: Ref<Class<Doc>>
-
-  label?: IntlString
-  onlyWithParent?: boolean
 }
 
 @Mixin(chunter.mixin.ObjectChatPanel, core.class.Class)

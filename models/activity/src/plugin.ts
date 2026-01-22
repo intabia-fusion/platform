@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import {
-  activityId,
-  type ActivityMessage,
-  type ActivityMessagesFilter,
-  type DocUpdateMessageViewlet
-} from '@hcengineering/activity'
+import { activityId, type ActivityMessage, type ActivityMessagesFilter } from '@hcengineering/activity'
 import activity from '@hcengineering/activity-resources/src/plugin'
 import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
 import { type Doc, type Ref } from '@hcengineering/core'
@@ -47,7 +42,6 @@ export default mergeIds(activityId, activity, {
     ReferencesFilter: '' as Resource<(message: ActivityMessage, _class?: Ref<Doc>) => boolean>
   },
   ids: {
-    ReactionAddedActivityViewlet: '' as Ref<DocUpdateMessageViewlet>,
     ActivityNotificationGroup: '' as Ref<NotificationGroup>,
     AddReactionAction: '' as Ref<Action>,
     SaveForLaterAction: '' as Ref<Action>,

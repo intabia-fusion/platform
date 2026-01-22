@@ -914,17 +914,6 @@ export function createModel (builder: Builder): void {
     searchDisabled: true
   })
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: github.class.GithubPullRequest,
-      label: chunter.string.LeftComment
-    },
-    github.ids.GitHubPullRequestChatMessageViewlet
-  )
-
   builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
     ofClass: github.class.GithubPullRequest,
     components: {
@@ -1017,23 +1006,6 @@ export function createModel (builder: Builder): void {
       ]
     }
   )
-
-  builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {
-    objectClass: github.class.GithubPullRequest,
-    action: 'update',
-    icon: github.icon.PullRequest,
-    config: {
-      status: {
-        iconPresenter: tracker.component.IssueStatusIcon
-      },
-      priority: {
-        iconPresenter: tracker.component.PriorityIconPresenter
-      },
-      estimation: {
-        icon: tracker.icon.Estimation
-      }
-    }
-  })
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_GITHUB,

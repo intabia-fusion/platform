@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import type { Client, Doc, Ref } from '@hcengineering/core'
 import { inventoryId } from '@hcengineering/inventory'
 import inventory from '@hcengineering/inventory-resources/src/plugin'
@@ -47,10 +46,6 @@ export default mergeIds(inventoryId, inventory, {
   string: {
     ConfigLabel: '' as IntlString,
     ConfigDescription: '' as IntlString
-  },
-  ids: {
-    ProductChatMessageViewlet: '' as Ref<ChatMessageViewlet>,
-    CategoryChatMessageViewlet: '' as Ref<ChatMessageViewlet>
   },
   function: {
     ProductIdProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,

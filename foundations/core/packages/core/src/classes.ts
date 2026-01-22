@@ -267,6 +267,7 @@ export interface Class<T extends Obj> extends Classifier {
   sortingKey?: string
   filteringKey?: string
   pluralLabel?: IntlString
+  titleKey?: string
 }
 
 /**

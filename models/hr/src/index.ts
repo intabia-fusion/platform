@@ -68,7 +68,7 @@ export { default } from './plugin'
 export const DOMAIN_HR = 'hr' as Domain
 
 @Model(hr.class.Department, core.class.Doc, DOMAIN_HR)
-@UX(hr.string.Department, hr.icon.Department)
+@UX(hr.string.Department, hr.icon.Department, undefined, undefined, undefined, hr.string.Departments, 'name')
 export class TDepartment extends TDoc implements Department {
   @Prop(TypeRef(hr.class.Department), hr.string.ParentDepartmentLabel)
   @Index(IndexKind.Indexed)

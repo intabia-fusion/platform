@@ -154,8 +154,6 @@ import {
 } from './utils'
 
 import { componentStore, grouppingComponentManager } from './component'
-import PriorityIcon from './components/activity/PriorityIcon.svelte'
-import StatusIcon from './components/activity/StatusIcon.svelte'
 import DeleteComponentPresenter from './components/components/DeleteComponentPresenter.svelte'
 import IssueStatusIcon from './components/issues/IssueStatusIcon.svelte'
 import MoveIssues from './components/issues/Move.svelte'
@@ -401,10 +399,6 @@ async function openIssuesOfTaskType (taskType: TaskType): Promise<void> {
 }
 
 export default async (): Promise<Resources> => ({
-  activity: {
-    PriorityIcon,
-    StatusIcon
-  },
   component: {
     NopeComponent,
     Issues,

@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-import { type ChatMessageViewlet } from '@hcengineering/chunter'
 import type { Doc, Ref, Status } from '@hcengineering/core'
 import { leadId } from '@hcengineering/lead'
 import lead from '@hcengineering/lead-resources/src/plugin'
@@ -64,8 +63,7 @@ export default mergeIds(leadId, lead, {
     CustomerNotificationGroup: '' as Ref<NotificationGroup>,
     FunnelNotificationGroup: '' as Ref<NotificationGroup>,
     LeadCreateNotification: '' as Ref<NotificationType>,
-    AssigneeNotification: '' as Ref<NotificationType>,
-    LeadChatMessageViewlet: '' as Ref<ChatMessageViewlet>
+    AssigneeNotification: '' as Ref<NotificationType>
   },
   descriptors: {
     Lead: '' as Ref<TaskTypeDescriptor>

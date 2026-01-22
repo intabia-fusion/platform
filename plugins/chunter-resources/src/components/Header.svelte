@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import {
     AnySvelteComponent,
     Breadcrumbs,
@@ -29,7 +29,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { Doc, Ref } from '@hcengineering/core'
   import { ActivityMessagesFilter } from '@hcengineering/activity'
   import workbench from '@hcengineering/workbench'
@@ -64,6 +64,7 @@
   export let realWidth: number | undefined = undefined
 
   const client = getClient()
+  const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
 
   export let searchValue: string = ''
@@ -73,6 +74,16 @@
   onDestroy(() => {
     userSearch.set('')
   })
+
+  let iconComponent: AnySvelteComponent | undefined = undefined
+  $: clazz = object && hierarchy.getClass(object._class)
+  $: iconMixin = object && hierarchy.classHierarchyMixin(object._class, view.mixin.ObjectIcon)
+
+  $: if (iconMixin != null) {
+    void getResource(iconMixin.component).then((it) => {
+      iconComponent = it
+    })
+  }
 </script>
 
 <Header
@@ -92,17 +103,31 @@
   </svelte:fragment>
 
   {#if titleKind === 'breadcrumbs'}
-    <Breadcrumbs
-      items={[
-        {
-          icon,
-          iconProps,
-          title: label,
-          label: label ? undefined : intlLabel
-        }
-      ]}
-      currentOnly
-    />
+    {#if iconComponent != null && object}
+      <Breadcrumbs
+        items={[
+          {
+            icon: iconComponent,
+            iconProps: { ...iconProps, value: object },
+            title: label,
+            label: label ? undefined : intlLabel
+          }
+        ]}
+        currentOnly
+      />
+    {:else}
+      <Breadcrumbs
+        items={[
+          {
+            icon: icon === view.ids.IconWithEmoji ? IconWithEmoji : icon,
+            iconProps: icon === view.ids.IconWithEmoji ? { ...iconProps, icon: clazz?.color ?? 0 } : iconProps,
+            title: label,
+            label: label ? undefined : intlLabel
+          }
+        ]}
+        currentOnly
+      />
+    {/if}
   {:else}
     <div class="hulyHeader-titleGroup">
       {#if icon}

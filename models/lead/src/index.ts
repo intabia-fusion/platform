@@ -497,17 +497,6 @@ export function createModel (builder: Builder): void {
     lead.viewlet.DashboardLead
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: lead.class.Lead,
-      label: chunter.string.LeftComment
-    },
-    lead.ids.LeadChatMessageViewlet
-  )
-
   builder.mixin(lead.class.Lead, core.class.Class, task.mixin.KanbanCard, {
     card: lead.component.KanbanCard
   })

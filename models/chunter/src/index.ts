@@ -30,7 +30,6 @@ import {
   DOMAIN_CHUNTER,
   TChannel,
   TChatMessage,
-  TChatMessageViewlet,
   TChatSyncInfo,
   TChunterSpace,
   TDirectMessage,
@@ -50,7 +49,6 @@ export function createModel (builder: Builder): void {
     TDirectMessage,
     TChatMessage,
     TThreadMessage,
-    TChatMessageViewlet,
     TObjectChatPanel,
     TChatSyncInfo
   )
@@ -195,17 +193,6 @@ export function createModel (builder: Builder): void {
       }
     },
     chunter.viewlet.Channels
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ThreadMessage,
-      objectClass: chunter.class.ChatMessage,
-      label: chunter.string.RepliedToThread
-    },
-    chunter.ids.ThreadMessageViewlet
   )
 
   builder.mixin(chunter.class.Channel, core.class.Class, chunter.mixin.ObjectChatPanel, {

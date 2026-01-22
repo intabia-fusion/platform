@@ -166,7 +166,10 @@ export class TApplicant extends TTask implements Applicant {
   @Index(IndexKind.Indexed)
   declare assignee: Ref<Employee> | null
 
-  @Prop(TypeRef(core.class.Status), task.string.TaskState, { _id: recruit.attribute.State })
+  @Prop(TypeRef(core.class.Status), task.string.TaskState, {
+    _id: recruit.attribute.State,
+    iconPresenter: task.component.StateIconPresenter
+  })
   @Index(IndexKind.Indexed)
   declare status: Ref<Status>
 

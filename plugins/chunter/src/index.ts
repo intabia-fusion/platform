@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ActivityMessage, ActivityMessageViewlet } from '@hcengineering/activity'
+import { ActivityMessage } from '@hcengineering/activity'
 import type { Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
 import { NotificationType } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
@@ -76,14 +76,6 @@ export interface ThreadMessage extends ChatMessage {
   objectClass: Ref<Class<Doc>>
 }
 
-/**
- * @public
- */
-export interface ChatMessageViewlet extends ActivityMessageViewlet {
-  messageClass: Ref<Class<Doc>>
-  label?: IntlString
-}
-
 export interface ChatSyncInfo extends Doc {
   user: Ref<Person>
   timestamp: Timestamp
@@ -143,7 +135,6 @@ export default plugin(chunterId, {
     Channel: '' as Ref<Class<Channel>>,
     DirectMessage: '' as Ref<Class<DirectMessage>>,
     ChatMessage: '' as Ref<Class<ChatMessage>>,
-    ChatMessageViewlet: '' as Ref<Class<ChatMessageViewlet>>,
     ChatSyncInfo: '' as Ref<Class<ChatSyncInfo>>
   },
   mixin: {
@@ -217,7 +208,6 @@ export default plugin(chunterId, {
     ThreadNotification: '' as Ref<NotificationType>,
     ChannelNotification: '' as Ref<NotificationType>,
     JoinChannelNotification: '' as Ref<NotificationType>,
-    ThreadMessageViewlet: '' as Ref<ChatMessageViewlet>,
     ChatWidget: '' as Ref<Widget>
   },
   app: {

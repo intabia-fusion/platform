@@ -1446,39 +1446,6 @@ export function createModel (builder: Builder): void {
     recruit.filter.None
   )
 
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Vacancy,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.VacancyChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Applicant,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.ApplicantChatMessageViewlet
-  )
-
-  builder.createDoc(
-    chunter.class.ChatMessageViewlet,
-    core.space.Model,
-    {
-      messageClass: chunter.class.ChatMessage,
-      objectClass: recruit.class.Review,
-      label: chunter.string.LeftComment
-    },
-    recruit.ids.ReviewChatMessageViewlet
-  )
-
   // Allow to use fuzzy search for mixins
   builder.createDoc(core.class.FullTextSearchContext, core.space.Model, {
     toClass: recruit.class.Vacancy,
@@ -1515,21 +1482,6 @@ export function createModel (builder: Builder): void {
       label: tracker.string.RelatedIssues
     }
   })
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: recruit.class.Applicant,
-      action: 'update',
-      config: {
-        status: {
-          iconPresenter: task.component.StateIconPresenter
-        }
-      }
-    },
-    recruit.ids.ApplicantUpdatedActivityViewlet
-  )
 
   createAction(
     builder,

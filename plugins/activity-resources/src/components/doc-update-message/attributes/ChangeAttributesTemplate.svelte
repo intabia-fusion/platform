@@ -37,20 +37,26 @@
     attributeValues = result
   })
 
-  $: attrViewletConfig = viewlet?.config?.[attributeModel.key]
-  $: attributeIcon = attrViewletConfig?.icon ?? attributeModel.icon ?? IconEdit
+  $: viewletConfig = viewlet?.config?.[attributeModel.key]
+  $: _icon = viewletConfig?.icon ?? attributeModel.attribute?.icon ?? attributeModel.icon ?? IconEdit
   $: _space = space ?? (typeof attributeValues[0] === 'object' ? attributeValues[0]?.space : undefined)
 </script>
 
 <div class="content overflow-label" class:preview>
   <span class="mr-1">
-    {#if attrViewletConfig?.iconPresenter}
+    {#if viewletConfig?.iconPresenter}
       <Component
-        is={attrViewletConfig?.iconPresenter}
+        is={viewletConfig?.iconPresenter}
         props={{ value: attributeValues[0], space: _space, size: 'small' }}
       />
+    {:else if attributeModel?.attribute?.iconComponent != null && attributeValues.length > 0}
+      <Component
+        is={attributeModel.attribute.iconComponent}
+        props={{ value: attributeValues[0], size: 'small', space: _space }}
+        showLoading={false}
+      />
     {:else}
-      <Icon icon={attributeIcon} size="small" />
+      <Icon icon={_icon} size="small" />
     {/if}
   </span>
 

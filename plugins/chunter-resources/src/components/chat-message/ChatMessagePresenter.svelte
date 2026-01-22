@@ -22,7 +22,7 @@
   } from '@hcengineering/activity-resources'
   import { Attachment } from '@hcengineering/attachment'
   import { AttachmentDocList, AttachmentImageSize } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage, ChatMessageViewlet } from '@hcengineering/chunter'
+  import chunter, { ChatMessage } from '@hcengineering/chunter'
   import contact, { getCurrentEmployee, Person, SocialIdentity } from '@hcengineering/contact'
   import { getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
   import { Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
@@ -71,15 +71,6 @@
   let object: Doc | undefined
 
   let refInput: ChatMessageInput
-
-  let viewlet: ChatMessageViewlet | undefined
-  ;[viewlet] =
-    value !== undefined
-      ? client.getModel().findAllSync(chunter.class.ChatMessageViewlet, {
-        objectClass: value.attachedToClass,
-        messageClass: value._class
-      })
-      : []
 
   $: personId = value?.createdBy
   let person: Person | undefined
@@ -242,7 +233,6 @@
 {:else if value && !inline}
   <ActivityMessageTemplate
     message={value}
-    {viewlet}
     {parentMessage}
     {person}
     socialId={socialId?.type !== 'huly' ? socialId : undefined}
@@ -273,7 +263,7 @@
     {onReply}
   >
     <svelte:fragment slot="header">
-      <ChatMessageHeader label={viewlet?.label} />
+      <ChatMessageHeader label={chunter.string.LeftComment} />
     </svelte:fragment>
     <svelte:fragment slot="content">
       {#if !isEditing}

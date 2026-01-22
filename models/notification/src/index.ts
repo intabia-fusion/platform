@@ -437,30 +437,6 @@ export function createModel (builder: Builder): void {
     notification.ids.CollaboratoAddNotification
   )
 
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: core.class.Collaborator,
-      action: 'create',
-      icon: notification.icon.Notifications,
-      component: notification.component.CollaboratorsChanged
-    },
-    notification.ids.CollaboratorsAddMessage
-  )
-
-  builder.createDoc(
-    activity.class.DocUpdateMessageViewlet,
-    core.space.Model,
-    {
-      objectClass: core.class.Collaborator,
-      action: 'remove',
-      icon: notification.icon.Notifications,
-      component: notification.component.CollaboratorsChanged
-    },
-    notification.ids.CollaboratorsRemoveMessage
-  )
-
   createAction(
     builder,
     {

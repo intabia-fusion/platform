@@ -14,4 +14,5 @@ export interface ActivityControl {
   modelDb: ModelDb
   storageAdapter: StorageAdapter
   workspace: WorkspaceIds
+  removedMap: Map<Ref<Doc>, Doc>
 }

@@ -235,7 +235,7 @@ export async function pushDocUpdateMessages (
   control: ActivityControl,
   res: TxCUD<DocUpdateMessage>[],
   object: Doc | undefined,
-  originTx: TxCUD<Doc>,
+  tx: TxCUD<Doc>,
   modifiedBy?: PersonId,
   objectCache?: DocObjectCache,
   controlRules?: ActivityMessageControl[]
@@ -249,23 +249,37 @@ export async function pushDocUpdateMessages (
   }
 
   const rawMessage: Data<DocUpdateMessage> = {
-    txId: originTx._id,
+    txId: tx._id,
     attachedTo: object._id,
     attachedToClass: object._class,
-    objectId: originTx.objectId,
-    objectClass: originTx.objectClass,
-    action: getDocUpdateAction(control, originTx),
+    objectId: tx.objectId,
+    objectClass: tx.objectClass,
+    action: getDocUpdateAction(control, tx),
     collection: 'docUpdateMessages',
-    updateCollection: originTx.collection
+    updateCollection: tx.collection
   }
 
-  const attributesUpdates = await getTxAttributesUpdates(ctx, control, originTx, object, objectCache, controlRules)
+  if (tx.collection != null && tx._class === core.class.TxCreateDoc) {
+    const clazz = control.hierarchy.findClass(tx.objectClass)
+    const collectionDoc = TxProcessor.createDoc2Doc(tx as TxCreateDoc<Doc>)
+    rawMessage.title = clazz?.titleKey != null ? (collectionDoc as any)[clazz.titleKey] : undefined
+    rawMessage.attributes = clazz?.titleKey != null ? undefined : (tx as TxCreateDoc<Doc>).attributes
+  } else if (tx.collection != null && tx._class === core.class.TxRemoveDoc) {
+    const clazz = control.hierarchy.findClass(tx.objectClass)
+    const collectionDoc = control.removedMap.get(tx.objectId)
+
+    rawMessage.title =
+      clazz?.titleKey != null && collectionDoc != null ? (collectionDoc as any)[clazz.titleKey] : undefined
+    rawMessage.attributes = clazz?.titleKey != null ? undefined : collectionDoc
+  }
+
+  const attributesUpdates = await getTxAttributesUpdates(ctx, control, tx, object, objectCache, controlRules)
 
   for (const attributeUpdates of attributesUpdates) {
     res.push(
       getDocUpdateMessageTx(
         control,
-        originTx,
+        tx,
         object,
         {
           ...rawMessage,
@@ -277,7 +291,7 @@ export async function pushDocUpdateMessages (
   }
 
   if (attributesUpdates.length === 0 && rawMessage.action !== 'update') {
-    res.push(getDocUpdateMessageTx(control, originTx, object, rawMessage, modifiedBy))
+    res.push(getDocUpdateMessageTx(control, tx, object, rawMessage, modifiedBy))
   }
 
   return res
@@ -344,6 +358,7 @@ export async function generateDocUpdateMessages (
 
         doc = createTx !== undefined ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
       }
+
       if (doc !== undefined) {
         objectCache?.docs?.set(tx.attachedTo, doc)
         return await ctx.with(
