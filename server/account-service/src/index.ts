@@ -262,6 +262,12 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     return options
   }
 
+  /**
+   * Extracts the cookie domain from a URL.
+   * By default, it returns the full hostname to prevent cross-environment cookie conflicts.
+   * If USE_PARENT_DOMAIN_FOR_COOKIES environment variable is set to 'true',
+   * it will return the parent domain instead (original behavior).
+   */
   const getCookieDomain = (url: string): string => {
     const hostname = new URL(url).hostname
 
@@ -273,9 +279,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       return hostname
     }
 
-    const parts = hostname.split('.')
-    if (parts.length > 2) {
-      return '.' + parts.slice(1).join('.')
+    // Check if we should use the parent domain instead of the full hostname
+    const useParentDomain = process.env.USE_PARENT_DOMAIN_FOR_COOKIES === 'true'
+
+    if (useParentDomain) {
+      const parts = hostname.split('.')
+      if (parts.length > 2) {
+        return '.' + parts.slice(1).join('.')
+      }
     }
 
     return hostname
