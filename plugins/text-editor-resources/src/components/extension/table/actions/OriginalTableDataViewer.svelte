@@ -20,6 +20,9 @@
   import { Component, Loading } from '@hcengineering/ui'
   import type { BuildModelKey, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import type { TableMetadata } from '../tableMetadata'
+
+  import TableSourceInfo from './TableSourceInfo.svelte'
 
   export let _class: Ref<Class<Doc>>
   export let config: Array<string | BuildModelKey> | undefined = undefined
@@ -27,6 +30,7 @@
   export let query: DocumentQuery<Doc> | undefined = undefined
   export let viewlet: Viewlet | undefined = undefined
   export let viewletWithLookup: any | undefined = undefined
+  export let metadata: TableMetadata | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -34,15 +38,13 @@
   let tableQuery: DocumentQuery<Doc>
   $: tableQuery = documentIds.length > 0 ? { _id: { $in: documentIds as any[] } } : (query ?? {})
 
-  // Use config from viewlet if available, otherwise use metadata config
-  // RelationshipTable doesn't use viewlets, so config comes directly from metadata
-  // Ensure config is never empty - use default empty string key for default presenter
+  // Use metadata config, otherwise use viewlet config
   $: viewletConfig = viewlet?.config
   $: tableConfig =
-    viewletConfig !== undefined && viewletConfig.length > 0
-      ? viewletConfig
-      : config !== undefined && config.length > 0
-        ? config
+    config !== undefined && config.length > 0
+      ? config
+      : viewletConfig !== undefined && viewletConfig.length > 0
+        ? viewletConfig
         : ['']
 
   // Get component from viewlet descriptor lookup
@@ -84,6 +86,9 @@
       <Loading />
     {/if}
   </div>
+  {#if metadata}
+    <TableSourceInfo {metadata} />
+  {/if}
 </Card>
 
 <style lang="scss">
