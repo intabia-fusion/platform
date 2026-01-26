@@ -1,4 +1,4 @@
-<svg viewBox="0 0 512 512" width="1.5rem" height="1.5rem" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 512 512" width="2rem" height="2rem" xmlns="http://www.w3.org/2000/svg">
   <rect
     height="512"
     rx="64"
