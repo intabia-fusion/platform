@@ -24,7 +24,7 @@
 </script>
 
 {#if status.severity !== Severity.OK}
-  <div class="flex-row-center container" class:error={status.severity === Severity.ERROR}>
+  <div class="flex-row-center container {status.severity}" class:error={status.severity === Severity.ERROR}>
     <!-- <StatusControl {status} overflow={false} /> -->
     <IconInfo size={'small'} />
     <span class="text-sm ml-2" class:overflow-label={overflow}>
