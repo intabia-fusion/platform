@@ -52,7 +52,13 @@
         password: true,
         rules: getPasswordValidationRules()
       })
-      fields.push({ id: 'password', idOverride: 'password2', name: 'password2', i18n: login.string.PasswordRepeat, password: true })
+      fields.push({
+        id: 'password',
+        idOverride: 'password2',
+        name: 'password2',
+        i18n: login.string.PasswordRepeat,
+        password: true
+      })
     }
   }
 
