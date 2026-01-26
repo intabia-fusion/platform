@@ -17,6 +17,7 @@ import { type IntlString } from '@hcengineering/platform'
 
 export interface Field {
   id?: string
+  idOverride?: string
   name: string
   i18n: IntlString
   password?: boolean

@@ -163,7 +163,7 @@
       <div class={field.short !== undefined && !($deviceInfo.docWidth <= 600) ? 'form-col' : 'form-row'}>
         <StylishEdit
           label={field.i18n}
-          name={field.id}
+          name={field.idOverride ?? field.id}
           password={field.password}
           disabled={inAction || field.disabled}
           bind:value={object[field.name]}
