@@ -47,8 +47,8 @@
           { id: 'given-name', name: 'first', i18n: login.string.FirstName, short: true },
           { id: 'family-name', name: 'last', i18n: login.string.LastName, short: true },
           { id: 'email', name: 'username', i18n: login.string.Email },
-          { id: 'new-password', name: 'password', i18n: login.string.Password, password: true },
-          { id: 'new-password', name: 'password2', i18n: login.string.PasswordRepeat, password: true }
+          { id: 'password', name: 'password', i18n: login.string.Password, password: true },
+          { id: 'password2', name: 'password2', i18n: login.string.PasswordRepeat, password: true }
         ]
 
   $: object = {
