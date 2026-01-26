@@ -17,7 +17,8 @@
   import { Analytics } from '@hcengineering/analytics'
   import { logIn } from '@hcengineering/workbench'
   import { setMetadata, translate } from '@hcengineering/platform'
-  import { Loading, Label, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { Loading, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import Label from './internal/Label.svelte'
   import { type LoginInfo } from '@hcengineering/account-client'
   import { loginId } from '@hcengineering/login'
   import { themeStore } from '@hcengineering/theme'
@@ -116,7 +117,7 @@
 
 <style lang="scss">
   .title {
-    color: var(--theme-caption-color);
+    color: var(--login-caption-color, var(--theme-caption-color));
     text-align: center;
   }
 </style>

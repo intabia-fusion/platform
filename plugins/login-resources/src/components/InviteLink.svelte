@@ -16,7 +16,10 @@
   import { AccountRole, getCurrentAccount, hasAccountRole, Timestamp } from '@hcengineering/core'
   import { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import { Button, EditBox, Grid, Label, Loading, MiniToggle, ticker } from '@hcengineering/ui'
+  import { Grid, Loading, MiniToggle, ticker } from '@hcengineering/ui'
+  import FormButton from './internal/FormButton.svelte'
+  import Label from './internal/Label.svelte'
+  import EditBox from './internal/EditBox.svelte'
   import { createEventDispatcher } from 'svelte'
 
   import login from '../plugin'
@@ -144,7 +147,7 @@
       {link}
     </div>
     <div class="buttons">
-      <Button
+      <FormButton
         label={login.string.Close}
         size={'medium'}
         kind={'primary'}
@@ -153,12 +156,12 @@
         }}
       />
       {#if isSecureContext}
-        <Button label={copied ? login.string.Copied : login.string.Copy} size={'medium'} on:click={copy} />
+        <FormButton label={copied ? login.string.Copied : login.string.Copy} size={'medium'} on:click={copy} />
       {/if}
     </div>
   {:else}
     <div class="buttons">
-      <Button
+      <FormButton
         label={login.string.GetLink}
         size={'medium'}
         kind={'primary'}

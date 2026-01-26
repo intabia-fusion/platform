@@ -1,0 +1,179 @@
+/**
+  Copyright © 2026 Intabia Fusion.
+
+  Licensed under the Eclipse Public License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may
+  obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.login-theme-intabia {
+
+  /* Content wrapper inside the panel */
+  .form-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    height: max-content;
+  }
+
+  /* End of inlined base layout */
+
+  /* Panel / background tokens */
+  --login-panel-bg: #ffffff;
+  --login-panel-gradient: radial-gradient(161.92% 96.11% at 11.33% 3.89%, #eeeeee 0%, #ffffff 100%);
+
+  /* Login-scoped popup tokens (do NOT override global popup variables).
+     These are intentionally prefixed so other UI popups (e.g. SettingsPopup)
+     continue to use the app-level theme tokens. */
+  --login-popup-color: #ffffff;
+  --login-popup-hover: #f9fafb;
+  --login-popup-divider: #e5e7eb;
+
+  /* Login primary button tokens (accent for Intabia) - tuned to design (pink/magenta).
+     Consolidated authoritative set (improves contrast for white button text). */
+  --login-primary-button-default: #cf13a2;
+  --login-primary-button-hovered: #a60f82;
+  --login-primary-button-pressed: #7c0b61;
+  --login-primary-button-focused: #a60f82;
+  --login-primary-button-disabled-color: rgba(255, 255, 255, 0.3);
+  /* CSS color used for focus rings (RGBA derived from focused color, adjustable). */
+  --login-primary-button-focus-ring: rgba(166, 15, 130, 0.14);
+
+  /* Black provider button (Intabia): background/text/hover/active tokens */
+  --button-black-BackgroundColor: #07040f;
+  --button-black-hover-BackgroundColor: #0b0813;
+  --button-black-active-BackgroundColor: #05030b;
+  --button-black-LabelColor: #ffffff;
+  --button-black-IconColor: #ffffff;
+
+  /* Compatibility: mirror login primary button tokens onto global primary-button tokens
+     so Button components that read global variables render correctly when the
+     `login-theme-intabia` root class is active. This keeps button visuals stable
+     without mutating global theme files. */
+  --primary-button-default: var(--login-primary-button-default, var(--primary-button-default));
+  --primary-button-hovered: var(--login-primary-button-hovered, var(--primary-button-hovered));
+  --primary-button-pressed: var(--login-primary-button-pressed, var(--primary-button-pressed));
+  --primary-button-focused: var(--login-primary-button-focused, var(--primary-button-focused));
+  --primary-button-disabled-color: var(--login-primary-button-disabled-color, var(--primary-button-disabled-color));
+  --primary-button-color: var(--login-primary-button-color, var(--primary-button-color));
+  --primary-button-content-color: var(--login-primary-button-content-color, var(--primary-button-content-color));
+  --primary-button-label-color: var(--login-primary-button-label-color, var(--primary-button-label-color));
+  --primary-button-icon-color: var(--login-primary-button-icon-color, var(--primary-button-icon-color));
+  --primary-button-focus-ring: var(--login-primary-button-focus-ring, var(--primary-button-focus-ring));
+
+  /* Geometry tokens for primary button (Intabia visual adjustments).
+     These allow the Button base styles to consume geometry via variables
+     while keeping theme files token-only. */
+  --primary-button-border-radius: var(--login-primary-button-border-radius, 0.5rem);
+  --primary-button-padding: var(--login-primary-button-padding, 0 1.5rem);
+  --primary-button-height: var(--login-primary-button-height, 3.5rem);
+  --primary-button-font-size: var(--login-primary-button-font-size, 1rem);
+  --primary-button-font-weight: var(--login-primary-button-font-weight, 600);
+
+  /* Accent purple (used for inputs focus, tabs underline, small accents) */
+  --accent-purple: #7e57c2;
+
+  /* Login inputs / form tokens (scoped to login theme)
+     - inputs use a pale lilac background, subtle borders and purple focus outline */
+  --login-button-default: #ffffff; /* white */
+  --login-button-hovered: #f9fafb;
+  --login-button-pressed: #f3f4f6;
+  --login-button-border: #e5e7eb; /* light gray border */
+  --login-button-focused: #ffffff;
+
+  /* Login-scoped text tokens — prefer login-prefixed variables so we don't
+     mutate global theme tokens (which are used by other UI like SettingsPopup). */
+  --login-dark-color: #555555;
+  /* Placeholder / small labels (Intabia uses a soft lilac placeholder) */
+  --login-caption-color: #000061;
+  /* Main text used throughout forms; also used as a fallback for inputs */
+  --login-content-color: #201240;
+  /* NavLink colors (login-scoped) */
+  --login-navlink-color: #6e48ce;
+  --login-navlink-hover-color: #633ccb;
+  --login-navlink-active-color: #633ccb;
+  /* Explicit input/placeholder tokens used by input controls (StylishEdit / EditBox) */
+  --login-input-text-color: #201240;
+  --login-placeholder-color: #A49BB7;
+  /* Input background and a scoped focus divider used by login inputs */
+  --login-input-bg: #f3e5f5;
+  --login-list-divider-color: #cf13a2;
+  --login-heading-color: #000061;
+  --login-caret-color: #000000;
+  --login-title-font-size: 1.75rem;
+  --login-title-font-weight: 700;
+  --login-title-margin-bottom: 0.75rem;
+
+  /* Login-prefixed tokens for localized components inside login-resources.
+     These allow localized inputs/buttons to read variables with a consistent
+     prefix (`login-`) while themes remain responsible for mapping them to
+     actual colors/accents. Defaults fall back to existing theme tokens to
+     preserve backward compatibility. */
+  --login-button-default: #ffffff;
+  --login-button-hovered: #f9fafb;
+  --login-button-pressed: #f3f4f6;
+  --login-button-border: #e5e7eb;
+  --login-button-focused: #ffffff;
+
+  /* Intabia label/button split - prefer dark gray labels and white button text */
+  --login-label-color: #333333;
+  --login-label-link-color: #6c48ce;
+  --login-button-text-color: #ffffff;
+  --login-primary-button-color: var(--login-button-text-color, #ffffff);
+
+  /* duplicate tokens removed */
+
+  /* Login-scoped compatibility tokens (do not mutate global tokens) */
+  --login-primary-button-content-color: var(--login-button-text-color, #ffffff);
+  --login-primary-button-label-color: var(--login-button-text-color, #ffffff);
+  --login-primary-button-icon-color: var(--login-button-text-color, #ffffff);
+
+  /* Layout & sizing tokens */
+  /* Layout & sizing tokens removed from theme.
+     Layout (widths, gaps, indents) is defined in form components so themes
+     only supply colors, images and backgrounds. */
+
+  /* Legacy backfills removed (not used by login-resources). */
+
+  /* Contrast button tokens (for the main form button) - login-scoped */
+  --login-button-contrast-enabled: var(--login-primary-button-default, var(--primary-button-default));
+  --login-button-contrast-hovered: var(--login-primary-button-hovered, var(--primary-button-hovered));
+  --login-button-contrast-pressed: var(--login-primary-button-pressed, var(--primary-button-pressed));
+  --login-button-contrast-border: var(--login-primary-button-default, var(--primary-button-default));
+  --login-button-contrast-color: var(--login-button-text-color, var(--primary-button-color));
+  --login-button-contrast-disabled: #f3eafb;
+  --login-button-contrast-disabled-color: #9ca3af;
+
+  --login-box-bg: transparent;
+
+  --login-form-bg: transparent;
+  /* --login-form-padding: 1.0rem; */
+  /* --login-form-border-radius: 0.75rem; */
+  /* --login-form-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); */
+  --login-form-grid-template: 1fr;
+  --login-form-column-gap: 0.75rem;
+  --login-form-row-gap: 1.5rem;
+  --login-form-margin-top: 1.5rem;
+}
+
+.login-theme-intabia .login-popup {
+  --login-popup-color: #ffffff;
+  --login-popup-hover: #f9fafb;
+  --login-popup-divider: #e5e7eb;
+  --login-content-color: #333333;
+  --login-caption-color: #757575;
+  --login-dark-color: #555555;
+  --login-darker-color: #777777;
+}
+
+.login-theme-intabia .login-popup .hulyPopup-row__label {
+  color: var(--login-content-color, var(--theme-content-color));
+}

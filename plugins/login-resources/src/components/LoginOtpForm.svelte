@@ -79,7 +79,6 @@
 {#if step === OtpLoginSteps.Otp && formData.username !== ''}
   <OtpForm
     email={formData.username}
-    {signUpDisabled}
     {navigateUrl}
     retryOn={otpRetryOn}
     {onLogin}

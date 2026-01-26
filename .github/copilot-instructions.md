@@ -57,9 +57,11 @@ When generating changelogs (the "All commits" lists), follow these rules:
 - Exclude commits whose subject contains `Merge remote-tracking` (filter them out).
 - Strip `Signed-off-by:` footers from commit messages (remove the footer content and any lines that are only `Signed-off-by:`).
 - Recommended pipeline (example):
+
 ```/dev/null/changelog-filter.sh#L1-3
 git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' | sed -E 's/\s*Signed-off-by:.*$//'
 ```
+
 - Note: `git log --no-merges` removes all merge commits; use it only if you intentionally want to omit all merges.
 
 Apply these filters when updating `changelog.md` or generating release notes so the generated logs exclude noisy merge-tracking commits and signed-off-by lines.
@@ -70,12 +72,12 @@ Apply these filters when updating `changelog.md` or generating release notes so 
 - Use async/await, Promise.all() for parallel ops
 - Svelte stores for shared state, separate business logic
 - JSDoc public APIs, tests alongside code
-- Check with `diagnostics` before committing changes
-- Run `rushx test` before commit
+- Check with `diagnostics` before making changes; do not commit locally — use diffs for review and let maintainers handle commits
 
 ## Debugging Workflow
 
 When debugging issues:
+
 1. **Add comprehensive logging first** - use `console.log` with structured objects showing state, parameters, IDs
 2. **Test and analyze logs** - let user run the app and provide actual console output
 3. **Identify root cause** from logs - trace the flow, compare expected vs actual values
@@ -83,11 +85,12 @@ When debugging issues:
 5. **Remove all logging** after fix is confirmed - keep production code clean
 
 Logging format:
+
 ```typescript
 console.log('[ComponentName.methodName] Description', {
   key1: value1,
   key2: value2,
-  objectId: object?._id  // Use optional chaining for safety
+  objectId: object?._id // Use optional chaining for safety
 })
 ```
 
@@ -95,12 +98,14 @@ console.log('[ComponentName.methodName] Description', {
 
 ❌ `any` without reason ❌ `console.log()` in production ❌ Mixed concerns ❌ Circular deps ❌ Ignoring TS errors ❌ Using `rush build` to check for errors
 
+❌ Git policy: do NOT make commits, resets, reverts, or switch branches. Use git only for read-only operations (diff, status, log).
+
 ## When Coding
 
 - Infer location from context (models/server/plugins/packages)
 - Match existing patterns in codebase
 - Include proper imports/types
-- When adding a new `IntlString` key, add corresponding entries to the component language files under `component-assets/lang` for every supported locale (at minimum include the English entry) and update translations as needed; ensure you run `diagnostics()` and include the language file changes in the same commit.
+- When adding a new `IntlString` key, add corresponding entries to the component language files under `component-assets/lang` for every supported locale (at minimum include the English entry) and update translations as needed; ensure you run `diagnostics()`. Do not commit changes locally — prepare a diff for review and let maintainers perform commits.
 - Add error handling
 - Use existing utils first
 - When fixing bugs:
@@ -108,24 +113,25 @@ console.log('[ComponentName.methodName] Description', {
   - Use logging to understand actual runtime behavior
   - Trace data flow through components
   - Verify assumptions with logs before implementing fixes
-  - Test incrementally, remove debug code when done
+  - remove debug code when done
 
 ## Navigation & Selection Architecture
 
 The app uses a provider-based selection/focus system:
+
 - `focusStore` - global focus state
-- `selectionStore` - global selection state  
+- `selectionStore` - global selection state
 - `ListSelectionProvider` - manages list navigation, delegates to view-specific handlers
 - `SelectDirection` - `'vertical'` (up/down) or `'horizontal'` (left/right in tables, first/last in lists)
 
 Key principles:
+
 - Navigation uses **actual displayed order** (from `getLimited()`) not projection order
-- Focus changes propagate through `updateFocus()` 
+- Focus changes propagate through `updateFocus()`
 - Selection follows focus via provider delegation
 - Scroll happens automatically via `scrollIntoView()` on navigation
 
-
-# License: 
+# License:
 
 For every new files please add a 2026 Intabia Fusion license header like this:
 

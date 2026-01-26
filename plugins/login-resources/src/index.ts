@@ -80,3 +80,5 @@ export interface BottomAction {
 }
 
 export * from './utils'
+export { loginTheme, loginThemeName, setLoginTheme } from './theme'
+export type { LoginTheme, LoginThemeName } from './theme'

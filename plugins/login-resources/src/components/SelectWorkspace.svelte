@@ -22,11 +22,11 @@
     isUpgradingMode
   } from '@hcengineering/core'
   import { LoginInfo } from '@hcengineering/login'
-  import { OK, Severity, Status } from '@hcengineering/platform'
-  import presentation, { MessageBox, NavLink, isAdminUser, reduceCalls } from '@hcengineering/presentation'
+  import { OK, Severity, Status, translateCB } from '@hcengineering/platform'
+  import presentation, { MessageBox, reduceCalls } from '@hcengineering/presentation'
   import {
     Button,
-    Label,
+    IconBack,
     Scroller,
     SearchEdit,
     Spinner,
@@ -34,6 +34,9 @@
     showPopup,
     ticker
   } from '@hcengineering/ui'
+  import Label from './internal/Label.svelte'
+  import FormButton from './internal/FormButton.svelte'
+  import { themeStore } from '@hcengineering/theme'
   import { logOut } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
 
@@ -50,6 +53,7 @@
     unArchive
   } from '../utils'
   import StatusControl from './StatusControl.svelte'
+  import NavLink from './NavLink.svelte'
 
   export let navigateUrl: string | undefined = undefined
 
@@ -138,16 +142,30 @@
   let search: string = ''
 </script>
 
-<form class="container" style:padding={$deviceInfo.docWidth <= 480 ? '1.25rem' : '5rem'}>
+<form class="container" style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '1rem 1rem'}>
   <div class="grow-separator" />
-  <div class="fs-title">
+  <div class="title-row">
+    <FormButton
+      type="button"
+      size="small"
+      shape="round"
+      on:click={() => {
+        goTo('login')
+      }}
+    >
+      <IconBack size="small" />
+    </FormButton>
+    <div class="title">
+      <Label label={login.string.SelectWorkspace} variant={'heading'} />
+    </div>
+  </div>
+  <div class="fs-title mt-2">
     {#if account != null}
       {getAccountDisplayName(account)}
     {:else}
       <Label label={login.string.LoadingAccount} />
     {/if}
   </div>
-  <div class="title"><Label label={login.string.SelectWorkspace} /></div>
   <div class="status">
     <StatusControl {status} />
   </div>
@@ -222,7 +240,7 @@
             href={getHref('createWorkspace')}
             onClick={() => {
               goTo('createWorkspace')
-            }}><Label label={login.string.CreateWorkspace} /></NavLink
+            }}><Label label={login.string.CreateWorkspace} variant={'link'} /></NavLink
           >
         </div>
       {/if}
@@ -235,7 +253,7 @@
             goTo('login')
           }}
         >
-          <Label label={login.string.ChangeAccount} />
+          <Label label={login.string.ChangeAccount} variant={'link'} />
         </NavLink>
       </div>
     </div>
@@ -257,13 +275,29 @@
       align-items: center;
     }
 
+    .fs-title {
+      font-weight: 600;
+      color: var(--login-content-color, var(--theme-content-color));
+      margin-bottom: 0.75rem;
+    }
     .title {
       font-weight: 600;
       font-size: 1.5rem;
-      color: var(--theme-caption-color);
+      color: var(--login-caption-color, var(--theme-caption-color));
+      /* Keep title on a single line, ellipsize on overflow */
+      flex: 1 1 auto;
+      min-width: 0; /* allow flex child to shrink for ellipsis */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .status {
-      min-height: 7.5rem;
+      /* min-height: 7.5rem; */
       max-height: 7.5rem;
       padding-top: 1.25rem;
     }
@@ -286,7 +320,7 @@
     }
     .readonly-warning {
       margin-bottom: 1.5rem;
-      color: var(--theme-caption-color);
+      color: var(--login-caption-color, var(--theme-caption-color));
     }
     .grow-separator {
       flex-grow: 1;
@@ -294,13 +328,15 @@
     .footer {
       margin-top: 3.5rem;
       font-size: 0.8rem;
-      color: var(--theme-caption-color);
+      color: var(--login-caption-color, var(--theme-caption-color));
       span {
         opacity: 0.8;
       }
+      /* Ensure anchors inside nested components (like NavLink) get styled in the footer.
+         Svelte scopes component styles, so use :global(a) to target child anchor elements. */
       a {
         text-decoration: none;
-        color: var(--theme-caption-color);
+        color: var(--login-navlink-color, var(--login-caption-color, var(--theme-caption-color)));
         opacity: 0.8;
         &:hover {
           opacity: 1;

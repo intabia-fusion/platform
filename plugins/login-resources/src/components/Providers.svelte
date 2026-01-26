@@ -1,8 +1,10 @@
 <script lang="ts">
   import { concatLink } from '@hcengineering/core'
-  import { getMetadata } from '@hcengineering/platform'
+  import platform, { getMetadata } from '@hcengineering/platform'
   import { type ProviderInfo } from '@hcengineering/account-client'
-  import { AnySvelteComponent, Button, Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
+  import { AnySvelteComponent, Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
+
+  import FormButton from './internal/FormButton.svelte'
   import { Analytics } from '@hcengineering/analytics'
   import { onMount } from 'svelte'
   import login from '../plugin'
@@ -26,15 +28,30 @@
   let enabledProviders: Provider[] = []
 
   onMount(() => {
-    void getProviders().then((res: ProviderInfo[]) => {
-      enabledProviders = res.map((provider) => {
-        const component = providerMap[provider.name]
-        return {
-          ...provider,
-          component
-        }
+    if (getMetadata(platform.metadata.DevModel) !== true) {
+      void getProviders().then((res: ProviderInfo[]) => {
+        enabledProviders = res.map((provider) => {
+          const component = providerMap[provider.name]
+          return {
+            ...provider,
+            component
+          }
+        })
       })
-    })
+    } else {
+      enabledProviders = [
+        {
+          name: 'openid',
+          component: OpenId,
+          displayName: 'OpenID'
+        },
+        {
+          name: 'github',
+          component: Github,
+          displayName: 'GitHub'
+        }
+      ]
+    }
   })
 
   function getColumnsCount (providersCount: number): number {
@@ -78,16 +95,19 @@
     <Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems={'center'}>
       {#each enabledProviders as provider}
         <a
+          class="provider-button"
           href={getLink(provider)}
           on:click={() => {
             handleProviderClick(provider)
           }}
         >
-          <Button kind={'contrast'} shape={'round2'} size={'x-large'} width="100%" stopPropagation={false}>
-            <svelte:fragment slot="content">
-              <svelte:component this={provider.component} displayName={provider.displayName} />
-            </svelte:fragment>
-          </Button>
+          <FormButton kind={'black'} shape={'round2'} size={'x-large'} width="100%" stopPropagation={false}>
+            <svelte:component
+              this={provider.component}
+              displayName={provider.displayName}
+              labelClass={'button-label'}
+            />
+          </FormButton>
         </a>
       {/each}
     </Grid>
@@ -97,5 +117,20 @@
 <style lang="scss">
   .container {
     padding-top: 1rem;
+  }
+
+  /* Anchor wrapper for provider buttons — keep full-width and remove link styling */
+  .container a.provider-button {
+    display: block;
+    text-decoration: none;
+    width: 100%;
+  }
+
+  /* Ensure the inner Button stretches to full width inside the anchor wrapper:
+     support both the global Button (.antiButton) and the local FormButton (.form-button). */
+  .container a.provider-button .antiButton,
+  .container a.provider-button .form-button {
+    width: 100%;
+    display: block;
   }
 </style>

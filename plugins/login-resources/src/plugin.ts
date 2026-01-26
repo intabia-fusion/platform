@@ -40,6 +40,7 @@ export default mergeIds(loginId, login, {
     PasswordRepeat: '' as IntlString,
     Workspace: '' as IntlString,
     SignUp: '' as IntlString,
+    SignUpTab: '' as IntlString,
     DoNotHaveAnAccount: '' as IntlString,
     Copy: '' as IntlString,
     Copied: '' as IntlString,
@@ -64,6 +65,7 @@ export default mergeIds(loginId, login, {
     WrongEmail: '' as IntlString,
     ChangeEmail: '' as IntlString,
     SentTo: '' as IntlString,
+    EnterCode: '' as IntlString,
     CanFindCode: '' as IntlString,
     LoginWithCode: '' as IntlString,
     LoginWithPassword: '' as IntlString,
@@ -80,6 +82,10 @@ export default mergeIds(loginId, login, {
     WhatIsYourName: '' as IntlString,
     AccessExpired: '' as IntlString,
     AccessNotActive: '' as IntlString,
-    DesktopApp: '' as IntlString
+    DesktopApp: '' as IntlString,
+    EditBoxPlaceholder: '' as IntlString
+  },
+  metadata: {
+    LoginTheme: '' as any
   }
 })

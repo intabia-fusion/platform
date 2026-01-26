@@ -15,30 +15,48 @@
 <script lang="ts">
   import type { Status } from '@hcengineering/platform'
   import { Severity } from '@hcengineering/platform'
+  import { IconInfo, Label } from '@hcengineering/ui'
 
-  import { Status as StatusControl } from '@hcengineering/ui'
+  // import { Status as StatusControl } from '@hcengineering/ui'
 
   export let status: Status
+  export let overflow: boolean = true
 </script>
 
 {#if status.severity !== Severity.OK}
   <div class="flex-row-center container" class:error={status.severity === Severity.ERROR}>
-    <StatusControl {status} overflow={false} />
+    <!-- <StatusControl {status} overflow={false} /> -->
+    <IconInfo size={'small'} />
+    <span class="text-sm ml-2" class:overflow-label={overflow}>
+      <Label label={status.code} params={status.params} />
+    </span>
   </div>
 {/if}
 
 <style lang="scss">
   .container {
+    user-select: none;
+    font-size: 14px;
     padding: 0.75rem 1rem;
-    background-color: var(--theme-button-default);
-    border: 1px solid var(--theme-button-border);
+    background-color: var(--login-button-default, var(--theme-button-default));
+    border: 1px solid var(--login-button-border, var(--theme-button-border));
     border-radius: 0.5rem;
+    /* Ensure status text is readable inside the white login card by preferring
+       login-scoped content color (falls back to global theme token). */
+    color: var(--login-content-color, var(--theme-content-color));
+    fill: var(--login-content-color, var(--theme-content-color));
+    &.WARNING {
+      color: yellow;
+    }
+    &.ERROR {
+      color: var(--system-error-color);
+    }
   }
 
   .error {
     color: var(--system-error-color);
     fill: var(--system-error-color);
-    background-color: var(--theme-button-default);
+    background-color: var(--login-button-default, var(--theme-button-default));
     border-color: var(--system-error-60-color);
   }
 </style>

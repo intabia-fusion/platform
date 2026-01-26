@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import { NavLink } from '@hcengineering/presentation'
+  import Label from './internal/Label.svelte'
+  import NavLink from './NavLink.svelte'
 
   import { getHref } from '../utils'
   import { BottomAction, goTo } from '../index'
@@ -39,16 +39,21 @@
       }}><Label label={action.i18n} /></NavLink
     >
   {:else}
-    <a href="." on:click|preventDefault={action.func}><Label label={action.i18n} /></a>
+    <a href="." on:click|preventDefault={action.func}><Label label={action.i18n} className={'login-label-link'} /></a>
   {/if}
 </div>
 
 <style lang="scss">
   span {
-    color: var(--theme-darker-color);
+    color: var(--login-darker-color, var(--theme-darker-color));
   }
   a {
     font-weight: 400;
-    color: var(--theme-content-color);
+    color: var(--login-navlink-color, var(--login-label-color, var(--login-content-color, var(--theme-content-color))));
+    text-decoration: none;
+    opacity: 0.8;
+    &:hover {
+      opacity: 1;
+    }
   }
 </style>
