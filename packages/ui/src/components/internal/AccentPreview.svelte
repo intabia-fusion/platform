@@ -33,7 +33,8 @@
     rgbToHex,
     IconCheckmark,
     IconActivity,
-    IconAttachment
+    IconAttachment,
+    IconClose
   } from '../..'
   import Loading from '../Loading.svelte'
   import ModernToggle from '../ModernToggle.svelte'
@@ -287,6 +288,9 @@
           { id: 'b2', icon: IconAttachment }
         ]}
       />
+    </div>
+    <div class="row btn-row small">
+      <ButtonIcon kind="primary" icon={IconClose} size={'min'} />
     </div>
 
     <div class="row checks">

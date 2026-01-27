@@ -79,7 +79,7 @@
 
   {#if canClose && !readonly}
     <div class="close-button {orientation}">
-      <ButtonIcon icon={IconClose} size="min" on:click={() => dispatch('close')} />
+      <ButtonIcon icon={IconClose} kind={'tertiary'} size="min" on:click={() => dispatch('close')} />
     </div>
   {:else if $$slots.postfix === undefined}
     <div />

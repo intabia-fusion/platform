@@ -64,6 +64,7 @@
   }
   &.min {
     height: var(--global-min-Size);
+    width: var(--global-min-Size);
     border: 0;
     border-radius: var(--min-BorderRadius);
   }
