@@ -9,6 +9,182 @@ Changelog.
   - d409a0e99 Update summary
   - d533933b7 Update git diff to put into 2 level dir structure
 
+## [0.7.329] - 2026-01-27
+
+* 🐛 BUG FIXES: · Fix formatting · Fix signup tests · Fix status control · Fix for join tests · Fix invite link · Fix display
+* ⚙️ MISCELLANEOUS TASKS: · Adjust telegram-bot for PostgreSQL (#10435) · Display documents table source (#10433) · Start exported doc numbers from the higher available one (#10434) · Allow guest update profile (avatar, name etc) (#10429)
+
+All commits (generated from v0.7.328..v0.7.329; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 64574dadb Fix formatting
+- 26e6a68dd Fix signup tests
+- 8abeabefd Fix status control
+- 051a9369e Fix for join tests
+- 5ec5b80c3 Fix invite link
+- fc10cf27a Fix display
+- 8da34ee15 Fix source table columns (#10437)
+- 31b0eedd8 fix: add more mail ervice traces (#10438)
+- c1f167542 Fix login if current location equal to target (#10436)
+- f56a483c8 Adjust telegram-bot for PostgreSQL (#10435)
+- 1d450682b Display documents table source (#10433)
+- f36ac1a6d Start exported doc numbers from the higher available one (#10434)
+- 90af23b9c Fix missing collaborative content in export (#10432)
+- 5f00f623d Allow guest update profile (avatar, name etc) (#10429)
+- 03a14ae55 FUSIO-89: Fix clisr
+
+## [0.7.328] - 2026-01-22
+
+* 🐛 BUG FIXES: · Fix deps · More accent fixes · Fix original table layout (#10427) · Allow light/dark + accent colors and fix kanban selection · Fix toggle styling
+* 🚀 FEATURES: · Add confirmation modal for table refresh (#10428) · Add retry for login token validation in case of any error · Add git ignore · Add mobile view check for desktop app downloads · feat: link preview service (#10424)
+* ⚙️ MISCELLANEOUS TASKS: · Display space for templates (#10426) · Remove mobile view check · Move metadata comment to the end (#10421)
+
+All commits (generated from v0.7.327..v0.7.328; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 06a78b42a Fix deps
+- fbd95912c More accent fixes
+- d8653adf7 Add confirmation modal for table refresh (#10428)
+- b0366dee2 Display space for templates (#10426)
+- d3782f86a Fix original table layout (#10427)
+- 8450c3d3d Allow light/dark + accent colors and fix kanban selection
+- 084df6789 Add retry for login token validation in case of any error
+- 64985e048 Remove mobile view check
+- 9198b5a84 Add git ignore
+- b82ca8eab Fix toggle styling
+- 619bc6cba Add mobile view check for desktop app downloads
+- 2b3979030 feat: link preview service (#10424)
+- f52fa27e6 Move metadata comment to the end (#10421)
+
+## [0.7.327] - 2026-01-21
+
+* 🐛 BUG FIXES: · Fix artifact name · Fix Platform-Linux-arm64 · Fixes for desktop packages
+
+All commits (generated from v0.7.326..v0.7.327; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 07c0b3cb6 Fix artifact name
+- 199ab860b Fix Platform-Linux-arm64
+- c7063977e Fixes for desktop packages
+
+## [0.7.326] - 2026-01-20
+
+* 🐛 BUG FIXES: · Fix · Fix aibot snappy compression · fix: sort qms templates in wizard (#10419) · Fix long title display (#10418) · Fix dist build · Fix size predicate null handle (#10417)
+* 🚀 FEATURES: · Accent colors support
+
+All commits (generated from v0.7.325..v0.7.326; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- d38fcbff5 Fix
+- 8f3fced18 Accent colors support
+- 072a364fc Fix aibot snappy compression
+- 3f2a8cf24 fix: sort qms templates in wizard (#10419)
+- 0fd1f17fa Fix long title display (#10418)
+- e85f24000 Fix dist build
+- 218cce6a4 Fix size predicate null handle (#10417)
+- 558d66883 Minor process fixes (#10416)
+
+## [0.7.325] - 2026-01-19
+
+* 🐛 BUG FIXES: · Attempt to fix dist docker build · Fix flacky test + disable dist in dev setup by default · Fix docker setup for dist build · Fix formatting · Fix GitHub License badge URL in README.md
+* ⚙️ MISCELLANEOUS TASKS: · Update desktop build
+
+All commits (generated from v0.7.324..v0.7.325; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 5bfde7840 Attempt to fix dist docker build
+- 9d0da81b5 Fix flacky test + disable dist in dev setup by default
+- 6def7fe63 Fix docker setup for dist build
+- 02e676484 Fix formatting
+- 86f7cdf0c Fix GitHub License badge URL in README.md
+- 2a05f1a4d Update desktop build
+
+## [0.7.324] - 2026-01-19
+
+* ⚙️ MISCELLANEOUS TASKS: · Use actual viewlet config to copy table (#10415) · Display original data for tables (#10413) · Bump actions/upload-artifact from 4 to 6 (#10300) · Remove beta marks for cards and processes (#10408) · Print workspace logo in PDF (#10407)
+* 🐛 BUG FIXES: · fix: filter relations by workspaceId (#10414) · Fix transcription on reconnect to service · fix: show custom icons for cards breadcrumbs (#10412) · Fix view setting freeze (#10410) · Fix default null value (#10409) · Fix controlled doc sequence conflicts (#10406)
+* 🚀 FEATURES: · Support documents table diff and refresh (#10411)
+
+All commits (generated from v0.7.323..v0.7.324; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- c4a769c54 Use actual viewlet config to copy table (#10415)
+- 775006303 fix: filter relations by workspaceId (#10414)
+- aa6668a2b Fix transcription on reconnect to service
+- 7a8a75b8b Display original data for tables (#10413)
+- 8bc8183cb fix: show custom icons for cards breadcrumbs (#10412)
+- 144b0acfe Support documents table diff and refresh (#10411)
+- eac75aaf5 Bump actions/upload-artifact from 4 to 6 (#10300)
+- 93fca17b0 Fix view setting freeze (#10410)
+- e1231f855 Fix default null value (#10409)
+- 1fcb44334 Remove beta marks for cards and processes (#10408)
+- 1e4926fd8 Fix controlled doc sequence conflicts (#10406)
+- 79f847e6d Print workspace logo in PDF (#10407)
+- ad50c8840 fix: customize support links (#10405)
+- 6f012e42b Fix card view settings (#10404)
+
+## [0.7.323] - 2026-01-15
+
+* ⚙️ MISCELLANEOUS TASKS: · fnd-40: update activity filter · Update core and server (#10400) · Process service should ignore config user (#10399) · Export without extra sublings (#10401)
+* 🐛 BUG FIXES: · fnd-38: fix tooltip · fnd-35: fix tooltip · Fix card export (#10403) · fnd-7: fix recording attachment
+
+All commits (generated from v0.7.322..v0.7.323; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 1e819eb9e fnd-40: update activity filter
+- 681dc124b fnd-38: fix tooltip
+- c30aaa8b8 fnd-35: fix tooltip
+- 6bdb38827 Fix card export (#10403)
+- 2165c3928 Update core and server (#10400)
+- 354cafddd Process service should ignore config user (#10399)
+- 9dfcf8498 Export without extra sublings (#10401)
+- 31a86eb16 fnd-7: fix recording attachment
+
+## [0.7.322] - 2026-01-13
+
+* 🐛 BUG FIXES: · Fix unhandled rejection in transactor · Fix association attribute in markdown table (#10398) · fnd-11: fix font size ru translation · fnd-20: fix guest email edit
+* ⚙️ MISCELLANEOUS TASKS: · Copy relationship table (#10397)
+
+All commits (generated from v0.7.321..v0.7.322; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 2cd9973d8 Fix unhandled rejection in transactor
+- 2ae599884 Fix association attribute in markdown table (#10398)
+- e42999537 Copy relationship table (#10397)
+- f9cf59d63 fnd-11: fix font size ru translation
+- 4ba300da7 fnd-20: fix guest email edit
+
+## [0.7.321] - 2026-01-12
+
+* 🐛 BUG FIXES: · Fix agent's list per room · Fix missing events in planner (#10395) · fnd-25: fix loc on workspace switch · Fix card activity (#10393)
+* ⚙️ MISCELLANEOUS TASKS: · Bump postgres package version (#10394) · fnd-23: remove skype · Allow issue max width · Remove collapse button in planner
+* 🚀 FEATURES: · Initial Stripe support (#10392)
+
+All commits (generated from v0.7.320..v0.7.321; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 8d916030f Fix agent's list per room
+- 7cbdb612e Fix missing events in planner (#10395)
+- f6d2476b5 Bump postgres package version (#10394)
+- 795ba3649 fnd-23: remove skype
+- 499211af5 fnd-25: fix loc on workspace switch
+- 951ff735d Allow issue max width
+- 5d43f44c4 Remove collapse button in planner
+- 289b1d2ef Fix card activity (#10393)
+- 36927fbd9 Initial Stripe support (#10392)
+
+## [0.7.320] - 2026-01-12
+
+* 🐛 BUG FIXES: · Egress Webhook & agent assignee fixes
+
+All commits (generated from v0.7.319..v0.7.320; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- ac4d56f83 Egress Webhook & agent assignee fixes
+
+## [0.7.319] - 2026-01-12
+
+* 🐛 BUG FIXES: · Fix aibot init concurrency · Fix notification topic creation
+* ⚙️ MISCELLANEOUS TASKS: · Allow override from/replyTo in client mode · Update summary · Update git diff to put into 2 level dir structure
+
+All commits (generated from v0.7.318..v0.7.319; filtered: merges excluded, 'Signed-off-by:' footers removed):
+
+- 3c21faa6e Fix aibot init concurrency
+- 6d234fa56 Allow override from/replyTo in client mode
+- 12d98179f Fix notification topic creation
+- d409a0e99 Update summary
+- d533933b7 Update git diff to put into 2 level dir structure
+
 ## [0.7.318] - 2026-01-11
 
 * 🚀 FEATURES: · Office recordings & transcriptions; separate storage for transcription chunks; Aibot (Gigachat) support and REST APIs; Type/tag permissions; Ability to copy issues and cards as tables; Card versioning and version selector for relations; Support for PGBouncer/Postgres improvements; Switch build and tests to Node 24; Various export and table improvements.
@@ -121,7 +297,6 @@ All commits (generated from v0.7.317..v0.7.318; filtered: 'Merge remote-tracking
 - 49fbda1d7 Add more logging to aibot and love-agent
 - 98055e4b5 Fix documents with notes and images (#10328)
 
-
 ## [0.7.317] - 2025-12-24
 
 * 🚀 FEATURES: · Relationship table and a set of print/table fixes; i18n improvements (missing translations for fr/pt/de); ensure uniqueness for controlled document codes and sequences.
@@ -161,7 +336,6 @@ All commits:
 - 214c68e45 Do not pull hulypulse
 - b214ce127 Fix copy as markdown action (#10321)
 - 788d064a5 Export document space to another workspace (#10320)
-
 
 - c0f877561 Show message if user doesn't have any workspaces with export permissions (#10319)
 - 33bb18050 Ability to show ids in title (#10318)
@@ -4018,3 +4192,4 @@ All commits:
 * CLEAN: · Package.json 
 
 <!-- generated by git-cliff -->
+
