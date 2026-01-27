@@ -1152,7 +1152,7 @@
     .now-line,
     .now-line::before {
       position: absolute;
-      background-color: var(--highlight-red);
+      background-color: var(--accent-color-base, var(--highlight-red));
     }
     .now-line {
       left: 3rem;
