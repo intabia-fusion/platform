@@ -282,16 +282,12 @@ function buildVersionBlock (version, date, prevTag, tag, commits) {
     lines.push(`* ${info.emoji} ${cat}: · ${summary}`)
   }
 
-  if (commits.length > 0) {
-    lines.push('')
-    lines.push(`All commits (generated from ${prevTag}..${tag}; filtered: merges excluded, 'Signed-off-by:' footers removed):`)
-    lines.push('')
-    for (const c of commits) {
-      lines.push(`- ${c.hash} ${c.subject}`)
-    }
-  } else {
+  // Full commit list intentionally omitted to keep changelog concise.
+  if (commits.length === 0) {
     lines.push('')
     lines.push('* ⚙️ MISCELLANEOUS TASKS: No substantive changes (all commits were merges or non-substantial)')
+  } else {
+    lines.push('')
   }
   lines.push('')
   return lines.join('\n')

@@ -5,32 +5,15 @@ Changelog.
 ## [unreleased]
 
 * ⚙️ CHORE: Small follow-ups since v0.7.318 — update summary and adjust git-diff output for changelog generation; filter out 'Merge remote-tracking' merge commits and strip 'Signed-off-by:' footers from commit entries.
-* All commits (filtered: 'Merge remote-tracking' commits excluded, 'Signed-off-by:' footers removed):
-  - d409a0e99 Update summary
-  - d533933b7 Update git diff to put into 2 level dir structure
+## [0.7.330] - 2026-01-27
+
+* 🐛 BUG FIXES: · Fix calendar color · Fix relationship table diff/refresh (#10446) · Fix widget bar icons for tabs · Fix download page · Fix custom attributes in markdown table (#10445) · Allow to specify and fix theme
+* ⚙️ MISCELLANEOUS TASKS: · Reuse one metadata interface (#10444) · Skip archived and outdated documents in export by default (#10443) · Update changelog (#10439)
 
 ## [0.7.329] - 2026-01-27
 
 * 🐛 BUG FIXES: · Fix formatting · Fix signup tests · Fix status control · Fix for join tests · Fix invite link · Fix display
 * ⚙️ MISCELLANEOUS TASKS: · Adjust telegram-bot for PostgreSQL (#10435) · Display documents table source (#10433) · Start exported doc numbers from the higher available one (#10434) · Allow guest update profile (avatar, name etc) (#10429)
-
-All commits (generated from v0.7.328..v0.7.329; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 64574dadb Fix formatting
-- 26e6a68dd Fix signup tests
-- 8abeabefd Fix status control
-- 051a9369e Fix for join tests
-- 5ec5b80c3 Fix invite link
-- fc10cf27a Fix display
-- 8da34ee15 Fix source table columns (#10437)
-- 31b0eedd8 fix: add more mail ervice traces (#10438)
-- c1f167542 Fix login if current location equal to target (#10436)
-- f56a483c8 Adjust telegram-bot for PostgreSQL (#10435)
-- 1d450682b Display documents table source (#10433)
-- f36ac1a6d Start exported doc numbers from the higher available one (#10434)
-- 90af23b9c Fix missing collaborative content in export (#10432)
-- 5f00f623d Allow guest update profile (avatar, name etc) (#10429)
-- 03a14ae55 FUSIO-89: Fix clisr
 
 ## [0.7.328] - 2026-01-22
 
@@ -38,61 +21,19 @@ All commits (generated from v0.7.328..v0.7.329; filtered: merges excluded, 'Sign
 * 🚀 FEATURES: · Add confirmation modal for table refresh (#10428) · Add retry for login token validation in case of any error · Add git ignore · Add mobile view check for desktop app downloads · feat: link preview service (#10424)
 * ⚙️ MISCELLANEOUS TASKS: · Display space for templates (#10426) · Remove mobile view check · Move metadata comment to the end (#10421)
 
-All commits (generated from v0.7.327..v0.7.328; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 06a78b42a Fix deps
-- fbd95912c More accent fixes
-- d8653adf7 Add confirmation modal for table refresh (#10428)
-- b0366dee2 Display space for templates (#10426)
-- d3782f86a Fix original table layout (#10427)
-- 8450c3d3d Allow light/dark + accent colors and fix kanban selection
-- 084df6789 Add retry for login token validation in case of any error
-- 64985e048 Remove mobile view check
-- 9198b5a84 Add git ignore
-- b82ca8eab Fix toggle styling
-- 619bc6cba Add mobile view check for desktop app downloads
-- 2b3979030 feat: link preview service (#10424)
-- f52fa27e6 Move metadata comment to the end (#10421)
-
 ## [0.7.327] - 2026-01-21
 
 * 🐛 BUG FIXES: · Fix artifact name · Fix Platform-Linux-arm64 · Fixes for desktop packages
-
-All commits (generated from v0.7.326..v0.7.327; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 07c0b3cb6 Fix artifact name
-- 199ab860b Fix Platform-Linux-arm64
-- c7063977e Fixes for desktop packages
 
 ## [0.7.326] - 2026-01-20
 
 * 🐛 BUG FIXES: · Fix · Fix aibot snappy compression · fix: sort qms templates in wizard (#10419) · Fix long title display (#10418) · Fix dist build · Fix size predicate null handle (#10417)
 * 🚀 FEATURES: · Accent colors support
 
-All commits (generated from v0.7.325..v0.7.326; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- d38fcbff5 Fix
-- 8f3fced18 Accent colors support
-- 072a364fc Fix aibot snappy compression
-- 3f2a8cf24 fix: sort qms templates in wizard (#10419)
-- 0fd1f17fa Fix long title display (#10418)
-- e85f24000 Fix dist build
-- 218cce6a4 Fix size predicate null handle (#10417)
-- 558d66883 Minor process fixes (#10416)
-
 ## [0.7.325] - 2026-01-19
 
 * 🐛 BUG FIXES: · Attempt to fix dist docker build · Fix flacky test + disable dist in dev setup by default · Fix docker setup for dist build · Fix formatting · Fix GitHub License badge URL in README.md
 * ⚙️ MISCELLANEOUS TASKS: · Update desktop build
-
-All commits (generated from v0.7.324..v0.7.325; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 5bfde7840 Attempt to fix dist docker build
-- 9d0da81b5 Fix flacky test + disable dist in dev setup by default
-- 6def7fe63 Fix docker setup for dist build
-- 02e676484 Fix formatting
-- 86f7cdf0c Fix GitHub License badge URL in README.md
-- 2a05f1a4d Update desktop build
 
 ## [0.7.324] - 2026-01-19
 
@@ -100,51 +41,15 @@ All commits (generated from v0.7.324..v0.7.325; filtered: merges excluded, 'Sign
 * 🐛 BUG FIXES: · fix: filter relations by workspaceId (#10414) · Fix transcription on reconnect to service · fix: show custom icons for cards breadcrumbs (#10412) · Fix view setting freeze (#10410) · Fix default null value (#10409) · Fix controlled doc sequence conflicts (#10406)
 * 🚀 FEATURES: · Support documents table diff and refresh (#10411)
 
-All commits (generated from v0.7.323..v0.7.324; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- c4a769c54 Use actual viewlet config to copy table (#10415)
-- 775006303 fix: filter relations by workspaceId (#10414)
-- aa6668a2b Fix transcription on reconnect to service
-- 7a8a75b8b Display original data for tables (#10413)
-- 8bc8183cb fix: show custom icons for cards breadcrumbs (#10412)
-- 144b0acfe Support documents table diff and refresh (#10411)
-- eac75aaf5 Bump actions/upload-artifact from 4 to 6 (#10300)
-- 93fca17b0 Fix view setting freeze (#10410)
-- e1231f855 Fix default null value (#10409)
-- 1fcb44334 Remove beta marks for cards and processes (#10408)
-- 1e4926fd8 Fix controlled doc sequence conflicts (#10406)
-- 79f847e6d Print workspace logo in PDF (#10407)
-- ad50c8840 fix: customize support links (#10405)
-- 6f012e42b Fix card view settings (#10404)
-
 ## [0.7.323] - 2026-01-15
 
 * ⚙️ MISCELLANEOUS TASKS: · fnd-40: update activity filter · Update core and server (#10400) · Process service should ignore config user (#10399) · Export without extra sublings (#10401)
 * 🐛 BUG FIXES: · fnd-38: fix tooltip · fnd-35: fix tooltip · Fix card export (#10403) · fnd-7: fix recording attachment
 
-All commits (generated from v0.7.322..v0.7.323; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 1e819eb9e fnd-40: update activity filter
-- 681dc124b fnd-38: fix tooltip
-- c30aaa8b8 fnd-35: fix tooltip
-- 6bdb38827 Fix card export (#10403)
-- 2165c3928 Update core and server (#10400)
-- 354cafddd Process service should ignore config user (#10399)
-- 9dfcf8498 Export without extra sublings (#10401)
-- 31a86eb16 fnd-7: fix recording attachment
-
 ## [0.7.322] - 2026-01-13
 
 * 🐛 BUG FIXES: · Fix unhandled rejection in transactor · Fix association attribute in markdown table (#10398) · fnd-11: fix font size ru translation · fnd-20: fix guest email edit
 * ⚙️ MISCELLANEOUS TASKS: · Copy relationship table (#10397)
-
-All commits (generated from v0.7.321..v0.7.322; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 2cd9973d8 Fix unhandled rejection in transactor
-- 2ae599884 Fix association attribute in markdown table (#10398)
-- e42999537 Copy relationship table (#10397)
-- f9cf59d63 fnd-11: fix font size ru translation
-- 4ba300da7 fnd-20: fix guest email edit
 
 ## [0.7.321] - 2026-01-12
 
@@ -152,150 +57,20 @@ All commits (generated from v0.7.321..v0.7.322; filtered: merges excluded, 'Sign
 * ⚙️ MISCELLANEOUS TASKS: · Bump postgres package version (#10394) · fnd-23: remove skype · Allow issue max width · Remove collapse button in planner
 * 🚀 FEATURES: · Initial Stripe support (#10392)
 
-All commits (generated from v0.7.320..v0.7.321; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 8d916030f Fix agent's list per room
-- 7cbdb612e Fix missing events in planner (#10395)
-- f6d2476b5 Bump postgres package version (#10394)
-- 795ba3649 fnd-23: remove skype
-- 499211af5 fnd-25: fix loc on workspace switch
-- 951ff735d Allow issue max width
-- 5d43f44c4 Remove collapse button in planner
-- 289b1d2ef Fix card activity (#10393)
-- 36927fbd9 Initial Stripe support (#10392)
-
 ## [0.7.320] - 2026-01-12
 
 * 🐛 BUG FIXES: · Egress Webhook & agent assignee fixes
-
-All commits (generated from v0.7.319..v0.7.320; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- ac4d56f83 Egress Webhook & agent assignee fixes
 
 ## [0.7.319] - 2026-01-12
 
 * 🐛 BUG FIXES: · Fix aibot init concurrency · Fix notification topic creation
 * ⚙️ MISCELLANEOUS TASKS: · Allow override from/replyTo in client mode · Update summary · Update git diff to put into 2 level dir structure
 
-All commits (generated from v0.7.318..v0.7.319; filtered: merges excluded, 'Signed-off-by:' footers removed):
-
-- 3c21faa6e Fix aibot init concurrency
-- 6d234fa56 Allow override from/replyTo in client mode
-- 12d98179f Fix notification topic creation
-- d409a0e99 Update summary
-- d533933b7 Update git diff to put into 2 level dir structure
-
 ## [0.7.318] - 2026-01-11
 
 * 🚀 FEATURES: · Office recordings & transcriptions; separate storage for transcription chunks; Aibot (Gigachat) support and REST APIs; Type/tag permissions; Ability to copy issues and cards as tables; Card versioning and version selector for relations; Support for PGBouncer/Postgres improvements; Switch build and tests to Node 24; Various export and table improvements.
 * 🐛 BUG FIXES: · Fix exporter ancestor order; hide processes when missing; fix old card UI and card type export; fulltext index fix when communication api is disabled; numerous test, build and formatting fixes.
 * ⚙️ MISCELLANEOUS TASKS: · Bump model version; migrate only existing config; use separate storage for transcription chunks;
-
-All commits (generated from v0.7.317..v0.7.318; filtered: 'Merge remote-tracking' commits excluded, 'Signed-off-by:' footers removed):
-
-- 1052103ec Merge pull request #4 from intabia-fusion/office-recordings
-- cd0542d93 Review fixes
-- 8fdecbd6d Office recordings and transcriptions
-- ab9daa499 Show doc attrs and collaborators for cards (#10390)
-- ccab8a43e Rollback temporarly nodejs version
-- dcb25b2a0 Enhance ObjectBoxPopup to handle category presentation (#10389)
-- 3411597ca Fix exporter ancestor order (#10388)
-- cabc0b0a7 Hide processes if not exists (#10387)
-- 4751ae8bc Fix old card UI (#10386)
-- 0e89060f5 Fix card type export (#10385)
-- dcfc541f7 Switch build and tests to use node 24
-- 13d9a3ad0 fix: sort controlled documents by rank and title (#10383)
-- 42f2141d0 Add type/tag permissions (#10384)
-- 58f78b683 Update changelog (#10382)
-- 585358ea0 Fix exporter (#10378)
-- b24df45ba Bump model version (#10381)
-- 0f0790b78 Migrate only existing config (#10380)
-- d66209626 Fix social id search (#10379)
-- 1a46076c8 Use separate storage for transcription chunks
-- ad73f8762 Remove keybind to close current tab (problem with different keyboards) (#10375)
-- d8d301004 Merge pull request #3 from intabia-fusion/gigachat-support
-- ae496987a Review fixes
-- a90f785ed Add token limit display
-- 9ce63ae27 Check only visited workspaces in billing
-- 204ac8d80 Refactoring aibot to support gigachat
-- 5a3088070 Update local client configs in case of version change (#10377)
-- cdbc1959a Fix email notifications (#10376)
-- a7599bb3d Temporal debug loggin for notifications (#10374)
-- 90b93b97c Type export/import (#10373)
-- b89613780 Select relation when create new version (#10372)
-- 4c6020275 Fix fulltext index if communication api is not enabled (#10371)
-- c95dca13e Adjust QMS client for new TraceX (#10370)
-- 5e47a2fe9 Merge branch 'aibot-rest' into develop
-- 267d5bb40 update room events
-- adac5a2e9 Update some minor stuff
-- 7c407ab60 Aibot using rest APIs
-- e864a2e98 Remember last login method for user
-- 3a45f31ae Multiple user request input (#10367)
-- ebb3adbbf update browserslist
-- 214f61fb8 Fix outdated baseline warning (#10369)
-- 33acb80a2 Allow to get person info in export (#10368)
-- 7b1ed12ae Add ability to copy issues as table (#10366)
-- 8107341f0 Format space and type in cards table (#10365)
-- c6764b8cd Do not show title instead of labels (#10364)
-- 04a0f3b1d Format controlled docs table (#10363)
-- 6293de624 Fix viewlet settings loading for export (#10362)
-- d42e9c50d Load person names in docs table (#10361)
-- ea364db75 Allow open relations in new tab from context menu (#10359)
-- eec5c8f02 use versioning selector for relations (#10360)
-- faa562c7e Fix subprocess space (#10358)
-- c75c077e9 show boolean attributes in card title (#10354)
-- 1ab534165 Fix tests
-- 121d6afa7 Copy controlled docs table (#10357)
-- 97bd5ebdd Add chat presenters updates
-- be55b4a39 Fix exported table columns (#10356)
-- bc310ecdd Add confirmation dialog on message delete
-- cdc90c828 Remove extra search
-- e578d7e3e Add ability to copy cards as table (#10355)
-- defcd0eef Fix card spaces table (#10352)
-- 6b9e2b1e8 331 minor fixes (#10351)
-- b37c74185 Fix relationship table header order (#10353)
-- 1c9112dab Qfix: external approver (#10350)
-- 11d675332 Do not flood on livekit
-- 480a7f53d Merge pull request #2 from intabia-fusion/notifications-rework
-- 4b343905c Fix test
-- c91a19cae Improve custom employee ref (#10349)
-- bbdc3167e Fix USE_OTP
-- b17629d57 Fix rush check
-- 8a0909869 Fix formatting
-- 8530fcd04 Allow to error back propogation
-- afd8e59fd Rename connection->client
-- 216399e17 Mail with OTP in dev setup
-- c99c14672 Rework mail service
-- 87d421172 Use frame utils
-- 4f620325f Fix buffer logic
-- fc52dc159 Fix reconnect-logic
-- e62191145 Benchmark test
-- e051d0d66 Test fixes
-- 2a3d2a2f3 Caching of snappy imports
-- a2cb57d2d Fixes
-- 4522a529a apply formatting
-- e0e06d0e2 Socket ops
-- 1edd03aea Rename inner rush.json files
-- da4b59e09 Batch processing
-- cd178d213 Minor fixes (Execution autostart, show version for any mention, versioning handle in idpresenter) (#10347)
-- c8eebb0d9 Fix relation query (#10346)
-- 027e98d32 Version attribute migration (#10345)
-- 4eec6ea2d Show version as column (#10344)
-- 19963814b New version confirmation (#10343)
-- bc0567988 Relationship table fixes (#10342)
-- 5b3eeb4ff Update README.md
-- b270c4f7c Fix limits after workspace change (#10340)
-- 56e5d6f6d Make mail config optional in export (#10339)
-- 05e5c37a5 Add versioning support to fulltext (#10338)
-- 9bb0d35de Card versioning (#10336)
-- 2e72b1a5a Send mail to workspace owners after documents import (#10337)
-- 82d2a9815 Merge pull request #1 from intabia-fusion/pgbouncer-support
-- 4fcd1c11c Support PGBouncer by default
-- 51a876db5 Fix export notifications (#10333)
-- c8aec52f1 Postgress support (#10331)
-- d69af65ea Add missing translations (#10330)
-- 49fbda1d7 Add more logging to aibot and love-agent
-- 98055e4b5 Fix documents with notes and images (#10328)
 
 ## [0.7.317] - 2025-12-24
 
@@ -4192,4 +3967,5 @@ All commits:
 * CLEAN: · Package.json 
 
 <!-- generated by git-cliff -->
+
 
