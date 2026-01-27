@@ -84,8 +84,5 @@ export default mergeIds(loginId, login, {
     AccessNotActive: '' as IntlString,
     DesktopApp: '' as IntlString,
     EditBoxPlaceholder: '' as IntlString
-  },
-  metadata: {
-    LoginTheme: '' as any
   }
 })

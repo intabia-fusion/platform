@@ -71,6 +71,9 @@ export interface Config {
   HULYLAKE_URL?: string
   DISABLED_FEATURES?: string
   SIGNUP_URL?: string
+
+  ACCENT_THEME?: string
+  LOGIN_THEME?: string
 }
 
 export interface Branding {

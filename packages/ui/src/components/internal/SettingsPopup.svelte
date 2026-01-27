@@ -33,6 +33,7 @@
     eventToHTMLElement
   } from '../..'
   import EmojiStyle from './icons/EmojiStyle.svelte'
+  import { isForceAccentColor } from '@hcengineering/theme'
 
   const { currentFontSize, setFontSize } = getContext<{
     currentFontSize: Readable<string>
@@ -202,8 +203,6 @@
   $: fontsize = fontsizes.find((fs) => fs.id === $currentFontSize) ?? fontsizes[0]
   $: language = langs.find((lang) => lang.id === $currentLanguage) ?? langs[0]
   $: emoji = emojis.find((e) => e.id === $currentEmoji) ?? emojis[0]
-  $: accent =
-    accentColors.find((a: { id: string, name: string, color: string }) => a.id === $currentAccent) ?? accentColors[0]
 </script>
 
 <div class="antiPopup thinStyle">
@@ -231,50 +230,51 @@
         {/each}
       </div>
 
-      <div class="ap-menuItem separator halfMargin" />
-
-      <div class="flex-row-center m-4">
-        {#each accentColors as option}
-          {@const selected = $currentAccent === option.id}
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
-          <div
-            class="statusPopup-option"
-            style={'margin-right: 5px;'}
-            class:selected
-            title={option.name}
-            tabindex="0"
-            role="button"
-            on:click={() => {
-              selectAccent(option.id)
-            }}
-            on:mouseenter={(ev) => {
-              showAccentPreview(ev, option)
-            }}
-            on:mouseleave={() => {
-              scheduleHidePreview()
-            }}
-            on:focus={(ev) => {
-              showAccentPreview(ev, option)
-            }}
-            on:blur={() => {
-              scheduleHidePreview()
-            }}
-            on:keydown={(ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') {
-                ev.preventDefault()
-                selectAccent(option.id)
-              }
-            }}
-          >
+      {#if !isForceAccentColor()}
+        <div class="ap-menuItem separator halfMargin" />
+        <div class="flex-row-center m-4">
+          {#each accentColors as option}
+            {@const selected = $currentAccent === option.id}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
-              class="accent-color-dot"
-              class:selected={$currentAccent === option.id}
-              style="background-color: {option.color}"
-            />
-          </div>
-        {/each}
-      </div>
+              class="statusPopup-option"
+              style={'margin-right: 5px;'}
+              class:selected
+              title={option.name}
+              tabindex="0"
+              role="button"
+              on:click={() => {
+                selectAccent(option.id)
+              }}
+              on:mouseenter={(ev) => {
+                showAccentPreview(ev, option)
+              }}
+              on:mouseleave={() => {
+                scheduleHidePreview()
+              }}
+              on:focus={(ev) => {
+                showAccentPreview(ev, option)
+              }}
+              on:blur={() => {
+                scheduleHidePreview()
+              }}
+              on:keydown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault()
+                  selectAccent(option.id)
+                }
+              }}
+            >
+              <div
+                class="accent-color-dot"
+                class:selected={$currentAccent === option.id}
+                style="background-color: {option.color}"
+              />
+            </div>
+          {/each}
+        </div>
+      {/if}
 
       <div class="ap-menuItem separator halfMargin" />
 

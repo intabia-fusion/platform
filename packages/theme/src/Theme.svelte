@@ -90,7 +90,7 @@
     )
     setOptions(fontsize, getCurrentTheme(), getCurrentLanguage(), getCurrentEmoji(), getCurrentAccentColor())
   }
-  const setLanguage = async (language: string, set: boolean = true) => {
+  const setLanguage = async (language: string, set: boolean = true): Promise<void> => {
     currentLanguage.set(language)
     if (set) {
       localStorage.setItem('lang', language)

@@ -142,7 +142,7 @@ import { coreId } from '@hcengineering/core'
 import presentation, { loadServerConfig, createFileStorage, presentationId } from '@hcengineering/presentation'
 
 import { setMetadata } from '@hcengineering/platform'
-import { initThemeStore, setDefaultLanguage } from '@hcengineering/theme'
+import { initThemeStore, setDefaultLanguage, setForceAccent, type AccentColorType } from '@hcengineering/theme'
 
 import { preferenceId } from '@hcengineering/preference'
 import { uiId } from '@hcengineering/ui/src/plugin'
@@ -203,6 +203,9 @@ export interface Config {
   DESKTOP_UPDATES_URL?: string
   DESKTOP_UPDATES_CHANNEL?: string
   DESKTOP_UPDATES_CHANNELS?: string
+
+  ACCENT_THEME?: string
+  LOGIN_THEME?: string
 }
 
 export interface Branding {
@@ -469,6 +472,7 @@ export async function configurePlatform() {
   setMetadata(login.metadata.AccountsUrl, config.ACCOUNTS_URL)
   setMetadata(login.metadata.DisableSignUp, config.DISABLE_SIGNUP === 'true')
   setMetadata(login.metadata.HideLocalLogin, config.HIDE_LOCAL_LOGIN === 'true')
+  setMetadata(login.metadata.LoginTheme, config.LOGIN_THEME ?? 'intabia')
 
 
   const updatesUrl = config.DESKTOP_UPDATES_URL
@@ -487,6 +491,10 @@ export async function configurePlatform() {
     createFileStorage(config.UPLOAD_URL, config.DATALAKE_URL, config.HULYLAKE_URL)
   )
   setMetadata(presentation.metadata.CollaboratorUrl, config.COLLABORATOR_URL)
+
+  if( config.ACCENT_THEME !== undefined) {
+    setForceAccent(config.ACCENT_THEME as AccentColorType)
+  }
 
   setMetadata(platform.metadata.DevModel, false)
 

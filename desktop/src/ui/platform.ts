@@ -149,7 +149,7 @@ import print, { printId } from '@hcengineering/print'
 import sign from '@hcengineering/sign'
 import textEditor, { textEditorId } from '@hcengineering/text-editor'
 
-import { initThemeStore, setDefaultLanguage } from '@hcengineering/theme'
+import { AccentColorType, initThemeStore, setDefaultLanguage, setForceAccent } from '@hcengineering/theme'
 import { configureNotifications } from './notifications'
 import { configureAnalyticsProviders } from '@hcengineering/analytics-providers'
 import { Branding, Config } from './types'
@@ -337,6 +337,8 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(login.metadata.AccountsUrl, config.ACCOUNTS_URL)
   setMetadata(login.metadata.DisableSignUp, config.DISABLE_SIGNUP === 'true')
   setMetadata(login.metadata.HideLocalLogin, config.HIDE_LOCAL_LOGIN === 'true')
+  setMetadata(login.metadata.LoginTheme, config.LOGIN_THEME ?? 'intabia')
+
   setMetadata(presentation.metadata.UploadURL, config.UPLOAD_URL)
   setMetadata(presentation.metadata.UploadURL, config.FILES_URL)
   setMetadata(presentation.metadata.DatalakeUrl, config.DATALAKE_URL ?? '')
@@ -362,6 +364,10 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(github.metadata.GithubApplication, config.GITHUB_APP ?? '')
   setMetadata(github.metadata.GithubClientID, config.GITHUB_CLIENTID ?? '')
   setMetadata(github.metadata.GithubURL, config.GITHUB_URL ?? '')
+
+  if (config.ACCENT_THEME !== undefined) {
+    setForceAccent(config.ACCENT_THEME as AccentColorType)
+  }
 
   setMetadata(communication.metadata.Enabled, config.COMMUNICATION_API_ENABLED === 'true')
 

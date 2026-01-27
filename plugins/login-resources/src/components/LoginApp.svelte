@@ -59,7 +59,7 @@
   import AdminWorkspaces from './AdminWorkspaces.svelte'
   import ChangePassword from './ChangePassword.svelte'
 
-  import { loginTheme, themes, applyHtmlAccent, setLoginTheme, type LoginThemeName } from '../theme'
+  import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
 
   export let page: Pages = 'signup'
 
