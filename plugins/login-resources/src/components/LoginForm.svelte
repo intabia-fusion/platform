@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type IntlString, Severity, Status } from '@hcengineering/platform'
+  import { getEmbeddedLabel, type IntlString, Severity, Status } from '@hcengineering/platform'
   import { signupStore } from '@hcengineering/analytics-providers'
   import { onMount } from 'svelte'
 
-  import { type BottomAction, doLoginAsGuest, doLoginNavigate, LoginMethods } from '../index'
+  import { type BottomAction, doLoginAsGuest, doLoginNavigate, getAccountClient, LoginMethods } from '../index'
   import LoginPasswordForm from './LoginPasswordForm.svelte'
   import LoginOtpForm from './LoginOtpForm.svelte'
   import BottomActionComponent from './BottomAction.svelte'
@@ -121,6 +121,14 @@
       void guestLogin()
     }
   }
+
+  let allowReadonlyGuests = false
+
+  void getAccountClient()
+    .isAllowReadOnlyGuests()
+    .then(({ allowed }) => {
+      allowReadonlyGuests = allowed
+    })
 </script>
 
 {#if method === LoginMethods.Otp}
@@ -128,18 +136,28 @@
 {:else}
   <LoginPasswordForm {navigateUrl} {signUpDisabled} {email} {caption} {subtitle} {onLogin} on:change={changeMethod} />
 {/if}
+
 <div class="actions">
   <BottomActionComponent action={method === LoginMethods.Otp ? loginWithPasswordAction : loginWithCodeAction} />
-  <div class="login-as-guest">
-    <BottomActionComponent action={loginAsGuest} />
-  </div>
+
+  {#if allowReadonlyGuests}
+    <div class="login-as-guest">
+      <BottomActionComponent action={loginAsGuest} />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
   .actions {
-    margin-left: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
   }
+
   .login-as-guest {
     margin-top: 1rem;
+    color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
   }
 </style>

@@ -18,12 +18,12 @@
   import { logIn } from '@hcengineering/workbench'
   import { signupStore } from '@hcengineering/analytics-providers'
 
-  import BottomActionComponent from './BottomAction.svelte'
+  import Label from './internal/Label.svelte'
   import login from '../plugin'
   import { getPasswordValidationRules } from '../validations'
   import { goTo } from '../utils'
   import Form from './Form.svelte'
-  import { OtpLoginSteps, signUp, signUpOtp, type BottomAction } from '../index'
+  import { OtpLoginSteps, signUp, signUpOtp } from '../index'
   import type { Field } from '../types'
   import OtpForm from './OtpForm.svelte'
   import { onMount } from 'svelte'
@@ -39,20 +39,26 @@
 
   $: {
     fields = [
-      { id: 'given-name', name: 'first', i18n: login.string.FirstName, short: true },
-      { id: 'family-name', name: 'last', i18n: login.string.LastName, short: true },
+      { id: 'given-name', name: 'first', i18n: login.string.FirstName },
+      { id: 'family-name', name: 'last', i18n: login.string.LastName },
       { id: 'email', name: 'username', i18n: login.string.Email }
     ]
 
     if (withPassword) {
       fields.push({
-        id: 'new-password',
+        id: 'password',
         name: 'password',
         i18n: login.string.Password,
         password: true,
         rules: getPasswordValidationRules()
       })
-      fields.push({ id: 'new-password', name: 'password2', i18n: login.string.PasswordRepeat, password: true })
+      fields.push({
+        id: 'password',
+        idOverride: 'password2',
+        name: 'password2',
+        i18n: login.string.PasswordRepeat,
+        password: true
+      })
     }
   }
 
@@ -102,19 +108,16 @@
     }
   }
 
-  let withPasswordAction: BottomAction
-  $: withPasswordAction = {
-    i18n: withPassword ? login.string.SetPasswordLater : login.string.SetPasswordNow,
-    func: () => {
-      withPassword = !withPassword
-      step = OtpLoginSteps.Email
-
-      setTimeout(() => {
-        if (form != null) {
-          form.invalidate()
-        }
-      }, 0)
-    }
+  function revalidateAndFocusPassword (): void {
+    setTimeout(() => {
+      if (form != null) {
+        form.invalidate()
+      }
+      if (withPassword) {
+        const pw = document.querySelector('input[name="password"]')
+        if (pw instanceof HTMLInputElement) pw.focus()
+      }
+    }, 0)
   }
 
   function handleStep (event: CustomEvent<OtpLoginSteps>): void {
@@ -123,13 +126,28 @@
 </script>
 
 {#if step === OtpLoginSteps.Email}
-  <Form bind:this={form} caption={login.string.SignUp} {status} {fields} {object} {action} withProviders />
+  <Form bind:this={form} caption={login.string.SignUp} {status} {fields} {object} {action} withProviders>
+    <div slot="after-fields" class="form-row">
+      {#if useOTP}
+        <label class="check-label">
+          <input
+            type="checkbox"
+            bind:checked={withPassword}
+            on:change={() => {
+              step = OtpLoginSteps.Email
+              revalidateAndFocusPassword()
+            }}
+          />
+          <Label label={login.string.SetPasswordNow} />
+        </label>
+      {/if}
+    </div>
+  </Form>
 {/if}
 
 {#if step === OtpLoginSteps.Otp && object.username !== ''}
   <OtpForm
     email={object.username}
-    {signUpDisabled}
     {navigateUrl}
     loginState="signup"
     password={object.password}
@@ -138,21 +156,63 @@
   />
 {/if}
 
-{#if useOTP}
-  <div class="action">
-    <BottomActionComponent action={withPasswordAction} />
-  </div>
-{:else}
-  <div class="placeholder" />
-{/if}
-
 <style lang="scss">
+  // TODO: Refactor me please
   .action {
     margin-left: 5rem;
   }
 
-  // TODO: Refactor me please
   .placeholder {
     height: 1.125rem;
+  }
+
+  /* Checkbox row for "Set password now" */
+  .check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--login-content-color, var(--theme-content-color));
+  }
+
+  /* Custom-styled checkbox so it's visible across themes (Intabia/Huly).
+     Keep visuals simple and theme-aware via `--login-*` tokens (fallbacks to global tokens). */
+  .check-label input[type='checkbox'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    /* Thicker, more contrasting border to ensure visibility on light backgrounds */
+    border: 2px solid var(--login-darker-color, var(--theme-darker-color, rgba(0, 0, 0, 0.2)));
+    background: var(--login-button-default, var(--theme-button-default, #ffffff));
+    border-radius: 0.2rem;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    vertical-align: middle;
+    /* Provide native accent fallback so platform checkboxes remain visible when appearance can't be suppressed */
+    accent-color: var(--login-primary-button-default, var(--primary-button-default));
+  }
+
+  .check-label input[type='checkbox']:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .check-label input[type='checkbox']:checked {
+    background: var(--login-primary-button-default, var(--primary-button-default, #cf13a2));
+    border-color: var(--login-primary-button-default, var(--primary-button-default));
+  }
+
+  .check-label input[type='checkbox']:checked::after {
+    content: '';
+    position: absolute;
+    left: 0.36rem;
+    top: 0.06rem;
+    width: 0.26rem;
+    height: 0.6rem;
+    border: solid var(--login-button-text-color, var(--primary-button-color, #ffffff));
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
   }
 </style>

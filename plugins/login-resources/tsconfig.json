@@ -7,5 +7,5 @@
     "declarationDir": "./types"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "lib", "dist", "types", "bundle"]
+  "exclude": ["node_modules", "lib", "dist", "types", "bundle", "src/**/*.scss"]
 }

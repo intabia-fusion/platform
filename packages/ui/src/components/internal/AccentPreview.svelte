@@ -189,7 +189,8 @@
 
 <div
   bind:this={previewEl}
-  class="accent-preview {accent?.id ?? 'accent-huly'} {`accent-${$themeStore.dark ? 'dark' : 'light'}-${(accent?.id ?? 'accent-huly').replace('accent-', '')}`}"
+  class="accent-preview {accent?.id ??
+    'accent-huly'} {`accent-${$themeStore.dark ? 'dark' : 'light'}-${(accent?.id ?? 'accent-huly').replace('accent-', '')}`}"
   role="dialog"
   aria-label="Accent preview"
   on:mouseenter={handleMouseEnter}

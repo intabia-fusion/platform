@@ -26,7 +26,9 @@
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import login from '@hcengineering/login'
   import { goTo } from '../utils'
-  import { Button, Label, Scroller, Spinner, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Scroller, Spinner, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import FormButton from './internal/FormButton.svelte'
+  import Label from './internal/Label.svelte'
 
   interface DownloadArtifact {
     filename: string
@@ -362,7 +364,7 @@
               <div class="artifact-buttons">
                 {#each visibleArtifactsForPlatform(p) as a (a.url)}
                   <div class="download-button">
-                    <Button
+                    <FormButton
                       kind={p.platform === detectedPlatform && pickDefaultForPlatform(p) === a
                         ? 'primary'
                         : 'secondary'}
@@ -383,7 +385,7 @@
     {/if}
   {/if}
   <div class="back-row">
-    <Button
+    <FormButton
       kind="regular"
       size="medium"
       shape="round2"

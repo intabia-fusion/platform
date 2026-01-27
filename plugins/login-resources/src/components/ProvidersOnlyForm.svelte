@@ -19,10 +19,7 @@
   import Providers from './Providers.svelte'
 </script>
 
-<div
-  style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '4rem 5rem'}
-  style:min-height={$deviceInfo.docHeight > 720 ? '42rem' : '0'}
->
+<div style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '4rem 5rem'}>
   <Tabs loginState={'login'} signUpDisabled={true} />
   <Providers />
 </div>

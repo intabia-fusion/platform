@@ -15,7 +15,7 @@
     "ecmaVersion": 2020,
     "sourceType": "module",
     "project": ["tsconfig.json"],
-    "extraFileExtensions": [".svelte"]
+    "extraFileExtensions": [".svelte", ".scss"]
   },
   "plugins": ["@typescript-eslint", "import"],
   "ignorePatterns": ["*.json", "node_modules/*", ".eslintrc.js"],

@@ -13,8 +13,8 @@ export class SignUpPage extends CommonPage {
   inputFirstName = (): Locator => this.page.locator('input[name="given-name"]')
   inputLastName = (): Locator => this.page.locator('input[name="family-name"]')
   inputEmail = (): Locator => this.page.locator('input[name="email"]')
-  inputNewPassword = (): Locator => this.page.locator('//div[text()="Password"]/../input')
-  inputRepeatPassword = (): Locator => this.page.locator('//div[text()="Repeat password"]/../input')
+  inputNewPassword = (): Locator => this.page.locator('input[name="password"]')
+  inputRepeatPassword = (): Locator => this.page.locator('input[name="password2"]')
   buttonSignUp = (): Locator => this.page.locator('button', { hasText: 'Sign Up' })
 
   async enterFirstName (firstName: string): Promise<void> {

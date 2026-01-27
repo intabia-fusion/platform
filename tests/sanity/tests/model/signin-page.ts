@@ -11,7 +11,7 @@ export class SignInJoinPage extends CommonPage {
   }
 
   inputEmail = (): Locator => this.page.locator('input[name="email"]')
-  inputPassword = (): Locator => this.page.locator('//div[text()="Password"]/../input')
+  inputPassword = (): Locator => this.page.locator('input[name="current-password"]')
   buttonJoin = (): Locator => this.page.locator('button', { hasText: 'Join' })
 
   async join (data: Pick<SignUpData, 'email' | 'password'>): Promise<void> {

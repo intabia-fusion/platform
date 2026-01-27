@@ -1,0 +1,114 @@
+/**
+  Copyright © 2026 Intabia Fusion.
+
+  Licensed under the Eclipse Public License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may
+  obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+/* Huly-specific tokens and inlined base layout (no positional customizations) */
+.login-theme-huly {
+
+  /* Content wrapper inside the panel */
+  .form-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    height: max-content;
+  }
+
+  /* Theme color / token overrides (Huly) */
+  --login-panel-bg: rgba(45, 50, 160, 0.5);
+  --login-panel-gradient: radial-gradient(161.92% 96.11% at 11.33% 3.89%, #313d9a 0%, #202669 100%);
+
+  /* Login-prefixed tokens for localized components in login-resources.
+     These variables allow localized inputs/buttons to consume login-specific
+     colors while falling back to existing theme tokens for compatibility. */
+  --login-button-default: var(--theme-button-default, rgba(255, 255, 255, 0.02));
+  --login-button-hovered: var(--theme-button-hovered, rgba(0,0,0,0.04));
+  --login-button-pressed: var(--theme-button-pressed, rgba(0,0,0,0.06));
+  --login-button-border: var(--primary-button-border, rgba(255, 255, 255, 0.09));
+  --login-button-focused: rgba(255, 255, 255, 0.04);
+  /* Subtle focus background for inputs (Huly uses a slight white overlay). */
+  --login-input-focus-bg: var(--theme-button-focused, rgba(255, 255, 255, 0.04));
+
+  /* Prefer app-level primary tokens; fallback to Huly legacy palette */
+  --login-primary-button-default: var(--primary-button-default, #205DC2);
+  --login-primary-button-hovered: var(--primary-button-hovered, #3575de);
+  --login-primary-button-pressed: var(--primary-button-pressed, #1C52AB);
+  --login-primary-button-color: var(--primary-button-color, #ffffff);
+
+  /* Login-specific label/button tokens (Huly) */
+  /* Labels/use text color: white */
+  --login-label-color: #ffffff;
+  --login-label-link-color: #ffffff;
+  /* Button text color: white */
+  --login-button-text-color: #ffffff;
+
+  --login-content-color: var(--theme-content-color, #ffffff);
+  --login-caption-color: var(--theme-caption-color, #000000);
+  /* NavLink colors (login-scoped) */
+  --login-navlink-color: var(--login-content-color, var(--theme-content-color));
+  --login-navlink-hover-color: var(--login-caption-color, var(--theme-caption-color));
+  --login-navlink-active-color: var(--login-content-color, var(--theme-content-color));
+
+  /* Form background: Huly keeps a transparent/form-integrated card by default */
+  --login-form-bg: transparent;
+
+  /* Heading color for login titles in Huly */
+  --login-heading-color: #ffffff;
+
+  /* Login-scoped primary button tokens (Huly palette) */
+  --login-primary-button-default: var(--primary-button-default, #205DC2);
+  --login-primary-button-hovered: var(--primary-button-hovered, #3575de);
+  --login-primary-button-pressed: var(--primary-button-pressed, #1C52AB);
+  --login-primary-button-focused: var(--primary-button-focused, #205DC2);
+  --login-primary-button-focus-ring: rgba(81, 144, 236, 0.06);
+  --login-primary-button-font-weight: 500;
+  --login-primary-button-disabled-color: rgba(255, 255, 255, 0.3);
+
+  /* Contrast tokens for login components (explicit Huly contrast values) */
+  --login-button-contrast-enabled: rgb(255, 255, 255);
+  --login-button-contrast-color: rgb(0, 0, 0);
+  --login-button-contrast-hovered: #ffffff;
+  --login-button-contrast-pressed: rgba(255, 255, 255, 0.6);
+  --login-button-contrast-border: rgba(255, 255, 255, 0.2);
+  --login-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --login-button-contrast-disabled-color: rgba(0, 0, 0, .5);
+
+  --login-caret-color: var(--theme-caret-color, #000000);
+  --login-input-bg: var(--login-button-default, rgba(255, 255, 255, 0.02));
+  --login-form-grid-template: 1fr;
+
+  /* Primary button tokens — restore Huly legacy values (match theme defaults) */
+  --primary-button-default: #205DC2;
+  --primary-button-hovered: #3575de;
+  --primary-button-pressed: #1C52AB;
+  --primary-button-focused: #205DC2;
+  --primary-button-disabled-color: rgba(255, 255, 255, 0.3);
+
+  /* Compatibility tokens */
+  --primary-button-color: #ffffff;
+  --primary-button-content-color: rgba(255, 255, 255, 0.8);
+  --primary-button-label-color: #ffffff;
+  --primary-button-icon-color: #ffffff;
+}
+
+.login-theme-huly {
+  --login-title-font-size: 1.75rem;
+  --login-title-font-weight: 700;
+  --login-title-margin-bottom: 0.75rem;
+  --login-main-heading-font-size: 2.25rem;
+  --login-main-heading-font-weight: 800;
+  --login-main-heading-line-height: 2.6rem;
+  --login-main-heading-letter-spacing: 0.02em;
+  --login-main-heading-margin-bottom: 1rem;
+}

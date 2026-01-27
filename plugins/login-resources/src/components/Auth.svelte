@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getCurrentLocation, Label, Loading, TimeLeft } from '@hcengineering/ui'
+  import { getCurrentLocation, Loading, TimeLeft } from '@hcengineering/ui'
+  import Label from './internal/Label.svelte'
   import { logIn } from '@hcengineering/workbench'
   import { trackOAuthCompletion } from '@hcengineering/analytics-providers'
   import { type LoginInfoRequest, type LoginInfoByToken } from '@hcengineering/account-client'
@@ -120,6 +121,6 @@
 
 <style>
   .text {
-    color: var(--theme-caption-color);
+    color: var(--login-caption-color, var(--theme-caption-color));
   }
 </style>

@@ -14,13 +14,16 @@
 -->
 
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo, Label, TimeLeft, CodeInput } from '@hcengineering/ui'
-  import { OK, Severity, Status } from '@hcengineering/platform'
+  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack } from '@hcengineering/ui'
+  import FormButton from './internal/FormButton.svelte'
+  import { translateCB, OK, Severity, Status } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
+  import Label from './internal/Label.svelte'
+  import LoginCodeInput from './internal/LoginCodeInput.svelte'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { Timestamp } from '@hcengineering/core'
   import { LoginInfo } from '@hcengineering/account-client'
 
-  import Tabs from './Tabs.svelte'
   import { BottomAction, doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp } from '../index'
   import login from '../plugin'
   import BottomActionComponent from './BottomAction.svelte'
@@ -29,7 +32,6 @@
   export let navigateUrl: string | undefined = undefined
   export let email: string
   export let retryOn: Timestamp
-  export let signUpDisabled = false
   export let loginState: 'login' | 'signup' | 'none' = 'none'
   export let canChangeEmail = true
   export let password: string | undefined = undefined
@@ -238,14 +240,25 @@
 <form
   bind:this={formElement}
   class="container"
-  style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '4rem 5rem'}
-  style:min-height={$deviceInfo.docHeight > 720 ? '42rem' : '0'}
+  style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '1rem 1.5rem'}
 >
   <div class="header">
-    <Tabs {loginState} {signUpDisabled} />
+    <div class="title-row">
+      <FormButton
+        type="button"
+        shape="round"
+        size="small"
+        on:click={() => {
+          dispatch('step', OtpLoginSteps.Email)
+        }}
+      >
+        <IconBack size="small" />
+      </FormButton>
+      <div class="title"><Label label={login.string.EnterCode} variant={'heading'} /></div>
+    </div>
     <div class="description">
       <Label label={login.string.SentTo} />
-      <span class="email ml-1">
+      <span class="email">
         {email}
       </span>
     </div>
@@ -257,7 +270,7 @@
         <div class="separator" />
       {/if}
       <div class={'form-row'}>
-        <CodeInput
+        <LoginCodeInput
           id={field.id}
           name={field.name}
           size="medium"
@@ -302,7 +315,7 @@
     display: block;
     width: 0.75rem;
     height: 1px;
-    background-color: var(--theme-button-border);
+    background-color: var(--login-button-border, var(--theme-button-border));
     flex-shrink: 0;
   }
 
@@ -310,15 +323,50 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
 
-    .description {
-      font-size: 1rem;
-      color: var(--theme-darker-color);
-    }
+  .header .title-row {
+    position: relative;
+    min-height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
 
-    .email {
-      color: var(--theme-caption-color);
-    }
+  .header .title-row > .form-button {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--login-caret-color, inherit); /* Intabia: black; other themes: inherit */
+    padding: 0.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header .title {
+    margin: 0 auto;
+    text-align: center;
+    font-weight: var(--login-title-font-weight, 500);
+    font-size: var(--login-title-font-size, 1.25rem);
+    color: var(--login-caption-color, var(--theme-caption-color));
+  }
+
+  .header .description {
+    font-size: 1rem;
+    color: var(--login-darker-color, var(--theme-darker-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .header .email {
+    color: var(--login-caption-color, var(--theme-caption-color));
   }
 
   .status {
@@ -330,23 +378,38 @@
     flex-direction: column;
     gap: 0.25rem;
     min-height: 4.625rem;
-    color: var(--theme-darker-color);
+    color: var(--login-darker-color, var(--theme-darker-color));
   }
 
   .container {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
 
-    .form {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1.5rem;
-      align-items: center;
+  .container .form {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 1.5rem;
+    align-items: center;
+  }
+
+  /* Reduce spacing on narrow screens so action buttons fit without changing their size */
+  @media (max-width: 600px) {
+    .container .form {
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .separator {
+      width: 0.5rem;
+    }
+    .footer {
+      gap: 0.125rem;
+      min-height: 3.5rem;
     }
   }
 
   .time {
-    color: var(--theme-caption-color);
+    color: var(--login-caption-color, var(--theme-caption-color));
   }
 </style>
