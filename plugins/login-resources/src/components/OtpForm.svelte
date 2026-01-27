@@ -246,6 +246,7 @@
     <div class="title-row">
       <FormButton
         type="button"
+        kind="ghost"
         shape="round"
         size="small"
         on:click={() => {

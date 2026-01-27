@@ -176,6 +176,38 @@
     }
   }
 
+  /* Ghost: minimal, transparent by default and shows a subtle hover background.
+     Mirrors the global Button.ghost semantics while keeping login-scoped tokens. */
+  .kind-ghost {
+    background: transparent;
+    color: var(--login-content-color, var(--theme-content-color, #111111));
+    border: 0;
+
+    &:hover {
+      background: var(--login-button-hovered, var(--theme-button-hovered, #f9fafb));
+    }
+    &:active {
+      background: var(--login-button-pressed, var(--theme-button-pressed, #f3f4f6));
+      transform: translateY(1px);
+    }
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 4px var(--login-primary-button-focus-ring, rgba(0, 0, 0, 0.08));
+      border-color: var(--login-primary-button-focused, var(--primary-button-focused, rgba(0, 0, 0, 0.06)));
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-icon {
+      color: var(--login-content-color, var(--theme-content-color));
+    }
+  }
+
   /* small loader */
   .loader {
     width: 1rem;

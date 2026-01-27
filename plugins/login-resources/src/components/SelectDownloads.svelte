@@ -24,11 +24,14 @@
 
   import { onMount } from 'svelte'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
   import { goTo } from '../utils'
-  import { Scroller, Spinner, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Scroller, Spinner, IconBack, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { themeStore, AccentColor } from '@hcengineering/theme'
   import FormButton from './internal/FormButton.svelte'
   import Label from './internal/Label.svelte'
+  import PlatformIcon from './internal/PlatformIcon.svelte'
 
   interface DownloadArtifact {
     filename: string
@@ -52,7 +55,7 @@
 
   interface PlatformGroup {
     platform: string
-    name: string
+    name: IntlString
     variants: Variant[]
   }
 
@@ -157,7 +160,7 @@
       const json = await res.json()
       const list: PlatformGroup[] = (json?.platforms ?? []).map((p: any) => ({
         platform: p.platform,
-        name: p.name ?? (p.platform === 'mac' ? 'macOS' : p.platform === 'linux' ? 'Linux' : 'Windows'),
+        name: (p.name ?? (p.platform === 'mac' ? 'macOS' : p.platform === 'linux' ? 'Linux' : 'Windows')) as IntlString,
         variants: (p.variants ?? []).map((v: any) => ({
           manifest: v.manifest,
           variant: v.variant,
@@ -196,6 +199,38 @@
   // Exposed helper to allow reloading from parent
   export function refresh (): void {
     void fetchDownloads()
+  }
+
+  // Back handler extracted so it can be reused and kept out of markup
+  function handleBack (): void {
+    // Prefer optional chaining and explicit checks for clarity and safety
+    if (typeof window !== 'undefined' && (window.history?.length ?? 0) > 1) {
+      try {
+        // Avoid sending the user back to an external site — prefer app navigation in that case
+        const ref = document.referrer ?? ''
+        if (ref !== '') {
+          try {
+            if (new URL(ref).origin !== window.location.origin) {
+              goTo('login')
+              return
+            }
+          } catch (e) {
+            // Ignore URL parse errors and continue to history.back fallback
+          }
+        }
+
+        const prevHref = window.location.href
+        window.history.back()
+        // If the browser didn't actually navigate after a short delay, fall back to the app route
+        setTimeout(() => {
+          if (window.location.href === prevHref) goTo('login')
+        }, 400)
+        return
+      } catch (err) {
+        console.error('[SelectDownloads.back] history.back failed', err)
+      }
+    }
+    goTo('login')
   }
 
   // Helpers --------------------------------------------------------------
@@ -336,13 +371,27 @@
 </script>
 
 <form class="container" style:padding={$deviceInfo.docWidth <= 480 ? '1.25rem' : '2rem'}>
-  <div class="fs-title flex flex-between flex-row-center">
-    <Label label={login.string.Downloads} />
-  </div>
-  {#if loading}
-    <div class="loader">
-      <Spinner />
+  <div class="header">
+    <div class="title-row">
+      <FormButton type="button" kind="ghost" shape="round" size="small" on:click={handleBack}>
+        <IconBack size="small" />
+      </FormButton>
+      <div class="title">
+        <Label label={login.string.Downloads} variant="heading" />
+      </div>
     </div>
+  </div>
+
+  {#if loading}
+    <Scroller padding={'.125rem 0'} maxHeight={35}>
+      <div class="platforms loading">
+        <div class="platform-card">
+          <div class="loader">
+            <Spinner size="medium" color={$themeStore.accent === AccentColor.Intabia ? 'accent' : 'default'} />
+          </div>
+        </div>
+      </div>
+    </Scroller>
   {:else if error}
     <div class="error fs-title">{error}</div>
   {:else}
@@ -357,7 +406,10 @@
             <div class="platform-card">
               <div class="platform-header">
                 <div class="platform-title">
-                  <div class="fs-title platform-name">{p.name}</div>
+                  <div class="platform-title-left">
+                    <PlatformIcon platform={p.platform} className="platform-icon" />
+                    <Label label={getEmbeddedLabel(p.name)} variant="heading" className="platform-name" />
+                  </div>
                 </div>
               </div>
 
@@ -365,9 +417,7 @@
                 {#each visibleArtifactsForPlatform(p) as a (a.url)}
                   <div class="download-button">
                     <FormButton
-                      kind={p.platform === detectedPlatform && pickDefaultForPlatform(p) === a
-                        ? 'primary'
-                        : 'secondary'}
+                      kind={p.platform === detectedPlatform && pickDefaultForPlatform(p) === a ? 'contrast' : 'default'}
                       size="small"
                       width="100%"
                       label={getEmbeddedLabel(friendlyLabel(p, a))}
@@ -384,44 +434,6 @@
       </Scroller>
     {/if}
   {/if}
-  <div class="back-row">
-    <FormButton
-      kind="regular"
-      size="medium"
-      shape="round2"
-      on:click={() => {
-        // Prefer optional chaining and explicit checks for clarity and safety
-        if (typeof window !== 'undefined' && (window.history?.length ?? 0) > 1) {
-          try {
-            // Avoid sending the user back to an external site — prefer app navigation in that case
-            const ref = document.referrer ?? ''
-            if (ref !== '') {
-              try {
-                if (new URL(ref).origin !== window.location.origin) {
-                  goTo('login')
-                  return
-                }
-              } catch (e) {
-                // Ignore URL parse errors and continue to history.back fallback
-              }
-            }
-
-            const prevHref = window.location.href
-            window.history.back()
-            // If the browser didn't actually navigate after a short delay, fall back to the app route
-            setTimeout(() => {
-              if (window.location.href === prevHref) goTo('login')
-            }, 400)
-            return
-          } catch (err) {
-            console.error('[SelectDownloads.back] history.back failed', err)
-          }
-        }
-        goTo('login')
-      }}
-      label={login.string.BackLabel}
-    />
-  </div>
 </form>
 
 <style lang="scss">
@@ -440,16 +452,60 @@
     /* .title and .controls removed - simplified grid-only layout */
 
     .status {
-      color: var(--content-muted-color, #6b7280);
+      color: var(--login-caption-color, var(--content-muted-color, #6b7280));
       padding: 0.5rem 0;
     }
 
-    .back-row {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
+    .header {
       display: flex;
-      justify-content: flex-start;
+      flex-direction: column;
       gap: 0.5rem;
+    }
+
+    .header .title-row {
+      position: relative;
+      min-height: 2.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    /* Icon/back button positioned exactly as in other login screens */
+    .header .title-row > .form-button {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--login-caret-color, inherit); /* Intabia: black; other themes: inherit */
+      padding: 0.25rem;
+      min-width: 2.25rem;
+      height: 2.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header .title {
+      margin: 0 auto;
+      text-align: center;
+      font-weight: var(--login-title-font-weight, 500);
+      font-size: var(--login-title-font-size, 1.25rem);
+      color: var(--login-caption-color, var(--theme-caption-color));
+    }
+
+    /* Centered loading state inside the list (keeps layout stable while fetching) */
+    .platforms.loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .platforms.loading .platform-card {
+      padding: 1.5rem;
+      min-height: 6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .platforms {
@@ -460,7 +516,7 @@
 
     .platform-card {
       padding: 0.75rem;
-      background: var(--card-bg, rgba(255, 255, 255, 0.02));
+      /* background: var(--card-bg, rgba(255, 255, 255, 0.02)); */
       border-radius: 0.5rem;
     }
 
@@ -477,8 +533,19 @@
       gap: 0.125rem;
     }
 
+    .platform-title-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
     .platform-name {
       font-weight: 600;
+    }
+
+    .platform-icon {
+      color: var(--login-heading-color, var(--login-content-color));
+      display: inline-flex;
     }
 
     .artifact-buttons {

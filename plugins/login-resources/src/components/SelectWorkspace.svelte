@@ -22,7 +22,7 @@
     isUpgradingMode
   } from '@hcengineering/core'
   import { LoginInfo } from '@hcengineering/login'
-  import { OK, Severity, Status, translateCB } from '@hcengineering/platform'
+  import { OK, Severity, Status } from '@hcengineering/platform'
   import presentation, { MessageBox, reduceCalls } from '@hcengineering/presentation'
   import {
     Button,
@@ -147,6 +147,7 @@
   <div class="title-row">
     <FormButton
       type="button"
+      kind="ghost"
       size="small"
       shape="round"
       on:click={() => {

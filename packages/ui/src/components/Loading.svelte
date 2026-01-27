@@ -21,6 +21,8 @@
   export let shrink: boolean = false
   export let label: string = ''
   export let size: ButtonSize = 'medium'
+  // color: 'default' uses the current caption color; 'accent' will use the accent/primary color
+  export let color: 'default' | 'accent' | string = 'default'
 
   const dispatch = createEventDispatcher()
   let timer: any
@@ -36,7 +38,7 @@
 
 <div class="spinner-container" class:fullSize={!shrink}>
   <div data-label={label} class="inner flex-row-center" class:labeled={label !== ''}>
-    <Spinner {size} />
+    <Spinner {size} {color} />
     <slot />
   </div>
 </div>
