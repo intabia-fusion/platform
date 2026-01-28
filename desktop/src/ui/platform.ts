@@ -365,7 +365,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(github.metadata.GithubClientID, config.GITHUB_CLIENTID ?? '')
   setMetadata(github.metadata.GithubURL, config.GITHUB_URL ?? '')
 
-  if (config.ACCENT_THEME !== undefined) {
+  if (config.ACCENT_THEME != null && config.ACCENT_THEME.trim() !== '') {
     setForceAccent(config.ACCENT_THEME as AccentColorType)
   }
 

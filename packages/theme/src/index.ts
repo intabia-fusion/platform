@@ -43,10 +43,13 @@ export const setDefaultAccent = (accent: string): void => {
 }
 
 export const isForceAccentColor = (): boolean => {
-  return forceAccent !== undefined
+  return forceAccent != null && (forceAccent as any) !== ''
 }
 
 export const setForceAccent = (value: AccentColorType): void => {
+  if (!value.startsWith('accent-')) {
+    forceAccent = ('accent-' + value) as AccentColorType
+  }
   forceAccent = value
 }
 

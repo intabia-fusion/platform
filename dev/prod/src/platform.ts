@@ -492,7 +492,7 @@ export async function configurePlatform() {
   )
   setMetadata(presentation.metadata.CollaboratorUrl, config.COLLABORATOR_URL)
 
-  if( config.ACCENT_THEME !== undefined) {
+  if( config.ACCENT_THEME != null && config.ACCENT_THEME.trim() !== '') {
     setForceAccent(config.ACCENT_THEME as AccentColorType)
   }
 
