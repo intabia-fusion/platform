@@ -276,13 +276,6 @@
     /* Ensure tertiary labels/icons are white in dark theme for sufficient contrast */
     --button-tertiary-LabelColor: #ffffff;
     --button-tertiary-IconColor: #ffffff;
-    /* Make primary buttons more visible on dark surfaces: prefer the primary accent tone and add subtle border/outline */
-    --primary-button-default: var(--accent-color-primary, #6b3ad3);
-    --primary-button-hovered: var(--accent-color-primary-hover, #562ea9);
-    --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #6b3ad3));
-    --button-primary-BorderColor: rgba(255, 255, 255, 0.06);
-    --primary-button-outline: rgba(255, 255, 255, 0.08);
-    --primary-button-disabled-color: rgba(255, 255, 255, 0.8);
 }
 
 /* Theme-aware Huly accent variants.
