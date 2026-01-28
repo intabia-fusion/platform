@@ -152,7 +152,7 @@
 
   /* Use a darker tertiary color for labels/icons to ensure contrast on hovered surfaces */
   --button-tertiary-LabelColor: var(--accent-color-primary-pressed, #40237f);
-  --button-tertiary-IconColor: var(--accent-color-primary-pressed, #40237f);
+  /* --button-tertiary-IconColor: var(--accent-color-primary-pressed, #40237f); */
   --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary-pressed, #40237f));
   --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary-pressed, #40237f));
   /* Additional token used for icon-only tertiary buttons (expected by checks) */
@@ -831,7 +831,7 @@
   --button-secondary-IconColor: #FFFFFF;
   /* For tertiary use darker (secondary) tone so it contrasts on light surfaces */
   --button-tertiary-LabelColor: var(--accent-color-secondary-active, #b8580a);
-  --button-tertiary-IconColor: var(--accent-color-secondary-active, #b8580a);
+  /* --button-tertiary-IconColor: var(--accent-color-secondary-active, #b8580a); */
 
   /* Explicit primary-button tokens (mapped to button-primary or accent values) */
   --primary-button-default: var(--button-primary-BackgroundColor, var(--accent-color-primary, var(--accent-color-base, #989898)));
