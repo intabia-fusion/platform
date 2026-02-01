@@ -145,7 +145,6 @@ import {
 
 import ForbiddenNotification from './components/ForbiddenNotification.svelte'
 import { AggregationMiddleware, AnalyticsMiddleware, ReadOnlyAccessMiddleware } from './middleware'
-import { buildMarkdownTableFromMetadata } from './copyAsMarkdownTable'
 import { getLink, openDocFromRef } from './utils'
 import { hideArchived, showEmptyGroups } from './viewOptions'
 import {
@@ -222,20 +221,8 @@ export {
 } from './utils'
 export * from './viewOptions'
 export * from './viewletContextStore'
-export {
-  CopyAsMarkdownTable,
-  type CopyAsMarkdownTableProps,
-  CopyRelationshipTableAsMarkdown,
-  type CopyRelationshipTableAsMarkdownProps,
-  type RelationshipCellModel,
-  type RelationshipRowModel,
-  type ValueFormatter,
-  registerValueFormatterForClass,
-  registerValueFormatter,
-  buildMarkdownTableFromDocs,
-  buildMarkdownTableFromMetadata
-} from './copyAsMarkdownTable'
-export { isIntlString } from './markdownTableUtils'
+export { copyMarkdown } from './actionImpl'
+export { default as SimpleNotification } from './components/SimpleNotification.svelte'
 export type { BuildMarkdownTableMetadata } from '@hcengineering/view'
 export {
   ArrayEditor,
@@ -409,7 +396,6 @@ export default async (): Promise<Resources> => ({
     BlobVideoMetadata: blobVideoMetadata,
     OpenDocument: openDocFromRef,
     CanCopyLink: canCopyLink,
-    GetLink: getLink,
-    BuildMarkdownTableFromDocs: buildMarkdownTableFromMetadata
+    GetLink: getLink
   }
 })

@@ -102,7 +102,7 @@ import {
   resolveLocation
 } from './issues'
 import tracker from './plugin'
-import './issueTableFormatter'
+import { formatIssueValue } from './issueTableFormatter'
 
 import MilestoneEditor from './components/milestones/MilestoneEditor.svelte'
 import MilestonePresenter from './components/milestones/MilestonePresenter.svelte'
@@ -517,7 +517,8 @@ export default async (): Promise<Resources> => ({
     GetIssueStatusCategories: getIssueStatusCategories,
     SetComponentStore: setStore,
     ComponentFilterFunction: filterComponents,
-    OpenIssuesOfTaskType: openIssuesOfTaskType
+    OpenIssuesOfTaskType: openIssuesOfTaskType,
+    FormatIssueMarkdownValue: formatIssueValue
   },
   actionImpl: {
     Move: move,
