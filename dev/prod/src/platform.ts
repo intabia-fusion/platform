@@ -572,7 +572,8 @@ export async function configurePlatform() {
       [githubId, github.component.ConnectApp],
       [calendarId, calendar.component.ConnectApp],
       [guestId, guest.component.GuestApp],
-      [globalProfileRoute, globalProfile.component.GlobalProfileApp]
+      [globalProfileRoute, globalProfile.component.GlobalProfileApp],
+      ['themes', workbench.component.Themes]
     ])
   )
 

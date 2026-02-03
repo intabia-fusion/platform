@@ -303,6 +303,9 @@ export { default as Dock } from './components/Dock.svelte'
 export { default as Image } from './components/Image.svelte'
 export { default as Video } from './components/Video.svelte'
 
+export { default as AccentPreview } from './components/internal/AccentPreview.svelte'
+export { default as PreviewControls } from './components/internal/PreviewControls.svelte'
+
 export * from './types'
 export * from './location'
 export * from './utils'

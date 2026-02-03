@@ -104,8 +104,9 @@
   --secondary-button-default: var(--button-secondary-BackgroundColor);
   --secondary-button-hovered: var(--button-secondary-hover-BackgroundColor);
   --secondary-button-pressed: var(--button-secondary-active-BackgroundColor);
-  --secondary-button-color: var(--button-subtle-LabelColor);
+  /* --secondary-button-color: var(--button-subtle-LabelColor); */
   --secondary-button-disabled: var(--button-disabled-BackgroundColor);
+  --secondary-button-focused: #B887D4;
 
   /* Button text colors for all types */
   /* Selector / focus / link (accent-aware) */

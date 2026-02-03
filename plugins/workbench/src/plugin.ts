@@ -54,7 +54,8 @@ export const workbenchPlugin = plugin(workbenchId, {
     WorkbenchApp: '' as AnyComponent,
     InviteLink: '' as AnyComponent,
     Archive: '' as AnyComponent,
-    SpecialView: '' as AnyComponent
+    SpecialView: '' as AnyComponent,
+    Themes: '' as AnyComponent
   },
   string: {
     Archive: '' as IntlString,
