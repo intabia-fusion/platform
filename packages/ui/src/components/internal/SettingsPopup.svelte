@@ -90,10 +90,10 @@
 
   const uiLangs = new Set(getMetadata(ui.metadata.Languages))
   const langs = [
+    { id: 'ru', label: ui.string.Russian, logo: '&#x1F1F7;&#x1F1FA;' },
     { id: 'en', label: ui.string.English, logo: '&#x1F1FA;&#x1F1F8;' },
     { id: 'pt', label: ui.string.Portuguese, logo: '&#x1F1F5;&#x1F1F9;' },
     { id: 'es', label: ui.string.Spanish, logo: '&#x1F1EA;&#x1F1F8;' },
-    { id: 'ru', label: ui.string.Russian, logo: '&#x1F1F7;&#x1F1FA;' },
     { id: 'zh', label: ui.string.Chinese, logo: '&#x1F1E8;&#x1F1F3;' },
     { id: 'fr', label: ui.string.French, logo: '&#x1F1EB;&#x1F1F7;' },
     { id: 'it', label: ui.string.Italian, logo: '&#x1F1EE;&#x1F1F9;' },

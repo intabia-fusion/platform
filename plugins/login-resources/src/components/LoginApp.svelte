@@ -20,7 +20,6 @@
     Location,
     Popup,
     Scroller,
-    Label,
     deviceOptionsStore as deviceInfo,
     fetchMetadataLocalStorage,
     getCurrentLocation,
@@ -45,7 +44,7 @@
   import SignupForm from './SignupForm.svelte'
   import SelectDownloads from './SelectDownloads.svelte'
   import { Pages, getAccount, pages } from '..'
-  import { getHref, goTo } from '../utils'
+  import { goTo } from '../utils'
   import login from '../plugin'
 
   // Resolve static asset URLs at runtime to avoid requiring image module declarations
@@ -60,6 +59,8 @@
   import ChangePassword from './ChangePassword.svelte'
 
   import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
+  import NavLink from './NavLink.svelte'
+  import BottomAction from './BottomAction.svelte'
 
   export let page: Pages = 'signup'
 
@@ -233,16 +234,19 @@
             {/if}
           </div>
           {#if !desktopPlatform && page !== 'downloads'}
+            {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
             <div class="mt-4 flex flex-row-reverse mr-4">
-              {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && getMetadata(login.metadata.DesktopUpdatesUrl) != null && getMetadata(login.metadata.DesktopUpdatesUrl) !== ''}
-                <a
-                  href={getHref('downloads')}
-                  on:click|preventDefault={() => {
-                    goTo('downloads')
+              {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}
+                <BottomAction
+                  action={{
+                    // caption: login.string.Downloads,
+                    i18n: login.string.Downloads,
+                    page: 'downloads',
+                    func: () => {
+                      goTo('downloads')
+                    }
                   }}
-                >
-                  <Label label={login.string.Downloads} />
-                </a>
+                />
               {/if}
             </div>
           {/if}

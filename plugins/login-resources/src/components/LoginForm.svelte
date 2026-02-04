@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel, type IntlString, Severity, Status } from '@hcengineering/platform'
+  import { type IntlString, Severity, Status } from '@hcengineering/platform'
   import { signupStore } from '@hcengineering/analytics-providers'
   import { onMount } from 'svelte'
 
