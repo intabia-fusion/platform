@@ -153,6 +153,10 @@
     align-items: center;
     width: auto;
     min-width: 0;
+    /* max-width: 5rem;
+    &:hover {
+        max-width: fit-content;
+    } */
     border-radius: 0.25rem;
     transition: box-shadow 0.15s ease-in-out;
   }

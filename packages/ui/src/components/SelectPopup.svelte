@@ -137,7 +137,7 @@
   on:keydown={onKeydown}
 >
   {#if searchable}
-    <div class="header">
+    <div class="header flex flex-row-center">
       <EditWithIcon
         icon={IconSearch}
         size={'large'}
@@ -148,6 +148,7 @@
         {placeholderParam}
         on:change
       />
+      <slot name="buttons" />
     </div>
   {:else}
     <div class="menu-space" />

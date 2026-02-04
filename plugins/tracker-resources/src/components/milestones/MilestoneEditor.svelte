@@ -104,6 +104,7 @@
         {popupPlaceholder}
         {onlyIcon}
         {enlargedText}
+        maxLabelWidth={'5rem'}
         space={_space}
         short={compression}
         showTooltip={{ label: value.milestone ? tracker.string.MoveToMilestone : tracker.string.AddToMilestone }}

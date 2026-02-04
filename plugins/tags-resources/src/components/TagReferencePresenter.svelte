@@ -55,7 +55,7 @@
       }}
     >
       <div class="color" style:background-color={color.color} />
-      <span class="label overflow-label ml-1-5 max-w-40">
+      <span class="label overflow-label ml-1-5 max-w-20">
         {value.title}
       </span>
       {#if isEditable}

@@ -18,9 +18,19 @@
   import { createQuery } from '@hcengineering/presentation'
   import { Milestone } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult } from '@hcengineering/ui'
-  import { Button, ButtonShape, Label, SelectPopup, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonShape,
+    IconAdd,
+    Label,
+    SelectPopup,
+    eventToHTMLElement,
+    showPopup,
+    themeStore
+  } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
+  import NewMilestone from './NewMilestone.svelte'
 
   export let value: Ref<Milestone> | null | undefined
   export let space: DocumentQuery<Milestone>['space'] | undefined = undefined
@@ -32,12 +42,13 @@
   export let size: ButtonSize = 'small'
   export let shape: ButtonShape = undefined
   export let justify: 'left' | 'center' = 'center'
-  export let width: string | undefined = 'min-content'
+  export let width: string | undefined = '100%'
   export let onlyIcon: boolean = false
   export let enlargedText: boolean = false
   export let short: boolean = false
   export let focusIndex: number | undefined = undefined
   export let isAction: boolean = false
+  export let maxLabelWidth: string | undefined = undefined
 
   export let showTooltip: LabelAndProps | undefined = undefined
 
@@ -125,7 +136,25 @@
     on:close={(evt) => {
       if (onChange !== undefined) onChange(evt.detail)
     }}
-  />
+  >
+    <svelte:fragment slot="buttons">
+      <div class="p-1">
+        <Button
+          kind={'ghost'}
+          size={'large'}
+          icon={IconAdd}
+          dataId={'btnAdd'}
+          on:click={() => {
+            showPopup(NewMilestone, {}, undefined, (evt) => {
+              // if (evt?.detail !== undefined && onChange !== undefined) {
+              //   onChange(evt.detail)
+              // }
+            })
+          }}
+        />
+      </div>
+    </svelte:fragment>
+  </SelectPopup>
 {:else if onlyIcon || milestoneText === undefined}
   <Button
     id="milestone"
@@ -158,7 +187,10 @@
     on:click={handleMilestoneEditorOpened}
   >
     <svelte:fragment slot="content">
-      <span class="label {enlargedText ? 'text-base' : 'text-md'} overflow-label pointer-events-none">
+      <span
+        class="label {enlargedText ? 'text-base' : 'text-md'} overflow-label pointer-events-none"
+        style:max-width={maxLabelWidth}
+      >
         <Label label={getEmbeddedLabel(milestoneText)} />
       </span>
     </svelte:fragment>

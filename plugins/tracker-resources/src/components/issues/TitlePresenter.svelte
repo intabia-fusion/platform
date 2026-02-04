@@ -53,6 +53,10 @@
     align-items: center;
     flex-shrink: 1;
     min-width: 1rem;
+    transition: flex-shrink 0.25s cubic-bezier(0.38, 0.01, 0.33, 1) 0s;
+    &:hover {
+      flex-shrink: 0;
+    }
   }
 
   .with-margin {
