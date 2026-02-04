@@ -32,11 +32,11 @@
   --accent-color-primary-disabled: #e0d1ff99;
 
   /* Secondary: use a darker, more stable background tone derived from the accent */
-  --accent-color-secondary: #5c3b70;
-  --accent-color-secondary-hover: #4a2e5a;
-  --accent-color-secondary-focused: #4a2e5a;
-  --accent-color-secondary-pressed: #5a2b76; /* stronger/vivid purple so secondary pressed is more distinct */
-  --accent-color-secondary-disabled: rgba(92, 59, 112, 0.12);
+  //--accent-color-secondary: #5c3b70;
+  //--accent-color-secondary-hover: #4a2e5a;
+  //--accent-color-secondary-focused: #4a2e5a;
+  //--accent-color-secondary-pressed: #5a2b76; /* stronger/vivid purple so secondary pressed is more distinct */
+  //--accent-color-secondary-disabled: rgba(92, 59, 112, 0.12);
 
   /* Tertiary uses primary color with alpha steps for subtle surfaces */
   --accent-color-tertiary: rgba(107, 58, 211, 0.102);
@@ -91,22 +91,22 @@
   --global-on-accent-TextColor: #ffffff;
 
   /* Secondary (filled) buttons should derive from the accent secondary tone */
-  --button-secondary-BackgroundColor: var(--accent-color-secondary);
-  --button-secondary-hover-BackgroundColor: var(--accent-color-secondary-hover);
-  --button-secondary-active-BackgroundColor: var(--accent-color-secondary-pressed);
-  --button-secondary-BorderColor: transparent;
+  /* --button-secondary-BackgroundColor: var(--accent-color-secondary); */
+  /* --button-secondary-hover-BackgroundColor: var(--accent-color-secondary-hover); */
+  /* --button-secondary-active-BackgroundColor: var(--accent-color-secondary-pressed); */
+  /* --button-secondary-BorderColor: transparent; */
 
   /* Ensure subtle (secondary/tertiary) labels/icons contrast on dark secondary */
-  --button-subtle-LabelColor: #ffffff;
-  --button-subtle-IconColor: #ffffff;
+  /* --button-subtle-LabelColor: #ffffff; */
+  /* --button-subtle-IconColor: #ffffff; */
 
   /* Map legacy secondary tokens to the adjusted button tokens so older consumers stay in sync */
-  --secondary-button-default: var(--button-secondary-BackgroundColor);
-  --secondary-button-hovered: var(--button-secondary-hover-BackgroundColor);
-  --secondary-button-pressed: var(--button-secondary-active-BackgroundColor);
+  /* --secondary-button-default: var(--button-secondary-BackgroundColor); */
+  /* --secondary-button-hovered: var(--button-secondary-hover-BackgroundColor); */
+  /* --secondary-button-pressed: var(--button-secondary-active-BackgroundColor); */
   /* --secondary-button-color: var(--button-subtle-LabelColor); */
-  --secondary-button-disabled: var(--button-disabled-BackgroundColor);
-  --secondary-button-focused: #B887D4;
+  /* --secondary-button-disabled: var(--button-disabled-BackgroundColor); */
+  /* --secondary-button-focused: #B887D4; */
 
   /* Button text colors for all types */
   /* Selector / focus / link (accent-aware) */
@@ -146,10 +146,10 @@
   --button-negative-active-BackgroundColor: #B34139;
   --button-negative-loading-LabelColor: #ff9187;
 
-  --button-secondary-LabelColor: #FFFFFF;
-  --button-secondary-IconColor: #FFFFFF;
-  --secondary-button-color: var(--button-secondary-LabelColor, rgba(0, 0, 0, .8));
-  --secondary-button-content-color: var(--button-secondary-IconColor, rgba(0, 0, 0, .8));
+  /* --button-secondary-LabelColor: #FFFFFF; */
+  /* --button-secondary-IconColor: #FFFFFF; */
+  /* --secondary-button-color: var(--button-secondary-LabelColor, rgba(0, 0, 0, .8)); */
+  /* --secondary-button-content-color: var(--button-secondary-IconColor, rgba(0, 0, 0, .8)); */
 
   /* Use a darker tertiary color for labels/icons to ensure contrast on hovered surfaces */
   --button-tertiary-LabelColor: var(--accent-color-primary-pressed, #40237f);
@@ -265,7 +265,7 @@
     /* Use a concrete light hover color so contrast checks compute against an explicit value */
     --theme-button-hovered: #f0f0f0;
     --theme-button-pressed: #e6e6e6;
-    --button-subtle-LabelColor: #ffffff;
+    /* --button-subtle-LabelColor: #ffffff; */
     /* Ensure tertiary labels/icons are dark in light theme so ModernButton tertiary remains readable on light surfaces */
     --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
     --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
