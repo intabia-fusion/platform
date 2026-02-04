@@ -95,7 +95,10 @@ export default plugin(loginId, {
     RestoreArchivedWorkspace: '' as IntlString,
     PasswordExpiredDesc: '' as IntlString,
     Downloads: '' as IntlString,
-    BackLabel: '' as IntlString
+    BackLabel: '' as IntlString,
+    Email: '' as IntlString,
+    Password: '' as IntlString,
+    PasswordRepeat: '' as IntlString
   },
   function: {
     SendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,
