@@ -1030,7 +1030,7 @@ export function createModel (builder: Builder): void {
         label: print.string.PrintToPDF,
         icon: print.icon.Print,
         category: view.category.General,
-        input: 'selection',
+        input: 'any',
         target,
         context: { mode: ['context', 'browser'], group: 'tools' },
         visibilityTester: documents.function.CanPrintDocument,

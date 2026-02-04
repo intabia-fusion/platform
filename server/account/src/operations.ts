@@ -340,7 +340,7 @@ export async function signUpOtp (
     const existingAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
 
     if (existingAccount !== null) {
-      ctx.error('An account with the provided email already exists', { email })
+      ctx.warn('An account with the provided email already exists', { email })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountAlreadyExists, {}))
     }
 
@@ -450,7 +450,7 @@ export async function validateOtp (
           await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
         } else {
           // Normally, it should not be the case
-          ctx.error("Verifying new social id belonging to person w/o account but it's already verified", {
+          ctx.warn("Verifying new social id belonging to person w/o account but it's already verified", {
             emailSocialId,
             callerAccountUuid
           })
@@ -1051,12 +1051,12 @@ export async function checkAutoJoin (
   }
 
   if (invite.autoJoin !== true) {
-    ctx.error('Not an auto-join invite', invite)
+    ctx.warn('Not an auto-join invite', invite)
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
   if (invite.role !== AccountRole.Guest) {
-    ctx.error('Auto-join not for guest role is forbidden', invite)
+    ctx.warn('Auto-join not for guest role is forbidden', invite)
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -1065,7 +1065,7 @@ export async function checkAutoJoin (
   const workspace = await getWorkspaceById(db, workspaceUuid)
 
   if (workspace === null) {
-    ctx.error('Workspace not found in auto-joining workflow', { workspaceUuid, email: normalizedEmail, inviteId })
+    ctx.warn('Workspace not found in auto-joining workflow', { workspaceUuid, email: normalizedEmail, inviteId })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
@@ -1598,7 +1598,7 @@ export async function getWorkspaceInfo (
     }
 
     if (role == null) {
-      ctx.error('Not a member of the workspace', { workspaceUuid, account })
+      ctx.warn('Not a member of the workspace', { workspaceUuid, account })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
   }
@@ -1607,12 +1607,12 @@ export async function getWorkspaceInfo (
 
   // TODO: what should we return for archived?
   if (workspace == null) {
-    ctx.error('Workspace not found', { workspaceUuid, account })
+    ctx.warn('Workspace not found', { workspaceUuid, account })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
   if (workspace.status.isDisabled && isActiveMode(workspace.status.mode)) {
-    ctx.error('Workspace is disabled', { workspaceUuid, account })
+    ctx.warn('Workspace is disabled', { workspaceUuid, account })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
@@ -1678,7 +1678,7 @@ export async function getLoginInfoByToken (
   // Check if token has grants and create automatic account if needed
   if (grant != null) {
     if (workspaceUuid != null) {
-      ctx.error('Grants are not allowed in workspace-specific tokens', { workspaceUuid, grant })
+      ctx.warn('Grants are not allowed in workspace-specific tokens', { workspaceUuid, grant })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
 
@@ -1692,7 +1692,7 @@ export async function getLoginInfoByToken (
     const grantWorkspace = await getWorkspaceById(db, workspaceUuid)
 
     if (grantWorkspace == null) {
-      ctx.error('Workspace not found in token grant workflow', { grant })
+      ctx.warn('Workspace not found in token grant workflow', { grant })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
     }
 
@@ -1781,7 +1781,7 @@ export async function getLoginInfoByToken (
     const workspace = await getWorkspaceById(db, workspaceUuid)
 
     if (workspace == null) {
-      ctx.error('Workspace not found', { workspaceUuid, account: accountUuid })
+      ctx.warn('Workspace not found', { workspaceUuid, account: accountUuid })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
     }
 
