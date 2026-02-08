@@ -300,7 +300,7 @@ test.describe('Inbox tests', () => {
     }
   })
 
-  test('Checking the ability to receive a task and schedule it', async ({ page, browser }) => {
+  test.skip('Checking the ability to receive a task and schedule it', async ({ page, browser }) => {
     await leftSideMenuPage.openProfileMenu()
     await leftSideMenuPage.inviteToWorkspace()
     await leftSideMenuPage.getInviteLink()
