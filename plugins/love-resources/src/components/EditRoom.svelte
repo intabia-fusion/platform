@@ -20,9 +20,10 @@
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
-  import { infos, myOffice, currentRoom } from '../stores'
+  import { infos, myOffice, currentRoom, meetings } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { createMeeting, joinMeeting } from '../meetings'
+  import { get } from 'svelte/store'
 
   export let object: Room
 
@@ -42,8 +43,9 @@
   const tryConnecting = false
 
   async function connect (): Promise<void> {
-    if ($infos.some(({ room }) => room === object._id)) {
-      await joinMeeting(object)
+    const mm = get(meetings).find((it) => it.attachedTo === object._id)
+    if (mm !== undefined) {
+      await joinMeeting(mm)
     } else {
       await createMeeting(object)
     }

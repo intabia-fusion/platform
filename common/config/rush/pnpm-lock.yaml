@@ -18315,7 +18315,7 @@ importers:
         version: 6.6.0(eslint@8.57.1)
       jest:
         specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
+        version: 29.7.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -18385,7 +18385,7 @@ importers:
         version: 6.6.0(eslint@8.57.1)
       jest:
         specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@swc/core@1.15.1)(@types/node@22.19.0)(typescript@5.9.3))
+        version: 29.7.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -38820,6 +38820,9 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
+      '@hcengineering/activity':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/activity
       '@hcengineering/analytics-service':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics-service
@@ -38838,6 +38841,9 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client-resources
+      '@hcengineering/contact':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -38847,6 +38853,9 @@ importers:
       '@hcengineering/drive':
         specifier: workspace:^0.7.0
         version: link:../../plugins/drive
+      '@hcengineering/kafka':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/server/packages/kafka
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../plugins/love

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { Avatar, myEmployeeStore, getPersonByPersonRef } from '@hcengineering/contact-resources'
+  import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@hcengineering/contact-resources'
   import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice } from '@hcengineering/love'
   import { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -22,12 +22,13 @@
   import { openDoc } from '@hcengineering/view-resources'
 
   import love from '../plugin'
-  import { myInfo, selectedRoomPlace, currentRoom, currentMeetingMinutes } from '../stores'
+  import { myInfo, selectedRoomPlace, currentRoom, currentMeetingMinutes, infos } from '../stores'
   import { getRoomLabel } from '../utils'
   import PersonActionPopup from './PersonActionPopup.svelte'
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
   import RoomLanguage from './RoomLanguage.svelte'
+  import { AccountUuid, Ref } from '@hcengineering/core'
 
   export let room: Room
   export let info: ParticipantInfo[]
@@ -49,15 +50,15 @@
 
   $: disabled = room._class === love.class.Office && info.length === 0
 
-  async function getPerson (info: ParticipantInfo | undefined): Promise<Person | undefined> {
+  async function getPerson (info: Ref<Person> | undefined): Promise<Person | undefined> {
     if (info === undefined) {
       return
     }
 
-    return (await getPersonByPersonRef(info.person)) ?? undefined
+    return (await getPersonByPersonRef(info)) ?? undefined
   }
 
-  function getPersonInfo (y: number, x: number, info: ParticipantInfo[]): ParticipantInfo | undefined {
+  function getPersonInfo (y: number, x: number, info: ParticipantInfo[]): Omit<ParticipantInfo, 'meeting'> | undefined {
     return info.find((p) => p.x === x && p.y === y)
   }
 
@@ -144,6 +145,22 @@
   async function handleClick (): Promise<void> {
     await openRoom(0, 0)
   }
+
+  let roomPerson: Person | undefined = undefined
+
+  $: if (isOffice(room) && room.person != null) {
+    void getPerson(room.person).then((res) => {
+      roomPerson = res
+    })
+  } else {
+    roomPerson = undefined
+  }
+
+  $: roomUserOnline =
+    roomPerson?.personUuid != null
+      ? ($statusByUserStore.get(roomPerson?.personUuid as AccountUuid)?.online ?? false) &&
+        !$infos.some((it) => it.person === roomPerson?._id)
+      : false
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -169,33 +186,37 @@
   {#each new Array(room.height) as _, y}
     {#each new Array(room.width + extraRow) as _, x}
       {@const personInfo = getPersonInfo(y, x, info)}
-      {#await getPerson(personInfo) then person}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div
-          class="floorGrid-room__field"
-          class:hovered={hoveredRoomX === x && hoveredRoomY === y}
-          class:person={personInfo || person || $myInfo?.room === room._id}
-          on:mouseenter={() => {
-            if (!(personInfo || person) && !disabled && $myInfo?.room !== room._id) {
-              hoveredRoomX = x
-              hoveredRoomY = y
-            }
-          }}
-          on:mouseout={() => {
-            hoveredRoomX = undefined
-            hoveredRoomY = undefined
-          }}
-          on:click={(e) => {
-            placeClickHandler(e, x, y, person)
-          }}
-        >
-          {#if personInfo}
-            <Avatar name={person?.name ?? personInfo.name} {person} size={'large'} showStatus={false} adaptiveName />
-          {:else if hoveredRoomX === x && hoveredRoomY === y}
-            <Avatar name={myName} person={$myEmployeeStore} size={'large'} showStatus={false} adaptiveName />
-          {/if}
-        </div>
-      {/await}
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <div
+        class="floorGrid-room__field"
+        class:hovered={hoveredRoomX === x && hoveredRoomY === y}
+        class:person={$myInfo?.room === room._id}
+        on:mouseenter={() => {
+          if ($myInfo?.room !== room._id) {
+            hoveredRoomX = x
+            hoveredRoomY = y
+          }
+        }}
+        on:mouseout={() => {
+          hoveredRoomX = undefined
+          hoveredRoomY = undefined
+        }}
+        on:click={(e) => {
+          void placeClickHandler(e, x, y, roomPerson)
+        }}
+      >
+        {#if personInfo === undefined && roomUserOnline && roomPerson != null && x === 0 && y === 0}
+          <Avatar name={roomPerson.name} person={roomPerson} size={'large'} showStatus={false} adaptiveName />
+        {:else if personInfo !== undefined}
+          {#await getPerson(personInfo.person) then person}
+            {#if personInfo}
+              <Avatar name={person?.name ?? personInfo.name} {person} size={'large'} showStatus={false} adaptiveName />
+            {:else if hoveredRoomX === x && hoveredRoomY === y}
+              <Avatar name={myName} person={$myEmployeeStore} size={'large'} showStatus={false} adaptiveName />
+            {/if}
+          {/await}
+        {/if}
+      </div>
     {/each}
   {/each}
 

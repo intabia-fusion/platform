@@ -32,7 +32,7 @@
   import ShareScreenButton from './meeting/controls/ShareScreenButton.svelte'
   import LeaveRoomButton from './meeting/controls/LeaveRoomButton.svelte'
   import MeetingHeader from './meeting/MeetingHeader.svelte'
-  import { joinMeeting } from '../meetings'
+  import { createMeeting } from '../meetings'
 
   export let room: Room
 
@@ -49,12 +49,13 @@
   $: joined = $myInfo?.room === room._id
 
   let info: ParticipantInfo[] = []
+
   $: info = $infos.filter((p) => p.room === room._id)
 
   const dispatch = createEventDispatcher()
 
   async function connect (): Promise<void> {
-    await joinMeeting(room)
+    await createMeeting(room)
     dispatch('close')
   }
 

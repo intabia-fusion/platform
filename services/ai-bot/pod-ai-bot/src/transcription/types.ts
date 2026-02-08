@@ -11,7 +11,7 @@ export type AudioFormat = 'ogg' | 'wav'
 export interface TranscriptionQueueTask {
   /** Storage object name for audio file */
   blobId: string
-  /** Room name from LiveKit (format: workspaceUuid_roomName_roomId) */
+  /** Room name from LiveKit (format: workspaceUuid_meetingMinutesId) */
   roomName: string
   /** Participant identity (Ref<Person>) */
   participant: string

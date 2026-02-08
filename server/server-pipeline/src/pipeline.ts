@@ -48,7 +48,8 @@ import {
   TriggersMiddleware,
   TxMiddleware,
   TxOrderingMiddleware,
-  UserStatusMiddleware
+  UserStatusMiddleware,
+  TransientMiddleware
 } from '@hcengineering/middleware'
 import {
   createBenchmarkAdapter,
@@ -161,6 +162,7 @@ export function createServerPipeline (
       VersioningMiddleware.create,
       IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
       RatingMiddleware.create, // Rating editing restrictions
+      TransientMiddleware.create,
       TxMiddleware.create, // Store tx into transaction domain
       ...(opt.disableTriggers === true ? [] : [TriggersMiddleware.create]),
       ...(opt.fulltextUrl !== undefined

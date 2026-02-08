@@ -1,8 +1,39 @@
 import { Employee, Person } from '@hcengineering/contact'
-import { Data, generateId, Ref } from '@hcengineering/core'
+import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
 import love from './plugin'
-import { Office, ParticipantInfo, Room, RoomAccess, RoomType } from './types'
+import { MeetingMinutes, Office, ParticipantInfo, Room, RoomAccess, RoomType } from './types'
+
+/**
+ * Parsed LiveKit room name components
+ */
+export interface ParsedRoomName {
+  workspace: WorkspaceUuid
+  meetingId: Ref<MeetingMinutes>
+}
+
+/**
+ * Parse LiveKit room name to extract workspace and meeting ID.
+ * Room name format: workspaceUuid_meetingMinutesId (2 non-empty parts separated by underscore)
+ *
+ * @param roomName - The LiveKit room name string
+ * @returns ParsedRoomName if valid, undefined otherwise
+ */
+export function parseRoomName (roomName: string): ParsedRoomName | undefined {
+  const parts = roomName.split('_')
+  if (parts.length < 2) return undefined
+
+  const workspace = parts[0]
+  const meetingId = parts[parts.length - 1]
+
+  // Both parts must be non-empty
+  if (workspace === '' || meetingId === '') return undefined
+
+  return {
+    workspace: workspace as WorkspaceUuid,
+    meetingId: meetingId as Ref<MeetingMinutes>
+  }
+}
 
 export const GRID_WIDTH = 15
 

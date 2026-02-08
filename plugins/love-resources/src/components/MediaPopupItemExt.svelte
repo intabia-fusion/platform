@@ -4,7 +4,7 @@
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import { currentRoom, infos, myInfo, myOffice } from '../stores'
+  import { currentRoom, currentMeetingMinutes, infos, myInfo, myOffice } from '../stores'
   import { liveKitClient } from '../utils'
   import { lkSessionConnected, ScreenSharingState, screenSharingState } from '../liveKitClient'
   import MeetingHeader from './meeting/MeetingHeader.svelte'
@@ -35,7 +35,7 @@
     await liveKitClient.setScreenShareEnabled(false)
   }
 
-  $: participants = $infos.filter((p) => p.room === $currentRoom?._id)
+  $: participants = $infos.filter((p) => p.meeting === $currentMeetingMinutes?._id)
   $: personByRefStore = getPersonByPersonRefStore(participants.map((p) => p.person))
 </script>
 

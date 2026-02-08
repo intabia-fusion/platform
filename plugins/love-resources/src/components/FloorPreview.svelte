@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import core, { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     AccordionItem,
     ButtonIcon,
@@ -29,14 +29,15 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
-  import { Floor, ParticipantInfo, Room } from '@hcengineering/love'
-  import { createEventDispatcher } from 'svelte'
+  import { Floor, isOffice, ParticipantInfo, Room } from '@hcengineering/love'
+  import { createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
   import { infos } from '../stores'
   import { calculateFloorSize } from '../utils'
   import EditFloorPopup from './EditFloorPopup.svelte'
   import FloorGrid from './FloorGrid.svelte'
   import RoomPreview from './RoomPreview.svelte'
+  import { loadUsersStatus } from '@hcengineering/contact-resources'
 
   export let floor: Floor
   export let configurable: boolean = false
@@ -94,6 +95,10 @@
       } else if (result === 'rename') renameFloor()
     })
   }
+
+  onMount(() => {
+    loadUsersStatus()
+  })
 </script>
 
 <AccordionItem

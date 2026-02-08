@@ -19,24 +19,15 @@
   import love from '../../../plugin'
   import { Ref } from '@hcengineering/core'
   import { onMount } from 'svelte'
-  import {
-    cancelInvites,
-    closeInvitesPopup,
-    inviteRequestSecondsToLive,
-    subscribeInviteResponses,
-    unsubscribeInviteResponses,
-    updateInvites
-  } from '../../../invites'
+  import { cancelInvites, closeInvitesPopup, inviteRequestSecondsToLive, updateInvites } from '../../../invites'
 
   export let persons: Array<Ref<Person>>
   export let meetingId: string
 
   onMount(() => {
-    void subscribeInviteResponses()
     void doUpdateInvites()
     const interval = setInterval(doUpdateInvites, (inviteRequestSecondsToLive - 2) * 1000)
     return () => {
-      void unsubscribeInviteResponses()
       clearInterval(interval)
       void cancelInvites(meetingId)
     }

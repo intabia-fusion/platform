@@ -117,7 +117,8 @@ export default plugin(loginId, {
     SelectWorkspace: '' as Resource<
     (
       workspace: string,
-      token: string | null | undefined
+      token: string | null | undefined,
+      doNavigate?: boolean | undefined // Default to true
     ) => Promise<[Status, WorkspaceLoginInfo | undefined, boolean]>
     >,
     ExchangeGuestToken: '' as Resource<(token: string) => Promise<string>>,

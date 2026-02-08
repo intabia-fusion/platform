@@ -1,7 +1,7 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
-import { MeasureContext, Ref, withContext, WorkspaceUuid, type WorkspaceIds } from '@hcengineering/core'
-import { Room } from '@hcengineering/love'
+import { MeasureContext, withContext, WorkspaceUuid, type WorkspaceIds } from '@hcengineering/core'
+import { parseRoomName } from '@hcengineering/love'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 
 import { TranscriptionQueueTask, TranscriptionProvider, TranscriptionConfig, AudioFormat } from './types'
@@ -38,13 +38,13 @@ enum TranscriptionErrorType {
 }
 
 /**
- * Parse roomId from roomName (format: workspaceUuid_roomName_roomId)
- * Returns the last segment as roomId
+ * Parse room identifier from roomName.
+ * Returns the meetingId from the parsed room name.
  */
-function parseRoomId (roomName: string): Ref<Room> | undefined {
-  const parsed = roomName.split('_')
-  if (parsed.length < 2) return undefined
-  return parsed[parsed.length - 1] as Ref<Room>
+function parseRoomId (roomName: string): string | undefined {
+  const parsed = parseRoomName(roomName)
+  if (parsed === undefined) return undefined
+  return parsed.meetingId
 }
 
 /**
@@ -347,9 +347,9 @@ export class TranscriptionConsumer {
           })
           // Calculate timestamp based on meeting start + startTimeSec
           // startTimeSec is relative to meeting start, we use it as timestamp offset
-          const roomId = parseRoomId(task.roomName)
-          if (roomId === undefined) {
-            this.ctx.error('Failed to parse roomId from roomName', {
+          const roomIdentifier = parseRoomId(task.roomName)
+          if (roomIdentifier === undefined) {
+            this.ctx.error('Failed to parse room identifier from roomName', {
               workspace,
               roomName: task.roomName,
               participant: task.participant
@@ -359,7 +359,7 @@ export class TranscriptionConsumer {
           const created = await this.createMessageWithTimestamp(
             ctx,
             workspace,
-            roomId,
+            roomIdentifier,
             task.participant,
             finalText,
             task.startTimeSec

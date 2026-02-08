@@ -26,8 +26,11 @@
     updateJoinRequest
   } from '../../../joinRequests'
   import { onMount } from 'svelte'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
 
-  export let meetingId: string
+  export let kind: 'room' | 'meeting'
+  export let meetingId: Ref<MeetingMinutes> | Ref<Room>
 
   $: room = $rooms.find((p) => p._id === meetingId)
 

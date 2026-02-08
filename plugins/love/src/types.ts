@@ -25,6 +25,24 @@ export enum TranscriptionStatus {
   Completed = 'completed'
 }
 
+/**
+ * Transcription state for MeetingMinutes - stored in DB as activity status
+ */
+export enum TranscriptionState {
+  NotStarted = 0,
+  Transcribing = 1,
+  Finished = 2
+}
+
+/**
+ * Recording state for MeetingMinutes - stored in DB as activity status
+ */
+export enum RecordingState {
+  NotStarted = 0,
+  Recording = 1,
+  Finished = 2
+}
+
 export type RoomLanguage =
   | 'bg'
   | 'ca'
@@ -74,6 +92,7 @@ export type RoomLanguage =
   | 'vi'
 
 export interface RoomMetadata {
+  projectKey?: string
   recording?: boolean
   transcription?: TranscriptionStatus
   language?: RoomLanguage
@@ -103,10 +122,12 @@ export interface Office extends Room {
 
 // transient data for status
 export interface ParticipantInfo extends Doc {
-  // isActive: boolean (disabled until server connection to check it for all active rooms)
+  kind: 'user' | 'agent'
+  // isActive: boolean (disabled until server connection to check it for all active meetings)
   person: Ref<Person>
   name: string
-  room: Ref<Room>
+  meeting: Ref<MeetingMinutes>
+  room?: Ref<Room>
   x: number
   y: number
   sessionId: string | null
@@ -119,7 +140,7 @@ export interface RoomInfo extends Doc {
   isOffice: boolean
 }
 
-export interface Meeting extends Event {
+export interface MeetingEventLink extends Event {
   room: Ref<Room>
 }
 
@@ -135,18 +156,64 @@ export interface DevicesPreference extends Preference {
 }
 
 export enum MeetingStatus {
-  Active,
-  Finished
+  Active = 0,
+  Finished = 1,
+  Pending = 2
 }
 
+export const transcriptionStateLabel = {
+  [TranscriptionState.NotStarted]: 'NotStarted',
+  [TranscriptionState.Transcribing]: 'Transcribing',
+  [TranscriptionState.Finished]: 'Finished'
+}
+
+export const recordingStateLabel = {
+  [RecordingState.NotStarted]: 'NotStarted',
+  [RecordingState.Recording]: 'Recording',
+  [RecordingState.Finished]: 'Finished'
+}
+
+// Meeting minutes
 export interface MeetingMinutes extends AttachedDoc {
   title: string
   description: MarkupBlobRef | null
 
   status: MeetingStatus
+  transcriptionState: TranscriptionState
+  recordingState: RecordingState
   meetingEnd?: Timestamp
 
   transcription?: number
   messages?: number
   attachments?: number
+  /** Number of active recordings (PendingRecording collection) */
+  recordings?: number
+
+  access: RoomAccess
+  language: RoomLanguage
+}
+
+/**
+ * Recording format type for PendingRecording
+ */
+export type RecordingFormat = 'video' | 'audio'
+
+/**
+ * Pending recording document created when recording starts.
+ * Used to track in-progress recordings until they complete (egress_ended).
+ * Attached to MeetingMinutes as a collection to show recording progress in UI.
+ */
+export interface PendingRecording extends AttachedDoc {
+  /** LiveKit egress ID for this recording (set when egress_started webhook arrives) */
+  egressId?: string
+  /** Recording format: video (room composite) or audio (track) */
+  format: RecordingFormat
+  /** When the recording started (Unix timestamp in milliseconds) */
+  startedAt: Timestamp
+  /** Room name from LiveKit (contains workspace and meetingId) */
+  roomName: string
+  /** Display name for the recording file (e.g., "Room_2024-01-15_12-30-00.mp4") */
+  name: string
+  /** Current size in bytes (updated via egress_updated webhooks) */
+  size?: number
 }

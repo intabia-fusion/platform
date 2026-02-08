@@ -22,12 +22,17 @@ import MeetingMinutesTable from './components/MeetingMinutesTable.svelte'
 import RoomPresenter from './components/RoomPresenter.svelte'
 import MeetingMinutesDocEditor from './components/MeetingMinutesDocEditor.svelte'
 import MeetingMinutesStatusPresenter from './components/MeetingMinutesStatusPresenter.svelte'
+import MeetingMinutesTranscriptionStatePresenter from './components/MeetingMinutesTranscriptionStatePresenter.svelte'
+import MeetingMinutesRecordingStatePresenter from './components/MeetingMinutesRecordingStatePresenter.svelte'
 import RoomLanguageEditor from './components/RoomLanguageEditor.svelte'
 import MediaPopupItemExt from './components/MediaPopupItemExt.svelte'
 import SharingStateIndicator from './components/SharingStateIndicator.svelte'
 import MeetingScheduleData from './components/MeetingScheduleData.svelte'
 import EditMeetingScheduleData from './components/EditMeetingScheduleData.svelte'
 import InviteEmployeeButton from './components/meeting/invites/InviteEmployeeButton.svelte'
+import PendingRecordingPresenter from './components/PendingRecordingPresenter.svelte'
+import GuestJoinPopup from './components/GuestJoinPopup.svelte'
+import GuestApp from './components/GuestApp.svelte'
 
 import {
   copyGuestLink,
@@ -65,12 +70,17 @@ export default async (): Promise<Resources> => ({
     RoomPresenter,
     MeetingMinutesDocEditor,
     MeetingMinutesStatusPresenter,
+    MeetingMinutesTranscriptionStatePresenter,
+    MeetingMinutesRecordingStatePresenter,
     RoomLanguageEditor,
     MediaPopupItemExt,
     SharingStateIndicator,
     MeetingScheduleData,
     EditMeetingScheduleData,
-    InviteEmployeeButton
+    InviteEmployeeButton,
+    PendingRecordingPresenter,
+    GuestJoinPopup,
+    GuestApp
   },
   function: {
     CreateMeeting: createMeeting,

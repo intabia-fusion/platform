@@ -59,8 +59,8 @@
   <svelte:fragment slot="actions">
     {#if $currentRoom !== undefined}
       <RoomAccessButton {room} kind="tertiary" size="small" />
-      <RecordingButton {room} kind="tertiary" size="small" />
-      <TranscriptionButton {room} kind="tertiary" size="small" />
+      <RecordingButton kind="tertiary" size="small" />
+      <TranscriptionButton kind="tertiary" size="small" />
       <MeetingOptionsButton {room} kind="tertiary" size="small" />
       <ButtonIcon icon={IconMaximize} kind="tertiary" size="small" noPrint on:click={maximize} />
     {/if}

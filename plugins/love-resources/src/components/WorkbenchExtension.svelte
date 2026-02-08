@@ -1,15 +1,14 @@
 <script lang="ts">
+  import { Ref } from '@hcengineering/core'
+  import { MeetingMinutes } from '@hcengineering/love'
   import { pushRootBarComponent } from '@hcengineering/ui'
   import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, Track } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
-  import love from '../plugin'
-  import { liveKitClient, lk } from '../utils'
-  import { lkSessionConnected } from '../liveKitClient'
-  import { subscribeInviteRequests, unsubscribeInviteRequests } from '../invites'
-  import { Room } from '@hcengineering/love'
   import { subscribeJoinRequests, unsubscribeJoinRequests } from '../joinRequests'
-  import { Ref } from '@hcengineering/core'
-  import { myInfo } from '../stores'
+  import { lkSessionConnected } from '../liveKitClient'
+  import love from '../plugin'
+  import { myInfo, myConnectingSessionId } from '../stores'
+  import { liveKitClient, lk } from '../utils'
 
   let parentElement: HTMLDivElement
 
@@ -38,29 +37,40 @@
     }
   }
 
-  function subscribeRoomRequests (room: Ref<Room> | undefined): void {
+  function subscribeMeetingRequests (meeting?: Ref<MeetingMinutes>): void {
     unsubscribeJoinRequests()
-      .then(() => subscribeJoinRequests(room))
+      .then(() => subscribeJoinRequests(meeting))
       .catch((e) => {
         console.log(e)
       })
   }
 
-  $: subscribeRoomRequests($myInfo?.room)
+  $: subscribeMeetingRequests($myInfo?.meeting)
 
   onMount(async () => {
     pushRootBarComponent('left', love.component.ControlExt, 20)
     lk.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
 
-    await subscribeInviteRequests()
+    // Attach existing audio tracks from already connected participants
+    // This fixes the issue where audio is not heard when joining a room with existing participants
+    for (const participant of lk.remoteParticipants.values()) {
+      for (const publication of participant.trackPublications.values()) {
+        if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
+          const element = publication.track.attach()
+          element.id = publication.trackSid
+          parentElement.appendChild(element)
+        }
+      }
+    }
   })
 
   onDestroy(async () => {
-    await unsubscribeInviteRequests()
     lk.off(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-    if ($lkSessionConnected) {
+    // Do not disconnect if the current session initiated a connect (user is in the process of connecting)
+    // or if the LiveKit client is currently connecting
+    if ($lkSessionConnected && $myConnectingSessionId === null && !liveKitClient.isConnecting) {
       await liveKitClient.disconnect()
     }
   })

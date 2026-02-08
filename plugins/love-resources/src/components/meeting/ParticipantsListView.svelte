@@ -4,11 +4,11 @@
   import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import { liveKitClient, lk } from '../../utils'
-  import { infos } from '../../stores'
+  import { infos, currentMeetingMinutes } from '../../stores'
   import { Ref } from '@hcengineering/core'
   import { Person } from '@hcengineering/contact'
   import { getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
-  import { Room as TypeRoom } from '@hcengineering/love'
+  import { Room as TypeRoom, MeetingMinutes } from '@hcengineering/love'
 
   export let room: Ref<TypeRoom>
 
@@ -69,9 +69,15 @@
 
   onDestroy(
     infos.subscribe((data) => {
+      const currentMeeting = $currentMeetingMinutes
       for (const info of data) {
-        if (info.room !== room) continue
-        const current = participants.find((p) => p._id === info.person)
+        // Filter by meeting if available, otherwise fallback to room
+        const infoMeeting = (info as any).meeting as Ref<MeetingMinutes> | undefined
+        if (currentMeeting !== undefined && infoMeeting !== currentMeeting._id) continue
+        if (currentMeeting === undefined && info.room !== room) continue
+
+        // Check both by person id and by identity (person ref) to avoid duplicates
+        const current = participants.find((p) => p._id === info.person || p._id === (info.person as string))
         if (current !== undefined) continue
         const value: ParticipantData = {
           _id: info.person,
@@ -98,7 +104,7 @@
   $: activeParticipants = getActiveParticipants(participants)
 </script>
 
-{#each activeParticipants as participant, i (participant._id)}
+{#each activeParticipants as participant (participant._id)}
   <div class="video">
     <ParticipantView {...participant} />
   </div>

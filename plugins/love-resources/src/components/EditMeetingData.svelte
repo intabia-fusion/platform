@@ -25,13 +25,13 @@
 
   const client = getClient()
 
-  $: isMeeting = client.getHierarchy().hasMixin(value, love.mixin.Meeting)
-  $: meeting = isMeeting ? client.getHierarchy().as(value, love.mixin.Meeting) : null
+  $: isMeeting = client.getHierarchy().hasMixin(value, love.mixin.MeetingEventLink)
+  $: meeting = isMeeting ? client.getHierarchy().as(value, love.mixin.MeetingEventLink) : null
 
   async function changeRoom (val: Ref<Room>): Promise<void> {
     const events = await client.findAll(value._class, { eventId: value.eventId }, { projection: { _id: 1 } })
     for (const event of events) {
-      await client.updateMixin(event._id, event._class, event.space, love.mixin.Meeting, { room: val })
+      await client.updateMixin(event._id, event._class, event.space, love.mixin.MeetingEventLink, { room: val })
     }
   }
 </script>

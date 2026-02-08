@@ -34,8 +34,15 @@ export default mergeIds(loveId, love, {
     FloorView: '' as AnyComponent,
     MeetingMinutesDocEditor: '' as AnyComponent,
     MeetingMinutesStatusPresenter: '' as AnyComponent,
+    MeetingMinutesTranscriptionStatePresenter: '' as AnyComponent,
+    MeetingMinutesRecordingStatePresenter: '' as AnyComponent,
+    RoomLanguageEditor: '' as AnyComponent,
+    MediaPopupItemExt: '' as AnyComponent,
+    SharingStateIndicator: '' as AnyComponent,
     MeetingScheduleData: '' as AnyComponent,
-    EditMeetingScheduleData: '' as AnyComponent
+    EditMeetingScheduleData: '' as AnyComponent,
+    InviteEmployeeButton: '' as AnyComponent,
+    PendingRecordingPresenter: '' as AnyComponent
   },
   function: {
     CreateMeeting: '' as Resource<DocCreateFunction>,

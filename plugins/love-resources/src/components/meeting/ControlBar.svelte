@@ -67,8 +67,8 @@
         <MicrophoneButton />
         <CameraButton />
         <ShareScreenButton />
-        <RecordingButton {room} />
-        <TranscriptionButton {room} />
+        <RecordingButton />
+        <TranscriptionButton />
       {:else}
         <RoomAccessButton {room} />
       {/if}

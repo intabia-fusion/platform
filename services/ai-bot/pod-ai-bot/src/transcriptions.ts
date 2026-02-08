@@ -18,7 +18,7 @@ import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { createTranscriptionConsumer, SendToDeadLetterCallback, TranscriptionConsumer } from './transcription/consumer'
 import { AIControl } from './controller'
-import { Room } from '@hcengineering/love'
+import love, { parseRoomName } from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
 import { ChatMessage } from '@hcengineering/chunter'
 import { PlatformQueueProducer } from '@hcengineering/server-core'
@@ -89,12 +89,17 @@ export async function createTranscriptionsSupport (
           ctx.error('Failed to get workspace client for sending transcript', { workspace })
           return
         }
-        // Parse roomId from roomName (format: workspaceUuid_roomId)
-        const parsed = roomName.split('_')
-        const roomId = parsed[parsed.length - 1] as Ref<Room>
+
+        // Parse room name to get meeting ID
+        const parsed = parseRoomName(roomName)
+        if (parsed === undefined) {
+          ctx.error('Invalid room name format', { roomName })
+          return
+        }
+        const { meetingId: meetingMinutesId } = parsed
 
         // participant identity from LiveKit is Ref<Person> as string
-        await wsClient.processLoveTranscript(ctx, transcript, participant as Ref<Person>, roomId)
+        await wsClient.processLoveTranscript(ctx, transcript, participant as Ref<Person>, meetingMinutesId)
       },
       // Callback to update/delete placeholder message
       async (ctx, workspace: WorkspaceUuid, roomName: string, messageId: string, text: string | null) => {
@@ -109,7 +114,7 @@ export async function createTranscriptionsSupport (
       async (
         ctx,
         workspace: WorkspaceUuid,
-        roomId: string,
+        roomIdentifier: string, // Must be MeetingMinutes ID
         participant: string,
         text: string,
         startTimeSec: number
@@ -120,22 +125,31 @@ export async function createTranscriptionsSupport (
           return false
         }
 
-        // Get meeting start time to calculate absolute timestamp
-        // startTimeSec is relative to meeting start
-        const meetingMinutes = await wsClient.getMeetingMinutesByRoom(ctx, roomId as Ref<Room>)
+        // Parse room name to get meeting ID
+        const parsed = parseRoomName(roomIdentifier)
+        if (parsed === undefined) {
+          ctx.error('Invalid room name format', { roomIdentifier })
+          return false
+        }
+        const { meetingId: meetingMinutesId } = parsed
+
+        const client = wsClient.client
+        const meetingMinutes = await client.findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
+
         if (meetingMinutes === undefined) {
-          ctx.error('Failed to get meeting minutes for fallback message', { workspace, roomId })
+          ctx.error('Failed to get meeting minutes for fallback message', { workspace, roomIdentifier })
           return false
         }
 
         // Calculate absolute timestamp: meeting creation time + offset in seconds
         const timestamp = (meetingMinutes.createdOn ?? Date.now()) + startTimeSec * 1000
 
+        // Use the Room ID from the MeetingMinutes document for the message creation
         return await wsClient.createTranscriptionMessageWithTimestamp(
           ctx,
           text,
           participant as Ref<Person>,
-          roomId as Ref<Room>,
+          meetingMinutesId,
           timestamp
         )
       },

@@ -29,6 +29,39 @@ rush build --to PKG  # Build specific
 rush add -p PKG      # Add dependency
 ```
 
+## Docker Build Workflow
+
+**IMPORTANT**: After making changes to service code (in `services/`, `pods/`, etc.), you must rebuild Docker images:
+
+```bash
+# Build Docker images for specific service
+rush docker:build --to @hcengineering/pod-ai-bot
+rush docker:build --to @hcengineering/love-agent
+
+# Restart Docker containers to use new images
+docker compose -f dev/docker-compose.yaml restart aibot
+docker compose -f dev/docker-compose.yaml restart love-agent
+```
+
+**Workflow for service changes:**
+1. Make code changes to service
+2. Run `rush build --to <package>` (builds TypeScript)
+3. Run `rushx format` in the package directory (format & lint)
+4. Run `diagnostics` to check for errors
+5. Run `rush docker:build --to <package>` (builds Docker image)
+6. Restart the Docker container
+
+Example for ai-bot service:
+```bash
+# After editing services/ai-bot/pod-ai-bot/src/workspace/love.ts
+cd services/ai-bot/pod-ai-bot
+rushx format
+diagnostics path: "services/ai-bot/pod-ai-bot/src/workspace/love.ts"
+cd ../../..
+rush docker:build --to @hcengineering/pod-ai-bot
+docker compose -f dev/docker-compose.yaml restart aibot
+```
+
 ## Error Checking
 
 **IMPORTANT**: Use `diagnostics` tool to check for TypeScript/Svelte errors, NOT `rush build`:
@@ -45,10 +78,26 @@ After making changes to a package, run formatting and linting in the modified pa
 
 ```bash
 cd <package-directory>
-rushx format --force   # Format code and run linting
+rushx format         # Format code and run linting
 ```
 
 This ensures code style consistency and catches linting errors before commit.
+
+### ⚠️ CRITICAL: Formatting Safety Rules
+
+**NEVER run formatting commands in parallel or concurrently.** The formatter can corrupt or completely erase file contents when run simultaneously on multiple packages.
+
+Rules:
+- ❌ **DO NOT** run multiple `rushx format` commands in parallel
+- ❌ **DO NOT** use `--force` flag with formatting - it can cause content loss
+- ✅ **DO** run formatting sequentially, one package at a time
+- ✅ **DO** verify file contents after formatting with `git diff` or `git status`
+- ✅ **DO** restore files immediately with `git checkout -- <file>` if content is lost
+
+If you see files becoming empty or losing content after formatting, immediately restore them:
+```bash
+git checkout -- <affected-files>
+```
 
 ## Changelog generation
 
@@ -58,7 +107,7 @@ When generating changelogs (the "All commits" lists), follow these rules:
 - Strip `Signed-off-by:` footers from commit messages (remove the footer content and any lines that are only `Signed-off-by:`).
 - Recommended pipeline (example):
 
-```/dev/null/changelog-filter.sh#L1-3
+```bash
 git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' | sed -E 's/\s*Signed-off-by:.*$//'
 ```
 
@@ -80,9 +129,10 @@ When debugging issues:
 
 1. **Add comprehensive logging first** - use `console.log` with structured objects showing state, parameters, IDs
 2. **Test and analyze logs** - let user run the app and provide actual console output
-3. **Identify root cause** from logs - trace the flow, compare expected vs actual values
-4. **Fix the issue** based on findings
-5. **Remove all logging** after fix is confirmed - keep production code clean
+3. **Propose options before applying fixes or workarounds** - when you identify multiple possible approaches (including quick or temporary workarounds), outline each option clearly (pros, cons, risks, and how invasive the change is) and ask the user which variant to proceed with. Do not implement non-trivial temporary workarounds without explicit approval.
+4. **Identify root cause** from logs - trace the flow, compare expected vs actual values
+5. **Fix the issue** based on findings
+6. **Remove all logging** after fix is confirmed - keep production code clean
 
 Logging format:
 
@@ -96,16 +146,23 @@ console.log('[ComponentName.methodName] Description', {
 
 ## Avoid
 
-❌ `any` without reason ❌ `console.log()` in production ❌ Mixed concerns ❌ Circular deps ❌ Ignoring TS errors ❌ Using `rush build` to check for errors
+❌ `any` without reason
+❌ `console.log()` in production
+❌ Mixed concerns
+❌ Circular deps
+❌ Ignoring TS errors
+❌ Using `rush build` to check for errors
+❌ Running formatting in parallel (causes content loss!)
+❌ Using `--force` flag with formatter
 
-❌ Git policy: do NOT make commits, resets, reverts, or switch branches. Use git only for read-only operations (diff, status, log).
+❌ **Git policy**: do NOT make commits, resets, reverts, or switch branches. Use git only for read-only operations (diff, status, log).
 
 ## When Coding
 
 - Infer location from context (models/server/plugins/packages)
 - Match existing patterns in codebase
 - Include proper imports/types
-- When adding a new `IntlString` key, add corresponding entries to the component language files under `component-assets/lang` for every supported locale (at minimum include the English entry) and update translations as needed; ensure you run `diagnostics()`. Do not commit changes locally — prepare a diff for review and let maintainers perform commits.
+- When adding a new `IntlString` key, add corresponding entries to the component language files under `component-assets/lang` for every supported locale (at minimum include the English entry) and update translations as needed; ensure you run `diagnostics()`. Do not commit changes locally — prepare a diff for review and let maintainers perform commits. !!! If diagnostics are not disappearing for fixed items, stop and inform user to reload language servers or wait for build. Wait for continue request from user.
 - Add error handling
 - Use existing utils first
 - When fixing bugs:
@@ -113,7 +170,7 @@ console.log('[ComponentName.methodName] Description', {
   - Use logging to understand actual runtime behavior
   - Trace data flow through components
   - Verify assumptions with logs before implementing fixes
-  - remove debug code when done
+  - Remove debug code when done
 
 ## Navigation & Selection Architecture
 
@@ -131,7 +188,7 @@ Key principles:
 - Selection follows focus via provider delegation
 - Scroll happens automatically via `scrollIntoView()` on navigation
 
-# License:
+## License
 
 For every new files please add a 2026 Intabia Fusion license header like this:
 

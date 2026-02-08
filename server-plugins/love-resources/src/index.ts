@@ -13,29 +13,24 @@
 // limitations under the License.
 //
 
-import contact, { Employee, getName, Person } from '@hcengineering/contact'
+import contact, { Employee, Person } from '@hcengineering/contact'
 import core, {
-  type AccountUuid,
   combineAttributes,
   concatLink,
   Doc,
-  generateId,
   Ref,
-  Timestamp,
   Tx,
   TxCreateDoc,
   TxCUD,
   TxMixin,
   TxProcessor,
-  TxUpdateDoc,
-  UserStatus
+  TxUpdateDoc
 } from '@hcengineering/core'
 import love, {
   isOffice,
   loveId,
   MeetingMinutes,
   MeetingStatus,
-  Office,
   ParticipantInfo,
   Room,
   RoomAccess,
@@ -92,88 +87,32 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
   return result
 }
 
-async function createUserInfo (user: AccountUuid, control: TriggerControl): Promise<Tx[]> {
-  const person = (await control.findAll(control.ctx, contact.class.Person, { personUuid: user }))[0]
-  if (person === undefined) return []
-
-  // we already have participantInfo for this person
-  const infos = await control.findAll(control.ctx, love.class.ParticipantInfo, { person: person._id })
-  if (infos.length > 0) return []
-
-  const room = (await control.findAll(control.ctx, love.class.Office, { person: person._id }))[0]
-  const tx = control.txFactory.createTxCreateDoc(love.class.ParticipantInfo, core.space.Workspace, {
-    person: person._id,
-    name: person !== undefined ? getName(control.hierarchy, person, control.branding?.lastNameFirst) : 'User',
-    room: room?._id ?? love.ids.Reception,
-    x: 0,
-    y: 0,
-    account: user,
-    sessionId: null
-  })
-  const ptx = control.txFactory.createTxApplyIf(
-    core.space.Workspace,
-    user,
-    [],
-    [
-      {
-        _class: love.class.ParticipantInfo,
-        query: { person: person._id }
-      }
-    ],
-    [tx],
-    'createUserInfo'
-  )
-  return [ptx]
-}
-
-async function removeUserInfo (user: AccountUuid, control: TriggerControl): Promise<Tx[]> {
-  const person = (await control.findAll(control.ctx, contact.class.Person, { personUuid: user }))[0]
-  if (person === undefined) return []
-
-  // recheck that user is still offline
-  const status = (await control.findAll(control.ctx, core.class.UserStatus, { user }))[0]
-  if (status !== undefined && status.online) return []
-
-  const infos = await control.findAll(control.ctx, love.class.ParticipantInfo, { person: person._id })
-  const res: Tx[] = []
-  for (const info of infos) {
-    res.push(control.txFactory.createTxRemoveDoc(info._class, info.space, info._id))
-  }
-  return res
-}
-
 export async function OnUserStatus (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  const result: Tx[] = []
-  for (const tx of txes) {
-    const actualTx = tx as TxCUD<UserStatus>
-    if (actualTx.objectClass !== core.class.UserStatus) {
-      continue
-    }
-    if (actualTx._class === core.class.TxCreateDoc) {
-      const createTx = actualTx as TxCreateDoc<UserStatus>
-      const status = TxProcessor.createDoc2Doc(createTx)
-      result.push(...(await createUserInfo(status.user, control)))
-    } else if (actualTx._class === core.class.TxUpdateDoc) {
-      const updateTx = actualTx as TxUpdateDoc<UserStatus>
-      const val = updateTx.operations.online
-      if (val === undefined) return []
-      const status = (await control.findAll(control.ctx, core.class.UserStatus, { _id: updateTx.objectId }))[0]
-      if (status !== undefined) {
-        if (val) {
-          result.push(...(await createUserInfo(status.user, control)))
-        } else {
-          result.push(...(await removeUserInfo(status.user, control)))
-        }
-      }
-    }
-  }
-  return result
+  return []
 }
 
 async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
+
+  // Participants without a LiveKit sessionId (like AI bot) should not be added to RoomInfo.persons
+  // to avoid triggering "room empty" logic when they disconnect (e.g., when stopping transcription)
+  if (info.sessionId === null || info.sessionId === undefined) {
+    return res
+  }
+
   const roomInfos = await control.queryFind(control.ctx, love.class.RoomInfo, {})
-  const roomInfo = roomInfos.find((ri) => ri.room === info.room)
+
+  // Prefer MeetingMinutes association: if a ParticipantInfo references a meeting,
+  // use the meeting's attached room as the canonical room for RoomInfo updates.
+  let targetRoom = info.room
+  if (info.meeting !== undefined) {
+    const meeting = (await control.findAll(control.ctx, love.class.MeetingMinutes, { _id: info.meeting }))[0]
+    if (meeting?.attachedTo !== undefined) {
+      targetRoom = meeting.attachedTo as Ref<Room>
+    }
+  }
+
+  const roomInfo = roomInfos.find((ri) => ri.room === targetRoom)
   if (roomInfo !== undefined && !roomInfo.persons.includes(info.person)) {
     res.push(
       control.txFactory.createTxUpdateDoc(love.class.RoomInfo, core.space.Workspace, roomInfo._id, {
@@ -181,12 +120,12 @@ async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl):
       })
     )
   } else {
-    const room = (await control.findAll(control.ctx, love.class.Room, { _id: info.room }))[0]
+    const room = (await control.findAll(control.ctx, love.class.Room, { _id: targetRoom }))[0]
     if (room === undefined) return []
     res.push(
       control.txFactory.createTxCreateDoc(love.class.RoomInfo, core.space.Workspace, {
         persons: [info.person],
-        room: info.room,
+        room: room._id,
         isOffice: isOffice(room)
       })
     )
@@ -213,71 +152,9 @@ async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl):
           })
         )
       }
-    } else {
-      const room = (await control.findAll(control.ctx, love.class.Room, { _id: info.room }))[0]
-      if (room === undefined) return res
-      if (isOffice(room) && room.person === info.person) return res
-      const _id = generateId<MeetingMinutes>()
-      const date = new Date()
-        .toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        })
-        .replace(',', ' at')
-      const tx = control.txFactory.createTxCreateDoc(
-        love.class.MeetingMinutes,
-        core.space.Workspace,
-        {
-          description: null,
-          attachedTo: info.room,
-          status: MeetingStatus.Active,
-          title: `${await getRoomName(control, info.room)} ${date}`,
-          attachedToClass: love.class.Room,
-          collection: 'meetings'
-        },
-        _id
-      )
-      tx.space = core.space.Tx
-      res.push(tx)
-      res.push(
-        control.txFactory.createTxCreateDoc(core.class.Collaborator, core.space.Workspace, {
-          attachedTo: _id,
-          attachedToClass: love.class.MeetingMinutes,
-          collection: 'collaborators',
-          collaborator: info.account
-        })
-      )
-      if (isOffice(room) && room.person !== info.person && room.person !== null) {
-        const person = (
-          await control.findAll(control.ctx, contact.mixin.Employee, { _id: room.person as Ref<Employee> })
-        )[0]
-        if (person?.personUuid !== undefined) {
-          res.push(
-            control.txFactory.createTxCreateDoc(core.class.Collaborator, core.space.Workspace, {
-              attachedTo: _id,
-              attachedToClass: love.class.MeetingMinutes,
-              collection: 'collaborators',
-              collaborator: person.personUuid
-            })
-          )
-        }
-      }
     }
   }
   return res
-}
-
-async function getRoomName (control: TriggerControl, roomId: Ref<Room>): Promise<string> {
-  const room = (await control.findAll(control.ctx, love.class.Room, { _id: roomId }))[0]
-  if (room === undefined) return ''
-  if (isOffice(room) && room.person !== null && room.name === '') {
-    const employee = (await control.findAll(control.ctx, contact.class.Person, { _id: room.person }))[0]
-    if (employee != null) {
-      return getName(control.hierarchy, employee)
-    }
-  }
-  return room.name
 }
 
 async function setDefaultRoomAccess (info: ParticipantInfo, control: TriggerControl): Promise<Tx[]> {
@@ -305,25 +182,6 @@ async function setDefaultRoomAccess (info: ParticipantInfo, control: TriggerCont
       )
     }
   }
-  return res
-}
-
-async function finishRoomMeetings (room: Ref<Room>, meetingEnd: Timestamp, control: TriggerControl): Promise<Tx[]> {
-  const res: Tx[] = []
-  const meetingMinutes = await control.findAll(control.ctx, love.class.MeetingMinutes, {
-    attachedTo: room,
-    status: MeetingStatus.Active
-  })
-
-  for (const meeting of meetingMinutes) {
-    res.push(
-      control.txFactory.createTxUpdateDoc(meeting._class, meeting.space, meeting._id, {
-        status: MeetingStatus.Finished,
-        meetingEnd
-      })
-    )
-  }
-
   return res
 }
 
@@ -380,22 +238,6 @@ export async function meetingMinutesTextPresenter (doc: Doc): Promise<string> {
   return meetingMinutes.title
 }
 
-async function isRoomEmpty (
-  room: Ref<Room>,
-  isOffice: boolean,
-  persons: Ref<Person>[],
-  control: TriggerControl
-): Promise<boolean> {
-  if (persons.length === 0) return true
-  if (isOffice && persons.length === 1) {
-    const office = (await control.findAll(control.ctx, love.class.Office, { _id: room as Ref<Office> }))[0]
-    if (office === undefined) return true
-    return office.person != null && office.person === persons[0]
-  }
-
-  return false
-}
-
 async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   const personsByRoom = new Map<Ref<RoomInfo>, Ref<Person>[]>()
@@ -405,7 +247,9 @@ async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Pr
       if (roomInfo === undefined) continue
       if (roomInfo.room === love.ids.Reception) continue
       personsByRoom.delete(tx.objectId)
-      result.push(...(await finishRoomMeetings(roomInfo.room, tx.modifiedOn, control)))
+      // Note: We no longer call finishRoomMeetings here on RoomInfo removal.
+      // The love service handles room_finished webhook and finishes the specific meeting by meetingId.
+      // Calling finishRoomMeetings here would incorrectly finish ALL active meetings for the room.
       continue
     }
     if (tx._class === core.class.TxUpdateDoc) {
@@ -423,10 +267,6 @@ async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Pr
       const newPersons = currentPersons.filter((p) => !pulled.includes(p)).concat(pushed)
 
       personsByRoom.set(tx.objectId, newPersons)
-
-      if (await isRoomEmpty(roomInfo.room, roomInfo.isOffice, newPersons, control)) {
-        result.push(...(await finishRoomMeetings(roomInfo.room, tx.modifiedOn, control)))
-      }
     }
   }
   return result

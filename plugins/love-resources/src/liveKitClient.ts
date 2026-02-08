@@ -91,6 +91,11 @@ export class LiveKitClient {
   }
 
   async connect (wsURL: string, token: string, withVideo: boolean): Promise<void> {
+    console.log('[LiveKitClient.connect] Starting connection', {
+      wsURL,
+      withVideo,
+      currentState: this.liveKitRoom.state
+    })
     this.isConnecting = true
     this.currentSessionSupportsVideo = withVideo
     try {
@@ -133,7 +138,9 @@ export class LiveKitClient {
       })
 
       await this.updateActiveDevices()
+      console.log('[LiveKitClient.connect] Connection established successfully', { state: this.liveKitRoom.state })
     } catch (error) {
+      console.error('[LiveKitClient.connect] Connection failed', { error, state: this.liveKitRoom.state })
       this.isConnecting = false
       this.currentMediaSession?.close()
       this.currentMediaSession?.removeAllListeners()
@@ -143,6 +150,7 @@ export class LiveKitClient {
   }
 
   async disconnect (): Promise<void> {
+    console.log('[LiveKitClient.disconnect] Disconnecting...', { state: this.liveKitRoom.state })
     screenSharingState.set(ScreenSharingState.Inactive)
     clearTimeout(this.lastParticipantNotificationTimeout)
     const me = this.liveKitRoom.localParticipant
@@ -152,6 +160,7 @@ export class LiveKitClient {
     this.currentMediaSession?.close()
     this.currentMediaSession?.removeAllListeners()
     this.currentMediaSession = undefined
+    console.log('[LiveKitClient.disconnect] Disconnected', { state: this.liveKitRoom.state })
   }
 
   async awaitConnect (): Promise<void> {
@@ -166,6 +175,7 @@ export class LiveKitClient {
   }
 
   onConnected = (): void => {
+    console.log('[LiveKitClient.onConnected] Connected event fired')
     this.isConnecting = false
     lkSessionConnected.set(true)
     this.liveKitRoom.on(RoomEvent.ParticipantConnected, this.onParticipantConnected)
@@ -179,6 +189,7 @@ export class LiveKitClient {
   }
 
   onDisconnected = (): void => {
+    console.log('[LiveKitClient.onDisconnected] Disconnected event fired')
     lkSessionConnected.set(false)
     this.liveKitRoom.off(RoomEvent.ParticipantConnected, this.onParticipantConnected)
     this.liveKitRoom.off(RoomEvent.ParticipantDisconnected, this.onParticipantDisconnected)
@@ -319,11 +330,35 @@ export class LiveKitClient {
     }
   }
 
+  /**
+   * Enable or disable the local camera.
+   *
+   * NOTE: allow enabling camera even if the session was originally created
+   * without video support (for example when user chose to join muted/no-video).
+   * When enabling later we mark the session as supporting video and initialize
+   * the local media session camera state so enabling works properly.
+   */
   async setCameraEnabled (value: boolean): Promise<void> {
-    if (!this.currentSessionSupportsVideo) return
+    // If trying to disable and session didn't support video originally, nothing to do.
+    if (!value && !this.currentSessionSupportsVideo) return
+
+    // If enabling and session originally didn't support video, mark it supported
+    // and make sure media session has a camera state so downstream logic works.
+    if (value && !this.currentSessionSupportsVideo) {
+      this.currentSessionSupportsVideo = true
+      try {
+        // Initialize camera state inside current media session if present.
+        this.currentMediaSession?.setCamera({ enabled: true })
+      } catch (err) {
+        // Best-effort: ignore errors during media session update
+        console.debug('[LiveKitClient.setCameraEnabled] failed to initialize media session camera state', err)
+      }
+    }
+
     try {
       await this.liveKitRoom.localParticipant.setCameraEnabled(value)
     } catch (e) {
+      // If enabling failed, try to select an available camera and enable again.
       if (value) {
         const mediaDevices = await getMediaDevices(false, true)
         if (mediaDevices.activeCamera !== undefined) {

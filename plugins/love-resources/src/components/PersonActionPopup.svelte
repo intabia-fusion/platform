@@ -4,7 +4,7 @@
   import { isOffice, Room, RoomAccess } from '@hcengineering/love'
   import { ActionIcon } from '@hcengineering/ui'
   import love from '../plugin'
-  import { myInfo } from '../stores'
+  import { myInfo, meetings } from '../stores'
   import { joinMeeting, kick } from '../meetings'
   import { sendInvites } from '../invites'
 
@@ -40,7 +40,10 @@
         label={love.string.KnockAction}
         icon={love.icon.Knock}
         action={() => {
-          void joinMeeting(room)
+          const mm = $meetings.find((it) => it.attachedTo === room._id)
+          if (mm !== undefined) {
+            void joinMeeting(mm)
+          }
         }}
       />
     {/if}

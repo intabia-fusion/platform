@@ -1,8 +1,11 @@
 import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
 import { getCurrentEmployee } from '@hcengineering/contact'
-import { getPersonRefByPersonId } from '@hcengineering/contact-resources'
+import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
 import { type Ref } from '@hcengineering/core'
+import { createQuery, onClient } from '@hcengineering/presentation'
 import {
+  isOffice,
+  MeetingStatus,
   type DevicesPreference,
   type Floor,
   type MeetingMinutes,
@@ -10,12 +13,17 @@ import {
   type ParticipantInfo,
   type Room
 } from '@hcengineering/love'
-import { createQuery, onClient } from '@hcengineering/presentation'
 import { derived, get, writable } from 'svelte/store'
 
 import love from './plugin'
 
+// Client-side store to indicate current session is attempting to connect to a meeting
+export const myConnectingSessionId = writable<string | null>(null)
+export const isLocalConnecting = derived(myConnectingSessionId, (v) => v !== null)
+
 export const rooms = writable<Room[]>([])
+export const meetings = writable<MeetingMinutes[]>([])
+
 export const myOffice = derived(rooms, (val) => {
   const personId = getCurrentEmployee()
   return val.find((p) => (p as Office).person === personId) as Office | undefined
@@ -25,9 +33,14 @@ export const myInfo = derived(infos, (val) => {
   const personId = getCurrentEmployee()
   return val.find((p) => p.person === personId)
 })
+
+export const currentMeetingMinutes = derived([meetings, myInfo], ([meetings, myInfo]) => {
+  return myInfo !== undefined ? meetings.find((p) => p._id === myInfo.meeting) : undefined
+})
 export const currentRoom = derived([rooms, myInfo], ([rooms, myInfo]) => {
   return myInfo !== undefined ? rooms.find((p) => p._id === myInfo.room) : undefined
 })
+
 export const floors = writable<Floor[]>([])
 export const selectedFloor = writable<Ref<Floor> | undefined>(undefined)
 export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, myOffice]) => {
@@ -44,7 +57,6 @@ export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, m
 export const myPreferences = writable<DevicesPreference | undefined>()
 export let $myPreferences: DevicesPreference | undefined
 
-export const currentMeetingMinutes = writable<MeetingMinutes | undefined>(undefined)
 export const selectedRoomPlace = writable<{ _id: Ref<Room>, x: number, y: number } | undefined>(undefined)
 
 async function filterParticipantInfo (value: ParticipantInfo[]): Promise<ParticipantInfo[]> {
@@ -67,11 +79,20 @@ const query = createQuery(true)
 const statusQuery = createQuery(true)
 const floorsQuery = createQuery(true)
 const preferencesQuery = createQuery(true)
+const meetingsQuery = createQuery(true)
 
 onClient(() => {
   const roomPromise = new Promise<void>((resolve) =>
     query.query(love.class.Room, {}, (res) => {
       rooms.set(res)
+
+      // cache for all office persons
+      void getPersonsByPersonRefs(
+        res
+          .filter((it) => isOffice(it))
+          .map((it) => it.person)
+          .filter((it) => it != null)
+      )
       resolve()
     })
   )
@@ -95,7 +116,21 @@ onClient(() => {
     })
   )
 
-  void Promise.all([roomPromise, infoPromise, floorPromise, preferencePromise]).then(() => {
+  // All active meetings
+  const meetingsPromise = new Promise<void>((resolve) =>
+    meetingsQuery.query(
+      love.class.MeetingMinutes,
+      {
+        status: { $ne: MeetingStatus.Finished }
+      },
+      (res) => {
+        meetings.set(res)
+        resolve()
+      }
+    )
+  )
+
+  void Promise.all([roomPromise, infoPromise, floorPromise, preferencePromise, meetingsPromise]).then(() => {
     officeLoaded.set(true)
   })
 })

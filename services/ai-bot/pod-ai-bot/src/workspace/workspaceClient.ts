@@ -50,7 +50,7 @@ import {
   type Account,
   type WorkspaceIds
 } from '@hcengineering/core'
-import love, { type MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
+import love, { type MeetingMinutes } from '@hcengineering/love'
 import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
 import { getTools } from '../utils/tools'
@@ -554,7 +554,7 @@ export class WorkspaceClient {
       return
     }
 
-    await this.love.disconnect(request.roomId)
+    await this.love.disconnect(request.meetingId)
   }
 
   @withContext('processLoveTranscript')
@@ -562,7 +562,7 @@ export class WorkspaceClient {
     ctx: MeasureContext,
     text: string,
     participant: Ref<Person>,
-    room: Ref<Room>
+    meeting: Ref<MeetingMinutes>
   ): Promise<void> {
     await this.initPromise
     if (this.love === undefined) {
@@ -572,12 +572,12 @@ export class WorkspaceClient {
 
     // Diagnostics: log incoming love transcript for easier tracing
     ctx.info('workspaceClient.processLoveTranscript', {
-      room,
+      room: meeting,
       participant,
       textLength: text.length
     })
 
-    await this.love.processTranscript(text, participant, room)
+    await this.love.processTranscript(text, participant, meeting)
   }
 
   /**
@@ -587,7 +587,7 @@ export class WorkspaceClient {
   async createTranscriptionPlaceholder (
     ctx: MeasureContext,
     participant: Ref<Person>,
-    room: Ref<Room>,
+    meetingId: Ref<MeetingMinutes>,
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
@@ -598,7 +598,7 @@ export class WorkspaceClient {
       return undefined
     }
 
-    return await this.love.createTranscriptionPlaceholder(participant, room, startTimeSec, endTimeSec, blobId)
+    return await this.love.createTranscriptionPlaceholder(participant, meetingId, startTimeSec, endTimeSec, blobId)
   }
 
   /**
@@ -628,7 +628,7 @@ export class WorkspaceClient {
     ctx: MeasureContext,
     text: string,
     participant: Ref<Person>,
-    roomId: Ref<Room>,
+    meeting: Ref<MeetingMinutes>,
     timestamp: Timestamp
   ): Promise<boolean> {
     await this.initPromise
@@ -637,26 +637,7 @@ export class WorkspaceClient {
       return false
     }
 
-    return await this.love.createTranscriptionMessageWithTimestamp(text, participant, roomId, timestamp)
-  }
-
-  /**
-   * Get MeetingMinutes by room ID (any status, most recent)
-   */
-  @withContext('getMeetingMinutesByRoom')
-  async getMeetingMinutesByRoom (ctx: MeasureContext, roomId: Ref<Room>): Promise<MeetingMinutes | undefined> {
-    await this.initPromise
-    if (this.love === undefined) {
-      this.ctx.error('Love controller is not initialized')
-      return undefined
-    }
-
-    const room = await this.love.getRoom(roomId)
-    if (room === undefined) {
-      return undefined
-    }
-
-    return await this.love.getMeetingMinutesAny(room)
+    return await this.love.createTranscriptionMessageWithTimestamp(text, participant, meeting, timestamp)
   }
 
   async getLoveIdentity (): Promise<IdentityResponse | undefined> {
@@ -679,7 +660,7 @@ export class WorkspaceClient {
    * Add session recording as attachment to meeting minutes
    */
   async addSessionAttachment (
-    roomId: Ref<Room>,
+    meetingMinutesId: Ref<MeetingMinutes>,
     blobId: string,
     participant: string,
     startTimeSec: number,
@@ -687,14 +668,12 @@ export class WorkspaceClient {
     size: number,
     sessionNumber: number
   ): Promise<void> {
-    // Find active meeting minutes for this room
     const meetingMinutes = await this.client.findOne<MeetingMinutes>(love.class.MeetingMinutes, {
-      attachedTo: roomId,
-      status: MeetingStatus.Active
+      _id: meetingMinutesId
     })
 
     if (meetingMinutes === undefined) {
-      this.ctx.warn('No active meeting minutes found for room', { roomId, participant })
+      this.ctx.warn('No meeting minutes found for room', { participant })
       return
     }
 
@@ -737,7 +716,6 @@ export class WorkspaceClient {
 
     this.ctx.info('Added session attachment to meeting minutes', {
       meetingMinutes: meetingMinutes._id,
-      roomId,
       participant,
       participantName,
       sessionNumber,
