@@ -43,12 +43,18 @@ export class Refs {
       const queries = (docMap.get(d._id)?.queries ?? []).filter((it) => it !== q.id)
       if (!clean) {
         queries.push(q.id)
+      } else {
+        // We need to remove query if it doesn't containt element anymore
+        const qholer = docMap.get(d._id)
+        if (qholer !== undefined) {
+          qholer.queries = queries
+        }
       }
       if (queries.length === 0) {
         docMap.delete(d._id)
       } else {
         const q = docMap.get(d._id)
-        if ((q?.lastUsed ?? 0) < d.modifiedOn) {
+        if ((q?.lastUsed ?? 0) <= d.modifiedOn) {
           docMap.set(d._id, { ...(q ?? {}), doc: d, queries, lastUsed: d.modifiedOn })
         }
       }
