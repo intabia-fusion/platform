@@ -14,9 +14,18 @@
 -->
 
 <script lang="ts">
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { ApproveRequest } from '@hcengineering/process'
+  import { tooltip } from '@hcengineering/ui'
+  import { BooleanPresenter } from '@hcengineering/view-resources'
 
   export let value: ApproveRequest
 </script>
 
-{value.title}
+<div
+  use:tooltip={value.approved !== undefined
+    ? { label: getEmbeddedLabel(value.user + ' ' + new Date(value.modifiedOn).toLocaleString()) }
+    : undefined}
+>
+  <BooleanPresenter value={value.approved} />
+</div>
