@@ -38854,7 +38854,7 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../plugins/drive
       '@hcengineering/kafka':
-        specifier: workspace:^0.7.18
+        specifier: workspace:^0.7.19
         version: link:../../foundations/server/packages/kafka
       '@hcengineering/love':
         specifier: workspace:^0.7.0
