@@ -53,6 +53,7 @@ export default mergeIds(loveId, love, {
   string: {
     CreateMeeting: '' as IntlString,
     LeaveRoom: '' as IntlString,
+    AcceptRecording: '' as IntlString,
     LeaveRoomConfirmation: '' as IntlString,
     Mute: '' as IntlString,
     UnMute: '' as IntlString,
@@ -114,6 +115,12 @@ export default mergeIds(loveId, love, {
     Window: '' as IntlString,
     MeetingEmptyTitle: '' as IntlString,
     MeetingEmptyMessage: '' as IntlString,
+    InvalidOrExpiredLink: '' as IntlString,
+    CheckingLink: '' as IntlString,
+    PreparingGuestConnection: '' as IntlString,
+    GuestJoin: '' as IntlString,
+    StartOptions: '' as IntlString,
+    Error: '' as IntlString,
     StayInRoom: '' as IntlString
   }
 })

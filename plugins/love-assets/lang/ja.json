@@ -106,6 +106,13 @@
     "Window": "ウィンドウ",
     "MeetingEmptyTitle": "ミーティング終了？",
     "MeetingEmptyMessage": "全参加者が退出しました。1分後に自動切断されます。ミーティングに残りますか？",
-    "StayInRoom": "ルームに残る"
+    "StayInRoom": "ルームに残る",
+    "AcceptRecording": "録画と文字起こしの実行を許可します。",
+    "GuestJoin": "ゲストとして参加",
+    "StartOptions": "開始オプション",
+    "InvalidOrExpiredLink": "リンクが無効、または期限切れです。",
+    "CheckingLink": "リンクを確認して準備しています...",
+    "PreparingGuestConnection": "ゲスト接続を準備しています...",
+    "Error": "エラー"
   }
 }

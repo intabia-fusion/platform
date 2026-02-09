@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,170 +15,104 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata, setMetadata } from '@hcengineering/platform'
-  import presentation from '@hcengineering/presentation'
-  import {
-    Location,
-    deviceOptionsStore as deviceInfo,
-    fetchMetadataLocalStorage,
-    getCurrentLocation,
-    location,
-    setMetadataLocalStorage,
-    desktopPlatform
-  } from '@hcengineering/ui'
-  import { onDestroy, onMount } from 'svelte'
-  import Auth from './Auth.svelte'
-  import Confirmation from './Confirmation.svelte'
-  import ConfirmationSend from './ConfirmationSend.svelte'
-  import CreateWorkspaceForm from './CreateWorkspaceForm.svelte'
-  import Join from './Join.svelte'
-  import AutoJoin from './AutoJoin.svelte'
-  import LoginForm from './LoginForm.svelte'
-  import ProvidersOnlyForm from './ProvidersOnlyForm.svelte'
-  import PasswordRequest from './PasswordRequest.svelte'
-  import PasswordRestore from './PasswordRestore.svelte'
-  import SelectWorkspace from './SelectWorkspace.svelte'
-  import SignupForm from './SignupForm.svelte'
-  import SelectDownloads from './SelectDownloads.svelte'
-  import { Pages, getAccount, pages } from '..'
-  import { goTo } from '../utils'
+  import platform, { getMetadata } from '@hcengineering/platform'
+  import { Popup, Scroller, deviceOptionsStore as deviceInfo, themeStore } from '@hcengineering/ui'
+  import workbench from '@hcengineering/workbench'
+  import { onMount } from 'svelte'
   import login from '../plugin'
-  import LoginAppBase from './LoginAppBase.svelte'
 
   // Resolve static asset URLs at runtime to avoid requiring image module declarations
   // (prevents TypeScript / diagnostics errors when module types are missing)
+  import loginBack from '../../img/login_back.png'
+  import loginBack2x from '../../img/login_back_2x.png'
+  import loginBackAvif from '../../img/login_back.avif'
+  import loginBack2xAvif from '../../img/login_back_2x.avif'
+  import loginBackWebp from '../../img/login_back.webp'
+  import loginBack2xWebp from '../../img/login_back_2x.webp'
 
-  import AdminWorkspaces from './AdminWorkspaces.svelte'
-  import ChangePassword from './ChangePassword.svelte'
-
-  import BottomAction from './BottomAction.svelte'
-
-  export let page: Pages = 'signup'
-
-  const signUpDisabled = getMetadata(login.metadata.DisableSignUp) ?? false
-  const localLoginHidden = getMetadata(login.metadata.HideLocalLogin) ?? false
-  const useOTP = getMetadata(presentation.metadata.UseOTP) === true
-  let navigateUrl: string | undefined
-
-  onDestroy(location.subscribe(updatePageLoc))
-
-  function updatePageLoc (loc: Location): void {
-    const token = getMetadata(presentation.metadata.Token)
-    page = (loc.path[1] as Pages) ?? (token != null ? 'selectWorkspace' : 'login')
-    if (page === 'join' && loc.query?.autoJoin !== undefined) {
-      page = 'autoJoin'
-    }
-
-    const allowedUnauthPages: Pages[] = [
-      'login',
-      'signup',
-      'password',
-      'recovery',
-      'join',
-      'autoJoin',
-      'confirm',
-      'confirmationSend',
-      'auth',
-      'downloads'
-    ]
-    if (token === undefined ? !allowedUnauthPages.includes(page) : !pages.includes(page)) {
-      const account = fetchMetadataLocalStorage(login.metadata.LastAccount)
-      page = account != null ? 'login' : 'signup'
-    }
-
-    navigateUrl = loc.query?.navigateUrl ?? undefined
-  }
-
-  async function chooseToken (): Promise<void> {
-    if (page === 'auth') {
-      // token handled by auth page
-      return
-    } else if (page === 'autoJoin') {
-      // there's a separate workflow for auto join
-      return
-    }
-
-    if (getMetadata(presentation.metadata.Token) == null) {
-      const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
-      if (lastAccount != null) {
-        try {
-          const loginInfo = await getAccount(false)
-          if (loginInfo != null) {
-            setMetadata(presentation.metadata.Token, loginInfo.token)
-            setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
-            updatePageLoc(getCurrentLocation())
-          }
-        } catch (err: any) {
-          // do nothing
-        }
-      }
-    }
-  }
+  import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
 
   onMount(() => {
-    // Preserve existing login initialization behavior
-    void chooseToken()
+    // Initialize login theme from platform metadata if provided
+    const lTheme = getMetadata(login.metadata.LoginTheme) as LoginThemeName | undefined
+    if (lTheme === 'intabia' || lTheme === 'huly') {
+      setLoginTheme(lTheme)
+    }
   })
+
+  // activeTheme is used everywhere for rendering (prefers override if set)
+  $: activeTheme = $loginTheme
+
+  // themeStyle resolves to override theme vars when override is active, otherwise to store theme vars
+  function onDevThemeChange (e: Event): void {
+    const v = (e.target as HTMLSelectElement).value as LoginThemeName
+    // set local override and apply accent class immediately (no store change)
+    setLoginTheme(v)
+  }
 </script>
 
-{#if page === 'admin'}
-  <AdminWorkspaces />
-{:else}
-  <LoginAppBase>
-    <svelte:fragment slot="form-content">
-      {#if page === 'login'}
-        {#if localLoginHidden}
-          <ProvidersOnlyForm />
-        {:else}
-          <LoginForm {navigateUrl} {signUpDisabled} {useOTP} />
-        {/if}
-      {:else if page === 'signup'}
-        <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
-      {:else if page === 'createWorkspace'}
-        <CreateWorkspaceForm />
-      {:else if page === 'password'}
-        <PasswordRequest {signUpDisabled} />
-      {:else if page === 'recovery'}
-        <PasswordRestore />
-      {:else if page === 'selectWorkspace'}
-        <SelectWorkspace {navigateUrl} />
-      {:else if page === 'downloads'}
-        <SelectDownloads />
-      {:else if page === 'join'}
-        <Join />
-      {:else if page === 'autoJoin'}
-        <AutoJoin />
-      {:else if page === 'confirm'}
-        <Confirmation />
-      {:else if page === 'confirmationSend'}
-        <ConfirmationSend />
-      {:else if page === 'auth'}
-        <Auth />
-      {:else if page === 'changePassword'}
-        <ChangePassword />
+<div
+  class="theme-dark w-full h-full backd"
+  class:accent-intabia={activeTheme.name === 'intabia'}
+  class:paneld={$deviceInfo.docWidth <= 768}
+  class:white={!$themeStore.dark}
+  class:login-theme-intabia={activeTheme.name === 'intabia'}
+  class:login-theme-huly={activeTheme.name === 'huly'}
+>
+  <div class="bg-image clear-mins p-4 back">
+    {#if activeTheme.backgroundComponent}
+      <div class="back-image" style:display={'block'}>
+        <svelte:component this={activeTheme.backgroundComponent} />
+      </div>
+    {:else}
+      <picture>
+        <source srcset={`${loginBackAvif}, ${loginBack2xAvif} 2x`} type="image/avif" />
+        <source srcset={`${loginBackWebp}, ${loginBack2xWebp} 2x`} type="image/webp" />
+
+        <img
+          class="back-image"
+          src={loginBack}
+          style:display={'block'}
+          srcset={`${loginBack} 1x, ${loginBack2x} 2x`}
+          alt=""
+        />
+      </picture>
+    {/if}
+
+    <div
+      style:position="fixed"
+      style:left={$deviceInfo.docWidth <= 480 ? '.75rem' : '1.75rem'}
+      style:top={'3rem'}
+      style:z-index={10001}
+      class="flex-row-center"
+    >
+      <svelte:component this={activeTheme.logoComponent} />
+      {#if activeTheme.showTitle}
+        <span class="fs-title ml-2">{getMetadata(workbench.metadata.PlatformTitle)}</span>
       {/if}
-    </svelte:fragment>
-    <svelte:fragment slot="extra-form-content">
-      {#if !desktopPlatform && page !== 'downloads'}
-        {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
-        <div class="mt-4 flex flex-row-reverse mr-4">
-          {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}
-            <BottomAction
-              action={{
-                // caption: login.string.Downloads,
-                i18n: login.string.Downloads,
-                page: 'downloads',
-                func: () => {
-                  goTo('downloads')
-                }
-              }}
-            />
-          {/if}
+    </div>
+
+    {#if getMetadata(platform.metadata.DevModel)}
+      <div style:position="fixed" style:left={'0px'} style:top={'0px'} style:z-index={10000} class="flex-row-center">
+        <select class="select small" value={$loginTheme.name} on:change={onDevThemeChange}>
+          <option value="intabia">Intabia</option>
+          <option value="huly">Huly</option>
+        </select>
+      </div>
+    {/if}
+
+    <div class="panel-base panel" class:white={!$themeStore.dark}>
+      <Scroller padding={'1rem 0'}>
+        <div class="form-content">
+          <slot name="form-content" />
         </div>
-      {/if}
-    </svelte:fragment>
-  </LoginAppBase>
-{/if}
+        <slot name="extra-form-content" />
+      </Scroller>
+    </div>
+
+    <Popup />
+  </div>
+</div>
 
 <style lang="scss">
   @use './themes/intabia.scss';

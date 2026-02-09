@@ -138,7 +138,7 @@ const love = plugin(loveId, {
   },
   component: {
     SelectScreenSourcePopup: '' as AnyComponent,
-    GuestApp: '' as AnyComponent
+    GuestMeetingApp: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,

@@ -44,44 +44,78 @@ import { workbenchId } from '@hcengineering/workbench'
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const tx of txes) {
-    const actualTx = tx as TxMixin<Person, Employee>
-    if (actualTx._class !== core.class.TxMixin) {
-      continue
-    }
-    if (actualTx.mixin !== contact.mixin.Employee) {
-      continue
-    }
-    const val = actualTx.attributes.active
-    if (val === undefined) {
-      continue
-    }
-    const user = (
-      await control.findAll(control.ctx, contact.mixin.Employee, { _id: actualTx.objectId as Ref<Employee> })
-    )[0]
-    if (user === undefined) {
-      continue
-    }
-    if (user.role === 'GUEST') {
-      continue
-    }
-    if (val) {
-      const freeRoom = (await control.findAll(control.ctx, love.class.Office, { person: null }))[0]
-      if (freeRoom !== undefined) {
-        return [
-          control.txFactory.createTxUpdateDoc(freeRoom._class, freeRoom.space, freeRoom._id, {
-            person: actualTx.objectId
-          })
-        ]
+    let employeeId: Ref<Person> | undefined
+    let employee: Employee | undefined
+
+    // Handle TxCreateDoc (direct Employee creation)
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<Employee>
+      if (createTx.objectClass === contact.mixin.Employee) {
+        employee = TxProcessor.createDoc2Doc(createTx)
+        employeeId = createTx.objectId as Ref<Person>
       }
+    }
+    // Handle TxMixin (Employee added as mixin to Person) - used by AI bot
+    else if (tx._class === core.class.TxMixin) {
+      const mixinTx = tx as TxMixin<Person, Employee>
+      if (mixinTx.mixin === contact.mixin.Employee) {
+        employeeId = mixinTx.objectId
+        // Check if employee is being activated
+        if (mixinTx.attributes.active !== true) {
+          continue
+        }
+        employee = mixinTx.attributes as Employee
+      }
+    }
+
+    if (employeeId === undefined || employee === undefined) {
+      continue
+    }
+
+    // Skip if employee is not active or is a guest
+    if (employee.active !== true) {
+      continue
+    }
+    if (employee.role === 'GUEST') {
+      continue
+    }
+
+    control.ctx.info('[OnEmployee] Processing employee', {
+      employeeId,
+      active: employee.active,
+      role: employee.role,
+      txClass: tx._class
+    })
+
+    // Check if employee already has an office
+    const existingRooms = await control.findAll(control.ctx, love.class.Office, { person: employeeId })
+    control.ctx.info('[OnEmployee] Employee office check', {
+      employeeId,
+      existingOfficeCount: existingRooms.length
+    })
+
+    if (existingRooms.length > 0) {
+      control.ctx.info('[OnEmployee] Employee already has office, skipping', {
+        employeeId,
+        officeId: existingRooms[0]._id
+      })
+      continue
+    }
+
+    // Find a free office and assign it
+    const freeRoom = (await control.findAll(control.ctx, love.class.Office, { person: null }))[0]
+    if (freeRoom !== undefined) {
+      control.ctx.info('[OnEmployee] Assigning employee to office', {
+        employeeId,
+        officeId: freeRoom._id
+      })
+      result.push(
+        control.txFactory.createTxUpdateDoc(freeRoom._class, freeRoom.space, freeRoom._id, {
+          person: employeeId
+        })
+      )
     } else {
-      const room = (await control.findAll(control.ctx, love.class.Office, { person: actualTx.objectId }))[0]
-      if (room !== undefined) {
-        result.push(
-          control.txFactory.createTxUpdateDoc(room._class, room.space, room._id, {
-            person: null
-          })
-        )
-      }
+      control.ctx.info('[OnEmployee] No free office available', { employeeId })
     }
   }
   return result

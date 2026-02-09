@@ -12,10 +12,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // Internal login-scoped Label component.
-  // This component mirrors the public Label API but applies login-scoped
-  // color tokens (prefixed with `--login-*`) to avoid mutating global theme
-  // variables in the login plugin.
   import type { IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
@@ -24,20 +20,18 @@
   export let params: Record<string, any> = {}
   export let className: string = 'login-label'
   export let variant: string | undefined = undefined
+  // Allow long labels to wrap to multiple lines when true
+  export let wrap: boolean = false
 
-  // Store computed classes in a declared variable so TypeScript is happy.
-  // We compute a base class (first token of `className`) to create a
-  // predictable variant class (e.g. `login-label--heading`) even when
-  // `className` contains multiple classes.
   let classes: string = className
 
   $: {
     const base =
       typeof className === 'string' && className.trim().length > 0 ? className.trim().split(/\s+/)[0] : 'login-label'
-    classes =
-      variant && typeof variant === 'string' && variant.trim().length > 0
-        ? `${className} ${base}--${variant}`
-        : className
+    // Build class list: include variant and optional wrap class when requested
+    const variantClass = typeof variant === 'string' && variant.trim().length > 0 ? `${base}--${variant}` : ''
+    const wrapClass = wrap ? `${base}--wrap` : ''
+    classes = [className, variantClass, wrapClass].filter(Boolean).join(' ')
   }
 
   let _value: string | undefined
@@ -61,14 +55,17 @@
 </span>
 
 <style lang="scss">
-  /* Color is intentionally login-scoped: prefer `--login-*` tokens and
-     fall back to global theme tokens only if login-specific ones are absent. */
   .login-label {
     color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
     display: inline;
     line-height: inherit;
   }
-  /* Heading variant: use theme token when available; otherwise inherit color */
+  .login-label--wrap {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: left;
+  }
   .login-label--heading {
     color: var(--login-heading-color, inherit);
   }
@@ -77,9 +74,6 @@
     display: inline;
     line-height: inherit;
   }
-  /* Caption / smaller labels may want a different tone. Consumers can add
-     the `caption` class to request caption color; fallback still respects
-     login-prefixed tokens. */
   .login-label.caption {
     color: var(--login-caption-color, var(--theme-caption-color));
   }

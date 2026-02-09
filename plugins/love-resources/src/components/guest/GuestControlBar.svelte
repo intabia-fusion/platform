@@ -1,5 +1,5 @@
 <!--
-// Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,20 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
+  import { ModernButton, Popup, TooltipInstance } from '@hcengineering/ui'
 
-  import love from '../plugin'
-  import { myInfo, myOffice } from '../stores'
-  import { isFullScreen } from '../utils'
-  import ControlBarContainer from './meeting/ControlBarContainer.svelte'
-  import { lkSessionConnected } from '../liveKitClient'
-  import SendReactionButton from './meeting/controls/SendReactionButton.svelte'
-  import LeaveRoomButton from './meeting/controls/LeaveRoomButton.svelte'
-  import RecordingButton from './meeting/controls/RecordingButton.svelte'
-  import TranscriptionButton from './meeting/controls/TranscriptionButton.svelte'
-  import MicrophoneButton from './meeting/controls/MicrophoneButton.svelte'
-  import CameraButton from './meeting/controls/CameraButton.svelte'
-  import ShareScreenButton from './meeting/controls/ShareScreenButton.svelte'
+  import love from '../../plugin'
+  import { myInfo, myOffice } from '../../stores'
+  import { isFullScreen } from '../../utils'
+  import ControlBarContainer from '../meeting/ControlBarContainer.svelte'
+  import { lkSessionConnected } from '../../liveKitClient'
+  import SendReactionButton from '../meeting/controls/SendReactionButton.svelte'
+  import MicrophoneButton from '../meeting/controls/MicrophoneButton.svelte'
+  import CameraButton from '../meeting/controls/CameraButton.svelte'
+  import ShareScreenButton from '../meeting/controls/ShareScreenButton.svelte'
 
   export let canMaximize: boolean = true
   export let fullScreen: boolean = false

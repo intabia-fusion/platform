@@ -20,25 +20,28 @@
   // Otherwise we remain on the public Guest flow (GuestJoinPopup).
 
   import GuestJoinPopup from './GuestJoinPopup.svelte'
-  import ScreenSharingView from './meeting/ScreenSharingView.svelte'
-  import GuestParticipantsListView from './meeting/GuestParticipantsListView.svelte'
-  import { lkSessionConnected } from '../liveKitClient'
-  import { liveKitClient } from '../utils'
+  import ScreenSharingView from '../meeting/ScreenSharingView.svelte'
+  import GuestParticipantsListView from '../meeting/GuestParticipantsListView.svelte'
+  import { lkSessionConnected } from '../../liveKitClient'
+  import { liveKitClient } from '../../utils'
   import { onDestroy } from 'svelte'
-  import ui, { location, navigate, Modal, Location, Popup, Button } from '@hcengineering/ui'
-  import { getMetadata, getResource } from '@hcengineering/platform'
+  import ui, { location, navigate, Location, Button } from '@hcengineering/ui'
+  import { getMetadata, getResource, IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
 
-  import love from '../plugin'
+  import love from '../../plugin'
   import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
   import { workbenchId } from '@hcengineering/workbench'
   import GuestControlBar from './GuestControlBar.svelte'
   import { Ref, WorkspaceUuid } from '@hcengineering/core'
 
+  import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
+  import loginResources from '@hcengineering/login-resources/src/plugin'
+
   // Route params
   let meetingId: string | undefined = undefined
   let guestToken: string | undefined = undefined
-  let errorMessage: string | null = null
+  let errorMessage: IntlString | null = null
 
   // Guest info / resolution state
   let guestInfo: {
@@ -84,7 +87,7 @@
     guestToken = q.guestToken ?? undefined
 
     if (meetingId == null || guestToken == null) {
-      errorMessage = 'Ссылка некорректна или устарела.'
+      errorMessage = love.string.InvalidOrExpiredLink
       guestInfo = null
     } else {
       errorMessage = null
@@ -144,15 +147,6 @@
     }
   }
 
-  function handleJoinFromGuestApp (): void {
-    // Programmatically trigger child's join action (it will validate name and call /guestJoin)
-    try {
-      void guestJoinRef?.join?.()
-    } catch (err: any) {
-      console.error('Failed to trigger guest join', err)
-    }
-  }
-
   // Subscribe to location and ensure subscription is cleaned up automatically
   onDestroy(
     location.subscribe((loc) => {
@@ -175,8 +169,8 @@
   }
 </script>
 
-<div class="guest-app">
-  <div class="panel" class:full={$lkSessionConnected}>
+<LoginAppBase>
+  <svelte:fragment slot="form-content">
     {#if errorMessage}
       <div class="center" role="alert">
         <div class="message">{errorMessage}</div>
@@ -185,99 +179,70 @@
         </div>
       </div>
     {:else if meetingId !== undefined && guestToken}
-      <Modal
-        type="type-component"
-        hideFooter
-        padding="0"
-        on:close={() => {
-          void leaveGuest()
-        }}
-      >
-        <svelte:fragment slot="title">
-          {guestInfo?.title ?? guestInfo?.workspaceUrl ?? 'Meeting'}
-        </svelte:fragment>
+      <!-- {guestInfo?.title ?? guestInfo?.workspaceUrl ?? 'Meeting'} -->
 
-        {#if resolving}
-          <div class="center">
-            <div class="message">Проверка ссылки и подготовка...</div>
+      {#if resolving}
+        <div class="center">
+          <div class="message">{love.string.CheckingLink}</div>
+        </div>
+      {:else if $lkSessionConnected}
+        <!-- Full-room view for connected guest -->
+        <div class="room-container" class:sharing={withScreenSharing}>
+          <div class="screenContainer">
+            <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
           </div>
-        {:else if $lkSessionConnected}
-          <!-- Full-room view for connected guest -->
-          <div class="room-container" class:sharing={withScreenSharing}>
-            <div class="screenContainer">
-              <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
-            </div>
-            <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
-              <GuestParticipantsListView
-                room={guestRoomPlaceholder}
-                on:participantsCount={(evt) => {
-                  updateStyle(evt.detail, withScreenSharing)
-                }}
-              />
-            </div>
-          </div>
-
-          <GuestControlBar {leaveGuest} />
-        {:else}
-          <div class="center">
-            {#if guestInfo?.workspaceUrl != null && guestInfo.workspaceUrl !== ''}
-              <div class="message">Приглашение в рабочую область: {guestInfo.workspaceUrl}</div>
-            {/if}
-            {#if resolveError}
-              <div class="message" role="alert">Ошибка: {resolveError}</div>
-            {/if}
-
-            <!-- Show join UI (handles name prompt and connecting to LiveKit).
-                   We pass workspace info so GuestJoinPopup can persist guest-id / prefill name. -->
-            <GuestJoinPopup
-              bind:this={guestJoinRef}
-              {meetingId}
-              {guestToken}
-              workspaceId={guestInfo?.workspace ?? undefined}
-              workspaceName={guestInfo?.workspaceUrl ?? undefined}
+          <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
+            <GuestParticipantsListView
+              room={guestRoomPlaceholder}
+              on:participantsCount={(evt) => {
+                updateStyle(evt.detail, withScreenSharing)
+              }}
             />
           </div>
-        {/if}
-      </Modal>
+        </div>
+
+        <GuestControlBar {leaveGuest} />
+      {:else}
+        <div>
+          <div class="flex flex-col justify-center">
+            {#if $loginTheme.showLoginTitle}
+              <div class="main-heading">
+                <Label
+                  className="login-label main-heading__label"
+                  variant="heading"
+                  label={loginResources.string.SignToProceed}
+                />
+              </div>
+            {/if}
+            {#if guestInfo?.workspaceUrl != null && guestInfo.workspaceUrl !== ''}
+              <div class="message flex flex-row-center justify-center">{guestInfo.workspaceUrl}</div>
+            {/if}
+            {#if resolveError}
+              <div class="message" role="alert">{love.string.Error}: {resolveError}</div>
+            {/if}
+          </div>
+
+          <!-- Show join UI (handles name prompt and connecting to LiveKit).
+                       We pass workspace info so GuestJoinPopup can persist guest-id / prefill name. -->
+          <GuestJoinPopup
+            bind:this={guestJoinRef}
+            {meetingId}
+            {guestToken}
+            workspaceId={guestInfo?.workspace ?? undefined}
+            workspaceName={guestInfo?.workspaceUrl ?? undefined}
+          />
+        </div>
+      {/if}
     {:else}
       <!-- In case location hasn't been populated yet we show a small loader/placeholder -->
       <div class="center">
-        <div class="message">Подготовка гостевого подключения...</div>
+        <div class="message">{love.string.PreparingGuestConnection}</div>
       </div>
     {/if}
-  </div>
-</div>
-<Popup />
+  </svelte:fragment>
+</LoginAppBase>
 
 <style>
-  .guest-app {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
-    background: var(--app-bg, #ffffff);
-  }
-
-  .panel {
-    width: 100%;
-    max-width: 980px;
-    height: 100%;
-    max-height: 860px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .panel.full {
-    max-width: none;
-    max-height: none;
-    width: 100%;
-    height: 100%;
-  }
-
   .room-container {
     display: flex;
     justify-content: center;
@@ -340,5 +305,30 @@
   .actions {
     display: flex;
     gap: 8px;
+  }
+  /* Main heading (title above tabs/signup/login) */
+  .main-heading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-style: Bold;
+  }
+
+  .login-label.main-heading__label {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0 0 16px;
+    width: 412px;
+    height: 36px;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: var(--login-main-heading-font-weight, 700);
+    font-size: var(--login-main-heading-font-size, 28px);
+    line-height: var(--login-main-heading-line-height, 38px);
+    letter-spacing: var(--login-main-heading-letter-spacing, -0.005em);
+    text-align: center;
+    color: var(--login-heading-color, #000061) !important;
   }
 </style>

@@ -34,12 +34,13 @@ import {
 
 import { type Pages, pages } from '@hcengineering/login'
 export { pages, type Pages }
-/*!
- * Anticrm Platform™ Login Plugin
- * © 2020, 2021 Anticrm Platform Contributors.
- * © 2021 Hardcore Engineering Inc. All Rights Reserved.
- * Licensed under the Eclipse Public License, Version 2.0
- */
+export { default as LoginAppBase } from './components/LoginAppBase.svelte'
+export { default as AuthLikeForm } from './components/AuthLikeForm.svelte'
+export { default as Label } from './components/internal/Label.svelte'
+export { default as FormButton } from './components/internal/FormButton.svelte'
+export { default as StylishEdit } from './components/internal/StylishEdit.svelte'
+export { default as EditBox } from './components/internal/EditBox.svelte'
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   component: {

@@ -106,6 +106,13 @@
     "Window": "Janela",
     "MeetingEmptyTitle": "Reunião encerrada?",
     "MeetingEmptyMessage": "Todos os participantes saíram. Você será desconectado em 1 minuto. Deseja permanecer?",
-    "StayInRoom": "Permanecer na sala"
+    "StayInRoom": "Permanecer na sala",
+    "AcceptRecording": "Permitir realizar gravação e transcrição.",
+    "GuestJoin": "Entrar como convidado",
+    "StartOptions": "Opções de início",
+    "InvalidOrExpiredLink": "O link é inválido ou expirou.",
+    "CheckingLink": "Verificando o link e preparando...",
+    "PreparingGuestConnection": "Preparando a conexão do convidado...",
+    "Error": "Erro"
   }
 }

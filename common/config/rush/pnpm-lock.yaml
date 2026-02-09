@@ -22391,6 +22391,9 @@ importers:
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
+      '@hcengineering/login-resources':
+        specifier: workspace:^0.7.0
+        version: link:../login-resources
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../love

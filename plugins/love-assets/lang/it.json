@@ -106,6 +106,13 @@
     "Window": "Finestra",
     "MeetingEmptyTitle": "Riunione terminata?",
     "MeetingEmptyMessage": "Tutti i partecipanti hanno abbandonato. Sarai disconnesso tra 1 minuto. Vuoi rimanere?",
-    "StayInRoom": "Rimani nella stanza"
+    "StayInRoom": "Rimani nella stanza",
+    "AcceptRecording": "Consenti di eseguire la registrazione e la trascrizione.",
+    "GuestJoin": "Accedi come ospite",
+    "StartOptions": "Opzioni di avvio",
+    "InvalidOrExpiredLink": "Il link non è valido o è scaduto.",
+    "CheckingLink": "Controllo del link e preparazione...",
+    "PreparingGuestConnection": "Preparazione della connessione ospite...",
+    "Error": "Errore"
   }
 }

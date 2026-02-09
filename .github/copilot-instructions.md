@@ -74,6 +74,8 @@ docker compose -f dev/docker-compose.yaml restart aibot
 
 ## Formatting and Linting
 
+**AI AGENTS: DO NOT run formatting commands automatically.** Formatting can corrupt or erase files. Let the user handle formatting.
+
 After making changes to a package, run formatting and linting in the modified package directory:
 
 ```bash

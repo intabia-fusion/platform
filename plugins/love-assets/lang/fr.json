@@ -106,6 +106,13 @@
     "Window": "Fenêtre",
     "MeetingEmptyTitle": "Réunion terminée ?",
     "MeetingEmptyMessage": "Tous les participants sont partis. Vous serez déconnecté dans 1 minute. Souhaitez-vous rester ?",
-    "StayInRoom": "Rester dans la salle"
+    "StayInRoom": "Rester dans la salle",
+    "AcceptRecording": "Autoriser l'exécution de l'enregistrement et de la transcription.",
+    "GuestJoin": "Rejoindre en tant qu'invité",
+    "StartOptions": "Options de démarrage",
+    "InvalidOrExpiredLink": "Le lien est invalide ou a expiré.",
+    "CheckingLink": "Vérification du lien et préparation...",
+    "PreparingGuestConnection": "Préparation de la connexion de l'invité...",
+    "Error": "Erreur"
   }
 }

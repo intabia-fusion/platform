@@ -15,6 +15,7 @@ Respond to user using Russian language, all comments should be in English.
 ## Structure
 
 - `models/*` - Shared types/models
+  - If add resources like component: '' as AnyComponent, ensure is it added into one of api package/resources package or model package. It should be defined only once. It could be IntlString as well or any other '' as Ref<something> declaration.
 - `server-*` - Server packages
 - `plugins/*` - Client plugins
 - `packages/*` - Reusable utilities
@@ -32,6 +33,8 @@ rush add -p PKG      # Add dependency
 ## Docker Build Workflow
 
 **IMPORTANT**: After making changes to service code (in `services/`, `pods/`, etc.), you must rebuild Docker images:
+
+**Note**: If you're running the UI via `rush dev` (dev-server), you don't need to restart the `front` Docker container. Changes will be picked up automatically by the dev server.
 
 ```bash
 # Build Docker images for specific service
@@ -73,6 +76,8 @@ docker compose -f dev/docker-compose.yaml restart aibot
 `rush build` performs transpilation which may succeed even with type errors. Always use `diagnostics` to verify code correctness.
 
 ## Formatting and Linting
+
+**AI AGENTS: DO NOT run formatting commands automatically.** Formatting can corrupt or erase files. Let the user handle formatting.
 
 After making changes to a package, run formatting and linting in the modified package directory:
 

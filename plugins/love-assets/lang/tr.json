@@ -106,6 +106,13 @@
     "Window": "Pencere",
     "MeetingEmptyTitle": "Toplantı bitti mi?",
     "MeetingEmptyMessage": "Tüm katılımcılar ayrıldı. 1 dakika içinde bağlantınız kesilecek. Kalmak ister misiniz?",
-    "StayInRoom": "Odada kal"
+    "StayInRoom": "Odada kal",
+    "AcceptRecording": "Kaydı ve transkripti gerçekleştirmeye izin ver.",
+    "GuestJoin": "Misafir olarak katıl",
+    "StartOptions": "Başlatma seçenekleri",
+    "InvalidOrExpiredLink": "Bağlantı geçersiz veya süresi dolmuş.",
+    "CheckingLink": "Bağlantı kontrol ediliyor ve hazırlanıyor...",
+    "PreparingGuestConnection": "Misafir bağlantısı hazırlanıyor...",
+    "Error": "Hata"
   }
 }

@@ -106,6 +106,13 @@
     "Window": "窗口",
     "MeetingEmptyTitle": "会议已结束？",
     "MeetingEmptyMessage": "所有参与者已离开。您将在1分钟后断开连接。是否要留在会议中？",
-    "StayInRoom": "留在房间"
+    "StayInRoom": "留在房间",
+    "AcceptRecording": "允许执行录制和转录。",
+    "GuestJoin": "以访客身份加入",
+    "StartOptions": "启动选项",
+    "InvalidOrExpiredLink": "链接无效或已过期。",
+    "CheckingLink": "正在检查链接并进行准备...",
+    "PreparingGuestConnection": "正在准备访客连接...",
+    "Error": "错误"
   }
 }

@@ -106,6 +106,13 @@
     "Window": "Okno",
     "MeetingEmptyTitle": "Schůzka ukončena?",
     "MeetingEmptyMessage": "Všichni účastníci odešli. Během 1 minuty budete odpojeni. Chcete zůstat?",
-    "StayInRoom": "Zůstat v místnosti"
+    "StayInRoom": "Zůstat v místnosti",
+    "AcceptRecording": "Povolit provádění nahrávání a přepisu.",
+    "GuestJoin": "Připojení hosta",
+    "StartOptions": "Možnosti spuštění",
+    "InvalidOrExpiredLink": "Odkaz je neplatný nebo vypršel.",
+    "CheckingLink": "Kontrola odkazu a příprava...",
+    "PreparingGuestConnection": "Příprava připojení hosta...",
+    "Error": "Chyba"
   }
 }

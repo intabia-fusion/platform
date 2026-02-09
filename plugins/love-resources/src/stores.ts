@@ -1,5 +1,5 @@
 import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
-import { getCurrentEmployee } from '@hcengineering/contact'
+import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
 import { type Ref } from '@hcengineering/core'
 import { createQuery, onClient } from '@hcengineering/presentation'
@@ -149,3 +149,21 @@ export async function waitForOfficeLoaded (): Promise<void> {
 }
 
 export const lockedRoom = writable<string>('')
+
+// Store that maps personId -> their primary office (first one by _id)
+// This fixes the issue where a person assigned to multiple offices appears in all of them
+export const personPrimaryOffice = derived(rooms, (val) => {
+  const officeMap = new Map<Ref<Person>, Office>()
+  const allOffices = val.filter((r) => isOffice(r))
+
+  // Sort offices by _id to ensure consistent ordering
+  const sortedOffices = [...allOffices].sort((a, b) => a._id.localeCompare(b._id))
+
+  for (const office of sortedOffices) {
+    if (office.person != null && !officeMap.has(office.person)) {
+      officeMap.set(office.person, office)
+    }
+  }
+
+  return officeMap
+})

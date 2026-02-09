@@ -31,8 +31,7 @@ import MeetingScheduleData from './components/MeetingScheduleData.svelte'
 import EditMeetingScheduleData from './components/EditMeetingScheduleData.svelte'
 import InviteEmployeeButton from './components/meeting/invites/InviteEmployeeButton.svelte'
 import PendingRecordingPresenter from './components/PendingRecordingPresenter.svelte'
-import GuestJoinPopup from './components/GuestJoinPopup.svelte'
-import GuestApp from './components/GuestApp.svelte'
+import GuestMeetingApp from './components/guest/GuestMeetingApp.svelte'
 
 import {
   copyGuestLink,
@@ -79,8 +78,7 @@ export default async (): Promise<Resources> => ({
     EditMeetingScheduleData,
     InviteEmployeeButton,
     PendingRecordingPresenter,
-    GuestJoinPopup,
-    GuestApp
+    GuestMeetingApp
   },
   function: {
     CreateMeeting: createMeeting,

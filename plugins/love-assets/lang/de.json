@@ -104,6 +104,13 @@
     "Window": "Fenster",
     "MeetingEmptyTitle": "Besprechung beendet?",
     "MeetingEmptyMessage": "Alle Teilnehmer haben die Besprechung verlassen. Sie werden in 1 Minute automatisch getrennt. Möchten Sie bleiben?",
-    "StayInRoom": "Im Raum bleiben"
+    "StayInRoom": "Im Raum bleiben",
+    "AcceptRecording": "Erlauben Sie die Aufnahme und Transkription durchzuführen.",
+    "GuestJoin": "Als Gast beitreten",
+    "StartOptions": "Startoptionen",
+    "InvalidOrExpiredLink": "Der Link ist ungültig oder abgelaufen.",
+    "CheckingLink": "Link wird geprüft und vorbereitet...",
+    "PreparingGuestConnection": "Gastverbindung wird vorbereitet...",
+    "Error": "Fehler"
   }
 }

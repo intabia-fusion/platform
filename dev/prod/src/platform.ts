@@ -576,7 +576,7 @@ export async function configurePlatform() {
       [guestId, guest.component.GuestApp],
       [globalProfileRoute, globalProfile.component.GlobalProfileApp],
       ['themes', workbench.component.Themes],
-      ['meetings', love.component.GuestApp]
+      ['meetings', love.component.GuestMeetingApp]
     ])
   )
 

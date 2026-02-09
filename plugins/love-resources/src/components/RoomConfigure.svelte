@@ -204,7 +204,7 @@
           if (isOffice(room) && rX === 0 && rY === 0) e.stopPropagation()
         }}
       >
-        {#if isOffice(room) && rX === 0 && rY === 0 && !room.person}
+        {#if isOffice(room) && rX === 0 && rY === 0}
           <AssigneeBox
             _class={contact.class.Person}
             excluded={excludedPersons}
@@ -215,6 +215,7 @@
             label={contact.string.Person}
             value={room.person}
             avatarSize={'full'}
+            allowDeselect={true}
             on:change={changePerson}
           />
         {/if}

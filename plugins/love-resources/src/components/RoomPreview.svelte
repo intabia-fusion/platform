@@ -202,17 +202,40 @@
           hoveredRoomY = undefined
         }}
         on:click={(e) => {
-          void placeClickHandler(e, x, y, roomPerson)
+          placeClickHandler(e, x, y).catch(() => {
+            // Ignore errors
+          })
         }}
       >
-        {#if personInfo === undefined && roomUserOnline && roomPerson != null && x === 0 && y === 0}
-          <Avatar name={roomPerson.name} person={roomPerson} size={'large'} showStatus={false} adaptiveName />
+        {#if personInfo === undefined && shouldShowAvatar && roomPerson != null && x === 0 && y === 0}
+          <Avatar
+            name={roomPerson.name}
+            person={roomPerson}
+            size={'large'}
+            variant={'roundedRect'}
+            adaptiveName
+            grayscale={!isUserOnline}
+          />
         {:else if personInfo !== undefined}
           {#await getPerson(personInfo.person) then person}
             {#if personInfo}
-              <Avatar name={person?.name ?? personInfo.name} {person} size={'large'} showStatus={false} adaptiveName />
+              <Avatar
+                name={person?.name ?? personInfo.name}
+                {person}
+                size={'large'}
+                showStatus={false}
+                adaptiveName
+                grayscale={!isUserOnline}
+              />
             {:else if hoveredRoomX === x && hoveredRoomY === y}
-              <Avatar name={myName} person={$myEmployeeStore} size={'large'} showStatus={false} adaptiveName />
+              <Avatar
+                name={myName}
+                person={$myEmployeeStore}
+                size={'large'}
+                showStatus={false}
+                adaptiveName
+                grayscale={!isUserOnline}
+              />
             {/if}
           {/await}
         {/if}

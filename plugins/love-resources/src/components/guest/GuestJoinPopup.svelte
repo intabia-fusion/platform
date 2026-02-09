@@ -20,13 +20,14 @@
 
   import { onMount, onDestroy } from 'svelte'
   import { get } from 'svelte/store'
-  import { getMetadata } from '@hcengineering/platform'
-  import love from '../plugin'
-  import { liveKitClient, lk } from '../utils'
-  import { lkSessionConnected } from '../liveKitClient'
-  import { Button, closePanel, ModernEditbox, Label, CheckBox } from '@hcengineering/ui'
+  import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
+  import love from '../../plugin'
+  import { liveKitClient, lk } from '../../utils'
+  import { lkSessionConnected } from '../../liveKitClient'
+  import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
   import { RoomEvent } from 'livekit-client'
+  import { AuthLikeForm, Label } from '@hcengineering/login-resources'
 
   export let meetingId: string | undefined
   export let guestToken: string | undefined
@@ -35,7 +36,6 @@
 
   let firstName: string = ''
   let lastName: string = ''
-  let connecting: boolean = false
   let error: string | null = null
   let videoContainer: HTMLDivElement | null = null
 
@@ -46,11 +46,12 @@
   // Start-with options (controls whether we join with video/audio enabled)
   let startWithVideo: boolean = true
   let startWithAudio: boolean = true
+  let acceptRecording: boolean = true
 
   // Local preview state (preview shown before join)
   let localStream: MediaStream | null = null
   let localVideoEl: HTMLVideoElement | null = null
-  let previewError: any = null
+  let previewError: IntlString | null = null
   let previewStarting: boolean = false
 
   async function startLocalPreview (): Promise<void> {
@@ -60,7 +61,7 @@
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
       localStream = stream
-      if (localVideoEl) {
+      if (localVideoEl != null) {
         localVideoEl.srcObject = stream
         localVideoEl.muted = true
         try {
@@ -72,14 +73,14 @@
     } catch (err: any) {
       console.error('Failed to start local preview', err)
       // Use localized message for camera permission if available
-      previewError = love.string.CamPermission ?? err?.message ?? String(err)
+      previewError = love.string.CamPermission ?? getEmbeddedLabel(err?.message ?? String(err))
     } finally {
       previewStarting = false
     }
   }
 
   function stopLocalPreview (): void {
-    if (localStream) {
+    if (localStream != null) {
       for (const t of localStream.getTracks()) {
         try {
           t.stop()
@@ -89,15 +90,12 @@
       }
       localStream = null
     }
-    if (localVideoEl) {
+    if (localVideoEl != null) {
       localVideoEl.srcObject = null
     }
     previewError = null
     previewStarting = false
   }
-
-  // Toggle wrappers removed — handlers now come directly from CheckBox events
-  // Use `setStartWithVideo()` and `setStartWithAudio()` instead.
 
   function setStartWithVideo (value: boolean): void {
     startWithVideo = value
@@ -172,8 +170,8 @@
     }
   }
 
-  async function join (): Promise<void> {
-    if (!guestToken || !meetingId) {
+  async function join (firstName: string, lastName: string): Promise<void> {
+    if (guestToken == null || meetingId == null) {
       error = 'Missing invite information'
       return
     }
@@ -181,7 +179,6 @@
       error = 'Please enter your first and last name'
       return
     }
-    connecting = true
     error = null
 
     try {
@@ -242,8 +239,6 @@
     } catch (err: any) {
       console.error('Guest join failed', err)
       error = err?.message ?? String(err)
-    } finally {
-      connecting = false
     }
   }
 
@@ -318,101 +313,114 @@
   })
 </script>
 
-<div class="guest-join">
-  {#if !$lkSessionConnected}
-    <div class="form" role="dialog" aria-label="Guest join">
-      <div class="preview-area" aria-hidden={startWithVideo ? 'false' : 'true'}>
-        <div class="preview">
-          <video bind:this={localVideoEl} autoplay muted playsinline class="preview-video" />
-        </div>
-        {#if previewError}
-          <div class="error"><Label label={previewError} /></div>
-        {/if}
-      </div>
-
-      <div class="checks" role="group" aria-label="Start options">
-        <div class="check-item">
-          <CheckBox
-            checked={startWithVideo}
-            size="small"
-            kind="primary"
-            on:value={(e) => {
-              setStartWithVideo(e.detail)
-            }}
-          />
-          <button
-            type="button"
-            class="check-label"
-            on:click={() => {
-              setStartWithVideo(!startWithVideo)
-            }}
-            aria-pressed={startWithVideo}
-          >
-            <Label label={love.string.StartWithVideo} />
-          </button>
-        </div>
-        <div class="check-item">
-          <CheckBox
-            checked={startWithAudio}
-            size="small"
-            kind="primary"
-            on:value={(e) => {
-              setStartWithAudio(e.detail)
-            }}
-          />
-          <button
-            type="button"
-            class="check-label"
-            on:click={() => {
-              setStartWithAudio(!startWithAudio)
-            }}
-            aria-pressed={startWithAudio}
-          >
-            <Label label={love.string.StartWithAudio} />
-          </button>
-        </div>
-      </div>
-
-      <div class="input-wrapper">
-        <ModernEditbox
-          bind:value={firstName}
-          label={love.string.GuestFirstName}
-          size="large"
-          kind="default"
-          width="100%"
-        />
-      </div>
-      <div class="input-wrapper">
-        <ModernEditbox
-          bind:value={lastName}
-          label={love.string.GuestLastName}
-          size="large"
-          kind="default"
-          width="100%"
-        />
-      </div>
-
+{#if !$lkSessionConnected}
+  <AuthLikeForm
+    caption={undefined}
+    handleProceed={async (f, l) => {
+      firstName = f ?? ''
+      lastName = l ?? ''
+      await join(firstName, lastName)
+    }}
+    {firstName}
+    {lastName}
+    proceedDisabled={!acceptRecording}
+    proceedButton={love.string.JoinMeeting}
+  >
+    <svelte:fragment slot="before-form">
       <div class="actions center">
-        <Button
-          on:click={join}
-          size={'large'}
-          kind={'primary'}
-          disabled={firstName.trim() === '' || lastName.trim() === ''}
-          loading={connecting}
-          label={love.string.JoinMeeting}
-        />
-      </div>
+        <div class="form" role="dialog" aria-label={love.string.GuestJoin}>
+          {#if error != null || previewError != null}
+            <div class="error">
+              {#if error != null}
+                {error}
+              {/if}
+              {#if previewError}
+                <Label label={previewError} />
+              {/if}
+            </div>
+          {/if}
+          <div class="preview-area" aria-hidden={startWithVideo ? 'false' : 'true'}>
+            <div class="preview">
+              <video bind:this={localVideoEl} autoplay muted playsinline class="preview-video" />
+            </div>
+          </div>
 
-      {#if error}
-        <div class="error">{error}</div>
-      {/if}
-    </div>
-  {:else}
+          <div class="checks" role="group" aria-label={love.string.StartOptions}>
+            <div class="check-item">
+              <CheckBox
+                checked={startWithVideo}
+                size="small"
+                kind="primary"
+                on:value={(e) => {
+                  setStartWithVideo(e.detail)
+                }}
+              />
+              <button
+                type="button"
+                class="check-label"
+                on:click={() => {
+                  setStartWithVideo(!startWithVideo)
+                }}
+                aria-pressed={startWithVideo}
+              >
+                <Label label={love.string.StartWithVideo} />
+              </button>
+            </div>
+            <div class="check-item">
+              <CheckBox
+                checked={startWithAudio}
+                size="small"
+                kind="primary"
+                on:value={(e) => {
+                  setStartWithAudio(e.detail)
+                }}
+              />
+              <button
+                type="button"
+                class="check-label"
+                on:click={() => {
+                  setStartWithAudio(!startWithAudio)
+                }}
+                aria-pressed={startWithAudio}
+              >
+                <Label label={love.string.StartWithAudio} />
+              </button>
+            </div>
+          </div>
+          <div class="checks" role="group">
+            <div class="check-item">
+              <CheckBox
+                checked={acceptRecording}
+                size="small"
+                kind="primary"
+                on:value={(e) => {
+                  acceptRecording = e.detail
+                }}
+              />
+              <button
+                type="button"
+                class="check-label"
+                on:click={() => {
+                  acceptRecording = !acceptRecording
+                }}
+                aria-pressed={acceptRecording}
+              >
+                <Label label={love.string.AcceptRecording} wrap />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </svelte:fragment>
+  </AuthLikeForm>
+{/if}
+<div class="guest-join">
+  {#if $lkSessionConnected}
     <div>
       <div class="controls">
-        <button on:click={toggleMute}>{micEnabled ? 'Mute' : 'Unmute'}</button>
-        <button on:click={toggleCam}>{camEnabled ? 'Stop video' : 'Start video'}</button>
-        <button class="secondary" on:click={leave}>Leave</button>
+        <button on:click={toggleMute}>{micEnabled ? love.string.Mute : love.string.UnMute}</button>
+        <button on:click={toggleCam}>{camEnabled ? love.string.StopVideo : love.string.StartVideo}</button>
+        <button class="secondary" on:click={leave}>{love.string.LeaveRoom}</button>
       </div>
       <div class="video-grid" bind:this={videoContainer} aria-live="polite" />
     </div>
@@ -477,22 +485,27 @@
   .checks {
     display: flex;
     gap: 16px;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    width: 300px;
   }
-
   .check-item {
     display: inline-flex;
     gap: 8px;
     align-items: center;
     cursor: pointer;
     user-select: none;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--login-content-color, var(--theme-content-color));
   }
 
   /* Using UI CheckBox component's built-in styling; custom .check-box rules removed */
 
   .check-label {
-    color: var(--theme-caption-color, #666);
+    background: var(--login-primary-button-default, var(--primary-button-default, #cf13a2));
+    color: var(--login-content-color, var(--theme-content-color));
+    border-color: var(--login-primary-button-default, var(--primary-button-default));
     font-size: 0.95rem;
     background: transparent;
     border: none;
