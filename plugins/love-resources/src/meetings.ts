@@ -21,24 +21,26 @@ import {
   navigateToOfficeDoc
 } from './utils'
 import { get } from 'svelte/store'
-import { infos, myInfo, myOffice, rooms, myConnectingSessionId } from './stores'
+import { infos, myInfo, myOffice, rooms, myConnectingSessionId, meetings } from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
-import { sendJoinRequest, unsubscribeJoinRequests } from './joinRequests'
+import { sendInvites, unsubscribeFromIncomingInvites } from './invites'
 
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
 
-export async function createMeeting (room: Room): Promise<void> {
-  if (room.access === RoomAccess.DND) return
+export async function createMeeting (room: Room): Promise<MeetingMinutes | undefined> {
+  if (room.access === RoomAccess.DND) {
+    return
+  }
 
   const client = getClient()
   const me = getCurrentEmployee()
   const currentPerson = await getPersonByPersonRef(me)
 
-  if (isOffice(room) && room.person !== currentPerson?._id) {
-    sendJoinRequest(room._id)
+  if (isOffice(room) && room.person != null && room.person !== currentPerson?._id) {
+    await sendInvites([room.person])
     return
   }
 
@@ -50,12 +52,13 @@ export async function createMeeting (room: Room): Promise<void> {
 
   if (meeting !== undefined) {
     await joinMeeting(meeting)
-    return
+    return meeting
   }
 
   // Create MeetingMinutes document before connecting to LiveKit (atomic apply -> Pending)
   meeting = await createMeetingDocument(room)
   await connectToMeeting(meeting)
+  return meeting
 }
 
 export async function leaveMeeting (): Promise<void> {
@@ -71,7 +74,7 @@ export async function leaveMeeting (): Promise<void> {
   if (currentParticipationInfo === undefined) {
     // If there was no active ParticipantInfo, ensure we still disconnect/cleanup state
     await liveKitClient.disconnect()
-    await unsubscribeJoinRequests()
+    unsubscribeFromIncomingInvites()
     closeMeetingMinutes()
     currentMeeting = undefined
     currentMeetingRoom = undefined
@@ -95,7 +98,6 @@ export async function leaveMeeting (): Promise<void> {
     }
   }
   await liveKitClient.disconnect()
-  await unsubscribeJoinRequests()
   closeMeetingMinutes()
   currentMeeting = undefined
   currentMeetingRoom = undefined
@@ -110,12 +112,9 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
   // Check if this is the user's own office - allow direct connection without knock
   const isOwnOffice = room !== undefined && isOffice(room) && room.person === getCurrentEmployee()
 
-  if (
-    isGuest ||
-    (meeting.access === RoomAccess.Knock && !isOwnOffice) ||
-    (room !== undefined && isOffice(room) && !isOwnOffice)
-  ) {
-    sendJoinRequest(meeting._id)
+  const officePerson = room != null ? (isOffice(room) ? room.person : undefined) : undefined
+  if ((isGuest || (meeting.access === RoomAccess.Knock && !isOwnOffice)) && officePerson != null && !isOwnOffice) {
+    await sendInvites([officePerson], meeting._id)
     return
   }
 
@@ -125,11 +124,29 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
 export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes>): Promise<void> {
   const client = getClient()
 
-  // Find the MeetingMinutes document by ID
-  const meeting = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+  // Retry finding meeting - it may take time to propagate
+  let meeting: MeetingMinutes | undefined = get(meetings).find((it) => it._id === meetingId)
+  let attempts = 0
+  const maxAttempts = 20
+  const delay = 100 // ms
+
+  while (attempts < maxAttempts) {
+    if (meeting === undefined) {
+      meeting = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+    }
+
+    if (meeting !== undefined) {
+      break
+    }
+
+    attempts++
+    if (attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+  }
 
   if (meeting === undefined) {
-    console.error('[joinOrCreateMeetingByInvite] MeetingMinutes not found', { meetingId })
+    console.error('[joinOrCreateMeetingByInvite] MeetingMinutes not found after all retries', { meetingId })
     return
   }
 
@@ -147,12 +164,18 @@ export async function kick (person: Ref<Person>): Promise<void> {
 }
 
 async function connectToMeeting (mm: MeetingMinutes): Promise<void> {
-  if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) return
+  console.log('[connectToMeeting] Called with meeting:', mm._id)
+  if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
+    console.log('[connectToMeeting] Blocked: ReadOnlyGuest')
+    return
+  }
   if (currentMeeting === mm._id) {
+    console.log('[connectToMeeting] Already in this meeting, returning')
     return
   }
 
   if (currentMeeting !== undefined) {
+    console.log('[connectToMeeting] Leaving current meeting first:', currentMeeting)
     await leaveMeeting()
   }
 
@@ -160,27 +183,37 @@ async function connectToMeeting (mm: MeetingMinutes): Promise<void> {
 
   const room = await getClient().findOne<Room>(mm.attachedToClass, { _id: mm.attachedTo as Ref<Room> })
   currentMeetingRoom = room?._id
+  console.log('[connectToMeeting] Found room:', room?._id, room?.name)
 
   await navigateToOfficeDoc(mm) // TODO: Select room?
+  console.log('[connectToMeeting] Navigated to office doc')
   await moveToMeetingRoom(mm, room)
+  console.log('[connectToMeeting] Moved to meeting room')
 
   // Resolve current person so we can cleanup pending entries after connect
   const me = getCurrentEmployee()
   const currentPerson = await getPersonByPersonRef(me)
   if (currentPerson == null) {
+    console.log('[connectToMeeting] No current person, returning')
     return
   }
+  console.log('[connectToMeeting] Getting room token...')
   const token = await loveClient.getRoomToken(mm)
   const wsURL = getLiveKitEndpoint()
+  console.log('[connectToMeeting] Got token, wsURL:', wsURL)
 
   // Mark local session as connecting (prevents accidental disconnects while connecting)
   const sessionId = getMetadata(presentation.metadata.SessionId) ?? null
   myConnectingSessionId.set(sessionId)
 
   try {
+    console.log('[connectToMeeting] Connecting to LiveKit...')
     await liveKitClient.connect(wsURL, token, room?.type === RoomType.Video)
+    console.log('[connectToMeeting] LiveKit connected, navigating to meeting minutes...')
     await navigateToMeetingMinutes(mm)
+    console.log('[connectToMeeting] Navigation complete')
   } catch (err: any) {
+    console.error('[connectToMeeting] Error connecting:', err)
     // Ensure local connecting flag is cleared on error
     myConnectingSessionId.set(null)
     throw err
@@ -188,6 +221,7 @@ async function connectToMeeting (mm: MeetingMinutes): Promise<void> {
 
   // Connection completed successfully: clear connecting flag
   myConnectingSessionId.set(null)
+  console.log('[connectToMeeting] Connection completed successfully')
 }
 
 async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void> {

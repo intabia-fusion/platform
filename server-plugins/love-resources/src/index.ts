@@ -13,11 +13,13 @@
 // limitations under the License.
 //
 
-import contact, { Employee, Person } from '@hcengineering/contact'
+import contact, { Employee, Person, PersonSpace } from '@hcengineering/contact'
 import core, {
   combineAttributes,
   concatLink,
   Doc,
+  DocumentUpdate,
+  generateId,
   Ref,
   Tx,
   TxCreateDoc,
@@ -34,7 +36,8 @@ import love, {
   ParticipantInfo,
   Room,
   RoomAccess,
-  RoomInfo
+  RoomInfo,
+  UserMeetingInvite
 } from '@hcengineering/love'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
@@ -54,9 +57,8 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
         employee = TxProcessor.createDoc2Doc(createTx)
         employeeId = createTx.objectId as Ref<Person>
       }
-    }
-    // Handle TxMixin (Employee added as mixin to Person) - used by AI bot
-    else if (tx._class === core.class.TxMixin) {
+    } else if (tx._class === core.class.TxMixin) {
+      // Handle TxMixin (Employee added as mixin to Person) - used by AI bot
       const mixinTx = tx as TxMixin<Person, Employee>
       if (mixinTx.mixin === contact.mixin.Employee) {
         employeeId = mixinTx.objectId
@@ -73,7 +75,7 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
     }
 
     // Skip if employee is not active or is a guest
-    if (employee.active !== true) {
+    if (!employee.active) {
       continue
     }
     if (employee.role === 'GUEST') {
@@ -306,6 +308,146 @@ async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Pr
   return result
 }
 
+async function getPersonSpace (control: TriggerControl, person: Ref<Person>): Promise<PersonSpace> {
+  // Find recipient's personal space (PersonSpace)
+  return (await control.findAll(control.ctx, contact.class.PersonSpace, { person }, { limit: 1 }))[0]
+}
+
+/**
+ * Unified trigger for UserMeetingInvite
+ * Handles all events: creation, updates from sender (expiresAt, cancellation), updates from recipient (accept/decline)
+ */
+export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+
+  for (const tx of txes) {
+    // Handle creation of invite-request
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<UserMeetingInvite>
+      if (createTx.objectClass !== love.class.UserMeetingInvite) continue
+
+      const invite = TxProcessor.createDoc2Doc(createTx)
+
+      // Only process invite-request kind
+      if (invite.kind !== 'invite-request') continue
+      if (invite.status !== 'pending') continue
+
+      // Skip self-invites
+      if (invite.from === invite.to) continue
+
+      // Find recipient's personal space (PersonSpace)
+      const recipientSpace = await getPersonSpace(control, invite.to)
+      if (recipientSpace === undefined) continue
+
+      // Create invite-response in recipient's space
+      const responseId = generateId<UserMeetingInvite>()
+      result.push(
+        control.txFactory.createTxCreateDoc(
+          love.class.UserMeetingInvite,
+          recipientSpace._id,
+          {
+            kind: 'invite-response',
+            from: invite.from,
+            to: invite.to,
+            meeting: invite.meeting,
+            expiresAt: invite.expiresAt,
+            status: 'pending'
+          },
+          responseId
+        )
+      )
+    }
+
+    // Handle updates
+    if (tx._class === core.class.TxUpdateDoc || tx._class === core.class.TxRemoveDoc) {
+      const cudTx = tx as TxCUD<UserMeetingInvite>
+      if (cudTx.objectClass !== love.class.UserMeetingInvite) continue
+
+      // Get the document being updated
+      const sourceDoc =
+        (
+          await control.findAll(control.ctx, love.class.UserMeetingInvite, { _id: cudTx.objectId }, { limit: 1 })
+        ).shift() ?? (control.removedMap.get(cudTx.objectId) as UserMeetingInvite | undefined)
+
+      if (sourceDoc === undefined) continue
+
+      if (sourceDoc.kind === 'invite-request') {
+        // Update from sender - sync to recipient's invite-response
+        // Find all invite-responses for this pair
+        const inviteResponses = await control.findAll(control.ctx, love.class.UserMeetingInvite, {
+          kind: 'invite-response',
+          from: sourceDoc.from,
+          to: sourceDoc.to
+        })
+
+        if (inviteResponses.length === 0) continue
+
+        const now = Date.now()
+        // Process all found invite-responses
+        for (const response of inviteResponses) {
+          // Handle cancellation - sync only if status changed
+          if (tx._class === core.class.TxRemoveDoc || response.expiresAt < now) {
+            // We need to remove other side
+            result.push(control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, response.space, response._id))
+            continue
+          }
+          const updateTx = tx as TxUpdateDoc<UserMeetingInvite>
+
+          // Handle expiresAt update - only if response is still pending and expiresAt changed
+          if (updateTx.operations.expiresAt !== undefined && response.expiresAt !== updateTx.operations.expiresAt) {
+            result.push(
+              control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, response.space, response._id, {
+                expiresAt: updateTx.operations.expiresAt
+              })
+            )
+          }
+        }
+      } else if (sourceDoc.kind === 'invite-response' && tx._class === core.class.TxUpdateDoc) {
+        // Find invite-request for this pair
+        const inviteRequests = await control.findAll(control.ctx, love.class.UserMeetingInvite, {
+          kind: 'invite-request',
+          from: sourceDoc.from,
+          to: sourceDoc.to
+        })
+
+        const updateTx = tx as TxUpdateDoc<UserMeetingInvite>
+        // Update from recipient (accept/decline) - sync to sender's invite-request
+        const newStatus = updateTx.operations.status
+        const newMeeting = updateTx.operations.meeting
+
+        // If nothing changed, skip
+        if (newStatus === undefined && newMeeting === undefined) continue
+
+        if (newStatus === 'declined' || (newStatus === 'accepted' && newMeeting !== undefined)) {
+          // If we declined or accepted and meeting is set, we can remove the invite-response as it's no longer needed
+          result.push(
+            control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
+          )
+        }
+
+        for (const request of inviteRequests) {
+          const upd: DocumentUpdate<UserMeetingInvite> = {}
+          // Sync status if changed
+          if (newStatus !== undefined && request.status !== newStatus) {
+            upd.status = newStatus
+          }
+          // Sync meeting reference if provided (recipient created/joined a meeting)
+          if (newMeeting !== undefined && request.meeting !== newMeeting) {
+            upd.meeting = newMeeting
+          }
+          if (Object.keys(upd).length > 0) {
+            result.push(
+              control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, request.space, request._id, upd)
+            )
+          }
+        }
+      }
+    }
+  }
+
+  return result
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
@@ -316,6 +458,7 @@ export default async () => ({
     OnEmployee,
     OnUserStatus,
     OnParticipantInfo,
-    OnRoomInfo
+    OnRoomInfo,
+    OnUserMeetingInvite
   }
 })

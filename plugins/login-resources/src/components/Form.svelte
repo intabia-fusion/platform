@@ -155,9 +155,9 @@
       </div>
     {/if}
     <div class="flex-row-center">
-        {#if caption !== undefined}
-            <div class="title"><Label label={caption} /></div>
-        {/if}
+      {#if caption !== undefined}
+        <div class="title"><Label label={caption} /></div>
+      {/if}
       <slot name="region-selector" />
     </div>
   {/if}
@@ -190,7 +190,7 @@
         size={'x-large'}
         width="100%"
         loading={inAction}
-        disabled={proceedDisabled || ( status.severity !== Severity.OK && status.severity !== Severity.ERROR)}
+        disabled={proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)}
         on:click={(e) => {
           e.preventDefault()
           if (!inAction) {

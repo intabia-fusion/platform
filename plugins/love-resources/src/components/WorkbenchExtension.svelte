@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { MeetingMinutes } from '@hcengineering/love'
   import { pushRootBarComponent } from '@hcengineering/ui'
   import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, Track } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
-  import { subscribeJoinRequests, unsubscribeJoinRequests } from '../joinRequests'
+  import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
   import { lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'
   import { myInfo, myConnectingSessionId } from '../stores'
@@ -37,20 +35,14 @@
     }
   }
 
-  function subscribeMeetingRequests (meeting?: Ref<MeetingMinutes>): void {
-    unsubscribeJoinRequests()
-      .then(() => subscribeJoinRequests(meeting))
-      .catch((e) => {
-        console.log(e)
-      })
-  }
-
-  $: subscribeMeetingRequests($myInfo?.meeting)
-
   onMount(async () => {
     pushRootBarComponent('left', love.component.ControlExt, 20)
+    pushRootBarComponent('left', love.component.InvitesExt, 25)
     lk.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+
+    // Subscribe to incoming meeting invites
+    subscribeToIncomingInvites()
 
     // Attach existing audio tracks from already connected participants
     // This fixes the issue where audio is not heard when joining a room with existing participants
@@ -68,6 +60,8 @@
   onDestroy(async () => {
     lk.off(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+    // Unsubscribe from incoming invites
+    unsubscribeFromIncomingInvites()
     // Do not disconnect if the current session initiated a connect (user is in the process of connecting)
     // or if the LiveKit client is currently connecting
     if ($lkSessionConnected && $myConnectingSessionId === null && !liveKitClient.isConnecting) {

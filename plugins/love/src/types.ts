@@ -217,3 +217,25 @@ export interface PendingRecording extends AttachedDoc {
   /** Current size in bytes (updated via egress_updated webhooks) */
   size?: number
 }
+
+/**
+ * User meeting invite - stored in user's personal space
+ * Used for knock/invite notifications with 30-second TTL
+ *
+ * kind: 'invite-request' - created in sender's space, tracks outgoing invites
+ * kind: 'invite-response' - created in recipient's space by server trigger, used for display
+ */
+export interface UserMeetingInvite extends Doc {
+  /** Type of invite record */
+  kind: 'invite-request' | 'invite-response'
+  /** Person who sent the invite */
+  from: Ref<Person>
+  /** Person who should receive the invite */
+  to: Ref<Person>
+  /** Meeting ID if already created */
+  meeting?: Ref<MeetingMinutes>
+  /** Expiration timestamp (30 seconds from creation) */
+  expiresAt: Timestamp
+  /** Status of the invite */
+  status: 'pending' | 'accepted' | 'declined'
+}

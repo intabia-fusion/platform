@@ -6,7 +6,7 @@
   import login from '../plugin'
 
   export let proceedButton: IntlString = login.string.Proceed
-  export let handleProceed: ((firstName: string | undefined, lastName: string | undefined) => void | Promise<void>)
+  export let handleProceed: (firstName: string | undefined, lastName: string | undefined) => void | Promise<void>
   export let firstName: string | undefined = undefined
   export let lastName: string | undefined = undefined
   export let caption: IntlString | undefined = undefined
@@ -39,9 +39,17 @@
       }
     }
   }
-
 </script>
 
-<slot name='before-form' />
-<Form {caption} {status} {proceedDisabled} {fields} object={formData} {action} ignoreInitialValidation {signUpDisabled} />
-<slot name='after-form' />
+<slot name="before-form" />
+<Form
+  {caption}
+  {status}
+  {proceedDisabled}
+  {fields}
+  object={formData}
+  {action}
+  ignoreInitialValidation
+  {signUpDisabled}
+/>
+<slot name="after-form" />

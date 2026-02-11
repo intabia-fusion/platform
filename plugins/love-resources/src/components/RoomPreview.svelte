@@ -14,8 +14,14 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@hcengineering/contact-resources'
-  import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice } from '@hcengineering/love'
+  import {
+    Avatar,
+    myEmployeeStore,
+    getPersonByPersonRef,
+    getPersonByPersonRefStore,
+    statusByUserStore
+  } from '@hcengineering/contact-resources'
+  import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice, Office } from '@hcengineering/love'
   import { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getClient } from '@hcengineering/presentation'
@@ -24,11 +30,11 @@
   import love from '../plugin'
   import { myInfo, selectedRoomPlace, currentRoom, currentMeetingMinutes, infos } from '../stores'
   import { getRoomLabel } from '../utils'
-  import PersonActionPopup from './PersonActionPopup.svelte'
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
-  import RoomLanguage from './RoomLanguage.svelte'
   import { AccountUuid, Ref } from '@hcengineering/core'
+  import RoomLanguage from './RoomLanguage.svelte'
+  import PersonActionPopup from './PersonActionPopup.svelte'
 
   export let room: Room
   export let info: ParticipantInfo[]
@@ -44,9 +50,11 @@
   let hoveredRoomY: number | undefined = undefined
 
   let roomLabel: IntlString
-  $: void getRoomLabel(room).then((label) => {
-    roomLabel = label
-  })
+  $: {
+    void getRoomLabel(room).then((label) => {
+      roomLabel = label
+    })
+  }
 
   $: disabled = room._class === love.class.Office && info.length === 0
 
@@ -93,15 +101,52 @@
     }
   }
 
-  async function placeClickHandler (e: MouseEvent, x: number, y: number, person: Person | undefined): Promise<void> {
+  async function placeClickHandler (e: MouseEvent, x: number, y: number): Promise<void> {
     e.stopPropagation()
     e.preventDefault()
-    if (person !== undefined) {
-      if ($myInfo === undefined || (person._id === me && $myInfo?.room === room._id)) return
-      showPopup(PersonActionPopup, { room, person: person._id }, eventToHTMLElement(e))
-    } else {
-      await openRoom(x, y)
+
+    console.log('[placeClickHandler]', {
+      x,
+      y,
+      isOffice: isOffice(room),
+      shouldShowAvatar,
+      roomPersonId: roomPerson?._id,
+      me,
+      myInfoRoom: $myInfo?.room,
+      roomId: room._id
+    })
+
+    // Get person at this position
+    const personInfo = getPersonInfo(y, x, info)
+    if (personInfo !== undefined) {
+      const person = await getPerson(personInfo.person)
+      if (person !== undefined) {
+        if ($myInfo === undefined || (person._id === me && $myInfo?.room === room._id)) return
+        showPopup(PersonActionPopup, { room, person: person._id }, eventToHTMLElement(e))
+        return
+      }
     }
+
+    // Check if clicking on room owner avatar (shown in office at position 0,0)
+    if (isOffice(room) && x === 0 && y === 0 && shouldShowAvatar && roomPerson != null) {
+      const isMe = roomPerson._id === me && $myInfo?.room === room._id
+      console.log('[placeClickHandler] Office click:', {
+        isMe,
+        roomPersonId: roomPerson._id,
+        me,
+        myInfoRoom: $myInfo?.room
+      })
+      if (isMe) {
+        await openRoom(x, y)
+        return
+      }
+      showPopup(PersonActionPopup, { room, person: roomPerson._id }, eventToHTMLElement(e))
+      return
+    }
+
+    // If no person at this position, open the room
+    console.log('[placeClickHandler] Opening room')
+    await openRoom(x, y)
   }
 
   $: extraRow = calcExtraRows(hovered, room, info, $myInfo)
@@ -146,21 +191,58 @@
     await openRoom(0, 0)
   }
 
-  let roomPerson: Person | undefined = undefined
+  // Create a store for the office person that reacts to room.person changes
+  let roomPerson: Person | null
 
   $: if (isOffice(room) && room.person != null) {
-    void getPerson(room.person).then((res) => {
+    void getPersonByPersonRef(room.person).then((res) => {
       roomPerson = res
     })
   } else {
-    roomPerson = undefined
+    roomPerson = null
   }
 
-  $: roomUserOnline =
+  // Check if this is the user's current room (where they are in ParticipantInfo)
+  $: isUserCurrentRoom = $infos.some((it) => it.person === roomPerson?._id && it.room === room._id)
+
+  // Show avatar for office owner if:
+  // 1. It's an office AND
+  // 2. There's a person assigned to it
+  $: shouldShowAvatar = isOffice(room) && room.person != null
+
+  // Check if user is online (for styling)
+  $: isUserOnline =
     roomPerson?.personUuid != null
-      ? ($statusByUserStore.get(roomPerson?.personUuid as AccountUuid)?.online ?? false) &&
-        !$infos.some((it) => it.person === roomPerson?._id)
+      ? ($statusByUserStore.get(roomPerson.personUuid as AccountUuid)?.online ?? false)
       : false
+
+  // User is offline if assigned but not online and not currently in the room
+  $: isUserOffline = roomPerson != null && !isUserOnline && !isUserCurrentRoom
+
+  // Debug logging for office presence
+  $: {
+    const isOfficeCheck = isOffice(room)
+    const hasPerson = isOfficeCheck ? (room as Office).person != null : false
+    if (isOfficeCheck && hasPerson) {
+      console.log('[RoomPreview Debug]', {
+        roomId: room._id,
+        roomName: room.name,
+        roomClass: room._class,
+        isOffice: isOfficeCheck,
+        hasPerson,
+        shouldShowAvatar,
+        roomPersonLoaded: roomPerson != null,
+        roomPersonId: roomPerson?._id,
+        roomPersonName: roomPerson?.name,
+        roomPersonUuid: roomPerson?.personUuid,
+        statusStoreSize: $statusByUserStore.size,
+        isOnline:
+          roomPerson?.personUuid != null
+            ? $statusByUserStore.get(roomPerson.personUuid as AccountUuid)?.online
+            : undefined
+      })
+    }
+  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->

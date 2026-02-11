@@ -1,4 +1,4 @@
-# Foundation Platform - Copilot Instructions
+# Foundation Platform - AI Agent Instructions
 
 TypeScript/Svelte 4 monorepo using Rush.js (pnpm 10.15.1), Node >=20 <25, Webpack 5, Electron, Jest.
 
@@ -15,6 +15,7 @@ Respond to user using Russian language, all comments should be in English.
 ## Structure
 
 - `models/*` - Shared types/models
+  - If add resources like component: '' as AnyComponent, ensure is it added into one of api package/resources package or model package. It should be defined only once. It could be IntlString as well or any other '' as Ref<something> declaration.
 - `server-*` - Server packages
 - `plugins/*` - Client plugins
 - `packages/*` - Reusable utilities
@@ -33,6 +34,8 @@ rush add -p PKG      # Add dependency
 
 **IMPORTANT**: After making changes to service code (in `services/`, `pods/`, etc.), you must rebuild Docker images:
 
+**Note**: If you're running the UI via `rush dev` (dev-server), you don't need to restart the `front` Docker container. Changes will be picked up automatically by the dev server.
+
 ```bash
 # Build Docker images for specific service
 rush docker:build --to @hcengineering/pod-ai-bot
@@ -46,7 +49,7 @@ docker compose -f dev/docker-compose.yaml restart love-agent
 **Workflow for service changes:**
 1. Make code changes to service
 2. Run `rush build --to <package>` (builds TypeScript)
-3. Run `rushx format` in the package directory (format & lint)
+3. Never Run `rushx format` in the package directory (format & lint) - MAY CAUSE FILE CORRUPTIONS. Lets user do it.
 4. Run `diagnostics` to check for errors
 5. Run `rush docker:build --to <package>` (builds Docker image)
 6. Restart the Docker container
@@ -55,7 +58,6 @@ Example for ai-bot service:
 ```bash
 # After editing services/ai-bot/pod-ai-bot/src/workspace/love.ts
 cd services/ai-bot/pod-ai-bot
-rushx format
 diagnostics path: "services/ai-bot/pod-ai-bot/src/workspace/love.ts"
 cd ../../..
 rush docker:build --to @hcengineering/pod-ai-bot
@@ -72,16 +74,35 @@ docker compose -f dev/docker-compose.yaml restart aibot
 
 `rush build` performs transpilation which may succeed even with type errors. Always use `diagnostics` to verify code correctness.
 
+### Validation in Modified Projects
+
+After making changes, always validate the affected packages to ensure diagnostics are accurate:
+
+```bash
+# Navigate to each modified package and run:
+cd <modified-package-directory>
+rushx build
+rushx _phase:validate
+
+# Examples:
+cd plugins/love-resources
+rushx build
+rushx _phase:validate
+
+cd models/love
+rushx build
+rushx _phase:validate
+
+cd server-plugins/love-resources
+rushx build
+rushx _phase:validate
+```
+
+This ensures that the language server has the correct build artifacts and validation passes for the specific packages you modified.
+
 ## Formatting and Linting
 
 **AI AGENTS: DO NOT run formatting commands automatically.** Formatting can corrupt or erase files. Let the user handle formatting.
-
-After making changes to a package, run formatting and linting in the modified package directory:
-
-```bash
-cd <package-directory>
-rushx format         # Format code and run linting
-```
 
 This ensures code style consistency and catches linting errors before commit.
 
@@ -90,7 +111,7 @@ This ensures code style consistency and catches linting errors before commit.
 **NEVER run formatting commands in parallel or concurrently.** The formatter can corrupt or completely erase file contents when run simultaneously on multiple packages.
 
 Rules:
-- ❌ **DO NOT** run multiple `rushx format` commands in parallel
+- ❌ **DO NOT** run `rushx format` commands
 - ❌ **DO NOT** use `--force` flag with formatting - it can cause content loss
 - ✅ **DO** run formatting sequentially, one package at a time
 - ✅ **DO** verify file contents after formatting with `git diff` or `git status`

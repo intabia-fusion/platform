@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Person } from '@hcengineering/contact'
   import { Ref } from '@hcengineering/core'
-  import { isOffice, Room, RoomAccess } from '@hcengineering/love'
-  import { ActionIcon } from '@hcengineering/ui'
+  import { isOffice, Room } from '@hcengineering/love'
+  import { ActionIcon, closePopup } from '@hcengineering/ui'
   import love from '../plugin'
-  import { myInfo, meetings } from '../stores'
-  import { joinMeeting, kick } from '../meetings'
+  import { myInfo } from '../stores'
+  import { kick } from '../meetings'
   import { sendInvites } from '../invites'
 
   export let room: Room
@@ -21,32 +21,22 @@
       label={love.string.Kick}
       icon={love.icon.Kick}
       action={() => {
+        closePopup()
         void kick(person)
       }}
     />
   {/if}
-  {#if $myInfo?.room !== room._id}
+  {#if person !== $myInfo?.person}
     <ActionIcon
       size={'small'}
       label={love.string.Invite}
       icon={love.icon.Invite}
       action={() => {
+        console.log('[PersonActionPopup] Inviting person:', person)
+        closePopup()
         sendInvites([person])
       }}
     />
-    {#if room.access === RoomAccess.Knock}
-      <ActionIcon
-        size={'small'}
-        label={love.string.KnockAction}
-        icon={love.icon.Knock}
-        action={() => {
-          const mm = $meetings.find((it) => it.attachedTo === room._id)
-          if (mm !== undefined) {
-            void joinMeeting(mm)
-          }
-        }}
-      />
-    {/if}
   {/if}
 </div>
 

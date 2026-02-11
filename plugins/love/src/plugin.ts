@@ -1,6 +1,6 @@
 import { Class, Mixin, Ref } from '@hcengineering/core'
 import { Drive } from '@hcengineering/drive'
-import { NotificationType } from '@hcengineering/notification'
+import { NotificationGroup, NotificationType } from '@hcengineering/notification'
 import { Asset, IntlString, Metadata as ServiceEndpoint, Plugin, plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui/src/types'
 import { Action, Viewlet, ViewletDescriptor } from '@hcengineering/view'
@@ -16,7 +16,8 @@ import {
   PendingRecording,
   Room,
   RoomAccess,
-  RoomInfo
+  RoomInfo,
+  UserMeetingInvite
 } from './types'
 
 export const loveId = 'love' as Plugin
@@ -30,7 +31,8 @@ const love = plugin(loveId, {
     PendingRecording: '' as Ref<Class<PendingRecording>>,
     DevicesPreference: '' as Ref<Class<DevicesPreference>>,
     RoomInfo: '' as Ref<Class<RoomInfo>>,
-    MeetingMinutes: '' as Ref<Class<MeetingMinutes>>
+    MeetingMinutes: '' as Ref<Class<MeetingMinutes>>,
+    UserMeetingInvite: '' as Ref<Class<UserMeetingInvite>>
   },
   mixin: {
     MeetingEventLink: '' as Ref<Mixin<MeetingEventLink>>,
@@ -46,8 +48,9 @@ const love = plugin(loveId, {
     Room: '' as IntlString,
     IsKnocking: '' as IntlString,
     KnockingLabel: '' as IntlString,
-    InivitingLabel: '' as IntlString,
     InvitingYou: '' as IntlString,
+    MeetingRequest: '' as IntlString,
+    Kind: '' as IntlString,
     RoomType: '' as IntlString,
     Knock: '' as IntlString,
     Open: '' as IntlString,
@@ -75,6 +78,10 @@ const love = plugin(loveId, {
     NoMeetingMinutes: '' as IntlString,
     JoinMeeting: '' as IntlString,
     JoinedMeeting: '' as IntlString,
+    Accept: '' as IntlString,
+    Decline: '' as IntlString,
+    Join: '' as IntlString,
+    Reject: '' as IntlString,
     MeetingStart: '' as IntlString,
     MeetingEnd: '' as IntlString,
     Status: '' as IntlString,
@@ -92,7 +99,9 @@ const love = plugin(loveId, {
     SearchMeetingMinutes: '' as IntlString,
     FinishMeeting: '' as IntlString,
     AddParticipant: '' as IntlString,
-    LeaveParticipant: '' as IntlString
+    LeaveParticipant: '' as IntlString,
+    KnockAction: '' as IntlString,
+    KnockingTo: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,
@@ -100,7 +109,9 @@ const love = plugin(loveId, {
     InviteNotification: '' as Ref<NotificationType>,
     KnockNotification: '' as Ref<NotificationType>,
     LoveWidget: '' as Ref<Widget>,
-    MeetingWidget: '' as Ref<Widget>
+    MeetingWidget: '' as Ref<Widget>,
+    MeetingRequestNotification: '' as Ref<NotificationType>,
+    LoveNotificationGroup: '' as Ref<NotificationGroup>
   },
   icon: {
     Love: '' as Asset,

@@ -45,7 +45,8 @@ import {
   type RoomLanguage,
   type RoomType,
   type TranscriptionState,
-  type RecordingState
+  type RecordingState,
+  type UserMeetingInvite
 } from '@hcengineering/love'
 import {
   type Builder,
@@ -301,6 +302,33 @@ export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
   room!: Ref<Room>
 }
 
+export const DOMAIN_USER_MEETING_INVITE = 'user-meeting-invite' as Domain
+
+@Model(love.class.UserMeetingInvite, core.class.Doc, DOMAIN_USER_MEETING_INVITE)
+export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
+  @Prop(TypeString(), love.string.Kind)
+  @Index(IndexKind.Indexed)
+    kind!: 'invite-request' | 'invite-response'
+
+  @Prop(TypeRef(contact.class.Person), love.string.From)
+  @Index(IndexKind.Indexed)
+    from!: Ref<Person>
+
+  @Prop(TypeRef(contact.class.Person), love.string.To)
+  @Index(IndexKind.Indexed)
+    to!: Ref<Person>
+
+  @Prop(TypeRef(love.class.MeetingMinutes), love.string.Meeting)
+    meeting?: Ref<MeetingMinutes>
+
+  @Prop(TypeTimestamp(), love.string.ExpiresAt)
+  @Index(IndexKind.Indexed)
+    expiresAt!: Timestamp
+
+  @Prop(TypeString(), love.string.Status)
+    status!: 'pending' | 'accepted' | 'declined'
+}
+
 export default love
 
 export function createModel (builder: Builder): void {
@@ -314,7 +342,8 @@ export function createModel (builder: Builder): void {
     TRoomInfo,
     TMeeting,
     TMeetingMinutes,
-    TMeetingSchedule
+    TMeetingSchedule,
+    TUserMeetingInvite
   )
 
   builder.createDoc(
@@ -668,13 +697,13 @@ export function createModel (builder: Builder): void {
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.InboxNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification]
+    enabledTypes: [love.ids.MeetingMinutesChatNotification, love.ids.MeetingRequestNotification]
   })
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.PushNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification]
+    enabledTypes: [love.ids.MeetingMinutesChatNotification, love.ids.MeetingRequestNotification]
   })
 
   defineCollaborators(builder, love.class.MeetingMinutes, { fields: ['createdBy'], provideSecurity: true })
@@ -734,5 +763,27 @@ export function createModel (builder: Builder): void {
     love.class.MeetingMinutes,
     'meetingEnd',
     'attribute'
+  )
+
+  builder.createDoc(
+    notification.class.NotificationType,
+    core.space.Model,
+    {
+      hidden: false,
+      objectClass: love.class.UserMeetingInvite,
+      txClasses: [core.class.TxCreateDoc],
+      field: 'to',
+      generated: false,
+      group: love.ids.LoveNotificationGroup,
+      label: love.string.MeetingRequest,
+      allowedForAuthor: false,
+      defaultEnabled: true,
+      templates: {
+        textTemplate: '{sender} invites you to a meeting',
+        htmlTemplate: '<p><b>{sender}</b> invites you to a meeting</p>',
+        subjectTemplate: 'Meeting invitation'
+      }
+    },
+    love.ids.MeetingRequestNotification
   )
 }

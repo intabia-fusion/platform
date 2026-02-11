@@ -22,6 +22,7 @@ import { type ViewActionAvailabilityFunction } from '@hcengineering/view'
 export default mergeIds(loveId, love, {
   component: {
     ControlExt: '' as AnyComponent,
+    InvitesExt: '' as AnyComponent,
     MeetingData: '' as AnyComponent,
     EditMeetingData: '' as AnyComponent,
     MeetingMinutesPresenter: '' as AnyComponent,
@@ -66,12 +67,9 @@ export default mergeIds(loveId, love, {
     EditOffice: '' as IntlString,
     FinalizeEditing: '' as IntlString,
     ChangeFloor: '' as IntlString,
-    Accept: '' as IntlString,
-    Decline: '' as IntlString,
     ChangeAccess: '' as IntlString,
     AddAFloor: '' as IntlString,
     RenameAFloor: '' as IntlString,
-    KnockingTo: '' as IntlString,
     Cancel: '' as IntlString,
     EnterRoom: '' as IntlString,
     Configure: '' as IntlString,
@@ -86,7 +84,7 @@ export default mergeIds(loveId, love, {
     DefaultDevice: '' as IntlString,
     StartWithMutedMic: '' as IntlString,
     StartWithoutVideo: '' as IntlString,
-    YouInivite: '' as IntlString,
+    YouInvite: '' as IntlString,
     NoiseCancellation: '' as IntlString,
     NoiseCancellationNotSupported: '' as IntlString,
     Blur: '' as IntlString,
@@ -100,7 +98,6 @@ export default mergeIds(loveId, love, {
     FullscreenMode: '' as IntlString,
     ExitingFullscreenMode: '' as IntlString,
     Invite: '' as IntlString,
-    KnockAction: '' as IntlString,
     Select: '' as IntlString,
     ChooseShare: '' as IntlString,
     MoreOptions: '' as IntlString,
@@ -121,6 +118,9 @@ export default mergeIds(loveId, love, {
     GuestJoin: '' as IntlString,
     StartOptions: '' as IntlString,
     Error: '' as IntlString,
-    StayInRoom: '' as IntlString
+    StayInRoom: '' as IntlString,
+    From: '' as IntlString,
+    To: '' as IntlString,
+    ExpiresAt: '' as IntlString
   }
 })
