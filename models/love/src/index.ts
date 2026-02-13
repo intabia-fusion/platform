@@ -305,6 +305,7 @@ export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
 export const DOMAIN_USER_MEETING_INVITE = 'user-meeting-invite' as Domain
 
 @Model(love.class.UserMeetingInvite, core.class.Doc, DOMAIN_USER_MEETING_INVITE)
+@UX(love.string.MeetingRequest, love.icon.Invite)
 export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
   @Prop(TypeString(), love.string.Kind)
   @Index(IndexKind.Indexed)
@@ -573,6 +574,10 @@ export function createModel (builder: Builder): void {
     titleProvider: love.function.MeetingMinutesTitleProvider
   })
 
+  builder.mixin(love.class.UserMeetingInvite, core.class.Class, view.mixin.ObjectTitle, {
+    titleProvider: love.function.UserMeetingInviteTitleProvider
+  })
+
   builder.mixin(love.class.Room, core.class.Class, view.mixin.ObjectEditor, {
     editor: love.component.EditRoom
   })
@@ -697,13 +702,13 @@ export function createModel (builder: Builder): void {
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.InboxNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification, love.ids.MeetingRequestNotification]
+    enabledTypes: [love.ids.MeetingMinutesChatNotification]
   })
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.PushNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification, love.ids.MeetingRequestNotification]
+    enabledTypes: [love.ids.MeetingMinutesChatNotification]
   })
 
   defineCollaborators(builder, love.class.MeetingMinutes, { fields: ['createdBy'], provideSecurity: true })
@@ -763,27 +768,5 @@ export function createModel (builder: Builder): void {
     love.class.MeetingMinutes,
     'meetingEnd',
     'attribute'
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      objectClass: love.class.UserMeetingInvite,
-      txClasses: [core.class.TxCreateDoc],
-      field: 'to',
-      generated: false,
-      group: love.ids.LoveNotificationGroup,
-      label: love.string.MeetingRequest,
-      allowedForAuthor: false,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} invites you to a meeting',
-        htmlTemplate: '<p><b>{sender}</b> invites you to a meeting</p>',
-        subjectTemplate: 'Meeting invitation'
-      }
-    },
-    love.ids.MeetingRequestNotification
   )
 }

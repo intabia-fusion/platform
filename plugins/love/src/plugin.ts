@@ -110,7 +110,6 @@ const love = plugin(loveId, {
     KnockNotification: '' as Ref<NotificationType>,
     LoveWidget: '' as Ref<Widget>,
     MeetingWidget: '' as Ref<Widget>,
-    MeetingRequestNotification: '' as Ref<NotificationType>,
     LoveNotificationGroup: '' as Ref<NotificationGroup>
   },
   icon: {

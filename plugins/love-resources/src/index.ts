@@ -42,9 +42,23 @@ import {
   startTranscription,
   stopTranscription,
   getMeetingMinutesTitle,
-  queryMeetingMinutes
+  queryMeetingMinutes,
+  getUserMeetingInviteTitle
 } from './utils'
 import { toggleMicState, toggleCamState } from '@hcengineering/media-resources'
+
+function canShowRoomSettings (): boolean | undefined {
+  if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
+    return undefined
+  }
+  // For now settings is available only when AI bot is enabled
+  const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
+  return url !== ''
+}
+
+function canCopyGuestLink (): boolean {
+  return hasAccountRole(getCurrentAccount(), AccountRole.User)
+}
 
 export { setCustomCreateScreenTracks } from './utils'
 
@@ -85,18 +99,10 @@ export default async (): Promise<Resources> => ({
   function: {
     CreateMeeting: createMeeting,
     CreateMeetingSchedule: createMeetingSchedule,
-    CanShowRoomSettings: () => {
-      if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
-        return
-      }
-      // For now settings is available only when AI bot is enabled
-      const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
-      return url !== ''
-    },
-    CanCopyGuestLink: () => {
-      return hasAccountRole(getCurrentAccount(), AccountRole.User)
-    },
-    MeetingMinutesTitleProvider: getMeetingMinutesTitle
+    CanShowRoomSettings: canShowRoomSettings,
+    CanCopyGuestLink: canCopyGuestLink,
+    MeetingMinutesTitleProvider: getMeetingMinutesTitle,
+    UserMeetingInviteTitleProvider: getUserMeetingInviteTitle
   },
   actionImpl: {
     ToggleMic: toggleMicState,

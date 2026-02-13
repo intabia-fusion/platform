@@ -3,7 +3,7 @@ import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resourc
 import { Analytics } from '@hcengineering/analytics'
 import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import { getName } from '@hcengineering/contact'
+import contact, { getName } from '@hcengineering/contact'
 import core, {
   AccountRole,
   type Client,
@@ -28,9 +28,10 @@ import {
   type MeetingSchedule,
   type Room,
   type RoomMetadata,
-  TranscriptionStatus
+  TranscriptionStatus,
+  type UserMeetingInvite
 } from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, getResource, type IntlString } from '@hcengineering/platform'
+import { getEmbeddedLabel, getMetadata, getResource, translate, type IntlString } from '@hcengineering/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
@@ -38,6 +39,7 @@ import presentation, {
   type ObjectSearchResult
 } from '@hcengineering/presentation'
 import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import view from '@hcengineering/view'
 import { getObjectLinkFragment } from '@hcengineering/view-resources'
 import { type Widget, type WidgetTab } from '@hcengineering/workbench'
@@ -521,6 +523,20 @@ export async function getMeetingMinutesTitle (
   const meeting = doc ?? (await client.findOne(love.class.MeetingMinutes, { _id: ref }))
 
   return meeting?.title ?? ''
+}
+
+export async function getUserMeetingInviteTitle (
+  client: TxOperations,
+  ref: Ref<UserMeetingInvite>,
+  doc?: UserMeetingInvite
+): Promise<string> {
+  const invite = doc ?? (await client.findOne(love.class.UserMeetingInvite, { _id: ref }))
+  if (invite === undefined) return ''
+
+  const sender = await client.findOne(contact.class.Person, { _id: invite.from })
+  const senderName = sender?.name ?? ''
+
+  return await translate(love.string.InvitingYou, { name: senderName }, getCurrentLanguage())
 }
 
 export async function queryMeetingMinutes (

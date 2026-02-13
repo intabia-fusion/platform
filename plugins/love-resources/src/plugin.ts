@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
 import love, { loveId } from '@hcengineering/love'
 import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
 import { type DocCreateFunction } from '@hcengineering/presentation/src/types'
@@ -49,7 +50,9 @@ export default mergeIds(loveId, love, {
     CreateMeeting: '' as Resource<DocCreateFunction>,
     CreateMeetingSchedule: '' as Resource<DocCreateFunction>,
     CanShowRoomSettings: '' as Resource<ViewActionAvailabilityFunction>,
-    CanCopyGuestLink: '' as Resource<ViewActionAvailabilityFunction>
+    CanCopyGuestLink: '' as Resource<ViewActionAvailabilityFunction>,
+    MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
+    UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
   },
   string: {
     CreateMeeting: '' as IntlString,

@@ -36,7 +36,7 @@
 </script>
 
 <ModernButton
-  label={label}
+  {label}
   kind="primary"
   size="small"
   tooltip={{ label: tooltipLabel, direction: 'bottom' }}

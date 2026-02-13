@@ -15,8 +15,10 @@
 
 import contact, { Employee, Person, PersonSpace } from '@hcengineering/contact'
 import core, {
+  Class,
   combineAttributes,
   concatLink,
+  Data,
   Doc,
   DocumentUpdate,
   generateId,
@@ -39,8 +41,16 @@ import love, {
   RoomInfo,
   UserMeetingInvite
 } from '@hcengineering/love'
+import notification, { CommonInboxNotification } from '@hcengineering/notification'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import { getSocialStrings } from '@hcengineering/server-contact'
+import {
+  getCommonNotificationTxes,
+  getNotificationContent,
+  getSenderInfo
+} from '@hcengineering/server-notification-resources'
+import { ReceiverInfo, SenderInfo } from '@hcengineering/server-notification'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
 
@@ -356,6 +366,83 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           responseId
         )
       )
+
+      // Create notification for recipient
+      const employee = (
+        await control.findAll(
+          control.ctx,
+          contact.mixin.Employee,
+          { _id: invite.to as Ref<Employee>, active: true },
+          { limit: 1 }
+        )
+      )[0]
+      if (employee?.personUuid != null) {
+        const account = employee.personUuid
+        const socialIds = await getSocialStrings(control, employee._id)
+
+        const receiverInfo: ReceiverInfo = {
+          account,
+          socialIds,
+          space: recipientSpace._id,
+          employee: employee._id,
+          role: employee.role
+        }
+
+        const senderInfo: SenderInfo = await getSenderInfo(control.ctx, tx.modifiedBy, control)
+
+        // Check if should notify - we always notify for meeting invites
+        const notifyResult = new Map([[notification.providers.InboxNotificationProvider, []]])
+
+        const content = await getNotificationContent(createTx, invite.to, senderInfo, invite, control)
+
+        // Get meeting info if available
+
+        let notificationObjectId: Ref<Doc>
+        let notificationObjectClass: Ref<Class<Doc>>
+
+        if (invite.meeting !== undefined) {
+          const meeting = await control
+            .findAll(control.ctx, love.class.MeetingMinutes, { _id: invite.meeting }, { limit: 1 })
+            .then((r) => r[0])
+          // Attach to MeetingMinutes if exists
+          notificationObjectId = meeting?._id ?? invite._id
+          notificationObjectClass = meeting?._class ?? invite._class
+        } else {
+          // No meeting - attach to sender's Person
+          notificationObjectId = invite.from
+          notificationObjectClass = contact.class.Person
+        }
+
+        // Create notification with i18n message
+        // Don't set headerObjectId/headerObjectClass to show sender's avatar instead
+        const data: Partial<Data<CommonInboxNotification>> = {
+          ...content,
+          message: love.string.InvitingYou,
+          props: {
+            name: ''
+          },
+          header: love.string.MeetingRequest,
+          headerIcon: love.icon.Invite
+        }
+
+        const notificationTxes = await getCommonNotificationTxes(
+          control.ctx,
+          control,
+          invite,
+          data,
+          receiverInfo,
+          senderInfo,
+          notificationObjectId,
+          notificationObjectClass,
+          recipientSpace._id,
+          createTx.modifiedOn,
+          notifyResult,
+          notification.class.CommonInboxNotification,
+          createTx
+        )
+
+        result.push(...notificationTxes)
+      }
     }
 
     // Handle updates
