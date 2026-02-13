@@ -12,16 +12,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closePopup, eventToHTMLElement, showPopup, ticker1 } from '@hcengineering/ui'
+  import { closePopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
 
-  import { outgoingInvitesStore, incomingInvitesStore, closeInvitesPopup, updateInvites } from '../../../invites'
+  import { outgoingInvitesStore, incomingInvitesStore, closeInvitesPopup } from '../../../invites'
   import InviteButton from './InviteButton.svelte'
   import OutgoingInvitePopup from '../invites/OutgoingInvitePopup.svelte'
   import IncomingInvitePopup from '../invites/IncomingInvitePopup.svelte'
   import { getPersonsByPersonRefsCb } from '@hcengineering/contact-resources'
   import { Person } from '@hcengineering/contact'
-  import { reduceCalls, Ref } from '@hcengineering/core'
+  import { Ref } from '@hcengineering/core'
   import { UserMeetingInvite } from '@hcengineering/love'
 
   const invitesCategory = 'meetingInvites'
