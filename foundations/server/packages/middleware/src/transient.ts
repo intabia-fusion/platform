@@ -66,6 +66,13 @@ export class TransientMiddleware extends BaseMiddleware implements Middleware {
     }
   }
 
+  async close (): Promise<void> {
+    if (this.ttlChecker !== undefined) {
+      clearInterval(this.ttlChecker)
+      this.ttlChecker = undefined
+    }
+  }
+
   static async create (
     ctx: MeasureContext,
     context: PipelineContext,
