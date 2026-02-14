@@ -60,7 +60,6 @@ const love = plugin(loveId, {
     Meeting: '' as IntlString,
     Transcription: '' as IntlString,
     TranscriptionState: '' as IntlString,
-    TranscriptionNone: '' as IntlString,
     TranscriptionNotStarted: '' as IntlString,
     TranscriptionTranscribing: '' as IntlString,
     TranscriptionFinished: '' as IntlString,
