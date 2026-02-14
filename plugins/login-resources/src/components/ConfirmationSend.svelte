@@ -19,7 +19,7 @@
   import { afterConfirm, getAccount } from '../utils'
 
   const CHECK_INTERVAL = 1000
-  let checkHandle: number | undefined
+  let checkHandle: any | undefined
   let mounted = false
 
   async function checkAccountStatus (): Promise<void> {
