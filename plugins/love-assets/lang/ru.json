@@ -118,6 +118,8 @@
     "InvalidOrExpiredLink": "Ссылка некорректна или устарела.",
     "CheckingLink": "Проверка ссылки и подготовка...",
     "PreparingGuestConnection": "Подготовка гостевого подключения...",
-    "Error": "Ошибка"
+    "Error": "Ошибка",
+    "ShowParticipants": "Показать участников",
+    "HideParticipants": "Скрыть участников"
   }
 }

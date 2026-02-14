@@ -45,7 +45,7 @@
 <div class="antiPopup videoPopup-container" class:isDock>
   <div class="screenContainer" class:hidden={!withScreenSharing}>
     {#if !$roomModalActive}
-      <ScreenSharingView showLocalTrack={false} bind:hasActiveTrack={withScreenSharing} />
+      <ScreenSharingView showLocalTrack={true} bind:hasActiveTrack={withScreenSharing} />
     {/if}
   </div>
   <Scroller

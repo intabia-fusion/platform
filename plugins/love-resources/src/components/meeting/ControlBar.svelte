@@ -32,8 +32,10 @@
   import CameraButton from './controls/CameraButton.svelte'
   import ShareScreenButton from './controls/ShareScreenButton.svelte'
   import InviteEmployeeButton from './invites/InviteEmployeeButton.svelte'
+  import ToggleParticipantsButton from './controls/ToggleParticipantsButton.svelte'
 
   export let room: Room
+  export let isModal: boolean = false
   export let canMaximize: boolean = true
   export let fullScreen: boolean = false
   export let onFullScreen: (() => void) | undefined = undefined
@@ -63,6 +65,9 @@
     </svelte:fragment>
     <svelte:fragment slot="center">
       {#if $lkSessionConnected}
+        {#if isModal}
+          <ToggleParticipantsButton />
+        {/if}
         <SendReactionButton />
         <MicrophoneButton />
         <CameraButton />

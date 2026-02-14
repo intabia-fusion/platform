@@ -101,7 +101,9 @@ const love = plugin(loveId, {
     AddParticipant: '' as IntlString,
     LeaveParticipant: '' as IntlString,
     KnockAction: '' as IntlString,
-    KnockingTo: '' as IntlString
+    KnockingTo: '' as IntlString,
+    ShowParticipants: '' as IntlString,
+    HideParticipants: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,

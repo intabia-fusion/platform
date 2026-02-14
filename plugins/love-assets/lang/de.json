@@ -110,6 +110,8 @@
     "InvalidOrExpiredLink": "Der Link ist ungültig oder abgelaufen.",
     "CheckingLink": "Link wird geprüft und vorbereitet...",
     "PreparingGuestConnection": "Gastverbindung wird vorbereitet...",
-    "Error": "Fehler"
+    "Error": "Fehler",
+    "ShowParticipants": "Teilnehmer anzeigen",
+    "HideParticipants": "Teilnehmer ausblenden"
   }
 }

@@ -112,6 +112,8 @@
     "InvalidOrExpiredLink": "リンクが無効、または期限切れです。",
     "CheckingLink": "リンクを確認して準備しています...",
     "PreparingGuestConnection": "ゲスト接続を準備しています...",
-    "Error": "エラー"
+    "Error": "エラー",
+    "ShowParticipants": "参加者を表示",
+    "HideParticipants": "参加者を非表示"
   }
 }

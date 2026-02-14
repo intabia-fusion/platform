@@ -20,7 +20,7 @@
   import { onDestroy, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { waitForOfficeLoaded, currentRoom, roomModalActive } from '../stores'
+  import { waitForOfficeLoaded, currentRoom, roomModalActive, showParticipantsInModal } from '../stores'
   import { isFullScreen, lk } from '../utils'
   import ControlBar from './meeting/ControlBar.svelte'
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
@@ -138,23 +138,23 @@
     class:mobile={$deviceInfo.isMobile}
   >
     <div class="screenContainer">
-      {#if isModal || !$roomModalActive}
+      {#if !isModal || $roomModalActive}
         <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
       {/if}
     </div>
-    <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
-      {#if isModal || !$roomModalActive}
+    {#if ($showParticipantsInModal && isModal) || !$roomModalActive}
+      <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
         <ParticipantsListView
           room={room._id}
           on:participantsCount={(evt) => {
             updateStyle(evt.detail, withScreenSharing)
           }}
         />
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
   {#if $currentRoom}
-    <ControlBar room={$currentRoom} fullScreen={$isFullScreen} {onFullScreen} {canMaximize} />
+    <ControlBar room={$currentRoom} fullScreen={$isFullScreen} {onFullScreen} {canMaximize} {isModal} />
   {/if}
 </div>
 

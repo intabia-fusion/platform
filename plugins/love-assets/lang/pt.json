@@ -112,6 +112,8 @@
     "InvalidOrExpiredLink": "O link é inválido ou expirou.",
     "CheckingLink": "Verificando o link e preparando...",
     "PreparingGuestConnection": "Preparando a conexão do convidado...",
-    "Error": "Erro"
+    "Error": "Erro",
+    "ShowParticipants": "Mostrar participantes",
+    "HideParticipants": "Ocultar participantes"
   }
 }
