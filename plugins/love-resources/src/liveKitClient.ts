@@ -66,8 +66,8 @@ export class LiveKitClient {
       publishDefaults: {
         videoCodec: 'vp9',
         screenShareEncoding: {
-          maxBitrate: 7_000_000,
-          maxFramerate: 15,
+          maxBitrate: 15_000_000,
+          maxFramerate: 24,
           priority: 'high'
         }
       },
