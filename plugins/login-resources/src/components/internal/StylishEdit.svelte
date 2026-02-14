@@ -82,7 +82,7 @@
     height: 3.25rem;
     /* Prefer login-scoped input background (Intabia uses a pale lilac) */
     background-color: var(--login-input-bg, var(--theme-button-default));
-    border: 1px solid var(--theme-button-border);
+    border: 1px solid var(--login-button-border, var(--theme-button-border));
     border-radius: 0.75rem;
     /* Prefer login-scoped caret so login themes can ensure visibility */
     caret-color: var(--login-caret-color, var(--theme-caret-color));

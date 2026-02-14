@@ -201,7 +201,11 @@ test.describe('Planning ToDo tests', () => {
     await planningPage.checkTimeSlotEndDate(1, dateEndTomorrow.getDate().toString())
   })
 
-  test.skip('Adding ToDo by dragging and checking visibility in the Team Planner', async ({ browser, page, request }) => {
+  test.skip('Adding ToDo by dragging and checking visibility in the Team Planner', async ({
+    browser,
+    page,
+    request
+  }) => {
     const data: TestData = generateTestData()
     const leftMenuPage = new LeftSideMenuPage(page)
     const channelPage = new ChannelPage(page)

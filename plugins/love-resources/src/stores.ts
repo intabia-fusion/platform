@@ -150,6 +150,9 @@ export async function waitForOfficeLoaded (): Promise<void> {
 
 export const lockedRoom = writable<string>('')
 
+// Store to track if RoomModal is active - when true, video should be hidden in ParticipantsListView
+export const roomModalActive = writable<boolean>(false)
+
 // Store that maps personId -> their primary office (first one by _id)
 // This fixes the issue where a person assigned to multiple offices appears in all of them
 export const personPrimaryOffice = derived(rooms, (val) => {

@@ -26,7 +26,7 @@
   import { onDestroy } from 'svelte'
 
   import RoomModal from '../../RoomModal.svelte'
-  import { currentRoom } from '../../../stores'
+  import { currentRoom, roomModalActive } from '../../../stores'
   import MeetingOptionsButton from '../controls/MeetingOptionsButton.svelte'
   import RecordingButton from '../controls/RecordingButton.svelte'
   import TranscriptionButton from '../controls/TranscriptionButton.svelte'
@@ -46,7 +46,7 @@
   ]
 
   function maximize (): void {
-    popup = showPopup(RoomModal, { room }, 'full-centered')
+    popup = showPopup(RoomModal, { room }, 'full-centered', undefined)
   }
 
   onDestroy(() => {

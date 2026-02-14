@@ -4,7 +4,7 @@
   import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import { liveKitClient, lk } from '../../utils'
-  import { infos, currentMeetingMinutes } from '../../stores'
+  import { infos, currentMeetingMinutes, roomModalActive } from '../../stores'
   import { Ref } from '@hcengineering/core'
   import { Person } from '@hcengineering/contact'
   import { getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'

@@ -21,11 +21,11 @@
 
   import GuestJoinPopup from './GuestJoinPopup.svelte'
   import ScreenSharingView from '../meeting/ScreenSharingView.svelte'
-  import GuestParticipantsListView from '../meeting/GuestParticipantsListView.svelte'
-  import { lkSessionConnected } from '../../liveKitClient'
-  import { liveKitClient } from '../../utils'
-  import { onDestroy } from 'svelte'
-  import ui, { location, navigate, Location, Button } from '@hcengineering/ui'
+  import GuestParticipantsListView from './GuestParticipantsListView.svelte'
+  import { getLiveKitClient, lkSessionConnected } from '../../liveKitClient'
+  import { isFullScreen, liveKitClient } from '../../utils'
+  import { onDestroy, onMount } from 'svelte'
+  import ui, { location, navigate, Location, Button, Scroller } from '@hcengineering/ui'
   import { getMetadata, getResource, IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
 
@@ -38,10 +38,22 @@
   import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
   import loginResources from '@hcengineering/login-resources/src/plugin'
 
+  import {
+    LocalAudioTrack,
+    type LocalTrack,
+    type LocalTrackPublication,
+    LocalVideoTrack,
+    type Room as LKRoom,
+    RoomEvent,
+    Track
+  } from 'livekit-client'
+
   // Route params
   let meetingId: string | undefined = undefined
   let guestToken: string | undefined = undefined
   let errorMessage: IntlString | null = null
+
+  export const lk: LKRoom = liveKitClient.liveKitRoom
 
   // Guest info / resolution state
   let guestInfo: {
@@ -147,6 +159,10 @@
     }
   }
 
+  onMount(() => {
+    roomEl && roomEl.addEventListener('fullscreenchange', handleFullScreen)
+  })
+
   // Subscribe to location and ensure subscription is cleaned up automatically
   onDestroy(
     location.subscribe((loc) => {
@@ -167,9 +183,65 @@
     // Navigate to root (workbench) - adjust if you prefer a different location
     navigate({ path: [] })
   }
+
+  let roomEl: HTMLDivElement
+
+  const handleFullScreen = () => ($isFullScreen = document.fullscreenElement != null)
+
+  function checkFullscreen (): void {
+    const needFullScreen = $isFullScreen
+    if (document.fullscreenElement && !needFullScreen) {
+      document
+        .exitFullscreen()
+        .then(() => {
+          $isFullScreen = false
+        })
+        .catch((err) => {
+          console.log(`Error exiting fullscreen mode: ${err.message} (${err.name})`)
+          $isFullScreen = false
+        })
+    } else if (!document.fullscreenElement && needFullScreen && roomEl != null) {
+      roomEl
+        .requestFullscreen()
+        .then(() => {
+          $isFullScreen = true
+        })
+        .catch((err) => {
+          console.log(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`)
+          $isFullScreen = false
+        })
+    }
+  }
+
+  function onFullScreen (): void {
+    const needFullScreen = !$isFullScreen
+    if (!document.fullscreenElement && needFullScreen && roomEl != null) {
+      roomEl
+        .requestFullscreen()
+        .then(() => {
+          $isFullScreen = true
+        })
+        .catch((err) => {
+          console.log(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`)
+          $isFullScreen = false
+        })
+    } else if (!needFullScreen) {
+      document
+        .exitFullscreen()
+        .then(() => {
+          $isFullScreen = false
+        })
+        .catch((err) => {
+          console.log(`Error exiting fullscreen mode: ${err.message} (${err.name})`)
+          $isFullScreen = false
+        })
+    }
+  }
+  $: if (((document.fullscreenElement && !$isFullScreen) || $isFullScreen) && roomEl) checkFullscreen()
+  $: updateStyle(lk.numParticipants, withScreenSharing)
 </script>
 
-<LoginAppBase>
+<LoginAppBase wide={$lkSessionConnected ?? false}>
   <svelte:fragment slot="form-content">
     {#if errorMessage}
       <div class="center" role="alert">
@@ -186,22 +258,22 @@
           <div class="message">{love.string.CheckingLink}</div>
         </div>
       {:else if $lkSessionConnected}
-        <!-- Full-room view for connected guest -->
-        <div class="room-container" class:sharing={withScreenSharing}>
-          <div class="screenContainer">
-            <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
+        <div bind:this={roomEl} class="flex-col-center w-full h-full">
+          <div class="room-container" class:sharing={withScreenSharing}>
+            <div class="screenContainer">
+              <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
+            </div>
+            <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
+              <GuestParticipantsListView
+                room={guestRoomPlaceholder}
+                on:participantsCount={(evt) => {
+                  updateStyle(evt.detail, withScreenSharing)
+                }}
+              />
+            </div>
           </div>
-          <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
-            <GuestParticipantsListView
-              room={guestRoomPlaceholder}
-              on:participantsCount={(evt) => {
-                updateStyle(evt.detail, withScreenSharing)
-              }}
-            />
-          </div>
+          <GuestControlBar {leaveGuest} {onFullScreen} />
         </div>
-
-        <GuestControlBar {leaveGuest} />
       {:else}
         <div>
           <div class="flex flex-col justify-center">
@@ -242,7 +314,12 @@
   </svelte:fragment>
 </LoginAppBase>
 
-<style>
+<style lang="scss">
+  .error {
+    font-weight: 500;
+    font-size: 1.5rem;
+    align-items: center;
+  }
   .room-container {
     display: flex;
     justify-content: center;
@@ -251,60 +328,79 @@
     height: 100%;
     min-width: 0;
     min-height: 0;
-  }
 
-  .screenContainer {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-height: 100%;
-    min-height: 0;
-    width: 100%;
-    border-radius: 0.75rem;
-  }
+    .screenContainer {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-height: 100%;
+      min-height: 0;
+      width: 100%;
+      border-radius: 0.75rem;
 
-  .videoGrid {
-    display: grid;
-    grid-auto-rows: 1fr;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    max-height: 100%;
-    max-width: 100%;
-  }
+      .screen {
+        object-fit: contain;
+        max-width: 100%;
+        max-height: 100%;
+        height: 100%;
+        width: 100%;
+        border-radius: 0.75rem;
+      }
+    }
+    &:not(.sharing) {
+      gap: 0;
 
-  .videoGrid.scroll-m-0 {
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-    padding: 0 0.5rem;
-    width: 15rem;
-    min-width: 15rem;
-    min-height: 0;
-    max-width: 15rem;
-  }
+      .videoGrid {
+        display: grid;
+        grid-auto-rows: 1fr;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        max-height: 100%;
+        max-width: 100%;
+      }
+      .screenContainer {
+        display: none;
+      }
+    }
+    &.sharing {
+      gap: 1rem;
 
-  .center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    text-align: center;
-    padding: 24px;
-  }
+      .videoGrid {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+        padding: 0 0.5rem;
+        width: 15rem;
+        min-width: 15rem;
+        min-height: 0;
+        max-width: 15rem;
+      }
+    }
 
-  .message {
-    font-size: 1.05rem;
-    color: var(--text-muted, #666);
-  }
+    &.many {
+      padding: 0.5rem;
 
-  .actions {
-    display: flex;
-    gap: 8px;
+      &:not(.sharing) .videoGrid,
+      &.sharing {
+        gap: 0.5rem;
+      }
+    }
+
+    &.mobile {
+      padding: var(--spacing-0_5);
+
+      &:not(.sharing) .videoGrid,
+      &.sharing {
+        gap: var(--spacing-0_5);
+      }
+    }
+  }
+  .hidden {
+    display: none;
   }
   /* Main heading (title above tabs/signup/login) */
   .main-heading {
@@ -313,22 +409,5 @@
     align-items: center;
     font-size: 28px;
     font-style: Bold;
-  }
-
-  .login-label.main-heading__label {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    padding: 0 0 16px;
-    width: 412px;
-    height: 36px;
-    font-family: 'Open Sans', sans-serif;
-    font-style: normal;
-    font-weight: var(--login-main-heading-font-weight, 700);
-    font-size: var(--login-main-heading-font-size, 28px);
-    line-height: var(--login-main-heading-line-height, 38px);
-    letter-spacing: var(--login-main-heading-letter-spacing, -0.005em);
-    text-align: center;
-    color: var(--login-heading-color, #000061) !important;
   }
 </style>

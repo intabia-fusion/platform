@@ -21,7 +21,7 @@
   import { Loading } from '@hcengineering/ui'
   import MicDisabled from '../icons/MicDisabled.svelte'
   import BadConnection from '../icons/BadConnection.svelte'
-  import Reaction from './Reaction.svelte'
+  import Reaction from '../meeting/Reaction.svelte'
 
   import { ConnectionQuality, ParticipantEvent, RoomEvent, Track } from 'livekit-client'
 

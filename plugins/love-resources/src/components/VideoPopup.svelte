@@ -20,6 +20,7 @@
 
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
   import ScreenSharingView from './meeting/ScreenSharingView.svelte'
+  import { roomModalActive } from '../stores'
 
   export let isDock: boolean = false
   export let room: Ref<TypeRoom>
@@ -43,7 +44,9 @@
 
 <div class="antiPopup videoPopup-container" class:isDock>
   <div class="screenContainer" class:hidden={!withScreenSharing}>
-    <ScreenSharingView showLocalTrack={false} bind:hasActiveTrack={withScreenSharing} />
+    {#if !$roomModalActive}
+      <ScreenSharingView showLocalTrack={false} bind:hasActiveTrack={withScreenSharing} />
+    {/if}
   </div>
   <Scroller
     bind:divScroll
@@ -54,12 +57,14 @@
     stickedScrollBars
   >
     <div class="videoGrid">
-      <ParticipantsListView
-        {room}
-        on:participantsCount={(evt) => {
-          dispatchFit(evt.detail > 0)
-        }}
-      />
+      {#if !$roomModalActive}
+        <ParticipantsListView
+          {room}
+          on:participantsCount={(evt) => {
+            dispatchFit(evt.detail > 0)
+          }}
+        />
+      {/if}
     </div>
   </Scroller>
   <div class="antiNav-space" />

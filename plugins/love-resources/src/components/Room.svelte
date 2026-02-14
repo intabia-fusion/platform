@@ -20,7 +20,7 @@
   import { onDestroy, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { waitForOfficeLoaded, currentRoom } from '../stores'
+  import { waitForOfficeLoaded, currentRoom, roomModalActive } from '../stores'
   import { isFullScreen, lk } from '../utils'
   import ControlBar from './meeting/ControlBar.svelte'
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
@@ -28,6 +28,7 @@
 
   export let canMaximize: boolean = true
   export let room: TypeRoom
+  export let isModal: boolean = false
 
   let roomEl: HTMLDivElement
 
@@ -137,15 +138,19 @@
     class:mobile={$deviceInfo.isMobile}
   >
     <div class="screenContainer">
-      <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
+      {#if isModal || !$roomModalActive}
+        <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
+      {/if}
     </div>
     <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
-      <ParticipantsListView
-        room={room._id}
-        on:participantsCount={(evt) => {
-          updateStyle(evt.detail, withScreenSharing)
-        }}
-      />
+      {#if isModal || !$roomModalActive}
+        <ParticipantsListView
+          room={room._id}
+          on:participantsCount={(evt) => {
+            updateStyle(evt.detail, withScreenSharing)
+          }}
+        />
+      {/if}
     </div>
   </div>
   {#if $currentRoom}

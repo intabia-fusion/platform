@@ -59,7 +59,7 @@
     previewStarting = true
     previewError = null
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      const stream = await navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
       localStream = stream
       if (localVideoEl != null) {
         localVideoEl.srcObject = stream

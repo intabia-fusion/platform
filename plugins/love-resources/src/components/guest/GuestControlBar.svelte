@@ -35,7 +35,7 @@
   $: allowLeave = $myInfo?.room !== ($myOffice?._id ?? love.ids.Reception)
 </script>
 
-<div class="control-bar">
+<div class="control-bar theme-light">
   <ControlBarContainer>
     <svelte:fragment slot="center">
       {#if $lkSessionConnected}
