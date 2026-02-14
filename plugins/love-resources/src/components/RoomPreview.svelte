@@ -28,7 +28,7 @@
   import { openDoc } from '@hcengineering/view-resources'
 
   import love from '../plugin'
-  import { myInfo, selectedRoomPlace, currentRoom, currentMeetingMinutes, infos } from '../stores'
+  import { myInfo, myOffice, selectedRoomPlace, currentRoom, currentMeetingMinutes, infos } from '../stores'
   import { getRoomLabel } from '../utils'
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
@@ -252,7 +252,7 @@
   class="floorGrid-room"
   class:hovered
   class:disabled
-  class:myOffice={$myInfo?.room === room._id}
+  class:myOffice={$myOffice?._id === room._id}
   style:--huly-floor-roomWidth={room.width + extraRow}
   style:--huly-floor-roomHeight={room.height}
   style:grid-column={`${room.x + 2} / span ${room.width + extraRow}`}

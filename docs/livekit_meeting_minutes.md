@@ -40,10 +40,10 @@
 - **GuestMeetingApp.svelte** - полноэкранное приложение для гостей
   - Обрабатывает query params: `meetingId`, `guestToken`
   - Верифицирует гостя через `/guestInfo`
-  - При успехе - навигирует в workspace + meeting
+  - При успехе - навигирует в meeting
 
 - **GuestJoinPopup.svelte** - UI для гостя который не смог автоматически присоединиться
-  - Запрашивает имя/email если нужно
+  - Запрашивает имя если нужно
 
 - **GuestControlBar.svelte** - упрощенная панель управления для гостей
 
@@ -77,7 +77,7 @@
 
 ## 📋 TODO
 
-### 1. Исправить баг с Video в RoomModal
+### 1. Исправить баг с Video в RoomModal - Исправлено
 > Нужно починить багу: если RoomModal в полный экран, то нужно видео в правой панельке не показывать, а то получается 2 контрола одно и тоже видео гоняют.
 
 ### 2. Очередь вебхуков
@@ -88,96 +88,11 @@
 #### Проблема:
 Сейчас ссылка требует `meetingId`. Но если митинг еще не начался - meetingId может быть не активен.
 
-#### Решение:
-1. **Добавить дату в ссылку:**
-   - В `createMeeting` передавать дату/время митинга из Event.date
-   - Ссылка: `navigateUrl` содержит timestamp
+#### вариант решения
 
-2. **Токен для поиска митинга:**
-   - Без meetingId - генерировать токен с room + timestamp
-   - Сервер ищет активный митинг по room и времени (±30 мин)
+1. Добавить в MeetingMinutes статус `scheduled` - и дату, в ссылку на митинг тоже добавить дату, давать зайти когда митинг активен, или за 5 минут до начала митинга.
+2. Заменить ссылку 
+3. Из платформы, по мимо Start Meeting, за 5 минут до начала митинга показывать кнопку, Start Scheduled meeting. И в верху в панельке показывать ближайший Scheduled meeting, если остался до него заданный интервал, 30мин/15мин/5мин.
 
-3. **API для верификации:**
-   - Обновить `/guestInfo` endpoint
-   - Логика поиска митингов по времени
 
-#### План:
-- [ ] Модель данных: добавить поля room, timestampStart, timestampEnd
-- [ ] Генерация ссылок: обновить `createMeeting`
-- [ ] Серверная часть: обновить `/guestInfo`
-- [ ] GuestMeetingApp: обработка ссылки с timestamp
-
-### 4. UI - Расширение формы после подключения
-
-После подключения (`$lkSessionConnected === true`) форма должна расшириться на весь экран:
-- Оставить только верхнюю полоску с логотипом
-- room-container + GuestControlBar занимают всё пространство
-
-#### Текущее:
-```svelte
-<LoginAppBase>
-  <svelte:fragment slot="form-content">
-    {#if $lkSessionConnected}
-      <room-container />
-      <GuestControlBar />
-    {:else}
-      <GuestJoinPopup />
-    {/if}
-  </svelte:fragment>
-</LoginAppBase>
-```
-
-#### Нужно:
-```svelte
-{#if $lkSessionConnected}
-  <div class="fullscreen-meeting">
-    <header class="meeting-header">
-      <Logo />
-      <span class="meeting-title">{guestInfo?.title}</span>
-    </header>
-    <div class="meeting-content">
-      <room-container />
-      <GuestControlBar />
-    </div>
-  </div>
-{:else}
-  <LoginAppBase>...</LoginAppBase>
-{/if}
-```
-
-- [ ] Расширить форму на весь экран после подключения
-- [ ] Оставить только header с логотипом
-
-### 5. Тестирование
-- [ ] Проверить отправку приглашений
-- [ ] Проверить получение и принятие приглашений
-- [ ] Проверить отклонение приглашений
-- [ ] Проверить звуковые уведомления
-- [ ] Проверить генерацию ссылки с датой
-- [ ] Проверить вход без meetingId
-- [ ] Проверить поиск активного митинга по времени
-
----
-
-## 🔧 Technical Details
-
-### Клиент логи (`invites.ts`):
-- `[responseToInviteRequest]` - статус приглашения (accept/decline)
-- `[subscribeToIncomingInvites]` - полученные приглашения из query
-- `[updateInvites]` - поиск существующих приглашений
-
-### Клиент логи (`meetings.ts`):
-- `[createMeeting]` - создание митинга
-- `[joinOrCreateMeetingByInvite]` - присоединение к митингу по invite
-- `[connectToMeeting]` - подключение к митингу (LiveKit)
-
-### Сервер логи (`server-plugins/love-resources/src/index.ts`):
-- `[OnUserMeetingInvite]` - обработка обновления invite-response
-- `[OnUserMeetingInvite]` - поиск invite-request для синхронизации
-
-### Важные замечания:
-1. **Права доступа:** `invite-request` в space отправителя, `invite-response` в space получателя
-2. **Синхронизация:** Только сервер может обновлять `invite-request`
-3. **Время жизни:** 30 секунд, обновляется каждые 5 секунд если отправитель активен
-4. **Звук:** Включается при показе плашки (`playSound`)
-5. **Обратный отсчет:** Показывается последние 10 секунд
+### 4. Поломано запрещение подключения к митингу, нужно проверить и использовать новый стук, сделать проверку закрытости комнаты на уровне love сервиса, а не UI.

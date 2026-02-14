@@ -42,7 +42,9 @@
 
   let allowLeave: boolean = false
 
-  $: allowLeave = $myInfo?.room !== ($myOffice?._id ?? love.ids.Reception)
+  // If user is not in a meeting (no myInfo), they cannot leave
+  // If user is in a meeting, they can leave unless it's their office or reception
+  $: allowLeave = $myInfo !== undefined && $myInfo.room !== ($myOffice?._id ?? love.ids.Reception)
 
   function maximize (): void {
     showPopup(RoomModal, { room }, 'full-centered')

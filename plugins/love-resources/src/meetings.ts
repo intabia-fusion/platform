@@ -154,6 +154,7 @@ export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes
 }
 
 export async function kick (person: Ref<Person>): Promise<void> {
+  // TODO: Need to rework a logic to kick a person from a personal meeting.
   const client = getClient()
   const allRooms = get(rooms)
   const participantsInfo = get(infos)

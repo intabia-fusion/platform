@@ -14,8 +14,10 @@
 
   const dispatch = createEventDispatcher()
 
-  $: isMyOffice = $myInfo?.room === $myOffice?._id
-  $: allowLeave = !isMyOffice && $myInfo?.room !== love.ids.Reception
+  // Check if current room is my office using myOffice store (works even when not in a meeting)
+  $: isMyOffice = $currentRoom?._id === $myOffice?._id
+  // Can leave if in a meeting (myInfo exists) and it's not my office or reception
+  $: allowLeave = $myInfo !== undefined && !isMyOffice && $myInfo.room !== love.ids.Reception
 
   let leaving = false
   async function handleLeaveClick (): Promise<void> {
