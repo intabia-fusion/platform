@@ -19,7 +19,7 @@
   let screen: HTMLVideoElement
 
   let scale = 1
-  const MIN_SCALE = 0.5
+  const MIN_SCALE = 1
   const MAX_SCALE = 3
   const SCALE_STEP = 0.25
   const WHEEL_SCALE_STEP = 0.1
