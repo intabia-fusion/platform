@@ -45,7 +45,6 @@ import {
   Space,
   Timestamp,
   toIdMap,
-  TxCUD,
   withContext,
   type Account,
   type WorkspaceIds
@@ -527,15 +526,31 @@ export class WorkspaceClient {
     }
   }
 
-  async close (): Promise<void> {
-    this.ctx.info('Closed workspace client: ', { workspace: this.wsIds })
-  }
-
-  async txHandler (txes: TxCUD<Doc>[]): Promise<void> {
+  async meetingStarted (meetingId: Ref<MeetingMinutes>): Promise<void> {
     await this.initPromise
     if (this.love !== undefined) {
-      this.love.txHandler(txes)
+      const mm = await this.love.getMeeting(meetingId)
+      if (mm !== undefined) {
+        this.ctx.info('Meeting started, connecting to Love', {
+          meetingId,
+          autoTranscribe: mm.startWithTranscription ?? false
+        })
+        await this.love?.connect({
+          language: mm.language,
+          meetingId: mm._id,
+          transcription: mm.startWithTranscription ?? false
+        })
+      }
     }
+  }
+
+  async meetingFinished (meetingId: Ref<MeetingMinutes>): Promise<void> {
+    await this.initPromise
+    await this.love?.disconnect(meetingId)
+  }
+
+  async close (): Promise<void> {
+    this.ctx.info('Closed workspace client: ', { workspace: this.wsIds })
   }
 
   async loveConnect (request: ConnectMeetingRequest): Promise<void> {

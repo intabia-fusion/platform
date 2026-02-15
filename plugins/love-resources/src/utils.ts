@@ -28,7 +28,6 @@ import {
   type MeetingSchedule,
   type Room,
   type RoomMetadata,
-  TranscriptionStatus,
   type UserMeetingInvite
 } from '@hcengineering/love'
 import { getEmbeddedLabel, getMetadata, getResource, translate, type IntlString } from '@hcengineering/platform'
@@ -61,7 +60,7 @@ import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
 import love from './plugin'
-import { $myPreferences, currentMeetingMinutes, currentRoom } from './stores'
+import { $myPreferences, currentMeetingMinutes } from './stores'
 import { getLiveKitClient } from './liveKitClient'
 import { getLoveClient } from './loveClient'
 
@@ -183,48 +182,16 @@ lk.on(RoomEvent.RecordingStatusChanged, (evt) => {
 })
 lk.on(RoomEvent.RoomMetadataChanged, (metadata) => {
   const data = parseMetadata(metadata)
-  if (data.recording !== undefined) {
-    isRecording.set(data.recording)
-  }
-  if (data.transcription !== undefined) {
-    isTranscription.set(data.transcription === TranscriptionStatus.InProgress)
-  }
+  isRecording.set(data.recording ?? false)
+  isTranscription.set(data.transcription ?? false)
 })
 
 lk.on(RoomEvent.Connected, () => {
-  isRecording.set(lk.isRecording)
-  void initRoomMetadata(lk.metadata)
+  const data: RoomMetadata = parseMetadata(lk.metadata)
+  isTranscription.set(data.transcription ?? false)
+  isRecording.set(data.recording ?? false)
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
 })
-
-async function initRoomMetadata (metadata: string | undefined): Promise<void> {
-  const room = get(currentRoom)
-  const mm = get(currentMeetingMinutes)
-  if (mm === undefined) {
-    return
-  }
-  const data: RoomMetadata = parseMetadata(metadata)
-
-  isTranscription.set(data.transcription === TranscriptionStatus.InProgress)
-
-  if (
-    (data.transcription == null || data.transcription === TranscriptionStatus.Idle) &&
-    room?.startWithTranscription === true
-  ) {
-    // TODO: It should be done inside love
-    await startTranscription(mm)
-  }
-
-  if (
-    mm !== undefined &&
-    get(isRecordingAvailable) &&
-    data.recording == null &&
-    room?.startWithRecording === true &&
-    !get(isRecording)
-  ) {
-    await loveClient.record(mm)
-  }
-}
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {
   try {

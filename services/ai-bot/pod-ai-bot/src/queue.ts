@@ -32,7 +32,7 @@ import serverToken, { generateToken } from '@hcengineering/server-token'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { AIEventRequest } from '@hcengineering/ai-bot'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { Doc, groupByArray, newMetrics, TxCUD, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
+import { newMetrics, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import { updateDeepgramBilling } from './billing'
@@ -45,6 +45,7 @@ import { createTranscriptionsSupport } from './transcriptions'
 import { TranscriptionTask } from './types'
 import { getAccountUuid } from './utils/account'
 import { ClisrServer } from '@intabiafusion/clisr'
+import { QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
 
 export const startQueue = async (): Promise<void> => {
   setMetadata(serverToken.metadata.Secret, config.ServerSecret)
@@ -161,25 +162,24 @@ export const startQueue = async (): Promise<void> => {
     }
   )
 
-  const txConsumer = queue.createBatchConsumer<TxCUD<Doc>>(
+  const loveConsumer = queue.createConsumer<QueueMeetingMessage>(
     ctx,
-    QueueTopic.Tx,
+    QueueTopic.LoveQueue,
     'ai-bot',
-    async (ctx, message, control) => {
-      const byWorkspace = groupByArray(message, (a) => a.workspace)
-      for (const [ws, txes] of byWorkspace.entries()) {
-        try {
-          await aiControl.processTxes(
-            ws,
-            txes.map((it) => it.value),
-            control
-          )
-        } catch (err: any) {
-          ctx.error('failed to handle ai event', { error: err.message })
+    async (ctx, msg) => {
+      switch (msg.value.type) {
+        case QueueMeetingEvent.started: {
+          const wsClient = await aiControl.getWorkspaceClient(msg.workspace)
+          await wsClient?.meetingStarted(msg.value.meetingId)
+          break
+        }
+        case QueueMeetingEvent.finished: {
+          const wsClient = await aiControl.getWorkspaceClient(msg.workspace)
+          await wsClient?.meetingFinished(msg.value.meetingId)
+          break
         }
       }
-    },
-    { batchSize: 50 }
+    }
   )
 
   // Set up transcription queue producer
@@ -268,8 +268,8 @@ export const startQueue = async (): Promise<void> => {
     void aiEventConsumer?.close()
     void transcriptionConsumer?.close()
     void transcriptionProducer?.close()
-    void txConsumer?.close()
     void transcriptionDeadLetterProducer?.close()
+    void loveConsumer?.close()
     if (billingIntervalId !== undefined) {
       clearInterval(billingIntervalId)
     }

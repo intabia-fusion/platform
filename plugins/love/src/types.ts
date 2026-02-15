@@ -1,6 +1,6 @@
 import { Event, Schedule } from '@hcengineering/calendar'
 import { Person } from '@hcengineering/contact'
-import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Timestamp } from '@hcengineering/core'
+import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
 
 export enum RoomAccess {
@@ -17,12 +17,6 @@ export enum RoomType {
 
 export interface Floor extends Doc {
   name: string
-}
-
-export enum TranscriptionStatus {
-  Idle = 'idle',
-  InProgress = 'inProgress',
-  Completed = 'completed'
 }
 
 /**
@@ -93,9 +87,13 @@ export type RoomLanguage =
 
 export interface RoomMetadata {
   projectKey?: string
-  recording?: boolean
-  transcription?: TranscriptionStatus
+  workspaceId?: WorkspaceUuid
+  meetingId?: Ref<MeetingMinutes>
   language?: RoomLanguage
+
+  // Status for operations
+  transcription?: boolean
+  recording?: boolean
 }
 
 export interface Room extends Doc {
@@ -191,6 +189,11 @@ export interface MeetingMinutes extends AttachedDoc {
 
   access: RoomAccess
   language: RoomLanguage
+
+  // If defined, should start with recording
+  startWithRecording?: boolean
+  // If defined, should start with transcription
+  startWithTranscription?: boolean
 }
 
 /**

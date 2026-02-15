@@ -924,7 +924,7 @@ export enum SocialIdType {
   HULY = 'huly',
   TELEGRAM = 'telegram',
   HULY_ASSISTANT = 'huly-assistant',
-  LOVE = 'love'
+  LOVE = 'office'
 }
 
 export interface SocialId {

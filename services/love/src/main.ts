@@ -21,15 +21,25 @@ import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/a
 import {
   MeasureContext,
   newMetrics,
+  readOnlyGuestAccountUuid,
   Ref,
-  WorkspaceIds,
-  WorkspaceUuid,
-  readOnlyGuestAccountUuid
+  systemAccountUuid,
+  WorkspaceUuid
 } from '@hcengineering/core'
-import { MeetingMinutes, RecordingState, RoomMetadata, TranscriptionStatus } from '@hcengineering/love'
+import {
+  MeetingMinutes,
+  parseRoomName,
+  queueEvents,
+  QueueMeetingEvent,
+  QueueMeetingMessage,
+  QueueMeetingUpdateMetadataMessage,
+  QueueWebhookMeetingMessage,
+  RoomMetadata
+} from '@hcengineering/love'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
 
+import { combineName } from '@hcengineering/contact'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@hcengineering/server-core'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
@@ -40,12 +50,8 @@ import { IncomingHttpHeaders } from 'http'
 import {
   AccessToken,
   EgressClient,
-  EncodedFileOutput,
-  EncodedFileType,
   RoomAgentDispatch,
   RoomServiceClient,
-  S3Upload,
-  WebhookConfig,
   WebhookReceiver,
   type WebhookEvent
 } from 'livekit-server-sdk'
@@ -53,11 +59,9 @@ import { join } from 'path'
 import { updateLiveKitSessions } from './billing'
 import config from './config'
 import { LiveKitPollingService } from './polling'
-import { getRecordingPreset } from './preset'
-import { getS3UploadParams } from './storage'
+import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
-import { combineName } from '@hcengineering/contact'
 
 const extractToken = (header: IncomingHttpHeaders): any => {
   try {
@@ -93,6 +97,13 @@ function convertBigIntToString (obj: unknown): unknown {
 
 function getAccountClient (token?: string): AccountClient {
   return getAccountClientRaw(config.AccountsURL, token)
+}
+
+export function getWebhookRoomName (event: WebhookEvent): string | undefined {
+  if (event.egressInfo != null && typeof event.egressInfo.roomName === 'string') return event.egressInfo.roomName
+  if (typeof (event as any).roomName === 'string') return (event as any).roomName
+  if (event.room != null && typeof event.room.name === 'string') return event.room.name
+  return undefined
 }
 
 export const main = async (): Promise<void> => {
@@ -133,7 +144,25 @@ export const main = async (): Promise<void> => {
   const roomClient = new RoomServiceClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
   const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
 
-  const webhookProcessor = new WebhookProcessor(ctx, roomClient, egressClient, storageConfig, s3storageConfig)
+  const eventProducer = queue.getProducer<QueueMeetingMessage>(ctx, QueueTopic.LoveQueue)
+
+  const webhookProcessor = new WebhookProcessor(
+    ctx,
+    roomClient,
+    eventProducer,
+    egressClient,
+    storageConfig,
+    s3storageConfig
+  )
+
+  const recordingProcessor = new RecordingProcessor(
+    ctx.newChild('recordings', {}),
+    roomClient,
+    eventProducer,
+    egressClient,
+    storageConfig,
+    s3storageConfig
+  )
 
   const receivers = [new WebhookReceiver(config.ApiKey, config.ApiSecret)]
 
@@ -151,6 +180,50 @@ export const main = async (): Promise<void> => {
     }
     throw new Error('Failed to decode webhook event with all receivers')
   }
+
+  const eventConsumer = queue.createConsumer(ctx, QueueTopic.LoveQueue, 'love-webhook-producer', async (ctx, msg) => {
+    const queueMsg = msg.value as QueueMeetingMessage
+    switch (queueMsg.type) {
+      case QueueMeetingEvent.webhook: {
+        const event = (queueMsg as QueueWebhookMeetingMessage).webhook
+        await ctx.with('handle-webhook', {}, () =>
+          webhookProcessor.processEvent(event, {
+            meetingId: queueMsg.meetingId,
+            workspace: msg.workspace
+          })
+        )
+        break
+      }
+      case QueueMeetingEvent.updateMetadata: {
+        const metadataMsg = queueMsg as QueueMeetingUpdateMetadataMessage
+        await updateMetadata(roomClient, metadataMsg.roomName, metadataMsg.metadata)
+        break
+      }
+      case QueueMeetingEvent.started: {
+        const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
+        try {
+          const mm = await wsClient.findMeetingById(queueMsg.meetingId)
+          if (mm !== undefined && mm.startWithRecording === true) {
+            const sysToken = generateToken(systemAccountUuid, msg.workspace, { service: 'love' })
+            const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
+            if (!isWorkspaceLoginInfo(wsLoginInfo)) {
+              break
+            }
+            await recordingProcessor.startRecording(
+              getRoomName(msg.workspace, queueMsg.meetingId),
+              msg.workspace,
+              queueMsg.meetingId,
+              wsLoginInfo,
+              mm.title
+            )
+          }
+        } finally {
+          await wsClient.close()
+        }
+        break
+      }
+    }
+  })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/webhook', async (req, res) => {
@@ -171,9 +244,20 @@ export const main = async (): Promise<void> => {
         }
       }
 
-      // We need to filter not our events if projectKey is defined.
+      const roomStr = getWebhookRoomName(event)
+      if (roomStr === undefined) {
+        console.warn('No roomName available in event', { event: event.event })
+        return
+      }
 
-      await ctx.with('handle-webhook', {}, () => webhookProcessor.processEvent(event))
+      const roomName = parseRoomName(roomStr)
+      if (roomName === undefined) {
+        ctx.info('Skipping event: invalid room name format', { roomName: roomStr, event: event.event })
+
+        return
+      }
+
+      await eventProducer.send(ctx, roomName.workspace, [queueEvents.webhook(roomName.meetingId, event)])
     } catch (e) {
       ctx.error('Failed to process webhook event', { error: e })
     } finally {
@@ -220,7 +304,12 @@ export const main = async (): Promise<void> => {
       ctx.info('Creating room', { roomName })
       try {
         await roomClient.createRoom({
-          metadata: JSON.stringify({ projectKey: config.LiveKitProject, workspaceId, meetingId }),
+          metadata: JSON.stringify({
+            projectKey: config.LiveKitProject,
+            workspaceId,
+            meetingId
+          } satisfies RoomMetadata),
+          departureTimeout: 3,
           name: roomName,
           agents: config.Agents.map((it) => new RoomAgentDispatch({ agentName: it }))
         })
@@ -428,14 +517,6 @@ export const main = async (): Promise<void> => {
     const roomName = getRoomName(workspaceId, meetingId)
 
     try {
-      // Check if LiveKit room exists before starting recording
-      const existingRooms = await roomClient.listRooms([roomName])
-      if (existingRooms === undefined || existingRooms.length === 0) {
-        ctx.error('Cannot start recording: LiveKit room does not exist', { roomName })
-        res.status(404).send({ error: 'Room does not exist. Please ensure participants have joined the meeting.' })
-        return
-      }
-
       const token = extractToken(req.headers)
       const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
       if (!isWorkspaceLoginInfo(wsLoginInfo)) {
@@ -444,50 +525,13 @@ export const main = async (): Promise<void> => {
         return
       }
 
-      const dateStr = new Date().toISOString().replace('T', '_').slice(0, 19)
-      // Use MeetingMinutes title for recording filename
-      let meetingTitle = req.body.title ?? 'recording'
-
-      const wsClient = await WorkspaceClient.create(wsLoginInfo.workspace, ctx)
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          ctx.error('Meeting document not found when starting recording', { meetingId })
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-        meetingTitle = meetingTitle.replace(/[^a-zA-Z0-9_-]/g, '_')
-
-        const name = `${meetingTitle}_${dateStr}.mp4`
-        const wsIds = {
-          uuid: wsLoginInfo.workspace,
-          dataId: wsLoginInfo.workspaceDataId,
-          url: wsLoginInfo.workspaceUrl
-        }
-        const { egressId } = await startRecord(
-          ctx,
-          storageConfig,
-          s3storageConfig,
-          egressClient,
-          roomClient,
-          roomName,
-          wsIds
-        )
-
-        await wsClient.createPendingRecording({
-          meeting: meetingId,
-          format: 'video',
-          roomName,
-          name,
-          egressId
-        })
-        // Update meeting document to reflect recording started
-        await wsClient.updateMeetingRecordingState(meetingDoc, RecordingState.Recording)
-      } finally {
-        await wsClient.close()
-      }
-
-      ctx.info('Start recording', { workspace: wsLoginInfo.workspace, roomName, meetingId })
+      await recordingProcessor.startRecording(
+        roomName,
+        workspaceId,
+        meetingId,
+        wsLoginInfo,
+        req.body.title ?? 'recording'
+      )
       res.send()
     } catch (e) {
       console.error(e)
@@ -505,12 +549,7 @@ export const main = async (): Promise<void> => {
     const roomName = getRoomName(workspaceId, meetingId)
 
     try {
-      // Check if LiveKit room exists before stopping recording
-      const existingRooms = await roomClient.listRooms([roomName])
-      if (existingRooms !== undefined && existingRooms.length > 0) {
-        await updateMetadata(roomClient, roomName, { recording: false })
-      }
-      void stopEgress(egressClient, roomName)
+      void recordingProcessor.stopRecording(roomName, workspaceId, meetingId)
       res.send()
     } catch (e) {
       console.error(e)
@@ -528,7 +567,7 @@ export const main = async (): Promise<void> => {
     const roomName = getRoomName(workspaceId, meetingId)
 
     const language = req.body.language
-    const transcription = req.body.transcription as TranscriptionStatus
+    const transcription = req.body.transcription ?? false
 
     if (typeof roomName !== 'string') {
       res.status(400).send()
@@ -545,7 +584,7 @@ export const main = async (): Promise<void> => {
       }
 
       const metadata = language != null ? { transcription, language } : { transcription }
-      await updateMetadata(roomClient, roomName, metadata)
+      await eventProducer.send(ctx, workspaceId, [queueEvents.updateMetadata(meetingId, roomName, metadata)])
       res.status(200).send()
     } catch (e) {
       console.error(e)
@@ -565,7 +604,11 @@ export const main = async (): Promise<void> => {
     const language = req.body.language
 
     try {
-      await updateMetadata(roomClient, roomName, { language })
+      await eventProducer.send(ctx, workspaceId, [
+        queueEvents.updateMetadata(meetingId, roomName, {
+          language
+        })
+      ])
       res.send()
     } catch (e) {
       console.error(e)
@@ -606,6 +649,8 @@ export const main = async (): Promise<void> => {
   const shutdown = (): void => {
     void workspaceConsumer.close()
     void workspaceTxConsumer.close()
+    void eventConsumer.close()
+    void eventProducer.close()
     void queue.shutdown()
     pollingService.stop()
     server.close(() => process.exit())
@@ -635,13 +680,6 @@ export const main = async (): Promise<void> => {
   }
 }
 
-const stopEgress = async (egressClient: EgressClient, roomName: string): Promise<void> => {
-  const egresses = await egressClient.listEgress({ active: true, roomName })
-  for (const egress of egresses) {
-    await egressClient.stopEgress(egress.egressId)
-  }
-}
-
 const createToken = async (roomName: string, _id: string, participantName: string): Promise<string> => {
   const at = new AccessToken(config.ApiKey, config.ApiSecret, {
     identity: _id,
@@ -649,7 +687,10 @@ const createToken = async (roomName: string, _id: string, participantName: strin
     // token to expire after 10 minutes
     ttl: '10m'
   })
-  at.addGrant({ roomJoin: true, room: roomName })
+  at.addGrant({
+    roomJoin: true,
+    room: roomName
+  })
 
   return await at.toJwt()
 }
@@ -666,62 +707,6 @@ const checkRecordAvailable = async (
     s3storageConfig: s3storageConfig?.kind
   })
   return false
-}
-
-const startRecord = async (
-  ctx: MeasureContext,
-  storageConfig: StorageConfig | undefined,
-  s3StorageConfig: StorageConfig | undefined,
-  egressClient: EgressClient,
-  roomClient: RoomServiceClient,
-  roomName: string,
-  wsIds: WorkspaceIds
-): Promise<{ filepath: string, egressId: string }> => {
-  if (storageConfig === undefined) {
-    console.error('please provide storage configuration')
-    throw new Error('please provide storage configuration')
-  }
-  const uploadParams = await getS3UploadParams(ctx, wsIds, storageConfig, s3StorageConfig)
-
-  const { filepath, endpoint, accessKey, secret, region, bucket } = uploadParams
-
-  ctx.info('staring recording on', { filepath, endpoint, region, bucket })
-  const output = new EncodedFileOutput({
-    fileType: EncodedFileType.MP4,
-    filepath,
-    disableManifest: true,
-    output: {
-      case: 's3',
-      value: new S3Upload({
-        endpoint,
-        accessKey,
-        region,
-        secret,
-        bucket,
-        forcePathStyle: true
-      })
-    }
-  })
-  const { preset } = getRecordingPreset(config.RecordingPreset)
-  await updateMetadata(roomClient, roomName, { recording: true })
-  const { egressId } = await egressClient.startRoomCompositeEgress(
-    roomName,
-    { file: output },
-    {
-      layout: 'grid',
-      encodingOptions: preset,
-      webhooks:
-        config.WebHookUrl !== ''
-          ? [
-              new WebhookConfig({
-                url: config.WebHookUrl,
-                signingKey: config.ApiKey
-              })
-            ]
-          : []
-    }
-  )
-  return { filepath, egressId }
 }
 
 function getWorkspaceId (req: Request): WorkspaceUuid | undefined {

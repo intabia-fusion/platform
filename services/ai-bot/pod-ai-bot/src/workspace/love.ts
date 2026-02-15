@@ -18,18 +18,12 @@ import chunter, { ChatMessage } from '@hcengineering/chunter'
 import contact, { Person } from '@hcengineering/contact'
 import core, {
   concatLink,
-  Doc,
   generateId,
   Markup,
   MeasureContext,
   PersonId,
   Ref,
-  SortingOrder,
   Timestamp,
-  TxCreateDoc,
-  TxCUD,
-  TxProcessor,
-  TxUpdateDoc,
   TxFactory,
   WorkspaceUuid,
   pickPrimarySocialId,
@@ -38,12 +32,10 @@ import core, {
 import love, {
   getFreeRoomPlace,
   MeetingMinutes,
-  MeetingStatus,
   ParticipantInfo,
   Room,
   RoomLanguage,
-  TranscriptionState,
-  TranscriptionStatus
+  TranscriptionState
 } from '@hcengineering/love'
 import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
 
@@ -53,9 +45,7 @@ import { RestClient } from '@hcengineering/api-client'
 export class LoveController {
   private readonly connectedMeetings = new Set<Ref<MeetingMinutes>>()
 
-  private participantsInfo: ParticipantInfo[] = []
   private readonly socialIdByPerson = new Map<Ref<Person>, PersonId>()
-  private meetingMinutes: MeetingMinutes[] = []
   private initComplete = false
 
   constructor (
@@ -66,9 +56,6 @@ export class LoveController {
     private readonly currentPerson: Person
   ) {
     void this.initData()
-    setInterval(() => {
-      void this.checkConnection()
-    }, 10 * 1000)
   }
 
   getIdentity (): { identity: Ref<Person>, name: string } {
@@ -78,84 +65,13 @@ export class LoveController {
     }
   }
 
-  txHandler (txes: TxCUD<Doc>[]): void {
-    if (!this.initComplete) {
-      // Pass, since init is not yet complete
-      return
-    }
-    for (const etx of txes) {
-      if (!TxProcessor.isExtendsCUD(etx._class)) continue
-      if (etx._class === core.class.TxCreateDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo.push(TxProcessor.createDoc2Doc(etx as TxCreateDoc<ParticipantInfo>))
-        } else if (etx.objectClass === love.class.MeetingMinutes) {
-          this.meetingMinutes.push(TxProcessor.createDoc2Doc(etx as TxCreateDoc<MeetingMinutes>))
-        }
-      } else if (etx._class === core.class.TxRemoveDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo = this.participantsInfo.filter((p) => p._id !== etx.objectId)
-        } else if (etx.objectClass === love.class.MeetingMinutes) {
-          this.meetingMinutes = this.meetingMinutes.filter((r) => r._id !== etx.objectId)
-        }
-      } else if (etx._class === core.class.TxUpdateDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo = this.participantsInfo.map((p) => {
-            if (p._id === etx.objectId) {
-              return TxProcessor.updateDoc2Doc(p, etx as TxUpdateDoc<ParticipantInfo>)
-            }
-            return p
-          })
-        } else if (etx.objectClass === love.class.MeetingMinutes) {
-          this.meetingMinutes = this.meetingMinutes.map((r) => {
-            if (r._id === etx.objectId) {
-              return TxProcessor.updateDoc2Doc(r, etx as TxUpdateDoc<MeetingMinutes>)
-            }
-            return r
-          })
-        }
-      }
-    }
-  }
-
   async initData (): Promise<void> {
-    this.participantsInfo = await this.client.findAll(love.class.ParticipantInfo, {})
-    this.meetingMinutes = await this.client.findAll(love.class.MeetingMinutes, {
-      status: { $ne: MeetingStatus.Finished }
-    })
+    const pp = await this.client.findAll(love.class.ParticipantInfo, { person: this.currentPerson._id })
 
-    for (const p of this.participantsInfo) {
-      if (p.person === this.currentPerson._id) {
-        await this.client.remove(p)
-      }
+    for (const p of pp) {
+      await this.client.remove(p)
     }
     this.initComplete = true
-    await this.checkConnection()
-  }
-
-  async checkConnection (): Promise<void> {
-    if (this.connectedMeetings.size === 0) return
-
-    for (const meeting of this.connectedMeetings) {
-      try {
-        // If meeting exists, consider meeting-bound participants only
-        const meetingParticipants = this.participantsInfo.filter(
-          (p) => (p as any).meeting === meeting && p.person !== this.currentPerson._id
-        )
-        if (meetingParticipants.length === 0) {
-          void this.disconnect(meeting)
-        }
-      } catch (err: any) {
-        // Be defensive: log and continue
-        try {
-          this.ctx?.info?.('[LoveController.checkConnection] error while checking room', {
-            meeting,
-            error: String(err)
-          })
-        } catch {
-          // ignore logging errors
-        }
-      }
-    }
   }
 
   async connect (request: ConnectMeetingRequest): Promise<void> {
@@ -173,11 +89,9 @@ export class LoveController {
       return
     }
 
-    this.connectedMeetings.add(request.meetingId)
-
-    this.ctx.info('Connecting', { room: mm.title, meeting: mm._id, transcription: request.transcription })
-
     if (request.transcription) {
+      this.ctx.info('Connecting', { room: mm.title, meeting: mm._id, transcription: request.transcription })
+      this.connectedMeetings.add(request.meetingId)
       await this.requestTranscription(mm, request.language)
       await this.updateTranscriptionState(mm._id, TranscriptionState.Transcribing)
       const participantId = await this.createAiParticipant(mm)
@@ -196,22 +110,16 @@ export class LoveController {
     if (participant !== undefined) {
       this.ctx.info('Removing AI participant', { meeting: meetingId, participantId: participant._id })
       await this.client.remove(participant)
-      this.ctx.info('AI participant removed', { meeting: meetingId, participantId: participant._id })
-    } else {
-      this.ctx.info('No AI participant found to remove', { meeting: meetingId, person: this.currentPerson._id })
     }
 
     // Prefer MeetingMinutes id when stopping transcription so token names match started sessions.
     this.ctx.info('Stopping transcription', { meeting: meetingId })
     await stopTranscription(this.token, meetingId)
-    this.ctx.info('Transcription stopped', { meeting: meetingId })
 
     // Update transcription state to Finished
     await this.updateTranscriptionState(meetingId, TranscriptionState.Finished)
 
-    this.meetingMinutes = this.meetingMinutes.filter((m) => m.attachedTo !== meetingId)
     this.connectedMeetings.delete(meetingId)
-    this.ctx.info('Disconnected successfully', { meeting: meetingId })
   }
 
   async updateTranscriptionState (meetingId: Ref<MeetingMinutes>, state: TranscriptionState): Promise<void> {
@@ -406,56 +314,18 @@ export class LoveController {
   }
 
   async getMeeting (ref: Ref<MeetingMinutes>): Promise<MeetingMinutes | undefined> {
-    return (
-      this.meetingMinutes.find(({ _id }) => _id === ref) ??
-      (await this.client.findOne(love.class.MeetingMinutes, { _id: ref }))
-    )
+    return await this.client.findOne(love.class.MeetingMinutes, { _id: ref })
   }
 
   async getRoomParticipant (meetingId: Ref<MeetingMinutes>, person: Ref<Person>): Promise<ParticipantInfo | undefined> {
     // Prefer meeting-bound participant (if there is an active/pending meeting in the room)
     try {
-      const meeting = await this.getMeeting(meetingId)
-      if (meeting !== undefined) {
-        const local = this.participantsInfo.find((p) => (p as any).meeting === meeting._id && p.person === person)
-        if (local !== undefined) return local
-        const remote = await this.client.findOne(love.class.ParticipantInfo, { meeting: meeting._id, person })
-        if (remote !== undefined) return remote
-      }
+      const remote = await this.client.findOne(love.class.ParticipantInfo, { meeting: meetingId, person })
+      if (remote !== undefined) return remote
     } catch (err: any) {
       this.ctx?.info?.('[LoveController.getRoomParticipant] failed to resolve meeting for room', { error: String(err) })
+      return undefined
     }
-
-    // Fallback to legacy room-bound participant
-    return (
-      this.participantsInfo.find((p) => p.meeting === meetingId && p.person === person) ??
-      (await this.client.findOne(love.class.ParticipantInfo, { person }))
-    )
-  }
-
-  /**
-   * Get MeetingMinutes for room regardless of status (Active or Finished)
-   * Returns the most recent one if multiple exist
-   */
-  async getMeetingMinutesAny (room: Room): Promise<MeetingMinutes | undefined> {
-    // First try to find in cache
-    const cached = this.meetingMinutes.find((m) => m.attachedTo === room._id)
-    if (cached !== undefined) {
-      return cached
-    }
-
-    // Find the most recent meeting minutes for this room (any status)
-    const doc = await this.client.findOne(
-      love.class.MeetingMinutes,
-      { attachedTo: room._id },
-      { sort: { createdOn: SortingOrder.Descending } }
-    )
-
-    if (doc !== undefined) {
-      this.meetingMinutes.push(doc)
-    }
-
-    return doc
   }
 
   async createAiParticipant (meeting: MeetingMinutes): Promise<Ref<ParticipantInfo>> {
@@ -605,7 +475,7 @@ async function startTranscription (
       body: JSON.stringify({
         meetingId,
         language,
-        transcription: TranscriptionStatus.InProgress
+        transcription: true
       })
     })
     return res.ok
@@ -624,7 +494,7 @@ async function stopTranscription (token: string, meetingId: Ref<MeetingMinutes>)
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ meetingId, transcription: TranscriptionStatus.Idle })
+      body: JSON.stringify({ meetingId, transcription: false })
     })
     return res.ok
   } catch (err: any) {

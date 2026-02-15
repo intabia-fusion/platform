@@ -1,8 +1,14 @@
 import { MeasureContext, Ref, WorkspaceIds, type WorkspaceUuid } from '@hcengineering/core'
-import love, { MeetingMinutes, parseRoomName, RecordingState, type ParsedRoomName } from '@hcengineering/love'
+import love, {
+  MeetingMinutes,
+  queueEvents,
+  QueueMeetingMessage,
+  RecordingState,
+  type ParsedRoomName
+} from '@hcengineering/love'
 
 import { Person } from '@hcengineering/contact'
-import { StorageConfig } from '@hcengineering/server-core'
+import { PlatformQueueProducer, StorageConfig } from '@hcengineering/server-core'
 import {
   EgressClient,
   ParticipantInfo as LKParticipantInfo,
@@ -19,31 +25,13 @@ export class WebhookProcessor {
   constructor (
     readonly ctx: MeasureContext,
     readonly roomClient: RoomServiceClient,
+    readonly eventProducer: PlatformQueueProducer<QueueMeetingMessage>,
     readonly egressClient: EgressClient,
     readonly storageConfig: StorageConfig | undefined,
     readonly s3storageConfig: StorageConfig | undefined
   ) {}
 
-  getRoomName (event: WebhookEvent): string | undefined {
-    if (event.egressInfo != null && typeof event.egressInfo.roomName === 'string') return event.egressInfo.roomName
-    if (typeof (event as any).roomName === 'string') return (event as any).roomName
-    if (event.room != null && typeof event.room.name === 'string') return event.room.name
-    return undefined
-  }
-
-  async processEvent (event: WebhookEvent): Promise<void> {
-    const roomStr = this.getRoomName(event)
-    if (roomStr === undefined) {
-      console.warn('No roomName available in event', { event: event.event })
-      return
-    }
-
-    const roomName = parseRoomName(roomStr)
-    if (roomName === undefined) {
-      this.ctx.info('Skipping event: invalid room name format', { roomName: roomStr, event: event.event })
-
-      return
-    }
+  async processEvent (event: WebhookEvent, roomName: ParsedRoomName): Promise<void> {
     const { workspace, meetingId } = roomName
 
     // Handle egress_started - log only, PendingRecording is created in /startRecord
@@ -74,14 +62,14 @@ export class WebhookProcessor {
 
       // Room finished -> mark meeting finished and add activity
       if (event.event === 'room_finished') {
-        await this.roomFinished(event, meetingId, wsClient, workspace, roomStr)
+        await this.roomFinished(event, meetingId, wsClient, workspace, roomName)
         return
       }
 
       // Room started -> optionally add an activity entry
       if (event.event === 'room_started') {
         // When a room starts, mark the associated MeetingMinutes as Active.
-        await this.roomStarted(meetingId, wsClient, workspace, roomStr)
+        await this.roomStarted(meetingId, wsClient, workspace, roomName)
         return
       }
     } catch (err: any) {
@@ -177,11 +165,11 @@ export class WebhookProcessor {
 
     if (!isAgent) {
       if (event.event === 'participant_joined') {
-        await this.handleParticipantJoined(personRef, participant, meetingId, wsClient)
+        await this.handleParticipantJoined(personRef, participant, roomName, wsClient)
       } else {
         // participant_left -> remove any ParticipantInfo records for this person or by name as fallback
         // Skip only for truly unknown identities
-        await this.handleParticipantLeft(wsClient, personRef, participant, meetingId)
+        await this.handleParticipantLeft(wsClient, personRef, participant, roomName)
       }
     }
 
@@ -202,41 +190,48 @@ export class WebhookProcessor {
     wsClient: WorkspaceClient,
     personRef: Ref<Person>,
     participant: LKParticipantInfo,
-    meetingId: Ref<MeetingMinutes>
+    roomName: ParsedRoomName
   ): Promise<void> {
     if (!(personRef === undefined)) {
-      await wsClient.removeParticipantFromLiveKit(meetingId, personRef, participant.sid)
+      await wsClient.removeParticipantFromLiveKit(roomName.meetingId, personRef, participant.sid)
+      await this.eventProducer.send(this.ctx, roomName.workspace, [
+        queueEvents.personJoined(roomName.meetingId, personRef, participant.identity ?? '')
+      ])
     }
   }
 
   private async handleParticipantJoined (
     personRef: Ref<Person>,
     participant: LKParticipantInfo,
-    meetingId: Ref<MeetingMinutes>,
+    roomName: ParsedRoomName,
     wsClient: WorkspaceClient
   ): Promise<void> {
     this.ctx.info('[Webhook] participant_joined - will upsert?', {
       personRef,
       identity: participant.identity,
-      meetingId
+      meetingId: roomName.meetingId
     })
     await wsClient.upsertParticipantFromLiveKit(
       personRef,
       participant.name ?? participant.identity ?? 'Unknown',
       null,
-      meetingId,
+      roomName.meetingId,
       participant.sid
     )
+    await this.eventProducer.send(this.ctx, roomName.workspace, [
+      queueEvents.personJoined(roomName.meetingId, personRef, participant.identity ?? '')
+    ])
   }
 
   private async roomStarted (
     meetingId: Ref<MeetingMinutes>,
     wsClient: WorkspaceClient,
     workspace: WorkspaceUuid,
-    roomName: string | undefined
+    roomName: ParsedRoomName
   ): Promise<void> {
     if (meetingId !== undefined) {
       await wsClient.activateMeeting(meetingId)
+      await this.eventProducer.send(this.ctx, roomName.workspace, [queueEvents.started(roomName.meetingId)])
     } else {
       this.ctx.info('Skipping room_started: not a MeetingMinutes-identified room', { workspace, roomName })
     }
@@ -248,7 +243,7 @@ export class WebhookProcessor {
     meetingId: Ref<MeetingMinutes>,
     wsClient: WorkspaceClient,
     workspace: WorkspaceUuid,
-    roomName: string | undefined
+    roomName: ParsedRoomName
   ): Promise<void> {
     const meetingEnd =
       typeof event.createdAt === 'string' || typeof event.createdAt === 'number'
@@ -257,6 +252,8 @@ export class WebhookProcessor {
 
     if (meetingId !== undefined) {
       await wsClient.finishMeeting(meetingId, meetingEnd)
+
+      await this.eventProducer.send(this.ctx, roomName.workspace, [queueEvents.finished(roomName.meetingId)])
     } else {
       this.ctx.info('Skipping room_finished: not a MeetingMinutes-identified room', { workspace, roomName })
       // Do not operate on legacy room-id-only events.
@@ -280,13 +277,20 @@ export class WebhookProcessor {
           const wsClient = await WorkspaceClient.create(roomName.workspace, this.ctx)
           await wsClient.updatePendingRecordingSize(egressId, Number(fileResult.size))
           await wsClient.close()
+
+          await this.eventProducer.send(this.ctx, roomName.workspace, [
+            queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'updated', {
+              ended: event.egressInfo.endedAt,
+              fileName: fileResult.filename,
+              size: Number(fileResult.size)
+            })
+          ])
         } catch (err: any) {
           this.ctx.error('egress_updated: failed to update size', {
             error: err?.message ?? String(err),
             egressId
           })
         }
-        break
       }
     }
   }
@@ -298,11 +302,6 @@ export class WebhookProcessor {
     const egressId = event.egressInfo.egressId
 
     this.ctx.info('egress_ended received', { egressId, roomName })
-
-    if (roomName === undefined) {
-      this.ctx.warn('egress_ended: no roomName available', { egressId })
-      return
-    }
 
     try {
       const wsClient = await WorkspaceClient.create(roomName.workspace, this.ctx)
@@ -333,6 +332,7 @@ export class WebhookProcessor {
           )
           if (storedBlob !== undefined) {
             this.ctx.info('Stored file', { storedBlob })
+
             const preset = getRecordingPreset(config.RecordingPreset)
             // Use name from PendingRecording if available, otherwise generate from filename
             const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
@@ -340,6 +340,15 @@ export class WebhookProcessor {
               const name = pendingRecording.name ?? fileResult.filename.split('/').pop() ?? 'recording.mp4'
               await wsClient.saveFile(storedBlob._id, name, storedBlob, preset, roomName.meetingId)
               await wsClient.removePendingRecording(pendingRecording)
+
+              await this.eventProducer.send(this.ctx, roomName.workspace, [
+                queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'ended', {
+                  ended: event.egressInfo.endedAt,
+                  storedBlob,
+                  name,
+                  preset
+                })
+              ])
             }
           } else {
             this.ctx.error('Not Stored file', { storedBlob })
@@ -362,9 +371,17 @@ export class WebhookProcessor {
   }
 
   private async egressStarted (event: WebhookEvent, roomName: ParsedRoomName): Promise<void> {
+    if (event.egressInfo === undefined) {
+      return
+    }
     this.ctx.info('egress_started received', {
-      egressId: event.egressInfo?.egressId,
+      egressId: event.egressInfo.egressId,
       roomName
     })
+    await this.eventProducer.send(this.ctx, roomName.workspace, [
+      queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'started', {
+        started: event.egressInfo.startedAt
+      })
+    ])
   }
 }

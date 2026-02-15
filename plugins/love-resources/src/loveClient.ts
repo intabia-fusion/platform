@@ -97,7 +97,11 @@ export class LoveClient {
         Authorization: `Bearer ${platformToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ meetingId: meetingMinutes._id, _id: myPerson._id, participantName: myPerson.name })
+      body: JSON.stringify({
+        meetingId: meetingMinutes._id,
+        _id: myPerson._id,
+        participantName: myPerson.name
+      })
     })
     return await res.text()
   }

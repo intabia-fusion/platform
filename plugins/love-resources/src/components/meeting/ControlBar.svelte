@@ -76,7 +76,7 @@
         <ShareScreenButton />
         <RecordingButton />
         <TranscriptionButton />
-      <!-- {:else}
+        <!-- {:else}
         <RoomAccessButton {room} /> -->
       {/if}
     </svelte:fragment>

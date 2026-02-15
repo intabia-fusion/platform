@@ -29,14 +29,12 @@ import {
 } from '@hcengineering/ai-bot'
 import core, {
   AccountUuid,
-  Doc,
   MeasureContext,
   PersonId,
   Ref,
   SocialId,
   SortingOrder,
   toIdMap,
-  TxCUD,
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
@@ -460,15 +458,6 @@ export class AIControl {
       text: summaryMarkup,
       lang: req.lang
     }
-  }
-
-  async processTxes (workspace: WorkspaceUuid, txes: TxCUD<Doc>[], control?: ConsumerControl): Promise<void> {
-    // TODO: Move creation of ai-events here, instead of trigger.
-    const wsClient = await this.getWorkspaceClient(workspace)
-    if (wsClient === undefined) {
-      return
-    }
-    wsClient.love?.txHandler?.(txes)
   }
 
   async processEvent (workspace: WorkspaceUuid, events: AIEventRequest[], control?: ConsumerControl): Promise<void> {
