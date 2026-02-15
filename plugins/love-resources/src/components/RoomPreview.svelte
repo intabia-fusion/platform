@@ -33,7 +33,7 @@
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
   import { AccountUuid, Ref } from '@hcengineering/core'
-  import RoomLanguage from './RoomLanguage.svelte'
+  // import RoomLanguage from './RoomLanguage.svelte'
   import PersonActionPopup from './PersonActionPopup.svelte'
 
   export let room: Room
@@ -330,9 +330,9 @@
       <span class="overflow-label text-md flex-grow">
         <Label label={roomLabel} />
       </span>
-      {#if !isOffice(room)}
+      <!-- {#if !isOffice(room)}
         <RoomLanguage {room} />
-      {/if}
+      {/if} -->
       {#if room.access === RoomAccess.DND || room.type === RoomType.Video}
         <div class="flex-row-center flex-no-shrink h-full flex-gap-2">
           {#if room.access === RoomAccess.DND}

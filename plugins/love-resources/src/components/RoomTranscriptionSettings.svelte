@@ -32,12 +32,12 @@
 </script>
 
 <div class="antiGrid">
-  <div class="antiGrid-row">
+  <!-- <div class="antiGrid-row">
     <div class="antiGrid-row__header">
       <Label label={ui.string.Language} />
     </div>
     <RoomLanguageSelector {room} />
-  </div>
+  </div> -->
   <div class="antiGrid-row">
     <div class="antiGrid-row__header">
       <Label label={love.string.StartWithTranscription} />

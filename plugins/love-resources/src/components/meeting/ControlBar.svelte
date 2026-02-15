@@ -55,7 +55,7 @@
   <ControlBarContainer>
     <svelte:fragment slot="left">
       {#if room._id !== love.ids.Reception && $lkSessionConnected}
-        <RoomAccessButton {room} />
+        <!-- <RoomAccessButton {room} /> -->
         <InviteEmployeeButton
           kind={'secondary'}
           type={'type-button-icon'}
@@ -76,8 +76,8 @@
         <ShareScreenButton />
         <RecordingButton />
         <TranscriptionButton />
-      {:else}
-        <RoomAccessButton {room} />
+      <!-- {:else}
+        <RoomAccessButton {room} /> -->
       {/if}
     </svelte:fragment>
     <svelte:fragment slot="right">
