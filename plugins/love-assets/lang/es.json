@@ -120,6 +120,7 @@
     "PreparingGuestConnection": "Preparando la conexión del invitado...",
     "Error": "Error",
     "ShowParticipants": "Mostrar participantes",
-    "HideParticipants": "Ocultar participantes"
+    "HideParticipants": "Ocultar participantes",
+    "Scheduled": "Programado"
   }
 }

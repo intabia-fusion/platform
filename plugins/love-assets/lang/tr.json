@@ -120,6 +120,7 @@
     "PreparingGuestConnection": "Misafir bağlantısı hazırlanıyor...",
     "Error": "Hata",
     "ShowParticipants": "Katılımcıları göster",
-    "HideParticipants": "Katılımcıları gizle"
+    "HideParticipants": "Katılımcıları gizle",
+    "Scheduled": "Planlanmış"
   }
 }

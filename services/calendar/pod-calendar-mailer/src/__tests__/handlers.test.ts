@@ -57,7 +57,7 @@ jest.mock('../utils', () => {
     ...actual,
     ...actual.default,
     isMeeting: jest.fn((ws: WorkspaceUuid, event: Event): Promise<boolean> => {
-      return Promise.resolve((event as any as MeetingEventLink).room !== undefined)
+      return Promise.resolve((event as any as MeetingEventLink).meetingId !== undefined)
     })
   }
 })

@@ -118,6 +118,7 @@
     "PreparingGuestConnection": "Gastverbindung wird vorbereitet...",
     "Error": "Fehler",
     "ShowParticipants": "Teilnehmer anzeigen",
-    "HideParticipants": "Teilnehmer ausblenden"
+    "HideParticipants": "Teilnehmer ausblenden",
+    "Scheduled": "Geplant"
   }
 }

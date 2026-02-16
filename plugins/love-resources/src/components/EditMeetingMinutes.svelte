@@ -13,12 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
-  import { MeetingMinutes } from '@hcengineering/love'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { EditBox, ModernButton } from '@hcengineering/ui'
+  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
+  import { joinMeeting } from '../meetings'
+  import { currentMeetingMinutes, myConnectingSessionId } from '../stores'
+  import { lkSessionConnected } from '../liveKitClient'
+  import { getMetadata } from '@hcengineering/platform'
 
   export let object: MeetingMinutes
   export let readonly: boolean = false
@@ -41,10 +45,34 @@
   onMount(() => {
     dispatch('open', { ignoreKeys: ['title'] })
   })
+
+  // Check if pending join is for THIS session (same browser tab)
+  $: currentSessionId = getMetadata(presentation.metadata.SessionId)
+  $: hasPendingJoinInThisSession = $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId
+
+  async function connect (): Promise<void> {
+    await joinMeeting(object)
+  }
+
+  $: connecting = hasPendingJoinInThisSession || ($currentMeetingMinutes?._id === object._id && !$lkSessionConnected)
+
+  $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
+
+  function showConnectionButton (object: MeetingMinutes, connecting: boolean, isConnected: boolean): boolean {
+    if (object.status === MeetingStatus.Finished) {
+      return false
+    }
+    // Show during connecting with spinner
+    if (connecting) return true
+    // Do not show connect button if we are already connected to the room
+    if (isConnected && $currentMeetingMinutes?._id === object._id) return false
+
+    return true
+  }
 </script>
 
 <div class="flex-row-stretch">
-  <div class="flex-col flex-grow">
+  <div class="row flex-grow">
     <div class="title">
       <EditBox
         disabled={readonly}
@@ -54,6 +82,9 @@
         focusIndex={1}
       />
     </div>
+    {#if showConnectionButton(object, connecting, $lkSessionConnected)}
+      <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+    {/if}
   </div>
 </div>
 
@@ -62,5 +93,11 @@
     font-weight: 500;
     font-size: 1.25rem;
     color: var(--theme-caption-color);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    justify-content: space-between;
   }
 </style>

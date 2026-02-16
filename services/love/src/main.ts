@@ -18,16 +18,8 @@ import {
   type AccountClient
 } from '@hcengineering/account-client'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
-  MeasureContext,
-  newMetrics,
-  readOnlyGuestAccountUuid,
-  Ref,
-  systemAccountUuid,
-  WorkspaceUuid
-} from '@hcengineering/core'
-import {
-  MeetingMinutes,
   parseRoomName,
   queueEvents,
   QueueMeetingEvent,
@@ -39,16 +31,13 @@ import {
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
 
-import { combineName } from '@hcengineering/contact'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@hcengineering/server-core'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
-import serverToken, { decodeToken, generateToken, Token } from '@hcengineering/server-token'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import cors from 'cors'
-import express, { Response, type Request } from 'express'
-import { IncomingHttpHeaders } from 'http'
+import express, { type Request } from 'express'
 import {
-  AccessToken,
   EgressClient,
   RoomAgentDispatch,
   RoomServiceClient,
@@ -62,15 +51,8 @@ import { LiveKitPollingService } from './polling'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
-
-const extractToken = (header: IncomingHttpHeaders): any => {
-  try {
-    return header.authorization?.slice(7) ?? ''
-  } catch {
-    return undefined
-  }
-}
-
+import { GuestManager } from './guests'
+import { createToken, decodeMeetingToken, extractToken, getRoomName, parseMetadata } from './utils'
 /**
  * Recursively converts all BigInt values in an object to strings.
  * This is needed because JSON.stringify cannot handle BigInt values.
@@ -163,6 +145,8 @@ export const main = async (): Promise<void> => {
     storageConfig,
     s3storageConfig
   )
+
+  const guestManager = new GuestManager(ctx, roomClient)
 
   const receivers = [new WebhookReceiver(config.ApiKey, config.ApiSecret)]
 
@@ -265,28 +249,6 @@ export const main = async (): Promise<void> => {
     }
   })
 
-  function getRoomName (workspaceId: WorkspaceUuid, meetingId: Ref<MeetingMinutes>): string {
-    return `${workspaceId}_${meetingId}`
-  }
-
-  function decodeMeetingToken (
-    req: Request<any>,
-    res: Response<any>
-  ): { workspaceId?: WorkspaceUuid, meetingId?: Ref<MeetingMinutes> } {
-    const meetingId: Ref<MeetingMinutes> = req.body.meetingId
-    if (typeof meetingId !== 'string') {
-      res.status(400).send()
-      return {}
-    }
-
-    const workspaceId = getWorkspaceId(req)
-    if (workspaceId === undefined) {
-      res.status(401).send()
-      return {}
-    }
-    return { meetingId, workspaceId }
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/getToken', async (req, res) => {
     const { meetingId, workspaceId } = decodeMeetingToken(req, res)
@@ -323,183 +285,17 @@ export const main = async (): Promise<void> => {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/guestToken', async (req, res) => {
-    const { meetingId, workspaceId } = decodeMeetingToken(req, res)
-    if (meetingId == null || workspaceId == null) {
-      return
-    }
-
-    try {
-      // We also need workspace info to generate guest token with proper workspace claims, so validate token and workspace access first
-      const token = extractToken(req.headers)
-      const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
-      if (!isWorkspaceLoginInfo(wsLoginInfo)) {
-        res.status(401).send()
-        return
-      }
-      const wsClient = await WorkspaceClient.create(workspaceId, ctx)
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-
-        const workspaceUrl = wsLoginInfo.workspaceUrl ?? ''
-        const guestToken = generateToken(
-          readOnlyGuestAccountUuid,
-          wsLoginInfo.workspace,
-          { meetingId, workspaceUrl },
-          config.ApiSecret
-        )
-
-        res.status(200).send({ token: guestToken })
-      } finally {
-        await wsClient.close()
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send()
-    }
+    await guestManager.handleGuestToken(req, res)
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/guestInfo', async (req, res) => {
-    const guestToken = req.body.token
-
-    if (typeof guestToken !== 'string') {
-      res.status(400).send()
-      return
-    }
-
-    try {
-      let decoded: Token
-      try {
-        decoded = decodeToken(guestToken, true, config.ApiSecret)
-      } catch (err) {
-        res.status(401).send({ error: 'Invalid or expired token' })
-        return
-      }
-
-      const meetingId: Ref<MeetingMinutes> = decoded.extra?.meetingId
-      const workspace = decoded.workspace
-      const workspaceUrl = decoded.extra?.workspaceUrl ?? null
-
-      if (typeof meetingId !== 'string' || typeof workspace !== 'string') {
-        res.status(400).send({ error: 'Invalid token payload' })
-        return
-      }
-
-      // Resolve meeting & room presence via workspace client and livekit room list
-      const wsClient = await WorkspaceClient.create(workspace, ctx)
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-        const meetingStatus = meetingDoc.status
-        const roomName = getRoomName(workspace, meetingId)
-        const rooms = await roomClient.listRooms([roomName])
-        const roomFound = !(rooms === undefined || rooms.length === 0)
-
-        res.status(200).send({
-          meetingId,
-          workspace,
-          workspaceUrl,
-          title: meetingDoc.title,
-          meetingStatus,
-          roomFound
-        })
-      } finally {
-        await wsClient.close()
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send()
-    }
+    await guestManager.handleGuestInfo(req, res)
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/guestJoin', async (req, res) => {
-    const guestToken = req.body.token
-    const firstName = req.body.firstName
-    const lastName = req.body.lastName
-
-    if (typeof guestToken !== 'string') {
-      res.status(400).send()
-      return
-    }
-
-    try {
-      // Validate guest token and extract meeting + workspace
-      let decoded: Token
-      try {
-        decoded = decodeToken(guestToken, true, config.ApiSecret)
-      } catch (err) {
-        res.status(401).send({ error: 'Invalid or expired token' })
-        return
-      }
-
-      const meetingId: Ref<MeetingMinutes> = decoded.extra?.meetingId
-      const workspace = decoded.workspace
-
-      if (typeof meetingId !== 'string' || typeof workspace !== 'string') {
-        res.status(400).send({ error: 'Invalid token payload' })
-        return
-      }
-      // Resolve or create a Person for this guest (so webhook and ui can reliably reference a Person)
-      const wsClient = await WorkspaceClient.create(workspace, ctx)
-
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-
-        const roomName = getRoomName(workspace, meetingId)
-
-        // Ensure LiveKit room exists
-        const room = await roomClient.listRooms([roomName])
-        if (room === undefined || room.length === 0) {
-          ctx.info('No room found guest join, not possible to join', { roomName })
-          res.status(404).send({
-            error: 'Meeting room not found.'
-          })
-          return
-        }
-        // Try finding an existing person by name to avoid duplicates
-        let personRef = await wsClient.findPersonByName(firstName, lastName)
-
-        // Create a guest person if not found
-        if (personRef === undefined) {
-          personRef = await wsClient.createGuestPerson(firstName, lastName)
-        }
-
-        if (personRef === undefined) {
-          // Repeated failures while creating a Person - do not fallback to ephemeral identity.
-          ctx.error('[guestJoin] Failed to create Person for guest join after retries', { firstName, lastName })
-          res.status(500).send({ error: 'Failed to create guest identity' })
-          return
-        }
-
-        // Use the person's document id as LiveKit identity so webhooks can resolve the person
-        ctx.info('[guestJoin] Using identity', { identity: personRef })
-        const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName))
-
-        res.status(200).send({
-          token: roomToken,
-          wsUrl: config.LiveKitHost,
-          roomName,
-          person: personRef
-        })
-      } finally {
-        await wsClient.close()
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send()
-    }
+    await guestManager.handleGuestJoin(req, res)
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -680,21 +476,6 @@ export const main = async (): Promise<void> => {
   }
 }
 
-const createToken = async (roomName: string, _id: string, participantName: string): Promise<string> => {
-  const at = new AccessToken(config.ApiKey, config.ApiSecret, {
-    identity: _id,
-    name: participantName,
-    // token to expire after 10 minutes
-    ttl: '10m'
-  })
-  at.addGrant({
-    roomJoin: true,
-    room: roomName
-  })
-
-  return await at.toJwt()
-}
-
 const checkRecordAvailable = async (
   ctx: MeasureContext,
   storageConfig: StorageConfig | undefined,
@@ -707,35 +488,6 @@ const checkRecordAvailable = async (
     s3storageConfig: s3storageConfig?.kind
   })
   return false
-}
-
-function getWorkspaceId (req: Request): WorkspaceUuid | undefined {
-  const token = extractToken(req.headers)
-  if (token === undefined) {
-    return undefined
-  }
-
-  let decodedToken: Token | undefined
-  try {
-    decodedToken = decodeToken(token)
-  } catch (e) {
-    return undefined
-  }
-
-  if (decodedToken === undefined || decodedToken.extra?.readonly === 'true' || decodedToken.extra?.guest === 'true') {
-    return undefined
-  }
-  return decodedToken.workspace
-}
-
-function parseMetadata (metadata?: string | null): RoomMetadata {
-  if (metadata === '' || metadata == null) return {}
-
-  try {
-    return JSON.parse(metadata) as RoomMetadata
-  } catch (e) {
-    return {}
-  }
 }
 
 async function updateMetadata (

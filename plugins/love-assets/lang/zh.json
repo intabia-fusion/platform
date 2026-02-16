@@ -120,6 +120,7 @@
     "PreparingGuestConnection": "正在准备访客连接...",
     "Error": "错误",
     "ShowParticipants": "显示参与者",
-    "HideParticipants": "隐藏参与者"
+    "HideParticipants": "隐藏参与者",
+    "Scheduled": "已安排"
   }
 }

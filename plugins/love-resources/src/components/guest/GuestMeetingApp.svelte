@@ -22,10 +22,10 @@
   import GuestJoinPopup from './GuestJoinPopup.svelte'
   import ScreenSharingView from '../meeting/ScreenSharingView.svelte'
   import GuestParticipantsListView from './GuestParticipantsListView.svelte'
-  import { getLiveKitClient, lkSessionConnected } from '../../liveKitClient'
+  import { lkSessionConnected } from '../../liveKitClient'
   import { isFullScreen, liveKitClient } from '../../utils'
   import { onDestroy, onMount } from 'svelte'
-  import ui, { location, navigate, Location, Button, Scroller } from '@hcengineering/ui'
+  import ui, { location, navigate, Location, Button, ticker } from '@hcengineering/ui'
   import { getMetadata, getResource, IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
 
@@ -38,15 +38,8 @@
   import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
   import loginResources from '@hcengineering/login-resources/src/plugin'
 
-  import {
-    LocalAudioTrack,
-    type LocalTrack,
-    type LocalTrackPublication,
-    LocalVideoTrack,
-    type Room as LKRoom,
-    RoomEvent,
-    Track
-  } from 'livekit-client'
+  import { type Room as LKRoom } from 'livekit-client'
+  import { getLink, openDoc } from '@hcengineering/view-resources'
 
   // Route params
   let meetingId: string | undefined = undefined
@@ -94,6 +87,9 @@
   }
 
   function handleLocation (loc: Location): void {
+    if (loc.path[0] !== 'meetings') {
+      return
+    }
     const q = loc.query ?? {}
     meetingId = q.meetingId ?? undefined
     guestToken = q.guestToken ?? undefined
@@ -104,11 +100,11 @@
     } else {
       errorMessage = null
       // Fire-and-forget: fetch guest info and attempt to resolve workspace
-      void fetchGuestInfo()
+      void fetchGuestInfo(0)
     }
   }
 
-  async function fetchGuestInfo (): Promise<void> {
+  async function fetchGuestInfo (_time: number): Promise<void> {
     if (meetingId == null || guestToken == null) return
 
     resolving = true
@@ -144,7 +140,8 @@
           const [, loginInfo, ok] = selectResult ?? [undefined, null, false]
           // If selection completed successfully and returned login token — perform login/navigation
           if (ok && loginInfo?.token != null) {
-            navigate({ path: [workbenchId, wsUrl, 'meetings'], query: { meetingId } }, true)
+            const fragment = `view:component:EditDoc|${meetingId}|love:class:MeetingMinutes|content`
+            navigate({ path: [workbenchId, wsUrl, 'love'], fragment }, true)
           }
         } catch (err: any) {
           // Swallow error — we'll remain in Public Guest flow
@@ -158,6 +155,8 @@
       resolving = false
     }
   }
+
+  $: void fetchGuestInfo($ticker)
 
   onMount(() => {
     roomEl && roomEl.addEventListener('fullscreenchange', handleFullScreen)
@@ -243,7 +242,16 @@
 
 <LoginAppBase wide={$lkSessionConnected ?? false}>
   <svelte:fragment slot="form-content">
-    {#if errorMessage}
+    {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
+      <div class="center">
+        <div class="message flex justify-center">
+          <Label label={love.string.Meeting} />
+          <div class="ml-2">
+            <Label label={love.string.Finished} />
+          </div>
+        </div>
+      </div>
+    {:else if errorMessage}
       <div class="center" role="alert">
         <div class="message">{errorMessage}</div>
         <div class="actions">
@@ -255,7 +263,7 @@
 
       {#if resolving}
         <div class="center">
-          <div class="message">{love.string.CheckingLink}</div>
+          <div class="message flex justify-center">{love.string.CheckingLink}</div>
         </div>
       {:else if $lkSessionConnected}
         <div bind:this={roomEl} class="flex-col-center w-full h-full">

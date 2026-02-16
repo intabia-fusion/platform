@@ -5,7 +5,6 @@ import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
 import contact, { getName } from '@hcengineering/contact'
 import core, {
-  AccountRole,
   type Client,
   concatLink,
   type Data,
@@ -18,11 +17,14 @@ import core, {
   type TxOperations,
   type WithLookup
 } from '@hcengineering/core'
-import login from '@hcengineering/login'
 import {
   isOffice,
   LoveEvents,
   loveId,
+  MeetingStatus,
+  RecordingState,
+  RoomAccess,
+  TranscriptionState,
   type MeetingEventLink,
   type MeetingMinutes,
   type MeetingSchedule,
@@ -30,7 +32,7 @@ import {
   type RoomMetadata,
   type UserMeetingInvite
 } from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, getResource, translate, type IntlString } from '@hcengineering/platform'
+import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@hcengineering/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
@@ -290,6 +292,32 @@ export async function createMeeting (
     const event = await client.findOne(calendar.class.Event, { _id })
     if (event === undefined) return
     const events = await client.findAll(calendar.class.Event, { eventId: event.eventId })
+
+    const meetingId = await client.addCollection(
+      love.class.MeetingMinutes,
+      space._id,
+      store.room,
+      love.class.Room,
+      'meetings',
+      {
+        status: MeetingStatus.Scheduled,
+        access: RoomAccess.Open,
+        language: 'en',
+        description: null,
+        recordingState: RecordingState.NotStarted,
+        transcriptionState: TranscriptionState.NotStarted,
+        title: event.title,
+        startWithRecording: false,
+        startWithTranscription: false,
+        meetingScheduledDate: event.date
+      }
+    )
+
+    const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+    if (meetingDoc === undefined) {
+      throw new Error('Failed to create meeting minutes')
+    }
+
     for (const event of events) {
       await client.createMixin<Event, MeetingEventLink>(
         event._id,
@@ -297,7 +325,8 @@ export async function createMeeting (
         space._id,
         love.mixin.MeetingEventLink,
         {
-          room: store.room as Ref<Room>
+          room: store.room as Ref<Room>,
+          meetingId
         }
       )
     }
@@ -306,8 +335,7 @@ export async function createMeeting (
     navigateUrl.query = {
       meetId: _id
     }
-    const func = await getResource(login.function.GetInviteLink)
-    const link = await func(-1, '', -1, AccountRole.Guest, encodeURIComponent(JSON.stringify(navigateUrl)))
+    const link = await getMeetingGuestLink(meetingDoc)
     await client.update(event, { location: link })
   }
 }
@@ -374,7 +402,7 @@ export async function showRoomSettings (room?: Room): Promise<void> {
   showPopup(RoomSettingsPopup, { room }, 'top')
 }
 
-export async function copyGuestLink (mm?: MeetingMinutes): Promise<void> {
+export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
   if (mm === undefined) return
 
   const link = await getMeetingGuestLink(mm)

@@ -120,6 +120,7 @@
     "PreparingGuestConnection": "Preparing guest connection...",
     "Error": "Error",
     "ShowParticipants": "Show participants",
-    "HideParticipants": "Hide participants"
+    "HideParticipants": "Hide participants",
+    "Scheduled": "Scheduled"
   }
 }

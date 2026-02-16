@@ -36,6 +36,7 @@
 
   interface ActiveRoom extends Room {
     participants: ParticipantInfo[]
+    meeting: MeetingMinutes
   }
 
   function getActiveMeetings (rooms: Room[], infos: ParticipantInfo[], meetings: MeetingMinutes[]): ActiveRoom[] {
@@ -49,12 +50,15 @@
       // - If participant is meeting-bound, use the meeting's attached room
       // - Otherwise, use the legacy `room` field
       let attachedRoom = info.room
+      let meeting: MeetingMinutes | undefined
       if (info.meeting !== undefined) {
-        const meeting = meetings.find((m) => m._id === info.meeting)
+        meeting = meetings.find((m) => m._id === info.meeting)
         if (meeting === undefined) continue
         attachedRoom = meeting.attachedTo as Ref<Room> | undefined
         if (attachedRoom === undefined || attachedRoom === love.ids.Reception) continue
       }
+
+      if (meeting === undefined) continue
 
       if (attachedRoom === undefined) continue
 
@@ -63,7 +67,7 @@
       // temporary disabled check for floor
       // if (roomObj.floor !== selectedFloor?._id) continue
       const _id = roomObj._id as Ref<ActiveRoom>
-      const active = map.get(_id) ?? { ...roomObj, _id, participants: [] }
+      const active = map.get(_id) ?? { ...roomObj, _id, participants: [], meeting }
       active.participants.push(info)
       map.set(_id, active)
     }
@@ -75,10 +79,10 @@
 
   $: activeMeetings = getActiveMeetings($rooms, $infos, $meetings)
 
-  function openRoom (room: Room): (e: MouseEvent) => void {
+  function openRoom (room: ActiveRoom): (e: MouseEvent) => void {
     return (e: MouseEvent) => {
       closeTooltip()
-      showPopup(RoomPopup, { room }, eventToHTMLElement(e))
+      showPopup(RoomPopup, { room, meeting: room.meeting }, eventToHTMLElement(e))
     }
   }
 

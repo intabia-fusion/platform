@@ -30,7 +30,7 @@ import { sendInvites, unsubscribeFromIncomingInvites } from './invites'
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
 
-export async function createMeeting (room: Room): Promise<MeetingMinutes | undefined> {
+export async function createMeeting (room: Room, meeting?: MeetingMinutes): Promise<MeetingMinutes | undefined> {
   if (room.access === RoomAccess.DND) {
     return
   }
@@ -45,10 +45,12 @@ export async function createMeeting (room: Room): Promise<MeetingMinutes | undef
   }
 
   // TODO: We need server atomic operation to create a meeting minutes with pending, or create one
-  let meeting = await client.findOne(love.class.MeetingMinutes, {
-    attachedTo: room._id,
-    status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
-  })
+  meeting =
+    meeting ??
+    (await client.findOne(love.class.MeetingMinutes, {
+      attachedTo: room._id,
+      status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+    }))
 
   if (meeting !== undefined) {
     await joinMeeting(meeting)
@@ -98,7 +100,6 @@ export async function leaveMeeting (): Promise<void> {
     }
   }
   await liveKitClient.disconnect()
-  closeMeetingMinutes()
   currentMeeting = undefined
   currentMeetingRoom = undefined
 }
@@ -178,8 +179,10 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
 
   currentMeeting = mm._id
 
-  room = room ?? (await getClient().findOne<Room>(mm.attachedToClass, { _id: mm.attachedTo as Ref<Room> }))
-  currentMeetingRoom = room?._id
+  if (mm.attachedToClass === love.class.Room) {
+    room = room ?? (await getClient().findOne<Room>(mm.attachedToClass, { _id: mm.attachedTo as Ref<Room> }))
+    currentMeetingRoom = room?._id
+  }
 
   await navigateToOfficeDoc(mm) // TODO: Select room?
   await moveToMeetingRoom(mm, room)

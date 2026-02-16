@@ -214,6 +214,7 @@ export class TRoomInfo extends TDoc implements RoomInfo {
 @Mixin(love.mixin.MeetingEventLink, calendar.class.Event)
 export class TMeeting extends TEvent implements MeetingEventLink {
   room!: Ref<Room>
+  meetingId!: Ref<MeetingMinutes>
 }
 
 @Model(love.class.MeetingMinutes, core.class.Doc, DOMAIN_MEETING_MINUTES)
@@ -300,6 +301,7 @@ export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Tod
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
 export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
   room!: Ref<Room>
+  meetingId!: Ref<MeetingMinutes>
 }
 
 export const DOMAIN_USER_MEETING_INVITE = 'user-meeting-invite' as Domain

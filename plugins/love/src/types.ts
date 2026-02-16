@@ -140,6 +140,7 @@ export interface RoomInfo extends Doc {
 
 export interface MeetingEventLink extends Event {
   room: Ref<Room>
+  meetingId: Ref<MeetingMinutes> // A reference to scheduled meeting minutes
 }
 
 export interface MeetingSchedule extends Schedule {
@@ -156,7 +157,8 @@ export interface DevicesPreference extends Preference {
 export enum MeetingStatus {
   Active = 0,
   Finished = 1,
-  Pending = 2
+  Pending = 2,
+  Scheduled = 7 // In case meeting is scheduled, it could be started by any ws participant, only once at -15mins - due interval
 }
 
 export const transcriptionStateLabel = {
@@ -180,6 +182,8 @@ export interface MeetingMinutes extends AttachedDoc {
   transcriptionState: TranscriptionState
   recordingState: RecordingState
   meetingEnd?: Timestamp
+
+  meetingScheduledDate?: Timestamp
 
   transcription?: number
   messages?: number

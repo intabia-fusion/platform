@@ -16,11 +16,12 @@
   import { EditBox, ModernButton } from '@hcengineering/ui'
   import { Room, isOffice, type ParticipantInfo } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import { getMetadata, IntlString } from '@hcengineering/platform'
+  import presentation from '@hcengineering/presentation'
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
-  import { infos, myOffice, currentRoom, meetings } from '../stores'
+  import { infos, myOffice, currentRoom, meetings, isLocalConnecting, myConnectingSessionId } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
@@ -40,8 +41,6 @@
     dispatch('open', { ignoreKeys: ['name'] })
   })
 
-  const tryConnecting = false
-
   async function connect (): Promise<void> {
     const mm = get(meetings).find((it) => it.attachedTo === object._id)
     if (mm !== undefined) {
@@ -51,17 +50,28 @@
     }
   }
 
-  $: connecting = tryConnecting || ($currentRoom?._id === object._id && !$lkSessionConnected)
+  let connectLabel: IntlString | undefined
 
-  let connectLabel: IntlString = $infos.some(({ room }) => room === object._id)
-    ? love.string.JoinMeeting
-    : love.string.StartMeeting
+  async function updateConnecting (object: Room, infos: ParticipantInfo[], isLocalConnecting: boolean): Promise<void> {
+    connecting = isLocalConnecting || ($currentRoom?._id === object._id && !$lkSessionConnected)
 
-  $: if ($infos.some(({ room }) => room === object._id) && !connecting) {
-    connectLabel = love.string.JoinMeeting
-  } else if (!connecting) {
-    connectLabel = love.string.StartMeeting
+    let _connectLabel: IntlString = infos.some(({ room }) => room === object._id)
+      ? love.string.JoinMeeting
+      : love.string.StartMeeting
+
+    if (infos.some(({ room }) => room === object._id) && !connecting) {
+      _connectLabel = love.string.JoinMeeting
+    } else if (!connecting) {
+      _connectLabel = love.string.StartMeeting
+    }
+    connectLabel = _connectLabel
   }
+
+  // Check if pending join is for THIS session (same browser tab)
+  $: currentSessionId = getMetadata(presentation.metadata.SessionId)
+  $: hasPendingJoinInThisSession = $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId
+
+  $: void updateConnecting(object, $infos, hasPendingJoinInThisSession)
 
   function showConnectionButton (
     object: Room,
@@ -97,7 +107,7 @@
     <div class="name">
       <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
     </div>
-    {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom)}
+    {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
       <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
     {/if}
   </div>

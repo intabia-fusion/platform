@@ -122,6 +122,7 @@
     "PreparingGuestConnection": "Подготовка гостевого подключения...",
     "Error": "Ошибка",
     "ShowParticipants": "Показать участников",
-    "HideParticipants": "Скрыть участников"
+    "HideParticipants": "Скрыть участников",
+    "Scheduled": "Запланировано"
   }
 }

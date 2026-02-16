@@ -124,6 +124,7 @@ export default mergeIds(loveId, love, {
     StayInRoom: '' as IntlString,
     From: '' as IntlString,
     To: '' as IntlString,
-    ExpiresAt: '' as IntlString
+    ExpiresAt: '' as IntlString,
+    Scheduled: '' as IntlString
   }
 })

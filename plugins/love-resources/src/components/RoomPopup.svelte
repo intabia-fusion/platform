@@ -35,6 +35,7 @@
   import { createMeeting } from '../meetings'
 
   export let room: Room
+  export let meeting: MeetingMinutes
 
   const client = getClient()
   async function getPerson (info: ParticipantInfo | undefined): Promise<Person | null> {
@@ -55,20 +56,16 @@
   const dispatch = createEventDispatcher()
 
   async function connect (): Promise<void> {
-    await createMeeting(room)
+    await createMeeting(room, meeting)
     dispatch('close')
   }
 
-  async function back (): Promise<void> {
-    const meetingMinutes = $currentMeetingMinutes
-    if (meetingMinutes !== undefined) {
+  async function backOrOpen (): Promise<void> {
+    if (meeting !== undefined) {
       const hierarchy = client.getHierarchy()
-      const panelComponent = hierarchy.classHierarchyMixin(
-        meetingMinutes._class as Ref<Class<Doc>>,
-        view.mixin.ObjectPanel
-      )
+      const panelComponent = hierarchy.classHierarchyMixin(meeting._class as Ref<Class<Doc>>, view.mixin.ObjectPanel)
       const comp = panelComponent?.component ?? view.component.EditDoc
-      const loc = await getObjectLinkFragment(hierarchy, meetingMinutes, {}, comp)
+      const loc = await getObjectLinkFragment(hierarchy, meeting, {}, comp)
       loc.path[2] = loveId
       loc.path.length = 3
       navigate(loc)
@@ -117,20 +114,29 @@
         label={love.string.MeetingMinutes}
         kind={'primary'}
         size={'medium'}
-        on:click={back}
+        on:click={backOrOpen}
       />
     {/if}
     {#if joined}
       <LeaveRoomButton {room} noLabel={false} size="medium" on:leave={() => dispatch('close')} />
     {:else}
-      <ModernButton
-        icon={love.icon.EnterRoom}
-        label={love.string.EnterRoom}
-        size={'medium'}
-        kind={'primary'}
-        autoFocus
-        on:click={connect}
-      />
+      <div class="flex flex-row-center gap-2">
+        <ModernButton
+          icon={love.icon.MeetingMinutes}
+          label={love.string.MeetingMinutes}
+          kind={'secondary'}
+          size={'medium'}
+          on:click={backOrOpen}
+        />
+        <ModernButton
+          icon={love.icon.EnterRoom}
+          label={love.string.EnterRoom}
+          size={'medium'}
+          kind={'primary'}
+          autoFocus
+          on:click={connect}
+        />
+      </div>
     {/if}
   </div>
 </div>
