@@ -56,6 +56,7 @@ import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { Client, NotificationSettings, NotifyResult } from './types'
 import config from './config'
 
+export const MAX_NOTIFICATION_TYPE_PRIORITY = Number.MAX_SAFE_INTEGER
 const externalRegions = process.env.EXTERNAL_REGIONS?.split(';') ?? []
 
 export async function getWorkspaceInfo (token: string): Promise<WorkspaceLoginInfo> {
@@ -120,7 +121,9 @@ function getMatchedMessageTypes (client: Client, message: ActivityMessage, doc: 
     }
   }
 
-  return filtered
+  return filtered.sort(
+    (a, b) => (a.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY) - (b.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY)
+  )
 }
 
 function isMessageTypeMatched (
@@ -311,14 +314,14 @@ async function getNotifyResult (
 
     if (hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
       const mixin = hierarchy.as(type, serverNotification.mixin.TypeMatch)
-      console.log({ mixin, type })
+
       if (mixin.match !== undefined) {
         const f = await getResource(mixin.match)
         let res = f(getTypeMatchClient(client), type, obj, doc, receiver)
         if (res instanceof Promise) {
           res = await res
         }
-        console.log({ typeMatchRes: res, type: type._id })
+
         if (!res) continue
       }
     }
@@ -436,6 +439,7 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
 
 export function getMessageNotificationContent (
   hierarchy: Hierarchy,
+  type: NotificationType,
   doc: Doc,
   message: ActivityMessage,
   sender: Sender
@@ -455,7 +459,9 @@ export function getMessageNotificationContent (
 
   intlParams.senderName = getSenderName(sender, config.LastNameFirst)
 
-  if (message.message != null && !isEmptyMarkup(message.message)) {
+  if (type.notificationMessage != null) {
+    intlParamsNotLocalized.message = type.notificationMessage
+  } else if (message.message != null && !isEmptyMarkup(message.message)) {
     intlParams.message = normalizeTextMessage(markupToText(message.message))
   } else if (
     hierarchy.isDerived(chunter.class.ChatMessage, message._class) &&

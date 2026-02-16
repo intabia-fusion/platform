@@ -150,11 +150,13 @@ function defineNotifications (builder: Builder): void {
       messageClass: activity.class.DocUpdateMessage,
       objectClass: tracker.class.Issue,
       attachedToClass: tracker.class.Issue,
+      notificationMessage: tracker.string.IssueAssignedToYou,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
+      priority: 200,
       defaultEnabled: true
     },
     tracker.ids.AssigneeNotification

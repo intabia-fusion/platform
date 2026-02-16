@@ -16,8 +16,9 @@ import core, { Doc, includesAny, Ref, Space } from '@hcengineering/core'
 import { MessageNotificationType, NotificationType } from '@hcengineering/notification'
 import { TriggerControl } from '@hcengineering/server-core'
 import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
+import { DocUpdateMessage } from '@hcengineering/activity'
 
-export const isUserFieldValueTypeMatch: TypeMatchFunc = (
+export const IsUserFieldValueTypeMatch: TypeMatchFunc = (
   _client: TypeMatchClient,
   _type: NotificationType,
   _message: Doc,
@@ -35,6 +36,31 @@ export const isUserFieldValueTypeMatch: TypeMatchFunc = (
   } else {
     return receiver.socialIds.includes(value)
   }
+}
+
+export const MeAddedInCollaboratorsNotificationTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _message: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const message = _message as DocUpdateMessage
+  if (message.objectClass !== core.class.Collaborator || message.action !== 'create') return false
+  return message.objectAttributes?.collaborator === receiver.account
+}
+
+export const MeRemovedFromCollaboratorsNotificationTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _message: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const message = _message as DocUpdateMessage
+  console.log(message)
+  if (message.objectClass !== core.class.Collaborator || message.action !== 'remove') return false
+  return message.objectAttributes?.collaborator === receiver.account
 }
 
 export async function getObjectSpace (control: TriggerControl, doc: Doc, cache: Map<Ref<Doc>, Doc>): Promise<Space> {

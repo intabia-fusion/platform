@@ -118,6 +118,8 @@ export default plugin(serverNotificationId, {
     OnCollaboratorRemoved: '' as Resource<TriggerFunc>
   },
   function: {
-    IsUserFieldValueTypeMatch: '' as TypeMatchFuncResource
+    IsUserFieldValueTypeMatch: '' as TypeMatchFuncResource,
+    MeAddedInCollaboratorsNotificationTypeMatch: '' as TypeMatchFuncResource,
+    MeRemovedFromCollaboratorsNotificationTypeMatch: '' as TypeMatchFuncResource
   }
 })

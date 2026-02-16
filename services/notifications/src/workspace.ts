@@ -33,7 +33,7 @@ import core, {
   TxProcessor,
   TxRemoveDoc
 } from '@hcengineering/core'
-import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
 import notification, {
   DocNotifyContext,
@@ -163,7 +163,7 @@ class Workspace {
         matched.push(type)
       }
     }
-    console.log('MATCHED', matched)
+
     if (matched.length === 0) return []
 
     const txAttachedToDoc =
@@ -405,6 +405,16 @@ class Workspace {
     res.push(...this.getUpdateContextTxes(contexts, message.modifiedOn))
 
     const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
+
+    if (client.hierarchy.isDerived(message._class, activity.class.DocUpdateMessage)) {
+      const dum = message as DocUpdateMessage
+
+      if (dum.objectClass === core.class.Collaborator) {
+        const acc = dum.objectAttributes?.collaborator as AccountUuid | undefined
+        if (acc != null && !collaborators.includes(acc)) collaborators.push(acc)
+      }
+    }
+
     if (collaborators.length === 0) return res
 
     const settings = await this.cache.getSettings()
@@ -418,8 +428,9 @@ class Workspace {
       const context = contexts.find((it) => it.user === receiver.account)
       const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings)
 
-      const types = (notifyResult[notification.providers.InboxNotificationProvider] ?? []).map((it) => it._id)
-      if (types.length === 0) continue
+      const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
+      const type = types[0]
+      if (type == null) continue
 
       res.push(
         ...(await this.createNotifications(
@@ -428,7 +439,7 @@ class Workspace {
             attachedTo: message._id,
             attachedToClass: message._class
           },
-          getMessageNotificationContent(client.hierarchy, doc, message, sender),
+          getMessageNotificationContent(client.hierarchy, type, doc, message, sender),
           doc,
           message.modifiedOn,
           message.modifiedBy,

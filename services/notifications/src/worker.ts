@@ -34,7 +34,7 @@ import notification, { TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 
 import Workspace from './workspace'
-import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger } from './utils'
+import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
 import config from './config'
 
 export class Worker {
@@ -57,7 +57,9 @@ export class Worker {
     this.sysModel.addTxes(ctx, modelTxes, true)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
-    this.txTypes = this.sysModel.findAllSync(notification.class.TxNotificationType, {})
+    this.txTypes = this.sysModel
+      .findAllSync(notification.class.TxNotificationType, {})
+      .sort((a, b) => (a.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY) - (b.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY))
     this.triggerClasses = [activity.class.ActivityMessage, ...this.txTypes.map((it) => it.objectClass)].filter(
       (it) => it !== core.class.Doc
     )

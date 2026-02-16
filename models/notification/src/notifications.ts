@@ -28,9 +28,45 @@ export function defineNotifications (builder: Builder): void {
       messageClass: activity.class.DocUpdateMessage,
       objectClass: core.class.Collaborator,
       attachedToClass: core.class.Doc,
-      defaultEnabled: true
+      defaultEnabled: true,
+      match: {
+        action: 'create'
+      },
+      notificationMessage: notification.string.YouAddedAsCollaborator,
+      templates: {
+        textTemplate: '{sender} added you as a collaborator to {doc}.',
+        htmlTemplate: '<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>',
+        subjectTemplate: 'You were added as a collaborator to {doc}'
+      },
+      priority: 100
     },
-    notification.ids.CollaboratorsNotification
+    notification.ids.MeAddedInCollaboratorsNotification
+  )
+
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
+    core.space.Model,
+    {
+      hidden: true,
+      generated: false,
+      label: core.string.Collaborators,
+      group: notification.ids.NotificationGroup,
+      messageClass: activity.class.DocUpdateMessage,
+      objectClass: core.class.Collaborator,
+      attachedToClass: core.class.Doc,
+      defaultEnabled: true,
+      match: {
+        action: 'remove'
+      },
+      notificationMessage: notification.string.YouRemovedFromCollaborators,
+      templates: {
+        textTemplate: '{sender} removed you as a collaborator from {doc}.',
+        htmlTemplate: '<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>',
+        subjectTemplate: 'You were removed as a collaborator from {doc}'
+      },
+      priority: 100
+    },
+    notification.ids.MeRemovedFromCollaboratorsNotification
   )
 
   builder.createDoc<TxNotificationType>(
@@ -49,7 +85,8 @@ export function defineNotifications (builder: Builder): void {
         textTemplate: '{sender} mentioned you in {doc}: {message}',
         htmlTemplate: '<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>',
         subjectTemplate: 'You were mentioned in {doc}'
-      }
+      },
+      priority: 50
     },
     notification.ids.MentionNotificationType
   )
@@ -69,8 +106,6 @@ export function generateClassNotificationTypes (
   )
   const filtered = Array.from(attributes.values()).filter((p) => p.hidden !== true && p.readonly !== true)
   const enabledInboxTypes: Ref<MessageNotificationType>[] = []
-
-  ignoreKeys.push('collaborators')
 
   for (const attribute of filtered) {
     if (ignoreKeys.includes(attribute.name)) continue

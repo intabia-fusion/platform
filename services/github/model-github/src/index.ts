@@ -839,6 +839,7 @@ export function createModel (builder: Builder): void {
         htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p>',
         subjectTemplate: 'Pull request {doc} was assigned to you'
       },
+      priority: 200,
       defaultEnabled: true
     },
     github.ids.AssigneeNotification as Ref<MessageNotificationType>

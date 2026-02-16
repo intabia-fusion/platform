@@ -144,6 +144,10 @@ export interface NotificationType extends Doc {
   attachedToClass?: Ref<Class<Doc>>
 
   notifyAuthor?: boolean
+
+  priority?: number
+
+  notificationMessage?: IntlString
 }
 
 export interface MessageNotificationType<T extends ActivityMessage = ActivityMessage> extends NotificationType {
@@ -378,7 +382,8 @@ const notification = plugin(notificationId, {
   ids: {
     NotificationSettings: '' as Ref<Doc>,
     NotificationGroup: '' as Ref<NotificationGroup>,
-    CollaboratorsNotification: '' as Ref<MessageNotificationType>,
+    MeAddedInCollaboratorsNotification: '' as Ref<MessageNotificationType>,
+    MeRemovedFromCollaboratorsNotification: '' as Ref<MessageNotificationType>,
     MentionNotificationType: '' as Ref<TxNotificationType>
   },
   metadata: {
@@ -447,7 +452,9 @@ const notification = plugin(notificationId, {
     Sound: '' as IntlString,
     NoAccessToObject: '' as IntlString,
     ViewIn: '' as IntlString,
-    Clear: '' as IntlString
+    Clear: '' as IntlString,
+    YouAddedAsCollaborator: '' as IntlString,
+    YouRemovedFromCollaborators: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,

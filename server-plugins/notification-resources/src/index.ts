@@ -39,7 +39,11 @@ import notification, { DocNotifyContext, MessageNotificationType, NotificationTy
 import { type TriggerControl } from '@hcengineering/server-core'
 
 import { PushNotificationsHandler } from './push'
-import { isUserFieldValueTypeMatch } from './utils'
+import {
+  IsUserFieldValueTypeMatch,
+  MeAddedInCollaboratorsNotificationTypeMatch,
+  MeRemovedFromCollaboratorsNotificationTypeMatch
+} from './utils'
 
 async function removeContexts (
   control: TriggerControl,
@@ -304,6 +308,8 @@ export default async () => ({
     OnCollaboratorRemoved
   },
   function: {
-    IsUserFieldValueTypeMatch: isUserFieldValueTypeMatch
+    IsUserFieldValueTypeMatch,
+    MeAddedInCollaboratorsNotificationTypeMatch,
+    MeRemovedFromCollaboratorsNotificationTypeMatch
   }
 })

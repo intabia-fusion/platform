@@ -405,7 +405,8 @@ export function createModel (builder: Builder): void {
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
-      defaultEnabled: true
+      defaultEnabled: true,
+      priority: 200
     },
     lead.ids.AssigneeNotification
   )

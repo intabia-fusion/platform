@@ -89,4 +89,22 @@ export function createModel (builder: Builder): void {
       objectClass: core.class.Collaborator
     }
   })
+
+  builder.mixin(
+    notification.ids.MeAddedInCollaboratorsNotification,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverNotification.function.MeAddedInCollaboratorsNotificationTypeMatch
+    }
+  )
+
+  builder.mixin(
+    notification.ids.MeRemovedFromCollaboratorsNotification,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverNotification.function.MeRemovedFromCollaboratorsNotificationTypeMatch
+    }
+  )
 }

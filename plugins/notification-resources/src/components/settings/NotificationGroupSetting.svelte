@@ -105,18 +105,6 @@
     return typeMap.find((p) => p.attachedTo === provider)
   }
 
-  const isNotificationType = (type: NotificationType): type is NotificationType => {
-    return type._class === notification.class.NotificationType
-  }
-
-  function getLabel (type: NotificationType): IntlString {
-    if (isNotificationType(type) && type.attachedToClass !== undefined) {
-      return notification.string.AddedRemoved
-    }
-
-    return notification.string.Change
-  }
-
   function isIgnored (type: Ref<NotificationType>, provider: NotificationProvider): boolean {
     const ignored = providerDefaults.some((it) => provider._id === it.provider && it.ignoredTypes.includes(type))
 
@@ -177,9 +165,6 @@
   <Grid {column} columnGap={5} rowGap={1.5}>
     {#each types as type}
       <div class="flex">
-        {#if type.generated}
-          <Label label={getLabel(type)} />:
-        {/if}
         <Label label={type.label} />
       </div>
       {#each filteredProviders as provider (provider._id)}

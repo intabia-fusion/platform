@@ -1359,6 +1359,7 @@ export function createModel (builder: Builder): void {
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
+      priority: 200,
       defaultEnabled: true
     },
     recruit.ids.AssigneeNotification
