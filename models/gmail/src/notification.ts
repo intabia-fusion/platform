@@ -16,7 +16,6 @@
 import notification from '@hcengineering/model-notification'
 import core from '@hcengineering/model-core'
 import contact from '@hcengineering/model-contact'
-import love from '@hcengineering/model-love'
 import { type Builder } from '@hcengineering/model'
 import { type MessageNotificationType } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
@@ -78,7 +77,7 @@ export function defineNotifications (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: gmail.providers.EmailNotificationProvider,
-    ignoredTypes: [gmail.ids.EmailNotification, love.ids.InviteNotification, love.ids.KnockNotification],
+    ignoredTypes: [gmail.ids.EmailNotification],
     enabledTypes: []
   })
 }

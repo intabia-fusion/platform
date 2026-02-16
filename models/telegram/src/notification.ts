@@ -18,7 +18,6 @@ import notification from '@hcengineering/model-notification'
 import core from '@hcengineering/model-core'
 import contact from '@hcengineering/model-contact'
 import chunter from '@hcengineering/chunter'
-import love from '@hcengineering/love'
 import { type MessageNotificationType } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
 
@@ -77,7 +76,7 @@ export function defineNotifications (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: telegram.providers.TelegramNotificationProvider,
-    ignoredTypes: [telegram.ids.NewMessageNotification, love.ids.InviteNotification, love.ids.KnockNotification],
+    ignoredTypes: [telegram.ids.NewMessageNotification],
     enabledTypes: [chunter.ids.DMNotification, chunter.ids.ThreadNotification]
   })
 }

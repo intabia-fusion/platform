@@ -7818,9 +7818,6 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
-      '@hcengineering/model-love':
-        specifier: workspace:^0.7.0
-        version: link:../love
       '@hcengineering/model-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
@@ -10076,9 +10073,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-notification':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -12521,9 +12515,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/love':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/love
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model

@@ -458,13 +458,6 @@ export function createModel (builder: Builder): void {
     love.ids.LoveNotificationGroup
   )
 
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.SoundNotificationProvider,
-    excludeIgnore: [love.ids.KnockNotification],
-    ignoredTypes: [],
-    enabledTypes: []
-  })
-
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_LOVE,
     disabled: [{ space: 1 }, { modifiedOn: 1 }, { modifiedBy: 1 }, { createdBy: 1 }, { createdOn: -1 }]
@@ -689,7 +682,7 @@ export function createModel (builder: Builder): void {
     {
       label: chunter.string.Chat,
       generated: false,
-      hidden: false,
+      hidden: true,
       messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: love.class.MeetingMinutes,
