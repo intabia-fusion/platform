@@ -430,14 +430,14 @@ export async function readChannelMessages (
 
     const storedTimestampUpdates = get(contextsTimestampStore).get(context._id)
     const newTimestamp = messages[messages.length - 1].createdOn ?? 0
-    const prevTimestamp = Math.max(storedTimestampUpdates ?? 0, context.lastViewedTimestamp ?? 0)
+    const prevTimestamp = Math.max(storedTimestampUpdates ?? 0, context.lastView ?? 0)
 
     if (prevTimestamp < newTimestamp) {
       contextsTimestampStore.update((store) => {
         store.set(context._id, newTimestamp)
         return store
       })
-      await op.update(context, { lastViewedTimestamp: newTimestamp })
+      await op.update(context, { lastView: newTimestamp })
     }
     await inboxClient.readNotifications(op, [...notifications, ...relatedMentions, ...reactionNotifications])
   } finally {

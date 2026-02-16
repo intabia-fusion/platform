@@ -164,9 +164,9 @@ export function addNotification (
     params
   }
 
-  if (closeTimeout !== 0) {
-    notificationsStore.addNotification(notification)
-  }
+  // if (closeTimeout !== 0) {
+  notificationsStore.addNotification(notification)
+  // }
 }
 
 /**

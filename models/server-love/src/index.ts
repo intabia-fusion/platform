@@ -19,17 +19,13 @@ import { type Builder } from '@hcengineering/model'
 import serverCore from '@hcengineering/server-core'
 import love from '@hcengineering/love'
 import serverLove from '@hcengineering/server-love'
-import serverNotification from '@hcengineering/server-notification'
+import serverActivity from '@hcengineering/server-activity'
 
 export { serverLoveId } from '@hcengineering/server-love'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(love.class.MeetingMinutes, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverLove.function.MeetingMinutesHTMLPresenter
-  })
-
-  builder.mixin(love.class.MeetingMinutes, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverLove.function.MeetingMinutesTextPresenter
+  builder.mixin(love.class.MeetingMinutes, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverLove.function.MeetingMinutesUrlPresenter
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

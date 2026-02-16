@@ -1026,11 +1026,28 @@
         "ACCOUNTS_URL": "http://localhost:3000",
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "TRANSACTOR_URL": "ws://localhost:3333",
-        "SERVICE_ID": "export-service"
+        "SERVICE_ID": "export-service",
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}/services/export/pod-export"
+    },
+    {
+    "name": "Debug Notifications",
+    "type": "node",
+    "request": "launch",
+    "args": ["src/index.ts"],
+    "env": {
+    "SECRET": "secret",
+    "ACCOUNTS_URL": "http://localhost:3000",
+    "QUEUE_CONFIG": "localhost:19092",
+    "QUEUE_REGION": "",
+    "MODEL_JSON": "/Users/kristinawork/intabia/foundation/models/all/bundle/model.json",
+      "STORAGE_CONFIG": "datalake|http://localhost:4030"
+    },
+    "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+    "sourceMaps": true,
+    "cwd": "${workspaceRoot}/services/notifications"
     }
   ]
 }

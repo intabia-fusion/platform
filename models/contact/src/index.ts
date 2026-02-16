@@ -229,7 +229,7 @@ export class TMember extends TAttachedDoc implements Member {
 }
 
 @Model(contact.class.Organization, contact.class.Contact)
-@UX(contact.string.Organization, contact.icon.Company, 'ORG', 'name', undefined, contact.string.Organizations)
+@UX(contact.string.Organization, contact.icon.Company, 'ORG', 'name', undefined, contact.string.Organizations, 'name')
 export class TOrganization extends TContact implements Organization {
   @Prop(TypeCollaborativeDoc(), core.string.Description)
   @Index(IndexKind.FullText)
@@ -1310,7 +1310,7 @@ export function createModel (builder: Builder): void {
     builder,
     contact.class.Person,
     contact.ids.PersonNotificationGroup,
-    [],
+    ['socialIds'],
     ['comments', 'attachments']
   )
 

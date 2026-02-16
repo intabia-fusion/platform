@@ -26,7 +26,7 @@ import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import { type ViewOptionsModel } from '@hcengineering/view'
 
@@ -388,8 +388,8 @@ export function createModel (builder: Builder): void {
     lead.ids.LeadNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -397,8 +397,9 @@ export function createModel (builder: Builder): void {
       label: task.string.AssignedToMe,
       group: lead.ids.LeadNotificationGroup,
       field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: lead.class.Lead,
+      attachedToClass: lead.class.Lead,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
@@ -441,8 +442,8 @@ export function createModel (builder: Builder): void {
     lead.ids.FunnelNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -450,9 +451,9 @@ export function createModel (builder: Builder): void {
       label: lead.string.LeadCreateLabel,
       group: lead.ids.FunnelNotificationGroup,
       field: 'space',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: lead.class.Funnel,
-      spaceSubscribe: true,
+      attachedToClass: lead.class.Funnel,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',

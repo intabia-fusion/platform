@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref } from '@hcengineering/core'
+  import { Ref, toIdMap } from '@hcengineering/core'
   import type {
     NotificationType,
     NotificationGroup,
@@ -126,19 +126,24 @@
           <div class="antiNav-divider line" />
         {/if}
         {#each groups as gr}
-          <NavItem
-            icon={gr.icon}
-            label={gr.label}
-            selected={gr._id === group}
-            on:click={() => {
-              group = gr._id
-              currentPreferenceGroup = undefined
-              const loc = getCurrentResolvedLocation()
-              loc.path[4] = group
-              loc.path.length = 5
-              navigate(loc)
-            }}
-          />
+          {@const types = client
+            .getModel()
+            .findAllSync(notification.class.NotificationType, { group: gr._id, hidden: { $ne: true } }, { limit: 1 })}
+          {#if types.length > 0}
+            <NavItem
+              icon={gr.icon}
+              label={gr.label}
+              selected={gr._id === group}
+              on:click={() => {
+                group = gr._id
+                currentPreferenceGroup = undefined
+                const loc = getCurrentResolvedLocation()
+                loc.path[4] = group
+                loc.path.length = 5
+                navigate(loc)
+              }}
+            />
+          {/if}
         {/each}
         <div class="antiNav-space" />
       </Scroller>

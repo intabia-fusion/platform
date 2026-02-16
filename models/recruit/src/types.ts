@@ -64,7 +64,7 @@ import survey, { type Poll } from '@hcengineering/survey'
 import recruit from './plugin'
 
 @Model(recruit.class.Vacancy, task.class.Project)
-@UX(recruit.string.Vacancy, recruit.icon.Vacancy, 'VCN', 'name', undefined, recruit.string.Vacancies)
+@UX(recruit.string.Vacancy, recruit.icon.Vacancy, 'VCN', 'name', undefined, recruit.string.Vacancies, 'name')
 export class TVacancy extends TProject implements Vacancy {
   @Prop(TypeCollaborativeDoc(), recruit.string.FullDescription)
   @Index(IndexKind.FullText)
@@ -168,7 +168,7 @@ export class TApplicant extends TTask implements Applicant {
 
   @Prop(TypeRef(core.class.Status), task.string.TaskState, {
     _id: recruit.attribute.State,
-    iconPresenter: task.component.StateIconPresenter
+    iconComponent: task.component.StateIconPresenter
   })
   @Index(IndexKind.Indexed)
   declare status: Ref<Status>

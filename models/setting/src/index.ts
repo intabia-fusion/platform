@@ -26,7 +26,7 @@ import exportPlugin from '@hcengineering/export'
 import { Mixin, Model, UX, type Builder } from '@hcengineering/model'
 import core, { defineCollaborators, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   DOMAIN_SETTING,
@@ -49,6 +49,7 @@ import setting from './plugin'
 
 import workbench, { WidgetType } from '@hcengineering/model-workbench'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
+import activity from '@hcengineering/activity'
 
 export { settingId } from '@hcengineering/setting'
 export { settingOperation } from './migration'
@@ -641,21 +642,23 @@ export function createModel (builder: Builder): void {
     setting.ids.SettingNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
       label: setting.string.IntegrationDisabledSetting,
       group: setting.ids.SettingNotificationGroup,
+      messageClass: activity.class.DocUpdateMessage,
       field: 'disabled',
-      txClasses: [core.class.TxUpdateDoc],
-      txMatch: {
-        'operations.disabled': true
+      match: {
+        action: 'update',
+        'attributeUpdates.set': true
       },
       objectClass: setting.class.Integration,
-      allowedForAuthor: true,
+      attachedToClass: setting.class.Integration,
+      notifyAuthor: true,
       templates: {
         textTemplate: 'Integration with {doc} was disabled',
         htmlTemplate: '<p>Integration with {doc} was disabled</p>',

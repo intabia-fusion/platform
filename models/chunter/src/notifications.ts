@@ -16,7 +16,9 @@
 import { type Builder } from '@hcengineering/model'
 import notification from '@hcengineering/model-notification'
 import core, { defineCollaborators } from '@hcengineering/model-core'
-import activity from '@hcengineering/activity'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import { type MessageNotificationType } from '@hcengineering/notification'
+import { type ChatMessage, type ThreadMessage } from '@hcengineering/chunter'
 
 import chunter from './plugin'
 
@@ -49,14 +51,15 @@ export function defineNotifications (builder: Builder): void {
     chunter.ids.ChunterNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ChatMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.DM,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      // txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: chunter.class.DirectMessage,
       defaultEnabled: false,
@@ -70,14 +73,15 @@ export function defineNotifications (builder: Builder): void {
     chunter.ids.DMNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ChatMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.ChannelMessages,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      // txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: chunter.class.Channel,
       defaultEnabled: false,
@@ -91,18 +95,19 @@ export function defineNotifications (builder: Builder): void {
     chunter.ids.ChannelNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.JoinChannel,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: chunter.class.Channel,
       defaultEnabled: false,
       field: 'members',
       group: chunter.ids.ChunterNotificationGroup,
+      attachedToClass: chunter.class.Channel,
       templates: {
         textTemplate: 'You have been added to #{doc}',
         htmlTemplate: '<p>You have been added to <b>#{doc}</b></p>',
@@ -112,15 +117,17 @@ export function defineNotifications (builder: Builder): void {
     chunter.ids.JoinChannelNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ThreadMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.ThreadMessage,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      // txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ThreadMessage,
       objectClass: chunter.class.ThreadMessage,
+      attachedToClass: activity.class.ActivityMessage,
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {

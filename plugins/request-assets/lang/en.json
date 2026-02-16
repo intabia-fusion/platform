@@ -20,6 +20,8 @@
     "Cancel": "Cancel",
     "Cancelled": "Cancelled",
     "NewRequest": "New Request",
-    "CancelRequest": "Cancel Request"
+    "CancelRequest": "Cancel Request",
+    "NewRequestNotification": "New {name}",
+    "CancelRequestNotification": "{name} cancelled"
   }
 }

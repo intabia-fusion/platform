@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import chunter from '@hcengineering/chunter'
 import { AccountRole, type Ref, type Status } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
@@ -24,7 +24,7 @@ import task from '@hcengineering/model-task'
 import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import converter from '@hcengineering/converter'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import pluginState, { trackerId } from '@hcengineering/tracker'
 
@@ -138,8 +138,8 @@ function defineNotifications (builder: Builder): void {
     tracker.ids.TrackerNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -147,9 +147,9 @@ function defineNotifications (builder: Builder): void {
       label: task.string.AssignedToMe,
       group: tracker.ids.TrackerNotificationGroup,
       field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: tracker.class.Issue,
-      onlyOwn: true,
+      attachedToClass: tracker.class.Issue,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
@@ -164,7 +164,7 @@ function defineNotifications (builder: Builder): void {
     builder,
     tracker.class.Issue,
     tracker.ids.TrackerNotificationGroup,
-    [],
+    ['todos'],
     ['comments', 'status', 'priority', 'assignee', 'subIssues', 'blockedBy', 'milestone', 'dueDate']
   )
 }

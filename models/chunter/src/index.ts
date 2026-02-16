@@ -22,6 +22,7 @@ import presentation from '@hcengineering/model-presentation'
 import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { WidgetType } from '@hcengineering/workbench'
+import { AccountRole } from '@hcengineering/core'
 
 import { defineActions } from './actions'
 import { defineNotifications } from './notifications'
@@ -36,7 +37,6 @@ import {
   TObjectChatPanel,
   TThreadMessage
 } from './types'
-import { AccountRole } from '@hcengineering/core'
 
 export { chunterId } from '@hcengineering/chunter'
 export { chunterOperation } from './migration'

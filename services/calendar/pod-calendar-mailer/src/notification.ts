@@ -101,7 +101,8 @@ export async function createNotification (
     props: { title: forEvent.title },
     isViewed: false,
     archived: false,
-    docNotifyContext: docNotifyContextId
+    docNotifyContext: docNotifyContextId,
+    allowedProviders: {}
   })
 
   ctx.info('Notification created', {

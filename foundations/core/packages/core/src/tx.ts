@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type {
+import {
   Arr,
   AttachedDoc,
   Class,
@@ -607,4 +607,19 @@ export class TxFactory {
 
 export function isMixinTx (tx: TxCUD<Doc>): tx is TxMixin<Doc, Doc> {
   return tx._class === core.class.TxMixin
+}
+
+export function getTxOperations (tx: TxCUD<Doc>): Record<string, any> {
+  if (tx._class === core.class.TxUpdateDoc) {
+    const uTx = tx as TxUpdateDoc<Doc>
+    return uTx.operations
+  } else if (tx._class === core.class.TxMixin) {
+    const mTx = tx as TxMixin<Doc, Doc>
+    return mTx.attributes
+  } else if (tx._class === core.class.TxCreateDoc) {
+    const cTx = tx as TxCreateDoc<Doc>
+    return cTx.attributes
+  }
+
+  return []
 }

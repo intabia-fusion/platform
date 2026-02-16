@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 import { type Doc, type DocManager, type Ref, type StatusCategory } from '@hcengineering/core'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
+import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
 import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
 import { type ProjectType } from '@hcengineering/task'
 import { trackerId } from '@hcengineering/tracker'
@@ -22,6 +22,7 @@ import tracker from '@hcengineering/tracker-resources/src/plugin'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
 import { type Action, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
 import { type Application } from '@hcengineering/workbench'
+import { type DocUpdateMessage } from '@hcengineering/activity'
 
 export default mergeIds(trackerId, tracker, {
   string: {
@@ -70,7 +71,7 @@ export default mergeIds(trackerId, tracker, {
   },
   ids: {
     TrackerNotificationGroup: '' as Ref<NotificationGroup>,
-    AssigneeNotification: '' as Ref<NotificationType>,
+    AssigneeNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     BaseProjectType: '' as Ref<ProjectType>,
     DefaultProjectType: '' as Ref<ProjectType>
   },

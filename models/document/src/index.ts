@@ -42,7 +42,7 @@ import presentation from '@hcengineering/model-presentation'
 import tracker from '@hcengineering/model-tracker'
 import view, { actionTemplates, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
 import time, { type ToDo, type Todoable } from '@hcengineering/time'
@@ -411,18 +411,20 @@ function defineDocument (builder: Builder): void {
     document.ids.DocumentNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: false,
+      notifyAuthor: false,
       label: document.string.Document,
       group: document.ids.DocumentNotificationGroup,
       field: 'content',
-      txClasses: [core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
+      // txClasses: [core.class.TxUpdateDoc],
       objectClass: document.class.Document,
+      attachedToClass: document.class.Document,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',
@@ -443,7 +445,7 @@ function defineDocument (builder: Builder): void {
     builder,
     document.class.Document,
     document.ids.DocumentNotificationGroup,
-    [],
+    ['todos'],
     ['attachments', 'comments']
   )
 

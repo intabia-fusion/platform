@@ -16,12 +16,18 @@
   import { AccountRole, Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
   import notification, { BrowserNotification } from '@hcengineering/notification'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { addNotification, getCurrentResolvedLocation, Location, NotificationSeverity } from '@hcengineering/ui'
+  import {
+    addNotification,
+    getCurrentResolvedLocation,
+    Location,
+    NotificationSeverity,
+    languageStore
+  } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { parseLinkId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
   import workbench, { Application } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
+  import { getResource, translate } from '@hcengineering/platform'
 
   import { checkPermission, pushAllowed, subscribePush } from '../utils'
   import Notification from './Notification.svelte'
@@ -48,6 +54,7 @@
       },
       (res) => {
         if (res.length > 0) {
+          console.log('Received notification:', res[0])
           void notify(res[0])
         }
       }
@@ -80,30 +87,28 @@
 
   async function notify (value: BrowserNotification): Promise<void> {
     const _id: Ref<Doc> | undefined = value.objectId
+    void removeNotification(value)
 
-    const getSidebarObject = await getResource(workbench.function.GetSidebarObject)
-    const sidebarObjectId = getSidebarObject()?._id
+    // const getSidebarObject = await getResource(workbench.function.GetSidebarObject)
+    // const sidebarObjectId = getSidebarObject()?._id
+    //
+    // if (_id && _id === sidebarObjectId) return
+    //
+    // const locObjectId = await getObjectIdFromLocation(getCurrentResolvedLocation())
+    //
+    // if (_id && _id === locObjectId) return
 
-    if (_id && _id === sidebarObjectId) {
-      await removeNotification(value)
-      return
+    const params = { ...value.intlParams }
+
+    for (const [k, v] of Object.entries(value.intlParamsNotLocalized ?? {})) {
+      params[k] = await translate(v, params, $languageStore)
     }
 
-    const locObjectId = await getObjectIdFromLocation(getCurrentResolvedLocation())
+    const title = await translate(value.title, params, $languageStore)
+    const body = await translate(value.body, params, $languageStore)
 
-    if (_id && _id === locObjectId) {
-      await removeNotification(value)
-      return
-    }
-    addNotification(
-      value.title,
-      value.body,
-      Notification,
-      { value },
-      NotificationSeverity.Info,
-      `notification-${value.objectId}`
-    )
-    await removeNotification(value)
+    console.log({ title, body }, params)
+    addNotification(title, body, Notification, { value }, NotificationSeverity.Info, `notification-${value.objectId}`)
   }
 
   async function removeNotification (value: BrowserNotification): Promise<void> {

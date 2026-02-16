@@ -67,7 +67,7 @@ export class TFunnel extends TProject implements Funnel {
 }
 
 @Model(lead.class.Lead, task.class.Task)
-@UX(lead.string.Lead, lead.icon.Lead, 'LEAD', 'title', undefined, lead.string.Leads)
+@UX(lead.string.Lead, lead.icon.Lead, 'LEAD', 'title', undefined, lead.string.Leads, 'title')
 export class TLead extends TTask implements Lead {
   @Prop(TypeRef(contact.class.Contact), lead.string.Customer)
   @ReadOnly()

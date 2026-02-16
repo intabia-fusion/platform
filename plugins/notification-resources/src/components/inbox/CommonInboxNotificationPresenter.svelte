@@ -16,7 +16,7 @@
   import { BasePreview } from '@hcengineering/activity-resources'
   import { Doc, Markup } from '@hcengineering/core'
   import { CommonInboxNotification } from '@hcengineering/notification'
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { IntlString, translate, translateCB } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { themeStore } from '@hcengineering/ui'
 
@@ -26,13 +26,24 @@
 
   let content: Markup = ''
 
-  $: void updateContent(value.message, value.messageHtml)
+  $: void updateContent(value.message, value.markup)
 
-  async function updateContent (message?: IntlString, messageHtml?: Markup): Promise<void> {
-    if (messageHtml !== undefined) {
-      content = messageHtml
+  async function getProps (): Promise<Record<string, any>> {
+    const result = value.props ?? {}
+    const propsIntl = value.propsIntl ?? {}
+    for (const [key, v] of Object.entries(propsIntl)) {
+      result[key] = await translate(v, value.props, $themeStore.language)
+    }
+    return result
+  }
+
+  async function updateContent (message?: IntlString, markup?: Markup): Promise<void> {
+    if (markup !== undefined) {
+      content = markup
     } else if (message !== undefined) {
-      translateCB(message, value.props, $themeStore.language, (res) => {
+      const props = await getProps()
+      console.log(message, props)
+      translateCB(message, props, $themeStore.language, (res) => {
         content = res
       })
     }

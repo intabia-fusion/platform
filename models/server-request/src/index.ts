@@ -21,6 +21,7 @@ import serverRequest from '@hcengineering/server-request'
 import serverNotification from '@hcengineering/server-notification'
 import request from '@hcengineering/model-request'
 import notification from '@hcengineering/notification'
+import serverActivity from '@hcengineering/server-activity'
 
 export { serverRequestId } from '@hcengineering/server-request'
 
@@ -32,8 +33,8 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(request.class.Request, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverRequest.function.RequestTextPresenter
+  builder.mixin(request.class.Request, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverRequest.function.RequestTitlePresenter
   })
 
   builder.mixin(
@@ -41,7 +42,8 @@ export function createModel (builder: Builder): void {
     notification.class.NotificationType,
     serverNotification.mixin.TypeMatch,
     {
-      func: serverRequest.function.SendRequestMatch
+      match: serverRequest.function.SendRequestMatch,
+      create: serverRequest.function.SendRequestCreateNotification
     }
   )
 
@@ -50,7 +52,8 @@ export function createModel (builder: Builder): void {
     notification.class.NotificationType,
     serverNotification.mixin.TypeMatch,
     {
-      func: serverRequest.function.RemoveRequestMatch
+      match: serverRequest.function.RemoveRequestMatch,
+      create: serverRequest.function.RemoveRequestCreateNotification
     }
   )
 }

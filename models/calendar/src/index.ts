@@ -268,32 +268,27 @@ export function createModel (builder: Builder): void {
 
   defineCollaborators(builder, calendar.class.Event, { fields: ['participants'] })
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: calendar.string.Reminder,
-      group: calendar.ids.CalendarNotificationGroup,
-      txClasses: [],
-      objectClass: calendar.class.Event,
-      allowedForAuthor: true,
-      templates: {
-        textTemplate: 'Reminder: {doc}',
-        htmlTemplate: 'Reminder: {doc}',
-        subjectTemplate: 'Reminder: {doc}'
-      },
-      defaultEnabled: false
-    },
-    calendar.ids.ReminderNotification
-  )
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.InboxNotificationProvider,
-    ignoredTypes: [],
-    enabledTypes: [calendar.ids.ReminderNotification]
-  })
+  // TODO: FIXME - not working
+  // builder.createDoc<TxNotificationType>(
+  //   notification.class.TxNotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: calendar.string.Reminder,
+  //     group: calendar.ids.CalendarNotificationGroup,
+  //     txClasses: [],
+  //     objectClass: calendar.class.Event,
+  //     notifyAuthor: true,
+  //     templates: {
+  //       textTemplate: 'Reminder: {doc}',
+  //       htmlTemplate: 'Reminder: {doc}',
+  //       subjectTemplate: 'Reminder: {doc}'
+  //     },
+  //     defaultEnabled: true
+  //   },
+  //   calendar.ids.ReminderNotification
+  // )
 
   builder.createDoc(
     view.class.ViewletDescriptor,

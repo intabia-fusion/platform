@@ -15,90 +15,86 @@
 //
 
 import { Employee, Person, PersonSpace } from '@hcengineering/contact'
-import { PersonId, Class, Doc, Mixin, Ref, Tx, TxCUD, AccountUuid } from '@hcengineering/core'
-import { NotificationContent, NotificationType } from '@hcengineering/notification'
+import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup, Data } from '@hcengineering/core'
+import { CommonInboxNotification, NotificationContent, NotificationType } from '@hcengineering/notification'
 import { Metadata, Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
+import { ActivityMessage } from '@hcengineering/activity'
 
-/**
- * @public
- */
 export const serverNotificationId = 'server-notification' as Plugin
 export { DOMAIN_USER_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
 
-/**
- * @public
- */
-export type Presenter<T extends Doc = any> = (doc: T, control: TriggerControl) => Promise<string>
-
-/**
- * @public
- */
-export interface HTMLPresenter<T extends Doc = any> extends Class<T> {
-  presenter: Resource<Presenter<T>>
-}
-
-/**
- * @public
- */
-export interface TextPresenter<T extends Doc = any> extends Class<T> {
-  presenter: Resource<Presenter<T>>
-}
-
-/**
- * @public
- */
-export type TypeMatchFunc = Resource<
-(
-  tx: Tx,
-  doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
-  type: NotificationType,
-  control: TriggerControl,
+export interface Receiver {
   account: AccountUuid
-) => boolean | Promise<boolean>
->
-
-/**
- * @public
- */
-export interface TypeMatch extends NotificationType {
-  func: TypeMatchFunc
-}
-
-/**
- * @public
- */
-export type NotificationContentProvider = (
-  doc: Doc,
-  tx: TxCUD<Doc>,
-  person: Ref<Person>,
-  control: TriggerControl
-) => Promise<NotificationContent>
-
-/**
- * @public
- */
-export interface NotificationPresenter extends Class<Doc> {
-  presenter: Resource<NotificationContentProvider>
-}
-
-export interface ReceiverInfo {
-  account: AccountUuid
-  employee: Ref<Employee>
-  role: 'USER' | 'GUEST' | undefined
+  employeeRef: Ref<Employee>
+  role?: 'USER' | 'GUEST'
   socialIds: PersonId[]
   space: Ref<PersonSpace>
+  online: boolean
 }
 
-export interface SenderInfo {
+export interface Sender {
   socialId: PersonId
   person?: Person
 }
 
-export const NOTIFICATION_BODY_SIZE = 50
+export type TypeMatchClient = Pick<
+TriggerControl,
+'hierarchy' | 'modelDb' | 'findAll' | 'txFactory' | 'ctx' | 'branding'
+>
+export type TypeMatchFunc = (
+  client: TypeMatchClient,
+  type: NotificationType,
+  typeObject: Doc,
+  doc: Doc,
+  receiver: Receiver
+) => Promise<boolean> | boolean
+
+export type TypeMatchFuncResource = Resource<TypeMatchFunc>
+export type CreateNotificationResult = Omit<
+Data<CommonInboxNotification>,
+'archived' | 'user' | 'allowedProviders' | 'docNotifyContext' | 'isViewed' | 'objectId' | 'objectClass'
+>
+export type CreateNotificationFunc = (
+  client: TypeMatchClient,
+  tx: TxCUD<Doc>,
+  attachedToDoc: Doc | undefined,
+  object: Doc,
+  receiver: Receiver
+) => Promise<CreateNotificationResult | undefined>
+export type CreateNotificationResource = Resource<CreateNotificationFunc>
+
+export interface TypeMatch extends NotificationType {
+  match?: TypeMatchFuncResource
+  create?: CreateNotificationResource
+  contentProvider?: NotificationContentProviderResource
+}
+
+export type NotificationContentProviderResource = Resource<NotificationContentProvider>
+
+export type NotificationContentProvider = (
+  client: TypeMatchClient,
+  type: NotificationType,
+  typeObject: Doc,
+  doc: Doc,
+  object: Doc | undefined,
+  sender: Sender
+) => Promise<NotificationContent>
+
+export interface MentionRef {
+  markup: Markup
+  docId: Ref<Doc>
+  docClass: Ref<Class<Doc>>
+  messageId?: Ref<ActivityMessage>
+  messageClass?: Ref<Class<ActivityMessage>>
+  mentionId: Ref<Person>
+  mentionClass: Ref<Class<Person>>
+}
+
+export const NOTIFICATION_BODY_SIZE = 100
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
+
+export * from './utils'
 
 /**
  * @public
@@ -111,22 +107,17 @@ export default plugin(serverNotificationId, {
     InboxOnlyNotifications: '' as Metadata<boolean>
   },
   mixin: {
-    HTMLPresenter: '' as Ref<Mixin<HTMLPresenter>>,
-    TextPresenter: '' as Ref<Mixin<TextPresenter>>,
-    TypeMatch: '' as Ref<Mixin<TypeMatch>>,
-    NotificationPresenter: '' as Ref<Mixin<NotificationPresenter>>
+    TypeMatch: '' as Ref<Mixin<TypeMatch>>
   },
   trigger: {
     OnAttributeCreate: '' as Resource<TriggerFunc>,
     OnAttributeUpdate: '' as Resource<TriggerFunc>,
-    OnReactionChanged: '' as Resource<TriggerFunc>,
     OnDocRemove: '' as Resource<TriggerFunc>,
     OnEmployeeDeactivate: '' as Resource<TriggerFunc>,
     PushNotificationsHandler: '' as Resource<TriggerFunc>,
     OnCollaboratorRemoved: '' as Resource<TriggerFunc>
   },
   function: {
-    IsUserEmployeeInFieldValueTypeMatch: '' as TypeMatchFunc,
-    MentionTypeMatch: '' as TypeMatchFunc
+    IsUserFieldValueTypeMatch: '' as TypeMatchFuncResource
   }
 })

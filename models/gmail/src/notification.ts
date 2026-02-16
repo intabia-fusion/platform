@@ -18,6 +18,8 @@ import core from '@hcengineering/model-core'
 import contact from '@hcengineering/model-contact'
 import love from '@hcengineering/model-love'
 import { type Builder } from '@hcengineering/model'
+import { type MessageNotificationType } from '@hcengineering/notification'
+import activity from '@hcengineering/activity'
 
 import gmail from './plugin'
 
@@ -32,17 +34,22 @@ export function defineNotifications (builder: Builder): void {
     gmail.ids.EmailNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: gmail.string.NewMessage,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: activity.class.DocUpdateMessage,
+      match: {
+        action: 'create',
+        objectClass: gmail.class.Message
+      },
       objectClass: gmail.class.Message,
+      attachedToClass: gmail.class.Message,
       group: gmail.ids.EmailNotificationGroup,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       defaultEnabled: false
     },
     gmail.ids.EmailNotification
@@ -71,12 +78,7 @@ export function defineNotifications (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: gmail.providers.EmailNotificationProvider,
-    ignoredTypes: [
-      gmail.ids.EmailNotification,
-      notification.ids.CollaboratoAddNotification,
-      love.ids.InviteNotification,
-      love.ids.KnockNotification
-    ],
+    ignoredTypes: [gmail.ids.EmailNotification, love.ids.InviteNotification, love.ids.KnockNotification],
     enabledTypes: []
   })
 }

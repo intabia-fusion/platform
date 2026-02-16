@@ -41,7 +41,8 @@ import type {
   ProjectDocument,
   ControlledDocumentSnapshot
 } from './types'
-import type { NotificationType } from '@hcengineering/notification'
+import type { MessageNotificationType } from '@hcengineering/notification'
+import { DocUpdateMessage } from '@hcengineering/activity'
 
 /**
  * @public
@@ -335,7 +336,7 @@ export const documentsPlugin = plugin(documentsId, {
     ProductChangeControl: '' as Ref<DocumentTemplate>
   },
   notification: {
-    CoAuthorsNotification: '' as Ref<NotificationType>
+    CoAuthorsNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>
   },
   viewlet: {
     DocumentSpaceTable: '' as Ref<Viewlet>

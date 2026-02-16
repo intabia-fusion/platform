@@ -13,13 +13,12 @@
 // limitations under the License.
 //
 
-import activity, { ActivityMessage, ActivityReference } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import chunter, { Channel, ChatMessage, chunterId, ChunterSpace, ThreadMessage } from '@hcengineering/chunter'
 import contact, { Employee, Person } from '@hcengineering/contact'
 import core, {
   AccountUuid,
   Class,
-  combineAttributes,
   concatLink,
   Doc,
   DocumentQuery,
@@ -27,7 +26,6 @@ import core, {
   FindResult,
   Hierarchy,
   notEmpty,
-  PersonId,
   Ref,
   Timestamp,
   Tx,
@@ -39,37 +37,21 @@ import core, {
   getClassCollaborators,
   type MeasureContext
 } from '@hcengineering/core'
-import notification, { DocNotifyContext, NotificationContent } from '@hcengineering/notification'
-import { getMetadata, IntlString, translate } from '@hcengineering/platform'
+import notification, { DocNotifyContext, NotificationType } from '@hcengineering/notification'
+import { getMetadata, translate } from '@hcengineering/platform'
 import { getAccountBySocialId, getAddCollaboratorsTxes, getPerson } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { createCollaboratorNotifications } from '@hcengineering/server-notification-resources'
-import { jsonToHTML, markupToJSON } from '@hcengineering/text'
-import { extractReferences, markupToText, stripTags } from '@hcengineering/text-core'
+import { markupToJSON } from '@hcengineering/text'
+import { extractReferences } from '@hcengineering/text-core'
 import { workbenchId } from '@hcengineering/workbench'
-import { NOTIFICATION_BODY_SIZE } from '@hcengineering/server-notification'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import { encodeObjectURI } from '@hcengineering/view'
 import { getCollaboratorsFromDocFields } from '@hcengineering/server-contact-resources'
 
 const updateChatInfoDelay = 12 * 60 * 60 * 1000 // 12 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-/**
- * @public
- */
-export async function channelHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
-  const channel = doc as ChunterSpace
-  const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
-  const path = `${workbenchId}/${control.workspace.url}/${chunterId}/${encodeObjectURI(channel._id, channel._class)}`
-  const link = concatLink(front, path)
-  const name = await channelTextPresenter(channel)
-  return `<a href='${link}'>${name}</a>`
-}
-
-/**
- * @public
- */
-export async function channelTextPresenter (doc: Doc): Promise<string> {
+export async function channelTitlePresenter (doc: Doc): Promise<string> {
   const channel = doc as ChunterSpace
 
   if (channel._class === chunter.class.DirectMessage) {
@@ -79,17 +61,13 @@ export async function channelTextPresenter (doc: Doc): Promise<string> {
   return `#${channel.name}`
 }
 
-export async function ChatMessageTextPresenter (doc: ChatMessage): Promise<string> {
-  return markupToText(doc.message)
+export async function channelURLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+  const channel = doc as ChunterSpace
+  const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
+  const path = `${workbenchId}/${control.workspace.url}/${chunterId}/${encodeObjectURI(channel._id, channel._class)}`
+  return concatLink(front, path)
 }
 
-export async function ChatMessageHtmlPresenter (doc: ChatMessage): Promise<string> {
-  return jsonToHTML(markupToJSON(doc.message))
-}
-
-/**
- * @public
- */
 export async function CommentRemove (
   doc: Doc,
   hiearachy: Hierarchy,
@@ -231,22 +209,6 @@ async function OnChatMessageCreated (ctx: MeasureContext, tx: TxCUD<Doc>, contro
   return res
 }
 
-async function ChatNotificationsHandler (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
-  const result: Tx[] = []
-  for (const tx of txes) {
-    const actualTx = tx as TxCreateDoc<ChatMessage>
-
-    if (actualTx._class !== core.class.TxCreateDoc) {
-      continue
-    }
-
-    const chatMessage = TxProcessor.createDoc2Doc(actualTx)
-
-    result.push(...(await createCollaboratorNotifications(control.ctx, tx, control, [chatMessage])))
-  }
-  return result
-}
-
 function joinChannel (control: TriggerControl, channel: Channel, user: AccountUuid): Tx[] {
   if (channel.members.includes(user)) {
     return []
@@ -322,57 +284,6 @@ export async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerContro
   return res
 }
 
-/**
- * @public
- */
-export async function getChunterNotificationContent (
-  _: Doc,
-  tx: TxCUD<Doc>,
-  target: Ref<Person>,
-  control: TriggerControl
-): Promise<NotificationContent> {
-  let title: IntlString = notification.string.CommonNotificationTitle
-  let body: IntlString = chunter.string.Message
-  const intlParams: Record<string, string | number> = {}
-  let intlParamsNotLocalized: Record<string, IntlString> | undefined
-
-  let message: string | undefined
-
-  if (tx._class === core.class.TxCreateDoc) {
-    if (control.hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)) {
-      const createTx = tx as TxCreateDoc<ChatMessage>
-      message = createTx.attributes.message
-    } else if (tx.objectClass === activity.class.ActivityReference) {
-      const createTx = tx as TxCreateDoc<ActivityReference>
-      message = createTx.attributes.message
-    }
-  }
-
-  if (message !== undefined) {
-    intlParams.message = stripTags(message, NOTIFICATION_BODY_SIZE)
-
-    body = chunter.string.MessageNotificationBody
-
-    if (tx.attachedToClass != null && control.hierarchy.isDerived(tx.attachedToClass, chunter.class.DirectMessage)) {
-      body = chunter.string.DirectNotificationBody
-      title = chunter.string.DirectNotificationTitle
-    }
-  }
-
-  if (tx.attachedToClass != null && control.hierarchy.isDerived(tx.attachedToClass, chunter.class.ChatMessage)) {
-    intlParamsNotLocalized = {
-      title: chunter.string.ThreadMessage
-    }
-  }
-
-  return {
-    title,
-    body,
-    intlParams,
-    intlParamsNotLocalized
-  }
-}
-
 async function OnChatMessageRemoved (txes: TxCUD<ChatMessage>[], control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
   for (const tx of txes) {
@@ -400,15 +311,15 @@ function getDirectsToHide (directs: DocNotifyContext[], date: Timestamp): DocNot
   const toHide: DocNotifyContext[] = []
 
   for (const context of directs) {
-    const { lastUpdateTimestamp = 0, lastViewedTimestamp = 0 } = context
-    if (lastViewedTimestamp === 0) continue
-    if (lastUpdateTimestamp > lastViewedTimestamp) continue
-    if (date - lastUpdateTimestamp > hideChannelDelay) {
+    const { lastUpdate = 0, lastView = 0 } = context
+    if (lastView === 0) continue
+    if (lastUpdate > lastView) continue
+    if (date - lastUpdate > hideChannelDelay) {
       toHide.push(context)
     }
   }
 
-  toHide.sort((a, b) => (a.lastUpdateTimestamp ?? 0) - (b.lastUpdateTimestamp ?? 0))
+  toHide.sort((a, b) => (a.lastUpdate ?? 0) - (b.lastUpdate ?? 0))
 
   return toHide.slice(0, hideCount)
 }
@@ -418,10 +329,10 @@ function getActivityToHide (contexts: DocNotifyContext[], date: Timestamp): DocN
   const toHide: DocNotifyContext[] = []
 
   for (const context of contexts) {
-    const { lastUpdateTimestamp = 0, lastViewedTimestamp = 0 } = context
-    if (lastViewedTimestamp === 0) continue
-    if (lastUpdateTimestamp > lastViewedTimestamp) continue
-    if (date - lastUpdateTimestamp > hideChannelDelay) {
+    const { lastUpdate = 0, lastView = 0 } = context
+    if (lastView === 0) continue
+    if (lastUpdate > lastView) continue
+    if (date - lastUpdate > hideChannelDelay) {
       toHide.push(context)
     }
   }
@@ -515,14 +426,32 @@ async function OnUserStatus (txes: TxCUD<UserStatus>[], control: TriggerControl)
   return []
 }
 
-function JoinChannelTypeMatch (originTx: Tx, _: Doc, person: Ref<Person>, user: PersonId[]): boolean {
-  if (user.includes(originTx.modifiedBy)) return false
-  if (originTx._class !== core.class.TxUpdateDoc) return false
+const JoinChannelTypeMatch: TypeMatchFunc = (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _object: Doc,
+  doc: Doc,
+  receiver: Receiver
+) => {
+  const message = _object as DocUpdateMessage
+  const author = message.createdBy ?? message.modifiedBy
 
-  const tx = originTx as TxUpdateDoc<Channel>
-  const added = combineAttributes([tx.operations], 'members', '$push', '$each')
+  if (receiver.socialIds.includes(author)) {
+    return false
+  }
 
-  return user.some((it) => added.includes(it))
+  if (message.action === 'update') {
+    const added = message.attributeUpdates?.added ?? []
+    const set = message.attributeUpdates?.set ?? []
+
+    return added.includes(receiver.account) || set.includes(receiver.account)
+  }
+
+  if (message.action === 'create') {
+    return (doc as Channel).members.includes(receiver.account)
+  }
+
+  return false
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -530,16 +459,12 @@ export default async () => ({
   trigger: {
     ChunterTrigger,
     OnChatMessageRemoved,
-    ChatNotificationsHandler,
     OnUserStatus
   },
   function: {
     CommentRemove,
-    ChannelHTMLPresenter: channelHTMLPresenter,
-    ChannelTextPresenter: channelTextPresenter,
-    ChunterNotificationContentProvider: getChunterNotificationContent,
-    ChatMessageTextPresenter,
-    ChatMessageHtmlPresenter,
+    ChannelUrlPresenter: channelURLPresenter,
+    ChannelTitlePresenter: channelTitlePresenter,
     JoinChannelTypeMatch
   }
 })

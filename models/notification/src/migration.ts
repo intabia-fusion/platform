@@ -229,8 +229,8 @@ export async function migrateDuplicateContexts (client: MigrationClient): Promis
       const existContext = contextByUser.get(key)
 
       if (existContext != null) {
-        const existLastViewedTimestamp = existContext.lastViewedTimestamp ?? 0
-        const newLastViewedTimestamp = context.lastViewedTimestamp ?? 0
+        const existLastViewedTimestamp = existContext.lastView ?? 0
+        const newLastViewedTimestamp = context.lastView ?? 0
         if (existLastViewedTimestamp > newLastViewedTimestamp) {
           toRemove.add(context._id)
         } else {
@@ -316,6 +316,26 @@ async function migrateCollaborators (client: MigrationClient): Promise<void> {
     }
   }
   client.logger.log('finished processing collaborators ', {})
+}
+
+async function migrateCommonNotificationFields (client: MigrationClient): Promise<void> {
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.CommonInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
+
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.MentionInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
+
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.ReactionInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
 }
 
 /**
@@ -856,6 +876,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrate-collaborators-v2',
         mode: 'upgrade',
         func: migrateCollaborators
+      },
+      {
+        state: 'migrate-common-notification-fields-v1',
+        mode: 'upgrade',
+        func: migrateCommonNotificationFields
       }
     ])
   },

@@ -27,7 +27,6 @@ import core, {
   WorkspaceUuid
 } from '@hcengineering/core'
 import exportPlugin from '@hcengineering/export'
-import notification from '@hcengineering/notification'
 import { generateToken } from '@hcengineering/server-token'
 import envConfig from './config'
 
@@ -71,31 +70,31 @@ export async function sendExportCompletionNotification (
 
     for (const owner of owners) {
       try {
-        const docNotifyContextId = await targetTxOps.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-          objectId: resultId,
-          objectClass: exportPlugin.class.ExportResultRecord,
-          objectSpace: core.space.Space,
-          user: owner.person,
-          isPinned: false,
-          hidden: false
-        })
-
-        await targetTxOps.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
-          user: owner.person,
-          objectId: resultId,
-          objectClass: exportPlugin.class.ExportResultRecord,
-          icon: exportPlugin.icon.Export,
-          header: exportPlugin.string.ImportCompleted,
-          message: exportPlugin.string.ImportToWorkspaceNotificationMessage,
-          props: {
-            count,
-            sourceWorkspace: sourceWsIds.uuid
-          },
-          isViewed: false,
-          archived: false,
-          docNotifyContext: docNotifyContextId,
-          types: [exportPlugin.ids.ImportedDocumentsNotification]
-        })
+        // const docNotifyContextId = await targetTxOps.createDoc(notification.class.DocNotifyContext, core.space.Space, {
+        //   objectId: resultId,
+        //   objectClass: exportPlugin.class.ExportResultRecord,
+        //   objectSpace: core.space.Space,
+        //   user: owner.person,
+        //   isPinned: false,
+        //   hidden: false
+        // })
+        //
+        // await targetTxOps.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+        //   user: owner.person,
+        //   objectId: resultId,
+        //   objectClass: exportPlugin.class.ExportResultRecord,
+        //   icon: exportPlugin.icon.Export,
+        //   header: exportPlugin.string.ImportCompleted,
+        //   message: exportPlugin.string.ImportToWorkspaceNotificationMessage,
+        //   props: {
+        //     count,
+        //     sourceWorkspace: sourceWsIds.uuid
+        //   },
+        //   isViewed: false,
+        //   archived: false,
+        //   docNotifyContext: docNotifyContextId,
+        //   types: [exportPlugin.ids.ImportedDocumentsNotification]
+        // })
       } catch (err) {
         ctx.error('Failed to create export notification for owner', { owner: owner.person, err })
       }

@@ -17,7 +17,7 @@ import { type Builder } from '@hcengineering/model'
 
 import calendar from '@hcengineering/calendar'
 import core, { type Class, type Doc } from '@hcengineering/core'
-import serverNotification from '@hcengineering/server-notification'
+import serverActivity from '@hcengineering/server-activity'
 import serverCalendar from '@hcengineering/server-calendar'
 import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
 import contact from '@hcengineering/contact'
@@ -25,12 +25,16 @@ import contact from '@hcengineering/contact'
 export { serverCalendarId } from '@hcengineering/server-calendar'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(calendar.class.Event, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverCalendar.function.ReminderHTMLPresenter
+  builder.mixin(calendar.class.Event, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverCalendar.function.ReminderUrlPresenter
   })
 
-  builder.mixin(calendar.class.Event, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverCalendar.function.ReminderTextPresenter
+  builder.mixin(calendar.class.Event, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
+    presenter: serverCalendar.function.ReminderIdentifierPresenter
+  })
+
+  builder.mixin(calendar.class.Event, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverCalendar.function.ReminderTitlePresenter
   })
 
   builder.mixin(calendar.class.Event, core.class.Class, serverCore.mixin.SearchPresenter, {

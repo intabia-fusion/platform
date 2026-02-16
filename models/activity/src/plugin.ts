@@ -23,7 +23,6 @@ import {
   type ViewAction,
   type ViewActionAvailabilityFunction
 } from '@hcengineering/view'
-import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(activityId, activity, {
   string: {
@@ -42,7 +41,6 @@ export default mergeIds(activityId, activity, {
     ReferencesFilter: '' as Resource<(message: ActivityMessage, _class?: Ref<Doc>) => boolean>
   },
   ids: {
-    ActivityNotificationGroup: '' as Ref<NotificationGroup>,
     AddReactionAction: '' as Ref<Action>,
     SaveForLaterAction: '' as Ref<Action>,
     RemoveFromLaterAction: '' as Ref<Action>,

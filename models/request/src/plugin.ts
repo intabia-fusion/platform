@@ -19,7 +19,7 @@ import { mergeIds } from '@hcengineering/platform'
 import { requestId } from '@hcengineering/request'
 import request from '@hcengineering/request-resources/src/plugin'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { NotificationGroup, NotificationType } from '@hcengineering/notification'
+import type { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
 
 export default mergeIds(requestId, request, {
   component: {
@@ -29,8 +29,8 @@ export default mergeIds(requestId, request, {
   },
   ids: {
     RequestNotificationGroup: '' as Ref<NotificationGroup>,
-    CreateRequestNotification: '' as Ref<NotificationType>,
-    RemoveRequestNotification: '' as Ref<NotificationType>
+    CreateRequestNotification: '' as Ref<TxNotificationType>,
+    RemoveRequestNotification: '' as Ref<TxNotificationType>
   },
   string: {
     Status: '' as IntlString,

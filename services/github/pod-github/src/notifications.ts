@@ -43,7 +43,8 @@ export async function createNotification (
       props: data.props,
       isViewed: false,
       archived: false,
-      docNotifyContext: docNotifyContext?._id as Ref<DocNotifyContext>
+      docNotifyContext: docNotifyContext?._id as Ref<DocNotifyContext>,
+      allowedProviders: {}
     })
   }
 }

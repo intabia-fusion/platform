@@ -15,7 +15,7 @@
 
 import { type Builder } from '@hcengineering/model'
 import view, { actionTemplates as viewTemplates, createAction, template } from '@hcengineering/model-view'
-import notification, { notificationActionTemplates } from '@hcengineering/model-notification'
+import notification from '@hcengineering/model-notification'
 import activity from '@hcengineering/activity'
 import workbench from '@hcengineering/model-workbench'
 import core from '@hcengineering/model-core'
@@ -283,52 +283,52 @@ function defineChannelActions (builder: Builder): void {
     chunter.action.LeaveChannel
   )
 
-  createAction(builder, {
-    ...notificationActionTemplates.pinContext,
-    label: chunter.string.StarChannel,
-    query: {
-      objectClass: chunter.class.Channel
-    },
-    override: [notification.action.PinDocNotifyContext]
-  })
-
-  createAction(builder, {
-    ...notificationActionTemplates.unpinContext,
-    label: chunter.string.UnstarChannel,
-    query: {
-      objectClass: chunter.class.Channel
-    }
-  })
-
-  createAction(builder, {
-    ...notificationActionTemplates.pinContext,
-    label: chunter.string.StarConversation,
-    query: {
-      objectClass: chunter.class.DirectMessage
-    }
-  })
-
-  createAction(builder, {
-    ...notificationActionTemplates.unpinContext,
-    label: chunter.string.UnstarConversation,
-    query: {
-      objectClass: chunter.class.DirectMessage
-    }
-  })
-
-  createAction(builder, {
-    ...notificationActionTemplates.pinContext,
-    query: {
-      objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
-    }
-  })
-
-  createAction(builder, {
-    ...notificationActionTemplates.unpinContext,
-    query: {
-      objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
-    }
-  })
+  // createAction(builder, {
+  //   ...notificationActionTemplates.pinContext,
+  //   label: chunter.string.StarChannel,
+  //   query: {
+  //     objectClass: chunter.class.Channel
+  //   },
+  //   override: [notification.action.PinDocNotifyContext]
+  // })
+  //
+  // createAction(builder, {
+  //   ...notificationActionTemplates.unpinContext,
+  //   label: chunter.string.UnstarChannel,
+  //   query: {
+  //     objectClass: chunter.class.Channel
+  //   }
+  // })
+  //
+  // createAction(builder, {
+  //   ...notificationActionTemplates.pinContext,
+  //   label: chunter.string.StarConversation,
+  //   query: {
+  //     objectClass: chunter.class.DirectMessage
+  //   }
+  // })
+  //
+  // createAction(builder, {
+  //   ...notificationActionTemplates.unpinContext,
+  //   label: chunter.string.UnstarConversation,
+  //   query: {
+  //     objectClass: chunter.class.DirectMessage
+  //   }
+  // })
+  //
+  // createAction(builder, {
+  //   ...notificationActionTemplates.pinContext,
+  //   query: {
+  //     objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
+  //   }
+  // })
+  //
+  // createAction(builder, {
+  //   ...notificationActionTemplates.unpinContext,
+  //   query: {
+  //     objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
+  //   }
+  // })
 
   createAction(builder, {
     action: chunter.actionImpl.OpenInSidebar,

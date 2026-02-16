@@ -16,7 +16,7 @@
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-notification'
+import { Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -38,9 +38,7 @@ export default plugin(serverHrId, {
     OnPublicHolidayCreate: '' as Resource<TriggerFunc>
   },
   function: {
-    RequestHTMLPresenter: '' as Resource<Presenter>,
-    RequestTextPresenter: '' as Resource<Presenter>,
-    PublicHolidayHTMLPresenter: '' as Resource<Presenter>,
-    PublicHolidayTextPresenter: '' as Resource<Presenter>
+    RequestTitlePresenter: '' as Resource<Presenter>,
+    PublicHolidayTitlePresenter: '' as Resource<Presenter>
   }
 })

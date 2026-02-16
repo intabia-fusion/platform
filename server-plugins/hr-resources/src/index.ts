@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact, { Contact, Employee, formatName, getName, Person } from '@hcengineering/contact'
+import contact, { Employee, formatName, getName, Person } from '@hcengineering/contact'
 import core, {
   Doc,
   PersonId,
@@ -28,18 +28,11 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
-import gmail from '@hcengineering/gmail'
 import hr, { Department, fromTzDate, PublicHoliday, Request, Staff, tzDateEqual } from '@hcengineering/hr'
-import notification, { NotificationType } from '@hcengineering/notification'
+import { NotificationType } from '@hcengineering/notification'
 import { translate } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
-import { getEmployee, getSocialStrings } from '@hcengineering/server-contact'
-import { sendEmailNotification } from '@hcengineering/server-gmail-resources'
-import {
-  getContentByTemplate,
-  getNotificationProviderControl,
-  isAllowed
-} from '@hcengineering/server-notification-resources'
+import { getEmployee } from '@hcengineering/server-contact'
 
 async function getOldDepartment (
   currentTx: TxMixin<Employee, Staff>,
@@ -266,49 +259,47 @@ async function sendEmailNotifications (
   space: Ref<Department>,
   typeId: Ref<NotificationType>
 ): Promise<void> {
-  const contacts = new Set<Ref<Contact>>()
-  const departments = await buildHierarchy(space, control)
-  for (const department of departments) {
-    if (department.subscribers === undefined) continue
-    for (const subscriber of department.subscribers) {
-      contacts.add(subscriber)
-    }
-  }
-
-  // should respect employee settings
-  const type = await control.modelDb.findOne(notification.class.NotificationType, { _id: typeId })
-  if (type === undefined) return
-  const provider = await control.modelDb.findOne(notification.class.NotificationProvider, {
-    _id: gmail.providers.EmailNotificationProvider
-  })
-  if (provider === undefined) return
-
-  const notificationControl = await getNotificationProviderControl(control.ctx, control)
-  for (const contact of contacts.values()) {
-    const socialStrings = await getSocialStrings(control, contact as Ref<Person>)
-    const allowed = isAllowed(control, socialStrings, type, provider, notificationControl)
-    if (!allowed) {
-      contacts.delete(contact)
-    }
-  }
-
-  const channels = await control.findAll(control.ctx, contact.class.Channel, {
-    provider: contact.channelProvider.Email,
-    attachedTo: { $in: Array.from(contacts) }
-  })
-
-  const socialId = (await control.findAll(control.ctx, contact.class.SocialIdentity, { key: sender }))[0]
-  if (socialId === undefined) return
-
-  const senderPerson = (await control.findAll(control.ctx, contact.class.Person, { _id: socialId.attachedTo }))[0]
-
-  const senderName = senderPerson !== undefined ? formatName(senderPerson.name, control.branding?.lastNameFirst) : ''
-  const content = await getContentByTemplate(doc, senderName, type._id, control, '')
-  if (content === undefined) return
-
-  for (const channel of channels) {
-    await sendEmailNotification(control.ctx, content.text, content.html, content.subject, channel.value)
-  }
+  // const contacts = new Set<Ref<Contact>>()
+  // const departments = await buildHierarchy(space, control)
+  // for (const department of departments) {
+  //   if (department.subscribers === undefined) continue
+  //   for (const subscriber of department.subscribers) {
+  //     contacts.add(subscriber)
+  //   }
+  // }
+  //
+  // // should respect employee settings
+  // const type = await control.modelDb.findOne(notification.class.NotificationType, { _id: typeId })
+  // if (type === undefined) return
+  // const provider = await control.modelDb.findOne(notification.class.NotificationProvider, {
+  //   _id: gmail.providers.EmailNotificationProvider
+  // })
+  // if (provider === undefined) return
+  //
+  // const notificationControl = await getNotificationProviderControl(control.ctx, control)
+  // for (const contact of contacts.values()) {
+  //   const socialStrings = await getSocialStrings(control, contact as Ref<Person>)
+  //   const allowed = isAllowed(control, socialStrings, type, provider, notificationControl)
+  //   if (!allowed) {
+  //     contacts.delete(contact)
+  //   }
+  // }
+  //
+  // const channels = await control.findAll(control.ctx, contact.class.Channel, {
+  //   provider: contact.channelProvider.Email,
+  //   attachedTo: { $in: Array.from(contacts) }
+  // })
+  // const socialId = (await control.findAll(control.ctx, contact.class.SocialIdentity, { key: sender }))[0]
+  // if (socialId === undefined) return
+  //
+  // const senderPerson = (await control.findAll(control.ctx, contact.class.Person, { _id: socialId.attachedTo }))[0]
+  // const senderName = senderPerson !== undefined ? formatName(senderPerson.name, control.branding?.lastNameFirst) : ''
+  // const content = await getContentByTemplate(doc, senderName, type._id, control, '')
+  // if (content === undefined) return
+  //
+  // for (const channel of channels) {
+  //   await sendEmailNotification(control.ctx, content.text, content.html, content.subject, channel.value)
+  // }
 }
 
 /**
@@ -350,25 +341,7 @@ export async function OnRequestRemove (txes: Tx[], control: TriggerControl): Pro
 /**
  * @public
  */
-export async function RequestHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
-  const request = doc as Request
-  const employee = (await control.findAll(control.ctx, contact.mixin.Employee, { _id: request.attachedTo }))[0]
-  const who = getName(control.hierarchy, employee, control.branding?.lastNameFirst)
-  const type = await translate(control.modelDb.getObject(request.type).label, {})
-
-  const date = tzDateEqual(request.tzDate, request.tzDueDate)
-    ? `on ${new Date(fromTzDate(request.tzDate)).toLocaleDateString()}`
-    : `from ${new Date(fromTzDate(request.tzDate)).toLocaleDateString()} to ${new Date(
-        fromTzDate(request.tzDueDate)
-      ).toLocaleDateString()}`
-
-  return `${who} - ${type.toLowerCase()} ${date}`
-}
-
-/**
- * @public
- */
-export async function RequestTextPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function RequestTitlePresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const request = doc as Request
   const employee = (await control.findAll(control.ctx, contact.mixin.Employee, { _id: request.attachedTo }))[0]
   const who = getName(control.hierarchy, employee, control.branding?.lastNameFirst)
@@ -405,21 +378,7 @@ export async function OnPublicHolidayCreate (txes: Tx[], control: TriggerControl
 /**
  * @public
  */
-export async function PublicHolidayHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
-  const holiday = doc as PublicHoliday
-  const employee = await getEmployee(control, holiday.modifiedBy)
-  if (employee === undefined) return ''
-  const who = formatName(employee.name, control.branding?.lastNameFirst)
-
-  const date = `on ${new Date(fromTzDate(holiday.date)).toLocaleDateString()}`
-
-  return `${holiday.title} ${date}<br/>${holiday.description}<br/>Set by ${who}`
-}
-
-/**
- * @public
- */
-export async function PublicHolidayTextPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function PublicHolidayTitlePresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const holiday = doc as PublicHoliday
   const employee = await getEmployee(control, holiday.modifiedBy)
   if (employee === undefined) return ''
@@ -443,9 +402,7 @@ export default async () => ({
     OnPublicHolidayCreate
   },
   function: {
-    RequestHTMLPresenter,
-    RequestTextPresenter,
-    PublicHolidayHTMLPresenter,
-    PublicHolidayTextPresenter
+    RequestTitlePresenter,
+    PublicHolidayTitlePresenter
   }
 })

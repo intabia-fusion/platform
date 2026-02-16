@@ -122,7 +122,7 @@ export function createModel (builder: Builder): void {
   )
 
   builder.createDoc(
-    notification.class.NotificationType,
+    notification.class.TxNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -132,7 +132,7 @@ export function createModel (builder: Builder): void {
       generated: false,
       group: request.ids.RequestNotificationGroup,
       label: request.string.NewRequest,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} sent you a request for the {doc}',
@@ -144,7 +144,7 @@ export function createModel (builder: Builder): void {
   )
 
   builder.createDoc(
-    notification.class.NotificationType,
+    notification.class.TxNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -154,7 +154,7 @@ export function createModel (builder: Builder): void {
       generated: false,
       group: request.ids.RequestNotificationGroup,
       label: request.string.CancelRequest,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} canceled the request for the {doc}',

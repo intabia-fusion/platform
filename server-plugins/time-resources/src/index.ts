@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
 import contact, { Employee, Person } from '@hcengineering/contact'
 
 import core, {
@@ -31,26 +30,21 @@ import core, {
   TxFactory,
   TxProcessor,
   TxUpdateDoc,
-  toIdMap,
-  Space
+  toIdMap
 } from '@hcengineering/core'
-import notification, { CommonInboxNotification } from '@hcengineering/notification'
 import { getResource } from '@hcengineering/platform'
 import type { TriggerControl } from '@hcengineering/server-core'
-import { getSocialStrings } from '@hcengineering/server-contact'
-import { ReceiverInfo, SenderInfo } from '@hcengineering/server-notification'
-import {
-  getCommonNotificationTxes,
-  getNotificationContent,
-  getNotificationProviderControl,
-  isShouldNotifyTx,
-  getSenderInfo
-} from '@hcengineering/server-notification-resources'
 import serverTime, { OnToDo, ToDoFactory } from '@hcengineering/server-time'
 import task, { makeRank } from '@hcengineering/task'
-import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@hcengineering/text-core'
 import time, { ProjectToDo, ToDo, ToDoPriority, TodoAutomationHelper, WorkSlot } from '@hcengineering/time'
 import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengineering/tracker'
+import {
+  CreateNotificationFunc,
+  CreateNotificationResult,
+  Receiver,
+  TypeMatchClient
+} from '@hcengineering/server-notification'
+import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@hcengineering/text-core'
 
 /**
  * @public
@@ -222,117 +216,6 @@ export async function OnToDoRemove (txes: Tx[], control: TriggerControl): Promis
             await control.apply(control.ctx, [outerTx])
           }
         }
-      }
-    }
-  }
-  return []
-}
-
-export async function OnToDoCreate (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
-  const hierarchy = control.hierarchy
-
-  for (const tx of txes) {
-    const createTx = tx as TxCreateDoc<ToDo>
-
-    if (!hierarchy.isDerived(createTx.objectClass, time.class.ToDo)) {
-      continue
-    }
-    if (!hierarchy.isDerived(createTx._class, core.class.TxCreateDoc)) {
-      continue
-    }
-
-    const todo = TxProcessor.createDoc2Doc(createTx)
-    const object = (await control.findAll(control.ctx, todo.attachedToClass, { _id: todo.attachedTo }))[0]
-    if (object === undefined) {
-      continue
-    }
-
-    const objectSpace = hierarchy.isDerived(object._class, core.class.Space)
-      ? (object as Space)
-      : (await control.findAll<Space>(control.ctx, core.class.Space, { _id: object.space }))[0]
-
-    if (objectSpace === undefined) {
-      control.ctx.error('No space found', { objectId: object._id, objectClass: object._class, space: object.space })
-      Analytics.handleError(
-        new Error(`No space found for object ${object._id} of class ${object._class} and space ${object.space}`)
-      )
-      continue
-    }
-
-    const currentAcc = control.ctx.contextData.account
-
-    if (
-      !hierarchy.isDerived(objectSpace._class, core.class.SystemSpace) &&
-      !objectSpace.members.includes(currentAcc.uuid) &&
-      currentAcc.primarySocialId !== core.account.System
-    ) {
-      continue
-    }
-
-    const employee = (
-      await control.findAll(control.ctx, contact.mixin.Employee, { _id: todo.user, active: true }, { limit: 1 })
-    )[0]
-    if (employee === undefined) {
-      continue
-    }
-
-    const personSpace = (
-      await control.findAll(control.ctx, contact.class.PersonSpace, { person: todo.user }, { limit: 1 })
-    )[0]
-    if (personSpace === undefined) {
-      continue
-    }
-
-    const socialIds = await getSocialStrings(control, employee._id)
-    const account = employee.personUuid
-
-    if (account == null) {
-      continue
-    }
-
-    const receiverInfo: ReceiverInfo = {
-      account,
-      socialIds,
-      space: personSpace._id,
-      employee: employee._id,
-      role: employee.role
-    }
-
-    const senderInfo: SenderInfo = await getSenderInfo(control.ctx, tx.modifiedBy, control)
-    const notificationControl = await getNotificationProviderControl(control.ctx, control)
-    const notifyResult = await isShouldNotifyTx(control, createTx, todo, receiverInfo, true, false, notificationControl)
-    const content = await getNotificationContent(tx, employee._id, senderInfo, todo, control)
-    const data: Partial<Data<CommonInboxNotification>> = {
-      ...content,
-      header: time.string.ToDo,
-      headerIcon: time.icon.Planned,
-      headerObjectId: object._id,
-      headerObjectClass: object._class,
-      messageHtml: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
-    }
-
-    const txes = await getCommonNotificationTxes(
-      control.ctx,
-      control,
-      object,
-      data,
-      receiverInfo,
-      senderInfo,
-      object._id,
-      object._class,
-      object.space,
-      createTx.modifiedOn,
-      notifyResult,
-      notification.class.CommonInboxNotification,
-      tx
-    )
-
-    await control.apply(control.ctx, txes)
-
-    const ids = txes.map((it) => it._id)
-    control.ctx.contextData.broadcast.targets.notifications = async (it) => {
-      if (ids.includes(it._id)) {
-        return { target: [receiverInfo.account] }
       }
     }
   }
@@ -780,17 +663,39 @@ async function updateIssueHandler (tx: TxUpdateDoc<Issue>, control: TriggerContr
   return res
 }
 
+const TodoCreateNotification: CreateNotificationFunc = async (
+  _client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  attachedToDoc: Doc | undefined,
+  object: Doc,
+  receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  const todo = object as ToDo
+
+  if (todo.user !== receiver.employeeRef) return undefined
+
+  // TODO: FIXME
+  // const content = await getNotificationContent(tx, employee._id, senderInfo, todo, control)
+  return {
+    header: time.string.ToDo,
+    headerIcon: time.icon.Planned,
+    headerObjectId: todo._id,
+    headerObjectClass: todo._class,
+    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
     IssueToDoFactory,
-    IssueToDoDone
+    IssueToDoDone,
+    TodoCreateNotification
   },
   trigger: {
     OnTask,
     OnToDoUpdate,
     OnToDoRemove,
-    OnToDoCreate,
     OnWorkSlotCreate,
     OnWorkSlotUpdate
   }

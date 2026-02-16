@@ -19,6 +19,8 @@ import core from '@hcengineering/model-core'
 import contact from '@hcengineering/model-contact'
 import chunter from '@hcengineering/chunter'
 import love from '@hcengineering/love'
+import { type MessageNotificationType } from '@hcengineering/notification'
+import activity from '@hcengineering/activity'
 
 import telegram from './plugin'
 
@@ -50,16 +52,17 @@ export function defineNotifications (builder: Builder): void {
     telegram.providers.TelegramNotificationProvider
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: telegram.string.NewMessage,
       generated: false,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: telegram.class.Message,
+      attachedToClass: telegram.class.Message,
       group: telegram.ids.NotificationGroup,
       defaultEnabled: false
     },
@@ -74,11 +77,7 @@ export function defineNotifications (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: telegram.providers.TelegramNotificationProvider,
-    ignoredTypes: [
-      notification.ids.CollaboratoAddNotification,
-      love.ids.InviteNotification,
-      love.ids.KnockNotification
-    ],
+    ignoredTypes: [telegram.ids.NewMessageNotification, love.ids.InviteNotification, love.ids.KnockNotification],
     enabledTypes: [chunter.ids.DMNotification, chunter.ids.ThreadNotification]
   })
 }

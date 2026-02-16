@@ -129,9 +129,7 @@
   {count}
   title={item.title}
   description={item.description}
-  secondaryNotifyMarker={context === undefined
-    ? false
-    : (context?.lastViewedTimestamp ?? 0) < (context?.lastUpdateTimestamp ?? 0)}
+  secondaryNotifyMarker={context === undefined ? false : (context?.lastView ?? 0) < (context?.lastUpdate ?? 0)}
   {actions}
   {type}
   on:click={() => {

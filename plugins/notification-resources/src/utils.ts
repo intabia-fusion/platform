@@ -133,7 +133,7 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
       ops,
       inboxNotifications.map(({ _id }) => _id)
     )
-    await ops.update(doc, { lastViewedTimestamp: Date.now() })
+    await ops.update(doc, { lastView: Date.now() })
   } finally {
     await ops.commit()
   }
@@ -167,7 +167,7 @@ export async function unReadNotifyContext (doc: DocNotifyContext): Promise<void>
         return
       }
 
-      await ops.diffUpdate(doc, { lastViewedTimestamp: createdOn - 1 })
+      await ops.diffUpdate(doc, { lastView: createdOn - 1 })
     }
   } finally {
     await ops.commit()
@@ -189,7 +189,7 @@ export async function removeContextNotifications (doc?: DocNotifyContext): Promi
     for (const notification of notifications) {
       await ops.removeDoc(notification._class, notification.space, notification._id)
     }
-    await ops.update(doc, { lastViewedTimestamp: Date.now() })
+    await ops.update(doc, { lastView: Date.now() })
   } finally {
     await ops.commit()
   }

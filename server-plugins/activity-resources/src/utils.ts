@@ -6,6 +6,7 @@ import activity, {
 import cardPlugin, { type Card, type Tag } from '@hcengineering/card'
 import { type ActivityUpdate, ActivityUpdateType } from '@hcengineering/communication-types'
 import core, {
+  type AnyAttribute,
   type ArrOf,
   type AttachedDoc,
   type Attribute,
@@ -18,15 +19,24 @@ import core, {
   type Mixin,
   type Ref,
   type RefTo,
+  type Space,
   type TxCreateDoc,
   type TxCUD,
   type TxMixin,
   TxProcessor,
-  type TxUpdateDoc
+  type TxUpdateDoc,
+  type Type
 } from '@hcengineering/core'
-import { translate } from '@hcengineering/platform'
-import { type ActivityControl, type DocObjectCache, getAllObjectTransactions } from '@hcengineering/server-activity'
+import { getResource, translate } from '@hcengineering/platform'
+import {
+  type DocObjectCache,
+  getAllObjectTransactions,
+  type IdentifierPresenter,
+  type TitlePresenter,
+  type UrlPresenter
+} from '@hcengineering/server-activity'
 import { type TriggerControl } from '@hcengineering/server-core'
+import serverActivity from '@hcengineering/server-activity'
 
 // Use 100 KB limit for attribute updates
 const valueSizeLimit = 100 * 1024 // 100 KB
@@ -100,7 +110,7 @@ function getModifiedAttributes (tx: TxCUD<Doc>, hierarchy: Hierarchy): Record<st
   return {}
 }
 
-export function getDocUpdateAction (control: ActivityControl, tx: TxCUD<Doc>): DocUpdateAction {
+export function getDocUpdateAction (control: TriggerControl, tx: TxCUD<Doc>): DocUpdateAction {
   const hierarchy = control.hierarchy
 
   if (hierarchy.isDerived(tx._class, core.class.TxCreateDoc)) {
@@ -115,17 +125,17 @@ export function getDocUpdateAction (control: ActivityControl, tx: TxCUD<Doc>): D
 }
 
 export async function getDocDiff (
-  control: ActivityControl,
+  control: TriggerControl,
   _class: Ref<Class<Doc>>,
   objectId: Ref<Doc>,
   lastTxId: Ref<TxCUD<Doc>>,
   mixin?: Ref<Mixin<Doc>>,
-  objectCache?: DocObjectCache
+  cache?: DocObjectCache
 ): Promise<{ doc?: Doc, prevDoc?: Doc }> {
   const hierarchy = control.hierarchy
 
   const objectTxes =
-    objectCache?.transactions.get(objectId) ??
+    cache?.transactions.get(objectId) ??
     (await getAllObjectTransactions(control, _class, [objectId], mixin)).get(objectId) ??
     []
 
@@ -165,7 +175,7 @@ interface AttributeDiff {
 }
 
 export async function getAttributeDiff (
-  control: ActivityControl,
+  control: TriggerControl,
   doc: Doc,
   prevDoc: Doc | undefined,
   attrKey: string,
@@ -202,7 +212,7 @@ export async function getAttributeDiff (
 
 export async function getTxAttributesUpdates (
   ctx: MeasureContext,
-  control: ActivityControl,
+  control: TriggerControl,
   tx: TxCUD<Doc>,
   object: Doc,
   objectCache?: DocObjectCache,
@@ -252,18 +262,12 @@ export async function getTxAttributesUpdates (
 
     let attrClass: Ref<Class<Doc>> | undefined = mixin
 
-    const clazz = hierarchy.findAttribute(updateObject._class, key)
+    const attribute = hierarchy.findAttribute(updateObject._class, key)
 
-    if (clazz !== undefined && 'to' in clazz.type) {
-      attrClass = clazz.type.to as Ref<Class<Doc>>
-    } else if (clazz !== undefined && hierarchy.isDerived(clazz.type._class, core.class.ArrOf)) {
-      attrClass = (clazz.type as ArrOf<Doc>).of._class
-    } else if (clazz !== undefined && 'of' in clazz?.type) {
-      attrClass = (clazz.type.of as RefTo<Doc>).to
-    }
+    attrClass = attribute != null ? getAttrClass(hierarchy, attribute) : attribute
 
-    if (attrClass == null && clazz?.type?._class !== undefined) {
-      attrClass = clazz.type._class
+    if (attrClass == null && attribute?.type?._class !== undefined) {
+      attrClass = attribute.type._class
     }
 
     if (attrClass === undefined) {
@@ -390,23 +394,15 @@ export function getCollectionAttribute (
   return undefined
 }
 
-function getAttrClass (
-  hierarchy: Hierarchy,
-  objectClass: Ref<Class<Doc>>,
-  attrKey: string
-): Ref<Class<Doc>> | undefined {
-  const clazz = hierarchy.findAttribute(objectClass, attrKey)
-
-  if (clazz === undefined) return undefined
-
-  if (hierarchy.isDerived(clazz.type._class, core.class.RefTo)) {
-    return (clazz.type as RefTo<Doc>).to
-  } else if (hierarchy.isDerived(clazz.type._class, core.class.ArrOf)) {
-    const of = (clazz.type as ArrOf<AttachedDoc>).of
+function getAttrClass (hierarchy: Hierarchy, attribute: AnyAttribute): Ref<Class<Doc>> | undefined {
+  if (hierarchy.isDerived(attribute.type._class, core.class.RefTo)) {
+    return (attribute.type as RefTo<Doc>).to
+  } else if (hierarchy.isDerived(attribute.type._class, core.class.ArrOf)) {
+    const of = (attribute.type as ArrOf<AttachedDoc>).of
     return of._class === core.class.RefTo ? (of as RefTo<Doc>).to : of._class
   }
 
-  return clazz.type._class
+  return attribute.type._class
 }
 
 export async function getNewActivityUpdates (
@@ -459,7 +455,8 @@ export async function getNewActivityUpdates (
       }
     }
 
-    const attrClass: Ref<Class<Doc>> | undefined = getAttrClass(hierarchy, mixin ?? card._class, key)
+    const attribute = hierarchy.findAttribute(mixin ?? card._class, key)
+    const attrClass: Ref<Class<Doc>> | undefined = attribute != null ? getAttrClass(hierarchy, attribute) : undefined
 
     if (attrClass === undefined) continue
     if (
@@ -481,4 +478,66 @@ export async function getNewActivityUpdates (
   }
 
   return result
+}
+
+export function isActivityDoc (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
+  const mixin = hierarchy.classHierarchyMixin(_class, activity.mixin.ActivityDoc)
+
+  return mixin !== undefined
+}
+
+export function isSpace (space: Doc, hierarchy: Hierarchy): space is Space {
+  return hierarchy.isDerived(space._class, core.class.Space)
+}
+
+export function isMarkupType (type: Ref<Class<Type<any>>>): boolean {
+  return type === core.class.TypeMarkup
+}
+
+export function isCollaborativeType (type: Ref<Class<Type<any>>>): boolean {
+  return type === core.class.TypeCollaborativeDoc
+}
+
+function getUrlPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.UrlPresenter)
+}
+
+function getIdentifierPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IdentifierPresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.IdentifierPresenter)
+}
+
+function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TitlePresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
+}
+
+export async function getDocTitle (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+  const TitlePresenter = getTitlePresenter(doc._class, control.hierarchy)
+
+  if (TitlePresenter !== undefined) {
+    return await (
+      await getResource(TitlePresenter.presenter)
+    )(doc, control)
+  }
+
+  const clazz = control.hierarchy.getClass(doc._class)
+  if (clazz.titleKey != null) {
+    return (doc as any)[clazz.titleKey] ?? undefined
+  }
+}
+
+export async function getDocIdentifier (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+  const IdentifierPresenter = getIdentifierPresenter(doc._class, control.hierarchy)
+
+  if (IdentifierPresenter === undefined) return
+  return await (
+    await getResource(IdentifierPresenter.presenter)
+  )(doc, control)
+}
+
+export async function getDocUrl (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+  const UrlPresenter = getUrlPresenter(doc._class, control.hierarchy)
+  if (UrlPresenter === undefined) return
+  return await (
+    await getResource(UrlPresenter.presenter)
+  )(doc, control)
 }

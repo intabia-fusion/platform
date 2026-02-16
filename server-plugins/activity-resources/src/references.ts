@@ -13,10 +13,9 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type ActivityReference, type UserMentionInfo } from '@hcengineering/activity'
-import contact, { type Employee, type Person } from '@hcengineering/contact'
+import activity, { type ActivityReference, type UserMentionInfo } from '@hcengineering/activity'
+import contact, { type Employee } from '@hcengineering/contact'
 import core, {
-  type AccountUuid,
   type Blob,
   type Class,
   type Data,
@@ -25,7 +24,6 @@ import core, {
   type Markup,
   type MeasureContext,
   type ModelDb,
-  type PersonId,
   type Ref,
   type Space,
   type Tx,
@@ -35,20 +33,13 @@ import core, {
   TxProcessor,
   type TxRemoveDoc,
   type TxUpdateDoc,
-  type Type,
   getClassCollaborators
 } from '@hcengineering/core'
-import notification, { type MentionInboxNotification, type NotificationType } from '@hcengineering/notification'
-import { getPerson } from '@hcengineering/server-contact'
+import notification from '@hcengineering/notification'
 import { type StorageAdapter, type TriggerControl } from '@hcengineering/server-core'
-import {
-  getAllowedProviders,
-  getCommonNotificationTxes,
-  getNotificationProviderControl,
-  getReceiversInfo,
-  type NotificationProviderControl
-} from '@hcengineering/server-notification-resources'
 import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON } from '@hcengineering/text-core'
+import { isCollaborativeType, isMarkupType } from './utils'
+import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
 
 export function isDocMentioned (doc: Ref<Doc>, content: string): boolean {
   const references = []
@@ -65,201 +56,6 @@ export function isDocMentioned (doc: Ref<Doc>, content: string): boolean {
   return false
 }
 
-export async function getPersonNotificationTxes (
-  ctx: MeasureContext,
-  reference: Data<ActivityReference>,
-  control: TriggerControl,
-  senderId: PersonId,
-  space: Ref<Space>,
-  originTx: TxCUD<Doc>,
-  notificationControl: NotificationProviderControl
-): Promise<Tx[]> {
-  const { hierarchy } = control
-  const res: Tx[] = []
-  const receiverPersonRef = reference.attachedTo as Ref<Person>
-  const info = (
-    await control.findAll<UserMentionInfo>(ctx, activity.class.UserMentionInfo, {
-      user: receiverPersonRef,
-      attachedTo: reference.attachedDocId
-    })
-  )[0]
-
-  res.push(getUpdateMentionInfoTx(control, reference, space, info))
-
-  if (
-    originTx._class === core.class.TxCreateDoc &&
-    hierarchy.isDerived(originTx.objectClass, activity.class.ActivityMessage)
-  ) {
-    return res
-  }
-
-  if (info !== undefined && hierarchy.isDerived(originTx.objectClass, activity.class.ActivityMessage)) {
-    return res
-  }
-
-  const doc = (await control.findAll(ctx, reference.srcDocClass, { _id: reference.srcDocId }))[0]
-  if (doc === undefined) return res
-  const docSpace = (await control.findAll<Space>(control.ctx, core.class.Space, { _id: space }, { limit: 1 }))[0]
-  if (docSpace === undefined) return res
-
-  const senderAccount = control.ctx.contextData.socialStringsToUsers.get(senderId)?.accountUuid
-
-  let collaborators: AccountUuid[] = []
-
-  if ([contact.mention.Everyone, contact.mention.Here].includes(reference.attachedTo as Ref<Employee>)) {
-    collaborators = await getMultipleMentionCollaborators(ctx, reference, control, doc)
-  } else {
-    const employee = (
-      await control.findAll(ctx, contact.mixin.Employee, { _id: reference.attachedTo as Ref<Employee> })
-    )[0]
-    if (employee?.personUuid != null && employee.personUuid !== senderAccount) {
-      collaborators = [employee.personUuid]
-
-      const collaboratorsTx = getCollaboratorsTxes(control, employee.personUuid, doc)
-
-      res.push(...collaboratorsTx)
-    }
-  }
-
-  const filteredCollaborators = collaborators.filter(
-    (c) => c !== senderAccount && checkSpace(c, docSpace, control, res)
-  )
-
-  if (filteredCollaborators.length === 0) return res
-  const receivers = await getReceiversInfo(ctx, filteredCollaborators, control)
-  if (receivers.length === 0) return []
-  const senderPerson = await getPerson(control, senderId)
-  const sender = {
-    socialId: senderId,
-    person: senderPerson
-  }
-  const type: NotificationType = control.modelDb.findAllSync(notification.class.NotificationType, {
-    _id: notification.ids.MentionNotificationType
-  })[0]
-  for (const receiver of receivers) {
-    const data: Omit<Data<MentionInboxNotification>, 'docNotifyContext'> = {
-      header: activity.string.MentionedYouIn,
-      messageHtml: reference.message,
-      mentionedIn: reference.attachedDocId ?? reference.srcDocId,
-      mentionedInClass: reference.attachedDocClass ?? reference.srcDocClass,
-      objectId: reference.srcDocId,
-      objectClass: reference.srcDocClass,
-      user: receiver.account,
-      isViewed: false,
-      archived: false
-    }
-
-    const allowedProviders = getAllowedProviders(control, receiver.socialIds, type, notificationControl)
-    const notifyResult = new Map(allowedProviders.map((it) => [it, [type]]))
-
-    if (notifyResult.has(notification.providers.InboxNotificationProvider)) {
-      const txes = await getCommonNotificationTxes(
-        control.ctx,
-        control,
-        doc,
-        data,
-        receiver,
-        sender,
-        reference.srcDocId,
-        reference.srcDocClass,
-        doc.space,
-        originTx.modifiedOn,
-        notifyResult,
-        notification.class.MentionInboxNotification,
-        originTx
-      )
-      res.push(...txes)
-    }
-  }
-  return res
-}
-
-function getUpdateMentionInfoTx (
-  control: TriggerControl,
-  reference: Data<ActivityReference>,
-  space: Ref<Space>,
-  info?: UserMentionInfo
-): Tx {
-  if (info === undefined) {
-    return control.txFactory.createTxCreateDoc(activity.class.UserMentionInfo, space, {
-      attachedTo: reference.attachedDocId ?? reference.srcDocId,
-      attachedToClass: reference.attachedDocClass ?? reference.srcDocClass,
-      user: reference.attachedTo as Ref<Person>,
-      content: reference.message,
-      collection: 'mentions'
-    })
-  }
-
-  return control.txFactory.createTxUpdateDoc(info._class, info.space, info._id, {
-    content: reference.message
-  })
-}
-
-async function getMultipleMentionCollaborators (
-  ctx: MeasureContext,
-  reference: Data<ActivityReference>,
-  control: TriggerControl,
-  doc: Doc
-): Promise<AccountUuid[]> {
-  const { hierarchy, modelDb } = control
-  const personRef = reference.attachedTo as Ref<Person>
-
-  const classCollaborators = getClassCollaborators(modelDb, hierarchy, doc._class)
-
-  if (classCollaborators === undefined) return []
-  const collaborators = (
-    await control.findAll(ctx, core.class.Collaborator, {
-      attachedTo: doc._id
-    })
-  ).map((it) => it.collaborator)
-
-  if (collaborators.length === 0) return []
-  const statuses = Array.from(control.userStatusMap.values())
-
-  return personRef === contact.mention.Here
-    ? collaborators.filter((it) => statuses.some((s) => s.online && s.user === it))
-    : collaborators
-}
-
-function checkSpace (account: AccountUuid, space: Space, control: TriggerControl, res: Tx[]): boolean {
-  const isMember = space.members.includes(account)
-
-  if (space.private) {
-    return isMember
-  }
-
-  if (!isMember) {
-    res.push(control.txFactory.createTxUpdateDoc(space._class, space.space, space._id, { $push: { members: account } }))
-  }
-
-  return true
-}
-
-function getCollaboratorsTxes (control: TriggerControl, receiver: AccountUuid, object?: Doc): Tx[] {
-  const res: Tx[] = []
-
-  if (object !== undefined) {
-    const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, object.space, {
-      attachedTo: object._id,
-      collaborator: receiver,
-      attachedToClass: object._class,
-      collection: 'collaborators'
-    })
-
-    res.push(tx)
-  }
-
-  return res
-}
-
-function isMarkupType (type: Ref<Class<Type<any>>>): boolean {
-  return type === core.class.TypeMarkup
-}
-
-function isCollaborativeType (type: Ref<Class<Type<any>>>): boolean {
-  return type === core.class.TypeCollaborativeDoc
-}
-
 async function getCreateReferencesTxes (
   ctx: MeasureContext,
   control: TriggerControl,
@@ -268,8 +64,7 @@ async function getCreateReferencesTxes (
   createdDoc: Doc,
   srcDocId: Ref<Doc>,
   srcDocClass: Ref<Class<Doc>>,
-  srcDocSpace: Ref<Space>,
-  originTx: TxCUD<Doc>
+  srcDocSpace: Ref<Space>
 ): Promise<Tx[]> {
   const attachedDocId = createdDoc._id
   const attachedDocClass = createdDoc._class
@@ -302,7 +97,7 @@ async function getCreateReferencesTxes (
     ? (srcDocId as Ref<Space>)
     : srcDocSpace
 
-  return await getReferencesTxes(ctx, control, txFactory, refs, refSpace, [], [], originTx)
+  return await getReferencesTxes(control, txFactory, refs, refSpace, [], [])
 }
 
 async function getUpdateReferencesTxes (
@@ -313,8 +108,7 @@ async function getUpdateReferencesTxes (
   updatedDoc: Doc,
   srcDocId: Ref<Doc>,
   srcDocClass: Ref<Class<Doc>>,
-  srcDocSpace: Ref<Space>,
-  originTx: TxCUD<Doc>
+  srcDocSpace: Ref<Space>
 ): Promise<Tx[]> {
   const attachedDocId = updatedDoc._id
   const attachedDocClass = updatedDoc._class
@@ -362,7 +156,7 @@ async function getUpdateReferencesTxes (
       ? (srcDocId as Ref<Space>)
       : srcDocSpace
 
-    return await getReferencesTxes(ctx, control, txFactory, references, refSpace, current, userMentions, originTx)
+    return await getReferencesTxes(control, txFactory, references, refSpace, current, userMentions)
   }
 
   return []
@@ -400,16 +194,40 @@ export function getReferencesData (
 }
 
 async function createReferenceTxes (
-  ctx: MeasureContext,
   control: TriggerControl,
-  txFactory: TxFactory,
   ref: Data<ActivityReference>,
-  space: Ref<Space>,
-  originTx: TxCUD<Doc>,
-  notificationControl: NotificationProviderControl
+  space: Ref<Space>
 ): Promise<Tx[]> {
   if (control.hierarchy.isDerived(ref.attachedToClass, contact.class.Person)) {
-    return await getPersonNotificationTxes(ctx, ref, control, txFactory.account, space, originTx, notificationControl)
+    const employee = (
+      await control.findAll(control.ctx, contact.mixin.Employee, { _id: ref.attachedTo as Ref<Employee> })
+    )[0]
+    const account = employee?.personUuid
+    if (account == null) return []
+
+    const res: Tx[] = []
+    const collaborator = (
+      await control.findAll(control.ctx, core.class.Collaborator, { collaborator: account, attachedTo: ref.srcDocId })
+    )[0]
+
+    if (collaborator == null) {
+      const srcDoc = (await control.findAll(control.ctx, ref.srcDocClass, { _id: ref.srcDocId }))[0]
+      if (srcDoc != null) {
+        res.push(...getAddCollaboratorsTxes(srcDoc._id, srcDoc._class, srcDoc.space, control, [account]))
+      }
+    }
+
+    const spaceDoc = (await control.findAll(control.ctx, core.class.Space, { _id: space }))[0]
+    if (spaceDoc != null && !spaceDoc.private && !spaceDoc.members.includes(account)) {
+      res.push(
+        control.txFactory.createTxUpdateDoc(spaceDoc._class, spaceDoc.space, spaceDoc._id, {
+          $push: { members: account }
+        })
+      )
+      return res
+    }
+
+    return res
   }
 
   const refTx = control.txFactory.createTxCreateDoc(activity.class.ActivityReference, space, ref)
@@ -418,50 +236,17 @@ async function createReferenceTxes (
   return [tx]
 }
 
-async function getRemoveMentionTxes (
-  control: TriggerControl,
-  mention: UserMentionInfo,
-  originTx: TxCUD<Doc>
-): Promise<Tx[]> {
-  const res: Tx[] = []
-  res.push(control.txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id))
-
-  if (control.hierarchy.isDerived(originTx.objectClass, activity.class.ActivityMessage)) {
-    const _id = originTx.objectId as Ref<ActivityMessage>
-    const person = (
-      await control.findAll(control.ctx, contact.mixin.Employee, { _id: mention.user as Ref<Employee> })
-    )[0]
-    if (person?.personUuid !== undefined) {
-      const activityNotification = await control.findAll(control.ctx, notification.class.ActivityInboxNotification, {
-        attachedTo: _id,
-        user: person.personUuid
-      })
-      const mentionNotifications = await control.findAll(control.ctx, notification.class.MentionInboxNotification, {
-        mentionedIn: _id,
-        user: person.personUuid
-      })
-      res.push(
-        ...activityNotification
-          .filter((it) => it.types?.length === 1 && it.types[0] === notification.ids.MentionNotificationType)
-          .map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
-      )
-
-      res.push(...mentionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-    }
-  }
-
-  return res
+async function getRemoveMentionTxes (control: TriggerControl, mention: UserMentionInfo): Promise<Tx[]> {
+  return [control.txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id)]
 }
 
 async function getReferencesTxes (
-  ctx: MeasureContext,
   control: TriggerControl,
   txFactory: TxFactory,
   references: Data<ActivityReference>[],
   space: Ref<Space>,
   current: ActivityReference[],
-  mentions: UserMentionInfo[],
-  originTx: TxCUD<Doc>
+  mentions: UserMentionInfo[]
 ): Promise<Tx[]> {
   const txes: Tx[] = []
 
@@ -487,8 +272,6 @@ async function getReferencesTxes (
     }
   }
 
-  const notificationControl = await getNotificationProviderControl(ctx, control)
-
   for (const mention of mentions) {
     const refIndex = references.findIndex(
       (r) => mention.user === r.attachedTo && mention.attachedTo === r.attachedDocId
@@ -503,14 +286,14 @@ async function getReferencesTxes (
         references.splice(refIndex, 1)
       }
     } else {
-      const removeTxes = await getRemoveMentionTxes(control, mention, originTx)
+      const removeTxes = await getRemoveMentionTxes(control, mention)
       txes.push(...removeTxes)
     }
   }
 
   // Add missing references
   for (const ref of references) {
-    txes.push(...(await createReferenceTxes(ctx, control, txFactory, ref, space, originTx, notificationControl)))
+    txes.push(...(await createReferenceTxes(control, ref, space)))
   }
 
   return txes
@@ -614,8 +397,7 @@ async function ActivityReferenceCreate (tx: TxCUD<Doc>, control: TriggerControl)
     doc,
     target.objectId,
     target.objectClass,
-    tx.objectSpace,
-    tx
+    tx.objectSpace
   )
 
   if (txes.length !== 0) {
@@ -662,8 +444,7 @@ async function ActivityReferenceUpdate (tx: TxCUD<Doc>, control: TriggerControl)
     doc,
     target.objectId,
     target.objectClass,
-    tx.objectSpace,
-    tx
+    tx.objectSpace
   )
 
   if (txes.length !== 0) {
@@ -698,9 +479,6 @@ async function ActivityReferenceRemove (tx: TxCUD<Doc>, control: TriggerControl)
   return []
 }
 
-/**
- * @public
- */
 export async function ReferenceTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 

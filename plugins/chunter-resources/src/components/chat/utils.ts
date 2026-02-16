@@ -217,11 +217,11 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
       return 1
     }
 
-    const hasNewMessages1 = (context1.lastUpdateTimestamp ?? 0) > (context1.lastViewedTimestamp ?? 0)
-    const hasNewMessages2 = (context2.lastUpdateTimestamp ?? 0) > (context2.lastViewedTimestamp ?? 0)
+    const hasNewMessages1 = (context1.lastUpdate ?? 0) > (context1.lastView ?? 0)
+    const hasNewMessages2 = (context2.lastUpdate ?? 0) > (context2.lastView ?? 0)
 
     if (hasNewMessages1 && hasNewMessages2) {
-      return (context2.lastUpdateTimestamp ?? 0) - (context1.lastUpdateTimestamp ?? 0)
+      return (context2.lastUpdate ?? 0) - (context1.lastUpdate ?? 0)
     }
 
     if (hasNewMessages1 && !hasNewMessages2) {
@@ -232,7 +232,7 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
       return 1
     }
 
-    return (context2.lastUpdateTimestamp ?? 0) - (context1.lastUpdateTimestamp ?? 0)
+    return (context2.lastUpdate ?? 0) - (context1.lastUpdate ?? 0)
   })
 }
 
@@ -347,7 +347,7 @@ export async function readActivityChannels (contexts: DocNotifyContext[]): Promi
           .filter(({ _class }) => _class === notification.class.ActivityInboxNotification)
           .map(({ _id }) => _id)
       )
-      await ops.update(context, { lastViewedTimestamp: Date.now() })
+      await ops.update(context, { lastView: Date.now() })
     }
   } finally {
     await ops.commit()

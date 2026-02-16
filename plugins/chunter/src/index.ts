@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { ActivityMessage } from '@hcengineering/activity'
+import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import type { Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
+import { MessageNotificationType } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
@@ -204,10 +204,10 @@ export default plugin(chunterId, {
     SummarizeMessages: '' as IntlString
   },
   ids: {
-    DMNotification: '' as Ref<NotificationType>,
-    ThreadNotification: '' as Ref<NotificationType>,
-    ChannelNotification: '' as Ref<NotificationType>,
-    JoinChannelNotification: '' as Ref<NotificationType>,
+    DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
+    ThreadNotification: '' as Ref<MessageNotificationType<ThreadMessage>>,
+    ChannelNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
+    JoinChannelNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     ChatWidget: '' as Ref<Widget>
   },
   app: {

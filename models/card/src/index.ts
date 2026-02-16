@@ -458,46 +458,47 @@ export function createModel (builder: Builder): void {
     card.ids.CardNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: card.string.CardUpdated,
-      group: card.ids.CardNotificationGroup,
-      txClasses: [core.class.TxUpdateDoc, core.class.TxMixin],
-      objectClass: card.class.Card,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title} updated'
-      }
-    },
-    card.ids.CardNotification
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: card.string.CardUpdated,
+  //     group: card.ids.CardNotificationGroup,
+  //     txClasses: [core.class.TxUpdateDoc, core.class.TxMixin],
+  //     objectClass: card.class.Card,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p><p>{link}</p>',
+  //       subjectTemplate: '{title} updated'
+  //     }
+  //   },
+  //   card.ids.CardNotification
+  // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: chunter.string.Comments,
-      group: card.ids.CardNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: chunter.class.ChatMessage,
-      attachedToClass: card.class.Card,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'New message in {title} ({link}) from {senderName}: {message}',
-        htmlTemplate: '<p>New message in <b>{title}</b> <b>from {senderName}</b>: {message}<p>{link}</p>',
-        subjectTemplate: 'New message from {senderName} in {title}'
-      }
-    },
-    card.ids.CardMessageNotification
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: chunter.string.Comments,
+  //     group: card.ids.CardNotificationGroup,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: chunter.class.ChatMessage,
+  //     attachedToClass: card.class.Card,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: 'New message in {title} ({link}) from {senderName}: {message}',
+  //       htmlTemplate: '<p>New message in <b>{title}</b> <b>from {senderName}</b>: {message}<p>{link}</p>',
+  //       subjectTemplate: 'New message from {senderName} in {title}'
+  //     }
+  //   },
+  //   card.ids.CardMessageNotification
+  // )
 
   builder.createDoc(view.class.Viewlet, core.space.Model, {
     attachTo: card.class.CardSpace,

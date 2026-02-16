@@ -14,7 +14,7 @@
 //
 
 import { type Doc, type Ref } from '@hcengineering/core'
-import { type NotificationType } from '@hcengineering/notification'
+import { type NotificationGroup, type MessageNotificationType } from '@hcengineering/notification'
 import { type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type ViewAction } from '@hcengineering/view'
@@ -45,7 +45,8 @@ export default mergeIds(loveId, love, {
   },
   ids: {
     Settings: '' as Ref<Doc>,
-    MeetingMinutesChatNotification: '' as Ref<NotificationType>
+    LoveNotificationGroup: '' as Ref<NotificationGroup>,
+    MeetingMinutesChatNotification: '' as Ref<MessageNotificationType>
   },
   completion: {
     MeetingMinutesQuery: '' as Resource<ObjectSearchFactory>,

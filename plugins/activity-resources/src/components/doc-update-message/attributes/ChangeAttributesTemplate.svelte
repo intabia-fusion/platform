@@ -67,7 +67,15 @@
       {#if value !== null && typeof value === 'object'}
         <ObjectPresenter {value} shouldShowAvatar={false} accent />
       {:else}
-        <svelte:component this={attributeModel.presenter} {value} shouldShowAvatar={false} accent kind="list-header" />
+        <svelte:component
+          this={attributeModel.presenter}
+          {value}
+          shouldShowAvatar={false}
+          accent
+          kind="list-header"
+          readonly
+          size="small"
+        />
       {/if}
     </span>
   {/each}

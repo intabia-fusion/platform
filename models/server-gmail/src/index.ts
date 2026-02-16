@@ -18,10 +18,10 @@ import { type Builder } from '@hcengineering/model'
 import contact from '@hcengineering/contact'
 import core, { type Class, type Doc } from '@hcengineering/core'
 import gmail from '@hcengineering/gmail'
-import notification from '@hcengineering/notification'
+import notification, { type NotificationType } from '@hcengineering/notification'
 import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
 import serverGmail from '@hcengineering/server-gmail'
-import serverNotification from '@hcengineering/server-notification'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
 export { serverGmailId } from '@hcengineering/server-gmail'
 
 export function createModel (builder: Builder): void {
@@ -42,9 +42,14 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(gmail.ids.EmailNotification, notification.class.NotificationType, serverNotification.mixin.TypeMatch, {
-    func: serverGmail.function.IsIncomingMessageTypeMatch
-  })
+  builder.mixin<NotificationType, TypeMatch>(
+    gmail.ids.EmailNotification,
+    notification.class.MessageNotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverGmail.function.IsIncomingMessageTypeMatch
+    }
+  )
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverGmail.trigger.NotificationsHandler,

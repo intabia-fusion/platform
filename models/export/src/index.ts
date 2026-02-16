@@ -79,25 +79,26 @@ export function createModel (builder: Builder): void {
     exportPlugin.ids.ImportNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: exportPlugin.string.ImportedDocuments,
-      group: exportPlugin.ids.ImportNotificationGroup,
-      txClasses: [],
-      objectClass: exportPlugin.class.ExportResultRecord,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    exportPlugin.ids.ImportedDocumentsNotification
-  )
+  //TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: exportPlugin.string.ImportedDocuments,
+  //     group: exportPlugin.ids.ImportNotificationGroup,
+  //     txClasses: [],
+  //     objectClass: exportPlugin.class.ExportResultRecord,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p><p>{link}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   exportPlugin.ids.ImportedDocumentsNotification
+  // )
 
   builder.createDoc(
     presentation.class.ComponentPointExtension,

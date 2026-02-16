@@ -1,4 +1,4 @@
-import notification from '@hcengineering/notification'
+import notification, { type TxNotificationType } from '@hcengineering/notification'
 import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 
@@ -6,26 +6,17 @@ import activity from './plugin'
 import { defineCollaborators } from '@hcengineering/model-core'
 
 export function buildNotifications (builder: Builder): void {
-  builder.createDoc(
-    notification.class.NotificationGroup,
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
     core.space.Model,
     {
-      label: activity.string.Activity,
-      icon: activity.icon.Activity
-    },
-    activity.ids.ActivityNotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
+      hidden: true,
       generated: false,
       label: activity.string.Reactions,
-      group: activity.ids.ActivityNotificationGroup,
+      group: notification.ids.NotificationGroup,
       txClasses: [core.class.TxCreateDoc],
       objectClass: activity.class.Reaction,
+      attachedToClass: activity.class.ActivityMessage,
       defaultEnabled: false,
       templates: {
         textTemplate: '{sender} reacted to {doc}: {reaction}',

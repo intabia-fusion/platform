@@ -2,13 +2,15 @@ import { type FindOptions } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import calendar from '@hcengineering/model-calendar'
 import contact from '@hcengineering/model-contact'
-import core from '@hcengineering/model-core'
+import core, { defineCollaborators } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
 import { type Review } from '@hcengineering/recruit'
 import { type BuildModelKey } from '@hcengineering/view'
-import recruit from './plugin'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
+import activity from '@hcengineering/activity'
+
+import recruit from './plugin'
 
 export const reviewTableOptions: FindOptions<Review> = {
   lookup: {
@@ -38,6 +40,8 @@ export function createReviewModel (builder: Builder): void {
   builder.mixin(recruit.class.Review, core.class.Class, view.mixin.CollectionEditor, {
     editor: recruit.component.Reviews
   })
+
+  defineCollaborators(builder, recruit.class.Review, { fields: ['createdBy'] })
 
   createTableViewlet(builder)
 
@@ -123,18 +127,20 @@ export function createReviewModel (builder: Builder): void {
     recruit.ids.ReviewNotificationGroup
   )
 
-  generateClassNotificationTypes(builder, recruit.class.Review, recruit.ids.ReviewNotificationGroup, [], ['comments'])
-
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
       label: recruit.string.NewReview,
       group: recruit.ids.ReviewNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
+      match: {
+        action: 'create'
+      },
       objectClass: recruit.class.Review,
+      attachedToClass: recruit.class.Review,
+      messageClass: activity.class.DocUpdateMessage,
       defaultEnabled: true,
       templates: {
         textTemplate: '{body}',
@@ -144,6 +150,8 @@ export function createReviewModel (builder: Builder): void {
     },
     recruit.ids.ReviewCreateNotification
   )
+
+  generateClassNotificationTypes(builder, recruit.class.Review, recruit.ids.ReviewNotificationGroup, [], ['comments'])
 }
 
 function createTableViewlet (builder: Builder): void {

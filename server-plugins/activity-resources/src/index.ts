@@ -17,8 +17,7 @@ import activity, {
   type ActivityMessage,
   type ActivityMessageControl,
   type DocAttributeUpdates,
-  type DocUpdateMessage,
-  type Reaction
+  type DocUpdateMessage
 } from '@hcengineering/activity'
 import core, {
   type PersonId,
@@ -31,183 +30,40 @@ import core, {
   matchQuery,
   type MeasureContext,
   type Ref,
-  type Space,
   type Tx,
   type TxCreateDoc,
   type TxCUD,
   TxProcessor,
-  type TxRemoveDoc
+  type Markup
 } from '@hcengineering/core'
-import { getAccountBySocialId, getPerson } from '@hcengineering/server-contact'
-import notification, {
-  type NotificationContent,
-  type NotificationType,
-  type ReactionInboxNotification
-} from '@hcengineering/notification'
-import { getMetadata, getResource, translate } from '@hcengineering/platform'
-import { type ActivityControl, type DocObjectCache } from '@hcengineering/server-activity'
+import notification from '@hcengineering/notification'
+import { getMetadata, translate } from '@hcengineering/platform'
+import { type DocObjectCache, getDocObjectCache } from '@hcengineering/server-activity'
 import type { TriggerControl } from '@hcengineering/server-core'
-import {
-  createCollaboratorNotifications,
-  getAllowedProviders,
-  getCommonNotificationTxes,
-  getNotificationProviderControl,
-  getReceiversInfo,
-  getTextPresenter
-} from '@hcengineering/server-notification-resources'
 import card, { type Card } from '@hcengineering/card'
 import serverCard from '@hcengineering/server-card'
 
 import { ReferenceTrigger } from './references'
-import { getAttrName, getCollectionAttribute, getDocUpdateAction, getTxAttributesUpdates } from './utils'
+import {
+  getAttrName,
+  getCollectionAttribute,
+  getDocUpdateAction,
+  getTxAttributesUpdates,
+  isSpace,
+  isActivityDoc,
+  getDocTitle,
+  getDocIdentifier,
+  getDocUrl
+} from './utils'
 import { generateActivity } from './newActivity'
 
-export async function OnReactionChanged (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  for (const tx of txes) {
-    const innerTx = tx as TxCUD<Reaction>
-
-    if (innerTx._class === core.class.TxCreateDoc) {
-      const txes = await createReactionNotifications(innerTx as TxCreateDoc<Reaction>, control)
-
-      await control.apply(control.ctx, txes)
-      continue
-    }
-
-    if (innerTx._class === core.class.TxRemoveDoc) {
-      const txes = await removeReactionNotifications(innerTx, control)
-      await control.apply(control.ctx, txes)
-      continue
-    }
-  }
-
-  return []
-}
-
-export async function removeReactionNotifications (tx: TxRemoveDoc<Reaction>, control: TriggerControl): Promise<Tx[]> {
-  const res: Tx[] = []
-
-  const n = await control.findAll(control.ctx, notification.class.ReactionInboxNotification, { ref: tx.objectId })
-
-  for (const nn of n) {
-    res.push(control.txFactory.createTxRemoveDoc(nn._class, nn.space, nn._id))
-  }
-  return res
-}
-
-export async function createReactionNotifications (tx: TxCreateDoc<Reaction>, control: TriggerControl): Promise<Tx[]> {
-  if (tx.attachedTo === undefined) return []
-
-  const reaction = TxProcessor.createDoc2Doc(tx)
-  const parentMessage = (
-    await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: reaction.attachedTo })
-  )[0]
-
-  if (parentMessage === undefined) return []
-
-  const doc = (await control.findAll(control.ctx, parentMessage.attachedToClass, { _id: parentMessage.attachedTo }))[0]
-
-  if (doc === undefined) return []
-
-  const userSocialId = parentMessage.createdBy
-
-  if (userSocialId === undefined || userSocialId === core.account.System || userSocialId === tx.modifiedBy) return []
-
-  const account = await getAccountBySocialId(control, userSocialId)
-
-  if (account == null) return []
-
-  const receiver = (await getReceiversInfo(control.ctx, [account], control))[0]
-  if (receiver === undefined) return []
-
-  const res: Tx[] = []
-
-  const content = await reactionNotificationContentProvider(parentMessage, reaction, control)
-  const data: Partial<Data<ReactionInboxNotification>> = {
-    emoji: reaction.emoji,
-    attachedTo: parentMessage._id,
-    attachedToClass: parentMessage._class,
-    ref: reaction._id,
-    ...content
-  }
-
-  const senderPerson = await getPerson(control, tx.createdBy ?? tx.modifiedBy)
-  const sender = {
-    socialId: tx.createdBy ?? tx.modifiedBy,
-    person: senderPerson
-  }
-  const type: NotificationType = control.modelDb.findAllSync(notification.class.NotificationType, {
-    _id: activity.ids.AddReactionNotification
-  })[0]
-
-  const notificationControl = await getNotificationProviderControl(control.ctx, control)
-  const allowedProviders = getAllowedProviders(control, receiver.socialIds, type, notificationControl)
-  const notifyResult = new Map(allowedProviders.map((it) => [it, [type]]))
-
-  const txes = await getCommonNotificationTxes(
-    control.ctx,
-    control,
-    doc,
-    data,
-    receiver,
-    sender,
-    doc._id,
-    doc._class,
-    doc.space,
-    tx.modifiedOn,
-    notifyResult,
-    notification.class.ReactionInboxNotification,
-    tx
-  )
-  res.push(...txes)
-
-  return res
-}
-
-async function reactionNotificationContentProvider (
-  message: ActivityMessage,
-  reaction: Reaction,
-  control: TriggerControl
-): Promise<NotificationContent> {
-  const presenter = getTextPresenter(message._class, control.hierarchy)
-
-  let text = ''
-
-  if (presenter !== undefined) {
-    const fn = await getResource(presenter.presenter)
-
-    text = await fn(message, control)
-  } else {
-    text = await translate(activity.string.Message, {})
-  }
-
-  return {
-    title: activity.string.ReactionNotificationTitle,
-    body: activity.string.ReactionNotificationBody,
-    data: reaction.emoji,
-    intlParams: {
-      title: text,
-      reaction: reaction.emoji
-    }
-  }
-}
-
-function isActivityDoc (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
-  const mixin = hierarchy.classHierarchyMixin(_class, activity.mixin.ActivityDoc)
-
-  return mixin !== undefined
-}
-
-function isSpace (space: Doc, hierarchy: Hierarchy): space is Space {
-  return hierarchy.isDerived(space._class, core.class.Space)
-}
-
-function getDocUpdateMessageTx (
-  control: ActivityControl,
+async function getDocUpdateMessageTx (
+  control: TriggerControl,
   originTx: TxCUD<Doc>,
   object: Doc,
   rawMessage: Data<DocUpdateMessage>,
   modifiedBy?: PersonId
-): TxCUD<DocUpdateMessage> {
+): Promise<TxCUD<DocUpdateMessage>> {
   const { hierarchy } = control
   const space = isSpace(object, hierarchy) ? object._id : object.space
   const innerTx = control.txFactory.createTxCreateDoc(
@@ -218,6 +74,9 @@ function getDocUpdateMessageTx (
     originTx.modifiedOn,
     modifiedBy ?? originTx.modifiedBy
   )
+
+  const dum = TxProcessor.createDoc2Doc(innerTx)
+  innerTx.attributes.message = await getDocUpdateMessageMarkup(dum, control)
 
   return control.txFactory.createTxCollectionCUD(
     rawMessage.attachedToClass,
@@ -232,7 +91,7 @@ function getDocUpdateMessageTx (
 
 export async function pushDocUpdateMessages (
   ctx: MeasureContext,
-  control: ActivityControl,
+  control: TriggerControl,
   res: TxCUD<DocUpdateMessage>[],
   object: Doc | undefined,
   tx: TxCUD<Doc>,
@@ -248,7 +107,7 @@ export async function pushDocUpdateMessages (
     return res
   }
 
-  const rawMessage: Data<DocUpdateMessage> = {
+  const raw: Data<DocUpdateMessage> = {
     txId: tx._id,
     attachedTo: object._id,
     attachedToClass: object._class,
@@ -256,33 +115,35 @@ export async function pushDocUpdateMessages (
     objectClass: tx.objectClass,
     action: getDocUpdateAction(control, tx),
     collection: 'docUpdateMessages',
-    updateCollection: tx.collection
+    updateCollection: tx.collection,
+    attachedToTitle: await getDocTitle(control, object),
+    attachedToIdentifier: await getDocIdentifier(control, object),
+    attachedToUrl: await getDocUrl(control, object)
   }
 
   if (tx.collection != null && tx._class === core.class.TxCreateDoc) {
-    const clazz = control.hierarchy.findClass(tx.objectClass)
     const collectionDoc = TxProcessor.createDoc2Doc(tx as TxCreateDoc<Doc>)
-    rawMessage.title = clazz?.titleKey != null ? (collectionDoc as any)[clazz.titleKey] : undefined
-    rawMessage.attributes = clazz?.titleKey != null ? undefined : (tx as TxCreateDoc<Doc>).attributes
+    raw.objectTitle = await getDocTitle(control, collectionDoc)
+    raw.objectAttributes = raw.objectTitle != null ? undefined : (tx as TxCreateDoc<Doc>).attributes
   } else if (tx.collection != null && tx._class === core.class.TxRemoveDoc) {
-    const clazz = control.hierarchy.findClass(tx.objectClass)
     const collectionDoc = control.removedMap.get(tx.objectId)
 
-    rawMessage.title =
-      clazz?.titleKey != null && collectionDoc != null ? (collectionDoc as any)[clazz.titleKey] : undefined
-    rawMessage.attributes = clazz?.titleKey != null ? undefined : collectionDoc
+    if (collectionDoc != null) {
+      raw.objectTitle = await getDocTitle(control, collectionDoc)
+      raw.objectAttributes = raw.objectTitle != null ? undefined : collectionDoc
+    }
   }
 
   const attributesUpdates = await getTxAttributesUpdates(ctx, control, tx, object, objectCache, controlRules)
 
   for (const attributeUpdates of attributesUpdates) {
     res.push(
-      getDocUpdateMessageTx(
+      await getDocUpdateMessageTx(
         control,
         tx,
         object,
         {
-          ...rawMessage,
+          ...raw,
           attributeUpdates
         },
         modifiedBy
@@ -290,8 +151,8 @@ export async function pushDocUpdateMessages (
     )
   }
 
-  if (attributesUpdates.length === 0 && rawMessage.action !== 'update') {
-    res.push(getDocUpdateMessageTx(control, tx, object, rawMessage, modifiedBy))
+  if (attributesUpdates.length === 0 && raw.action !== 'update') {
+    res.push(await getDocUpdateMessageTx(control, tx, object, raw, modifiedBy))
   }
 
   return res
@@ -300,9 +161,9 @@ export async function pushDocUpdateMessages (
 export async function generateDocUpdateMessages (
   ctx: MeasureContext,
   tx: TxCUD<Doc>,
-  control: ActivityControl,
+  control: TriggerControl,
   res: TxCUD<DocUpdateMessage>[] = [],
-  objectCache?: DocObjectCache,
+  cache?: DocObjectCache,
   skipAttached: boolean = false
 ): Promise<TxCUD<DocUpdateMessage>[]> {
   if (tx.space === core.space.DerivedTx) {
@@ -341,13 +202,13 @@ export async function generateDocUpdateMessages (
   }
 
   if (tx.attachedTo !== undefined && tx.attachedToClass !== undefined && !skipAttached) {
-    res = await generateDocUpdateMessages(ctx, tx, control, res, objectCache, true)
+    res = await generateDocUpdateMessages(ctx, tx, control, res, cache, true)
     if ([core.class.TxCreateDoc, core.class.TxRemoveDoc].includes(tx._class)) {
       if (!isActivityDoc(tx.attachedToClass, control.hierarchy)) {
         return res
       }
 
-      let doc = objectCache?.docs?.get(tx.attachedTo)
+      let doc = cache?.docs?.get(tx.attachedTo)
       if (doc === undefined) {
         doc = (await control.findAll(ctx, tx.attachedToClass, { _id: tx.attachedTo }, { limit: 1 }))[0]
       }
@@ -360,12 +221,12 @@ export async function generateDocUpdateMessages (
       }
 
       if (doc !== undefined) {
-        objectCache?.docs?.set(tx.attachedTo, doc)
+        cache?.docs?.set(tx.attachedTo, doc)
         return await ctx.with(
           'pushDocUpdateMessages',
           {},
           async (ctx) =>
-            await pushDocUpdateMessages(ctx, control, res, doc ?? undefined, tx, undefined, objectCache, controlRules)
+            await pushDocUpdateMessages(ctx, control, res, doc ?? undefined, tx, undefined, cache, controlRules)
         )
       }
     }
@@ -376,22 +237,22 @@ export async function generateDocUpdateMessages (
     case core.class.TxCreateDoc: {
       const doc = TxProcessor.createDoc2Doc(tx as TxCreateDoc<Doc>)
       return await ctx.with('pushDocUpdateMessages', {}, (ctx) =>
-        pushDocUpdateMessages(ctx, control, res, doc, tx, undefined, objectCache, controlRules)
+        pushDocUpdateMessages(ctx, control, res, doc, tx, undefined, cache, controlRules)
       )
     }
     case core.class.TxMixin:
     case core.class.TxUpdateDoc: {
       if (isActivityDoc(tx.objectClass, control.hierarchy)) {
-        let doc = objectCache?.docs?.get(tx.objectId)
+        let doc = cache?.docs?.get(tx.objectId)
         if (doc === undefined) {
           doc = (await control.findAll(ctx, tx.objectClass, { _id: tx.objectId }, { limit: 1 }))[0]
-          objectCache?.docs?.set(tx.objectId, doc)
+          cache?.docs?.set(tx.objectId, doc)
         }
         return await ctx.with(
           'pushDocUpdateMessages',
           {},
           async (ctx) =>
-            await pushDocUpdateMessages(ctx, control, res, doc ?? undefined, tx, undefined, objectCache, controlRules)
+            await pushDocUpdateMessages(ctx, control, res, doc ?? undefined, tx, undefined, cache, controlRules)
         )
       }
     }
@@ -413,11 +274,8 @@ async function ActivityMessagesHandler (_txes: TxCUD<Doc>[], control: TriggerCon
       )
   )
 
-  const cache: DocObjectCache = control.contextCache.get('ActivityMessagesHandler') ?? {
-    docs: new Map(),
-    transactions: new Map()
-  }
-  control.contextCache.set('ActivityMessagesHandler', cache)
+  const cache = getDocObjectCache(control)
+
   const result: Tx[] = []
   for (const tx of ltxes) {
     if (control.hierarchy.isDerived(tx.objectClass, card.class.Card) && isCommunicationEnabled) continue
@@ -435,39 +293,19 @@ async function ActivityMessagesHandler (_txes: TxCUD<Doc>[], control: TriggerCon
           generateDocUpdateMessages(ctx, tx, control, [], cache)
         )
 
-    const messages = txes.map((messageTx) => TxProcessor.createDoc2Doc(messageTx as TxCreateDoc<DocUpdateMessage>))
-
-    const notificationTxes = await control.ctx.with('createCollaboratorNotifications', {}, (ctx) =>
-      createCollaboratorNotifications(ctx, tx, control, messages)
-    )
-
-    result.push(...txes, ...notificationTxes)
+    result.push(...txes)
   }
-  if (result.length > 0) {
-    await control.apply(control.ctx, result)
-  }
-  return []
+
+  return result
 }
 
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const tx of txes) {
-    if (tx._class !== core.class.TxRemoveDoc) {
-      continue
-    }
-
-    if (control.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
-      const reactionNotification = await control.findAll(control.ctx, notification.class.ReactionInboxNotification, {
-        attachedTo: tx.objectId as Ref<ActivityMessage>
-      })
-      result.push(...reactionNotification.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-    }
+    if (tx._class !== core.class.TxRemoveDoc) continue
 
     const activityDocMixin = control.hierarchy.classHierarchyMixin(tx.objectClass, activity.mixin.ActivityDoc)
-
-    if (activityDocMixin === undefined) {
-      continue
-    }
+    if (activityDocMixin === undefined) continue
 
     const messages = await control.findAll(
       control.ctx,
@@ -515,9 +353,9 @@ async function getAttributesUpdatesText (
   return undefined
 }
 
-export async function DocUpdateMessageTextPresenter (doc: DocUpdateMessage, control: TriggerControl): Promise<string> {
+export async function getDocUpdateMessageMarkup (message: DocUpdateMessage, control: TriggerControl): Promise<Markup> {
   const { hierarchy } = control
-  const { attachedTo, attachedToClass, objectClass, objectId, action, updateCollection, attributeUpdates } = doc
+  const { attachedTo, attachedToClass, objectClass, objectId, action, updateCollection, attributeUpdates } = message
   const isOwn = attachedTo === objectId
 
   const collectionAttribute = getCollectionAttribute(hierarchy, attachedToClass, updateCollection)
@@ -556,18 +394,47 @@ async function HandleCardActivity (txes: TxCUD<Card>[], control: TriggerControl)
   return []
 }
 
+async function OnActivityMessageCreate (txes: TxCreateDoc<ActivityMessage>[], control: TriggerControl): Promise<Tx[]> {
+  const res: Tx[] = []
+  const { hierarchy } = control
+
+  for (const tx of txes) {
+    if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) continue
+    const message = TxProcessor.createDoc2Doc(tx)
+
+    if (message.attachedToTitle != null || message.attachedToIdentifier != null || message.attachedToUrl != null) { continue }
+
+    const doc = (await control.findAll(control.ctx, message.attachedToClass, { _id: message.attachedTo }))[0]
+    if (doc === undefined) continue
+
+    const attachedToTitle = await getDocTitle(control, doc)
+    const attachedToUrl = await getDocUrl(control, doc)
+    const attachedToIdentifier = await getDocIdentifier(control, doc)
+
+    if (attachedToTitle != null || attachedToUrl != null || attachedToIdentifier != null) {
+      res.push(
+        control.txFactory.createTxUpdateDoc(message._class, message.space, message._id, {
+          attachedToTitle,
+          attachedToUrl,
+          attachedToIdentifier
+        })
+      )
+    }
+  }
+
+  return res
+}
+
 export * from './references'
+export { getDocTitle, getDocUrl, getDocIdentifier } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     ReferenceTrigger,
+    OnActivityMessageCreate,
     ActivityMessagesHandler,
     OnDocRemoved,
-    OnReactionChanged,
     HandleCardActivity
-  },
-  function: {
-    DocUpdateMessageTextPresenter
   }
 })

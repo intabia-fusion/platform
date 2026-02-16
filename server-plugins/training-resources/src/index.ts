@@ -13,15 +13,14 @@
 // limitations under the License.
 //
 
-import { TrainingRequestHTMLPresenter } from './functions/TrainingRequestHTMLPresenter'
 import { TrainingRequestNotificationTypeMatch } from './functions/TrainingRequestNotificationTypeMatch'
-import { TrainingRequestTextPresenter } from './functions/TrainingRequestTextPresenter'
+import { TrainingRequestTitlePresenter, TrainingRequestUrlPresenter } from './functions/TrainingRequestPresenters'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    TrainingRequestHTMLPresenter,
     TrainingRequestNotificationTypeMatch,
-    TrainingRequestTextPresenter
+    TrainingRequestTitlePresenter,
+    TrainingRequestUrlPresenter
   }
 })

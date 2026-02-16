@@ -49,7 +49,7 @@ import document from '@hcengineering/model-document'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification, { type NotificationGroup } from '@hcengineering/notification'
+import notification, { type NotificationGroup, type TxNotificationType } from '@hcengineering/notification'
 import recruit from '@hcengineering/recruit'
 import tags from '@hcengineering/tags'
 import {
@@ -357,18 +357,17 @@ export function createModel (builder: Builder): void {
     time.ids.TimeNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       label: time.string.NewToDo,
       group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
       txClasses: [core.class.TxCreateDoc],
       objectClass: time.class.ProjectToDo,
-      onlyOwn: true,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',

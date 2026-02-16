@@ -74,7 +74,7 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
 import media from '@hcengineering/media'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
@@ -683,18 +683,19 @@ export function createModel (builder: Builder): void {
     love.viewlet.FloorMeetingMinutes
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.Chat,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      // txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: love.class.MeetingMinutes,
-      txMatch: {
-        'attributes.collection': 'messages'
+      match: {
+        collection: 'messages'
       },
       defaultEnabled: false,
       group: love.ids.LoveNotificationGroup

@@ -8,6 +8,7 @@ import serverTraining from '@hcengineering/server-training'
 import core from '@hcengineering/core'
 import notification from '@hcengineering/notification'
 import serverNotification from '@hcengineering/server-notification'
+import serverActivity from '@hcengineering/server-activity'
 
 export { serverTrainingId } from '@hcengineering/server-training/src/index'
 
@@ -17,15 +18,15 @@ export function createModel (builder: Builder): void {
     notification.class.NotificationType,
     serverNotification.mixin.TypeMatch,
     {
-      func: serverTraining.function.TrainingRequestNotificationTypeMatch
+      match: serverTraining.function.TrainingRequestNotificationTypeMatch
     }
   )
 
-  builder.mixin(training.class.TrainingRequest, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverTraining.function.TrainingRequestTextPresenter
+  builder.mixin(training.class.TrainingRequest, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverTraining.function.TrainingRequestTitlePresenter
   })
 
-  builder.mixin(training.class.TrainingRequest, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverTraining.function.TrainingRequestHTMLPresenter
+  builder.mixin(training.class.TrainingRequest, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverTraining.function.TrainingRequestUrlPresenter
   })
 }

@@ -153,7 +153,7 @@ export interface ClientOperations {
 
 export interface RestClient extends ClientOperations {
   getAccount: () => Promise<Account>
-  getModel: () => Promise<{ hierarchy: Hierarchy, model: ModelDb }>
+  getModel: (full?: boolean) => Promise<{ hierarchy: Hierarchy, model: ModelDb }>
   ensurePerson: (
     socialType: SocialIdType,
     socialValue: string,

@@ -707,7 +707,8 @@ async function sendSuccessNotification (
     },
     isViewed: false,
     archived: false,
-    docNotifyContext: docNotifyContextId
+    docNotifyContext: docNotifyContextId,
+    allowedProviders: {}
   })
 }
 
@@ -745,6 +746,7 @@ async function sendFailureNotification (
     },
     isViewed: false,
     archived: false,
-    docNotifyContext: docNotifyContextId
+    docNotifyContext: docNotifyContextId,
+    allowedProviders: {}
   })
 }

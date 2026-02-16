@@ -37,7 +37,7 @@ import notification, {
 } from '@hcengineering/notification'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import serverView from '@hcengineering/server-view'
-import { getMetadata, getResource } from '@hcengineering/platform'
+import { getMetadata, getResource, translate } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import contact, {
@@ -47,10 +47,9 @@ import contact, {
   Person,
   PersonSpace
 } from '@hcengineering/contact'
-import { AvailableProvidersCache, AvailableProvidersCacheKey, getTranslatedNotificationContent } from './index'
 import { getPerson } from '@hcengineering/server-contact'
 
-async function createPushFromInbox (
+async function createPush (
   control: TriggerControl,
   n: InboxNotification,
   receiver: AccountUuid,
@@ -59,13 +58,7 @@ async function createPushFromInbox (
   subscriptions: PushSubscription[],
   senderPerson?: Person
 ): Promise<Tx | undefined> {
-  let { title, body } = await getTranslatedNotificationContent(n, n._class, control)
-
-  if (title === '' || body === '') {
-    return
-  }
-
-  title = title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE)
+  const { title, body } = await getTranslatedNotificationContent(n)
 
   const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
   const provider = linkProviders.find(({ _id }) => _id === n.objectClass)
@@ -96,9 +89,11 @@ async function createPushFromInbox (
   const messageInfo = getMessageInfo(n, control.hierarchy)
   return control.txFactory.createTxCreateDoc(notification.class.BrowserNotification, receiverSpace, {
     user: receiver,
-    title,
-    body,
-    senderId: n.createdBy ?? n.modifiedBy,
+    title: n.title ?? notification.string.CommonNotificationTitle,
+    body: n.body ?? notification.string.UpdateNotificationBody,
+    intlParams: n.intlParams ?? { title },
+    intlParamsNotLocalized: n.intlParamsNotLocalized,
+    sender: n.createdBy ?? n.modifiedBy,
     tag: n._id,
     objectId: n.objectId,
     objectClass: n.objectClass,
@@ -233,18 +228,11 @@ export async function PushNotificationsHandler (
   txes: TxCreateDoc<InboxNotification>[],
   control: TriggerControl
 ): Promise<Tx[]> {
-  const availableProviders: AvailableProvidersCache = control.contextCache.get(AvailableProvidersCacheKey) ?? new Map()
-
   const all: InboxNotification[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
-    .filter(
-      (it) =>
-        availableProviders.get(it._id)?.find((p) => p === notification.providers.PushNotificationProvider) !== undefined
-    )
+    .filter((it) => (it.allowedProviders?.[notification.providers.PushNotificationProvider]?.length ?? 0) !== 0)
 
-  if (all.length === 0) {
-    return []
-  }
+  if (all.length === 0) return []
 
   const receivers = new Set(all.map((it) => it.user))
   const subscriptions = (await control.queryFind(control.ctx, notification.class.PushSubscription, {})).filter((it) =>
@@ -260,10 +248,8 @@ export async function PushNotificationsHandler (
     const senderSocialString = inboxNotification.createdBy ?? inboxNotification.modifiedBy
     const senderPerson = await getPerson(control, senderSocialString)
     const soundAlert =
-      availableProviders
-        .get(inboxNotification._id)
-        ?.find((p) => p === notification.providers.SoundNotificationProvider) !== undefined
-    const tx = await createPushFromInbox(
+      (inboxNotification.allowedProviders?.[notification.providers.SoundNotificationProvider]?.length ?? 0) > 0
+    const tx = await createPush(
       control,
       inboxNotification,
       user,
@@ -279,4 +265,19 @@ export async function PushNotificationsHandler (
   }
 
   return res
+}
+
+async function getTranslatedNotificationContent (
+  data: Data<InboxNotification>
+): Promise<{ title: string, body: string, [key: string]: string }> {
+  const params = { ...data.intlParams }
+
+  for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
+    params[k] = await translate(v, params)
+  }
+
+  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params)
+  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params)
+
+  return { title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body }
 }
