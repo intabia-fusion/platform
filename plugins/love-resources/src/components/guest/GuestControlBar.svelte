@@ -29,15 +29,9 @@
   export let fullScreen: boolean = false
   export let onFullScreen: (() => void) | undefined = undefined
   export let leaveGuest: () => Promise<void>
-
-  let allowLeave: boolean = false
-
-  // If user is not in a meeting (no myInfo), they cannot leave
-  // If user is in a meeting, they can leave unless it's their office or reception
-  $: allowLeave = $myInfo !== undefined && $myInfo.room !== ($myOffice?._id ?? love.ids.Reception)
 </script>
 
-<div class="control-bar theme-light">
+<div class="control-bar" class:theme-light={!$isFullScreen} class:theme-dark={$isFullScreen}>
   <ControlBarContainer>
     <svelte:fragment slot="center">
       {#if $lkSessionConnected}
@@ -63,16 +57,14 @@
         />
       {/if}
 
-      {#if allowLeave}
-        <ModernButton
-          icon={love.icon.LeaveRoom}
-          label={love.string.LeaveRoom}
-          tooltip={{ label: love.string.LeaveRoom, direction: 'top' }}
-          kind={'negative'}
-          size={'medium'}
-          on:click={leaveGuest}
-        />
-      {/if}
+      <ModernButton
+        icon={love.icon.LeaveRoom}
+        label={love.string.LeaveRoom}
+        tooltip={{ label: love.string.LeaveRoom, direction: 'top' }}
+        kind={'negative'}
+        size={'medium'}
+        on:click={leaveGuest}
+      />
     </svelte:fragment>
 
     <svelte:fragment slot="extra">
