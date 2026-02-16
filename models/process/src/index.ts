@@ -318,7 +318,7 @@ export function createModel (builder: Builder): void {
     TEventButton
   )
 
-  // TODO: ????????????
+  // TODO: FIXME
   // builder.createDoc(
   //   notification.class.1NotificationType,
   //   core.space.Model,
@@ -341,27 +341,28 @@ export function createModel (builder: Builder): void {
   //   process.ids.ProcessToDoCreated
   // )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: process.string.ApproveRequest,
-      group: time.ids.TimeNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: process.class.ApproveRequest,
-      onlyOwn: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    process.ids.ApproveRequestCreated
-  )
+  // TODO: FIXME
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: process.string.ApproveRequest,
+  //     group: time.ids.TimeNotificationGroup,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: process.class.ApproveRequest,
+  //     onlyOwn: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   process.ids.ApproveRequestCreated
+  // )
 
   createAction(builder, {
     action: view.actionImpl.Delete,
