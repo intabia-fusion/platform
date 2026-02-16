@@ -743,7 +743,7 @@ services:
   #     - HULY_ACCOUNT_SERVICE=http://huly.local:3000
   #   restart: unless-stopped
   hulypulse:
-    image: intabiafusion/hulypulse:v0.7.320
+    image: intabiafusion/hulypulse
     depends_on:
       redis:
         condition: service_started
