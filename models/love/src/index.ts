@@ -690,7 +690,6 @@ export function createModel (builder: Builder): void {
       label: chunter.string.Chat,
       generated: false,
       hidden: false,
-      // txClasses: [core.class.TxCreateDoc],
       messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: love.class.MeetingMinutes,

@@ -422,7 +422,6 @@ function defineDocument (builder: Builder): void {
       group: document.ids.DocumentNotificationGroup,
       field: 'content',
       messageClass: activity.class.DocUpdateMessage,
-      // txClasses: [core.class.TxUpdateDoc],
       objectClass: document.class.Document,
       attachedToClass: document.class.Document,
       defaultEnabled: false,

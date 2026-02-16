@@ -268,7 +268,7 @@ export function createModel (builder: Builder): void {
 
   defineCollaborators(builder, calendar.class.Event, { fields: ['participants'] })
 
-  // TODO: FIXME - not working
+  // TODO: FIXME LATER - not working
   // builder.createDoc<TxNotificationType>(
   //   notification.class.TxNotificationType,
   //   core.space.Model,

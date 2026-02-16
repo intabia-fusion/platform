@@ -593,7 +593,6 @@ function defineTrainingRequest (builder: Builder): void {
       label: training.string.TrainingRequest,
       group: training.notification.TrainingGroup,
       messageClass: activity.class.DocUpdateMessage,
-      // txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
       objectClass: training.class.TrainingRequest,
       attachedToClass: training.class.TrainingRequest,
       defaultEnabled: true,

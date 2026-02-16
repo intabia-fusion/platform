@@ -832,7 +832,6 @@ export function createModel (builder: Builder): void {
       group: github.ids.GithubNotificationGroup,
       field: 'assignee',
       messageClass: activity.class.DocUpdateMessage,
-      // txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
       objectClass: github.class.GithubPullRequest,
       attachedToClass: github.class.GithubPullRequest,
       templates: {

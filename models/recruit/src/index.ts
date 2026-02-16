@@ -1352,7 +1352,6 @@ export function createModel (builder: Builder): void {
       group: recruit.ids.ApplicationNotificationGroup,
       field: 'assignee',
       messageClass: activity.class.DocUpdateMessage,
-      // txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
       objectClass: recruit.class.Applicant,
       attachedToClass: recruit.class.Applicant,
       templates: {
@@ -1394,10 +1393,8 @@ export function createModel (builder: Builder): void {
       group: recruit.ids.VacancyNotificationGroup,
       field: 'space',
       messageClass: activity.class.DocUpdateMessage,
-      // txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
       objectClass: recruit.class.Applicant,
       attachedToClass: recruit.class.Applicant,
-      // spaceSubscribe: true, //TODO: ???????
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',

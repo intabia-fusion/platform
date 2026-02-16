@@ -464,7 +464,7 @@ export function createModel (builder: Builder): void {
     hr.ids.HRNotificationGroup
   )
 
-  // TODO: FOR WHAT ?
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,
@@ -486,7 +486,7 @@ export function createModel (builder: Builder): void {
   //   hr.ids.CreateRequestNotification
   // )
 
-  // TODO: FOR WHAT ?
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,
@@ -508,7 +508,7 @@ export function createModel (builder: Builder): void {
   //   hr.ids.UpdateRequestNotification
   // )
 
-  // TODO: FOR WHAT ?
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,
@@ -530,7 +530,7 @@ export function createModel (builder: Builder): void {
   //   hr.ids.RemoveRequestNotification
   // )
 
-  // TODO: FOR WHAT ?
+  // TODO: FIXME LATER
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,
