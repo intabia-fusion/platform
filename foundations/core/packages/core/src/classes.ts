@@ -255,6 +255,11 @@ export interface Interface<T extends Doc> extends Classifier {
   extends?: Ref<Interface<Doc>>[]
 }
 
+// Mixin to control TTL for transient objects.
+export interface TransientTTL extends Class<Doc> {
+  ttl: number // TTL in seconds
+}
+
 /**
  * @public
  */
@@ -918,7 +923,8 @@ export enum SocialIdType {
   OIDC = 'oidc',
   HULY = 'huly',
   TELEGRAM = 'telegram',
-  HULY_ASSISTANT = 'huly-assistant'
+  HULY_ASSISTANT = 'huly-assistant',
+  LOVE = 'office'
 }
 
 export interface SocialId {

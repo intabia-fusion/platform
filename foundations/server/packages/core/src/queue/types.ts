@@ -29,7 +29,10 @@ export enum QueueTopic {
 
   // All OTP and notifications to mail/notify services are goes here first
   // And services will take them and send to a proper places.
-  NotificationQueue = 'notifications'
+  NotificationQueue = 'notifications',
+
+  // Events about meetings and operations with meetings
+  LoveQueue = 'love-queue'
 }
 
 export interface ConsumerHandle {

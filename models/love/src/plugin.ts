@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@hcengineering/core'
-import { type NotificationType, type NotificationGroup } from '@hcengineering/notification'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { type NotificationType } from '@hcengineering/notification'
 import { type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type ViewAction } from '@hcengineering/view'
@@ -29,11 +29,7 @@ export default mergeIds(loveId, love, {
     Settings: '' as AnyComponent,
     LoveWidget: '' as AnyComponent,
     MeetingWidget: '' as AnyComponent,
-    WidgetSwitcher: '' as AnyComponent,
-    RoomLanguageEditor: '' as AnyComponent,
-    MediaPopupItemExt: '' as AnyComponent,
-    SharingStateIndicator: '' as AnyComponent,
-    InviteEmployeeButton: '' as AnyComponent
+    WidgetSwitcher: '' as AnyComponent
   },
   app: {
     Love: '' as Ref<Doc>
@@ -49,11 +45,7 @@ export default mergeIds(loveId, love, {
   },
   ids: {
     Settings: '' as Ref<Doc>,
-    LoveNotificationGroup: '' as Ref<NotificationGroup>,
     MeetingMinutesChatNotification: '' as Ref<NotificationType>
-  },
-  function: {
-    MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
   },
   completion: {
     MeetingMinutesQuery: '' as Resource<ObjectSearchFactory>,

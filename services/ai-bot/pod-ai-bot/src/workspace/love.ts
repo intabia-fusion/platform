@@ -13,22 +13,18 @@
 // limitations under the License.
 //
 import { ConnectMeetingRequest } from '@hcengineering/ai-bot'
+
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import contact, { Person } from '@hcengineering/contact'
 import core, {
   concatLink,
-  Doc,
   generateId,
   Markup,
   MeasureContext,
   PersonId,
   Ref,
-  SortingOrder,
   Timestamp,
-  TxCreateDoc,
-  TxCUD,
-  TxProcessor,
-  TxUpdateDoc,
+  TxFactory,
   WorkspaceUuid,
   pickPrimarySocialId,
   AccountUuid
@@ -36,11 +32,10 @@ import core, {
 import love, {
   getFreeRoomPlace,
   MeetingMinutes,
-  MeetingStatus,
   ParticipantInfo,
   Room,
   RoomLanguage,
-  TranscriptionStatus
+  TranscriptionState
 } from '@hcengineering/love'
 import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
 
@@ -48,12 +43,9 @@ import config from '../config'
 import { RestClient } from '@hcengineering/api-client'
 
 export class LoveController {
-  private readonly connectedRooms = new Set<Ref<Room>>()
+  private readonly connectedMeetings = new Set<Ref<MeetingMinutes>>()
 
-  private participantsInfo: ParticipantInfo[] = []
-  private rooms: Room[] = []
   private readonly socialIdByPerson = new Map<Ref<Person>, PersonId>()
-  private meetingMinutes: MeetingMinutes[] = []
   private initComplete = false
 
   constructor (
@@ -64,9 +56,6 @@ export class LoveController {
     private readonly currentPerson: Person
   ) {
     void this.initData()
-    setInterval(() => {
-      void this.checkConnection()
-    }, 10 * 1000)
   }
 
   getIdentity (): { identity: Ref<Person>, name: string } {
@@ -76,120 +65,80 @@ export class LoveController {
     }
   }
 
-  txHandler (txes: TxCUD<Doc>[]): void {
-    if (!this.initComplete) {
-      // Pass, since init is not yet complete
-      return
-    }
-    for (const etx of txes) {
-      if (!TxProcessor.isExtendsCUD(etx._class)) continue
-      if (etx._class === core.class.TxCreateDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo.push(TxProcessor.createDoc2Doc(etx as TxCreateDoc<ParticipantInfo>))
-        } else if (etx.objectClass === love.class.Room) {
-          this.rooms.push(TxProcessor.createDoc2Doc(etx as TxCreateDoc<Room>))
-        }
-      } else if (etx._class === core.class.TxRemoveDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo = this.participantsInfo.filter((p) => p._id !== etx.objectId)
-        } else if (etx.objectClass === love.class.Room) {
-          this.rooms = this.rooms.filter((r) => r._id !== etx.objectId)
-        }
-      } else if (etx._class === core.class.TxUpdateDoc) {
-        if (etx.objectClass === love.class.ParticipantInfo) {
-          this.participantsInfo = this.participantsInfo.map((p) => {
-            if (p._id === etx.objectId) {
-              return TxProcessor.updateDoc2Doc(p, etx as TxUpdateDoc<ParticipantInfo>)
-            }
-            return p
-          })
-        } else if (etx.objectClass === love.class.Room) {
-          this.rooms = this.rooms.map((r) => {
-            if (r._id === etx.objectId) {
-              return TxProcessor.updateDoc2Doc(r, etx as TxUpdateDoc<Room>)
-            }
-            return r
-          })
-        }
-      }
-    }
-  }
-
   async initData (): Promise<void> {
-    this.participantsInfo = await this.client.findAll(love.class.ParticipantInfo, {})
-    this.rooms = await this.client.findAll(love.class.Room, {})
+    const pp = await this.client.findAll(love.class.ParticipantInfo, { person: this.currentPerson._id })
 
-    for (const p of this.participantsInfo) {
-      if (p.person === this.currentPerson._id) {
-        await this.client.remove(p)
-      }
+    for (const p of pp) {
+      await this.client.remove(p)
     }
     this.initComplete = true
-    await this.checkConnection()
-  }
-
-  async checkConnection (): Promise<void> {
-    if (this.connectedRooms.size === 0) return
-
-    for (const room of this.connectedRooms) {
-      const roomParticipants = this.participantsInfo.filter(
-        (p) => p.room === room && p.person !== this.currentPerson._id
-      )
-      if (roomParticipants.length === 0) {
-        void this.disconnect(room)
-      }
-    }
   }
 
   async connect (request: ConnectMeetingRequest): Promise<void> {
-    const room = await this.getRoom(request.roomId)
+    const mm = await this.getMeeting(request.meetingId)
 
-    if (room === undefined) {
+    if (mm === undefined) {
       this.ctx.error('Room not found', request)
-      this.connectedRooms.delete(request.roomId)
+      this.connectedMeetings.delete(request.meetingId)
       return
     }
 
-    this.connectedRooms.add(request.roomId)
-
-    this.ctx.info('Connecting', { room: room.name, roomId: room._id })
-
-    if (request.transcription) {
-      await this.requestTranscription(room, request.language)
+    // Check if already connected
+    if (this.connectedMeetings.has(request.meetingId)) {
+      this.ctx.info('Already connected to meeting, skipping', { meeting: request.meetingId })
+      return
     }
 
-    await this.createAiParticipant(room)
+    if (request.transcription) {
+      this.ctx.info('Connecting', { room: mm.title, meeting: mm._id, transcription: request.transcription })
+      this.connectedMeetings.add(request.meetingId)
+      await this.requestTranscription(mm, request.language)
+      await this.updateTranscriptionState(mm._id, TranscriptionState.Transcribing)
+      const participantId = await this.createAiParticipant(mm)
+      this.ctx.info('AI participant created/found', { meeting: mm._id, participantId })
+    }
   }
 
-  async requestTranscription (room: Room, language: RoomLanguage): Promise<void> {
-    const roomTokenName = getTokenRoomName(this.workspace, room.name, room._id)
-    await startTranscription(this.token, roomTokenName, room.name, language)
+  async requestTranscription (meeting: MeetingMinutes, language: RoomLanguage): Promise<void> {
+    await startTranscription(this.token, meeting._id, language)
   }
 
-  async disconnect (roomId: Ref<Room>): Promise<void> {
-    this.ctx.info('Disconnecting', { roomId })
+  async disconnect (meetingId: Ref<MeetingMinutes>): Promise<void> {
+    this.ctx.info('Disconnecting', { meeting: meetingId })
 
-    const participant = await this.getRoomParticipant(roomId, this.currentPerson._id)
+    const participant = await this.getRoomParticipant(meetingId, this.currentPerson._id)
     if (participant !== undefined) {
+      this.ctx.info('Removing AI participant', { meeting: meetingId, participantId: participant._id })
       await this.client.remove(participant)
     }
 
-    const room = await this.getRoom(roomId)
+    // Prefer MeetingMinutes id when stopping transcription so token names match started sessions.
+    this.ctx.info('Stopping transcription', { meeting: meetingId })
+    await stopTranscription(this.token, meetingId)
 
-    if (room !== undefined) {
-      await stopTranscription(this.token, getTokenRoomName(this.workspace, room.name, room._id), room.name)
+    // Update transcription state to Finished
+    await this.updateTranscriptionState(meetingId, TranscriptionState.Finished)
+
+    this.connectedMeetings.delete(meetingId)
+  }
+
+  async updateTranscriptionState (meetingId: Ref<MeetingMinutes>, state: TranscriptionState): Promise<void> {
+    try {
+      const mm = await this.getMeeting(meetingId)
+      if (mm !== undefined && mm.transcriptionState !== state) {
+        await this.client.update(mm, { transcriptionState: state })
+        this.ctx.info('Updated transcription state', { meeting: meetingId, state })
+      }
+    } catch (err: any) {
+      this.ctx.error('Failed to update transcription state', { meeting: meetingId, error: err?.message })
     }
-
-    this.meetingMinutes = this.meetingMinutes.filter((m) => m.attachedTo !== roomId)
-    this.connectedRooms.delete(roomId)
   }
 
   async getSocialId (person: Ref<Person>): Promise<PersonId | undefined> {
     if (!this.socialIdByPerson.has(person)) {
       const identities = await this.client.findAll(contact.class.SocialIdentity, {
         attachedTo: person,
-        attachedToClass: contact.class.Person,
-        verifiedOn: { $gt: 0 }
+        attachedToClass: contact.class.Person
       })
       if (identities.length > 0) {
         const id = pickPrimarySocialId(identities)._id
@@ -214,28 +163,16 @@ export class LoveController {
    */
   async createTranscriptionPlaceholder (
     person: Ref<Person>,
-    roomId: Ref<Room>,
+    meetingId: Ref<MeetingMinutes>,
     startTimeSec: number,
     endTimeSec: number,
     blobId: string
   ): Promise<Ref<ChatMessage> | undefined> {
-    this.ctx.info('Creating transcription placeholder', { person, roomId, startTimeSec, endTimeSec, blobId })
-
-    const room = await this.getRoom(roomId)
-    if (room === undefined) {
-      this.ctx.warn('Room not found for placeholder', { roomId })
-      return undefined
-    }
+    this.ctx.info('Creating transcription placeholder', { person, roomId: meetingId, startTimeSec, endTimeSec, blobId })
 
     const socialId = await this.getSocialId(person)
     if (socialId === undefined) {
       this.ctx.warn('SocialId not found for placeholder', { person })
-      return undefined
-    }
-
-    const doc = await this.getMeetingMinutes(room)
-    if (doc === undefined) {
-      this.ctx.warn('MeetingMinutes not found for placeholder', { roomId, roomName: room.name })
       return undefined
     }
 
@@ -257,8 +194,8 @@ export class LoveController {
     await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
-      doc._id,
-      doc._class,
+      meetingId,
+      love.class.MeetingMinutes,
       'transcription',
       {
         message: this.transcriptToMarkup(placeholderText)
@@ -305,12 +242,12 @@ export class LoveController {
   async createTranscriptionMessageWithTimestamp (
     text: string,
     person: Ref<Person>,
-    roomId: Ref<Room>,
+    meetingId: Ref<MeetingMinutes>,
     timestamp: Timestamp
   ): Promise<boolean> {
-    const room = await this.getRoom(roomId)
-    if (room === undefined) {
-      this.ctx.warn('Room not found for fallback transcription', { roomId })
+    const meeting = await this.getMeeting(meetingId)
+    if (meeting === undefined) {
+      this.ctx.warn('Room not found for fallback transcription', { meetingId })
       return false
     }
 
@@ -320,18 +257,11 @@ export class LoveController {
       return false
     }
 
-    // Find MeetingMinutes for this room (including Finished ones)
-    const doc = await this.getMeetingMinutesAny(room)
-    if (doc === undefined) {
-      this.ctx.warn('No MeetingMinutes found for fallback transcription', { roomId })
-      return false
-    }
-
     await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
-      doc._id,
-      doc._class,
+      meeting._id,
+      meeting._class,
       'transcription',
       {
         message: this.transcriptToMarkup(text)
@@ -342,7 +272,6 @@ export class LoveController {
     )
 
     this.ctx.info('Created fallback transcription message with timestamp', {
-      roomId,
       person,
       textLength: text.length,
       timestamp
@@ -350,25 +279,22 @@ export class LoveController {
     return true
   }
 
-  async processTranscript (text: string, person: Ref<Person>, roomId: Ref<Room>): Promise<void> {
-    const room = await this.getRoom(roomId)
-    const participant = await this.getRoomParticipant(roomId, person)
+  async processTranscript (text: string, person: Ref<Person>, meetingMinutesId: Ref<MeetingMinutes>): Promise<void> {
+    const meeting = await this.getMeeting(meetingMinutesId)
+    const participant = await this.getRoomParticipant(meetingMinutesId, person)
 
-    if (room === undefined || participant === undefined) {
+    if (meeting === undefined || participant === undefined) {
       return
     }
 
     const socialId = await this.getSocialId(person)
     if (socialId === undefined) return
 
-    const doc = await this.getMeetingMinutes(room)
-    if (doc === undefined) return
-
     await this.client.addCollection(
       chunter.class.ChatMessage,
       core.space.Workspace,
-      doc._id,
-      doc._class,
+      meeting._id,
+      meeting._class,
       'transcription',
       {
         message: this.transcriptToMarkup(text)
@@ -378,91 +304,141 @@ export class LoveController {
       socialId
     )
     this.ctx.info('Added transcription message to meeting minutes', {
-      roomId: room._id,
-      meetingMinutes: doc._id,
+      meetingMinutes: meeting._id,
       textLength: text.length
     })
   }
 
   hasActiveConnections (): boolean {
-    return this.connectedRooms.size > 0
+    return this.connectedMeetings.size > 0
   }
 
-  async getRoom (ref: Ref<Room>): Promise<Room | undefined> {
-    return this.rooms.find(({ _id }) => _id === ref) ?? (await this.client.findOne(love.class.Room, { _id: ref }))
+  async getMeeting (ref: Ref<MeetingMinutes>): Promise<MeetingMinutes | undefined> {
+    return await this.client.findOne(love.class.MeetingMinutes, { _id: ref })
   }
 
-  async getRoomParticipant (room: Ref<Room>, person: Ref<Person>): Promise<ParticipantInfo | undefined> {
-    return (
-      this.participantsInfo.find((p) => p.room === room && p.person === person) ??
-      (await this.client.findOne(love.class.ParticipantInfo, { room, person }))
-    )
-  }
-
-  async getMeetingMinutes (room: Room): Promise<MeetingMinutes | undefined> {
-    const doc =
-      this.meetingMinutes.find((m) => m.attachedTo === room._id && m.status === MeetingStatus.Active) ??
-      (await this.client.findOne(love.class.MeetingMinutes, { attachedTo: room._id, status: MeetingStatus.Active }))
-
-    if (doc === undefined) {
+  async getRoomParticipant (meetingId: Ref<MeetingMinutes>, person: Ref<Person>): Promise<ParticipantInfo | undefined> {
+    // Prefer meeting-bound participant (if there is an active/pending meeting in the room)
+    try {
+      const remote = await this.client.findOne(love.class.ParticipantInfo, { meeting: meetingId, person })
+      if (remote !== undefined) return remote
+    } catch (err: any) {
+      this.ctx?.info?.('[LoveController.getRoomParticipant] failed to resolve meeting for room', { error: String(err) })
       return undefined
     }
-
-    this.meetingMinutes.push(doc)
-    return doc
   }
 
-  /**
-   * Get MeetingMinutes for room regardless of status (Active or Finished)
-   * Returns the most recent one if multiple exist
-   */
-  async getMeetingMinutesAny (room: Room): Promise<MeetingMinutes | undefined> {
-    // First try to find in cache
-    const cached = this.meetingMinutes.find((m) => m.attachedTo === room._id)
-    if (cached !== undefined) {
-      return cached
-    }
-
-    // Find the most recent meeting minutes for this room (any status)
-    const doc = await this.client.findOne(
-      love.class.MeetingMinutes,
-      { attachedTo: room._id },
-      { sort: { createdOn: SortingOrder.Descending } }
-    )
-
-    if (doc !== undefined) {
-      this.meetingMinutes.push(doc)
-    }
-
-    return doc
-  }
-
-  async createAiParticipant (room: Room): Promise<Ref<ParticipantInfo>> {
-    const participants = await this.client.findAll(love.class.ParticipantInfo, { room: room._id })
+  async createAiParticipant (meeting: MeetingMinutes): Promise<Ref<ParticipantInfo>> {
+    const participants = await this.client.findAll(love.class.ParticipantInfo, { meeting: meeting._id })
     const currentInfo = participants.find((p) => p.person === this.currentPerson._id)
 
-    if (currentInfo !== undefined) return currentInfo._id
+    if (currentInfo !== undefined) {
+      this.ctx.info('AI participant already exists', { meeting: meeting._id, participantId: currentInfo._id })
+      return currentInfo._id
+    }
 
-    const place = getFreeRoomPlace(room, participants, this.currentPerson._id)
-    const x: number = place.x
-    const y: number = place.y
+    const room =
+      meeting.attachedTo !== undefined
+        ? await this.client.findOne(love.class.Room, { _id: meeting.attachedTo as Ref<Room> })
+        : undefined
 
-    const oid: Ref<ParticipantInfo> = generateId()
+    // Try to allocate unique cell atomically using TxApplyIf (apply + notMatch)
+    const maxAttempts = 5
+    const socialId = (await this.getSocialId(this.currentPerson._id)) ?? core.account.System
+    const tf = new TxFactory(socialId)
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const currentParticipants = await this.client.findAll(love.class.ParticipantInfo, { meeting: meeting._id })
+      const placeNow =
+        room !== undefined ? getFreeRoomPlace(room, currentParticipants, this.currentPerson._id) : { x: 0, y: 0 }
+      const xNow: number = placeNow.x
+      const yNow: number = placeNow.y
+
+      const oid: Ref<ParticipantInfo> = generateId()
+      const createTx = tf.createTxCreateDoc(
+        love.class.ParticipantInfo,
+        core.space.Workspace,
+        {
+          x: xNow,
+          y: yNow,
+          meeting: meeting._id,
+          room: room?._id,
+          person: this.currentPerson._id,
+          name: this.currentPerson.name,
+          account: (this.currentPerson.personUuid as AccountUuid) ?? null,
+          sessionId: null
+        } as any,
+        oid
+      )
+
+      const applyTx = tf.createTxApplyIf(
+        core.space.Workspace,
+        `${meeting._id}`,
+        [],
+        [
+          { _class: love.class.ParticipantInfo, query: { meeting: meeting._id, person: this.currentPerson._id } },
+          { _class: love.class.ParticipantInfo, query: { meeting: meeting._id, x: xNow, y: yNow } }
+        ],
+        [createTx],
+        'createAiParticipant',
+        true
+      )
+
+      try {
+        const res = (await this.client.tx(applyTx)) as unknown
+        let applied = false
+        if (Array.isArray(res)) {
+          const r = (res as unknown[]).find((it: unknown) => {
+            if (it == null || typeof it !== 'object') return false
+            const s = (it as { success?: unknown }).success
+            return typeof s === 'boolean'
+          })
+          applied = r != null && (r as { success: boolean }).success
+        } else if (res != null && typeof res === 'object') {
+          const s = (res as { success?: unknown }).success
+          applied = typeof s === 'boolean' && s
+        }
+
+        if (applied) {
+          this.ctx.info('AI participant create applied', { meeting: meeting._id, oid, x: xNow, y: yNow })
+          return oid
+        } else {
+          this.ctx.info('createAiParticipant apply failed, retrying', {
+            meeting: meeting._id,
+            attempt,
+            x: xNow,
+            y: yNow
+          })
+          // small backoff before retry
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        this.ctx.error('createAiParticipant apply error', { meeting: meeting._id, attempt, error: msg })
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+    }
+
+    // Fallback: best-effort create if apply failed after retries
+    const fallbackOid: Ref<ParticipantInfo> = generateId()
     await this.client.createDoc(
       love.class.ParticipantInfo,
       core.space.Workspace,
       {
-        x,
-        y,
-        room: room._id,
+        kind: 'agent',
+        x: 0,
+        y: 0,
+        meeting: meeting._id,
+        room: room?._id,
         person: this.currentPerson._id,
         name: this.currentPerson.name,
         account: (this.currentPerson.personUuid as AccountUuid) ?? null,
         sessionId: null
-      },
-      oid
+      } as any,
+      fallbackOid
     )
-    return oid
+    this.ctx.info('AI participant create fallback', { meeting: meeting._id, fallbackOid })
+    return fallbackOid
   }
 
   transcriptToMarkup (transcript: string): Markup {
@@ -483,14 +459,9 @@ export class LoveController {
   }
 }
 
-function getTokenRoomName (workspace: WorkspaceUuid, roomName: string, roomId: Ref<Room>): string {
-  return `${workspace}_${roomName}_${roomId}`
-}
-
 async function startTranscription (
   token: string,
-  roomTokenName: string,
-  roomName: string,
+  meetingId: Ref<MeetingMinutes>,
   language: RoomLanguage
 ): Promise<boolean> {
   try {
@@ -502,10 +473,9 @@ async function startTranscription (
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        roomName: roomTokenName,
-        room: roomName,
+        meetingId,
         language,
-        transcription: TranscriptionStatus.InProgress
+        transcription: true
       })
     })
     return res.ok
@@ -515,7 +485,7 @@ async function startTranscription (
   }
 }
 
-async function stopTranscription (token: string, roomTokenName: string, roomName: string): Promise<boolean> {
+async function stopTranscription (token: string, meetingId: Ref<MeetingMinutes>): Promise<boolean> {
   try {
     const endpoint = config.LoveEndpoint
     const res = await fetch(concatLink(endpoint, '/transcription'), {
@@ -524,7 +494,7 @@ async function stopTranscription (token: string, roomTokenName: string, roomName
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ roomName: roomTokenName, room: roomName, transcription: TranscriptionStatus.Idle })
+      body: JSON.stringify({ meetingId, transcription: false })
     })
     return res.ok
   } catch (err: any) {

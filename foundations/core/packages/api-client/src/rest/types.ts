@@ -19,6 +19,9 @@ import {
   Data,
   DocumentUpdate,
   FindResult,
+  Mixin,
+  MixinData,
+  MixinUpdate,
   SearchOptions,
   SearchQuery,
   SearchResult,
@@ -126,6 +129,26 @@ export interface ClientOperations {
    * For documents be aware all collection documents attached will be removed as well.
    */
   remove: <T extends Doc>(doc: T, modifiedOn?: Timestamp, modifiedBy?: PersonId) => Promise<TxResult>
+
+  createMixin: <D extends Doc, M extends D>(
+    objectId: Ref<D>,
+    objectClass: Ref<Class<D>>,
+    objectSpace: Ref<Space>,
+    mixin: Ref<Mixin<M>>,
+    attributes: MixinData<D, M>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
+
+  updateMixin: <D extends Doc, M extends D>(
+    objectId: Ref<D>,
+    objectClass: Ref<Class<D>>,
+    objectSpace: Ref<Space>,
+    mixin: Ref<Mixin<M>>,
+    attributes: MixinUpdate<D, M>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
 }
 
 export interface RestClient extends ClientOperations {

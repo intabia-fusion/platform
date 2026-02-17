@@ -29,18 +29,16 @@ import {
 } from '@hcengineering/ai-bot'
 import core, {
   AccountUuid,
-  Doc,
   MeasureContext,
   PersonId,
   Ref,
   SocialId,
   SortingOrder,
   toIdMap,
-  TxCUD,
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { Room } from '@hcengineering/love'
+import love, { parseRoomName, Room } from '@hcengineering/love'
 import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
@@ -127,15 +125,13 @@ export class AIControl {
    * Process incoming audio chunk: store in storage and queue for transcription
    */
   async processAudioChunk (audioData: Buffer, metadata: AudioChunkMetadata): Promise<void> {
-    // Parse workspace and roomId from room name (format: workspaceUuid_roomName_roomId)
-    const parsed = metadata.roomName.split('_')
-    const workspace = parsed[0] as WorkspaceUuid | undefined
-    const roomId = parsed[parsed.length - 1] as Ref<Room> | undefined
-
-    if (workspace === undefined) {
+    // Parse workspace and meeting ID from room name
+    const parsed = parseRoomName(metadata.roomName)
+    if (parsed === undefined) {
       this.ctx.error('Invalid room name format', { roomName: metadata.roomName })
       return
     }
+    const { workspace, meetingId } = parsed
 
     // Generate unique blob ID for this chunk
     const blobId = `audio-chunk-${uuid()}`
@@ -154,12 +150,12 @@ export class AIControl {
 
       // Create placeholder message for pending transcription (with spinner indicator)
       let placeholderMessageId: Ref<ChatMessage> | undefined
-      if (roomId !== undefined) {
+      if (meetingId !== undefined) {
         try {
           placeholderMessageId = await wsClient.createTranscriptionPlaceholder(
             this.ctx,
             metadata.participant as Ref<Person>,
-            roomId,
+            meetingId,
             metadata.startTimeSec,
             metadata.endTimeSec,
             blobId
@@ -219,17 +215,15 @@ export class AIControl {
    * Process full session recording: stream directly to storage and attach to meeting minutes
    */
   async processSessionRecording (stream: Readable, metadata: SessionRecordingMetadata): Promise<void> {
-    // Parse workspace and roomId from room name (format: workspaceUuid_roomName_roomId)
-    const parsed = metadata.roomName.split('_')
-    const workspace = parsed[0] as WorkspaceUuid | undefined
-    const roomId = parsed[parsed.length - 1] as Ref<Room> | undefined
-
-    if (workspace === undefined || roomId === undefined) {
+    // Parse workspace and meeting ID from room name
+    const parsed = parseRoomName(metadata.roomName)
+    if (parsed === undefined) {
       this.ctx.error('Invalid room name format for session', { roomName: metadata.roomName })
       return
     }
+    const { workspace, meetingId: meetingMinutesId } = parsed
 
-    // Get workspace client
+    // Get workspace client early (used to resolve MeetingMinutes -> Room if necessary)
     const wsClient = await this.getWorkspaceClient(workspace)
     if (wsClient === undefined) {
       this.ctx.error('Failed to get workspace client for session recording', { workspace })
@@ -254,7 +248,7 @@ export class AIControl {
 
       // Add attachment to meeting minutes
       await wsClient.addSessionAttachment(
-        roomId,
+        meetingMinutesId,
         blobId,
         metadata.participantName,
         metadata.startTimeSec,
@@ -466,15 +460,6 @@ export class AIControl {
     }
   }
 
-  async processTxes (workspace: WorkspaceUuid, txes: TxCUD<Doc>[], control?: ConsumerControl): Promise<void> {
-    // TODO: Move creation of ai-events here, instead of trigger.
-    const wsClient = await this.getWorkspaceClient(workspace)
-    if (wsClient === undefined) {
-      return
-    }
-    wsClient.love?.txHandler?.(txes)
-  }
-
   async processEvent (workspace: WorkspaceUuid, events: AIEventRequest[], control?: ConsumerControl): Promise<void> {
     if (this.llm === undefined) {
       throw new Error('LLM provider not configured')
@@ -515,11 +500,10 @@ export class AIControl {
   }
 
   async getLoveIdentity (roomName: string): Promise<IdentityResponse | undefined> {
-    const parsed = roomName.split('_')
-    const workspace = parsed[0] as WorkspaceUuid
+    const parsed = parseRoomName(roomName)
+    if (parsed === undefined) return
 
-    if (workspace === null) return
-
+    const { workspace } = parsed
     const wsClient = await this.getWorkspaceClient(workspace)
     if (wsClient === undefined) {
       this.ctx.error('Workspace not found', { workspace })
@@ -536,29 +520,32 @@ export class AIControl {
       participant: request.participant
     })
 
-    const parsed = request.roomName.split('_')
-    const workspace = parsed[0] as WorkspaceUuid | undefined
-    const roomId = parsed[parsed.length - 1] as Ref<Room> | undefined
-
-    if (workspace == null || roomId == null) {
+    const parsed = parseRoomName(request.roomName)
+    if (parsed === undefined) {
       this.ctx.warn('Invalid room name format in love transcript request', { roomName: request.roomName })
       return
     }
+    const { workspace, meetingId: meetingMinutesId } = parsed
 
-    this.ctx.info('Parsed roomName into workspace and roomId', { workspace, roomId })
-
+    // Get workspace client and resolve MeetingMinutes -> Room
     const wsClient = await this.getWorkspaceClient(workspace)
     if (wsClient === undefined) {
-      this.ctx.error('Failed to get workspace client for love transcript', {
-        workspace,
-        roomName: request.roomName,
-        roomId
-      })
+      this.ctx.error('Failed to get workspace client for love transcript', { workspace })
       return
     }
 
+    const meetingMinutes = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
+    if (meetingMinutes?.attachedTo === undefined || meetingMinutes?.attachedTo === null) {
+      this.ctx.error('MeetingMinutes not found or missing attached room for love transcript', { meetingMinutesId })
+      return
+    }
+
+    const roomId = meetingMinutes.attachedTo as Ref<Room>
+
+    this.ctx.info('Parsed roomName into workspace and roomId', { workspace, roomId })
+
     try {
-      await wsClient.processLoveTranscript(this.ctx, request.transcript, request.participant, roomId)
+      await wsClient.processLoveTranscript(this.ctx, request.transcript, request.participant, meetingMinutesId)
       this.ctx.info('Processed love transcript', {
         workspace,
         roomId,

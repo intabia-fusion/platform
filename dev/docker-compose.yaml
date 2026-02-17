@@ -253,7 +253,6 @@ services:
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
-
       - postgres
       - minio
       - stats
@@ -350,7 +349,6 @@ services:
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
-
       - postgres
       - minio
       - account
@@ -408,7 +406,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
     links:
-
       - elastic
       - postgres
       - rekoni
@@ -479,13 +476,23 @@ services:
       - LIVEKIT_HOST=ws://huly.local:7880
       - LIVEKIT_API_KEY=devkey
       - LIVEKIT_API_SECRET=secret
+      - LIVEKIT_WEBHOOK_API_KEY=whkey
+      - LIVEKIT_WEBHOOK_API_SECRET=whsecret
+      - LIVEKIT_PROJECT=dev-project
       - BILLING_URL=http://huly.local:4041
       - BILLING_POLL_INTERVAL=15
       - AGENTS=transcribe-dev
-      - WEBHOOK_URL=http://127.0.0.1:8096/webhook
+      - WEBHOOK_URL=http://127.0.0.1:8097/webhook
+      - POLLING_ENABLED=true
+      - POLLING_INTERVAL_MS=30000
+      - PENDING_JOIN_TIMEOUT_MS=60000
+      - STATS_URL=http://huly.local:4900
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
     ports:
       - 8096:8096
     restart: unless-stopped
+
   aibot:
     image: intabiafusion/ai-bot
     ports:
@@ -837,7 +844,6 @@ services:
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
-
       - postgres
       - minio
       - account
@@ -989,15 +995,15 @@ services:
       - 'huly.local:host-gateway'
     restart: unless-stopped
     volumes:
-        - mailpit:/data
+      - mailpit:/data
     ports:
-        - 8025:8025
-        - 1025:1025
+      - 8025:8025
+      - 1025:1025
     environment:
-        MP_MAX_MESSAGES: 5000
-        MP_DATABASE: /data/mailpit.db
-        MP_SMTP_AUTH_ACCEPT_ANY: 1
-        MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
   # desktop-dist:
   #   image: intabiafusion/desktop-distro
   #   extra_hosts:

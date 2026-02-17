@@ -45,7 +45,7 @@
         <Toggle
           on={$myPreferences?.noiseCancellation ?? true}
           on:change={(e) => {
-            saveNoiseCancellationPreference($myPreferences, e.detail)
+            void saveNoiseCancellationPreference($myPreferences, e.detail)
           }}
         />
       </div>

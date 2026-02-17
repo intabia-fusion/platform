@@ -36,7 +36,7 @@
     func: () => Promise<void>
   }
 
-  export let caption: IntlString
+  export let caption: IntlString | undefined = undefined
   export let status: Status
   export let fields: Field[]
   export let action: Action
@@ -49,6 +49,7 @@
   export let subtitle: string | undefined = undefined
   export let signUpDisabled = false
   export let isLoading: boolean = false
+  export let proceedDisabled: boolean = false
 
   const validate = makeSequential(async function validateAsync (language: string): Promise<boolean> {
     if (ignoreInitialValidation || isLoading) return true
@@ -154,7 +155,9 @@
       </div>
     {/if}
     <div class="flex-row-center">
-      <div class="title"><Label label={caption} /></div>
+      {#if caption !== undefined}
+        <div class="title"><Label label={caption} /></div>
+      {/if}
       <slot name="region-selector" />
     </div>
   {/if}
@@ -187,7 +190,7 @@
         size={'x-large'}
         width="100%"
         loading={inAction}
-        disabled={status.severity !== Severity.OK && status.severity !== Severity.ERROR}
+        disabled={proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)}
         on:click={(e) => {
           e.preventDefault()
           if (!inAction) {

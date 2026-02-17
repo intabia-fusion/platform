@@ -9,15 +9,17 @@ set +a
 # For dev: ../dev/.env; for tests: ./tests/.env
 # Set DB_PURE_PG_URL / DB_URL_PG to point to pgbouncer when running the pure-Postgres configuration.
 # Do not hardcode URLs here so .env controls which DB backend is used.
+# Determine compose files to use
 if [ -f "docker-compose.override.versions.yml" ]; then
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -f docker-compose.override.versions.yml -p sanity kill
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -f docker-compose.override.versions.yml -p sanity down --volumes
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -f docker-compose.override.versions.yml -p sanity up -d --force-recreate --renew-anon-volumes
+    COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -f docker-compose.override.versions.yml"
 else
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -p sanity kill
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -p sanity down --volumes
-    docker compose -f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml -p sanity up -d --force-recreate --renew-anon-volumes
+    COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml"
 fi
+
+docker compose ${COMPOSE_FILES} -p sanity kill
+docker compose ${COMPOSE_FILES} -p sanity down --volumes
+docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes
+
 docker_exit=$?
 if [ ${docker_exit} -eq 0 ]; then
     echo "Container started successfully"
@@ -28,7 +30,7 @@ fi
 
 # Wait for pgbouncer to be ready (container named 'pgbouncer' under project 'sanity')
 echo "Waiting for pgbouncer to be ready..."
-PGB_CONTAINER=$(docker compose -p sanity ps -q pgbouncer 2>/dev/null || true)
+PGB_CONTAINER=$(docker compose ${COMPOSE_FILES} -p sanity ps -q pgbouncer 2>/dev/null || true)
 if [ -n "$PGB_CONTAINER" ]; then
     for i in $(seq 1 60); do
         STATUS_HEALTH=$(docker inspect -f '{{ .State.Health.Status }}' "$PGB_CONTAINER" 2>/dev/null || true)

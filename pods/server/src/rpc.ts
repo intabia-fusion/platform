@@ -28,7 +28,10 @@ import core, {
   type SearchQuery,
   type TxCUD,
   type TxDomainEvent,
-  type DocumentUpdate
+  type DocumentUpdate,
+  type Mixin,
+  type MixinData,
+  type MixinUpdate
 } from '@hcengineering/core'
 import { rpcJSONReplacer, type RateLimitInfo } from '@hcengineering/rpc'
 import {
@@ -408,6 +411,71 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         )
       }
       await sendJson(req, res, await doOp(), rateLimitToHeaders(rateLimit))
+    })
+  })
+
+  app.post('/api/v1/createMixin/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-create', async (ctx, session, rateLimit) => {
+      const request: {
+        objectId: Ref<Doc>
+        objectClass: Ref<Class<Doc>>
+        objectSpace: Ref<Space>
+        mixin: Ref<Mixin<Doc>>
+        attributes: MixinData<Doc, Doc>
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const ops = new TxOperations(client, pid)
+
+      await sendJson(
+        req,
+        res,
+        await ops.createMixin(
+          request.objectId,
+          request.objectClass,
+          request.objectSpace,
+          request.mixin,
+          request.attributes,
+          request.modifiedOn,
+          request.modifiedBy ?? pid
+        ),
+        rateLimitToHeaders(rateLimit)
+      )
+    })
+  })
+  app.post('/api/v1/updateMixin/:workspaceId', (req, res) => {
+    void withSession(req, res, 'v1-create', async (ctx, session, rateLimit) => {
+      const request: {
+        objectId: Ref<Doc>
+        objectClass: Ref<Class<Doc>>
+        objectSpace: Ref<Space>
+        mixin: Ref<Mixin<Doc>>
+        attributes: MixinUpdate<Doc, Doc>
+        modifiedOn?: Timestamp
+        modifiedBy?: PersonId
+      } = (await retrieveJson(req)) ?? {}
+
+      const pid = session.getRawAccount().primarySocialId
+      const client = wrapPipeline(ctx.ctx, ctx.pipeline, session.workspace, true)
+      const ops = new TxOperations(client, pid)
+
+      await sendJson(
+        req,
+        res,
+        await ops.updateMixin(
+          request.objectId,
+          request.objectClass,
+          request.objectSpace,
+          request.mixin,
+          request.attributes,
+          request.modifiedOn,
+          request.modifiedBy ?? pid
+        ),
+        rateLimitToHeaders(rateLimit)
+      )
     })
   })
 

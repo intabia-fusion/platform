@@ -60,7 +60,8 @@ import {
   type Type,
   type TypeAny,
   type Version,
-  type VersionableClass
+  type VersionableClass,
+  type TransientTTL
 } from '@hcengineering/core'
 import {
   Hidden,
@@ -427,4 +428,9 @@ export class TCollaborator extends TAttachedDoc implements Collaborator {
 @MMixin(core.mixin.VersionableClass, core.class.Class)
 export class TVersionableClass extends TClass implements VersionableClass {
   enabled!: boolean
+}
+
+@MMixin(core.mixin.TransientTTL, core.class.Class)
+export class TTTransientTTL extends TClass implements TransientTTL {
+  ttl!: number
 }

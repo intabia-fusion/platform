@@ -52,7 +52,7 @@
   let isBadConnection: boolean = false
 
   $: personByRefStore = getPersonByPersonRefStore([_id as Ref<Person>])
-  $: user = $personByRefStore.get(_id as Ref<Person>)
+  $: user = $personByRefStore?.get(_id as Ref<Person>)
   $: userName = (user !== undefined ? user.name : activeParticipant?.name) ?? ''
 
   function attachTrack (track: Track): void {

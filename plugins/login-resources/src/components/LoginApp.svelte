@@ -14,21 +14,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata, setMetadata } from '@hcengineering/platform'
+  import { getMetadata, setMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
   import {
     Location,
-    Popup,
-    Scroller,
     deviceOptionsStore as deviceInfo,
     fetchMetadataLocalStorage,
     getCurrentLocation,
     location,
     setMetadataLocalStorage,
-    themeStore,
     desktopPlatform
   } from '@hcengineering/ui'
-  import workbench from '@hcengineering/workbench'
   import { onDestroy, onMount } from 'svelte'
   import Auth from './Auth.svelte'
   import Confirmation from './Confirmation.svelte'
@@ -46,20 +42,14 @@
   import { Pages, getAccount, pages } from '..'
   import { goTo } from '../utils'
   import login from '../plugin'
+  import LoginAppBase from './LoginAppBase.svelte'
 
   // Resolve static asset URLs at runtime to avoid requiring image module declarations
   // (prevents TypeScript / diagnostics errors when module types are missing)
-  import loginBack from '../../img/login_back.png'
-  import loginBack2x from '../../img/login_back_2x.png'
-  import loginBackAvif from '../../img/login_back.avif'
-  import loginBack2xAvif from '../../img/login_back_2x.avif'
-  import loginBackWebp from '../../img/login_back.webp'
-  import loginBack2xWebp from '../../img/login_back_2x.webp'
+
   import AdminWorkspaces from './AdminWorkspaces.svelte'
   import ChangePassword from './ChangePassword.svelte'
 
-  import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
-  import NavLink from './NavLink.svelte'
   import BottomAction from './BottomAction.svelte'
 
   export let page: Pages = 'signup'
@@ -127,135 +117,66 @@
   onMount(() => {
     // Preserve existing login initialization behavior
     void chooseToken()
-    // Initialize login theme from platform metadata if provided
-    const lTheme = getMetadata(login.metadata.LoginTheme) as LoginThemeName | undefined
-    if (lTheme === 'intabia' || lTheme === 'huly') {
-      setLoginTheme(lTheme)
-    }
   })
-
-  // activeTheme is used everywhere for rendering (prefers override if set)
-  $: activeTheme = $loginTheme
-
-  // themeStyle resolves to override theme vars when override is active, otherwise to store theme vars
-  function onDevThemeChange (e: Event): void {
-    const v = (e.target as HTMLSelectElement).value as LoginThemeName
-    // set local override and apply accent class immediately (no store change)
-    setLoginTheme(v)
-  }
 </script>
 
 {#if page === 'admin'}
   <AdminWorkspaces />
 {:else}
-  <div
-    class="theme-dark w-full h-full backd"
-    class:accent-intabia={activeTheme.name === 'intabia'}
-    class:paneld={$deviceInfo.docWidth <= 768}
-    class:white={!$themeStore.dark}
-    class:login-theme-intabia={activeTheme.name === 'intabia'}
-    class:login-theme-huly={activeTheme.name === 'huly'}
-  >
-    <div class="bg-image clear-mins p-4 back">
-      {#if activeTheme.backgroundComponent}
-        <div class="back-image" style:display={'block'}>
-          <svelte:component this={activeTheme.backgroundComponent} />
-        </div>
-      {:else}
-        <picture>
-          <source srcset={`${loginBackAvif}, ${loginBack2xAvif} 2x`} type="image/avif" />
-          <source srcset={`${loginBackWebp}, ${loginBack2xWebp} 2x`} type="image/webp" />
-
-          <img
-            class="back-image"
-            src={loginBack}
-            style:display={'block'}
-            srcset={`${loginBack} 1x, ${loginBack2x} 2x`}
-            alt=""
-          />
-        </picture>
-      {/if}
-
-      <div
-        style:position="fixed"
-        style:left={$deviceInfo.docWidth <= 480 ? '.75rem' : '1.75rem'}
-        style:top={'3rem'}
-        style:z-index={10001}
-        class="flex-row-center"
-      >
-        <svelte:component this={activeTheme.logoComponent} />
-        {#if activeTheme.showTitle}
-          <span class="fs-title ml-2">{getMetadata(workbench.metadata.PlatformTitle)}</span>
+  <LoginAppBase>
+    <svelte:fragment slot="form-content">
+      {#if page === 'login'}
+        {#if localLoginHidden}
+          <ProvidersOnlyForm />
+        {:else}
+          <LoginForm {navigateUrl} {signUpDisabled} {useOTP} />
         {/if}
-      </div>
-
-      {#if getMetadata(platform.metadata.DevModel)}
-        <div style:position="fixed" style:left={'0px'} style:top={'0px'} style:z-index={10000} class="flex-row-center">
-          <select class="select small" value={$loginTheme.name} on:change={onDevThemeChange}>
-            <option value="intabia">Intabia</option>
-            <option value="huly">Huly</option>
-          </select>
+      {:else if page === 'signup'}
+        <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
+      {:else if page === 'createWorkspace'}
+        <CreateWorkspaceForm />
+      {:else if page === 'password'}
+        <PasswordRequest {signUpDisabled} />
+      {:else if page === 'recovery'}
+        <PasswordRestore />
+      {:else if page === 'selectWorkspace'}
+        <SelectWorkspace {navigateUrl} />
+      {:else if page === 'downloads'}
+        <SelectDownloads />
+      {:else if page === 'join'}
+        <Join />
+      {:else if page === 'autoJoin'}
+        <AutoJoin />
+      {:else if page === 'confirm'}
+        <Confirmation />
+      {:else if page === 'confirmationSend'}
+        <ConfirmationSend />
+      {:else if page === 'auth'}
+        <Auth />
+      {:else if page === 'changePassword'}
+        <ChangePassword />
+      {/if}
+    </svelte:fragment>
+    <svelte:fragment slot="extra-form-content">
+      {#if !desktopPlatform && page !== 'downloads'}
+        {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
+        <div class="mt-4 flex flex-row-reverse mr-4">
+          {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}
+            <BottomAction
+              action={{
+                // caption: login.string.Downloads,
+                i18n: login.string.Downloads,
+                page: 'downloads',
+                func: () => {
+                  goTo('downloads')
+                }
+              }}
+            />
+          {/if}
         </div>
       {/if}
-
-      <div class="panel-base panel" class:white={!$themeStore.dark}>
-        <Scroller padding={'1rem 0'}>
-          <div class="form-content">
-            {#if page === 'login'}
-              {#if localLoginHidden}
-                <ProvidersOnlyForm />
-              {:else}
-                <LoginForm {navigateUrl} {signUpDisabled} {useOTP} />
-              {/if}
-            {:else if page === 'signup'}
-              <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
-            {:else if page === 'createWorkspace'}
-              <CreateWorkspaceForm />
-            {:else if page === 'password'}
-              <PasswordRequest {signUpDisabled} />
-            {:else if page === 'recovery'}
-              <PasswordRestore />
-            {:else if page === 'selectWorkspace'}
-              <SelectWorkspace {navigateUrl} />
-            {:else if page === 'downloads'}
-              <SelectDownloads />
-            {:else if page === 'join'}
-              <Join />
-            {:else if page === 'autoJoin'}
-              <AutoJoin />
-            {:else if page === 'confirm'}
-              <Confirmation />
-            {:else if page === 'confirmationSend'}
-              <ConfirmationSend />
-            {:else if page === 'auth'}
-              <Auth />
-            {:else if page === 'changePassword'}
-              <ChangePassword />
-            {/if}
-          </div>
-          {#if !desktopPlatform && page !== 'downloads'}
-            {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
-            <div class="mt-4 flex flex-row-reverse mr-4">
-              {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}
-                <BottomAction
-                  action={{
-                    // caption: login.string.Downloads,
-                    i18n: login.string.Downloads,
-                    page: 'downloads',
-                    func: () => {
-                      goTo('downloads')
-                    }
-                  }}
-                />
-              {/if}
-            </div>
-          {/if}
-        </Scroller>
-      </div>
-
-      <Popup />
-    </div>
-  </div>
+    </svelte:fragment>
+  </LoginAppBase>
 {/if}
 
 <style lang="scss">

@@ -20,9 +20,9 @@ import core, {
   type Tx,
   type TxCreateDoc,
   TxFactory,
-  type TypeIdentifier
+  type TypeIdentifier,
+  type TxMixin
 } from '@hcengineering/core'
-import { type TxMixin } from '@hcengineering/core/src'
 import {
   BaseMiddleware,
   type Middleware,

@@ -336,6 +336,18 @@ export const ticker = readable(Date.now(), (set) => {
   }
 })
 
+export const ticker1 = readable(Date.now(), (set) => {
+  set(Date.now())
+
+  const interval = setInterval(() => {
+    set(Date.now())
+  }, 1000)
+
+  return () => {
+    clearInterval(interval)
+  }
+})
+
 addLocation(uiId, async () => ({ default: async () => ({}) }))
 
 export const deviceOptionsStore = writable<DeviceOptions>({

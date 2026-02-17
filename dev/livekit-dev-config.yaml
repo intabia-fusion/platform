@@ -4,9 +4,9 @@
 port: 7880
 
 # # Конфигурация вебхуков для отправки в сервис love
-# webhook:
-#   urls: ["http://127.0.0.1:8096/webhook"]
-#   api_key: devkey
+webhook:
+  urls: ['http://127.0.0.1:8096/webhook']
+  api_key: whkey
 
 redis:
   address: 127.0.0.1:6379
@@ -17,13 +17,15 @@ turn:
   enabled: false
 
 rtc:
-    udp_port: 7882
-    tcp_port: 7881
-    use_external_ip: false
-    enable_loopback_candidate: false
+  udp_port: 7882
+  tcp_port: 7881
+  use_external_ip: false
+  enable_loopback_candidate: false
 keys:
-    devkey: secret
+  devkey: secret
+  devkey2: secret2
+  whkey: whsecret
 
 logging:
-    json: false
-    level: debug
+  json: false
+  level: debug

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte'
   import presentation from '@hcengineering/presentation'
   import { Modal } from '@hcengineering/ui'
   import { RoomType } from '@hcengineering/love'
 
-  import { currentRoom } from '../stores'
+  import { currentRoom, roomModalActive } from '../stores'
   import RoomComponent from './Room.svelte'
 
   const dispatch = createEventDispatcher()
@@ -26,6 +26,14 @@
   $: if ($currentRoom === undefined) {
     dispatch('close')
   }
+
+  onMount(() => {
+    $roomModalActive = true
+  })
+
+  onDestroy(() => {
+    $roomModalActive = false
+  })
 </script>
 
 {#if $currentRoom !== undefined}
@@ -39,6 +47,6 @@
     <svelte:fragment slot="title">
       {$currentRoom.name}
     </svelte:fragment>
-    <RoomComponent room={$currentRoom} canMaximize={false} />
+    <RoomComponent room={$currentRoom} canMaximize={false} isModal={true} />
   </Modal>
 {/if}

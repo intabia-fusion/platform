@@ -44,7 +44,10 @@ import {
   Timestamp,
   AttachedDoc,
   AttachedData,
-  DocumentUpdate
+  DocumentUpdate,
+  Mixin,
+  MixinData,
+  MixinUpdate
 } from '@hcengineering/core'
 import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
 
@@ -372,7 +375,7 @@ export class RestClientImpl implements RestClient {
     return result
   }
 
-  private async v1op<T extends Doc>(op: string, data: any): Promise<any> {
+  private async v1op<T extends Doc, P>(op: string, data: any): Promise<P> {
     const requestUrl = concatLink(this.endpoint, `/api/v1/${op}/${this.workspace}`)
     await this.checkRate()
     const result = await withRetry<{ result?: Ref<T>, error?: Status }>(async () => {
@@ -392,7 +395,7 @@ export class RestClientImpl implements RestClient {
     if (result.error !== undefined) {
       throw new PlatformError(result.error)
     }
-    return result.result as Ref<T>
+    return result as P
   }
 
   createDoc<T extends Doc>(
@@ -477,5 +480,45 @@ export class RestClientImpl implements RestClient {
       ;(req as any as AttachedDoc).collection = adoc.collection
     }
     return this.v1op('remove', req)
+  }
+
+  createMixin<D extends Doc, M extends D>(
+    objectId: Ref<D>,
+    objectClass: Ref<Class<D>>,
+    objectSpace: Ref<Space>,
+    mixin: Ref<Mixin<M>>,
+    attributes: MixinData<D, M>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('createMixin', {
+      objectId,
+      objectClass,
+      objectSpace,
+      mixin,
+      attributes,
+      modifiedOn,
+      modifiedBy
+    })
+  }
+
+  updateMixin<D extends Doc, M extends D>(
+    objectId: Ref<D>,
+    objectClass: Ref<Class<D>>,
+    objectSpace: Ref<Space>,
+    mixin: Ref<Mixin<M>>,
+    attributes: MixinUpdate<D, M>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('updateMixin', {
+      objectId,
+      objectClass,
+      objectSpace,
+      mixin,
+      attributes,
+      modifiedOn,
+      modifiedBy
+    })
   }
 }

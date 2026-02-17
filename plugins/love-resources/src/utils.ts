@@ -3,9 +3,8 @@ import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resourc
 import { Analytics } from '@hcengineering/analytics'
 import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import { getName } from '@hcengineering/contact'
+import contact, { getName } from '@hcengineering/contact'
 import core, {
-  AccountRole,
   type Client,
   concatLink,
   type Data,
@@ -18,20 +17,22 @@ import core, {
   type TxOperations,
   type WithLookup
 } from '@hcengineering/core'
-import login from '@hcengineering/login'
 import {
   isOffice,
   LoveEvents,
   loveId,
-  type Meeting,
+  MeetingStatus,
+  RecordingState,
+  RoomAccess,
+  TranscriptionState,
+  type MeetingEventLink,
   type MeetingMinutes,
   type MeetingSchedule,
   type Room,
   type RoomMetadata,
-  TranscriptionStatus,
-  MeetingStatus
+  type UserMeetingInvite
 } from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, getResource, type IntlString } from '@hcengineering/platform'
+import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@hcengineering/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
@@ -39,6 +40,7 @@ import presentation, {
   type ObjectSearchResult
 } from '@hcengineering/presentation'
 import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import view from '@hcengineering/view'
 import { getObjectLinkFragment } from '@hcengineering/view-resources'
 import { type Widget, type WidgetTab } from '@hcengineering/workbench'
@@ -60,10 +62,9 @@ import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
 import love from './plugin'
-import { $myPreferences, currentMeetingMinutes, currentRoom } from './stores'
+import { $myPreferences, currentMeetingMinutes } from './stores'
 import { getLiveKitClient } from './liveKitClient'
 import { getLoveClient } from './loveClient'
-import { getClient as getAccountClientRaw } from '@hcengineering/account-client'
 
 export const liveKitClient = getLiveKitClient()
 export const lk: LKRoom = liveKitClient.liveKitRoom
@@ -183,37 +184,16 @@ lk.on(RoomEvent.RecordingStatusChanged, (evt) => {
 })
 lk.on(RoomEvent.RoomMetadataChanged, (metadata) => {
   const data = parseMetadata(metadata)
-  if (data.recording !== undefined) {
-    isRecording.set(data.recording)
-  }
-  if (data.transcription !== undefined) {
-    isTranscription.set(data.transcription === TranscriptionStatus.InProgress)
-  }
+  isRecording.set(data.recording ?? false)
+  isTranscription.set(data.transcription ?? false)
 })
 
 lk.on(RoomEvent.Connected, () => {
-  isRecording.set(lk.isRecording)
-  void initRoomMetadata(lk.metadata)
+  const data: RoomMetadata = parseMetadata(lk.metadata)
+  isTranscription.set(data.transcription ?? false)
+  isRecording.set(data.recording ?? false)
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
 })
-
-async function initRoomMetadata (metadata: string | undefined): Promise<void> {
-  const room = get(currentRoom)
-  const data: RoomMetadata = parseMetadata(metadata)
-
-  isTranscription.set(data.transcription === TranscriptionStatus.InProgress)
-
-  if (
-    (data.transcription == null || data.transcription === TranscriptionStatus.Idle) &&
-    room?.startWithTranscription === true
-  ) {
-    await startTranscription(room)
-  }
-
-  if (get(isRecordingAvailable) && data.recording == null && room?.startWithRecording === true && !get(isRecording)) {
-    await loveClient.record(room)
-  }
-}
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {
   try {
@@ -236,7 +216,6 @@ export function closeMeetingMinutes (): void {
       closePanel()
     }
   }
-  currentMeetingMinutes.set(undefined)
 }
 
 export async function getRoomName (room: Room): Promise<string> {
@@ -267,16 +246,8 @@ export async function navigateToOfficeDoc (object: Doc): Promise<void> {
   navigate(loc)
 }
 
-export async function navigateToMeetingMinutes (room: Room): Promise<void> {
-  const meeting = await getClient().findOne(love.class.MeetingMinutes, {
-    attachedTo: room._id,
-    status: MeetingStatus.Active
-  })
-  if (meeting !== undefined) {
-    await navigateToOfficeDoc(meeting)
-    return
-  }
-  await navigateToOfficeDoc(room)
+export async function navigateToMeetingMinutes (mm: MeetingMinutes): Promise<void> {
+  await navigateToOfficeDoc(mm)
 }
 
 export function calculateFloorSize (_rooms: Room[], _preview?: boolean): number {
@@ -289,7 +260,7 @@ export function calculateFloorSize (_rooms: Room[], _preview?: boolean): number 
 
 async function checkRecordAvailable (): Promise<void> {
   try {
-    const endpoint = getMetadata(love.metadata.ServiceEnpdoint)
+    const endpoint = getMetadata(love.metadata.ServiceEndpoint)
     if (endpoint === undefined) {
       setTimeout(() => {
         void checkRecordAvailable()
@@ -321,18 +292,50 @@ export async function createMeeting (
     const event = await client.findOne(calendar.class.Event, { _id })
     if (event === undefined) return
     const events = await client.findAll(calendar.class.Event, { eventId: event.eventId })
+
+    const meetingId = await client.addCollection(
+      love.class.MeetingMinutes,
+      space._id,
+      store.room,
+      love.class.Room,
+      'meetings',
+      {
+        status: MeetingStatus.Scheduled,
+        access: RoomAccess.Open,
+        language: 'en',
+        description: null,
+        recordingState: RecordingState.NotStarted,
+        transcriptionState: TranscriptionState.NotStarted,
+        title: event.title,
+        startWithRecording: false,
+        startWithTranscription: false,
+        meetingScheduledDate: event.date
+      }
+    )
+
+    const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+    if (meetingDoc === undefined) {
+      throw new Error('Failed to create meeting minutes')
+    }
+
     for (const event of events) {
-      await client.createMixin<Event, Meeting>(event._id, calendar.class.Event, space._id, love.mixin.Meeting, {
-        room: store.room as Ref<Room>
-      })
+      await client.createMixin<Event, MeetingEventLink>(
+        event._id,
+        calendar.class.Event,
+        space._id,
+        love.mixin.MeetingEventLink,
+        {
+          room: store.room as Ref<Room>,
+          meetingId
+        }
+      )
     }
     const navigateUrl = getCurrentLocation()
     navigateUrl.path[2] = loveId
     navigateUrl.query = {
       meetId: _id
     }
-    const func = await getResource(login.function.GetInviteLink)
-    const link = await func(-1, '', -1, AccountRole.Guest, encodeURIComponent(JSON.stringify(navigateUrl)))
+    const link = await getMeetingGuestLink(meetingDoc)
     await client.update(event, { location: link })
   }
 }
@@ -370,6 +373,7 @@ export function getLiveKitEndpoint (): string {
 }
 
 export function getPlatformToken (): string {
+  // TODO: Change to cookie
   const token = getMetadata(presentation.metadata.Token)
   if (token === undefined) {
     throw new Error('Token not found')
@@ -378,18 +382,18 @@ export function getPlatformToken (): string {
   return token
 }
 
-export async function startTranscription (room: Room): Promise<void> {
-  const current = get(currentRoom)
-  if (current === undefined || room._id !== current._id) return
+export async function startTranscription (mm: MeetingMinutes): Promise<void> {
+  const current = get(currentMeetingMinutes)
+  if (current === undefined || mm._id !== current._id) return
 
-  await connectMeeting(room._id, room.language, { transcription: true })
+  await connectMeeting(mm._id, mm.language, { transcription: true })
 }
 
-export async function stopTranscription (room: Room): Promise<void> {
-  const current = get(currentRoom)
-  if (current === undefined || room._id !== current._id) return
+export async function stopTranscription (mm: MeetingMinutes): Promise<void> {
+  const current = get(currentMeetingMinutes)
+  if (current === undefined || mm._id !== current._id) return
 
-  await disconnectMeeting(room._id)
+  await disconnectMeeting(mm._id)
 }
 
 export async function showRoomSettings (room?: Room): Promise<void> {
@@ -398,31 +402,51 @@ export async function showRoomSettings (room?: Room): Promise<void> {
   showPopup(RoomSettingsPopup, { room }, 'top')
 }
 
-export async function copyGuestLink (room?: Room): Promise<void> {
-  if (room === undefined) return
+export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
+  if (mm === undefined) return
 
-  await copyTextToClipboard(getRoomGuestLink(room))
+  const link = await getMeetingGuestLink(mm)
+  if (link !== '') {
+    await copyTextToClipboard(link)
+  }
 }
 
-async function getRoomGuestLink (room: Room): Promise<string> {
-  const client = getClient()
-  const roomInfo = await client.findOne(love.class.RoomInfo, { room: room._id })
-  if (roomInfo !== undefined) {
+async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
+  const endpoint = getMetadata(love.metadata.ServiceEndpoint)
+  if (endpoint === undefined) {
+    console.error('Love service endpoint is not configured')
+    return ''
+  }
+
+  const platformToken = getMetadata(presentation.metadata.Token)
+  if (platformToken === undefined) {
+    throw new Error('Platform token not found')
+  }
+
+  try {
+    const guestToken = await getLoveClient().getGuestToken(mm)
+
     const navigateUrl = getCurrentLocation()
+    navigateUrl.path = ['meetings']
     navigateUrl.query = {
-      sessionId: roomInfo._id
+      guestToken
     }
 
-    const accountsUrl = getMetadata(login.metadata.AccountsUrl)
-    const token = getMetadata(presentation.metadata.Token)
+    // Build direct guest link (no createAccessLink). Use current front origin to build a full URL.
+    // This simplifies the flow: result link will be like https://front/meetings?meetingId=...&guestToken=...
+    try {
+      const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
 
-    console.log('Create link')
-    const accountClient = getAccountClientRaw(accountsUrl, token)
-    return await accountClient.createAccessLink(AccountRole.Guest, {
-      navigateUrl: encodeURIComponent(JSON.stringify(navigateUrl))
-    })
+      const query = new URLSearchParams({ guestToken })
+      return concatLink(front, `/meetings?${query.toString()}`)
+    } catch (err: any) {
+      console.error('Failed to create guest link', err)
+      return ''
+    }
+  } catch (err: any) {
+    console.error('Failed to generate guest token', err)
+    return ''
   }
-  return ''
 }
 
 export function isTranscriptionAllowed (): boolean {
@@ -493,6 +517,20 @@ export async function getMeetingMinutesTitle (
   const meeting = doc ?? (await client.findOne(love.class.MeetingMinutes, { _id: ref }))
 
   return meeting?.title ?? ''
+}
+
+export async function getUserMeetingInviteTitle (
+  client: TxOperations,
+  ref: Ref<UserMeetingInvite>,
+  doc?: UserMeetingInvite
+): Promise<string> {
+  const invite = doc ?? (await client.findOne(love.class.UserMeetingInvite, { _id: ref }))
+  if (invite === undefined) return ''
+
+  const sender = await client.findOne(contact.class.Person, { _id: invite.from })
+  const senderName = sender?.name ?? ''
+
+  return await translate(love.string.InvitingYou, { name: senderName }, getCurrentLanguage())
 }
 
 export async function queryMeetingMinutes (
