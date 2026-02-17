@@ -65,10 +65,16 @@ export function decodeMeetingToken (
   return { meetingId, workspaceId }
 }
 
-export async function createToken (roomName: string, _id: string, participantName: string): Promise<string> {
+export async function createToken (
+  roomName: string,
+  _id: string,
+  participantName: string,
+  metadata?: string
+): Promise<string> {
   const at = new AccessToken(config.ApiKey, config.ApiSecret, {
     identity: _id,
     name: participantName,
+    metadata,
     // token to expire after 10 minutes
     ttl: '10m'
   })

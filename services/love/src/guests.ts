@@ -201,7 +201,9 @@ export class GuestManager {
 
         // Use the person's document id as LiveKit identity so webhooks can resolve the person
         this.ctx.info('[guestJoin] Using identity', { identity: personRef })
-        const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName))
+        // Mark this participant as a guest in the token metadata
+        const guestMetadata = JSON.stringify({ isGuest: true })
+        const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName), guestMetadata)
 
         res.status(200).send({
           token: roomToken,

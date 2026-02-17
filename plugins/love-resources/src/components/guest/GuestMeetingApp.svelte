@@ -38,7 +38,11 @@
   import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
   import loginResources from '@hcengineering/login-resources/src/plugin'
 
-  import { type Room as LKRoom } from 'livekit-client'
+  import { type Room as LKRoom, RoomEvent, type RemoteParticipant } from 'livekit-client'
+
+  // Timeout constants for guests-only check
+  const GUEST_ONLY_CHECK_INTERVAL_MS = 5000 // Check every 5 seconds
+  const GUEST_ONLY_TIMEOUT_MS = 30000 // 30 seconds timeout before leaving
 
   // Route params
   let guestToken: string | undefined = undefined
@@ -66,6 +70,10 @@
   // ref to GuestJoinPopup to trigger join programmatically
   let guestJoinRef: any = null
 
+  // Guest-only detection
+  let guestOnlyCheckInterval: number | undefined
+  let guestOnlyTimeout: number | undefined
+
   // Live view state for guest presentation
   let withScreenSharing: boolean = false
   let gridStyle = ''
@@ -84,6 +92,97 @@
       await liveKitClient.disconnect()
     } catch (err: any) {
       console.error('Failed to disconnect guest', err)
+    }
+  }
+
+  // Check if there are any non-guest participants in the room
+  function checkForNonGuestParticipants (): void {
+    if (!lk || !$lkSessionConnected) return
+
+    // Get all remote participants
+    const remoteParticipants = Array.from(lk.remoteParticipants.values())
+
+    // Filter out agents/bots (kind === 4 is agent) from remote participants
+    const humanRemoteParticipants = remoteParticipants.filter((p) => p.kind !== 4 && p.permissions?.agent !== true)
+
+    let nonGuestCount = 0
+    let guestCount = 0
+
+    // Check remote participants only (local is always a guest in this component)
+    for (const p of humanRemoteParticipants) {
+      try {
+        const metadata = p.metadata ? JSON.parse(p.metadata) : null
+        if (metadata?.isGuest === true) {
+          guestCount++
+        } else {
+          nonGuestCount++
+        }
+      } catch {
+        // If can't parse metadata, assume non-guest
+        nonGuestCount++
+      }
+    }
+
+    console.log('[GuestMeetingApp] Checking remote participants:', {
+      totalRemote: remoteParticipants.length,
+      humanRemoteParticipants: humanRemoteParticipants.length,
+      nonGuestCount,
+      guestCount
+    })
+
+    if (nonGuestCount === 0) {
+      // Only guests present (any number, including just self), start timeout
+      if (guestOnlyTimeout === undefined) {
+        console.log('[GuestMeetingApp] Only guests detected (no regular users), starting leave timeout')
+        guestOnlyTimeout = window.setTimeout(() => {
+          console.log('[GuestMeetingApp] Guest-only timeout reached, leaving meeting')
+          void leaveGuest()
+        }, GUEST_ONLY_TIMEOUT_MS)
+      }
+    } else {
+      // Found non-guest participant, clear timeout
+      if (guestOnlyTimeout !== undefined) {
+        console.log('[GuestMeetingApp] Non-guest participant found, clearing timeout')
+        clearTimeout(guestOnlyTimeout)
+        guestOnlyTimeout = undefined
+      }
+    }
+  }
+
+  function onParticipantConnected (_participant: RemoteParticipant): void {
+    console.log('[GuestMeetingApp] Participant connected:', _participant.identity)
+    // Recheck when someone joins
+    checkForNonGuestParticipants()
+  }
+
+  function onParticipantDisconnected (_participant: RemoteParticipant): void {
+    console.log('[GuestMeetingApp] Participant disconnected:', _participant.identity)
+    // Recheck when someone leaves
+    checkForNonGuestParticipants()
+  }
+
+  function startGuestOnlyCheck (): void {
+    if (guestOnlyCheckInterval !== undefined) return
+
+    console.log('[GuestMeetingApp] Starting guest-only check')
+    // Initial check
+    checkForNonGuestParticipants()
+
+    // Set up interval to check periodically
+    guestOnlyCheckInterval = window.setInterval(() => {
+      checkForNonGuestParticipants()
+    }, GUEST_ONLY_CHECK_INTERVAL_MS)
+  }
+
+  function stopGuestOnlyCheck (): void {
+    console.log('[GuestMeetingApp] Stopping guest-only check')
+    if (guestOnlyCheckInterval !== undefined) {
+      clearInterval(guestOnlyCheckInterval)
+      guestOnlyCheckInterval = undefined
+    }
+    if (guestOnlyTimeout !== undefined) {
+      clearTimeout(guestOnlyTimeout)
+      guestOnlyTimeout = undefined
     }
   }
 
@@ -166,6 +265,30 @@
 
   onMount(() => {
     roomEl && roomEl.addEventListener('fullscreenchange', handleFullScreen)
+
+    // Subscribe to LiveKit events for guest-only detection
+    if (lk) {
+      lk.on(RoomEvent.ParticipantConnected, onParticipantConnected)
+      lk.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected)
+    }
+
+    // Start checking when connected
+    const unsubscribe = lkSessionConnected.subscribe((connected) => {
+      if (connected) {
+        startGuestOnlyCheck()
+      } else {
+        stopGuestOnlyCheck()
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      stopGuestOnlyCheck()
+      if (lk) {
+        lk.off(RoomEvent.ParticipantConnected, onParticipantConnected)
+        lk.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected)
+      }
+    }
   })
 
   // Subscribe to location and ensure subscription is cleaned up automatically
@@ -177,6 +300,7 @@
 
   // Ensure LiveKit is disconnected when this component is destroyed (e.g., modal closed)
   onDestroy(() => {
+    stopGuestOnlyCheck()
     if ($lkSessionConnected) {
       void liveKitClient.disconnect().catch((err: any) => {
         console.error('Failed to disconnect LiveKit on destroy', err)
