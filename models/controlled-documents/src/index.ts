@@ -20,10 +20,7 @@ import documentsPlugin, {
   DocumentState,
   type Document,
   type DocumentSpace,
-  type DocumentTemplate,
-  type ProjectDocument,
-  type ChangeControl,
-  type DocumentRequest
+  type DocumentTemplate
 } from '@hcengineering/controlled-documents'
 import exportPlugin, { type RelationDefinition } from '@hcengineering/export'
 import { type Builder } from '@hcengineering/model'
@@ -43,7 +40,7 @@ import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
 import textEditor from '@hcengineering/text-editor'
 
-import { AccountRole, type ClassCollaborators, type Class, type Doc, type Lookup, type Ref } from '@hcengineering/core'
+import { AccountRole, type Class, type Doc, type Lookup, type Ref } from '@hcengineering/core'
 import { type Action } from '@hcengineering/view'
 import { definePermissions } from './permissions'
 import documents from './plugin'
