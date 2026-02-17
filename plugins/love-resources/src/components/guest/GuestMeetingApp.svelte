@@ -267,11 +267,9 @@
     {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
       <div class="center">
         <div class="message flex flex-col justify-center">
-          <div class="flex flex-row-center">
+          <div class="flex flex-row-center justify-center fs-title mb-2">
             <Label label={love.string.Meeting} />
             <div class="p-1">{guestInfo.title ?? ''}</div>
-          </div>
-          <div class="ml-2">
             <Label label={love.string.Finished} />
           </div>
         </div>
@@ -329,12 +327,14 @@
         <div>
           <div class="flex flex-col justify-center fs-title mb-2">
             {#if guestInfo.workspaceUrl !== ''}
-            <div class="message flex flex-row-center justify-center">
+              <div class="message flex flex-row-center justify-center">
                 <Label label={love.string.Meeting} />
-                <div class='p-1'>
-                    {guestInfo.title ?? ''}
-                </div> - <div class='p-1'> {guestInfo.workspaceUrl}</div>
-            </div>
+                <div class="p-1">
+                  {guestInfo.title ?? ''}
+                </div>
+                -
+                <div class="p-1">{guestInfo.workspaceUrl}</div>
+              </div>
             {/if}
             {#if resolveError}
               <div class="message" role="alert">{love.string.Error}: {resolveError}</div>

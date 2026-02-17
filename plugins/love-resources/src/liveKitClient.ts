@@ -34,7 +34,7 @@ export enum ScreenSharingState {
 export const screenSharingState = writable<ScreenSharingState>(ScreenSharingState.Inactive)
 export const lkSessionConnected = writable<boolean>(false)
 
-const LAST_PARTICIPANT_NOTIFICATION_DELAY_MS = 2 * 60 * 1000
+const LAST_PARTICIPANT_NOTIFICATION_DELAY_MS = 15 * 1000
 const AUTO_DISCONNECT_DELAY_MS = 60 * 1000
 
 export function getLiveKitClient (): LiveKitClient {
@@ -203,12 +203,23 @@ export class LiveKitClient {
   }
 
   onParticipantConnected = (_participant: RemoteParticipant): void => {
-    clearTimeout(this.lastParticipantDisconnectTimeout)
-    clearTimeout(this.lastParticipantNotificationTimeout)
+    // Filter out agents/bots (kind === 4 is agent)
+    const humanParticipants = Array.from(this.liveKitRoom.remoteParticipants.values()).filter(
+      (p) => p.kind !== 4 && p.permissions?.agent !== true
+    )
+    if (humanParticipants.length > 0) {
+      // Have other remote participants, not just me
+      clearTimeout(this.lastParticipantDisconnectTimeout)
+      clearTimeout(this.lastParticipantNotificationTimeout)
+    }
   }
 
-  onParticipantDisconnected = (_participant: RemoteParticipant): void => {
-    if (this.liveKitRoom.remoteParticipants.size === 0) {
+  onParticipantDisconnected = (): void => {
+    // Filter out agents/bots (kind === 4 is agent)
+    const humanParticipants = Array.from(this.liveKitRoom.remoteParticipants.values()).filter(
+      (p) => p.kind !== 4 && p.permissions?.agent !== true
+    )
+    if (humanParticipants.length === 0) {
       clearTimeout(this.lastParticipantDisconnectTimeout)
       clearTimeout(this.lastParticipantNotificationTimeout)
       this.lastParticipantNotificationTimeout = window.setTimeout(() => {

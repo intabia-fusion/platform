@@ -1,18 +1,16 @@
 <script lang="ts">
   import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
   import ParticipantView from './ParticipantView.svelte'
-  import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { Participant } from 'livekit-client'
+  import { onMount } from 'svelte'
   import { liveKitClient, lk } from '../../utils'
-  import { infos, currentMeetingMinutes, roomModalActive } from '../../stores'
+  import { infos, currentMeetingMinutes } from '../../stores'
   import { Ref } from '@hcengineering/core'
   import { Person } from '@hcengineering/contact'
   import { getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
-  import { Room as TypeRoom, MeetingMinutes } from '@hcengineering/love'
+  import { Room as TypeRoom, MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
 
   export let room: Ref<TypeRoom>
-
-  const dispatch = createEventDispatcher()
 
   interface ParticipantData {
     _id: string
@@ -33,78 +31,36 @@
 
   let participants: ParticipantData[] = []
 
-  function attachParticipant (participant: Participant): void {
-    const current = participants.find((p) => p._id === participant.identity)
-    if (current !== undefined) {
-      current.participant = participant
-      participants = participants
-      return
-    }
-    const value: ParticipantData = {
-      _id: participant.identity,
-      participant,
-      isAgent: participant.isAgent
-    }
-    participants.push(value)
-    participants = participants
-  }
-
-  function handleParticipantDisconnected (participant: RemoteParticipant): void {
-    const index = participants.findIndex((p) => p._id === participant.identity)
-    if (index !== -1) {
-      participants.splice(index, 1)
-      participants = participants
-    }
-  }
-
   onMount(async () => {
     await liveKitClient.awaitConnect()
-    for (const participant of lk.remoteParticipants.values()) {
-      attachParticipant(participant)
-    }
-    attachParticipant(lk.localParticipant)
-    lk.on(RoomEvent.ParticipantConnected, attachParticipant)
-    lk.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
   })
 
-  onDestroy(
-    infos.subscribe((data) => {
-      const currentMeeting = $currentMeetingMinutes
-      for (const info of data) {
-        // Filter by meeting if available, otherwise fallback to room
-        const infoMeeting = (info as any).meeting as Ref<MeetingMinutes> | undefined
-        if (currentMeeting !== undefined && infoMeeting !== currentMeeting._id) continue
-        if (currentMeeting === undefined && info.room !== room) continue
+  function updateParticipants (
+    data: ParticipantInfo[],
+    currentMeeting: MeetingMinutes | undefined,
+    room: Ref<Room>
+  ): void {
+    const _participants: ParticipantData[] = []
+    for (const info of data) {
+      // Filter by meeting if available, otherwise fallback to room
+      const infoMeeting = info.meeting as Ref<MeetingMinutes> | undefined
+      if (currentMeeting !== undefined && infoMeeting !== currentMeeting._id) continue
+      if (currentMeeting === undefined && info.room !== room) continue
 
-        // Check both by person id and by identity (person ref) to avoid duplicates
-        const current = participants.find((p) => p._id === info.person || p._id === (info.person as string))
-        if (current !== undefined) continue
-        const value: ParticipantData = {
-          _id: info.person,
-          participant: undefined,
-          isAgent: info.person === aiPersonRef
-        }
-        participants.push(value)
+      const value: ParticipantData = {
+        _id: info.person,
+        participant: undefined,
+        isAgent: info.person === aiPersonRef
       }
-      participants = participants
-    })
-  )
-
-  onDestroy(() => {
-    lk.off(RoomEvent.ParticipantConnected, attachParticipant)
-    lk.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
-  })
-
-  function getActiveParticipants (participants: ParticipantData[]): ParticipantData[] {
-    const result = participants.filter((p) => !p.isAgent || $infos.some(({ person }) => person === p._id))
-    dispatch('participantsCount', result.length)
-    return result
+      _participants.push(value)
+    }
+    participants = _participants
   }
 
-  $: activeParticipants = getActiveParticipants(participants)
+  $: updateParticipants($infos, $currentMeetingMinutes, room)
 </script>
 
-{#each activeParticipants as participant (participant._id)}
+{#each participants as participant (participant._id)}
   <div class="video">
     <ParticipantView {...participant} />
   </div>
