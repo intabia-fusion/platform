@@ -44,10 +44,10 @@ export class Refs {
       if (!clean) {
         queries.push(q.id)
       } else {
-        // We need to remove query if it doesn't containt element anymore
-        const qholer = docMap.get(d._id)
-        if (qholer !== undefined) {
-          qholer.queries = queries
+        // We need to remove query if it doesn't contains element anymore
+        const queryHolder = docMap.get(d._id)
+        if (queryHolder !== undefined) {
+          queryHolder.queries = queries
         }
       }
       if (queries.length === 0) {

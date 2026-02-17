@@ -203,7 +203,7 @@ export default plugin(coreId, {
     TransientConfiguration: '' as Ref<Mixin<TransientConfiguration>>,
     TxAccessLevel: '' as Ref<Mixin<TxAccessLevel>>,
     VersionableClass: '' as Ref<Mixin<VersionableClass>>,
-    TransientTTL: '' as Ref<Class<TransientTTL>>
+    TransientTTL: '' as Ref<Mixin<TransientTTL>>
   },
   space: {
     Tx: '' as Ref<Space>,
