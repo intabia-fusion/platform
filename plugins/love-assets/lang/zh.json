@@ -71,6 +71,7 @@
     "StartTranscription": "开始转录",
     "StopTranscription": "停止转录",
     "Meeting": "会议",
+    "ScheduledIn": "安排于",
     "Transcription": "转录",
     "TranscriptionState": "转录状态",
     "TranscriptionNotStarted": "未开始",
@@ -121,6 +122,7 @@
     "Error": "错误",
     "ShowParticipants": "显示参与者",
     "HideParticipants": "隐藏参与者",
-    "Scheduled": "已安排"
+    "Scheduled": "已安排",
+    "WaitForHost": "请等待主持人开始会议。"
   }
 }

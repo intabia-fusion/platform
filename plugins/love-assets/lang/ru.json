@@ -73,6 +73,7 @@
     "StartTranscription": "Начать транскрипцию",
     "StopTranscription": "Остановить транскрипцию",
     "Meeting": "Встреча",
+    "ScheduledIn": "Запланирована через",
     "Transcription": "Транскрипция",
     "TranscriptionState": "Транскрипция",
     "TranscriptionNotStarted": "Не начато",
@@ -123,6 +124,7 @@
     "Error": "Ошибка",
     "ShowParticipants": "Показать участников",
     "HideParticipants": "Скрыть участников",
-    "Scheduled": "Запланировано"
+    "Scheduled": "Запланировано",
+    "WaitForHost": "Пожалуйста, дождитесь, пока организатор начнет встречу."
   }
 }

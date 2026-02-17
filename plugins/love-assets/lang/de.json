@@ -71,6 +71,7 @@
     "StartTranscription": "Transkription starten",
     "StopTranscription": "Transkription beenden",
     "Meeting": "Meeting",
+    "ScheduledIn": "Geplant in",
     "Transcription": "Transkription",
     "TranscriptionState": "Transkriptionsstatus",
     "TranscriptionNotStarted": "Nicht gestartet",
@@ -119,6 +120,7 @@
     "Error": "Fehler",
     "ShowParticipants": "Teilnehmer anzeigen",
     "HideParticipants": "Teilnehmer ausblenden",
-    "Scheduled": "Geplant"
+    "Scheduled": "Geplant",
+    "WaitForHost": "Bitte warten Sie, bis der Gastgeber die Besprechung startet."
   }
 }

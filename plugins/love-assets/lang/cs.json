@@ -71,6 +71,7 @@
     "StartTranscription": "Spustit přepis",
     "StopTranscription": "Zastavit přepis",
     "Meeting": "Schůzka",
+    "ScheduledIn": "Naplánováno za",
     "Transcription": "Přepis",
     "TranscriptionState": "Stav přepisu",
     "TranscriptionNotStarted": "Žádný",
@@ -121,6 +122,7 @@
     "Error": "Chyba",
     "ShowParticipants": "Zobrazit účastníky",
     "HideParticipants": "Skrýt účastníky",
-    "Scheduled": "Naplánováno"
+    "Scheduled": "Naplánováno",
+    "WaitForHost": "Počkejte prosím, až hostitel zahájí schůzku."
   }
 }

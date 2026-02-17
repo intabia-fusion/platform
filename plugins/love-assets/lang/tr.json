@@ -71,6 +71,7 @@
     "StartTranscription": "Transkripti başlat",
     "StopTranscription": "Transkripti durdur",
     "Meeting": "Toplantı",
+    "ScheduledIn": "Planlanmış",
     "Transcription": "Transkript",
     "TranscriptionState": "Transkript durumu",
     "TranscriptionTranscribing": "Transkript yapılıyor",
@@ -121,6 +122,7 @@
     "Error": "Hata",
     "ShowParticipants": "Katılımcıları göster",
     "HideParticipants": "Katılımcıları gizle",
-    "Scheduled": "Planlanmış"
+    "Scheduled": "Planlanmış",
+    "WaitForHost": "Lütfen toplantıyı başlatması için ev sahibini bekleyin."
   }
 }

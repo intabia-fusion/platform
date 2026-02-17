@@ -71,6 +71,7 @@
     "StartTranscription": "Start transcription",
     "StopTranscription": "Stop transcription",
     "Meeting": "Meeting",
+    "ScheduledIn": "Scheduled in",
     "Transcription": "Transcription",
     "TranscriptionState": "Transcription state",
     "TranscriptionNotStarted": "Not started",
@@ -121,6 +122,7 @@
     "Error": "Error",
     "ShowParticipants": "Show participants",
     "HideParticipants": "Hide participants",
-    "Scheduled": "Scheduled"
+    "Scheduled": "Scheduled",
+    "WaitForHost": "Please wait for the host to start the meeting."
   }
 }

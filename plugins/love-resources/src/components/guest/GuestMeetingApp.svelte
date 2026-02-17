@@ -254,10 +254,22 @@
 
 <LoginAppBase wide={$lkSessionConnected ?? false}>
   <svelte:fragment slot="form-content">
+    {#if $loginTheme.showLoginTitle}
+      <div class="center main-heading mb-4">
+        <Label
+          className="login-label main-heading__label"
+          variant="heading"
+          label={loginResources.string.SignToProceed}
+        />
+      </div>
+    {/if}
     {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
       <div class="center">
-        <div class="message flex justify-center">
-          <Label label={love.string.Meeting} />
+        <div class="message flex flex-col justify-center">
+          <div class="flex flex-row-center">
+            <Label label={love.string.Meeting} />
+            <div class="p-1">{guestInfo.title ?? ''}</div>
+          </div>
           <div class="ml-2">
             <Label label={love.string.Finished} />
           </div>
@@ -265,30 +277,22 @@
       </div>
     {:else if guestInfo != null && guestInfo.meetingStatus === MeetingStatus.Scheduled}
       <div class="center">
-        {#if $loginTheme.showLoginTitle}
-          <div class="main-heading">
-            <Label
-              className="login-label main-heading__label"
-              variant="heading"
-              label={loginResources.string.SignToProceed}
-            />
-          </div>
-        {/if}
         <div class="message flex flex-col items-center">
-          <div class="flex flex-row-center">
-            <Label label={love.string.Meeting} />
-            <div class="p-1">{guestInfo.title ?? ''}</div>
+          <div class="flex flex-col flex-row-center">
+            <div class="flex flex-row-center">
+              <Label label={love.string.Meeting} />
+              <div class="p-1">{guestInfo.title ?? ''}</div>
+            </div>
             <div class="ml-2 flex flex-row-center">
-              <Label label={love.string.Scheduled} />
+              <Label label={love.string.ScheduledIn} />
               {#if durValue > 0}
-                -
                 <span class="p-1 duration">
                   {duration}
                 </span>
               {/if}
             </div>
           </div>
-          Please wait for the host to start the meeting.
+          <Label label={love.string.WaitForHost} />
         </div>
       </div>
     {:else if errorMessage}
@@ -299,8 +303,6 @@
         </div>
       </div>
     {:else if guestToken}
-      <!-- {guestInfo?.title ?? guestInfo?.workspaceUrl ?? 'Meeting'} -->
-
       {#if resolving}
         <div class="center">
           <div class="message flex justify-center">{love.string.CheckingLink}</div>
@@ -325,15 +327,6 @@
       {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center">
-            {#if $loginTheme.showLoginTitle}
-              <div class="main-heading">
-                <Label
-                  className="login-label main-heading__label"
-                  variant="heading"
-                  label={loginResources.string.SignToProceed}
-                />
-              </div>
-            {/if}
             {#if guestInfo.workspaceUrl !== ''}
               <div class="message flex flex-row-center justify-center">{guestInfo.workspaceUrl}</div>
             {/if}

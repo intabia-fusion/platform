@@ -71,6 +71,7 @@
     "StartTranscription": "Avvia trascrizione",
     "StopTranscription": "Ferma trascrizione",
     "Meeting": "Riunione",
+    "ScheduledIn": "Programmato tra",
     "Transcription": "Trascrizione",
     "TranscriptionState": "Stato trascrizione",
     "TranscriptionNotStarted": "Non iniziata",
@@ -121,6 +122,7 @@
     "Error": "Errore",
     "ShowParticipants": "Mostra partecipanti",
     "HideParticipants": "Nascondi partecipanti",
-    "Scheduled": "Programmato"
+    "Scheduled": "Programmato",
+    "WaitForHost": "Attendere che l'organizzatore avvii la riunione."
   }
 }

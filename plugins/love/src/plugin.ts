@@ -102,7 +102,10 @@ const love = plugin(loveId, {
     KnockAction: '' as IntlString,
     KnockingTo: '' as IntlString,
     ShowParticipants: '' as IntlString,
-    HideParticipants: '' as IntlString
+    HideParticipants: '' as IntlString,
+    Scheduled: '' as IntlString,
+    ScheduledIn: '' as IntlString,
+    WaitForHost: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,

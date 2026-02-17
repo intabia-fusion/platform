@@ -71,6 +71,7 @@
     "StartTranscription": "文字起こしを開始",
     "StopTranscription": "文字起こしを停止",
     "Meeting": "会議",
+    "ScheduledIn": "予定まで",
     "Transcription": "文字起こし",
     "TranscriptionState": "文字起こし状態",
     "TranscriptionNotStarted": "なし",
@@ -121,6 +122,7 @@
     "Error": "エラー",
     "ShowParticipants": "参加者を表示",
     "HideParticipants": "参加者を非表示",
-    "Scheduled": "予定"
+    "Scheduled": "予定",
+    "WaitForHost": "主催者がミーティングを開始するまでお待ちください。"
   }
 }
