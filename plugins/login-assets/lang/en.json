@@ -21,6 +21,7 @@
     "LastName": "Last name",
     "FirstName": "First name",
     "Join": "Join",
+    "JoinWorkspace": "Join {workspaceName}",
     "Email": "Email",
     "Password": "Password",
     "Workspace": "Workspace name",
@@ -87,6 +88,13 @@
     "AccessExpired": "Access time expired. Please ask for a new access link.",
     "AccessNotActive": "Access time hasn't started yet. It is starting in: ",
     "Downloads": "Download desktop app",
-    "BackLabel": "Back"
+    "BackLabel": "Back",
+    "JoinWithThisAccount": "Join with this account",
+    "UseDifferentAccount": "Use different account",
+    "UseCurrentAccountToJoin": "Already signed in?",
+    "LogInAndJoin": "Log In & Join",
+    "SignUpAndJoin": "Sign Up & Join",
+    "CreateNewAccount": "Create new account",
+    "SignedInAs": "Signed in as {name}"
   }
 }

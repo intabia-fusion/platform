@@ -221,6 +221,7 @@ export {
 } from './utils'
 export * from './viewOptions'
 export * from './viewletContextStore'
+export { getViewletSpecialActions } from './viewletUtils'
 export { copyMarkdown } from './actionImpl'
 export { default as SimpleNotification } from './components/SimpleNotification.svelte'
 export type { BuildMarkdownTableMetadata } from '@hcengineering/view'

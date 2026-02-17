@@ -21,6 +21,7 @@
     "LastName": "Apellido",
     "FirstName": "Nombre",
     "Join": "Unirse",
+    "JoinWorkspace": "Unirse a {workspaceName}",
     "Email": "Correo Electrónico",
     "Password": "Contraseña",
     "Workspace": "Nombre del espacio de trabajo",
@@ -86,6 +87,13 @@
     "AccessExpired": "El tiempo de acceso ha expirado. Por favor, solicite un nuevo enlace de acceso.",
     "AccessNotActive": "El tiempo de acceso aún no ha comenzado. Comienza en: ",
     "Downloads": "Descargar la aplicación de escritorio",
-    "BackLabel": "Atrás"
+    "BackLabel": "Atrás",
+    "JoinWithThisAccount": "Unirse con esta cuenta",
+    "UseDifferentAccount": "Usar otra cuenta",
+    "UseCurrentAccountToJoin": "¿Ya has iniciado sesión?",
+    "LogInAndJoin": "Iniciar sesión y unirse",
+    "SignUpAndJoin": "Registrarse y unirse",
+    "CreateNewAccount": "Crear nueva cuenta",
+    "SignedInAs": "Conectado como {name}"
   }
 }

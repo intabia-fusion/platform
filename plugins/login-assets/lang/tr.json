@@ -21,6 +21,7 @@
     "LastName": "Soyad",
     "FirstName": "Ad",
     "Join": "Katıl",
+    "JoinWorkspace": "{workspaceName} alanına katıl",
     "Email": "E-posta",
     "Password": "Şifre",
     "Workspace": "Çalışma alanı adı",
@@ -86,6 +87,13 @@
     "AccessExpired": "Erişim süresi doldu. Lütfen yeni bir erişim bağlantısı isteyin.",
     "AccessNotActive": "Erişim süresi henüz başlamadı. Başlangıç zamanı: ",
     "Downloads": "Masaüstü uygulamasını indir",
-    "BackLabel": "Geri"
+    "BackLabel": "Geri",
+    "JoinWithThisAccount": "Bu hesapla katıl",
+    "UseDifferentAccount": "Farklı hesap kullan",
+    "UseCurrentAccountToJoin": "Zaten giriş yaptınız mı?",
+    "LogInAndJoin": "Giriş yap ve katıl",
+    "SignUpAndJoin": "Kayıt ol ve katıl",
+    "CreateNewAccount": "Yeni hesap oluştur",
+    "SignedInAs": "{name} olarak giriş yapıldı"
   }
 }

@@ -21,6 +21,7 @@
     "LastName": "Фамилия",
     "FirstName": "Имя",
     "Join": "Присоединиться",
+    "JoinWorkspace": "Присоединиться к {workspaceName}",
     "Email": "Email",
     "Password": "Пароль",
     "Workspace": "Рабочее пространство",
@@ -87,6 +88,13 @@
     "AccessExpired": "Время доступа истекло. Пожалуйста, запросите новую ссылку доступа.",
     "AccessNotActive": "Время доступа еще не началось. Начинается через: ",
     "Downloads": "Скачать настольное приложение",
-    "BackLabel": "Назад"
+    "BackLabel": "Назад",
+    "JoinWithThisAccount": "Присоединиться с этим аккаунтом",
+    "UseDifferentAccount": "Использовать другой аккаунт",
+    "UseCurrentAccountToJoin": "Уже вошли в аккаунт?",
+    "LogInAndJoin": "Войти и присоединиться",
+    "SignUpAndJoin": "Зарегистрироваться и присоединиться",
+    "CreateNewAccount": "Создать новый аккаунт",
+    "SignedInAs": "Вы вошли как {name}"
   }
 }

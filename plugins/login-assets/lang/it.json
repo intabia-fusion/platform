@@ -21,6 +21,7 @@
     "LastName": "Cognome",
     "FirstName": "Nome",
     "Join": "Unisciti",
+    "JoinWorkspace": "Partecipa a {workspaceName}",
     "Email": "Email",
     "Password": "Password",
     "Workspace": "Nome dello spazio di lavoro",
@@ -86,6 +87,13 @@
     "AccessExpired": "Il tempo di accesso è scaduto. Per favore, richiedi un nuovo link di accesso.",
     "AccessNotActive": "Il tempo di accesso non è ancora iniziato. Inizia tra: ",
     "Downloads": "Scarica l'app desktop",
-    "BackLabel": "Indietro"
+    "BackLabel": "Indietro",
+    "JoinWithThisAccount": "Partecipa con questo account",
+    "UseDifferentAccount": "Usa un altro account",
+    "UseCurrentAccountToJoin": "Già effettuato l'accesso?",
+    "LogInAndJoin": "Accedi e partecipa",
+    "SignUpAndJoin": "Iscriviti e partecipa",
+    "CreateNewAccount": "Crea nuovo account",
+    "SignedInAs": "Accesso effettuato come {name}"
   }
 }

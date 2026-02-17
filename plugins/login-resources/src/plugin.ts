@@ -35,6 +35,7 @@ export default mergeIds(loginId, login, {
     HaveAccount: '' as IntlString,
     LoadingAccount: '' as IntlString,
     Join: '' as IntlString,
+    JoinWorkspace: '' as IntlString<{ workspaceName: string }>,
     Workspace: '' as IntlString,
     SignUp: '' as IntlString,
     SignUpTab: '' as IntlString,
@@ -80,6 +81,13 @@ export default mergeIds(loginId, login, {
     AccessExpired: '' as IntlString,
     AccessNotActive: '' as IntlString,
     DesktopApp: '' as IntlString,
-    EditBoxPlaceholder: '' as IntlString
+    EditBoxPlaceholder: '' as IntlString,
+    JoinWithThisAccount: '' as IntlString,
+    UseDifferentAccount: '' as IntlString,
+    UseCurrentAccountToJoin: '' as IntlString,
+    LogInAndJoin: '' as IntlString,
+    SignUpAndJoin: '' as IntlString,
+    CreateNewAccount: '' as IntlString,
+    SignedInAs: '' as IntlString<{ name: string }>
   }
 })

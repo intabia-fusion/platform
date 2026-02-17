@@ -417,6 +417,7 @@ export class TClassCollaborators extends TDoc implements ClassCollaborators<Doc>
   allFields?: boolean
   fields!: (keyof Doc)[]
   provideSecurity?: boolean
+  provideAttachedSecurity?: boolean
 }
 
 @UX(core.string.Collaborator, undefined, undefined, undefined, undefined, core.string.Collaborators)

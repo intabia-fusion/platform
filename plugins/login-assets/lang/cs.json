@@ -21,6 +21,7 @@
     "LastName": "Příjmení",
     "FirstName": "Jméno",
     "Join": "Připojit se",
+    "JoinWorkspace": "Připojit se k {workspaceName}",
     "Email": "E-mail",
     "Password": "Heslo",
     "Workspace": "Název pracovního prostoru",
@@ -87,6 +88,13 @@
     "AccessExpired": "Doba přístupu vypršela. Požádejte prosím o nový odkaz pro přístup.",
     "AccessNotActive": "Doba přístupu ještě nezačala. Začíná za: ",
     "Downloads": "Stáhnout desktopovou aplikaci",
-    "BackLabel": "Zpět"
+    "BackLabel": "Zpět",
+    "JoinWithThisAccount": "Připojit se tímto účtem",
+    "UseDifferentAccount": "Použít jiný účet",
+    "UseCurrentAccountToJoin": "Už jste přihlášeni?",
+    "LogInAndJoin": "Přihlásit se a připojit",
+    "SignUpAndJoin": "Registrovat se a připojit",
+    "CreateNewAccount": "Vytvořit nový účet",
+    "SignedInAs": "Přihlášen jako {name}"
   }
 }
