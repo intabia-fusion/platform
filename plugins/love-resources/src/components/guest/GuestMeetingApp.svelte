@@ -25,7 +25,7 @@
   import { lkSessionConnected } from '../../liveKitClient'
   import { isFullScreen, liveKitClient } from '../../utils'
   import { onDestroy, onMount } from 'svelte'
-  import ui, { location, navigate, Location, Button, ticker } from '@hcengineering/ui'
+  import ui, { location, navigate, Location, Button, ticker, formatDuration, themeStore } from '@hcengineering/ui'
   import { getMetadata, getResource, IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
 
@@ -33,16 +33,14 @@
   import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
   import { workbenchId } from '@hcengineering/workbench'
   import GuestControlBar from './GuestControlBar.svelte'
-  import { Ref, WorkspaceUuid } from '@hcengineering/core'
+  import { Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
 
   import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
   import loginResources from '@hcengineering/login-resources/src/plugin'
 
   import { type Room as LKRoom } from 'livekit-client'
-  import { getLink, openDoc } from '@hcengineering/view-resources'
 
   // Route params
-  let meetingId: string | undefined = undefined
   let guestToken: string | undefined = undefined
   let errorMessage: IntlString | null = null
 
@@ -53,7 +51,10 @@
     meetingId: Ref<MeetingMinutes>
     workspace: WorkspaceUuid
     workspaceUrl: string
+    now: Timestamp
     meetingStatus: MeetingStatus
+    meetingScheduledDate?: Timestamp
+    meetingEnd?: Timestamp
     roomFound: boolean
     title: string
   } | null = null
@@ -91,10 +92,10 @@
       return
     }
     const q = loc.query ?? {}
-    meetingId = q.meetingId ?? undefined
+
     guestToken = q.guestToken ?? undefined
 
-    if (meetingId == null || guestToken == null) {
+    if (guestToken == null) {
       errorMessage = love.string.InvalidOrExpiredLink
       guestInfo = null
     } else {
@@ -105,7 +106,7 @@
   }
 
   async function fetchGuestInfo (_time: number): Promise<void> {
-    if (meetingId == null || guestToken == null) return
+    if (guestToken == null) return
 
     resolving = true
     resolveError = null
@@ -131,6 +132,10 @@
       const data = await resp.json()
       guestInfo = data
 
+      if (guestInfo === undefined) {
+        return
+      }
+
       // Attempt automatic workspace resolve/select if URL is present
       const wsUrl = guestInfo?.workspaceUrl ?? guestInfo?.workspace ?? null
       if (wsUrl != null) {
@@ -140,7 +145,7 @@
           const [, loginInfo, ok] = selectResult ?? [undefined, null, false]
           // If selection completed successfully and returned login token — perform login/navigation
           if (ok && loginInfo?.token != null) {
-            const fragment = `view:component:EditDoc|${meetingId}|love:class:MeetingMinutes|content`
+            const fragment = `view:component:EditDoc|${guestInfo?.meetingId}|love:class:MeetingMinutes|content`
             navigate({ path: [workbenchId, wsUrl, 'love'], fragment }, true)
           }
         } catch (err: any) {
@@ -238,6 +243,13 @@
   }
   $: if (((document.fullscreenElement && !$isFullScreen) || $isFullScreen) && roomEl) checkFullscreen()
   $: updateStyle(lk.numParticipants, withScreenSharing)
+  $: now = $ticker
+
+  let duration: string
+  $: durValue = (guestInfo?.meetingScheduledDate ?? 0) - now
+  $: void formatDuration(durValue, $themeStore.language).then((res) => {
+    duration = res
+  })
 </script>
 
 <LoginAppBase wide={$lkSessionConnected ?? false}>
@@ -251,6 +263,34 @@
           </div>
         </div>
       </div>
+    {:else if guestInfo != null && guestInfo.meetingStatus === MeetingStatus.Scheduled}
+      <div class="center">
+        {#if $loginTheme.showLoginTitle}
+          <div class="main-heading">
+            <Label
+              className="login-label main-heading__label"
+              variant="heading"
+              label={loginResources.string.SignToProceed}
+            />
+          </div>
+        {/if}
+        <div class="message flex flex-col items-center">
+          <div class="flex flex-row-center">
+            <Label label={love.string.Meeting} />
+            <div class="p-1">{guestInfo.title ?? ''}</div>
+            <div class="ml-2 flex flex-row-center">
+              <Label label={love.string.Scheduled} />
+              {#if durValue > 0}
+                -
+                <span class="p-1 duration">
+                  {duration}
+                </span>
+              {/if}
+            </div>
+          </div>
+          Please wait for the host to start the meeting.
+        </div>
+      </div>
     {:else if errorMessage}
       <div class="center" role="alert">
         <div class="message">{errorMessage}</div>
@@ -258,7 +298,7 @@
           <Button on:click={goHome} label={ui.string.Back}></Button>
         </div>
       </div>
-    {:else if meetingId !== undefined && guestToken}
+    {:else if guestToken}
       <!-- {guestInfo?.title ?? guestInfo?.workspaceUrl ?? 'Meeting'} -->
 
       {#if resolving}
@@ -282,7 +322,7 @@
           </div>
           <GuestControlBar {leaveGuest} {onFullScreen} />
         </div>
-      {:else}
+      {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center">
             {#if $loginTheme.showLoginTitle}
@@ -294,7 +334,7 @@
                 />
               </div>
             {/if}
-            {#if guestInfo?.workspaceUrl != null && guestInfo.workspaceUrl !== ''}
+            {#if guestInfo.workspaceUrl !== ''}
               <div class="message flex flex-row-center justify-center">{guestInfo.workspaceUrl}</div>
             {/if}
             {#if resolveError}
@@ -306,10 +346,10 @@
                        We pass workspace info so GuestJoinPopup can persist guest-id / prefill name. -->
           <GuestJoinPopup
             bind:this={guestJoinRef}
-            {meetingId}
+            meetingId={guestInfo.meetingId}
             {guestToken}
-            workspaceId={guestInfo?.workspace ?? undefined}
-            workspaceName={guestInfo?.workspaceUrl ?? undefined}
+            workspaceId={guestInfo.workspace ?? undefined}
+            workspaceName={guestInfo.workspaceUrl ?? undefined}
           />
         </div>
       {/if}
@@ -327,6 +367,9 @@
     font-weight: 500;
     font-size: 1.5rem;
     align-items: center;
+  }
+  .duration {
+    color: var(--accent-color-base);
   }
   .room-container {
     display: flex;

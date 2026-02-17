@@ -429,7 +429,6 @@ async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
     const navigateUrl = getCurrentLocation()
     navigateUrl.path = ['meetings']
     navigateUrl.query = {
-      meetingId: mm._id,
       guestToken
     }
 
@@ -438,7 +437,7 @@ async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
     try {
       const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
 
-      const query = new URLSearchParams({ meetingId: mm._id, guestToken })
+      const query = new URLSearchParams({ guestToken })
       return concatLink(front, `/meetings?${query.toString()}`)
     } catch (err: any) {
       console.error('Failed to create guest link', err)

@@ -1,5 +1,5 @@
 import { MeasureContext, readOnlyGuestAccountUuid, Ref } from '@hcengineering/core'
-import { MeetingMinutes } from '@hcengineering/love'
+import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
 import { RoomServiceClient } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
@@ -31,7 +31,7 @@ export class GuestManager {
         return
       }
       res.status(200).send({
-        token: this.createGuestToken(meetingId, wsLoginInfo)
+        token: await this.createGuestToken(meetingId, wsLoginInfo)
       })
     } catch (e) {
       console.error(e)
@@ -104,6 +104,9 @@ export class GuestManager {
           meetingId,
           workspace,
           workspaceUrl,
+          now: Date.now(),
+          meetingScheduledDate: meetingDoc.meetingScheduledDate,
+          meetingEnd: meetingDoc.meetingEnd,
           title: meetingDoc.title,
           meetingStatus,
           roomFound
@@ -155,6 +158,22 @@ export class GuestManager {
         }
 
         const roomName = getRoomName(workspace, meetingId)
+
+        const isActive = meetingDoc.status === MeetingStatus.Active
+
+        if (meetingDoc.status === MeetingStatus.Scheduled && !isActive) {
+          res.status(403).send({
+            error: 'Meeting has not started yet.'
+          })
+          return
+        }
+
+        if (meetingDoc.status === MeetingStatus.Finished) {
+          res.status(403).send({
+            error: 'Meeting has already finished.'
+          })
+          return
+        }
 
         // Ensure LiveKit room exists
         const room = await this.roomClient.listRooms([roomName])
