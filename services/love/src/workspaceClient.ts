@@ -193,6 +193,7 @@ export class WorkspaceClient {
   /**
    * Mark meeting as finished.
    * No activity message is added - status change is reflected in meeting document.
+   * Also cleans up all ParticipantInfo entries for this meeting.
    */
   async finishMeeting (ref: Ref<MeetingMinutes>, meetingEnd?: number): Promise<void> {
     if (ref === undefined) return
@@ -213,6 +214,36 @@ export class WorkspaceClient {
     }
     await this.client.update(meeting, upd)
     this.ctx.info('Marked meeting as finished', { meeting: meeting._id, meetingEnd: endTs })
+
+    // Clean up all ParticipantInfo entries for this meeting
+    await this.cleanupParticipantInfosForMeeting(ref)
+  }
+
+  /**
+   * Remove all ParticipantInfo entries for a given meeting.
+   * Called when meeting is finished to ensure no stale participant records remain.
+   */
+  private async cleanupParticipantInfosForMeeting (meeting: Ref<MeetingMinutes>): Promise<void> {
+    try {
+      const participantInfos = await this.client.findAll(love.class.ParticipantInfo, { meeting })
+      for (const info of participantInfos) {
+        await this.client.remove(info)
+        this.ctx.info('[WorkspaceClient.cleanupParticipantInfosForMeeting] Removed ParticipantInfo', {
+          infoId: info._id,
+          person: info.person,
+          meeting
+        })
+      }
+      this.ctx.info('[WorkspaceClient.cleanupParticipantInfosForMeeting] Cleaned up participants for meeting', {
+        meeting,
+        count: participantInfos.length
+      })
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupParticipantInfosForMeeting] Failed', {
+        error: err?.message ?? String(err),
+        meeting
+      })
+    }
   }
 
   async checkUnfinishedMeetings (meetingMinutes: Ref<MeetingMinutes>[]): Promise<void> {
@@ -228,6 +259,57 @@ export class WorkspaceClient {
       }
     } catch (err: any) {
       this.ctx.error('[WorkspaceClient.checkUnfinishedMeetings] Failed', { error: err?.message ?? String(err) })
+    }
+  }
+
+  /**
+   * Clean up orphaned ParticipantInfo entries that reference finished meetings.
+   * This handles cases where ParticipantInfo was not cleaned up when a meeting finished
+   * (e.g., due to a bug or service restart before cleanup could complete).
+   */
+  async cleanupOrphanedParticipantInfos (): Promise<void> {
+    try {
+      // Find all ParticipantInfo entries first
+      const allParticipantInfos = await this.client.findAll(love.class.ParticipantInfo, {})
+
+      if (allParticipantInfos.length === 0) {
+        return
+      }
+
+      // Get unique meeting IDs from ParticipantInfo entries
+      const meetingIds = [...new Set(allParticipantInfos.map((info) => info.meeting))]
+
+      // Find which of these meetings are finished
+      const finishedMeetings = await this.client.findAll(love.class.MeetingMinutes, {
+        _id: { $in: meetingIds },
+        status: MeetingStatus.Finished
+      })
+
+      const finishedMeetingIds = new Set(finishedMeetings.map((m) => m._id))
+
+      // Remove ParticipantInfo entries that reference finished meetings
+      let removedCount = 0
+      for (const info of allParticipantInfos) {
+        if (finishedMeetingIds.has(info.meeting)) {
+          await this.client.remove(info)
+          removedCount++
+          this.ctx.info('[WorkspaceClient.cleanupOrphanedParticipantInfos] Removed orphaned ParticipantInfo', {
+            infoId: info._id,
+            person: info.person,
+            meeting: info.meeting
+          })
+        }
+      }
+
+      if (removedCount > 0) {
+        this.ctx.info('[WorkspaceClient.cleanupOrphanedParticipantInfos] Cleaned up orphaned participants', {
+          count: removedCount
+        })
+      }
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupOrphanedParticipantInfos] Failed', {
+        error: err?.message ?? String(err)
+      })
     }
   }
 

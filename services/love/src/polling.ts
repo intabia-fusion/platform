@@ -59,8 +59,9 @@ export class LiveKitPollingService {
   private isRunning = false
   private readonly roomStates = new Map<string, RoomState>()
 
-  private readonly checkedWorkspaces = new Set<WorkspaceUuid>()
   private readonly workspacesToCheck = new Set<WorkspaceUuid>()
+  private readonly lastCleanupTime = new Map<WorkspaceUuid, number>()
+  private static readonly CLEANUP_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
 
   constructor (ctx: MeasureContext, roomClient: RoomServiceClient, config: PollingConfig) {
     this.ctx = ctx
@@ -69,9 +70,20 @@ export class LiveKitPollingService {
   }
 
   addWorkspaceToCheck (workspace: WorkspaceUuid): void {
-    if (!this.checkedWorkspaces.has(workspace)) {
-      this.workspacesToCheck.add(workspace)
+    this.workspacesToCheck.add(workspace)
+  }
+
+  /**
+   * Check if cleanup should be run for a workspace (at most once per hour)
+   */
+  private shouldRunCleanup (workspace: WorkspaceUuid): boolean {
+    const lastCleanup = this.lastCleanupTime.get(workspace)
+    const now = Date.now()
+    if (lastCleanup === undefined || now - lastCleanup >= LiveKitPollingService.CLEANUP_INTERVAL_MS) {
+      this.lastCleanupTime.set(workspace, now)
+      return true
     }
+    return false
   }
 
   /**
@@ -165,6 +177,10 @@ export class LiveKitPollingService {
               .map((it) => it?.meetingId)
               .filter((it) => it != null)
           )
+          // Also clean up orphaned ParticipantInfo entries for finished meetings (at most once per hour)
+          if (this.shouldRunCleanup(workspace)) {
+            await wsClient.cleanupOrphanedParticipantInfos()
+          }
         } catch (err: any) {
           this.ctx.error('[PollingService] Error checking unfinished meetings', {
             workspace,

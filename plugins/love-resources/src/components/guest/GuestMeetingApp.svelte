@@ -108,9 +108,10 @@
   async function fetchGuestInfo (_time: number): Promise<void> {
     if (guestToken == null) return
 
-    resolving = true
+    if (guestToken === null) {
+      resolving = true
+    }
     resolveError = null
-    guestInfo = null
 
     try {
       const endpoint = getMetadata(love.metadata.ServiceEndpoint)
@@ -326,9 +327,14 @@
         </div>
       {:else if guestInfo != null}
         <div>
-          <div class="flex flex-col justify-center">
+          <div class="flex flex-col justify-center fs-title mb-2">
             {#if guestInfo.workspaceUrl !== ''}
-              <div class="message flex flex-row-center justify-center">{guestInfo.workspaceUrl}</div>
+            <div class="message flex flex-row-center justify-center">
+                <Label label={love.string.Meeting} />
+                <div class='p-1'>
+                    {guestInfo.title ?? ''}
+                </div> - <div class='p-1'> {guestInfo.workspaceUrl}</div>
+            </div>
             {/if}
             {#if resolveError}
               <div class="message" role="alert">{love.string.Error}: {resolveError}</div>
