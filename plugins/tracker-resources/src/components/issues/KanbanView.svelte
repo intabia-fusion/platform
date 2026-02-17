@@ -445,6 +445,7 @@
                 isEditable={true}
                 kind={'link-bordered'}
                 size={'small'}
+                maxWidth={'7rem'}
                 justify={'center'}
               />
             {/if}
