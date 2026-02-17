@@ -29,7 +29,9 @@ async function sendPushToSubscription (
   const result: Ref<PushSubscription>[] = []
   for (const subscription of subscriptions) {
     try {
-      await webpush.sendNotification(subscription, JSON.stringify(data))
+      await webpush.sendNotification(subscription, JSON.stringify(data), {
+        TTL: config.TTL
+      })
     } catch (err: any) {
       if (err instanceof WebPushError) {
         if (errorMessages.some((p) => JSON.stringify(err.body).includes(p))) {

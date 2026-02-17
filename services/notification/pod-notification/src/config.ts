@@ -20,6 +20,8 @@ interface Config {
   PushSubject?: string
   PushPublicKey?: string
   PushPrivateKey?: string
+
+  TTL: number
 }
 
 const envMap: { [key in keyof Required<Config>]: string } = {
@@ -28,7 +30,8 @@ const envMap: { [key in keyof Required<Config>]: string } = {
   AuthToken: 'AUTH_TOKEN',
   PushPublicKey: 'PUSH_PUBLIC_KEY',
   PushPrivateKey: 'PUSH_PRIVATE_KEY',
-  PushSubject: 'PUSH_SUBJECT'
+  PushSubject: 'PUSH_SUBJECT',
+  TTL: 'TTL'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -40,7 +43,8 @@ const config: Config = (() => {
     AuthToken: process.env[envMap.AuthToken],
     PushPublicKey: process.env[envMap.PushPublicKey],
     PushPrivateKey: process.env[envMap.PushPrivateKey],
-    PushSubject: process.env[envMap.PushSubject]
+    PushSubject: process.env[envMap.PushSubject],
+    TTL: parseNumber(process.env[envMap.TTL] ?? '3600') // default to 1 hour
   }
 
   const required: Array<keyof Config> = ['Port', 'Source']
