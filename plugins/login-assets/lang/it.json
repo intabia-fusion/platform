@@ -21,7 +21,6 @@
     "LastName": "Cognome",
     "FirstName": "Nome",
     "Join": "Unisciti",
-    "JoinWorkspace": "Partecipa a {workspaceName}",
     "Email": "Email",
     "Password": "Password",
     "Workspace": "Nome dello spazio di lavoro",

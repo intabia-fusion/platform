@@ -80,11 +80,6 @@ export interface WorkspaceInviteInfo {
   name?: string
 }
 
-/** Public invite details from getInviteInfo (no auth required). */
-export interface InviteInfo {
-  workspaceName: string | null
-}
-
 export interface OtpInfo {
   sent: boolean
   retryOn: Timestamp

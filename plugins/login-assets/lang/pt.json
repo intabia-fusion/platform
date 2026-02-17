@@ -21,7 +21,6 @@
     "LastName": "Apelido",
     "FirstName": "Nome",
     "Join": "Participar",
-    "JoinWorkspace": "Participar em {workspaceName}",
     "Email": "Email",
     "Password": "Palavra-Passe",
     "Workspace": "Nome do espaço de trabalho",

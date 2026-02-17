@@ -21,7 +21,6 @@
     "LastName": "Фамилия",
     "FirstName": "Имя",
     "Join": "Присоединиться",
-    "JoinWorkspace": "Присоединиться к {workspaceName}",
     "Email": "Email",
     "Password": "Пароль",
     "Workspace": "Рабочее пространство",

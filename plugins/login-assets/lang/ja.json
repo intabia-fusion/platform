@@ -14,7 +14,6 @@
     "LastName": "姓",
     "FirstName": "名",
     "Join": "参加",
-    "JoinWorkspace": "{workspaceName} に参加",
     "Email": "メールアドレス",
     "Password": "パスワード",
     "Workspace": "ワークスペース名",

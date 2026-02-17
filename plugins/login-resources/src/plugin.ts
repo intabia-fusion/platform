@@ -35,7 +35,6 @@ export default mergeIds(loginId, login, {
     HaveAccount: '' as IntlString,
     LoadingAccount: '' as IntlString,
     Join: '' as IntlString,
-    JoinWorkspace: '' as IntlString<{ workspaceName: string }>,
     Workspace: '' as IntlString,
     SignUp: '' as IntlString,
     SignUpTab: '' as IntlString,

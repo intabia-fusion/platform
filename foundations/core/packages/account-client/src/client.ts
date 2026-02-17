@@ -42,7 +42,6 @@ import type {
   LoginInfo,
   LoginInfoByToken,
   LoginInfoRequestData,
-  InviteInfo,
   LoginInfoWithWorkspaces,
   MailboxInfo,
   MailboxOptions,
@@ -125,9 +124,7 @@ export interface AccountClient {
     }
   ) => Promise<string>
   checkJoin: (inviteId: string) => Promise<WorkspaceLoginInfo>
-  joinByToken: (inviteId: string) => Promise<WorkspaceLoginInfo>
   checkAutoJoin: (inviteId: string, firstName?: string, lastName?: string) => Promise<WorkspaceLoginInfo>
-  getInviteInfo: (inviteId: string) => Promise<InviteInfo>
   getWorkspaceInfo: (updateLastVisit?: boolean) => Promise<WorkspaceInfoWithStatus>
   getWorkspacesInfo: (workspaces: WorkspaceUuid[]) => Promise<WorkspaceInfoWithStatus[]>
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
@@ -589,28 +586,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async joinByToken (inviteId: string): Promise<WorkspaceLoginInfo> {
-    const request = {
-      method: 'joinByToken' as const,
-      params: { inviteId }
-    }
-
-    return await this.rpc(request)
-  }
-
   async checkAutoJoin (inviteId: string, firstName?: string, lastName?: string): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'checkAutoJoin' as const,
       params: { inviteId, firstName, lastName }
-    }
-
-    return await this.rpc(request)
-  }
-
-  async getInviteInfo (inviteId: string): Promise<InviteInfo> {
-    const request = {
-      method: 'getInviteInfo' as const,
-      params: { inviteId }
     }
 
     return await this.rpc(request)

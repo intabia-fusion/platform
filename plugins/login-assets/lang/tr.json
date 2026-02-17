@@ -21,7 +21,6 @@
     "LastName": "Soyad",
     "FirstName": "Ad",
     "Join": "Katıl",
-    "JoinWorkspace": "{workspaceName} alanına katıl",
     "Email": "E-posta",
     "Password": "Şifre",
     "Workspace": "Çalışma alanı adı",

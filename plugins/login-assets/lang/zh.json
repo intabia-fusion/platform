@@ -21,7 +21,6 @@
     "LastName": "姓",
     "FirstName": "名",
     "Join": "加入",
-    "JoinWorkspace": "加入 {workspaceName}",
     "Email": "电子邮件",
     "Password": "密码",
     "Workspace": "工作区名称",

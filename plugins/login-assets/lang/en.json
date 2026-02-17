@@ -21,7 +21,6 @@
     "LastName": "Last name",
     "FirstName": "First name",
     "Join": "Join",
-    "JoinWorkspace": "Join {workspaceName}",
     "Email": "Email",
     "Password": "Password",
     "Workspace": "Workspace name",
