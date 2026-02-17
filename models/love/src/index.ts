@@ -65,7 +65,8 @@ import {
   TypeTimestamp,
   UX,
   TypeBoolean,
-  Hidden
+  Hidden,
+  TypeNumber
 } from '@hcengineering/model'
 import calendar, { TEvent, TSchedule } from '@hcengineering/model-calendar'
 import core, { defineCollaborators, TAttachedDoc, TDoc } from '@hcengineering/model-core'
@@ -192,7 +193,7 @@ export class TPendingRecording extends TAttachedDoc implements PendingRecording 
   @Prop(TypeString(), core.string.Name)
     name!: string
 
-  @Prop(TypeString(), getEmbeddedLabel('Size'))
+  @Prop(TypeNumber(), getEmbeddedLabel('Size'))
     size?: number
 }
 
