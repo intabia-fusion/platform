@@ -268,7 +268,9 @@ async function unpinAllChannels (): Promise<void> {
   const ops = client.apply(undefined, 'unpinAllChannels')
   try {
     for (const p of pinned) {
-      await ops.update(p, { pinned: false })
+      await ops.updateCollection(p._class, p.space, p._id, p.attachedTo, p.attachedToClass, 'chats', {
+        pinned: false
+      })
     }
   } finally {
     await ops.commit()
@@ -329,7 +331,7 @@ async function hideDocs (id: SectionID): Promise<void> {
 
   try {
     for (const chat of chats) {
-      await client.update(chat, { hidden: true })
+      await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', { hidden: true })
     }
   } catch (e) {
     console.error(e)

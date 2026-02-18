@@ -19,14 +19,9 @@ import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core
 import { TypeMatchFuncResource } from '@hcengineering/server-notification'
 import { Presenter } from '@hcengineering/server-activity'
 
-/**
- * @public
- */
 export const serverChunterId = 'server-chunter' as Plugin
+export { ChunterMiddleware } from './middleware'
 
-/**
- * @public
- */
 export default plugin(serverChunterId, {
   trigger: {
     ChunterTrigger: '' as Resource<TriggerFunc>,

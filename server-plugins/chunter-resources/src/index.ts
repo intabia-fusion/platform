@@ -35,11 +35,12 @@ import core, {
   type MeasureContext,
   Collaborator,
   TxRemoveDoc,
-  SortingOrder
+  SortingOrder,
+  getClassCollaborators
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { getMetadata, translate } from '@hcengineering/platform'
-import { getPerson, getPersonSpaces } from '@hcengineering/server-contact'
+import { getAccountBySocialId, getAddCollaboratorsTxes, getPerson, getPersonSpaces } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
@@ -168,10 +169,38 @@ async function OnThreadMessageDeleted (tx: Tx, control: TriggerControl): Promise
   // return [updateTx]
 }
 
-/**
- * @public
- */
-export async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+async function OnChatMessageCreated (ctx: MeasureContext, tx: TxCreateDoc<ChatMessage>, control: TriggerControl): Promise<Tx[]> {
+  const hierarchy = control.hierarchy
+
+  const message = TxProcessor.createDoc2Doc(tx)
+  if (message.modifiedBy === core.account.System) return []
+
+  const mixin = getClassCollaborators(control.modelDb, hierarchy, message.attachedToClass)
+  if (mixin === undefined || mixin.provideSecurity === true) return []
+
+  const account = await getAccountBySocialId(control, message.modifiedBy)
+  if (account == null) return []
+
+  const collaborator = (
+    await control.findAll(ctx, core.class.Collaborator, {
+      attachedTo: message.attachedTo,
+      collaborator: account
+    })
+  )[0]
+
+  if (collaborator != null) return []
+
+  const targetDoc = (await control.findAll(ctx, message.attachedToClass, { _id: message.attachedTo }, { limit: 1 }))[0]
+  if (targetDoc === undefined) return []
+
+  const res: Tx[] = []
+
+  res.push(...getAddCollaboratorsTxes(targetDoc._id, targetDoc._class, targetDoc.space, control, [account]))
+
+  return res
+}
+
+async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
   for (const tx of txes) {
     if (
@@ -187,6 +216,12 @@ export async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerContro
       control.hierarchy.isDerived(tx.objectClass, chunter.class.ThreadMessage)
     ) {
       res.push(...(await control.ctx.with('OnThreadMessageDeleted', {}, (ctx) => OnThreadMessageDeleted(tx, control))))
+    }
+    if (
+      tx._class === core.class.TxCreateDoc &&
+      control.hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)
+    ) {
+      res.push(...(await control.ctx.with('OnChatMessageCreated', {}, (ctx) => OnChatMessageCreated(ctx, tx as TxCreateDoc<ChatMessage>, control))))
     }
   }
   return res
@@ -301,11 +336,10 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
     const activityToHide = await getActivityToHide(control, activityChats, contexts, date)
     const toHide = directsToHide.concat(activityToHide)
     for (const chat of toHide) {
-      res.push(
-        control.txFactory.createTxUpdateDoc(chat._class, chat.space, chat._id, {
-          hidden: true
-        })
-      )
+      const updateTx = control.txFactory.createTxUpdateDoc(chat._class, chat.space, chat._id, {
+        hidden: true
+      })
+      res.push(control.txFactory.createTxCollectionCUD(chat.attachedToClass, chat.attachedTo, chat.space, 'chats', updateTx))
     }
   }
   if (syncInfo === undefined) {
@@ -366,15 +400,17 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
     if (control.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
       continue
     }
+
+    const createTx = control.txFactory.createTxCreateDoc(chunter.class.Chat, space._id, {
+      attachedTo: collaborator.attachedTo,
+      attachedToClass: collaborator.attachedToClass,
+      account: collaborator.collaborator,
+      pinned: false,
+      hidden: false,
+      collection: 'chats'
+    })
     res.push(
-      control.txFactory.createTxCreateDoc(chunter.class.Chat, space._id, {
-        attachedTo: collaborator.attachedTo,
-        attachedToClass: collaborator.attachedToClass,
-        account: collaborator.collaborator,
-        pinned: false,
-        hidden: false,
-        collection: 'chats'
-      })
+      control.txFactory.createTxCollectionCUD(collaborator.attachedToClass, collaborator.attachedTo, space._id, 'chats', createTx)
     )
   }
 
@@ -394,7 +430,17 @@ async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control
       attachedTo: collaborator.attachedTo
     })
     if (chats.length === 0) continue
-    res.push(...chats.map((chat) => control.txFactory.createTxRemoveDoc(chat._class, chat.space, chat._id)))
+    res.push(
+      ...chats.map((chat) =>
+        control.txFactory.createTxCollectionCUD(
+          chat.attachedToClass,
+          chat.attachedTo,
+          chat.space,
+          'chats',
+          control.txFactory.createTxRemoveDoc(chat._class, chat.space, chat._id)
+        )
+      )
+    )
   }
 
   return res

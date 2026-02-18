@@ -217,7 +217,11 @@ async function OnActivityMessageRemove (message: ActivityMessage, control: Trigg
   const mentionNotifications = await control.findAll(control.ctx, notification.class.MentionInboxNotification, {
     mentionedIn: message._id
   })
+  const activityNotifications = await control.findAll(control.ctx, notification.class.ActivityInboxNotification, {
+    attachedTo: message._id
+  })
 
+  res.push(...activityNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
   res.push(...reactionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
   res.push(...mentionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
 

@@ -104,7 +104,7 @@
         labelParams: { label },
         group: 'edit',
         action: async () => {
-          await client.update(chat, { pinned: true })
+          await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', { pinned: true })
         }
       })
     } else if (chat != null && chat.pinned) {
@@ -114,7 +114,7 @@
         labelParams: { label },
         group: 'edit',
         action: async () => {
-          await client.update(chat, { pinned: false })
+          await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', { pinned: false })
         }
       })
     }
@@ -138,7 +138,7 @@
         labelParams: { label },
         group: 'remove',
         action: async () => {
-          await client.update(chat, { hidden: true })
+          await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', { hidden: true })
         }
       })
     }

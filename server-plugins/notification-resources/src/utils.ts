@@ -58,7 +58,6 @@ export const MeRemovedFromCollaboratorsNotificationTypeMatch: TypeMatchFunc = as
   receiver: Receiver
 ): Promise<boolean> => {
   const message = _message as DocUpdateMessage
-  console.log(message)
   if (message.objectClass !== core.class.Collaborator || message.action !== 'remove') return false
   return message.objectAttributes?.collaborator === receiver.account
 }
