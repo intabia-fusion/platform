@@ -41,24 +41,20 @@ export class GuestManager {
 
   async createGuestToken (meetingId: Ref<MeetingMinutes>, wsLoginInfo: WorkspaceLoginInfo): Promise<string> {
     const wsClient = await WorkspaceClient.create(wsLoginInfo.workspace, this.ctx)
-    try {
-      const meetingDoc = await wsClient.findMeetingById(meetingId)
-      if (meetingDoc === undefined) {
-        throw new Error('Meeting not found')
-      }
-
-      const workspaceUrl = wsLoginInfo.workspaceUrl ?? ''
-      const guestToken = generateToken(
-        readOnlyGuestAccountUuid,
-        wsLoginInfo.workspace,
-        { meetingId, workspaceUrl },
-        config.ApiSecret
-      )
-
-      return guestToken
-    } finally {
-      await wsClient.close()
+    const meetingDoc = await wsClient.findMeetingById(meetingId)
+    if (meetingDoc === undefined) {
+      throw new Error('Meeting not found')
     }
+
+    const workspaceUrl = wsLoginInfo.workspaceUrl ?? ''
+    const guestToken = generateToken(
+      readOnlyGuestAccountUuid,
+      wsLoginInfo.workspace,
+      { meetingId, workspaceUrl },
+      config.ApiSecret
+    )
+
+    return guestToken
   }
 
   async handleGuestInfo (req: Request, res: Response): Promise<void> {
@@ -89,31 +85,27 @@ export class GuestManager {
 
       // Resolve meeting & room presence via workspace client and livekit room list
       const wsClient = await WorkspaceClient.create(workspace, this.ctx)
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-        const meetingStatus = meetingDoc.status
-        const roomName = getRoomName(workspace, meetingId)
-        const rooms = await this.roomClient.listRooms([roomName])
-        const roomFound = !(rooms === undefined || rooms.length === 0)
-
-        res.status(200).send({
-          meetingId,
-          workspace,
-          workspaceUrl,
-          now: Date.now(),
-          meetingScheduledDate: meetingDoc.meetingScheduledDate,
-          meetingEnd: meetingDoc.meetingEnd,
-          title: meetingDoc.title,
-          meetingStatus,
-          roomFound
-        })
-      } finally {
-        await wsClient.close()
+      const meetingDoc = await wsClient.findMeetingById(meetingId)
+      if (meetingDoc === undefined) {
+        res.status(404).send({ error: 'Meeting not found' })
+        return
       }
+      const meetingStatus = meetingDoc.status
+      const roomName = getRoomName(workspace, meetingId)
+      const rooms = await this.roomClient.listRooms([roomName])
+      const roomFound = !(rooms === undefined || rooms.length === 0)
+
+      res.status(200).send({
+        meetingId,
+        workspace,
+        workspaceUrl,
+        now: Date.now(),
+        meetingScheduledDate: meetingDoc.meetingScheduledDate,
+        meetingEnd: meetingDoc.meetingEnd,
+        title: meetingDoc.title,
+        meetingStatus,
+        roomFound
+      })
     } catch (e) {
       console.error(e)
       res.status(500).send()
@@ -150,70 +142,66 @@ export class GuestManager {
       // Resolve or create a Person for this guest (so webhook and ui can reliably reference a Person)
       const wsClient = await WorkspaceClient.create(workspace, this.ctx)
 
-      try {
-        const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc === undefined) {
-          res.status(404).send({ error: 'Meeting not found' })
-          return
-        }
-
-        const roomName = getRoomName(workspace, meetingId)
-
-        const isActive = meetingDoc.status === MeetingStatus.Active
-
-        if (meetingDoc.status === MeetingStatus.Scheduled && !isActive) {
-          res.status(403).send({
-            error: 'Meeting has not started yet.'
-          })
-          return
-        }
-
-        if (meetingDoc.status === MeetingStatus.Finished) {
-          res.status(403).send({
-            error: 'Meeting has already finished.'
-          })
-          return
-        }
-
-        // Ensure LiveKit room exists
-        const room = await this.roomClient.listRooms([roomName])
-        if (room === undefined || room.length === 0) {
-          this.ctx.info('No room found guest join, not possible to join', { roomName })
-          res.status(404).send({
-            error: 'Meeting room not found.'
-          })
-          return
-        }
-        // Try finding an existing person by name to avoid duplicates
-        let personRef = await wsClient.findPersonByName(firstName, lastName)
-
-        // Create a guest person if not found
-        if (personRef === undefined) {
-          personRef = await wsClient.createGuestPerson(firstName, lastName)
-        }
-
-        if (personRef === undefined) {
-          // Repeated failures while creating a Person - do not fallback to ephemeral identity.
-          this.ctx.error('[guestJoin] Failed to create Person for guest join after retries', { firstName, lastName })
-          res.status(500).send({ error: 'Failed to create guest identity' })
-          return
-        }
-
-        // Use the person's document id as LiveKit identity so webhooks can resolve the person
-        this.ctx.info('[guestJoin] Using identity', { identity: personRef })
-        // Mark this participant as a guest in the token metadata
-        const guestMetadata = JSON.stringify({ isGuest: true })
-        const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName), guestMetadata)
-
-        res.status(200).send({
-          token: roomToken,
-          wsUrl: config.LiveKitHost,
-          roomName,
-          person: personRef
-        })
-      } finally {
-        await wsClient.close()
+      const meetingDoc = await wsClient.findMeetingById(meetingId)
+      if (meetingDoc === undefined) {
+        res.status(404).send({ error: 'Meeting not found' })
+        return
       }
+
+      const roomName = getRoomName(workspace, meetingId)
+
+      const isActive = meetingDoc.status === MeetingStatus.Active
+
+      if (meetingDoc.status === MeetingStatus.Scheduled && !isActive) {
+        res.status(403).send({
+          error: 'Meeting has not started yet.'
+        })
+        return
+      }
+
+      if (meetingDoc.status === MeetingStatus.Finished) {
+        res.status(403).send({
+          error: 'Meeting has already finished.'
+        })
+        return
+      }
+
+      // Ensure LiveKit room exists
+      const room = await this.roomClient.listRooms([roomName])
+      if (room === undefined || room.length === 0) {
+        this.ctx.info('No room found guest join, not possible to join', { roomName })
+        res.status(404).send({
+          error: 'Meeting room not found.'
+        })
+        return
+      }
+      // Try finding an existing person by name to avoid duplicates
+      let personRef = await wsClient.findPersonByName(firstName, lastName)
+
+      // Create a guest person if not found
+      if (personRef === undefined) {
+        personRef = await wsClient.createGuestPerson(firstName, lastName)
+      }
+
+      if (personRef === undefined) {
+        // Repeated failures while creating a Person - do not fallback to ephemeral identity.
+        this.ctx.error('[guestJoin] Failed to create Person for guest join after retries', { firstName, lastName })
+        res.status(500).send({ error: 'Failed to create guest identity' })
+        return
+      }
+
+      // Use the person's document id as LiveKit identity so webhooks can resolve the person
+      this.ctx.info('[guestJoin] Using identity', { identity: personRef })
+      // Mark this participant as a guest in the token metadata
+      const guestMetadata = JSON.stringify({ isGuest: true })
+      const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName), guestMetadata)
+
+      res.status(200).send({
+        token: roomToken,
+        wsUrl: config.LiveKitHost,
+        roomName,
+        person: personRef
+      })
     } catch (e) {
       console.error(e)
       res.status(500).send()

@@ -20,6 +20,7 @@ import config from './config'
 import { getRecordingPreset } from './preset'
 import { saveFile } from './storage'
 import { WorkspaceClient } from './workspaceClient'
+import platform, { PlatformError } from '@hcengineering/platform'
 
 export class WebhookProcessor {
   constructor (
@@ -52,8 +53,8 @@ export class WebhookProcessor {
       return
     }
 
-    const wsClient = await WorkspaceClient.create(workspace, this.ctx)
     try {
+      const wsClient = await WorkspaceClient.create(workspace, this.ctx)
       // Participant joined / left -> manage ParticipantInfo and PendingJoin via LiveKit events only
       if (event.event === 'participant_joined' || event.event === 'participant_left') {
         await this.handleJoinLeave(event, roomName, wsClient)
@@ -73,10 +74,12 @@ export class WebhookProcessor {
         return
       }
     } catch (err: any) {
-      this.ctx.error('Failed to process livekit event', { error: err?.message ?? String(err), event: event.event })
+      const wsNotFound = err instanceof PlatformError && err.status.code === platform.status.WorkspaceNotFound
+
+      if (!wsNotFound) {
+        this.ctx.error('Failed to process livekit event', { error: err?.message ?? String(err), event: event.event })
+      }
       return
-    } finally {
-      await wsClient.close()
     }
 
     // Unknown event type - acknowledge receipt but don't process
@@ -235,7 +238,6 @@ export class WebhookProcessor {
     } else {
       this.ctx.info('Skipping room_started: not a MeetingMinutes-identified room', { workspace, roomName })
     }
-    await wsClient.close()
   }
 
   private async roomFinished (
@@ -258,8 +260,6 @@ export class WebhookProcessor {
       this.ctx.info('Skipping room_finished: not a MeetingMinutes-identified room', { workspace, roomName })
       // Do not operate on legacy room-id-only events.
     }
-
-    await wsClient.close()
   }
 
   private async egressUpdated (event: WebhookEvent, roomName: ParsedRoomName): Promise<void> {
@@ -276,7 +276,6 @@ export class WebhookProcessor {
         try {
           const wsClient = await WorkspaceClient.create(roomName.workspace, this.ctx)
           await wsClient.updatePendingRecordingSize(egressId, Number(fileResult.size))
-          await wsClient.close()
 
           await this.eventProducer.send(this.ctx, roomName.workspace, [
             queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'updated', {
@@ -312,7 +311,6 @@ export class WebhookProcessor {
       const meeting = await wsClient.findMeetingById(roomName.meetingId)
       if (meeting === undefined) {
         this.ctx.warn('egress_ended: meeting not found', { egressId, meetingId: roomName.meetingId })
-        await wsClient.close()
         return
       }
 
@@ -355,7 +353,6 @@ export class WebhookProcessor {
           }
         }
       }
-      await wsClient.close()
     } catch (err: any) {
       this.ctx.error('egress_ended: failed to process recording', {
         error: err?.message ?? String(err),

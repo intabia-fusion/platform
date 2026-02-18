@@ -53,18 +53,60 @@ import { RecordingPreset } from './preset'
 export class WorkspaceClient {
   private client!: RestClient
 
+  // Static cache for workspace clients
+  private static readonly workspaces = new Map<WorkspaceUuid, WorkspaceClient>()
+  private static readonly connectingWorkspaces = new Map<WorkspaceUuid, Promise<void>>()
+
   private constructor (
     private readonly workspace: WorkspaceUuid,
     private readonly ctx: MeasureContext
   ) {}
 
   static async create (workspace: WorkspaceUuid, ctx: MeasureContext): Promise<WorkspaceClient> {
-    const instance = new WorkspaceClient(workspace, ctx)
-    await instance.initClient(workspace)
-    return instance
+    return await WorkspaceClient.getWorkspaceClient(workspace, ctx)
   }
 
   async close (): Promise<void> {}
+
+  private static async initWorkspaceClient (workspace: WorkspaceUuid, ctx: MeasureContext): Promise<void> {
+    if (WorkspaceClient.connectingWorkspaces.has(workspace)) {
+      return await WorkspaceClient.connectingWorkspaces.get(workspace)
+    }
+
+    const initPromise = (async () => {
+      try {
+        if (!WorkspaceClient.workspaces.has(workspace)) {
+          const instance = new WorkspaceClient(workspace, ctx)
+          await instance.initClient(workspace)
+          WorkspaceClient.workspaces.set(workspace, instance)
+        }
+      } catch (err: any) {
+        ctx.error('Failed to initialize workspace client', { error: err?.message ?? String(err), workspace })
+      } finally {
+        WorkspaceClient.connectingWorkspaces.delete(workspace)
+      }
+    })()
+
+    WorkspaceClient.connectingWorkspaces.set(workspace, initPromise)
+    await initPromise
+  }
+
+  static async getWorkspaceClient (workspace: WorkspaceUuid, ctx: MeasureContext): Promise<WorkspaceClient> {
+    await WorkspaceClient.initWorkspaceClient(workspace, ctx)
+    const client = WorkspaceClient.workspaces.get(workspace)
+    if (client === undefined) {
+      throw new Error(`Failed to get workspace client for ${workspace}`)
+    }
+    return client
+  }
+
+  static async closeAll (): Promise<void> {
+    for (const workspace of WorkspaceClient.workspaces.values()) {
+      await workspace.close()
+    }
+    WorkspaceClient.workspaces.clear()
+    WorkspaceClient.connectingWorkspaces.clear()
+  }
 
   private async initClient (workspace: WorkspaceUuid): Promise<RestClient> {
     const token = generateToken(systemAccountUuid, workspace, { service: 'love' })

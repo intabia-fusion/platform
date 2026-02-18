@@ -65,7 +65,7 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
 
 export async function leaveMeeting (): Promise<void> {
   // If we're still in the process of connecting, don't disconnect
-  if (liveKitClient.isConnecting) {
+  if (get(liveKitClient.isConnecting)) {
     return
   }
 

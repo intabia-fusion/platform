@@ -898,22 +898,22 @@ services:
       - STT_PROVIDER=stream
     restart: unless-stopped
 
-  love-agent-prod:
-    image: intabiafusion/love-agent
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    depends_on:
-      - love
-      - aibot
-    environment:
-      - SERVER_SECRET=secret
-      - AGENT_NAME=transcribe-prod
-      - PLATFORM_URL=http://huly.local:4010
-      - LIVEKIT_URL=ws://huly.local:7880
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      - STT_PROVIDER=stream
-    restart: unless-stopped
+  # love-agent-prod:
+  #   image: intabiafusion/love-agent
+  #   extra_hosts:
+  #     - 'huly.local:host-gateway'
+  #   depends_on:
+  #     - love
+  #     - aibot
+  #   environment:
+  #     - SERVER_SECRET=secret
+  #     - AGENT_NAME=transcribe-prod
+  #     - PLATFORM_URL=http://huly.local:4010
+  #     - LIVEKIT_URL=ws://huly.local:7880
+  #     - LIVEKIT_API_KEY=devkey
+  #     - LIVEKIT_API_SECRET=secret
+  #     - STT_PROVIDER=stream
+  #   restart: unless-stopped
 
   livekit-egress:
     image: livekit/egress

@@ -23,6 +23,7 @@
   import { currentMeetingMinutes, myConnectingSessionId } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
+  import { liveKitClient } from '../utils'
 
   export let object: MeetingMinutes
   export let readonly: boolean = false
@@ -46,15 +47,15 @@
     dispatch('open', { ignoreKeys: ['title'] })
   })
 
+  const isConnecting = liveKitClient.isConnecting
+
   // Check if pending join is for THIS session (same browser tab)
   $: currentSessionId = getMetadata(presentation.metadata.SessionId)
-  $: hasPendingJoinInThisSession = $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId
+  $: hasPendingJoinInThisSession = ($myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId) && $isConnecting
 
   async function connect (): Promise<void> {
     await joinMeeting(object)
   }
-
-  $: connecting = hasPendingJoinInThisSession || ($currentMeetingMinutes?._id === object._id && !$lkSessionConnected)
 
   $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
 
@@ -82,8 +83,8 @@
         focusIndex={1}
       />
     </div>
-    {#if showConnectionButton(object, connecting, $lkSessionConnected)}
-      <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+    {#if showConnectionButton(object, hasPendingJoinInThisSession, $lkSessionConnected)}
+      <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={hasPendingJoinInThisSession} />
     {/if}
   </div>
 </div>

@@ -5,8 +5,11 @@
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
   import { lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'
-  import { myInfo, myConnectingSessionId } from '../stores'
+  import { myConnectingSessionId } from '../stores'
   import { liveKitClient, lk } from '../utils'
+  import { get } from 'svelte/store'
+
+  const isConnecting = liveKitClient.isConnecting
 
   let parentElement: HTMLDivElement
 
@@ -64,7 +67,7 @@
     unsubscribeFromIncomingInvites()
     // Do not disconnect if the current session initiated a connect (user is in the process of connecting)
     // or if the LiveKit client is currently connecting
-    if ($lkSessionConnected && $myConnectingSessionId === null && !liveKitClient.isConnecting) {
+    if ($lkSessionConnected && $myConnectingSessionId === null && !isConnecting) {
       await liveKitClient.disconnect()
     }
   })

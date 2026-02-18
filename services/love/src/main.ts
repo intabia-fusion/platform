@@ -185,24 +185,20 @@ export const main = async (): Promise<void> => {
       }
       case QueueMeetingEvent.started: {
         const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
-        try {
-          const mm = await wsClient.findMeetingById(queueMsg.meetingId)
-          if (mm !== undefined && mm.startWithRecording === true) {
-            const sysToken = generateToken(systemAccountUuid, msg.workspace, { service: 'love' })
-            const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
-            if (!isWorkspaceLoginInfo(wsLoginInfo)) {
-              break
-            }
-            await recordingProcessor.startRecording(
-              getRoomName(msg.workspace, queueMsg.meetingId),
-              msg.workspace,
-              queueMsg.meetingId,
-              wsLoginInfo,
-              mm.title
-            )
+        const mm = await wsClient.findMeetingById(queueMsg.meetingId)
+        if (mm !== undefined && mm.startWithRecording === true) {
+          const sysToken = generateToken(systemAccountUuid, msg.workspace, { service: 'love' })
+          const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
+          if (!isWorkspaceLoginInfo(wsLoginInfo)) {
+            break
           }
-        } finally {
-          await wsClient.close()
+          await recordingProcessor.startRecording(
+            getRoomName(msg.workspace, queueMsg.meetingId),
+            msg.workspace,
+            queueMsg.meetingId,
+            wsLoginInfo,
+            mm.title
+          )
         }
         break
       }
@@ -449,6 +445,7 @@ export const main = async (): Promise<void> => {
     void eventProducer.close()
     void queue.shutdown()
     pollingService.stop()
+    void WorkspaceClient.closeAll()
     server.close(() => process.exit())
   }
 

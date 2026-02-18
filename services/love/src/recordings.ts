@@ -68,8 +68,9 @@ export class RecordingProcessor {
       })
       // Update meeting document to reflect recording started
       await wsClient.updateMeetingRecordingState(meetingDoc, RecordingState.Recording)
-    } finally {
-      await wsClient.close()
+    } catch (err: any) {
+      this.ctx.error('Failed to start recording', { error: err?.message ?? String(err), meetingId, roomName })
+      throw err
     }
 
     this.ctx.info('Start recording', { workspace: wsLoginInfo.workspace, roomName, meetingId })

@@ -168,8 +168,8 @@ export class LiveKitPollingService {
       const wtc = Array.from(this.workspacesToCheck)
       this.workspacesToCheck.clear()
       for (const workspace of wtc) {
-        const wsClient = await WorkspaceClient.create(workspace, this.ctx)
         try {
+          const wsClient = await WorkspaceClient.create(workspace, this.ctx)
           await wsClient.checkUnfinishedMeetings(
             ourRooms
               .map((it) => parseRoomName(it.name))
@@ -186,8 +186,6 @@ export class LiveKitPollingService {
             workspace,
             error: err?.message ?? String(err)
           })
-        } finally {
-          await wsClient.close()
         }
       }
 
@@ -267,10 +265,8 @@ export class LiveKitPollingService {
     meetingId: Ref<MeetingMinutes>,
     allParticipants: Map<string, LiveKitParticipant>
   ): Promise<void> {
-    let wsClient: WorkspaceClient | null = null
-
     try {
-      wsClient = await WorkspaceClient.create(workspace, this.ctx)
+      const wsClient = await WorkspaceClient.create(workspace, this.ctx)
 
       // Get all ParticipantInfo from database for this meeting
       const dbParticipants = await wsClient.findParticipantInfosByMeeting(meetingId)
@@ -302,10 +298,6 @@ export class LiveKitPollingService {
         meetingId,
         error: err?.message ?? String(err)
       })
-    } finally {
-      if (wsClient !== null) {
-        await wsClient.close()
-      }
     }
   }
 
@@ -318,10 +310,8 @@ export class LiveKitPollingService {
     previousParticipants: Map<string, LiveKitParticipant>,
     currentParticipants: Map<string, LiveKitParticipant>
   ): Promise<void> {
-    let wsClient: WorkspaceClient | null = null
-
     try {
-      wsClient = await WorkspaceClient.create(workspace, this.ctx)
+      const wsClient = await WorkspaceClient.create(workspace, this.ctx)
 
       // Preload existing ParticipantInfo for this meeting to avoid false positives in detection.
       // We collect both person refs (person field) and stored display names to catch cases
@@ -411,10 +401,12 @@ export class LiveKitPollingService {
           }
         }
       }
-    } finally {
-      if (wsClient !== null) {
-        await wsClient.close()
-      }
+    } catch (err: any) {
+      this.ctx.error('[PollingService] Error reconciling participants', {
+        workspace,
+        meetingId,
+        error: err?.message ?? String(err)
+      })
     }
   }
 
@@ -433,19 +425,14 @@ export class LiveKitPollingService {
         })
 
         // Room ended - ensure meeting is marked as finished and pending joins are cleaned up
-        let wsClient: WorkspaceClient | null = null
         try {
-          wsClient = await WorkspaceClient.create(state.workspace, this.ctx)
+          const wsClient = await WorkspaceClient.create(state.workspace, this.ctx)
           await wsClient.finishMeeting(state.meetingId, Date.now())
         } catch (err: any) {
           this.ctx.error('[PollingService] Error finishing meeting for closed room', {
             roomName,
             error: err?.message ?? String(err)
           })
-        } finally {
-          if (wsClient !== null) {
-            await wsClient.close()
-          }
         }
 
         this.roomStates.delete(roomName)
