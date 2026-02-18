@@ -51,7 +51,8 @@
 
   // Check if pending join is for THIS session (same browser tab)
   $: currentSessionId = getMetadata(presentation.metadata.SessionId)
-  $: hasPendingJoinInThisSession = ($myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId) && $isConnecting
+  $: hasPendingJoinInThisSession =
+    $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId && $isConnecting
 
   async function connect (): Promise<void> {
     await joinMeeting(object)
@@ -84,7 +85,13 @@
       />
     </div>
     {#if showConnectionButton(object, hasPendingJoinInThisSession, $lkSessionConnected)}
-      <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={hasPendingJoinInThisSession} />
+      <ModernButton
+        label={connectLabel}
+        size="large"
+        kind={'primary'}
+        on:click={connect}
+        loading={hasPendingJoinInThisSession}
+      />
     {/if}
   </div>
 </div>
