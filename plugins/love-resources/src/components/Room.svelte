@@ -20,7 +20,14 @@
   import { onDestroy, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { waitForOfficeLoaded, currentRoom, roomModalActive, showParticipantsInModal } from '../stores'
+  import {
+    waitForOfficeLoaded,
+    currentRoom,
+    roomModalActive,
+    showParticipantsInModal,
+    infos,
+    currentMeetingMinutes
+  } from '../stores'
   import { isFullScreen, lk } from '../utils'
   import ControlBar from './meeting/ControlBar.svelte'
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
@@ -118,7 +125,10 @@
   }
 
   $: if (((document.fullscreenElement && !$isFullScreen) || $isFullScreen) && roomEl) checkFullscreen()
-  $: updateStyle(lk.numParticipants, withScreenSharing)
+  $: updateStyle(
+    $infos.filter((it) => it.meeting === $currentMeetingMinutes?._id).length ?? lk.numParticipants,
+    withScreenSharing
+  )
 </script>
 
 <div bind:this={roomEl} class="flex-col-center w-full h-full" class:theme-dark={$isFullScreen}>

@@ -35,8 +35,8 @@ export class RecordingProcessor {
     // Check if LiveKit room exists before starting recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {
-      this.ctx.error('Cannot start recording: LiveKit room does not exist', { roomName })
-      throw new Error('Room does not exist. Please ensure participants have joined the meeting.')
+      this.ctx.warn('Cannot start recording: LiveKit room does not exist', { roomName })
+      return
     }
 
     const dateStr = new Date().toISOString().replace('T', '_').slice(0, 19)

@@ -16,7 +16,6 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
   import presentation from '@hcengineering/presentation'
   import { Modal } from '@hcengineering/ui'
-  import { RoomType } from '@hcengineering/love'
 
   import { currentRoom, roomModalActive } from '../stores'
   import RoomComponent from './Room.svelte'

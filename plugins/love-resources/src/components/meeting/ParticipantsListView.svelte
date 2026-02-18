@@ -14,7 +14,7 @@
 
   interface ParticipantData {
     _id: string
-    participant: Participant | undefined
+    participant: Participant
     isAgent: boolean
   }
 
@@ -52,54 +52,40 @@
     lk.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
   })
 
+  let lkitParticipants = new Map<Ref<Person>, ParticipantData>()
+
   // Attach or update a participant entry (using LiveKit identity as key).
   function attachParticipant (participant: Participant): void {
-    if (participant == null) return
-    if (participant.identity == null || participant.identity === '') return
-
-    const current = participants.find((p) => p._id === participant.identity)
-    if (current !== undefined) {
-      current.participant = participant
-      participants = participants
-      return
-    }
-
     // Add new participant
     const value: ParticipantData = {
       _id: participant.identity,
       participant,
       isAgent: participant.isAgent
     }
-    participants.push(value)
-    participants = participants
+    lkitParticipants.set(participant.identity as Ref<Person>, value)
+    lkitParticipants = lkitParticipants
   }
 
   function handleParticipantDisconnected (participant: RemoteParticipant): void {
-    const index = participants.findIndex((p) => p._id === participant.identity)
-    if (index !== -1) {
-      participants.splice(index, 1)
-      participants = participants
-    }
+    lkitParticipants.delete(participant.identity as Ref<Person>)
+    lkitParticipants = lkitParticipants
   }
 
   function updateParticipants (
     data: ParticipantInfo[],
     currentMeeting: MeetingMinutes | undefined,
-    room: Ref<Room>
+    room: Ref<Room>,
+    participantData: Map<Ref<Person>, ParticipantData>
   ): void {
     const _participants: ParticipantData[] = []
-    for (const info of data) {
-      // Filter by meeting if available, otherwise fallback to room
-      const infoMeeting = info.meeting as Ref<MeetingMinutes> | undefined
-      if (currentMeeting !== undefined && infoMeeting !== currentMeeting._id) continue
-      if (currentMeeting === undefined && info.room !== room) continue
-
-      // Find existing participant from LiveKit
-      const existing = participants.find((p) => p._id === info.person)
-
+    for (const info of data.filter((it) => it.meeting === currentMeeting?._id)) {
+      const participant = participantData.get(info.person)
+      if (participant === undefined) {
+        continue
+      }
       const value: ParticipantData = {
         _id: info.person,
-        participant: existing?.participant,
+        participant: participant.participant,
         isAgent: info.person === aiPersonRef
       }
       _participants.push(value)
@@ -107,7 +93,7 @@
     participants = _participants
   }
 
-  $: updateParticipants($infos, $currentMeetingMinutes, room)
+  $: updateParticipants($infos, $currentMeetingMinutes, room, lkitParticipants)
 </script>
 
 {#each participants as participant (participant._id)}

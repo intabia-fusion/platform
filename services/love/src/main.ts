@@ -180,7 +180,7 @@ export const main = async (): Promise<void> => {
       }
       case QueueMeetingEvent.updateMetadata: {
         const metadataMsg = queueMsg as QueueMeetingUpdateMetadataMessage
-        await updateMetadata(roomClient, metadataMsg.roomName, metadataMsg.metadata)
+        await updateMetadata(ctx, roomClient, metadataMsg.roomName, metadataMsg.metadata)
         break
       }
       case QueueMeetingEvent.started: {
@@ -491,13 +491,15 @@ const checkRecordAvailable = async (
 }
 
 async function updateMetadata (
+  ctx: MeasureContext,
   roomClient: RoomServiceClient,
   roomName: string,
   metadata: Partial<RoomMetadata>
 ): Promise<void> {
   const room = (await roomClient.listRooms([roomName]))[0]
   if (room === undefined) {
-    throw new Error(`Cannot update metadata: room "${roomName}" does not exist`)
+    ctx.warn(`Cannot update metadata: room "${roomName}" does not exist`)
+    return
   }
   const currentMetadata = parseMetadata(room.metadata)
 
