@@ -21,6 +21,7 @@ import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/a
 import { MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
   parseRoomName,
+  ParticipantMetadata,
   queueEvents,
   QueueMeetingEvent,
   QueueMeetingMessage,
@@ -254,6 +255,8 @@ export const main = async (): Promise<void> => {
 
     const _id = req.body._id
     const participantName = req.body.participantName
+    const x = req.body.x ?? -1
+    const y = req.body.y ?? -1
     const roomName = getRoomName(workspaceId, meetingId)
 
     const room = await roomClient.listRooms([roomName])
@@ -276,7 +279,17 @@ export const main = async (): Promise<void> => {
       }
     }
 
-    res.send(await createToken(roomName, _id, participantName))
+    res.send(
+      await createToken(
+        roomName,
+        _id,
+        participantName,
+        JSON.stringify({
+          x,
+          y
+        } satisfies ParticipantMetadata)
+      )
+    )
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises

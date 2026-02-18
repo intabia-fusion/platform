@@ -15,15 +15,19 @@
 <script lang="ts">
   import presentation, { getClient } from '@hcengineering/presentation'
   import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+  import { MeetingMinutes, MeetingStatus, ParticipantInfo, Room } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { joinMeeting } from '../meetings'
-  import { currentMeetingMinutes, myConnectingSessionId } from '../stores'
-  import { lkSessionConnected } from '../liveKitClient'
+  import { joinMeeting, leaveMeeting } from '../meetings'
+  import { currentMeetingMinutes, currentRoom, infos, myConnectingSessionId, rooms } from '../stores'
+  import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
-  import { liveKitClient } from '../utils'
+  import { Ref } from '@hcengineering/core'
+  import RoomPreview from './RoomPreview.svelte'
+  import ParticipantsPreview from './ParticipantsPreview.svelte'
+  import { openWidgetTab } from '@hcengineering/workbench-resources'
+  import { videoVisible } from '../utils'
 
   export let object: MeetingMinutes
   export let readonly: boolean = false
@@ -47,12 +51,10 @@
     dispatch('open', { ignoreKeys: ['title'] })
   })
 
-  const isConnecting = liveKitClient.isConnecting
-
   // Check if pending join is for THIS session (same browser tab)
   $: currentSessionId = getMetadata(presentation.metadata.SessionId)
   $: hasPendingJoinInThisSession =
-    $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId && $isConnecting
+    $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId && $lkIsConnecting
 
   async function connect (): Promise<void> {
     await joinMeeting(object)
@@ -71,29 +73,63 @@
 
     return true
   }
+
+  function getInfo (mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
+    return info.filter((p) => p.meeting === mm)
+  }
+
+  $: roomInfos = getInfo(object._id, $infos)
+
+  $: room = $rooms.find((it) => it._id === object.attachedTo)
 </script>
 
-<div class="flex-row-stretch">
-  <div class="row flex-grow">
-    <div class="title">
-      <EditBox
-        disabled={readonly}
-        placeholder={love.string.MeetingMinutes}
-        bind:value={newTitle}
-        on:change={changeTitle}
-        focusIndex={1}
-      />
+<div class="flex flex-col">
+  <div class="flex flex-row">
+    <div class="flex flex-grow flex-between gap-2 mb-4">
+      <div class="title flex-grow">
+        <EditBox
+          disabled={readonly}
+          placeholder={love.string.MeetingMinutes}
+          bind:value={newTitle}
+          on:change={changeTitle}
+          focusIndex={1}
+        />
+      </div>
+      {#if showConnectionButton(object, hasPendingJoinInThisSession, $lkSessionConnected)}
+        <ModernButton
+          label={connectLabel}
+          size="large"
+          kind={'primary'}
+          on:click={connect}
+          loading={hasPendingJoinInThisSession}
+        />
+      {:else if $lkSessionConnected}
+        {#if !$videoVisible}
+          <ModernButton
+            label={love.string.ShowVideo}
+            size="large"
+            kind={'secondary'}
+            on:click={() => {
+              openWidgetTab(love.ids.MeetingWidget, 'video')
+            }}
+          />
+        {/if}
+        <ModernButton
+          label={love.string.LeaveRoom}
+          size="large"
+          kind={'negative'}
+          on:click={() => {
+            void leaveMeeting()
+          }}
+        />
+      {/if}
     </div>
-    {#if showConnectionButton(object, hasPendingJoinInThisSession, $lkSessionConnected)}
-      <ModernButton
-        label={connectLabel}
-        size="large"
-        kind={'primary'}
-        on:click={connect}
-        loading={hasPendingJoinInThisSession}
-      />
-    {/if}
   </div>
+  {#if object != null && roomInfos.length > 0 && room != null}
+    <div class="room-preview">
+      <ParticipantsPreview info={roomInfos} />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -102,10 +138,9 @@
     font-size: 1.25rem;
     color: var(--theme-caption-color);
   }
-  .row {
+  .room-preview {
     display: flex;
-    align-items: center;
-    gap: var(--spacing-1);
-    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 </style>

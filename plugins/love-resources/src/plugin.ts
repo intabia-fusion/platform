@@ -64,6 +64,7 @@ export default mergeIds(loveId, love, {
     Share: '' as IntlString,
     StopShare: '' as IntlString,
     StartVideo: '' as IntlString,
+    ShowVideo: '' as IntlString,
     StopVideo: '' as IntlString,
     Floors: '' as IntlString,
     Floor: '' as IntlString,

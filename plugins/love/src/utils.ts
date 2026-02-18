@@ -258,8 +258,22 @@ export interface ScreenSource {
   appIconURL: string
 }
 
-export function getFreeRoomPlace (room: Room, info: ParticipantInfo[], person: Ref<Person>): { x: number, y: number } {
+export function getFreeRoomPlace (
+  room: Room,
+  info: ParticipantInfo[],
+  person: Ref<Person>,
+  pref?: { x: number, y: number }
+): { x: number, y: number } {
   let y = 0
+  if (pref !== undefined) {
+    if (isOffice(room) && room.person === person) {
+      return { x: 0, y: 0 }
+    }
+    if (!info.some((it) => it.x === pref.x && it.y === pref.y)) {
+      // Place is free, use it.
+      return pref
+    }
+  }
   while (true) {
     for (let x = 0; x < room.width; x++) {
       if (info.find((p) => p.x === x && p.y === y) === undefined) {

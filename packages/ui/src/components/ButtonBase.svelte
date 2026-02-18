@@ -21,6 +21,7 @@
   import Spinner from './Spinner.svelte'
   import Icon from './Icon.svelte'
   import Label from './Label.svelte'
+  import { themeStore, AccentColor } from '@hcengineering/theme'
 
   export let title: string | undefined = undefined
   export let label: IntlString | undefined = undefined
@@ -109,7 +110,9 @@
   on:keydown
 >
   {#if loading}
-    <div class="icon no-gap"><Spinner size={'small'} /></div>
+    <div class="icon no-gap">
+      <Spinner size={'small'} color={$themeStore.accent === AccentColor.Intabia ? 'accent' : 'default'} />
+    </div>
   {:else if icon}
     <div class="icon no-gap"><Icon {icon} {iconProps} size={actualIconSize} /></div>
   {/if}

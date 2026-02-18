@@ -21,6 +21,7 @@ import { getRecordingPreset } from './preset'
 import { saveFile } from './storage'
 import { WorkspaceClient } from './workspaceClient'
 import platform, { PlatformError } from '@hcengineering/platform'
+import { parseParticipantMetadata } from './utils'
 
 export class WebhookProcessor {
   constructor (
@@ -214,12 +215,14 @@ export class WebhookProcessor {
       identity: participant.identity,
       meetingId: roomName.meetingId
     })
+    const participantMetadata = parseParticipantMetadata(participant.metadata)
     await wsClient.upsertParticipantFromLiveKit(
       personRef,
       participant.name ?? participant.identity ?? 'Unknown',
       null,
       roomName.meetingId,
-      participant.sid
+      participant.sid,
+      participantMetadata
     )
     await this.eventProducer.send(this.ctx, roomName.workspace, [
       queueEvents.personJoined(roomName.meetingId, personRef, participant.identity ?? '')

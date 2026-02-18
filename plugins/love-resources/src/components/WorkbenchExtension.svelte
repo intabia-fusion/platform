@@ -3,13 +3,11 @@
   import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, Track } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
-  import { lkSessionConnected } from '../liveKitClient'
+  import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'
   import { myConnectingSessionId } from '../stores'
   import { liveKitClient, lk } from '../utils'
   import { get } from 'svelte/store'
-
-  const isConnecting = liveKitClient.isConnecting
 
   let parentElement: HTMLDivElement
 
@@ -67,7 +65,7 @@
     unsubscribeFromIncomingInvites()
     // Do not disconnect if the current session initiated a connect (user is in the process of connecting)
     // or if the LiveKit client is currently connecting
-    if ($lkSessionConnected && $myConnectingSessionId === null && !isConnecting) {
+    if ($lkSessionConnected && $myConnectingSessionId === null && !$lkIsConnecting) {
       await liveKitClient.disconnect()
     }
   })

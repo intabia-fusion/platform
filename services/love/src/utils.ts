@@ -1,5 +1,5 @@
 import { Ref, WorkspaceUuid } from '@hcengineering/core'
-import { MeetingMinutes, RoomMetadata } from '@hcengineering/love'
+import { MeetingMinutes, ParticipantMetadata, RoomMetadata } from '@hcengineering/love'
 import { decodeToken, Token } from '@hcengineering/server-token'
 import { Request, Response } from 'express'
 import { IncomingHttpHeaders } from 'http'
@@ -38,6 +38,16 @@ export function parseMetadata (metadata?: string | null): RoomMetadata {
 
   try {
     return JSON.parse(metadata) as RoomMetadata
+  } catch (e) {
+    return {}
+  }
+}
+
+export function parseParticipantMetadata (metadata?: string | null): ParticipantMetadata {
+  if (metadata === '' || metadata == null) return {}
+
+  try {
+    return JSON.parse(metadata) as ParticipantMetadata
   } catch (e) {
     return {}
   }

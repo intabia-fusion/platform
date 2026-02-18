@@ -28,7 +28,7 @@
   import { createMeetingWidget, getRoomName, liveKitClient } from '../../utils'
   import PersonActionPopup from '../PersonActionPopup.svelte'
   import RoomButton from '../RoomButton.svelte'
-  import { lkSessionConnected } from '../../liveKitClient'
+  import { lkIsConnecting, lkSessionConnected } from '../../liveKitClient'
   import RoomPopup from '../RoomPopup.svelte'
   import { currentMeeting, leaveMeeting } from '../../meetings'
   import { get } from 'svelte/store'
@@ -93,8 +93,6 @@
 
   $: receptionParticipants = $infos.filter((p) => p.room === love.ids.Reception)
 
-  const isConnecting = liveKitClient.isConnecting
-
   function checkActiveMeeting (
     loc: Location,
     meetingSessionConnected: boolean,
@@ -106,7 +104,7 @@
 
     // If user has a pending join in THIS session or is currently connecting, don't make any decisions yet
     // Pending joins from other browser tabs/sessions should not block this session
-    if (hasPendingJoinInThisSession || $isConnecting) {
+    if (hasPendingJoinInThisSession || $lkIsConnecting) {
       return
     }
 

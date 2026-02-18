@@ -14,13 +14,7 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import {
-    Avatar,
-    myEmployeeStore,
-    getPersonByPersonRef,
-    getPersonByPersonRefStore,
-    statusByUserStore
-  } from '@hcengineering/contact-resources'
+  import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@hcengineering/contact-resources'
   import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice, Office } from '@hcengineering/love'
   import { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -58,6 +52,8 @@
 
   $: disabled = room._class === love.class.Office && info.length === 0
 
+  let personPopupVisible: Ref<Person> | undefined = undefined
+
   async function getPerson (info: Ref<Person> | undefined): Promise<Person | undefined> {
     if (info === undefined) {
       return
@@ -93,6 +89,7 @@
       if (meeting === undefined) {
         await openDoc(hierarchy, room)
       } else {
+        // We have active meeting, let's connect to it.
         await openDoc(hierarchy, meeting)
       }
     } else {
@@ -105,24 +102,16 @@
     e.stopPropagation()
     e.preventDefault()
 
-    console.log('[placeClickHandler]', {
-      x,
-      y,
-      isOffice: isOffice(room),
-      shouldShowAvatar,
-      roomPersonId: roomPerson?._id,
-      me,
-      myInfoRoom: $myInfo?.room,
-      roomId: room._id
-    })
-
     // Get person at this position
     const personInfo = getPersonInfo(y, x, info)
     if (personInfo !== undefined) {
       const person = await getPerson(personInfo.person)
       if (person !== undefined) {
         if ($myInfo === undefined || (person._id === me && $myInfo?.room === room._id)) return
-        showPopup(PersonActionPopup, { room, person: person._id }, eventToHTMLElement(e))
+        personPopupVisible = person._id
+        showPopup(PersonActionPopup, { room, person: person._id }, eventToHTMLElement(e), () => {
+          personPopupVisible = undefined
+        })
         return
       }
     }
@@ -130,22 +119,17 @@
     // Check if clicking on room owner avatar (shown in office at position 0,0)
     if (isOffice(room) && x === 0 && y === 0 && shouldShowAvatar && roomPerson != null) {
       const isMe = roomPerson._id === me && $myInfo?.room === room._id
-      console.log('[placeClickHandler] Office click:', {
-        isMe,
-        roomPersonId: roomPerson._id,
-        me,
-        myInfoRoom: $myInfo?.room
-      })
       if (isMe) {
         await openRoom(x, y)
         return
       }
-      showPopup(PersonActionPopup, { room, person: roomPerson._id }, eventToHTMLElement(e))
+      personPopupVisible = roomPerson._id
+      showPopup(PersonActionPopup, { room, person: roomPerson._id }, eventToHTMLElement(e), () => {
+        personPopupVisible = undefined
+      })
       return
     }
 
-    // If no person at this position, open the room
-    console.log('[placeClickHandler] Opening room')
     await openRoom(x, y)
   }
 
@@ -203,7 +187,7 @@
   }
 
   // Check if this is the user's current room (where they are in ParticipantInfo)
-  $: isUserCurrentRoom = $infos.some((it) => it.person === roomPerson?._id && it.room === room._id)
+  $: isUserInOtherRoom = $infos.some((it) => it.person === roomPerson?._id && it.room !== room._id)
 
   // Show avatar for office owner if:
   // 1. It's an office AND
@@ -215,34 +199,6 @@
     roomPerson?.personUuid != null
       ? ($statusByUserStore.get(roomPerson.personUuid as AccountUuid)?.online ?? false)
       : false
-
-  // User is offline if assigned but not online and not currently in the room
-  $: isUserOffline = roomPerson != null && !isUserOnline && !isUserCurrentRoom
-
-  // Debug logging for office presence
-  $: {
-    const isOfficeCheck = isOffice(room)
-    const hasPerson = isOfficeCheck ? (room as Office).person != null : false
-    if (isOfficeCheck && hasPerson) {
-      console.log('[RoomPreview Debug]', {
-        roomId: room._id,
-        roomName: room.name,
-        roomClass: room._class,
-        isOffice: isOfficeCheck,
-        hasPerson,
-        shouldShowAvatar,
-        roomPersonLoaded: roomPerson != null,
-        roomPersonId: roomPerson?._id,
-        roomPersonName: roomPerson?.name,
-        roomPersonUuid: roomPerson?.personUuid,
-        statusStoreSize: $statusByUserStore.size,
-        isOnline:
-          roomPerson?.personUuid != null
-            ? $statusByUserStore.get(roomPerson.personUuid as AccountUuid)?.online
-            : undefined
-      })
-    }
-  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -268,10 +224,11 @@
   {#each new Array(room.height) as _, y}
     {#each new Array(room.width + extraRow) as _, x}
       {@const personInfo = getPersonInfo(y, x, info)}
+      {@const isHovered = hoveredRoomX === x && hoveredRoomY === y}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div
         class="floorGrid-room__field"
-        class:hovered={hoveredRoomX === x && hoveredRoomY === y}
+        class:hovered={isHovered}
         class:person={$myInfo?.room === room._id}
         on:mouseenter={() => {
           if ($myInfo?.room !== room._id) {
@@ -289,35 +246,16 @@
           })
         }}
       >
-        {#if personInfo === undefined && shouldShowAvatar && roomPerson != null && x === 0 && y === 0}
-          <Avatar
-            name={roomPerson.name}
-            person={roomPerson}
-            size={'large'}
-            variant={'roundedRect'}
-            adaptiveName
-            grayscale={!isUserOnline}
-          />
+        {#if personInfo === undefined && shouldShowAvatar && !isUserInOtherRoom && roomPerson != null && x === 0 && y === 0}
+          {#if isHovered || isUserOnline || personPopupVisible === roomPerson?._id}
+            <Avatar name={roomPerson.name} person={roomPerson} size={'large'} variant={'roundedRect'} adaptiveName />
+          {/if}
         {:else if personInfo !== undefined}
           {#await getPerson(personInfo.person) then person}
             {#if personInfo}
-              <Avatar
-                name={person?.name ?? personInfo.name}
-                {person}
-                size={'large'}
-                showStatus={false}
-                adaptiveName
-                grayscale={!isUserOnline}
-              />
+              <Avatar name={person?.name ?? personInfo.name} {person} size={'large'} showStatus={false} adaptiveName />
             {:else if hoveredRoomX === x && hoveredRoomY === y}
-              <Avatar
-                name={myName}
-                person={$myEmployeeStore}
-                size={'large'}
-                showStatus={false}
-                adaptiveName
-                grayscale={!isUserOnline}
-              />
+              <Avatar name={myName} person={$myEmployeeStore} size={'large'} showStatus={false} adaptiveName />
             {/if}
           {/await}
         {/if}

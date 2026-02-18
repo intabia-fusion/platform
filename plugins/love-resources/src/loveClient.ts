@@ -5,6 +5,8 @@ import { getPlatformToken } from './utils'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { Analytics } from '@hcengineering/analytics'
+import { selectedRoomPlace } from './stores'
+import { get } from 'svelte/store'
 
 export function getLoveClient (): LoveClient {
   return new LoveClient()
@@ -91,6 +93,17 @@ export class LoveClient {
       throw new Error('Cannot find current person')
     }
     const platformToken = getPlatformToken()
+
+    const place = get(selectedRoomPlace)
+
+    let x: number | undefined
+    let y: number | undefined
+
+    if (meetingMinutes.attachedTo === place?._id && place != null) {
+      x = place.x
+      y = place.y
+    }
+
     const res = await fetch(concatLink(endpoint, '/getToken'), {
       method: 'POST',
       headers: {
@@ -100,7 +113,9 @@ export class LoveClient {
       body: JSON.stringify({
         meetingId: meetingMinutes._id,
         _id: myPerson._id,
-        participantName: myPerson.name
+        participantName: myPerson.name,
+        x,
+        y
       })
     })
     return await res.text()

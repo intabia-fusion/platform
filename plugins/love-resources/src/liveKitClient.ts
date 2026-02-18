@@ -16,7 +16,7 @@ import { translate } from '@hcengineering/platform'
 import { getMediaDevices, getSelectedSpeakerId, type MediaSession } from '@hcengineering/media'
 import { LoveEvents } from '@hcengineering/love'
 import { useMedia } from '@hcengineering/media-resources'
-import { writable } from 'svelte/store'
+import { get, writable } from 'svelte/store'
 import { Analytics } from '@hcengineering/analytics'
 import { addNotification, NotificationSeverity } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
@@ -33,6 +33,8 @@ export enum ScreenSharingState {
 
 export const screenSharingState = writable<ScreenSharingState>(ScreenSharingState.Inactive)
 export const lkSessionConnected = writable<boolean>(false)
+
+export const lkIsConnecting = writable<boolean>(false)
 
 const LAST_PARTICIPANT_NOTIFICATION_DELAY_MS = 15 * 1000
 const AUTO_DISCONNECT_DELAY_MS = 60 * 1000
@@ -53,7 +55,6 @@ const defaultCaptureOptions: VideoCaptureOptions = {
 export class LiveKitClient {
   public readonly liveKitRoom: LKRoom
 
-  public isConnecting = writable<boolean>(false)
   public currentMediaSession: MediaSession | undefined = undefined
   private currentSessionSupportsVideo: boolean = false
   private lastParticipantNotificationTimeout: number = -1
@@ -96,7 +97,17 @@ export class LiveKitClient {
       withVideo,
       currentState: this.liveKitRoom.state
     })
-    this.isConnecting.set(true)
+
+    if (get(lkSessionConnected)) {
+      console.log('[LiveKitClient.connect] Already connected => Disconnect', {
+        wsURL,
+        withVideo,
+        currentState: this.liveKitRoom.state
+      })
+      await this.disconnect()
+    }
+
+    lkIsConnecting.set(true)
     this.currentSessionSupportsVideo = withVideo
     try {
       const setupMediaSession = async (): Promise<void> => {
@@ -141,7 +152,7 @@ export class LiveKitClient {
       console.log('[LiveKitClient.connect] Connection established successfully', { state: this.liveKitRoom.state })
     } catch (error) {
       console.error('[LiveKitClient.connect] Connection failed', { error, state: this.liveKitRoom.state })
-      this.isConnecting.set(false)
+      lkIsConnecting.set(false)
       this.currentMediaSession?.close()
       this.currentMediaSession?.removeAllListeners()
       this.currentMediaSession = undefined
@@ -176,8 +187,9 @@ export class LiveKitClient {
 
   onConnected = (): void => {
     console.log('[LiveKitClient.onConnected] Connected event fired')
-    this.isConnecting.set(false)
     lkSessionConnected.set(true)
+    lkIsConnecting.set(false)
+
     this.liveKitRoom.on(RoomEvent.ParticipantConnected, this.onParticipantConnected)
     this.liveKitRoom.on(RoomEvent.ParticipantDisconnected, this.onParticipantDisconnected)
     this.liveKitRoom.on(RoomEvent.TrackSubscribed, this.onTrackSubscribed)
@@ -191,6 +203,7 @@ export class LiveKitClient {
   onDisconnected = (): void => {
     console.log('[LiveKitClient.onDisconnected] Disconnected event fired')
     lkSessionConnected.set(false)
+    lkIsConnecting.set(false)
     this.liveKitRoom.off(RoomEvent.ParticipantConnected, this.onParticipantConnected)
     this.liveKitRoom.off(RoomEvent.ParticipantDisconnected, this.onParticipantDisconnected)
     this.liveKitRoom.off(RoomEvent.TrackSubscribed, this.onTrackSubscribed)
@@ -305,7 +318,12 @@ export class LiveKitClient {
       await translate(love.string.MeetingEmptyTitle, {}, getCurrentLanguage()),
       await translate(love.string.MeetingEmptyMessage, {}, getCurrentLanguage()),
       LastParticipantNotification,
-      undefined,
+      {
+        onRemove: () => {
+          clearTimeout(this.lastParticipantDisconnectTimeout)
+          this.lastParticipantDisconnectTimeout = -1
+        }
+      },
       NotificationSeverity.Info,
       'love'
     )

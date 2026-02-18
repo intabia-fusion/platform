@@ -21,10 +21,12 @@
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
-  import { infos, myOffice, currentRoom, meetings, isLocalConnecting, myConnectingSessionId } from '../stores'
+  import { infos, myOffice, currentRoom, meetings, myConnectingSessionId } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
+  import RoomPreview from './RoomPreview.svelte'
+  import { Ref } from '@hcengineering/core'
 
   export let object: Room
 
@@ -100,17 +102,30 @@
 
     return true
   }
+  function getInfo (room: Ref<Room>, info: ParticipantInfo[]): ParticipantInfo[] {
+    return info.filter((p) => p.room === room)
+  }
+
+  $: roomInfos = getInfo(object._id, $infos)
 </script>
 
-<div class="flex-row-stretch">
-  <div class="row flex-grow">
-    <div class="name">
-      <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
+<div class="flex flex-col">
+  <div class="flex flex-row">
+    <div class="flex flex-grow space-between gap-2 mb-4">
+      <div class="name">
+        <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
+      </div>
+
+      {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
+        <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+      {/if}
     </div>
-    {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
-      <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
-    {/if}
   </div>
+  {#if object != null && roomInfos.length > 0}
+    <div class="room-preview">
+      <RoomPreview room={object} info={roomInfos} preview />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -121,10 +136,11 @@
     width: 100%;
   }
 
-  .row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-1);
-    justify-content: space-between;
+  .room-preview {
+    /* width: 100%; */
+    height: 200px;
+    max-width: 500px;
+    overflow: hidden;
+    padding: 2rem;
   }
 </style>

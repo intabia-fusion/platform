@@ -22,7 +22,6 @@ import core, {
   MeasureContext,
   Ref,
   generateId,
-  TxFactory,
   systemAccountUuid,
   type AccountUuid,
   type Blob,
@@ -30,7 +29,6 @@ import core, {
   type WorkspaceUuid,
   DocumentUpdate,
   AccountRole,
-  TxApplyResult,
   SocialIdType
 } from '@hcengineering/core'
 import drive, { createFile } from '@hcengineering/drive'
@@ -38,6 +36,7 @@ import love, {
   MeetingMinutes,
   MeetingStatus,
   ParticipantInfo,
+  ParticipantMetadata,
   PendingRecording,
   RecordingFormat,
   RecordingState,
@@ -364,7 +363,8 @@ export class WorkspaceClient {
     name: string | null,
     account: AccountUuid | null,
     meeting: Ref<MeetingMinutes>,
-    sessionId: string
+    sessionId: string,
+    participantMetadata: ParticipantMetadata
   ): Promise<void> {
     try {
       this.ctx.info('[WorkspaceClient.upsertParticipantFromLiveKit] Starting', { meeting, person, name, sessionId })
@@ -409,104 +409,28 @@ export class WorkspaceClient {
         infos.splice(1)
       }
 
-      if (infos.length > 0) {
+      if (infos.length === 1) {
+        const info = infos[0]
         // ParticipantInfo already exists - update it with new meeting/session info
-        for (const info of infos) {
-          this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Updating existing ParticipantInfo', {
-            infoId: info._id,
-            person,
-            meeting
-          })
-          // Ensure the `meeting` field is set so clients can reliably discover current meeting
-          // for this participant (fixes missing subscribe to join requests / knock notifications).
-          await this.client.update(info, {
-            meeting,
-            room: attachedRoom ?? info.room,
-            name: name ?? info.name,
-            sessionId,
-            account: account ?? info.account
-          })
-          this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Updated ParticipantInfo', {
-            infoId: info._id,
-            person,
-            meeting
-          })
-
-          // Ensure cell uniqueness - if collision detected, reassign to a free place atomically
-          try {
-            const updatedInfo = await this.client.findOne(love.class.ParticipantInfo, { _id: info._id })
-            if (updatedInfo !== undefined) {
-              const colliders = await this.client.findAll(love.class.ParticipantInfo, {
-                meeting,
-                x: updatedInfo.x,
-                y: updatedInfo.y
-              })
-              const other = colliders.find((p) => p._id !== updatedInfo._id)
-              if (other !== undefined) {
-                // collision - pick a free place and try to update via apply
-                const roomDoc =
-                  attachedRoom !== null ? await this.client.findOne(love.class.Room, { _id: attachedRoom }) : undefined
-                if (roomDoc !== undefined) {
-                  const participants = await this.client.findAll(love.class.ParticipantInfo, { meeting })
-                  const place = getFreeRoomPlace(roomDoc, participants, person)
-                  const tf = new TxFactory(core.account.System)
-                  const updateTx = tf.createTxUpdateDoc(
-                    love.class.ParticipantInfo,
-                    core.space.Workspace,
-                    updatedInfo._id,
-                    { x: place.x, y: place.y }
-                  )
-                  const applyTx = tf.createTxApplyIf(
-                    core.space.Workspace,
-                    `${meeting}_${updatedInfo._id}_place`,
-                    [],
-                    [{ _class: love.class.ParticipantInfo, query: { meeting, x: place.x, y: place.y } }],
-                    [updateTx],
-                    'reassignParticipantPlace',
-                    true
-                  )
-                  const res = (await this.client.tx(applyTx)) as unknown
-                  let applied = false
-                  if (Array.isArray(res)) {
-                    const r = (res as unknown[]).find((it: unknown) => {
-                      if (it == null || typeof it !== 'object') return false
-                      const s = (it as { success?: unknown }).success
-                      return typeof s === 'boolean'
-                    })
-                    applied = r != null && (r as { success: boolean }).success
-                  } else if (res != null && typeof res === 'object') {
-                    const s = (res as { success?: unknown }).success
-                    applied = typeof s === 'boolean' && s
-                  }
-                  if (applied) {
-                    this.ctx.info(
-                      '[WorkspaceClient.upsertParticipantFromLivekit] Reassigned participant to free place',
-                      {
-                        infoId: updatedInfo._id,
-                        place
-                      }
-                    )
-                  } else {
-                    this.ctx.warn(
-                      '[WorkspaceClient.upsertParticipantFromLivekit] Failed to reassign participant place',
-                      {
-                        infoId: updatedInfo._id,
-                        place
-                      }
-                    )
-                  }
-                }
-              }
-            }
-          } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err)
-            this.ctx.error('[WorkspaceClient.upsertParticipantFromLivekit] Collision handling failed', {
-              error: msg,
-              meeting,
-              person
-            })
-          }
-        }
+        this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Updating existing ParticipantInfo', {
+          infoId: info._id,
+          person,
+          meeting
+        })
+        // Ensure the `meeting` field is set so clients can reliably discover current meeting
+        // for this participant (fixes missing subscribe to join requests / knock notifications).
+        await this.client.update(info, {
+          meeting,
+          room: attachedRoom ?? info.room,
+          name: name ?? info.name,
+          sessionId,
+          account: account ?? info.account
+        })
+        this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Updated ParticipantInfo', {
+          infoId: info._id,
+          person,
+          meeting
+        })
       } else {
         // Create new ParticipantInfo - place will be allocated atomically to avoid collisions
         this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Creating new ParticipantInfo', {
@@ -514,88 +438,32 @@ export class WorkspaceClient {
           meeting,
           attachedRoom
         })
-        const txFactory = new TxFactory(core.account.System)
-        const maxAttempts = 5
-        let created = false
-        let newId: Ref<ParticipantInfo> | undefined
         const roomDoc =
           attachedRoom !== null ? await this.client.findOne(love.class.Room, { _id: attachedRoom }) : undefined
-        for (let attempt = 0; attempt < maxAttempts && !created; attempt++) {
-          const participants = await this.client.findAll(love.class.ParticipantInfo, { meeting })
-          const place = roomDoc !== undefined ? getFreeRoomPlace(roomDoc, participants, person) : { x: 0, y: 0 }
-          const oid = generateId<ParticipantInfo>()
-          const createTx = txFactory.createTxCreateDoc(
-            love.class.ParticipantInfo,
-            core.space.Workspace,
-            {
-              person,
-              name: name ?? '',
-              meeting,
-              room: attachedRoom ?? null,
-              x: place.x,
-              y: place.y,
-              sessionId: sessionId ?? null,
-              account: account ?? null
-            } as any,
-            oid
-          )
-          const applyTx = txFactory.createTxApplyIf(
-            core.space.Workspace,
-            `${meeting}`,
-            [],
-            [
-              { _class: love.class.ParticipantInfo, query: { meeting, person } },
-              { _class: love.class.ParticipantInfo, query: { meeting, x: place.x, y: place.y } }
-            ],
-            [createTx],
-            'createParticipant',
-            true
-          )
-          try {
-            const res = (await this.client.tx(applyTx)) as TxApplyResult
-            if (res.success) {
-              created = true
-              newId = oid
-              this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Created ParticipantInfo (apply)', {
-                newId,
-                person,
-                meeting,
-                place
-              })
-              break
-            } else {
-              this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] create apply failed, retrying', {
-                attempt,
-                meeting,
-                place
-              })
-              await new Promise((resolve) => setTimeout(resolve, 50))
-            }
-          } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err)
-            this.ctx.error('[WorkspaceClient.upsertParticipantFromLivekit] create apply error', { error: msg })
-            await new Promise((resolve) => setTimeout(resolve, 50))
-          }
-        }
-        if (!created) {
-          // Fallback
-          const fallbackId = await this.client.createDoc(love.class.ParticipantInfo, core.space.Workspace, {
+
+        const participants = await this.client.findAll(love.class.ParticipantInfo, { meeting })
+
+        const place =
+          roomDoc !== undefined
+            ? getFreeRoomPlace(roomDoc, participants, person, { x: participantMetadata.x, y: participantMetadata.y })
+            : { x: 0, y: 0 }
+        const oid = generateId<ParticipantInfo>()
+
+        await this.client.createDoc(
+          love.class.ParticipantInfo,
+          core.space.Workspace,
+          {
             person,
             name: name ?? '',
-            kind: 'user',
             meeting,
             room: attachedRoom ?? null,
-            x: -1, // -1 will show a person on random free place
-            y: -1,
+            x: place.x,
+            y: place.y,
             sessionId: sessionId ?? null,
             account: account ?? null
-          } as any)
-          this.ctx.info('[WorkspaceClient.upsertParticipantFromLivekit] Created ParticipantInfo (fallback)', {
-            newId: fallbackId,
-            person,
-            meeting
-          })
-        }
+          } as any,
+          oid
+        )
       }
     } catch (err: any) {
       this.ctx.error('[WorkspaceClient.upsertParticipantFromLivekit] Failed', {

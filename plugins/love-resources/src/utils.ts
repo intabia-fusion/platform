@@ -4,6 +4,7 @@ import { Analytics } from '@hcengineering/analytics'
 import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
 import contact, { getName } from '@hcengineering/contact'
+import workbench from '@hcengineering/workbench'
 import core, {
   type Client,
   concatLink,
@@ -56,7 +57,7 @@ import {
   RoomEvent,
   Track
 } from 'livekit-client'
-import { get, writable } from 'svelte/store'
+import { derived, get, writable } from 'svelte/store'
 
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
@@ -453,6 +454,18 @@ export function isTranscriptionAllowed (): boolean {
   const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
   return url !== ''
 }
+
+export const videoVisible = derived(sidebarStore, (store) => {
+  const widget = getClient().getModel().findAllSync(workbench.class.Widget, { _id: love.ids.MeetingWidget })[0]
+  if (widget === undefined) return false
+
+  const wstate = store.widgetsState.get(widget._id)
+  if (store.widget !== widget._id) return false
+  if (wstate === undefined) return false
+  if (wstate.tab === 'video') return true
+
+  return false
+})
 
 export function createMeetingWidget (widget: Widget, room: Ref<Room>, video: boolean): void {
   const tabs: WidgetTab[] = [

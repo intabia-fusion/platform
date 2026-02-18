@@ -26,6 +26,7 @@ import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
 import { sendInvites, unsubscribeFromIncomingInvites } from './invites'
+import { lkIsConnecting } from './liveKitClient'
 
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
@@ -65,7 +66,7 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
 
 export async function leaveMeeting (): Promise<void> {
   // If we're still in the process of connecting, don't disconnect
-  if (get(liveKitClient.isConnecting)) {
+  if (get(lkIsConnecting)) {
     return
   }
 

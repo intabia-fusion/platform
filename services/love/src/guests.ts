@@ -1,5 +1,5 @@
 import { MeasureContext, readOnlyGuestAccountUuid, Ref } from '@hcengineering/core'
-import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+import { MeetingMinutes, MeetingStatus, ParticipantMetadata } from '@hcengineering/love'
 import { RoomServiceClient } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
@@ -193,7 +193,7 @@ export class GuestManager {
       // Use the person's document id as LiveKit identity so webhooks can resolve the person
       this.ctx.info('[guestJoin] Using identity', { identity: personRef })
       // Mark this participant as a guest in the token metadata
-      const guestMetadata = JSON.stringify({ isGuest: true })
+      const guestMetadata = JSON.stringify({ isGuest: true } satisfies ParticipantMetadata)
       const roomToken = await createToken(roomName, personRef, combineName(firstName, lastName), guestMetadata)
 
       res.status(200).send({

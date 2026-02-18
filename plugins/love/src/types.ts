@@ -96,6 +96,12 @@ export interface RoomMetadata {
   recording?: boolean
 }
 
+export interface ParticipantMetadata {
+  isGuest?: boolean
+  x?: number
+  y?: number
+}
+
 export interface Room extends Doc {
   name: string
   type: RoomType
