@@ -1,6 +1,5 @@
 {
   "string": {
-      "OnboardingChannelDescription": "Kullanıcı: {user}; Çalışma alanı: {workspace}",
       "Error": "Hata: ",
       "InProject": " projede ",
       "NavigateToSpecial": "{app}: {special} aç",
@@ -9,8 +8,6 @@
       "To": " değerine ",
       "Open": "aç ",
       "Workbench": "Çalışma Masası: ",
-      "OnboardingChannel": "Karşılama Kanalı",
-      "OnboardingChannels": "Karşılama Kanalları",
       "WorkspaceId": "Çalışma alanı id",
       "WorkspaceName": "Çalışma alanı adı",
       "WorkspaceUrl": "Çalışma alanı url",

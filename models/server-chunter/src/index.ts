@@ -48,6 +48,24 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnCollaboratorAdded,
+    txMatch: {
+      objectClass: core.class.Collaborator,
+      _class: core.class.TxCreateDoc
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnCollaboratorRemoved,
+    txMatch: {
+      objectClass: core.class.Collaborator,
+      _class: core.class.TxRemoveDoc
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverChunter.trigger.OnUserStatus,
     txMatch: {
       objectClass: core.class.UserStatus
@@ -63,13 +81,4 @@ export function createModel (builder: Builder): void {
       match: serverChunter.function.JoinChannelTypeMatch
     }
   )
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverChunter.trigger.OnChatMessageRemoved,
-    txMatch: {
-      _class: core.class.TxRemoveDoc,
-      objectClass: chunter.class.ChatMessage
-    },
-    isAsync: true
-  })
 }

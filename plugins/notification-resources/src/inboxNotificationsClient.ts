@@ -112,7 +112,6 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         user: account.uuid
       },
       (result: InboxNotification[]) => {
-        console.log(result)
         result.sort((a, b) => (b.createdOn ?? b.modifiedOn) - (a.createdOn ?? a.modifiedOn))
         this.otherInboxNotifications.set(result)
       }
@@ -125,7 +124,6 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         user: account.uuid
       },
       (result: ActivityInboxNotification[]) => {
-        console.log(result)
         this.activityInboxNotifications.set(result)
       },
       {
@@ -153,13 +151,13 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
   }
 
   async readDoc (_id: Ref<Doc>): Promise<void> {
+    const client = getClient()
     const docNotifyContext = this._contextByDoc.get(_id)
 
     if (docNotifyContext === undefined || getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
       return
     }
 
-    const client = getClient()
     const op = client.apply(undefined, 'readDoc', true)
     const inboxNotifications = await client.findAll(
       notification.class.InboxNotification,

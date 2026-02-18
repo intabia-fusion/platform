@@ -252,8 +252,15 @@ export async function getAccountBySocialKey (control: TriggerControl, socialKey:
   return employee[0]?.personUuid ?? null
 }
 
-export async function getPersonSpaces (control: TriggerControl): Promise<Pick<PersonSpace, '_id' | 'person'>[]> {
-  return await control.queryFind(control.ctx, contact.class.PersonSpace, {}, { projection: { _id: 1, person: 1 } })
+export async function getPersonSpaces (
+  control: TriggerControl
+): Promise<Pick<PersonSpace, '_id' | 'person' | 'account'>[]> {
+  return await control.queryFind(
+    control.ctx,
+    contact.class.PersonSpace,
+    {},
+    { projection: { _id: 1, person: 1, account: 1 } }
+  )
 }
 
 export function getAddCollaboratorsTxes (

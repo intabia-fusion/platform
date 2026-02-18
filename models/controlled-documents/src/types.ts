@@ -385,7 +385,7 @@ export class TDocumentCategory extends TDoc implements DocumentCategory {
   undefined,
   undefined,
   undefined,
-  documents.string.Documents,
+  documents.string.ControlledDocuments,
   'title'
 )
 export class TControlledDocument extends THierarchyDocument implements ControlledDocument {

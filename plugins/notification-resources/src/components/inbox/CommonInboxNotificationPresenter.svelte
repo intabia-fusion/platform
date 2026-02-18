@@ -42,7 +42,6 @@
       content = markup
     } else if (message !== undefined) {
       const props = await getProps()
-      console.log(message, props)
       translateCB(message, props, $themeStore.language, (res) => {
         content = res
       })

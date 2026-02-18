@@ -232,7 +232,6 @@
       activity.class.ActivityMessage,
       { attachedTo: objectId, space: getSpace(object) },
       (result: ActivityMessage[]) => {
-        console.log(result[result.length - 1])
         messages = combineActivityMessages(result, order)
         isMessagesLoading = false
       },

@@ -13,100 +13,85 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity from '@hcengineering/activity'
-  import core, { Class, Doc, groupByArray, reduceCalls, Ref, Space } from '@hcengineering/core'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, LiveQuery } from '@hcengineering/presentation'
-  import { Action } from '@hcengineering/ui'
+  import { Chat } from '@hcengineering/chunter'
 
   import chunter from '../../../plugin'
-  import { ChatGroup, ChatNavGroupModel } from '../types'
+  import { ChatNavGroupModel } from '../types'
   import ChatNavSection from './ChatNavSection.svelte'
+  import { getNavGroupClasses, isArchived, shouldPushObjectInNavigator } from '../utils'
 
   export let object: Doc | undefined
+  export let chat: Chat | undefined
+  export let pinned: Chat[] = []
   export let model: ChatNavGroupModel
 
   interface Section {
     id: string
     _class?: Ref<Class<Doc>>
     label: IntlString
-    objects: Doc[]
+    objects: { doc: Doc, chat?: Chat }[]
     count: number
   }
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const contextsStore = inboxClient.contexts
-  const contextByDocStore = inboxClient.contextByDoc
-  const objectsQueryByClass = new Map<Ref<Class<Doc>>, { query: LiveQuery, limit: number }>()
+  const objectsQueryByClass = new Map<Ref<Class<Doc>>, { query: LiveQuery, limit?: number }>()
 
-  let contexts: DocNotifyContext[] = []
-  let objectsByClass = new Map<Ref<Class<Doc>>, { docs: Doc[], total: number }>()
+  const me = getCurrentAccount()
+  let objectsByClass = new Map<Ref<Class<Doc>>, { docs: { doc: Doc, chat: Chat }[], total: number }>()
 
   let shouldPushObject = false
-
   let sections: Section[] = []
 
-  $: contexts = $contextsStore.filter((it) => {
-    const { objectClass, isPinned, hidden } = it
-    if (hidden) return false
-    if (model.isPinned !== isPinned) return false
-    if (model._class !== undefined && model._class !== objectClass) return false
-    if (model.skipClasses !== undefined && model.skipClasses.includes(objectClass)) return false
-    if (hierarchy.classHierarchyMixin(objectClass, activity.mixin.ActivityDoc) === undefined) return false
-    return true
-  })
+  $: shouldPushObject = shouldPushObjectInNavigator(model, object, chat, Array.from(objectsByClass.keys()))
+  $: pushObj = shouldPushObject && object != null ? { object, chat } : undefined
 
-  $: loadObjects(contexts)
+  function loadObjects (model: ChatNavGroupModel, pinned: Chat[]): void {
+    const classes = getNavGroupClasses(model, pinned)
 
-  $: pushObj = shouldPushObject ? object : undefined
-
-  const getPushObj = () => pushObj as Doc
-
-  $: void getSections(objectsByClass, model, pushObj, getPushObj, (res) => {
-    sections = res
-  })
-
-  $: shouldPushObject =
-    object !== undefined &&
-    getObjectGroup(object) === model.id &&
-    (!$contextByDocStore.has(object._id) || isArchived(object))
-
-  function isArchived (object: Doc): boolean {
-    return hierarchy.isDerived(object._class, core.class.Space) ? (object as Space).archived : false
-  }
-
-  function loadObjects (contexts: DocNotifyContext[]): void {
-    const contextsByClass = groupByArray(contexts, ({ objectClass }) => objectClass)
-
-    for (const [_class, ctx] of contextsByClass.entries()) {
-      const isSpace = hierarchy.isDerived(_class, core.class.Space)
-      const ids = ctx.map(({ objectId }) => objectId)
+    for (const _class of classes) {
       const { query, limit } = objectsQueryByClass.get(_class) ?? {
         query: createQuery(),
-        limit: isSpace ? -1 : (model.maxSectionItems ?? 5)
+        limit: model.maxSectionItems
       }
 
-      objectsQueryByClass.set(_class, { query, limit: limit ?? model.maxSectionItems ?? 5 })
+      if (!objectsQueryByClass.has(_class)) {
+        objectsQueryByClass.set(_class, { query, limit })
+      }
 
       query.query(
-        _class,
+        chunter.class.Chat,
         {
-          _id: { $in: limit !== -1 ? ids.slice(0, limit) : ids },
-          ...(isSpace ? { space: core.space.Space, archived: false } : {})
+          ...model.query,
+          hidden: false,
+          account: me.uuid,
+          attachedToClass: _class,
+          '$lookup.attachedTo._id': { $exists: true }
         },
         (res) => {
-          objectsByClass = objectsByClass.set(_class, { docs: res, total: res.total })
+          const docs: { doc: Doc, chat: Chat }[] = res
+            .filter((it) => it.$lookup?.attachedTo != null && !isArchived(it.$lookup.attachedTo))
+            .map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
+          objectsByClass = objectsByClass.set(_class, { docs, total: res.total })
         },
-        { total: true }
+        {
+          total: true,
+          limit,
+          lookup: {
+            attachedTo: _class
+          },
+          sort: {
+            '$lookup.attachedTo.modifiedOn': SortingOrder.Descending
+          }
+        }
       )
     }
 
     for (const [classRef, query] of objectsQueryByClass.entries()) {
-      if (!contextsByClass.has(classRef)) {
+      if (!classes.includes(classRef)) {
         query.query.unsubscribe()
         objectsQueryByClass.delete(classRef)
         objectsByClass.delete(classRef)
@@ -115,34 +100,22 @@
     objectsByClass = objectsByClass
   }
 
-  function getObjectGroup (object: Doc): ChatGroup {
-    if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
-      return 'channels'
-    }
-
-    if (hierarchy.isDerived(object._class, chunter.class.DirectMessage)) {
-      return 'direct'
-    }
-
-    return 'activity'
-  }
+  $: loadObjects(model, pinned)
 
   const getSections = reduceCalls(
     async (
-      objectsByClass: Map<Ref<Class<Doc>>, { docs: Doc[], total: number }>,
+      objectsByClass: Map<Ref<Class<Doc>>, { docs: { doc: Doc, chat: Chat }[], total: number }>,
       model: ChatNavGroupModel,
-      object: { _id: Doc['_id'], _class: Doc['_class'] } | undefined,
-      getPushObj: () => Doc,
+      pushObject: { object: Doc, chat?: Chat } | undefined,
       handler: (result: Section[]) => void
     ): Promise<void> => {
       const result: Section[] = []
-
       if (!model.wrap) {
         result.push({
           id: model.id,
-          objects: Array.from(Array.from(objectsByClass.values()).map((it) => it.docs)).flat(),
+          objects: Array.from(objectsByClass.values()).flatMap((it) => it.docs),
           label: model.label ?? chunter.string.Channels,
-          count: Array.from(Array.from(objectsByClass.values()).map((it) => it.total)).reduceRight((a, b) => a + b, 0)
+          count: Array.from(objectsByClass.values()).reduce((sum, it) => sum + it.total, 0)
         })
 
         handler(result)
@@ -151,22 +124,18 @@
 
       let isObjectPushed = false
 
-      if (
-        Array.from(Array.from(objectsByClass.values()).map((it) => it.docs))
-          .flat()
-          .some((o) => o._id === object?._id)
-      ) {
+      const allObjects = Array.from(Array.from(objectsByClass.values()).flatMap((it) => it.docs))
+      if (allObjects.some((o) => o.doc._id === pushObject?.object._id)) {
         isObjectPushed = true
       }
 
-      for (let [_class, { docs: objects, total }] of objectsByClass.entries()) {
+      for (const [_class, { docs, total }] of objectsByClass.entries()) {
         const clazz = hierarchy.getClass(_class)
-        const sectionObjects = [...objects]
+        const sectionObjects: { doc: Doc, chat?: Chat }[] = [...docs]
 
-        if (object !== undefined && _class === object._class && !objects.some(({ _id }) => _id === object._id)) {
+        if (!isObjectPushed && pushObject !== undefined && _class === pushObject.object._class) {
           isObjectPushed = true
-          sectionObjects.push(getPushObj())
-          total++
+          sectionObjects.push({ doc: pushObject.object, chat: pushObject.chat })
         }
 
         result.push({
@@ -174,17 +143,17 @@
           _class,
           objects: sectionObjects,
           label: clazz.pluralLabel ?? clazz.label,
-          count: total
+          count: sectionObjects.length > docs.length ? total + 1 : total
         })
       }
 
-      if (!isObjectPushed && object !== undefined) {
-        const clazz = hierarchy.getClass(object._class)
+      if (!isObjectPushed && pushObject !== undefined) {
+        const clazz = hierarchy.getClass(pushObject.object._class)
 
         result.push({
-          id: object._id,
-          _class: object._class,
-          objects: [getPushObj()],
+          id: pushObject.object._id,
+          _class: pushObject.object._class,
+          objects: [{ doc: pushObject.object, chat: pushObject.chat }],
           label: clazz.pluralLabel ?? clazz.label,
           count: 1
         })
@@ -194,37 +163,28 @@
     }
   )
 
-  function getSectionActions (section: Section, contexts: DocNotifyContext[]): Action[] {
-    if (model.getActionsFn === undefined) {
-      return []
-    }
-
-    const { _class } = section
-
-    if (_class === undefined) {
-      return model.getActionsFn(contexts)
-    } else {
-      return model.getActionsFn(contexts.filter(({ objectClass }) => objectClass === _class))
-    }
-  }
+  $: void getSections(objectsByClass, model, pushObj, (res) => {
+    sections = res
+  })
 </script>
 
 {#each sections as section (section.id)}
   <ChatNavSection
     id={section.id}
     objects={section.objects}
-    {contexts}
     objectId={object?._id}
     header={section.label}
-    actions={getSectionActions(section, contexts)}
+    actions={model.actions ?? []}
+    createAction={model.createAction}
     sortFn={model.sortFn}
+    showEmpty={model.showEmpty}
     itemsCount={section.count}
     on:show-more={() => {
       if (section._class !== undefined) {
         const query = objectsQueryByClass.get(section._class)
-        if (query !== undefined) {
+        if (query?.limit != null) {
           query.limit += 50
-          loadObjects(contexts)
+          loadObjects(model, pinned)
         }
       }
     }}

@@ -1,6 +1,5 @@
 {
   "string": {
-    "OnboardingChannelDescription": "Benutzer: {user}; Arbeitsbereich: {workspace}",
     "Error": "Fehler: ",
     "InProject": " im Projekt ",
     "NavigateToSpecial": "{app}: {special} öffnen",
@@ -9,8 +8,6 @@
     "To": " auf ",
     "Open": "öffnen ",
     "Workbench": "Arbeitsplatz: ",
-    "OnboardingChannel": "Onboarding-Kanal",
-    "OnboardingChannels": "Onboarding-Kanäle",
     "WorkspaceId": "Arbeitsbereich-ID",
     "WorkspaceName": "Name des Arbeitsbereichs",
     "WorkspaceUrl": "Arbeitsbereich-URL",

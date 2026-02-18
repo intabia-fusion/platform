@@ -293,6 +293,7 @@ async function createPersonSpace (
       private: true,
       archived: false,
       person,
+      account,
       members: [account]
     })
   ]

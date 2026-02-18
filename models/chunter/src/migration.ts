@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { chunterId, type ThreadMessage } from '@hcengineering/chunter'
+import { type Chat, chunterId, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -22,7 +22,11 @@ import core, {
   type Ref,
   type Space,
   DOMAIN_TX,
-  notEmpty
+  notEmpty,
+  DOMAIN_COLLABORATOR,
+  type Collaborator,
+  DOMAIN_SPACE,
+  generateId
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -32,12 +36,12 @@ import {
   type MigrationUpgradeClient
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import notification from '@hcengineering/notification'
-import contact, { getAllAccounts } from '@hcengineering/contact'
+import notification, { type DocNotifyContext } from '@hcengineering/notification'
+import contact, { getAllAccounts, type PersonSpace } from '@hcengineering/contact'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
 import { type DocUpdateMessage } from '@hcengineering/activity'
 
-import { DOMAIN_CHUNTER } from './index'
+import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
 import chunter from './plugin'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
@@ -63,9 +67,7 @@ export async function createDocNotifyContexts (
       user: account,
       objectId,
       objectClass,
-      objectSpace,
-      hidden: false,
-      isPinned: false
+      objectSpace
     })
   }
 }
@@ -231,6 +233,54 @@ async function removeWrongActivity (client: MigrationClient): Promise<void> {
   })
 }
 
+async function removeChatSync (client: MigrationClient): Promise<void> {
+  await client.deleteMany<DocUpdateMessage>(DOMAIN_CHUNTER, {
+    _class: chunter.class.ChatSyncInfo
+  })
+}
+
+async function createChats (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<Collaborator>(DOMAIN_COLLABORATOR, {})
+  const pinnedContexts = (await client.find(DOMAIN_DOC_NOTIFY, {
+    _class: notification.class.DocNotifyContext,
+    isPinned: true
+  })) as DocNotifyContext[]
+  const spaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
+  while (true) {
+    const collaborators = (await iterator.next(500)) ?? []
+    if (collaborators.length === 0) break
+
+    const res: Chat[] = []
+    for (const collaborator of collaborators) {
+      const space = spaces.find((it) => it.account === collaborator.collaborator)
+      if (space === undefined) continue
+      if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
+        continue
+      }
+      res.push({
+        _id: generateId<Chat>(),
+        _class: chunter.class.Chat,
+        attachedTo: collaborator.attachedTo,
+        attachedToClass: collaborator.attachedToClass,
+        hidden: false,
+        pinned: pinnedContexts.some(
+          (ctx) => ctx.objectId === collaborator.attachedTo && ctx.user === collaborator.collaborator
+        ),
+        account: collaborator.collaborator,
+        space: space._id,
+        collection: 'chats',
+        modifiedOn: collaborator.modifiedOn,
+        modifiedBy: core.account.System,
+        createdOn: collaborator.createdOn,
+        createdBy: core.account.System
+      })
+    }
+    if (res.length > 0) {
+      await client.create<Chat>(DOMAIN_CHUNTER_DOC, res)
+    }
+  }
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -305,6 +355,16 @@ export const chunterOperation: MigrateOperation = {
             attachedToClass: chunter.class.DirectMessage
           })
         }
+      },
+      {
+        state: 'create-chats-v2',
+        mode: 'upgrade',
+        func: createChats
+      },
+      {
+        state: 'remove-chat-sync-v2',
+        mode: 'upgrade',
+        func: removeChatSync
       }
     ])
   },

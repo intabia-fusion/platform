@@ -16,7 +16,7 @@
 import type { ActivityMessage, ActivityMessagesFilter } from '@hcengineering/activity'
 import { chunterId, type Channel } from '@hcengineering/chunter'
 import chunter from '@hcengineering/chunter-resources/src/plugin'
-import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import { type Doc, type Ref } from '@hcengineering/core'
 import { type NotificationGroup } from '@hcengineering/notification'
 import type { IntlString, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
@@ -44,19 +44,15 @@ export default mergeIds(chunterId, chunter, {
     MarkUnread: '' as Ref<Action>,
     ArchiveChannel: '' as Ref<Action>,
     UnarchiveChannel: '' as Ref<Action>,
-    ConvertToPrivate: '' as Ref<Action>,
     CopyChatMessageLink: '' as Ref<Action<Doc, any>>
   },
   actionImpl: {
     ArchiveChannel: '' as ViewAction,
     UnarchiveChannel: '' as ViewAction,
-    ConvertDmToPrivateChannel: '' as ViewAction,
     DeleteChatMessage: '' as ViewAction,
     ReplyToThread: '' as ViewAction,
-    OpenInSidebar: '' as ViewAction,
     TranslateMessage: '' as ViewAction,
     ShowOriginalMessage: '' as ViewAction,
-    StartConversation: '' as ViewAction,
     SummarizeMessages: '' as ViewAction
   },
   category: {
@@ -104,7 +100,6 @@ export default mergeIds(chunterId, chunter, {
   function: {
     GetLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<string>>,
     GetFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
-    DmIdentifierProvider: '' as Resource<<T extends Doc>(client: Client, ref: Ref<T>, doc?: T) => Promise<string>>,
     CanDeleteMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanCopyMessageLink: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     GetChunterSpaceLinkFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,

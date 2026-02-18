@@ -54,7 +54,6 @@
       },
       (res) => {
         if (res.length > 0) {
-          console.log('Received notification:', res[0])
           void notify(res[0])
         }
       }
@@ -89,14 +88,14 @@
     const _id: Ref<Doc> | undefined = value.objectId
     void removeNotification(value)
 
-    // const getSidebarObject = await getResource(workbench.function.GetSidebarObject)
-    // const sidebarObjectId = getSidebarObject()?._id
-    //
-    // if (_id && _id === sidebarObjectId) return
-    //
-    // const locObjectId = await getObjectIdFromLocation(getCurrentResolvedLocation())
-    //
-    // if (_id && _id === locObjectId) return
+    const getSidebarObject = await getResource(workbench.function.GetSidebarObject)
+    const sidebarObjectId = getSidebarObject()?._id
+
+    if (_id && _id === sidebarObjectId) return
+
+    const locObjectId = await getObjectIdFromLocation(getCurrentResolvedLocation())
+
+    if (_id && _id === locObjectId) return
 
     const params = { ...value.intlParams }
 
@@ -107,7 +106,6 @@
     const title = await translate(value.title, params, $languageStore)
     const body = await translate(value.body, params, $languageStore)
 
-    console.log({ title, body }, params)
     addNotification(title, body, Notification, { value }, NotificationSeverity.Info, `notification-${value.objectId}`)
   }
 

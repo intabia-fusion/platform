@@ -691,9 +691,7 @@ async function sendSuccessNotification (
     objectId: exportDrive,
     objectClass: drive.class.Drive,
     objectSpace: core.space.Space,
-    user: account,
-    isPinned: false,
-    hidden: false
+    user: account
   })
 
   await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
@@ -730,9 +728,7 @@ async function sendFailureNotification (
     objectId,
     objectClass,
     objectSpace: _objectSpace,
-    user: account,
-    isPinned: false,
-    hidden: false
+    user: account
   })
 
   await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {

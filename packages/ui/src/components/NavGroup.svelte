@@ -58,6 +58,9 @@
   export let draggable: boolean = false
   export let actions: Action[] = []
   export let _id: Ref<Doc> | string | undefined = undefined
+  export let noPadding: boolean = false
+  export let headerClickType: 'menu' | 'toggle' = 'menu'
+  export let contextClickType: 'menu' | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -84,14 +87,24 @@
   function handleMenuClicked (ev: MouseEvent): void {
     if (actions.length === 0) return
     ev.stopPropagation()
+    ev.preventDefault()
     pressed = true
-    showPopup(Menu, { actions }, ev.target as HTMLElement, () => {
+    showPopup(Menu, { actions, ctx: { _id } }, ev.target as HTMLElement, () => {
       pressed = false
     })
   }
   $: isOpen = !getTreeCollapsed(_id, collapsedPrefix)
   $: setTreeCollapsed(_id, !isOpen, collapsedPrefix)
   $: visibleIcon = folderIcon ? (isOpen && !empty ? IconFolderExpanded : IconFolderCollapsed) : icon
+
+  function onHeaderClick (e: MouseEvent): void {
+    if (headerClickType === 'menu') handleMenuClicked(e)
+    else if (headerClickType === 'toggle') toggle(e)
+  }
+
+  function onContextClick (e: MouseEvent): void {
+    if (contextClickType === 'menu') handleMenuClicked(e)
+  }
 </script>
 
 <div
@@ -101,6 +114,7 @@
   class:selectableHeader={type === 'selectable-header'}
   class:noIcon={!icon}
   class:noDivider
+  on:contextmenu={onContextClick}
 >
   <button
     class="hulyNavGroup-header"
@@ -122,7 +136,7 @@
     {/if}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div class="hulyNavGroup-header__label font-medium-12" on:click={handleMenuClicked}>
+    <div class="hulyNavGroup-header__label font-medium-12" on:click={onHeaderClick}>
       {#if visibleIcon}
         <div class="hulyNavGroup-header__icon" class:folder={folderIcon}>
           <Icon icon={visibleIcon} size={iconSize} {iconProps} />
@@ -165,7 +179,7 @@
     {/if}
   </button>
   {#if !empty}
-    <div {id} class="hulyNavGroup-content">
+    <div {id} class="hulyNavGroup-content" class:noPadding>
       {#if (!isOpen && visible) || forciblyСollapsed}
         <slot name="visible" {isOpen} />
       {:else}

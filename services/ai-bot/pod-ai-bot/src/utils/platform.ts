@@ -67,9 +67,7 @@ export async function getDirect (
     user: aibotAccount,
     objectId: dmId,
     objectClass: chunter.class.DirectMessage,
-    objectSpace: core.space.Space,
-    isPinned: false,
-    hidden: false
+    objectSpace: core.space.Space
   })
 
   return dmId

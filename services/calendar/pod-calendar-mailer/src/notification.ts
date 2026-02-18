@@ -78,9 +78,7 @@ export async function createNotification (
       objectId,
       objectClass,
       objectSpace,
-      user,
-      isPinned: false,
-      hidden: false
+      user
     })
   }
 

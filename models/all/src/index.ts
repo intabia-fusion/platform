@@ -88,7 +88,6 @@ import { serverDocumentId, createModel as serverDocumentModel } from '@hcenginee
 import github, { githubId, createModel as githubModel } from '@hcengineering/model-github'
 import { serverGithubId, createModel as serverGithubModel } from '@hcengineering/server-github-model'
 
-import { analyticsCollectorId, createModel as analyticsCollectorModel } from '@hcengineering/model-analytics-collector'
 import { exportId, createModel as exportModel } from '@hcengineering/model-export'
 import love, { loveId, createModel as loveModel } from '@hcengineering/model-love'
 import { printId, createModel as printModel } from '@hcengineering/model-print'
@@ -290,7 +289,6 @@ export default function buildModel (): Builder {
     [mediaModel, mediaId],
     [notificationModel, notificationId],
     [preferenceModel, preferenceId],
-    [analyticsCollectorModel, analyticsCollectorId],
     [
       hrModel,
       hrId,
@@ -456,10 +454,18 @@ export default function buildModel (): Builder {
       chatId,
       { label: chat.string.Chat, hidden: true, enabled: false, beta: true, classFilter: defaultFilter }
     ],
-    [inboxModel, inboxId],
+    [
+      inboxModel,
+      inboxId,
+      { label: setting.string.Configure, hidden: true, enabled: false, beta: true, classFilter: defaultFilter }
+    ],
     [achievementModel, achievementId],
     [emojiModel, emojiId],
-    [communicationModel, communicationId],
+    [
+      communicationModel,
+      communicationId,
+      { label: setting.string.Configure, hidden: true, enabled: false, beta: true, classFilter: defaultFilter }
+    ],
     [mailModel, mailId],
     [
       billingModel,

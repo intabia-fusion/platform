@@ -15,28 +15,16 @@
 
 import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import type { Class, Ref } from '@hcengineering/core'
-import { Channel } from '@hcengineering/chunter'
-
-import { OnboardingChannel } from './types'
 
 export const analyticsCollectorId = 'analytics' as Plugin
 
-export * from './utils'
 export * from './types'
 
 const analyticsCollector = plugin(analyticsCollectorId, {
   metadata: {
     EndpointURL: '' as Metadata<string>
   },
-  class: {
-    OnboardingChannel: '' as Ref<Class<OnboardingChannel>>
-  },
-  space: {
-    GeneralOnboardingChannel: '' as Ref<Channel>
-  },
   string: {
-    OnboardingChannelDescription: '' as IntlString,
     Error: '' as IntlString,
     InProject: '' as IntlString,
     Open: '' as IntlString,
@@ -44,8 +32,6 @@ const analyticsCollector = plugin(analyticsCollectorId, {
     Set: '' as IntlString,
     To: '' as IntlString,
     Workbench: '' as IntlString,
-    OnboardingChannel: '' as IntlString,
-    OnboardingChannels: '' as IntlString,
     WorkspaceId: '' as IntlString,
     WorkspaceName: '' as IntlString,
     WorkspaceUrl: '' as IntlString,

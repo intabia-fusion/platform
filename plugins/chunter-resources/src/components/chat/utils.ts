@@ -13,50 +13,46 @@
 // limitations under the License.
 //
 
-import { type DirectMessage } from '@hcengineering/chunter'
+import { type Chat, type DirectMessage } from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
-import { AccountRole, getCurrentAccount, hasAccountRole, type UserStatus, type AccountUuid } from '@hcengineering/core'
-import notification, { type DocNotifyContext } from '@hcengineering/notification'
-import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-import { getClient, MessageBox } from '@hcengineering/presentation'
+import core, {
+  AccountRole,
+  getCurrentAccount,
+  hasAccountRole,
+  type UserStatus,
+  type AccountUuid,
+  type Ref,
+  type Class,
+  type Doc,
+  type Space
+} from '@hcengineering/core'
+import notification from '@hcengineering/notification'
+import { readNotifyContext } from '@hcengineering/notification-resources'
+import { getClient } from '@hcengineering/presentation'
 import { type Action, showPopup } from '@hcengineering/ui'
 import view from '@hcengineering/view'
 import workbench, { type SpecialNavModel } from '@hcengineering/workbench'
-import { get, writable } from 'svelte/store'
+import activity from '@hcengineering/activity'
 
 import chunter from '../../plugin'
-import { type ChatNavGroupModel, type ChatNavItemModel, type SortFnOptions } from './types'
+import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel, type SortFnOptions } from './types'
 
-const navigatorStateStorageKey = 'chunter.navigatorState'
+type SectionID = Ref<Class<Doc>> | 'starred'
 
-interface NavigatorState {
-  collapsedSections: string[]
-}
-
-export const navigatorStateStore = writable<NavigatorState>(restoreNavigatorState())
-
-function restoreNavigatorState (): NavigatorState {
-  const raw = localStorage.getItem(navigatorStateStorageKey)
-
-  if (raw == null) return { collapsedSections: [] }
-
-  try {
-    return JSON.parse(raw) as NavigatorState
-  } catch (e) {
-    return { collapsedSections: [] }
+const createChannelAction: Action = {
+  icon: chunter.icon.Hashtag,
+  label: chunter.string.CreateChannel,
+  action: async (): Promise<void> => {
+    showPopup(chunter.component.CreateChannel, {}, 'top')
   }
 }
 
-export function toggleSections (_id: string): void {
-  const navState = get(navigatorStateStore)
-  const result: NavigatorState = navState.collapsedSections.includes(_id)
-    ? {
-        collapsedSections: navState.collapsedSections.filter((id) => id !== _id)
-      }
-    : { collapsedSections: [...navState.collapsedSections, _id] }
-
-  localStorage.setItem(navigatorStateStorageKey, JSON.stringify(result))
-  navigatorStateStore.set(result)
+const createDirectAction: Action = {
+  label: chunter.string.NewDirectChat,
+  icon: chunter.icon.Thread,
+  action: async (): Promise<void> => {
+    showPopup(chunter.component.CreateDirectChat, {}, 'top')
+  }
 }
 
 export const chatSpecials: SpecialNavModel[] = [
@@ -104,32 +100,47 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     label: chunter.string.Starred,
     sortFn: sortAlphabetically,
     wrap: false,
-    getActionsFn: getPinnedActions,
-    isPinned: true
+    actions: getPinnedActions(),
+    showEmpty: false,
+    query: {
+      pinned: true
+    },
+    _class: core.class.Doc
   },
   {
     id: 'channels',
     sortFn: sortAlphabetically,
     wrap: true,
-    getActionsFn: getChannelsActions,
-    isPinned: false,
+    actions: getChannelsActions(),
+    createAction: createChannelAction,
+    showEmpty: true,
+    query: {
+      pinned: false
+    },
     _class: chunter.class.Channel
   },
   {
     id: 'direct',
     sortFn: sortDirects,
     wrap: true,
-    getActionsFn: getDirectActions,
-    isPinned: false,
+    actions: getDirectActions(),
+    createAction: createDirectAction,
+    showEmpty: true,
+    query: {
+      pinned: false
+    },
     _class: chunter.class.DirectMessage
   },
   {
     id: 'activity',
     sortFn: sortActivityChannels,
     wrap: true,
-    getActionsFn: getActivityActions,
+    actions: getActivityActions({ readAll: true, hideAll: true }),
     maxSectionItems: 5,
-    isPinned: false,
+    showEmpty: false,
+    query: {
+      pinned: false
+    },
     skipClasses: [chunter.class.DirectMessage, chunter.class.Channel, contact.class.Channel]
   }
 ]
@@ -206,8 +217,7 @@ function sortDirects (items: ChatNavItemModel[], option: SortFnOptions): ChatNav
 }
 
 function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions): ChatNavItemModel[] {
-  const { contexts } = option
-  const contextByDoc = new Map(contexts.map((context) => [context.objectId, context]))
+  const { contextByDoc } = option
 
   return items.sort((i1, i2) => {
     const context1 = contextByDoc.get(i1.id)
@@ -236,24 +246,29 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
   })
 }
 
-function getPinnedActions (contexts: DocNotifyContext[]): Action[] {
+function getPinnedActions (): Action[] {
   return [
+    ...getActivityActions({ readAll: true }),
     {
       icon: view.icon.Delete,
       label: chunter.string.DeleteStarred,
+      group: 'remove',
       action: async () => {
-        await unpinAllChannels(contexts)
+        await unpinAllChannels()
       }
     }
   ]
 }
 
-async function unpinAllChannels (contexts: DocNotifyContext[]): Promise<void> {
-  const ops = getClient().apply(undefined, 'unpinAllChannels')
+async function unpinAllChannels (): Promise<void> {
+  const client = getClient()
+  const pinned = await client.findAll(chunter.class.Chat, { pinned: true })
+  if (pinned.length === 0) return
 
+  const ops = client.apply(undefined, 'unpinAllChannels')
   try {
-    for (const context of contexts) {
-      await ops.update(context, { isPinned: false })
+    for (const p of pinned) {
+      await ops.update(p, { pinned: false })
     }
   } finally {
     await ops.commit()
@@ -262,94 +277,159 @@ async function unpinAllChannels (contexts: DocNotifyContext[]): Promise<void> {
 
 function getChannelsActions (): Action[] {
   return hasAccountRole(getCurrentAccount(), AccountRole.User)
-    ? [
-        {
-          icon: chunter.icon.Hashtag,
-          label: chunter.string.CreateChannel,
-          action: async (): Promise<void> => {
-            showPopup(chunter.component.CreateChannel, {}, 'top')
-          }
-        }
-      ]
+    ? [createChannelAction, ...getActivityActions({ readAll: true, hideAll: true })]
     : []
 }
 
 function getDirectActions (): Action[] {
   return hasAccountRole(getCurrentAccount(), AccountRole.User)
+    ? [createDirectAction, ...getActivityActions({ readAll: true, hideAll: true })]
+    : []
+}
+
+function getActivityActions ({ readAll, hideAll }: { readAll?: boolean, hideAll?: boolean }): Action[] {
+  return hasAccountRole(getCurrentAccount(), AccountRole.User)
     ? [
-        {
-          label: chunter.string.NewDirectChat,
-          icon: chunter.icon.Thread,
-          action: async (): Promise<void> => {
-            showPopup(chunter.component.CreateDirectChat, {}, 'top')
-          }
-        }
+        ...(readAll === true
+          ? [
+              {
+                icon: view.icon.Eye,
+                label: notification.string.MarkReadAll,
+                group: 'edit',
+                action: async ({ _id }: { _id: SectionID }) => {
+                  await readDocs(_id)
+                }
+              }
+            ]
+          : []),
+        ...(hideAll === true
+          ? [
+              {
+                icon: view.icon.EyeCrossed,
+                label: chunter.string.HideAll,
+                group: 'remove',
+                action: async ({ _id }: { _id: SectionID }) => {
+                  await hideDocs(_id)
+                }
+              }
+            ]
+          : [])
       ]
     : []
 }
 
-function getActivityActions (contexts: DocNotifyContext[]): Action[] {
-  return [
-    {
-      icon: view.icon.Eye,
-      label: notification.string.MarkReadAll,
-      action: async () => {
-        await readActivityChannels(contexts)
-      }
-    },
-    {
-      icon: view.icon.EyeCrossed,
-      label: view.string.Hide,
-      action: async () => {
-        archiveActivityChannels(contexts)
-      }
-    }
-  ]
-}
-
-function archiveActivityChannels (contexts: DocNotifyContext[]): void {
-  showPopup(
-    MessageBox,
-    {
-      label: chunter.string.ArchiveActivityConfirmationTitle,
-      message: chunter.string.ArchiveActivityConfirmationMessage,
-      action: async () => {
-        await hideActivityChannels(contexts)
-      }
-    },
-    'top'
-  )
-}
-
-export async function hideActivityChannels (contexts: DocNotifyContext[]): Promise<void> {
-  const ops = getClient().apply(undefined, 'hideActivityChannels')
+async function hideDocs (id: SectionID): Promise<void> {
+  if (id === 'starred') return
+  const client = getClient()
+  const chats = await client.findAll(chunter.class.Chat, {
+    attachedToClass: id,
+    account: getCurrentAccount().uuid,
+    hidden: false
+  })
 
   try {
-    for (const context of contexts) {
-      await ops.update(context, { hidden: true })
+    for (const chat of chats) {
+      await client.update(chat, { hidden: true })
     }
-  } finally {
-    await ops.commit()
+  } catch (e) {
+    console.error(e)
   }
 }
 
-export async function readActivityChannels (contexts: DocNotifyContext[]): Promise<void> {
-  const client = InboxNotificationsClientImpl.getClient()
-  const notificationsByContext = get(client.inboxNotificationsByContext)
-  const ops = getClient().apply(undefined, 'readActivityChannels', true)
-
-  try {
-    for (const context of contexts) {
-      const notifications = notificationsByContext.get(context._id) ?? []
-      await client.readNotifications(
-        ops,
-        notifications
-          .filter(({ _class }) => _class === notification.class.ActivityInboxNotification)
-          .map(({ _id }) => _id)
-      )
-      await ops.update(context, { lastView: Date.now() })
+async function readDocs (id: SectionID): Promise<void> {
+  const client = getClient()
+  const me = getCurrentAccount()
+  if (id === 'starred') {
+    const starred = await client.findAll(chunter.class.Chat, { pinned: true })
+    const contexts = await client.findAll(notification.class.DocNotifyContext, {
+      objectId: { $in: starred.map((it) => it.attachedTo) },
+      user: me.uuid
+    })
+    try {
+      for (const context of contexts) {
+        await readNotifyContext(context)
+      }
+    } catch (e) {
+      console.error(e)
     }
-  } finally {
-    await ops.commit()
+  } else {
+    const contexts = await client.findAll(notification.class.DocNotifyContext, {
+      objectClass: id,
+      user: me.uuid
+    })
+    try {
+      for (const context of contexts) {
+        await readNotifyContext(context)
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
+}
+
+function filterClasses (classes: Array<Ref<Class<Doc>>>): Array<Ref<Class<Doc>>> {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  const res: Array<Ref<Class<Doc>>> = []
+  for (const _class of classes) {
+    const de = res.some((it) => hierarchy.isDerived(_class, it))
+    if (!de) res.push(_class)
+  }
+  return res
+}
+
+export function getNavGroupClasses (model: ChatNavGroupModel, pinned: Chat[]): Array<Ref<Class<Doc>>> {
+  if (model.id === 'starred') {
+    return Array.from(new Set(pinned.map((it) => it.attachedToClass)))
+  }
+  if (model._class != null) return [model._class]
+
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  const allClasses = hierarchy
+    .getMixinClasses(activity.mixin.ActivityDoc)
+    .filter((c) => !(model.skipClasses ?? []).includes(c))
+
+  return filterClasses(allClasses)
+}
+
+export function isArchived (object: Doc): boolean {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  return hierarchy.isDerived(object._class, core.class.Space) ? (object as Space).archived : false
+}
+
+function getObjectChatGroup (object: Doc): ChatGroupID {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
+    return 'channels'
+  }
+
+  if (hierarchy.isDerived(object._class, chunter.class.DirectMessage)) {
+    return 'direct'
+  }
+
+  return 'activity'
+}
+
+export function shouldPushObjectInNavigator (
+  model: ChatNavGroupModel,
+  object: Doc | undefined,
+  chat: Chat | undefined,
+  classes: Array<Ref<Class<Doc>>>
+): boolean {
+  if (object == null) return false
+  if (getObjectChatGroup(object) !== model.id) return false
+
+  if (chat?.pinned === true) return false
+
+  if (isArchived(object)) return true
+
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  return !classes.some((c) => hierarchy.isDerived(object._class, c))
 }

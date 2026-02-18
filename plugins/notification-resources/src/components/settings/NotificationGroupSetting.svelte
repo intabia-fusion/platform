@@ -45,7 +45,6 @@
 
   $: types = client.getModel().findAllSync(notification.class.NotificationType, { group, hidden: { $ne: true } })
   $: typesMap = toIdMap(types)
-  $: console.log({ types })
 
   function getStatus (
     settings: Map<Ref<NotificationType>, NotificationTypeSetting[]>,

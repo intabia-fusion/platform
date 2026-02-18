@@ -14,22 +14,8 @@
 //
 
 import contact, { Employee, formatName, getName, Person } from '@hcengineering/contact'
-import core, {
-  Doc,
-  PersonId,
-  Ref,
-  SortingOrder,
-  toIdMap,
-  Tx,
-  TxCreateDoc,
-  TxFactory,
-  TxMixin,
-  TxProcessor,
-  TxRemoveDoc,
-  TxUpdateDoc
-} from '@hcengineering/core'
+import core, { Doc, Ref, SortingOrder, toIdMap, Tx, TxFactory, TxMixin, TxRemoveDoc } from '@hcengineering/core'
 import hr, { Department, fromTzDate, PublicHoliday, Request, Staff, tzDateEqual } from '@hcengineering/hr'
-import { NotificationType } from '@hcengineering/notification'
 import { translate } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
 import { getEmployee } from '@hcengineering/server-contact'
@@ -251,93 +237,6 @@ export async function OnEmployeeDeactivate (txes: Tx[], control: TriggerControl)
   return result
 }
 
-// TODO: why we need specific email notifications instead of using general flow?
-async function sendEmailNotifications (
-  control: TriggerControl,
-  sender: PersonId,
-  doc: Request | PublicHoliday,
-  space: Ref<Department>,
-  typeId: Ref<NotificationType>
-): Promise<void> {
-  // const contacts = new Set<Ref<Contact>>()
-  // const departments = await buildHierarchy(space, control)
-  // for (const department of departments) {
-  //   if (department.subscribers === undefined) continue
-  //   for (const subscriber of department.subscribers) {
-  //     contacts.add(subscriber)
-  //   }
-  // }
-  //
-  // // should respect employee settings
-  // const type = await control.modelDb.findOne(notification.class.NotificationType, { _id: typeId })
-  // if (type === undefined) return
-  // const provider = await control.modelDb.findOne(notification.class.NotificationProvider, {
-  //   _id: gmail.providers.EmailNotificationProvider
-  // })
-  // if (provider === undefined) return
-  //
-  // const notificationControl = await getNotificationProviderControl(control.ctx, control)
-  // for (const contact of contacts.values()) {
-  //   const socialStrings = await getSocialStrings(control, contact as Ref<Person>)
-  //   const allowed = isAllowed(control, socialStrings, type, provider, notificationControl)
-  //   if (!allowed) {
-  //     contacts.delete(contact)
-  //   }
-  // }
-  //
-  // const channels = await control.findAll(control.ctx, contact.class.Channel, {
-  //   provider: contact.channelProvider.Email,
-  //   attachedTo: { $in: Array.from(contacts) }
-  // })
-  // const socialId = (await control.findAll(control.ctx, contact.class.SocialIdentity, { key: sender }))[0]
-  // if (socialId === undefined) return
-  //
-  // const senderPerson = (await control.findAll(control.ctx, contact.class.Person, { _id: socialId.attachedTo }))[0]
-  // const senderName = senderPerson !== undefined ? formatName(senderPerson.name, control.branding?.lastNameFirst) : ''
-  // const content = await getContentByTemplate(doc, senderName, type._id, control, '')
-  // if (content === undefined) return
-  //
-  // for (const channel of channels) {
-  //   await sendEmailNotification(control.ctx, content.text, content.html, content.subject, channel.value)
-  // }
-}
-
-/**
- * @public
- */
-export async function OnRequestCreate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  for (const tx of txes) {
-    const ctx = tx as TxCreateDoc<Request>
-    const request = TxProcessor.createDoc2Doc(ctx)
-
-    await sendEmailNotifications(control, ctx.modifiedBy, request, request.department, hr.ids.CreateRequestNotification)
-  }
-
-  return []
-}
-
-export async function OnRequestUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  for (const tx of txes) {
-    const ctx = tx as TxUpdateDoc<Request>
-    const request = (await control.findAll(control.ctx, hr.class.Request, { _id: ctx.objectId }))[0] as Request
-    if (request === undefined) continue
-
-    await sendEmailNotifications(control, ctx.modifiedBy, request, request.department, hr.ids.UpdateRequestNotification)
-  }
-  return []
-}
-
-export async function OnRequestRemove (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  for (const tx of txes) {
-    const ctx = tx as TxCreateDoc<Request>
-    const request = control.removedMap.get(ctx.objectId) as Request
-    if (request === undefined) continue
-
-    await sendEmailNotifications(control, ctx.modifiedBy, request, request.department, hr.ids.RemoveRequestNotification)
-  }
-  return []
-}
-
 /**
  * @public
  */
@@ -354,25 +253,6 @@ export async function RequestTitlePresenter (doc: Doc, control: TriggerControl):
       ).toLocaleDateString()}`
 
   return `${who} - ${type.toLowerCase()} ${date}`
-}
-
-export async function OnPublicHolidayCreate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
-  const result: Tx[] = []
-  for (const tx of txes) {
-    const ctx = tx as TxCreateDoc<PublicHoliday>
-    const employee = await getEmployee(control, ctx.modifiedBy)
-    if (employee === undefined) continue
-
-    const publicHoliday = TxProcessor.createDoc2Doc(ctx)
-    await sendEmailNotifications(
-      control,
-      ctx.modifiedBy,
-      publicHoliday,
-      publicHoliday.department,
-      hr.ids.CreatePublicHolidayNotification
-    )
-  }
-  return result
 }
 
 /**
@@ -393,13 +273,9 @@ export async function PublicHolidayTitlePresenter (doc: Doc, control: TriggerCon
 export default async () => ({
   trigger: {
     OnEmployee,
-    OnRequestCreate,
-    OnRequestUpdate,
-    OnRequestRemove,
     OnDepartmentStaff,
     OnDepartmentRemove,
-    OnEmployeeDeactivate,
-    OnPublicHolidayCreate
+    OnEmployeeDeactivate
   },
   function: {
     RequestTitlePresenter,

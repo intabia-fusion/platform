@@ -106,6 +106,7 @@ export function defineNotifications (builder: Builder): void {
       field: 'members',
       group: chunter.ids.ChunterNotificationGroup,
       attachedToClass: chunter.class.Channel,
+      notificationMessage: chunter.string.YouJoinedChannel,
       templates: {
         textTemplate: 'You have been added to #{doc}',
         htmlTemplate: '<p>You have been added to <b>#{doc}</b></p>',

@@ -184,6 +184,7 @@ export const documentsPlugin = plugin(documentsId, {
     Reason: '' as IntlString,
     CollaborativeDocument: '' as IntlString,
     ControlledDocument: '' as IntlString,
+    ControlledDocuments: '' as IntlString,
     Review: '' as IntlString,
     Approval: '' as IntlString,
     Reviewers: '' as IntlString,

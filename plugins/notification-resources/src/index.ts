@@ -29,10 +29,6 @@ import GeneralPreferencesGroup from './components/settings/GeneralPreferencesGro
 import {
   unsubscribe,
   resolveLocation,
-  hasDocNotifyContextPinAction,
-  hasDocNotifyContextUnpinAction,
-  pinDocNotifyContext,
-  unpinDocNotifyContext,
   canReadNotifyContext,
   canUnReadNotifyContext,
   readNotifyContext,
@@ -71,8 +67,6 @@ export default async (): Promise<Resources> => ({
   function: {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     GetInboxNotificationsClient: InboxNotificationsClientImpl.getClient,
-    HasDocNotifyContextPinAction: hasDocNotifyContextPinAction,
-    HasDocNotifyContextUnpinAction: hasDocNotifyContextUnpinAction,
     CanReadNotifyContext: canReadNotifyContext,
     CanUnReadNotifyContext: canUnReadNotifyContext,
     HasInboxNotifications: hasInboxNotifications,
@@ -82,8 +76,6 @@ export default async (): Promise<Resources> => ({
   },
   actionImpl: {
     Unsubscribe: unsubscribe,
-    PinDocNotifyContext: pinDocNotifyContext,
-    UnpinDocNotifyContext: unpinDocNotifyContext,
     ReadNotifyContext: readNotifyContext,
     UnReadNotifyContext: unReadNotifyContext,
     RemoveContextNotifications: removeContextNotifications,

@@ -164,9 +164,9 @@ export function addNotification (
     params
   }
 
-  // if (closeTimeout !== 0) {
-  notificationsStore.addNotification(notification)
-  // }
+  if (closeTimeout !== 0) {
+    notificationsStore.addNotification(notification)
+  }
 }
 
 /**
@@ -281,6 +281,10 @@ export interface IModeSelector<Mode extends string = string> {
  */
 export function capitalizeFirstLetter (str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+export function lowercaseFirstLetter (str: string): string {
+  return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
 const isMac = /Macintosh/i.test(navigator.userAgent)

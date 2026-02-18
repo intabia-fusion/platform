@@ -2257,11 +2257,6 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-analytics-collector",
-      "projectFolder": "models/analytics-collector",
-      "shouldPublish": false
-    },
-    {
       "packageName": "@hcengineering/pod-ai-bot",
       "projectFolder": "services/ai-bot/pod-ai-bot",
       "shouldPublish": false

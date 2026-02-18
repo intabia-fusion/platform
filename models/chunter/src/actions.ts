@@ -14,27 +14,11 @@
 //
 
 import { type Builder } from '@hcengineering/model'
-import view, { actionTemplates as viewTemplates, createAction, template } from '@hcengineering/model-view'
-import notification from '@hcengineering/model-notification'
+import view, { createAction } from '@hcengineering/model-view'
 import activity from '@hcengineering/activity'
-import workbench from '@hcengineering/model-workbench'
 import core from '@hcengineering/model-core'
-import contact from '@hcengineering/contact'
 
 import chunter from './plugin'
-
-const actionTemplates = template({
-  removeChannel: {
-    action: chunter.actionImpl.RemoveChannel,
-    label: view.string.Archive,
-    icon: view.icon.Delete,
-    input: 'focus',
-    keyBinding: ['Backspace'],
-    category: chunter.category.Chunter,
-    target: notification.class.DocNotifyContext,
-    context: { mode: ['context', 'browser'], group: 'remove' }
-  }
-})
 
 export function defineActions (builder: Builder): void {
   builder.createDoc(
@@ -43,19 +27,6 @@ export function defineActions (builder: Builder): void {
     { label: chunter.string.Chat, visible: true },
     chunter.category.Chunter
   )
-
-  createAction(builder, {
-    action: chunter.actionImpl.StartConversation,
-    label: chunter.string.Message,
-    icon: view.icon.Bubble,
-    input: 'focus',
-    category: chunter.category.Chunter,
-    target: contact.mixin.Employee,
-    context: {
-      mode: 'context',
-      group: 'associate'
-    }
-  })
   defineMessageActions(builder)
   defineChannelActions(builder)
 }
@@ -196,23 +167,6 @@ function defineChannelActions (builder: Builder): void {
   createAction(
     builder,
     {
-      action: chunter.actionImpl.ConvertDmToPrivateChannel,
-      label: chunter.string.ConvertToPrivate,
-      icon: chunter.icon.Lock,
-      input: 'focus',
-      category: chunter.category.Chunter,
-      target: chunter.class.DirectMessage,
-      context: {
-        mode: 'context',
-        group: 'edit'
-      }
-    },
-    chunter.action.ConvertToPrivate
-  )
-
-  createAction(
-    builder,
-    {
       action: chunter.actionImpl.ArchiveChannel,
       label: chunter.string.ArchiveChannel,
       icon: view.icon.Archive,
@@ -231,112 +185,4 @@ function defineChannelActions (builder: Builder): void {
     },
     chunter.action.ArchiveChannel
   )
-
-  createAction(builder, {
-    ...viewTemplates.open,
-    target: chunter.class.Channel,
-    context: {
-      mode: ['browser', 'context'],
-      group: 'edit'
-    },
-    action: workbench.actionImpl.Navigate,
-    actionProps: {
-      mode: 'space'
-    }
-  })
-
-  createAction(
-    builder,
-    {
-      ...actionTemplates.removeChannel,
-      icon: view.icon.EyeCrossed,
-      label: view.string.Hide,
-      query: {
-        objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
-      }
-    },
-    chunter.action.RemoveChannel
-  )
-
-  createAction(
-    builder,
-    {
-      ...actionTemplates.removeChannel,
-      label: chunter.string.CloseConversation,
-      query: {
-        objectClass: chunter.class.DirectMessage
-      }
-    },
-    chunter.action.CloseConversation
-  )
-
-  createAction(
-    builder,
-    {
-      ...actionTemplates.removeChannel,
-      action: chunter.actionImpl.LeaveChannel,
-      label: chunter.string.LeaveChannel,
-      query: {
-        objectClass: chunter.class.Channel
-      }
-    },
-    chunter.action.LeaveChannel
-  )
-
-  // createAction(builder, {
-  //   ...notificationActionTemplates.pinContext,
-  //   label: chunter.string.StarChannel,
-  //   query: {
-  //     objectClass: chunter.class.Channel
-  //   },
-  //   override: [notification.action.PinDocNotifyContext]
-  // })
-  //
-  // createAction(builder, {
-  //   ...notificationActionTemplates.unpinContext,
-  //   label: chunter.string.UnstarChannel,
-  //   query: {
-  //     objectClass: chunter.class.Channel
-  //   }
-  // })
-  //
-  // createAction(builder, {
-  //   ...notificationActionTemplates.pinContext,
-  //   label: chunter.string.StarConversation,
-  //   query: {
-  //     objectClass: chunter.class.DirectMessage
-  //   }
-  // })
-  //
-  // createAction(builder, {
-  //   ...notificationActionTemplates.unpinContext,
-  //   label: chunter.string.UnstarConversation,
-  //   query: {
-  //     objectClass: chunter.class.DirectMessage
-  //   }
-  // })
-  //
-  // createAction(builder, {
-  //   ...notificationActionTemplates.pinContext,
-  //   query: {
-  //     objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
-  //   }
-  // })
-  //
-  // createAction(builder, {
-  //   ...notificationActionTemplates.unpinContext,
-  //   query: {
-  //     objectClass: { $nin: [chunter.class.DirectMessage, chunter.class.Channel] }
-  //   }
-  // })
-
-  createAction(builder, {
-    action: chunter.actionImpl.OpenInSidebar,
-    label: workbench.string.OpenInSidebar,
-    icon: view.icon.DetailsFilled,
-    input: 'focus',
-    category: chunter.category.Chunter,
-    target: notification.class.DocNotifyContext,
-    context: { mode: ['context', 'browser'], group: 'tools' }
-  })
 }

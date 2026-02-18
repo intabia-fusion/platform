@@ -30,6 +30,7 @@ import chunter from './plugin'
 import {
   DOMAIN_CHUNTER,
   TChannel,
+  TChat,
   TChatMessage,
   TChatSyncInfo,
   TChunterSpace,
@@ -50,7 +51,8 @@ export function createModel (builder: Builder): void {
     TChatMessage,
     TThreadMessage,
     TObjectChatPanel,
-    TChatSyncInfo
+    TChatSyncInfo,
+    TChat
   )
 
   builder.createDoc(
@@ -148,10 +150,6 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(chunter.class.Channel, core.class.Class, view.mixin.SpaceHeader, {
     header: chunter.component.ChannelHeader
-  })
-
-  builder.mixin(chunter.class.DirectMessage, core.class.Class, view.mixin.ObjectIdentifier, {
-    provider: chunter.function.DmIdentifierProvider
   })
 
   builder.mixin(chunter.class.ChatMessage, core.class.Class, view.mixin.CollectionPresenter, {

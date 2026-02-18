@@ -501,8 +501,6 @@ class Workspace {
       objectId: doc._id,
       objectClass: doc._class,
       objectSpace: doc.space,
-      isPinned: false,
-      hidden: false,
       lastUpdate: createdOn,
       lastNotify: createdOn
     })
@@ -538,7 +536,6 @@ class Workspace {
   private getUpdateContextTxes (contexts: DocNotifyContext[], timestamp: Timestamp): Tx[] {
     return contexts.map((it) =>
       this.txFactory.createTxUpdateDoc(it._class, it.space, it._id, {
-        hidden: false,
         lastUpdate: Math.max(it.lastUpdate ?? 0, timestamp)
       })
     )

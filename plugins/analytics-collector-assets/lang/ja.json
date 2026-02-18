@@ -1,6 +1,5 @@
 {
   "string": {
-    "OnboardingChannelDescription": "ユーザー：{user} ワークスペース：{workspace}",
     "Error": "エラー：",
     "InProject": " プロジェクト内 ",
     "NavigateToSpecial": "{app}：{special} を開く",
@@ -9,8 +8,6 @@
     "To": " を ",
     "Open": "開く ",
     "Workbench": "ワークベンチ：",
-    "OnboardingChannel": "オンボーディングチャンネル",
-    "OnboardingChannels": "オンボーディングチャンネル一覧",
     "WorkspaceId": "ワークスペースID",
     "WorkspaceName": "ワークスペース名",
     "WorkspaceUrl": "ワークスペースURL",

@@ -284,6 +284,8 @@ export class TPersonSpace extends TSpace implements PersonSpace {
   @Prop(TypeRef(contact.class.Person), contact.string.Person)
   @Index(IndexKind.Indexed)
     person!: Ref<Person>
+
+  account!: AccountUuid
 }
 
 @Model(contact.class.UserRole, core.class.Doc, DOMAIN_ROLE)

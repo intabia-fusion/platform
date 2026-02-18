@@ -293,12 +293,6 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
   objectClass: Ref<Class<Doc>>
   objectSpace: Ref<Space>
 
-  // TODO: remove pinning
-  isPinned: boolean
-
-  // TODO: hidden???
-  hidden: boolean
-
   lastView?: Timestamp
   lastUpdate?: Timestamp
   lastNotify?: Timestamp
@@ -406,8 +400,6 @@ const notification = plugin(notificationId, {
     GeneralPreferencesGroup: '' as AnyComponent
   },
   action: {
-    PinDocNotifyContext: '' as Ref<Action>,
-    UnpinDocNotifyContext: '' as Ref<Action>,
     UnReadNotifyContext: '' as Ref<Action>,
     ReadNotifyContext: '' as Ref<Action>,
     RemoveContextNotifications: '' as Ref<Action>

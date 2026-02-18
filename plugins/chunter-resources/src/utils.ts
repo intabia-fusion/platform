@@ -14,16 +14,14 @@
 //
 import activity, {
   type ActivityMessage,
-  type ActivityMessagesFilter,
   type DisplayActivityMessage,
-  type DisplayDocUpdateMessage,
-  type DocUpdateMessage
+  type DisplayDocUpdateMessage
 } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
 import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
 import { type Channel, type ChatMessage, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
 import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@hcengineering/contact'
-import { employeeByAccountStore, employeeByIdStore, PersonIcon } from '@hcengineering/contact-resources'
+import { employeeByAccountStore, PersonIcon } from '@hcengineering/contact-resources'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -37,17 +35,17 @@ import core, {
   type Space,
   type Timestamp
 } from '@hcengineering/core'
-import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
+import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
 import {
   InboxNotificationsClientImpl,
   isActivityNotification,
   isMentionNotification,
   isReactionNotification
 } from '@hcengineering/notification-resources'
-import { type Asset, getMetadata, translate } from '@hcengineering/platform'
+import { type Asset, getMetadata } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
 import { type AnySvelteComponent, languageStore } from '@hcengineering/ui'
-import { classIcon, getDocLinkTitle, getDocTitle } from '@hcengineering/view-resources'
+import { classIcon, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
@@ -111,10 +109,6 @@ export async function buildDmName (client: Client, accounts: AccountUuid[]): Pro
   return names.length > 0 ? names.join(', ') : myName
 }
 
-export async function dmIdentifierProvider (): Promise<string> {
-  return await translate(chunter.string.Direct, {})
-}
-
 export async function canDeleteMessage (doc?: ChatMessage): Promise<boolean> {
   if (doc === undefined) {
     return false
@@ -134,37 +128,20 @@ export function canReplyToThread (doc?: ActivityMessage): boolean {
     return false
   }
 
-  if (doc._class === chunter.class.ThreadMessage) {
-    return false
-  }
-
-  if (doc._class === activity.class.DocUpdateMessage) {
-    return (doc as DocUpdateMessage).objectClass !== activity.class.Reaction
-  }
-
-  return true
+  return doc._class !== chunter.class.ThreadMessage
 }
 
 export async function canCopyMessageLink (doc?: ActivityMessage | ActivityMessage[]): Promise<boolean> {
   const message = Array.isArray(doc) ? doc[0] : doc
 
-  if (message === undefined) {
-    return false
-  }
-
-  if (message._class === activity.class.DocUpdateMessage) {
-    return (message as DocUpdateMessage).objectClass !== activity.class.Reaction
-  }
-
-  return true
+  return message !== undefined
 }
 
 export async function getDmPersons (client: Client, space: Space): Promise<Person[]> {
-  if (space === undefined) {
+  if (space === undefined || !client.getHierarchy().isDerived(space._class, core.class.Space)) {
     return []
   }
   const myAcc = getCurrentAccount().uuid
-
   const accounts = space.members.length > 1 ? space.members.filter((m) => m !== myAcc) : [myAcc]
 
   return await client.findAll(contact.class.Person, {
@@ -241,11 +218,7 @@ export async function getChannelName (
 ): Promise<string | undefined> {
   const client = getClient()
 
-  if (client.getHierarchy().isDerived(_class, chunter.class.ChunterSpace)) {
-    return await getDocTitle(client, _id, _class, object)
-  }
-
-  return await getDocLinkTitle(client, _id, _class, object)
+  return (await getDocTitle(client, _id, _class, object)) ?? (await getDocLabel(client, object))
 }
 
 export function getUnreadThreadsCount (): number {
@@ -277,34 +250,6 @@ export function getClosestDate (selectedDate: Timestamp, dates: Timestamp[]): Ti
   return closestDate
 }
 
-export function filterChatMessages (
-  messages: DisplayActivityMessage[],
-  filters: ActivityMessagesFilter[],
-  filterResources: Map<Ref<ActivityMessagesFilter>, (message: ActivityMessage, _class?: Ref<Doc>) => boolean>,
-  objectClass: Ref<Class<Doc>>,
-  enabledFilters: Array<Ref<ActivityMessagesFilter>>
-): DisplayActivityMessage[] {
-  if (enabledFilters.length === 0 || filters.every((it) => enabledFilters.includes(it._id))) {
-    return messages
-  }
-
-  const selectedFilters = filters.filter(({ _id }) => enabledFilters.includes(_id))
-
-  if (selectedFilters.length === 0) {
-    return messages
-  }
-  const filtersFns: Array<(message: ActivityMessage, _class?: Ref<Doc>) => boolean> = []
-
-  for (const filter of selectedFilters) {
-    const filterFn = filterResources.get(filter._id)
-    if (filterFn !== undefined) {
-      filtersFns.push(filterFn)
-    }
-  }
-
-  return messages.filter((message) => filtersFns.some((filterFn) => filterFn(message, objectClass)))
-}
-
 export async function joinChannel (channel: Channel, value: AccountUuid | AccountUuid[]): Promise<void> {
   const client = getClient()
 
@@ -317,7 +262,7 @@ export async function joinChannel (channel: Channel, value: AccountUuid | Accoun
   }
 }
 
-export async function leaveChannel (channel: Channel | undefined, value: AccountUuid | AccountUuid[]): Promise<void> {
+export async function leaveChannel (channel: Space | undefined, value: AccountUuid | AccountUuid[]): Promise<void> {
   if (channel === undefined) return
 
   const client = getClient()
@@ -445,47 +390,6 @@ export async function readChannelMessages (
   }
 }
 
-export async function leaveChannelAction (
-  context?: DocNotifyContext,
-  _?: Event,
-  props?: { object?: Channel }
-): Promise<void> {
-  if (context === undefined) {
-    return
-  }
-  const client = getClient()
-  const channel =
-    props?.object ?? (await client.findOne(chunter.class.Channel, { _id: context.objectId as Ref<Channel> }))
-
-  if (channel === undefined) {
-    return
-  }
-
-  await leaveChannel(channel, getCurrentAccount().uuid)
-  await client.remove(context)
-  await resetChunterLocIfEqual(channel._id, channel._class, channel)
-}
-
-export async function removeChannelAction (context?: DocNotifyContext, _?: Event): Promise<void> {
-  if (context === undefined) {
-    return
-  }
-
-  const client = getClient()
-  const hierarchy = client.getHierarchy()
-  const { objectId, objectClass, objectSpace } = context
-
-  if (hierarchy.isDerived(objectClass, chunter.class.Channel)) {
-    const channel = await client.findOne(chunter.class.Channel, { _id: objectId as Ref<Channel>, space: objectSpace })
-    await leaveChannel(channel, getCurrentAccount().uuid)
-    await client.remove(context)
-  } else {
-    const object = await client.findOne(objectClass, { _id: objectId, space: objectSpace })
-    await client.update(context, { hidden: true })
-    await resetChunterLocIfEqual(objectId, objectClass, object)
-  }
-}
-
 export function isThreadMessage (message: ActivityMessage): message is ThreadMessage {
   return message._class === chunter.class.ThreadMessage
 }
@@ -563,25 +467,23 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
 export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<Ref<DirectMessage>> {
   const client = getClient()
   const me = getCurrentEmployee()
-  const myAcc = getCurrentAccount()
 
   const existingDms = await client.findAll(chunter.class.DirectMessage, {})
   const newDirectEmployeeIds = Array.from(new Set([...employeeIds, me]))
 
   let direct: DirectMessage | undefined
 
-  const employeeById = get(employeeByIdStore)
-  const newDirectAccounts = new Set(newDirectEmployeeIds.map((it) => employeeById.get(it)?.personUuid).filter(notEmpty))
+  const employees = await client.findAll(contact.mixin.Employee, { _id: { $in: newDirectEmployeeIds } })
+  const newDirectAccounts = new Set(employees.map(({ personUuid }) => personUuid).filter(notEmpty))
 
   for (const dm of existingDms) {
-    const existAccounts = new Set(dm.members)
+    const dmAccounts = new Set(dm.members)
 
-    if (existAccounts.size !== newDirectAccounts.size) {
-      continue
-    }
+    if (dmAccounts.size !== newDirectAccounts.size) continue
 
     let match = true
-    for (const acc of existAccounts) {
+
+    for (const acc of dmAccounts) {
       if (!newDirectAccounts.has(acc)) {
         match = false
         break
@@ -594,38 +496,19 @@ export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<
     }
   }
 
-  const dmId =
-    direct?._id ??
-    (await client.createDoc(chunter.class.DirectMessage, core.space.Space, {
-      name: '',
-      description: '',
-      private: true,
-      archived: false,
-      members: Array.from(newDirectAccounts)
-    }))
-
-  const context = await client.findOne(notification.class.DocNotifyContext, {
-    user: myAcc.uuid,
-    objectId: dmId,
-    objectClass: chunter.class.DirectMessage
-  })
-
-  if (context !== undefined) {
-    if (context.hidden) {
-      await client.updateDoc(context._class, context.space, context._id, { hidden: false })
+  if (direct != null) {
+    const chat = await client.findOne(chunter.class.Chat, { attachedTo: direct._id })
+    if (chat?.hidden === true) {
+      await client.update(chat, { hidden: false })
     }
-  } else {
-    const space = await client.findOne(contact.class.PersonSpace, { person: me }, { projection: { _id: 1 } })
-    if (space == null) return dmId
-    await client.createDoc(notification.class.DocNotifyContext, space._id, {
-      user: myAcc.uuid,
-      objectId: dmId,
-      objectClass: chunter.class.DirectMessage,
-      objectSpace: core.space.Space,
-      hidden: false,
-      isPinned: false
-    })
+    return direct._id
   }
 
-  return dmId
+  return await client.createDoc(chunter.class.DirectMessage, core.space.Space, {
+    name: '',
+    description: '',
+    private: true,
+    archived: false,
+    members: Array.from(newDirectAccounts)
+  })
 }
