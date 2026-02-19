@@ -364,7 +364,7 @@ export class WorkspaceClient {
     account: AccountUuid | null,
     meeting: Ref<MeetingMinutes>,
     sessionId: string,
-    participantMetadata: ParticipantMetadata
+    meta: ParticipantMetadata
   ): Promise<void> {
     try {
       this.ctx.info('[WorkspaceClient.upsertParticipantFromLiveKit] Starting', { meeting, person, name, sessionId })
@@ -445,7 +445,12 @@ export class WorkspaceClient {
 
         const place =
           roomDoc !== undefined
-            ? getFreeRoomPlace(roomDoc, participants, person, { x: participantMetadata.x, y: participantMetadata.y })
+            ? getFreeRoomPlace(
+              roomDoc,
+              participants,
+              person,
+              meta.x !== undefined && meta.y !== undefined ? { x: meta.x, y: meta.y } : undefined
+            )
             : { x: 0, y: 0 }
         const oid = generateId<ParticipantInfo>()
 
