@@ -148,7 +148,10 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await expect(this.buttonMilestone()).toHaveText(data.milestone === 'No Milestone' ? 'Milestone' : data.milestone)
     }
     if (data.estimation != null) {
-      await expect(this.textEstimation()).toHaveText(convertEstimation(data.estimation))
+      // Retry checking estimation as UI may update with delay
+      await expect(async () => {
+        await expect(this.textEstimation()).toHaveText(convertEstimation(data.estimation as string))
+      }).toPass({ intervals: [100, 200, 500], timeout: 10000 })
     }
     if (data.parentIssue != null) {
       await expect(this.textParentTitle()).toHaveText(data.parentIssue)

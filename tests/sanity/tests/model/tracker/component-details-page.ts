@@ -13,6 +13,8 @@ export class ComponentsDetailsPage extends CommonTrackerPage {
     }
     if (data.description != null) {
       await this.inputComponentDescription().fill(data.description)
+      // Click outside the description field to trigger save
+      await this.inputComponentName().click()
     }
     if (data.lead != null) {
       await this.buttonLead().click()

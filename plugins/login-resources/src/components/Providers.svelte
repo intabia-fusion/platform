@@ -94,25 +94,21 @@
 </script>
 
 <div class="container">
-<Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems={'center'}>
+  <Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems={'center'}>
     {#each enabledProviders as provider}
-    <a
+      <a
         class="provider-button"
         href={getLink(provider)}
         on:click={() => {
           handleProviderClick(provider)
         }}
-    >
+      >
         <FormButton kind={'black'} shape={'round2'} size={'x-large'} width="100%" stopPropagation={false}>
-        <svelte:component
-            this={provider.component}
-            displayName={provider.displayName}
-            labelClass={'button-label'}
-        />
+          <svelte:component this={provider.component} displayName={provider.displayName} labelClass={'button-label'} />
         </FormButton>
-    </a>
+      </a>
     {/each}
-</Grid>
+  </Grid>
 </div>
 
 <style lang="scss">
