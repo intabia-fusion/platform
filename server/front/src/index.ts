@@ -44,8 +44,13 @@ const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-ag
 
 // Check if filename contains a content hash (e.g., main.a1b2c3d4.js.gz or chunk-abc123.css.gz)
 function hasContentHash (fileName: string): boolean {
-  // Remove .gz suffix for checking
-  const name = fileName.endsWith('.gz') ? fileName.slice(0, -3) : fileName
+  // Remove .gz or .br suffix for checking
+  let name = fileName
+  if (name.endsWith('.gz')) {
+    name = name.slice(0, -3)
+  } else if (name.endsWith('.br')) {
+    name = name.slice(0, -3)
+  }
   // Match patterns like: name.HASH.ext where HASH is 6+ hex chars
   return /\.[0-9a-f]{6,}\.\w+$/i.test(name)
 }
@@ -482,6 +487,7 @@ export function start (
     contentType: string
     size: number
     isGz: boolean
+    isBr: boolean
     headers200: Record<string, string>
     headers304: Record<string, string>
   }
@@ -512,19 +518,21 @@ export function start (
   }
 
   // Cache files in memory for maximum throughput
-  // Skip: source maps, uncompressed .js and .svg (clients should request .gz versions)
-  function shouldCacheFile (fileName: string): boolean {
-    if (fileName.endsWith('.map.gz') || fileName.endsWith('.map')) return false
-    // Skip uncompressed .js and .svg — .gz versions will be served instead
-    if (fileName.endsWith('.js') && !fileName.endsWith('.gz')) return false
-    if (fileName.endsWith('.svg') && !fileName.endsWith('.gz')) return false
-    // Skip uncompressed .css — .gz versions will be served instead
-    if (fileName.endsWith('.css') && !fileName.endsWith('.gz')) return false
+  // Skip: source maps, uncompressed .js/.css/.svg only if they have .gz/.br versions
+  function shouldCacheFile (fileName: string, hasGzVersion: boolean, hasBrVersion: boolean): boolean {
+    // Always skip source maps
+    if (fileName.endsWith('.map.gz') || fileName.endsWith('.map.br') || fileName.endsWith('.map')) return false
+    // Skip uncompressed .js/.css/.svg only if there's a compressed version available
+    if (!fileName.endsWith('.gz') && !fileName.endsWith('.br')) {
+      if (fileName.endsWith('.js') || fileName.endsWith('.css') || fileName.endsWith('.svg')) {
+        if (hasGzVersion || hasBrVersion) return false
+      }
+    }
     return true
   }
 
   // Load file into memory cache with pre-computed headers
-  function loadFileToCache (filePath: string, urlPath: string, isGzFile: boolean): boolean {
+  function loadFileToCache (filePath: string, urlPath: string, isGzFile: boolean, isBrFile: boolean): boolean {
     try {
       if (fileCache.has(urlPath)) return true
 
@@ -534,7 +542,7 @@ export function start (
 
       // Get content type from extension
       let ext: string
-      if (isGzFile) {
+      if (isGzFile || isBrFile) {
         const extParts = filePath.split('.')
         ext =
           extParts.length > 2
@@ -563,6 +571,8 @@ export function start (
       }
       if (isGzFile) {
         headers200['Content-Encoding'] = 'gzip'
+      } else if (isBrFile) {
+        headers200['Content-Encoding'] = 'br'
       }
 
       const headers304: Record<string, string> = {
@@ -576,6 +586,7 @@ export function start (
         contentType,
         size: content.length,
         isGz: isGzFile,
+        isBr: isBrFile,
         headers200,
         headers304
       })
@@ -586,7 +597,7 @@ export function start (
   }
 
   // First pass: collect all files
-  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean }>()
+  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean }>()
 
   function collectFiles (dir: string, basePath: string = ''): void {
     try {
@@ -601,6 +612,7 @@ export function start (
         } else {
           const urlPath = `/${relativePath}`
           const isGzFile = entry.name.endsWith('.gz')
+          const isBrFile = entry.name.endsWith('.br')
 
           if (isGzFile) {
             // This is a .gz file - mark that the uncompressed version has a .gz version
@@ -609,12 +621,22 @@ export function start (
             if (existing !== undefined) {
               existing.hasGzVersion = true
             }
-            allFiles.set(urlPath, { fullPath, hasGzVersion: false })
+            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false })
+          } else if (isBrFile) {
+            // This is a .br file - mark that the uncompressed version has a .br version
+            const uncompressedPath = urlPath.slice(0, -3) // Remove .br
+            const existing = allFiles.get(uncompressedPath)
+            if (existing !== undefined) {
+              existing.hasBrVersion = true
+            }
+            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false })
           } else {
-            // This is a regular file - check if we already saw a .gz version
+            // This is a regular file - check if we already saw a compressed version
             const gzPath = `${urlPath}.gz`
+            const brPath = `${urlPath}.br`
             const hasGzVersion = allFiles.has(gzPath)
-            allFiles.set(urlPath, { fullPath, hasGzVersion })
+            const hasBrVersion = allFiles.has(brPath)
+            allFiles.set(urlPath, { fullPath, hasGzVersion, hasBrVersion })
           }
         }
       }
@@ -651,18 +673,22 @@ export function start (
 
   // Now decide what to cache
   let gzCached = 0
+  let brCached = 0
   let uncompressedCached = 0
 
-  for (const [urlPath, { fullPath }] of allFiles) {
+  for (const [urlPath, { fullPath, hasGzVersion, hasBrVersion }] of allFiles) {
     knownFiles.add(urlPath)
 
     const fileName = urlPath.split('/').pop() ?? ''
     const isGzFile = fileName.endsWith('.gz')
+    const isBrFile = fileName.endsWith('.br')
 
-    if (shouldCacheFile(fileName)) {
-      if (loadFileToCache(fullPath, urlPath, isGzFile)) {
+    if (shouldCacheFile(fileName, hasGzVersion, hasBrVersion)) {
+      if (loadFileToCache(fullPath, urlPath, isGzFile, isBrFile)) {
         if (isGzFile) {
           gzCached++
+        } else if (isBrFile) {
+          brCached++
         } else {
           uncompressedCached++
         }
@@ -680,7 +706,7 @@ export function start (
   allFiles.clear()
 
   console.log(
-    `Found ${knownFiles.size} files, cached ${gzCached} .gz files + ${uncompressedCached} uncompressed files in memory, ${diskFiles.size} served from disk`
+    `Found ${knownFiles.size} files, cached ${gzCached} .gz + ${brCached} .br + ${uncompressedCached} uncompressed files in memory, ${diskFiles.size} served from disk`
   )
 
   // Optimized index.html endpoint - define BEFORE static middleware
@@ -757,6 +783,16 @@ export function start (
     return null
   }
 
+  // Parse Accept-Encoding header to determine preferred encoding
+  // Returns 'br', 'gzip', or undefined
+  function getPreferredEncoding (acceptEncoding: string | undefined): 'br' | 'gzip' | undefined {
+    if (acceptEncoding === undefined) return undefined
+    // Brotli is preferred over gzip (better compression)
+    if (acceptEncoding.includes('br')) return 'br'
+    if (acceptEncoding.includes('gzip')) return 'gzip'
+    return undefined
+  }
+
   // Static files middleware - serve from memory cache or disk
   app.use((req, res, next) => {
     // Skip API routes
@@ -774,10 +810,12 @@ export function start (
     // File exists - check if cached in memory
     let cached = fileCache.get(req.path)
 
-    // If not cached, check if .gz version exists and client accepts gzip
-    if (cached === undefined && !req.path.endsWith('.gz')) {
-      const acceptEncoding = req.headers['accept-encoding']
-      if (acceptEncoding !== undefined && acceptEncoding.includes('gzip')) {
+    // If not cached and not already a compressed file, check for compressed versions
+    if (cached === undefined && !req.path.endsWith('.gz') && !req.path.endsWith('.br')) {
+      const preferredEncoding = getPreferredEncoding(req.headers['accept-encoding'])
+      if (preferredEncoding === 'br') {
+        cached = fileCache.get(`${req.path}.br`)
+      } else if (preferredEncoding === 'gzip') {
         cached = fileCache.get(`${req.path}.gz`)
       }
     }

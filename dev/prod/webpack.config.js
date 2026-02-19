@@ -448,7 +448,27 @@ module.exports = [
           viewport: 'width=device-width, initial-scale=1.0'
         }
       }),
-      ...(prod ? [new CompressionPlugin()] : []),
+      ...(prod
+        ? [
+            new CompressionPlugin({
+              filename: '[path][base].gz',
+              algorithm: 'gzip',
+              test: /\.(js|css|html|svg|json)$/,
+              threshold: 1024,
+              minRatio: 0.8,
+              deleteOriginalAssets: false
+            }),
+            new CompressionPlugin({
+              filename: '[path][base].br',
+              algorithm: 'brotliCompress',
+              test: /\.(js|css|html|svg|json)$/,
+              threshold: 1024,
+              minRatio: 0.8,
+              compressionOptions: { level: 11 },
+              deleteOriginalAssets: false
+            })
+          ]
+        : []),
       // new MiniCssExtractPlugin({
       //   filename: '[name].[id][contenthash].css'
       // }),
