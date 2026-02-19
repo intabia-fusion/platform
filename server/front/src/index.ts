@@ -15,7 +15,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate, type Ref } from '@hcengineering/core'
+import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@hcengineering/core'
 import platform, { PlatformError } from '@hcengineering/platform'
 import { TokenError, decodeToken } from '@hcengineering/server-token'
 import { StorageAdapter } from '@hcengineering/storage'
@@ -23,24 +23,34 @@ import bp from 'body-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
 import fileUpload, { UploadedFile } from 'express-fileupload'
-import expressStaticGzip from 'express-static-gzip'
 import https from 'https'
 import morgan from 'morgan'
-import { join, normalize, resolve } from 'path'
+import { join, resolve } from 'path'
 import { cwd } from 'process'
-import sharp, { type Sharp } from 'sharp'
 import { v4 as uuid } from 'uuid'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
-import fs, { createReadStream, mkdtempSync } from 'fs'
-import { rm, writeFile } from 'fs/promises'
+import fs, { mkdtempSync } from 'fs'
 import { tmpdir } from 'os'
+import crypto from 'crypto'
 
-const cacheControlValue = 'public, no-cache, must-revalidate, max-age=365d'
+// Long-term cache for files with content hash in filename (immutable assets)
+const cacheControlImmutable = 'public, max-age=31536000, immutable'
+// Short cache with ETag revalidation for files without hash
+const cacheControlRevalidate = 'public, no-cache'
+// No cache for dynamic content (index.html, config.json)
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
-const KEEP_ALIVE_TIMEOUT = 5 // seconds
+// Check if filename contains a content hash (e.g., main.a1b2c3d4.js.gz or chunk-abc123.css.gz)
+function hasContentHash (fileName: string): boolean {
+  // Remove .gz suffix for checking
+  const name = fileName.endsWith('.gz') ? fileName.slice(0, -3) : fileName
+  // Match patterns like: name.HASH.ext where HASH is 6+ hex chars
+  return /\.[0-9a-f]{6,}\.\w+$/i.test(name)
+}
+
+const KEEP_ALIVE_TIMEOUT = 60 // seconds
 const KEEP_ALIVE_MAX = 1000
 const KEEP_ALIVE_HEADERS = {
   Connection: 'keep-alive',
@@ -186,7 +196,7 @@ async function getFile (
       'content-type': stat.contentType,
       etag: stat.etag,
       'last-modified': new Date(stat.modifiedOn).toISOString(),
-      'cache-control': cacheControlValue
+      'cache-control': cacheControlRevalidate
     })
     res.end()
     return
@@ -198,7 +208,7 @@ async function getFile (
       'content-type': stat.contentType,
       etag: stat.etag,
       'last-modified': new Date(stat.modifiedOn).toISOString(),
-      'cache-control': cacheControlValue
+      'cache-control': cacheControlRevalidate
     })
     res.end()
     return
@@ -216,7 +226,7 @@ async function getFile (
           'Content-Length': stat.size,
           Etag: stat.etag,
           'Last-Modified': new Date(stat.modifiedOn).toISOString(),
-          'Cache-Control': cacheControlValue,
+          'Cache-Control': cacheControlRevalidate,
           connection: 'keep-alive',
           'keep-alive': 'timeout=5, max=1000'
         })
@@ -286,7 +296,6 @@ export function start (
   const app = express()
 
   const tempFileDir = mkdtempSync(join(tmpdir(), 'front-'))
-  let temoFileIndex = 0
 
   function cleanupTempFiles (): void {
     const maxAge = 1000 * 60 * 60 // 1 hour
@@ -331,39 +340,59 @@ export function start (
 
   app.use(morgan('short', { stream: myStream }))
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/config.json', async (req, res) => {
-    const data = {
-      ACCOUNTS_URL: config.accountsUrl,
-      UPLOAD_URL: config.uploadUrl,
-      FILES_URL: config.filesUrl,
-      MODEL_VERSION: config.modelVersion,
-      VERSION: config.version,
-      REKONI_URL: config.rekoniUrl,
-      TELEGRAM_URL: config.telegramUrl,
-      GMAIL_URL: config.gmailUrl,
-      CALENDAR_URL: config.calendarUrl,
-      COLLABORATOR: config.collaborator,
-      LINK_PREVIEW_URL: config.linkPreviewUrl,
-      STREAM_URL: config.streamUrl,
-      COLLABORATOR_URL: config.collaboratorUrl,
-      BRANDING_URL: config.brandingUrl,
-      PREVIEW_URL: config.previewUrl,
-      PUSH_PUBLIC_KEY: config.pushPublicKey,
-      DISABLE_SIGNUP: config.disableSignUp,
-      HIDE_LOCAL_LOGIN: config.hideLocalLogin,
-      BILLING_URL: config.billingUrl,
-      PAYMENT_URL: config.paymentUrl,
-      PULSE_URL: config.pulseUrl,
-      HULYLAKE_URL: config.hulylakeUrl,
-      DATALAKE_URL: config.datalakeUrl,
-      ...(extraConfig ?? {})
+  // Pre-serialize config.json for optimal performance
+  const configData = {
+    ACCOUNTS_URL: config.accountsUrl,
+    UPLOAD_URL: config.uploadUrl,
+    FILES_URL: config.filesUrl,
+    MODEL_VERSION: config.modelVersion,
+    VERSION: config.version,
+    REKONI_URL: config.rekoniUrl,
+    TELEGRAM_URL: config.telegramUrl,
+    GMAIL_URL: config.gmailUrl,
+    CALENDAR_URL: config.calendarUrl,
+    COLLABORATOR: config.collaborator,
+    LINK_PREVIEW_URL: config.linkPreviewUrl,
+    STREAM_URL: config.streamUrl,
+    COLLABORATOR_URL: config.collaboratorUrl,
+    BRANDING_URL: config.brandingUrl,
+    PREVIEW_URL: config.previewUrl,
+    PUSH_PUBLIC_KEY: config.pushPublicKey,
+    DISABLE_SIGNUP: config.disableSignUp,
+    HIDE_LOCAL_LOGIN: config.hideLocalLogin,
+    BILLING_URL: config.billingUrl,
+    PAYMENT_URL: config.paymentUrl,
+    PULSE_URL: config.pulseUrl,
+    HULYLAKE_URL: config.hulylakeUrl,
+    DATALAKE_URL: config.datalakeUrl,
+    ...(extraConfig ?? {})
+  }
+  const cachedConfigJson = JSON.stringify(configData)
+  // Generate weak ETag same format as Express: W/"<base64>"
+  const hash = crypto.createHash('md5').update(cachedConfigJson).digest('base64')
+  const cachedConfigEtag = `W/"${hash}"`
+  const cachedConfigLength = Buffer.byteLength(cachedConfigJson, 'utf8')
+
+  // Optimized config.json endpoint - define BEFORE static middleware
+  app.get('/config.json', (req, res) => {
+    // Check If-None-Match for 304 Not Modified
+    if (req.headers['if-none-match'] === cachedConfigEtag) {
+      res.writeHead(304, { ETag: cachedConfigEtag })
+      res.end()
+      return
     }
-    res.status(200)
-    res.set('Cache-Control', cacheControlNoCache)
-    res.set('Connection', 'keep-alive')
-    res.set('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
-    res.json(data)
+
+    // Send pre-serialized response using writeHead to set all headers at once
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      ETag: cachedConfigEtag,
+      'Content-Length': String(cachedConfigLength),
+      'Cache-Control': 'public, max-age=60',
+      Connection: 'keep-alive',
+      'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`,
+      'Access-Control-Allow-Origin': '*'
+    })
+    res.end(cachedConfigJson)
   })
 
   app.get('/api/v1/statistics', (req, res) => {
@@ -399,37 +428,419 @@ export function start (
   const dist = resolve(process.env.PUBLIC_DIR ?? cwd(), 'dist')
   console.log('serving static files from', dist)
 
-  let brandingUrl: URL | undefined
+  // Pre-load and cache index.html as Buffer for optimal performance (avoids string→Buffer on each response)
+  const indexPath = join(dist, 'index.html')
+  let cachedIndexHtml: Buffer | null = null
+  let cachedIndexEtag: string | null = null
+  let cachedIndexLength: number = 0
+  let cachedIndexHeaders: Record<string, string> | null = null
+
+  try {
+    cachedIndexHtml = fs.readFileSync(indexPath)
+    const hash = crypto.createHash('md5').update(cachedIndexHtml).digest('base64')
+    cachedIndexEtag = `W/"${hash}"`
+    cachedIndexLength = cachedIndexHtml.length
+    cachedIndexHeaders = {
+      'Content-Type': 'text/html; charset=UTF-8',
+      ETag: cachedIndexEtag,
+      'Content-Length': String(cachedIndexLength),
+      'Cache-Control': cacheControlNoCache,
+      Connection: 'keep-alive',
+      'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`,
+      'Access-Control-Allow-Origin': '*'
+    }
+    console.log(`Pre-loaded index.html (${cachedIndexLength} bytes, ETag: ${cachedIndexEtag})`)
+  } catch (err: any) {
+    console.warn('Could not pre-load index.html, will use static middleware:', err.message)
+  }
+
+  // Helper: serve cached index.html, returns true if served
+  function serveCachedIndex (req: Request, res: Response): boolean {
+    if (cachedIndexHtml === null || cachedIndexEtag === null || cachedIndexHeaders === null) {
+      return false
+    }
+    if (req.headers['if-none-match'] === cachedIndexEtag) {
+      res.writeHead(304, { ETag: cachedIndexEtag })
+      res.end()
+      return true
+    }
+    res.writeHead(200, cachedIndexHeaders)
+    res.end(cachedIndexHtml)
+    return true
+  }
+
+  // Known files Set - all files in dist
+  const knownFiles = new Set<string>()
+  // Disk files - not cached in memory, served from disk via sendFile (which handles ETag/304 natively)
+  const diskFiles = new Map<string, { fullPath: string, cacheControl: string }>()
+  // Memory cache for files with pre-computed headers
+  const fileCache = new Map<
+  string,
+  {
+    content: Buffer
+    etag: string
+    contentType: string
+    size: number
+    isGz: boolean
+    headers200: Record<string, string>
+    headers304: Record<string, string>
+  }
+  >()
+
+  function getContentType (ext: string): string {
+    const types: Record<string, string> = {
+      js: 'application/javascript',
+      mjs: 'application/javascript',
+      css: 'text/css',
+      html: 'text/html',
+      json: 'application/json',
+      svg: 'image/svg+xml',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      ico: 'image/x-icon',
+      woff: 'font/woff',
+      woff2: 'font/woff2',
+      ttf: 'font/ttf',
+      eot: 'application/vnd.ms-fontobject',
+      webp: 'image/webp',
+      avif: 'image/avif',
+      gz: 'application/gzip'
+    }
+    return types[ext] ?? 'application/octet-stream'
+  }
+
+  // Cache files in memory for maximum throughput
+  // Skip: source maps, uncompressed .js and .svg (clients should request .gz versions)
+  function shouldCacheFile (fileName: string): boolean {
+    if (fileName.endsWith('.map.gz') || fileName.endsWith('.map')) return false
+    // Skip uncompressed .js and .svg — .gz versions will be served instead
+    if (fileName.endsWith('.js') && !fileName.endsWith('.gz')) return false
+    if (fileName.endsWith('.svg') && !fileName.endsWith('.gz')) return false
+    // Skip uncompressed .css — .gz versions will be served instead
+    if (fileName.endsWith('.css') && !fileName.endsWith('.gz')) return false
+    return true
+  }
+
+  // Load file into memory cache with pre-computed headers
+  function loadFileToCache (filePath: string, urlPath: string, isGzFile: boolean): boolean {
+    try {
+      if (fileCache.has(urlPath)) return true
+
+      const content = fs.readFileSync(filePath)
+      const hash = crypto.createHash('md5').update(content).digest('base64')
+      const etag = `W/"${hash}"`
+
+      // Get content type from extension
+      let ext: string
+      if (isGzFile) {
+        const extParts = filePath.split('.')
+        ext =
+          extParts.length > 2
+            ? extParts[extParts.length - 2].toLowerCase()
+            : extParts.length > 1
+              ? extParts[extParts.length - 1].toLowerCase()
+              : ''
+      } else {
+        ext = filePath.split('.').pop()?.toLowerCase() ?? ''
+      }
+      const contentType = getContentType(ext)
+
+      // Choose Cache-Control (accounts for branding URL and content hash)
+      const fileName = urlPath.split('/').pop() ?? ''
+      const cacheControl = getCacheControl(urlPath, fileName)
+
+      // Pre-compute headers for 200 and 304 responses
+      const headers200: Record<string, string> = {
+        'Content-Type': contentType,
+        ETag: etag,
+        'Content-Length': String(content.length),
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': cacheControl,
+        Connection: 'keep-alive',
+        'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+      }
+      if (isGzFile) {
+        headers200['Content-Encoding'] = 'gzip'
+      }
+
+      const headers304: Record<string, string> = {
+        ETag: etag,
+        'Last-Modified': new Date(0).toUTCString()
+      }
+
+      fileCache.set(urlPath, {
+        content,
+        etag,
+        contentType,
+        size: content.length,
+        isGz: isGzFile,
+        headers200,
+        headers304
+      })
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  // First pass: collect all files
+  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean }>()
+
+  function collectFiles (dir: string, basePath: string = ''): void {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name)
+        const relativePath = basePath !== '' ? `${basePath}/${entry.name}` : entry.name
+
+        if (entry.isDirectory()) {
+          collectFiles(fullPath, relativePath)
+        } else {
+          const urlPath = `/${relativePath}`
+          const isGzFile = entry.name.endsWith('.gz')
+
+          if (isGzFile) {
+            // This is a .gz file - mark that the uncompressed version has a .gz version
+            const uncompressedPath = urlPath.slice(0, -3) // Remove .gz
+            const existing = allFiles.get(uncompressedPath)
+            if (existing !== undefined) {
+              existing.hasGzVersion = true
+            }
+            allFiles.set(urlPath, { fullPath, hasGzVersion: false })
+          } else {
+            // This is a regular file - check if we already saw a .gz version
+            const gzPath = `${urlPath}.gz`
+            const hasGzVersion = allFiles.has(gzPath)
+            allFiles.set(urlPath, { fullPath, hasGzVersion })
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Error scanning directory ${dir}:`, err)
+    }
+  }
+
+  // Collect all files first
+  console.log('Collecting dist files...')
+  collectFiles(dist)
+
+  // Parse branding URL for cache-control decisions
+  let brandingPath: string | undefined
   if (config.brandingUrl !== undefined) {
     try {
-      brandingUrl = new URL(config.brandingUrl)
+      brandingPath = new URL(config.brandingUrl).pathname
     } catch (e) {
       console.error('Invalid branding URL. Must be absolute URL.', e)
     }
   }
 
-  app.use(
-    expressStaticGzip(dist, {
-      serveStatic: {
-        cacheControl: true,
-        dotfiles: 'allow',
-        maxAge: '365d',
-        etag: true,
-        lastModified: true,
-        index: false,
-        setHeaders (res, path) {
-          if (
-            path.toLowerCase().includes('index.html') ||
-            (brandingUrl !== undefined && path.toLowerCase().includes(brandingUrl.pathname))
-          ) {
-            res.setHeader('Cache-Control', cacheControlNoCache)
-          }
-          res.setHeader('Connection', 'keep-alive')
-          res.setHeader('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
+  // Determine cache-control for a given URL path
+  function getCacheControl (urlPath: string, fileName: string): string {
+    // Branding files and index.html get no-cache
+    if (
+      fileName === 'index.html' ||
+      (brandingPath !== undefined && urlPath.toLowerCase().includes(brandingPath.toLowerCase()))
+    ) {
+      return cacheControlNoCache
+    }
+    return hasContentHash(fileName) ? cacheControlImmutable : cacheControlRevalidate
+  }
+
+  // Now decide what to cache
+  let gzCached = 0
+  let uncompressedCached = 0
+
+  for (const [urlPath, { fullPath }] of allFiles) {
+    knownFiles.add(urlPath)
+
+    const fileName = urlPath.split('/').pop() ?? ''
+    const isGzFile = fileName.endsWith('.gz')
+
+    if (shouldCacheFile(fileName)) {
+      if (loadFileToCache(fullPath, urlPath, isGzFile)) {
+        if (isGzFile) {
+          gzCached++
+        } else {
+          uncompressedCached++
         }
       }
-    })
+    } else {
+      // Not cached in memory — sendFile handles ETag/304 natively
+      diskFiles.set(urlPath, {
+        fullPath,
+        cacheControl: getCacheControl(urlPath, fileName)
+      })
+    }
+  }
+
+  // Free allFiles map - no longer needed after initialization
+  allFiles.clear()
+
+  console.log(
+    `Found ${knownFiles.size} files, cached ${gzCached} .gz files + ${uncompressedCached} uncompressed files in memory, ${diskFiles.size} served from disk`
   )
+
+  // Optimized index.html endpoint - define BEFORE static middleware
+  app.get(['/index.html', '/'], (req, res, next) => {
+    if (!serveCachedIndex(req, res)) {
+      next()
+    }
+  })
+
+  // Helper functions for conditional requests
+  function parseRange (range: string, size: number): [number, number] | null {
+    const match = range.match(/bytes=(\d*)-(\d*)/)
+    if (match === null) return null
+
+    let start = parseInt(match[1], 10)
+    let end = parseInt(match[2], 10)
+
+    if (isNaN(start)) {
+      // Suffix range: bytes=-500 (last 500 bytes)
+      if (!isNaN(end)) {
+        start = size - end
+        end = size - 1
+      } else {
+        return null
+      }
+    } else if (isNaN(end)) {
+      // Open-ended: bytes=500- (from 500 to end)
+      end = size - 1
+    }
+
+    if (start > end || start >= size) {
+      return null
+    }
+
+    end = Math.min(end, size - 1)
+    return [start, end]
+  }
+
+  function checkPreconditions (req: Request, etag: string, lastModified: Date): number | null {
+    const ifMatch = req.headers['if-match']
+    const ifNoneMatch = req.headers['if-none-match']
+    const ifModifiedSince = req.headers['if-modified-since']
+    const ifUnmodifiedSince = req.headers['if-unmodified-since']
+
+    // If-Match: return 412 if etag doesn't match
+    if (ifMatch !== undefined && ifMatch !== '' && ifMatch !== '*' && ifMatch !== etag) {
+      return 412
+    }
+
+    // If-None-Match: return 304 for GET/HEAD if etag matches
+    if (ifNoneMatch !== undefined && ifNoneMatch !== '' && (ifNoneMatch === '*' || ifNoneMatch === etag)) {
+      if (req.method === 'GET' || req.method === 'HEAD') {
+        return 304
+      }
+      return 412
+    }
+
+    // If-Modified-Since: return 304 if not modified
+    if (ifModifiedSince !== undefined && ifModifiedSince !== '' && (ifNoneMatch === undefined || ifNoneMatch === '')) {
+      const modifiedSince = new Date(ifModifiedSince)
+      if (lastModified <= modifiedSince) {
+        return 304
+      }
+    }
+
+    // If-Unmodified-Since: return 412 if modified after date
+    if (ifUnmodifiedSince !== undefined && ifUnmodifiedSince !== '') {
+      const unmodifiedSince = new Date(ifUnmodifiedSince)
+      if (lastModified > unmodifiedSince) {
+        return 412
+      }
+    }
+
+    return null
+  }
+
+  // Static files middleware - serve from memory cache or disk
+  app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/') || req.path.startsWith('/files')) {
+      next()
+      return
+    }
+
+    // Check if file exists in known files
+    if (!knownFiles.has(req.path)) {
+      next()
+      return
+    }
+
+    // File exists - check if cached in memory
+    let cached = fileCache.get(req.path)
+
+    // If not cached, check if .gz version exists and client accepts gzip
+    if (cached === undefined && !req.path.endsWith('.gz')) {
+      const acceptEncoding = req.headers['accept-encoding']
+      if (acceptEncoding !== undefined && acceptEncoding.includes('gzip')) {
+        cached = fileCache.get(`${req.path}.gz`)
+      }
+    }
+
+    if (cached === undefined) {
+      // Serve from disk — sendFile handles ETag, If-None-Match, 304 natively
+      const diskEntry = diskFiles.get(req.path)
+      if (diskEntry !== undefined) {
+        res.sendFile(diskEntry.fullPath, {
+          headers: {
+            'Cache-Control': diskEntry.cacheControl,
+            Connection: 'keep-alive',
+            'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+          },
+          etag: true,
+          lastModified: true
+        })
+        return
+      }
+      next()
+      return
+    }
+
+    // Check preconditions (If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since)
+    const preconditionStatus = checkPreconditions(req, cached.etag, new Date(0))
+    if (preconditionStatus !== null) {
+      if (preconditionStatus === 304) {
+        res.writeHead(304, cached.headers304)
+      } else {
+        res.writeHead(preconditionStatus)
+      }
+      res.end()
+      return
+    }
+
+    // Check for Range request
+    const range = req.headers.range
+    if (range !== undefined) {
+      const parsedRange = parseRange(range, cached.size)
+      if (parsedRange !== null) {
+        const [start, end] = parsedRange
+        res.writeHead(206, {
+          'Content-Type': cached.contentType,
+          'Content-Range': `bytes ${start}-${end}/${cached.size}`,
+          'Content-Length': String(end - start + 1),
+          'Accept-Ranges': 'bytes',
+          ETag: cached.etag,
+          'Cache-Control': cached.headers200['Cache-Control'],
+          Connection: 'keep-alive',
+          'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+        })
+        res.end(cached.content.subarray(start, end + 1))
+      } else {
+        res.writeHead(416, { 'Content-Range': `bytes */${cached.size}` })
+        res.end()
+      }
+      return
+    }
+
+    // Serve from memory cache with pre-computed headers
+    res.writeHead(200, cached.headers200)
+    res.end(cached.content)
+  })
 
   const getWorkspaceIds = async (ctx: MeasureContext, token: string, path?: string): Promise<WorkspaceIds | null> => {
     const accountClient = getAccountClient(config.accountsUrlInternal ?? config.accountsUrl, token)
@@ -486,7 +897,7 @@ export function start (
             return
           }
 
-          let blobInfo = await ctx.with('stat', {}, (ctx) => config.storageAdapter.stat(ctx, wsIds, uuid), {
+          const blobInfo = await ctx.with('stat', {}, (ctx) => config.storageAdapter.stat(ctx, wsIds, uuid), {
             workspace: wsIds.uuid
           })
 
@@ -511,19 +922,6 @@ export function start (
 
             res.end()
             return
-          }
-          // try image and octet streams
-          const isImage =
-            blobInfo.contentType.includes('image/') || blobInfo.contentType.includes('application/octet-stream')
-
-          const size = req.query.size !== undefined ? parseInt(req.query.size as string) : undefined
-          const accept = req.headers.accept
-          if (accept !== undefined && isImage && blobInfo.contentType !== 'image/gif' && size !== undefined) {
-            blobInfo = await ctx.with('resize', {}, (ctx) =>
-              getGeneratePreview(ctx, blobInfo as PlatformBlob, size, uuid, config, wsIds, accept, () =>
-                join(tempFileDir, `${++temoFileIndex}`)
-              )
-            )
           }
 
           const range = req.headers.range
@@ -857,33 +1255,24 @@ export function start (
     void handleImportPost(req, res)
   })
 
-  const filesPatterns = [
-    '.js',
-    '.js.gz',
-    'js.map',
-    'js.map.gz',
-    '.woff',
-    '.woff2',
-    '.svg.gz',
-    '.css',
-    '.css.gz',
-    '.ico',
-    '.svg',
-    '.webp',
-    '.png',
-    '.avif'
-  ]
-
   app.get('*', (request, response) => {
-    const safePath = normalize(join(dist, request.path))
-    if (!safePath.startsWith(dist)) {
+    // Simple path traversal check - reject if path contains ..
+    if (request.path.includes('..')) {
       response.sendStatus(403)
       return
     }
-    if (filesPatterns.some((it) => request.path.endsWith(it))) {
+    // If path has a file extension, it's likely a missing static file
+    if (request.path.includes('.') && !request.path.endsWith('/')) {
       response.sendStatus(404)
       return
     }
+
+    // SPA routing — serve cached index.html
+    if (serveCachedIndex(request, response)) {
+      return
+    }
+
+    // Fallback to sendFile if cache not available
     response.sendFile(join(dist, 'index.html'), {
       etag: true,
       lastModified: true,
@@ -898,161 +1287,10 @@ export function start (
   const server = app.listen(port)
   server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 1000
   server.headersTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 2000
+
   return () => {
     server.close()
-  }
-}
-
-const supportedFormats = ['avif', 'webp', 'heif', 'jpeg', 'png']
-
-async function getGeneratePreview (
-  ctx: MeasureContext,
-  blob: PlatformBlob,
-  size: number | undefined,
-  uuid: string,
-  config: { storageAdapter: StorageAdapter },
-  wsIds: WorkspaceIds,
-  accept: string,
-  tempFile: () => string
-): Promise<PlatformBlob> {
-  if (size === undefined) {
-    return blob
-  }
-
-  const formats = accept.split(',').map((it) => it.trim())
-
-  // Select appropriate format
-  let format: string | undefined
-
-  for (const f of formats) {
-    const [type] = f.split(';')
-    const [clazz, kind] = type.split('/')
-    if (clazz === 'image' && supportedFormats.includes(kind)) {
-      format = kind
-      break
-    }
-  }
-  if (format === undefined) {
-    return blob
-  }
-
-  if (size === -1) {
-    size = 2048
-  }
-
-  if (size > 2048) {
-    size = 2048
-  }
-
-  const sizeId = uuid + `%preview%${size}${format !== 'jpeg' ? format : ''}`
-
-  const d = await config.storageAdapter.stat(ctx, wsIds, sizeId)
-  const hasSmall = d !== undefined && d.size > 0
-
-  if (hasSmall) {
-    // We have cached small document, let's proceed with it.
-    return d
-  } else {
-    const files: string[] = []
-    let pipeline: Sharp | undefined
-    try {
-      // Let's get data and resize it
-      const fname = tempFile()
-      files.push(fname)
-      await writeFile(fname, await config.storageAdapter.get(ctx, wsIds, uuid))
-
-      pipeline = sharp(fname)
-      const md = await pipeline.metadata()
-      if (md.format === undefined) {
-        // No format detected, return blob
-        return blob
-      }
-      sharp.cache(false)
-
-      // auto orient image based on exif to prevent resize use wrong orientation
-      pipeline = pipeline.rotate()
-
-      pipeline = pipeline.resize({
-        width: size,
-        fit: 'cover',
-        withoutEnlargement: true
-      })
-
-      let contentType = 'image/jpeg'
-      switch (format) {
-        case 'jpeg':
-          pipeline = pipeline.jpeg({
-            progressive: true
-          })
-          contentType = 'image/jpeg'
-          break
-        case 'avif':
-          pipeline = pipeline.avif({
-            lossless: false,
-            effort: 0
-          })
-          contentType = 'image/avif'
-          break
-        case 'heif':
-          pipeline = pipeline.heif({
-            effort: 0
-          })
-          contentType = 'image/heif'
-          break
-        case 'webp':
-          pipeline = pipeline.webp({
-            effort: 0
-          })
-          contentType = 'image/webp'
-          break
-        case 'png':
-          pipeline = pipeline.png({
-            effort: 0
-          })
-          contentType = 'image/png'
-          break
-      }
-
-      const outFile = tempFile()
-      files.push(outFile)
-
-      const dataBuff = await ctx.with('resize', { contentType }, () => (pipeline as Sharp).toFile(outFile))
-      pipeline.destroy()
-
-      // Add support of avif as well.
-      const upload = await config.storageAdapter.put(
-        ctx,
-        wsIds,
-        sizeId,
-        createReadStream(outFile),
-        contentType,
-        dataBuff.size
-      )
-      return {
-        ...blob,
-        _id: sizeId as Ref<PlatformBlob>,
-        size: dataBuff.size,
-        contentType,
-        etag: upload.etag
-      }
-    } catch (err: any) {
-      Analytics.handleError(err)
-      ctx.error('failed to resize image', {
-        err,
-        format: accept,
-        contentType: blob.contentType,
-        uuid,
-        size: blob.size,
-        provider: blob.provider
-      })
-
-      // Return original in case of error
-      return blob
-    } finally {
-      pipeline?.destroy()
-      for (const f of files) {
-        await rm(f)
-      }
-    }
+    // Clear file cache on shutdown
+    fileCache.clear()
   }
 }

@@ -115,3 +115,4 @@ dev/tool/history.json
 ws-tests/docker-compose.override.yml
 diff
 tests/docker-compose.override.versions.yml
+benchmarks/front-benchmark/front-benchmark
