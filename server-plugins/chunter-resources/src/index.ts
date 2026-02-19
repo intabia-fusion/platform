@@ -40,7 +40,12 @@ import core, {
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { getMetadata, translate } from '@hcengineering/platform'
-import { getAccountBySocialId, getAddCollaboratorsTxes, getPerson, getPersonSpaces } from '@hcengineering/server-contact'
+import {
+  getAccountBySocialId,
+  getAddCollaboratorsTxes,
+  getPerson,
+  getPersonSpaces
+} from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
@@ -169,7 +174,11 @@ async function OnThreadMessageDeleted (tx: Tx, control: TriggerControl): Promise
   // return [updateTx]
 }
 
-async function OnChatMessageCreated (ctx: MeasureContext, tx: TxCreateDoc<ChatMessage>, control: TriggerControl): Promise<Tx[]> {
+async function OnChatMessageCreated (
+  ctx: MeasureContext,
+  tx: TxCreateDoc<ChatMessage>,
+  control: TriggerControl
+): Promise<Tx[]> {
   const hierarchy = control.hierarchy
 
   const message = TxProcessor.createDoc2Doc(tx)
@@ -221,7 +230,11 @@ async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Pro
       tx._class === core.class.TxCreateDoc &&
       control.hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)
     ) {
-      res.push(...(await control.ctx.with('OnChatMessageCreated', {}, (ctx) => OnChatMessageCreated(ctx, tx as TxCreateDoc<ChatMessage>, control))))
+      res.push(
+        ...(await control.ctx.with('OnChatMessageCreated', {}, (ctx) =>
+          OnChatMessageCreated(ctx, tx as TxCreateDoc<ChatMessage>, control)
+        ))
+      )
     }
   }
   return res
@@ -339,7 +352,9 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
       const updateTx = control.txFactory.createTxUpdateDoc(chat._class, chat.space, chat._id, {
         hidden: true
       })
-      res.push(control.txFactory.createTxCollectionCUD(chat.attachedToClass, chat.attachedTo, chat.space, 'chats', updateTx))
+      res.push(
+        control.txFactory.createTxCollectionCUD(chat.attachedToClass, chat.attachedTo, chat.space, 'chats', updateTx)
+      )
     }
   }
   if (syncInfo === undefined) {
@@ -410,7 +425,13 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
       collection: 'chats'
     })
     res.push(
-      control.txFactory.createTxCollectionCUD(collaborator.attachedToClass, collaborator.attachedTo, space._id, 'chats', createTx)
+      control.txFactory.createTxCollectionCUD(
+        collaborator.attachedToClass,
+        collaborator.attachedTo,
+        space._id,
+        'chats',
+        createTx
+      )
     )
   }
 

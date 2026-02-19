@@ -77,7 +77,10 @@ export class ChunterMiddleware extends BaseMiddleware {
         } else if (hidden === false) {
           const current = this.hiddenChats.get(updateTx.attachedTo)
           if (current == null) continue
-          this.hiddenChats.set(updateTx.attachedTo, current.filter(chat => chat._id !== updateTx.objectId))
+          this.hiddenChats.set(
+            updateTx.attachedTo,
+            current.filter((chat) => chat._id !== updateTx.objectId)
+          )
         }
       }
     }
@@ -93,7 +96,9 @@ export class ChunterMiddleware extends BaseMiddleware {
   private async getHiddenChats (doc: Ref<Doc>): Promise<ChatData[]> {
     if (this.hiddenChats.has(doc)) return this.hiddenChats.get(doc) ?? []
 
-    const chats = await this.context.lowLevelStorage?.rawFindAll<Chat>(DOMAIN_CHUNTER_DOC, { hidden: true, attachedTo: doc }) ?? []
+    const chats =
+      (await this.context.lowLevelStorage?.rawFindAll<Chat>(DOMAIN_CHUNTER_DOC, { hidden: true, attachedTo: doc })) ??
+      []
     this.hiddenChats.set(doc, chats)
 
     return chats

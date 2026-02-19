@@ -331,7 +331,9 @@ async function hideDocs (id: SectionID): Promise<void> {
 
   try {
     for (const chat of chats) {
-      await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', { hidden: true })
+      await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', {
+        hidden: true
+      })
     }
   } catch (e) {
     console.error(e)

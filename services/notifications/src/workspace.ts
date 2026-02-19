@@ -21,6 +21,7 @@ import core, {
   Hierarchy,
   MeasureContext,
   ModelDb,
+  notEmpty,
   PersonId,
   readOnlyGuestAccountUuid,
   Ref,
@@ -31,7 +32,8 @@ import core, {
   TxCUD,
   TxFactory,
   TxProcessor,
-  TxRemoveDoc
+  TxRemoveDoc,
+  TxUpdateDoc
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
@@ -115,7 +117,7 @@ class Workspace {
     const notifiedUsers = getNotifiedUsers(this.hierarchy, res)
 
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
-      res.push(...(await this.processMessage(tx as TxCUD<ActivityMessage>, notifiedUsers)))
+      res.push(...(await this.processMessage(tx as TxCUD<ActivityMessage>, notifiedUsers, res)))
     }
 
     if (res.length > 0) {
@@ -180,11 +182,11 @@ class Workspace {
     const res: Tx[] = []
     const doc = txAttachedToDoc ?? txObject
     const contexts = await this.cache.getContexts(doc._id)
+    const sender = await this.cache.getSender(tx.modifiedBy)
 
-    res.push(...this.getUpdateContextTxes(contexts, tx.modifiedOn))
+    res.push(...this.getUpdateContextTxes(contexts, tx.modifiedOn, sender.account, []))
 
     const settings = await this.cache.getSettings()
-    const sender = await this.cache.getSender(tx.modifiedBy)
     const mentionType = matched.find((it) => it._id === notification.ids.MentionNotificationType)
 
     if (mentionType != null) {
@@ -201,6 +203,17 @@ class Workspace {
       res.push(...result.txes)
 
       for (const d of result.data) {
+        const updateContextTx = res.find(
+          (it): it is TxUpdateDoc<DocNotifyContext> =>
+            it._class === core.class.TxUpdateDoc &&
+            (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+            (it as TxUpdateDoc<DocNotifyContext>).objectId === d.context?._id
+        )
+
+        if (updateContextTx != null) {
+          updateContextTx.operations.lastNotify = tx.modifiedOn
+        }
+
         res.push(
           ...(await this.createNotifications(
             notification.class.MentionInboxNotification,
@@ -284,6 +297,18 @@ class Workspace {
             intlParamsNotLocalized
           }
         }
+
+        const updateContextTx = res.find(
+          (it): it is TxUpdateDoc<DocNotifyContext> =>
+            it._class === core.class.TxUpdateDoc &&
+            (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+            (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
+        )
+
+        if (updateContextTx != null) {
+          updateContextTx.operations.lastNotify = tx.modifiedOn
+        }
+
         res.push(
           ...(await this.createNotifications(
             notification.class.CommonInboxNotification,
@@ -352,9 +377,24 @@ class Workspace {
 
     const res: Tx[] = []
     const context = (await this.cache.getContexts(doc._id)).find((it) => it.user === receiver.account)
+    const sender = await this.cache.getSender(reaction.modifiedBy)
+
+    if (context != null) {
+      res.push(...this.getUpdateContextTxes([context], tx.modifiedOn, sender.account, []))
+    }
 
     const notifyResult: NotifyResult = Object.fromEntries(providers.map((p) => [p, [type]]))
-    const sender = await this.cache.getSender(reaction.modifiedBy)
+
+    const updateContextTx = res.find(
+      (it): it is TxUpdateDoc<DocNotifyContext> =>
+        it._class === core.class.TxUpdateDoc &&
+        (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+        (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
+    )
+
+    if (updateContextTx != null) {
+      updateContextTx.operations.lastNotify = tx.modifiedOn
+    }
 
     const txes = await this.createNotifications(
       notification.class.ReactionInboxNotification,
@@ -379,9 +419,9 @@ class Workspace {
     return toRemove.map((it) => this.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
   }
 
-  private async processMessage (tx: TxCUD<ActivityMessage>, notifiedUsers: AccountUuid[]): Promise<Tx[]> {
+  private async processMessage (tx: TxCUD<ActivityMessage>, notifiedUsers: AccountUuid[], _res: Tx[]): Promise<Tx[]> {
     if (tx._class === core.class.TxCreateDoc) {
-      return await this.processCreateMessage(tx as TxCreateDoc<ActivityMessage>, notifiedUsers)
+      return await this.processCreateMessage(tx as TxCreateDoc<ActivityMessage>, notifiedUsers, _res)
     } else if (tx._class === core.class.TxRemoveDoc) {
       return await this.processRemoveMessage(tx as TxRemoveDoc<ActivityMessage>)
     }
@@ -389,7 +429,11 @@ class Workspace {
     return []
   }
 
-  private async processCreateMessage (tx: TxCreateDoc<ActivityMessage>, notifiedUsers: AccountUuid[]): Promise<Tx[]> {
+  private async processCreateMessage (
+    tx: TxCreateDoc<ActivityMessage>,
+    notifiedUsers: AccountUuid[],
+    _res: Tx[]
+  ): Promise<Tx[]> {
     const client = this.getClient()
     const message = await getMessage(client, tx)
 
@@ -401,8 +445,9 @@ class Workspace {
 
     const res: Tx[] = []
     const contexts = await this.cache.getContexts(doc._id)
+    const sender = await this.cache.getSender(message.modifiedBy)
 
-    res.push(...this.getUpdateContextTxes(contexts, message.modifiedOn))
+    res.push(...this.getUpdateContextTxes(contexts, message.modifiedOn, sender.account, _res))
 
     const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
 
@@ -422,8 +467,6 @@ class Workspace {
 
     if (receivers.length === 0) return res
 
-    const sender = await this.cache.getSender(message.modifiedBy)
-
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
       const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings)
@@ -432,6 +475,16 @@ class Workspace {
       const type = types[0]
       if (type == null) continue
 
+      const updateContextTx = res.find(
+        (it): it is TxUpdateDoc<DocNotifyContext> =>
+          it._class === core.class.TxUpdateDoc &&
+          (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+          (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
+      )
+
+      if (updateContextTx != null) {
+        updateContextTx.operations.lastNotify = message.modifiedOn
+      }
       res.push(
         ...(await this.createNotifications(
           notification.class.ActivityInboxNotification,
@@ -533,12 +586,37 @@ class Workspace {
     return Array.from(accounts)
   }
 
-  private getUpdateContextTxes (contexts: DocNotifyContext[], timestamp: Timestamp): Tx[] {
-    return contexts.map((it) =>
-      this.txFactory.createTxUpdateDoc(it._class, it.space, it._id, {
-        lastUpdate: Math.max(it.lastUpdate ?? 0, timestamp)
+  private getUpdateContextTxes (
+    contexts: DocNotifyContext[],
+    timestamp: Timestamp,
+    author: AccountUuid | undefined,
+    _res: Tx[]
+  ): Tx[] {
+    function getUpdateTx (_context: DocNotifyContext): TxUpdateDoc<DocNotifyContext> | undefined {
+      return _res.find(
+        (it): it is TxUpdateDoc<DocNotifyContext> =>
+          it._class === core.class.TxUpdateDoc &&
+          (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+          (it as TxUpdateDoc<DocNotifyContext>).objectId === _context?._id
+      )
+    }
+
+    return contexts
+      .map((it) => {
+        const updateTx = getUpdateTx(it)
+        if (updateTx != null) {
+          updateTx.operations.lastUpdate = Math.max(updateTx.operations.lastUpdate ?? it.lastUpdate ?? 0, timestamp)
+          if (it.user === author) {
+            updateTx.operations.lastView = Math.max(updateTx.operations.lastView ?? it.lastView ?? 0, timestamp)
+          }
+          return undefined
+        }
+        return this.txFactory.createTxUpdateDoc(it._class, it.space, it._id, {
+          lastUpdate: Math.max(it.lastUpdate ?? 0, timestamp),
+          ...(it.user === author ? { lastView: Math.max(timestamp, it.lastView ?? 0) } : {})
+        })
       })
-    )
+      .filter(notEmpty)
   }
 
   public isInProgress (): boolean {

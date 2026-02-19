@@ -27,6 +27,7 @@ import core, {
   PersonId,
   Ref,
   Space,
+  systemAccountUuid,
   TxCreateDoc,
   TxCUD,
   TxMixin,
@@ -501,26 +502,27 @@ class WsCache {
   public async getSender (socialId: PersonId): Promise<Sender> {
     if (socialId === core.account.System) {
       return {
-        socialId
+        socialId,
+        account: systemAccountUuid
       }
     }
 
     const person = this.persons.get(socialId)
     if (person != null) {
-      return { socialId, person }
+      return { socialId, person, account: person.personUuid as AccountUuid }
     }
 
-    const account = await this.getAccountBySocialId(socialId)
+    const account = (await this.getAccountBySocialId(socialId)) ?? undefined
 
     if (account != null) {
       const pp = await this.client.findOne(contact.class.Person, { personUuid: account })
 
       if (pp != null) {
         this.persons.set(socialId, pp)
-        return { socialId, person: pp }
+        return { socialId, person: pp, account }
       }
 
-      return { socialId }
+      return { socialId, account }
     }
 
     const socialIdentity = await this.client.findOne(contact.class.SocialIdentity, {
@@ -529,7 +531,7 @@ class WsCache {
 
     if (socialIdentity === undefined) {
       this.ctx.error('Cannot find SocialIdentity', { _id: socialId })
-      return { socialId }
+      return { socialId, account }
     }
 
     const pp = await this.client.findOne(contact.class.Person, { _id: socialIdentity.attachedTo })
@@ -538,7 +540,7 @@ class WsCache {
       this.persons.set(socialId, pp)
     }
 
-    return { socialId, person: pp }
+    return { socialId, person: pp, account }
   }
 
   public async getAccountBySocialId (socialId: PersonId): Promise<AccountUuid | null> {

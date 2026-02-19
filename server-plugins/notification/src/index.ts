@@ -36,6 +36,7 @@ export interface Receiver {
 export interface Sender {
   socialId: PersonId
   person?: Person
+  account?: AccountUuid
 }
 
 export type TypeMatchClient = Pick<

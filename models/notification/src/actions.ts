@@ -1,5 +1,5 @@
 import { type Builder } from '@hcengineering/model'
-import view, { createAction, template } from '@hcengineering/model-view'
+import view, { createAction } from '@hcengineering/model-view'
 import core from '@hcengineering/model-core'
 import workbench from '@hcengineering/model-workbench'
 import { notificationId } from '@hcengineering/notification'
