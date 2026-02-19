@@ -19,19 +19,35 @@
 
   import { currentRoom, roomModalActive } from '../stores'
   import RoomComponent from './Room.svelte'
+  import { lk } from '../utils'
 
   const dispatch = createEventDispatcher()
 
   $: if ($currentRoom === undefined) {
+    console.log('[RoomModal] currentRoom is undefined, dispatching close')
     dispatch('close')
   }
 
   onMount(() => {
+    console.log('[RoomModal.onMount] Opening room modal', {
+      roomId: $currentRoom?._id,
+      roomName: $currentRoom?.name,
+      lkState: lk.state,
+      remoteParticipantsCount: lk.remoteParticipants.size,
+      localParticipant: lk.localParticipant?.identity ?? 'none'
+    })
     $roomModalActive = true
+    console.log('[RoomModal.onMount] roomModalActive set to true')
   })
 
   onDestroy(() => {
+    console.log('[RoomModal.onDestroy] Closing room modal', {
+      roomId: $currentRoom?._id,
+      lkState: lk.state,
+      roomModalActiveBefore: $roomModalActive
+    })
     $roomModalActive = false
+    console.log('[RoomModal.onDestroy] roomModalActive set to false')
   })
 </script>
 

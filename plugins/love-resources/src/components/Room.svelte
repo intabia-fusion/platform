@@ -45,9 +45,20 @@
 
   onMount(async () => {
     loading = true
+    console.log('[Room.onMount] Mounting Room component', {
+      roomId: room._id,
+      roomName: room.name,
+      isModal,
+      lkState: lk.state,
+      lkNumParticipants: lk.numParticipants,
+      roomModalActive: $roomModalActive,
+      showParticipantsInModal: $showParticipantsInModal
+    })
+
     const wsURL = getMetadata(love.metadata.WebSocketURL)
 
     if (wsURL === undefined) {
+      console.log('[Room.onMount] WebSocketURL not configured')
       return
     }
     configured = true
@@ -56,6 +67,11 @@
 
     roomEl && roomEl.addEventListener('fullscreenchange', handleFullScreen)
     loading = false
+    console.log('[Room.onMount] Room component mounted', {
+      roomId: room._id,
+      configured,
+      loading: false
+    })
   })
 
   let gridStyle = ''
@@ -63,8 +79,28 @@
   let rows: number = 0
 
   onDestroy(() => {
+    console.log('[Room.onDestroy] Destroying Room component', {
+      roomId: room._id,
+      isModal,
+      roomModalActive: $roomModalActive,
+      lkState: lk.state
+    })
     roomEl.removeEventListener('fullscreenchange', handleFullScreen)
   })
+
+  // Monitor roomModalActive changes for audio debugging
+  $: {
+    console.log('[Room] roomModalActive changed', {
+      roomId: room._id,
+      isModal,
+      roomModalActive: $roomModalActive,
+      showParticipantsInModal: $showParticipantsInModal,
+      shouldShowScreenSharing: !isModal || $roomModalActive,
+      shouldShowParticipants: ($showParticipantsInModal && isModal) || !$roomModalActive,
+      lkState: lk.state,
+      lkNumParticipants: lk.numParticipants
+    })
+  }
 
   function updateStyle (count: number, screenSharing: boolean): void {
     columns = screenSharing ? 1 : Math.min(Math.ceil(Math.sqrt(count)), 8)

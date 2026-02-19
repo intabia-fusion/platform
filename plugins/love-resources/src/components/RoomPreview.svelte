@@ -26,7 +26,7 @@
   import { getRoomLabel } from '../utils'
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
-  import { AccountUuid, Ref } from '@hcengineering/core'
+  import { AccountUuid, clone, Ref } from '@hcengineering/core'
   // import RoomLanguage from './RoomLanguage.svelte'
   import PersonActionPopup from './PersonActionPopup.svelte'
 
@@ -36,6 +36,41 @@
   export let hovered: boolean = false
 
   const dispatch = createEventDispatcher()
+
+  function prepareInfo (info: ParticipantInfo[]): ParticipantInfo[] {
+    const result: ParticipantInfo[] = []
+    const posMap = new Set<string>()
+
+    const conflicts: ParticipantInfo[] = []
+    for (const r of info) {
+      if (posMap.has(`${r.x}.${r.y}`)) {
+        conflicts.push(r)
+      } else {
+        result.push(r)
+      }
+    }
+    for (const c of conflicts) {
+      let found = false
+      for (let y = 0; y < room.height; y++) {
+        for (let x = 0; x < room.width; x++) {
+          if (!posMap.has(`${x}.${y}`)) {
+            const nc = clone(c)
+            nc.x = x
+            nc.y = y
+            posMap.add(`${x}.${y}`)
+            result.push(nc)
+            found = true
+            break
+          }
+        }
+        if (found) break
+      }
+    }
+
+    return result
+  }
+
+  $: _info = prepareInfo(info ?? [])
 
   const me = getCurrentEmployee()
   $: myName = $myEmployeeStore?.name
@@ -50,7 +85,7 @@
     })
   }
 
-  $: disabled = room._class === love.class.Office && info.length === 0
+  $: disabled = room._class === love.class.Office && _info.length === 0
 
   let personPopupVisible: Ref<Person> | undefined = undefined
 
@@ -103,7 +138,7 @@
     e.preventDefault()
 
     // Get person at this position
-    const personInfo = getPersonInfo(y, x, info)
+    const personInfo = getPersonInfo(y, x, _info)
     if (personInfo !== undefined) {
       const person = await getPerson(personInfo.person)
       if (person !== undefined) {
@@ -133,7 +168,7 @@
     await openRoom(x, y)
   }
 
-  $: extraRow = calcExtraRows(hovered, room, info, $myInfo)
+  $: extraRow = calcExtraRows(hovered, room, _info, $myInfo)
 
   function calcExtraRows (
     hovered: boolean,
@@ -223,7 +258,7 @@
 >
   {#each new Array(room.height) as _, y}
     {#each new Array(room.width + extraRow) as _, x}
-      {@const personInfo = getPersonInfo(y, x, info)}
+      {@const personInfo = getPersonInfo(y, x, _info)}
       {@const isHovered = hoveredRoomX === x && hoveredRoomY === y}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div
