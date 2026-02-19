@@ -6,29 +6,6 @@ import { notificationId } from '@hcengineering/notification'
 
 import notification from './plugin'
 
-export const notificationActionTemplates = template({
-  pinContext: {
-    action: notification.actionImpl.PinDocNotifyContext,
-    label: notification.string.StarDocument,
-    icon: view.icon.Star,
-    input: 'focus',
-    category: notification.category.Notification,
-    target: notification.class.DocNotifyContext,
-    visibilityTester: notification.function.HasDocNotifyContextPinAction,
-    context: { mode: ['context', 'browser'], group: 'edit' }
-  },
-  unpinContext: {
-    action: notification.actionImpl.UnpinDocNotifyContext,
-    label: notification.string.UnstarDocument,
-    icon: view.icon.Star,
-    input: 'focus',
-    category: notification.category.Notification,
-    target: notification.class.DocNotifyContext,
-    visibilityTester: notification.function.HasDocNotifyContextUnpinAction,
-    context: { mode: ['context', 'browser'], group: 'edit' }
-  }
-})
-
 export function defineActions (builder: Builder): void {
   builder.createDoc(
     view.class.ActionCategory,

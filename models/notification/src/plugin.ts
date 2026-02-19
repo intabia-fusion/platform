@@ -46,8 +46,6 @@ export default mergeIds(notificationId, notification, {
     MentionInboxNotificationPresenter: '' as AnyComponent
   },
   function: {
-    HasDocNotifyContextPinAction: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
-    HasDocNotifyContextUnpinAction: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanReadNotifyContext: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanUnReadNotifyContext: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     LocationDataResolver: '' as Resource<(loc: Location) => Promise<LocationData>>
@@ -64,8 +62,6 @@ export default mergeIds(notificationId, notification, {
   },
   actionImpl: {
     Unsubscribe: '' as ViewAction,
-    UnpinDocNotifyContext: '' as ViewAction,
-    PinDocNotifyContext: '' as ViewAction,
     UnReadNotifyContext: '' as ViewAction,
     ReadNotifyContext: '' as ViewAction,
     RemoveContextNotifications: '' as ViewAction,
