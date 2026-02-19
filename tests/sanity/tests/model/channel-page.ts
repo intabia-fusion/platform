@@ -124,7 +124,9 @@ export class ChannelPage extends CommonPage {
         // Clear the input and try again
         await this.inputMessage().fill('')
         // Wait for input to be cleared
-        await expect(this.inputMessage().locator('div.tiptap')).toHaveText('', { timeout: 5000 }).catch(() => {})
+        await expect(this.inputMessage().locator('div.tiptap'))
+          .toHaveText('', { timeout: 5000 })
+          .catch(() => {})
       }
     }
 
@@ -206,7 +208,9 @@ export class ChannelPage extends CommonPage {
   async clickEditMessageButton (editedMessage: string): Promise<void> {
     await this.editMessageButton().click()
     // Wait for the text editor to be focused/ready
-    await expect(this.inputMessage().locator('div.tiptap')).toBeFocused({ timeout: 5000 }).catch(() => {})
+    await expect(this.inputMessage().locator('div.tiptap'))
+      .toBeFocused({ timeout: 5000 })
+      .catch(() => {})
     await this.page.keyboard.type(editedMessage)
   }
 
