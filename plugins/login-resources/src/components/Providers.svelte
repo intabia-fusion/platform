@@ -55,6 +55,9 @@
   })
 
   function getColumnsCount (providersCount: number): number {
+    if ($deviceOptionsStore.isMobile) {
+      return 1
+    }
     return providersCount % 2 === 0 ? 2 : 1
   }
 
@@ -90,29 +93,27 @@
   }
 </script>
 
-{#if !$deviceOptionsStore.isMobile}
-  <div class="container">
-    <Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems={'center'}>
-      {#each enabledProviders as provider}
-        <a
-          class="provider-button"
-          href={getLink(provider)}
-          on:click={() => {
-            handleProviderClick(provider)
-          }}
-        >
-          <FormButton kind={'black'} shape={'round2'} size={'x-large'} width="100%" stopPropagation={false}>
-            <svelte:component
-              this={provider.component}
-              displayName={provider.displayName}
-              labelClass={'button-label'}
-            />
-          </FormButton>
-        </a>
-      {/each}
-    </Grid>
-  </div>
-{/if}
+<div class="container">
+<Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems={'center'}>
+    {#each enabledProviders as provider}
+    <a
+        class="provider-button"
+        href={getLink(provider)}
+        on:click={() => {
+          handleProviderClick(provider)
+        }}
+    >
+        <FormButton kind={'black'} shape={'round2'} size={'x-large'} width="100%" stopPropagation={false}>
+        <svelte:component
+            this={provider.component}
+            displayName={provider.displayName}
+            labelClass={'button-label'}
+        />
+        </FormButton>
+    </a>
+    {/each}
+</Grid>
+</div>
 
 <style lang="scss">
   .container {

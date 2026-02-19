@@ -54,7 +54,7 @@
     "RequestFromUser": "Solicitar do usuário",
     "EnterValue": "Insira valor",
     "OnToDoDone": "Ao completar a ação",
-    "OnSubProcessesDone": "Ao concluir processos sub",
+    "OnSubProcessesDone": "Ao concluir subprocessos",
     "WhenSubProcessMatches": "Quando o subprocesso corresponde",
     "Result": "Resultado",
     "RequestResult": "Solicitar resultado",
@@ -134,7 +134,9 @@
     "FieldIsEmpty": "Campo vazio",
     "UnlockCard": "Desbloquear cartão",
     "UnlockSection": "Desbloquear seção",
-    "CancelToDo": "Cancelar ação"
+    "CancelToDo": "Cancelar ação",
+    "Export": "Exportar",
+    "Import": "Importar"
   },
   "error": {
     "MethodNotFound": "Método não encontrado: {methodId}",

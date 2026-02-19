@@ -693,7 +693,6 @@ services:
       - REGION=
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-      - SECURE=true
     restart: unless-stopped
   # hulylake:
   #   image: intabiafusion/hulylake
