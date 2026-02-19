@@ -477,7 +477,8 @@ export function start (
   // Known files Set - all files in dist
   const knownFiles = new Set<string>()
   // Disk files - not cached in memory, served from disk via sendFile (which handles ETag/304 natively)
-  const diskFiles = new Map<string, { fullPath: string, cacheControl: string }>()
+  // lastModified is stored for proper HTTP headers
+  const diskFiles = new Map<string, { fullPath: string, cacheControl: string, lastModified: Date }>()
   // Memory cache for files with pre-computed headers
   const fileCache = new Map<
   string,
@@ -532,7 +533,13 @@ export function start (
   }
 
   // Load file into memory cache with pre-computed headers
-  function loadFileToCache (filePath: string, urlPath: string, isGzFile: boolean, isBrFile: boolean): boolean {
+  function loadFileToCache (
+    filePath: string,
+    urlPath: string,
+    isGzFile: boolean,
+    isBrFile: boolean,
+    lastModified: Date
+  ): boolean {
     try {
       if (fileCache.has(urlPath)) return true
 
@@ -559,6 +566,8 @@ export function start (
       const fileName = urlPath.split('/').pop() ?? ''
       const cacheControl = getCacheControl(urlPath, fileName)
 
+      const lastModifiedStr = lastModified.toUTCString()
+
       // Pre-compute headers for 200 and 304 responses
       const headers200: Record<string, string> = {
         'Content-Type': contentType,
@@ -566,6 +575,7 @@ export function start (
         'Content-Length': String(content.length),
         'Accept-Ranges': 'bytes',
         'Cache-Control': cacheControl,
+        'Last-Modified': lastModifiedStr,
         Connection: 'keep-alive',
         'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
       }
@@ -577,7 +587,7 @@ export function start (
 
       const headers304: Record<string, string> = {
         ETag: etag,
-        'Last-Modified': new Date(0).toUTCString()
+        'Last-Modified': lastModifiedStr
       }
 
       fileCache.set(urlPath, {
@@ -596,9 +606,13 @@ export function start (
     }
   }
 
-  // First pass: collect all files
-  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean }>()
+  // Two-pass file collection for proper compression tracking
+  // Stores file info with lastModified (from fs.stat, collected once)
+  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean, lastModified: Date }>()
+  const compressedFiles = new Map<string, { isGz: boolean, isBr: boolean }>()
 
+  // First pass: collect all files (both compressed and uncompressed)
+  // fs.statSync is called only once per file here
   function collectFiles (dir: string, basePath: string = ''): void {
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -614,29 +628,22 @@ export function start (
           const isGzFile = entry.name.endsWith('.gz')
           const isBrFile = entry.name.endsWith('.br')
 
-          if (isGzFile) {
-            // This is a .gz file - mark that the uncompressed version has a .gz version
-            const uncompressedPath = urlPath.slice(0, -3) // Remove .gz
-            const existing = allFiles.get(uncompressedPath)
-            if (existing !== undefined) {
-              existing.hasGzVersion = true
-            }
-            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false })
-          } else if (isBrFile) {
-            // This is a .br file - mark that the uncompressed version has a .br version
-            const uncompressedPath = urlPath.slice(0, -3) // Remove .br
-            const existing = allFiles.get(uncompressedPath)
-            if (existing !== undefined) {
-              existing.hasBrVersion = true
-            }
-            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false })
+          // Get file stats once (only for mtime)
+          let lastModified: Date
+          try {
+            const stats = fs.statSync(fullPath)
+            lastModified = stats.mtime
+          } catch {
+            lastModified = new Date(0)
+          }
+
+          if (isGzFile || isBrFile) {
+            // Track compressed file for second pass
+            compressedFiles.set(urlPath, { isGz: isGzFile, isBr: isBrFile })
+            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false, lastModified })
           } else {
-            // This is a regular file - check if we already saw a compressed version
-            const gzPath = `${urlPath}.gz`
-            const brPath = `${urlPath}.br`
-            const hasGzVersion = allFiles.has(gzPath)
-            const hasBrVersion = allFiles.has(brPath)
-            allFiles.set(urlPath, { fullPath, hasGzVersion, hasBrVersion })
+            // Regular file - will update compression flags in second pass
+            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false, lastModified })
           }
         }
       }
@@ -645,9 +652,25 @@ export function start (
     }
   }
 
+  // Second pass: determine compression relationships
+  function processCompressionRelationships (): void {
+    for (const [compressedPath, { isGz, isBr }] of compressedFiles) {
+      const uncompressedPath = compressedPath.slice(0, -3) // Remove .gz or .br
+      const uncompressedEntry = allFiles.get(uncompressedPath)
+      if (uncompressedEntry !== undefined) {
+        if (isGz) {
+          uncompressedEntry.hasGzVersion = true
+        } else if (isBr) {
+          uncompressedEntry.hasBrVersion = true
+        }
+      }
+    }
+  }
+
   // Collect all files first
   console.log('Collecting dist files...')
   collectFiles(dist)
+  processCompressionRelationships()
 
   // Parse branding URL for cache-control decisions
   let brandingPath: string | undefined
@@ -676,7 +699,7 @@ export function start (
   let brCached = 0
   let uncompressedCached = 0
 
-  for (const [urlPath, { fullPath, hasGzVersion, hasBrVersion }] of allFiles) {
+  for (const [urlPath, { fullPath, hasGzVersion, hasBrVersion, lastModified }] of allFiles) {
     knownFiles.add(urlPath)
 
     const fileName = urlPath.split('/').pop() ?? ''
@@ -684,7 +707,7 @@ export function start (
     const isBrFile = fileName.endsWith('.br')
 
     if (shouldCacheFile(fileName, hasGzVersion, hasBrVersion)) {
-      if (loadFileToCache(fullPath, urlPath, isGzFile, isBrFile)) {
+      if (loadFileToCache(fullPath, urlPath, isGzFile, isBrFile, lastModified)) {
         if (isGzFile) {
           gzCached++
         } else if (isBrFile) {
@@ -695,9 +718,11 @@ export function start (
       }
     } else {
       // Not cached in memory — sendFile handles ETag/304 natively
+      // Pass lastModified for proper If-Modified-Since handling
       diskFiles.set(urlPath, {
         fullPath,
-        cacheControl: getCacheControl(urlPath, fileName)
+        cacheControl: getCacheControl(urlPath, fileName),
+        lastModified
       })
     }
   }
@@ -827,11 +852,12 @@ export function start (
         res.sendFile(diskEntry.fullPath, {
           headers: {
             'Cache-Control': diskEntry.cacheControl,
+            'Last-Modified': diskEntry.lastModified.toUTCString(),
             Connection: 'keep-alive',
             'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
           },
           etag: true,
-          lastModified: true
+          lastModified: false // We set it explicitly above
         })
         return
       }
