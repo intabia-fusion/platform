@@ -292,7 +292,7 @@ async function processEmailNotifications (control: TriggerControl, notifications
 // }
 
 async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], control: TriggerControl): Promise<Tx[]> {
-// TODO: FIXME
+  // TODO: FIXME
   // control.ctx.info('NotificationsHandler: received InboxNotification txes', {
   //   count: txes.length,
   //   workspace: control.workspace?.url,

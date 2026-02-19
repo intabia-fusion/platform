@@ -79,7 +79,7 @@ export function createModel (builder: Builder): void {
     exportPlugin.ids.ImportNotificationGroup
   )
 
-  //TODO: FIXME
+  // TODO: FIXME
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,

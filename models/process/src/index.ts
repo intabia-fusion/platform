@@ -43,7 +43,6 @@ import presentation from '@hcengineering/model-presentation'
 import { TToDo } from '@hcengineering/model-time'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification, { type NotificationGroup } from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import {
   type ApproveRequest,
@@ -729,7 +728,7 @@ export function createModel (builder: Builder): void {
     component: process.component.ProcessesSettingSection
   })
 
-  //TODO: FIXME
+  // TODO: FIXME
   // builder.createDoc(notification.class.NotificationType, core.space.Model, {
   //   hidden: false,
   //   generated: false,

@@ -20,7 +20,7 @@ import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineer
 import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type ActionCategory, type ViewAction, Viewlet, ViewletViewAction } from '@hcengineering/view'
+import { type ActionCategory, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
 import { type NotificationGroup, type MessageNotificationType } from '@hcengineering/notification'
 import { type TextActionVisibleFunction, type TextActionFunction } from '@hcengineering/text-editor'
 import { type DocUpdateMessage } from '@hcengineering/activity'

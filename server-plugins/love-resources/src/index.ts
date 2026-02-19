@@ -360,7 +360,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       if (employee?.personUuid != null) {
         // const account = employee.personUuid
         // const socialIds = await getSocialStrings(control, employee._id)
-
         // const receiverInfo: ReceiverInfo = {
         //   account,
         //   socialIds,
@@ -375,9 +374,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         // const notifyResult = new Map([[notification.providers.InboxNotificationProvider, []]])
         //
         // const content = await getNotificationContent(createTx, invite.to, senderInfo, invite, control)
-
         // Get meeting info if available
-
         // let notificationObjectId: Ref<Doc>
         // let notificationObjectClass: Ref<Class<Doc>>
         //
