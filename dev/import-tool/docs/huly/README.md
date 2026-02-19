@@ -60,10 +60,6 @@ title: Project Alpha # Required
 identifier: ALPHA # Required, max 5 uppercase letters/numbers, must start with a letter
 private: false # Optional, default: false
 autoJoin: true # Optional, default: true
-owners: # Optional, list of email addresses
-  - john.doe@example.com
-members: # Optional, list of email addresses
-  - joe.shmoe@example.com
 description: string # Optional
 defaultIssueStatus: Todo # Optional
 ```
@@ -118,10 +114,6 @@ class: document:class:Teamspace # Required
 title: Documentation # Required
 private: false # Optional, default: false
 autoJoin: true # Optional, default: true
-owners: # Optional, list of email addresses
-  - john.doe@example.com
-members: # Optional, list of email addresses
-  - joe.shmoe@example.com
 description: string # Optional
 ```
 
@@ -147,10 +139,6 @@ QMS Document Space: `QMS Documents.yaml`:
 class: documents:class:OrgSpace # Required
 title: QMS Documents # Required
 private: false # Optional, default: false
-owners: # Optional, list of email addresses
-  - john.doe@example.com
-members: # Optional, list of email addresses
-  - joe.shmoe@example.com
 description: string # Optional
 qualified: john.doe@example.com # Optional, qualified user
 manager: jane.doe@example.com # Optional, QMS manager

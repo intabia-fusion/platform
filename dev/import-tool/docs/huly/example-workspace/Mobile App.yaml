@@ -1,0 +1,8 @@
+class: tracker:class:Project
+title: Mobile App
+identifier: MOAPP
+emoji: 📱
+private: false
+autoJoin: true
+description: Mobile application development project
+defaultIssueStatus: Todo

@@ -4,9 +4,5 @@ identifier: ALPHA
 emoji: 🦄
 private: false
 autoJoin: true
-owners:
-  - john.doe@example.com
-members:
-  - joe.shmoe@example.com
 description: Main development project
-defaultIssueStatus: Todo 
+defaultIssueStatus: Todo
