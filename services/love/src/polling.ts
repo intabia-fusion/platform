@@ -18,6 +18,7 @@ import { Person } from '@hcengineering/contact'
 import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
 import { RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
+import { parseParticipantMetadata } from './utils'
 
 /**
  * Configuration for the polling service
@@ -373,7 +374,8 @@ export class LiveKitPollingService {
               participant.name ?? participant.identity ?? 'Unknown',
               null,
               meetingId,
-              participant.sid
+              participant.sid,
+              parseParticipantMetadata(participant.metadata)
             )
           }
         }
