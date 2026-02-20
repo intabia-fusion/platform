@@ -55,11 +55,12 @@ function hasContentHash (fileName: string): boolean {
   return /\.[0-9a-f]{6,}\.\w+$/i.test(name)
 }
 
-const KEEP_ALIVE_TIMEOUT = 60 // seconds
-const KEEP_ALIVE_MAX = 1000
+const KEEP_ALIVE_TIMEOUT = parseInt(process.env.KEEP_ALIVE_TIMEOUT ?? '2') // seconds
+const KEEP_ALIVE_MAX = parseInt(process.env.KEEP_ALIVE_MAX ?? '100')
+const keepAliveValue = `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
 const KEEP_ALIVE_HEADERS = {
   Connection: 'keep-alive',
-  'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+  'Keep-Alive': keepAliveValue
 }
 
 async function storageUpload (
@@ -232,8 +233,7 @@ async function getFile (
           Etag: stat.etag,
           'Last-Modified': new Date(stat.modifiedOn).toISOString(),
           'Cache-Control': cacheControlRevalidate,
-          connection: 'keep-alive',
-          'keep-alive': 'timeout=5, max=1000'
+          ...KEEP_ALIVE_HEADERS
         })
 
         dataStream.pipe(res)
@@ -382,7 +382,10 @@ export function start (
   app.get('/config.json', (req, res) => {
     // Check If-None-Match for 304 Not Modified
     if (req.headers['if-none-match'] === cachedConfigEtag) {
-      res.writeHead(304, { ETag: cachedConfigEtag })
+      res.writeHead(304, {
+        ETag: cachedConfigEtag,
+        ...KEEP_ALIVE_HEADERS
+      })
       res.end()
       return
     }
@@ -393,8 +396,7 @@ export function start (
       ETag: cachedConfigEtag,
       'Content-Length': String(cachedConfigLength),
       'Cache-Control': 'public, max-age=60',
-      Connection: 'keep-alive',
-      'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`,
+      ...KEEP_ALIVE_HEADERS,
       'Access-Control-Allow-Origin': '*'
     })
     res.end(cachedConfigJson)
@@ -408,7 +410,7 @@ export function start (
       res.status(200)
       res.setHeader('Content-Type', 'application/json')
       res.setHeader('Connection', 'keep-alive')
-      res.setHeader('Keep-Alive', 'timeout=5')
+      res.setHeader('Keep-Alive', keepAliveValue)
       res.setHeader('Cache-Control', cacheControlNoCache)
 
       const json = JSON.stringify({
@@ -450,8 +452,7 @@ export function start (
       ETag: cachedIndexEtag,
       'Content-Length': String(cachedIndexLength),
       'Cache-Control': cacheControlNoCache,
-      Connection: 'keep-alive',
-      'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`,
+      ...KEEP_ALIVE_HEADERS,
       'Access-Control-Allow-Origin': '*'
     }
     console.log(`Pre-loaded index.html (${cachedIndexLength} bytes, ETag: ${cachedIndexEtag})`)
@@ -576,8 +577,7 @@ export function start (
         'Accept-Ranges': 'bytes',
         'Cache-Control': cacheControl,
         'Last-Modified': lastModifiedStr,
-        Connection: 'keep-alive',
-        'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+        ...KEEP_ALIVE_HEADERS
       }
       if (isGzFile) {
         headers200['Content-Encoding'] = 'gzip'
@@ -856,8 +856,7 @@ export function start (
           headers: {
             'Cache-Control': diskEntry.cacheControl,
             'Last-Modified': diskEntry.lastModified.toUTCString(),
-            Connection: 'keep-alive',
-            'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+            ...KEEP_ALIVE_HEADERS
           },
           etag: true,
           lastModified: false // We set it explicitly above
@@ -893,8 +892,7 @@ export function start (
           'Accept-Ranges': 'bytes',
           ETag: cached.etag,
           'Cache-Control': cached.headers200['Cache-Control'],
-          Connection: 'keep-alive',
-          'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+          ...KEEP_ALIVE_HEADERS
         })
         res.end(cached.content.subarray(start, end + 1))
       } else {
@@ -977,8 +975,7 @@ export function start (
           if (req.method === 'HEAD') {
             res.writeHead(200, {
               'accept-ranges': 'bytes',
-              connection: 'keep-alive',
-              'Keep-Alive': 'timeout=5',
+              ...KEEP_ALIVE_HEADERS,
               'content-type': blobInfo.contentType,
               'content-length': blobInfo.size,
               'content-security-policy': "default-src 'none';",
@@ -1346,7 +1343,7 @@ export function start (
       cacheControl: false,
       headers: {
         'Cache-Control': cacheControlNoCache,
-        'Keep-Alive': 'timeout=5'
+        keepAliveValue
       }
     })
   })
