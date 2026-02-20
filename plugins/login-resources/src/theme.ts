@@ -14,7 +14,7 @@
 */
 
 import type { AnySvelteComponent } from '@hcengineering/ui/src/types'
-import { writable, derived, get, type Readable } from 'svelte/store'
+import { writable, derived, type Readable } from 'svelte/store'
 import GradiantBack from './components/GradiantBack.svelte'
 import LoginIcon from './components/icons/LoginIcon.svelte'
 import IntabiaIcon from './components/icons/IntabiaIcon.svelte'
@@ -96,38 +96,3 @@ export function setLoginTheme (name: LoginThemeName): void {
   }
   loginThemeName.set(name)
 }
-
-/**
- * Apply accent class to the document <html> element for the provided theme.
- * If called without arguments, applies accent for the current active theme.
- */
-export function applyHtmlAccent (arg?: LoginThemeName | LoginTheme): void {
-  if (typeof document === 'undefined') return
-
-  // Determine theme name explicitly and null-safely
-  let name: LoginThemeName
-  if (typeof arg === 'string') {
-    name = arg
-  } else if (arg?.name !== undefined) {
-    name = arg.name
-  } else {
-    name = get(loginThemeName)
-  }
-
-  const docCls = document.documentElement.classList
-  // remove any existing accent- classes
-  for (const c of Array.from(docCls)) {
-    if (c.startsWith('accent-')) docCls.remove(c)
-  }
-
-  // Explicitly check for undefined/null/empty string before adding
-  const accent = themes[name]?.accentClass
-  if (accent !== undefined && accent !== null && accent !== '') {
-    docCls.add(accent)
-  }
-}
-
-// Automatically apply accent class when theme changes
-loginThemeName.subscribe((n) => {
-  applyHtmlAccent(n)
-})

@@ -13,9 +13,6 @@
     Label,
     Separator,
     Spinner,
-    IconCheck,
-    hexToRgb,
-    rgbToHex,
     IconCheckmark,
     IconActivity,
     IconAttachment,
@@ -65,16 +62,16 @@
   const LABEL_NEGATIVE: IntlString = getEmbeddedLabel('Negative')
   const LABEL_YES: IntlString = getEmbeddedLabel('Yes')
   const LABEL_NO: IntlString = getEmbeddedLabel('No')
-  const LABEL_ATTENTION: IntlString = getEmbeddedLabel('Attention')
-  const LABEL_CHECKED: IntlString = getEmbeddedLabel('Checked')
-  const LABEL_DISABLED: IntlString = getEmbeddedLabel('Disabled')
+  const LABEL_ATTENTION: IntlString = getEmbeddedLabel('Attn')
+  const LABEL_CHECKED: IntlString = getEmbeddedLabel('Check')
+  const LABEL_DISABLED: IntlString = getEmbeddedLabel('Disab')
   // Extra preview labels for states and variants
   const LABEL_LOADING: IntlString = getEmbeddedLabel('Loading')
   const LABEL_PRESSED: IntlString = getEmbeddedLabel('Pressed')
   const LABEL_GHOST: IntlString = getEmbeddedLabel('Ghost')
   const LABEL_LINK: IntlString = getEmbeddedLabel('Link')
-  const LABEL_CONTRAST: IntlString = getEmbeddedLabel('Contrast')
-  const LABEL_DANGEROUS: IntlString = getEmbeddedLabel('Dangerous')
+  const LABEL_CONTRAST: IntlString = getEmbeddedLabel('Contr')
+  const LABEL_DANGEROUS: IntlString = getEmbeddedLabel('Dang')
 
   const micOn = 'love:icon:MicEnabled' as Asset
   const micOff = 'love:icon:MicDisabled' as Asset
@@ -105,26 +102,33 @@
 
   <div class="flex flex-row-center p-1 gap-2">
     <Button kind="positive" label={LABEL_YES} />
+    <Button kind="positive" label={LABEL_YES} loading />
     <Button kind="positive" pressed label={LABEL_YES} />
     <Button kind="positive" pressed disabled label={LABEL_YES} />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
     <Button kind="negative" label={LABEL_NO} />
+    <Button kind="negative" label={LABEL_NO} loading />
     <Button kind="negative" pressed label={LABEL_NO} />
     <Button kind="negative" pressed disabled label={LABEL_NO} />
   </div>
   <div class="flex flex-row-center p-1 gap-2">
     <Button kind="attention" label={LABEL_ATTENTION} />
+    <Button kind="attention" label={LABEL_ATTENTION} loading />
     <Button kind="attention" pressed label={LABEL_ATTENTION} />
     <Button kind="attention" disabled label={LABEL_ATTENTION} />
     <Button kind="attention" pressed disabled label={LABEL_ATTENTION} />
   </div>
   <div class="flex flex-row-center p-1 gap-2">
     <Button kind="dangerous" label={LABEL_DANGEROUS} />
+    <Button kind="dangerous" label={LABEL_DANGEROUS} loading />
     <Button kind="dangerous" pressed label={LABEL_DANGEROUS} />
     <Button kind="dangerous" disabled label={LABEL_DANGEROUS} />
     <Button kind="dangerous" pressed disabled label={LABEL_DANGEROUS} />
   </div>
   <div class="flex flex-row-center p-1 gap-2">
     <Button kind="contrast" label={LABEL_CONTRAST} />
+    <Button kind="contrast" label={LABEL_CONTRAST} loading />
     <Button kind="contrast" pressed label={LABEL_CONTRAST} />
     <Button kind="contrast" disabled label={LABEL_CONTRAST} />
     <Button kind="contrast" pressed disabled label={LABEL_CONTRAST} />
@@ -132,9 +136,16 @@
 
   <div class="flex flex-row-center p-1 gap-2">
     <Button kind="ghost" label={LABEL_GHOST} />
+    <Button kind="ghost" label={LABEL_GHOST} loading />
     <Button kind="link" label={LABEL_LINK} />
+    <Button kind="link" label={LABEL_LINK} loading />
     <Button kind="link-bordered" label={LABEL_LINK} />
+    <Button kind="link-bordered" label={LABEL_LINK} loading />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
     <Button kind="no-border" label={getEmbeddedLabel('No border')} />
+    <Button kind="no-border" label={getEmbeddedLabel('No border')} loading />
+    <Button kind="stepper" label={getEmbeddedLabel('Stepper')} />
     <Button kind="stepper" label={getEmbeddedLabel('Stepper')} />
   </div>
 
@@ -197,7 +208,11 @@
         <Label label={LABEL_CHECKED} />
       </span>
     </div>
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
     <ModernToggle />
+    <ModernToggle checked />
+    <ModernToggle disabled />
     <Toggle on={true} />
     <Toggle />
     <div class="mini-toggle-wrapper">
