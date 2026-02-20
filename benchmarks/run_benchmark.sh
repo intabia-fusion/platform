@@ -65,12 +65,10 @@ echo "Connections: $CONNECTIONS"
 echo "Results:     $RESULTS_FILE"
 echo ""
 
-# Build Go benchmark if needed
-if [ ! -f "$BENCHMARK_BIN" ]; then
-  echo "Building benchmark tool..."
-  cd "$BENCHMARK_DIR/front-benchmark"
-  go build -o front-benchmark main.go
-fi
+# Build Go benchmark tool (always rebuild to pick up code changes)
+echo "Building benchmark tool..."
+cd "$BENCHMARK_DIR/front-benchmark"
+go build -o front-benchmark main.go
 
 # Build Docker images if requested
 if [ "$BUILD" = true ]; then
@@ -160,6 +158,10 @@ run_scenario "Node: index.html (SPA)" \
 run_scenario "Node: random files" \
   "http://localhost:$NODE_PORT" "$NODE_CONTAINER" "-files=/tmp/bench_files.txt"
 
+run_scenario "Node: mixed (files + config.json)" \
+  "http://localhost:$NODE_PORT" "$NODE_CONTAINER" \
+  "-files=/tmp/bench_files.txt -mixed=/config.json -mixed-conns=10"
+
 # --- Nginx+Node ---
 run_scenario "Nginx: config.json" \
   "http://localhost:$NGINX_PORT/config.json" "$NGINX_CONTAINER" "-exact"
@@ -169,6 +171,10 @@ run_scenario "Nginx: index.html (SPA)" \
 
 run_scenario "Nginx: random files" \
   "http://localhost:$NGINX_PORT" "$NGINX_CONTAINER" "-files=/tmp/bench_files.txt"
+
+run_scenario "Nginx: mixed (files + config.json)" \
+  "http://localhost:$NGINX_PORT" "$NGINX_CONTAINER" \
+  "-files=/tmp/bench_files.txt -mixed=/config.json -mixed-conns=10"
 
 # Print summary
 echo ""

@@ -12,7 +12,9 @@
       "Bash(./run_benchmark.sh:*)",
       "Bash(go mod tidy:*)",
       "Bash(docker ps:*)",
-      "Bash(./datalake-benchmark:*)"
+      "Bash(./datalake-benchmark:*)",
+      "Bash(npx tsc:*)",
+      "Bash(bash benchmarks/run_benchmark.sh:*)"
     ]
   },
   "outputStyle": "default"

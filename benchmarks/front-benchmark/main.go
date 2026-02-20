@@ -47,6 +47,8 @@ type Config struct {
 	ContainerName string
 	Exact         bool // Use URL exactly as provided, no path manipulation
 	MonitorMemory bool // Monitor container memory usage
+	MixedURL      string // URL for mixed workload (e.g., /config.json requested alongside random files)
+	MixedConns    int    // Number of connections dedicated to mixed URL (default: 10)
 }
 
 // MemorySample holds memory usage at a point in time
@@ -78,6 +80,9 @@ func main() {
 	fmt.Printf("Duration:       %s\n", config.Duration)
 	fmt.Printf("Timeout:        %s\n", config.Timeout)
 	fmt.Printf("Mode:           %s\n", func() string {
+		if config.MixedURL != "" {
+			return fmt.Sprintf("mixed (files + %s with %d conns)", config.MixedURL, config.MixedConns)
+		}
 		if config.Exact {
 			return "exact (URL as-is)"
 		}
@@ -113,8 +118,13 @@ func main() {
 		cancel()
 	}()
 
-	stats := runBenchmark(ctx, config, files)
-	printResults(stats, config.Duration)
+	if config.MixedURL != "" {
+		fileStats, mixedStats := runMixedBenchmark(ctx, config, files)
+		printMixedResults(fileStats, mixedStats, config)
+	} else {
+		stats := runBenchmark(ctx, config, files)
+		printResults(stats, config.Duration)
+	}
 }
 
 func parseFlags() Config {
@@ -127,6 +137,8 @@ func parseFlags() Config {
 	containerName := flag.String("container", "dev-front-1", "Docker container name to get files from")
 	exact := flag.Bool("exact", false, "Use URL exactly as provided (no path manipulation)")
 	monitorMemory := flag.Bool("monitor-memory", false, "Monitor container memory usage")
+	mixedURL := flag.String("mixed", "", "URL to request concurrently with files (e.g., /config.json) for mixed workload test")
+	mixedConns := flag.Int("mixed-conns", 10, "Number of connections dedicated to mixed URL")
 	flag.Parse()
 
 	return Config{
@@ -139,6 +151,8 @@ func parseFlags() Config {
 		ContainerName: *containerName,
 		Exact:         *exact,
 		MonitorMemory: *monitorMemory,
+		MixedURL:      *mixedURL,
+		MixedConns:    *mixedConns,
 	}
 }
 
@@ -357,6 +371,97 @@ func runBenchmark(ctx context.Context, config Config, files []string) *Stats {
 	return stats
 }
 
+// runMixedBenchmark runs two groups of workers concurrently:
+// - fileWorkers: request random files from the file list
+// - mixedWorkers: request the mixed URL (e.g., /config.json)
+// Returns separate stats for each group.
+func runMixedBenchmark(ctx context.Context, config Config, files []string) (*Stats, *Stats) {
+	fileStats := &Stats{MinLatency: 1<<63 - 1}
+	mixedStats := &Stats{MinLatency: 1<<63 - 1}
+
+	benchCtx, cancel := context.WithTimeout(ctx, config.Duration)
+	defer cancel()
+
+	totalConns := config.Connections + config.MixedConns
+
+	client := &http.Client{
+		Timeout: config.Timeout,
+		Transport: &http.Transport{
+			MaxIdleConns:        totalConns * 2,
+			MaxIdleConnsPerHost: totalConns * 2,
+			IdleConnTimeout:     90 * time.Second,
+			DisableCompression:  false,
+			ForceAttemptHTTP2:   false,
+		},
+	}
+
+	// Progress reporter showing both stats
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		count := 0
+		for {
+			select {
+			case <-ticker.C:
+				count++
+				fileTotal := atomic.LoadInt64(&fileStats.TotalRequests)
+				mixedTotal := atomic.LoadInt64(&mixedStats.TotalRequests)
+				fmt.Printf("\rProgress: %d/%ds | Files: %d | Mixed: %d",
+					count, int(config.Duration.Seconds()), fileTotal, mixedTotal)
+			case <-done:
+				fmt.Println()
+				return
+			case <-benchCtx.Done():
+				return
+			}
+		}
+	}()
+
+	// Memory monitor uses fileStats for storage (shared resource)
+	if config.MonitorMemory && config.ContainerName != "" {
+		go monitorMemory(benchCtx, config.ContainerName, fileStats)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
+	var wg sync.WaitGroup
+
+	// File workers
+	for i := 0; i < config.Connections; i++ {
+		wg.Add(1)
+		go worker(benchCtx, config, files, fileStats, &wg, client)
+	}
+
+	// Mixed URL workers (e.g., config.json)
+	baseURL := strings.TrimSuffix(config.URL, "/")
+	mixedFullURL := baseURL + config.MixedURL
+	for i := 0; i < config.MixedConns; i++ {
+		wg.Add(1)
+		go mixedWorker(benchCtx, mixedFullURL, mixedStats, &wg, client)
+	}
+
+	<-benchCtx.Done()
+	wg.Wait()
+	close(done)
+
+	return fileStats, mixedStats
+}
+
+// mixedWorker continuously requests a single URL and records stats
+func mixedWorker(ctx context.Context, url string, stats *Stats, wg *sync.WaitGroup, client *http.Client) {
+	defer wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			doRequestAndRecord(client, url, 10*time.Second, stats)
+		}
+	}
+}
+
 func worker(ctx context.Context, config Config, files []string, stats *Stats, wg *sync.WaitGroup, client *http.Client) {
 	defer wg.Done()
 
@@ -477,6 +582,92 @@ func printResults(stats *Stats, duration time.Duration) {
 	fmt.Println()
 
 	color.Yellow("Status Codes:")
+	printStatusCodes(stats)
+
+	printMemoryStats(stats)
+
+	// Exit with error code if there were failures
+	if stats.FailedRequests > 0 {
+		fmt.Println()
+		color.Red("WARNING: Some requests failed!")
+		os.Exit(1)
+	}
+}
+
+func printMixedResults(fileStats *Stats, mixedStats *Stats, config Config) {
+	duration := config.Duration
+
+	color.Green("\n=== Mixed Workload Benchmark Results ===")
+
+	// --- File workers ---
+	fmt.Println()
+	color.Cyan("--- File Workers (%d connections) ---", config.Connections)
+	if fileStats.TotalRequests > 0 {
+		totalDuration := time.Duration(atomic.LoadInt64(&fileStats.TotalDuration)) * time.Millisecond
+		avgLatency := totalDuration / time.Duration(fileStats.TotalRequests)
+		rps := float64(fileStats.TotalRequests) / duration.Seconds()
+		throughput := float64(fileStats.TotalBytes) / duration.Seconds() / 1024 / 1024
+
+		color.Yellow("Requests:")
+		fmt.Printf("  Total:      %d\n", fileStats.TotalRequests)
+		fmt.Printf("  Successful: %d (%.2f%%)\n", fileStats.SuccessRequests, float64(fileStats.SuccessRequests)/float64(fileStats.TotalRequests)*100)
+		fmt.Printf("  Failed:     %d (%.2f%%)\n", fileStats.FailedRequests, float64(fileStats.FailedRequests)/float64(fileStats.TotalRequests)*100)
+		fmt.Printf("  RPS:        %.2f\n", rps)
+
+		color.Yellow("Latency:")
+		fmt.Printf("  Min:    %s\n", time.Duration(atomic.LoadInt64(&fileStats.MinLatency))*time.Millisecond)
+		fmt.Printf("  Max:    %s\n", time.Duration(atomic.LoadInt64(&fileStats.MaxLatency))*time.Millisecond)
+		fmt.Printf("  Avg:    %s\n", avgLatency)
+
+		color.Yellow("Throughput:")
+		fmt.Printf("  Total: %.2f MB\n", float64(fileStats.TotalBytes)/1024/1024)
+		fmt.Printf("  Rate:  %.2f MB/s\n", throughput)
+
+		color.Yellow("Status Codes:")
+		printStatusCodes(fileStats)
+	}
+
+	// --- Mixed URL workers ---
+	fmt.Println()
+	color.Cyan("--- Mixed URL Workers: %s (%d connections) ---", config.MixedURL, config.MixedConns)
+	if mixedStats.TotalRequests > 0 {
+		totalDuration := time.Duration(atomic.LoadInt64(&mixedStats.TotalDuration)) * time.Millisecond
+		avgLatency := totalDuration / time.Duration(mixedStats.TotalRequests)
+		rps := float64(mixedStats.TotalRequests) / duration.Seconds()
+		throughput := float64(mixedStats.TotalBytes) / duration.Seconds() / 1024 / 1024
+
+		color.Yellow("Requests:")
+		fmt.Printf("  Total:      %d\n", mixedStats.TotalRequests)
+		fmt.Printf("  Successful: %d (%.2f%%)\n", mixedStats.SuccessRequests, float64(mixedStats.SuccessRequests)/float64(mixedStats.TotalRequests)*100)
+		fmt.Printf("  Failed:     %d (%.2f%%)\n", mixedStats.FailedRequests, float64(mixedStats.FailedRequests)/float64(mixedStats.TotalRequests)*100)
+		fmt.Printf("  RPS:        %.2f\n", rps)
+
+		color.Yellow("Latency:")
+		fmt.Printf("  Min:    %s\n", time.Duration(atomic.LoadInt64(&mixedStats.MinLatency))*time.Millisecond)
+		fmt.Printf("  Max:    %s\n", time.Duration(atomic.LoadInt64(&mixedStats.MaxLatency))*time.Millisecond)
+		fmt.Printf("  Avg:    %s\n", avgLatency)
+
+		color.Yellow("Throughput:")
+		fmt.Printf("  Total: %.2f MB\n", float64(mixedStats.TotalBytes)/1024/1024)
+		fmt.Printf("  Rate:  %.2f MB/s\n", throughput)
+
+		color.Yellow("Status Codes:")
+		printStatusCodes(mixedStats)
+	}
+
+	// --- Memory (stored in fileStats) ---
+	printMemoryStats(fileStats)
+
+	// Check failures
+	totalFailed := fileStats.FailedRequests + mixedStats.FailedRequests
+	if totalFailed > 0 {
+		fmt.Println()
+		color.Red("WARNING: Some requests failed!")
+		os.Exit(1)
+	}
+}
+
+func printStatusCodes(stats *Stats) {
 	var codes []int
 	stats.StatusCodes.Range(func(key, value interface{}) bool {
 		codes = append(codes, key.(int))
@@ -487,14 +678,17 @@ func printResults(stats *Stats, duration time.Duration) {
 		count, _ := stats.StatusCodes.Load(code)
 		fmt.Printf("  %d: %d (%.2f%%)\n", code, count.(int64), float64(count.(int64))/float64(stats.TotalRequests)*100)
 	}
+}
 
-	// Print memory statistics if available
+func printMemoryStats(stats *Stats) {
 	stats.MemoryMutex.RLock()
+	defer stats.MemoryMutex.RUnlock()
+
 	if len(stats.MemorySamples) > 0 {
 		fmt.Println()
 		color.Yellow("Memory Usage:")
 
-		var minMem, maxMem, avgMem float64
+		var minMem, maxMem float64
 		minMem = stats.MemorySamples[0].MemoryMB
 		maxMem = stats.MemorySamples[0].MemoryMB
 		var totalMem float64
@@ -508,7 +702,7 @@ func printResults(stats *Stats, duration time.Duration) {
 			}
 			totalMem += sample.MemoryMB
 		}
-		avgMem = totalMem / float64(len(stats.MemorySamples))
+		avgMem := totalMem / float64(len(stats.MemorySamples))
 
 		fmt.Printf("  Samples: %d\n", len(stats.MemorySamples))
 		fmt.Printf("  Min:     %.2f MB\n", minMem)
@@ -518,13 +712,5 @@ func printResults(stats *Stats, duration time.Duration) {
 			fmt.Printf("  Start:   %.2f MB\n", stats.MemorySamples[0].MemoryMB)
 			fmt.Printf("  End:     %.2f MB\n", stats.MemorySamples[len(stats.MemorySamples)-1].MemoryMB)
 		}
-	}
-	stats.MemoryMutex.RUnlock()
-
-	// Exit with error code if there were failures
-	if stats.FailedRequests > 0 {
-		fmt.Println()
-		color.Red("WARNING: Some requests failed!")
-		os.Exit(1)
 	}
 }

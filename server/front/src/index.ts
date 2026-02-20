@@ -32,8 +32,31 @@ import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
 import fs, { mkdtempSync } from 'fs'
+import { Readable } from 'stream'
 import { tmpdir } from 'os'
 import crypto from 'crypto'
+import zlib from 'zlib'
+
+const STREAM_CHUNK_SIZE = parseInt(process.env.SEND_BUFFER_SIZE ?? String(64 * 1024)) // Default 64KB
+
+// Create a Readable that delivers a Buffer in chunks,
+// yielding the event loop between chunks so other requests can be served.
+// Respects the `size` hint from Node.js streams, capped by STREAM_CHUNK_SIZE.
+function createChunkedReadable (buf: Buffer): Readable {
+  let offset = 0
+  return new Readable({
+    read (size) {
+      if (offset >= buf.length) {
+        this.push(null)
+        return
+      }
+      const chunkSize = Math.min(size, STREAM_CHUNK_SIZE)
+      const end = Math.min(offset + chunkSize, buf.length)
+      this.push(buf.subarray(offset, end))
+      offset = end
+    }
+  })
+}
 
 // Long-term cache for files with content hash in filename (immutable assets)
 const cacheControlImmutable = 'public, max-age=31536000, immutable'
@@ -321,14 +344,15 @@ export function start (
   setInterval(cleanupTempFiles, 1000 * 60 * 15) // Run every 15 minutes
 
   app.use(cors())
-  app.use(
-    fileUpload({
-      useTempFiles: true,
-      tempFileDir
-    })
-  )
-  app.use(bp.json())
-  app.use(bp.urlencoded({ extended: true }))
+
+  // Body-parser and file upload middleware applied only to routes that need them (not globally)
+  // This avoids unnecessary overhead on GET requests for static files
+  const uploadMiddleware = fileUpload({
+    useTempFiles: true,
+    tempFileDir
+  })
+  const jsonMiddleware = bp.json()
+  const urlencodedMiddleware = bp.urlencoded({ extended: true })
 
   const childLogger = ctx.logger.childLogger?.('requests', {
     enableConsole: 'true'
@@ -372,34 +396,66 @@ export function start (
     DATALAKE_URL: config.datalakeUrl,
     ...(extraConfig ?? {})
   }
-  const cachedConfigJson = JSON.stringify(configData)
+  const cachedConfigJson = Buffer.from(JSON.stringify(configData), 'utf8')
   // Generate weak ETag same format as Express: W/"<base64>"
-  const hash = crypto.createHash('md5').update(cachedConfigJson).digest('base64')
-  const cachedConfigEtag = `W/"${hash}"`
-  const cachedConfigLength = Buffer.byteLength(cachedConfigJson, 'utf8')
+  const configHash = crypto.createHash('md5').update(cachedConfigJson).digest('base64')
+  const cachedConfigEtag = `W/"${configHash}"`
+
+  // Pre-compress config.json at startup
+  const cachedConfigGzip = zlib.gzipSync(cachedConfigJson)
+  const cachedConfigBr = zlib.brotliCompressSync(cachedConfigJson)
+
+  const configCacheControl = 'public, max-age=60'
+  const configHeaders304 = {
+    ETag: cachedConfigEtag,
+    ...KEEP_ALIVE_HEADERS
+  }
+
+  // Pre-compute headers for each encoding variant
+  const configHeadersIdentity = {
+    'Content-Type': 'application/json',
+    ETag: cachedConfigEtag,
+    'Content-Length': String(cachedConfigJson.length),
+    'Cache-Control': configCacheControl,
+    ...KEEP_ALIVE_HEADERS,
+    'Access-Control-Allow-Origin': '*'
+  }
+  const configHeadersGzip = {
+    ...configHeadersIdentity,
+    'Content-Encoding': 'gzip',
+    'Content-Length': String(cachedConfigGzip.length)
+  }
+  const configHeadersBr = {
+    ...configHeadersIdentity,
+    'Content-Encoding': 'br',
+    'Content-Length': String(cachedConfigBr.length)
+  }
+
+  console.log(
+    `Pre-compressed config.json: ${cachedConfigJson.length}B → gzip ${cachedConfigGzip.length}B, br ${cachedConfigBr.length}B`
+  )
 
   // Optimized config.json endpoint - define BEFORE static middleware
   app.get('/config.json', (req, res) => {
     // Check If-None-Match for 304 Not Modified
     if (req.headers['if-none-match'] === cachedConfigEtag) {
-      res.writeHead(304, {
-        ETag: cachedConfigEtag,
-        ...KEEP_ALIVE_HEADERS
-      })
+      res.writeHead(304, configHeaders304)
       res.end()
       return
     }
 
-    // Send pre-serialized response using writeHead to set all headers at once
-    res.writeHead(200, {
-      'Content-Type': 'application/json',
-      ETag: cachedConfigEtag,
-      'Content-Length': String(cachedConfigLength),
-      'Cache-Control': 'public, max-age=60',
-      ...KEEP_ALIVE_HEADERS,
-      'Access-Control-Allow-Origin': '*'
-    })
-    res.end(cachedConfigJson)
+    // Choose best encoding
+    const encoding = getPreferredEncoding(req.headers['accept-encoding'])
+    if (encoding === 'br') {
+      res.writeHead(200, configHeadersBr)
+      res.end(cachedConfigBr)
+    } else if (encoding === 'gzip') {
+      res.writeHead(200, configHeadersGzip)
+      res.end(cachedConfigGzip)
+    } else {
+      res.writeHead(200, configHeadersIdentity)
+      res.end(cachedConfigJson)
+    }
   })
 
   app.get('/api/v1/statistics', (req, res) => {
@@ -435,34 +491,53 @@ export function start (
   const dist = resolve(process.env.PUBLIC_DIR ?? cwd(), 'dist')
   console.log('serving static files from', dist)
 
-  // Pre-load and cache index.html as Buffer for optimal performance (avoids string→Buffer on each response)
+  // Pre-load and cache index.html as Buffer with pre-compressed variants
   const indexPath = join(dist, 'index.html')
   let cachedIndexHtml: Buffer | null = null
+  let cachedIndexGzip: Buffer | null = null
+  let cachedIndexBr: Buffer | null = null
   let cachedIndexEtag: string | null = null
-  let cachedIndexLength: number = 0
-  let cachedIndexHeaders: Record<string, string> | null = null
+  let cachedIndexHeadersIdentity: Record<string, string> | null = null
+  let cachedIndexHeadersGzip: Record<string, string> | null = null
+  let cachedIndexHeadersBr: Record<string, string> | null = null
 
   try {
     cachedIndexHtml = fs.readFileSync(indexPath)
     const hash = crypto.createHash('md5').update(cachedIndexHtml).digest('base64')
     cachedIndexEtag = `W/"${hash}"`
-    cachedIndexLength = cachedIndexHtml.length
-    cachedIndexHeaders = {
+
+    cachedIndexGzip = zlib.gzipSync(cachedIndexHtml)
+    cachedIndexBr = zlib.brotliCompressSync(cachedIndexHtml)
+
+    cachedIndexHeadersIdentity = {
       'Content-Type': 'text/html; charset=UTF-8',
       ETag: cachedIndexEtag,
-      'Content-Length': String(cachedIndexLength),
+      'Content-Length': String(cachedIndexHtml.length),
       'Cache-Control': cacheControlNoCache,
       ...KEEP_ALIVE_HEADERS,
       'Access-Control-Allow-Origin': '*'
     }
-    console.log(`Pre-loaded index.html (${cachedIndexLength} bytes, ETag: ${cachedIndexEtag})`)
+    cachedIndexHeadersGzip = {
+      ...cachedIndexHeadersIdentity,
+      'Content-Encoding': 'gzip',
+      'Content-Length': String(cachedIndexGzip.length)
+    }
+    cachedIndexHeadersBr = {
+      ...cachedIndexHeadersIdentity,
+      'Content-Encoding': 'br',
+      'Content-Length': String(cachedIndexBr.length)
+    }
+
+    console.log(
+      `Pre-loaded index.html: ${cachedIndexHtml.length}B → gzip ${cachedIndexGzip.length}B, br ${cachedIndexBr.length}B`
+    )
   } catch (err: any) {
     console.warn('Could not pre-load index.html, will use static middleware:', err.message)
   }
 
   // Helper: serve cached index.html, returns true if served
   function serveCachedIndex (req: Request, res: Response): boolean {
-    if (cachedIndexHtml === null || cachedIndexEtag === null || cachedIndexHeaders === null) {
+    if (cachedIndexHtml === null || cachedIndexEtag === null || cachedIndexHeadersIdentity === null) {
       return false
     }
     if (req.headers['if-none-match'] === cachedIndexEtag) {
@@ -470,8 +545,18 @@ export function start (
       res.end()
       return true
     }
-    res.writeHead(200, cachedIndexHeaders)
-    res.end(cachedIndexHtml)
+
+    const encoding = getPreferredEncoding(req.headers['accept-encoding'])
+    if (encoding === 'br' && cachedIndexBr !== null && cachedIndexHeadersBr !== null) {
+      res.writeHead(200, cachedIndexHeadersBr)
+      res.end(cachedIndexBr)
+    } else if (encoding === 'gzip' && cachedIndexGzip !== null && cachedIndexHeadersGzip !== null) {
+      res.writeHead(200, cachedIndexHeadersGzip)
+      res.end(cachedIndexGzip)
+    } else {
+      res.writeHead(200, cachedIndexHeadersIdentity)
+      res.end(cachedIndexHtml)
+    }
     return true
   }
 
@@ -885,16 +970,22 @@ export function start (
       const parsedRange = parseRange(range, cached.size)
       if (parsedRange !== null) {
         const [start, end] = parsedRange
+        const rangeLength = end - start + 1
         res.writeHead(206, {
           'Content-Type': cached.contentType,
           'Content-Range': `bytes ${start}-${end}/${cached.size}`,
-          'Content-Length': String(end - start + 1),
+          'Content-Length': String(rangeLength),
           'Accept-Ranges': 'bytes',
           ETag: cached.etag,
           'Cache-Control': cached.headers200['Cache-Control'],
           ...KEEP_ALIVE_HEADERS
         })
-        res.end(cached.content.subarray(start, end + 1))
+        const slice = cached.content.subarray(start, end + 1)
+        if (rangeLength <= STREAM_CHUNK_SIZE) {
+          res.end(slice)
+        } else {
+          createChunkedReadable(slice).pipe(res)
+        }
       } else {
         res.writeHead(416, { 'Content-Range': `bytes */${cached.size}` })
         res.end()
@@ -902,9 +993,15 @@ export function start (
       return
     }
 
-    // Serve from memory cache with pre-computed headers
+    // Serve from memory cache with streaming to avoid blocking the event loop
     res.writeHead(200, cached.headers200)
-    res.end(cached.content)
+    if (cached.size <= STREAM_CHUNK_SIZE) {
+      // Small files: send in one shot (no benefit from streaming)
+      res.end(cached.content)
+    } else {
+      // Large files: stream in chunks to yield event loop between writes
+      createChunkedReadable(cached.content).pipe(res)
+    }
   })
 
   const getWorkspaceIds = async (ctx: MeasureContext, token: string, path?: string): Promise<WorkspaceIds | null> => {
@@ -1040,11 +1137,11 @@ export function start (
     void filesHandler(req, res)
   })
 
-  app.post('/files', (req, res) => {
+  app.post('/files', uploadMiddleware, (req, res) => {
     void handleUpload(req, res)
   })
 
-  app.post('/files/*', (req, res) => {
+  app.post('/files/*', uploadMiddleware, (req, res) => {
     void handleUpload(req, res)
   })
 
@@ -1315,7 +1412,7 @@ export function start (
     void handleImportGet(req, res)
   })
 
-  app.post('/import', (req, res) => {
+  app.post('/import', jsonMiddleware, urlencodedMiddleware, (req, res) => {
     void handleImportPost(req, res)
   })
 
