@@ -1,3 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(rushx:*)",
+      "Bash(docker build:*)",
+      "Bash(go build:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker run:*)",
+      "Bash(curl:*)",
+      "Bash(./front-benchmark:*)",
+      "Bash(chmod:*)",
+      "Bash(./run_benchmark.sh:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(docker ps:*)",
+      "Bash(./datalake-benchmark:*)"
+    ]
+  },
   "outputStyle": "default"
 }

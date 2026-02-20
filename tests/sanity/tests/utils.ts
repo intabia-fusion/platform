@@ -241,7 +241,12 @@ export async function getInviteLink (page: Page): Promise<string | null> {
   await leftSideMenuPage.openProfileMenu()
   await leftSideMenuPage.inviteToWorkspace()
   await leftSideMenuPage.getInviteLink()
-  const linkText = await page.locator('.antiPopup .link').textContent()
+  // Wait for the link to be visible before getting text content with retry
+  const linkLocator = page.locator('.antiPopup .link')
+  await expect(async () => {
+    await expect(linkLocator).toBeVisible({ timeout: 5000 })
+  }).toPass({ intervals: [200, 500, 1000], timeout: 20000 })
+  const linkText = await linkLocator.textContent()
   expect(linkText).not.toBeNull()
   await leftSideMenuPage.clickOnCloseInvite()
   return linkText

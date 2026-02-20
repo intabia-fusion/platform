@@ -314,6 +314,8 @@ test.describe('Tracker filters tests', () => {
     await test.step(`Check Title filter for ${firstSearch}`, async () => {
       await issuesPage.selectFilter('Title', firstSearch)
       await issuesPage.checkFilter('Title', 'contains', firstSearch)
+      // Wait for the list to load after filter is applied
+      await expect(issuesPage.issuesList().first()).toBeVisible({ timeout: 10000 })
 
       for await (const issue of iterateLocator(issuesPage.issuesList())) {
         await expect(issue.locator('span.presenter-label > a')).toContainText(firstSearch, { ignoreCase: true })
@@ -324,6 +326,8 @@ test.describe('Tracker filters tests', () => {
       await issuesPage.buttonClearFilters().click()
       await issuesPage.selectFilter('Title', secondSearch)
       await issuesPage.checkFilter('Title', 'contains', secondSearch)
+      // Wait for the list to load after filter is applied
+      await expect(issuesPage.issuesList().first()).toBeVisible({ timeout: 10000 })
 
       for await (const issue of iterateLocator(issuesPage.issuesList())) {
         await expect(issue.locator('span.presenter-label > a')).toContainText(secondSearch, { ignoreCase: true })

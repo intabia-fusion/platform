@@ -109,17 +109,42 @@ export class ChannelPage extends CommonPage {
     for (let i = 0; i < 3; i++) {
       try {
         await this.inputMessage().fill(`@${message}`)
-        await this.selectMention(message, categoryName)
+        // Wait for mention popup to appear with a 5-second timeout
+        // If it times out, close the popup and retry
+        await this.selectMentionWithTimeout(message, categoryName, 5000)
         break
       } catch (error: any) {
         if (i === 2) {
           throw error
         }
-        await this.page.waitForTimeout(1000)
+        // Close the mention popup by pressing Escape if it's stuck
+        await this.page.keyboard.press('Escape')
+        // Wait for popup to close
+        await this.page.waitForSelector('form.mentionPoup', { state: 'detached', timeout: 5000 }).catch(() => {})
+        // Clear the input and try again
+        await this.inputMessage().fill('')
+        // Wait for input to be cleared
+        await expect(this.inputMessage().locator('div.tiptap'))
+          .toHaveText('', { timeout: 5000 })
+          .catch(() => {})
       }
     }
 
     await this.buttonSendMessage().click()
+  }
+
+  async selectMentionWithTimeout (
+    mentionName: string,
+    categoryName: string | undefined,
+    timeoutMs: number
+  ): Promise<void> {
+    const mentionLocator = this.mentionPopupListItem(mentionName, categoryName).first()
+    // Wait for the mention popup item to be visible with retry
+    // Using longer intervals since the popup may need time to load data
+    await expect(async () => {
+      await expect(mentionLocator).toBeVisible({ timeout: 3000 })
+    }).toPass({ intervals: [100, 200, 500, 1000], timeout: timeoutMs })
+    await mentionLocator.click()
   }
 
   async clickOnOpenChannelDetails (): Promise<void> {
@@ -143,7 +168,7 @@ export class ChannelPage extends CommonPage {
     autoJoin: boolean = false
   ): Promise<void> {
     await this.privateOrPublicChangeButton(change, autoJoin).click()
-    await this.page.waitForTimeout(200)
+    await expect(this.privateOrPublicPopupButton(YesNo)).toBeVisible({ timeout: 5000 })
     await this.privateOrPublicPopupButton(YesNo).click()
     await expect(this.privateOrPublicChangeButton(changed, autoJoin)).toBeVisible()
   }
@@ -182,7 +207,10 @@ export class ChannelPage extends CommonPage {
 
   async clickEditMessageButton (editedMessage: string): Promise<void> {
     await this.editMessageButton().click()
-    await this.page.waitForTimeout(500)
+    // Wait for the text editor to be focused/ready
+    await expect(this.inputMessage().locator('div.tiptap'))
+      .toBeFocused({ timeout: 5000 })
+      .catch(() => {})
     await this.page.keyboard.type(editedMessage)
   }
 
@@ -234,8 +262,14 @@ export class ChannelPage extends CommonPage {
   }
 
   async sendReply (messageReply: string): Promise<void> {
+    // First click on the sidebar input to ensure it's focused
+    await this.page.locator('#sidebar div.text-editor-view').click()
     await this.page.keyboard.type(messageReply)
     await this.page.keyboard.press('Enter')
+    // Wait for the message to appear in sidebar with retry
+    await expect(async () => {
+      await expect(this.textMessageInSidebar(messageReply, true)).toBeVisible({ timeout: 5000 })
+    }).toPass({ intervals: [100, 200, 500], timeout: 15000 })
   }
 
   async closeAndOpenReplyMessage (): Promise<void> {

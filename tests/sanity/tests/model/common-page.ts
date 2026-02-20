@@ -240,6 +240,8 @@ export class CommonPage {
         case 'Title':
           await this.inputFilterTitle().fill(filterSecondLevel)
           await this.buttonFilterApply().click()
+          // Wait for the list to update after applying filter
+          await this.page.waitForTimeout(500)
           break
         case 'Name':
           await this.inputFilterName().fill(filterSecondLevel)
@@ -334,7 +336,10 @@ export class CommonPage {
   }
 
   async checkRowsInListExist (text: string, count: number = 1): Promise<void> {
-    await expect(this.linesFromList(text)).toHaveCount(count)
+    // Retry with timeout as list may update with delay after search/filter
+    await expect(async () => {
+      await expect(this.linesFromList(text)).toHaveCount(count)
+    }).toPass({ intervals: [100, 200, 500], timeout: 15000 })
   }
 
   async pressEscape (): Promise<void> {

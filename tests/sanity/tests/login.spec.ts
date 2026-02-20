@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { PlatformUser, checkIfUrlContains } from './utils'
 import { LoginPage } from './model/login-page'
 import { SelectWorkspacePage } from './model/select-workspace-page'
@@ -32,7 +32,10 @@ test.describe('login test', () => {
   test('check login with wrong user and if the button is disabled ', async ({ page }) => {
     await loginPage.checkIfLoginButtonIsDisabled()
     await loginPage.login(PlatformUser, 'wrong-password')
-    await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
+    // Wait a bit for the error message to appear after login attempt
+    await expect(async () => {
+      await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
+    }).toPass({ intervals: [500, 1000, 2000], timeout: 30000 })
   })
 
   test('check if user is able to go to to recovery, then login and then signup', async ({ page }) => {

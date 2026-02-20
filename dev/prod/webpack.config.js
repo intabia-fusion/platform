@@ -265,15 +265,116 @@ module.exports = [
     output: {
       path: __dirname + '/dist',
       filename: '[name].[contenthash].js',
-      chunkFilename: '[name].[contenthash].js',
+      chunkFilename: (pathData) => {
+        // Get chunk name from chunk id (which contains the path for named chunks)
+        let name = pathData.chunk.name 
+        if (!name && pathData.chunk.id) {
+          name = String(pathData.chunk.id)
+        }
+        if (!name) {
+          name = 'chunk'
+        }
+        // Clean up chunk names: extract plugin/package name
+        const match = name.match(/(?:plugins|packages|foundations|services)[\\/]([^\\/]+)/)
+        if (match) {
+          // Extract clean name: contact-resources -> contact, chunter-resources -> chunter
+          name = match[1].replace(/-resources$/, '')
+        }
+        // Clean up the name
+        name = name
+          .replace(/^(plugins_|packages_|foundations_|services_)/, '')
+          .replace(/_core_packages_/, '-')
+          .replace(/_packages_/, '-')
+          .replace(/_src_[^_]+_ts$/, '')
+          .replace(/_lib_[^_]+_js$/, '')
+          .replace(/_assets_lang_[a-z]+_json$/, '')
+          .replace(/-resources/, '')
+        // Special cases for lang files that weren't caught by cacheGroup
+        const langMatch = name.match(/_assets_lang_([a-z-]+)_json$/)
+        if (langMatch) {
+          name = `lang-${langMatch[1]}`
+        } else if (name.includes('github-github')) {
+          name = 'github'
+        } else if (name.includes('onboard') && name.includes('account-client')) {
+          name = 'onboard-account'
+        } else if (name.startsWith('core-')) {
+          name = name.replace(/^core-/, 'core/')
+        }
+        // Final cleanup: remove any remaining underscores and extra dashes
+        name = name.replace(/_+/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '')
+        return name + '.[contenthash].js'
+      },
       publicPath: '/',
       pathinfo: false
     },
     optimization: prod
       ? {
           minimize: true,
+          chunkIds: 'named', // Use webpackChunkName for chunk filenames
           splitChunks: {
-            chunks: 'all'
+            chunks: 'all',
+            minSize: 50000, // Only split chunks > 50KB
+            cacheGroups: {
+              // Editor vendors - prosemirror, tiptap, yjs (used in text-editor)
+              editorVendors: {
+                test: /[\\/]node_modules[\\/](@tiptap|prosemirror|yjs|y-prosemirror|y-protocols|highlight\.js|lowlight)[\\/]/,
+                priority: 5,
+                reuseExistingChunk: true,
+                name: 'vendors-editor',
+                minSize: 0
+              },
+              // Chart vendors
+              chartVendors: {
+                test: /[\\/]node_modules[\\/](chart\.js|d3|@fullcalendar)[\\/]/,
+                priority: 5,
+                reuseExistingChunk: true,
+                name: 'vendors-charts',
+                minSize: 0
+              },
+              // Date/time vendors
+              dateVendors: {
+                test: /[\\/]node_modules[\\/](date-fns|luxon|moment)[\\/]/,
+                priority: 5,
+                reuseExistingChunk: true,
+                name: 'vendors-datetime',
+                minSize: 0
+              },
+              // Emojibase data - separate chunks by language
+              emojiData: {
+                test: /[\\/]node_modules[\\/]emojibase-data[\\/]/,
+                type: 'json',
+                priority: 3,
+                reuseExistingChunk: true,
+                name (module, chunks, cacheGroupKey) {
+                  // Extract language from path: emojibase-data/en/data.json -> emoji-data-en
+                  const match = module.resource?.match(/emojibase-data[\\/]([a-z-]+)[\\/]/)
+                  const lang = match ? match[1] : 'unknown'
+                  return `emoji-data-${lang}`
+                },
+                minSize: 0
+              },
+              // All other vendors
+              vendors: {
+                test: /[\\/]node_modules[\\/]/,
+                priority: -10,
+                reuseExistingChunk: true,
+                name: 'vendors',
+                minSize: 0
+              },
+              // Group translation files by language (includes github-assets/lang, etc.)
+              translations: {
+                test: /[\\/]lang[\\/]([a-z-]+)\.json$/,
+                type: 'json',
+                priority: -5,
+                reuseExistingChunk: true,
+                name (module, chunks, cacheGroupKey) {
+                  // Extract language code from path (e.g., /lang/en.json -> en)
+                  const match = module.resource?.match(/[\\/]lang[\\/]([a-z-]+)\.json$/)
+                  const lang = match ? match[1] : 'unknown'
+                  return `lang-${lang}`
+                }
+              }
+            }
           }
         }
       : {
@@ -448,7 +549,27 @@ module.exports = [
           viewport: 'width=device-width, initial-scale=1.0'
         }
       }),
-      ...(prod ? [new CompressionPlugin()] : []),
+      ...(prod
+        ? [
+            new CompressionPlugin({
+              filename: '[path][base].gz',
+              algorithm: 'gzip',
+              test: /\.(js|css|html|svg|json)$/,
+              threshold: 1024,
+              minRatio: 0.8,
+              deleteOriginalAssets: false
+            }),
+            new CompressionPlugin({
+              filename: '[path][base].br',
+              algorithm: 'brotliCompress',
+              test: /\.(js|css|html|svg|json)$/,
+              threshold: 1024,
+              minRatio: 0.8,
+              compressionOptions: { level: 11 },
+              deleteOriginalAssets: false
+            })
+          ]
+        : []),
       // new MiniCssExtractPlugin({
       //   filename: '[name].[id][contenthash].css'
       // }),

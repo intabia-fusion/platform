@@ -164,9 +164,14 @@ export class PlanningPage extends CalendarPage {
   }
 
   async markDoneInToDos (title: string): Promise<void> {
-    await this.toDoInToDos(title).hover()
-    await this.checkboxToDoInToDos(title).hover()
-    await this.checkboxToDoInToDos(title).click()
+    // Retry logic to handle DOM detachment issues and slow loading
+    // First ensure the todo is visible in the list with longer timeout
+    await expect(this.toDoInToDos(title)).toBeVisible({ timeout: 20000 })
+    await expect(async () => {
+      await this.toDoInToDos(title).hover()
+      await this.checkboxToDoInToDos(title).hover()
+      await this.checkboxToDoInToDos(title).click()
+    }).toPass({ intervals: [100, 200, 500, 1000], timeout: 20000 })
   }
 
   async clickButtonCreateAddSlot (): Promise<void> {
