@@ -14,7 +14,7 @@
     "_phase:package": "rushx package",
     "_phase:docker-build": "rushx docker:build",
     "_phase:docker-staging": "rushx docker:staging",
-    "bundle": "node ../../common/scripts/esbuild.js --entry=src/__start.ts --keep-names=true --define=MODEL_VERSION --define=VERSION --sourcemap=external --minify --external=sharp",
+    "bundle": "node ../../common/scripts/esbuild.js --entry=src/__start.ts --keep-names=true --define=MODEL_VERSION --define=VERSION --sourcemap=external --minify",
     "package": "rm -rf ./dist && cp -r ../../dev/prod/dist . && cp -r ../../dev/prod/public/* ./dist/ && rm ./dist/config.json",
     "docker:build": "../../common/scripts/docker_build.sh intabiafusion/front",
     "docker:staging": "../../common/scripts/docker_tag.sh intabiafusion/front staging",

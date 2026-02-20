@@ -23,67 +23,26 @@ import bp from 'body-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
 import fileUpload, { UploadedFile } from 'express-fileupload'
+import expressStaticGzip from 'express-static-gzip'
 import https from 'https'
 import morgan from 'morgan'
-import { join, resolve } from 'path'
+import { join, normalize, resolve } from 'path'
 import { cwd } from 'process'
 import { v4 as uuid } from 'uuid'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
 import fs, { mkdtempSync } from 'fs'
-import { Readable } from 'stream'
 import { tmpdir } from 'os'
-import crypto from 'crypto'
-import zlib from 'zlib'
 
-const STREAM_CHUNK_SIZE = parseInt(process.env.SEND_BUFFER_SIZE ?? String(64 * 1024)) // Default 64KB
-
-// Create a Readable that delivers a Buffer in chunks,
-// yielding the event loop between chunks so other requests can be served.
-// Respects the `size` hint from Node.js streams, capped by STREAM_CHUNK_SIZE.
-function createChunkedReadable (buf: Buffer): Readable {
-  let offset = 0
-  return new Readable({
-    read (size) {
-      if (offset >= buf.length) {
-        this.push(null)
-        return
-      }
-      const chunkSize = Math.min(size, STREAM_CHUNK_SIZE)
-      const end = Math.min(offset + chunkSize, buf.length)
-      this.push(buf.subarray(offset, end))
-      offset = end
-    }
-  })
-}
-
-// Long-term cache for files with content hash in filename (immutable assets)
-const cacheControlImmutable = 'public, max-age=31536000, immutable'
-// Short cache with ETag revalidation for files without hash
-const cacheControlRevalidate = 'public, no-cache'
-// No cache for dynamic content (index.html, config.json)
+const cacheControlValue = 'public, no-cache, must-revalidate, max-age=365d'
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
-// Check if filename contains a content hash (e.g., main.a1b2c3d4.js.gz or chunk-abc123.css.gz)
-function hasContentHash (fileName: string): boolean {
-  // Remove .gz or .br suffix for checking
-  let name = fileName
-  if (name.endsWith('.gz')) {
-    name = name.slice(0, -3)
-  } else if (name.endsWith('.br')) {
-    name = name.slice(0, -3)
-  }
-  // Match patterns like: name.HASH.ext where HASH is 6+ hex chars
-  return /\.[0-9a-f]{6,}\.\w+$/i.test(name)
-}
-
-const KEEP_ALIVE_TIMEOUT = parseInt(process.env.KEEP_ALIVE_TIMEOUT ?? '2') // seconds
-const KEEP_ALIVE_MAX = parseInt(process.env.KEEP_ALIVE_MAX ?? '100')
-const keepAliveValue = `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
+const KEEP_ALIVE_TIMEOUT = 5 // seconds
+const KEEP_ALIVE_MAX = 1000
 const KEEP_ALIVE_HEADERS = {
   Connection: 'keep-alive',
-  'Keep-Alive': keepAliveValue
+  'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
 }
 
 async function storageUpload (
@@ -225,7 +184,7 @@ async function getFile (
       'content-type': stat.contentType,
       etag: stat.etag,
       'last-modified': new Date(stat.modifiedOn).toISOString(),
-      'cache-control': cacheControlRevalidate
+      'cache-control': cacheControlValue
     })
     res.end()
     return
@@ -237,7 +196,7 @@ async function getFile (
       'content-type': stat.contentType,
       etag: stat.etag,
       'last-modified': new Date(stat.modifiedOn).toISOString(),
-      'cache-control': cacheControlRevalidate
+      'cache-control': cacheControlValue
     })
     res.end()
     return
@@ -255,8 +214,9 @@ async function getFile (
           'Content-Length': stat.size,
           Etag: stat.etag,
           'Last-Modified': new Date(stat.modifiedOn).toISOString(),
-          'Cache-Control': cacheControlRevalidate,
-          ...KEEP_ALIVE_HEADERS
+          'Cache-Control': cacheControlValue,
+          connection: 'keep-alive',
+          'keep-alive': 'timeout=5, max=1000'
         })
 
         dataStream.pipe(res)
@@ -344,15 +304,14 @@ export function start (
   setInterval(cleanupTempFiles, 1000 * 60 * 15) // Run every 15 minutes
 
   app.use(cors())
-
-  // Body-parser and file upload middleware applied only to routes that need them (not globally)
-  // This avoids unnecessary overhead on GET requests for static files
-  const uploadMiddleware = fileUpload({
-    useTempFiles: true,
-    tempFileDir
-  })
-  const jsonMiddleware = bp.json()
-  const urlencodedMiddleware = bp.urlencoded({ extended: true })
+  app.use(
+    fileUpload({
+      useTempFiles: true,
+      tempFileDir
+    })
+  )
+  app.use(bp.json())
+  app.use(bp.urlencoded({ extended: true }))
 
   const childLogger = ctx.logger.childLogger?.('requests', {
     enableConsole: 'true'
@@ -369,8 +328,7 @@ export function start (
 
   app.use(morgan('short', { stream: myStream }))
 
-  // Pre-serialize config.json for optimal performance
-  const configData = {
+  const data = {
     ACCOUNTS_URL: config.accountsUrl,
     UPLOAD_URL: config.uploadUrl,
     FILES_URL: config.filesUrl,
@@ -396,66 +354,13 @@ export function start (
     DATALAKE_URL: config.datalakeUrl,
     ...(extraConfig ?? {})
   }
-  const cachedConfigJson = Buffer.from(JSON.stringify(configData), 'utf8')
-  // Generate weak ETag same format as Express: W/"<base64>"
-  const configHash = crypto.createHash('md5').update(cachedConfigJson).digest('base64')
-  const cachedConfigEtag = `W/"${configHash}"`
-
-  // Pre-compress config.json at startup
-  const cachedConfigGzip = zlib.gzipSync(cachedConfigJson)
-  const cachedConfigBr = zlib.brotliCompressSync(cachedConfigJson)
-
-  const configCacheControl = 'public, max-age=60'
-  const configHeaders304 = {
-    ETag: cachedConfigEtag,
-    ...KEEP_ALIVE_HEADERS
-  }
-
-  // Pre-compute headers for each encoding variant
-  const configHeadersIdentity = {
-    'Content-Type': 'application/json',
-    ETag: cachedConfigEtag,
-    'Content-Length': String(cachedConfigJson.length),
-    'Cache-Control': configCacheControl,
-    ...KEEP_ALIVE_HEADERS,
-    'Access-Control-Allow-Origin': '*'
-  }
-  const configHeadersGzip = {
-    ...configHeadersIdentity,
-    'Content-Encoding': 'gzip',
-    'Content-Length': String(cachedConfigGzip.length)
-  }
-  const configHeadersBr = {
-    ...configHeadersIdentity,
-    'Content-Encoding': 'br',
-    'Content-Length': String(cachedConfigBr.length)
-  }
-
-  console.log(
-    `Pre-compressed config.json: ${cachedConfigJson.length}B → gzip ${cachedConfigGzip.length}B, br ${cachedConfigBr.length}B`
-  )
-
-  // Optimized config.json endpoint - define BEFORE static middleware
-  app.get('/config.json', (req, res) => {
-    // Check If-None-Match for 304 Not Modified
-    if (req.headers['if-none-match'] === cachedConfigEtag) {
-      res.writeHead(304, configHeaders304)
-      res.end()
-      return
-    }
-
-    // Choose best encoding
-    const encoding = getPreferredEncoding(req.headers['accept-encoding'])
-    if (encoding === 'br') {
-      res.writeHead(200, configHeadersBr)
-      res.end(cachedConfigBr)
-    } else if (encoding === 'gzip') {
-      res.writeHead(200, configHeadersGzip)
-      res.end(cachedConfigGzip)
-    } else {
-      res.writeHead(200, configHeadersIdentity)
-      res.end(cachedConfigJson)
-    }
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.get('/config.json', async (req, res) => {
+    res.status(200)
+    res.set('Cache-Control', cacheControlNoCache)
+    res.set('Connection', 'keep-alive')
+    res.set('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
+    res.json(data)
   })
 
   app.get('/api/v1/statistics', (req, res) => {
@@ -466,7 +371,7 @@ export function start (
       res.status(200)
       res.setHeader('Content-Type', 'application/json')
       res.setHeader('Connection', 'keep-alive')
-      res.setHeader('Keep-Alive', keepAliveValue)
+      res.setHeader('Keep-Alive', 'timeout=5')
       res.setHeader('Cache-Control', cacheControlNoCache)
 
       const json = JSON.stringify({
@@ -491,518 +396,37 @@ export function start (
   const dist = resolve(process.env.PUBLIC_DIR ?? cwd(), 'dist')
   console.log('serving static files from', dist)
 
-  // Pre-load and cache index.html as Buffer with pre-compressed variants
-  const indexPath = join(dist, 'index.html')
-  let cachedIndexHtml: Buffer | null = null
-  let cachedIndexGzip: Buffer | null = null
-  let cachedIndexBr: Buffer | null = null
-  let cachedIndexEtag: string | null = null
-  let cachedIndexHeadersIdentity: Record<string, string> | null = null
-  let cachedIndexHeadersGzip: Record<string, string> | null = null
-  let cachedIndexHeadersBr: Record<string, string> | null = null
-
-  try {
-    cachedIndexHtml = fs.readFileSync(indexPath)
-    const hash = crypto.createHash('md5').update(cachedIndexHtml).digest('base64')
-    cachedIndexEtag = `W/"${hash}"`
-
-    cachedIndexGzip = zlib.gzipSync(cachedIndexHtml)
-    cachedIndexBr = zlib.brotliCompressSync(cachedIndexHtml)
-
-    cachedIndexHeadersIdentity = {
-      'Content-Type': 'text/html; charset=UTF-8',
-      ETag: cachedIndexEtag,
-      'Content-Length': String(cachedIndexHtml.length),
-      'Cache-Control': cacheControlNoCache,
-      ...KEEP_ALIVE_HEADERS,
-      'Access-Control-Allow-Origin': '*'
-    }
-    cachedIndexHeadersGzip = {
-      ...cachedIndexHeadersIdentity,
-      'Content-Encoding': 'gzip',
-      'Content-Length': String(cachedIndexGzip.length)
-    }
-    cachedIndexHeadersBr = {
-      ...cachedIndexHeadersIdentity,
-      'Content-Encoding': 'br',
-      'Content-Length': String(cachedIndexBr.length)
-    }
-
-    console.log(
-      `Pre-loaded index.html: ${cachedIndexHtml.length}B → gzip ${cachedIndexGzip.length}B, br ${cachedIndexBr.length}B`
-    )
-  } catch (err: any) {
-    console.warn('Could not pre-load index.html, will use static middleware:', err.message)
-  }
-
-  // Helper: serve cached index.html, returns true if served
-  function serveCachedIndex (req: Request, res: Response): boolean {
-    if (cachedIndexHtml === null || cachedIndexEtag === null || cachedIndexHeadersIdentity === null) {
-      return false
-    }
-    if (req.headers['if-none-match'] === cachedIndexEtag) {
-      res.writeHead(304, { ETag: cachedIndexEtag })
-      res.end()
-      return true
-    }
-
-    const encoding = getPreferredEncoding(req.headers['accept-encoding'])
-    if (encoding === 'br' && cachedIndexBr !== null && cachedIndexHeadersBr !== null) {
-      res.writeHead(200, cachedIndexHeadersBr)
-      res.end(cachedIndexBr)
-    } else if (encoding === 'gzip' && cachedIndexGzip !== null && cachedIndexHeadersGzip !== null) {
-      res.writeHead(200, cachedIndexHeadersGzip)
-      res.end(cachedIndexGzip)
-    } else {
-      res.writeHead(200, cachedIndexHeadersIdentity)
-      res.end(cachedIndexHtml)
-    }
-    return true
-  }
-
-  // Known files Set - all files in dist
-  const knownFiles = new Set<string>()
-  // Disk files - not cached in memory, served from disk via sendFile (which handles ETag/304 natively)
-  // lastModified is stored for proper HTTP headers
-  const diskFiles = new Map<string, { fullPath: string, cacheControl: string, lastModified: Date }>()
-  // Memory cache for files with pre-computed headers
-  const fileCache = new Map<
-  string,
-  {
-    content: Buffer
-    etag: string
-    contentType: string
-    size: number
-    isGz: boolean
-    isBr: boolean
-    headers200: Record<string, string>
-    headers304: Record<string, string>
-  }
-  >()
-
-  function getContentType (ext: string): string {
-    const types: Record<string, string> = {
-      js: 'application/javascript',
-      mjs: 'application/javascript',
-      css: 'text/css',
-      html: 'text/html',
-      json: 'application/json',
-      svg: 'image/svg+xml',
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      gif: 'image/gif',
-      ico: 'image/x-icon',
-      woff: 'font/woff',
-      woff2: 'font/woff2',
-      ttf: 'font/ttf',
-      eot: 'application/vnd.ms-fontobject',
-      webp: 'image/webp',
-      avif: 'image/avif',
-      gz: 'application/gzip'
-    }
-    return types[ext] ?? 'application/octet-stream'
-  }
-
-  // Cache files in memory for maximum throughput
-  // Skip: source maps, uncompressed .js/.css/.svg only if they have .gz/.br versions
-  function shouldCacheFile (fileName: string, hasGzVersion: boolean, hasBrVersion: boolean): boolean {
-    // Always skip source maps
-    if (fileName.endsWith('.map.gz') || fileName.endsWith('.map.br') || fileName.endsWith('.map')) return false
-    // Skip uncompressed .js/.css/.svg only if there's a compressed version available
-    if (!fileName.endsWith('.gz') && !fileName.endsWith('.br')) {
-      if (fileName.endsWith('.js') || fileName.endsWith('.css') || fileName.endsWith('.svg')) {
-        if (hasGzVersion || hasBrVersion) return false
-      }
-    }
-    return true
-  }
-
-  // Load file into memory cache with pre-computed headers
-  function loadFileToCache (
-    filePath: string,
-    urlPath: string,
-    isGzFile: boolean,
-    isBrFile: boolean,
-    lastModified: Date
-  ): boolean {
-    try {
-      if (fileCache.has(urlPath)) return true
-
-      const content = fs.readFileSync(filePath)
-      const hash = crypto.createHash('md5').update(content).digest('base64')
-      const etag = `W/"${hash}"`
-
-      // Get content type from extension
-      let ext: string
-      if (isGzFile || isBrFile) {
-        const extParts = filePath.split('.')
-        ext =
-          extParts.length > 2
-            ? extParts[extParts.length - 2].toLowerCase()
-            : extParts.length > 1
-              ? extParts[extParts.length - 1].toLowerCase()
-              : ''
-      } else {
-        ext = filePath.split('.').pop()?.toLowerCase() ?? ''
-      }
-      const contentType = getContentType(ext)
-
-      // Choose Cache-Control (accounts for branding URL and content hash)
-      const fileName = urlPath.split('/').pop() ?? ''
-      const cacheControl = getCacheControl(urlPath, fileName)
-
-      const lastModifiedStr = lastModified.toUTCString()
-
-      // Pre-compute headers for 200 and 304 responses
-      const headers200: Record<string, string> = {
-        'Content-Type': contentType,
-        ETag: etag,
-        'Content-Length': String(content.length),
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': cacheControl,
-        'Last-Modified': lastModifiedStr,
-        ...KEEP_ALIVE_HEADERS
-      }
-      if (isGzFile) {
-        headers200['Content-Encoding'] = 'gzip'
-      } else if (isBrFile) {
-        headers200['Content-Encoding'] = 'br'
-      }
-
-      const headers304: Record<string, string> = {
-        ETag: etag,
-        'Last-Modified': lastModifiedStr
-      }
-
-      fileCache.set(urlPath, {
-        content,
-        etag,
-        contentType,
-        size: content.length,
-        isGz: isGzFile,
-        isBr: isBrFile,
-        headers200,
-        headers304
-      })
-      return true
-    } catch (err) {
-      return false
-    }
-  }
-
-  // Two-pass file collection for proper compression tracking
-  // Stores file info with lastModified (from fs.stat, collected once)
-  const allFiles = new Map<
-  string,
-  { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean, lastModified: Date }
-  >()
-  const compressedFiles = new Map<string, { isGz: boolean, isBr: boolean }>()
-
-  // First pass: collect all files (both compressed and uncompressed)
-  // fs.statSync is called only once per file here
-  function collectFiles (dir: string, basePath: string = ''): void {
-    try {
-      const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-      for (const entry of entries) {
-        const fullPath = join(dir, entry.name)
-        const relativePath = basePath !== '' ? `${basePath}/${entry.name}` : entry.name
-
-        if (entry.isDirectory()) {
-          collectFiles(fullPath, relativePath)
-        } else {
-          const urlPath = `/${relativePath}`
-          const isGzFile = entry.name.endsWith('.gz')
-          const isBrFile = entry.name.endsWith('.br')
-
-          // Get file stats once (only for mtime)
-          let lastModified: Date
-          try {
-            const stats = fs.statSync(fullPath)
-            lastModified = stats.mtime
-          } catch {
-            lastModified = new Date(0)
-          }
-
-          if (isGzFile || isBrFile) {
-            // Track compressed file for second pass
-            compressedFiles.set(urlPath, { isGz: isGzFile, isBr: isBrFile })
-            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false, lastModified })
-          } else {
-            // Regular file - will update compression flags in second pass
-            allFiles.set(urlPath, { fullPath, hasGzVersion: false, hasBrVersion: false, lastModified })
-          }
-        }
-      }
-    } catch (err) {
-      console.warn(`Error scanning directory ${dir}:`, err)
-    }
-  }
-
-  // Second pass: determine compression relationships
-  function processCompressionRelationships (): void {
-    for (const [compressedPath, { isGz, isBr }] of compressedFiles) {
-      const uncompressedPath = compressedPath.slice(0, -3) // Remove .gz or .br
-      const uncompressedEntry = allFiles.get(uncompressedPath)
-      if (uncompressedEntry !== undefined) {
-        if (isGz) {
-          uncompressedEntry.hasGzVersion = true
-        } else if (isBr) {
-          uncompressedEntry.hasBrVersion = true
-        }
-      }
-    }
-  }
-
-  // Collect all files first
-  console.log('Collecting dist files...')
-  collectFiles(dist)
-  processCompressionRelationships()
-
-  // Parse branding URL for cache-control decisions
-  let brandingPath: string | undefined
+  let brandingUrl: URL | undefined
   if (config.brandingUrl !== undefined) {
     try {
-      brandingPath = new URL(config.brandingUrl).pathname
+      brandingUrl = new URL(config.brandingUrl)
     } catch (e) {
       console.error('Invalid branding URL. Must be absolute URL.', e)
     }
   }
 
-  // Determine cache-control for a given URL path
-  function getCacheControl (urlPath: string, fileName: string): string {
-    // Branding files and index.html get no-cache
-    if (
-      fileName === 'index.html' ||
-      (brandingPath !== undefined && urlPath.toLowerCase().includes(brandingPath.toLowerCase()))
-    ) {
-      return cacheControlNoCache
-    }
-    return hasContentHash(fileName) ? cacheControlImmutable : cacheControlRevalidate
-  }
-
-  // Now decide what to cache
-  let gzCached = 0
-  let brCached = 0
-  let uncompressedCached = 0
-
-  for (const [urlPath, { fullPath, hasGzVersion, hasBrVersion, lastModified }] of allFiles) {
-    knownFiles.add(urlPath)
-
-    const fileName = urlPath.split('/').pop() ?? ''
-    const isGzFile = fileName.endsWith('.gz')
-    const isBrFile = fileName.endsWith('.br')
-
-    if (shouldCacheFile(fileName, hasGzVersion, hasBrVersion)) {
-      if (loadFileToCache(fullPath, urlPath, isGzFile, isBrFile, lastModified)) {
-        if (isGzFile) {
-          gzCached++
-        } else if (isBrFile) {
-          brCached++
-        } else {
-          uncompressedCached++
+  app.use(
+    expressStaticGzip(dist, {
+      serveStatic: {
+        cacheControl: true,
+        dotfiles: 'allow',
+        maxAge: '365d',
+        etag: true,
+        lastModified: true,
+        index: false,
+        setHeaders (res, path) {
+          if (
+            path.toLowerCase().includes('index.html') ||
+            (brandingUrl !== undefined && path.toLowerCase().includes(brandingUrl.pathname))
+          ) {
+            res.setHeader('Cache-Control', cacheControlNoCache)
+          }
+          res.setHeader('Connection', 'keep-alive')
+          res.setHeader('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
         }
       }
-    } else {
-      // Not cached in memory — sendFile handles ETag/304 natively
-      // Pass lastModified for proper If-Modified-Since handling
-      diskFiles.set(urlPath, {
-        fullPath,
-        cacheControl: getCacheControl(urlPath, fileName),
-        lastModified
-      })
-    }
-  }
-
-  // Free allFiles map - no longer needed after initialization
-  allFiles.clear()
-
-  console.log(
-    `Found ${knownFiles.size} files, cached ${gzCached} .gz + ${brCached} .br + ${uncompressedCached} uncompressed files in memory, ${diskFiles.size} served from disk`
+    })
   )
-
-  // Optimized index.html endpoint - define BEFORE static middleware
-  app.get(['/index.html', '/'], (req, res, next) => {
-    if (!serveCachedIndex(req, res)) {
-      next()
-    }
-  })
-
-  // Helper functions for conditional requests
-  function parseRange (range: string, size: number): [number, number] | null {
-    const match = range.match(/bytes=(\d*)-(\d*)/)
-    if (match === null) return null
-
-    let start = parseInt(match[1], 10)
-    let end = parseInt(match[2], 10)
-
-    if (isNaN(start)) {
-      // Suffix range: bytes=-500 (last 500 bytes)
-      if (!isNaN(end)) {
-        start = size - end
-        end = size - 1
-      } else {
-        return null
-      }
-    } else if (isNaN(end)) {
-      // Open-ended: bytes=500- (from 500 to end)
-      end = size - 1
-    }
-
-    if (start > end || start >= size) {
-      return null
-    }
-
-    end = Math.min(end, size - 1)
-    return [start, end]
-  }
-
-  function checkPreconditions (req: Request, etag: string, lastModified: Date): number | null {
-    const ifMatch = req.headers['if-match']
-    const ifNoneMatch = req.headers['if-none-match']
-    const ifModifiedSince = req.headers['if-modified-since']
-    const ifUnmodifiedSince = req.headers['if-unmodified-since']
-
-    // If-Match: return 412 if etag doesn't match
-    if (ifMatch !== undefined && ifMatch !== '' && ifMatch !== '*' && ifMatch !== etag) {
-      return 412
-    }
-
-    // If-None-Match: return 304 for GET/HEAD if etag matches
-    if (ifNoneMatch !== undefined && ifNoneMatch !== '' && (ifNoneMatch === '*' || ifNoneMatch === etag)) {
-      if (req.method === 'GET' || req.method === 'HEAD') {
-        return 304
-      }
-      return 412
-    }
-
-    // If-Modified-Since: return 304 if not modified
-    if (ifModifiedSince !== undefined && ifModifiedSince !== '' && (ifNoneMatch === undefined || ifNoneMatch === '')) {
-      const modifiedSince = new Date(ifModifiedSince)
-      if (lastModified <= modifiedSince) {
-        return 304
-      }
-    }
-
-    // If-Unmodified-Since: return 412 if modified after date
-    if (ifUnmodifiedSince !== undefined && ifUnmodifiedSince !== '') {
-      const unmodifiedSince = new Date(ifUnmodifiedSince)
-      if (lastModified > unmodifiedSince) {
-        return 412
-      }
-    }
-
-    return null
-  }
-
-  // Parse Accept-Encoding header to determine preferred encoding
-  // Returns 'br', 'gzip', or undefined
-  function getPreferredEncoding (acceptEncoding: string | undefined): 'br' | 'gzip' | undefined {
-    if (acceptEncoding === undefined) return undefined
-    // Brotli is preferred over gzip (better compression)
-    if (acceptEncoding.includes('br')) return 'br'
-    if (acceptEncoding.includes('gzip')) return 'gzip'
-    return undefined
-  }
-
-  // Static files middleware - serve from memory cache or disk
-  app.use((req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/') || req.path.startsWith('/files')) {
-      next()
-      return
-    }
-
-    // Check if file exists in known files
-    if (!knownFiles.has(req.path)) {
-      next()
-      return
-    }
-
-    // File exists - check if cached in memory
-    let cached = fileCache.get(req.path)
-
-    // If not cached and not already a compressed file, check for compressed versions
-    if (cached === undefined && !req.path.endsWith('.gz') && !req.path.endsWith('.br')) {
-      const preferredEncoding = getPreferredEncoding(req.headers['accept-encoding'])
-      if (preferredEncoding === 'br') {
-        cached = fileCache.get(`${req.path}.br`)
-      } else if (preferredEncoding === 'gzip') {
-        cached = fileCache.get(`${req.path}.gz`)
-      }
-    }
-
-    if (cached === undefined) {
-      // Serve from disk — sendFile handles ETag, If-None-Match, 304 natively
-      const diskEntry = diskFiles.get(req.path)
-      if (diskEntry !== undefined) {
-        res.sendFile(diskEntry.fullPath, {
-          headers: {
-            'Cache-Control': diskEntry.cacheControl,
-            'Last-Modified': diskEntry.lastModified.toUTCString(),
-            ...KEEP_ALIVE_HEADERS
-          },
-          etag: true,
-          lastModified: false // We set it explicitly above
-        })
-        return
-      }
-      next()
-      return
-    }
-
-    // Check preconditions (If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since)
-    const preconditionStatus = checkPreconditions(req, cached.etag, new Date(0))
-    if (preconditionStatus !== null) {
-      if (preconditionStatus === 304) {
-        res.writeHead(304, cached.headers304)
-      } else {
-        res.writeHead(preconditionStatus)
-      }
-      res.end()
-      return
-    }
-
-    // Check for Range request
-    const range = req.headers.range
-    if (range !== undefined) {
-      const parsedRange = parseRange(range, cached.size)
-      if (parsedRange !== null) {
-        const [start, end] = parsedRange
-        const rangeLength = end - start + 1
-        res.writeHead(206, {
-          'Content-Type': cached.contentType,
-          'Content-Range': `bytes ${start}-${end}/${cached.size}`,
-          'Content-Length': String(rangeLength),
-          'Accept-Ranges': 'bytes',
-          ETag: cached.etag,
-          'Cache-Control': cached.headers200['Cache-Control'],
-          ...KEEP_ALIVE_HEADERS
-        })
-        const slice = cached.content.subarray(start, end + 1)
-        if (rangeLength <= STREAM_CHUNK_SIZE) {
-          res.end(slice)
-        } else {
-          createChunkedReadable(slice).pipe(res)
-        }
-      } else {
-        res.writeHead(416, { 'Content-Range': `bytes */${cached.size}` })
-        res.end()
-      }
-      return
-    }
-
-    // Serve from memory cache with streaming to avoid blocking the event loop
-    res.writeHead(200, cached.headers200)
-    if (cached.size <= STREAM_CHUNK_SIZE) {
-      // Small files: send in one shot (no benefit from streaming)
-      res.end(cached.content)
-    } else {
-      // Large files: stream in chunks to yield event loop between writes
-      createChunkedReadable(cached.content).pipe(res)
-    }
-  })
 
   const getWorkspaceIds = async (ctx: MeasureContext, token: string, path?: string): Promise<WorkspaceIds | null> => {
     const accountClient = getAccountClient(config.accountsUrlInternal ?? config.accountsUrl, token)
@@ -1072,7 +496,8 @@ export function start (
           if (req.method === 'HEAD') {
             res.writeHead(200, {
               'accept-ranges': 'bytes',
-              ...KEEP_ALIVE_HEADERS,
+              connection: 'keep-alive',
+              'Keep-Alive': 'timeout=5',
               'content-type': blobInfo.contentType,
               'content-length': blobInfo.size,
               'content-security-policy': "default-src 'none';",
@@ -1084,7 +509,6 @@ export function start (
             res.end()
             return
           }
-
           const range = req.headers.range
           if (range !== undefined) {
             await ctx.with(
@@ -1137,11 +561,11 @@ export function start (
     void filesHandler(req, res)
   })
 
-  app.post('/files', uploadMiddleware, (req, res) => {
+  app.post('/files', (req, res) => {
     void handleUpload(req, res)
   })
 
-  app.post('/files/*', uploadMiddleware, (req, res) => {
+  app.post('/files/*', (req, res) => {
     void handleUpload(req, res)
   })
 
@@ -1412,35 +836,44 @@ export function start (
     void handleImportGet(req, res)
   })
 
-  app.post('/import', jsonMiddleware, urlencodedMiddleware, (req, res) => {
+  app.post('/import', (req, res) => {
     void handleImportPost(req, res)
   })
 
+  const filesPatterns = [
+    '.js',
+    '.js.gz',
+    'js.map',
+    'js.map.gz',
+    '.woff',
+    '.woff2',
+    '.svg.gz',
+    '.css',
+    '.css.gz',
+    '.ico',
+    '.svg',
+    '.webp',
+    '.png',
+    '.avif'
+  ]
+
   app.get('*', (request, response) => {
-    // Simple path traversal check - reject if path contains ..
-    if (request.path.includes('..')) {
+    const safePath = normalize(join(dist, request.path))
+    if (!safePath.startsWith(dist)) {
       response.sendStatus(403)
       return
     }
-    // If path has a file extension, it's likely a missing static file
-    if (request.path.includes('.') && !request.path.endsWith('/')) {
+    if (filesPatterns.some((it) => request.path.endsWith(it))) {
       response.sendStatus(404)
       return
     }
-
-    // SPA routing — serve cached index.html
-    if (serveCachedIndex(request, response)) {
-      return
-    }
-
-    // Fallback to sendFile if cache not available
     response.sendFile(join(dist, 'index.html'), {
       etag: true,
       lastModified: true,
       cacheControl: false,
       headers: {
         'Cache-Control': cacheControlNoCache,
-        keepAliveValue
+        'Keep-Alive': 'timeout=5'
       }
     })
   })
@@ -1448,10 +881,7 @@ export function start (
   const server = app.listen(port)
   server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 1000
   server.headersTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 2000
-
   return () => {
     server.close()
-    // Clear file cache on shutdown
-    fileCache.clear()
   }
 }
