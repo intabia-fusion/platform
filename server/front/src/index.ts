@@ -608,7 +608,10 @@ export function start (
 
   // Two-pass file collection for proper compression tracking
   // Stores file info with lastModified (from fs.stat, collected once)
-  const allFiles = new Map<string, { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean, lastModified: Date }>()
+  const allFiles = new Map<
+  string,
+  { fullPath: string, hasGzVersion: boolean, hasBrVersion: boolean, lastModified: Date }
+  >()
   const compressedFiles = new Map<string, { isGz: boolean, isBr: boolean }>()
 
   // First pass: collect all files (both compressed and uncompressed)
