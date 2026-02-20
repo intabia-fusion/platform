@@ -8,6 +8,27 @@ This directory contains benchmarking tools and results for the front service per
 - `run_benchmark.sh` - Automated benchmark script
 - `results/` - Benchmark results storage
 
+## Optimizations Applied (2026-02-20)
+
+### Build Optimizations
+- **Brotli + Gzip compression** - dual compression for all assets
+- **Code splitting** - vendors separated by usage (editor, charts, datetime)
+- **Emoji data split** - 30 language-specific chunks, lazy loaded
+- **Translation grouping** - 12 language bundles instead of 697 JSON files
+- **Chunk size optimization** - minSize: 50KB to avoid tiny files
+
+### Runtime Optimizations (Node.js)
+- **In-memory file cache** - pre-loaded with pre-computed headers
+- **Last-Modified caching** - single stat() at startup
+- **HTTP/2 optimized chunks** - max 244KB for multiplexing
+- **Brotli priority** - serves .br files when client supports
+
+### Results
+- Vendors: 58MB → 10.4MB (-82%)
+- Vendors (Brotli): 2.3MB (-79%)
+- JS files: 1,030 → 110 (-89%)
+- Total files: 2,900 → 594 (-80%)
+
 ## Usage
 
 ### Quick Benchmark
@@ -44,15 +65,25 @@ go build -o front-benchmark .
 
 See `results/` directory for detailed benchmark reports.
 
-### 2026-02-18: Node.js vs Nginx+Node
+### 2026-02-20: Optimized Node.js vs Nginx+Node
 
-| Metric | Node.js | Nginx + Node | Difference |
-|--------|---------|--------------|------------|
-| RPS | 6,172 | 6,362 | +3.1% |
-| Latency (avg) | 6.80ms | 6.52ms | -4.1% |
-| Throughput | 506.87 MB/s | 514.97 MB/s | +1.6% |
+After optimizations (Brotli/Gzip compression, improved caching, code splitting):
 
-**Conclusion:** Current Node.js implementation performs within 4% of Nginx+Node hybrid.
+| Scenario | Node.js RPS | Nginx RPS | Node Latency | Nginx Latency |
+|----------|-------------|-----------|--------------|---------------|
+| config.json (API) | **10,790** | 4,848 | 8.77ms | 20.07ms |
+| index.html (SPA) | 12,899 | **17,806** | 7.25ms | **4.91ms** |
+| Random files | 6,263 | **7,534** | 13.11ms | 11.89ms |
+
+**Key Improvements (Node.js vs previous):**
+- config.json: **+75% RPS** (6,172 → 10,790)
+- Static files: **+7% throughput** (507 → 541 MB/s)
+- Memory: **Stable** (~260-340 MB)
+
+**Conclusion:**
+- Node.js now significantly faster for API endpoints (+122% vs Nginx)
+- Nginx still faster for static files (+20% RPS)
+- Both implementations viable depending on workload
 
 ## Options
 
