@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import { createApp } from '@hcengineering/ui'
 import { configurePlatform } from './platform'
 import { configurePlatformDevServer } from './platform-dev'
 
-configurePlatform().then(() => {
+(async (): Promise<void> => {
+  await configurePlatform()
   if (
     process.env.CLIENT_TYPE === 'dev-server' ||
     process.env.CLIENT_TYPE === 'dev-production' ||
@@ -28,6 +28,6 @@ configurePlatform().then(() => {
   ) {
     configurePlatformDevServer()
   }
-
-  createApp(document.body)
-})
+  const pl = await import(/* webpackChunkName: "platform-ui" */ '@hcengineering/ui')
+  pl.createApp(document.body)
+})()

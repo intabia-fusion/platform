@@ -14,9 +14,10 @@
 // limitations under the License.
 //
 
-import { createApp } from '@hcengineering/ui'
 import { configurePlatform } from './platform'
 
-configurePlatform().then(() => {
-  createApp(document.body)
-})
+(async (): Promise<void> => {
+  await configurePlatform()
+  const pl = await import(/* webpackChunkName: "platform-ui" */ '@hcengineering/ui')
+  pl.createApp(document.body)
+})()

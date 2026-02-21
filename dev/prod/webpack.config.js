@@ -44,11 +44,17 @@ const dev =
   devServerTest
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
-const doValidate = !prod || process.env.DO_VALIDATE === 'true'
+const doValidate = true
+
+const doCompression = prod
 
 const useCache = process.env.USE_CACHE === 'true'
 
+const doAnalyze = process.env.DO_ANALYZE === 'true'
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+
+const StatoscopeWebpackPlugin = require('@statoscope/webpack-plugin').default;
+
 
 const devProxy = {
   '/account': {
@@ -240,7 +246,9 @@ module.exports = [
         }
       : undefined,
     entry: {
-      bundle: ['@hcengineering/theme/styles/global.scss', ...(dev ? ['./src/main-dev.ts'] : ['./src/main.ts'])]
+      bundle: ['@hcengineering/theme/styles/global.scss',
+        ...(dev ? ['./src/main-dev.ts'] : ['./src/main.ts'])
+      ]
     },
     ignoreWarnings: [
       {
@@ -265,25 +273,102 @@ module.exports = [
     output: {
       path: __dirname + '/dist',
       filename: '[name].[contenthash].js',
-      chunkFilename: '[name].[contenthash].js',
       publicPath: '/',
-      pathinfo: false
+      pathinfo: false,
+      asyncChunks: true
     },
-    optimization: prod
-      ? {
-          minimize: true,
-          splitChunks: {
-            chunks: 'all'
-          }
+    optimization: {
+      minimize: prod,
+      //moduleIds: 'named',
+      chunkIds: prod ? 'deterministic' : 'named',
+      // chunkIds: 'named',
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          'vendors-livekit': {
+            test: /[\\/]node_modules[\\/](@livekit\/krisp-noise-filter|@livekit\/track-processors|livekit-client)[\\/]/,
+            name: 'vendors-livekit',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 11, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+          'vendors-editors': {
+            test: /[\\/]node_modules[\\/](@tiptap|.*prosemirror.*|yjs|y-protocols)[\\/]/,
+            name: 'vendors-editors',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 12, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+
+          'media-plyr': {
+            test: /[\\/]node_modules[\\/](plyr)[\\/]/,
+            name: 'media-plyr',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 14, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+          'autolinker': {
+            test: /[\\/]node_modules[\\/](autolinker)[\\/]/,
+            name: 'autolinker',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 14, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+
+          'mermaid': {
+            test: /[\\/]node_modules[\\/](mermaid|@mermaid-js|khroma|dayjs|katex|cytoscape)[\\/]/,
+            name: 'mermaid',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 15, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+          'd3': {
+            test: /[\\/]node_modules[\\/](d3|d3-)[\\/]/,
+            name: 'd3',
+            reuseExistingChunk: true,
+            chunks: 'all',
+            priority: 15, // Высокий приоритет, чтобы перехватить модули до других групп
+          },
+
+          // Group translation files by language (includes github-assets/lang, etc.)
+          translations: {
+            test: /[\\/]lang[\\/]([a-z-]+)\.json$/,
+            type: 'json',
+            priority: -5,
+            enforce: true,
+            reuseExistingChunk: true,
+            name (module, chunks, cacheGroupKey) {
+              // Extract language code from path (e.g., /lang/en.json -> en)
+              const match = module.resource?.match(/[\\/]lang[\\/]([a-z-]+)\.json$/)
+              const lang = match ? match[1] : 'unknown'
+              return `lang-${lang}`
+            }
+          },
+          // Emojibase data - separate chunks by language
+          emojiData: {
+            test: /[\\/]node_modules[\\/]emojibase-data[\\/]/,
+            type: 'json',
+            priority: 3,
+            reuseExistingChunk: true,
+            name (module, chunks, cacheGroupKey) {
+              // Extract language from path: emojibase-data/en/data.json -> emoji-data-en
+              const match = module.resource?.match(/emojibase-data[\\/]([a-z-]+)[\\/]/)
+              const lang = match ? match[1] : 'unknown'
+              return `emoji-data-${lang}`
+            },
+            minSize: 0
+          },
+          // Bundle all *-assets plugins into single chunk
+          'bundle-assets': {
+            test: /[\\/]([^\\/]*-assets)[\\/]/,
+            name: 'bundle-assets',
+            priority: 4,
+            reuseExistingChunk: true,
+            minSize: 0
+          },
         }
-      : {
-          minimize: false,
-          mangleExports: false,
-          usedExports: false,
-          splitChunks: {
-            chunks: 'all'
-          }
-        },
+      }
+    },
     module: {
       rules: [
         {
@@ -435,20 +520,34 @@ module.exports = [
     },
     mode,
     plugins: [
-      ...(prod
-        ? [
-            new BundleAnalyzerPlugin({
-              analyzerMode: 'static',
-              openAnalyzer: false
-            })
-          ]
-        : []),
+      ...(doAnalyze ? [new StatoscopeWebpackPlugin()]: []),
+      // ...(doAnalyze
+      //   ? [
+      //       new BundleAnalyzerPlugin({
+      //         analyzerMode: 'static',
+      //         openAnalyzer: false
+      //       })
+      //     ]
+      //   : []),
       new HtmlWebpackPlugin({
         meta: {
           viewport: 'width=device-width, initial-scale=1.0'
         }
       }),
-      ...(prod ? [new CompressionPlugin()] : []),
+      ...(doCompression
+        ? [
+            new CompressionPlugin({
+              filename: '[path][base].gz',
+              algorithm: 'gzip',
+            }),
+            new CompressionPlugin({
+              filename: '[path][base].br',
+              algorithm: 'brotliCompress',
+              compressionOptions: { level: 11 }
+            })
+          ]
+        : []),
+      // ...(doCompression ? [new CompressionPlugin()] : []),
       // new MiniCssExtractPlugin({
       //   filename: '[name].[id][contenthash].css'
       // }),

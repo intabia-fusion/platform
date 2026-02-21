@@ -7,9 +7,11 @@
     "_phase:package": "rushx package",
     "_phase:validate": "rm -rf ./types && compile validate",
     "package": "rm -rf ./dist && cross-env NODE_ENV=production webpack --stats-error-details && echo 'done'",
-    "analyze": "rm -rf ./dist && cross-env NODE_ENV=production webpack --profile --json > stats.json",
+    "packagep": "rm -rf ./dist && cross-env NODE_ENV=production webpack --stats-error-details --progress && echo 'done'",
+    "analyze": "rm -rf ./dist && cross-env NODE_ENV=production DO_ANALYZE=true webpack --profile --json > stats.json",
     "show": "webpack-bundle-analyzer stats.json dist",
-    "dev-server": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
+    "dev-server": "cross-env NODE_ENV=production USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
+    "dev-server-p": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
     "dev-server-test": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server-test webpack serve",
     "dev-worker": "cross-env USE_CACHE=false CLIENT_TYPE=dev-worker webpack serve",
     "dev-worker-local": "cross-env USE_CACHE=false CLIENT_TYPE=dev-worker-local webpack serve",
@@ -52,7 +54,8 @@
     "webpack": "^5.97.1",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.11.1"
+    "webpack-dev-server": "^4.11.1",
+    "@statoscope/webpack-plugin": "~5.29.0"
   },
   "dependencies": {
     "@hcengineering/achievement": "workspace:^0.7.0",

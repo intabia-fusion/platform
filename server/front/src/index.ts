@@ -407,6 +407,8 @@ export function start (
 
   app.use(
     expressStaticGzip(dist, {
+      enableBrotli: true,
+      orderPreference: ['br'],
       serveStatic: {
         cacheControl: true,
         dotfiles: 'allow',
@@ -867,13 +869,13 @@ export function start (
       response.sendStatus(404)
       return
     }
-    response.sendFile(join(dist, 'index.html'), {
+    response.sendFile(join(dist, request.accepts().includes('gzip') ? 'index.html.gz' : 'index.html'), {
       etag: true,
       lastModified: true,
       cacheControl: false,
       headers: {
         'Cache-Control': cacheControlNoCache,
-        'Keep-Alive': 'timeout=5'
+        'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
       }
     })
   })

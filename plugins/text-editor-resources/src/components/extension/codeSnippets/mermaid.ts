@@ -22,6 +22,8 @@ import { type Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { NodeSelection, Plugin, PluginKey, TextSelection, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 import { createLowlight } from 'lowlight'
+
+/* webpackChunkName: "vendor-mermaid" */
 import type { MermaidConfig } from 'mermaid'
 import { createRelativePositionFromTypeIndex, type RelativePosition, type Doc as YDoc } from 'yjs'
 
@@ -383,7 +385,12 @@ interface MermaidRenderResult {
 async function renderMermaidDiagram (code: string, theme: MermaidConfig['theme']): Promise<MermaidRenderResult> {
   // Has no practical effect now, but in case the Webpack
   // configuration gets changed to split the vendor bundle, it might come in handy
-  const mermaid = (await import(/* webpackMode: "lazy-once" */ 'mermaid')).default
+  const mermaid = (
+    await import(
+      /* webpackChunkName: "vendor-mermaid" */
+      'mermaid'
+    )
+  ).default
 
   const useMaxWidth = false
 
