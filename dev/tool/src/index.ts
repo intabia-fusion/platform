@@ -1043,7 +1043,7 @@ export function devTool (
     .action(async (dirName: string, cmd: { force: boolean, contentTypes: string, keepSnapshots: string }) => {
       const storage = await createFileBackupStorage(dirName)
       await compactBackup(toolCtx, storage, cmd.force, {
-        blobLimit: 5 * 1024 * 1024, // 5 MB
+        blobLimit: 5, // 5 MB
         skipContentTypes: cmd.contentTypes.split(';')
       })
     })
@@ -1327,7 +1327,7 @@ export function devTool (
           storage,
           cmd.force,
           {
-            blobLimit: 5 * 1024 * 1024, // 5 MB
+            blobLimit: 5, // 5 MB
             skipContentTypes: cmd.contentTypes !== undefined ? cmd.contentTypes.split(';') : undefined
           },
           true
