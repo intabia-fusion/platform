@@ -53,7 +53,7 @@ import {
   type Ref,
   type Timestamp
 } from '@hcengineering/core'
-import { createSystemType } from '@hcengineering/model-card'
+import card, { createSystemType } from '@hcengineering/model-card'
 import {
   Collection as CollectionType,
   Hidden,
@@ -82,7 +82,7 @@ import { generateClassNotificationTypes } from '@hcengineering/model-notificatio
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter, type Viewlet } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
 import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import templates from '@hcengineering/templates'
@@ -1354,6 +1354,26 @@ export function createModel (builder: Builder): void {
     undefined,
     PaletteColorIndexes.Pink
   )
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
+      label: contact.string.UserProfile,
+      icon: contact.icon.Person,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: contact.class.UserProfile
+    },
+    contact.ids.UserProfileNotificationGroup
+  )
+  generateClassNotificationTypes(
+    builder,
+    contact.class.UserProfile,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos'],
+    ['comments'],
+    contact.ids.UserProfileNotificationGroup
+  )
+
   builder.createDoc(core.class.Attribute, core.space.Model, {
     attributeOf: contact.class.UserProfile,
     name: 'person',

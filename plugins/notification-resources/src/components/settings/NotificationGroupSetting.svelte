@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, toIdMap } from '@hcengineering/core'
+  import core, { IdMap, Ref, toIdMap, groupByArray } from '@hcengineering/core'
   import {
     NotificationType,
     NotificationProvider,
@@ -22,9 +22,9 @@
     NotificationProviderDefaults,
     NotificationProviderSetting
   } from '@hcengineering/notification'
-  import { getResource, IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Grid, Label, ModernToggle } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Grid, Label, ModernToggle } from '@hcengineering/ui'
 
   import notification from '../../plugin'
   import { providersSettings } from '../../utils'
@@ -43,8 +43,30 @@
     .findAllSync(notification.class.NotificationProviderDefaults, {})
   const providersMap: IdMap<NotificationProvider> = toIdMap(providers)
 
-  $: types = client.getModel().findAllSync(notification.class.NotificationType, { group, hidden: { $ne: true } })
-  $: typesMap = toIdMap(types)
+  let subGroupId: Ref<NotificationGroup> =
+    client.getModel().findAllSync(notification.class.NotificationGroup, { parent: group })[0]?._id ?? group
+  let prevGroup: Ref<NotificationGroup> = group
+
+  let allTypes: NotificationType[] = []
+  let subGroups: NotificationGroup[] = []
+
+  $: if (prevGroup !== group) {
+    subGroupId = client.getModel().findAllSync(notification.class.NotificationGroup, { parent: group })[0]?._id ?? group
+    prevGroup = group
+  }
+
+  $: void client.findAll(notification.class.NotificationGroup, { parent: group }).then((result) => {
+    subGroups = result
+  })
+  $: void client.findAll(notification.class.NotificationType, { group, hidden: { $ne: true } }).then((result) => {
+    allTypes = result
+  })
+
+  $: typesMap = groupByArray(allTypes, (it) => it.subGroup ?? group)
+  $: typesById = toIdMap(allTypes)
+  $: types = typesMap.get(subGroupId ?? group) ?? []
+
+  $: subGroup = subGroups.find((it) => it._id === subGroupId)
 
   function getStatus (
     settings: Map<Ref<NotificationType>, NotificationTypeSetting[]>,
@@ -57,7 +79,7 @@
     if (prov === undefined) return false
     const providerEnabled = providerDefaults.some((it) => it.provider === provider && it.enabledTypes.includes(type))
     if (providerEnabled) return true
-    const typeValue = typesMap.get(type)
+    const typeValue = typesById.get(type)
     if (typeValue === undefined) return false
     return typeValue.defaultEnabled
   }
@@ -153,16 +175,44 @@
 
   let filteredProviders: NotificationProvider[] = []
 
-  $: void getFilteredProviders(providers, types, $providersSettings).then((result) => {
+  $: void getFilteredProviders(providers, typesMap.get(subGroupId) ?? [], $providersSettings).then((result) => {
     filteredProviders = result
   })
 
   $: column = filteredProviders.length + 1
+  $: items = subGroups.map((it) => ({ id: it._id, label: it.label, icon: it.icon }))
+
+  function sortTypes (types: NotificationType[]): NotificationType[] {
+    return types.sort((a, b) => {
+      const aAttachedTo = a.attachedToClass ?? a.objectClass
+      const bAttachedTp = b.attachedToClass ?? b.objectClass
+
+      const aIsCollection = aAttachedTo !== a.objectClass
+      const bIsCollection = bAttachedTp !== b.objectClass
+      if (aIsCollection && !bIsCollection) return 1
+      if (!aIsCollection && bIsCollection) return -1
+
+      const aLabel = a.label.split(':').pop() ?? a.label
+      const bLabel = b.label.split(':').pop() ?? b.label
+      return aLabel.toLocaleLowerCase().localeCompare(bLabel.toLocaleLowerCase())
+    })
+  }
 </script>
 
 <div class="container">
+  {#if subGroups.length > 0}
+    <DropdownLabelsIntl
+      {items}
+      kind="regular"
+      size="large"
+      icon={subGroup?.icon}
+      bind:selected={subGroupId}
+      label={notification.string.General}
+    />
+    <span class="flex mb-8" />
+  {/if}
   <Grid {column} columnGap={5} rowGap={1.5}>
-    {#each types as type}
+    {#each sortTypes(types) as type}
       <div class="flex">
         <Label label={type.label} />
       </div>

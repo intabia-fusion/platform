@@ -113,7 +113,8 @@ export default mergeIds(contactId, contact, {
   },
   ids: {
     OrganizationNotificationGroup: '' as Ref<NotificationGroup>,
-    PersonNotificationGroup: '' as Ref<NotificationGroup>
+    PersonNotificationGroup: '' as Ref<NotificationGroup>,
+    UserProfileNotificationGroup: '' as Ref<NotificationGroup>
   },
   action: {
     KickEmployee: '' as Ref<Action>,

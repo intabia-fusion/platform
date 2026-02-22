@@ -20,6 +20,7 @@ import serverCore from '@hcengineering/server-core'
 import serverCard from '@hcengineering/server-card'
 import card from '@hcengineering/card'
 import communication from '@hcengineering/communication'
+import serverActivity from '@hcengineering/server-activity'
 
 export { serverCardId } from '@hcengineering/server-card'
 
@@ -130,12 +131,7 @@ export function createModel (builder: Builder): void {
     title: [['title']]
   })
 
-  // TODO: FIXME
-  // builder.mixin(card.class.Card, core.class.Class, serverNotification.mixin.TextPresenter, {
-  //   presenter: serverCard.function.CardTextPresenter
-  // })
-  //
-  // builder.mixin(card.class.Card, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-  //   presenter: serverCard.function.CardHTMLPresenter
-  // })
+  builder.mixin(card.class.Card, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverCard.function.CardUrlPresenter
+  })
 }

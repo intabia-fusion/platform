@@ -1098,7 +1098,8 @@ export function defineNotifications (builder: Builder): void {
     core.space.Model,
     {
       label: documents.string.DocumentApplication,
-      icon: documents.icon.DocumentApplication
+      icon: documents.icon.DocumentApplication,
+      objectClass: documents.class.Document
     },
     documents.notification.DocumentsNotificationGroup
   )

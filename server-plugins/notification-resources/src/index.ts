@@ -19,10 +19,7 @@ import contact, { Employee, type Person } from '@hcengineering/contact'
 import core, {
   AccountUuid,
   AnyAttribute,
-  AttachedDoc,
   Collaborator,
-  Collection,
-  Data,
   Doc,
   getClassCollaborators,
   Ref,
@@ -35,11 +32,13 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
-import notification, { DocNotifyContext, MessageNotificationType, NotificationType } from '@hcengineering/notification'
+import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
 
 import { PushNotificationsHandler } from './push'
 import {
+  generateAttributeNotificationType,
+  getClassNotificationGroup,
   IsUserFieldValueTypeMatch,
   MeAddedInCollaboratorsNotificationTypeMatch,
   MeRemovedFromCollaboratorsNotificationTypeMatch
@@ -121,40 +120,11 @@ async function OnAttributeCreate (txes: Tx[], control: TriggerControl): Promise<
   const result: Tx[] = []
   for (const tx of txes) {
     const attribute = TxProcessor.createDoc2Doc(tx as TxCreateDoc<AnyAttribute>)
-    const group = (
-      await control.modelDb.findAll(notification.class.NotificationGroup, { objectClass: attribute.attributeOf })
-    )[0]
-    if (group === undefined) {
-      continue
-    }
-    const isCollection: boolean = core.class.Collection === attribute.type._class
-    const objectClass = !isCollection ? attribute.attributeOf : (attribute.type as Collection<AttachedDoc>).of
-    const messageClass = control.hierarchy.isDerived(objectClass, activity.class.ActivityMessage)
-      ? objectClass
-      : activity.class.DocUpdateMessage
 
-    const data: Data<MessageNotificationType> = {
-      attribute: attribute._id,
-      group: group._id,
-      field: attribute.name,
-      generated: true,
-      objectClass,
-      messageClass,
-      hidden: false,
-      defaultEnabled: false,
-      attachedToClass: attribute.attributeOf,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{doc} updated'
-      },
-      label: attribute.label
-    }
-    const id =
-      `${notification.class.MessageNotificationType}_${attribute.attributeOf}_${attribute.name}` as Ref<NotificationType>
-    result.push(
-      control.txFactory.createTxCreateDoc(notification.class.MessageNotificationType, core.space.Model, data, id)
-    )
+    const group = await getClassNotificationGroup(control, attribute.attributeOf)
+    if (group === undefined) continue
+
+    result.push(...generateAttributeNotificationType(control, attribute, group))
   }
   return result
 }

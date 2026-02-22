@@ -22,7 +22,7 @@ import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'
 import { type Location, type ResolvedLocation } from '@hcengineering/ui/src/types'
 import { type LocationData } from '@hcengineering/workbench'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(cardId, card, {
   app: {
@@ -54,9 +54,8 @@ export default mergeIds(cardId, card, {
     MasterTags: '' as Ref<Doc>,
     ManageMasterTags: '' as Ref<Doc>,
     TagRelations: '' as Ref<Doc>,
-    CardNotificationGroup: '' as Ref<NotificationGroup>,
-    CardNotification: '' as Ref<NotificationType>,
-    CardMessageNotification: '' as Ref<NotificationType>
+    FileNotificationGroup: '' as Ref<NotificationGroup>,
+    DocumentNotificationGroup: '' as Ref<NotificationGroup>
   },
   resolver: {
     Location: '' as Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>,

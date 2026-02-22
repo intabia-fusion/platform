@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref, toIdMap } from '@hcengineering/core'
+  import { Ref } from '@hcengineering/core'
   import type {
     NotificationType,
     NotificationGroup,
@@ -43,7 +43,9 @@
   import { providersSettings, typesSettings } from '../../utils'
 
   const client = getClient()
-  const groups: NotificationGroup[] = client.getModel().findAllSync(notification.class.NotificationGroup, {})
+  const groups: NotificationGroup[] = client
+    .getModel()
+    .findAllSync(notification.class.NotificationGroup, { parent: { $exists: false } })
   const preferencesGroups: NotificationPreferencesGroup[] = client
     .getModel()
     .findAllSync(notification.class.NotificationPreferencesGroup, {})
@@ -108,7 +110,7 @@
   <div class="hulyComponent-content__container columns">
     <div class="hulyComponent-content__column navigation py-2">
       <Scroller shrink>
-        {#each preferencesGroups as preferenceGroup}
+        {#each preferencesGroups as preferenceGroup (preferenceGroup._id)}
           <NavItem
             icon={preferenceGroup.icon}
             label={preferenceGroup.label}
@@ -125,7 +127,7 @@
         {#if preferencesGroups.length > 0 && groups.length > 0}
           <div class="antiNav-divider line" />
         {/if}
-        {#each groups as gr}
+        {#each groups as gr (gr._id)}
           {@const types = client
             .getModel()
             .findAllSync(notification.class.NotificationType, { group: gr._id, hidden: { $ne: true } }, { limit: 1 })}

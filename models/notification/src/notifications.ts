@@ -97,7 +97,8 @@ export function generateClassNotificationTypes (
   _class: Ref<Class<Doc>>,
   group: Ref<NotificationGroup>,
   ignoreKeys: string[] = [],
-  defaultEnabled: string[] = []
+  defaultEnabled: string[] = [],
+  subGroup?: Ref<NotificationGroup>
 ): void {
   const hierarchy = builder.hierarchy
   const attributes = hierarchy.getAllAttributes(
@@ -119,6 +120,7 @@ export function generateClassNotificationTypes (
       attribute: attribute._id,
       field: attribute.name,
       group,
+      subGroup,
       generated: true,
       objectClass,
       messageClass,
