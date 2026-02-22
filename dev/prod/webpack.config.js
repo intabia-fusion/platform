@@ -44,7 +44,7 @@ const dev =
   devServerTest
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
-const doValidate = true
+const doValidate = !prod || process.env.DO_VALIDATE === 'true'
 
 const doCompression = prod
 
