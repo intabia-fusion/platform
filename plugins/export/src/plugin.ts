@@ -16,7 +16,7 @@
 import type { Class, Client, Doc, Ref } from '@hcengineering/core'
 import { type IntlString, type Metadata, type Plugin, plugin, type Resource, type Asset } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { NotificationGroup, NotificationType } from '@hcengineering/notification'
+import type { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
 import type { ExportResultRecord } from './types'
 
 export const exportId = 'export' as Plugin
@@ -24,7 +24,7 @@ export const exportId = 'export' as Plugin
 export const exportPlugin = plugin(exportId, {
   ids: {
     ImportNotificationGroup: '' as Ref<NotificationGroup>,
-    ImportedDocumentsNotification: '' as Ref<NotificationType>
+    ImportedDocumentsNotification: '' as Ref<TxNotificationType>
   },
   class: {
     ExportResultRecord: '' as Ref<Class<ExportResultRecord>>

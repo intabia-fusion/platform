@@ -49,6 +49,7 @@ import {
   ModelMiddleware
 } from '@hcengineering/middleware'
 import notification from '@hcengineering/notification'
+import contact from '@hcengineering/contact'
 import { setMetadata } from '@hcengineering/platform'
 import { createClient, getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import {
@@ -469,7 +470,7 @@ export function createServer (
           url: targetWsInfo.url
         }
 
-        const targetToken = generateToken(decodedToken.account, targetWorkspace, {
+        const targetToken = generateToken(systemAccountUuid, targetWorkspace, {
           service: 'export'
         })
 
@@ -542,6 +543,7 @@ export function createServer (
           if (exportResult.success && exportResult.exportedCount > 0) {
             await sendExportCompletionNotification(
               measureCtx,
+              decodedToken.account,
               targetTxOps,
               targetWorkspace,
               targetWsIds,
@@ -687,14 +689,20 @@ async function sendSuccessNotification (
   exportDrive: Ref<Drive>,
   archiveName: string
 ): Promise<void> {
-  const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-    objectId: exportDrive,
-    objectClass: drive.class.Drive,
-    objectSpace: core.space.Space,
-    user: account
-  })
+  const personSpace = await client.findOne(contact.class.PersonSpace, { account })
+  if (personSpace == null) return
 
-  await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+  const context = await client.findOne(notification.class.DocNotifyContext, { objectId: exportDrive, user: account })
+  const docNotifyContextId =
+    context?._id ??
+    (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
+      objectId: exportDrive,
+      objectClass: drive.class.Drive,
+      objectSpace: core.space.Space,
+      user: account
+    }))
+
+  await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
     user: account,
     objectId: exportDrive,
     objectClass: drive.class.Drive,
@@ -724,14 +732,20 @@ async function sendFailureNotification (
     return
   }
 
-  const docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-    objectId,
-    objectClass,
-    objectSpace: _objectSpace,
-    user: account
-  })
+  const personSpace = await client.findOne(contact.class.PersonSpace, { account })
+  if (personSpace == null) return
 
-  await client.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
+  const context = await client.findOne(notification.class.DocNotifyContext, { objectId, user: account })
+  const docNotifyContextId =
+    context?._id ??
+    (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
+      objectId,
+      objectClass,
+      objectSpace: _objectSpace,
+      user: account
+    }))
+
+  await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
     user: account,
     objectId,
     objectClass,
