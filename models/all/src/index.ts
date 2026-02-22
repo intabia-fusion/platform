@@ -112,7 +112,7 @@ import trainings, { trainingId, createModel as trainingModel } from '@hcengineer
 import { achievementId, createModel as achievementModel } from '@hcengineering/model-achievement'
 import { billingId, createModel as billingModel } from '@hcengineering/model-billing'
 import chat, { chatId, createModel as chatModel } from '@hcengineering/model-chat'
-import { communicationId, createModel as communicationModel } from '@hcengineering/model-communication'
+import communication, { communicationId, createModel as communicationModel } from '@hcengineering/model-communication'
 import { emojiId, createModel as emojiModel } from '@hcengineering/model-emoji'
 import { inboxId, createModel as inboxModel } from '@hcengineering/model-inbox'
 import { presenceId, createModel as presenceModel } from '@hcengineering/model-presence'
@@ -156,6 +156,9 @@ export default function buildModel (): Builder {
     presentation.class.ComponentPointExtension,
     presentation.class.ObjectSearchCategory,
     notification.class.NotificationGroup,
+    notification.class.NotificationType,
+    notification.class.TxNotificationType,
+    notification.class.MessageNotificationType,
     view.class.Action,
     contact.class.ChannelProvider,
     setting.class.IntegrationType,
@@ -452,7 +455,13 @@ export default function buildModel (): Builder {
     [
       chatModel,
       chatId,
-      { label: chat.string.Chat, hidden: true, enabled: false, beta: true, classFilter: defaultFilter }
+      {
+        label: chat.string.Chat,
+        hidden: true,
+        enabled: false,
+        beta: true,
+        classFilter: [...defaultFilter, card.class.MasterTag, chat.masterTag.Thread]
+      }
     ],
     [
       inboxModel,
@@ -464,7 +473,13 @@ export default function buildModel (): Builder {
     [
       communicationModel,
       communicationId,
-      { label: setting.string.Configure, hidden: true, enabled: false, beta: true, classFilter: defaultFilter }
+      {
+        label: setting.string.Configure,
+        hidden: true,
+        enabled: false,
+        beta: true,
+        classFilter: [...defaultFilter, card.class.MasterTag, communication.type.Direct, communication.type.Poll]
+      }
     ],
     [mailModel, mailId],
     [

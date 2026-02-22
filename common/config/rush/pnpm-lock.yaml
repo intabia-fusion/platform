@@ -6520,12 +6520,18 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-notification':
+        specifier: workspace:^0.7.0
+        version: link:../notification
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
       '@hcengineering/model-workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
+      '@hcengineering/notification':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -6720,9 +6726,15 @@ importers:
       '@hcengineering/model-emoji':
         specifier: workspace:^0.7.0
         version: link:../emoji
+      '@hcengineering/model-notification':
+        specifier: workspace:^0.7.0
+        version: link:../notification
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
+      '@hcengineering/notification':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
