@@ -10,7 +10,7 @@
     "packagep": "rm -rf ./dist && cross-env NODE_ENV=production webpack --stats-error-details --progress && echo 'done'",
     "analyze": "rm -rf ./dist && cross-env NODE_ENV=production DO_ANALYZE=true webpack --profile --json > stats.json",
     "show": "webpack-bundle-analyzer stats.json dist",
-    "dev-server": "cross-env NODE_ENV=production USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
+    "dev-server": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
     "dev-server-p": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server webpack serve",
     "dev-server-test": "cross-env USE_CACHE=false CLIENT_TYPE=dev-server-test webpack serve",
     "dev-worker": "cross-env USE_CACHE=false CLIENT_TYPE=dev-worker webpack serve",
