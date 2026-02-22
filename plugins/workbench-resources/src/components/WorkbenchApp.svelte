@@ -43,7 +43,7 @@
     {#await connect(getMetadata(workbenchRes.metadata.PlatformTitle) ?? 'Platform')}
       <AppLoading>
         {#if ($workspaceCreating ?? -1) >= 0}
-          <div class="ml-1">
+          <div class="ml-1 flex-no-shrink">
             <Label label={workbenchRes.string.WorkspaceCreating} />
             {$workspaceCreating} %
           </div>
