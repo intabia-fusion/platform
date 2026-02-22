@@ -317,9 +317,9 @@ export function createModel (builder: Builder): void {
     TEventButton
   )
 
-  // TODO: FIXME
+  // TODO: FIXME LATER
   // builder.createDoc(
-  //   notification.class.1NotificationType,
+  //   notification.class.NotificationType,
   //   core.space.Model,
   //   {
   //     hidden: false,
@@ -339,8 +339,6 @@ export function createModel (builder: Builder): void {
   //   },
   //   process.ids.ProcessToDoCreated
   // )
-
-  // TODO: FIXME
   // builder.createDoc(
   //   notification.class.NotificationType,
   //   core.space.Model,
