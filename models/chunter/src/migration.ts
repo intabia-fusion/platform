@@ -26,7 +26,8 @@ import core, {
   DOMAIN_COLLABORATOR,
   type Collaborator,
   DOMAIN_SPACE,
-  generateId
+  generateId,
+  type AccountUuid
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -246,12 +247,18 @@ async function createChats (client: MigrationClient): Promise<void> {
     isPinned: true
   })) as DocNotifyContext[]
   const spaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
+  const processed = new Map<Ref<Doc>, AccountUuid[]>()
   while (true) {
     const collaborators = (await iterator.next(500)) ?? []
     if (collaborators.length === 0) break
 
     const res: Chat[] = []
     for (const collaborator of collaborators) {
+      if (processed.get(collaborator.attachedTo)?.includes(collaborator.collaborator) === true) continue
+      processed.set(
+        collaborator.attachedTo,
+        (processed.get(collaborator.attachedTo) ?? []).concat([collaborator.collaborator])
+      )
       const space = spaces.find((it) => it.account === collaborator.collaborator)
       if (space === undefined) continue
       if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
@@ -357,7 +364,7 @@ export const chunterOperation: MigrateOperation = {
         }
       },
       {
-        state: 'create-chats-v2',
+        state: 'create-chats-v1',
         mode: 'upgrade',
         func: createChats
       },

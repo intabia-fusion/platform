@@ -41,6 +41,7 @@ import {
   getIndex,
   getSchema,
   getSchemaAndFields,
+  customIndexes,
   type Schema,
   type SchemaAndFields,
   translateDomain
@@ -154,27 +155,39 @@ function parseDataType (type: string): DataType {
 
 async function createTable (client: postgres.Sql, domain: string): Promise<void> {
   const schema = getSchema(domain)
+  const indexes = customIndexes[domain]
+
   const fields: string[] = []
   for (const key in schema) {
     const val = schema[key]
     fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
   }
   const colums = fields.join(', ')
-  const res = await client.unsafe(`CREATE TABLE IF NOT EXISTS ${domain} (
+  await client.unsafe(`CREATE TABLE IF NOT EXISTS ${domain} (
       "workspaceId" uuid NOT NULL,
       ${colums}, 
       data JSONB NOT NULL,
       PRIMARY KEY("workspaceId", _id)
     )`)
-  if (res.count > 0) {
-    for (const key in schema) {
-      const val = schema[key]
-      if (val.index) {
-        await client.unsafe(`
-          CREATE INDEX ${domain}_${key} ON ${domain} ${getIndex(val)} ("${key}")
+
+  for (const key in schema) {
+    const val = schema[key]
+    if (val.index) {
+      await client.unsafe(`
+          CREATE INDEX IF NOT EXISTS ${domain}_${key} ON ${domain} ${getIndex(val)} ("${key}")
         `)
+    }
+    fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
+  }
+
+  if (indexes !== undefined) {
+    for (const val of indexes) {
+      if ('unique' in val) {
+        const uniqueFields: string[] = ['workspaceId', ...val.unique]
+        const indexName = `${domain}_unique_${uniqueFields.join('_')}`
+        const fields = uniqueFields.map((f) => `"${f}"`).join(', ')
+        await client.unsafe(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${domain} (${fields})`)
       }
-      fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
     }
   }
 }

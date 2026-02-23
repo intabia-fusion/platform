@@ -323,6 +323,14 @@ const githubLogin: Schema = {
   }
 }
 
+export const customIndexes: Record<string, { [key in 'unique']: string[] }[]> = {
+  [translateDomain('chunter_doc')]: [
+    {
+      unique: ['attachedTo', 'attachedToClass', 'account']
+    }
+  ]
+}
+
 export function addSchema (domain: string, schema: Schema): void {
   domainSchemas[translateDomain(domain)] = schema
   domainSchemaFields.set(domain, createSchemaFields(schema))
