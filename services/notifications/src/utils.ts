@@ -66,7 +66,7 @@ export async function getWorkspaceInfo (token: string): Promise<WorkspaceLoginIn
   const timeout = -1
   while (true) {
     try {
-      const workspaceInfo = await accountClient.selectWorkspace('', 'external', externalRegions)
+      const workspaceInfo = await accountClient.selectWorkspace('', 'internal', externalRegions)
 
       if (workspaceInfo === undefined) {
         throw new Error('Workspace not found')
