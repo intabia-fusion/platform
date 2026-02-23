@@ -133,6 +133,11 @@
     "OpenChatInSidebar": "Apri chat nella barra laterale",
     "NoThreadsYet": "Non ci sono ancora discussioni.",
     "SummarizeMessages": "Riassumere la discussione",
-    "DeleteMessageDescription": "Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata."
+    "DeleteMessageDescription": "Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata.",
+    "Star": "Aggiungi {label} ai preferiti",
+    "Unstar": "Rimuovi {label} dai preferiti",
+    "Hide": "Nascondi {label}",
+    "Leave": "Lascia {label}",
+    "HideAll": "Nascondi tutto"
   }
 }

@@ -28,9 +28,9 @@
     "Read": "Gelesen",
     "Unread": "Ungelesen",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Aktualisiert von {senderName}",
-    "CommonNotificationChanged": "{senderName} hat {property} geändert",
-    "CommonNotificationChangedProperty": "{senderName} hat {property} zu \"{newValue}\" geändert",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Aktualisiert von {senderName}",
     "ChangedCollaborators": "Mitwirkende geändert",
     "NewCollaborators": "Neue Mitwirkende",
     "RemovedCollaborators": "Entfernte Mitwirkende",
@@ -58,6 +58,8 @@
     "SoundNotificationsDescription": "Erhalten Sie Tonbenachrichtigungen für Ereignisse.",
     "NoAccessToObject": "Sie haben keinen Zugriff mehr auf dieses Objekt",
     "ViewIn": "Ansehen in {app}",
-    "Clear": "Löschen"
+    "Clear": "Löschen",
+    "YouAddedAsCollaborator": "Sie wurden als Mitwirkender hinzugefügt",
+    "YouRemovedFromCollaborators": "Sie wurden als Mitwirkender entfernt"
   }
 }

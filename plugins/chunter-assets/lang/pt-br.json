@@ -132,6 +132,12 @@
     "ViewingArchivedChannel": "Você está vendo um canal arquivado",
     "OpenChatInSidebar": "Abrir chat na barra lateral",
     "NoThreadsYet": "Não há conversas ainda.",
-    "SummarizeMessages": "Resumir discussão"
+    "SummarizeMessages": "Resumir discussão",
+    "DeleteMessageDescription": "Tem certeza de que deseja excluir esta mensagem? Esta ação não pode ser desfeita.",
+    "Star": "Destacar {label}",
+    "Unstar": "Remover destaque de {label}",
+    "Hide": "Ocultar {label}",
+    "Leave": "Sair de {label}",
+    "HideAll": "Ocultar tudo"
   }
 }

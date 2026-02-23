@@ -56,6 +56,7 @@
     "AttributeSetTo": "{name} nastaveno na {value}",
     "AddedTag": "Přidaný štítek: {title}",
     "RemovedTag": "Odebráný štítek: {title}",
-    "ValueTooLarge": "Hodnota je příliš velká na zobrazení"
+    "ValueTooLarge": "Hodnota je příliš velká na zobrazení",
+    "SentAttachments": "Odeslán příloha"
   }
 }

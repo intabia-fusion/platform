@@ -28,9 +28,9 @@
     "Read": "既読",
     "Unread": "未読",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "{senderName} が更新しました",
-    "CommonNotificationChanged": "{senderName} が {property} を変更しました",
-    "CommonNotificationChangedProperty": "{senderName} が {property} を \"{newValue}\" に変更しました",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "{senderName} が更新しました",
     "ChangedCollaborators": "コラボレーターを変更しました",
     "NewCollaborators": "新しいコラボレーター",
     "RemovedCollaborators": "削除されたコラボレーター",
@@ -58,6 +58,8 @@
     "SoundNotificationsDescription": "イベントのサウンド通知を受け取ります。",
     "NoAccessToObject": "このオブジェクトへのアクセス権がありません",
     "ViewIn": "{app} で表示",
-    "Clear": "クリア"
+    "Clear": "クリア",
+    "YouAddedAsCollaborator": "コラボレーターに追加されました",
+    "YouRemovedFromCollaborators": "コラボレーターから削除されました"
   }
 }

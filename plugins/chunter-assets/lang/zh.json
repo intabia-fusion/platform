@@ -133,6 +133,11 @@
     "OpenChatInSidebar": "在侧边栏中打开聊天",
     "NoThreadsYet": "还没有线程。",
     "SummarizeMessages": "总结讨论",
-    "DeleteMessageDescription": "你确定要删除此消息吗？此操作无法撤销。"
+    "DeleteMessageDescription": "你确定要删除此消息吗？此操作无法撤销。",
+    "Star": "星标{label}",
+    "Unstar": "取消星标{label}",
+    "Hide": "隐藏{label}",
+    "Leave": "离开{label}",
+    "HideAll": "全部隐藏"
   }
 }

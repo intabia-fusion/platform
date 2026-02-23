@@ -20,6 +20,8 @@
     "Cancel": "Отменить",
     "Cancelled": "Отменен",
     "NewRequest": "Новый запрос",
-    "CancelRequest": "Отмена запроса"
+    "CancelRequest": "Отмена запроса",
+    "NewRequestNotification": "Новый {name}",
+    "CancelRequestNotification": "{name} отменен"
   }
 }
