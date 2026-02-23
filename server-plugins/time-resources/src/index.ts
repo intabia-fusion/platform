@@ -674,8 +674,6 @@ const TodoCreateNotification: CreateNotificationFunc = async (
 
   if (todo.user !== receiver.employeeRef) return undefined
 
-  // TODO: FIXME
-  // const content = await getNotificationContent(tx, employee._id, senderInfo, todo, control)
   return {
     header: time.string.ToDo,
     headerIcon: time.icon.Planned,
