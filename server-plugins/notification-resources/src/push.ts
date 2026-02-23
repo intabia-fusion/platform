@@ -14,7 +14,7 @@
 //
 
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import serverNotification, { PUSH_NOTIFICATION_TITLE_SIZE } from '@hcengineering/server-notification'
+import serverNotification from '@hcengineering/server-notification'
 import {
   AccountUuid,
   Class,
@@ -37,7 +37,7 @@ import notification, {
 } from '@hcengineering/notification'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import serverView from '@hcengineering/server-view'
-import { getMetadata, getResource, translate } from '@hcengineering/platform'
+import { getMetadata, getResource } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import contact, {
@@ -48,6 +48,8 @@ import contact, {
   PersonSpace
 } from '@hcengineering/contact'
 import { getPerson } from '@hcengineering/server-contact'
+
+import { getTranslatedNotificationContent } from './utils'
 
 async function createPush (
   control: TriggerControl,
@@ -265,19 +267,4 @@ export async function PushNotificationsHandler (
   }
 
   return res
-}
-
-async function getTranslatedNotificationContent (
-  data: Data<InboxNotification>
-): Promise<{ title: string, body: string, [key: string]: string }> {
-  const params = { ...data.intlParams }
-
-  for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
-    params[k] = await translate(v, params)
-  }
-
-  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params)
-  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params)
-
-  return { title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body }
 }

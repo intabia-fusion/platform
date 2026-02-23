@@ -19,6 +19,7 @@ import contact from '@hcengineering/model-contact'
 import { type Builder } from '@hcengineering/model'
 import { type MessageNotificationType } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
+import love from '@hcengineering/model-love'
 
 import gmail from './plugin'
 
@@ -77,7 +78,11 @@ export function defineNotifications (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: gmail.providers.EmailNotificationProvider,
-    ignoredTypes: [gmail.ids.EmailNotification],
+    ignoredTypes: [
+      gmail.ids.EmailNotification,
+      activity.ids.AddReactionNotification,
+      love.ids.MeetingMinutesChatNotification
+    ],
     enabledTypes: []
   })
 }

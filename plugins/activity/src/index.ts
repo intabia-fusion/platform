@@ -349,7 +349,6 @@ export default plugin(activityId, {
     ActivityInfoMessagePreview: '' as AnyComponent
   },
   ids: {
-    MentionNotification: '' as Ref<Doc>,
     AddReactionNotification: '' as Ref<any>
   },
   extension: {

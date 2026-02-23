@@ -269,7 +269,6 @@ async function OnDocRemove (txes: TxCUD<Doc>[], control: TriggerControl): Promis
 export * from './push'
 export * from './types'
 export * from './utils'
-export * from './text'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({

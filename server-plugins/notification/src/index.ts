@@ -92,7 +92,7 @@ export interface MentionRef {
   mentionClass: Ref<Class<Person>>
 }
 
-export const NOTIFICATION_BODY_SIZE = 100
+export const NOTIFICATION_BODY_SIZE = 150
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
 
 export * from './utils'

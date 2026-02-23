@@ -40,7 +40,7 @@ import notification, {
 import { translate } from '@hcengineering/platform'
 import { getAccountBySocialId, getPerson } from '@hcengineering/server-contact'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
-import { getNotificationLink } from '@hcengineering/server-notification-resources'
+import { getNotificationInboxLink } from '@hcengineering/server-notification-resources'
 import {
   type TelegramNotificationQueueMessage,
   TelegramQueueMessageType,
@@ -225,7 +225,7 @@ async function getTranslatedData (
     title,
     quote,
     body,
-    link: await getNotificationLink(control, doc, message?._id)
+    link: await getNotificationInboxLink(control, doc, message?._id)
   }
 }
 

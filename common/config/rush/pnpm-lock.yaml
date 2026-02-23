@@ -7742,6 +7742,9 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-love':
+        specifier: workspace:^0.7.0
+        version: link:../love
       '@hcengineering/model-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
@@ -12454,6 +12457,9 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-love':
+        specifier: workspace:^0.7.0
+        version: link:../love
       '@hcengineering/model-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
@@ -33027,6 +33033,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity-resources':
+        specifier: workspace:^0.7.0
+        version: link:../activity-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact

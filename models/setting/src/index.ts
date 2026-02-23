@@ -661,7 +661,7 @@ export function createModel (builder: Builder): void {
       notifyAuthor: true,
       templates: {
         textTemplate: 'Integration with {doc} was disabled',
-        htmlTemplate: '<p>Integration with {doc} was disabled</p>',
+        htmlTemplate: '<p>Integration with {doc} was disabled</p> <p>{link}</p>',
         subjectTemplate: 'Integration with {doc} was disabled'
       },
       defaultEnabled: true

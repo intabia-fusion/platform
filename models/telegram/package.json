@@ -44,6 +44,7 @@
     "@hcengineering/model-notification": "workspace:^0.7.0",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/model-contact": "workspace:^0.7.0",
+    "@hcengineering/model-love": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/telegram": "workspace:^0.7.0",

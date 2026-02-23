@@ -46,6 +46,7 @@
   const groups: NotificationGroup[] = client
     .getModel()
     .findAllSync(notification.class.NotificationGroup, { parent: { $exists: false } })
+    .sort((a, b) => (a.order ?? 99999) - (b.order ?? 99999))
   const preferencesGroups: NotificationPreferencesGroup[] = client
     .getModel()
     .findAllSync(notification.class.NotificationPreferencesGroup, {})

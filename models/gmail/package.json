@@ -45,6 +45,7 @@
     "@hcengineering/gmail-resources": "workspace:^0.7.0",
     "@hcengineering/model-attachment": "workspace:^0.7.0",
     "@hcengineering/model-view": "workspace:^0.7.0",
+    "@hcengineering/model-love": "workspace:^0.7.0",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/model-notification": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",

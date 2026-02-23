@@ -17,17 +17,42 @@ import core, {
   AttachedDoc,
   Class,
   Collection,
+  concatLink,
   Data,
   Doc,
   includesAny,
+  Markup,
+  notEmpty,
   Ref,
   Space,
   Tx
 } from '@hcengineering/core'
-import notification, { MessageNotificationType, NotificationGroup, NotificationType } from '@hcengineering/notification'
-import { TriggerControl } from '@hcengineering/server-core'
-import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
-import activity, { DocUpdateMessage } from '@hcengineering/activity'
+import notification, {
+  ActivityInboxNotification,
+  InboxNotification,
+  MentionInboxNotification,
+  MessageNotificationType,
+  NotificationGroup,
+  notificationId,
+  NotificationType
+} from '@hcengineering/notification'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import {
+  NOTIFICATION_BODY_SIZE,
+  PUSH_NOTIFICATION_TITLE_SIZE,
+  Receiver,
+  TypeMatchClient,
+  TypeMatchFunc
+} from '@hcengineering/server-notification'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { getMetadata, getResource, translate } from '@hcengineering/platform'
+import { workbenchId } from '@hcengineering/workbench'
+import { encodeObjectURI } from '@hcengineering/view'
+import serverView from '@hcengineering/server-view'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
+import { markupToText } from '@hcengineering/text-core'
+
+import { TemplateContent } from './types'
 
 export const IsUserFieldValueTypeMatch: TypeMatchFunc = (
   _client: TypeMatchClient,
@@ -135,4 +160,174 @@ export function generateAttributeNotificationType (
     `${notification.class.MessageNotificationType}_${attribute.attributeOf}_${attribute.name}` as Ref<NotificationType>
   res.push(control.txFactory.createTxCreateDoc(notification.class.MessageNotificationType, core.space.Model, data, id))
   return res
+}
+
+export async function getNotificationMessages (
+  control: TriggerControl,
+  notifications: InboxNotification[]
+): Promise<Map<Ref<InboxNotification>, ActivityMessage | undefined>> {
+  const { hierarchy } = control
+
+  const ids: Ref<ActivityMessage>[] = []
+  const map = new Map<Ref<InboxNotification>, Ref<ActivityMessage> | undefined>()
+
+  for (const n of notifications) {
+    if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
+      const activityNotification = n as ActivityInboxNotification
+      ids.push(activityNotification.attachedTo)
+      map.set(n._id, activityNotification.attachedTo)
+    } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
+      const mentionNotification = n as MentionInboxNotification
+      if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
+        ids.push(mentionNotification.mentionedIn as Ref<ActivityMessage>)
+        map.set(n._id, mentionNotification.mentionedIn as Ref<ActivityMessage>)
+      }
+    }
+  }
+
+  if (ids.length === 0) return new Map()
+
+  const messages = await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: { $in: ids } })
+
+  return new Map(
+    map.entries().map(([notificationId, messageId]) => [notificationId, messages.find((msg) => msg._id === messageId)])
+  )
+}
+
+export async function getTranslatedNotificationContent (
+  data: Data<InboxNotification>
+): Promise<{ title: string, body: string, [key: string]: string }> {
+  const params = { ...data.intlParams }
+
+  for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
+    params[k] = await translate(v, params)
+  }
+
+  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params)
+  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params)
+
+  return { ...params, title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body: body.slice(0, NOTIFICATION_BODY_SIZE) }
+}
+
+export async function getContentByTemplate (
+  control: TriggerControl,
+  doc: Doc,
+  _types: Ref<NotificationType>[],
+  inboxNotification: InboxNotification,
+  message: ActivityMessage | undefined
+): Promise<TemplateContent | undefined> {
+  const { hierarchy, modelDb } = control
+  const types = _types.map((it) => modelDb.getObject(it)).filter(notEmpty)
+
+  const type = types.find((it) => it.templates != null)
+  const templates = type?.templates ?? {
+    textTemplate: '{body}',
+    htmlTemplate: '<p>{body}.</p> <p>{link}</p>',
+    subjectTemplate: '{doc}'
+  }
+
+  const params: Record<string, string> = await getTranslatedNotificationContent(inboxNotification)
+
+  const title = (await getDocTitle(control, doc)) ?? ''
+  const url = (inboxNotification.intlParams?.url ?? (await getDocUrl(control, doc)))?.toString()
+  const identifier = (inboxNotification.intlParams?.identifier ?? (await getDocIdentifier(control, doc)))?.toString()
+
+  const titleWithIdentifier = identifier != null ? `${identifier}: ${title}` : title
+  const htmlTitle = url != null ? `<a href='${url}'>${titleWithIdentifier}</a>` : titleWithIdentifier
+
+  if (url != null) {
+    params.url = url
+  }
+  if (identifier != null) {
+    params.identifier = identifier
+  }
+
+  if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
+    const markup: Markup | undefined = message?.message ?? (inboxNotification as MentionInboxNotification).markup
+    const text = markup !== undefined ? markupToText(markup) : undefined
+    params.body = text ?? params.body
+    params.message = text ?? params.message
+  } else if (message !== undefined) {
+    params.message = message.message !== undefined ? markupToText(message.message) : (params.message ?? '')
+  } else if (params.message === undefined) {
+    params.message = params.body ?? ''
+  }
+
+  const inboxLink = await getNotificationInboxLink(control, doc, message?._id)
+  const app = control.branding?.title ?? 'Huly'
+
+  const inboxLinkText = await translate(notification.string.ViewIn, { app })
+
+  params.link = `<a href='${inboxLink}'>${inboxLinkText}</a>`
+  const senderName = (inboxNotification?.intlParams?.senderName ?? 'System').toString()
+
+  const text = fillTemplate(templates.textTemplate, senderName, titleWithIdentifier, params)
+  const html = fillTemplate(templates.htmlTemplate, senderName, htmlTitle, params)
+  const subject = fillTemplate(templates.subjectTemplate, senderName, titleWithIdentifier, params)
+
+  if (subject === '') return
+
+  return {
+    text,
+    html,
+    subject
+  }
+}
+
+export async function getNotificationInboxLink (
+  control: TriggerControl,
+  doc: Doc,
+  message?: Ref<ActivityMessage>
+): Promise<string> {
+  const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
+  const provider = linkProviders.find(({ _id }) => _id === doc._class)
+
+  let id: string = doc._id
+
+  if (provider !== undefined) {
+    const encodeFn = await getResource(provider.encode)
+
+    id = await encodeFn(doc, control)
+  }
+
+  let thread: string | undefined
+
+  if (control.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+    const id = (doc as ActivityMessage)._id
+
+    if (message === undefined) {
+      message = id
+    } else {
+      thread = id
+    }
+  }
+
+  const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
+  const path = [workbenchId, control.workspace.url, notificationId, encodeObjectURI(id, doc._class), thread]
+    .filter((x): x is string => x !== undefined)
+    .map((p) => encodeURIComponent(p))
+    .join('/')
+
+  const link = concatLink(front, path)
+
+  return message !== undefined ? `${link}?message=${message}` : link
+}
+
+function fillTemplate (template: string, sender: string, doc: string, params: Record<string, string> = {}): string {
+  let res = replaceAll(template, '{sender}', sender)
+  res = replaceAll(res, '{doc}', doc)
+
+  for (const key in params) {
+    res = replaceAll(res, `{${key}}`, params[key])
+  }
+
+  return res
+}
+
+function replaceAll (str: string, find: string, replace: string): string {
+  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace)
+}
+
+function escapeRegExp (str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

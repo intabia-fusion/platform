@@ -10,25 +10,26 @@ export function buildNotifications (builder: Builder): void {
     notification.class.TxNotificationType,
     core.space.Model,
     {
-      hidden: true,
+      hidden: false,
       generated: false,
       label: activity.string.Reactions,
       group: notification.ids.NotificationGroup,
       txClasses: [core.class.TxCreateDoc],
       objectClass: activity.class.Reaction,
       attachedToClass: activity.class.ActivityMessage,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{sender} reacted to {doc}: {reaction}',
-        htmlTemplate: '<p><b>{sender}</b> reacted to {doc}: {reaction}</p>',
-        subjectTemplate: 'Reaction on {doc}'
-      }
+      defaultEnabled: false
     },
     activity.ids.AddReactionNotification
   )
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.InboxNotificationProvider,
+    ignoredTypes: [],
+    enabledTypes: [activity.ids.AddReactionNotification]
+  })
+
+  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+    provider: notification.providers.PushNotificationProvider,
     ignoredTypes: [],
     enabledTypes: [activity.ids.AddReactionNotification]
   })

@@ -12,7 +12,8 @@ export function defineNotifications (builder: Builder): void {
     core.space.Model,
     {
       label: notification.string.Notifications,
-      icon: notification.icon.Notifications
+      icon: notification.icon.Notifications,
+      order: 0
     },
     notification.ids.NotificationGroup
   )
@@ -75,7 +76,7 @@ export function defineNotifications (builder: Builder): void {
     {
       label: activity.string.Mentions,
       generated: false,
-      hidden: true,
+      hidden: false,
       group: notification.ids.NotificationGroup,
       txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc, core.class.TxRemoveDoc],
       attrTypes: [core.class.TypeMarkup, core.class.TypeCollaborativeDoc],

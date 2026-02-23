@@ -136,7 +136,7 @@ export function createModel (builder: Builder): void {
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} sent you a request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a request for the {doc}</p>',
+        htmlTemplate: '<p><b>{sender}</b> sent you a request for the {doc}</p> <p>{link}</p>',
         subjectTemplate: '{doc}'
       }
     },
@@ -158,7 +158,7 @@ export function createModel (builder: Builder): void {
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} canceled the request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> canceled the request for the {doc}</p>',
+        htmlTemplate: '<p><b>{sender}</b> canceled the request for the {doc}</p> <p>{link}</p>',
         subjectTemplate: '{doc}'
       }
     },

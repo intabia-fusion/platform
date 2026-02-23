@@ -1120,7 +1120,7 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
+        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
         subjectTemplate: '{title}'
       }
     },
@@ -1143,7 +1143,7 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: false,
       templates: {
         textTemplate: '{sender} changed {doc} status',
-        htmlTemplate: '<p>{sender} changed {doc} status</p>',
+        htmlTemplate: '<p>{sender} changed {doc} status</p> <p>{link}</p>',
         subjectTemplate: '{doc} status changed'
       }
     },
@@ -1166,7 +1166,7 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} assigned you as a co-author of {doc}',
-        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p>',
+        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>',
         subjectTemplate: 'Co-authoring assignment for {doc}'
       }
     },

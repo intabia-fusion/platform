@@ -153,7 +153,7 @@ function defineNotifications (builder: Builder): void {
       notificationMessage: tracker.string.IssueAssignedToYou,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
       priority: 200,

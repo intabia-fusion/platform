@@ -682,7 +682,7 @@ export function createModel (builder: Builder): void {
     {
       label: chunter.string.Chat,
       generated: false,
-      hidden: true,
+      hidden: false,
       messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: love.class.MeetingMinutes,
