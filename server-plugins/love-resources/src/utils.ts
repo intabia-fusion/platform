@@ -18,7 +18,9 @@ export async function getInviteAllowedProviders (
       ![notification.providers.PushNotificationProvider, notification.providers.SoundNotificationProvider].includes(
         provider._id
       )
-    ) { continue }
+    ) {
+      continue
+    }
 
     const allowed = await isProviderAllowed(control, provider, socialIds)
 
