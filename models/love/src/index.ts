@@ -74,7 +74,7 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
 import media from '@hcengineering/media'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
+import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
@@ -693,6 +693,21 @@ export function createModel (builder: Builder): void {
       group: love.ids.LoveNotificationGroup
     },
     love.ids.MeetingMinutesChatNotification
+  )
+
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
+    core.space.Model,
+    {
+      label: love.string.Invite,
+      generated: false,
+      hidden: true,
+      objectClass: love.class.UserMeetingInvite,
+      txClasses: [],
+      defaultEnabled: true,
+      group: love.ids.LoveNotificationGroup
+    },
+    love.ids.InviteNotification
   )
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
