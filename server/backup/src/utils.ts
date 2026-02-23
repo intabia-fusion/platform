@@ -345,7 +345,7 @@ export async function compactBackup (
   storage: BackupStorage,
   force: boolean = false,
   opt?: {
-    blobLimit?: number
+    blobLimit?: number // In megabytes
     skipContentTypes?: string[]
     msg?: Record<string, any>
   },
@@ -613,7 +613,7 @@ export async function compactBackup (
                 digest.delete(doc._id)
                 return
               }
-              if (opt?.blobLimit !== undefined && opt?.blobLimit > 0 && bsize > opt.blobLimit) {
+              if (opt?.blobLimit !== undefined && opt?.blobLimit > 0 && bsize > opt.blobLimit * 1024 * 1024) {
                 skipBlobs++
                 skipSize += bsize
                 digest.delete(doc._id)

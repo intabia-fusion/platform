@@ -63,9 +63,9 @@ import textEditor, { textEditorId } from '@hcengineering/text-editor'
 import { timeId } from '@hcengineering/time'
 import tracker, { trackerId } from '@hcengineering/tracker'
 import { trainingId } from '@hcengineering/training'
-import uiPlugin from '@hcengineering/ui'
+import uiPlugin from '@hcengineering/ui/src/plugin'
 import { uploaderId } from '@hcengineering/uploader'
-import { mediaId } from '@hcengineering/media'
+import { mediaId } from '@hcengineering/media/src/plugin'
 import recorder, { recorderId } from '@hcengineering/recorder'
 import { viewId } from '@hcengineering/view'
 import workbench, { workbenchId } from '@hcengineering/workbench'
@@ -81,63 +81,70 @@ import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
 
-import '@hcengineering/activity-assets'
-import '@hcengineering/analytics-collector-assets'
-import '@hcengineering/attachment-assets'
-import '@hcengineering/calendar-assets'
-import '@hcengineering/card-assets'
-import '@hcengineering/chunter-assets'
-import '@hcengineering/contact-assets'
-import '@hcengineering/controlled-documents-assets'
-import '@hcengineering/desktop-preferences-assets'
-import '@hcengineering/diffview-assets'
-import '@hcengineering/document-assets'
-import '@hcengineering/drive-assets'
-import '@hcengineering/export-assets'
-import '@hcengineering/gmail-assets'
-import '@hcengineering/guest-assets'
-import '@hcengineering/global-profile-assets'
-import '@hcengineering/hr-assets'
-import '@hcengineering/inventory-assets'
-import '@hcengineering/lead-assets'
-import '@hcengineering/login-assets'
-import '@hcengineering/love-assets'
-import '@hcengineering/notification-assets'
-import '@hcengineering/preference-assets'
-import '@hcengineering/print-assets'
-import '@hcengineering/process-assets'
-import '@hcengineering/products-assets'
-import '@hcengineering/questions-assets'
-import '@hcengineering/recruit-assets'
-import '@hcengineering/request-assets'
-import '@hcengineering/setting-assets'
-import '@hcengineering/support-assets'
-import '@hcengineering/survey-assets'
-import '@hcengineering/tags-assets'
-import '@hcengineering/task-assets'
-import '@hcengineering/telegram-assets'
-import '@hcengineering/templates-assets'
-import '@hcengineering/test-management-assets'
-import '@hcengineering/text-editor-assets'
-import '@hcengineering/time-assets'
-import '@hcengineering/tracker-assets'
-import '@hcengineering/training-assets'
-import '@hcengineering/uploader-assets'
-import '@hcengineering/recorder-assets'
-import '@hcengineering/media-assets'
-import '@hcengineering/view-assets'
-import '@hcengineering/workbench-assets'
-import '@hcengineering/chat-assets'
-import '@hcengineering/inbox-assets'
-import '@hcengineering/mail-assets'
-import '@hcengineering/github-assets'
-import '@hcengineering/achievement-assets'
-import '@hcengineering/communication-assets'
-import '@hcengineering/emoji-assets'
-import '@hcengineering/billing-assets'
-import '@hcengineering/huly-mail-assets'
-import '@hcengineering/ai-assistant-assets'
-import '@hcengineering/rating-assets'
+async function loadAssets(): Promise<void> {
+
+  /* webpackChunkName: "contact" */
+
+  await Promise.all([
+    await import(/* webpackChunkName: "assets" */'@hcengineering/activity-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/analytics-collector-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/attachment-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/calendar-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/card-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/chunter-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/contact-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/controlled-documents-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/desktop-preferences-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/diffview-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/document-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/drive-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/export-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/gmail-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/guest-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/global-profile-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/hr-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/inventory-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/lead-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/login-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/love-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/notification-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/preference-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/print-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/process-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/products-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/questions-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/recruit-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/request-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/setting-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/support-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/survey-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/tags-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/task-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/telegram-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/templates-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/test-management-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/text-editor-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/time-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/tracker-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/training-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/uploader-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/recorder-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/media-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/view-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/workbench-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/chat-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/inbox-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/mail-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/github-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/achievement-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/communication-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/emoji-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/billing-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/huly-mail-assets'),
+    // await import(/* webpackChunkName: "assets" */'@hcengineering/ai-assistant-assets'),
+    await import(/* webpackChunkName: "assets" */'@hcengineering/rating-assets')]
+  )
+}
 
 import { coreId } from '@hcengineering/core'
 import presentation, { loadServerConfig, createFileStorage, presentationId } from '@hcengineering/presentation'
@@ -283,9 +290,6 @@ function configureI18n(): void {
     platformId,
     async (lang: string) =>
       await import(
-        /* webpackInclude: /\.json$/ */
-        /* webpackMode: "lazy" */
-        /* webpackChunkName: "lang-[request]" */
         `@hcengineering/platform/lang/${lang}.json`
       )
   )
@@ -293,9 +297,6 @@ function configureI18n(): void {
     coreId,
     async (lang: string) =>
       await import(
-        /* webpackInclude: /\.json$/ */
-        /* webpackMode: "lazy" */
-        /* webpackChunkName: "lang-[request]" */
         `@hcengineering/core/lang/${lang}.json`
       )
   )
@@ -763,5 +764,6 @@ export async function configurePlatform() {
 
   setMetadata(setting.metadata.BackupUrl, config.BACKUP_URL ?? '')
 
+  await loadAssets()
   initThemeStore()
 }

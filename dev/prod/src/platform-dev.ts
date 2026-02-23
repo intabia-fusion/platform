@@ -15,9 +15,8 @@
 
 import { devModelId } from '@hcengineering/devmodel'
 import { PresentationClientHook } from '@hcengineering/devmodel-resources'
-import login from '@hcengineering/login'
 import platform, { addLocation, setMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import presentation from '@hcengineering/presentation/src/plugin'
 
 export function configurePlatformDevServer () {
   // Set devmodel to hook client to be able to present all activity

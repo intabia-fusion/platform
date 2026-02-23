@@ -15,7 +15,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate, type Ref } from '@hcengineering/core'
+import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@hcengineering/core'
 import platform, { PlatformError } from '@hcengineering/platform'
 import { TokenError, decodeToken } from '@hcengineering/server-token'
 import { StorageAdapter } from '@hcengineering/storage'
@@ -28,13 +28,11 @@ import https from 'https'
 import morgan from 'morgan'
 import { join, normalize, resolve } from 'path'
 import { cwd } from 'process'
-import sharp, { type Sharp } from 'sharp'
 import { v4 as uuid } from 'uuid'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
-import fs, { createReadStream, mkdtempSync } from 'fs'
-import { rm, writeFile } from 'fs/promises'
+import fs, { mkdtempSync } from 'fs'
 import { tmpdir } from 'os'
 
 const cacheControlValue = 'public, no-cache, must-revalidate, max-age=365d'
@@ -286,7 +284,6 @@ export function start (
   const app = express()
 
   const tempFileDir = mkdtempSync(join(tmpdir(), 'front-'))
-  let temoFileIndex = 0
 
   function cleanupTempFiles (): void {
     const maxAge = 1000 * 60 * 60 // 1 hour
@@ -331,34 +328,34 @@ export function start (
 
   app.use(morgan('short', { stream: myStream }))
 
+  const data = {
+    ACCOUNTS_URL: config.accountsUrl,
+    UPLOAD_URL: config.uploadUrl,
+    FILES_URL: config.filesUrl,
+    MODEL_VERSION: config.modelVersion,
+    VERSION: config.version,
+    REKONI_URL: config.rekoniUrl,
+    TELEGRAM_URL: config.telegramUrl,
+    GMAIL_URL: config.gmailUrl,
+    CALENDAR_URL: config.calendarUrl,
+    COLLABORATOR: config.collaborator,
+    LINK_PREVIEW_URL: config.linkPreviewUrl,
+    STREAM_URL: config.streamUrl,
+    COLLABORATOR_URL: config.collaboratorUrl,
+    BRANDING_URL: config.brandingUrl,
+    PREVIEW_URL: config.previewUrl,
+    PUSH_PUBLIC_KEY: config.pushPublicKey,
+    DISABLE_SIGNUP: config.disableSignUp,
+    HIDE_LOCAL_LOGIN: config.hideLocalLogin,
+    BILLING_URL: config.billingUrl,
+    PAYMENT_URL: config.paymentUrl,
+    PULSE_URL: config.pulseUrl,
+    HULYLAKE_URL: config.hulylakeUrl,
+    DATALAKE_URL: config.datalakeUrl,
+    ...(extraConfig ?? {})
+  }
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/config.json', async (req, res) => {
-    const data = {
-      ACCOUNTS_URL: config.accountsUrl,
-      UPLOAD_URL: config.uploadUrl,
-      FILES_URL: config.filesUrl,
-      MODEL_VERSION: config.modelVersion,
-      VERSION: config.version,
-      REKONI_URL: config.rekoniUrl,
-      TELEGRAM_URL: config.telegramUrl,
-      GMAIL_URL: config.gmailUrl,
-      CALENDAR_URL: config.calendarUrl,
-      COLLABORATOR: config.collaborator,
-      LINK_PREVIEW_URL: config.linkPreviewUrl,
-      STREAM_URL: config.streamUrl,
-      COLLABORATOR_URL: config.collaboratorUrl,
-      BRANDING_URL: config.brandingUrl,
-      PREVIEW_URL: config.previewUrl,
-      PUSH_PUBLIC_KEY: config.pushPublicKey,
-      DISABLE_SIGNUP: config.disableSignUp,
-      HIDE_LOCAL_LOGIN: config.hideLocalLogin,
-      BILLING_URL: config.billingUrl,
-      PAYMENT_URL: config.paymentUrl,
-      PULSE_URL: config.pulseUrl,
-      HULYLAKE_URL: config.hulylakeUrl,
-      DATALAKE_URL: config.datalakeUrl,
-      ...(extraConfig ?? {})
-    }
     res.status(200)
     res.set('Cache-Control', cacheControlNoCache)
     res.set('Connection', 'keep-alive')
@@ -410,6 +407,8 @@ export function start (
 
   app.use(
     expressStaticGzip(dist, {
+      enableBrotli: true,
+      orderPreference: ['br'],
       serveStatic: {
         cacheControl: true,
         dotfiles: 'allow',
@@ -486,7 +485,7 @@ export function start (
             return
           }
 
-          let blobInfo = await ctx.with('stat', {}, (ctx) => config.storageAdapter.stat(ctx, wsIds, uuid), {
+          const blobInfo = await ctx.with('stat', {}, (ctx) => config.storageAdapter.stat(ctx, wsIds, uuid), {
             workspace: wsIds.uuid
           })
 
@@ -512,20 +511,6 @@ export function start (
             res.end()
             return
           }
-          // try image and octet streams
-          const isImage =
-            blobInfo.contentType.includes('image/') || blobInfo.contentType.includes('application/octet-stream')
-
-          const size = req.query.size !== undefined ? parseInt(req.query.size as string) : undefined
-          const accept = req.headers.accept
-          if (accept !== undefined && isImage && blobInfo.contentType !== 'image/gif' && size !== undefined) {
-            blobInfo = await ctx.with('resize', {}, (ctx) =>
-              getGeneratePreview(ctx, blobInfo as PlatformBlob, size, uuid, config, wsIds, accept, () =>
-                join(tempFileDir, `${++temoFileIndex}`)
-              )
-            )
-          }
-
           const range = req.headers.range
           if (range !== undefined) {
             await ctx.with(
@@ -884,13 +869,13 @@ export function start (
       response.sendStatus(404)
       return
     }
-    response.sendFile(join(dist, 'index.html'), {
+    response.sendFile(join(dist, request.accepts().includes('gzip') ? 'index.html.gz' : 'index.html'), {
       etag: true,
       lastModified: true,
       cacheControl: false,
       headers: {
         'Cache-Control': cacheControlNoCache,
-        'Keep-Alive': 'timeout=5'
+        'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
       }
     })
   })
@@ -900,159 +885,5 @@ export function start (
   server.headersTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 2000
   return () => {
     server.close()
-  }
-}
-
-const supportedFormats = ['avif', 'webp', 'heif', 'jpeg', 'png']
-
-async function getGeneratePreview (
-  ctx: MeasureContext,
-  blob: PlatformBlob,
-  size: number | undefined,
-  uuid: string,
-  config: { storageAdapter: StorageAdapter },
-  wsIds: WorkspaceIds,
-  accept: string,
-  tempFile: () => string
-): Promise<PlatformBlob> {
-  if (size === undefined) {
-    return blob
-  }
-
-  const formats = accept.split(',').map((it) => it.trim())
-
-  // Select appropriate format
-  let format: string | undefined
-
-  for (const f of formats) {
-    const [type] = f.split(';')
-    const [clazz, kind] = type.split('/')
-    if (clazz === 'image' && supportedFormats.includes(kind)) {
-      format = kind
-      break
-    }
-  }
-  if (format === undefined) {
-    return blob
-  }
-
-  if (size === -1) {
-    size = 2048
-  }
-
-  if (size > 2048) {
-    size = 2048
-  }
-
-  const sizeId = uuid + `%preview%${size}${format !== 'jpeg' ? format : ''}`
-
-  const d = await config.storageAdapter.stat(ctx, wsIds, sizeId)
-  const hasSmall = d !== undefined && d.size > 0
-
-  if (hasSmall) {
-    // We have cached small document, let's proceed with it.
-    return d
-  } else {
-    const files: string[] = []
-    let pipeline: Sharp | undefined
-    try {
-      // Let's get data and resize it
-      const fname = tempFile()
-      files.push(fname)
-      await writeFile(fname, await config.storageAdapter.get(ctx, wsIds, uuid))
-
-      pipeline = sharp(fname)
-      const md = await pipeline.metadata()
-      if (md.format === undefined) {
-        // No format detected, return blob
-        return blob
-      }
-      sharp.cache(false)
-
-      // auto orient image based on exif to prevent resize use wrong orientation
-      pipeline = pipeline.rotate()
-
-      pipeline = pipeline.resize({
-        width: size,
-        fit: 'cover',
-        withoutEnlargement: true
-      })
-
-      let contentType = 'image/jpeg'
-      switch (format) {
-        case 'jpeg':
-          pipeline = pipeline.jpeg({
-            progressive: true
-          })
-          contentType = 'image/jpeg'
-          break
-        case 'avif':
-          pipeline = pipeline.avif({
-            lossless: false,
-            effort: 0
-          })
-          contentType = 'image/avif'
-          break
-        case 'heif':
-          pipeline = pipeline.heif({
-            effort: 0
-          })
-          contentType = 'image/heif'
-          break
-        case 'webp':
-          pipeline = pipeline.webp({
-            effort: 0
-          })
-          contentType = 'image/webp'
-          break
-        case 'png':
-          pipeline = pipeline.png({
-            effort: 0
-          })
-          contentType = 'image/png'
-          break
-      }
-
-      const outFile = tempFile()
-      files.push(outFile)
-
-      const dataBuff = await ctx.with('resize', { contentType }, () => (pipeline as Sharp).toFile(outFile))
-      pipeline.destroy()
-
-      // Add support of avif as well.
-      const upload = await config.storageAdapter.put(
-        ctx,
-        wsIds,
-        sizeId,
-        createReadStream(outFile),
-        contentType,
-        dataBuff.size
-      )
-      return {
-        ...blob,
-        _id: sizeId as Ref<PlatformBlob>,
-        size: dataBuff.size,
-        contentType,
-        etag: upload.etag
-      }
-    } catch (err: any) {
-      Analytics.handleError(err)
-      ctx.error('failed to resize image', {
-        err,
-        format: accept,
-        contentType: blob.contentType,
-        uuid,
-        size: blob.size,
-        provider: blob.provider
-      })
-
-      // Return original in case of error
-      return blob
-    } finally {
-      pipeline?.destroy()
-      for (const f of files) {
-        await rm(f)
-      }
-    }
   }
 }

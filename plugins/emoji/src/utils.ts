@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
+/* webpackChunkName: "emoji-lang-en" */
 import EMOJI_REGEX from 'emojibase-regex'
+/* webpackChunkName: "emoji-base" */
 import EMOTICON_REGEX from 'emojibase-regex/emoticon'
+/* webpackChunkName: "emoji-base" */
 import SHORTCODE_REGEX from 'emojibase-regex/shortcode'
 
 import {
@@ -40,6 +44,91 @@ export const emoticonGlobalRegex = new RegExp(EMOTICON_REGEX.source, EMOTICON_RE
 export const shortcodeRegex = new RegExp(`(?:^|\\s)(${SHORTCODE_REGEX.source})$`)
 export const shortcodeGlobalRegex = new RegExp(SHORTCODE_REGEX.source, SHORTCODE_REGEX.flags + 'g')
 
+async function importEmoji (lang: Locale, compact: boolean): Promise<Emoji[]> {
+  switch (lang) {
+    case 'bn':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-bn" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+
+    case 'es-mx':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-es-mx" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'fr':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-fr" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'it':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-it" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'pl':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-pl" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'ru':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-ru" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'es':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-es" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'zh':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-zh" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+    case 'de':
+      return (
+        await import(
+          /* webpackMode: "lazy" */
+          /* webpackChunkName: "emoji-lang-de" */
+          `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+        )
+      ).default as Emoji[]
+  }
+  return (
+    await import(
+      /* webpackMode: "lazy" */
+      /* webpackChunkName: "emoji-lang-en" */
+      `emojibase-data/${lang}/${compact ? 'compact' : 'data'}.json`
+    )
+  ).default as Emoji[]
+}
+
 async function fetchEmojis (locale: Locale, options: FetchEmojisOptions & { compact: true }): Promise<CompactEmoji[]>
 
 async function fetchEmojis (locale: Locale, options?: FetchEmojisOptions & { compact?: false }): Promise<Emoji[]>
@@ -47,7 +136,7 @@ async function fetchEmojis (locale: Locale, options?: FetchEmojisOptions & { com
 async function fetchEmojis (locale: Locale, options: FetchEmojisExpandedOptions = {}): Promise<unknown[]> {
   const { compact = false, shortcodes: presets = [] } = options
   try {
-    const emojis = (await import(`emojibase-data/${locale}/${compact ? 'compact' : 'data'}.json`)).default as Emoji[]
+    const emojis = await importEmoji(locale, compact)
     const shortcodes: ShortcodesDataset[] = []
 
     for (const preset of presets) {

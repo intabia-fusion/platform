@@ -36,7 +36,8 @@ export class SpotlightPopup extends CommonPage {
     await this.page.waitForTimeout(500)
   }
 
-  async checkSearchResult (search: string, count: number): Promise<void> {
-    await expect(this.searchResult(search)).toHaveCount(count)
+  async checkSearchResult (search: string, count: number, timeoutMs: number = 30000): Promise<void> {
+    // Full-text indexing is async, so we need to retry with increased timeout
+    await expect(this.searchResult(search)).toHaveCount(count, { timeout: timeoutMs })
   }
 }

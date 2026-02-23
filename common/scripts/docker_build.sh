@@ -10,7 +10,7 @@ fi
 
 echo "Building version: $version" 
 
-docker build -t "$1" -t "$1:$version" ${DOCKER_EXTRA} .
+docker build --build-arg BUILD_ID="$version" -t "$1" -t "$1:$version" ${DOCKER_EXTRA} .
 
 if [ "$cleanup" = true ]; then
   echo "Cleaning up build artifacts..."

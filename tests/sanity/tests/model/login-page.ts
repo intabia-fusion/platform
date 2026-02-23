@@ -67,7 +67,11 @@ export class LoginPage {
 
   async checkIfErrorMessageIsShown (message: string): Promise<void> {
     if (message === 'wrong-credentials') {
-      await expect(this.invalidCredentialsMessage()).toBeVisible()
+      // Wait for error message with increased timeout to allow for network latency
+      // Using retry pattern as error message may take time to appear
+      await expect(async () => {
+        await expect(this.invalidCredentialsMessage()).toBeVisible({ timeout: 3000 })
+      }).toPass({ intervals: [500, 1000, 2000, 3000], timeout: 25000 })
     }
   }
 

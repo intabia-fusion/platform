@@ -17,8 +17,8 @@
 import type { Class, Doc, Mixin, Ref, Space } from '@hcengineering/core'
 import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import { AnyComponent, ComponentExtensionId, Location } from '@hcengineering/ui'
-import { Action, ViewAction } from '@hcengineering/view'
+import { type AnyComponent, type ComponentExtensionId, type Location } from '@hcengineering/ui'
+import { type Action, type ViewAction } from '@hcengineering/view'
 
 import type {
   Application,

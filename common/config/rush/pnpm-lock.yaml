@@ -1645,6 +1645,9 @@ importers:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@statoscope/webpack-plugin':
+        specifier: ~5.29.0
+        version: 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)
       '@types/node':
         specifier: ^22.18.1
         version: 22.19.0
@@ -29744,9 +29747,6 @@ importers:
       express-fileupload:
         specifier: ^1.5.1
         version: 1.5.2
-      sharp:
-        specifier: ~0.34.3
-        version: 0.34.5
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
@@ -41590,6 +41590,10 @@ packages:
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
     engines: {node: '>=10.0.0'}
 
+  '@discoveryjs/natural-compare@1.1.0':
+    resolution: {integrity: sha512-yuctPJs5lRXoI8LkpVZGAV6n+DKOuEsfpfcIDQ8ZjWHwazqk1QjBc4jMlof0UlZHyUqv4dwsOTooMiAmtzvwXA==}
+    engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
+
   '@elastic/elasticsearch@7.17.14':
     resolution: {integrity: sha512-6uQ1pVXutwz1Krwooo67W+3K8BwH1ASMh1WoHTpomUzw8EXecXN5lHIJ9EPqTHuv1WqR2LKkSJyagcq0HYUJpg==}
     engines: {node: '>=12'}
@@ -43948,6 +43952,55 @@ packages:
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
 
+  '@statoscope/extensions@5.28.1':
+    resolution: {integrity: sha512-jxkHSNfr7KJOfxlueCtahv1LqscTALLkcGSrYCU71C4tR9GVYoVCUMOrhAFJr6ia+GlPhSaxOSk/j+Ay+ZN9vg==}
+
+  '@statoscope/helpers@5.28.1':
+    resolution: {integrity: sha512-G+o+wCYsuc8+0OdY+kyrTOzm5A6X3yp8ArGTWjr9TCllqDk4LzBlHBmWo7z4SPigjNeY/i38sqi1PeWztW+rWA==}
+
+  '@statoscope/report-writer@5.28.1':
+    resolution: {integrity: sha512-BjZVdZa7XWkK+zUnFLFWp8yNgmis0DTaPiy/QyU56iWuW+DcF/un1wkvt8ha0jxlXRDbBOfezAztdLNx4U5mxw==}
+
+  '@statoscope/stats-extension-compressed@5.28.1':
+    resolution: {integrity: sha512-tmmKbQwibSaRpWv+p8Tb7BxhMNuSGS28NJeN1t2byzakz/FLCzvkT9tj/aBxfQqEIOGusmN+8znz6XSmJ0cbew==}
+
+  '@statoscope/stats-extension-custom-reports@5.28.1':
+    resolution: {integrity: sha512-f527f6bjl+6iJow+zQFw+hZxGR2hY/FIuFTxhrcbrDXqXu7ApK0e0azJJxAQs0eO1WPMSduXt2k/5kSFecC/kA==}
+
+  '@statoscope/stats-extension-package-info@5.28.1':
+    resolution: {integrity: sha512-HvwlMfFVSx91KmwUmeIcJZS/0rVbNTRvMEBHzPsZ1Y5BIqZlH/bk/HK8nWYjptUaNkpmcxewp5xO9FtpMaSNVA==}
+
+  '@statoscope/stats-extension-stats-validation-result@5.28.1':
+    resolution: {integrity: sha512-vekMnWXVikWo2c4IzmjqKkHGxBTE9RNpTxnD5t5qGz2wx3IHuosV8kp4yaUlD/Atv8C+aLoF0Jg0Q4eB7IYWEA==}
+
+  '@statoscope/stats@5.28.1':
+    resolution: {integrity: sha512-BB9IZQcBo9I0FFL5sHttF5ubhfE3HkbDMPw5MqEBCee7m6NrlrRe8dxLpPsCUkeFytTWjRLKrY1JOgQq/iE4Fg==}
+
+  '@statoscope/types@5.28.1':
+    resolution: {integrity: sha512-PLcSaRQvGkKhjVLU3YbjFDfZN6H2WF0vp0QqQOOh6qvxRhlOc14ckyou04bnvEqsSWXpvkMPJhOLue+YdIFI9A==}
+
+  '@statoscope/webpack-model@5.29.0':
+    resolution: {integrity: sha512-5MZsjHiCS+TxKOtEI66Dz0yGkN8qeCMbtWjHhRckfQtkWNeO3JK3nlt26WPr1Bh/PwJlMtaJVWpGCbG4LQKp5Q==}
+
+  '@statoscope/webpack-plugin@5.29.0':
+    resolution: {integrity: sha512-CC+ryZmwwsaTB/WwhQWwb5QgKU960ujEOjT/liX8z0OwCssbLKZDdsdZvqJj/tB1kEuuJXpHIqIpuS04+6ADKw==}
+    peerDependencies:
+      webpack: ^4.0.0 || ^5.0.0
+
+  '@statoscope/webpack-stats-extension-compressed@5.29.0':
+    resolution: {integrity: sha512-fi/GnRAfWRyhSuNszz7MfW2ricqfaUvrCvA945VnEt5l9nALrR6/vDI/Lv8swxkkQYBWjRrV359ATuBFwQsIBw==}
+    peerDependencies:
+      webpack: ^4.0.0 || ^5.0.0
+
+  '@statoscope/webpack-stats-extension-package-info@5.29.0':
+    resolution: {integrity: sha512-5SRAjKQCeEFsb1gGibpvolIZRcYEtQaYH206btEqlTKEsz/EkLzzyfbjSAKkiVLLJCoPLugvneVDRfujTC8M9w==}
+    peerDependencies:
+      '@rspack/core': ^1.0.0
+      webpack: ^4.0.0 || ^5.0.0
+
+  '@statoscope/webpack-ui@5.29.0':
+    resolution: {integrity: sha512-1GqNkph/8XfCIqcGyBsfr+67ZueClu9yeOSP4SCbbNhFBQ91WE4fewgVxY3DNcPh4Ma1gksvSi/tFFpdt8fhNg==}
+
   '@swc/core-darwin-arm64@1.15.1':
     resolution: {integrity: sha512-vEPrVxegWIjKEz+1VCVuKRY89jhokhSmQ/YXBWLnmLj9cI08G61RTZJvdsIcjYUjjTu7NgZlYVK+b2y0fbh11g==}
     engines: {node: '>=10'}
@@ -44332,6 +44385,9 @@ packages:
   '@types/archiver@6.0.4':
     resolution: {integrity: sha512-ULdQpARQ3sz9WH4nb98mJDYA0ft2A8C4f4fovvUcFwINa1cgGjY36JCAYuP5YypRq4mco1lJp1/7jEMS2oR0Hg==}
 
+  '@types/archy@0.0.32':
+    resolution: {integrity: sha512-5ZZ5+YGmUE01yejiXsKnTcvhakMZ2UllZlMsQni53Doc1JWhe21ia8VntRoRD6fAEWw08JBh/z9qQHJ+//MrIg==}
+
   '@types/aws-lambda@8.10.152':
     resolution: {integrity: sha512-soT/c2gYBnT5ygwiHPmd9a1bftj462NWVk2tKCc1PYHSIacB2UwbTS2zYG4jzag1mRDuzg/OjtxQjQ2NKRB6Rw==}
 
@@ -44628,6 +44684,9 @@ packages:
   '@types/markdown-it@14.1.2':
     resolution: {integrity: sha512-promo4eFwuiW+TfGxhi+0x3czqTYJkG8qB17ZUJiVF10Xm7NLVRSLUsfRTU/6h1e24VvRnXCx+hG7li58lkzog==}
 
+  '@types/md5@2.3.6':
+    resolution: {integrity: sha512-WD69gNXtRBnpknfZcb4TRQ0XJQbUPZcai/Qdhmka3sxUR3Et8NrXoeAoknG/LghYHTf4ve795rInVYHBTQdNVA==}
+
   '@types/mdurl@1.0.5':
     resolution: {integrity: sha512-6L6VymKTzYSrEf4Nev4Xa1LCHKrlTlYCBMTlQKFuddo1CvQcE52I0mwfOJayueUC7MJuXOeHTcIU683lzd0cUA==}
 
@@ -44693,6 +44752,9 @@ packages:
 
   '@types/otp-generator@4.0.2':
     resolution: {integrity: sha512-9+qqWzuFb332hXPbLgjUyOXlbcaTQkmkmqQjTduvNuOmPV5fW+iLv70JsVEhdUy0DWi4kY34++HDCaWl6N0AYg==}
+
+  '@types/pako@2.0.4':
+    resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
 
   '@types/passport-github2@1.2.9':
     resolution: {integrity: sha512-/nMfiPK2E6GKttwBzwj0Wjaot8eHrM57hnWxu52o6becr5/kXlH/4yE2v2rh234WGvSgEEzIII02Nc5oC5xEHA==}
@@ -44816,6 +44878,9 @@ packages:
 
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
+
+  '@types/webpack@5.28.5':
+    resolution: {integrity: sha512-wR87cgvxj3p6D0Crt1r5avwqffqPXUkNlnQ1mjU93G7gCuFjufZR4I6j8cz5g1F1tTYpfOOFvly+cmIQwL9wvw==}
 
   '@types/whatwg-url@11.0.5':
     resolution: {integrity: sha512-coYR071JRaHa+xoEvvYqvnIHaVqaYrLPbsufM9BF63HkwI5Lgmy2QR8Q5K/lYDYo5AK82wOvSOS0UsLTpTG7uQ==}
@@ -45175,6 +45240,9 @@ packages:
   archiver@7.0.1:
     resolution: {integrity: sha512-ZcbTaIqJOfCc03QwD468Unz/5Ir8ATtvAHsK+FdXbDIbGfihqh9mrvdcYunQzqn4HrvWWaFyaxJhGZagaJJpPQ==}
     engines: {node: '>= 14'}
+
+  archy@1.0.0:
+    resolution: {integrity: sha512-Xg+9RwCg/0p32teKdGMPTPnVXKD0w3DfHnFTficozsAgsvq2XenPJq/MYpzzQ/v8zrOyJn6Ds39VA4JIDwFfqw==}
 
   are-we-there-yet@3.0.1:
     resolution: {integrity: sha512-QZW4EDmGwlYur0Yyf/b2uGucHQMa8aFUP7eu9ddR73vvhFyt4V0Vl3QHPcTNJ8l6qYOBdxgXdnBXQrHilfRQBg==}
@@ -48322,6 +48390,10 @@ packages:
   jiti@1.21.7:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
+
+  jora@1.0.0-beta.8:
+    resolution: {integrity: sha512-f3WpYwfDTlhfSdyCkAlAXSKRpwZYBgCDnyWmA9D0yyItCTFnFefKtvFpaczrj/FItkgDkHiewgFuHsgh4TmokA==}
+    engines: {node: ^10.12.0 || ^12.20.0 || ^14.13.0 || >=15.0.0}
 
   jose@4.15.9:
     resolution: {integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==}
@@ -52702,6 +52774,8 @@ snapshots:
 
   '@discoveryjs/json-ext@0.5.7': {}
 
+  '@discoveryjs/natural-compare@1.1.0': {}
+
   '@elastic/elasticsearch@7.17.14':
     dependencies:
       debug: 4.4.3
@@ -55588,6 +55662,129 @@ snapshots:
 
   '@stablelib/base64@1.0.1': {}
 
+  '@statoscope/extensions@5.28.1': {}
+
+  '@statoscope/helpers@5.28.1':
+    dependencies:
+      '@types/archy': 0.0.32
+      '@types/semver': 7.7.1
+      archy: 1.0.0
+      jora: 1.0.0-beta.8
+      semver: 7.7.3
+
+  '@statoscope/report-writer@5.28.1':
+    dependencies:
+      '@discoveryjs/json-ext': 0.5.7
+      '@types/node': 18.19.130
+      '@types/pako': 2.0.4
+      pako: 2.1.0
+
+  '@statoscope/stats-extension-compressed@5.28.1':
+    dependencies:
+      '@statoscope/extensions': 5.28.1
+      '@statoscope/helpers': 5.28.1
+      '@statoscope/stats': 5.28.1
+      gzip-size: 6.0.0
+
+  '@statoscope/stats-extension-custom-reports@5.28.1':
+    dependencies:
+      '@statoscope/extensions': 5.28.1
+      '@statoscope/helpers': 5.28.1
+      '@statoscope/stats': 5.28.1
+      '@statoscope/types': 5.28.1
+
+  '@statoscope/stats-extension-package-info@5.28.1':
+    dependencies:
+      '@statoscope/extensions': 5.28.1
+      '@statoscope/helpers': 5.28.1
+      '@statoscope/stats': 5.28.1
+
+  '@statoscope/stats-extension-stats-validation-result@5.28.1':
+    dependencies:
+      '@statoscope/extensions': 5.28.1
+      '@statoscope/helpers': 5.28.1
+      '@statoscope/stats': 5.28.1
+      '@statoscope/types': 5.28.1
+
+  '@statoscope/stats@5.28.1': {}
+
+  '@statoscope/types@5.28.1':
+    dependencies:
+      '@statoscope/stats': 5.28.1
+
+  '@statoscope/webpack-model@5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)':
+    dependencies:
+      '@statoscope/extensions': 5.28.1
+      '@statoscope/helpers': 5.28.1
+      '@statoscope/stats': 5.28.1
+      '@statoscope/stats-extension-compressed': 5.28.1
+      '@statoscope/stats-extension-custom-reports': 5.28.1
+      '@statoscope/stats-extension-package-info': 5.28.1
+      '@statoscope/stats-extension-stats-validation-result': 5.28.1
+      '@statoscope/types': 5.28.1
+      '@types/md5': 2.3.6
+      '@types/webpack': 5.28.5(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      md5: 2.3.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+
+  '@statoscope/webpack-plugin@5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)':
+    dependencies:
+      '@discoveryjs/json-ext': 0.5.7
+      '@statoscope/report-writer': 5.28.1
+      '@statoscope/stats': 5.28.1
+      '@statoscope/stats-extension-compressed': 5.28.1
+      '@statoscope/stats-extension-custom-reports': 5.28.1
+      '@statoscope/types': 5.28.1
+      '@statoscope/webpack-model': 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      '@statoscope/webpack-stats-extension-compressed': 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)
+      '@statoscope/webpack-stats-extension-package-info': 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)
+      '@statoscope/webpack-ui': 5.29.0
+      '@types/node': 18.19.130
+      '@types/webpack': 5.28.5(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      open: 8.4.2
+      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@rspack/core'
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+
+  '@statoscope/webpack-stats-extension-compressed@5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)':
+    dependencies:
+      '@statoscope/stats': 5.28.1
+      '@statoscope/stats-extension-compressed': 5.28.1
+      '@statoscope/webpack-model': 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      '@types/webpack': 5.28.5(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+
+  '@statoscope/webpack-stats-extension-package-info@5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)(webpack@5.102.1)':
+    dependencies:
+      '@statoscope/stats': 5.28.1
+      '@statoscope/stats-extension-package-info': 5.28.1
+      '@statoscope/webpack-model': 5.29.0(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      '@types/webpack': 5.28.5(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+
+  '@statoscope/webpack-ui@5.29.0':
+    dependencies:
+      '@statoscope/types': 5.28.1
+      '@types/md5': 2.3.6
+
   '@swc/core-darwin-arm64@1.15.1':
     optional: true
 
@@ -55987,6 +56184,8 @@ snapshots:
     dependencies:
       '@types/readdir-glob': 1.1.5
 
+  '@types/archy@0.0.32': {}
+
   '@types/aws-lambda@8.10.152': {}
 
   '@types/aws-lambda@8.10.157': {}
@@ -56367,6 +56566,8 @@ snapshots:
       '@types/linkify-it': 5.0.0
       '@types/mdurl': 2.0.0
 
+  '@types/md5@2.3.6': {}
+
   '@types/mdurl@1.0.5': {}
 
   '@types/mdurl@2.0.0': {}
@@ -56442,6 +56643,8 @@ snapshots:
       '@types/node': 22.19.0
 
   '@types/otp-generator@4.0.2': {}
+
+  '@types/pako@2.0.4': {}
 
   '@types/passport-github2@1.2.9':
     dependencies:
@@ -56584,6 +56787,17 @@ snapshots:
       '@types/node': 22.19.0
 
   '@types/webidl-conversions@7.0.3': {}
+
+  '@types/webpack@5.28.5(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)':
+    dependencies:
+      '@types/node': 22.19.0
+      tapable: 2.3.0
+      webpack: 5.102.1(@swc/core@1.15.1)(esbuild@0.25.12)(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
 
   '@types/whatwg-url@11.0.5':
     dependencies:
@@ -57039,6 +57253,8 @@ snapshots:
     transitivePeerDependencies:
       - bare-abort-controller
       - react-native-b4a
+
+  archy@1.0.0: {}
 
   are-we-there-yet@3.0.1:
     dependencies:
@@ -61005,6 +61221,10 @@ snapshots:
       - debug
 
   jiti@1.21.7: {}
+
+  jora@1.0.0-beta.8:
+    dependencies:
+      '@discoveryjs/natural-compare': 1.1.0
 
   jose@4.15.9: {}
 

@@ -17,14 +17,18 @@ import {
   type DocAttributeUpdates,
   type ActivityMessage,
   type DocUpdateMessage,
-  type Reaction
+  type Reaction,
+  type DocUpdateAction
 } from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import core, {
   type AccountUuid,
   type Class,
+  type Collaborator,
   type Doc,
   type Domain,
+  DOMAIN_COLLABORATOR,
+  generateId,
   groupByArray,
   type PersonId,
   type Ref,
@@ -45,6 +49,12 @@ import {
   getSocialIdFromOldAccount,
   getSocialKeyByOldAccount
 } from '@hcengineering/model-core'
+import notification, {
+  type ActivityInboxNotification,
+  DOMAIN_DOC_NOTIFY,
+  DOMAIN_NOTIFICATION,
+  type ReactionInboxNotification
+} from '@hcengineering/notification'
 
 import { activityId, DOMAIN_ACTIVITY, DOMAIN_REACTION, DOMAIN_USER_MENTION } from './index'
 import activity from './plugin'
@@ -360,6 +370,99 @@ async function migrateAccountsInDocUpdates (client: MigrationClient): Promise<vo
   client.logger.log('finished processing activity doc updates ', {})
 }
 
+async function migrateCollaboratorsActivity (client: MigrationClient): Promise<void> {
+  const accounts = (await client.accountClient.listAccounts()).map((it) => it.uuid)
+  const iterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
+    _class: activity.class.DocUpdateMessage,
+    'attributeUpdates.attrClass': 'notification:mixin:Collaborators'
+  })
+
+  while (true) {
+    const docs = (await iterator.next(500)) ?? []
+    if (docs.length === 0) break
+
+    const attachedTo = Array.from(new Set(docs.map((it) => it.attachedTo)))
+    const createDocs: DocUpdateMessage[] = []
+    const collaborators: Collaborator[] = await client.find<Collaborator>(DOMAIN_COLLABORATOR, {
+      _class: core.class.Collaborator,
+      attachedTo: { $in: attachedTo }
+    })
+
+    for (const doc of docs) {
+      const added = doc.attributeUpdates?.added ?? []
+      const removed = doc.attributeUpdates?.removed ?? []
+
+      for (const add of added) {
+        if (add == null || !accounts.includes(add as any)) continue
+        const collaboratorId =
+          collaborators.find((it) => it.collaborator === add && it.attachedTo === doc.attachedTo)?._id ??
+          generateId<Collaborator>()
+
+        if (collaboratorId == null) continue
+        createDocs.push({
+          _id: generateId<DocUpdateMessage>(),
+          _class: activity.class.DocUpdateMessage,
+          space: doc.space,
+          isPinned: doc.isPinned,
+          createdBy: doc.createdBy,
+          modifiedBy: doc.modifiedBy,
+          createdOn: doc.createdOn,
+          modifiedOn: doc.modifiedOn,
+          attachedTo: doc.attachedTo,
+          attachedToClass: doc.attachedToClass,
+          action: 'create' as DocUpdateAction,
+          updateCollection: 'collaborators',
+          objectId: collaboratorId,
+          objectClass: core.class.Collaborator,
+          attributes: {
+            collaborator: add
+          },
+          collection: doc.collection
+        })
+      }
+
+      for (const remove of removed) {
+        if (remove == null || !accounts.includes(remove as any)) continue
+        createDocs.push({
+          _id: generateId<DocUpdateMessage>(),
+          _class: activity.class.DocUpdateMessage,
+          space: doc.space,
+          isPinned: doc.isPinned,
+          createdBy: doc.createdBy,
+          modifiedBy: doc.modifiedBy,
+          createdOn: doc.createdOn,
+          modifiedOn: doc.modifiedOn,
+          attachedTo: doc.attachedTo,
+          attachedToClass: doc.attachedToClass,
+          action: 'remove' as DocUpdateAction,
+          updateCollection: 'collaborators',
+          objectId: generateId<Collaborator>(),
+          objectClass: core.class.Collaborator,
+          attributes: {
+            collaborator: remove
+          },
+          collection: doc.collection
+        })
+      }
+    }
+
+    await client.create(DOMAIN_ACTIVITY, createDocs)
+    await client.deleteMany(DOMAIN_DOC_NOTIFY, {
+      _class: notification.class.DocNotifyContext,
+      objectId: { $in: docs.map((it) => it._id) }
+    })
+    await client.deleteMany<ActivityInboxNotification>(DOMAIN_NOTIFICATION, {
+      _class: notification.class.ActivityInboxNotification,
+      attachedTo: { $in: docs.map((it) => it._id) }
+    })
+    await client.deleteMany<ReactionInboxNotification>(DOMAIN_NOTIFICATION, {
+      _class: notification.class.ReactionInboxNotification,
+      attachedTo: { $in: docs.map((it) => it._id) }
+    })
+    await client.deleteMany(DOMAIN_ACTIVITY, { _id: { $in: docs.map((it) => it._id) } })
+  }
+}
+
 export const activityOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, activityId, [
@@ -442,6 +545,11 @@ export const activityOperation: MigrateOperation = {
         state: 'accounts-in-doc-updates-v2',
         mode: 'upgrade',
         func: migrateAccountsInDocUpdates
+      },
+      {
+        state: 'migrate-collaborators-dum-v1',
+        mode: 'upgrade',
+        func: migrateCollaboratorsActivity
       }
     ])
   },

@@ -35,8 +35,12 @@
   .toggle-element {
     position: relative;
     flex-shrink: 0;
-    background-color: var(--selector-off-BackgroundColor);
+    background-color: var(--theme-toggle-bg-color);
+    transition: background-color 0.2s;
 
+    &:hover {
+      background-color: var(--theme-toggle-bg-hover);
+    }
     &::after {
       content: '';
       position: absolute;
@@ -44,7 +48,7 @@
       left: 50%;
       width: var(--spacing-1);
       height: var(--spacing-1);
-      background-color: var(--selector-IconColor);
+      background-color: var(--theme-toggle-sw-color);
       border-radius: 50%;
       transform: translateY(-50%);
       transition: left 0.2s;
@@ -87,8 +91,14 @@
     clip: rect(0 0 0 0);
 
     &:checked + .toggle-element {
-      background-color: var(--selector-active-BackgroundColor);
+      background-color: var(--theme-toggle-on-bg-color);
 
+      &:hover {
+        background-color: var(--theme-toggle-on-bg-hover);
+      }
+      &::after {
+        background-color: var(--theme-toggle-on-sw-color);
+      }
       &.small::after {
         left: var(--spacing-2_5);
       }
@@ -97,11 +107,10 @@
       }
     }
     &:disabled + .toggle-element {
-      box-shadow: none;
-      background-color: var(--selector-disabled-BackgroundColor);
+      filter: grayscale(70%);
 
       &::after {
-        background-color: var(--selector-disabled-IconColor);
+        background-color: #eee;
       }
       & + .toggle-label {
         color: var(--global-disabled-TextColor);
@@ -144,9 +153,6 @@
       &:active .toggle-element {
         outline: 2px solid var(--global-focus-BorderColor);
         outline-offset: 2px;
-      }
-      &:hover .toggle-element {
-        box-shadow: 0 0 0 4px var(--selector-hover-overlay-BackgroundColor);
       }
     }
   }

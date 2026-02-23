@@ -41,5 +41,5 @@
 
 <div class="editor-grid">
   <Label label={plugin.string.ToDo} />
-  <ToDoContextSelector readonly={false} {process} value={_id} on:change={change} />
+  <ToDoContextSelector readonly={false} skipRollback {process} value={_id} on:change={change} />
 </div>
