@@ -31382,6 +31382,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/server-notification':
+        specifier: workspace:^0.7.0
+        version: link:../notification
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

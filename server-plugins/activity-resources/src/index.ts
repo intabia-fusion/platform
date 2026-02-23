@@ -402,7 +402,9 @@ async function OnActivityMessageCreate (txes: TxCreateDoc<ActivityMessage>[], co
     if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) continue
     const message = TxProcessor.createDoc2Doc(tx)
 
-    if (message.attachedToTitle != null || message.attachedToIdentifier != null || message.attachedToUrl != null) { continue }
+    if (message.attachedToTitle != null || message.attachedToIdentifier != null || message.attachedToUrl != null) {
+      continue
+    }
 
     const doc = (await control.findAll(control.ctx, message.attachedToClass, { _id: message.attachedTo }))[0]
     if (doc === undefined) continue
