@@ -71,7 +71,8 @@ export function parseStorageEnv (storageEnv: string, storageConfig: StorageConfi
     const config: StorageConfig = {
       kind,
       name,
-      endpoint: (hasProtocol ? uri.protocol + '//' : '') + uri.hostname, // Port should go away
+      endpoint:
+        (hasProtocol ? uri.protocol + '//' : '') + uri.hostname + (uri.pathname !== '' ? '/' + uri.pathname : ''), // Port should go away
       port: uri.port !== '' ? parseInt(uri.port) : undefined
     }
 
