@@ -993,10 +993,18 @@ export function devTool (
               toolCtx.error('failed to restore, pipeline is undefined', { workspace })
               return
             }
+            const include = cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim()))
 
+            if (include != null && include.has('account.socialId')) {
+              include.add('channel')
+            }
+            if (include != null && include.has('account.person')) {
+              include.add('contact')
+            }
+            toolCtx.info('OPT', { include: include != null ? Array.from(include) : '', skip: cmd.skip })
             await backup(toolCtx, pipeline, wsIds, storage, db, {
               force: cmd.force,
-              include: cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim())),
+              include,
               skipDomains: (cmd.skip ?? '').split(';').map((it) => it.trim()),
               timeout: 0,
               connectTimeout: parseInt(cmd.timeout) * 1000,
