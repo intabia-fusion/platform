@@ -33,7 +33,8 @@ import core, {
   TxFactory,
   TxProcessor,
   TxRemoveDoc,
-  TxUpdateDoc
+  TxUpdateDoc,
+  WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
@@ -54,7 +55,6 @@ import serverNotification, {
   TypeMatch
 } from '@hcengineering/server-notification'
 import { StorageAdapter } from '@hcengineering/storage'
-import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 import WsCache from './cache'
 import { Client, NotifyResult } from './types'
@@ -84,7 +84,7 @@ class Workspace {
 
   constructor (
     private readonly ctx: MeasureContext,
-    private readonly ws: WorkspaceLoginInfo,
+    private readonly ws: WorkspaceInfoWithStatus,
     private readonly hierarchy: Hierarchy,
     private readonly model: ModelDb,
     private readonly client: RestClient,

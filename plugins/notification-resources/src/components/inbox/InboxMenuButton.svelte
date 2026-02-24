@@ -40,6 +40,7 @@
   size="small"
   noSelection
   icon={IconMoreV}
+  dataId="inbox_menu-button"
   items={[
     {
       id: 'read',

@@ -97,6 +97,7 @@ export class Worker {
 
     const token = generateToken(systemAccountUuid, ws)
     const wsInfo = await getWorkspaceInfo(token)
+    if (wsInfo === undefined) return
 
     const endpoint = getTransactorApiEndpoint(wsInfo)
     if (endpoint === undefined) return

@@ -30,7 +30,8 @@ import core, {
   type Tx,
   TxCreateDoc,
   TxCUD,
-  TxProcessor
+  TxProcessor,
+  WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import activity, { DocUpdateMessage, ActivityMessage } from '@hcengineering/activity'
 import notification, {
@@ -49,7 +50,6 @@ import serverNotification, {
   TypeMatchClient
 } from '@hcengineering/server-notification'
 import { getResource, IntlString } from '@hcengineering/platform'
-import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 
@@ -59,7 +59,9 @@ import config from './config'
 export const MAX_NOTIFICATION_TYPE_PRIORITY = Number.MAX_SAFE_INTEGER
 const externalRegions = process.env.EXTERNAL_REGIONS?.split(';') ?? []
 
-export async function getWorkspaceInfo (token: string): Promise<WorkspaceLoginInfo> {
+export async function getWorkspaceInfo (
+  token: string
+): Promise<(WorkspaceInfoWithStatus & { endpoint: string }) | undefined> {
   const accountClient = getAccountClient(token, 30000)
   const connectionErrorCodes = ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND']
   const st = Date.now()
@@ -67,11 +69,15 @@ export async function getWorkspaceInfo (token: string): Promise<WorkspaceLoginIn
   while (true) {
     try {
       const workspaceInfo = await accountClient.selectWorkspace('', 'internal', externalRegions)
-
       if (workspaceInfo === undefined) {
         throw new Error('Workspace not found')
       }
-      return workspaceInfo
+
+      const infoWithStatus = await accountClient.getWorkspaceInfo(false)
+
+      if (infoWithStatus.isDisabled === true) return undefined
+      if (infoWithStatus.mode !== 'active') return undefined
+      return { ...infoWithStatus, endpoint: workspaceInfo.endpoint }
     } catch (err: any) {
       if (timeout > 0 && st + timeout < Date.now()) {
         // Timeout happened
@@ -86,7 +92,7 @@ export async function getWorkspaceInfo (token: string): Promise<WorkspaceLoginIn
   }
 }
 
-export function getTransactorApiEndpoint (ws: WorkspaceLoginInfo): string {
+export function getTransactorApiEndpoint (ws: { endpoint: string }): string {
   return ws.endpoint.replace('wss://', 'https://').replace('ws://', 'http://')
 }
 

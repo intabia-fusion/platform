@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Hierarchy, MeasureContext, ModelDb, Ref, Tx, TxFactory } from '@hcengineering/core'
+import { Hierarchy, MeasureContext, ModelDb, Ref, Tx, TxFactory, WorkspaceInfoWithStatus } from '@hcengineering/core'
 import {
   DocNotifyContext,
   MentionInboxNotification,
@@ -24,7 +24,6 @@ import {
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
-import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { RestClient } from '@hcengineering/api-client'
 import { Receiver } from '@hcengineering/server-notification'
 
@@ -43,7 +42,7 @@ export type NotifyResult = Record<Ref<NotificationProvider>, NotificationType[]>
 export interface Client {
   ctx: MeasureContext
   rest: RestClient
-  workspace: WorkspaceLoginInfo
+  workspace: WorkspaceInfoWithStatus
   storage: StorageAdapter
   model: ModelDb
   hierarchy: Hierarchy

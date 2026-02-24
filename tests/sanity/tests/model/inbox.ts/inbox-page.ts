@@ -1,12 +1,7 @@
-import { expect, type Locator, type Page } from '@playwright/test'
+import { expect, type Locator } from '@playwright/test'
+import { CommonPage } from '../common-page'
 
-export class InboxPage {
-  readonly page: Page
-
-  constructor (page: Page) {
-    this.page = page
-  }
-
+export class InboxPage extends CommonPage {
   readonly taskName = (taskName: string): Locator => this.page.getByRole('paragraph').getByTitle(taskName)
   readonly toDoName = (): Locator => this.page.getByRole('paragraph')
   readonly leftSidePanelOpen = (): Locator => this.page.locator('#btnPAside')
@@ -14,6 +9,7 @@ export class InboxPage {
   readonly leftSidePanelClose = (): Locator => this.page.locator('#btnPClose')
   readonly inboxChat = (text: string): Locator => this.page.getByText(text)
   readonly issueTitle = (issueTitle: string): Locator => this.page.getByText(issueTitle).first()
+  readonly menuButton = (): Locator => this.page.locator('[data-id="inbox_menu-button"]')
 
   // ACTIONS
 
@@ -67,5 +63,13 @@ export class InboxPage {
 
   async checkIfTextInChatIsPresent (text: string): Promise<void> {
     await expect(this.inboxChat(text).nth(1)).toBeVisible()
+  }
+
+  async clearAll (): Promise<void> {
+    await this.menuButton().click()
+    await this.page.getByRole('button', { name: 'Clear all' }).click()
+    await expect(this.page.getByText('Remove all notifications?').nth(0)).toBeVisible()
+
+    await this.page.getByRole('button', { name: 'Ok' }).click()
   }
 }

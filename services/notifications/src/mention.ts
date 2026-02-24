@@ -193,8 +193,8 @@ async function getMentionRefs (
           const buffer = await storage.read(
             ctx,
             {
-              uuid: workspace.workspace,
-              url: workspace.workspaceUrl
+              uuid: workspace.uuid,
+              url: workspace.url
             },
             blobId
           )
