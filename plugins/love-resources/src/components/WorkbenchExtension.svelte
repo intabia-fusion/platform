@@ -3,13 +3,95 @@
   import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, Track } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
-  import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
+  import { lkIsConnecting, lkReconnected, lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'
   import { myConnectingSessionId } from '../stores'
   import { liveKitClient, lk } from '../utils'
   import { get } from 'svelte/store'
 
   let parentElement: HTMLDivElement
+  let audioUnlocked = false
+
+  /**
+   * Ensure the Room-level AudioContext is resumed (unlocks autoplay).
+   * LiveKit SDK handles this internally but we call it explicitly
+   * to cover edge cases where browser blocked audio playback.
+   */
+  async function ensureAudioUnlocked (): Promise<void> {
+    if (audioUnlocked) return
+    try {
+      await lk.startAudio()
+      audioUnlocked = true
+      console.log('[WorkbenchExtension] Audio context unlocked via startAudio()')
+    } catch (err) {
+      console.warn('[WorkbenchExtension] startAudio() failed, will retry on user interaction', err)
+    }
+  }
+
+  /**
+   * Try to play an audio element with retry on user interaction.
+   */
+  function safePlay (element: HTMLAudioElement, trackSid: string): void {
+    element.play().catch((err) => {
+      console.warn('[WorkbenchExtension] Audio play() failed, will retry on interaction', {
+        trackSid,
+        errorName: err.name,
+        errorMessage: err.message
+      })
+      // Register one-time click handler to resume playback on user interaction
+      const resumeHandler = (): void => {
+        void ensureAudioUnlocked().then(() => {
+          retryPausedAudioElements()
+        })
+        document.removeEventListener('click', resumeHandler)
+        document.removeEventListener('keydown', resumeHandler)
+      }
+      document.addEventListener('click', resumeHandler, { once: true })
+      document.addEventListener('keydown', resumeHandler, { once: true })
+    })
+  }
+
+  /**
+   * Retry playing all paused audio elements in the container.
+   */
+  function retryPausedAudioElements (): void {
+    if (parentElement == null) return
+    const audioElements = Array.from(parentElement.children) as HTMLAudioElement[]
+    for (const el of audioElements) {
+      if (el.paused && !el.ended) {
+        el.play().catch((err) => {
+          console.warn('[WorkbenchExtension] Retry play() still failed', {
+            trackSid: el.id,
+            error: err.message
+          })
+        })
+      }
+    }
+  }
+
+  function attachAudioTrack (
+    track: RemoteTrack,
+    publication: RemoteTrackPublication,
+    participant?: RemoteParticipant
+  ): void {
+    // Avoid duplicate elements for the same track
+    if (parentElement?.querySelector(`#${CSS.escape(publication.trackSid)}`) != null) {
+      return
+    }
+
+    const element = track.attach() as HTMLAudioElement
+    element.id = publication.trackSid
+    element.autoplay = true
+    parentElement.appendChild(element)
+
+    console.log('[WorkbenchExtension] Audio element attached', {
+      trackSid: publication.trackSid,
+      participant: participant?.identity ?? 'unknown',
+      parentChildrenCount: parentElement?.children?.length ?? 0
+    })
+
+    safePlay(element, publication.trackSid)
+  }
 
   function handleTrackSubscribed (
     track: RemoteTrack,
@@ -21,33 +103,10 @@
         trackSid: publication.trackSid,
         participant: participant.identity,
         participantName: participant.name,
-        isMuted: track.isMuted,
-        mediaStreamTrackReadyState: track.mediaStreamTrack?.readyState,
-        mediaStreamTrackMuted: track.mediaStreamTrack?.muted
+        isMuted: track.isMuted
       })
-      const element = track.attach() as HTMLAudioElement
-      element.id = publication.trackSid
-      element.autoplay = true
-      parentElement.appendChild(element)
-
-      console.log('[WorkbenchExtension.handleTrackSubscribed] Audio element attached', {
-        trackSid: publication.trackSid,
-        elementId: element.id,
-        elementPaused: element.paused,
-        elementMuted: element.muted,
-        elementReadyState: element.readyState,
-        parentChildrenCount: parentElement?.children?.length ?? 0
-      })
-
-      // Try to play and log any errors
-      element.play().catch((err) => {
-        console.error('[WorkbenchExtension.handleTrackSubscribed] Audio play() failed', {
-          trackSid: publication.trackSid,
-          errorName: err.name,
-          errorMessage: err.message,
-          participant: participant.identity
-        })
-      })
+      void ensureAudioUnlocked()
+      attachAudioTrack(track, publication, participant)
     }
   }
 
@@ -60,52 +119,67 @@
       console.log('[WorkbenchExtension.handleTrackUnsubscribed] Audio track unsubscribed', {
         trackSid: publication.trackSid,
         participant: participant.identity,
-        participantName: participant.name,
-        parentChildrenCount: parentElement?.children?.length ?? 0
+        participantName: participant.name
       })
-      const element = document.getElementById(publication.trackSid)
+      const element = parentElement?.querySelector(`#${CSS.escape(publication.trackSid)}`)
       if (element != null) {
-        parentElement.removeChild(element)
-        console.log('[WorkbenchExtension.handleTrackUnsubscribed] Audio element removed', {
-          trackSid: publication.trackSid,
-          remainingChildrenCount: parentElement?.children?.length ?? 0
-        })
-      } else {
-        console.warn('[WorkbenchExtension.handleTrackUnsubscribed] Audio element not found for removal', {
-          trackSid: publication.trackSid
-        })
+        track.detach(element as HTMLMediaElement)
+        element.remove()
       }
     }
   }
 
-  // Validate audio elements are functioning properly
-  function validateAudioElements (): void {
-    if (parentElement == null) {
-      console.log('[WorkbenchExtension.validateAudioElements] No parent element')
-      return
+  /**
+   * Re-attach all remote audio tracks. Called after LiveKit reconnect
+   * to ensure audio elements reference the new MediaStreams.
+   */
+  function reattachAllAudioTracks (): void {
+    if (parentElement == null) return
+
+    console.log('[WorkbenchExtension] Reattaching audio tracks after reconnect')
+
+    // Remove stale audio elements
+    while (parentElement.firstChild != null) {
+      parentElement.removeChild(parentElement.firstChild)
     }
 
-    const audioElements = Array.from(parentElement.children) as HTMLAudioElement[]
-    console.log('[WorkbenchExtension.validateAudioElements] Validating audio elements', {
-      totalElements: audioElements.length,
-      connectionState: lk.state
-    })
+    // Re-attach from current remote participants
+    let count = 0
+    for (const participant of lk.remoteParticipants.values()) {
+      for (const publication of participant.trackPublications.values()) {
+        if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
+          attachAudioTrack(publication.track, publication, participant)
+          count++
+        }
+      }
+    }
 
-    audioElements.forEach((el, index) => {
-      const trackSid = el.id
-      console.log(`[WorkbenchExtension.validateAudioElements] Audio element ${index}`, {
-        trackSid,
-        paused: el.paused,
-        muted: el.muted,
-        ended: el.ended,
-        readyState: el.readyState,
-        currentTime: el.currentTime,
-        volume: el.volume,
-        error: el.error?.code ?? null,
-        networkState: el.networkState
-      })
+    console.log('[WorkbenchExtension] Reattached audio tracks', { count })
+
+    void ensureAudioUnlocked()
+  }
+
+  /**
+   * Attach existing audio tracks from already connected participants.
+   */
+  function attachExistingAudioTracks (): void {
+    let attachedCount = 0
+    for (const participant of lk.remoteParticipants.values()) {
+      for (const publication of participant.trackPublications.values()) {
+        if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
+          attachAudioTrack(publication.track, publication, participant)
+          attachedCount++
+        }
+      }
+    }
+
+    console.log('[WorkbenchExtension.onMount] Attached existing audio tracks', {
+      attachedCount,
+      totalAudioElements: parentElement?.children?.length ?? 0
     })
   }
+
+  let unsubReconnect: (() => void) | undefined
 
   onMount(async () => {
     console.log('[WorkbenchExtension.onMount] Mounting WorkbenchExtension', {
@@ -121,41 +195,20 @@
     // Subscribe to incoming meeting invites
     subscribeToIncomingInvites()
 
-    // Attach existing audio tracks from already connected participants
-    // This fixes the issue where audio is not heard when joining a room with existing participants
-    let attachedCount = 0
-    for (const participant of lk.remoteParticipants.values()) {
-      for (const publication of participant.trackPublications.values()) {
-        if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
-          console.log('[WorkbenchExtension.onMount] Attaching existing audio track', {
-            trackSid: publication.trackSid,
-            participant: participant.identity,
-            isMuted: publication.track.isMuted,
-            mediaStreamTrackReadyState: publication.track.mediaStreamTrack?.readyState
-          })
-          const element = publication.track.attach() as HTMLAudioElement
-          element.id = publication.trackSid
-          element.autoplay = true
-          parentElement.appendChild(element)
-          attachedCount++
+    // Attach existing audio tracks
+    attachExistingAudioTracks()
 
-          element.play().catch((err) => {
-            console.error('[WorkbenchExtension.onMount] Failed to play existing audio', {
-              trackSid: publication.trackSid,
-              error: err.message
-            })
-          })
-        }
+    // Unlock audio context
+    void ensureAudioUnlocked()
+
+    // Listen for reconnect events to re-attach audio elements
+    unsubReconnect = lkReconnected.subscribe(() => {
+      // Skip initial subscription call (value is 0)
+      if (get(lkReconnected) > 0) {
+        audioUnlocked = false
+        reattachAllAudioTracks()
       }
-    }
-
-    console.log('[WorkbenchExtension.onMount] Finished attaching existing audio tracks', {
-      attachedCount,
-      totalAudioElements: parentElement?.children?.length ?? 0
     })
-
-    // Validate audio elements after initial setup
-    validateAudioElements()
   })
 
   onDestroy(async () => {
@@ -166,6 +219,7 @@
 
     lk.off(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+    unsubReconnect?.()
     // Unsubscribe from incoming invites
     unsubscribeFromIncomingInvites()
     // Do not disconnect if the current session initiated a connect (user is in the process of connecting)

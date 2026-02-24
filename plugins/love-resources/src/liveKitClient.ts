@@ -33,6 +33,7 @@ export enum ScreenSharingState {
 
 export const screenSharingState = writable<ScreenSharingState>(ScreenSharingState.Inactive)
 export const lkSessionConnected = writable<boolean>(false)
+export const lkReconnected = writable<number>(0)
 
 export const lkIsConnecting = writable<boolean>(false)
 
@@ -83,6 +84,8 @@ export class LiveKitClient {
       videoCaptureDefaults: defaultCaptureOptions
     })
     lkRoom.on(RoomEvent.Connected, this.onConnected)
+    lkRoom.on(RoomEvent.Reconnecting, this.onReconnecting)
+    lkRoom.on(RoomEvent.Reconnected, this.onReconnected)
     lkRoom.on(RoomEvent.Disconnected, this.onDisconnected)
     this.liveKitRoom = lkRoom
   }
@@ -198,6 +201,16 @@ export class LiveKitClient {
     this.liveKitRoom.on(RoomEvent.LocalTrackUnpublished, this.onLocalTrackUnpublished)
     this.liveKitRoom.on(RoomEvent.TrackMuted, this.onTrackMuted)
     this.liveKitRoom.on(RoomEvent.TrackUnmuted, this.onTrackUnmuted)
+  }
+
+  onReconnecting = (): void => {
+    console.log('[LiveKitClient.onReconnecting] Reconnecting event fired')
+  }
+
+  onReconnected = (): void => {
+    console.log('[LiveKitClient.onReconnected] Reconnected event fired')
+    // Signal WorkbenchExtension to re-attach audio elements after reconnect
+    lkReconnected.update((v) => v + 1)
   }
 
   onDisconnected = (): void => {
