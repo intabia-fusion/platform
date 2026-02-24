@@ -22,7 +22,9 @@ export class ChannelPage extends CommonPage {
       ? this.page.locator('#sidebar .activityMessage div[data-delivered]', { hasText: messageText })
       : this.page.locator('#sidebar .activityMessage', { hasText: messageText })
 
-  readonly channelName = (channel: string): Locator => this.page.getByText('general random').getByText(channel)
+  readonly channelName = (channel: string): Locator =>
+    this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: channel })
+
   readonly channelTab = (): Locator => this.page.getByRole('link', { name: 'Channels' }).getByRole('button')
   readonly channelTable = (): Locator => this.page.getByRole('table')
   readonly channel = (channel: string): Locator => this.page.getByRole('button', { name: channel })
