@@ -223,15 +223,11 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
     const context1 = contextByDoc.get(i1.id)
     const context2 = contextByDoc.get(i2.id)
 
-    if (context1 === undefined || context2 === undefined) {
-      return 1
-    }
-
-    const hasNewMessages1 = (context1.lastUpdate ?? 0) > (context1.lastView ?? 0)
-    const hasNewMessages2 = (context2.lastUpdate ?? 0) > (context2.lastView ?? 0)
+    const hasNewMessages1 = (context1?.lastUpdate ?? 0) > (context1?.lastView ?? 0)
+    const hasNewMessages2 = (context2?.lastUpdate ?? 0) > (context2?.lastView ?? 0)
 
     if (hasNewMessages1 && hasNewMessages2) {
-      return (context2.lastUpdate ?? 0) - (context1.lastUpdate ?? 0)
+      return (context2?.lastUpdate ?? 0) - (context1?.lastUpdate ?? 0)
     }
 
     if (hasNewMessages1 && !hasNewMessages2) {
@@ -242,7 +238,7 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
       return 1
     }
 
-    return (context2.lastUpdate ?? 0) - (context1.lastUpdate ?? 0)
+    return (context2?.lastUpdate ?? i2.object.modifiedOn) - (context1?.lastUpdate ?? i2.object.modifiedOn)
   })
 }
 

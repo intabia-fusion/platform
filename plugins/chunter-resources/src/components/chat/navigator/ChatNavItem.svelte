@@ -32,7 +32,7 @@
 
   import NavItem from './NavItem.svelte'
   import { ChatNavItemModel } from '../types'
-  import { openChannel, openChannelInSidebar } from '../../../navigation'
+  import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
   import { leaveChannel } from '../../../utils'
 
@@ -163,6 +163,7 @@
             'chats',
             { hidden: true }
           )
+          await resetChunterLocIfEqual(object._id, object._class, object)
         }
       })
     }

@@ -147,6 +147,7 @@
     headerClickType="toggle"
     contextClickType="menu"
     showMenu={menuOpened}
+    testid={`section-${id}`}
   >
     {#each sortedItems as item (item.id)}
       {@const context = $contextByDocStore.get(item.id)}
@@ -168,12 +169,21 @@
 
     <svelte:fragment slot="actions">
       {#if createAction}
-        <button class="action" on:click|preventDefault|stopPropagation={(e) => createAction.action({}, e)}>
+        <button
+          class="action"
+          on:click|preventDefault|stopPropagation={(e) => createAction.action({}, e)}
+          data-testid={`action-create-${id}`}
+        >
           <Icon icon={IconAdd} size="small" />
         </button>
       {/if}
       {#if actions.length > 0}
-        <button class="action" class:pressed={menuOpened} on:click|preventDefault|stopPropagation={handleMenuClicked}>
+        <button
+          class="action"
+          class:pressed={menuOpened}
+          on:click|preventDefault|stopPropagation={handleMenuClicked}
+          data-testid={`action-menu-${id}`}
+        >
           <IconMoreH size={'small'} />
         </button>
       {/if}

@@ -243,8 +243,12 @@ export class Hierarchy {
   public getMixinClasses (mixin: Ref<Mixin<Doc>>): Ref<Class<Doc>>[] {
     const result: Ref<Class<Doc>>[] = []
     for (const _id of this.classifiers.keys()) {
-      if (this.classHierarchyMixin(_id, mixin) !== undefined) {
-        result.push(_id)
+      try {
+        if (this.classHierarchyMixin(_id, mixin) !== undefined) {
+          result.push(_id)
+        }
+      } catch (e) {
+        console.error(e)
       }
     }
 

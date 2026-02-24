@@ -61,6 +61,7 @@
   export let noPadding: boolean = false
   export let headerClickType: 'menu' | 'toggle' = 'menu'
   export let contextClickType: 'menu' | undefined = undefined
+  export let testid: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -115,6 +116,7 @@
   class:noIcon={!icon}
   class:noDivider
   on:contextmenu={onContextClick}
+  data-testid={testid}
 >
   <button
     class="hulyNavGroup-header"

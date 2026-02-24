@@ -174,7 +174,7 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
     const val = schema[key]
     if (val.index) {
       await client.unsafe(`
-          CREATE INDEX IF NOT EXISTS ${domain}_${key} ON ${domain} ${getIndex(val)} ("${key}")
+          CREATE INDEX IF NOT EXISTS ${domain}_${key}__index ON ${domain} ${getIndex(val)} ("${key}")
         `)
     }
     fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
@@ -184,7 +184,7 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
     for (const val of indexes) {
       if ('unique' in val) {
         const uniqueFields: string[] = ['workspaceId', ...val.unique]
-        const indexName = `${domain}_unique_${uniqueFields.join('_')}`
+        const indexName = `${domain}_unique_${uniqueFields.join('_')}__index`
         const fields = uniqueFields.map((f) => `"${f}"`).join(', ')
         await client.unsafe(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${domain} (${fields})`)
       }
