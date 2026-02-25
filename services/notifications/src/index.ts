@@ -27,16 +27,38 @@ import { readFileSync } from 'fs'
 import { Worker } from './worker'
 import config from './config'
 import { prepare } from './prepare'
+import {
+  registerAdapterFactory,
+  registerDestroyFactory,
+  registerTxAdapterFactory,
+  setAdapterSecurity
+} from '@hcengineering/server-pipeline'
+import {
+  createPostgreeDestroyAdapter,
+  createPostgresAdapter,
+  createPostgresTxAdapter,
+  shutdownPostgres
+} from '@hcengineering/postgres'
 
 void main().catch((err) => {
   console.error(err)
 })
 
+process.on('exit', () => {
+  shutdownPostgres().catch((err) => {
+    console.error(err)
+  })
+})
 async function main (): Promise<void> {
   prepare()
   setMetadata(serverToken.metadata.Secret, config.Secret)
   setMetadata(serverToken.metadata.Service, config.ServiceId)
   setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
+
+  registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
+  registerAdapterFactory('postgresql', createPostgresAdapter, true)
+  registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
+  setAdapterSecurity('postgresql', true)
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)

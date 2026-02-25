@@ -53,7 +53,7 @@ export async function createMentionsData (
     return await removeMentionNotifications(client, tx as TxRemoveDoc<Doc>)
   }
 
-  const { rest, hierarchy } = client
+  const { hierarchy } = client
   const res: MentionResult = { txes: [], data: [] }
 
   const doc = attachedToDoc ?? object
@@ -68,7 +68,7 @@ export async function createMentionsData (
   const mentions =
     tx._class === core.class.TxCreateDoc
       ? []
-      : await rest.findAll(activity.class.UserMentionInfo, { attachedTo: tx.objectId })
+      : await client.findAll(activity.class.UserMentionInfo, { attachedTo: tx.objectId })
 
   for (const mention of mentions) {
     const refIndex = references.findIndex(
@@ -99,8 +99,6 @@ export async function createMentionsData (
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
       const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [type])
-
-      console.log('notifyResult:', notifyResult, receiver.account, doc, message)
 
       if ((notifyResult[notification.providers.InboxNotificationProvider]?.length ?? 0) === 0) continue
 
@@ -157,7 +155,7 @@ async function getReceivers (client: Client, cache: Cache, reference: MentionRef
         .map((it) => it.collaborator)
     )
   } else {
-    const employee = await client.rest.findOne(contact.mixin.Employee, { _id: reference.mentionId as Ref<Employee> })
+    const employee = await client.findOne(contact.mixin.Employee, { _id: reference.mentionId as Ref<Employee> })
 
     if (employee?.personUuid != null && (!space.private || space.members.includes(employee.personUuid))) {
       return await cache.getReceivers([employee.personUuid])
@@ -244,7 +242,7 @@ function getMentionRefsData (
 }
 
 async function getRemoveMentionTxes (client: Client, mention: UserMentionInfo, tx: TxCUD<Doc>): Promise<Tx[]> {
-  const { txFactory, hierarchy, rest } = client
+  const { txFactory, hierarchy } = client
   const res: Tx[] = []
 
   res.push(txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id))
@@ -253,12 +251,12 @@ async function getRemoveMentionTxes (client: Client, mention: UserMentionInfo, t
 
   const _id = tx.objectId as Ref<ActivityMessage>
 
-  const person = await rest.findOne(contact.class.Person, { _id: mention.user })
+  const person = await client.findOne(contact.class.Person, { _id: mention.user })
 
   if (person?.personUuid == null) return res
   const account = person.personUuid as AccountUuid
 
-  const notifications = await rest.findAll(notification.class.MentionInboxNotification, {
+  const notifications = await client.findAll(notification.class.MentionInboxNotification, {
     mentionedIn: _id,
     user: account
   })
@@ -292,7 +290,7 @@ function getUpdateMentionTx (
 }
 
 async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>): Promise<MentionResult> {
-  const { hierarchy, rest, txFactory } = client
+  const { hierarchy, txFactory } = client
   const attributes = hierarchy.getAllAttributes(tx.objectClass)
 
   let hasMarkdown = false
@@ -307,7 +305,7 @@ async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>)
   if (hasMarkdown) {
     const txes: Tx[] = []
 
-    const notifications = await rest.findAll(notification.class.MentionInboxNotification, {
+    const notifications = await client.findAll(notification.class.MentionInboxNotification, {
       mentionedIn: tx.objectId
     })
 

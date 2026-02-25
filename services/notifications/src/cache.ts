@@ -20,9 +20,7 @@ import core, {
   Doc,
   getClassCollaborators,
   groupByArray,
-  Hierarchy,
   MeasureContext,
-  ModelDb,
   notEmpty,
   PersonId,
   Ref,
@@ -41,11 +39,10 @@ import notification, {
   type NotificationProviderSetting,
   type NotificationTypeSetting
 } from '@hcengineering/notification'
-import { RestClient } from '@hcengineering/api-client'
 import contact, { Employee, Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
-
-import { EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
 import { Receiver, Sender } from '@hcengineering/server-notification'
+
+import { Client, EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
 
 class WsCache {
   private readonly collaborators = new Map<Ref<Doc>, Collaborator[]>()
@@ -71,9 +68,7 @@ class WsCache {
 
   constructor (
     private readonly ctx: MeasureContext,
-    private readonly hierarchy: Hierarchy,
-    private readonly model: ModelDb,
-    private readonly client: RestClient
+    private readonly client: Client
   ) {}
 
   public tx (tx: TxCUD<Doc>): void {
@@ -92,8 +87,9 @@ class WsCache {
 
   private txCreateDoc (tx: TxCreateDoc<Doc>): void {
     const doc = TxProcessor.createDoc2Doc(tx)
+    const { hierarchy } = this.client
 
-    if (this.hierarchy.isDerived(doc._class, core.class.Collaborator)) {
+    if (hierarchy.isDerived(doc._class, core.class.Collaborator)) {
       const collab = doc as Collaborator
 
       if (!this.collaborators.has(collab.attachedTo)) return
@@ -104,7 +100,7 @@ class WsCache {
       }
     }
 
-    if (this.hierarchy.isDerived(doc._class, notification.class.DocNotifyContext)) {
+    if (hierarchy.isDerived(doc._class, notification.class.DocNotifyContext)) {
       const context = doc as DocNotifyContext
       if (!this.contexts.has(context.objectId)) return
       const current = this.contexts.get(context.objectId) ?? []
@@ -113,22 +109,22 @@ class WsCache {
       }
     }
 
-    if (this.isSettingsLoaded && this.hierarchy.isDerived(doc._class, notification.class.NotificationProviderSetting)) {
+    if (this.isSettingsLoaded && hierarchy.isDerived(doc._class, notification.class.NotificationProviderSetting)) {
       const setting = doc as NotificationProviderSetting
       this.notificationProviderSettings.set(setting._id, setting)
     }
 
-    if (this.isSettingsLoaded && this.hierarchy.isDerived(doc._class, notification.class.NotificationTypeSetting)) {
+    if (this.isSettingsLoaded && hierarchy.isDerived(doc._class, notification.class.NotificationTypeSetting)) {
       const setting = doc as NotificationTypeSetting
       this.notificationTypeSettings.set(setting._id, setting)
     }
 
-    if (this.hierarchy.isDerived(doc._class, contact.class.PersonSpace)) {
+    if (hierarchy.isDerived(doc._class, contact.class.PersonSpace)) {
       const space = doc as PersonSpace
       this.personSpaces.set(space.person, space)
     }
 
-    if (this.hierarchy.isDerived(doc._class, core.class.UserStatus)) {
+    if (hierarchy.isDerived(doc._class, core.class.UserStatus)) {
       const status = doc as UserStatus
       this.userStatuses.set(status._id, status)
     }
@@ -136,12 +132,14 @@ class WsCache {
 
   private txUpdateDoc (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): void {
     const doc = this.docs.get(tx.objectId)
+    const { hierarchy } = this.client
+
     if (doc != null) {
       const updated = this.updateOrMixin(tx, doc)
       this.docs.set(updated._id, updated)
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
+    if (hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
       const collabs = Array.from(this.collaborators.values()).flat()
       const collab = collabs.find((collab) => collab._id === tx.objectId)
       if (collab === undefined) return
@@ -153,7 +151,7 @@ class WsCache {
       )
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
       const contexts = Array.from(this.contexts.values()).flat()
       const context = contexts.find((context) => context._id === tx.objectId)
       if (context === undefined) return
@@ -165,21 +163,21 @@ class WsCache {
       )
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.NotificationProviderSetting)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.NotificationProviderSetting)) {
       const setting = this.notificationProviderSettings.get(tx.objectId as Ref<NotificationProviderSetting>)
       if (setting === undefined) return
       const updated = this.updateOrMixin(tx, setting)
       this.notificationProviderSettings.set(updated._id, updated)
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.NotificationTypeSetting)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.NotificationTypeSetting)) {
       const setting = this.notificationTypeSettings.get(tx.objectId as Ref<NotificationTypeSetting>)
       if (setting === undefined) return
       const updated = this.updateOrMixin(tx, setting)
       this.notificationTypeSettings.set(updated._id, updated)
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, contact.class.PersonSpace)) {
+    if (hierarchy.isDerived(tx.objectClass, contact.class.PersonSpace)) {
       const spaces = Array.from(this.personSpaces.values())
       const space = spaces.find((space) => space._id === tx.objectId)
       if (space === undefined) return
@@ -187,14 +185,14 @@ class WsCache {
       this.personSpaces.set(updated.person, updated)
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
+    if (hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
       const status = this.userStatuses.get(tx.objectId as Ref<UserStatus>)
       if (status === undefined) return
       const updated = this.updateOrMixin(tx, status)
       this.userStatuses.set(updated._id, updated)
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
+    if (hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
       const persons: Array<[PersonId, Person]> = Array.from(this.persons.entries())
       const matched = persons.filter(([_, person]) => person._id === tx.objectId)
       if (matched.length === 0) return
@@ -210,8 +208,9 @@ class WsCache {
 
   private txRemoveDoc (tx: TxRemoveDoc<Doc>): void {
     this.docs.delete(tx.objectId)
+    const { hierarchy } = this.client
 
-    if (this.hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
+    if (hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
       const collabs = Array.from(this.collaborators.values()).flat()
       const collab = collabs.find((collab) => collab._id === tx.objectId)
       if (collab === undefined) return
@@ -223,7 +222,7 @@ class WsCache {
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
       this.contexts.delete(tx.objectId)
       const contexts = Array.from(this.contexts.values()).flat()
       const context = contexts.find((context) => context._id === tx.objectId)
@@ -236,17 +235,17 @@ class WsCache {
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.NotificationProviderSetting)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.NotificationProviderSetting)) {
       this.notificationProviderSettings.delete(tx.objectId as Ref<NotificationProviderSetting>)
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.NotificationTypeSetting)) {
+    if (hierarchy.isDerived(tx.objectClass, notification.class.NotificationTypeSetting)) {
       this.notificationTypeSettings.delete(tx.objectId as Ref<NotificationTypeSetting>)
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, contact.class.PersonSpace)) {
+    if (hierarchy.isDerived(tx.objectClass, contact.class.PersonSpace)) {
       const spaces = Array.from(this.personSpaces.values())
       const space = spaces.find((space) => space._id === tx.objectId)
       if (space === undefined) return
@@ -254,12 +253,12 @@ class WsCache {
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
+    if (hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
       this.userStatuses.delete(tx.objectId as Ref<UserStatus>)
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
+    if (hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
       const employees = Array.from(this.employees.values())
       const employee = employees.find((employee) => employee._id === tx.objectId)
       if (employee != null) {
@@ -276,7 +275,7 @@ class WsCache {
       return
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, contact.class.SocialIdentity)) {
+    if (hierarchy.isDerived(tx.objectClass, contact.class.SocialIdentity)) {
       this.persons.delete(tx.objectId as any as PersonId)
       const socialIds = Array.from(this.socialIds.values()).flat()
       const socialId = socialIds.find((socialId) => socialId._id === tx.objectId)
@@ -334,7 +333,7 @@ class WsCache {
       return this.collaborators.get(_id) ?? []
     }
 
-    const mixin = getClassCollaborators(this.model, this.hierarchy, _class)
+    const mixin = getClassCollaborators(this.client.model, this.client.hierarchy, _class)
     if (mixin === undefined) {
       return []
     }
@@ -372,7 +371,7 @@ class WsCache {
   }
 
   public async getDocSpace (doc: Doc): Promise<Space | undefined> {
-    if (this.hierarchy.isDerived(doc._class, core.class.Space)) return doc as Space
+    if (this.client.hierarchy.isDerived(doc._class, core.class.Space)) return doc as Space
     if (this.docs.has(doc.space)) return doc as Space
 
     const space = await this.client.findOne<Space>(core.class.Space, { _id: doc.space }, { limit: 1 })

@@ -50,7 +50,10 @@ export class Worker {
 
   private readonly interval: NodeJS.Timeout | undefined = undefined
 
-  constructor (ctx: MeasureContext, modelTxes: Tx[]) {
+  constructor (
+    ctx: MeasureContext,
+    private readonly modelTxes: Tx[]
+  ) {
     for (const tx of modelTxes) {
       this.sysHierarchy.tx(tx)
     }
@@ -72,6 +75,7 @@ export class Worker {
           const time = workspace.getLastTxDate() ?? 0
           const diff = now - time
           if (diff < 5 * 60 * 1000) continue
+          void workspace.close()
           this.workspaces.delete(uuid)
         }
       },
@@ -95,7 +99,7 @@ export class Worker {
       return
     }
 
-    const token = generateToken(systemAccountUuid, ws)
+    const token = generateToken(systemAccountUuid, ws, { service: 'notifications' })
     const wsInfo = await getWorkspaceInfo(token)
     if (wsInfo === undefined) return
 
@@ -105,7 +109,17 @@ export class Worker {
     const client = createRestClient(endpoint, ws, token)
 
     const { model, hierarchy } = await client.getModel(true)
-    const workspace = new Workspace(ctx.newChild(ws, {}), wsInfo, hierarchy, model, client, this.storage, this.txTypes)
+
+    const workspace = await Workspace.create(
+      ctx.newChild(ws, {}),
+      wsInfo,
+      hierarchy,
+      model,
+      this.modelTxes,
+      this.storage,
+      client,
+      this.txTypes
+    )
 
     this.workspaces.set(ws, workspace)
 

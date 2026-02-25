@@ -39425,12 +39425,18 @@ importers:
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../foundations/server/packages/kafka
+      '@hcengineering/middleware':
+        specifier: workspace:^0.7.22
+        version: link:../../foundations/server/packages/middleware
       '@hcengineering/notification':
         specifier: workspace:^0.7.0
         version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/postgres':
+        specifier: workspace:^0.7.22
+        version: link:../../foundations/server/packages/postgres
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry
@@ -39464,6 +39470,9 @@ importers:
       '@hcengineering/server-notification-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/notification-resources
+      '@hcengineering/server-pipeline':
+        specifier: workspace:^0.7.0
+        version: link:../../server/server-pipeline
       '@hcengineering/server-request':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/request

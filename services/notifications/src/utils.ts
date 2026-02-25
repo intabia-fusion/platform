@@ -439,7 +439,7 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
     branding: {
       lastNameFirst: config.LastNameFirst
     },
-    findAll: (_ctx, _class, query, ops) => client.rest.findAll(_class, query, ops)
+    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   }
 }
 
@@ -495,5 +495,5 @@ export async function getMessage (client: Client, tx: TxCreateDoc<ActivityMessag
 
   if (raw.attachedToTitle != null || raw.attachedToIdentifier != null || raw.attachedToUrl != null) return raw
 
-  return (await client.rest.findOne(raw._class, { _id: raw._id })) ?? raw
+  return (await client.findOne(raw._class, { _id: raw._id })) ?? raw
 }

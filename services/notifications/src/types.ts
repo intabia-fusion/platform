@@ -13,7 +13,21 @@
 // limitations under the License.
 //
 
-import { Hierarchy, MeasureContext, ModelDb, Ref, Tx, TxFactory, WorkspaceInfoWithStatus } from '@hcengineering/core'
+import {
+  type Class,
+  type Doc,
+  type DocumentQuery,
+  type FindOptions,
+  FindResult,
+  Hierarchy,
+  MeasureContext,
+  ModelDb,
+  Ref,
+  Tx,
+  TxFactory,
+  type WithLookup,
+  WorkspaceInfoWithStatus
+} from '@hcengineering/core'
 import {
   DocNotifyContext,
   MentionInboxNotification,
@@ -24,7 +38,6 @@ import {
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
-import { RestClient } from '@hcengineering/api-client'
 import { Receiver } from '@hcengineering/server-notification'
 
 export interface NotificationSettings {
@@ -41,12 +54,22 @@ export type NotifyResult = Record<Ref<NotificationProvider>, NotificationType[]>
 
 export interface Client {
   ctx: MeasureContext
-  rest: RestClient
   workspace: WorkspaceInfoWithStatus
   storage: StorageAdapter
   model: ModelDb
   hierarchy: Hierarchy
   txFactory: TxFactory
+  findAll: <T extends Doc>(
+    _class: Ref<Class<T>>,
+    query: DocumentQuery<T>,
+    options?: FindOptions<T>
+  ) => Promise<FindResult<T>>
+
+  findOne: <T extends Doc>(
+    _class: Ref<Class<T>>,
+    query: DocumentQuery<T>,
+    options?: FindOptions<T>
+  ) => Promise<WithLookup<T> | undefined>
 }
 
 export interface MentionResult {

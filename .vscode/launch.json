@@ -1043,7 +1043,8 @@
     "QUEUE_CONFIG": "localhost:19092",
     "QUEUE_REGION": "",
     "MODEL_JSON": "${workspaceRoot}/models/all/bundle/model.json",
-    "STORAGE_CONFIG": "datalake|http://localhost:4030"
+    "STORAGE_CONFIG": "datalake|http://localhost:4030",
+    "DB_URL": "postgresql://postgres:postgres@huly.local:5432"
     },
     "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
     "sourceMaps": true,

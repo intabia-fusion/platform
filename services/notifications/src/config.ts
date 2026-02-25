@@ -28,6 +28,7 @@ export interface Config {
   StorageConfig: string
   AllowedNotificationProviders: (Ref<NotificationProvider> | 'all')[]
   LastNameFirst: string
+  DbUrl: string
 }
 
 function getAllowedProviders (): (Ref<NotificationProvider> | 'all')[] {
@@ -46,7 +47,8 @@ const config: Config = (() => {
     ServiceId: process.env.SERVICE_ID ?? 'notifications-service',
     StorageConfig: process.env.STORAGE_CONFIG,
     AllowedNotificationProviders: getAllowedProviders(),
-    LastNameFirst: process.env.LAST_NAME_FIRST ?? 'false'
+    LastNameFirst: process.env.LAST_NAME_FIRST ?? 'false',
+    DbUrl: process.env.DB_URL
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

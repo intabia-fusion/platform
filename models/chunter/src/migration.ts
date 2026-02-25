@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Chat, chunterId, type ThreadMessage } from '@hcengineering/chunter'
+import { chunterId, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -21,13 +21,7 @@ import core, {
   type Domain,
   type Ref,
   type Space,
-  DOMAIN_TX,
-  notEmpty,
-  DOMAIN_COLLABORATOR,
-  type Collaborator,
-  DOMAIN_SPACE,
-  generateId,
-  type AccountUuid
+  DOMAIN_TX
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -37,41 +31,14 @@ import {
   type MigrationUpgradeClient
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import notification, { type DocNotifyContext } from '@hcengineering/notification'
-import contact, { getAllAccounts, type PersonSpace } from '@hcengineering/contact'
+import { getAllAccounts } from '@hcengineering/contact'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
 import { type DocUpdateMessage } from '@hcengineering/activity'
 
-import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
+import { DOMAIN_CHUNTER } from './index'
 import chunter from './plugin'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
-
-export async function createDocNotifyContexts (
-  client: MigrationUpgradeClient,
-  tx: TxOperations,
-  objectId: Ref<Doc>,
-  objectClass: Ref<Class<Doc>>,
-  objectSpace: Ref<Space>
-): Promise<void> {
-  const employees = await client.findAll(contact.mixin.Employee, { active: true })
-  const accounts = employees.map((it) => it.personUuid).filter(notEmpty)
-
-  const docNotifyContexts = await client.findAll(notification.class.DocNotifyContext, {
-    user: { $in: accounts },
-    objectId
-  })
-  const existingDNCUsers = new Set(docNotifyContexts.map((it) => it.user))
-
-  for (const account of accounts.filter((it) => !existingDNCUsers.has(it))) {
-    await tx.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-      user: account,
-      objectId,
-      objectClass,
-      objectSpace
-    })
-  }
-}
 
 export async function createGeneral (client: MigrationUpgradeClient, tx: TxOperations): Promise<void> {
   const current = await tx.findOne(chunter.class.Channel, { _id: chunter.space.General })
@@ -104,8 +71,6 @@ export async function createGeneral (client: MigrationUpgradeClient, tx: TxOpera
       )
     }
   }
-
-  await createDocNotifyContexts(client, tx, chunter.space.General, chunter.class.Channel, core.space.Space)
 }
 
 async function joinEmployees (current: Space, tx: TxOperations): Promise<void> {
@@ -154,8 +119,6 @@ export async function createRandom (client: MigrationUpgradeClient, tx: TxOperat
       )
     }
   }
-
-  await createDocNotifyContexts(client, tx, chunter.space.Random, chunter.class.Channel, core.space.Space)
 }
 
 async function convertCommentsToChatMessages (client: MigrationClient): Promise<void> {
@@ -240,54 +203,6 @@ async function removeChatSync (client: MigrationClient): Promise<void> {
   })
 }
 
-async function createChats (client: MigrationClient): Promise<void> {
-  const iterator = await client.traverse<Collaborator>(DOMAIN_COLLABORATOR, {})
-  const pinnedContexts = (await client.find(DOMAIN_DOC_NOTIFY, {
-    _class: notification.class.DocNotifyContext,
-    isPinned: true
-  })) as DocNotifyContext[]
-  const spaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
-  const processed = new Map<Ref<Doc>, AccountUuid[]>()
-  while (true) {
-    const collaborators = (await iterator.next(500)) ?? []
-    if (collaborators.length === 0) break
-
-    const res: Chat[] = []
-    for (const collaborator of collaborators) {
-      if (processed.get(collaborator.attachedTo)?.includes(collaborator.collaborator) === true) continue
-      processed.set(
-        collaborator.attachedTo,
-        (processed.get(collaborator.attachedTo) ?? []).concat([collaborator.collaborator])
-      )
-      const space = spaces.find((it) => it.account === collaborator.collaborator)
-      if (space === undefined) continue
-      if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
-        continue
-      }
-      res.push({
-        _id: generateId<Chat>(),
-        _class: chunter.class.Chat,
-        attachedTo: collaborator.attachedTo,
-        attachedToClass: collaborator.attachedToClass,
-        hidden: false,
-        pinned: pinnedContexts.some(
-          (ctx) => ctx.objectId === collaborator.attachedTo && ctx.user === collaborator.collaborator
-        ),
-        account: collaborator.collaborator,
-        space: space._id,
-        collection: 'chats',
-        modifiedOn: collaborator.modifiedOn,
-        modifiedBy: core.account.System,
-        createdOn: collaborator.createdOn,
-        createdBy: core.account.System
-      })
-    }
-    if (res.length > 0) {
-      await client.create<Chat>(DOMAIN_CHUNTER_DOC, res)
-    }
-  }
-}
-
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -362,11 +277,6 @@ export const chunterOperation: MigrateOperation = {
             attachedToClass: chunter.class.DirectMessage
           })
         }
-      },
-      {
-        state: 'create-chats-v1',
-        mode: 'upgrade',
-        func: createChats
       },
       {
         state: 'remove-chat-sync-v2',

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 //
 // Copyright © 2026 Intabia Fusion Inc.
 //
@@ -18,6 +19,9 @@ import core, {
   Class,
   Data,
   Doc,
+  type DocumentQuery,
+  type FindOptions,
+  FindResult,
   Hierarchy,
   MeasureContext,
   ModelDb,
@@ -34,6 +38,7 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc,
+  type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
@@ -55,6 +60,20 @@ import serverNotification, {
   TypeMatch
 } from '@hcengineering/server-notification'
 import { StorageAdapter } from '@hcengineering/storage'
+import { getResource, IntlString, PlatformError, unknownError } from '@hcengineering/platform'
+import { markupToText } from '@hcengineering/text-core'
+import config from './config'
+import { createPipeline, MiddlewareCreator, Pipeline, PipelineContext } from '@hcengineering/server-core'
+import { getConfig } from '@hcengineering/server-pipeline'
+import {
+  ContextNameMiddleware,
+  DBAdapterInitMiddleware,
+  DBAdapterMiddleware,
+  DomainFindMiddleware,
+  DomainTxMiddleware,
+  LowLevelMiddleware,
+  ModelMiddleware
+} from '@hcengineering/middleware'
 
 import WsCache from './cache'
 import { Client, NotifyResult } from './types'
@@ -70,9 +89,6 @@ import {
 } from './utils'
 import { createMentionsData, getMentionNotificationContent } from './mention'
 import { getReactionNotificationContent } from './reaction'
-import { getResource, IntlString } from '@hcengineering/platform'
-import { markupToText } from '@hcengineering/text-core'
-import config from './config'
 
 class Workspace {
   private readonly cache: WsCache
@@ -81,17 +97,20 @@ class Workspace {
   private lastTxDate: Timestamp | undefined = undefined
 
   private readonly txFactory = new TxFactory(core.account.System)
+  private readonly client: Client
 
-  constructor (
+  private constructor (
     private readonly ctx: MeasureContext,
     private readonly ws: WorkspaceInfoWithStatus,
+    private readonly pipeline: Pipeline,
     private readonly hierarchy: Hierarchy,
     private readonly model: ModelDb,
-    private readonly client: RestClient,
+    private readonly rest: RestClient,
     private readonly storage: StorageAdapter,
     private readonly txTypes: TxNotificationType[]
   ) {
-    this.cache = new WsCache(this.ctx, hierarchy, model, client)
+    this.client = this.getClient()
+    this.cache = new WsCache(this.ctx, this.client)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
@@ -132,7 +151,7 @@ class Workspace {
   private async applyTxes (txes: Tx[]): Promise<void> {
     for (const resTx of txes) {
       try {
-        await this.client.tx(resTx)
+        await this.rest.tx(resTx)
       } catch (e) {
         console.error(e)
         this.ctx.error('Failed to send tx', { tx: resTx })
@@ -143,12 +162,25 @@ class Workspace {
   private getClient (): Client {
     return {
       ctx: this.ctx,
-      rest: this.client,
       txFactory: this.txFactory,
       workspace: this.ws,
       storage: this.storage,
       hierarchy: this.hierarchy,
-      model: this.model
+      model: this.model,
+      findAll: async <T extends Doc>(
+        _class: Ref<Class<T>>,
+        query: DocumentQuery<T>,
+        options?: FindOptions<T>
+      ): Promise<FindResult<T>> => {
+        return await this.pipeline.findAll(this.ctx, _class, query, options)
+      },
+      findOne: async <T extends Doc>(
+        _class: Ref<Class<T>>,
+        query: DocumentQuery<T>,
+        options?: FindOptions<T>
+      ): Promise<WithLookup<T> | undefined> => {
+        return (await this.pipeline.findAll(this.ctx, _class, query, { ...options, limit: 1 }))[0]
+      }
     }
   }
 
@@ -158,7 +190,7 @@ class Workspace {
     }
 
     let matched: TxNotificationType[] = []
-    const client: Client = this.getClient()
+    const client: Client = this.client
 
     for (const type of this.txTypes) {
       if (isMatchedTxType(client, tx, type)) {
@@ -359,7 +391,6 @@ class Workspace {
     if (receiver === undefined) return []
 
     const settings = await this.cache.getSettings()
-    const client: Client = this.getClient()
 
     const data: Partial<Data<ReactionInboxNotification>> = {
       emoji: reaction.emoji,
@@ -372,7 +403,7 @@ class Workspace {
       _id: activity.ids.AddReactionNotification
     })[0]
 
-    const providers: Ref<NotificationProvider>[] = getAllowedProviders(client, settings, receiver.socialIds, type)
+    const providers: Ref<NotificationProvider>[] = getAllowedProviders(this.client, settings, receiver.socialIds, type)
     if (providers.length === 0 || !providers.includes(notification.providers.InboxNotificationProvider)) return []
 
     const res: Tx[] = []
@@ -434,7 +465,7 @@ class Workspace {
     notifiedUsers: AccountUuid[],
     _res: Tx[]
   ): Promise<Tx[]> {
-    const client = this.getClient()
+    const client = this.client
     const message = await getMessage(client, tx)
 
     const doc = await this.cache.getDoc(message.attachedTo, message.attachedToClass)
@@ -625,6 +656,64 @@ class Workspace {
 
   public getLastTxDate (): Timestamp | undefined {
     return this.lastTxDate
+  }
+
+  static async create (
+    ctx: MeasureContext,
+    ws: WorkspaceInfoWithStatus,
+    hierarchy: Hierarchy,
+    modelDb: ModelDb,
+    sysModel: Tx[],
+    storage: StorageAdapter,
+    rest: RestClient,
+    txTypes: TxNotificationType[]
+  ): Promise<Workspace> {
+    const dbConf = getConfig(ctx, config.DbUrl, ctx, {
+      disableTriggers: true,
+      externalStorage: storage
+    })
+
+    const middlewares: MiddlewareCreator[] = [
+      LowLevelMiddleware.create,
+      ContextNameMiddleware.create,
+      DomainFindMiddleware.create,
+      DomainTxMiddleware.create,
+      DBAdapterInitMiddleware.create,
+      ModelMiddleware.create(sysModel),
+      DBAdapterMiddleware.create(dbConf)
+    ]
+
+    const context: PipelineContext = {
+      workspace: {
+        uuid: ws.uuid,
+        url: ws.url
+      },
+      branding: null,
+      modelDb,
+      hierarchy,
+      storageAdapter: storage,
+      contextVars: {}
+    }
+    const pipeline = await createPipeline(ctx, middlewares, context)
+
+    const defaultAdapter = pipeline.context.adapterManager?.getDefaultAdapter()
+    if (defaultAdapter === undefined) {
+      throw new PlatformError(unknownError('Default adapter should be set'))
+    }
+
+    if (pipeline.context.lowLevelStorage === undefined) {
+      throw new Error('Low level storage is not defined')
+    }
+
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, txTypes)
+  }
+
+  async close (): Promise<void> {
+    try {
+      await this.pipeline.close()
+    } catch (e) {
+      this.ctx.error('Error during close workspace', { e })
+    }
   }
 }
 
