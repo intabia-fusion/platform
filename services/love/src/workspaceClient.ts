@@ -16,7 +16,7 @@
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
 import attachment, { Attachment } from '@hcengineering/attachment'
-import contact, { Person, AvatarType } from '@hcengineering/contact'
+import contact, { Person } from '@hcengineering/contact'
 import core, {
   Data,
   MeasureContext,
@@ -28,7 +28,6 @@ import core, {
   type PersonId,
   type WorkspaceUuid,
   DocumentUpdate,
-  AccountRole,
   SocialIdType
 } from '@hcengineering/core'
 import drive, { createFile } from '@hcengineering/drive'
@@ -520,125 +519,27 @@ export class WorkspaceClient {
    * Find a person by name (attempts a few strategies: exact first/last match, full name match, case-insensitive regex).
    * Returns the first matching Person ref or undefined if not found.
    */
-  async findPersonByName (firstName?: string, lastName?: string): Promise<Ref<Person> | undefined> {
+  async ensurePersonByName (guestId: string, firstName?: string, lastName?: string): Promise<Ref<Person> | undefined> {
     try {
-      // Build an exact match query first
-      const q: any = {}
-      if (firstName !== undefined && firstName !== '') q.firstName = firstName
-      if (lastName !== undefined && lastName !== '') q.lastName = lastName
-
-      let persons: Person[] = []
-      if (Object.keys(q).length > 0) {
-        persons = (await this.client.findAll(contact.class.Person, q, { limit: 10 })) as unknown as Person[]
-      }
-
-      // Fallback: try full `name` exact match
-      if (persons.length === 0 && firstName != null && lastName != null) {
-        const full = `${firstName} ${lastName}`
-        persons = (await this.client.findAll(
-          contact.class.Person,
-          { name: full },
-          { limit: 10 }
-        )) as unknown as Person[]
-      }
-
-      // Fallback: case-insensitive regex match if nothing found so far
-      if (persons.length === 0 && firstName != null) {
-        const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        const regexQ: any = {}
-        if (firstName !== undefined) regexQ.firstName = { $regex: `^${escapeRegExp(firstName)}$`, $options: 'i' }
-        if (lastName !== undefined) regexQ.lastName = { $regex: `^${escapeRegExp(lastName ?? '')}$`, $options: 'i' }
-        persons = (await this.client.findAll(contact.class.Person, regexQ, { limit: 10 })) as unknown as Person[]
-      }
-
-      if (persons.length > 0) return persons[0]._id
-      return undefined
+      const person = await this.client.ensurePerson(SocialIdType.LOVE, guestId, firstName ?? '', lastName ?? '', {
+        addGuestEmployee: true
+      })
+      return person.localPerson as Ref<Person>
     } catch (err: any) {
       this.ctx.error('[WorkspaceClient.findPersonByName] Failed', {
         error: err?.message ?? String(err),
         firstName,
         lastName
       })
-      return undefined
     }
   }
 
-  /**
-   * Create a guest Person record with provided name parts.
-   * Uses a simple payload (name, firstName, lastName, avatarType) and returns created Person ref.
-   */
-  async createGuestPerson (firstName: string, lastName?: string): Promise<Ref<Person> | undefined> {
-    try {
-      const name = lastName != null ? `${firstName} ${lastName}` : firstName
-      const payload: any = {
-        name,
-        firstName: firstName ?? '',
-        lastName: lastName ?? '',
-        avatarType: AvatarType.COLOR
-      }
-
-      const personId = await this.client.createDoc(contact.class.Person, contact.space.Contacts, payload)
-      this.ctx.info('[WorkspaceClient.createGuestPerson] Created person', { personId, name })
-
-      // Ensure Employee mixin for this Person (retry on transient failure)
-      try {
-        await this.ensureEmployeeMixin(personId)
-        this.ctx.info('[WorkspaceClient.createGuestPerson] Ensured Employee mixin for person', { personId })
-      } catch (err: any) {
-        this.ctx.error('[WorkspaceClient.createGuestPerson] Unexpected error ensuring Employee mixin', {
-          error: err?.message ?? String(err),
-          personId
-        })
-      }
-      await this.createLoveSocialIdentity(personId, name)
-
-      return personId
-    } catch (err: any) {
-      this.ctx.error('[WorkspaceClient.createGuestPerson] Failed', {
-        error: err?.message ?? String(err),
-        firstName,
-        lastName
-      })
-      return undefined
-    }
-  }
-
-  // TODO: Pending remove
-  async ensureEmployeeMixin (personId: Ref<Person>): Promise<boolean> {
-    await this.ctx.with('create-employee', {}, async () => {
-      await this.client.createMixin(personId, contact.class.Person, contact.space.Contacts, contact.mixin.Employee, {
-        active: true,
-        role: AccountRole.Guest
-      })
-    })
-    return true
-  }
-
-  async createLoveSocialIdentity (personRef: Ref<Person>, name: string): Promise<PersonId> {
-    // Ok we do not have one, let's create a new one with the same name as the Person
-    return (await this.client.addCollection(
-      contact.class.SocialIdentity,
-      contact.space.Contacts,
-      personRef,
-      contact.class.Person,
-      'socialIds',
-      {
-        type: SocialIdType.LOVE,
-        key: personRef, // Using personRef as key for simplicity
-        value: personRef
-      }
-    )) as unknown as PersonId
-  }
-
-  async getCreatePersonIdByPersonRef (personRef: Ref<Person>, name: string): Promise<PersonId | undefined> {
+  async getPersonIdByPersonRef (personRef: Ref<Person>, name: string): Promise<PersonId | undefined> {
     try {
       const socialIds = await this.client.findAll(contact.class.SocialIdentity, { attachedTo: personRef }, { limit: 1 })
       if (socialIds.length > 0) {
         return socialIds[0]._id as PersonId
       }
-
-      // Ok we do not have one, let's create a new one with the same name as the Person
-      return await this.createLoveSocialIdentity(personRef, name)
     } catch (err: any) {
       this.ctx.error('[WorkspaceClient.getPersonIdByPersonRef] Failed', {
         error: err?.message ?? String(err),

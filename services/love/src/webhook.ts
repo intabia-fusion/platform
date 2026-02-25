@@ -159,9 +159,6 @@ export class WebhookProcessor {
       return
     }
 
-    // Get PersonId for the participant to use as modifiedBy (optional)
-    const participantPersonId = await wsClient.getCreatePersonIdByPersonRef(personRef, displayName)
-
     // Skip activity logs only for agent/system participants.
     // If personRef is known (even without SocialIdentity), we still add activity entries
     // so joins/leaves from real Person records are visible in MeetingMinutes.
@@ -180,6 +177,9 @@ export class WebhookProcessor {
     // Add activity entry to MeetingMinutes for visibility (from participant's identity)
     // Skip for recorder participants, agents, and unknown identities to avoid logging system events as participant joins
     if (!isAgent) {
+      // Get PersonId for the participant to use as modifiedBy (optional)
+      const participantPersonId = await wsClient.getPersonIdByPersonRef(personRef, displayName)
+
       await wsClient.addActivityToMeeting(
         event.event === 'participant_joined' ? love.string.JoinedMeeting : love.string.LeaveParticipant,
         meetingId,
