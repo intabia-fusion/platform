@@ -154,7 +154,7 @@ export class ChannelPage extends CommonPage {
   }
 
   async clickChannel (channel: string): Promise<void> {
-    await this.channel(channel).click()
+    await this.channelName(channel).click()
   }
 
   async changeChannelName (channel: string): Promise<void> {

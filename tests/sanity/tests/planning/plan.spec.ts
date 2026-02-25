@@ -276,7 +276,7 @@ test.describe('Planning ToDo tests', () => {
 
     await test.step('Go to another page to check work in Sidebar', async () => {
       await leftMenuPage.clickChunter()
-      await channelPage.clickChannel('general')
+      await channelPage.clickChannel('General')
     })
 
     const sidebarPage = new SidebarPage(page)
@@ -391,7 +391,7 @@ test.describe('Planning ToDo tests', () => {
 
     await test.step('Go to any another page', async () => {
       await leftMenuPage.clickChunter()
-      await channelPage.clickChannel('general')
+      await channelPage.clickChannel('General')
     })
 
     await test.step('Open planner via sidebar icon button', async () => {
