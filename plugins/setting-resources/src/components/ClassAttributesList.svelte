@@ -138,13 +138,13 @@
       ...extra.map((it) => ({
         label: it.label,
         icon: it.icon,
-        action: async (evtArg: unknown, evt: Event): Promise<void> => {
+        action: async (_: any, evt: Event) => {
           const r = await getResource(it.action)
           await r(attribute, evt, it.actionProps)
         }
       }))
     )
-    void showPopup(Menu, { actions }, getEventPositionElement(ev), () => {
+    showPopup(Menu, { actions }, getEventPositionElement(ev), () => {
       hovered = null
     })
   }
@@ -155,10 +155,8 @@
         return client.getHierarchy().getClass((type as RefTo<Doc>).to)?.label
       case core.class.Collection:
         return client.getHierarchy().getClass((type as Collection<AttachedDoc>).of)?.label
-      case core.class.ArrOf: {
-        const arrOf = type as ArrOf<Doc>
-        return arrOf.of !== undefined && arrOf.of !== null ? arrOf.of.label : undefined
-      }
+      case core.class.ArrOf:
+        return (type as ArrOf<Doc>).of?.label
       default:
         return undefined
     }

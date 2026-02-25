@@ -23,7 +23,7 @@ import {
   type IntegrationKind
 } from '@hcengineering/core'
 import exportPlugin from '@hcengineering/export'
-import { Mixin, Model, TypeRecord, UX, type Builder } from '@hcengineering/model'
+import { Mixin, Model, UX, type Builder } from '@hcengineering/model'
 import core, { defineCollaborators, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
 import notification from '@hcengineering/notification'
@@ -37,7 +37,6 @@ import {
   type IntegrationType,
   type InviteSettings,
   type OfficeSettings,
-  type RoleCapabilitySettings,
   type SettingsCategory,
   type SpaceTypeCreator,
   type SpaceTypeEditor,
@@ -111,15 +110,6 @@ export class TInviteSettings extends TConfiguration implements InviteSettings {
   expirationTime!: number
   emailMask!: string
   limit!: number
-  defaultInviteRole!: AccountRole
-  inviteLinkGeneratorRoles!: AccountRole[]
-}
-
-@Model(setting.class.RoleCapabilitySettings, core.class.Configuration, DOMAIN_SETTING)
-@UX(setting.string.RoleCapabilitySettings)
-export class TRoleCapabilitySettings extends TConfiguration implements RoleCapabilitySettings {
-  @Prop(TypeRecord(), setting.string.RoleCapabilitySettings)
-    roleByCapability!: Record<string, AccountRole[]>
 }
 
 @Model(setting.class.OfficeSettings, core.class.Configuration, DOMAIN_SETTING)
@@ -154,7 +144,6 @@ export function createModel (builder: Builder): void {
     TEditable,
     TUserMixin,
     TInviteSettings,
-    TRoleCapabilitySettings,
     TOfficeSettings,
     TWorkspaceSetting,
     TSpaceTypeEditor,

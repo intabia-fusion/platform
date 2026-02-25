@@ -17,9 +17,6 @@
   import { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { Button, EditBox, Grid, Label, Loading, MiniToggle, ticker } from '@hcengineering/ui'
-  // import FormButton from './internal/FormButton.svelte'
-  // import Label from './internal/Label.svelte'
-  // import EditBox from './internal/EditBox.svelte'
   import { createEventDispatcher } from 'svelte'
 
   import login from '../plugin'
