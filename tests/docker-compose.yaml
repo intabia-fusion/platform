@@ -298,7 +298,7 @@ services:
     environment:
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3003
-      - DB_URL=${DB_PG_URL}
+      - DB_URL=${DB_PURE_PG_URL}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=

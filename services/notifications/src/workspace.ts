@@ -204,8 +204,10 @@ class Workspace {
       tx.attachedTo != null && tx.attachedToClass != null
         ? await this.cache.getDoc(tx.attachedTo, tx.attachedToClass)
         : undefined
-    const txObject = await this.cache.getDoc(tx.objectId, tx.objectClass)
-
+    const txObject =
+      tx._class === core.class.TxCreateDoc
+        ? TxProcessor.createDoc2Doc(tx as TxCreateDoc<Doc>)
+        : await this.cache.getDoc(tx.objectId, tx.objectClass)
     if (txObject === undefined) return []
 
     const space = await this.cache.getDocSpace(txObject)
