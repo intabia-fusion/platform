@@ -1,4 +1,4 @@
-FROM hardcoreeng/base-slim:v20250916
+FROM intabiafusion/base-slim:v20251218
 WORKDIR /usr/src/app
 
 COPY bundle/bundle.js ./

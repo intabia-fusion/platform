@@ -12,7 +12,7 @@ services:
       - 1081:1080
     restart: unless-stopped
   time-machine:
-    image: hardcoreeng/worker
+    image: intabiafusion/worker
     pull_policy: never
     depends_on:
       redpanda:
