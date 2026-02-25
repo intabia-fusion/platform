@@ -138,6 +138,18 @@
 
     console.log('[WorkbenchExtension] Reattaching audio tracks after reconnect')
 
+    // Detach tracks before removing elements to avoid dangling references in LiveKit SDK
+    for (const participant of lk.remoteParticipants.values()) {
+      for (const publication of participant.trackPublications.values()) {
+        if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
+          const element = parentElement.querySelector(`#${CSS.escape(publication.trackSid)}`)
+          if (element != null) {
+            publication.track.detach(element as HTMLMediaElement)
+          }
+        }
+      }
+    }
+
     // Remove stale audio elements
     while (parentElement.firstChild != null) {
       parentElement.removeChild(parentElement.firstChild)

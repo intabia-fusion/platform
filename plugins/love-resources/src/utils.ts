@@ -16,7 +16,8 @@ import core, {
   type RelatedDocument,
   type Space,
   type TxOperations,
-  type WithLookup
+  type WithLookup,
+  reduceCalls
 } from '@hcengineering/core'
 import {
   isOffice,
@@ -95,15 +96,24 @@ try {
 /**
  * Recreate Krisp noise filter processor. Called on reconnect to avoid
  * InvalidAccessError when old processor holds a stale AudioContext reference.
+ * Stops processor on all local audio tracks before recreating to release resources.
  */
-export function recreateKrispProcessor (): void {
+export const recreateKrispProcessor = reduceCalls(async (): Promise<void> => {
   try {
+    // Stop processor on all local audio tracks before recreating
+    // to release AudioContext references and avoid resource leaks
+    for (const publication of lk.localParticipant.trackPublications.values()) {
+      if (publication.track instanceof LocalAudioTrack) {
+        await publication.track.stopProcessor().catch(() => {})
+      }
+    }
+
     krispProcessor = KrispNoiseFilter()
     console.log('[utils] Krisp processor recreated')
   } catch (err: any) {
     console.error('[utils] Failed to recreate Krisp processor', err)
   }
-}
+})
 
 async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
   if (pub.track instanceof LocalAudioTrack) {
@@ -217,7 +227,17 @@ lk.on(RoomEvent.Connected, () => {
 lk.on(RoomEvent.Disconnected, () => {
   // Recreate Krisp processor on disconnect so that the next connect
   // does not hit InvalidAccessError due to stale AudioContext references.
-  recreateKrispProcessor()
+  void recreateKrispProcessor()
+})
+lk.on(RoomEvent.Reconnecting, () => {
+  // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
+  // before the connection is re-established.
+  void recreateKrispProcessor()
+})
+lk.on(RoomEvent.Reconnected, () => {
+  // Ensure processor is fresh after successful reconnection
+  // as the AudioContext may have changed during reconnect.
+  void recreateKrispProcessor()
 })
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {
