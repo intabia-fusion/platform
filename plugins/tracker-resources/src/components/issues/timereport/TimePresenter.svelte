@@ -23,23 +23,23 @@
   export let accent: boolean = false
 
   // TODO: Make configurable?
-  const hoursInWorkingDay = 8
+  // const hoursInWorkingDay = 8
 
   let label = ''
 
-  $: days = Math.floor(value / hoursInWorkingDay)
-  $: hours = Math.floor(value % hoursInWorkingDay)
+  // $: days = Math.floor(value / hoursInWorkingDay)
+  $: hours = Math.floor(value)
   $: minutes = Math.round((value % 1) * 60)
 
-  $: void getLabel(days, hours, minutes, $themeStore.language)
+  $: void getLabel(0, hours, minutes, $themeStore.language)
 
   async function getLabel (days: number, hours: number, minutes: number, language: string): Promise<void> {
     try {
       const res: string[] = []
-      if (days > 0) {
-        const d = await translate(tracker.string.TimeSpendDays, { value: days }, language)
-        res.push(d)
-      }
+      // if (days > 0) {
+      //   const d = await translate(tracker.string.TimeSpendDays, { value: days }, language)
+      //   res.push(d)
+      // }
       if (hours > 0) {
         const h = await translate(tracker.string.TimeSpendHours, { value: hours }, language)
         res.push(h)

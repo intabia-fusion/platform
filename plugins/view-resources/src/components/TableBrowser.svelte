@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
   import { ActionContext } from '@hcengineering/presentation'
   import { FadeOptions, Scroller, tableSP } from '@hcengineering/ui'
@@ -35,7 +35,8 @@
   export let enableChecking = true
   export let tableId: string | undefined = undefined
   export let fade: FadeOptions = tableSP
-  export let prefferedSorting: string = 'modifiedOn'
+  export let preferredSorting: string = 'modifiedOn'
+  export let preferredSortingOrder: SortingOrder | undefined = undefined
   export let viewOptions: ViewOptions | undefined = undefined
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
   export let viewlet: Viewlet | undefined = undefined
@@ -117,7 +118,8 @@
     {enableChecking}
     showFooter
     checked={$selection ?? []}
-    {prefferedSorting}
+    {preferredSorting}
+    {preferredSortingOrder}
     {tableId}
     {viewOptions}
     viewOptionsConfig={viewOptionsConfig ?? viewlet?.viewOptions?.other}

@@ -35,7 +35,7 @@
       reports = result
     },
     {
-      sort: { modifiedOn: SortingOrder.Descending },
+      sort: { date: SortingOrder.Ascending, modifiedOn: SortingOrder.Descending },
       lookup: {
         attachedTo: tracker.class.Issue
       }

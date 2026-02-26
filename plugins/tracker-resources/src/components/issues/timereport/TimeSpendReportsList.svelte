@@ -29,6 +29,7 @@
   import { activeProjects } from '../../../utils'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
+  import { getClient } from '@hcengineering/presentation'
 
   export let reports: WithLookup<TimeSpendReport>[]
 
@@ -98,8 +99,12 @@
             label={tracker.string.Assignee}
             _class={contact.mixin.Employee}
             value={report.employee}
-            readonly
             showNavigate={false}
+            on:change={(detail) => {
+              void getClient().diffUpdate(report, {
+                employee: detail.detail
+              })
+            }}
           />
         </FixedColumn>
         <FixedColumn key={'timespend_reported'} justify={'center'}>

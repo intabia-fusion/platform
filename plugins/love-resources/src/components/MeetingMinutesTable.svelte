@@ -52,7 +52,7 @@
       viewOptions,
       viewOptionsConfig: viewlet.viewOptions?.other,
       enableChecking: false,
-      prefferedSorting: 'createdOn'
+      preferredSorting: 'createdOn'
     }}
   />
 {/if}
