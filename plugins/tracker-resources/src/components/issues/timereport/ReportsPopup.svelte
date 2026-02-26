@@ -64,7 +64,7 @@
   <svelte:fragment slot="header">
     <IssuePresenter value={issue} disabled />
   </svelte:fragment>
-  <div class="h-50">
+  <div class="h-full">
     <Scroller fade={tableSP}>
       <TableBrowser
         _class={tracker.class.TimeSpendReport}

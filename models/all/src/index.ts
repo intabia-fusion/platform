@@ -162,7 +162,8 @@ export default function buildModel (): Builder {
     setting.class.IntegrationType,
     setting.class.WorkspaceSettingCategory,
     setting.class.SettingsCategory,
-    workbench.class.Widget
+    workbench.class.Widget,
+    core.class.SpaceTypeDescriptor
   ]
 
   const builders: BuilderConfig[] = [
@@ -179,7 +180,7 @@ export default function buildModel (): Builder {
       {
         label: card.string.Cards,
         description: card.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: false,
         icon: card.icon.Card,
         classFilter: defaultFilter
@@ -229,7 +230,7 @@ export default function buildModel (): Builder {
       {
         label: recruit.string.ConfigLabel,
         description: recruit.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: false,
         icon: recruit.icon.RecruitApplication,
         classFilter: defaultFilter
@@ -265,7 +266,7 @@ export default function buildModel (): Builder {
       {
         label: gmail.string.ConfigLabel,
         description: gmail.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: true,
         classFilter: defaultFilter
       }
@@ -297,7 +298,7 @@ export default function buildModel (): Builder {
       {
         label: hr.string.ConfigLabel,
         description: hr.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: true,
         icon: hr.icon.Structure,
         classFilter: defaultFilter
@@ -350,7 +351,7 @@ export default function buildModel (): Builder {
       {
         label: github.string.ConfigLabel,
         description: github.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: false,
         icon: github.icon.Github,
         classFilter: defaultFilter
@@ -377,7 +378,7 @@ export default function buildModel (): Builder {
       {
         label: processes.string.ConfigLabel,
         description: processes.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: false,
         icon: processes.icon.Process,
         classFilter: defaultFilter
@@ -434,7 +435,7 @@ export default function buildModel (): Builder {
       {
         label: testManagement.string.ConfigLabel,
         description: testManagement.string.ConfigDescription,
-        enabled: true,
+        enabled: false,
         beta: true,
         classFilter: defaultFilter
       }

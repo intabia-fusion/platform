@@ -101,13 +101,14 @@
     <ObjectBox
       _class={core.class.SpaceTypeDescriptor}
       value={descriptor?._id}
-      docQuery={{ system: { $ne: true } }}
+      docQuery={{ _id: { $in: descriptors.map((it) => it._id) } }}
       on:change={handleDescriptorSelected}
       kind="regular"
       size="small"
       label={core.string.SpaceType}
       searchField="name"
       showNavigate={false}
+      groupBy={'baseClass'}
       focusIndex={20000}
       id={'selectSpaceType'}
     />
