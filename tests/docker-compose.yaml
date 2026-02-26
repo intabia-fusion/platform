@@ -11,6 +11,21 @@ services:
     ports:
       - 1081:1080
     restart: unless-stopped
+  time-machine:
+    image: intabiafusion/worker
+    pull_policy: never
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+    restart: unless-stopped
   cockroach:
     image: cockroachdb/cockroach:v24.1.2
     ports:
