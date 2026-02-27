@@ -65,7 +65,7 @@ async function createRooms (client: MigrationUpgradeClient): Promise<void> {
   const data = createDefaultRooms(
     employees.map((p) => p._id),
     true,
-    true
+    false
   )
   for (const room of data) {
     const _class = isOffice(room) ? love.class.Office : love.class.Room

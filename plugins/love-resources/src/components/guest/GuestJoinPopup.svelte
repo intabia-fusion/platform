@@ -28,11 +28,14 @@
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
   import { RoomEvent } from 'livekit-client'
   import { AuthLikeForm, Label } from '@hcengineering/login-resources'
+  import { generateId } from '@hcengineering/core'
 
   export let meetingId: string | undefined
   export let guestToken: string | undefined
   export let workspaceId: string | undefined
   export let workspaceName: string | undefined
+
+  const identityKey = 'platform.love_uniq_person_identity'
 
   let firstName: string = ''
   let lastName: string = ''
@@ -187,10 +190,21 @@
         throw new Error('Love service endpoint not found')
       }
 
+      let personToken = localStorage.getItem(identityKey)
+      if (personToken == null) {
+        personToken = generateId()
+        localStorage.setItem(identityKey, personToken)
+      }
+
       const resp = await fetch(`${endpoint}/guestJoin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: guestToken, firstName, lastName })
+        body: JSON.stringify({
+          token: guestToken,
+          firstName,
+          lastName,
+          personToken
+        })
       })
 
       if (!resp.ok) {

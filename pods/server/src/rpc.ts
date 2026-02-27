@@ -31,7 +31,9 @@ import core, {
   type DocumentUpdate,
   type Mixin,
   type MixinData,
-  type MixinUpdate
+  type MixinUpdate,
+  type SocialIdType,
+  AccountRole
 } from '@hcengineering/core'
 import { rpcJSONReplacer, type RateLimitInfo } from '@hcengineering/rpc'
 import {
@@ -616,9 +618,25 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
     })
   })
 
+  interface EnsurePersonOptions {
+    addGuestEmployee?: boolean
+  }
+
   app.post('/api/v1/ensure-person/:workspaceId', (req, res) => {
     void withSession(req, res, 'ensurePerson', async (ctx, session, rateLimit, token) => {
-      const { socialType, socialValue, firstName, lastName } = (await retrieveJson(req)) ?? {}
+      const {
+        socialType,
+        socialValue,
+        firstName,
+        lastName,
+        options
+      }: {
+        socialType: SocialIdType
+        socialValue: string
+        firstName: string
+        lastName: string
+        options?: EnsurePersonOptions
+      } = (await retrieveJson(req)) ?? {}
       const accountClient = getAccountClient(token)
 
       const { uuid, socialId } = await accountClient.ensurePerson(socialType, socialValue, firstName, lastName)
@@ -626,7 +644,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         session.getUser() === systemAccountUuid ? core.account.System : pickPrimarySocialId(session.getSocialIds())._id
       const txFactory: TxFactory = new TxFactory(primaryPersonId)
 
-      const [person] = await session.findAllRaw(ctx, contact.class.Person, { personUuid: uuid }, { limit: 1 })
+      let [person] = await session.findAllRaw(ctx, contact.class.Person, { personUuid: uuid }, { limit: 1 })
       let personRef: Ref<Person> = person?._id
 
       if (personRef === undefined) {
@@ -651,6 +669,20 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
 
         await session.txRaw(ctx, createUniquePersonTx)
         personRef = createPersonTx.objectId
+        if (options?.addGuestEmployee === true) {
+          ;[person] = await session.findAllRaw(ctx, contact.class.Person, { personUuid: uuid }, { limit: 1 })
+        }
+      }
+
+      if (person !== undefined && options?.addGuestEmployee === true) {
+        const h = ctx.pipeline.context.hierarchy
+        if (!h.hasMixin(person, contact.mixin.Employee)) {
+          const op = txFactory.createTxMixin(person._id, contact.class.Person, person.space, contact.mixin.Employee, {
+            active: true,
+            role: AccountRole.Guest
+          })
+          await session.txRaw(ctx, op)
+        }
       }
 
       const [socialIdentity] = await session.findAllRaw(

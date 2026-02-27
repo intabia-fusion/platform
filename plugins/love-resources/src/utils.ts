@@ -16,7 +16,8 @@ import core, {
   type RelatedDocument,
   type Space,
   type TxOperations,
-  type WithLookup
+  type WithLookup,
+  reduceCalls
 } from '@hcengineering/core'
 import {
   isOffice,
@@ -82,7 +83,7 @@ export const isRecordingAvailable = writable<boolean>(false)
 export const isFullScreen = writable<boolean>(false)
 export const isShareWithSound = writable<boolean>(false)
 
-export const krispProcessor = KrispNoiseFilter()
+export let krispProcessor = KrispNoiseFilter()
 export let blurProcessor: ProcessorWrapper<BackgroundOptions> | undefined
 let localVideo: LocalVideoTrack | undefined
 
@@ -92,6 +93,28 @@ try {
   console.log("Can't set blur processor", err)
 }
 
+/**
+ * Recreate Krisp noise filter processor. Called on reconnect to avoid
+ * InvalidAccessError when old processor holds a stale AudioContext reference.
+ * Stops processor on all local audio tracks before recreating to release resources.
+ */
+export const recreateKrispProcessor = reduceCalls(async (): Promise<void> => {
+  try {
+    // Stop processor on all local audio tracks before recreating
+    // to release AudioContext references and avoid resource leaks
+    for (const publication of lk.localParticipant.trackPublications.values()) {
+      if (publication.track instanceof LocalAudioTrack) {
+        await publication.track.stopProcessor().catch(() => {})
+      }
+    }
+
+    krispProcessor = KrispNoiseFilter()
+    console.log('[utils] Krisp processor recreated')
+  } catch (err: any) {
+    console.error('[utils] Failed to recreate Krisp processor', err)
+  }
+})
+
 async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
   if (pub.track instanceof LocalAudioTrack) {
     if (!isKrispNoiseFilterSupported()) {
@@ -99,6 +122,12 @@ async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
       return
     }
     try {
+      // Stop existing processor to avoid AudioContext conflicts
+      try {
+        await pub.track.stopProcessor()
+      } catch {
+        // Ignore if no processor was set
+      }
       // once instantiated the filter will begin initializing and will download additional resources
       console.log('enabling LiveKit enhanced noise filter')
       await pub.track.setProcessor(krispProcessor)
@@ -194,6 +223,21 @@ lk.on(RoomEvent.Connected, () => {
   isTranscription.set(data.transcription ?? false)
   isRecording.set(data.recording ?? false)
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
+})
+lk.on(RoomEvent.Disconnected, () => {
+  // Recreate Krisp processor on disconnect so that the next connect
+  // does not hit InvalidAccessError due to stale AudioContext references.
+  void recreateKrispProcessor()
+})
+lk.on(RoomEvent.Reconnecting, () => {
+  // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
+  // before the connection is re-established.
+  void recreateKrispProcessor()
+})
+lk.on(RoomEvent.Reconnected, () => {
+  // Ensure processor is fresh after successful reconnection
+  // as the AudioContext may have changed during reconnect.
+  void recreateKrispProcessor()
 })
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {

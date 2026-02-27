@@ -116,6 +116,7 @@ export class GuestManager {
     const guestToken = req.body.token
     const firstName = req.body.firstName
     const lastName = req.body.lastName
+    const personToken = req.body.personToken
 
     if (typeof guestToken !== 'string') {
       res.status(400).send()
@@ -176,12 +177,7 @@ export class GuestManager {
         return
       }
       // Try finding an existing person by name to avoid duplicates
-      let personRef = await wsClient.findPersonByName(firstName, lastName)
-
-      // Create a guest person if not found
-      if (personRef === undefined) {
-        personRef = await wsClient.createGuestPerson(firstName, lastName)
-      }
+      const personRef = await wsClient.ensurePersonByName(personToken, firstName, lastName)
 
       if (personRef === undefined) {
         // Repeated failures while creating a Person - do not fallback to ephemeral identity.

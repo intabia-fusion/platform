@@ -993,10 +993,18 @@ export function devTool (
               toolCtx.error('failed to restore, pipeline is undefined', { workspace })
               return
             }
+            const include = cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim()))
 
+            if (include != null && include.has('account.socialId')) {
+              include.add('channel')
+            }
+            if (include != null && include.has('account.person')) {
+              include.add('contact')
+            }
+            toolCtx.info('OPT', { include: include != null ? Array.from(include) : '', skip: cmd.skip })
             await backup(toolCtx, pipeline, wsIds, storage, db, {
               force: cmd.force,
-              include: cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim())),
+              include,
               skipDomains: (cmd.skip ?? '').split(';').map((it) => it.trim()),
               timeout: 0,
               connectTimeout: parseInt(cmd.timeout) * 1000,
@@ -1134,6 +1142,7 @@ export function devTool (
     .option('-i, --include <include>', 'A list of ; separated domain names to include during backup', '*')
     .option('-s, --skip <skip>', 'A list of ; separated domain names to skip during backup', '')
     .option('--upgrade', 'Upgrade workspace', false)
+    .option('--noqueue', 'NoQueue', false)
     .option('--accounts', 'Restore accounts (person/socialId) from backup', false)
     .option(
       '--history-file <historyFile>',
@@ -1155,6 +1164,7 @@ export function devTool (
           useStorage: string
           historyFile: string
           upgrade: boolean
+          noqueue: boolean
           accounts: boolean
         }
       ) => {
@@ -1174,10 +1184,10 @@ export function devTool (
           const storage = await createFileBackupStorage(dirName)
           const storageConfig = storageConfigFromEnv()
 
-          const queue = getPlatformQueue('tool', ws.region)
-          const wsProducer = queue.getProducer<QueueWorkspaceMessage>(toolCtx, QueueTopic.Workspace)
+          const queue = !cmd.noqueue ? getPlatformQueue('tool', ws.region) : undefined
+          const wsProducer = queue?.getProducer<QueueWorkspaceMessage>(toolCtx, QueueTopic.Workspace)
 
-          await wsProducer.send(toolCtx, ws.uuid, [workspaceEvents.restoring()])
+          await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restoring()])
 
           const workspaceStorage: StorageAdapter = buildStorageFromConfig(storageConfig)
 
@@ -1219,12 +1229,12 @@ export function devTool (
             }
 
             console.log('workspace restored')
-            await wsProducer.send(toolCtx, ws.uuid, [workspaceEvents.restored()])
+            await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restored()])
           } catch (err) {
             toolCtx.error('failed to restore', { err })
           }
           await pipeline?.close()
-          await queue.shutdown()
+          await queue?.shutdown()
           await workspaceStorage?.close()
         })
       }

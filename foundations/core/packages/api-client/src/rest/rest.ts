@@ -53,7 +53,7 @@ import { PlatformError, type Status, unknownError } from '@hcengineering/platfor
 
 import { AuthOptions } from '../types'
 import { getWorkspaceToken } from '../utils'
-import type { RestClient } from './types'
+import type { EnsurePersonOptions, RestClient } from './types'
 import { extractJson, withRetry } from './utils'
 
 export function createRestClient (endpoint: string, workspaceId: string, token: string): RestClient {
@@ -346,7 +346,8 @@ export class RestClientImpl implements RestClient {
     socialType: SocialIdType,
     socialValue: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    options?: EnsurePersonOptions
   ): Promise<{ uuid: PersonUuid, socialId: PersonId, localPerson: string }> {
     const requestUrl = concatLink(this.endpoint, `/api/v1/ensure-person/${this.workspace}`)
     await this.checkRate()
@@ -359,7 +360,8 @@ export class RestClientImpl implements RestClient {
           socialType,
           socialValue,
           firstName,
-          lastName
+          lastName,
+          options
         })
       })
       if (!response.ok) {
