@@ -175,6 +175,9 @@
       await accountClient.mergeSpecifiedPersons(targetPerson.personUuid, sourcePerson.personUuid)
     }
 
+    // Ok now we could safely remove source person.
+    await client.remove(sourcePerson)
+
     dispatch('close')
   }
 
@@ -321,24 +324,28 @@
       if (attr.name === '_id') {
         continue
       }
-      const descendants = h.getDescendants(attr.attributeOf)
-      for (const d of descendants) {
-        if (h.isDerived(d, core.class.Tx) || h.isDerived(d, core.class.BenchmarkDoc)) {
-          continue
-        }
-        if (h.findDomain(d) !== undefined) {
-          while (true) {
-            const values = await client.findAll(attr.attributeOf, { [attr.name]: sourceAccount._id }, { limit: 100 })
-            if (values.length === 0) {
-              break
+      try {
+        const descendants = h.getDescendants(attr.attributeOf)
+        for (const d of descendants) {
+          if (h.isDerived(d, core.class.Tx) || h.isDerived(d, core.class.BenchmarkDoc)) {
+            continue
+          }
+          if (h.findDomain(d) !== undefined) {
+            while (true) {
+              const values = await client.findAll(attr.attributeOf, { [attr.name]: sourceAccount._id }, { limit: 100 })
+              if (values.length === 0) {
+                break
+              }
+              const builder = client.apply(sourceAccount._id)
+              for (const v of values) {
+                await updateAttribute(builder, v, d, { key: attr.name, attr }, targetAccount._id)
+              }
+              await builder.commit()
             }
-            const builder = client.apply(sourceAccount._id)
-            for (const v of values) {
-              await updateAttribute(builder, v, d, { key: attr.name, attr }, targetAccount._id)
-            }
-            await builder.commit()
           }
         }
+      } catch (err: any) {
+        Analytics.handleError(err)
       }
     }
 
