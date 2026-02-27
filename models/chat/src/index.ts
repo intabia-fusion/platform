@@ -17,12 +17,14 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import workbench from '@hcengineering/model-workbench'
 import { chatId } from '@hcengineering/chat'
-import { createSystemType } from '@hcengineering/model-card'
+import card, { createSystemType } from '@hcengineering/model-card'
 import communication from '@hcengineering/communication'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import { AccountRole, type Ref } from '@hcengineering/core'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 
 import chat from './plugin'
-import { AccountRole } from '@hcengineering/core'
 
 export { chatId } from '@hcengineering/chat'
 export { chatOperation } from './migration'
@@ -58,6 +60,26 @@ export function createModel (builder: Builder): void {
       defaultSection: communication.ids.CardMessagesSection
     },
     PaletteColorIndexes.Houseplant
+  )
+
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
+      label: chat.string.Thread,
+      icon: chat.icon.Thread,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: chat.masterTag.Thread
+    },
+    chat.ids.ThreadNotificationGroup
+  )
+  generateClassNotificationTypes(
+    builder,
+    chat.masterTag.Thread,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos'],
+    ['comments'],
+    chat.ids.ThreadNotificationGroup
   )
 
   builder.mixin(chat.masterTag.Thread, core.class.Class, core.mixin.TxAccessLevel, {

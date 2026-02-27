@@ -207,6 +207,9 @@ export function markupToText (markup: Markup): string {
       }
     } else if (node.type === MarkupNodeType.paragraph) {
       fragments.push('\n\n')
+    } else if (node.type === MarkupNodeType.reference) {
+      const label = `${node.attrs?.label ?? ''}`
+      fragments.push(label.length > 0 ? `@${label}` : '')
     }
     return true
   })

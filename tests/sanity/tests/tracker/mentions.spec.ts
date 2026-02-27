@@ -73,7 +73,6 @@ test.describe('Mentions issue tests', () => {
     await issuesPage.openIssueByName(backlinkIssue.title)
 
     await issuesDetailsPage.checkActivityContentExist(`New issue: ${backlinkIssue.title}`)
-    await issuesDetailsPage.openLinkFromActivitiesByText(backlinkIssue.title)
     await issuesDetailsPage.checkIssue(backlinkIssue)
 
     await issuesDetailsPage.addMentions(mentionName)

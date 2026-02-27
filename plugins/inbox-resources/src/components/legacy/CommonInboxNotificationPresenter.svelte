@@ -30,11 +30,11 @@
   let content: Markup = ''
   let person: Person | undefined = undefined
 
-  $: void updateContent(value.message, value.messageHtml)
+  $: void updateContent(value.message, value.markup)
 
-  async function updateContent (message?: IntlString, messageHtml?: Markup): Promise<void> {
-    if (messageHtml !== undefined) {
-      content = messageHtml
+  async function updateContent (message?: IntlString, markup?: Markup): Promise<void> {
+    if (markup !== undefined) {
+      content = markup
     } else if (message !== undefined) {
       translateCB(message, value.props, $themeStore.language, (res) => {
         content = res

@@ -22,8 +22,8 @@
   $: value = notification.params?.value as BrowserNotification
 
   let sender: Person | undefined
-  $: if (value.senderId !== undefined) {
-    getPersonByPersonIdCb(value.senderId, (p) => {
+  $: if (value.sender !== undefined) {
+    getPersonByPersonIdCb(value.sender, (p) => {
       sender = p ?? undefined
     })
   } else {
@@ -77,7 +77,7 @@
         <Avatar person={sender} name={sender.name} size={'small'} />
       {/if}
       <span class="overflow-label">
-        {value.body}
+        {notification.subTitle}
       </span>
     </div>
   </svelte:fragment>

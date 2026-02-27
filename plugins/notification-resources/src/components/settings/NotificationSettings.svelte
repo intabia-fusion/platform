@@ -43,7 +43,10 @@
   import { providersSettings, typesSettings } from '../../utils'
 
   const client = getClient()
-  const groups: NotificationGroup[] = client.getModel().findAllSync(notification.class.NotificationGroup, {})
+  const groups: NotificationGroup[] = client
+    .getModel()
+    .findAllSync(notification.class.NotificationGroup, { parent: { $exists: false } })
+    .sort((a, b) => (a.order ?? 99999) - (b.order ?? 99999))
   const preferencesGroups: NotificationPreferencesGroup[] = client
     .getModel()
     .findAllSync(notification.class.NotificationPreferencesGroup, {})
@@ -108,7 +111,7 @@
   <div class="hulyComponent-content__container columns">
     <div class="hulyComponent-content__column navigation py-2">
       <Scroller shrink>
-        {#each preferencesGroups as preferenceGroup}
+        {#each preferencesGroups as preferenceGroup (preferenceGroup._id)}
           <NavItem
             icon={preferenceGroup.icon}
             label={preferenceGroup.label}
@@ -125,20 +128,25 @@
         {#if preferencesGroups.length > 0 && groups.length > 0}
           <div class="antiNav-divider line" />
         {/if}
-        {#each groups as gr}
-          <NavItem
-            icon={gr.icon}
-            label={gr.label}
-            selected={gr._id === group}
-            on:click={() => {
-              group = gr._id
-              currentPreferenceGroup = undefined
-              const loc = getCurrentResolvedLocation()
-              loc.path[4] = group
-              loc.path.length = 5
-              navigate(loc)
-            }}
-          />
+        {#each groups as gr (gr._id)}
+          {@const types = client
+            .getModel()
+            .findAllSync(notification.class.NotificationType, { group: gr._id, hidden: { $ne: true } }, { limit: 1 })}
+          {#if types.length > 0}
+            <NavItem
+              icon={gr.icon}
+              label={gr.label}
+              selected={gr._id === group}
+              on:click={() => {
+                group = gr._id
+                currentPreferenceGroup = undefined
+                const loc = getCurrentResolvedLocation()
+                loc.path[4] = group
+                loc.path.length = 5
+                navigate(loc)
+              }}
+            />
+          {/if}
         {/each}
         <div class="antiNav-space" />
       </Scroller>

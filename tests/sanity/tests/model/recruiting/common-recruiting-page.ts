@@ -75,7 +75,7 @@ export class CommonRecruitingPage extends CalendarPage {
   }
 
   async clickAppleseedJohn (): Promise<void> {
-    await this.appleseedJohnButton().click()
+    await this.appleseedJohnButton().last().click()
   }
 
   async clickChenRosamund (): Promise<void> {

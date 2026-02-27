@@ -79,7 +79,9 @@ const request = plugin(requestId, {
   },
   string: {
     Requests: '' as IntlString,
-    Request: '' as IntlString
+    Request: '' as IntlString,
+    NewRequestNotification: '' as IntlString,
+    CancelRequestNotification: '' as IntlString
   },
   icon: {
     Requests: '' as Asset

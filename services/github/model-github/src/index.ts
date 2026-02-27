@@ -79,16 +79,14 @@ import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
 import task from '@hcengineering/task'
-
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
-
 import { type ActivityMessageControl } from '@hcengineering/activity'
 import activity, { TActivityMessage } from '@hcengineering/model-activity'
 import attachment, { TAttachment } from '@hcengineering/model-attachment'
 import chunter from '@hcengineering/model-chunter'
 import { TPreference } from '@hcengineering/model-preference'
 import { TToDo } from '@hcengineering/model-time'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import time from '@hcengineering/time'
 
@@ -824,8 +822,8 @@ export function createModel (builder: Builder): void {
     github.ids.GithubNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -833,16 +831,18 @@ export function createModel (builder: Builder): void {
       label: task.string.AssignedToMe,
       group: github.ids.GithubNotificationGroup,
       field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: github.class.GithubPullRequest,
+      attachedToClass: github.class.GithubPullRequest,
       templates: {
         textTemplate: 'Pull request {doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p>',
+        htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p> <p>{link}</p>',
         subjectTemplate: 'Pull request {doc} was assigned to you'
       },
+      priority: 200,
       defaultEnabled: true
     },
-    github.ids.AssigneeNotification
+    github.ids.AssigneeNotification as Ref<MessageNotificationType>
   )
 
   generateClassNotificationTypes(

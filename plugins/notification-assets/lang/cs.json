@@ -28,9 +28,9 @@
     "Read": "Přečtené",
     "Unread": "Nepřečtené",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Aktualizoval {senderName}",
-    "CommonNotificationChanged": "{senderName} změnil {property}",
-    "CommonNotificationChangedProperty": "{senderName} změnil {property} na \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Aktualizoval {senderName}",
     "ChangedCollaborators": "Změnění spolupracovníci",
     "NewCollaborators": "Noví spolupracovníci",
     "RemovedCollaborators": "Odebraní spolupracovníci",
@@ -58,6 +58,8 @@
     "SoundNotificationsDescription": "Přijímejte zvuková oznámení o událostech.",
     "NoAccessToObject": "Již nemáte přístup k tomuto objektu",
     "ViewIn": "Zobrazit v {app}",
-    "Clear": "Vymazat"
+    "Clear": "Vymazat",
+    "YouAddedAsCollaborator": "Byli jste přidáni jako spolupracovník",
+    "YouRemovedFromCollaborators": "Byli jste odebráni jako spolupracovník"
   }
 }

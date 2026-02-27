@@ -46,9 +46,8 @@ test.describe('Channel tests', () => {
 
   test('Create new private channel and check if the messages stays on it', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, true)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, true)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -62,9 +61,8 @@ test.describe('Channel tests', () => {
 
   test('Create new public channel and check if the messages stays on it', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -78,9 +76,8 @@ test.describe('Channel tests', () => {
 
   test('Create new private channel tests and check if the new user have access to it', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, true)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, true)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -104,9 +101,8 @@ test.describe('Channel tests', () => {
     page
   }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -126,9 +122,8 @@ test.describe('Channel tests', () => {
 
   test('Create new private channel and test if the user can exchange the messages', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -157,9 +152,8 @@ test.describe('Channel tests', () => {
 
   test('Create new private channel add user to it', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, true)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, true)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.sendMessage('Test message')
     await channelPage.checkMessageExist('Test message', true, 'Test message')
@@ -312,9 +306,8 @@ test.describe('Channel tests', () => {
 
   test('Check if user can change the name of chat', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.clickOnOpenChannelDetails()
     await channelPage.changeChannelName(data.channelName)
@@ -323,9 +316,8 @@ test.describe('Channel tests', () => {
 
   test('Check if user can switch to private or public', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.clickOnOpenChannelDetails()
     await channelPage.changeChannelPrivacyOrAutoJoin('No', 'Yes', 'Yes')
@@ -334,9 +326,8 @@ test.describe('Channel tests', () => {
 
   test('Check if user can switch auto join', async ({ browser, page }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.clickOnOpenChannelDetails()
     await channelPage.changeChannelPrivacyOrAutoJoin('N/A', 'Yes', 'Yes', true)
@@ -362,9 +353,8 @@ test.describe('Channel tests', () => {
     page
   }) => {
     await leftSideMenuPage.clickChunter()
-    await chunterPage.clickChannelBrowser()
-    await chunterPage.clickNewChannelHeader()
-    await chunterPage.createPrivateChannel(data.channelName, false)
+    await chunterPage.clickAddChannel()
+    await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
 
     const linkText = await getInviteLink(page)
@@ -403,9 +393,8 @@ test.describe('Channel tests', () => {
   test('User is able to star and unstar a channel', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     })
 
@@ -425,9 +414,8 @@ test.describe('Channel tests', () => {
   test('User is able to leave and join a channel', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
 
       await channelPage.clickChooseChannel(data.channelName)
@@ -458,9 +446,8 @@ test.describe('Channel tests', () => {
   test('User is able to filter channels in table', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
       await channelPage.clickChannelTab()
     })
@@ -481,9 +468,8 @@ test.describe('Channel tests', () => {
   test('User is able to search channel in table', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
       await channelPage.clickChannelTab()
     })
@@ -506,9 +492,8 @@ test.describe('Channel tests', () => {
   test('User is able to work with a channel in a sidebar', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
       await channelPage.clickChooseChannel(data.channelName)
       await channelPage.sendMessage('Test message')
@@ -582,9 +567,8 @@ test.describe('Channel tests', () => {
   test('User is able to create thread automatically in Sidebar', async ({ page }) => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()
-      await chunterPage.clickChannelBrowser()
-      await chunterPage.clickNewChannelHeader()
-      await chunterPage.createPrivateChannel(data.channelName, false)
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
       await channelPage.clickChooseChannel(data.channelName)
       await channelPage.sendMessage('Test message')

@@ -14,7 +14,7 @@
 //
 
 import { type ActivityMessage } from '@hcengineering/activity'
-import { type Channel, type ChatMessage, type DirectMessage } from '@hcengineering/chunter'
+import { type Channel, type ChatMessage } from '@hcengineering/chunter'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
@@ -39,7 +39,6 @@ import CreateChannel from './components/chat/create/CreateChannel.svelte'
 import CreateDirectChat from './components/chat/create/CreateDirectChat.svelte'
 import ChunterBrowser from './components/chat/specials/ChunterBrowser.svelte'
 import SavedMessages from './components/chat/specials/SavedMessages.svelte'
-import ConvertDmToPrivateChannelModal from './components/ConvertDmToPrivateChannel.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import DmHeader from './components/DmHeader.svelte'
 import DmPresenter from './components/DmPresenter.svelte'
@@ -68,7 +67,6 @@ import {
   getThreadLink,
   locationDataResolver,
   openChannelInSidebar,
-  openChannelInSidebarAction,
   openThreadInSidebar,
   replyToThread
 } from './navigation'
@@ -78,12 +76,9 @@ import {
   canCopyMessageLink,
   canDeleteMessage,
   canReplyToThread,
-  dmIdentifierProvider,
   getDmName,
   getTitle,
   getUnreadThreadsCount,
-  leaveChannelAction,
-  removeChannelAction,
   translateMessage,
   showOriginalMessage,
   canTranslateMessage,
@@ -129,13 +124,6 @@ async function UnarchiveChannel (channel: Channel): Promise<void> {
       const client = getClient()
       await client.update(channel, { archived: false })
     }
-  })
-}
-
-async function ConvertDmToPrivateChannel (dm: DirectMessage): Promise<void> {
-  showPopup(ConvertDmToPrivateChannelModal, {
-    label: chunter.string.ConvertToPrivate,
-    dm
   })
 }
 
@@ -221,7 +209,6 @@ export default async (): Promise<Resources> => ({
     GetLink: getMessageLink,
     DirectTitleProvider,
     ChannelTitleProvider,
-    DmIdentifierProvider: dmIdentifierProvider,
     CanDeleteMessage: canDeleteMessage,
     CanCopyMessageLink: canCopyMessageLink,
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
@@ -240,12 +227,8 @@ export default async (): Promise<Resources> => ({
   actionImpl: {
     ArchiveChannel,
     UnarchiveChannel,
-    ConvertDmToPrivateChannel,
     DeleteChatMessage: deleteChatMessage,
-    LeaveChannel: leaveChannelAction,
-    RemoveChannel: removeChannelAction,
     ReplyToThread: replyToThread,
-    OpenInSidebar: openChannelInSidebarAction,
     TranslateMessage: translateMessage,
     SummarizeMessages: summarizeMessages,
     ShowOriginalMessage: showOriginalMessage,

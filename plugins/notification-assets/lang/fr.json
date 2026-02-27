@@ -28,9 +28,9 @@
     "Read": "Lu",
     "Unread": "Non lu",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Mis à jour par {senderName}",
-    "CommonNotificationChanged": "{senderName} a modifié {property}",
-    "CommonNotificationChangedProperty": "{senderName} a modifié {property} à \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Mis à jour par {senderName}",
     "ChangedCollaborators": "Collaborateurs modifiés",
     "NewCollaborators": "Nouveaux collaborateurs",
     "RemovedCollaborators": "Collaborateurs supprimés",
@@ -54,10 +54,12 @@
     "PushNotificationsDescription": "Recevez des notifications personnelles sur le bureau.",
     "Sound": "Son",
     "SoundNotificationsDescription": "Recevez des notifications sonores pour les événements.",
-    "CommonNotificationCollectionAdded":  "{senderName} a ajouté {collection}",
+    "CommonNotificationCollectionAdded": "{senderName} a ajouté {collection}",
     "CommonNotificationCollectionRemoved": "{senderName} a supprimé {collection}",
     "NoAccessToObject": "Vous n'avez plus accès à cet objet",
     "ViewIn": "Voir dans {app}",
-    "Clear": "Effacer"
+    "Clear": "Effacer",
+    "YouAddedAsCollaborator": "Vous avez été ajouté comme collaborateur",
+    "YouRemovedFromCollaborators": "Vous avez été retiré des collaborateurs"
   }
 }

@@ -1,25 +1,21 @@
 //
 // Copyright © 2023-2024 Hardcore Engineering Inc.
 //
-import { Person, type Employee } from '@hcengineering/contact'
+import { type Employee } from '@hcengineering/contact'
 import core, {
-  combineAttributes,
   DocumentQuery,
-  PersonId,
   Ref,
   SortingOrder,
   Tx,
-  TxCreateDoc,
   TxFactory,
   TxUpdateDoc,
   pickPrimarySocialId,
   type Doc,
   type RolesAssignment,
   type Timestamp,
-  type TxCUD,
   concatLink
 } from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
+import { MessageNotificationType, NotificationType } from '@hcengineering/notification'
 import { getEmployees, getSocialIds } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 
@@ -39,6 +35,8 @@ import training, { TrainingState, type TrainingRequest } from '@hcengineering/tr
 import { getMetadata } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import slugify from 'slugify'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
+import { DocUpdateMessage } from '@hcengineering/activity'
 
 async function getDocs (
   control: TriggerControl,
@@ -389,60 +387,51 @@ export async function OnDocApprovalRequestApproved (
   return result
 }
 
-export async function ControlledDocumentTextPresenter (doc: ControlledDocument): Promise<string> {
-  return doc.title
+function getDocumentLinkId (doc: Document): string {
+  const slug = slugify(doc.title, { lower: true })
+  return `${slug}---${doc._id}`
 }
 
-export async function ControlledDocumentHTMLPresenter (
+export async function ControlledDocumentUrlPresenter (
   doc: ControlledDocument,
   control: TriggerControl
-): Promise<string> {
-  const title = await ControlledDocumentTextPresenter(doc)
-
+): Promise<string | undefined> {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 
   const prjdoc = (await control.findAll(control.ctx, documents.class.ProjectDocument, { document: doc._id }))[0]
-  if (prjdoc === undefined) {
-    return title
-  }
+  if (prjdoc === undefined) return undefined
 
   const project = prjdoc.project ?? documents.ids.NoProject
 
-  function getDocumentLinkId (doc: Document): string {
-    const slug = slugify(doc.title, { lower: true })
-    return `${slug}---${doc._id}`
-  }
-
   let path = `${workbenchId}/${control.workspace.url}/documents/${getDocumentLinkId(doc)}`
+
   if (project !== documents.ids.NoProject) {
     path += `/${project}`
   }
 
-  const link = concatLink(front, path)
-  return `<a href='${link}'>${title}</a>`
+  return concatLink(front, path)
 }
 
-async function CoAuthorsTypeMatch (
-  originTx: TxCUD<ControlledDocument>,
-  _doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
+const CoAuthorsTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
   _type: NotificationType,
-  control: TriggerControl
-): Promise<boolean> {
-  if (socialIds.includes(originTx.modifiedBy)) return false
-  if (originTx._class === core.class.TxUpdateDoc) {
-    const tx = originTx as TxUpdateDoc<ControlledDocument>
-    const employees = Array.isArray(tx.operations.coAuthors)
-      ? (tx.operations.coAuthors ?? [])
-      : (combineAttributes([tx.operations], 'coAuthors', '$push', '$each') as Ref<Employee>[])
+  _typeObject: Doc,
+  doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const type = _type as MessageNotificationType
+  const message = _typeObject as DocUpdateMessage
 
-    return employees.some((it) => it === person)
-  } else if (originTx._class === core.class.TxCreateDoc) {
-    const tx = originTx as TxCreateDoc<ControlledDocument>
-    const employees = tx.attributes.coAuthors
+  if (receiver.socialIds.includes(message.modifiedBy)) return false
+  if (message.action === 'update') {
+    if (message.attributeUpdates?.attrKey !== type.field) return false
 
-    return employees.some((it) => it === person)
+    return (message.attributeUpdates?.added ?? []).includes(receiver.employeeRef)
+  }
+
+  if (message.action === 'create' && message.objectId === doc._id) {
+    const coAuthors = (doc as ControlledDocument).coAuthors ?? []
+    return coAuthors.includes(receiver.employeeRef)
   }
 
   return false
@@ -458,8 +447,7 @@ export default async () => ({
     OnDocTitleChanged
   },
   function: {
-    ControlledDocumentTextPresenter,
-    ControlledDocumentHTMLPresenter,
+    ControlledDocumentUrlPresenter,
     CoAuthorsTypeMatch
   }
 })

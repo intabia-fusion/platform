@@ -28,7 +28,7 @@ import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction, showColorsViewOption, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench, { createNavigateAction, type Application } from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { type IntlString } from '@hcengineering/platform'
 import { recruitId, type Applicant, RecruitEvents } from '@hcengineering/recruit'
 import setting from '@hcengineering/setting'
@@ -1342,8 +1342,8 @@ export function createModel (builder: Builder): void {
     recruit.ids.ApplicationNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -1351,13 +1351,15 @@ export function createModel (builder: Builder): void {
       label: task.string.AssignedToMe,
       group: recruit.ids.ApplicationNotificationGroup,
       field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: recruit.class.Applicant,
+      attachedToClass: recruit.class.Applicant,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
+      priority: 200,
       defaultEnabled: true
     },
     recruit.ids.AssigneeNotification
@@ -1382,8 +1384,8 @@ export function createModel (builder: Builder): void {
     recruit.ids.VacancyNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -1391,9 +1393,9 @@ export function createModel (builder: Builder): void {
       label: recruit.string.CreateApplication,
       group: recruit.ids.VacancyNotificationGroup,
       field: 'space',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: recruit.class.Applicant,
-      spaceSubscribe: true,
+      attachedToClass: recruit.class.Applicant,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',

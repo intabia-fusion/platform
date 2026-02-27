@@ -35,6 +35,8 @@ import contact, { type PersonSpace } from '@hcengineering/contact'
 import { type Card, type MasterTag } from '@hcengineering/card'
 import { DOMAIN_SETTING } from '@hcengineering/setting'
 import view from '@hcengineering/model-view'
+import notification, { generateClassNotificationTypes } from '@hcengineering/model-notification'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 import communication from './plugin'
 
@@ -112,6 +114,26 @@ function defineDirect (builder: Builder): void {
     label: communication.string.Members
   })
 
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
+      label: communication.string.Direct,
+      icon: contact.icon.Contacts,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: communication.type.Direct
+    },
+    communication.ids.DirectNotificationGroup
+  )
+  generateClassNotificationTypes(
+    builder,
+    communication.type.Direct,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos', 'members'],
+    ['comments'],
+    communication.ids.DirectNotificationGroup
+  )
+
   builder.mixin(communication.type.Direct, core.class.Class, view.mixin.ObjectIcon, {
     component: communication.component.DirectIcon
   })
@@ -168,4 +190,24 @@ function definePoll (builder: Builder): void {
     type: communication.type.Poll,
     component: communication.poll.UserVoteActivityPresenter
   })
+
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
+      label: communication.string.Poll,
+      icon: communication.icon.Poll,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: communication.type.Poll
+    },
+    communication.ids.PollNotificationGroup
+  )
+  generateClassNotificationTypes(
+    builder,
+    communication.type.Poll,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos'],
+    ['comments'],
+    communication.ids.PollNotificationGroup
+  )
 }

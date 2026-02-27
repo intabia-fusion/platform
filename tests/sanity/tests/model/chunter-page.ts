@@ -8,9 +8,18 @@ export class ChunterPage {
     this.page = page
   }
 
-  readonly buttonChannelBrowser = (): Locator => this.page.locator('.hulyNavPanel-header > button.type-button-icon')
-  readonly buttonNewChannelHeader = (): Locator => this.page.getByRole('button', { name: 'New channel' })
-  readonly buttonNewDirectChatHeader = (): Locator => this.page.getByRole('button', { name: 'New direct chat' })
+  readonly buttonChannelsHeader = (): Locator =>
+    this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: 'Channels' })
+
+  readonly buttonDirectHeader = (): Locator =>
+    this.page
+      .locator('[data-testid="section-chunter:class:DirectMessage"]')
+      .getByRole('button', { name: 'Direct messages' })
+
+  readonly buttonAddChannel = (): Locator => this.page.locator('[data-testid="action-create-chunter:class:Channel"]')
+  readonly buttonAddDirectMessage = (): Locator =>
+    this.page.locator('[data-testid="action-create-chunter:class:DirectMessage"]')
+
   readonly inputNewChannelName = (): Locator => this.page.getByPlaceholder('New channel')
   readonly inputDescription = (): Locator => this.page.getByPlaceholder('Description (optional)')
   readonly checkboxMakePublic = (): Locator => this.page.getByRole('button', { name: 'Public' })
@@ -28,19 +37,19 @@ export class ChunterPage {
 
   // ACTIONS
 
-  async clickChannelBrowser (): Promise<void> {
-    await this.buttonChannelBrowser().click()
+  async clickAddChannel (): Promise<void> {
+    await this.buttonChannelsHeader().hover()
+    expect(await this.buttonAddChannel().isVisible()).toBe(true)
+    await this.buttonAddChannel().click()
   }
 
-  async clickNewChannelHeader (): Promise<void> {
-    await this.buttonNewChannelHeader().click()
+  async clickAddDirect (): Promise<void> {
+    await this.buttonDirectHeader().hover()
+    expect(await this.buttonAddDirectMessage().isVisible()).toBe(true)
+    await this.buttonAddDirectMessage().click()
   }
 
-  async clickNewDirectChatHeader (): Promise<void> {
-    await this.buttonNewDirectChatHeader().click()
-  }
-
-  async createPrivateChannel (channelName: string, privateChannel: boolean): Promise<void> {
+  async createChannel (channelName: string, privateChannel: boolean): Promise<void> {
     await this.inputNewChannelName().fill(channelName)
     if (privateChannel) {
       await this.checkboxMakePublic().click()
@@ -53,9 +62,12 @@ export class ChunterPage {
     await this.buttonOpenChannel().filter({ hasText: channelName }).click()
   }
 
+  getChatLocator (name: string): Locator {
+    return this.page.getByRole('button', { name })
+  }
+
   async createDirectChat ({ firstName, lastName }: SignUpData): Promise<void> {
-    await this.clickChannelBrowser()
-    await this.clickNewDirectChatHeader()
+    await this.clickAddDirect()
     await this.inputNewDirectChatEmployee().fill(`${lastName}`)
     await this.rowEmployeeInNewDirectChatModal()
       .filter({ hasText: `${lastName} ${firstName}` })

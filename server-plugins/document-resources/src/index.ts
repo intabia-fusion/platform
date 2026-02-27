@@ -18,24 +18,15 @@ function getDocumentId (doc: Document): string {
 /**
  * @public
  */
-export async function documentHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function documentUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const document = doc as Document
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${documentId}/${getDocumentId(document)}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${document.title}</a>`
+  return concatLink(front, path)
 }
 
 export async function documentLinkIdProvider (doc: Document): Promise<string> {
   return getDocumentId(doc)
-}
-
-/**
- * @public
- */
-export async function documentTextPresenter (doc: Doc): Promise<string> {
-  const document = doc as Document
-  return document.title
 }
 
 /**
@@ -56,8 +47,7 @@ export async function findChildDocuments (
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    DocumentHTMLPresenter: documentHTMLPresenter,
-    DocumentTextPresenter: documentTextPresenter,
+    DocumentUrlPresenter: documentUrlPresenter,
     DocumentLinkIdProvider: documentLinkIdProvider,
     FindChildDocuments: findChildDocuments
   }

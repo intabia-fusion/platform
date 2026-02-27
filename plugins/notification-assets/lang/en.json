@@ -28,9 +28,9 @@
     "Read": "Read",
     "Unread": "Unread",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Updated by {senderName}",
-    "CommonNotificationChanged": "{senderName} changed {property}",
-    "CommonNotificationChangedProperty": "{senderName} changed {property} to \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Updated by {senderName}",
     "ChangedCollaborators": "Changed collaborators",
     "NewCollaborators": "New collaborators",
     "RemovedCollaborators": "Removed collaborators",
@@ -52,12 +52,14 @@
     "General": "General",
     "InboxNotificationsDescription": "Receive personal notifications in your Huly inbox.",
     "PushNotificationsDescription": "Receive personal notifications on desktop.",
-    "CommonNotificationCollectionAdded":  "{senderName} added {collection}",
+    "CommonNotificationCollectionAdded": "{senderName} added {collection}",
     "CommonNotificationCollectionRemoved": "{senderName} removed {collection}",
     "Sound": "Sound",
     "SoundNotificationsDescription": "Receive sound notifications for events.",
     "NoAccessToObject": "You no longer have access to this object",
     "ViewIn": "View in {app}",
-    "Clear": "Clear"
+    "Clear": "Clear",
+    "YouAddedAsCollaborator": "You were added as a collaborator",
+    "YouRemovedFromCollaborators": "You were removed as a collaborator"
   }
 }

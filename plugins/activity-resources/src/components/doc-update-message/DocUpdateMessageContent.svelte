@@ -45,7 +45,7 @@
     objects = res
   })
 
-  $: isColumn = hierarchy.isDerived(message.objectClass, attachment.class.Attachment)
+  $: isColumn = hierarchy.isDerived(message.objectClass, attachment.class.Attachment) && !preview
   $: _icon = viewlet?.icon ?? objectIcon ?? activity.icon.Activity
   $: clazz = hierarchy.findClass(message.objectClass)
 </script>

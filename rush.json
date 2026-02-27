@@ -2257,21 +2257,6 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-analytics-collector",
-      "projectFolder": "models/analytics-collector",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-analytics-collector",
-      "projectFolder": "server-plugins/analytics-collector",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/server-analytics-collector-resources",
-      "projectFolder": "server-plugins/analytics-collector-resources",
-      "shouldPublish": false
-    },
-    {
       "packageName": "@hcengineering/pod-ai-bot",
       "projectFolder": "services/ai-bot/pod-ai-bot",
       "shouldPublish": false
@@ -2699,6 +2684,11 @@
     {
       "packageName": "@intabiafusion/clisr",
       "projectFolder": "packages/clisr",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/pod-notifications",
+      "projectFolder": "services/notifications",
       "shouldPublish": false
     }
     // ,

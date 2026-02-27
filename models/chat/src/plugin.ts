@@ -20,6 +20,7 @@ import { type Application } from '@hcengineering/model-workbench'
 import { mergeIds, type Resource } from '@hcengineering/platform'
 import type { Location, ResolvedLocation } from '@hcengineering/ui'
 import type { LocationData } from '@hcengineering/workbench'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(chatId, chat, {
   app: {
@@ -28,5 +29,8 @@ export default mergeIds(chatId, chat, {
   resolver: {
     Location: '' as Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>,
     LocationData: '' as Resource<(loc: Location) => Promise<LocationData>>
+  },
+  ids: {
+    ThreadNotificationGroup: '' as Ref<NotificationGroup>
   }
 })

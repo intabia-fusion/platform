@@ -1,6 +1,6 @@
 import { Class, Mixin, Ref } from '@hcengineering/core'
 import { Drive } from '@hcengineering/drive'
-import { NotificationGroup, NotificationType } from '@hcengineering/notification'
+import { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
 import { Asset, IntlString, Metadata as ServiceEndpoint, Plugin, plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui/src/types'
 import { Action, Viewlet, ViewletDescriptor } from '@hcengineering/view'
@@ -110,11 +110,10 @@ const love = plugin(loveId, {
   ids: {
     MainFloor: '' as Ref<Floor>,
     Reception: '' as Ref<Room>,
-    InviteNotification: '' as Ref<NotificationType>,
-    KnockNotification: '' as Ref<NotificationType>,
     LoveWidget: '' as Ref<Widget>,
     MeetingWidget: '' as Ref<Widget>,
-    LoveNotificationGroup: '' as Ref<NotificationGroup>
+    LoveNotificationGroup: '' as Ref<NotificationGroup>,
+    InviteNotification: '' as Ref<TxNotificationType>
   },
   icon: {
     Love: '' as Asset,

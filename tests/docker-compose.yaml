@@ -299,3 +299,22 @@ services:
       - PORT=4901
       - SERVER_SECRET=secret
     restart: unless-stopped
+  notifications:
+    image: intabiafusion/notifications
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      transactor:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - ACCOUNTS_URL=http://huly.local:3003
+      - DB_URL=${DB_PG_URL}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+    restart: unless-stopped

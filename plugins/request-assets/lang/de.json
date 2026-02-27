@@ -20,6 +20,8 @@
     "Cancel": "Abbrechen",
     "Cancelled": "Abgebrochen",
     "NewRequest": "Neue Anfrage",
-    "CancelRequest": "Anfrage abbrechen"
+    "CancelRequest": "Anfrage abbrechen",
+    "NewRequestNotification": "Neue {name}",
+    "CancelRequestNotification": "{name} abgebrochen"
   }
 }

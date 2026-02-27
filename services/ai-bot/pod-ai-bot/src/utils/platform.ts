@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import core, { Ref, TxOperations, AccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import core, { AccountUuid, Ref, TxOperations, WorkspaceUuid } from '@hcengineering/core'
 import contact, { Employee, Person } from '@hcengineering/contact'
 import chunter, { DirectMessage } from '@hcengineering/chunter'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
-import notification from '@hcengineering/notification'
 import { createRestClient, RestClient } from '@hcengineering/api-client'
 
 export function connectPlatform (token: string, workspaceId: WorkspaceUuid, endpoint: string): RestClient {
@@ -51,26 +50,11 @@ export async function getDirect (
     return existingDm._id
   }
 
-  const dmId = await client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
+  return await client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
     name: '',
     description: '',
     private: true,
     archived: false,
     members: [aibotAccount, account]
   })
-
-  if (aiPerson === undefined) return dmId
-
-  const space = await client.findOne(contact.class.PersonSpace, { person: aiPerson })
-  if (space === undefined) return dmId
-  await client.createDoc(notification.class.DocNotifyContext, space._id, {
-    user: aibotAccount,
-    objectId: dmId,
-    objectClass: chunter.class.DirectMessage,
-    objectSpace: core.space.Space,
-    isPinned: false,
-    hidden: false
-  })
-
-  return dmId
 }

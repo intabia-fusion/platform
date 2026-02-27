@@ -20,6 +20,8 @@
     "Cancel": "Annuler",
     "Cancelled": "Annulé",
     "NewRequest": "Nouvelle demande",
-    "CancelRequest": "Annuler la demande"
+    "CancelRequest": "Annuler la demande",
+    "NewRequestNotification": "Nouvelle {name}",
+    "CancelRequestNotification": "{name} annulée"
   }
 }

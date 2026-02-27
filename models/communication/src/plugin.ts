@@ -20,6 +20,7 @@ import {} from '@hcengineering/ui'
 import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type ViewAction } from '@hcengineering/model-view'
 import { type Card } from '@hcengineering/card'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(communicationId, communication, {
   action: {
@@ -31,6 +32,8 @@ export default mergeIds(communicationId, communication, {
     CanUnsubscribe: '' as Resource<(doc: Card | Card[] | undefined) => Promise<boolean>>
   },
   ids: {
-    UserVotesAttribute: '' as Ref<Attribute<Poll>>
+    UserVotesAttribute: '' as Ref<Attribute<Poll>>,
+    DirectNotificationGroup: '' as Ref<NotificationGroup>,
+    PollNotificationGroup: '' as Ref<NotificationGroup>
   }
 })

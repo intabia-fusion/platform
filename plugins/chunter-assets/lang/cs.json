@@ -133,6 +133,11 @@
     "OpenChatInSidebar": "Otevřít chat v postranním panelu",
     "NoThreadsYet": "Zatím nejsou žádné vlákna.",
     "SummarizeMessages": "Shrnout diskuzi",
-    "DeleteMessageDescription": "Opravdu chcete tuto zprávu smazat? Tuto akci nelze vrátit zpět."
+    "DeleteMessageDescription": "Opravdu chcete tuto zprávu smazat? Tuto akci nelze vrátit zpět.",
+    "Star": "Přidat {label} do oblíbených",
+    "Unstar": "Odebrat {label} z oblíbených",
+    "Hide": "Skrýt {label}",
+    "Leave": "Opustit {label}",
+    "HideAll": "Skrýt vše"
   }
 }

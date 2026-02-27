@@ -16,7 +16,7 @@ import {
   type ChunterSpace,
   type ThreadMessage
 } from '@hcengineering/chunter'
-import { type DocNotifyContext, notificationId } from '@hcengineering/notification'
+import { notificationId } from '@hcengineering/notification'
 import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
 import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
@@ -291,14 +291,6 @@ export async function openChannelInSidebar (
   }
 
   createWidgetTab(widget, tab, newTab)
-}
-
-export async function openChannelInSidebarAction (
-  context: DocNotifyContext,
-  _: Event,
-  props?: { object?: Doc }
-): Promise<void> {
-  await openChannelInSidebar(context.objectId, context.objectClass, props?.object, undefined, true)
 }
 
 export async function openThreadInSidebarChannel (

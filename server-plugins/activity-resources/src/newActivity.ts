@@ -11,7 +11,6 @@ import core, {
 import { type Card } from '@hcengineering/card'
 import { type TriggerControl } from '@hcengineering/server-core'
 import activity from '@hcengineering/activity'
-import { type ActivityControl } from '@hcengineering/server-activity'
 import { MessageEventType, type CreateMessageEvent } from '@hcengineering/communication-sdk-types'
 import {
   type ActivityAttributeUpdate,
@@ -98,7 +97,7 @@ async function createMessages (tx: TxCUD<Card>, control: TriggerControl, card: C
   )
 }
 
-function getActivityAction (control: ActivityControl, tx: TxCUD<Doc>): 'create' | 'remove' | 'update' {
+function getActivityAction (control: TriggerControl, tx: TxCUD<Doc>): 'create' | 'remove' | 'update' {
   const hierarchy = control.hierarchy
 
   if (hierarchy.isDerived(tx._class, core.class.TxCreateDoc)) return 'create'

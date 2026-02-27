@@ -20,7 +20,7 @@ import core, { TDoc } from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import workbench from '@hcengineering/workbench'
 import view from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
+import notification, { type TxNotificationType } from '@hcengineering/notification'
 import exportPlugin from '@hcengineering/export'
 
 import exportModelPlugin from './plugin'
@@ -79,8 +79,8 @@ export function createModel (builder: Builder): void {
     exportPlugin.ids.ImportNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
     core.space.Model,
     {
       hidden: false,

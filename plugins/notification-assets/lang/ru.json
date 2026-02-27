@@ -28,9 +28,9 @@
     "Read": "Прочитанное",
     "Unread": "Не прочитанное",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Обновление от {senderName}",
-    "CommonNotificationChanged": "{senderName} изменил {property}",
-    "CommonNotificationChangedProperty": "{senderName} изменил {property} на \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Обновлено пользователем {senderName}",
     "ChangedCollaborators": "Изменены участники",
     "NewCollaborators": "Новые участники",
     "RemovedCollaborators": "Удалены участники",
@@ -54,10 +54,12 @@
     "PushNotificationsDescription": "Получайте персональные уведомления на рабочий стол.",
     "Sound": "Звук",
     "SoundNotificationsDescription": "Получайте звуковые уведомления о событиях.",
-    "CommonNotificationCollectionAdded":  "{senderName} добавил {collection}",
+    "CommonNotificationCollectionAdded": "{senderName} добавил {collection}",
     "CommonNotificationCollectionRemoved": "{senderName} удалил {collection}",
     "NoAccessToObject": "У вас больше нет доступа к этому объекту",
     "ViewIn": "Посмотреть в {app}",
-    "Clear": "Очистить"
+    "Clear": "Очистить",
+    "YouAddedAsCollaborator": "Вы были добавлены как участник",
+    "YouRemovedFromCollaborators": "Вы были удалены из участников"
   }
 }

@@ -14,8 +14,9 @@
 //
 
 import { plugin, type Plugin, type Resource } from '@hcengineering/platform'
-import { type Presenter, TypeMatchFunc } from '@hcengineering/server-notification'
+import { TypeMatchFuncResource } from '@hcengineering/server-notification'
 import type { TrainingRequest } from '@hcengineering/training'
+import { type Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -27,8 +28,8 @@ export const serverTrainingId = 'server-training' as Plugin
  */
 export default plugin(serverTrainingId, {
   function: {
-    TrainingRequestHTMLPresenter: '' as Resource<Presenter<TrainingRequest>>,
-    TrainingRequestNotificationTypeMatch: '' as TypeMatchFunc,
-    TrainingRequestTextPresenter: '' as Resource<Presenter<TrainingRequest>>
+    TrainingRequestNotificationTypeMatch: '' as TypeMatchFuncResource,
+    TrainingRequestUrlPresenter: '' as Resource<Presenter<TrainingRequest>>,
+    TrainingRequestTitlePresenter: '' as Resource<Presenter<TrainingRequest>>
   }
 })

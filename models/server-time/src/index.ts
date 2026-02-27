@@ -22,6 +22,8 @@ import serverCore, { type TriggerControl } from '@hcengineering/server-core'
 import tracker from '@hcengineering/tracker'
 import serverTime, { type ToDoFactory, type OnToDo } from '@hcengineering/server-time'
 import time, { type ToDo, type WorkSlot } from '@hcengineering/time'
+import notification, { type NotificationType } from '@hcengineering/notification'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
 
 @Mixin(serverTime.mixin.ToDoFactory, core.class.Class)
 export class TToDoFactory extends TClass implements ToDoFactory {
@@ -58,15 +60,6 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverTime.trigger.OnToDoCreate,
-    txMatch: {
-      _class: core.class.TxCreateDoc,
-      objectClass: time.class.ToDo
-    },
-    isAsync: true
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverTime.trigger.OnWorkSlotCreate,
     txMatch: {
       _class: core.class.TxCreateDoc,
@@ -93,6 +86,15 @@ export function createModel (builder: Builder): void {
   builder.mixin(time.class.ToDo, core.class.Class, serverCore.mixin.SearchPresenter, {
     title: [['title']]
   })
+
+  builder.mixin<NotificationType, TypeMatch>(
+    time.ids.ToDoCreated,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      create: serverTime.function.TodoCreateNotification
+    }
+  )
 }
 
 export * from '@hcengineering/server-time'

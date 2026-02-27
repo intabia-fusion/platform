@@ -13,34 +13,27 @@
 // limitations under the License.
 //
 
-import { Person, type Employee } from '@hcengineering/contact'
-import { type PersonId, type Ref, type TxCUD } from '@hcengineering/core'
+import { Doc } from '@hcengineering/core'
 import type { NotificationType } from '@hcengineering/notification'
-import type { TriggerControl } from '@hcengineering/server-core'
 import type { TrainingRequest } from '@hcengineering/training'
-import { isTxCreateDoc } from '../utils/isTxCreateDoc'
-import { isTxUpdateDoc } from '../utils/isTxUpdateDoc'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
+import training from '@hcengineering/training'
+import { DocUpdateMessage } from '@hcengineering/activity'
 
-export function TrainingRequestNotificationTypeMatch (
-  tx: TxCUD<TrainingRequest>,
-  doc: TrainingRequest,
-  person: Ref<Person>,
-  user: PersonId[],
-  type: NotificationType,
-  control: TriggerControl
-): boolean {
-  if (isTxCreateDoc(tx)) {
-    return doc.trainees.includes(person as Ref<Employee>)
+export const TrainingRequestNotificationTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _typeObject: Doc,
+  doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const message = _typeObject as DocUpdateMessage
+  if (message.action === 'create' && message.objectClass === training.class.TrainingRequest) {
+    return (doc as TrainingRequest).trainees.includes(receiver.employeeRef)
   }
 
-  if (isTxUpdateDoc(tx)) {
-    const pushed = tx.operations.$push?.trainees
-    if (pushed === undefined) {
-      return false
-    }
-
-    const newTrainees = typeof pushed === 'object' ? pushed.$each : [pushed]
-    return newTrainees.includes(person as Ref<Employee>)
+  if (message.action === 'update' && message.attributeUpdates?.attrKey === 'trainees') {
+    return (message.attributeUpdates.added ?? []).includes(receiver.employeeRef)
   }
 
   return false

@@ -13,23 +13,32 @@
 // limitations under the License.
 //
 
-import { concatLink } from '@hcengineering/core'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import type { Presenter } from '@hcengineering/server-activity'
+import training, { trainingId, TrainingRequest } from '@hcengineering/training'
 import { getMetadata } from '@hcengineering/platform'
-import serverCore, { type TriggerControl } from '@hcengineering/server-core'
-import type { Presenter } from '@hcengineering/server-notification'
 import { workbenchId } from '@hcengineering/workbench'
-import { trainingId, type TrainingRequest } from '@hcengineering/training'
-import { TrainingRequestTextPresenter } from './TrainingRequestTextPresenter'
+import { concatLink } from '@hcengineering/core'
 
-/** @public */
-export const TrainingRequestHTMLPresenter: Presenter<TrainingRequest> = async (
+export const TrainingRequestTitlePresenter: Presenter<TrainingRequest> = async (
+  request: TrainingRequest,
+  control: TriggerControl
+) => {
+  const trainingObject = (await control.findAll(control.ctx, training.class.Training, { _id: request.attachedTo }))[0]
+
+  if (trainingObject === undefined) {
+    throw new Error(`Training #${request.attachedTo} not found`)
+  }
+
+  return `${trainingObject.code} • ${trainingObject.title} • Revision ${trainingObject.revision}`
+}
+
+export const TrainingRequestUrlPresenter: Presenter<TrainingRequest> = async (
   request: TrainingRequest,
   control: TriggerControl
 ) => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   // TODO: Don't hardcode URLs, find a way to share routes info between front and server resources, and DRY
   const path = `${workbenchId}/${control.workspace.url}/${trainingId}/requests/${request._id}`
-  const link = concatLink(front, path)
-  const name = await TrainingRequestTextPresenter(request, control)
-  return `<a href='${link}'>${name}</a>`
+  return concatLink(front, path)
 }

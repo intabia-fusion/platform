@@ -20,6 +20,8 @@
     "Cancel": "İptal",
     "Cancelled": "İptal Edildi",
     "NewRequest": "Yeni Talep",
-    "CancelRequest": "Talebi İptal Et"
+    "CancelRequest": "Talebi İptal Et",
+    "NewRequestNotification": "Yeni {name}",
+    "CancelRequestNotification": "{name} iptal edildi"
   }
 }

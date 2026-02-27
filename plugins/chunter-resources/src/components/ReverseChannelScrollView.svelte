@@ -413,9 +413,9 @@
 
   async function forceReadContext (isScrollAtBottom: boolean, context?: DocNotifyContext): Promise<void> {
     if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
-    const { lastUpdateTimestamp = 0, lastViewedTimestamp = 0 } = context
+    const { lastUpdate = 0, lastView = 0 } = context
 
-    if (lastViewedTimestamp >= lastUpdateTimestamp) return
+    if (lastView >= lastUpdate) return
 
     const notifications = $notificationsByContextStore.get(context._id) ?? []
     const unViewed = notifications.filter(({ isViewed }) => !isViewed)

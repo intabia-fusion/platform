@@ -15,7 +15,7 @@
 
 import { ChannelItem } from '@hcengineering/contact'
 import { AttachedDoc, Class, Doc, IntegrationKind, Ref, Timestamp } from '@hcengineering/core'
-import { NotificationProvider, NotificationType } from '@hcengineering/notification'
+import { MessageNotificationType, NotificationProvider } from '@hcengineering/notification'
 import type { Asset, IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Handler, IntegrationType } from '@hcengineering/setting'
@@ -86,7 +86,7 @@ export default plugin(telegramId, {
     DisconnectAllHandler: '' as Handler
   },
   ids: {
-    NewMessageNotification: '' as Ref<NotificationType>
+    NewMessageNotification: '' as Ref<MessageNotificationType>
   },
   class: {
     Message: '' as Ref<Class<TelegramMessage>>,

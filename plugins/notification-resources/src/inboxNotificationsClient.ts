@@ -151,13 +151,13 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
   }
 
   async readDoc (_id: Ref<Doc>): Promise<void> {
+    const client = getClient()
     const docNotifyContext = this._contextByDoc.get(_id)
 
     if (docNotifyContext === undefined || getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
       return
     }
 
-    const client = getClient()
     const op = client.apply(undefined, 'readDoc', true)
     const inboxNotifications = await client.findAll(
       notification.class.InboxNotification,
@@ -168,7 +168,7 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
     for (const notification of inboxNotifications) {
       await op.updateDoc(notification._class, notification.space, notification._id, { isViewed: true })
     }
-    await op.update(docNotifyContext, { lastViewedTimestamp: Date.now() })
+    await op.update(docNotifyContext, { lastView: Date.now() })
     await op.commit()
   }
 
@@ -230,7 +230,7 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
       }
 
       for (const context of contexts) {
-        await ops.update(context, { lastViewedTimestamp: Date.now() })
+        await ops.update(context, { lastView: Date.now() })
       }
     } finally {
       await ops.commit()
@@ -255,7 +255,7 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         await ops.updateDoc(notification._class, notification.space, notification._id, { isViewed: true })
       }
       for (const context of contexts) {
-        await ops.update(context, { lastViewedTimestamp: Date.now() })
+        await ops.update(context, { lastView: Date.now() })
       }
     } finally {
       await ops.commit()
@@ -294,7 +294,7 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
 
         const lastViewedTimestamp = (firstUnread.createdOn ?? firstUnread.modifiedOn) - 1
 
-        await ops.update(context, { lastViewedTimestamp })
+        await ops.update(context, { lastView: lastViewedTimestamp })
       }
     } finally {
       await ops.commit()

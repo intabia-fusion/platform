@@ -13,14 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Doc, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { Scroller, Label, ButtonIcon, IconAdd, showPopup, Menu } from '@hcengineering/ui'
-  import { DocNotifyContext } from '@hcengineering/notification'
+  import { Doc, getCurrentAccount } from '@hcengineering/core'
+  import { Scroller, Label } from '@hcengineering/ui'
   import { SpecialNavModel } from '@hcengineering/workbench'
   import { NavLink } from '@hcengineering/view-resources'
-  import { TreeSeparator, NavFooter } from '@hcengineering/workbench-resources'
-  import { getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { TreeSeparator } from '@hcengineering/workbench-resources'
+  import { Chat } from '@hcengineering/chunter'
+  import { createQuery } from '@hcengineering/presentation'
 
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'
@@ -28,72 +27,60 @@
   import ChatSpecialElement from './ChatSpecialElement.svelte'
 
   export let object: Doc | undefined
+  export let chat: Chat | undefined
   export let currentSpecial: SpecialNavModel | undefined
 
-  const notificationClient = InboxNotificationsClientImpl.getClient()
-  const contextsStore = notificationClient.contexts
-  let pressed: boolean = false
+  const me = getCurrentAccount()
+  const pinnedChatsQuery = createQuery()
 
-  const globalActions = [
+  let pinned: Chat[] = []
+
+  pinnedChatsQuery.query(
+    chunter.class.Chat,
     {
-      label: chunter.string.NewChannel,
-      icon: chunter.icon.Hashtag,
-      action: async (): Promise<void> => {
-        showPopup(chunter.component.CreateChannel, {}, 'top')
-      }
+      pinned: true,
+      hidden: false,
+      account: me.uuid
     },
-    {
-      label: chunter.string.NewDirectChat,
-      icon: chunter.icon.Thread,
-      action: async (): Promise<void> => {
-        showPopup(chunter.component.CreateDirectChat, {}, 'top')
-      }
+    (res) => {
+      pinned = res
     }
-  ]
-
-  async function isSpecialVisible (special: SpecialNavModel, contexts: DocNotifyContext[]): Promise<boolean> {
-    if (special.visibleIf === undefined) {
-      return true
-    }
-
-    const getIsVisible = await getResource(special.visibleIf)
-
-    return await getIsVisible(contexts as any)
-  }
-
-  function addButtonClicked (ev: MouseEvent): void {
-    pressed = true
-    showPopup(Menu, { actions: globalActions }, ev.target as HTMLElement, () => {
-      pressed = false
-    })
-  }
+  )
 </script>
 
-<div class="hulyNavPanel-header" class:withButton={hasAccountRole(getCurrentAccount(), AccountRole.User)}>
+<div class="hulyNavPanel-header header">
   <span class="overflow-label">
     <Label label={chunter.string.Chat} />
   </span>
-  {#if hasAccountRole(getCurrentAccount(), AccountRole.User)}
-    <ButtonIcon icon={IconAdd} hasMenu {pressed} kind={'primary'} size={'small'} on:click={addButtonClicked} />
-  {/if}
 </div>
 
 {#each chatSpecials as special, row}
   {#if row > 0 && chatSpecials[row].position !== chatSpecials[row - 1].position}
     <TreeSeparator line />
   {/if}
-  {#await isSpecialVisible(special, $contextsStore) then isVisible}
-    {#if isVisible}
-      <NavLink space={special.id}>
-        <ChatSpecialElement {special} {currentSpecial} on:select />
-      </NavLink>
-    {/if}
-  {/await}
+  <NavLink space={special.id}>
+    <ChatSpecialElement {special} {currentSpecial} on:select />
+  </NavLink>
 {/each}
 
-<Scroller shrink>
+<span class="divider" />
+
+<Scroller shrink bottomPadding="3rem">
   {#each chatNavGroupModels as model (model.id)}
-    <ChatNavGroup {object} {model} on:select />
+    <ChatNavGroup {object} {chat} {model} {pinned} on:select />
   {/each}
 </Scroller>
-<NavFooter />
+
+<style lang="scss">
+  .header {
+    min-height: 0;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--theme-navpanel-divider);
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

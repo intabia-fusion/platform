@@ -17,6 +17,7 @@ export class UserProfilePage {
   accountDissabledMessage = (): Locator => this.page.getByRole('heading')
   changeAccount = (): Locator => this.page.getByRole('link', { name: 'Change account' })
   settings = (): Locator => this.page.getByRole('button', { name: 'Settings' })
+  configure = (): Locator => this.page.getByRole('button', { name: 'Configure' })
   accountSettings = (): Locator => this.page.getByRole('button', { name: 'Account settings' })
   userAvatarMenu = (): Locator => this.page.locator('.mr-8 > .cursor-pointer')
   savaAvatarButton = (): Locator => this.page.getByRole('button', { name: 'Save' }).nth(1)
@@ -29,6 +30,9 @@ export class UserProfilePage {
   savedButton = (): Locator => this.page.getByRole('button', { name: 'Saved' })
   signOutButton = (): Locator => this.page.getByRole('button', { name: 'Sign out' })
   notificationsButton = (): Locator => this.page.getByRole('button', { name: 'Notifications' })
+
+  recruitingCardLocator = (): Locator => this.page.locator('.cardBox', { hasText: 'Recruiting' })
+  emailCardLocator = (): Locator => this.page.locator('.cardBox', { hasText: 'Email' })
 
   constructor (page: Page) {
     this.page = page
@@ -53,6 +57,18 @@ export class UserProfilePage {
 
   async clickSettings (): Promise<void> {
     await this.settings().click()
+  }
+
+  async clickConfigure (): Promise<void> {
+    await this.configure().click()
+  }
+
+  async enableRecruiting (): Promise<void> {
+    await this.recruitingCardLocator().getByRole('button', { name: 'Enable' }).click()
+  }
+
+  async enableEmail (): Promise<void> {
+    await this.emailCardLocator().getByRole('button', { name: 'Enable' }).click()
   }
 
   async clickAccountSettings (): Promise<void> {

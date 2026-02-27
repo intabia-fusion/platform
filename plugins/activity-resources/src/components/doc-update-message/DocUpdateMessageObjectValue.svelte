@@ -25,6 +25,7 @@
     getDocTitle,
     isAttachedDoc
   } from '@hcengineering/view-resources'
+  import contact from '@hcengineering/contact'
 
   export let message: DisplayDocUpdateMessage
   export let viewlet: DocUpdateMessageViewlet | undefined
@@ -50,7 +51,7 @@
   }
 
   function buildObject (message: DocUpdateMessage): Doc | undefined {
-    if (message.attributes != null) return undefined
+    if (message.objectAttributes == null) return undefined
 
     const createTx: TxCreateDoc<Doc> = {
       _id: generateId(),
@@ -59,7 +60,7 @@
       objectId: message.objectId,
       objectClass: message.objectClass,
       objectSpace: message.space,
-      attributes: message.attributes ?? {},
+      attributes: message.objectAttributes ?? {},
       modifiedBy: message.createdBy ?? message.modifiedBy,
       modifiedOn: message.createdOn ?? message.modifiedOn
     }
@@ -73,11 +74,8 @@
       return
     }
 
-    isRemoved = attachedTo === _id ? false : await checkIsObjectRemoved(client, _id, _class)
-
-    if (isRemoved) {
-      object = buildObject(message) ?? (await buildRemovedDoc(client, _id, _class))
-    }
+    isRemoved = true
+    object = buildObject(message) ?? (await buildRemovedDoc(client, _id, _class))
   }
 
   $: void loadObject(message.objectId, message.objectClass, message.attachedTo, doc)
@@ -95,7 +93,7 @@
   }
 </script>
 
-{#if isRemoved && message.title}
+{#if isRemoved && message.objectTitle}
   <span class="valueLink">
     <DocNavLink
       object={undefined}
@@ -104,7 +102,7 @@
       component={objectPanel?.component ?? view.component.EditDoc}
       shrink={1}
     >
-      {message.title}
+      {message.objectTitle}
     </DocNavLink>
   </span>
 {:else if object}
@@ -128,7 +126,9 @@
         props={{
           value: object,
           accent: true,
-          shouldShowAvatar: false,
+          shouldShowAvatar:
+            hierarchy.isDerived(message.objectClass, core.class.Collaborator) ||
+            hierarchy.isDerived(message.objectClass, contact.class.Person),
           preview,
           showPreview: message.action === 'create'
         }}

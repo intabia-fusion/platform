@@ -83,7 +83,8 @@ import { type BuildModelKey } from '@hcengineering/view'
 import { createActions } from './actions'
 import { definePermissions } from './permissions'
 import card from './plugin'
-import notification from '@hcengineering/notification'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 
 export { cardId } from '@hcengineering/card'
 
@@ -101,7 +102,7 @@ export class TTag extends TMixin implements Tag {
 }
 
 @Model(card.class.Card, core.class.Doc, DOMAIN_CARD)
-@UX(card.string.Card, card.icon.Card)
+@UX(card.string.Card, card.icon.Card, undefined, undefined, undefined, card.string.Cards, 'title')
 export class TCard extends TDoc implements Card {
   @Prop(TypeRef(card.class.CardSpace), core.string.Space)
   @Index(IndexKind.Indexed)
@@ -111,11 +112,11 @@ export class TCard extends TDoc implements Card {
   @Prop(TypeRef(card.class.MasterTag), card.string.MasterTag)
   declare _class: Ref<MasterTag>
 
-  @Prop(TypeString(), core.string.Name)
+  @Prop(TypeString(), view.string.Title)
   @Index(IndexKind.FullText)
     title!: string
 
-  @Prop(TypeCollaborativeDoc(), card.string.Content)
+  @Prop(TypeCollaborativeDoc(), core.string.Description)
     content!: MarkupBlobRef
 
   blobs!: Blobs
@@ -408,6 +409,8 @@ export function createModel (builder: Builder): void {
     TExportExtension
   )
 
+  defineCollaborators(builder, card.class.Card, { fields: ['modifiedBy'], allFields: true })
+
   builder.createDoc(
     core.class.SpaceType,
     core.space.Model,
@@ -452,71 +455,52 @@ export function createModel (builder: Builder): void {
     notification.class.NotificationGroup,
     core.space.Model,
     {
+      label: card.string.Document,
+      icon: card.icon.Document,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: card.types.Document
+    },
+    card.ids.DocumentNotificationGroup
+  )
+
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
+      label: attachment.string.File,
+      icon: card.icon.File,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+      objectClass: card.types.File
+    },
+    card.ids.FileNotificationGroup
+  )
+
+  builder.createDoc(
+    notification.class.NotificationGroup,
+    core.space.Model,
+    {
       label: card.string.Card,
       icon: card.icon.Card
     },
     card.ids.CardNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: card.string.CardCreated,
-      group: card.ids.CardNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: card.class.Card,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title} created'
-      }
-    },
-    card.ids.CardCreateNotification
+  generateClassNotificationTypes(
+    builder,
+    card.types.Document,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos'],
+    ['comments'],
+    card.ids.DocumentNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: card.string.CardUpdated,
-      group: card.ids.CardNotificationGroup,
-      txClasses: [core.class.TxUpdateDoc, core.class.TxMixin],
-      objectClass: card.class.Card,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title} updated'
-      }
-    },
-    card.ids.CardNotification
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: chunter.string.Comments,
-      group: card.ids.CardNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: chunter.class.ChatMessage,
-      attachedToClass: card.class.Card,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: 'New message in {title} ({link}) from {senderName}: {message}',
-        htmlTemplate: '<p>New message in <b>{title}</b> <b>from {senderName}</b>: {message}<p>{link}</p>',
-        subjectTemplate: 'New message from {senderName} in {title}'
-      }
-    },
-    card.ids.CardMessageNotification
+  generateClassNotificationTypes(
+    builder,
+    card.types.File,
+    card.ids.CardNotificationGroup as Ref<NotificationGroup>,
+    ['todos'],
+    ['comments'],
+    card.ids.FileNotificationGroup
   )
 
   builder.createDoc(view.class.Viewlet, core.space.Model, {
@@ -994,8 +978,6 @@ export function createModel (builder: Builder): void {
   })
 
   createPublicLinkAction(builder, card.class.Card, card.action.PublicLink)
-
-  defineCollaborators(builder, card.class.Card, { fields: ['modifiedBy'], allFields: true })
 }
 
 function defineTabs (builder: Builder): void {

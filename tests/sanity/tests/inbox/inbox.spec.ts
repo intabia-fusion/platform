@@ -184,6 +184,8 @@ test.describe('Inbox tests', () => {
 
   test('User is able to send message to other user and he should see it in inbox', async ({ page, browser }) => {
     const channelPage = new ChannelPage(page)
+    await leftSideMenuPage.clickNotification()
+    await inboxPage.clearAll()
     await leftSideMenuPage.openProfileMenu()
     await leftSideMenuPage.inviteToWorkspace()
     await leftSideMenuPage.getInviteLink()
@@ -198,6 +200,9 @@ test.describe('Inbox tests', () => {
       const joinPage = new SignInJoinPage(page2)
       await joinPage.join(newUser2)
       await page.waitForTimeout(1000)
+      const inboxPage2 = new InboxPage(page2)
+      await leftSideMenuPageSecond.clickNotification()
+      await inboxPage2.clearAll()
 
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChannel('general')
@@ -205,8 +210,8 @@ test.describe('Inbox tests', () => {
 
       await channelPage.checkMessageExist('Test message', true, 'Test message')
       await leftSideMenuPage.clickNotification()
+
       await inboxPage.checkIfInboxChatExists('Channel general', false)
-      await leftSideMenuPageSecond.clickNotification()
       await inboxPageSecond.checkIfInboxChatExists('Channel general', true)
       await inboxPageSecond.clickOnInboxChat('Channel general')
       await inboxPageSecond.checkIfTextInChatIsPresent('Test message')
@@ -220,6 +225,8 @@ test.describe('Inbox tests', () => {
     browser
   }) => {
     const channelPage = new ChannelPage(page)
+    await leftSideMenuPage.clickNotification()
+    await inboxPage.clearAll()
     await leftSideMenuPage.openProfileMenu()
     await leftSideMenuPage.inviteToWorkspace()
     await leftSideMenuPage.getInviteLink()
@@ -234,6 +241,8 @@ test.describe('Inbox tests', () => {
       await setTestOptions(page2)
       const joinPage = new SignInJoinPage(page2)
       await joinPage.join(newUser2)
+      await leftSideMenuPageSecond.clickNotification()
+      await inboxPageSecond.clearAll()
       const userProfilePageSecond = new UserProfilePage(page2)
       await userProfilePageSecond.openProfileMenu()
       await userProfilePageSecond.clickSettings()
@@ -254,6 +263,8 @@ test.describe('Inbox tests', () => {
 
   test('User is able to change filter in inbox', async ({ page, browser }) => {
     const channelPage = new ChannelPage(page)
+    await leftSideMenuPage.clickNotification()
+    await inboxPage.clearAll()
     await leftSideMenuPage.openProfileMenu()
     await leftSideMenuPage.inviteToWorkspace()
     await leftSideMenuPage.getInviteLink()
@@ -268,6 +279,9 @@ test.describe('Inbox tests', () => {
 
       const joinPage2 = new SignInJoinPage(page2)
       await joinPage2.join(newUser2)
+
+      await leftSideMenuPage2.clickNotification()
+      await inboxPage2.clearAll()
 
       await leftSideMenuPage2.clickChunter()
       await channelPage2.clickChannel('general')
@@ -301,6 +315,8 @@ test.describe('Inbox tests', () => {
   })
 
   test.skip('Checking the ability to receive a task and schedule it', async ({ page, browser }) => {
+    await leftSideMenuPage.clickNotification()
+    await inboxPage.clearAll()
     await leftSideMenuPage.openProfileMenu()
     await leftSideMenuPage.inviteToWorkspace()
     await leftSideMenuPage.getInviteLink()
@@ -326,7 +342,6 @@ test.describe('Inbox tests', () => {
       const inboxPageSecond = new InboxPage(page2)
       const issuesDetailsPageSecond = new IssuesDetailsPage(page2)
       const planningPageSecond = new PlanningPage(page2)
-      await leftSideMenuPageSecond.clickNotification()
       await inboxPageSecond.checkIfIssueIsPresentInInbox(newIssue.title)
       await inboxPageSecond.clickIssuePresentInInbox(newIssue.title)
       await inboxPage.page.waitForTimeout(100)

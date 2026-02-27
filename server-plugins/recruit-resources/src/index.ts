@@ -44,41 +44,36 @@ function getSequenceId (doc: Vacancy | Applicant, control: TriggerControl): stri
 /**
  * @public
  */
-export async function vacancyHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function vacancyUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const vacancy = doc as Vacancy
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${recruitId}/${getSequenceId(vacancy, control)}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${vacancy.name}</a>`
+  return concatLink(front, path)
 }
 
 /**
  * @public
  */
-export async function vacancyTextPresenter (doc: Doc): Promise<string> {
+export async function vacancyIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const vacancy = doc as Vacancy
-  return `${vacancy.name}`
+  return getSequenceId(vacancy, control)
 }
 
 /**
  * @public
  */
-export async function applicationHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function applicationUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const applicant = doc as Applicant
+
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const id = getSequenceId(applicant, control)
   const path = `${workbenchId}/${control.workspace.url}/${recruitId}/${id}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${id}</a>`
+  return concatLink(front, path)
 }
 
-/**
- * @public
- */
-export async function applicationTextPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function applicationIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const applicant = doc as Applicant
-  const id = getSequenceId(applicant, control)
-  return id
+  return getSequenceId(applicant, control)
 }
 
 /**
@@ -106,10 +101,10 @@ export async function OnRecruitUpdate (txes: Tx[], control: TriggerControl): Pro
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    VacancyHTMLPresenter: vacancyHTMLPresenter,
-    VacancyTextPresenter: vacancyTextPresenter,
-    ApplicationHTMLPresenter: applicationHTMLPresenter,
-    ApplicationTextPresenter: applicationTextPresenter,
+    VacancyUrlPresenter: vacancyUrlPresenter,
+    VacancyIdentifierPresenter: vacancyIdentifierPresenter,
+    ApplicationUrlPresenter: applicationUrlPresenter,
+    ApplicationIdentifierPresenter: applicationIdentifierPresenter,
     LinkIdProvider: getSequenceId
   },
   trigger: {

@@ -21,14 +21,14 @@ import setting from '@hcengineering/setting-resources/src/plugin'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
 import { type TemplateFieldFunc } from '@hcengineering/templates'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
+import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(settingId, setting, {
   ids: {
     EnumSetting: '' as Ref<Doc>,
     Configure: '' as Ref<Doc>,
     SettingNotificationGroup: '' as Ref<NotificationGroup>,
-    IntegrationDisabledNotification: '' as Ref<NotificationType>,
+    IntegrationDisabledNotification: '' as Ref<MessageNotificationType>,
     UpdateIntegrationActivityViewlet: '' as Ref<DocUpdateMessageViewlet>
   },
   component: {

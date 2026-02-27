@@ -56,7 +56,7 @@
     "AttributeSetTo": "{name} を {value} に設定しました",
     "AddedTag": "タグを追加しました：{title}",
     "RemovedTag": "タグを削除しました：{title}",
-    "ValueTooLarge": "表示するには値が大きすぎます"
+    "ValueTooLarge": "表示するには値が大きすぎます",
+    "SentAttachments": "添付ファイルを送信しました"
   }
 }
-  
