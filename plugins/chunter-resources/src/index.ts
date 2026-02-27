@@ -20,6 +20,7 @@ import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { writable } from 'svelte/store'
 import view from '@hcengineering/view'
+import { type DocNotifyContext } from '@hcengineering/notification'
 
 import chunter from './plugin'
 
@@ -235,7 +236,10 @@ export default async (): Promise<Resources> => ({
     CanTranslateMessage: canTranslateMessage,
     CanSummarizeMessages: canSummarizeMessages,
     OpenThreadInSidebar: openThreadInSidebar,
-    LocationDataResolver: locationDataResolver
+    LocationDataResolver: locationDataResolver,
+    ShowNotifyMarkerFn: async (contexts: DocNotifyContext[]): Promise<boolean> => {
+      return contexts.some((context) => (context.lastUpdateTimestamp ?? 0) > (context.lastViewedTimestamp ?? 0))
+    }
   },
   actionImpl: {
     ArchiveChannel,

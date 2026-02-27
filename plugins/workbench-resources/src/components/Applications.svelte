@@ -104,6 +104,7 @@
   )
 
   const inboxClient = InboxNotificationsClientImpl.getClient()
+  const inboxContextsStore = inboxClient.contexts
   const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
   let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
@@ -118,17 +119,24 @@
     hasInboxNotifications = res
   })
 
-  function showNotify (
-    alias: string,
+  async function showNotify (
+    app: Application,
+    contexts: DocNotifyContext[],
     hasOldNotifications: boolean,
     hasNewNotifications: boolean,
     hasNewMessagesNotifications: boolean
-  ): boolean {
+  ): Promise<boolean> {
+    const { alias } = app
     if (alias === inboxId) {
       return hasOldNotifications || hasNewNotifications
     }
     if (alias === chatId) {
       return hasNewMessagesNotifications
+    }
+
+    if (app.showNotifyMarkerFn != null) {
+      const fn = await getResource(app.showNotifyMarkerFn)
+      return await fn(contexts)
     }
     return false
   }
@@ -147,17 +155,19 @@
     >
       {#each topApps as app}
         {@const customProps = customAppProps.get(app.alias) ?? {}}
-        <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
-          <AppItem
-            selected={app._id === active}
-            icon={app.icon}
-            label={app.label}
-            navigator={app._id === active && $deviceInfo.navigator.visible}
-            notify={showNotify(app.alias, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification)}
-            {...customProps}
-            on:click={getClickHandler(app, customProps)}
-          />
-        </NavLink>
+        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification) then notify}
+          <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
+            <AppItem
+              selected={app._id === active}
+              icon={app.icon}
+              label={app.label}
+              navigator={app._id === active && $deviceInfo.navigator.visible}
+              {notify}
+              {...customProps}
+              on:click={getClickHandler(app, customProps)}
+            />
+          </NavLink>
+        {/await}
       {/each}
       {#if topApps.length > 0}
         <div class="divider" />
