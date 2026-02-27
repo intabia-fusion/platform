@@ -9,6 +9,7 @@ import { LinkedChannelTypes } from '../model/types'
 import { VacanciesPage } from '../model/recruiting/vacancies-page'
 import { TalentsPage } from '../model/recruiting/talents-page'
 import { TalentName } from '../model/recruiting/types'
+import { UserProfilePage } from '../model/profile/user-profile-page'
 
 test.describe('Dynamic reqruting chats', () => {
   let leftSideMenuPage: LeftSideMenuPage
@@ -35,6 +36,11 @@ test.describe('Dynamic reqruting chats', () => {
     await loginPage.login(data.userName, '1234')
     const swp = new SelectWorkspacePage(page)
     await swp.selectWorkspace(data.workspaceName)
+    const userProfilePage = new UserProfilePage(page)
+    await userProfilePage.openProfileMenu()
+    await userProfilePage.clickSettings()
+    await userProfilePage.clickConfigure()
+    await userProfilePage.enableRecruiting()
   })
 
   test('User can work with a vacancy/talent/aplications and see linked chat', async () => {

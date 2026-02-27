@@ -76,6 +76,9 @@ test.describe('Custom attributes tests', () => {
     }
     await userProfilePage.openProfileMenu()
     await userProfilePage.clickSettings()
+    await userProfilePage.clickConfigure()
+    await userProfilePage.enableRecruiting()
+    await userProfilePage.enableEmail()
     await workspaceSettingsPage.selectWorkspaceSettingsTab(ButtonType.Classes)
     await customAttributesPage.selectEntityTab(CustomAttributesButtons.Member)
     await customAttributesPage.clickAddAttribute()
