@@ -16,7 +16,7 @@
   import contact from '@hcengineering/contact'
   import { UserBox } from '@hcengineering/contact-resources'
   import { Ref, Space, WithLookup } from '@hcengineering/core'
-  import { Project, TimeReportDayType, TimeSpendReport } from '@hcengineering/tracker'
+  import { Issue, Project, TimeReportDayType, TimeSpendReport } from '@hcengineering/tracker'
   import {
     DatePresenter,
     ListView,
@@ -32,6 +32,7 @@
   import { getClient } from '@hcengineering/presentation'
 
   export let reports: WithLookup<TimeSpendReport>[]
+  export let issue: Issue
 
   const listProvider = new ListSelectionProvider(() => {})
 
@@ -80,39 +81,45 @@
       }}
     >
       <div class="flex-row-center clear-mins gap-2 flex-grow mr-4" class:p-text={twoRows}>
+        <FixedColumn key={'timespend_date'} justify={'left'}>
+          <DatePresenter value={report.date} kind={'ghost'} size={'small'} />
+        </FixedColumn>
+
+        <FixedColumn key={'timespend_reported'} justify={'center'}>
+          <TimePresenter value={report.value} />
+        </FixedColumn>
+        <div class="flex-row-center clear-mins gap-2 self-end flex-no-shrink" class:p-text={twoRows}>
+          <FixedColumn key={'timespend_assignee'} justify={'left'}>
+            <UserBox
+              width={'100%'}
+              kind={'ghost'}
+              label={tracker.string.Assignee}
+              _class={contact.mixin.Employee}
+              value={report.employee}
+              showNavigate={false}
+              on:change={(detail) => {
+                void getClient().diffUpdate(report, {
+                  employee: detail.detail
+                })
+              }}
+            />
+          </FixedColumn>
+        </div>
         <FixedColumn key={'timespend_issue'} justify={'left'} addClass={'fs-bold'}>
           {#if report.$lookup?.attachedTo}
             {report.$lookup?.attachedTo?.identifier}
           {/if}
         </FixedColumn>
-        {#if report.$lookup?.attachedTo?.title}
-          <span class="overflow-label fs-bold caption-color" title={report.$lookup?.attachedTo?.title}>
-            {report.$lookup?.attachedTo?.title}
+        {#if report.description}
+          <span class="overflow-label fs-bold caption-color" title={report.description}>
+            {report.description}
           </span>
         {/if}
-      </div>
-      <div class="flex-row-center clear-mins gap-2 self-end flex-no-shrink" class:p-text={twoRows}>
-        <FixedColumn key={'timespend_assignee'} justify={'left'}>
-          <UserBox
-            width={'100%'}
-            kind={'ghost'}
-            label={tracker.string.Assignee}
-            _class={contact.mixin.Employee}
-            value={report.employee}
-            showNavigate={false}
-            on:change={(detail) => {
-              void getClient().diffUpdate(report, {
-                employee: detail.detail
-              })
-            }}
-          />
-        </FixedColumn>
-        <FixedColumn key={'timespend_reported'} justify={'center'}>
-          <TimePresenter value={report.value} />
-        </FixedColumn>
-        <FixedColumn key={'timespend_date'} justify={'left'}>
-          <DatePresenter value={report.date} kind={'ghost'} size={'small'} />
-        </FixedColumn>
+        {#if report.attachedTo !== issue._id && report.$lookup?.attachedTo?.title}
+          <span class="overflow-label fs-bold caption-color" title={report.$lookup?.attachedTo?.title}>
+            ({report.$lookup?.attachedTo?.title})
+          </span>
+        {/if}
       </div>
     </div>
   </svelte:fragment>

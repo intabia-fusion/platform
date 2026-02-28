@@ -15,8 +15,7 @@
 <script lang="ts">
   import { AttachedData } from '@hcengineering/core'
 
-  import { Issue } from '@hcengineering/tracker'
-  import { floorFractionDigits } from '@hcengineering/ui'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
   import EstimationProgressCircle from './EstimationProgressCircle.svelte'
   import TimePresenter from './TimePresenter.svelte'
 
@@ -26,72 +25,41 @@
 
   $: _estimation = estimation ?? value.estimation
 
-  $: childReportTime = floorFractionDigits(
-    value.reportedTime + (value.childInfo ?? []).map((it) => it.reportedTime).reduce((a, b) => a + b, 0),
-    3
-  )
-  $: childEstimationTime = (value.childInfo ?? []).map((it) => it.estimation).reduce((a, b) => a + b, 0)
+  $: childInfos = value.childInfo ?? []
+  $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="estimation-container" on:click>
-  <div class="icon">
-    <EstimationProgressCircle
-      value={Math.max(value.reportedTime, childReportTime)}
-      max={childEstimationTime || _estimation}
-    />
-  </div>
+  {#if _estimation > 0}
+    <div class="icon">
+      <EstimationProgressCircle
+        items={[
+          { value: value.reportedTime + treeResult.totalReportedTime, max: _estimation },
+          ...(kind === 'list' && childInfos.length > 0
+            ? [{ value: value.reportedTime + treeResult.totalReportedTime, max: treeResult.totalEstimation }]
+            : [])
+        ]}
+      />
+    </div>
+  {/if}
   <span class="overflow-label label flex-row-center flex-nowrap {kind}">
-    {#if value.reportedTime > 0 || childReportTime > 0}
-      {#if childReportTime}
-        {@const rchildReportTime = childReportTime}
-        {@const reportDiff = floorFractionDigits(rchildReportTime - value.reportedTime, 3)}
-        {#if reportDiff !== 0 && value.reportedTime !== 0}
-          <div
-            class="flex flex-nowrap"
-            class:mr-1={kind !== 'list'}
-            class:showError={reportDiff > 0 && kind !== 'list'}
-          >
-            <TimePresenter value={rchildReportTime} />
-          </div>
-          {#if kind !== 'list'}
-            <div class="romColor">
-              (<TimePresenter value={value.reportedTime} />)
-            </div>
-          {/if}
-        {:else if value.reportedTime === 0}
-          <TimePresenter value={childReportTime} />
-        {:else}
-          <TimePresenter value={value.reportedTime} />
-        {/if}
-      {:else}
-        <TimePresenter value={value.reportedTime} />
-      {/if}
-      <span>/</span>
-    {/if}
-    {#if childEstimationTime}
-      {@const childEstTime = Math.round(childEstimationTime)}
-      {@const estimationDiff = childEstTime - Math.round(_estimation)}
-      {#if estimationDiff !== 0}
-        <div
-          class="flex flex-nowrap"
-          class:mr-1={kind !== 'list'}
-          class:showWarning={estimationDiff !== 0 && kind !== 'list'}
-        >
-          <TimePresenter value={childEstTime} />
-        </div>
-        {#if _estimation !== 0 && kind !== 'list'}
-          <div class="romColor">
-            (<TimePresenter value={_estimation} />)
-          </div>
-        {/if}
-      {:else}
-        <TimePresenter value={_estimation} />
-      {/if}
-    {:else}
-      <TimePresenter value={_estimation} />
-    {/if}
+    <div
+      class="flex flex-nowrap"
+      class:showError={value.estimation !== 0 && treeResult.totalReportedTime > value.estimation}
+    >
+      <TimePresenter value={value.reportedTime + treeResult.totalReportedTime} />
+    </div>
+    <span>/</span>
+    <div
+      class="flex flex-nowrap"
+      class:showWarning={value.estimation !== 0 && treeResult.totalEstimation > value.estimation}
+    >
+      <TimePresenter
+        value={kind === 'list' ? Math.max(value.estimation, treeResult.totalEstimation) : value.estimation}
+      />
+    </div>
   </span>
 </div>
 
@@ -137,6 +105,10 @@
     }
     .romColor {
       color: var(--theme-content-color) !important;
+    }
+
+    .showChild {
+      color: var(--theme-code-color) !important;
     }
   }
 </style>

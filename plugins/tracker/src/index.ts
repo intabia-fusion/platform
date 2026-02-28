@@ -330,6 +330,102 @@ export interface IssueChildInfo {
   childId: Ref<Issue>
   estimation: number
   reportedTime: number
+  parentId?: Ref<Issue>
+}
+
+/**
+ * Result of tree-based aggregation of child info.
+ * @public
+ */
+export interface ChildInfoTreeResult {
+  totalEstimation: number
+  totalReportedTime: number
+}
+
+/**
+ * Aggregates estimation and reported time from a hierarchical childInfo array.
+ *
+ * - If childInfo is empty, returns own values.
+ * - If any element lacks parentId (legacy data), falls back to flat summation.
+ * - Otherwise builds a tree and aggregates bottom-up:
+ *   effectiveEst(node) = max(node.estimation, sum(children.effectiveEst))
+ *   effectiveReported(node) = node.reportedTime + sum(children.effectiveReported)
+ *
+ * @public
+ */
+export function reduceChildInfoTree (
+  childInfo: IssueChildInfo[],
+  ownEstimation: number,
+  ownReportedTime: number
+): ChildInfoTreeResult {
+  if (childInfo.length === 0) {
+    return { totalEstimation: ownEstimation, totalReportedTime: ownReportedTime }
+  }
+
+  // Legacy fallback: if any entry lacks parentId, use flat summation
+  if (childInfo.some((it) => it.parentId === undefined)) {
+    const childEst = childInfo.reduce((a, b) => a + b.estimation, 0)
+    const childRep = childInfo.reduce((a, b) => a + b.reportedTime, 0)
+    return {
+      totalEstimation: ownEstimation + childEst,
+      totalReportedTime: ownReportedTime + childRep
+    }
+  }
+
+  // Build tree: parentId -> children
+  const childrenMap = new Map<string, IssueChildInfo[]>()
+  const nodeMap = new Map<string, IssueChildInfo>()
+
+  for (const info of childInfo) {
+    nodeMap.set(info.childId, info)
+    const pid = info.parentId as string
+    const arr = childrenMap.get(pid)
+    if (arr !== undefined) {
+      arr.push(info)
+    } else {
+      childrenMap.set(pid, [info])
+    }
+  }
+
+  // Memoized bottom-up aggregation
+  const estCache = new Map<string, number>()
+  const repCache = new Map<string, number>()
+
+  function effectiveEst (nodeId: string): number {
+    const cached = estCache.get(nodeId)
+    if (cached !== undefined) return cached
+    const node = nodeMap.get(nodeId)
+    const ownEst = node?.estimation ?? 0
+    const children = childrenMap.get(nodeId) ?? []
+    const childSum = children.reduce((acc, c) => acc + effectiveEst(c.childId), 0)
+    const result = Math.max(ownEst, childSum)
+    estCache.set(nodeId, result)
+    return result
+  }
+
+  function effectiveRep (nodeId: string): number {
+    const cached = repCache.get(nodeId)
+    if (cached !== undefined) return cached
+    const node = nodeMap.get(nodeId)
+    const ownRep = node?.reportedTime ?? 0
+    const children = childrenMap.get(nodeId) ?? []
+    const childSum = children.reduce((acc, c) => acc + effectiveRep(c.childId), 0)
+    const result = ownRep + childSum
+    repCache.set(nodeId, result)
+    return result
+  }
+
+  // Root children are those whose parentId is not in the childInfo set (i.e., they are direct children of the owner issue)
+  const allChildIds = new Set(childInfo.map((it) => it.childId as string))
+  const rootChildren = childInfo.filter((it) => !allChildIds.has(it.parentId as string))
+
+  const rootChildEstSum = rootChildren.reduce((acc, c) => acc + effectiveEst(c.childId), 0)
+  const rootChildRepSum = rootChildren.reduce((acc, c) => acc + effectiveRep(c.childId), 0)
+
+  return {
+    totalEstimation: Math.max(ownEstimation, rootChildEstSum),
+    totalReportedTime: ownReportedTime + rootChildRepSum
+  }
 }
 
 /**

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
-  import { themeStore, tooltip } from '@hcengineering/ui'
+  import { floorFractionDigits, themeStore, tooltip } from '@hcengineering/ui'
   import tracker from '../../../plugin'
 
   export let id: string | undefined = undefined
@@ -27,32 +27,13 @@
 
   let label = ''
 
-  // $: days = Math.floor(value / hoursInWorkingDay)
-  $: hours = Math.floor(value)
-  $: minutes = Math.round((value % 1) * 60)
+  $: hours = floorFractionDigits(value, 3)
 
-  $: void getLabel(0, hours, minutes, $themeStore.language)
+  $: void getLabel(hours, $themeStore.language)
 
-  async function getLabel (days: number, hours: number, minutes: number, language: string): Promise<void> {
+  async function getLabel (hours: number, language: string): Promise<void> {
     try {
-      const res: string[] = []
-      // if (days > 0) {
-      //   const d = await translate(tracker.string.TimeSpendDays, { value: days }, language)
-      //   res.push(d)
-      // }
-      if (hours > 0) {
-        const h = await translate(tracker.string.TimeSpendHours, { value: hours }, language)
-        res.push(h)
-      }
-      if (minutes > 0) {
-        const m = await translate(tracker.string.TimeSpendMinutes, { value: minutes }, language)
-        res.push(m)
-      }
-      if (res.length > 0) {
-        label = res.join(' ')
-      } else {
-        label = await translate(tracker.string.TimeSpendHours, { value: 0 }, language)
-      }
+      label = await translate(tracker.string.TimeSpendHours, { value: hours }, language)
     } catch {}
   }
 </script>

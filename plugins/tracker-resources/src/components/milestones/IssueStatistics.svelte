@@ -13,10 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import task from '@hcengineering/task'
-  import { Issue } from '@hcengineering/tracker'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
   import { floorFractionDigits, Label } from '@hcengineering/ui'
-  import { FixedColumn, statusStore } from '@hcengineering/view-resources'
+  import { FixedColumn } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import EstimationProgressCircle from '../issues/timereport/EstimationProgressCircle.svelte'
   import TimePresenter from '../issues/timereport/TimePresenter.svelte'
@@ -28,51 +27,23 @@
 
   $: noParents = docs?.filter((it) => !ids.has(it.attachedTo))
 
-  $: rootNoBacklogIssues = noParents?.filter(
-    (it) => $statusStore.byId.get(it.status)?.category !== task.statusCategory.UnStarted
-  )
-
   $: totalEstimation = floorFractionDigits(
-    (rootNoBacklogIssues ?? [{ estimation: 0, childInfo: [] } as unknown as Issue])
+    (noParents ?? [{ reportedTime: 0, childInfo: [], estimation: 0 } as unknown as Issue])
       .map((it) => {
-        const cat = $statusStore.byId.get(it.status)?.category
-
-        let retEst = it.estimation
-        if (it.childInfo?.length > 0) {
-          const cEstimation = it.childInfo.map((ct) => ct.estimation).reduce((a, b) => a + b, 0)
-          const cReported = it.childInfo.map((ct) => ct.reportedTime).reduce((a, b) => a + b, 0)
-          if (cEstimation !== 0) {
-            retEst = cEstimation
-            if (cat === task.statusCategory.Won || cat === task.statusCategory.Lost) {
-              if (cReported < cEstimation) {
-                retEst = cReported
-              }
-            }
-          }
-        } else {
-          if (cat === task.statusCategory.Won || cat === task.statusCategory.Lost) {
-            if (it.reportedTime < it.estimation) {
-              return it.reportedTime
-            }
-          }
-        }
-        return retEst
+        const tree = reduceChildInfoTree(it.childInfo ?? [], it.estimation, it.reportedTime)
+        return Math.max(it.estimation, tree.totalEstimation)
       })
       .reduce((it, cur) => {
         return it + cur
       }, 0),
     3
   )
+
   $: totalReported = floorFractionDigits(
-    (noParents ?? [{ reportedTime: 0, childInfo: [] } as unknown as Issue])
+    (noParents ?? [{ reportedTime: 0, childInfo: [], estimation: 0 } as unknown as Issue])
       .map((it) => {
-        if (it.childInfo?.length > 0) {
-          const cReported = it.childInfo.map((ct) => ct.reportedTime).reduce((a, b) => a + b, 0)
-          if (cReported !== 0) {
-            return cReported + it.reportedTime
-          }
-        }
-        return it.reportedTime
+        const tree = reduceChildInfoTree(it.childInfo ?? [], it.estimation, it.reportedTime)
+        return tree.totalReportedTime
       })
       .reduce((it, cur) => {
         return it + cur
@@ -85,7 +56,7 @@
   <FixedColumn key="estimation-editor">
     <!-- <Label label={tracker.string.MilestoneDay} value={}/> -->
     <div class="flex-row-center flex-no-shrink h-6" class:showWarning={totalEstimation > (capacity ?? 0)}>
-      <EstimationProgressCircle value={totalReported} max={totalEstimation} />
+      <EstimationProgressCircle items={[{ value: totalReported, max: totalEstimation }]} />
       <div class="w-2 min-w-2" />
       {#if totalReported > 0}
         <TimePresenter value={totalReported} />

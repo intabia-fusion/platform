@@ -33,7 +33,7 @@
   import tags from '@hcengineering/tags'
   import { DocWithRank, getStates } from '@hcengineering/task'
   import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
-  import { Issue, IssuesGrouping, IssuesOrdering, Project } from '@hcengineering/tracker'
+  import { Issue, IssuesGrouping, IssuesOrdering, Project, reduceChildInfoTree } from '@hcengineering/tracker'
   import {
     Button,
     ColorDefinition,
@@ -383,9 +383,9 @@
     <svelte:fragment slot="card" let:object>
       {@const issue = toIssue(object)}
       {@const issueId = object._id}
-      {@const reports =
-        issue.reportedTime + (issue.childInfo ?? []).map((it) => it.reportedTime).reduce((a, b) => a + b, 0)}
-      {@const estimations = (issue.childInfo ?? []).map((it) => it.estimation).reduce((a, b) => a + b, 0)}
+      {@const treeResult = reduceChildInfoTree(issue.childInfo ?? [], issue.estimation, issue.reportedTime)}
+      {@const reports = treeResult.totalReportedTime}
+      {@const estimations = treeResult.totalEstimation}
       {#key issueId}
         <div
           class="tracker-card"
