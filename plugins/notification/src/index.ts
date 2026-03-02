@@ -86,6 +86,12 @@ export interface PushSubscription extends Doc {
   user: AccountUuid
   endpoint: string
   keys: PushSubscriptionKeys
+  name?: string
+}
+
+export interface PushSubscriptionSetting extends Preference {
+  attachedTo: Ref<PushSubscription>
+  enabled: boolean
 }
 
 /**
@@ -365,6 +371,7 @@ const notification = plugin(notificationId, {
 
     BrowserNotification: '' as Ref<Class<BrowserNotification>>,
     PushSubscription: '' as Ref<Class<PushSubscription>>,
+    PushSubscriptionSetting: '' as Ref<Class<PushSubscriptionSetting>>,
     NotificationGroup: '' as Ref<Class<NotificationGroup>>,
     NotificationPreferencesGroup: '' as Ref<Class<NotificationPreferencesGroup>>,
     DocNotifyContext: '' as Ref<Class<DocNotifyContext>>,
@@ -400,7 +407,8 @@ const notification = plugin(notificationId, {
     CollaboratorsChanged: '' as AnyComponent,
     DocNotifyContextPresenter: '' as AnyComponent,
     NotificationCollaboratorsChanged: '' as AnyComponent,
-    GeneralPreferencesGroup: '' as AnyComponent
+    GeneralPreferencesGroup: '' as AnyComponent,
+    WebpushesPreferencesPresenter: '' as AnyComponent
   },
   action: {
     UnReadNotifyContext: '' as Ref<Action>,
@@ -449,7 +457,9 @@ const notification = plugin(notificationId, {
     ViewIn: '' as IntlString,
     Clear: '' as IntlString,
     YouAddedAsCollaborator: '' as IntlString,
-    YouRemovedFromCollaborators: '' as IntlString
+    YouRemovedFromCollaborators: '' as IntlString,
+    Webpushes: '' as IntlString,
+    UnknownDevice: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,

@@ -241,11 +241,16 @@ export async function PushNotificationsHandler (
     receivers.has(it.user)
   )
 
+  const subscriptionSettings = await control.queryFind(control.ctx, notification.class.PushSubscriptionSetting, {})
+  const filteredSubscriptions = subscriptions.filter((sub) => {
+    const setting = subscriptionSettings.find(({ attachedTo }) => attachedTo === sub._id)
+    return setting?.enabled !== false
+  })
   const res: Tx[] = []
 
   for (const inboxNotification of all) {
     const { user } = inboxNotification
-    const userSubscriptions = subscriptions.filter((it) => it.user === user)
+    const userSubscriptions = filteredSubscriptions.filter((it) => it.user === user)
 
     const senderSocialString = inboxNotification.createdBy ?? inboxNotification.modifiedBy
     const senderPerson = await getPerson(control, senderSocialString)
