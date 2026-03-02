@@ -14,10 +14,14 @@ import core, {
   MeasureContext,
   TxFactory,
   Ref,
-  type Domain
+  type Domain,
+  type SessionData,
+  AccountUuid
 } from '@hcengineering/core'
-import chunter, { Chat, ChatMessage } from '@hcengineering/chunter'
+import chunter, { Chat, ChatMessage, type DirectMessage } from '@hcengineering/chunter'
 import { PersonSpace } from '@hcengineering/contact'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { createHash } from 'crypto'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
@@ -30,7 +34,7 @@ export class ChunterMiddleware extends BaseMiddleware {
     return new ChunterMiddleware(context, next)
   }
 
-  async tx (ctx: MeasureContext, txes: Tx[]): Promise<TxMiddlewareResult> {
+  async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const { hierarchy } = this.context
     const factory = new TxFactory(core.account.System, true)
 
@@ -50,9 +54,29 @@ export class ChunterMiddleware extends BaseMiddleware {
         }
       }
 
+      if (
+        _tx._class === core.class.TxCreateDoc &&
+        this.context.hierarchy.isDerived(tx.objectClass, chunter.class.DirectMessage)
+      ) {
+        await this.onDirectCreate(ctx, _tx as TxCreateDoc<DirectMessage>)
+      }
+
+      if (
+        _tx._class === core.class.TxUpdateDoc &&
+        this.context.hierarchy.isDerived(tx.objectClass, chunter.class.DirectMessage)
+      ) {
+        await this.onDirectUpdate(ctx, _tx as TxUpdateDoc<DirectMessage>)
+      }
+
       if (_tx._class === core.class.TxCreateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.Chat)) {
         const createTx = _tx as TxCreateDoc<Chat>
         const chat = TxProcessor.createDoc2Doc(createTx)
+
+        if (chat.attachedTo == null) {
+          this.throwForbidden()
+          continue
+        }
+
         if (chat.hidden) {
           const current = this.hiddenChats.get(chat.attachedTo)
           if (current != null) current.push(chat)
@@ -61,8 +85,10 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       if (_tx._class === core.class.TxUpdateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.Chat)) {
         const updateTx = _tx as TxUpdateDoc<Chat>
-        console.log('UPDATE TX', updateTx)
-        if (updateTx.attachedTo == null) continue
+        if (updateTx.attachedTo == null) {
+          this.throwForbidden()
+          continue
+        }
 
         const hidden = updateTx.operations.hidden
         if (hidden === true) {
@@ -103,4 +129,64 @@ export class ChunterMiddleware extends BaseMiddleware {
 
     return chats
   }
+
+  private async onDirectCreate (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<DirectMessage>): Promise<void> {
+    const account = ctx.contextData.account
+
+    tx.objectSpace = core.space.Space
+    tx.attributes.archived = false
+    tx.attributes.autoJoin = false
+    tx.attributes.private = true
+    tx.attributes.members = Array.from(new Set([...tx.attributes.members, account.uuid]))
+
+    delete tx.attributes.referenceId
+
+    if (tx.attributes.referenceId == null && tx.attributes.members.length <= 2) {
+      const referenceId = getMembersHash(tx.attributes.members)
+
+      const direct = await this.findAll(ctx, chunter.class.DirectMessage, { referenceId })
+      if (direct.length > 0) {
+        this.throwForbidden()
+      }
+      tx.attributes.referenceId = referenceId
+    }
+  }
+
+  private async onDirectUpdate (ctx: MeasureContext<SessionData>, tx: TxUpdateDoc<DirectMessage>): Promise<void> {
+    if (tx.operations.referenceId != null) {
+      this.throwForbidden()
+    }
+    if (tx.operations?.$unset?.referenceId != null) {
+      this.throwForbidden()
+    }
+    if (tx.operations.private != null) {
+      this.throwForbidden()
+    }
+    if (tx.operations?.$unset?.private != null) {
+      this.throwForbidden()
+    }
+
+    const hasMembersUpdates =
+      tx.operations.members != null ||
+      tx.operations.$unset?.members != null ||
+      tx.operations.$pull?.members != null ||
+      tx.operations.$push?.members != null
+
+    if (!hasMembersUpdates) return
+
+    const direct = (await this.findAll(ctx, chunter.class.DirectMessage, { _id: tx.objectId }))[0]
+    if (direct?.referenceId != null) {
+      this.throwForbidden()
+    }
+  }
+
+  private throwForbidden (): void {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+}
+
+function getMembersHash (uuids: AccountUuid[]): string | undefined {
+  if (uuids.length === 0) return undefined
+
+  return createHash('sha256').update(uuids.slice().sort().join('|')).digest().toString('base64url')
 }

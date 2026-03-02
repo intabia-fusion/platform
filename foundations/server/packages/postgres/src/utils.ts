@@ -188,6 +188,12 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
         const fields = uniqueFields.map((f) => `"${f}"`).join(', ')
         await client.unsafe(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${domain} (${fields})`)
       }
+
+      if ('custom' in val && val.custom.length > 0) {
+        for (const custom of val.custom) {
+          await client.unsafe(custom)
+        }
+      }
     }
   }
 }
