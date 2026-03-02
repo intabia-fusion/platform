@@ -14,44 +14,82 @@
 -->
 
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, toIdMap } from '@hcengineering/core'
+  import { DocumentQuery, IdMap, PersonId, Ref, toIdMap } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { DocWithRank } from '@hcengineering/task'
-  import tracker, { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
-  import { ViewOptionModel, ViewOptions, Viewlet, BuildModelKey } from '@hcengineering/view'
+  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import tracker from '../../../plugin'
   import PersonCalendar from './PersonCalendar.svelte'
   import { Person } from '@hcengineering/contact'
-  import { Button, DropdownLabels, DropdownLabelsIntl, Icon, showPopup } from '@hcengineering/ui'
+  import {
+    Button,
+    CheckBox,
+    DropdownLabels,
+    Icon,
+    IconActivityEdit,
+    IconCircleAdd,
+    IconEdit,
+    ModernToggle,
+    showPopup
+  } from '@hcengineering/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
   import EstimationPopup from './EstimationPopup.svelte'
-  import IssueStatusPresenter from '../IssueStatusPresenter.svelte'
   import PersonReportsPopup from './PersonReportsPopup.svelte'
+  import { getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
+  import IssueStatusPresenter from '../IssueStatusPresenter.svelte'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   export let query: DocumentQuery<Issue> = {}
 
   // const reportQuery = createQuery()
   const issueQuery = createQuery()
 
-  let tasks: Issue[] = []
+  let issues: IdMap<Issue> = new Map()
+
+  let issuesDayMap = new Map<number, Ref<Issue>[]>()
   let reports: TimeSpendReport[] = []
+  let authors: PersonId[] = []
 
   $: issueQuery.query(
     tracker.class.Issue,
     { ...query },
     (res) => {
-      tasks = res
+      issues = toIdMap(res)
       const reps = res.map((it) => (it.$lookup?.reports as TimeSpendReport[]) ?? []).flat()
       reps.sort((a, b) => (b.date ?? b.createdOn ?? 0) - (a.date ?? a.createdOn ?? 0))
       reports = reps
+
+      authors = Array.from(new Set([...res.map((it) => it.createdBy), ...res.map((it) => it.modifiedBy)])).filter(
+        (it) => it !== undefined
+      )
+
+      if (!onlyReports) {
+        const _dayMap = new Map<number, Ref<Issue>[]>()
+
+        for (const is of res) {
+          let day = new Date(is.createdOn ?? 0).setHours(0, 0, 0, 0)
+          _dayMap.set(day, Array.from(new Set([...(_dayMap.get(day) ?? []), is._id])))
+
+          day = new Date(is.modifiedOn ?? 0).setHours(0, 0, 0, 0)
+          _dayMap.set(day, Array.from(new Set([...(_dayMap.get(day) ?? []), is._id])))
+        }
+
+        issuesDayMap = _dayMap
+      } else {
+        issuesDayMap = new Map<number, Ref<Issue>[]>()
+      }
     },
     {
       projection: {
         _class: 1,
         title: 1,
         identifier: 1,
-        status: 1
+        status: 1,
+        modifiedOn: 1,
+        createdOn: 1,
+        createdBy: 1,
+        modifiedBy: 1
       },
       lookup: {
         _id: {
@@ -66,9 +104,20 @@
     (reports.filter((it) => it.employee != null).map((it) => it.employee) as Ref<Person>[]) ?? []
   )
 
-  $: uneployedReports = (reports ?? []).filter((it) => it.employee == null)
+  let authorRefs = new Map<PersonId, Ref<Person>>()
 
-  $: finalPersons = [...(uneployedReports.length > 0 ? [null] : []), ...Array.from(new Set(reportPersons))]
+  $: getPersonRefsByPersonIdsCb(authors, (res) => {
+    authorRefs = res
+  })
+
+  $: noEmployeeReports = (reports ?? []).filter((it) => it.employee == null)
+
+  let onlyReports = false
+
+  $: finalPersons = [
+    ...(noEmployeeReports.length > 0 ? [null] : []),
+    ...Array.from(new Set([...reportPersons, ...(!onlyReports ? authorRefs.values() : [])]))
+  ]
 
   let currentDate: Date = new Date()
 
@@ -82,6 +131,7 @@
 </script>
 
 <TimeReportHeader bind:currentDate>
+  <ModernToggle label={tracker.string.TimeSpendReports} bind:checked={onlyReports} />
   <DropdownLabels
     items={[
       { id: 'x1', label: 'x1' },
@@ -118,39 +168,63 @@
       </svelte:fragment>
     </Button>
   </svelte:fragment>
-  <svelte:fragment slot="day" let:day let:today let:weekend let:person let:height>
+  <svelte:fragment slot="day" let:day let:person let:height>
     {@const dayFrom = new Date(day).setHours(0, 0, 0, 0)}
     {@const dayTo = new Date(day).setHours(23, 59, 59, 999)}
     {@const dayReports = reports.filter(
       (it) => it.employee === person && it.date != null && dayFrom < it.date && it.date <= dayTo
     )}
+    <!-- {@const personIds = getPersonByPersonRef(person) -->
     {@const taskIds = new Set(dayReports.map((it) => it.attachedTo))}
-    {@const dayIssues = tasks.filter((it) => taskIds.has(it._id))}
+    {@const dayIssues = Array.from(new Set([...Array.from(taskIds), ...(issuesDayMap.get(dayFrom) ?? [])]))
+      .map((it) => issues.get(it))
+      .filter(
+        (it) =>
+          it !== undefined &&
+          (taskIds.has(it._id) ||
+            (it.createdBy !== undefined &&
+              authorRefs.get(it.createdBy) === person &&
+              dayFrom === new Date(it.createdOn ?? 0).setHours(0, 0, 0, 0)) ||
+            (it.modifiedBy !== undefined &&
+              authorRefs.get(it.modifiedBy) === person &&
+              dayFrom === new Date(it.modifiedOn ?? 0).setHours(0, 0, 0, 0)))
+      )}
     <div style:overflow="auto" style:height="{height}rem" class="p-1">
-      {#if reports.length > 0}
-        <div class="flex flex-col p-1">
-          {#each dayIssues as issue}
-            <div class="flex flex-row-center gap-2 flex-wrap">
-              <div class="p-1 flex flex-row-center gap-2">
+      <div class="flex flex-col p-1">
+        {#each dayIssues as issue}
+          {@const createdByMe = dayFrom === new Date(issue?.createdOn ?? 0).setHours(0, 0, 0, 0)}
+          {@const closedByMe =
+            dayFrom === new Date(issue?.modifiedOn ?? 0).setHours(0, 0, 0, 0) && issue?.isDone === true}
+          <div class="flex flex-row-center gap-2 flex-wrap mb-1">
+            <div class="flex flex-row-center gap-2">
+              {#if createdByMe}
+                <Icon icon={IconCircleAdd} size={'small'} />
+              {/if}
+              {#if closedByMe || dayReports.length > 0}
                 <IssueStatusPresenter value={issue} />
+              {/if}
+              {#if createdByMe || closedByMe || dayReports.length > 0}
                 <IssuePresenter value={issue} />
-              </div>
+              {/if}
+            </div>
+            {#if dayReports.length > 0}
               <Button
                 kind={'link'}
+                size={'x-small'}
                 on:click={() => {
                   showPopup(EstimationPopup, { object: issue })
                 }}
               >
                 <svelte:fragment slot="content">
                   <TimePresenter
-                    value={dayReports.filter((it) => it.attachedTo === issue._id).reduce((a, b) => a + b.value, 0)}
+                    value={dayReports.filter((it) => it.attachedTo === issue?._id).reduce((a, b) => a + b.value, 0)}
                   />
                 </svelte:fragment>
               </Button>
-            </div>
-          {/each}
-        </div>
-      {/if}
+            {/if}
+          </div>
+        {/each}
+      </div>
     </div>
   </svelte:fragment>
 </PersonCalendar>
