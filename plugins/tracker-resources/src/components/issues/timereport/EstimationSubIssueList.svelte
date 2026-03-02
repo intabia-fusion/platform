@@ -20,6 +20,7 @@
   import { FixedColumn, ListSelectionProvider, showMenu } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import EstimationEditor from './EstimationEditor.svelte'
+  import { getClient } from '@hcengineering/presentation'
 
   export let issues: Issue[]
 
@@ -47,26 +48,29 @@
         <FixedColumn key={'estimation_issue'} justify={'left'} addClass={'fs-bold'}>
           {issue.identifier}
         </FixedColumn>
-        <span class="overflow-label fs-bold caption-color" title={issue.title}>
-          {issue.title}
-        </span>
-      </div>
-
-      <div class="flex-row-center clear-mins gap-2 self-end flex-no-shrink" class:p-text={twoRows}>
-        <FixedColumn key={'estimation_issue_assignee'} justify={'right'}>
-          <AssigneeBox
-            width={'100%'}
-            kind={'ghost'}
-            label={tracker.string.Assignee}
-            _class={contact.mixin.Employee}
-            value={issue.assignee}
-            readonly
-            showNavigate={false}
-          />
-        </FixedColumn>
         <FixedColumn key={'estimation'} justify={'left'}>
           <EstimationEditor value={issue} kind={'list'} />
         </FixedColumn>
+        <div class="flex-row-center clear-mins gap-2 self-end flex-no-shrink" class:p-text={twoRows}>
+          <FixedColumn key={'estimation_issue_assignee'} justify={'right'}>
+            <AssigneeBox
+              width={'100%'}
+              kind={'ghost'}
+              label={tracker.string.Assignee}
+              _class={contact.mixin.Employee}
+              value={issue.assignee}
+              showNavigate={false}
+              on:change={(evt) => {
+                void getClient().diffUpdate(issue, {
+                  assignee: evt.detail
+                })
+              }}
+            />
+          </FixedColumn>
+        </div>
+        <span class="overflow-label fs-bold caption-color" title={issue.title}>
+          {issue.title}
+        </span>
       </div>
     </div>
   </svelte:fragment>

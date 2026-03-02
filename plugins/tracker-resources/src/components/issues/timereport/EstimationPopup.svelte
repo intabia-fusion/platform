@@ -15,8 +15,16 @@
 -->
 <script lang="ts">
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue, Project } from '@hcengineering/tracker'
-  import { Button, EditStyle, eventToHTMLElement, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
+  import {
+    Button,
+    EditStyle,
+    eventToHTMLElement,
+    floorFractionDigits,
+    IconAdd,
+    Label,
+    showPopup
+  } from '@hcengineering/ui'
   import { EditBoxPopup } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
@@ -26,6 +34,7 @@
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
   import TimeSpendReports from './TimeSpendReports.svelte'
   import TimePresenter from './TimePresenter.svelte'
+  import EstimationProgressCircle from './EstimationProgressCircle.svelte'
 
   export let format: 'text' | 'password' | 'number'
   export let kind: EditStyle = 'search-style'
@@ -59,6 +68,11 @@
     }
   )
   $: defaultTimeReportDay = currentProject?.defaultTimeReportDay
+
+  $: childInfos = object.childInfo ?? []
+  $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
+  $: childReportTime = floorFractionDigits(treeResult.totalReportedTime, 3)
+  $: childEstimationTime = treeResult.totalEstimation
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -78,7 +92,7 @@
 >
   <svelte:fragment slot="title">
     <div class="flex-row-center">
-      <Label label={tracker.string.Estimation} />
+      <Label label={tracker.string.Estimation} />:
       <div
         class="ml-2 mr-4"
         on:click={(evt) => {
@@ -96,7 +110,7 @@
               if (typeof res === 'number') {
                 if (_value !== res) {
                   _value = res
-                  client.update(object, { estimation: res })
+                  void client.update(object, { estimation: res })
                   object.estimation = res
                 }
               }
@@ -106,7 +120,7 @@
       >
         <EstimationStatsPresenter value={object} estimation={_value} />
       </div>
-      <Label label={tracker.string.RemainingTime} />
+      <Label label={tracker.string.RemainingTime} />:
       <div class="ml-2 mr-4">
         <TimePresenter value={object.remainingTime} />
       </div>
@@ -117,12 +131,38 @@
     <IssuePresenter value={object} disabled />
   </svelte:fragment>
 
+  <div class="flex flex-row-center">
+    {#if childInfos.length > 0}
+      <div class="ml-1 mr-2"><Label label={tracker.string.SubIssues} />:</div>
+      <div class="icon">
+        <EstimationProgressCircle items={[{ value: childReportTime, max: childEstimationTime }]} />
+      </div>
+      <div class="ml-1 romColor">
+        <TimePresenter value={childReportTime} />
+      </div>
+      <span>/</span>
+      <div class="romColor">
+        <TimePresenter value={childEstimationTime} />
+      </div>
+    {/if}
+    {#if childInfos.length > 0}
+      <div class="flex flex-row-center gap-2 ml-2">
+        <Label label={tracker.string.RemainingTime} />:
+        <TimePresenter value={Math.max(0, childEstimationTime - childReportTime)} />
+      </div>
+    {/if}
+  </div>
+
   {#if currentProject}
-    <SubIssuesEstimations issue={object} />
+    <TimeSpendReports
+      issue={object}
+      query={{ attachedTo: object._id }}
+      childQuery={{ attachedTo: { $in: [object._id, ...childIds] } }}
+    />
   {/if}
 
   {#if currentProject}
-    <TimeSpendReports issue={object} query={{ attachedTo: { $in: [object._id, ...childIds] } }} />
+    <SubIssuesEstimations issue={object} />
   {/if}
   <svelte:fragment slot="buttons">
     <Button

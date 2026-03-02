@@ -93,6 +93,8 @@
   {canSave}
   okAction={create}
   gap={'gapV-4'}
+  width={'medium'}
+  thinHeader
   on:close
   okLabel={value === undefined ? presentation.string.Create : presentation.string.Save}
   on:changeContent
@@ -107,7 +109,7 @@
       autoFocus
       bind:value={data.value}
       {placeholder}
-      maxWidth={'9rem'}
+      maxWidth={'15rem'}
       format={'number'}
       maxDigitsAfterPoint={3}
       kind={'editbox'}
@@ -131,28 +133,34 @@
       <span slot="content">8<Label label={tracker.string.HourLabel} /></span>
     </Button>
   </div>
-  <EditBox bind:value={data.description} placeholder={tracker.string.TimeSpendReportDescription} kind={'editbox'} />
+  <div class="mt-2 mb-2">
+    <EditBox bind:value={data.description} placeholder={tracker.string.TimeSpendReportDescription} kind={'editbox'} />
+  </div>
   <svelte:fragment slot="pool">
-    <UserBox
-      _class={contact.mixin.Employee}
-      label={contact.string.Employee}
-      kind={'regular'}
-      size={'large'}
-      bind:value={data.employee}
-      showNavigate={false}
-    />
-    <TimeReportDayDropdown
-      kind={'regular'}
-      size={'large'}
-      bind:selected={selectedTimeReportDay}
-      on:selected={({ detail }) => (data.date = getTimeReportDate(detail))}
-    />
-    <DatePresenter
-      bind:value={data.date}
-      editable
-      kind={'regular'}
-      size={'large'}
-      on:change={({ detail }) => (selectedTimeReportDay = getTimeReportDayType(detail))}
-    />
+    <div class="flex flex-row-center flex-between gap-2 flex-grow">
+      <div class="flex flex-row-center gap-2">
+        <UserBox
+          _class={contact.mixin.Employee}
+          label={contact.string.Employee}
+          kind={'regular'}
+          size={'large'}
+          bind:value={data.employee}
+          showNavigate={false}
+        />
+        <DatePresenter
+          bind:value={data.date}
+          editable
+          kind={'regular'}
+          size={'large'}
+          on:change={({ detail }) => (selectedTimeReportDay = getTimeReportDayType(detail))}
+        />
+      </div>
+      <TimeReportDayDropdown
+        kind={'regular'}
+        size={'large'}
+        bind:selected={selectedTimeReportDay}
+        on:selected={({ detail }) => (data.date = getTimeReportDate(detail))}
+      />
+    </div>
   </svelte:fragment>
 </Card>

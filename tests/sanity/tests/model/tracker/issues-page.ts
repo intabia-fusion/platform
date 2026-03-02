@@ -298,7 +298,7 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async waitForEstimation (): Promise<void> {
-    await this.page.waitForSelector('text="Estimation"')
+    await this.page.waitForSelector('text="Estimation:"')
   }
 
   async clickAddTimeReport (): Promise<void> {

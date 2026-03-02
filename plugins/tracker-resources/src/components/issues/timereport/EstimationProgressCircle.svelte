@@ -12,51 +12,118 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
-<script lang="ts">
-  import { FernColor, FlamingoColor, IconSize } from '@hcengineering/ui'
+<script lang="ts" context="module">
+  export interface ProgressItem {
+    value: number
+    min?: number
+    max?: number
+  }
 
-  export let value: number
-  export let min: number = 0
-  export let max: number = 100
+  interface CircleData {
+    radius: number
+    circumference: number
+    dashOffset: number
+    circleColor: string
+    hasValue: boolean
+  }
+</script>
+
+<script lang="ts">
+  import { IconSize } from '@hcengineering/ui'
+
+  export let items: ProgressItem[]
   export let size: IconSize = 'small'
   export let primary: boolean = false
 
-  export let color: string = 'var(--theme-progress-color)'
-  export let greenColor: string = FernColor
-  export let overdueColor = FlamingoColor
+  const baseRadius: number = 7
+  const strokeWidth: number = 2
+  const ringGap: number = 1
 
-  const lenghtC: number = Math.PI * 14 - 1
-  $: procC = lenghtC / (max - min)
-  $: dashOffset = (Math.min(value, max) - min) * procC
+  function interpolateColor (
+    color1: { r: number, g: number, b: number },
+    color2: { r: number, g: number, b: number },
+    factor: number
+  ): string {
+    const r = Math.round(color1.r + (color2.r - color1.r) * factor)
+    const g = Math.round(color1.g + (color2.g - color1.g) * factor)
+    const b = Math.round(color1.b + (color2.b - color1.b) * factor)
+    return `rgb(${r}, ${g}, ${b})`
+  }
 
-  $: color = value > max ? overdueColor : value < max ? color : greenColor
+  function getCircleColor (val: number, maxVal: number): string {
+    // if (maxVal === 0) return 'rgb(144, 238, 144)'
+
+    const percentage = (val / maxVal) * 100
+
+    if (percentage > 100) {
+      const factor = (Math.min(percentage, 200) - 100) / 100
+      return interpolateColor({ r: 255, g: 0, b: 0 }, { r: 139, g: 0, b: 0 }, factor)
+    } else {
+      // 0% to 100%: light green to dark green
+      const factor = percentage / 100
+      return interpolateColor({ r: 144, g: 238, b: 144 }, { r: 0, g: 100, b: 0 }, factor)
+    }
+  }
+
+  function calculateCircleData (item: ProgressItem, index: number): CircleData {
+    const itemMin = item.min ?? 0
+    const itemMax = item.max ?? 100
+    const itemValue = item.value
+
+    const radius = baseRadius - index * (strokeWidth + ringGap)
+    const circumference = Math.PI * (radius * 2) - 1
+
+    let dashOffset = 0
+    if (itemMax !== itemMin) {
+      const procC = circumference / (itemMax - itemMin)
+      dashOffset = (Math.min(itemValue, itemMax) - itemMin) * procC
+    }
+
+    const hasValue = itemMax !== itemMin && itemMin !== itemValue
+
+    return {
+      radius,
+      circumference,
+      dashOffset,
+      circleColor: primary ? 'var(--primary-bg-color)' : getCircleColor(itemValue, itemMax),
+      hasValue
+    }
+  }
+
+  $: circles = items.map((item, index) => calculateCircleData(item, index))
+
+  $: console.log('##', items, circles)
 </script>
 
 <svg class="svg-{size}" fill="none" viewBox="0 0 16 16">
-  <circle
-    cx={8}
-    cy={8}
-    r={7}
-    class="progress-circle"
-    style:stroke={'var(--theme-caption-color)'}
-    style:opacity={'.15'}
-    style:transform={`rotate(${-78 + ((dashOffset + 1) * 360) / (lenghtC + 1)}deg)`}
-    style:stroke-dasharray={lenghtC}
-    style:stroke-dashoffset={dashOffset === 0 ? 0 : dashOffset + 3}
-  />
-  {#if min !== max && min !== value}
-    <circle
-      cx={8}
-      cy={8}
-      r={7}
-      class="progress-circle"
-      style:stroke={primary ? 'var(--primary-bg-color)' : color}
-      style:opacity={dashOffset === 0 ? 0 : 1}
-      style:transform={'rotate(-82deg)'}
-      style:stroke-dasharray={lenghtC}
-      style:stroke-dashoffset={dashOffset === 0 ? lenghtC : lenghtC - dashOffset + 1}
-    />
-  {/if}
+  {#each circles as circle}
+    {#if circle.hasValue}
+      <circle
+        cx={8}
+        cy={8}
+        r={circle.radius}
+        class="progress-circle"
+        style:stroke={'var(--theme-caption-color)'}
+        style:opacity={'.15'}
+        style:transform={`rotate(${-78 + ((circle.dashOffset + 1) * 360) / (circle.circumference + 1)}deg)`}
+        style:stroke-dasharray={circle.circumference}
+        style:stroke-dashoffset={circle.dashOffset === 0 ? 0 : circle.dashOffset + 3}
+      />
+      <circle
+        cx={8}
+        cy={8}
+        r={circle.radius}
+        class="progress-circle"
+        style:stroke={circle.circleColor}
+        style:opacity={circle.dashOffset === 0 ? 0 : 1}
+        style:transform={'rotate(-82deg)'}
+        style:stroke-dasharray={circle.circumference}
+        style:stroke-dashoffset={circle.dashOffset === 0
+          ? circle.circumference
+          : circle.circumference - circle.dashOffset + 1}
+      />
+    {/if}
+  {/each}
 </svg>
 
 <style lang="scss">

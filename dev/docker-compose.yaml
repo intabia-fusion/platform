@@ -1058,6 +1058,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - STATS_URL=http://huly.local:4900
     restart: unless-stopped
 volumes:
   db:

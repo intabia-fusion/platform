@@ -28,6 +28,7 @@ import NotificationToDoPresenter from './components/NotificationToDoPresenter.sv
 import PriorityEditor from './components/PriorityEditor.svelte'
 import ToDoPresenter from './components/ToDoPresenter.svelte'
 import { ToDoTitleProvider } from './utils'
+import PersonCalendar from './components/team/calendar/PersonCalendar.svelte'
 
 export type ToDosMode = 'unplanned' | 'planned' | 'all' | 'tag' | 'date'
 
@@ -45,7 +46,8 @@ export default async (): Promise<Resources> => ({
     EditToDo,
     NotificationToDoPresenter,
     PriorityEditor,
-    ToDoPresenter
+    ToDoPresenter,
+    PersonCalendar
   },
   function: {
     ToDoTitleProvider

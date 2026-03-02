@@ -229,7 +229,7 @@ export async function openIssue (page: Page, name: string): Promise<void> {
   })
 }
 
-export async function floorFractionDigits (n: number | string, amount: number): Promise<number> {
+export function floorFractionDigits (n: number | string, amount: number): number {
   return Number(Number(n).toFixed(amount))
 }
 
@@ -238,18 +238,7 @@ export async function toTime (value: number): Promise<string> {
     return '0h'
   }
 
-  // TODO: Make configurable?
-  const hoursInWorkingDay = 8
-
-  const days = Math.floor(value / hoursInWorkingDay)
-  const hours = Math.floor(value % hoursInWorkingDay)
-  const minutes = Math.floor((value % 1) * 60)
-
-  return [
-    ...(days > 0 ? [`${days}d`] : []),
-    ...(hours > 0 ? [`${hours}h`] : []),
-    ...(minutes > 0 ? [`${minutes}m`] : [])
-  ].join(' ')
+  return convertEstimation(value)
 }
 export const getIssueName = (postfix: string = generateId()): string => `issue-${postfix}`
 
@@ -289,17 +278,5 @@ export async function performPanelTest (page: Page, statuses: string[], panel: s
 }
 
 export function convertEstimation (estimation: number | string): string {
-  const hoursInWorkingDay = 8
-  const value = typeof estimation === 'string' ? parseFloat(estimation) : estimation
-
-  const days = Math.floor(value / hoursInWorkingDay)
-  const hours = Math.floor(value % hoursInWorkingDay)
-  const minutes = Math.round((value % 1) * 60)
-  const result = [
-    ...(days === 0 ? [] : [`${days}d`]),
-    ...(hours === 0 ? [] : [`${hours}h`]),
-    ...(minutes === 0 ? [] : [`${minutes}m`])
-  ].join(' ')
-
-  return result === '' ? '0h' : result
+  return `${floorFractionDigits(estimation, 3)}h`
 }
