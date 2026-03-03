@@ -343,7 +343,7 @@ services:
       - LIVEKIT_WS=ws://huly.local:7880
       - EXPORT_URL=http://huly.local:4009
       - LINK_PREVIEW_URL=http://huly.local:4042
-      - PUSH_PUBLIC_KEY=BHlVaLpDU0Lz42OH1G6nw9c6as0bLa0k93SGrAeeCI-EgkbWQe54LfRZlUllAJb_x0oEOIvrEmb09Pk6EjgJEN4
+      - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor
@@ -1068,8 +1068,8 @@ services:
       - SOURCE=mail@example.com
       - ACCESS_KEY=none
       - SECRET_KEY=none
-      - PUSH_PUBLIC_KEY=BHlVaLpDU0Lz42OH1G6nw9c6as0bLa0k93SGrAeeCI-EgkbWQe54LfRZlUllAJb_x0oEOIvrEmb09Pk6EjgJEN4
-      - PUSH_PRIVATE_KEY=s2tlK8EK93OnFS32Zuqkkk6qvMevYIhtrAeZtAC32ig
+      - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
+      - PUSH_PRIVATE_KEY=${PUSH_PRIVATE_KEY}
     restart: unless-stopped
 volumes:
   db:

@@ -59,7 +59,10 @@
         richMessage: true,
         dangerous: true,
         action: async () => {
-          const client = getClient()
+          const setting = settings.find(({ attachedTo }) => attachedTo === sub._id)
+          if (setting !== undefined) {
+            await client.remove(setting)
+          }
           await client.remove(sub)
         }
       },
