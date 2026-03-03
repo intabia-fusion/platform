@@ -31,7 +31,7 @@ import { readNotifyContext } from '@hcengineering/notification-resources'
 import { getClient } from '@hcengineering/presentation'
 import { type Action, showPopup } from '@hcengineering/ui'
 import view from '@hcengineering/view'
-import workbench, { type SpecialNavModel } from '@hcengineering/workbench'
+import { type SpecialNavModel } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 
 import chunter from '../../plugin'
@@ -72,24 +72,10 @@ export const chatSpecials: SpecialNavModel[] = [
     component: chunter.component.SavedMessages
   },
   {
-    id: 'chunterBrowser',
+    id: 'browser',
     label: chunter.string.ChunterBrowser,
-    icon: chunter.icon.ChunterBrowser,
-    component: chunter.component.ChunterBrowser,
-    position: 'top'
-  },
-  {
-    id: 'channels',
-    label: chunter.string.Channels,
     icon: chunter.icon.ChannelBrowser,
-    component: workbench.component.SpecialView,
-    componentProps: {
-      _class: chunter.class.Channel,
-      icon: chunter.icon.ChannelBrowser,
-      label: chunter.string.Channels,
-      createLabel: chunter.string.CreateChannel,
-      createComponent: chunter.component.CreateChannel
-    },
+    component: chunter.component.ChunterBrowser,
     position: 'top'
   }
 ]

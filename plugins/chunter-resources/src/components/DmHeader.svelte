@@ -69,7 +69,7 @@
         userSearch.set(ev.detail)
 
         if (ev.detail !== '') {
-          navigateToSpecial('chunterBrowser')
+          navigateToSpecial('browser')
         }
       }}
     />

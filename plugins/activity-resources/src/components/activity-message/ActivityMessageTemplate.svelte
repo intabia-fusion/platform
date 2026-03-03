@@ -439,6 +439,7 @@
     top: -0.5rem;
     left: -0.5rem;
     color: var(--white-color);
+    z-index: 2;
   }
 
   .message-content {

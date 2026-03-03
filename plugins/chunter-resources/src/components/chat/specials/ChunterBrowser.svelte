@@ -14,51 +14,107 @@
 -->
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
-  import chunter from '@hcengineering/chunter'
   import { FileBrowser } from '@hcengineering/attachment-resources'
   import { Scroller, Switcher } from '@hcengineering/ui'
   import type { AnySvelteComponent } from '@hcengineering/ui'
   import contact from '@hcengineering/contact'
-  import contactPlg from '@hcengineering/contact-resources/src/plugin'
-  import { EmployeeBrowser } from '@hcengineering/contact-resources'
   import MessagesBrowser from './MessagesBrowser.svelte'
   import { FilterBar, FilterButton } from '@hcengineering/view-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import ChunterSpacesView from './ChunterSpacesView.svelte'
+  import { IntlString } from '@hcengineering/platform'
 
   import { userSearch } from '../../../index'
   import { SearchType } from '../../../utils'
-  import plugin from '../../../plugin'
+  import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
 
   let userSearch_: string = ''
   userSearch.subscribe((v) => (userSearch_ = v))
 
-  const saved = localStorage.getItem('chunter-browser-st')
+  const localStorageKey = 'chunter-browser-st__v1'
+  const saved = localStorage.getItem(localStorageKey)
   let searchType: SearchType = saved ? parseInt(saved, 10) : SearchType.Messages
-  $: localStorage.setItem('chunter-browser-st', searchType.toString())
+  $: localStorage.setItem(localStorageKey, searchType.toString())
+
+  const tabs = [
+    {
+      id: SearchType.Messages,
+      icon: chunter.icon.Messages,
+      labelIntl: chunter.string.Messages,
+      tooltip: chunter.string.Messages
+    },
+    {
+      id: SearchType.Files,
+      icon: attachment.icon.FileBrowser,
+      labelIntl: attachment.string.Files,
+      tooltip: attachment.string.Files
+    },
+    {
+      id: SearchType.Channels,
+      icon: chunter.icon.Chunter,
+      labelIntl: chunter.string.Channels,
+      tooltip: chunter.string.Channels
+    },
+    {
+      id: SearchType.Directs,
+      icon: contact.icon.Contacts,
+      labelIntl: chunter.string.DirectMessages,
+      tooltip: chunter.string.DirectMessages
+    }
+  ]
 
   const components: {
     component: AnySvelteComponent
     searchType: SearchType
+    label: IntlString
     filterClass?: Ref<Class<Doc>>
     props?: Record<string, any>
   }[] = [
-    { searchType: SearchType.Messages, component: MessagesBrowser },
+    {
+      searchType: SearchType.Messages,
+      component: MessagesBrowser,
+      label: chunter.string.Messages
+    },
     {
       searchType: SearchType.Files,
       component: FileBrowser,
+      label: attachment.string.Files,
       props: {
-        requestedSpaceClasses: [plugin.class.Channel, plugin.class.DirectMessage]
+        requestedSpaceClasses: [chunter.class.Channel, chunter.class.DirectMessage]
       }
     },
-    { searchType: SearchType.Contacts, component: EmployeeBrowser, filterClass: contactPlg.mixin.Employee }
+    {
+      searchType: SearchType.Channels,
+      component: ChunterSpacesView,
+      filterClass: chunter.class.Channel,
+      label: chunter.string.Channels,
+      props: {
+        _class: chunter.class.Channel,
+        icon: chunter.icon.ChannelBrowser,
+        label: chunter.string.Channels
+      }
+    },
+    {
+      searchType: SearchType.Directs,
+      component: ChunterSpacesView,
+      filterClass: chunter.class.DirectMessage,
+      label: chunter.string.DirectMessages,
+      props: {
+        _class: chunter.class.DirectMessage,
+        icon: contact.class.Contact,
+        label: chunter.string.DirectMessages
+      }
+    }
   ]
+
   let searchValue: string = ''
+  let filterQuery: DocumentQuery<Doc> = {}
 </script>
 
 <Header
-  icon={plugin.icon.ChunterBrowser}
-  intlLabel={plugin.string.ChunterBrowser}
+  icon={chunter.icon.ChannelBrowser}
+  intlLabel={chunter.string.ChunterBrowser}
   titleKind={'breadcrumbs'}
   bind:searchValue
   adaptive={'freezeActions'}
@@ -72,26 +128,7 @@
       name={'browser_group'}
       kind={'subtle'}
       selected={searchType}
-      items={[
-        {
-          id: SearchType.Messages,
-          icon: chunter.icon.Messages,
-          labelIntl: plugin.string.Messages,
-          tooltip: plugin.string.Messages
-        },
-        {
-          id: SearchType.Files,
-          icon: attachment.icon.FileBrowser,
-          labelIntl: attachment.string.Files,
-          tooltip: attachment.string.Files
-        },
-        {
-          id: SearchType.Contacts,
-          icon: contact.icon.Contacts,
-          labelIntl: contactPlg.string.Contacts,
-          tooltip: contactPlg.string.Contacts
-        }
-      ]}
+      items={tabs}
       on:select={(result) => {
         if (result !== undefined && result.detail.id !== undefined) searchType = result.detail.id
       }}
@@ -104,6 +141,9 @@
     space={undefined}
     query={{ $search: searchValue }}
     hideSaveButtons
+    on:change={(e) => {
+      filterQuery = e.detail
+    }}
   />
 {/if}
 
@@ -113,6 +153,7 @@
       this={components[searchType].component}
       withHeader={false}
       search={userSearch_}
+      {filterQuery}
       {...components[searchType].props}
     />
   </Scroller>

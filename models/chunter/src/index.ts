@@ -197,6 +197,21 @@ export function createModel (builder: Builder): void {
     chunter.viewlet.Channels
   )
 
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: chunter.class.DirectMessage,
+      descriptor: view.viewlet.Table,
+      configOptions: {
+        hiddenKeys: ['name', 'description', 'archived', 'private', 'autoJoin', 'owners', 'members']
+      },
+      config: ['', 'modifiedOn'],
+      props: { enableChecking: false }
+    },
+    chunter.viewlet.DirectMessages
+  )
+
   builder.mixin(chunter.class.Channel, core.class.Class, chunter.mixin.ObjectChatPanel, {
     ignoreKeys: ['archived', 'collaborators', 'lastMessage', 'pinned', 'description', 'members', 'owners']
   })
@@ -231,12 +246,8 @@ export function createModel (builder: Builder): void {
 
   builder.createDoc<ActivityMessageControl<ChunterSpace>>(activity.class.ActivityMessageControl, core.space.Model, {
     objectClass: chunter.class.DirectMessage,
-    skip: [
-      { _class: core.class.TxMixin },
-      { _class: core.class.TxCreateDoc },
-      { _class: core.class.TxRemoveDoc },
-      { _class: core.class.TxUpdateDoc }
-    ]
+    skip: [{ _class: core.class.TxMixin }, { _class: core.class.TxCreateDoc }, { _class: core.class.TxRemoveDoc }],
+    allowedFields: ['members']
   })
 
   builder.createDoc(activity.class.DocUpdateMessageViewlet, core.space.Model, {

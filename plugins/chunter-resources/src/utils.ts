@@ -195,7 +195,8 @@ export async function ChannelTitleProvider (client: Client, id: Ref<Channel>, do
 export enum SearchType {
   Messages,
   Files,
-  Contacts
+  Channels,
+  Directs
 }
 
 export async function getTitle (doc: Doc): Promise<string> {

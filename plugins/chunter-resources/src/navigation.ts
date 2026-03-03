@@ -439,23 +439,15 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   > = {
     threads: {
       label: chunter.string.Threads,
-      icon: chunter.icon.Chunter
-      // icon: chunter.icon.Thread
+      icon: chunter.icon.Thread
     },
     saved: {
       label: chunter.string.Saved,
-      icon: chunter.icon.Chunter
-      // icon: chunter.icon.Bookmarks
+      icon: chunter.icon.Bookmarks
     },
-    chunterBrowser: {
+    browser: {
       label: chunter.string.ChunterBrowser,
-      icon: chunter.icon.Chunter
-      // icon: chunter.icon.ChunterBrowser
-    },
-    channels: {
-      label: chunter.string.Channels,
-      icon: chunter.icon.Chunter
-      // icon: chunter.icon.Hashtag
+      icon: chunter.icon.ChannelBrowser
     }
   }
 

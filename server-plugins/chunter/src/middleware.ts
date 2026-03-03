@@ -182,7 +182,7 @@ export class ChunterMiddleware extends BaseMiddleware {
     if (!hasMembersUpdates) return
 
     const direct = (await this.findAll(ctx, chunter.class.DirectMessage, { _id: tx.objectId }))[0]
-    if (direct?.referenceId != null) {
+    if (direct?.referenceId != null || direct.type === 'person') {
       this.throwForbidden()
     }
   }
