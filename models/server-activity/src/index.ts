@@ -80,15 +80,6 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverActivity.trigger.OnActivityMessageCreate,
-    txMatch: {
-      objectClass: activity.class.ActivityMessage,
-      _class: core.class.TxCreateDoc
-    },
-    isAsync: false
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.ReferenceTrigger,
     txMatch: {
       objectClass: { $ne: activity.class.ActivityReference },

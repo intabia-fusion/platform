@@ -26,12 +26,13 @@ import { readFileSync } from 'fs'
 
 import { Worker } from './worker'
 import config from './config'
-import { prepare } from './prepare'
 import {
   registerAdapterFactory,
   registerDestroyFactory,
   registerTxAdapterFactory,
-  setAdapterSecurity
+  setAdapterSecurity,
+  registerServerPlugins,
+  registerStringLoaders
 } from '@hcengineering/server-pipeline'
 import {
   createPostgreeDestroyAdapter,
@@ -50,7 +51,8 @@ process.on('exit', () => {
   })
 })
 async function main (): Promise<void> {
-  prepare()
+  registerServerPlugins()
+  registerStringLoaders()
   setMetadata(serverToken.metadata.Secret, config.Secret)
   setMetadata(serverToken.metadata.Service, config.ServiceId)
   setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)

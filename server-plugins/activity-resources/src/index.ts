@@ -14,7 +14,6 @@
 //
 
 import activity, {
-  type ActivityMessage,
   type ActivityMessageControl,
   type DocAttributeUpdates,
   type DocUpdateMessage
@@ -394,39 +393,6 @@ async function HandleCardActivity (txes: TxCUD<Card>[], control: TriggerControl)
   return []
 }
 
-async function OnActivityMessageCreate (txes: TxCreateDoc<ActivityMessage>[], control: TriggerControl): Promise<Tx[]> {
-  const res: Tx[] = []
-  const { hierarchy } = control
-
-  for (const tx of txes) {
-    if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) continue
-    const message = TxProcessor.createDoc2Doc(tx)
-
-    if (message.attachedToTitle != null || message.attachedToIdentifier != null || message.attachedToUrl != null) {
-      continue
-    }
-
-    const doc = (await control.findAll(control.ctx, message.attachedToClass, { _id: message.attachedTo }))[0]
-    if (doc === undefined) continue
-
-    const attachedToTitle = await getDocTitle(control, doc)
-    const attachedToUrl = await getDocUrl(control, doc)
-    const attachedToIdentifier = await getDocIdentifier(control, doc)
-
-    if (attachedToTitle != null || attachedToUrl != null || attachedToIdentifier != null) {
-      res.push(
-        control.txFactory.createTxUpdateDoc(message._class, message.space, message._id, {
-          attachedToTitle,
-          attachedToUrl,
-          attachedToIdentifier
-        })
-      )
-    }
-  }
-
-  return res
-}
-
 export * from './references'
 export { getDocTitle, getDocUrl, getDocIdentifier } from './utils'
 
@@ -434,7 +400,6 @@ export { getDocTitle, getDocUrl, getDocIdentifier } from './utils'
 export default async () => ({
   trigger: {
     ReferenceTrigger,
-    OnActivityMessageCreate,
     ActivityMessagesHandler,
     OnDocRemoved,
     HandleCardActivity

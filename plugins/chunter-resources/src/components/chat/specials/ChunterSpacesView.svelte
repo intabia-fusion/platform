@@ -83,8 +83,6 @@
         : initialQuery
     isQueryLoaded = true
   }
-
-  $: console.log({ resultQuery, filterQuery })
 </script>
 
 <Header

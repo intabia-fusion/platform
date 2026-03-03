@@ -37,6 +37,7 @@ import { workbenchId } from '@hcengineering/workbench'
 import slugify from 'slugify'
 import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import { DocUpdateMessage } from '@hcengineering/activity'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 async function getDocs (
   control: TriggerControl,
@@ -392,10 +393,10 @@ function getDocumentLinkId (doc: Document): string {
   return `${slug}---${doc._id}`
 }
 
-export async function ControlledDocumentUrlPresenter (
+const ControlledDocumentUrlPresenter: Presenter = async (
   doc: ControlledDocument,
-  control: TriggerControl
-): Promise<string | undefined> {
+  control: PresenterControl
+): Promise<string | undefined> => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 
   const prjdoc = (await control.findAll(control.ctx, documents.class.ProjectDocument, { document: doc._id }))[0]

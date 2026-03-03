@@ -33,6 +33,7 @@ import {
   type DocObjectCache,
   getAllObjectTransactions,
   type IdentifierPresenter,
+  type PresenterControl,
   type TitlePresenter,
   type UrlPresenter
 } from '@hcengineering/server-activity'
@@ -512,7 +513,7 @@ function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): Titl
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
 }
 
-export async function getDocTitle (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+export async function getDocTitle (control: PresenterControl, doc: Doc): Promise<string | undefined> {
   if (control.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
     const message = doc as ActivityMessage
     if (message.message != null && !isEmptyMarkup(message.message)) {
@@ -540,7 +541,7 @@ export async function getDocTitle (control: TriggerControl, doc: Doc): Promise<s
   }
 }
 
-export async function getDocIdentifier (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+export async function getDocIdentifier (control: PresenterControl, doc: Doc): Promise<string | undefined> {
   const IdentifierPresenter = getIdentifierPresenter(doc._class, control.hierarchy)
 
   if (IdentifierPresenter === undefined) return
@@ -549,7 +550,7 @@ export async function getDocIdentifier (control: TriggerControl, doc: Doc): Prom
   )(doc, control)
 }
 
-export async function getDocUrl (control: TriggerControl, doc: Doc): Promise<string | undefined> {
+export async function getDocUrl (control: PresenterControl, doc: Doc): Promise<string | undefined> {
   const UrlPresenter = getUrlPresenter(doc._class, control.hierarchy)
   if (UrlPresenter === undefined) return
   return await (

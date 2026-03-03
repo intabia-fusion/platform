@@ -70,6 +70,7 @@
     "@hcengineering/postgres": "workspace:^0.7.22",
     "@hcengineering/retry": "workspace:^0.7.17",
     "@hcengineering/server-chunter": "workspace:^0.7.0",
+    "@hcengineering/server-activity": "workspace:^0.7.0",
     "@hcengineering/server-chunter-resources": "workspace:^0.7.0",
     "@hcengineering/server-client": "workspace:^0.7.17",
     "@hcengineering/server-controlled-documents": "workspace:^0.7.0",
