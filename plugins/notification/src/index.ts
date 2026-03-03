@@ -459,7 +459,11 @@ const notification = plugin(notificationId, {
     YouAddedAsCollaborator: '' as IntlString,
     YouRemovedFromCollaborators: '' as IntlString,
     Webpushes: '' as IntlString,
-    UnknownDevice: '' as IntlString
+    UnknownDevice: '' as IntlString,
+    RemoveWebpush: '' as IntlString,
+    WebpushRemoveConfirm: '' as IntlString,
+    Value: '' as IntlString,
+    Current: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,

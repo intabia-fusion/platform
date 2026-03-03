@@ -1,23 +1,9 @@
-<!--
-// Copyright © 2024 Hardcore Engineering Inc.
-//
-// Licensed under the Eclipse Public License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License. You may
-// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-// See the License for the specific language governing permissions and
-// limitations under the License.
--->
 <script lang="ts">
-  import { getClient, createQuery } from '@hcengineering/presentation'
+  import { getClient, createQuery, MessageBox } from '@hcengineering/presentation'
   import notification, { type PushSubscription, type PushSubscriptionSetting } from '@hcengineering/notification'
   import core from '@hcengineering/core'
   import ModernToggle from '@hcengineering/ui/src/components/ModernToggle.svelte'
-  import { Label } from '@hcengineering/ui'
+  import { Button, Label, showPopup } from '@hcengineering/ui'
   import { parseUserAgent } from '../../utils'
 
   let subscriptions: PushSubscription[] = []
@@ -61,20 +47,45 @@
       })
     }
   }
+
+  async function remove (sub: PushSubscription): Promise<void> {
+    showPopup(
+      MessageBox,
+      {
+        label: notification.string.Value,
+        labelProps: { value: parseUserAgent(sub.name as string) },
+        message: notification.string.WebpushRemoveConfirm,
+        params: { title: parseUserAgent(sub.name as string) },
+        richMessage: true,
+        dangerous: true,
+        action: async () => {
+          const client = getClient()
+          await client.remove(sub)
+        }
+      },
+      undefined
+    )
+  }
 </script>
 
 <div class="flex-col flex-gap-4">
   {#each subscriptions as subscription (subscription._id)}
-  <div class="flex-row-top flex-gap-2">
+  <div class="flex-row-center flex-gap-4">
     <div class="flex-col flex-gap-2 w-120">
-      {#if subscription.name}
-        <span class="label font-semi-bold">{parseUserAgent(subscription.name)}</span>
-      {:else}
-        <span class="label font-semi-bold"><Label label={notification.string.UnknownDevice} /></span>
-      {/if}
-      <span class="description">{new Date(subscription.createdOn ?? 0).toLocaleDateString()}</span>
+    <span class="label">
+      <span class="font-semi-bold">
+        {#if subscription.name}
+          {parseUserAgent(subscription.name)}
+        {:else}
+          <Label label={notification.string.UnknownDevice} />
+        {/if}
+      </span>
+      {#if subscription.name === navigator.userAgent}(<Label label={notification.string.Current} />){/if}
+    </span>
+    <span class="description">{new Date(subscription.createdOn ?? 0).toLocaleDateString()}</span>
     </div>
     <ModernToggle size="small" checked={getEnabled(subscription)} on:change={() => toggle(subscription)} />
+    <Button kind="dangerous" label={notification.string.RemoveWebpush} on:click={() => remove(subscription)} />
   </div>
   {/each}
 </div>
