@@ -84,6 +84,7 @@
     "ReplyToThread": "回复线程",
     "SentMessage": "发送消息",
     "Direct": "直连",
+    "GroupChat": "群聊",
     "RepliedToThread": "回复了线程",
     "RepliedTo": "回复：{message}",
     "AllChannels": "所有频道",

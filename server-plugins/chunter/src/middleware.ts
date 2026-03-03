@@ -138,10 +138,11 @@ export class ChunterMiddleware extends BaseMiddleware {
     tx.attributes.autoJoin = false
     tx.attributes.private = true
     tx.attributes.members = Array.from(new Set([...tx.attributes.members, account.uuid]))
+    tx.attributes.type = tx.attributes.members.length > 2 ? 'group' : 'person'
 
     delete tx.attributes.referenceId
 
-    if (tx.attributes.referenceId == null && tx.attributes.members.length <= 2) {
+    if (tx.attributes.members.length <= 2) {
       const referenceId = getMembersHash(tx.attributes.members)
 
       const direct = await this.findAll(ctx, chunter.class.DirectMessage, { referenceId })
@@ -163,6 +164,12 @@ export class ChunterMiddleware extends BaseMiddleware {
       this.throwForbidden()
     }
     if (tx.operations?.$unset?.private != null) {
+      this.throwForbidden()
+    }
+    if (tx.operations.type != null) {
+      this.throwForbidden()
+    }
+    if (tx.operations?.$unset?.type != null) {
       this.throwForbidden()
     }
 

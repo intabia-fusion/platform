@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, tooltip } from '@hcengineering/ui'
+  import { Label, languageStore, tooltip } from '@hcengineering/ui'
   import { DocNotifyContext } from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import { Class, Doc, Ref } from '@hcengineering/core'
@@ -39,7 +39,7 @@
 
   $: loadChannel(object, isThread)
   $: channel &&
-    getDocLinkTitle(client, channel._id, channel._class, channel).then((res) => {
+    getDocLinkTitle(client, channel._id, channel._class, channel, $languageStore).then((res) => {
       title = res
     })
 

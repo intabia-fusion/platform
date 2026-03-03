@@ -139,6 +139,7 @@
     "Unstar": "Unstar {label}",
     "Hide": "Hide {label}",
     "Leave": "Leave {label}",
-    "HideAll": "Hide all"
+    "HideAll": "Hide all",
+    "GroupChat": "Group chat"
   }
 }

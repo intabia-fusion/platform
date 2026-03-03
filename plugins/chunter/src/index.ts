@@ -46,7 +46,9 @@ export interface Channel extends ChunterSpace {
 /**
  * @public
  */
-export interface DirectMessage extends ChunterSpace {}
+export interface DirectMessage extends ChunterSpace {
+  type: 'person' | 'group'
+}
 
 /**
  * @public
@@ -214,7 +216,8 @@ export default plugin(chunterId, {
     Unstar: '' as IntlString,
     Hide: '' as IntlString,
     Leave: '' as IntlString,
-    HideAll: '' as IntlString
+    HideAll: '' as IntlString,
+    GroupChat: '' as IntlString
   },
   ids: {
     DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,

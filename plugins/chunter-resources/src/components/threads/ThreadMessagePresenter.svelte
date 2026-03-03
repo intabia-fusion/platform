@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ThreadMessage } from '@hcengineering/chunter'
-  import { Action, Label } from '@hcengineering/ui'
+  import { Action, Label, languageStore } from '@hcengineering/ui'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import activity from '@hcengineering/activity'
@@ -47,7 +47,7 @@
 </script>
 
 {#if inline && value}
-  {#await getDocLinkTitle(client, value.objectId, value.objectClass) then title}
+  {#await getDocLinkTitle(client, value.objectId, value.objectClass, undefined, $languageStore) then title}
     <span>
       <span class="lower">
         <Label label={chunter.string.Thread} />

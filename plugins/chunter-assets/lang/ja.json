@@ -84,6 +84,7 @@
     "ReplyToThread": "スレッドに返信",
     "SentMessage": "メッセージを送信",
     "Direct": "ダイレクト",
+    "GroupChat": "グループチャット",
     "RepliedToThread": "スレッドに返信しました",
     "RepliedTo": "に返信しました: {message}",
     "AllChannels": "すべてのチャンネル",

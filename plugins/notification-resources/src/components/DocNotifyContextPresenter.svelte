@@ -18,6 +18,8 @@
   import { getDocLinkTitle, getDocTitle } from '@hcengineering/view-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import chunter from '@hcengineering/chunter'
+  import { languageStore } from '@hcengineering/ui'
+
   import NotifyContextIcon from './NotifyContextIcon.svelte'
 
   export let value: DocNotifyContext
@@ -31,11 +33,11 @@
     object = res[0]
   })
 
-  async function getTitle (object: Doc) {
+  async function getTitle (object: Doc, lang: string) {
     if (object._class === chunter.class.DirectMessage) {
       return await getDocTitle(client, object._id, object._class, object)
     }
-    return await getDocLinkTitle(client, object._id, object._class, object)
+    return await getDocLinkTitle(client, object._id, object._class, object, lang)
   }
 </script>
 
@@ -44,7 +46,7 @@
     <NotifyContextIcon {value} {object} size="small" />
     <div class="mr-4" />
 
-    {#await getTitle(object) then title}
+    {#await getTitle(object, $languageStore) then title}
       {title}
     {/await}
   </div>

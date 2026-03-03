@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize } from '@hcengineering/ui'
+  import { IconSize, languageStore } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import { Doc } from '@hcengineering/core'
   import ObjectIcon from './ObjectIcon.svelte'
@@ -32,7 +32,7 @@
 {#if _object}
   <div class="flex-presenter">
     <ObjectIcon value={_object} {size} />
-    {#await getDocLinkTitle(client, _object._id, _object._class, _object) then title}
+    {#await getDocLinkTitle(client, _object._id, _object._class, _object, $languageStore) then title}
       {title}
     {/await}
   </div>

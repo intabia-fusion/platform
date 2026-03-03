@@ -132,6 +132,10 @@ export function createModel (builder: Builder): void {
     titleProvider: chunter.function.DirectTitleProvider
   })
 
+  builder.mixin(chunter.class.DirectMessage, core.class.Class, view.mixin.ObjectLabel, {
+    labelProvider: chunter.function.DirectLabelProvider
+  })
+
   builder.mixin(chunter.class.Channel, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: chunter.function.ChannelTitleProvider
   })

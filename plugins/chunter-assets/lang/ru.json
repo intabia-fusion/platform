@@ -84,6 +84,7 @@
     "ReplyToThread": "Ответить в теме",
     "SentMessage": "Отправил(а) сообщение",
     "Direct": "Личные сообщения",
+    "GroupChat": "Групповой чат",
     "RepliedToThread": "Ответил(а) в канале",
     "RepliedTo": "Ответил(а) на: {message}",
     "AllChannels": "Все каналы",

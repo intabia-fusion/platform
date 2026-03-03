@@ -40,6 +40,7 @@ export default mergeIds(chunterId, chunter, {
   function: {
     GetDmName: '' as Resource<(client: Client, space: Space) => Promise<string>>,
     DirectTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
+    DirectLabelProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<IntlString>>,
     ChannelTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
     ChunterBrowserVisible: '' as Resource<(spaces: Space[]) => Promise<boolean>>,
     GetUnreadThreadsCount: '' as Resource<

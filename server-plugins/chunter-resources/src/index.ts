@@ -14,7 +14,14 @@
 //
 
 import activity, { ActivityMessage } from '@hcengineering/activity'
-import chunter, { Chat, ChatMessage, chunterId, ChunterSpace, ThreadMessage } from '@hcengineering/chunter'
+import chunter, {
+  Chat,
+  ChatMessage,
+  chunterId,
+  ChunterSpace,
+  DirectMessage,
+  ThreadMessage
+} from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
 import core, {
   Class,
@@ -58,7 +65,10 @@ export async function channelTitlePresenter (doc: Doc): Promise<string> {
   const channel = doc as ChunterSpace
 
   if (channel._class === chunter.class.DirectMessage) {
-    return await translate(chunter.string.Direct, {})
+    const direct = channel as DirectMessage
+    return direct.type === 'person'
+      ? await translate(chunter.string.Direct, {})
+      : await translate(chunter.string.GroupChat, {})
   }
 
   return `#${channel.name}`

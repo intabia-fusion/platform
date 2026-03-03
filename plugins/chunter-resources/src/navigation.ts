@@ -267,7 +267,8 @@ export async function openChannelInSidebar (
   const isPerson = hierarchy.isDerived(_class, contact.class.Person)
   const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
   const isChannel = hierarchy.isDerived(_class, chunter.class.Channel)
-  const name = (await getChannelName(_id, _class, object)) ?? (await translate(titleIntl, {}))
+  const lang = get(languageStore)
+  const name = (await getChannelName(_id, _class, object, lang)) ?? (await translate(titleIntl, {}, lang))
 
   const tab: ChatWidgetTab = {
     id: `chunter_${_id}`,
@@ -360,7 +361,8 @@ export async function openThreadInSidebar (
   if (object === undefined) return
 
   const titleIntl = client.getHierarchy().getClass(object._class).label
-  const name = (await getChannelName(object._id, object._class, object)) ?? (await translate(titleIntl, {}))
+  const lang = get(languageStore)
+  const name = (await getChannelName(object._id, object._class, object, lang)) ?? (await translate(titleIntl, {}, lang))
   const tabName = await translate(chunter.string.ThreadIn, { name })
   const loc = getCurrentLocation()
 
@@ -465,19 +467,20 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+  const lang = get(languageStore)
 
   const [id, _class] = decodeObjectURI(loc.path[3])
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
   const _id: Ref<Doc> | undefined = await parseLinkId(linkProviders, id, _class)
 
   const object = hierarchy.hasClass(_class) ? await client.findOne(_class, { _id }) : undefined
-  if (object === undefined) return { name: await translate(chunter.string.Chat, {}, get(languageStore)) }
+  if (object === undefined) return { name: await translate(chunter.string.Chat, {}, lang) }
 
   const titleIntl = client.getHierarchy().getClass(object._class).label
   const iconMixin = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIcon)
   const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
   const isChunterSpace = hierarchy.isDerived(_class, chunter.class.ChunterSpace)
-  const name = (await getChannelName(_id, _class, object)) ?? (await translate(titleIntl, {}))
+  const name = (await getChannelName(_id, _class, object, lang)) ?? (await translate(titleIntl, {}, lang))
 
   return {
     objectId: object._id,

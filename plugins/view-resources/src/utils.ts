@@ -81,7 +81,6 @@ import {
   locationToUrl,
   navigate,
   resolvedLocationStore,
-  themeStore,
   type AnyComponent,
   type AnySvelteComponent,
   type Location
@@ -99,14 +98,9 @@ import view, {
   type Viewlet,
   type ViewletDescriptor
 } from '@hcengineering/view'
-
-import contact, {
-  getAllSocialStringsByPersonRef,
-  getCurrentEmployee,
-  getName,
-  type Contact
-} from '@hcengineering/contact'
+import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@hcengineering/contact'
 import { get, writable } from 'svelte/store'
+
 import plugin from './plugin'
 import { noCategory } from './viewOptions'
 
@@ -1458,32 +1452,26 @@ export async function getSpacePresenter (
   }
 }
 
-export async function getDocLabel (client: Client, object: Doc | undefined): Promise<string | undefined> {
-  if (object === undefined) {
-    return undefined
-  }
-
+export async function getDocLabel (
+  client: Client,
+  objectId: Ref<Doc>,
+  objectClass: Ref<Class<Doc>>,
+  object: Doc | undefined,
+  lang: string
+): Promise<string | undefined> {
   const hierarchy = client.getHierarchy()
-  const name = (object as any).name
 
-  if (name !== undefined) {
-    if (hierarchy.isDerived(object._class, contact.class.Person)) {
-      return getName(hierarchy, object as Contact)
-    }
-    return name
+  const labelProvider = hierarchy.classHierarchyMixin(objectClass, view.mixin.ObjectLabel)
+  if (labelProvider != null) {
+    const resource = await getResource(labelProvider.labelProvider)
+
+    const label = await resource(client, objectId, object)
+    return await translate(label, {}, lang)
   }
 
-  const label = hierarchy.getClass(object._class).label ?? getObjectLabel(object)
+  const label = hierarchy.getClass(objectClass).label
 
-  if (label === undefined) {
-    return undefined
-  }
-
-  return await translate(label, {}, get(themeStore).language)
-}
-
-function getObjectLabel (object: any): IntlString | undefined {
-  return object?.label
+  return await translate(label, {}, lang)
 }
 
 export async function getDocTitle (
@@ -1528,7 +1516,8 @@ export async function getDocLinkTitle (
   client: Client,
   objectId: Ref<Doc>,
   objectClass: Ref<Class<Doc>>,
-  object?: Doc
+  object: Doc | undefined,
+  lang: string
 ): Promise<string | undefined> {
   const identifier = await getDocIdentifier(client, objectId, objectClass, object)
 
@@ -1542,7 +1531,7 @@ export async function getDocLinkTitle (
     return title
   }
 
-  return await getDocLabel(client, object)
+  return await getDocLabel(client, objectId, objectClass, object, lang)
 }
 
 /**
