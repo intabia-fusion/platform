@@ -182,7 +182,7 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
 
   if (indexes !== undefined) {
     for (const val of indexes) {
-      if ('unique' in val) {
+      if ('unique' in val && val.unique.length > 0) {
         const uniqueFields: string[] = ['workspaceId', ...val.unique]
         const indexName = `${domain}_unique_${uniqueFields.join('_')}__index`
         const fields = uniqueFields.map((f) => `"${f}"`).join(', ')
