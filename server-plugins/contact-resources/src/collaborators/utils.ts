@@ -182,7 +182,7 @@ export async function getDocCached (
 
   const doc = await ctx.with(
     'find-doc',
-    { _class },
+    { domain: control.hierarchy.findDomain(_class) },
     async (ctx) => (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
   )
 

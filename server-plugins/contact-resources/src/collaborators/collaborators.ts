@@ -229,7 +229,7 @@ export async function ManageCollaboratorsTrigger (txes: TxCUD<Doc>[], control: T
     if (!TxProcessor.isExtendsCUD(tx._class)) continue
     const txes = await control.ctx.with(
       'setup-collaborators',
-      { objectClass: tx.objectClass },
+      { domain: control.hierarchy.findDomain(tx.objectClass) },
       (ctx) => setupCollaborators(ctx, control, tx, cache, docCache)
     )
     res.push(...txes)
