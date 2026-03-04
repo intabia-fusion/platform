@@ -39,7 +39,7 @@ import { getAllAccounts } from '@hcengineering/contact'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
 import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
 
-import { DOMAIN_CHUNTER } from './index'
+import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
 import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
@@ -291,6 +291,7 @@ async function migrateDuplicatedDirects (client: MigrationClient): Promise<void>
     }
 
     await client.deleteMany(DOMAIN_SPACE, { _id: from })
+    await client.deleteMany(DOMAIN_CHUNTER_DOC, { attacheTo: from })
     await client.deleteMany<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectId: from })
   }
 }
