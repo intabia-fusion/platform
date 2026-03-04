@@ -49,7 +49,7 @@
   $: _baseQuery = mergeQueries(mergeQueries({}, {}), viewlet?.baseQuery ?? {})
   $: query = { ..._baseQuery }
   $: searchQuery = search === '' ? query : { ...query, $search: `${search}*` }
-  $: resultQuery = isQueryLoaded ? { ...searchQuery } : undefined
+  $: resultQuery = isQueryLoaded ? { ...filterQuery, ...searchQuery } : undefined
 
   let options = viewlet?.options
   let _options = viewlet?.options ?? {}

@@ -52,7 +52,7 @@
     },
     {
       id: SearchType.Channels,
-      icon: chunter.icon.Chunter,
+      icon: chunter.icon.Hashtag,
       labelIntl: chunter.string.Channels,
       tooltip: chunter.string.Channels
     },
@@ -143,6 +143,7 @@
     hideSaveButtons
     on:change={(e) => {
       filterQuery = e.detail
+      filterQuery.$search = undefined
     }}
   />
 {/if}
