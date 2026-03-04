@@ -25,7 +25,10 @@ export class ChannelPage extends CommonPage {
   readonly channelName = (channel: string): Locator =>
     this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: channel })
 
-  readonly channelTab = (): Locator => this.page.getByRole('link', { name: 'Channels' }).getByRole('button')
+  readonly browserTab = (): Locator => this.page.getByRole('link', { name: 'Browser' }).getByRole('button')
+  readonly channelsTab = (): Locator =>
+    this.page.locator('label.switcher-element__wrapper[data-view="chunter:string:Channels"]')
+
   readonly channelTable = (): Locator => this.page.getByRole('table')
   readonly channel = (channel: string): Locator => this.page.getByRole('button', { name: channel })
   readonly channelNameOnDetail = (channel: string): Locator =>
@@ -280,7 +283,8 @@ export class ChannelPage extends CommonPage {
   }
 
   async clickChannelTab (): Promise<void> {
-    await this.channelTab().click()
+    await this.browserTab().click()
+    await this.channelsTab().click()
   }
 
   async clickOnClosePopupButton (): Promise<void> {

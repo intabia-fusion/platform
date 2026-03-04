@@ -17,6 +17,7 @@ import contact from '@hcengineering/contact'
 import core, {
   concatLink,
   Doc,
+  Hierarchy,
   Tx,
   TxCreateDoc,
   TxCUD,
@@ -28,9 +29,9 @@ import { getMetadata } from '@hcengineering/platform'
 import recruit, { Applicant, recruitId, Vacancy } from '@hcengineering/recruit'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
-function getSequenceId (doc: Vacancy | Applicant, control: TriggerControl): string {
-  const hierarchy = control.hierarchy
+function getSequenceId (doc: Vacancy | Applicant, hierarchy: Hierarchy): string {
   let clazz = hierarchy.getClass(doc._class)
   let label = clazz.shortLabel
   while (label === undefined && clazz.extends !== undefined) {
@@ -44,36 +45,36 @@ function getSequenceId (doc: Vacancy | Applicant, control: TriggerControl): stri
 /**
  * @public
  */
-export async function vacancyUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const vacancyUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const vacancy = doc as Vacancy
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
-  const path = `${workbenchId}/${control.workspace.url}/${recruitId}/${getSequenceId(vacancy, control)}`
+  const path = `${workbenchId}/${control.workspace.url}/${recruitId}/${getSequenceId(vacancy, control.hierarchy)}`
   return concatLink(front, path)
 }
 
 /**
  * @public
  */
-export async function vacancyIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const vacancyIdentifierPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const vacancy = doc as Vacancy
-  return getSequenceId(vacancy, control)
+  return getSequenceId(vacancy, control.hierarchy)
 }
 
 /**
  * @public
  */
-export async function applicationUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const applicationUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const applicant = doc as Applicant
 
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
-  const id = getSequenceId(applicant, control)
+  const id = getSequenceId(applicant, control.hierarchy)
   const path = `${workbenchId}/${control.workspace.url}/${recruitId}/${id}`
   return concatLink(front, path)
 }
 
-export async function applicationIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const applicationIdentifierPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const applicant = doc as Applicant
-  return getSequenceId(applicant, control)
+  return getSequenceId(applicant, control.hierarchy)
 }
 
 /**

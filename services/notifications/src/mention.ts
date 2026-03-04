@@ -24,19 +24,18 @@ import core, {
   Tx,
   TxCUD,
   Blob,
-  type TxRemoveDoc,
-  Hierarchy
+  type TxRemoveDoc
 } from '@hcengineering/core'
 import notification, { DocNotifyContext, NotificationContent, TxNotificationType } from '@hcengineering/notification'
 import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
 import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON, markupToText } from '@hcengineering/text-core'
 import { Receiver, MentionRef, Sender, getSenderName, normalizeTextMessage } from '@hcengineering/server-notification'
 import contact, { type Employee, Person } from '@hcengineering/contact'
+import { IntlString } from '@hcengineering/platform'
 
 import { Client, NotificationSettings, NotifyResult, MentionResult } from './types'
-import { getTxNotifyResult } from './utils'
+import { getDocIdentifier, getDocTitle, getDocUrl, getTxNotifyResult } from './utils'
 import Cache from './cache'
-import { IntlString } from '@hcengineering/platform'
 import config from './config'
 
 export async function createMentionsData (
@@ -320,13 +319,14 @@ async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>)
   return { txes: [], data: [] }
 }
 
-export function getMentionNotificationContent (
-  hierarchy: Hierarchy,
+export async function getMentionNotificationContent (
+  client: Client,
   doc: Doc,
   object: Doc,
   markup: Markup | undefined,
   sender: Sender
-): NotificationContent {
+): Promise<NotificationContent> {
+  const { hierarchy } = client
   const message = hierarchy.isDerived(object._class, activity.class.ActivityMessage)
     ? (object as ActivityMessage)
     : undefined
@@ -338,25 +338,46 @@ export function getMentionNotificationContent (
   intlParams.senderName = getSenderName(sender, config.LastNameFirst)
 
   if (message != null) {
-    if (message.attachedToTitle != null) {
-      intlParams.title = message.attachedToTitle
+    const title = message.attachedToTitle
+    const url = message.attachedToUrl
+    const identifier = message.attachedToIdentifier
+
+    if (title != null && title.length > 0) {
+      intlParams.title = title
     }
-    if (message.attachedToUrl != null) {
-      intlParams.url = message.attachedToUrl
+    if (url != null && url.length > 0) {
+      intlParams.url = url
     }
-    if (message.attachedToIdentifier != null) {
-      intlParams.identifier = message.attachedToIdentifier
+    if (identifier != null && identifier.length > 0) {
+      intlParams.identifier = identifier
     }
   }
 
   if (intlParams.title == null) {
+    const title = await getDocTitle(client, doc)
     const clazz = hierarchy.getClass(doc._class)
 
-    if (clazz.titleKey != null) {
+    if (title != null && title.length > 0) {
+      intlParams.title = title
+    } else if (clazz.titleKey != null) {
       intlParams.title = (doc as any)[clazz.titleKey]
     } else {
       const anyDoc = doc as any
       intlParams.title = anyDoc.title ?? anyDoc.name ?? anyDoc.label ?? 'Notification'
+    }
+  }
+
+  if (intlParams.url == null) {
+    const url = await getDocUrl(client, doc)
+    if (url != null) {
+      intlParams.url = url
+    }
+  }
+
+  if (intlParams.identifier == null) {
+    const identifier = await getDocIdentifier(client, doc)
+    if (identifier != null) {
+      intlParams.identifier = identifier
     }
   }
 

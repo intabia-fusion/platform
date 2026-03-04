@@ -59,6 +59,7 @@ import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 
 import { ManageCollaboratorsTrigger } from './collaborators'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -359,18 +360,18 @@ export async function OnChannelUpdate (txes: Tx[], control: TriggerControl): Pro
   return result
 }
 
-export async function personUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const personUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${contactId}/${doc._id}`
   return concatLink(front, path)
 }
 
-export function personTitlePresenter (doc: Doc, control: TriggerControl): string {
+const personTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const person = doc as Person
   return `${getName(control.hierarchy, person, control.branding?.lastNameFirst)}`
 }
 
-export async function organizationUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const organizationUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${contactId}/${doc._id}`
   return concatLink(front, path)

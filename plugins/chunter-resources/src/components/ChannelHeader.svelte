@@ -20,6 +20,8 @@
   import { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
   import contact from '@hcengineering/contact'
   import view from '@hcengineering/view'
+  import { languageStore } from '@hcengineering/ui'
+
   import Header from './Header.svelte'
   import chunter from '../plugin'
   import { getObjectIcon, getChannelName } from '../utils'
@@ -47,7 +49,7 @@
 
   $: void updateDescription(_id, _class, object)
 
-  $: void getChannelName(_id, _class, object).then((res) => {
+  $: void getChannelName(_id, _class, object, $languageStore).then((res) => {
     title = res
   })
 

@@ -67,7 +67,8 @@ import {
   Viewlet,
   ViewletDescriptor,
   ViewletPreference,
-  ViewletViewAction
+  ViewletViewAction,
+  ObjectLabel
 } from './types'
 
 export * from './types'
@@ -101,6 +102,7 @@ const view = plugin(viewId, {
     ObjectValidator: '' as Ref<Mixin<ObjectValidator>>,
     ObjectFactory: '' as Ref<Mixin<ObjectFactory>>,
     ObjectTitle: '' as Ref<Mixin<ObjectTitle>>,
+    ObjectLabel: '' as Ref<Mixin<ObjectLabel>>,
     ObjectIdentifier: '' as Ref<Mixin<ObjectIdentifier>>,
     ReferenceObjectProvider: '' as Ref<Mixin<ReferenceObjectProvider>>,
     ObjectTooltip: '' as Ref<Mixin<ObjectTooltip>>,

@@ -495,7 +495,8 @@ export async function getLinkData (
   message: DisplayActivityMessage,
   object: Doc | undefined,
   parentObject: Doc | undefined,
-  person: Person | undefined
+  person: Person | undefined,
+  lang: string
 ): Promise<LinkData | undefined> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -518,7 +519,7 @@ export async function getLinkData (
     return undefined
   }
 
-  const title = await getDocLinkTitle(client, linkObject._id, linkObject._class, linkObject)
+  const title = await getDocLinkTitle(client, linkObject._id, linkObject._class, linkObject, lang)
 
   const preposition = hierarchy.classHierarchyMixin(linkObject._class, activity.mixin.ActivityDoc)?.preposition
   const panelComponent = hierarchy.classHierarchyMixin(linkObject._class, view.mixin.ObjectPanel)

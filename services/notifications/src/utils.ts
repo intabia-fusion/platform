@@ -52,6 +52,7 @@ import serverNotification, {
 import { getResource, IntlString } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
+import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@hcengineering/server-activity'
 
 import { Client, NotificationSettings, NotifyResult } from './types'
 import config from './config'
@@ -443,24 +444,27 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
   }
 }
 
-export function getMessageNotificationContent (
-  hierarchy: Hierarchy,
+export async function getMessageNotificationContent (
+  client: Client,
   type: NotificationType,
   doc: Doc,
   message: ActivityMessage,
   sender: Sender
-): NotificationContent {
+): Promise<NotificationContent> {
+  const { hierarchy } = client
   const intlParams: Record<string, string | number> = {}
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
-  intlParams.title = message.attachedToTitle ?? ''
+  intlParams.title = message.attachedToTitle ?? (await getDocTitle(client, doc)) ?? ''
 
-  if (message.attachedToUrl != null) {
-    intlParams.url = message.attachedToUrl
+  const url = message.attachedToUrl ?? (await getDocUrl(client, doc))
+  const identifier = message.attachedToIdentifier ?? (await getDocIdentifier(client, doc))
+
+  if (url != null && url.length > 0) {
+    intlParams.url = url
   }
-
-  if (message.attachedToIdentifier != null) {
-    intlParams.identifier = message.attachedToIdentifier
+  if (identifier != null && identifier.length > 0) {
+    intlParams.identifier = identifier
   }
 
   intlParams.senderName = getSenderName(sender, config.LastNameFirst)
@@ -496,4 +500,88 @@ export async function getMessage (client: Client, tx: TxCreateDoc<ActivityMessag
   if (raw.attachedToTitle != null || raw.attachedToIdentifier != null || raw.attachedToUrl != null) return raw
 
   return (await client.findOne(raw._class, { _id: raw._id })) ?? raw
+}
+
+function getUrlPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.UrlPresenter)
+}
+
+function getIdentifierPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IdentifierPresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.IdentifierPresenter)
+}
+
+function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TitlePresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
+}
+
+export async function getDocTitle (client: Client, doc: Doc): Promise<string | undefined> {
+  if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+    const message = doc as ActivityMessage
+    if (message.message != null && !isEmptyMarkup(message.message)) {
+      const text = markupToText(message.message).trim()
+      const normalized = text.length > 50 ? text.slice(0, 50) + '...' : text
+      if (text.length > 0) {
+        return normalized
+      }
+    }
+
+    return 'message'
+  }
+
+  const TitlePresenter = getTitlePresenter(doc._class, client.hierarchy)
+
+  if (TitlePresenter !== undefined) {
+    return await (
+      await getResource(TitlePresenter.presenter)
+    )(doc, {
+      ctx: client.ctx,
+      workspace: client.workspace,
+      hierarchy: client.hierarchy,
+      modelDb: client.model,
+      branding: {
+        lastNameFirst: config.LastNameFirst
+      },
+      findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+    })
+  }
+
+  const clazz = client.hierarchy.getClass(doc._class)
+  if (clazz.titleKey != null) {
+    return (doc as any)[clazz.titleKey] ?? undefined
+  }
+}
+
+export async function getDocIdentifier (client: Client, doc: Doc): Promise<string | undefined> {
+  const IdentifierPresenter = getIdentifierPresenter(doc._class, client.hierarchy)
+
+  if (IdentifierPresenter === undefined) return
+  return await (
+    await getResource(IdentifierPresenter.presenter)
+  )(doc, {
+    ctx: client.ctx,
+    workspace: client.workspace,
+    hierarchy: client.hierarchy,
+    modelDb: client.model,
+    branding: {
+      lastNameFirst: config.LastNameFirst
+    },
+    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+  })
+}
+
+export async function getDocUrl (client: Client, doc: Doc): Promise<string | undefined> {
+  const UrlPresenter = getUrlPresenter(doc._class, client.hierarchy)
+  if (UrlPresenter === undefined) return
+  return await (
+    await getResource(UrlPresenter.presenter)
+  )(doc, {
+    ctx: client.ctx,
+    workspace: client.workspace,
+    hierarchy: client.hierarchy,
+    modelDb: client.model,
+    branding: {
+      lastNameFirst: config.LastNameFirst
+    },
+    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+  })
 }

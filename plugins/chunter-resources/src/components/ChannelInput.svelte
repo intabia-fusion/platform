@@ -17,7 +17,7 @@
   import { Class, Doc, Ref } from '@hcengineering/core'
   import activity, { ActivityExtension } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Icon, Label } from '@hcengineering/ui'
+  import { AnySvelteComponent, Icon, Label, languageStore } from '@hcengineering/ui'
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import view from '@hcengineering/view'
 
@@ -75,8 +75,11 @@
     icon = result
   }
 
-  async function getName (object: Doc): Promise<{ name: string | undefined, label: IntlString | undefined }> {
-    const name = await getChannelName(object._id, object._class, object)
+  async function getName (
+    object: Doc,
+    lang: string
+  ): Promise<{ name: string | undefined, label: IntlString | undefined }> {
+    const name = await getChannelName(object._id, object._class, object, lang)
     const label = client.getHierarchy().getClass(object._class).label
 
     return { name, label }
@@ -101,7 +104,7 @@
         {#if icon}
           <Icon {icon} size="x-small" />
         {/if}
-        {#await getName(object) then data}
+        {#await getName(object, $languageStore) then data}
           {#if data.name}
             {data.name}
           {:else if data.label}

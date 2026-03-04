@@ -4,7 +4,7 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: sha256-La8sfCMI7irxJPTW6u4mJb4vNiyLrXeEbKaXv5G3dL0=
+pnpmfileChecksum: sha256-E1T7OJ3DLTjpDqf4RdJzK9VDtAxgm4gDEQCLYdHD8nI=
 
 importers:
 
@@ -17257,6 +17257,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text
@@ -31169,6 +31172,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-activity-resources':
         specifier: workspace:^0.7.0
         version: link:../activity-resources
@@ -31309,6 +31315,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -31461,6 +31470,9 @@ importers:
       '@hcengineering/server':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/server
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -31726,6 +31738,9 @@ importers:
       '@hcengineering/rank':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rank
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -31866,6 +31881,9 @@ importers:
       '@hcengineering/request':
         specifier: workspace:^0.7.0
         version: link:../../plugins/request
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-chunter-resources':
         specifier: workspace:^0.7.0
         version: link:../chunter-resources
@@ -32009,6 +32027,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -32503,6 +32524,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -32625,6 +32649,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -32750,6 +32777,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -32881,6 +32911,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -33435,6 +33468,9 @@ importers:
       '@hcengineering/recruit':
         specifier: workspace:^0.7.0
         version: link:../../plugins/recruit
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -33566,6 +33602,9 @@ importers:
       '@hcengineering/request':
         specifier: workspace:^0.7.0
         version: link:../../plugins/request
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-activity-resources':
         specifier: workspace:^0.7.0
         version: link:../activity-resources
@@ -33703,6 +33742,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -34437,6 +34479,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
       '@hcengineering/server-activity-resources':
         specifier: workspace:^0.7.0
         version: link:../activity-resources
@@ -39440,6 +39485,9 @@ importers:
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/activity
       '@hcengineering/server-chunter':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/chunter

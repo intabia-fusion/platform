@@ -42,30 +42,35 @@ import {
   isMentionNotification,
   isReactionNotification
 } from '@hcengineering/notification-resources'
-import { type Asset, getMetadata } from '@hcengineering/platform'
+import { type Asset, getMetadata, type IntlString } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
 import { type AnySvelteComponent, languageStore } from '@hcengineering/ui'
 import { classIcon, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
+import love, { type MeetingMinutes } from '@hcengineering/love'
+import { withRetry } from '@hcengineering/retry'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import { openChannelInSidebar, resetChunterLocIfEqual } from './navigation'
 import chunter from './plugin'
 import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from './stores'
-import love, { type MeetingMinutes } from '@hcengineering/love'
 
-export async function getDmName (client: Client, space?: Space): Promise<string> {
+export async function getDmName (client: Client, space?: DirectMessage): Promise<string> {
   if (space === undefined) {
     return ''
   }
 
-  return await buildDmName(client, space.members)
+  return await buildDmName(client, space.name, space.members)
 }
 
-export async function buildDmName (client: Client, accounts: AccountUuid[]): Promise<string> {
+export async function buildDmName (client: Client, name: string, accounts: AccountUuid[]): Promise<string> {
   if (accounts.length === 0) {
-    return ''
+    return name
+  }
+
+  if (accounts.length > 2 && name.trim().length > 0) {
+    return name
   }
 
   let unsub: Unsubscriber | undefined
@@ -163,6 +168,20 @@ export async function DirectTitleProvider (
   return await getDmName(client, direct)
 }
 
+export async function DirectLabelProvider (
+  client: Client,
+  id: Ref<DirectMessage>,
+  doc?: DirectMessage
+): Promise<IntlString> {
+  const direct = doc ?? (await client.findOne(chunter.class.DirectMessage, { _id: id }))
+
+  if (direct === undefined) {
+    return chunter.string.Direct
+  }
+
+  return direct.type === 'group' ? chunter.string.GroupChat : chunter.string.Direct
+}
+
 export async function ChannelTitleProvider (client: Client, id: Ref<Channel>, doc?: Channel): Promise<string> {
   const channel = doc ?? (await client.findOne(chunter.class.Channel, { _id: id }))
 
@@ -176,7 +195,8 @@ export async function ChannelTitleProvider (client: Client, id: Ref<Channel>, do
 export enum SearchType {
   Messages,
   Files,
-  Contacts
+  Channels,
+  Directs
 }
 
 export async function getTitle (doc: Doc): Promise<string> {
@@ -214,11 +234,12 @@ export function getObjectIcon (_class: Ref<Class<Doc>>): Asset | AnySvelteCompon
 export async function getChannelName (
   _id: Ref<Doc>,
   _class: Ref<Class<Doc>>,
-  object?: Doc
+  object: Doc | undefined,
+  lang: string
 ): Promise<string | undefined> {
   const client = getClient()
 
-  return (await getDocTitle(client, _id, _class, object)) ?? (await getDocLabel(client, object))
+  return (await getDocTitle(client, _id, _class, object)) ?? (await getDocLabel(client, _id, _class, object, lang))
 }
 
 export function getUnreadThreadsCount (): number {
@@ -464,27 +485,23 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
   }
 }
 
-export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<Ref<DirectMessage>> {
-  const client = getClient()
-  const me = getCurrentEmployee()
+async function findExistingDirect (accounts: Set<AccountUuid>): Promise<Ref<DirectMessage> | undefined> {
+  if (accounts.size > 2) return undefined
 
+  const client = getClient()
   const existingDms = await client.findAll(chunter.class.DirectMessage, {})
-  const newDirectEmployeeIds = Array.from(new Set([...employeeIds, me]))
 
   let direct: DirectMessage | undefined
-
-  const employees = await client.findAll(contact.mixin.Employee, { _id: { $in: newDirectEmployeeIds } })
-  const newDirectAccounts = new Set(employees.map(({ personUuid }) => personUuid).filter(notEmpty))
 
   for (const dm of existingDms) {
     const dmAccounts = new Set(dm.members)
 
-    if (dmAccounts.size !== newDirectAccounts.size) continue
+    if (dmAccounts.size !== accounts.size) continue
 
     let match = true
 
     for (const acc of dmAccounts) {
-      if (!newDirectAccounts.has(acc)) {
+      if (!accounts.has(acc)) {
         match = false
         break
       }
@@ -496,19 +513,38 @@ export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<
     }
   }
 
-  if (direct != null) {
-    const chat = await client.findOne(chunter.class.Chat, { attachedTo: direct._id })
-    if (chat?.hidden === true) {
-      await client.update(chat, { hidden: false })
-    }
-    return direct._id
-  }
+  return direct?._id
+}
 
-  return await client.createDoc(chunter.class.DirectMessage, core.space.Space, {
-    name: '',
-    description: '',
-    private: true,
-    archived: false,
-    members: Array.from(newDirectAccounts)
-  })
+export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<Ref<DirectMessage>> {
+  const client = getClient()
+  const me = getCurrentAccount()
+
+  const newDirectEmployeeIds = Array.from(new Set(employeeIds))
+  const employees = await client.findAll(contact.mixin.Employee, { _id: { $in: newDirectEmployeeIds } })
+  const accounts = new Set([...employees.map(({ personUuid }) => personUuid).filter(notEmpty), me.uuid])
+
+  return await withRetry(
+    async (): Promise<Ref<DirectMessage>> => {
+      const direct = await findExistingDirect(accounts)
+
+      if (direct != null) {
+        const chat = await client.findOne(chunter.class.Chat, { attachedTo: direct })
+        if (chat?.hidden === true) {
+          await client.update(chat, { hidden: false })
+        }
+        return direct
+      }
+
+      return await client.createDoc(chunter.class.DirectMessage, core.space.Space, {
+        name: '',
+        description: '',
+        private: true,
+        archived: false,
+        members: Array.from(accounts),
+        type: accounts.size > 2 ? 'group' : 'person'
+      })
+    },
+    { maxRetries: 3 }
+  )
 }

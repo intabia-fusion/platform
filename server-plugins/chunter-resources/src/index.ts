@@ -14,7 +14,14 @@
 //
 
 import activity, { ActivityMessage } from '@hcengineering/activity'
-import chunter, { Chat, ChatMessage, chunterId, ChunterSpace, ThreadMessage } from '@hcengineering/chunter'
+import chunter, {
+  Chat,
+  ChatMessage,
+  chunterId,
+  ChunterSpace,
+  DirectMessage,
+  ThreadMessage
+} from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
 import core, {
   Class,
@@ -49,22 +56,27 @@ import {
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+
 import { JoinChannelTypeMatch } from './utils'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-export async function channelTitlePresenter (doc: Doc): Promise<string> {
+const channelTitlePresenter: Presenter = async (doc: Doc): Promise<string> => {
   const channel = doc as ChunterSpace
 
   if (channel._class === chunter.class.DirectMessage) {
-    return await translate(chunter.string.Direct, {})
+    const direct = channel as DirectMessage
+    return direct.type === 'person'
+      ? await translate(chunter.string.Direct, {})
+      : await translate(chunter.string.GroupChat, {})
   }
 
   return `#${channel.name}`
 }
 
-export async function channelURLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const channelURLPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const channel = doc as ChunterSpace
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${chunterId}/${encodeObjectURI(channel._id, channel._class)}`

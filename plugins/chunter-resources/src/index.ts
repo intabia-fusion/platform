@@ -84,7 +84,8 @@ import {
   canTranslateMessage,
   startConversationAction,
   summarizeMessages,
-  canSummarizeMessages
+  canSummarizeMessages,
+  DirectLabelProvider
 } from './utils'
 import DeleteMessagePresenter from './components/DeleteMessagePresenter.svelte'
 
@@ -208,6 +209,7 @@ export default async (): Promise<Resources> => ({
     GetFragment: getTitle,
     GetLink: getMessageLink,
     DirectTitleProvider,
+    DirectLabelProvider,
     ChannelTitleProvider,
     CanDeleteMessage: canDeleteMessage,
     CanCopyMessageLink: canCopyMessageLink,

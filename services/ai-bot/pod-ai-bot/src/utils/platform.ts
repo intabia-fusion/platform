@@ -55,6 +55,7 @@ export async function getDirect (
     description: '',
     private: true,
     archived: false,
-    members: [aibotAccount, account]
+    members: [aibotAccount, account],
+    type: 'person'
   })
 }

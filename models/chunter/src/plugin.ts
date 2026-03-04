@@ -87,7 +87,8 @@ export default mergeIds(chunterId, chunter, {
   },
   viewlet: {
     Chat: '' as Ref<ViewletDescriptor>,
-    Channels: '' as Ref<Viewlet>
+    Channels: '' as Ref<Viewlet>,
+    DirectMessages: '' as Ref<Viewlet>
   },
   ids: {
     ChunterNotificationGroup: '' as Ref<NotificationGroup>,

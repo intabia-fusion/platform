@@ -84,6 +84,7 @@
     "ReplyToThread": "Responder al hilo",
     "SentMessage": "Mensaje enviado",
     "Direct": "Directo",
+    "GroupChat": "Chat de grupo",
     "RepliedToThread": "Respondió al hilo",
     "RepliedTo": "respondió a: {message}",
     "AllChannels": "Todos los canales",

@@ -287,6 +287,10 @@ export interface ObjectTitle extends Class<Doc> {
   titleProvider: Resource<<T extends Doc>(client: Client, ref: Ref<T>, doc?: T) => Promise<string>>
 }
 
+export interface ObjectLabel extends Class<Doc> {
+  labelProvider: Resource<<T extends Doc>(client: Client, ref: Ref<T>, doc?: T) => Promise<IntlString>>
+}
+
 /**
  * @public
  */

@@ -84,6 +84,7 @@
     "ReplyToThread": "Odpovědět ve vlákně",
     "SentMessage": "Odeslaná zpráva",
     "Direct": "Přímý",
+    "GroupChat": "Skupinový chat",
     "RepliedToThread": "Odpověděl ve vlákně",
     "RepliedTo": "odpověděl na: {message}",
     "AllChannels": "Všechny kanály",

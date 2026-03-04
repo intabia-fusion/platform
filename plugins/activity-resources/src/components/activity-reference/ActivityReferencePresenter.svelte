@@ -15,7 +15,7 @@
 <script lang="ts">
   import activity, { ActivityReference } from '@hcengineering/activity'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, Label, ShowMore } from '@hcengineering/ui'
+  import { Action, Label, languageStore, ShowMore } from '@hcengineering/ui'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { Doc } from '@hcengineering/core'
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
@@ -76,7 +76,7 @@
   $: srcDocPanel = hierarchy.classHierarchyMixin(value.srcDocClass, view.mixin.ObjectPanel)
 
   $: targetDoc !== undefined &&
-    getDocLinkTitle(client, targetDoc._id, targetDoc._class, targetDoc).then((res) => {
+    getDocLinkTitle(client, targetDoc._id, targetDoc._class, targetDoc, $languageStore).then((res) => {
       targetTitle = res
     })
 </script>

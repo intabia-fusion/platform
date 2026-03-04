@@ -116,7 +116,10 @@ export async function getPerson (control: TriggerControl, personId: PersonId): P
   return (await control.findAll(control.ctx, contact.class.Person, { _id: socialId.attachedTo }))[0]
 }
 
-export async function getEmployee (control: TriggerControl, personId: PersonId): Promise<Employee | undefined> {
+export async function getEmployee (
+  control: Pick<TriggerControl, 'findAll' | 'ctx'>,
+  personId: PersonId
+): Promise<Employee | undefined> {
   if (personId === core.account.System) return undefined
 
   const socialId = (
