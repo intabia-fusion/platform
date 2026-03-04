@@ -98,23 +98,23 @@
 </div>
 <div class="flex-col flex-gap-4">
   {#each subscriptions as subscription (subscription._id)}
-  <div class="flex-row-center flex-gap-4">
-    <div class="flex-col flex-gap-2 w-120">
-      <span class="label">
-        <span class="font-semi-bold">
-          {#if subscription.name}
-            {parseUserAgent(subscription.name)}
-          {:else}
-            <Label label={notification.string.UnknownDevice} />
-          {/if}
+    <div class="flex-row-center flex-gap-4">
+      <div class="flex-col flex-gap-2 w-120">
+        <span class="label">
+          <span class="font-semi-bold">
+            {#if subscription.name}
+              {parseUserAgent(subscription.name)}
+            {:else}
+              <Label label={notification.string.UnknownDevice} />
+            {/if}
+          </span>
+          {#if subscription.name === navigator.userAgent}(<Label label={notification.string.Current} />){/if}
         </span>
-        {#if subscription.name === navigator.userAgent}(<Label label={notification.string.Current} />){/if}
-      </span>
-      <span class="description">{new Date(subscription.createdOn ?? 0).toLocaleDateString()}</span>
+        <span class="description">{new Date(subscription.createdOn ?? 0).toLocaleDateString()}</span>
+      </div>
+      <ModernToggle size="small" checked={getEnabled(subscription)} on:change={() => toggle(subscription)} />
+      <Button kind="dangerous" label={notification.string.RemoveWebpush} on:click={() => remove(subscription)} />
     </div>
-    <ModernToggle size="small" checked={getEnabled(subscription)} on:change={() => toggle(subscription)} />
-    <Button kind="dangerous" label={notification.string.RemoveWebpush} on:click={() => remove(subscription)} />
-  </div>
   {/each}
 </div>
 
