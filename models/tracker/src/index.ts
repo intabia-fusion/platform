@@ -607,6 +607,30 @@ export function createModel (builder: Builder): void {
 
   definePermissions(builder)
   defineSpaceType(builder)
+
+  builder.createDoc(
+    view.class.ViewletDescriptor,
+    core.space.Model,
+    {
+      label: tracker.string.TimeSpendReports,
+      icon: tracker.icon.Estimation,
+      component: tracker.component.TimeSpendReportList
+    },
+    tracker.viewlet.TimeSpendReportList
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Issue,
+      descriptor: tracker.viewlet.TimeSpendReportList,
+      viewOptions: undefined,
+      configOptions: {},
+      config: []
+    },
+    tracker.viewlet.TimeSpendReportListVL
+  )
 }
 
 function defineSpaceType (builder: Builder): void {

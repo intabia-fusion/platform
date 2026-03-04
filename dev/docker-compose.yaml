@@ -343,6 +343,7 @@ services:
       - LIVEKIT_WS=ws://huly.local:7880
       - EXPORT_URL=http://huly.local:4009
       - LINK_PREVIEW_URL=http://huly.local:4042
+      - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor
@@ -386,6 +387,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
       - HYLYLAKE_URL=http://huly.local:8096
       - AI_BOT_URL=http://huly.local:4010
+      - WEB_PUSH_URL=http://notification:3335
     restart: unless-stopped
   rekoni:
     image: intabiafusion/rekoni-service
@@ -1058,6 +1060,16 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - STATS_URL=http://huly.local:4900
+  notification:
+    image: intabiafusion/notification
+    environment:
+      - PORT=3335
+      - SOURCE=mail@example.com
+      - ACCESS_KEY=none
+      - SECRET_KEY=none
+      - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
+      - PUSH_PRIVATE_KEY=${PUSH_PRIVATE_KEY}
     restart: unless-stopped
 volumes:
   db:

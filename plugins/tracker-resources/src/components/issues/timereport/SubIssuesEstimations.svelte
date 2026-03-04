@@ -15,10 +15,11 @@
 <script lang="ts">
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
   import { Expandable, Spinner } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import EstimationSubIssueList from './EstimationSubIssueList.svelte'
+  import TimePresenter from './TimePresenter.svelte'
 
   export let issue: Issue
 
@@ -26,7 +27,6 @@
 
   let subIssues: Issue[] | undefined
 
-  $: hasSubIssues = issue.subIssues > 0
   $: subIssuesQuery.query(
     tracker.class.Issue,
     { attachedTo: issue._id },
@@ -38,12 +38,23 @@
     }
   )
   $: total = (subIssues ?? []).reduce((a, b) => a + b.estimation, 0)
+
+  $: childInfos = issue.childInfo ?? []
+  $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
 </script>
 
-{#if subIssues}
-  {#if hasSubIssues}
+{#if subIssues !== undefined}
+  {#if subIssues.length > 0}
     <Expandable label={tracker.string.ChildEstimation} contentColor bordered>
-      <svelte:fragment slot="title">: <span class="caption-color">{total}</span></svelte:fragment>
+      <svelte:fragment slot="title"
+        >: <span class="caption-color">
+          {#if total < treeResult.totalEstimation}
+            <TimePresenter value={total} /> / <TimePresenter value={treeResult.totalEstimation} />
+          {:else}
+            <TimePresenter value={total} />
+          {/if}
+        </span></svelte:fragment
+      >
       <EstimationSubIssueList issues={subIssues} />
     </Expandable>
   {/if}

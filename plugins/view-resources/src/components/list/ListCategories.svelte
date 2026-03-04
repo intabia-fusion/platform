@@ -427,17 +427,23 @@
     category: CategoryType,
     resultQuery: DocumentQuery<Doc<Space>>
   ): Partial<DocumentQuery<Doc>> {
-    return {
-      ...docKeys,
-      [groupByKey]:
-        typeof category === 'object'
-          ? category.name !== undefined
+    if (typeof category === 'object') {
+      return {
+        ...docKeys,
+        [groupByKey]:
+          category.name !== undefined
             ? { $in: category.values.flatMap((x) => x._id) }
             : resultQuery[groupByKey]?.$in?.length !== 0
               ? undefined
               : []
-          : category
+      }
     }
+
+    if (category === undefined) {
+      return { ...docKeys, [groupByKey]: null }
+    }
+
+    return { ...docKeys, [groupByKey]: category }
   }
 </script>
 

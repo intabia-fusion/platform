@@ -33,6 +33,7 @@ import tracker, {
   Issue,
   IssueParentInfo,
   TimeSpendReport,
+  reduceChildInfoTree,
   trackerId,
   type Project
 } from '@hcengineering/tracker'
@@ -206,7 +207,14 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
         )
       ]
       currentIssue.reportedTime += ccud.attributes.value
-      currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+      {
+        const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+          currentIssue.childInfo ?? [],
+          currentIssue.estimation,
+          currentIssue.reportedTime
+        )
+        currentIssue.remainingTime = Math.max(0, Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime)
+      }
       updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
       return res
     }
@@ -242,7 +250,17 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
           )
           currentIssue.reportedTime -= doc.value
           currentIssue.reportedTime += upd.operations.value
-          currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+          {
+            const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+              currentIssue.childInfo ?? [],
+              currentIssue.estimation,
+              currentIssue.reportedTime
+            )
+            currentIssue.remainingTime = Math.max(
+              0,
+              Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime
+            )
+          }
         }
 
         updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
@@ -278,7 +296,17 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
             )
           ]
           currentIssue.reportedTime -= doc.value
-          currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+          {
+            const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+              currentIssue.childInfo ?? [],
+              currentIssue.estimation,
+              currentIssue.reportedTime
+            )
+            currentIssue.remainingTime = Math.max(
+              0,
+              Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime
+            )
+          }
           updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
           return res
         }
@@ -342,7 +370,14 @@ async function doIssueUpdate (updateTx: TxUpdateDoc<Issue>, control: TriggerCont
 
     // Remove from parent estimation list.
     const issue = await getCurrentIssue()
-    updateIssueParentEstimations(issue, res, control, issue.parents, updatedParents)
+    updateIssueParentEstimations(
+      issue,
+      res,
+      control,
+      issue.parents,
+      updatedParents,
+      updateTx.operations.attachedTo as Ref<Issue>
+    )
   }
 
   if (
@@ -355,7 +390,14 @@ async function doIssueUpdate (updateTx: TxUpdateDoc<Issue>, control: TriggerCont
 
     issue.estimation = updateTx.operations.estimation ?? issue.estimation
     issue.reportedTime = updateTx.operations.reportedTime ?? issue.reportedTime
-    issue.remainingTime = Math.max(0, issue.estimation - issue.reportedTime)
+    {
+      const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+        issue.childInfo ?? [],
+        issue.estimation,
+        issue.reportedTime
+      )
+      issue.remainingTime = Math.max(0, Math.max(issue.estimation, totalEstimation) - totalReportedTime)
+    }
 
     res.push(
       control.txFactory.createTxUpdateDoc(tracker.class.Issue, issue.space, issue._id, {
@@ -388,11 +430,13 @@ function updateIssueParentEstimations (
     space: Ref<Space>
     estimation: number
     reportedTime: number
+    attachedTo?: Ref<Issue>
   },
   res: Tx[],
   control: TriggerControl,
   sourceParents: IssueParentInfo[],
-  targetParents: IssueParentInfo[]
+  targetParents: IssueParentInfo[],
+  overrideParentId?: Ref<Issue>
 ): void {
   for (const pinfo of sourceParents) {
     res.push(
@@ -410,7 +454,8 @@ function updateIssueParentEstimations (
           childInfo: {
             childId: issue._id,
             estimation: issue.estimation,
-            reportedTime: issue.reportedTime
+            reportedTime: issue.reportedTime,
+            parentId: overrideParentId ?? issue.attachedTo
           }
         }
       })
