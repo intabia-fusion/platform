@@ -686,7 +686,8 @@ export async function subscribePush (): Promise<boolean> {
           keys: {
             p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
             auth: arrayBufferToBase64(subscription.getKey('auth'))
-          }
+          },
+          name: navigator.userAgent
         })
       } else {
         const exists = await client.findOne(notification.class.PushSubscription, {
@@ -700,7 +701,8 @@ export async function subscribePush (): Promise<boolean> {
             keys: {
               p256dh: arrayBufferToBase64(current.getKey('p256dh')),
               auth: arrayBufferToBase64(current.getKey('auth'))
-            }
+            },
+            name: navigator.userAgent
           })
         }
       }
@@ -803,4 +805,26 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   } catch (e) {
     return {}
   }
+}
+
+export function parseUserAgent (userAgent: string): string {
+  const browsers = [
+    { name: 'Chrome', pattern: /Chrome\/[\d.]+/ },
+    { name: 'Firefox', pattern: /Firefox\/[\d.]+/ },
+    { name: 'Safari', pattern: /Safari\/[\d.]+/ },
+    { name: 'Edge', pattern: /Edg\/[\d.]+/ }
+  ]
+
+  const os = [
+    { name: 'Windows', pattern: /Windows/ },
+    { name: 'Mac', pattern: /Macintosh/ },
+    { name: 'Linux', pattern: /Linux/ },
+    { name: 'Android', pattern: /Android/ },
+    { name: 'iOS', pattern: /iPhone|iPad/ }
+  ]
+
+  const browser = browsers.find(({ pattern }) => pattern.test(userAgent))?.name ?? 'Unknown browser'
+  const system = os.find(({ pattern }) => pattern.test(userAgent))?.name ?? 'Unknown OS'
+
+  return `${browser} on ${system}`
 }

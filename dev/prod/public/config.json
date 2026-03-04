@@ -36,5 +36,6 @@
   "LIVEKIT_WS":"ws://huly.local:7880",
   "BILLING_URL": "http://huly.local:3041",
   "DESKTOP_UPDATES_URL": "https://platform-stage.intabia.ru/_dist",
-  "LINK_PREVIEW_URL": "http://huly.local:4041"
+  "LINK_PREVIEW_URL": "http://huly.local:4041",
+  "PUSH_PUBLIC_KEY": "pushPublicKey"
 }

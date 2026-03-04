@@ -77,6 +77,7 @@ import {
   type NotificationTypeSetting,
   type PushSubscription,
   type PushSubscriptionKeys,
+  type PushSubscriptionSetting,
   type ReactionInboxNotification,
   type MessageNotificationType,
   type TxNotificationType
@@ -116,6 +117,13 @@ export class TPushSubscription extends TDoc implements PushSubscription {
   user!: AccountUuid
   endpoint!: string
   keys!: PushSubscriptionKeys
+  name?: string
+}
+
+@Model(notification.class.PushSubscriptionSetting, preference.class.Preference)
+export class TPushSubscriptionSetting extends TPreference implements PushSubscriptionSetting {
+  declare attachedTo: Ref<TPushSubscription>
+  enabled!: boolean
 }
 
 @Model(notification.class.NotificationType, core.class.Doc, DOMAIN_MODEL)
@@ -353,6 +361,7 @@ export function createModel (builder: Builder): void {
     TNotificationType,
     TMentionInboxNotification,
     TPushSubscription,
+    TPushSubscriptionSetting,
     TNotificationProvider,
     TNotificationProviderSetting,
     TNotificationTypeSetting,
@@ -525,6 +534,12 @@ export function createModel (builder: Builder): void {
     label: notification.string.General,
     icon: notification.icon.Notifications,
     presenter: notification.component.GeneralPreferencesGroup
+  })
+
+  builder.createDoc(notification.class.NotificationPreferencesGroup, core.space.Model, {
+    label: notification.string.Webpushes,
+    icon: view.icon.Card,
+    presenter: notification.component.WebpushesPreferencesPresenter
   })
 
   builder.createDoc(

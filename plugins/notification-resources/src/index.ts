@@ -26,6 +26,7 @@ import CommonInboxNotificationPresenter from './components/inbox/CommonInboxNoti
 import MentionInboxNotificationPresenter from './components/inbox/MentionInboxNotificationPresenter.svelte'
 import NotificationCollaboratorsChanged from './components/NotificationCollaboratorsChanged.svelte'
 import GeneralPreferencesGroup from './components/settings/GeneralPreferencesGroup.svelte'
+import WebpushesPreferencesPresenter from './components/settings/WebpushesPreferencesPresenter.svelte'
 import {
   unsubscribe,
   resolveLocation,
@@ -62,7 +63,8 @@ export default async (): Promise<Resources> => ({
     CommonInboxNotificationPresenter,
     MentionInboxNotificationPresenter,
     NotificationCollaboratorsChanged,
-    GeneralPreferencesGroup
+    GeneralPreferencesGroup,
+    WebpushesPreferencesPresenter
   },
   function: {
     // eslint-disable-next-line @typescript-eslint/unbound-method
