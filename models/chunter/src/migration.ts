@@ -21,8 +21,7 @@ import core, {
   type Domain,
   type Ref,
   type Space,
-  DOMAIN_TX,
-  notEmpty
+  DOMAIN_TX
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -32,8 +31,7 @@ import {
   type MigrationUpgradeClient
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import notification from '@hcengineering/notification'
-import contact, { getAllAccounts } from '@hcengineering/contact'
+import { getAllAccounts } from '@hcengineering/contact'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
 import { type DocUpdateMessage } from '@hcengineering/activity'
 
@@ -41,34 +39,6 @@ import { DOMAIN_CHUNTER } from './index'
 import chunter from './plugin'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
-
-export async function createDocNotifyContexts (
-  client: MigrationUpgradeClient,
-  tx: TxOperations,
-  objectId: Ref<Doc>,
-  objectClass: Ref<Class<Doc>>,
-  objectSpace: Ref<Space>
-): Promise<void> {
-  const employees = await client.findAll(contact.mixin.Employee, { active: true })
-  const accounts = employees.map((it) => it.personUuid).filter(notEmpty)
-
-  const docNotifyContexts = await client.findAll(notification.class.DocNotifyContext, {
-    user: { $in: accounts },
-    objectId
-  })
-  const existingDNCUsers = new Set(docNotifyContexts.map((it) => it.user))
-
-  for (const account of accounts.filter((it) => !existingDNCUsers.has(it))) {
-    await tx.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-      user: account,
-      objectId,
-      objectClass,
-      objectSpace,
-      hidden: false,
-      isPinned: false
-    })
-  }
-}
 
 export async function createGeneral (client: MigrationUpgradeClient, tx: TxOperations): Promise<void> {
   const current = await tx.findOne(chunter.class.Channel, { _id: chunter.space.General })
@@ -101,8 +71,6 @@ export async function createGeneral (client: MigrationUpgradeClient, tx: TxOpera
       )
     }
   }
-
-  await createDocNotifyContexts(client, tx, chunter.space.General, chunter.class.Channel, core.space.Space)
 }
 
 async function joinEmployees (current: Space, tx: TxOperations): Promise<void> {
@@ -151,8 +119,6 @@ export async function createRandom (client: MigrationUpgradeClient, tx: TxOperat
       )
     }
   }
-
-  await createDocNotifyContexts(client, tx, chunter.space.Random, chunter.class.Channel, core.space.Space)
 }
 
 async function convertCommentsToChatMessages (client: MigrationClient): Promise<void> {
@@ -231,6 +197,12 @@ async function removeWrongActivity (client: MigrationClient): Promise<void> {
   })
 }
 
+async function removeChatSync (client: MigrationClient): Promise<void> {
+  await client.deleteMany<DocUpdateMessage>(DOMAIN_CHUNTER, {
+    _class: chunter.class.ChatSyncInfo
+  })
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -305,6 +277,11 @@ export const chunterOperation: MigrateOperation = {
             attachedToClass: chunter.class.DirectMessage
           })
         }
+      },
+      {
+        state: 'remove-chat-sync-v2',
+        mode: 'upgrade',
+        func: removeChatSync
       }
     ])
   },

@@ -69,7 +69,7 @@
 
   export let totalQuery: DocumentQuery<Doc> | undefined = undefined
 
-  export let prefferedSorting: string = 'modifiedOn'
+  export let preferredSorting: string = 'modifiedOn'
 
   export let limit = 200
 
@@ -84,10 +84,10 @@
   $: lookup = buildConfigLookup(hierarchy, _class, config, options?.lookup)
   $: associations = buildConfigAssociation(config)
 
-  let _sortKey = prefferedSorting
+  let _sortKey = preferredSorting
   let userSorting = false
   $: if (!userSorting) {
-    _sortKey = prefferedSorting
+    _sortKey = preferredSorting
   }
 
   let sortOrder = SortingOrder.Descending

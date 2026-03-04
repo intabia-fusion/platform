@@ -207,6 +207,7 @@ export interface ContactsTab extends Doc {
 export const contactId = 'contact' as Plugin
 
 export interface PersonSpace extends Space {
+  account: AccountUuid
   person: Ref<Person>
 }
 

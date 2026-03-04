@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { getResource } from '@hcengineering/platform'
+  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
-  import { getActions, getObjectLinkId } from '@hcengineering/view-resources'
+  import { Action, languageStore, lowercaseFirstLetter } from '@hcengineering/ui'
+  import { getObjectLinkId, canLeaveSpace } from '@hcengineering/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
@@ -26,12 +26,15 @@
   } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
-  import { Doc } from '@hcengineering/core'
+  import { Doc, getCurrentAccount, Space } from '@hcengineering/core'
+  import { Chat } from '@hcengineering/chunter'
+  import workbench from '@hcengineering/workbench'
 
   import NavItem from './NavItem.svelte'
   import { ChatNavItemModel } from '../types'
-  import { openChannel } from '../../../navigation'
+  import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
+  import { leaveChannel } from '../../../utils'
 
   export let context: DocNotifyContext | undefined
   export let item: ChatNavItemModel
@@ -64,18 +67,14 @@
     count = res === 0 ? null : res
   })
 
-  $: void getChannelActions(context, item.object).then((res) => {
+  $: void getActions(item.object, item.chat).then((res) => {
     actions = res
   })
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  async function getChannelActions (context: DocNotifyContext | undefined, object: Doc): Promise<Action[]> {
+  async function getActions (object: Doc, chat?: Chat): Promise<Action[]> {
     const result: Action[] = []
-
-    if (context === undefined) {
-      return []
-    }
 
     result.push({
       icon: view.icon.Open,
@@ -87,34 +86,88 @@
       }
     })
 
-    const excludedActions = [
-      notification.action.RemoveContextNotifications,
-      notification.action.UnReadNotifyContext,
-      notification.action.ReadNotifyContext
-    ]
-    const actions = (await getActions(client, context, notification.class.DocNotifyContext)).filter(
-      ({ _id }) => !excludedActions.includes(_id)
-    )
-
-    for (const action of actions) {
-      const { visibilityTester } = action
-      const isVisibleFn = visibilityTester && (await getResource(visibilityTester))
-      const isVisible = isVisibleFn ? await isVisibleFn(context) : true
-
-      if (!isVisible) {
-        continue
+    result.push({
+      label: workbench.string.OpenInSidebar,
+      icon: view.icon.DetailsFilled,
+      group: 'edit',
+      action: async () => {
+        await openChannelInSidebar(object._id, object._class, object)
       }
+    })
 
+    const label = lowercaseFirstLetter(await translate(hierarchy.getClass(object._class).label, {}, $languageStore))
+
+    if (chat != null && !chat.pinned) {
       result.push({
-        icon: action.icon ?? IconEdit,
-        label: action.label,
-        group: action.context.group,
-        action: async (_: any, evt: Event) => {
-          const impl = await getResource(action.action)
-          await impl(context, evt, { ...action.actionProps, object })
+        icon: view.icon.Star,
+        label: chunter.string.Star,
+        labelParams: { label },
+        group: 'edit',
+        action: async () => {
+          await client.updateCollection(
+            chat._class,
+            chat.space,
+            chat._id,
+            chat.attachedTo,
+            chat.attachedToClass,
+            'chats',
+            { pinned: true }
+          )
+        }
+      })
+    } else if (chat != null && chat.pinned) {
+      result.push({
+        icon: view.icon.Star,
+        label: chunter.string.Unstar,
+        labelParams: { label },
+        group: 'edit',
+        action: async () => {
+          await client.updateCollection(
+            chat._class,
+            chat.space,
+            chat._id,
+            chat.attachedTo,
+            chat.attachedToClass,
+            'chats',
+            { pinned: false }
+          )
         }
       })
     }
+
+    const canLeave = await canLeaveSpace(object)
+
+    if (!hierarchy.isDerived(object._class, chunter.class.DirectMessage) && canLeave) {
+      result.push({
+        icon: view.icon.Delete,
+        label: chunter.string.Leave,
+        labelParams: { label },
+        group: 'remove',
+        action: async () => {
+          await leaveChannel(object as Space, getCurrentAccount().uuid)
+        }
+      })
+    } else if (chat != null && !chat.hidden) {
+      result.push({
+        icon: view.icon.EyeCrossed,
+        label: chunter.string.Hide,
+        labelParams: { label },
+        group: 'remove',
+        action: async () => {
+          await client.updateCollection(
+            chat._class,
+            chat.space,
+            chat._id,
+            chat.attachedTo,
+            chat.attachedToClass,
+            'chats',
+            { hidden: true }
+          )
+          await resetChunterLocIfEqual(object._id, object._class, object)
+        }
+      })
+    }
+
     return result
   }
 </script>
@@ -129,12 +182,11 @@
   {count}
   title={item.title}
   description={item.description}
-  secondaryNotifyMarker={context === undefined
-    ? false
-    : (context?.lastViewedTimestamp ?? 0) < (context?.lastUpdateTimestamp ?? 0)}
+  secondaryNotifyMarker={context === undefined ? false : (context?.lastView ?? 0) < (context?.lastUpdate ?? 0)}
   {actions}
   {type}
   on:click={() => {
-    dispatch('select', { object: item.object })
+    const select = { chat: item.chat, object: item.object }
+    dispatch('select', select)
   }}
 />

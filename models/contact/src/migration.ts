@@ -9,7 +9,9 @@ import {
   type UserProfile,
   getFirstName,
   getLastName,
-  formatName
+  formatName,
+  type PersonSpace,
+  type Employee
 } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -19,6 +21,7 @@ import {
   type Doc,
   type Domain,
   DOMAIN_MODEL_TX,
+  DOMAIN_SPACE,
   DOMAIN_TX,
   generateId,
   type MarkupBlobRef,
@@ -28,6 +31,7 @@ import {
   type SocialKey,
   SortingOrder,
   type Space,
+  toIdMap,
   type TxCUD
 } from '@hcengineering/core'
 import {
@@ -513,6 +517,36 @@ async function migrateUserProfiles (client: MigrationClient): Promise<void> {
   )
 }
 
+async function setAccountInPersonSpace (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
+  const employees = toIdMap(
+    await client.find<Employee>(DOMAIN_CONTACT, { [contact.mixin.Employee]: { $exists: true } })
+  )
+
+  while (true) {
+    const spaces = (await iterator.next(500)) ?? []
+    if (spaces.length === 0) break
+
+    const updates: { space: Ref<PersonSpace>, account: AccountUuid }[] = []
+
+    for (const space of spaces) {
+      const employee = employees.get(space.person as Ref<Employee>)
+      const account = employee?.personUuid ?? space.members[0]
+      updates.push({ space: space._id, account })
+    }
+
+    if (updates.length > 0) {
+      await client.bulk(
+        DOMAIN_SPACE,
+        updates.map((it) => ({
+          filter: { _id: it.space },
+          update: { account: it.account }
+        }))
+      )
+    }
+  }
+}
+
 export const contactOperation: MigrateOperation = {
   async preMigrate (client: MigrationClient, logger: ModelLogger, mode): Promise<void> {
     await tryMigrate(mode, client, contactId, [
@@ -709,6 +743,11 @@ export const contactOperation: MigrateOperation = {
         state: 'set-social-identity-is-deleted',
         mode: 'upgrade',
         func: setSocialIdentityIsDeleted
+      },
+      {
+        state: 'set-account-person-space-v2',
+        mode: 'upgrade',
+        func: setAccountInPersonSpace
       }
     ])
   },

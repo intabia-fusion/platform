@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { ActivityMessage } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
-import contact, { Channel, Person } from '@hcengineering/contact'
+import contact, { Channel } from '@hcengineering/contact'
 import core, {
   PersonId,
   Class,
@@ -31,21 +31,17 @@ import core, {
   TxUpdateDoc
 } from '@hcengineering/core'
 import notification, {
-  ActivityInboxNotification,
   InboxNotification,
   MentionInboxNotification,
   NotificationProviderSetting,
   NotificationType
 } from '@hcengineering/notification'
-import { getResource, translate } from '@hcengineering/platform'
-import { getAccountBySocialId, getPerson } from '@hcengineering/server-contact'
+import { getAccountBySocialId } from '@hcengineering/server-contact'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import {
-  getNotificationLink,
-  getTextPresenter,
+  getNotificationInboxLink,
   getTranslatedNotificationContent,
-  AvailableProvidersCache,
-  AvailableProvidersCacheKey
+  getNotificationMessages
 } from '@hcengineering/server-notification-resources'
 import {
   type TelegramNotificationQueueMessage,
@@ -54,6 +50,7 @@ import {
 } from '@hcengineering/server-telegram'
 import telegram, { TelegramMessage } from '@hcengineering/telegram'
 import { jsonToHTML, markupToJSON } from '@hcengineering/text'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -102,16 +99,28 @@ export async function OnMessageCreate (txes: Tx[], control: TriggerControl): Pro
 /**
  * @public
  */
-export function IsIncomingMessageTypeMatch (
-  tx: Tx,
+export const IsIncomingMessageTypeMatch: TypeMatchFunc = async (
+  client: TypeMatchClient,
+  _type: NotificationType,
+  _typeObject: Doc,
   doc: Doc,
-  person: Ref<Person>,
-  user: PersonId[],
-  type: NotificationType,
-  control: TriggerControl
-): boolean {
-  const message = TxProcessor.createDoc2Doc(tx as TxCreateDoc<TelegramMessage>)
-  return message.incoming && message.sendOn > (doc.createdOn ?? doc.modifiedOn)
+  _receiver: Receiver
+): Promise<boolean> => {
+  const { hierarchy } = client
+  const message = _typeObject as DocUpdateMessage
+  if (!hierarchy.isDerived(message.objectClass, telegram.class.Message)) return false
+  if (message.action !== 'create') return false
+
+  const tgMessage = (
+    await client.findAll(
+      client.ctx,
+      telegram.class.Message,
+      { _id: message.objectId as Ref<TelegramMessage> },
+      { limit: 1 }
+    )
+  )[0]
+  if (tgMessage == null) return false
+  return tgMessage.incoming && tgMessage.sendOn > (doc.createdOn ?? doc.modifiedOn)
 }
 
 export async function GetCurrentEmployeeTG (
@@ -169,30 +178,15 @@ export async function GetIntegrationOwnerTG (
 //   return res?.value ?? ''
 // }
 
-async function activityMessageToHtml (control: TriggerControl, message: ActivityMessage): Promise<string | undefined> {
-  const { hierarchy } = control
-  if (hierarchy.isDerived(message._class, chunter.class.ChatMessage)) {
-    const chatMessage = message as ChatMessage
-    return jsonToHTML(markupToJSON(chatMessage.message))
-  } else {
-    const resource = getTextPresenter(message._class, control.hierarchy)
-
-    if (resource !== undefined) {
-      const fn = await getResource(resource.presenter)
-      const textData = await fn(message, control)
-      if (textData !== undefined && textData !== '') {
-        return jsonToHTML(markupToJSON(textData))
-      }
-    }
-  }
-
-  return undefined
+function activityMessageToHtml (message: ActivityMessage): string | undefined {
+  if (message.message === undefined) return undefined
+  return jsonToHTML(markupToJSON(message.message))
 }
 
 async function getTranslatedData (
-  data: InboxNotification,
-  doc: Doc,
   control: TriggerControl,
+  doc: Doc,
+  inboxNotification: InboxNotification,
   message?: ActivityMessage
 ): Promise<{
     title: string
@@ -202,25 +196,21 @@ async function getTranslatedData (
   }> {
   const { hierarchy } = control
 
-  let { title, body } = await getTranslatedNotificationContent(data, data._class, control)
+  let { title, body } = await getTranslatedNotificationContent(inboxNotification)
   let quote: string | undefined
 
-  if (hierarchy.isDerived(data._class, notification.class.MentionInboxNotification)) {
-    const text = (data as MentionInboxNotification).messageHtml
-    body = text !== undefined ? jsonToHTML(markupToJSON(text)) : body
-  } else if (hierarchy.isDerived(data._class, notification.class.ReactionInboxNotification)) {
-    title = await translate(activity.string.Reacted, {})
-  } else if (data.data !== undefined) {
-    body = jsonToHTML(markupToJSON(data.data))
+  if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
+    const markup = message?.message ?? (inboxNotification as MentionInboxNotification).markup
+    body = markup !== undefined ? jsonToHTML(markupToJSON(markup)) : body
   } else if (message !== undefined) {
-    const html = await activityMessageToHtml(control, message)
+    const html = activityMessageToHtml(message)
     if (html !== undefined) {
       body = html
     }
   }
 
   if (hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
-    const html = await activityMessageToHtml(control, doc as ActivityMessage)
+    const html = activityMessageToHtml(doc as ActivityMessage)
     if (html !== undefined) {
       quote = html
     }
@@ -230,7 +220,7 @@ async function getTranslatedData (
     title,
     quote,
     body,
-    link: await getNotificationLink(control, doc, message?._id)
+    link: await getNotificationInboxLink(control, doc, message?._id)
   }
 }
 
@@ -252,108 +242,55 @@ const telegramNotificationCacheKey = 'telegram.notification.cache'
 async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], control: TriggerControl): Promise<Tx[]> {
   if (control.queue === undefined) return []
 
-  const availableProviders: AvailableProvidersCache = control.contextCache.get(AvailableProvidersCacheKey) ?? new Map()
-
   const all: InboxNotification[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
-    .filter(
-      (it) =>
-        availableProviders.get(it._id)?.find((p) => p === telegram.providers.TelegramNotificationProvider) !== undefined
-    )
+    .filter((it) => (it.allowedProviders[telegram.providers.TelegramNotificationProvider]?.length ?? 0) > 0)
 
-  if (all.length === 0) {
-    return []
-  }
+  if (all.length === 0) return []
 
-  const result: Tx[] = []
   const producer = control.queue.getProducer<TelegramQueueMessage>(control.ctx, QueueTopic.TelegramBot)
   for (const inboxNotification of all) {
-    result.push(...(await processNotification(inboxNotification, control, producer)))
-  }
-
-  return result
-}
-
-async function getNotificationMessage (
-  n: InboxNotification,
-  control: TriggerControl,
-  cache: Map<Ref<Doc>, Doc>
-): Promise<ActivityMessage | undefined> {
-  const { hierarchy } = control
-  if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
-    const activityNotification = n as ActivityInboxNotification
-    const message =
-      cache.get(activityNotification.attachedTo) ??
-      (
-        await control.findAll(control.ctx, activityNotification.attachedToClass, {
-          _id: activityNotification.attachedTo
-        })
-      )[0]
-    return message as ActivityMessage
-  } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
-    const mentionNotification = n as MentionInboxNotification
-    if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
-      const message =
-        cache.get(mentionNotification.mentionedIn) ??
-        (
-          await control.findAll(control.ctx, mentionNotification.mentionedInClass, {
-            _id: mentionNotification.mentionedIn
-          })
-        )[0]
-      return message as ActivityMessage
+    try {
+      await processNotification(control, producer, inboxNotification)
+    } catch (e) {
+      control.ctx.error('Could not send telegram notification', { inboxNotification, e })
     }
-  }
-
-  return undefined
-}
-
-async function getSenderName (n: InboxNotification, control: TriggerControl): Promise<string> {
-  const inlineName = n.intlParams?.senderName
-  if (inlineName != null && inlineName !== '') {
-    return inlineName.toString()
-  }
-  const senderPerson = await getPerson(control, n.createdBy ?? n.modifiedBy)
-  return senderPerson?.name ?? 'System'
-}
-
-async function processNotification (
-  n: InboxNotification,
-  control: TriggerControl,
-  producer: PlatformQueueProducer<TelegramQueueMessage>
-): Promise<Tx[]> {
-  try {
-    const cache: Map<Ref<Doc>, Doc> = control.contextCache.get(telegramNotificationCacheKey) ?? new Map()
-    const doc = cache.get(n.objectId) ?? (await control.findAll(control.ctx, n.objectClass, { _id: n.objectId }))[0]
-    if (doc === undefined) return []
-    const message = await getNotificationMessage(n, control, cache)
-
-    cache.set(n.objectId, doc)
-    control.contextCache.set(telegramNotificationCacheKey, cache)
-
-    const { title, body, quote, link } = await getTranslatedData(n, doc, control, message)
-    const record: TelegramNotificationQueueMessage = {
-      type: TelegramQueueMessageType.Notification,
-      notificationId: n._id,
-      messageId: message?._id,
-      account: n.user,
-      sender: await getSenderName(n, control),
-      attachments: hasAttachments(message, control.hierarchy),
-      title,
-      quote,
-      body,
-      link
-    }
-
-    await producer.send(control.ctx, control.workspace.uuid, [record])
-  } catch (err) {
-    control.ctx.error('Could not send telegram notification', {
-      err,
-      notificationId: n._id,
-      account: n.user
-    })
   }
 
   return []
+}
+
+async function processNotification (
+  control: TriggerControl,
+  producer: PlatformQueueProducer<TelegramQueueMessage>,
+  n: InboxNotification
+): Promise<void> {
+  const cache: Map<Ref<Doc>, Doc> = control.contextCache.get(telegramNotificationCacheKey) ?? new Map()
+  control.contextCache.set(telegramNotificationCacheKey, cache)
+
+  const doc = cache.get(n.objectId) ?? (await control.findAll(control.ctx, n.objectClass, { _id: n.objectId }))[0]
+  if (doc === undefined) return
+
+  cache.set(n.objectId, doc)
+
+  const messageByNotificationId = await getNotificationMessages(control, [n])
+  const message = messageByNotificationId.get(n._id)
+
+  const { title, body, quote, link } = await getTranslatedData(control, doc, n, message)
+  const record: TelegramNotificationQueueMessage = {
+    type: TelegramQueueMessageType.Notification,
+    notificationId: n._id,
+    messageId: message?._id,
+    account: n.user,
+    sender: n.intlParams?.senderName?.toString() ?? 'System',
+    attachments: hasAttachments(message, control.hierarchy),
+    title,
+    quote,
+    body,
+    link
+  }
+
+  await producer.send(control.ctx, control.workspace.uuid, [record])
 }
 
 async function updateWorkspaceSubscription (

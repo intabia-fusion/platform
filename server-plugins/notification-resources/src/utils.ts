@@ -12,559 +12,269 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import { Analytics } from '@hcengineering/analytics'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import contact, {
-  Employee,
-  formatName,
-  includesAny,
-  Person,
-  SocialIdentity,
-  SocialIdentityRef
-} from '@hcengineering/contact'
 import core, {
-  AccountUuid,
+  AnyAttribute,
+  AttachedDoc,
   Class,
+  Collection,
   concatLink,
+  Data,
   Doc,
-  DocumentUpdate,
-  groupByArray,
-  Hierarchy,
+  includesAny,
   Markup,
-  matchQuery,
-  type MeasureContext,
-  MixinUpdate,
   notEmpty,
-  PersonId,
   Ref,
   Space,
-  Tx,
-  TxCreateDoc,
-  TxCUD,
-  TxMixin,
-  TxProcessor,
-  TxUpdateDoc
+  Tx
 } from '@hcengineering/core'
 import notification, {
-  NotificationContent,
+  ActivityInboxNotification,
+  InboxNotification,
+  MentionInboxNotification,
+  MessageNotificationType,
+  NotificationGroup,
   notificationId,
-  NotificationProvider,
-  type NotificationProviderSetting,
-  NotificationType,
-  type NotificationTypeSetting
+  NotificationType
 } from '@hcengineering/notification'
-import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
-import { getPersonSpaces } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import serverNotification, {
-  HTMLPresenter,
-  NotificationPresenter,
-  ReceiverInfo,
-  SenderInfo,
-  TextPresenter
+import {
+  NOTIFICATION_BODY_SIZE,
+  PUSH_NOTIFICATION_TITLE_SIZE,
+  Receiver,
+  TypeMatchClient,
+  TypeMatchFunc
 } from '@hcengineering/server-notification'
-import serverView from '@hcengineering/server-view'
-import { extractReferences, markupToJSON, Reference } from '@hcengineering/text-core'
-import { encodeObjectURI } from '@hcengineering/view'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { getMetadata, getResource, translate } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
+import { encodeObjectURI } from '@hcengineering/view'
+import serverView from '@hcengineering/server-view'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
+import { markupToText } from '@hcengineering/text-core'
 
-import { NotifyResult } from './types'
+import { TemplateContent } from './types'
 
-/**
- * @public
- */
-export function isUserEmployeeInFieldValueTypeMatch (
-  _: Tx,
+export const IsUserFieldValueTypeMatch: TypeMatchFunc = (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _message: Doc,
   doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
-  type: NotificationType,
-  control: TriggerControl
-): boolean {
+  receiver: Receiver
+): boolean => {
+  const type = _type as MessageNotificationType
   if (type.field === undefined) return false
   const value = (doc as any)[type.field]
   if (value == null) return false
-  if (value === person) return true
+  if (value === receiver.employeeRef) return true
 
   if (Array.isArray(value)) {
-    return includesAny(value, socialIds)
+    return includesAny(value, receiver.socialIds)
   } else {
-    return socialIds.includes(value)
+    return receiver.socialIds.includes(value)
   }
 }
 
-export const mentionTypeMatch = (
-  tx: TxCreateDoc<ChatMessage>,
+export const MeAddedInCollaboratorsNotificationTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _message: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const message = _message as DocUpdateMessage
+  if (message.objectClass !== core.class.Collaborator || message.action !== 'create') return false
+  return message.objectAttributes?.collaborator === receiver.account
+}
+
+export const MeRemovedFromCollaboratorsNotificationTypeMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _message: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const message = _message as DocUpdateMessage
+  if (message.objectClass !== core.class.Collaborator || message.action !== 'remove') return false
+  return message.objectAttributes?.collaborator === receiver.account
+}
+
+export async function getObjectSpace (control: TriggerControl, doc: Doc, cache: Map<Ref<Doc>, Doc>): Promise<Space> {
+  return control.hierarchy.isDerived(doc._class, core.class.Space)
+    ? (doc as Space)
+    : ((cache.get(doc.space) as Space) ??
+        (await control.findAll<Space>(control.ctx, core.class.Space, { _id: doc.space }, { limit: 1 }))[0])
+}
+
+export async function getClassNotificationGroup (
+  control: TriggerControl,
+  _class: Ref<Class<Doc>>
+): Promise<NotificationGroup | undefined> {
+  const group = (await control.findAll(control.ctx, notification.class.NotificationGroup, { objectClass: _class }))[0]
+
+  if (group != null) return group
+
+  const groups = await control.findAll(control.ctx, notification.class.NotificationGroup, {
+    objectClass: { $exists: true }
+  })
+
+  for (const g of groups) {
+    if (g.objectClass != null && control.hierarchy.isDerived(_class, g.objectClass)) {
+      return g
+    }
+  }
+}
+
+export function generateAttributeNotificationType (
+  control: TriggerControl,
+  attribute: AnyAttribute,
+  group: NotificationGroup,
+  defaultEnabled = false
+): Tx[] {
+  const res: Tx[] = []
+
+  const isCollection: boolean = core.class.Collection === attribute.type._class
+  const objectClass = !isCollection ? attribute.attributeOf : (attribute.type as Collection<AttachedDoc>).of
+  const messageClass = control.hierarchy.isDerived(objectClass, activity.class.ActivityMessage)
+    ? objectClass
+    : activity.class.DocUpdateMessage
+
+  const data: Data<MessageNotificationType> = {
+    attribute: attribute._id,
+    group: group.parent ?? group._id,
+    subGroup: group.parent != null ? group._id : undefined,
+    field: attribute.name,
+    generated: true,
+    objectClass,
+    messageClass,
+    hidden: false,
+    defaultEnabled,
+    attachedToClass: attribute.attributeOf,
+    templates: {
+      textTemplate: '{body}',
+      htmlTemplate: '<p>{body}</p><p>{link}</p>',
+      subjectTemplate: '{doc} updated'
+    },
+    label: attribute.label
+  }
+  const id =
+    `${notification.class.MessageNotificationType}_${attribute.attributeOf}_${attribute.name}` as Ref<NotificationType>
+  res.push(control.txFactory.createTxCreateDoc(notification.class.MessageNotificationType, core.space.Model, data, id))
+  return res
+}
+
+export async function getNotificationMessages (
+  control: TriggerControl,
+  notifications: InboxNotification[]
+): Promise<Map<Ref<InboxNotification>, ActivityMessage | undefined>> {
+  const { hierarchy } = control
+
+  const ids: Ref<ActivityMessage>[] = []
+  const map = new Map<Ref<InboxNotification>, Ref<ActivityMessage> | undefined>()
+
+  for (const n of notifications) {
+    if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
+      const activityNotification = n as ActivityInboxNotification
+      ids.push(activityNotification.attachedTo)
+      map.set(n._id, activityNotification.attachedTo)
+    } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
+      const mentionNotification = n as MentionInboxNotification
+      if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
+        ids.push(mentionNotification.mentionedIn as Ref<ActivityMessage>)
+        map.set(n._id, mentionNotification.mentionedIn as Ref<ActivityMessage>)
+      }
+    }
+  }
+
+  if (ids.length === 0) return new Map()
+
+  const messages = await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: { $in: ids } })
+
+  return new Map(
+    map.entries().map(([notificationId, messageId]) => [notificationId, messages.find((msg) => msg._id === messageId)])
+  )
+}
+
+export async function getTranslatedNotificationContent (
+  data: Data<InboxNotification>
+): Promise<{ title: string, body: string, [key: string]: string }> {
+  const params = { ...data.intlParams }
+
+  for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
+    params[k] = await translate(v, params)
+  }
+
+  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params)
+  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params)
+
+  return { ...params, title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body: body.slice(0, NOTIFICATION_BODY_SIZE) }
+}
+
+export async function getContentByTemplate (
+  control: TriggerControl,
   doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
-  type: NotificationType,
-  control: TriggerControl,
-  account: AccountUuid
-): boolean => {
-  const hierarchy = control.hierarchy
-  if (tx._class !== core.class.TxCreateDoc) return false
-  if (!hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)) return false
-  const message = TxProcessor.createDoc2Doc(tx)
-  const content: string = message.message
+  _types: Ref<NotificationType>[],
+  inboxNotification: InboxNotification,
+  message: ActivityMessage | undefined
+): Promise<TemplateContent | undefined> {
+  const { hierarchy, modelDb } = control
+  const types = _types.map((it) => modelDb.getObject(it)).filter(notEmpty)
 
-  const references: Reference[] =
-    control.contextCache.get(`${message._id}_references`) ?? extractReferences(markupToJSON(content))
-  control.contextCache.set(`${message._id}_references`, references)
-
-  if (references.length === 0) return false
-
-  if (references.some(({ objectId }) => objectId === contact.mention.Everyone)) return true
-  if (references.some(({ objectId }) => objectId === contact.mention.Here)) {
-    const isOnline = Array.from(control.userStatusMap.values()).some(({ user, online }) => user === account && online)
-    if (isOnline) return true
+  const type = types.find((it) => it.templates != null)
+  const templates = type?.templates ?? {
+    textTemplate: '{body}',
+    htmlTemplate: '<p>{body}.</p> <p>{link}</p>',
+    subjectTemplate: '{doc}'
   }
 
-  return references.some(({ objectId }) => objectId === person)
-}
+  const params: Record<string, string> = await getTranslatedNotificationContent(inboxNotification)
 
-/**
- * @public
- */
-export function isUserInFieldValueTypeMatch (_: Tx, doc: Doc, user: PersonId[], type: NotificationType): boolean {
-  if (type.field === undefined) {
-    return false
+  const title = (await getDocTitle(control, doc)) ?? ''
+  const url = (inboxNotification.intlParams?.url ?? (await getDocUrl(control, doc)))?.toString()
+  const identifier = (inboxNotification.intlParams?.identifier ?? (await getDocIdentifier(control, doc)))?.toString()
+
+  const titleWithIdentifier = identifier != null ? `${identifier}: ${title}` : title
+  const htmlTitle = url != null ? `<a href='${url}'>${titleWithIdentifier}</a>` : titleWithIdentifier
+
+  if (url != null) {
+    params.url = url
+  }
+  if (identifier != null) {
+    params.identifier = identifier
   }
 
-  const value = (doc as any)[type.field]
-
-  if (value === undefined) {
-    return false
+  if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
+    const markup: Markup | undefined = message?.message ?? (inboxNotification as MentionInboxNotification).markup
+    const text = markup !== undefined ? markupToText(markup) : undefined
+    params.body = text ?? params.body
+    params.message = text ?? params.message
+  } else if (message !== undefined) {
+    params.message = message.message !== undefined ? markupToText(message.message) : (params.message ?? '')
+  } else if (params.message === undefined) {
+    params.message = params.body ?? ''
   }
 
-  return Array.isArray(value) ? user.some((it) => value.includes(it)) : user.includes(value)
-}
+  const inboxLink = await getNotificationInboxLink(control, doc, message?._id)
+  const app = control.branding?.title ?? 'Huly'
 
-export function replaceAll (str: string, find: string, replace: string): string {
-  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace)
-}
+  const inboxLinkText = await translate(notification.string.ViewIn, { app })
 
-function escapeRegExp (str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
+  params.link = `<a href='${inboxLink}'>${inboxLinkText}</a>`
+  const senderName = (inboxNotification?.intlParams?.senderName ?? 'System').toString()
 
-export function getAllowedProviders (
-  control: TriggerControl,
-  socialIds: PersonId[],
-  type: NotificationType,
-  notificationControl: NotificationProviderControl
-): Ref<NotificationProvider>[] {
-  const result: Ref<NotificationProvider>[] = []
-  const providers = control.modelDb.findAllSync(notification.class.NotificationProvider, {})
+  const text = fillTemplate(templates.textTemplate, senderName, titleWithIdentifier, params)
+  const html = fillTemplate(templates.htmlTemplate, senderName, htmlTitle, params)
+  const subject = fillTemplate(templates.subjectTemplate, senderName, titleWithIdentifier, params)
 
-  for (const provider of providers) {
-    const allowed = isAllowed(control, socialIds, type, provider, notificationControl)
-
-    if (allowed) {
-      result.push(provider._id)
-    }
-  }
-
-  return result
-}
-
-export function isAllowed (
-  control: TriggerControl,
-  receiverIds: PersonId[],
-  type: NotificationType,
-  provider: NotificationProvider,
-  notificationControl: NotificationProviderControl
-): boolean {
-  const providerSettings = (notificationControl.byProvider.get(provider._id) ?? []).filter(({ createdBy }) =>
-    createdBy !== undefined ? receiverIds.includes(createdBy) : false
-  )
-
-  if (providerSettings.length > 0 && providerSettings.every((s) => !s.enabled)) {
-    return false
-  }
-
-  if (providerSettings.length === 0 && !provider.defaultEnabled) {
-    return false
-  }
-
-  const providerDefaults = control.modelDb.findAllSync(notification.class.NotificationProviderDefaults, {})
-
-  if (providerDefaults.some((it) => it.provider === provider._id && it.ignoredTypes.includes(type._id))) {
-    return false
-  }
-
-  const setting = (notificationControl.settingsByProvider.get(provider._id) ?? []).find(
-    (it) => it.type === type._id && it.createdBy !== undefined && receiverIds.includes(it.createdBy)
-  )
-
-  if (setting !== undefined) {
-    return setting.enabled
-  }
-
-  if (providerDefaults.some((it) => it.provider === provider._id && it.enabledTypes.includes(type._id))) {
-    return true
-  }
-
-  if (type === undefined) return false
-
-  return type.defaultEnabled
-}
-
-export async function isShouldNotifyTx (
-  control: TriggerControl,
-  tx: TxCUD<Doc>,
-  object: Doc,
-  receiver: ReceiverInfo,
-  isOwn: boolean,
-  isSpace: boolean,
-  notificationControl: NotificationProviderControl,
-  docUpdateMessage?: DocUpdateMessage
-): Promise<NotifyResult> {
-  const types = getMatchedTypes(control, tx, isOwn, isSpace, docUpdateMessage?.attributeUpdates?.attrKey)
-  const modifiedByPersonId = tx.modifiedBy
-  const result = new Map<Ref<NotificationProvider>, NotificationType[]>()
-  let providers: NotificationProvider[] = control.modelDb.findAllSync(notification.class.NotificationProvider, {})
-
-  if (getMetadata(serverNotification.metadata.InboxOnlyNotifications) === true) {
-    providers = providers.filter((it) => it._id === notification.providers.InboxNotificationProvider)
-  }
-
-  for (const type of types) {
-    if (type.allowedForAuthor !== true && receiver.socialIds.includes(modifiedByPersonId)) {
-      continue
-    }
-
-    if (control.hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
-      const mixin = control.hierarchy.as(type, serverNotification.mixin.TypeMatch)
-      if (mixin.func !== undefined) {
-        const f = await getResource(mixin.func)
-        let res = f(tx, object, receiver.employee, receiver.socialIds, type, control, receiver.account)
-        if (res instanceof Promise) {
-          res = await res
-        }
-        if (!res) continue
-      }
-    }
-    for (const provider of providers) {
-      const allowed = isAllowed(control, receiver.socialIds, type, provider, notificationControl)
-
-      if (allowed) {
-        const cur = result.get(provider._id) ?? []
-        result.set(provider._id, [...cur, type])
-      }
-    }
-  }
-
-  return result
-}
-
-function getMatchedTypes (
-  control: TriggerControl,
-  tx: TxCUD<Doc>,
-  isOwn: boolean,
-  isSpace: boolean,
-  field?: string
-): NotificationType[] {
-  const filtered: NotificationType[] = []
-  let allTypes: NotificationType[] = control.modelDb.findAllSync(notification.class.NotificationType, {})
-  allTypes = allTypes.filter(
-    (p) =>
-      (isSpace ? p.spaceSubscribe === true : p.spaceSubscribe !== true) &&
-      (field === undefined || p.field === field || p.field === undefined)
-  )
-  for (const type of allTypes) {
-    if (isTypeMatched(control, type, tx, isOwn)) {
-      filtered.push(type)
-    }
-  }
-
-  return filtered
-}
-
-function isTypeMatched (control: TriggerControl, type: NotificationType, tx: TxCUD<Doc>, isOwn: boolean): boolean {
-  const h = control.hierarchy
-  const targetClass = h.getBaseClass(type.objectClass)
-  if (type.onlyOwn === true && !isOwn) return false
-  if (!type.txClasses.includes(tx._class)) return false
-  if (!control.hierarchy.isDerived(h.getBaseClass(tx.objectClass), targetClass)) return false
-  if (tx.attachedToClass !== undefined && type.attachedToClass !== undefined) {
-    if (!control.hierarchy.isDerived(h.getBaseClass(tx.attachedToClass), h.getBaseClass(type.attachedToClass))) {
-      return false
-    }
-  }
-  if (type.field !== undefined) {
-    if (tx._class === core.class.TxUpdateDoc) {
-      if (!fieldUpdated(type.field, (tx as TxUpdateDoc<Doc>).operations)) return false
-    }
-    if (tx._class === core.class.TxMixin) {
-      if (!fieldUpdated(type.field, (tx as TxMixin<Doc, Doc>).attributes)) return false
-    }
-  }
-  if (type.txMatch !== undefined) {
-    const res = matchQuery([tx], type.txMatch, tx._class, control.hierarchy, true)
-    if (res.length === 0) return false
-  }
-  return true
-}
-
-function fieldUpdated (field: string, ops: DocumentUpdate<Doc> | MixinUpdate<Doc, Doc>): boolean {
-  if ((ops as any)[field] !== undefined) return true
-  if ((ops.$pull as any)?.[field] !== undefined) return true
-  if ((ops.$push as any)?.[field] !== undefined) return true
-  return false
-}
-
-export async function updateNotifyContextsSpace (
-  ctx: MeasureContext,
-  control: TriggerControl,
-  tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>
-): Promise<Tx[]> {
-  if (tx._class !== core.class.TxUpdateDoc) {
-    return []
-  }
-  const updateTx = tx as TxUpdateDoc<Doc>
-
-  if (updateTx.operations.space === undefined) {
-    return []
-  }
-
-  const notifyContexts = await control.findAll(ctx, notification.class.DocNotifyContext, { objectId: tx.objectId })
-
-  return notifyContexts.map((value) =>
-    control.txFactory.createTxUpdateDoc(value._class, value.space, value._id, {
-      objectSpace: updateTx.operations.space
-    })
-  )
-}
-
-export function getHTMLPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): HTMLPresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverNotification.mixin.HTMLPresenter)
-}
-
-export function getTextPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TextPresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverNotification.mixin.TextPresenter)
-}
-
-async function getSenderName (control: TriggerControl, sender: SenderInfo): Promise<string> {
-  if (sender.socialId === core.account.System || sender.socialId === core.account.ConfigUser) {
-    return await translate(core.string.System, {})
-  }
-
-  const { person } = sender
-
-  if (person === undefined) {
-    console.error('Cannot find person', { socialId: sender.socialId })
-    Analytics.handleError(new Error(`Cannot find person ${sender.socialId}`))
-
-    return ''
-  }
-
-  return formatName(person.name, control.branding?.lastNameFirst)
-}
-
-async function getFallbackNotificationFullfillment (
-  object: Doc,
-  originTx: TxCUD<Doc>,
-  control: TriggerControl,
-  sender: SenderInfo
-): Promise<NotificationContent> {
-  const title: IntlString = notification.string.CommonNotificationTitle
-  let body: IntlString = notification.string.CommonNotificationBody
-
-  const intlParams: Record<string, string | number> = {}
-  const intlParamsNotLocalized: Record<string, IntlString> = {}
-
-  const textPresenter = getTextPresenter(object._class, control.hierarchy)
-  if (textPresenter !== undefined) {
-    const textPresenterFunc = await getResource(textPresenter.presenter)
-    intlParams.title = await textPresenterFunc(object, control)
-  }
-
-  intlParams.senderName = await getSenderName(control, sender)
-
-  if (originTx._class === core.class.TxUpdateDoc) {
-    const updateTx = originTx as TxUpdateDoc<Doc>
-    const attributes = control.hierarchy.getAllAttributes(object._class)
-    for (const attrName in updateTx.operations) {
-      if (!Object.prototype.hasOwnProperty.call(updateTx.operations, attrName)) {
-        continue
-      }
-
-      const attr = attributes.get(attrName)
-      if (attr !== null && attr !== undefined) {
-        intlParamsNotLocalized.property = attr.label
-        if (attr.type._class === core.class.TypeString) {
-          body = notification.string.CommonNotificationChangedProperty
-          intlParams.newValue = (updateTx.operations as any)[attrName]?.toString()
-        } else {
-          body = notification.string.CommonNotificationChanged
-        }
-      }
-      break
-    }
-  } else if (originTx.attachedToClass !== undefined && originTx._class === core.class.TxCreateDoc) {
-    const clazz = control.hierarchy.getClass(originTx.objectClass)
-    const label = clazz.pluralLabel ?? clazz.label
-
-    if (label !== undefined) {
-      intlParamsNotLocalized.collection = clazz.pluralLabel ?? clazz.label
-      body = notification.string.CommonNotificationCollectionAdded
-    }
-  } else if (originTx.attachedToClass !== undefined && originTx._class === core.class.TxRemoveDoc) {
-    const clazz = control.hierarchy.getClass(originTx.objectClass)
-    const label = clazz.pluralLabel ?? clazz.label
-
-    if (label !== undefined) {
-      intlParamsNotLocalized.collection = clazz.pluralLabel ?? clazz.label
-      body = notification.string.CommonNotificationCollectionRemoved
-    }
-  }
-
-  return { title, body, intlParams, intlParamsNotLocalized }
-}
-
-function getNotificationPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): NotificationPresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverNotification.mixin.NotificationPresenter)
-}
-
-export async function getNotificationContent (
-  originTx: TxCUD<Doc>,
-  receiver: Ref<Person>,
-  sender: SenderInfo,
-  object: Doc,
-  control: TriggerControl
-): Promise<NotificationContent> {
-  let { title, body, intlParams, intlParamsNotLocalized } = await getFallbackNotificationFullfillment(
-    object,
-    originTx,
-    control,
-    sender
-  )
-
-  let data: Markup | undefined
-
-  const notificationPresenter = getNotificationPresenter(originTx.objectClass, control.hierarchy)
-
-  if (notificationPresenter !== undefined) {
-    const getFuillfillmentParams = await getResource(notificationPresenter.presenter)
-    const updateParams = await getFuillfillmentParams(object, originTx, receiver, control)
-    title = updateParams.title
-    body = updateParams.body
-    data = updateParams.data
-    intlParams = {
-      ...intlParams,
-      ...updateParams.intlParams
-    }
-    if (updateParams.intlParamsNotLocalized != null) {
-      intlParamsNotLocalized = {
-        ...intlParamsNotLocalized,
-        ...updateParams.intlParamsNotLocalized
-      }
-    }
-  }
-
-  const content: NotificationContent = {
-    title,
-    body,
-    data,
-    intlParams
-  }
-
-  if (intlParamsNotLocalized !== undefined) {
-    content.intlParamsNotLocalized = intlParamsNotLocalized
-  }
-
-  return content
-}
-
-export async function getReceiversInfo (
-  ctx: MeasureContext,
-  accounts: AccountUuid[],
-  control: TriggerControl
-): Promise<ReceiverInfo[]> {
-  if (accounts.length === 0) return []
-
-  const employees: Pick<Employee, '_id' | 'personUuid' | 'role'>[] = await control.findAll(
-    ctx,
-    contact.mixin.Employee,
-    { personUuid: { $in: accounts }, active: true },
-    { projection: { _id: 1, personUuid: 1, role: 1 } }
-  )
-  if (employees.length === 0) return []
-
-  const spaces = await getPersonSpaces(control)
-  if (spaces.length === 0) return []
-
-  const socialIds: Pick<SocialIdentity, '_id' | 'attachedTo'>[] = await control.findAll(
-    ctx,
-    contact.class.SocialIdentity,
-    { attachedTo: { $in: employees.map((it) => it._id) } },
-    { projection: { _id: 1, attachedTo: 1 } }
-  )
-
-  const employeeByAccount = new Map(employees.map((it) => [it.personUuid, it]))
-  const spaceByPerson = new Map(spaces.map((it) => [it.person, it]))
-  const socialIdsByEmployee = groupByArray(socialIds, (it) => it.attachedTo)
-
-  return accounts
-    .map((account) => {
-      const employee = employeeByAccount.get(account)
-      if (employee === undefined) return undefined
-      const space = spaceByPerson.get(employee._id)
-      if (space === undefined) return undefined
-
-      const info: ReceiverInfo = {
-        employee: employee._id,
-        role: employee.role,
-        space: space._id,
-        account,
-        socialIds: socialIdsByEmployee.get(employee._id)?.map((it) => it._id) ?? []
-      }
-      return info
-    })
-    .filter(notEmpty)
-}
-
-export async function getSenderInfo (
-  ctx: MeasureContext,
-  socialId: PersonId,
-  control: TriggerControl
-): Promise<SenderInfo> {
-  const controlAccount = control.ctx.contextData.account
-  let account: AccountUuid | undefined = control.ctx.contextData.socialStringsToUsers.get(socialId)?.accountUuid
-
-  if (account == null && controlAccount.socialIds.includes(socialId)) {
-    account = controlAccount.uuid
-  }
-
-  if (account != null) {
-    return {
-      socialId,
-      person: (await control.findAll(ctx, contact.class.Person, { personUuid: account }))[0]
-    }
-  }
-
-  const socialIdentity = (
-    await control.findAll(
-      control.ctx,
-      contact.class.SocialIdentity,
-      { _id: socialId as SocialIdentityRef },
-      { limit: 1, projection: { _id: 1, attachedTo: 1 } }
-    )
-  )[0]
-
-  if (socialIdentity === undefined) {
-    return { socialId }
-  }
+  if (subject === '') return
 
   return {
-    socialId,
-    person: (await control.findAll(ctx, contact.class.Person, { _id: socialIdentity.attachedTo }))[0]
+    text,
+    html,
+    subject
   }
 }
 
-export async function getNotificationLink (
+export async function getNotificationInboxLink (
   control: TriggerControl,
   doc: Doc,
   message?: Ref<ActivityMessage>
@@ -603,62 +313,21 @@ export async function getNotificationLink (
   return message !== undefined ? `${link}?message=${message}` : link
 }
 
-export async function messageToMarkup (control: TriggerControl, message: ActivityMessage): Promise<string | undefined> {
-  const { hierarchy } = control
-  if (hierarchy.isDerived(message._class, chunter.class.ChatMessage)) {
-    const chatMessage = message as ChatMessage
-    return chatMessage.message
-  } else {
-    const resource = getTextPresenter(message._class, control.hierarchy)
+function fillTemplate (template: string, sender: string, doc: string, params: Record<string, string> = {}): string {
+  let res = replaceAll(template, '{sender}', sender)
+  res = replaceAll(res, '{doc}', doc)
 
-    if (resource !== undefined) {
-      const fn = await getResource(resource.presenter)
-      const textData = await fn(message, control)
-      if (textData !== undefined && textData !== '') {
-        return textData
-      }
-    }
+  for (const key in params) {
+    res = replaceAll(res, `{${key}}`, params[key])
   }
 
-  return undefined
-}
-export class NotificationProviderControl {
-  public byProvider: Map<Ref<NotificationProvider>, NotificationProviderSetting[]>
-  public settingsByProvider: Map<Ref<NotificationProvider>, NotificationTypeSetting[]>
-  constructor (
-    readonly providersSettings: NotificationProviderSetting[],
-    readonly typesSettings: NotificationTypeSetting[]
-  ) {
-    this.byProvider = groupByArray(providersSettings, (it) => it.attachedTo)
-    this.settingsByProvider = groupByArray(typesSettings, (it) => it.attachedTo)
-  }
-}
-const notificationProvidersKey = 'notification_provider_settings'
-const typesSettingsKey = 'notification_type_settings'
-export async function getNotificationProviderControl (
-  ctx: MeasureContext,
-  control: TriggerControl
-): Promise<NotificationProviderControl> {
-  let providersSettings: NotificationProviderSetting[] = control.contextCache.get(notificationProvidersKey)
-  if (providersSettings === undefined) {
-    providersSettings = await control.queryFind(ctx, notification.class.NotificationProviderSetting, {
-      space: core.space.Workspace
-    })
-    control.contextCache.set(notificationProvidersKey, providersSettings)
-  }
-  let typesSettings: NotificationTypeSetting[] = control.contextCache.get(typesSettingsKey)
-  if (typesSettings === undefined) {
-    typesSettings = await control.queryFind(ctx, notification.class.NotificationTypeSetting, {
-      space: core.space.Workspace
-    })
-    control.contextCache.set(typesSettingsKey, typesSettings)
-  }
-  return new NotificationProviderControl(providersSettings, typesSettings)
+  return res
 }
 
-export async function getObjectSpace (control: TriggerControl, doc: Doc, cache: Map<Ref<Doc>, Doc>): Promise<Space> {
-  return control.hierarchy.isDerived(doc._class, core.class.Space)
-    ? (doc as Space)
-    : ((cache.get(doc.space) as Space) ??
-        (await control.findAll<Space>(control.ctx, core.class.Space, { _id: doc.space }, { limit: 1 }))[0])
+function replaceAll (str: string, find: string, replace: string): string {
+  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace)
+}
+
+function escapeRegExp (str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

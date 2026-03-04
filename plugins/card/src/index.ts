@@ -205,7 +205,8 @@ const cardPlugin = plugin(cardId, {
     Favorites: '' as IntlString,
     CreateCard: '' as IntlString,
     Version: '' as IntlString,
-    Versions: '' as IntlString
+    Versions: '' as IntlString,
+    Default: '' as IntlString
   },
   section: {
     Attachments: '' as Ref<CardSection>,
@@ -217,7 +218,8 @@ const cardPlugin = plugin(cardId, {
     CommunicationMessages: '' as Ref<CardSection>
   },
   ids: {
-    CardWidget: '' as Ref<Doc>
+    CardWidget: '' as Ref<Doc>,
+    CardNotificationGroup: '' as Ref<Doc>
   },
   component: {
     LabelsPresenter: '' as AnyComponent,

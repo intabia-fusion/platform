@@ -453,19 +453,6 @@ export function createModel (builder: Builder): void {
     func: task.function.GetAllStates
   })
 
-  // builder.createDoc(
-  //   notification.class.NotificationType,
-  //   core.space.Model,
-  //   {
-  //     label: task.string.Assigned,
-  //     hidden: false,
-  //     textTemplate: '{doc} was assigned to you by {sender}',
-  //     htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
-  //     subjectTemplate: '{doc} was assigned to you'
-  //   },
-  //   task.ids.AssigneedNotification
-  // )
-
   builder.mixin(task.mixin.TaskTypeClass, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: task.component.TaskTypeClassPresenter
   })

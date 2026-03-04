@@ -25,7 +25,7 @@ import {
   UX,
   Hidden
 } from '@hcengineering/model'
-import core, { TClass, TDoc, TSpace } from '@hcengineering/model-core'
+import core, { TAttachedDoc, TClass, TDoc, TSpace } from '@hcengineering/model-core'
 import type {
   Channel,
   ChatMessage,
@@ -33,18 +33,28 @@ import type {
   ChunterSpace,
   DirectMessage,
   ObjectChatPanel,
-  ThreadMessage
+  ThreadMessage,
+  Chat
 } from '@hcengineering/chunter'
-import { type Class, type Doc, type Domain, IndexKind, type Ref, type Space, type Timestamp } from '@hcengineering/core'
-import contact, { type ChannelProvider as SocialChannelProvider, type Person } from '@hcengineering/contact'
+import {
+  type AccountUuid,
+  type Class,
+  type Doc,
+  type Domain,
+  IndexKind,
+  type Ref,
+  type Space,
+  type Timestamp
+} from '@hcengineering/core'
+import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@hcengineering/contact'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { TActivityMessage } from '@hcengineering/model-activity'
 import attachment from '@hcengineering/model-attachment'
-import type { DocNotifyContext } from '@hcengineering/notification'
 
 import chunter from './plugin'
 
 export const DOMAIN_CHUNTER = 'chunter' as Domain
+export const DOMAIN_CHUNTER_DOC = 'chunter-doc' as Domain
 
 @Model(chunter.class.ChunterSpace, core.class.Space)
 export class TChunterSpace extends TSpace implements ChunterSpace {
@@ -70,7 +80,15 @@ export class TChannel extends TChunterSpace implements Channel {
 }
 
 @Model(chunter.class.DirectMessage, chunter.class.ChunterSpace)
-@UX(chunter.string.DirectMessage, contact.icon.Person, undefined, undefined, undefined, chunter.string.DirectMessages)
+@UX(
+  chunter.string.DirectMessage,
+  contact.icon.Person,
+  undefined,
+  undefined,
+  undefined,
+  chunter.string.DirectMessages,
+  chunter.string.DirectMessages
+)
 export class TDirectMessage extends TChunterSpace implements DirectMessage {}
 
 @Model(chunter.class.ChatMessage, activity.class.ActivityMessage)
@@ -117,7 +135,14 @@ export class TObjectChatPanel extends TClass implements ObjectChatPanel {
 
 @Model(chunter.class.ChatSyncInfo, core.class.Doc, DOMAIN_CHUNTER)
 export class TChatSyncInfo extends TDoc implements ChatSyncInfo {
-  user!: Ref<Person>
-  hidden!: Ref<DocNotifyContext>[]
+  user!: AccountUuid
   timestamp!: Timestamp
+}
+
+@Model(chunter.class.Chat, core.class.AttachedDoc, DOMAIN_CHUNTER_DOC)
+export class TChat extends TAttachedDoc implements Chat {
+  declare space: Ref<PersonSpace>
+  account!: AccountUuid
+  pinned!: boolean
+  hidden!: boolean
 }

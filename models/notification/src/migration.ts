@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import chunter from '@hcengineering/chunter'
+import chunter, { type Chat } from '@hcengineering/chunter'
 import contact, { type PersonSpace } from '@hcengineering/contact'
 import core, {
   DOMAIN_TX,
@@ -28,7 +28,8 @@ import core, {
   type Collaborator,
   generateId,
   DOMAIN_TRANSIENT,
-  type Mixin
+  type Mixin,
+  type Domain
 } from '@hcengineering/core'
 import {
   migrateSpace,
@@ -47,7 +48,6 @@ import notification, {
   type InboxNotification
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
-
 import {
   DOMAIN_SPACE,
   getSocialKeyByOldAccount,
@@ -55,6 +55,7 @@ import {
   getUniqueAccountsFromOldAccounts,
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
+import activity from '@hcengineering/activity'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY } from './index'
 
 interface OldCollaborators extends Doc {
@@ -229,8 +230,8 @@ export async function migrateDuplicateContexts (client: MigrationClient): Promis
       const existContext = contextByUser.get(key)
 
       if (existContext != null) {
-        const existLastViewedTimestamp = existContext.lastViewedTimestamp ?? 0
-        const newLastViewedTimestamp = context.lastViewedTimestamp ?? 0
+        const existLastViewedTimestamp = existContext.lastView ?? 0
+        const newLastViewedTimestamp = context.lastView ?? 0
         if (existLastViewedTimestamp > newLastViewedTimestamp) {
           toRemove.add(context._id)
         } else {
@@ -316,6 +317,26 @@ async function migrateCollaborators (client: MigrationClient): Promise<void> {
     }
   }
   client.logger.log('finished processing collaborators ', {})
+}
+
+async function migrateCommonNotificationFields (client: MigrationClient): Promise<void> {
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.CommonInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
+
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.MentionInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
+
+  await client.update(
+    DOMAIN_NOTIFICATION,
+    { _class: notification.class.ReactionInboxNotification },
+    { $rename: { messageHtml: 'markup' } }
+  )
 }
 
 /**
@@ -644,6 +665,54 @@ export async function migrateNotificationsObject (client: MigrationClient): Prom
   }
 }
 
+async function createChats (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<Collaborator>(DOMAIN_COLLABORATOR, {})
+  const pinnedContexts = (await client.find(DOMAIN_DOC_NOTIFY, {
+    _class: notification.class.DocNotifyContext,
+    isPinned: true
+  })) as DocNotifyContext[]
+  const spaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
+  const processed = new Map<Ref<Doc>, AccountUuid[]>()
+  while (true) {
+    const collaborators = (await iterator.next(500)) ?? []
+    if (collaborators.length === 0) break
+
+    const res: Chat[] = []
+    for (const collaborator of collaborators) {
+      if (processed.get(collaborator.attachedTo)?.includes(collaborator.collaborator) === true) continue
+      processed.set(
+        collaborator.attachedTo,
+        (processed.get(collaborator.attachedTo) ?? []).concat([collaborator.collaborator])
+      )
+      const space = spaces.find((it) => it.account === collaborator.collaborator)
+      if (space === undefined) continue
+      if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
+        continue
+      }
+      res.push({
+        _id: generateId<Chat>(),
+        _class: chunter.class.Chat,
+        attachedTo: collaborator.attachedTo,
+        attachedToClass: collaborator.attachedToClass,
+        hidden: false,
+        pinned: pinnedContexts.some(
+          (ctx) => ctx.objectId === collaborator.attachedTo && ctx.user === collaborator.collaborator
+        ),
+        account: collaborator.collaborator,
+        space: space._id,
+        collection: 'chats',
+        modifiedOn: collaborator.modifiedOn,
+        modifiedBy: core.account.System,
+        createdOn: collaborator.createdOn,
+        createdBy: core.account.System
+      })
+    }
+    if (res.length > 0) {
+      await client.create<Chat>('chunter-doc' as Domain, res)
+    }
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -856,6 +925,16 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrate-collaborators-v2',
         mode: 'upgrade',
         func: migrateCollaborators
+      },
+      {
+        state: 'migrate-common-notification-fields-v1',
+        mode: 'upgrade',
+        func: migrateCommonNotificationFields
+      },
+      {
+        state: 'create-chats-by-collaborators-v1',
+        mode: 'upgrade',
+        func: createChats
       }
     ])
   },

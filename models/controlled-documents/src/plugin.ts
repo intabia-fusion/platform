@@ -20,9 +20,10 @@ import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineer
 import { mergeIds, type Resource } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { ActionCategory, ViewAction, Viewlet, ViewletViewAction } from '@hcengineering/view'
-import { type NotificationType, type NotificationGroup } from '@hcengineering/notification'
+import { type ActionCategory, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
+import { type NotificationGroup, type MessageNotificationType } from '@hcengineering/notification'
 import { type TextActionVisibleFunction, type TextActionFunction } from '@hcengineering/text-editor'
+import { type DocUpdateMessage } from '@hcengineering/activity'
 
 export default mergeIds(documentsId, documents, {
   component: {
@@ -89,7 +90,7 @@ export default mergeIds(documentsId, documents, {
   },
   notification: {
     DocumentsNotificationGroup: '' as Ref<NotificationGroup>,
-    ContentNotification: '' as Ref<NotificationType>,
-    StateNotification: '' as Ref<NotificationType>
+    ContentNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
+    StateNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>
   }
 })

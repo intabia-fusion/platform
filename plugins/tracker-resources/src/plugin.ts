@@ -37,7 +37,9 @@ export default mergeIds(trackerId, tracker, {
     List: '' as Ref<ViewletDescriptor>,
     Kanban: '' as Ref<ViewletDescriptor>,
     MilestoneIssuesList: '' as Ref<Viewlet>,
-    ComponentIssuesList: '' as Ref<Viewlet>
+    ComponentIssuesList: '' as Ref<Viewlet>,
+    TimeSpendReportList: '' as Ref<ViewletDescriptor>,
+    TimeSpendReportListVL: '' as Ref<Viewlet>
   },
   completion: {
     IssueQuery: '' as Resource<ObjectSearchFactory>,
@@ -361,6 +363,7 @@ export default mergeIds(trackerId, tracker, {
     TimePresenter: '' as AnyComponent,
     EstimationValueEditor: '' as AnyComponent,
     TimeSpendReport: '' as AnyComponent,
+    TimeSpendReportList: '' as AnyComponent,
     EstimationEditor: '' as AnyComponent,
     TemplateEstimationEditor: '' as AnyComponent,
     DeleteComponentPresenter: '' as AnyComponent,

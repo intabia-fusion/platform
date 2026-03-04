@@ -9,10 +9,12 @@ import core, {
   TxMixin,
   TxUpdateDoc
 } from '@hcengineering/core'
-import { DocObjectCache, type ActivityControl } from './types'
+import { TriggerControl } from '@hcengineering/server-core'
+
+import { DocObjectCache } from './types'
 
 export async function getAllObjectTransactions (
-  control: Pick<ActivityControl, 'hierarchy' | 'findAll' | 'ctx'>,
+  control: TriggerControl,
   _class: Ref<Class<Doc>>,
   docs: Ref<Doc>[],
   mixin?: Ref<Mixin<Doc>>
@@ -70,6 +72,16 @@ export async function getAllObjectTransactions (
         .filter((it, idx, arr) => arr.findIndex((q) => q._id === it._id) === idx)
     )
   }
+
+  return cache
+}
+
+export function getDocObjectCache (control: TriggerControl): DocObjectCache {
+  const cache: DocObjectCache = control.contextCache.get('ActivityMessagesHandler') ?? {
+    docs: new Map(),
+    transactions: new Map()
+  }
+  control.contextCache.set('ActivityMessagesHandler', cache)
 
   return cache
 }

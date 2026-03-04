@@ -18,45 +18,27 @@ import { type Builder, Mixin } from '@hcengineering/model'
 
 import contact from '@hcengineering/contact'
 import core from '@hcengineering/core'
-import { TClass } from '@hcengineering/model-core'
 import { TNotificationType } from '@hcengineering/model-notification'
 import notification from '@hcengineering/notification'
-import { type Resource } from '@hcengineering/platform'
 import serverCore from '@hcengineering/server-core'
 import serverNotification, {
-  type HTMLPresenter,
-  type NotificationContentProvider,
-  type NotificationPresenter,
-  type Presenter,
-  type TextPresenter,
+  type CreateNotificationResource,
+  type NotificationContentProviderResource,
   type TypeMatch,
-  type TypeMatchFunc
+  type TypeMatchFuncResource
 } from '@hcengineering/server-notification'
 
 export { serverNotificationId } from '@hcengineering/server-notification'
 
-@Mixin(serverNotification.mixin.HTMLPresenter, core.class.Class)
-export class THTMLPresenter extends TClass implements HTMLPresenter {
-  presenter!: Resource<Presenter>
-}
-
-@Mixin(serverNotification.mixin.TextPresenter, core.class.Class)
-export class TTextPresenter extends TClass implements TextPresenter {
-  presenter!: Resource<Presenter>
-}
-
-@Mixin(serverNotification.mixin.NotificationPresenter, core.class.Class)
-export class TNotificationPresenter extends TClass implements NotificationPresenter {
-  presenter!: Resource<NotificationContentProvider>
-}
-
 @Mixin(serverNotification.mixin.TypeMatch, notification.class.NotificationType)
 export class TTypeMatch extends TNotificationType implements TypeMatch {
-  func!: TypeMatchFunc
+  match?: TypeMatchFuncResource
+  create?: CreateNotificationResource
+  contentProvider?: NotificationContentProviderResource
 }
 
 export function createModel (builder: Builder): void {
-  builder.createModel(THTMLPresenter, TTextPresenter, TTypeMatch, TNotificationPresenter)
+  builder.createModel(TTypeMatch)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverNotification.trigger.OnAttributeCreate,
@@ -109,11 +91,20 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(
-    notification.ids.MentionNotificationType,
+    notification.ids.MeAddedInCollaboratorsNotification,
     notification.class.NotificationType,
     serverNotification.mixin.TypeMatch,
     {
-      func: serverNotification.function.MentionTypeMatch
+      match: serverNotification.function.MeAddedInCollaboratorsNotificationTypeMatch
+    }
+  )
+
+  builder.mixin(
+    notification.ids.MeRemovedFromCollaboratorsNotification,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverNotification.function.MeRemovedFromCollaboratorsNotificationTypeMatch
     }
   )
 }

@@ -13,27 +13,37 @@
 // limitations under the License.
 //
 import { type Asset, type IntlString } from '@hcengineering/platform'
-import { type Class, type Doc, type Ref, type UserStatus, type AccountUuid } from '@hcengineering/core'
+import {
+  type Class,
+  type Doc,
+  type Ref,
+  type UserStatus,
+  type AccountUuid,
+  type DocumentQuery
+} from '@hcengineering/core'
 import { type DocNotifyContext } from '@hcengineering/notification'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
+import { type Chat } from '@hcengineering/chunter'
 
-export type ChatGroup = 'activity' | 'direct' | 'channels' | 'starred'
+export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 
 export interface SortFnOptions {
-  contexts: DocNotifyContext[]
+  contextByDoc: Map<Ref<Doc>, DocNotifyContext>
   userStatusByAccount: Map<AccountUuid, UserStatus>
 }
 
 export interface ChatNavGroupModel {
-  id: ChatGroup
+  id: ChatGroupID
   label?: IntlString
   sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
   wrap: boolean
-  getActionsFn?: (contexts: DocNotifyContext[]) => Action[]
+  actions?: Action[]
+  createAction?: Action
   maxSectionItems?: number
-  isPinned: boolean
+  query: DocumentQuery<Chat>
   _class?: Ref<Class<Doc>>
   skipClasses?: Array<Ref<Class<Doc>>>
+  showEmpty?: boolean
 }
 
 export interface ChatNavItemModel {
@@ -45,8 +55,10 @@ export interface ChatNavItemModel {
   iconSize?: IconSize
   iconProps: Record<string, any>
   withIconBackground: boolean
+  chat?: Chat
 }
 
 export interface SelectChannelEvent {
+  chat: Chat
   object: Doc
 }

@@ -529,7 +529,7 @@ export class ChannelDataProvider implements IChannelDataProvider {
       return -1
     }
 
-    const lastViewedTimestamp = this.context.lastViewedTimestamp
+    const lastViewedTimestamp = this.context.lastView
     const client = getClient()
     const firstNotification = await client.findOne(
       notification.class.InboxNotification,

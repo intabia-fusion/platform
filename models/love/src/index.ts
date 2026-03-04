@@ -75,7 +75,7 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
 import media from '@hcengineering/media'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import workbench, { WidgetType } from '@hcengineering/workbench'
@@ -459,13 +459,6 @@ export function createModel (builder: Builder): void {
     love.ids.LoveNotificationGroup
   )
 
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.SoundNotificationProvider,
-    excludeIgnore: [love.ids.KnockNotification],
-    ignoredTypes: [],
-    enabledTypes: []
-  })
-
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_LOVE,
     disabled: [{ space: 1 }, { modifiedOn: 1 }, { modifiedBy: 1 }, { createdBy: 1 }, { createdOn: -1 }]
@@ -684,23 +677,38 @@ export function createModel (builder: Builder): void {
     love.viewlet.FloorMeetingMinutes
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.Chat,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: love.class.MeetingMinutes,
-      txMatch: {
-        'attributes.collection': 'messages'
+      match: {
+        collection: 'messages'
       },
       defaultEnabled: false,
       group: love.ids.LoveNotificationGroup
     },
     love.ids.MeetingMinutesChatNotification
+  )
+
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
+    core.space.Model,
+    {
+      label: love.string.Invite,
+      generated: false,
+      hidden: true,
+      objectClass: love.class.UserMeetingInvite,
+      txClasses: [],
+      defaultEnabled: true,
+      group: love.ids.LoveNotificationGroup
+    },
+    love.ids.InviteNotification
   )
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {

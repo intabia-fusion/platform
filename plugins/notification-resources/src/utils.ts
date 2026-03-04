@@ -91,14 +91,6 @@ export function loadNotificationSettings (): void {
 
 loadNotificationSettings()
 
-export async function hasDocNotifyContextPinAction (docNotifyContext: DocNotifyContext): Promise<boolean> {
-  return !docNotifyContext.isPinned
-}
-
-export async function hasDocNotifyContextUnpinAction (docNotifyContext: DocNotifyContext): Promise<boolean> {
-  return docNotifyContext.isPinned
-}
-
 /**
  * @public
  */
@@ -133,7 +125,7 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
       ops,
       inboxNotifications.map(({ _id }) => _id)
     )
-    await ops.update(doc, { lastViewedTimestamp: Date.now() })
+    await ops.update(doc, { lastView: Date.now() })
   } finally {
     await ops.commit()
   }
@@ -167,7 +159,7 @@ export async function unReadNotifyContext (doc: DocNotifyContext): Promise<void>
         return
       }
 
-      await ops.diffUpdate(doc, { lastViewedTimestamp: createdOn - 1 })
+      await ops.diffUpdate(doc, { lastView: createdOn - 1 })
     }
   } finally {
     await ops.commit()
@@ -189,7 +181,7 @@ export async function removeContextNotifications (doc?: DocNotifyContext): Promi
     for (const notification of notifications) {
       await ops.removeDoc(notification._class, notification.space, notification._id)
     }
-    await ops.update(doc, { lastViewedTimestamp: Date.now() })
+    await ops.update(doc, { lastView: Date.now() })
   } finally {
     await ops.commit()
   }
@@ -238,22 +230,6 @@ export async function unsubscribe (context: DocNotifyContext): Promise<void> {
 export async function subscribe (docClass: Ref<Class<Doc>>, docId: Ref<Doc>): Promise<void> {
   const client = getClient()
   await subscribeDoc(client, docClass, docId, 'add')
-}
-
-export async function pinDocNotifyContext (object: DocNotifyContext): Promise<void> {
-  const client = getClient()
-
-  await client.updateDoc(object._class, object.space, object._id, {
-    isPinned: true
-  })
-}
-
-export async function unpinDocNotifyContext (object: DocNotifyContext): Promise<void> {
-  const client = getClient()
-
-  await client.updateDoc(object._class, object.space, object._id, {
-    isPinned: false
-  })
 }
 
 export async function clearAll (): Promise<void> {
@@ -710,7 +686,8 @@ export async function subscribePush (): Promise<boolean> {
           keys: {
             p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
             auth: arrayBufferToBase64(subscription.getKey('auth'))
-          }
+          },
+          name: navigator.userAgent
         })
       } else {
         const exists = await client.findOne(notification.class.PushSubscription, {
@@ -724,7 +701,8 @@ export async function subscribePush (): Promise<boolean> {
             keys: {
               p256dh: arrayBufferToBase64(current.getKey('p256dh')),
               auth: arrayBufferToBase64(current.getKey('auth'))
-            }
+            },
+            name: navigator.userAgent
           })
         }
       }
@@ -827,4 +805,26 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   } catch (e) {
     return {}
   }
+}
+
+export function parseUserAgent (userAgent: string): string {
+  const browsers = [
+    { name: 'Chrome', pattern: /Chrome\/[\d.]+/ },
+    { name: 'Firefox', pattern: /Firefox\/[\d.]+/ },
+    { name: 'Safari', pattern: /Safari\/[\d.]+/ },
+    { name: 'Edge', pattern: /Edg\/[\d.]+/ }
+  ]
+
+  const os = [
+    { name: 'Windows', pattern: /Windows/ },
+    { name: 'Mac', pattern: /Macintosh/ },
+    { name: 'Linux', pattern: /Linux/ },
+    { name: 'Android', pattern: /Android/ },
+    { name: 'iOS', pattern: /iPhone|iPad/ }
+  ]
+
+  const browser = browsers.find(({ pattern }) => pattern.test(userAgent))?.name ?? 'Unknown browser'
+  const system = os.find(({ pattern }) => pattern.test(userAgent))?.name ?? 'Unknown OS'
+
+  return `${browser} on ${system}`
 }

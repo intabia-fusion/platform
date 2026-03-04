@@ -28,9 +28,9 @@
     "Read": "Přečtené",
     "Unread": "Nepřečtené",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Aktualizoval {senderName}",
-    "CommonNotificationChanged": "{senderName} změnil {property}",
-    "CommonNotificationChangedProperty": "{senderName} změnil {property} na \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Aktualizoval {senderName}",
     "ChangedCollaborators": "Změnění spolupracovníci",
     "NewCollaborators": "Noví spolupracovníci",
     "RemovedCollaborators": "Odebraní spolupracovníci",
@@ -50,6 +50,13 @@
     "EnablePush": "Povolit push oznámení",
     "NotificationBlockedInBrowser": "Oznámení jsou blokována ve vašem prohlížeči. Povolení oznámení nastavte v nastavení prohlížeče",
     "General": "Obecné",
+    "Webpushes": "Webpushes",
+    "UnknownDevice": "Neznámé zařízení",
+    "RemoveWebpush": "Odebrat",
+    "WebpushRemoveConfirm": "Webpushes budou smazány. Potvrdit?",
+    "Value": "{value}",
+    "Current": "aktuální",
+    "Subscribe": "Přihlásit se",
     "InboxNotificationsDescription": "Přijímejte osobní oznámení ve své doručené poště na platformě Huly.",
     "PushNotificationsDescription": "Přijímejte osobní oznámení na ploše.",
     "CommonNotificationCollectionAdded": "{senderName} přidal {collection}",
@@ -58,6 +65,8 @@
     "SoundNotificationsDescription": "Přijímejte zvuková oznámení o událostech.",
     "NoAccessToObject": "Již nemáte přístup k tomuto objektu",
     "ViewIn": "Zobrazit v {app}",
-    "Clear": "Vymazat"
+    "Clear": "Vymazat",
+    "YouAddedAsCollaborator": "Byli jste přidáni jako spolupracovník",
+    "YouRemovedFromCollaborators": "Byli jste odebráni jako spolupracovník"
   }
 }

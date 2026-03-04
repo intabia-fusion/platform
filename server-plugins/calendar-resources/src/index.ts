@@ -37,12 +37,12 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
-import { getMetadata, getResource } from '@hcengineering/platform'
+import { getMetadata } from '@hcengineering/platform'
 import serverCalendar from '@hcengineering/server-calendar'
 import { getAccountBySocialId, getPerson, getSocialIds, getSocialStrings } from '@hcengineering/server-contact'
 import { QueueTopic, TriggerControl } from '@hcengineering/server-core'
-import { getHTMLPresenter, getTextPresenter } from '@hcengineering/server-notification-resources'
 import { generateToken } from '@hcengineering/server-token'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
 
 /**
  * @public
@@ -56,37 +56,28 @@ export async function FindReminders (
     options?: FindOptions<T>
   ) => Promise<FindResult<T>>
 ): Promise<Doc[]> {
-  const events = await findAll(calendar.class.Event, { attachedTo: doc._id })
-  return events
+  return await findAll(calendar.class.Event, { attachedTo: doc._id })
 }
 
-/**
- * @public
- */
-export async function ReminderHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string | undefined> {
+export async function ReminderUrlPresenter (doc: Doc, control: TriggerControl): Promise<string | undefined> {
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
-  if (target !== undefined) {
-    const HTMLPresenter = getHTMLPresenter(target._class, control.hierarchy)
-    const htmlPart =
-      HTMLPresenter !== undefined ? await (await getResource(HTMLPresenter.presenter))(target, control) : undefined
-    return htmlPart
-  }
+
+  return await getDocUrl(control, target)
 }
 
-/**
- * @public
- */
-export async function ReminderTextPresenter (doc: Doc, control: TriggerControl): Promise<string | undefined> {
+export async function ReminderIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string | undefined> {
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
-  if (target !== undefined) {
-    const TextPresenter = getTextPresenter(target._class, control.hierarchy)
-    if (TextPresenter === undefined) return
-    return await (
-      await getResource(TextPresenter.presenter)
-    )(target, control)
-  }
+
+  return await getDocIdentifier(control, target)
+}
+
+export async function ReminderTitlePresenter (doc: Doc, control: TriggerControl): Promise<string | undefined> {
+  const event = doc as Event
+  const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
+  if (target == null) return undefined
+  return await getDocTitle(control, target)
 }
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
@@ -415,8 +406,9 @@ async function onRemoveEvent (ctx: TxRemoveDoc<Event>, control: TriggerControl):
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    ReminderHTMLPresenter,
-    ReminderTextPresenter,
+    ReminderUrlPresenter,
+    ReminderIdentifierPresenter,
+    ReminderTitlePresenter,
     FindReminders
   },
   trigger: {

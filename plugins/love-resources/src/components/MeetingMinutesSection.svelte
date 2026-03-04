@@ -57,7 +57,7 @@
             config={preference?.config ?? viewlet.config}
             query={{ attachedTo: objectId }}
             loadingProps={{ length: meetings }}
-            prefferedSorting="createdOn"
+            preferredSorting="createdOn"
             {readonly}
           />
         </Scroller>

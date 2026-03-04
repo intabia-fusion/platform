@@ -20,6 +20,8 @@
     "Cancel": "Zrušit",
     "Cancelled": "Zrušeno",
     "NewRequest": "Nový požadavek",
-    "CancelRequest": "Zrušit požadavek"
+    "CancelRequest": "Zrušit požadavek",
+    "NewRequestNotification": "Nový {name}",
+    "CancelRequestNotification": "{name} zrušeno"
   }
 }

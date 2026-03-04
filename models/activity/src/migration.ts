@@ -370,6 +370,30 @@ async function migrateAccountsInDocUpdates (client: MigrationClient): Promise<vo
   client.logger.log('finished processing activity doc updates ', {})
 }
 
+async function migrateActivityAttributes (client: MigrationClient): Promise<void> {
+  await client.update<DocUpdateMessage>(
+    DOMAIN_ACTIVITY,
+    {
+      _class: activity.class.DocUpdateMessage,
+      attributes: { $exists: true }
+    },
+    {
+      $rename: { attributes: 'objectAttributes' }
+    }
+  )
+
+  await client.update<DocUpdateMessage>(
+    DOMAIN_ACTIVITY,
+    {
+      _class: activity.class.DocUpdateMessage,
+      title: { $exists: true }
+    },
+    {
+      $rename: { title: 'objectTitle' }
+    }
+  )
+}
+
 async function migrateCollaboratorsActivity (client: MigrationClient): Promise<void> {
   const accounts = (await client.accountClient.listAccounts()).map((it) => it.uuid)
   const iterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
@@ -414,7 +438,7 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
           updateCollection: 'collaborators',
           objectId: collaboratorId,
           objectClass: core.class.Collaborator,
-          attributes: {
+          objectAttributes: {
             collaborator: add
           },
           collection: doc.collection
@@ -438,7 +462,7 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
           updateCollection: 'collaborators',
           objectId: generateId<Collaborator>(),
           objectClass: core.class.Collaborator,
-          attributes: {
+          objectAttributes: {
             collaborator: remove
           },
           collection: doc.collection
@@ -550,6 +574,11 @@ export const activityOperation: MigrateOperation = {
         state: 'migrate-collaborators-dum-v1',
         mode: 'upgrade',
         func: migrateCollaboratorsActivity
+      },
+      {
+        state: 'migrate-activity-attributes-v1',
+        mode: 'upgrade',
+        func: migrateActivityAttributes
       }
     ])
   },

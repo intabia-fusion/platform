@@ -26,7 +26,7 @@ import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
 import view, { createAction, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
 import { type ViewOptionsModel } from '@hcengineering/view'
 
@@ -48,15 +48,8 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(lead.mixin.Customer, core.class.Class, activity.mixin.ActivityDoc, {})
 
-  builder.mixin(lead.class.Funnel, core.class.Class, activity.mixin.ActivityDoc, {})
-
   builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
     ofClass: lead.class.Lead,
-    components: { input: { component: chunter.component.ChatMessageInput } }
-  })
-
-  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
-    ofClass: lead.class.Funnel,
     components: { input: { component: chunter.component.ChatMessageInput } }
   })
 
@@ -388,8 +381,8 @@ export function createModel (builder: Builder): void {
     lead.ids.LeadNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
@@ -397,14 +390,16 @@ export function createModel (builder: Builder): void {
       label: task.string.AssignedToMe,
       group: lead.ids.LeadNotificationGroup,
       field: 'assignee',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: lead.class.Lead,
+      attachedToClass: lead.class.Lead,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p>',
+        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
         subjectTemplate: '{doc} was assigned to you'
       },
-      defaultEnabled: true
+      defaultEnabled: true,
+      priority: 200
     },
     lead.ids.AssigneeNotification
   )
@@ -430,40 +425,47 @@ export function createModel (builder: Builder): void {
     ['comments', 'attachments']
   )
 
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: lead.string.Funnels,
-      icon: lead.icon.Funnel,
-      objectClass: lead.class.Funnel
-    },
-    lead.ids.FunnelNotificationGroup
-  )
+  // TODO: FIXME LATER - do we need it?
+  // builder.mixin(lead.class.Funnel, core.class.Class, activity.mixin.ActivityDoc, {})
+  // builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+  //   ofClass: lead.class.Funnel,
+  //   components: { input: { component: chunter.component.ChatMessageInput } }
+  // })
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: lead.string.LeadCreateLabel,
-      group: lead.ids.FunnelNotificationGroup,
-      field: 'space',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: lead.class.Funnel,
-      spaceSubscribe: true,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    lead.ids.LeadCreateNotification
-  )
+  // builder.createDoc(
+  //   notification.class.NotificationGroup,
+  //   core.space.Model,
+  //   {
+  //     label: lead.string.Funnels,
+  //     icon: lead.icon.Funnel,
+  //     objectClass: lead.class.Funnel
+  //   },
+  //   lead.ids.FunnelNotificationGroup
+  // )
 
-  generateClassNotificationTypes(builder, lead.class.Funnel, lead.ids.FunnelNotificationGroup, [], ['comments'])
+  // builder.createDoc<MessageNotificationType>(
+  //   notification.class.MessageNotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     label: lead.string.LeadCreateLabel,
+  //     group: lead.ids.FunnelNotificationGroup,
+  //     field: 'space',
+  //     messageClass: activity.class.DocUpdateMessage,
+  //     objectClass: lead.class.Funnel,
+  //     attachedToClass: lead.class.Funnel,
+  //     defaultEnabled: false,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p><p>{link}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   lead.ids.LeadCreateNotification
+  // )
+
+  // generateClassNotificationTypes(builder, lead.class.Funnel, lead.ids.FunnelNotificationGroup, [], ['comments'])
 
   builder.createDoc(
     view.class.Viewlet,

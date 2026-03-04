@@ -25,4 +25,4 @@
   }
 </script>
 
-<ButtonIcon icon={IconSettings} size="small" on:click={click} />
+<ButtonIcon icon={IconSettings} size="small" on:click={click} dataId="inbox_settings-button" />

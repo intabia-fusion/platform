@@ -13,35 +13,55 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder, Mixin } from '@hcengineering/model'
 import serverCore from '@hcengineering/server-core'
 import core from '@hcengineering/core'
-import serverActivity from '@hcengineering/server-activity'
-import serverNotification from '@hcengineering/server-notification'
+import serverActivity, {
+  type IdentifierPresenter,
+  type Presenter,
+  type TitlePresenter,
+  type UrlPresenter
+} from '@hcengineering/server-activity'
+import { TClass } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
 import notification from '@hcengineering/notification'
 import card from '@hcengineering/card'
+import type { Resource } from '@hcengineering/platform'
 
 export { activityServerOperation } from './migration'
 export { serverActivityId } from '@hcengineering/server-activity'
 
-export function createModel (builder: Builder): void {
-  builder.mixin(activity.class.DocUpdateMessage, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverActivity.function.DocUpdateMessageTextPresenter
-  })
+@Mixin(serverActivity.mixin.TitlePresenter, core.class.Class)
+export class TTitlePresenter extends TClass implements TitlePresenter {
+  presenter!: Resource<Presenter>
+}
 
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverActivity.trigger.OnReactionChanged,
-    txMatch: {
-      collection: 'reactions'
-    },
-    isAsync: true
-  })
+@Mixin(serverActivity.mixin.IdentifierPresenter, core.class.Class)
+export class TIdentifierPresenter extends TClass implements IdentifierPresenter {
+  presenter!: Resource<Presenter>
+}
+
+@Mixin(serverActivity.mixin.UrlPresenter, core.class.Class)
+export class TUrlPresenter extends TClass implements UrlPresenter {
+  presenter!: Resource<Presenter>
+}
+
+export function createModel (builder: Builder): void {
+  builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.ActivityMessagesHandler,
     txMatch: {
-      objectClass: { $nin: [activity.class.ActivityMessage, notification.class.DocNotifyContext] }
+      objectClass: {
+        $nin: [
+          activity.class.ActivityMessage,
+          notification.class.DocNotifyContext,
+          notification.class.ActivityInboxNotification,
+          notification.class.MentionInboxNotification,
+          notification.class.ReactionInboxNotification,
+          notification.class.BrowserNotification
+        ]
+      }
     },
     isAsync: true
   })
@@ -57,6 +77,15 @@ export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocRemoved,
     isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnActivityMessageCreate,
+    txMatch: {
+      objectClass: activity.class.ActivityMessage,
+      _class: core.class.TxCreateDoc
+    },
+    isAsync: false
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

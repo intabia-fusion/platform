@@ -32,6 +32,7 @@ import { Event, Visibility } from '@hcengineering/calendar'
 import { AnyComponent } from '@hcengineering/ui'
 import { Employee } from '@hcengineering/contact'
 import type { Rank } from '@hcengineering/rank'
+import { TxNotificationType } from '@hcengineering/notification'
 
 export * from './analytics'
 
@@ -136,7 +137,8 @@ export default plugin(timeId, {
   },
   ids: {
     NotAttached: '' as Ref<Doc>,
-    TimeNotificationGroup: '' as Ref<Doc>
+    TimeNotificationGroup: '' as Ref<Doc>,
+    ToDoCreated: '' as Ref<TxNotificationType>
   },
   space: {
     ToDos: '' as Ref<Space>

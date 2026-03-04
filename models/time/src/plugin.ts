@@ -15,7 +15,6 @@
 
 import { type Client, type Doc, type Ref } from '@hcengineering/core'
 import { type Application } from '@hcengineering/model-workbench'
-import { type NotificationType } from '@hcengineering/notification'
 import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
 import { timeId } from '@hcengineering/time'
 import time from '@hcengineering/time-resources/src/plugin'
@@ -53,9 +52,6 @@ export default mergeIds(timeId, time, {
   app: {
     Me: '' as Ref<Application>,
     Team: '' as Ref<Application>
-  },
-  ids: {
-    ToDoCreated: '' as Ref<NotificationType>
   },
   function: {
     ToDoTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>

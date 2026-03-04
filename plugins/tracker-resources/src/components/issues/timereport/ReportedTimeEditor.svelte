@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { Issue, Project } from '@hcengineering/tracker'
+  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
   import { ActionIcon, IconAdd, Label, eventToHTMLElement, floorFractionDigits, showPopup } from '@hcengineering/ui'
   import { activeProjects } from '../../../utils'
   import ReportsPopup from './ReportsPopup.svelte'
@@ -57,10 +57,9 @@
     if (readonly) return
     showPopup(ReportsPopup, { issue: object }, eventToHTMLElement(event))
   }
-  $: childTime = floorFractionDigits(
-    (object.childInfo ?? []).map((it) => it.reportedTime).reduce((a, b) => a + b, 0),
-    3
-  )
+  $: childInfos = object.childInfo ?? []
+  $: treeInfo = reduceChildInfoTree(childInfos, 0, 0)
+  $: childTime = floorFractionDigits(treeInfo.totalReportedTime, 3)
 </script>
 
 {#if kind === 'link'}
@@ -74,9 +73,14 @@
   >
     {#if value !== undefined}
       <span class="flex-row-center">
-        <TimePresenter {value} />
-        {#if childTime !== 0}
-          / <TimePresenter value={childTime} />
+        <TimePresenter value={value + childTime} />
+        {#if value !== value + childTime}
+          <span class="ml-1">
+            (<TimePresenter {value} />
+            {#if childTime !== 0}
+              / <TimePresenter value={childTime} />)
+            {/if}
+          </span>
         {/if}
       </span>
     {:else}

@@ -15,7 +15,7 @@
 
 import { ChannelItem } from '@hcengineering/contact'
 import type { PersonId, AttachedDoc, Class, Doc, Ref, Timestamp, IntegrationKind } from '@hcengineering/core'
-import { NotificationProvider, NotificationType } from '@hcengineering/notification'
+import { MessageNotificationType, NotificationProvider } from '@hcengineering/notification'
 import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Handler, IntegrationType } from '@hcengineering/setting'
@@ -126,7 +126,7 @@ export default plugin(gmailId, {
     SharedMessage: '' as Ref<Class<SharedMessage>>
   },
   ids: {
-    EmailNotification: '' as Ref<NotificationType>
+    EmailNotification: '' as Ref<MessageNotificationType>
   },
   metadata: {
     GmailURL: '' as Metadata<string>

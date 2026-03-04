@@ -39,6 +39,8 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-time": "workspace:^0.7.0",
     "@hcengineering/time": "workspace:^0.7.0",
+    "@hcengineering/notification": "workspace:^0.7.0",
+    "@hcengineering/server-notification": "workspace:^0.7.0",
     "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/model-core": "workspace:^0.7.0"

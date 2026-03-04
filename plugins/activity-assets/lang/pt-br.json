@@ -55,6 +55,7 @@
     "AttributeSetTo": "{name} definido para {value}",
     "AddedTag": "Tag adicionado: {title}",
     "RemovedTag": "Tag removido: {title}",
-    "ValueTooLarge": "Valor muito grande para mostrar"
+    "ValueTooLarge": "Valor muito grande para mostrar",
+    "SentAttachments": "Arquivos anexados enviados"
   }
 }

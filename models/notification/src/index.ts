@@ -22,10 +22,7 @@ import {
   DOMAIN_TRANSIENT,
   IndexKind,
   type AccountUuid,
-  type AttachedDoc,
   type Class,
-  type Collection,
-  type Data,
   type Doc,
   type DocumentQuery,
   type IndexingConfiguration,
@@ -34,8 +31,9 @@ import {
   type Ref,
   type Space,
   type Timestamp,
-  type Tx,
-  type TxCUD
+  type TxCUD,
+  type AnyAttribute,
+  type Tx
 } from '@hcengineering/core'
 import {
   Index,
@@ -52,7 +50,7 @@ import {
 } from '@hcengineering/model'
 import core, { TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
-import view, { createAction, template } from '@hcengineering/model-view'
+import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import {
   DOMAIN_DOC_NOTIFY,
@@ -79,24 +77,32 @@ import {
   type NotificationTypeSetting,
   type PushSubscription,
   type PushSubscriptionKeys,
-  type ReactionInboxNotification
+  type PushSubscriptionSetting,
+  type ReactionInboxNotification,
+  type MessageNotificationType,
+  type TxNotificationType
 } from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 
 import notification from './plugin'
+import { defineNotifications } from './notifications'
+import { defineActions } from './actions'
 
 export { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, notificationId } from '@hcengineering/notification'
 export { notificationOperation } from './migration'
 export { notification as default }
+export { generateClassNotificationTypes } from './notifications'
 
 @Model(notification.class.BrowserNotification, core.class.Doc, DOMAIN_TRANSIENT)
 export class TBrowserNotification extends TDoc implements BrowserNotification {
-  senderId?: PersonId | undefined
   tag!: Ref<Doc<Space>>
-  title!: string
-  body!: string
+  title!: IntlString
+  body!: IntlString
+  intlParams!: Record<string, any>
+  intlParamsNotLocalized?: Record<string, IntlString>
+  sender!: PersonId
   onClickLocation?: Location | undefined
   user!: AccountUuid
   messageId?: Ref<ActivityMessage>
@@ -111,6 +117,13 @@ export class TPushSubscription extends TDoc implements PushSubscription {
   user!: AccountUuid
   endpoint!: string
   keys!: PushSubscriptionKeys
+  name?: string
+}
+
+@Model(notification.class.PushSubscriptionSetting, preference.class.Preference)
+export class TPushSubscriptionSetting extends TPreference implements PushSubscriptionSetting {
+  declare attachedTo: Ref<TPushSubscription>
+  enabled!: boolean
 }
 
 @Model(notification.class.NotificationType, core.class.Doc, DOMAIN_MODEL)
@@ -121,9 +134,27 @@ export class TNotificationType extends TDoc implements NotificationType {
   defaultEnabled!: boolean
   hidden!: boolean
   templates?: NotificationTemplate
-  txClasses!: Ref<Class<Tx>>[]
   objectClass!: Ref<Class<Doc>>
   onlyOwn?: boolean
+}
+
+@Model(notification.class.MessageNotificationType, notification.class.NotificationType)
+export class TMessageNotificationType extends TNotificationType implements MessageNotificationType {
+  messageClass!: Ref<Class<ActivityMessage>>
+  attachedToClass!: Ref<Class<Doc>>
+  attribute?: Ref<AnyAttribute>
+  field?: string
+  match?: DocumentQuery<ActivityMessage>
+  notifyAuthor?: boolean
+}
+
+@Model(notification.class.TxNotificationType, notification.class.NotificationType)
+export class TTxNotificationType extends TNotificationType implements TxNotificationType {
+  txClasses!: Ref<Class<Tx>>[]
+  field?: string
+  match?: DocumentQuery<Tx>
+  notifyAuthor?: boolean
+  attachedToClass?: Ref<Class<Doc>>
 }
 
 @Model(notification.class.NotificationGroup, core.class.Doc, DOMAIN_MODEL)
@@ -188,16 +219,13 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   declare space: Ref<PersonSpace>
 
   @Prop(TypeDate(), core.string.Date)
-    lastViewedTimestamp?: Timestamp
+    lastView?: Timestamp
 
   @Prop(TypeDate(), core.string.Date)
-    lastUpdateTimestamp?: Timestamp
+    lastUpdate?: Timestamp
 
-  @Prop(TypeBoolean(), notification.string.Pinned)
-    isPinned!: boolean
-
-  @Prop(TypeBoolean(), view.string.Hide)
-    hidden!: boolean
+  @Prop(TypeDate(), core.string.Date)
+    lastNotify?: Timestamp
 
   tx?: Ref<TxCUD<Doc>>
 }
@@ -224,7 +252,7 @@ export class TInboxNotification extends TDoc implements InboxNotification {
 
   declare space: Ref<PersonSpace>
 
-  types?: Ref<NotificationType>[]
+  allowedProviders!: Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
 
   title?: IntlString
   body?: IntlString
@@ -258,7 +286,7 @@ export class TCommonInboxNotification extends TInboxNotification implements Comm
   headerIcon?: Asset
 
   @Prop(TypeMarkup(), notification.string.Message)
-    messageHtml?: Markup
+    markup?: Markup
 
   props?: Record<string, any>
   icon?: Asset
@@ -314,33 +342,12 @@ export class TNotificationProviderDefaults extends TDoc implements NotificationP
   enabledTypes!: Ref<NotificationType>[]
 }
 
-export const notificationActionTemplates = template({
-  pinContext: {
-    action: notification.actionImpl.PinDocNotifyContext,
-    label: notification.string.StarDocument,
-    icon: view.icon.Star,
-    input: 'focus',
-    category: notification.category.Notification,
-    target: notification.class.DocNotifyContext,
-    visibilityTester: notification.function.HasDocNotifyContextPinAction,
-    context: { mode: ['context', 'browser'], group: 'edit' }
-  },
-  unpinContext: {
-    action: notification.actionImpl.UnpinDocNotifyContext,
-    label: notification.string.UnstarDocument,
-    icon: view.icon.Star,
-    input: 'focus',
-    category: notification.category.Notification,
-    target: notification.class.DocNotifyContext,
-    visibilityTester: notification.function.HasDocNotifyContextUnpinAction,
-    context: { mode: ['context', 'browser'], group: 'edit' }
-  }
-})
-
 export function createModel (builder: Builder): void {
   builder.createModel(
     TBrowserNotification,
     TNotificationType,
+    TMessageNotificationType,
+    TTxNotificationType,
     TNotificationGroup,
     TNotificationPreferencesGroup,
     TNotificationObjectPresenter,
@@ -354,6 +361,7 @@ export function createModel (builder: Builder): void {
     TNotificationType,
     TMentionInboxNotification,
     TPushSubscription,
+    TPushSubscriptionSetting,
     TNotificationProvider,
     TNotificationProviderSetting,
     TNotificationTypeSetting,
@@ -396,108 +404,6 @@ export function createModel (builder: Builder): void {
     notification.app.Inbox
   )
 
-  createAction(builder, {
-    action: workbench.actionImpl.Navigate,
-    actionProps: {
-      mode: 'app',
-      application: notificationId
-    },
-    label: notification.string.Inbox,
-    icon: view.icon.ArrowRight,
-    input: 'none',
-    category: view.category.Navigation,
-    target: core.class.Doc,
-    context: {
-      mode: ['workbench', 'browser', 'editor', 'panel', 'popup']
-    }
-  })
-
-  builder.createDoc(
-    notification.class.NotificationGroup,
-    core.space.Model,
-    {
-      label: notification.string.Notifications,
-      icon: notification.icon.Notifications
-    },
-    notification.ids.NotificationGroup
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      label: core.string.Collaborators,
-      group: notification.ids.NotificationGroup,
-      txClasses: [],
-      objectClass: core.class.Collaborator,
-      defaultEnabled: true
-    },
-    notification.ids.CollaboratoAddNotification
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.ReadNotifyContext,
-      label: notification.string.MarkAsRead,
-      icon: view.icon.Eye,
-      input: 'focus',
-      visibilityTester: notification.function.CanReadNotifyContext,
-      category: notification.category.Notification,
-      target: notification.class.DocNotifyContext,
-      context: { mode: ['context', 'panel'], application: notification.app.Notification, group: 'edit' }
-    },
-    notification.action.ReadNotifyContext
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.UnReadNotifyContext,
-      label: notification.string.MarkAsUnread,
-      icon: view.icon.EyeCrossed,
-      input: 'focus',
-      visibilityTester: notification.function.CanUnReadNotifyContext,
-      category: notification.category.Notification,
-      target: notification.class.DocNotifyContext,
-      context: { mode: ['context', 'panel'], application: notification.app.Notification, group: 'edit' }
-    },
-    notification.action.UnReadNotifyContext
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.RemoveContextNotifications,
-      label: notification.string.Clear,
-      icon: view.icon.CheckCircle,
-      input: 'focus',
-      category: notification.category.Notification,
-      target: notification.class.DocNotifyContext,
-      context: { mode: ['panel'], application: notification.app.Notification, group: 'remove' }
-    },
-    notification.action.RemoveContextNotifications
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.Unsubscribe,
-      label: notification.string.Unsubscribe,
-      icon: notification.icon.BellCrossed,
-      input: 'focus',
-      category: notification.category.Notification,
-      target: notification.class.DocNotifyContext,
-      context: {
-        mode: ['panel'],
-        group: 'remove'
-      }
-    },
-    notification.action.Unsubscribe
-  )
-
   builder.mixin(notification.class.DocNotifyContext, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: notification.component.DocNotifyContextPresenter
   })
@@ -534,83 +440,6 @@ export function createModel (builder: Builder): void {
     updateAccessLevel: AccountRole.Guest,
     removeAccessLevel: AccountRole.Guest
   })
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      label: activity.string.Mentions,
-      generated: false,
-      hidden: false,
-      group: notification.ids.NotificationGroup,
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
-      objectClass: core.class.Doc,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{sender} mentioned you in {doc}: {message}',
-        htmlTemplate: '<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>',
-        subjectTemplate: 'You were mentioned in {doc}'
-      }
-    },
-    notification.ids.MentionNotificationType
-  )
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.ClearAll,
-      label: notification.string.ClearAll,
-      icon: view.icon.CheckCircle,
-      input: 'none',
-      category: notification.category.Notification,
-      target: core.class.Doc,
-      context: {
-        mode: ['browser'],
-        group: 'remove'
-      }
-    },
-    notification.action.ClearAll
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.ReadAll,
-      label: notification.string.MarkReadAll,
-      icon: view.icon.Eye,
-      input: 'none',
-      category: notification.category.Notification,
-      target: core.class.Doc,
-      context: {
-        mode: ['browser'],
-        group: 'edit'
-      }
-    },
-    notification.action.ReadAll
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.UnreadAll,
-      label: notification.string.MarkUnreadAll,
-      icon: view.icon.EyeCrossed,
-      input: 'none',
-      category: notification.category.Notification,
-      target: core.class.Doc,
-      context: {
-        mode: ['browser'],
-        group: 'edit'
-      }
-    },
-    notification.action.UnreadAll
-  )
-
-  builder.createDoc(
-    view.class.ActionCategory,
-    core.space.Model,
-    { label: notification.string.Inbox, visible: true },
-    notification.category.Notification
-  )
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_NOTIFICATION,
@@ -707,6 +536,12 @@ export function createModel (builder: Builder): void {
     presenter: notification.component.GeneralPreferencesGroup
   })
 
+  builder.createDoc(notification.class.NotificationPreferencesGroup, core.space.Model, {
+    label: notification.string.Webpushes,
+    icon: view.icon.Card,
+    presenter: notification.component.WebpushesPreferencesPresenter
+  })
+
   builder.createDoc(
     notification.class.NotificationProvider,
     core.space.Model,
@@ -751,75 +586,6 @@ export function createModel (builder: Builder): void {
     notification.providers.SoundNotificationProvider
   )
 
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.PushNotificationProvider,
-    ignoredTypes: [notification.ids.CollaboratoAddNotification],
-    enabledTypes: []
-  })
-
-  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-    provider: notification.providers.SoundNotificationProvider,
-    ignoredTypes: [notification.ids.CollaboratoAddNotification],
-    enabledTypes: []
-  })
-}
-
-export function generateClassNotificationTypes (
-  builder: Builder,
-  _class: Ref<Class<Doc>>,
-  group: Ref<NotificationGroup>,
-  ignoreKeys: string[] = [],
-  defaultEnabled: string[] = []
-): void {
-  const hierarchy = builder.hierarchy
-  const attributes = hierarchy.getAllAttributes(
-    _class,
-    hierarchy.isDerived(_class, core.class.AttachedDoc) ? core.class.AttachedDoc : core.class.Doc
-  )
-  const filtered = Array.from(attributes.values()).filter((p) => p.hidden !== true && p.readonly !== true)
-  const enabledInboxTypes: Ref<NotificationType>[] = []
-
-  for (const attribute of filtered) {
-    if (ignoreKeys.includes(attribute.name)) continue
-    const isCollection: boolean = core.class.Collection === attribute.type._class
-    const objectClass = !isCollection ? _class : (attribute.type as Collection<AttachedDoc>).of
-    const txClasses = !isCollection
-      ? hierarchy.isMixin(attribute.attributeOf)
-        ? [core.class.TxMixin]
-        : [core.class.TxUpdateDoc]
-      : [core.class.TxCreateDoc, core.class.TxRemoveDoc]
-    const data: Data<NotificationType> = {
-      attribute: attribute._id,
-      field: attribute.name,
-      group,
-      generated: true,
-      objectClass,
-      txClasses,
-      hidden: false,
-      defaultEnabled: false,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{doc} updated'
-      },
-      label: attribute.label
-    }
-    if (isCollection) {
-      data.attachedToClass = _class
-    }
-    const id = `${notification.class.NotificationType}_${_class}_${attribute.name}` as Ref<NotificationType>
-    builder.createDoc(notification.class.NotificationType, core.space.Model, data, id)
-
-    if (defaultEnabled.includes(attribute.name)) {
-      enabledInboxTypes.push(id)
-    }
-  }
-
-  if (enabledInboxTypes.length > 0) {
-    builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
-      provider: notification.providers.InboxNotificationProvider,
-      ignoredTypes: [],
-      enabledTypes: enabledInboxTypes
-    })
-  }
+  defineNotifications(builder)
+  defineActions(builder)
 }

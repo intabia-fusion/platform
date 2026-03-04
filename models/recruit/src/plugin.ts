@@ -14,7 +14,7 @@
 //
 
 import type { Client, Doc, Ref, Status } from '@hcengineering/core'
-import { type NotificationGroup, type NotificationType } from '@hcengineering/notification'
+import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
 import type { IntlString, Status as OperationStatus, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import { recruitId } from '@hcengineering/recruit'
@@ -90,9 +90,9 @@ export default mergeIds(recruitId, recruit, {
     CandidateNotificationGroup: '' as Ref<NotificationGroup>,
     ReviewNotificationGroup: '' as Ref<NotificationGroup>,
     ApplicationNotificationGroup: '' as Ref<NotificationGroup>,
-    AssigneeNotification: '' as Ref<NotificationType>,
-    ApplicationCreateNotification: '' as Ref<NotificationType>,
-    ReviewCreateNotification: '' as Ref<NotificationType>
+    AssigneeNotification: '' as Ref<MessageNotificationType>,
+    ApplicationCreateNotification: '' as Ref<MessageNotificationType>,
+    ReviewCreateNotification: '' as Ref<MessageNotificationType>
   },
   component: {
     CreateApplication: '' as AnyComponent,

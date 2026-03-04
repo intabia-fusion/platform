@@ -149,9 +149,11 @@ export class IssuesDetailsPage extends CommonTrackerPage {
     }
     if (data.estimation != null) {
       // Retry checking estimation as UI may update with delay
+      const val = convertEstimation(data.estimation)
       await expect(async () => {
-        await expect(this.textEstimation()).toHaveText(convertEstimation(data.estimation as string))
-      }).toPass({ intervals: [100, 200, 500], timeout: 10000 })
+        const curValue = JSON.stringify((await this.textEstimation().allTextContents()).join(' '))
+        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it ${curValue})}`).toHaveText(val)
+      }).toPass({ intervals: [100, 200, 500, 1000], timeout: 10000 })
     }
     if (data.parentIssue != null) {
       await expect(this.textParentTitle()).toHaveText(data.parentIssue)

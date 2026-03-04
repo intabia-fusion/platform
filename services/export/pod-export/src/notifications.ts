@@ -20,6 +20,7 @@ import core, {
   type Doc,
   generateId,
   MeasureContext,
+  PersonId,
   type Ref,
   systemAccountUuid,
   type TxOperations,
@@ -27,12 +28,15 @@ import core, {
   WorkspaceUuid
 } from '@hcengineering/core'
 import exportPlugin from '@hcengineering/export'
-import notification from '@hcengineering/notification'
 import { generateToken } from '@hcengineering/server-token'
+import notification, { NotificationProvider, NotificationType, TxNotificationType } from '@hcengineering/notification'
+import contact from '@hcengineering/contact'
+
 import envConfig from './config'
 
 export async function sendExportCompletionNotification (
   ctx: MeasureContext,
+  account: AccountUuid,
   targetTxOps: TxOperations,
   targetWorkspace: WorkspaceUuid,
   targetWsIds: WorkspaceIds,
@@ -56,6 +60,10 @@ export async function sendExportCompletionNotification (
       },
       resultId
     )
+    const type = await targetTxOps.findOne(notification.class.TxNotificationType, {
+      _id: exportPlugin.ids.ImportedDocumentsNotification
+    })
+    if (type == null) return
 
     const targetWsToken = generateToken(systemAccountUuid, targetWorkspace, { service: 'export' })
     const targetAccountClient = getClient(envConfig.AccountsUrl, targetWsToken)
@@ -68,34 +76,62 @@ export async function sendExportCompletionNotification (
       ctx.warn('No workspace owners found for export notification', { targetWorkspace })
       return
     }
-
+    const sender = await targetTxOps.findOne(contact.class.Person, { personUuid: account })
+    const senderSocialIds = ((await targetAccountClient.getPersonInfo(account))?.socialIds ?? []).map((it) => it._id)
+    const spaces = await targetTxOps.findAll(contact.class.PersonSpace, {
+      account: { $in: owners.map((it) => it.person) }
+    })
+    const providers: NotificationProvider[] = await targetTxOps
+      .getModel()
+      .findAll(notification.class.NotificationProvider, {})
     for (const owner of owners) {
       try {
-        const docNotifyContextId = await targetTxOps.createDoc(notification.class.DocNotifyContext, core.space.Space, {
-          objectId: resultId,
-          objectClass: exportPlugin.class.ExportResultRecord,
-          objectSpace: core.space.Space,
-          user: owner.person,
-          isPinned: false,
-          hidden: false
-        })
+        const space = spaces.find((it) => it.account === owner.person)
+        if (space == null) continue
 
-        await targetTxOps.createDoc(notification.class.CommonInboxNotification, core.space.Space, {
-          user: owner.person,
+        const socialIds = ((await targetAccountClient.getPersonInfo(owner.person))?.socialIds ?? []).map((it) => it._id)
+        if (socialIds.length === 0) continue
+
+        const allowedProviders = await getAllowedProviders(targetTxOps, providers, type, socialIds)
+        if (!allowedProviders.includes(notification.providers.InboxNotificationProvider)) continue
+
+        const context = await targetTxOps.findOne(notification.class.DocNotifyContext, {
           objectId: resultId,
-          objectClass: exportPlugin.class.ExportResultRecord,
-          icon: exportPlugin.icon.Export,
-          header: exportPlugin.string.ImportCompleted,
-          message: exportPlugin.string.ImportToWorkspaceNotificationMessage,
-          props: {
-            count,
-            sourceWorkspace: sourceWsIds.uuid
-          },
-          isViewed: false,
-          archived: false,
-          docNotifyContext: docNotifyContextId,
-          types: [exportPlugin.ids.ImportedDocumentsNotification]
+          user: owner.person
         })
+        const docNotifyContextId =
+          context?._id ??
+          (await targetTxOps.createDoc(notification.class.DocNotifyContext, space._id, {
+            objectId: resultId,
+            objectClass: exportPlugin.class.ExportResultRecord,
+            objectSpace: core.space.Space,
+            user: owner.person
+          }))
+
+        await targetTxOps.createDoc(
+          notification.class.CommonInboxNotification,
+          space._id,
+          {
+            user: owner.person,
+            objectId: resultId,
+            objectClass: exportPlugin.class.ExportResultRecord,
+            icon: exportPlugin.icon.Export,
+            header: exportPlugin.string.ImportCompleted,
+            message: exportPlugin.string.ImportToWorkspaceNotificationMessage,
+            props: {
+              senderName: sender?.name ?? 'System',
+              count,
+              sourceWorkspace: sourceWsIds.uuid
+            },
+            isViewed: false,
+            archived: false,
+            docNotifyContext: docNotifyContextId,
+            allowedProviders: Object.fromEntries(allowedProviders.map((provider) => [provider, [type._id]]))
+          },
+          undefined,
+          undefined,
+          senderSocialIds[0]
+        )
       } catch (err) {
         ctx.error('Failed to create export notification for owner', { owner: owner.person, err })
       }
@@ -103,4 +139,65 @@ export async function sendExportCompletionNotification (
   } catch (err) {
     ctx.error('Failed to send export completion notification', { err })
   }
+}
+
+async function getAllowedProviders (
+  client: TxOperations,
+  providers: NotificationProvider[],
+  type: TxNotificationType,
+  socialIds: PersonId[]
+): Promise<Ref<NotificationProvider>[]> {
+  const result: Ref<NotificationProvider>[] = []
+
+  for (const provider of providers) {
+    const allowed = await isProviderAllowed(client, provider, type, socialIds)
+
+    if (allowed) {
+      result.push(provider._id)
+    }
+  }
+
+  return result
+}
+
+async function isProviderAllowed (
+  client: TxOperations,
+  provider: NotificationProvider,
+  type: NotificationType,
+  socialIds: PersonId[]
+): Promise<boolean> {
+  const providerSettings = await client.findAll(notification.class.NotificationProviderSetting, {
+    attachedTo: provider._id,
+    createdBy: { $in: socialIds }
+  })
+
+  if (providerSettings.length > 0 && providerSettings.every((s) => !s.enabled)) {
+    return false
+  }
+
+  if (providerSettings.length === 0 && !provider.defaultEnabled) {
+    return false
+  }
+
+  const providerDefaults = client.getModel().findAllSync(notification.class.NotificationProviderDefaults, {})
+
+  if (providerDefaults.some((it) => it.provider === provider._id && it.ignoredTypes.includes(type._id))) {
+    return false
+  }
+
+  const typeSetting = await client.findOne(notification.class.NotificationTypeSetting, {
+    attachedTo: provider._id,
+    type: type._id,
+    createdBy: { $in: socialIds }
+  })
+
+  if (typeSetting !== undefined) {
+    return typeSetting.enabled
+  }
+
+  if (providerDefaults.some((it) => it.provider === provider._id && it.enabledTypes.includes(type._id))) {
+    return true
+  }
+
+  return type.defaultEnabled
 }

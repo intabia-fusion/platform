@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { ActivityMessage } from '@hcengineering/activity'
-import type { Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
-import { type DocNotifyContext, NotificationType } from '@hcengineering/notification'
+import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
+import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
 import { Action } from '@hcengineering/view'
-import { Person, ChannelProvider as SocialChannelProvider } from '@hcengineering/contact'
+import { ChannelProvider as SocialChannelProvider, PersonSpace } from '@hcengineering/contact'
 import { Widget, WidgetTab } from '@hcengineering/workbench'
 
 /**
@@ -77,7 +77,7 @@ export interface ThreadMessage extends ChatMessage {
 }
 
 export interface ChatSyncInfo extends Doc {
-  user: Ref<Person>
+  user: AccountUuid
   timestamp: Timestamp
 }
 
@@ -90,6 +90,13 @@ export interface ChatWidgetTab extends WidgetTab {
     selectedMessageId?: Ref<ActivityMessage>
     props?: Record<string, any>
   }
+}
+
+export interface Chat extends AttachedDoc {
+  account: AccountUuid
+  space: Ref<PersonSpace>
+  pinned: boolean
+  hidden: boolean
 }
 
 /**
@@ -135,7 +142,8 @@ export default plugin(chunterId, {
     Channel: '' as Ref<Class<Channel>>,
     DirectMessage: '' as Ref<Class<DirectMessage>>,
     ChatMessage: '' as Ref<Class<ChatMessage>>,
-    ChatSyncInfo: '' as Ref<Class<ChatSyncInfo>>
+    ChatSyncInfo: '' as Ref<Class<ChatSyncInfo>>,
+    Chat: '' as Ref<Class<Chat>>
   },
   mixin: {
     ObjectChatPanel: '' as Ref<Mixin<ObjectChatPanel>>
@@ -201,13 +209,18 @@ export default plugin(chunterId, {
     ViewingThreadFromArchivedChannel: '' as IntlString,
     ViewingArchivedChannel: '' as IntlString,
     OpenChatInSidebar: '' as IntlString,
-    SummarizeMessages: '' as IntlString
+    SummarizeMessages: '' as IntlString,
+    Star: '' as IntlString,
+    Unstar: '' as IntlString,
+    Hide: '' as IntlString,
+    Leave: '' as IntlString,
+    HideAll: '' as IntlString
   },
   ids: {
-    DMNotification: '' as Ref<NotificationType>,
-    ThreadNotification: '' as Ref<NotificationType>,
-    ChannelNotification: '' as Ref<NotificationType>,
-    JoinChannelNotification: '' as Ref<NotificationType>,
+    DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
+    ThreadNotification: '' as Ref<MessageNotificationType<ThreadMessage>>,
+    ChannelNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
+    JoinChannelNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     ChatWidget: '' as Ref<Widget>
   },
   app: {

@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import { DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   Doc,
   Tx,
@@ -21,26 +20,22 @@ import core, {
   TxCreateDoc,
   TxProcessor,
   TxUpdateDoc,
-  type MeasureContext,
   Ref,
-  PersonId,
-  AccountUuid,
   combineAttributes
 } from '@hcengineering/core'
-import notification, { NotificationType } from '@hcengineering/notification'
-import { getResource, translate } from '@hcengineering/platform'
+import { NotificationType } from '@hcengineering/notification'
+import { translate } from '@hcengineering/platform'
 import request, { Request, RequestStatus } from '@hcengineering/request'
-import { pushDocUpdateMessages } from '@hcengineering/server-activity-resources'
 import type { TriggerControl } from '@hcengineering/server-core'
 import {
-  getNotificationProviderControl,
-  getNotificationTxes,
-  getReceiversInfo,
-  getSenderInfo,
-  getTextPresenter
-} from '@hcengineering/server-notification-resources'
-import { Person } from '@hcengineering/contact'
-import { getCollaborators } from '@hcengineering/server-contact-resources'
+  CreateNotificationFunc,
+  CreateNotificationResult,
+  Receiver,
+  TypeMatchClient,
+  TypeMatchFunc
+} from '@hcengineering/server-notification'
+import { Employee } from '@hcengineering/contact'
+import { getDocTitle } from '@hcengineering/server-activity-resources'
 
 /**
  * @public
@@ -52,8 +47,6 @@ export async function OnRequest (txes: TxCUD<Doc>[], control: TriggerControl): P
   let res: Tx[] = []
 
   for (const ptx of ltxes) {
-    res = res.concat(await getRequestNotificationTx(control.ctx, ptx as TxCUD<Request>, control))
-
     if (ptx._class === core.class.TxUpdateDoc) {
       res = res.concat(await OnRequestUpdate(ptx as TxUpdateDoc<Request>, control))
     }
@@ -112,146 +105,106 @@ async function OnRequestUpdate (ctx: TxUpdateDoc<Request>, control: TriggerContr
   return []
 }
 
-async function getRequest (tx: TxCUD<Request>, control: TriggerControl): Promise<Request | undefined> {
-  if (tx._class === core.class.TxCreateDoc) {
-    return TxProcessor.createDoc2Doc(tx as TxCreateDoc<Request>)
-  }
-  if (tx._class === core.class.TxRemoveDoc) {
-    return control.removedMap.get(tx.objectId) as Request
-  }
-  if (tx._class === core.class.TxUpdateDoc) {
-    return (await control.findAll(control.ctx, tx.objectClass, { _id: tx.objectId }, { limit: 1 }))[0]
-  }
-
-  return undefined
-}
-
-// We need request-specific logic to attach a activity message on request create/update to parent, but use request collaborators for notifications
-async function getRequestNotificationTx (
-  ctx: MeasureContext,
-  tx: TxCUD<Request>,
-  control: TriggerControl
-): Promise<Tx[]> {
-  if (tx.attachedToClass === undefined || tx.attachedTo === undefined) return []
-  const request = await getRequest(tx, control)
-
-  if (request === undefined) return []
-
-  const doc = (await control.findAll(control.ctx, tx.attachedToClass, { _id: tx.attachedTo }, { limit: 1 }))[0]
-
-  if (doc === undefined) return []
-
-  const res: Tx[] = []
-  const messagesTxes = await pushDocUpdateMessages(control.ctx, control, [], doc, tx)
-
-  if (messagesTxes.length === 0) return []
-
-  res.push(...messagesTxes)
-
-  const messages = messagesTxes.map((messageTx) =>
-    TxProcessor.createDoc2Doc(messageTx as TxCreateDoc<DocUpdateMessage>)
-  )
-  const collaborators = await getCollaborators(control.ctx, control, request, tx, res)
-
-  if (collaborators.length === 0) return res
-
-  const notifyContexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
-    objectId: doc._id
-  })
-  const receiverInfos = await getReceiversInfo(ctx, Array.from(collaborators), control)
-  const senderInfo = await getSenderInfo(ctx, tx.modifiedBy, control)
-
-  const notificationControl = await getNotificationProviderControl(ctx, control)
-
-  for (const receiver of receiverInfos) {
-    const txes = await getNotificationTxes(
-      ctx,
-      control,
-      request,
-      tx,
-      receiver,
-      senderInfo,
-      { isOwn: true, isSpace: false, shouldUpdateTimestamp: true },
-      notifyContexts,
-      messages,
-      notificationControl
-    )
-    res.push(...txes)
-  }
-
-  return res
-}
-
-/**
- * @public
- */
-export async function requestTextPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function requestTitlePresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const request = doc as Request
-  let title = await translate(control.hierarchy.getClass(request._class).label, {})
+  const title = await translate(control.hierarchy.getClass(request._class).label, {})
 
-  const attachedDocTextPresenter = getTextPresenter(request.attachedToClass, control.hierarchy)
-  if (attachedDocTextPresenter !== undefined) {
-    const getTitle = await getResource(attachedDocTextPresenter.presenter)
-    const attachedDoc = (
-      await control.findAll(control.ctx, request.attachedToClass, { _id: request.attachedTo }, { limit: 1 })
-    )[0]
+  const attachedDoc = (
+    await control.findAll(control.ctx, request.attachedToClass, { _id: request.attachedTo }, { limit: 1 })
+  )[0]
+  if (attachedDoc == null) return title
 
-    if (attachedDoc !== undefined) {
-      title = `${title} — ${await getTitle(attachedDoc, control)}`
-    }
-  }
+  const attachedDocText = await getDocTitle(control, attachedDoc)
 
-  return title
+  return attachedDocText != null && attachedDocText !== '' ? `${title} — ${attachedDocText}` : title
 }
 
-export const sendRequestMatch = (
-  tx: TxCreateDoc<Request> | TxUpdateDoc<Request>,
-  doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
-  type: NotificationType,
-  control: TriggerControl,
-  account: AccountUuid
-): boolean => {
+export const sendRequestMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _typeObject: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const tx = _typeObject as TxCreateDoc<Request> | TxUpdateDoc<Request>
   if (tx._class === core.class.TxCreateDoc) {
     const createTx = tx as TxCreateDoc<Request>
     const request = TxProcessor.createDoc2Doc(createTx)
 
-    return request.requested.includes(person)
+    return request.requested.includes(receiver.employeeRef)
   } else if (tx._class === core.class.TxUpdateDoc) {
     const updateTx = tx as TxUpdateDoc<Request>
-    const pushed: Ref<Person>[] = combineAttributes([updateTx.operations], 'requested', '$push', '$each') ?? []
+    const pushed: Ref<Employee>[] = combineAttributes([updateTx.operations], 'requested', '$push', '$each') ?? []
 
-    return pushed.includes(person)
+    return pushed.includes(receiver.employeeRef)
   }
 
   return false
 }
 
-export const removeRequestMatch = (
-  tx: TxUpdateDoc<Request>,
-  doc: Doc,
-  person: Ref<Person>,
-  socialIds: PersonId[],
-  type: NotificationType,
-  control: TriggerControl,
-  account: AccountUuid
-): boolean => {
-  if (tx._class === core.class.TxUpdateDoc) {
-    const removed: Ref<Person>[] = combineAttributes([tx.operations], 'requested', '$pull', '$in') ?? []
+export const sendRequestCreateNotification: CreateNotificationFunc = async (
+  client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  attachedToDoc: Doc | undefined,
+  object: Doc,
+  _receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  if (attachedToDoc == null) return undefined
 
-    return removed.includes(person)
+  const req = object as Request
+  const clazz = client.hierarchy.getClass(req._class)
+
+  return {
+    icon: clazz.icon,
+    message: request.string.NewRequestNotification,
+    propsIntl: { name: clazz.label }
+  }
+}
+
+export const removeRequestMatch: TypeMatchFunc = async (
+  _client: TypeMatchClient,
+  _type: NotificationType,
+  _typeObject: Doc,
+  _doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const tx = _typeObject as TxUpdateDoc<Request>
+  if (tx._class === core.class.TxUpdateDoc) {
+    const removed: Ref<Employee>[] = combineAttributes([tx.operations], 'requested', '$pull', '$in') ?? []
+
+    return removed.includes(receiver.employeeRef)
   }
 
   return false
+}
+
+export const removeRequestCreateNotification: CreateNotificationFunc = async (
+  client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  attachedToDoc: Doc | undefined,
+  object: Doc,
+  _receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  if (attachedToDoc == null) return undefined
+
+  const req = object as Request
+  const clazz = client.hierarchy.getClass(req._class)
+
+  return {
+    icon: clazz.icon,
+    message: request.string.CancelRequestNotification,
+    propsIntl: { name: clazz.label }
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    RequestTextPresenter: requestTextPresenter,
+    RequestTitlePresenter: requestTitlePresenter,
     SendRequestMatch: sendRequestMatch,
-    RemoveRequestMatch: removeRequestMatch
+    RemoveRequestMatch: removeRequestMatch,
+    RemoveRequestCreateNotification: removeRequestCreateNotification,
+    SendRequestCreateNotification: sendRequestCreateNotification
   },
   trigger: {
     OnRequest

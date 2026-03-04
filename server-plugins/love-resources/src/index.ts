@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact, { Employee, Person, PersonSpace } from '@hcengineering/contact'
+import contact, { Employee, formatName, Person, PersonSpace } from '@hcengineering/contact'
 import core, {
   Class,
   combineAttributes,
@@ -22,7 +22,9 @@ import core, {
   Doc,
   DocumentUpdate,
   generateId,
+  readOnlyGuestAccountUuid,
   Ref,
+  Space,
   Tx,
   TxCreateDoc,
   TxCUD,
@@ -41,18 +43,14 @@ import love, {
   RoomInfo,
   UserMeetingInvite
 } from '@hcengineering/love'
-import notification, { CommonInboxNotification } from '@hcengineering/notification'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { getSocialStrings } from '@hcengineering/server-contact'
-import {
-  getCommonNotificationTxes,
-  getNotificationContent,
-  getSenderInfo
-} from '@hcengineering/server-notification-resources'
-import { ReceiverInfo, SenderInfo } from '@hcengineering/server-notification'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
+import { getSocialStrings } from '@hcengineering/server-contact'
+import notification, { CommonInboxNotification } from '@hcengineering/notification'
+
+import { getInviteAllowedProviders } from './utils'
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -265,23 +263,14 @@ export async function OnParticipantInfo (txes: Tx[], control: TriggerControl): P
   return result
 }
 
-export async function meetingMinutesHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function meetingMinutesUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const meetingMinutes = doc as MeetingMinutes
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 
   const panelProps = [view.component.EditDoc, meetingMinutes._id, meetingMinutes._class]
   const fragment = encodeURIComponent(panelProps.join('|'))
   const path = `${workbenchId}/${control.workspace.url}/${loveId}#${fragment}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${meetingMinutes.title}</a>`
-}
-
-/**
- * @public
- */
-export async function meetingMinutesTextPresenter (doc: Doc): Promise<string> {
-  const meetingMinutes = doc as MeetingMinutes
-  return meetingMinutes.title
+  return concatLink(front, path)
 }
 
 async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Promise<Tx[]> {
@@ -379,26 +368,23 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       if (employee?.personUuid != null) {
         const account = employee.personUuid
         const socialIds = await getSocialStrings(control, employee._id)
-
-        const receiverInfo: ReceiverInfo = {
+        const receiverInfo = {
           account,
           socialIds,
           space: recipientSpace._id,
           employee: employee._id,
           role: employee.role
-        }
+        } as const
 
-        const senderInfo: SenderInfo = await getSenderInfo(control.ctx, tx.modifiedBy, control)
-
-        // Check if should notify - we always notify for meeting invites
-        const notifyResult = new Map([[notification.providers.InboxNotificationProvider, []]])
-
-        const content = await getNotificationContent(createTx, invite.to, senderInfo, invite, control)
+        const sender: Person | undefined = (
+          await control.findAll(control.ctx, contact.class.Person, { _id: invite.from })
+        )[0]
+        const allowedProviders = await getInviteAllowedProviders(control, receiverInfo.socialIds)
 
         // Get meeting info if available
-
         let notificationObjectId: Ref<Doc>
         let notificationObjectClass: Ref<Class<Doc>>
+        let notificationObjectSpace: Ref<Space>
 
         if (invite.meeting !== undefined) {
           const meeting = await control
@@ -407,41 +393,69 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           // Attach to MeetingMinutes if exists
           notificationObjectId = meeting?._id ?? invite._id
           notificationObjectClass = meeting?._class ?? invite._class
+          notificationObjectSpace = meeting?.space ?? invite.space
         } else {
           // No meeting - attach to sender's Person
           notificationObjectId = invite.from
           notificationObjectClass = contact.class.Person
+          notificationObjectSpace = contact.space.Contacts
         }
 
-        // Create notification with i18n message
-        // Don't set headerObjectId/headerObjectClass to show sender's avatar instead
-        const data: Partial<Data<CommonInboxNotification>> = {
-          ...content,
+        const currentContext = (
+          await control.findAll(control.ctx, notification.class.DocNotifyContext, {
+            objectId: notificationObjectId,
+            user: receiverInfo.account
+          })
+        )[0]
+        let contextId = currentContext?._id
+
+        if (contextId === undefined) {
+          const createContextTx = control.txFactory.createTxCreateDoc(
+            notification.class.DocNotifyContext,
+            receiverInfo.space,
+            {
+              objectId: notificationObjectId,
+              objectClass: notificationObjectClass,
+              objectSpace: notificationObjectSpace,
+              user: receiverInfo.account,
+              lastNotify: tx.modifiedOn
+            }
+          )
+          contextId = createContextTx.objectId
+          result.push(createContextTx)
+        } else if (currentContext != null) {
+          result.push(
+            control.txFactory.createTxUpdateDoc(currentContext._class, currentContext.space, currentContext._id, {
+              lastNotify: tx.modifiedOn
+            })
+          )
+        }
+
+        const senderName = formatName(sender?.name, control.branding?.lastNameFirst) ?? 'System'
+        const data: Data<CommonInboxNotification> = {
+          docNotifyContext: contextId,
+          user: receiverInfo.account,
           message: love.string.InvitingYou,
           props: {
-            name: ''
+            name: senderName,
+            senderName
           },
           header: love.string.MeetingRequest,
-          headerIcon: love.icon.Invite
+          headerIcon: love.icon.Invite,
+          objectId: notificationObjectId,
+          objectClass: notificationObjectClass,
+          isViewed: receiverInfo.role === 'GUEST' && receiverInfo.account === readOnlyGuestAccountUuid,
+          archived: false,
+          allowedProviders: Object.fromEntries(
+            allowedProviders.map((provider) => [provider, [love.ids.InviteNotification]])
+          )
         }
 
-        const notificationTxes = await getCommonNotificationTxes(
-          control.ctx,
-          control,
-          invite,
-          data,
-          receiverInfo,
-          senderInfo,
-          notificationObjectId,
-          notificationObjectClass,
-          recipientSpace._id,
-          createTx.modifiedOn,
-          notifyResult,
-          notification.class.CommonInboxNotification,
-          createTx
+        result.push(
+          control.txFactory.createTxCreateDoc(notification.class.CommonInboxNotification, receiverInfo.space, {
+            ...data
+          })
         )
-
-        result.push(...notificationTxes)
       }
     }
 
@@ -538,8 +552,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    MeetingMinutesHTMLPresenter: meetingMinutesHTMLPresenter,
-    MeetingMinutesTextPresenter: meetingMinutesTextPresenter
+    MeetingMinutesUrlPresenter: meetingMinutesUrlPresenter
   },
   trigger: {
     OnEmployee,

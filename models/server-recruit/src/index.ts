@@ -18,30 +18,31 @@ import { type Builder } from '@hcengineering/model'
 import contact from '@hcengineering/contact'
 import core from '@hcengineering/core'
 import recruit from '@hcengineering/model-recruit'
-import notification from '@hcengineering/notification'
+import notification, { type NotificationType } from '@hcengineering/notification'
 import serverCore from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
 import serverRecruit from '@hcengineering/server-recruit'
 import serverView from '@hcengineering/server-view'
 import serverContact from '@hcengineering/server-contact'
+import serverActivity from '@hcengineering/server-activity'
 
 export { serverRecruitId } from '@hcengineering/server-recruit'
 
 export function createModel (builder: Builder): void {
-  builder.mixin(recruit.class.Applicant, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverRecruit.function.ApplicationHTMLPresenter
+  builder.mixin(recruit.class.Applicant, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverRecruit.function.ApplicationUrlPresenter
   })
 
-  builder.mixin(recruit.class.Applicant, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverRecruit.function.ApplicationTextPresenter
+  builder.mixin(recruit.class.Applicant, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
+    presenter: serverRecruit.function.ApplicationIdentifierPresenter
   })
 
-  builder.mixin(recruit.class.Vacancy, core.class.Class, serverNotification.mixin.HTMLPresenter, {
-    presenter: serverRecruit.function.VacancyHTMLPresenter
+  builder.mixin(recruit.class.Vacancy, core.class.Class, serverActivity.mixin.UrlPresenter, {
+    presenter: serverRecruit.function.VacancyUrlPresenter
   })
 
-  builder.mixin(recruit.class.Vacancy, core.class.Class, serverNotification.mixin.TextPresenter, {
-    presenter: serverRecruit.function.VacancyTextPresenter
+  builder.mixin(recruit.class.Vacancy, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
+    presenter: serverRecruit.function.VacancyIdentifierPresenter
   })
 
   builder.mixin(recruit.class.Applicant, core.class.Class, serverView.mixin.ServerLinkIdProvider, {
@@ -97,12 +98,12 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(
+  builder.mixin<NotificationType, TypeMatch>(
     recruit.ids.AssigneeNotification,
-    notification.class.NotificationType,
+    notification.class.MessageNotificationType,
     serverNotification.mixin.TypeMatch,
     {
-      func: serverNotification.function.IsUserEmployeeInFieldValueTypeMatch
+      match: serverNotification.function.IsUserFieldValueTypeMatch
     }
   )
 }

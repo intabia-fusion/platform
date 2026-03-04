@@ -133,6 +133,11 @@
     "OpenChatInSidebar": "Abrir chat en la barra lateral",
     "NoThreadsYet": "No hay hilos todavía.",
     "SummarizeMessages": "Resumir la discusión",
-    "DeleteMessageDescription": "¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer."
+    "DeleteMessageDescription": "¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.",
+    "Star": "Marcar {label}",
+    "Unstar": "Desmarcar {label}",
+    "Hide": "Ocultar {label}",
+    "Leave": "Abandonar {label}",
+    "HideAll": "Ocultar todo"
   }
 }

@@ -43,7 +43,6 @@ import presentation from '@hcengineering/model-presentation'
 import { TToDo } from '@hcengineering/model-time'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import notification, { type NotificationGroup } from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import {
   type ApproveRequest,
@@ -221,6 +220,9 @@ export class TApproveRequest extends TProcessToDo implements ApproveRequest {
   group!: string
 
   card!: Ref<Card>
+
+  @Prop(TypeString(), process.string.ActionType)
+    actionType?: 'approve' | 'review'
 }
 
 @Model(process.class.Method, core.class.Doc, DOMAIN_MODEL)
@@ -321,49 +323,49 @@ export function createModel (builder: Builder): void {
     TEventButton
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: process.string.NewProcessToDo,
-      group: time.ids.TimeNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: process.class.ProcessToDo,
-      onlyOwn: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    process.ids.ProcessToDoCreated
-  )
-
-  builder.createDoc(
-    notification.class.NotificationType,
-    core.space.Model,
-    {
-      hidden: false,
-      generated: false,
-      allowedForAuthor: true,
-      label: process.string.ApproveRequest,
-      group: time.ids.TimeNotificationGroup,
-      txClasses: [core.class.TxCreateDoc],
-      objectClass: process.class.ApproveRequest,
-      onlyOwn: true,
-      defaultEnabled: true,
-      templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
-        subjectTemplate: '{title}'
-      }
-    },
-    process.ids.ApproveRequestCreated
-  )
+  // TODO: FIXME LATER
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: process.string.NewProcessToDo,
+  //     group: time.ids.TimeNotificationGroup,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: process.class.ProcessToDo,
+  //     onlyOwn: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   process.ids.ProcessToDoCreated
+  // )
+  // builder.createDoc(
+  //   notification.class.NotificationType,
+  //   core.space.Model,
+  //   {
+  //     hidden: false,
+  //     generated: false,
+  //     allowedForAuthor: true,
+  //     label: process.string.ApproveRequest,
+  //     group: time.ids.TimeNotificationGroup,
+  //     txClasses: [core.class.TxCreateDoc],
+  //     objectClass: process.class.ApproveRequest,
+  //     onlyOwn: true,
+  //     defaultEnabled: true,
+  //     templates: {
+  //       textTemplate: '{body}',
+  //       htmlTemplate: '<p>{body}</p>',
+  //       subjectTemplate: '{title}'
+  //     }
+  //   },
+  //   process.ids.ApproveRequestCreated
+  // )
 
   createAction(builder, {
     action: view.actionImpl.Delete,
@@ -478,7 +480,17 @@ export function createModel (builder: Builder): void {
         strict: true
       },
       config: [
+        {
+          key: 'execution',
+          label: process.string.Process,
+          presenter: process.component.ExecutionRefPresenter
+        },
         'user',
+        {
+          key: 'actionType',
+          label: process.string.ActionType,
+          presenter: process.component.ActionTypePresenter
+        },
         {
           key: '',
           presenter: view.component.GrowPresenter,
@@ -494,6 +506,10 @@ export function createModel (builder: Builder): void {
     },
     process.viewlet.CardRequests
   )
+
+  builder.mixin(process.class.ApproveRequest, core.class.Class, view.mixin.IgnoreActions, {
+    actions: [view.action.Delete]
+  })
 
   builder.createDoc(
     view.class.Viewlet,
@@ -730,24 +746,25 @@ export function createModel (builder: Builder): void {
     component: process.component.ProcessesSettingSection
   })
 
-  builder.createDoc(notification.class.NotificationType, core.space.Model, {
-    hidden: false,
-    generated: false,
-    allowedForAuthor: true,
-    label: process.string.NewProcessToDo,
-    group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
-    txClasses: [core.class.TxCreateDoc],
-    objectClass: process.class.ProcessToDo,
-    txMatch: {
-      objectClass: process.class.ProcessToDo
-    },
-    defaultEnabled: true,
-    templates: {
-      textTemplate: '{body}',
-      htmlTemplate: '<p>{body}</p>',
-      subjectTemplate: '{title}'
-    }
-  })
+  // TODO: FIXME
+  // builder.createDoc(notification.class.NotificationType, core.space.Model, {
+  //   hidden: false,
+  //   generated: false,
+  //   allowedForAuthor: true,
+  //   label: process.string.NewProcessToDo,
+  //   group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
+  //   txClasses: [core.class.TxCreateDoc],
+  //   objectClass: process.class.ProcessToDo,
+  //   txMatch: {
+  //     objectClass: process.class.ProcessToDo
+  //   },
+  //   defaultEnabled: true,
+  //   templates: {
+  //     textTemplate: '{body}',
+  //     htmlTemplate: '<p>{body}</p>',
+  //     subjectTemplate: '{title}'
+  //   }
+  // })
 
   // builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
   //   extension: workbench.extensions.WorkbenchExtensions,

@@ -16,26 +16,29 @@
   import { DocumentQuery, SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Issue, TimeSpendReport } from '@hcengineering/tracker'
-  import { Expandable, Label, Spinner, floorFractionDigits } from '@hcengineering/ui'
+  import { Expandable, Label, MiniToggle, Spinner, floorFractionDigits } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportsList from './TimeSpendReportsList.svelte'
 
   export let issue: Issue
   export let query: DocumentQuery<TimeSpendReport>
+  export let childQuery: DocumentQuery<TimeSpendReport>
 
   const subIssuesQuery = createQuery()
 
   let reports: TimeSpendReport[] | undefined
 
+  let showSubIssues = true
+
   $: subIssuesQuery.query(
     tracker.class.TimeSpendReport,
-    query,
+    showSubIssues ? childQuery : query,
     async (result) => {
       reports = result
     },
     {
-      sort: { modifiedOn: SortingOrder.Descending },
+      sort: { date: SortingOrder.Ascending, modifiedOn: SortingOrder.Descending },
       lookup: {
         attachedTo: tracker.class.Issue
       }
@@ -43,7 +46,6 @@
   )
 
   $: total = (reports ?? []).reduce((a, b) => a + floorFractionDigits(b.value, 3), 0)
-  $: reportedTime = floorFractionDigits(issue.reportedTime, 3)
 </script>
 
 {#if reports}
@@ -51,12 +53,15 @@
     <svelte:fragment slot="title">
       <span class="overflow-label flex-nowrap">
         <Label label={tracker.string.ReportedTime} />:
-        <span class="caption-color"><TimePresenter value={reportedTime} /></span>.
-        <Label label={tracker.string.TimeSpendReports} />:
-        <span class="caption-color"><TimePresenter value={floorFractionDigits(total, 3)} /></span>
+        <span class="caption-color">
+          <TimePresenter value={total} />
+        </span>
       </span>
     </svelte:fragment>
-    <TimeSpendReportsList {reports} />
+    <svelte:fragment slot="tools">
+      <MiniToggle bind:on={showSubIssues} label={tracker.string.SubIssues} />
+    </svelte:fragment>
+    <TimeSpendReportsList {issue} {reports} />
   </Expandable>
 {:else}
   <div class="flex-center">

@@ -397,9 +397,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
             updates.push(`data = ${params.add(converted.data, '::json')}`)
           }
           await client.execute(
-            `UPDATE ${translateDomain(domain)} 
-                    SET ${updates.join(', ')} 
-                    WHERE "workspaceId" = ${params.add(this.workspaceId, '::uuid')} 
+            `UPDATE ${translateDomain(domain)}
+                    SET ${updates.join(', ')}
+                    WHERE "workspaceId" = ${params.add(this.workspaceId, '::uuid')}
                       AND _id = ${params.add(doc._id, '::text')}`,
             params.getValues()
           )
@@ -1639,9 +1639,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
       return await this.mgr.retry('', this.mgrId, async (client) => {
         const res = await client.execute(
-          `SELECT * 
+          `SELECT *
           FROM ${translateDomain(domain)}
-          WHERE "workspaceId" = $1::uuid 
+          WHERE "workspaceId" = $1::uuid
                     AND _id = ANY($2::text[])`,
           [this.workspaceId, docs]
         )
@@ -1821,7 +1821,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
   }
 
   private async txMixin (ctx: MeasureContext, tx: TxMixin<Doc, Doc>, schemaFields: SchemaAndFields): Promise<TxResult> {
-    await ctx.with('tx-mixin', { _class: tx.objectClass, mixin: tx.mixin }, async (ctx) => {
+    await ctx.with('tx-mixin', { domain: this.hierarchy.findDomain(tx.objectClass) }, async (ctx) => {
       await this.mgr.write(ctx.id, this.mgrId, async (client) => {
         const doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
         if (doc === undefined) return
@@ -1842,8 +1842,8 @@ export class PostgresAdapter extends PostgresAdapterBase {
         }
         updates.push(`data = ${params.add(converted.data, '::json')}`)
         await client.execute(
-          `UPDATE ${translateDomain(domain)} 
-          SET ${updates.join(', ')}  
+          `UPDATE ${translateDomain(domain)}
+          SET ${updates.join(', ')}
           WHERE "workspaceId" = ${wsId} AND _id = ${oId}`,
           params.getValues()
         )
@@ -1922,7 +1922,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
       let doc: Doc | undefined
       const ops: any = { '%hash%': this.curHash(), ...tx.operations }
       result.push(
-        await ctx.with('tx-update-doc', { _class: tx.objectClass }, async (ctx) => {
+        await ctx.with('tx-update-doc', { domain: this.hierarchy.findDomain(tx.objectClass) }, async (ctx) => {
           await this.mgr.write(ctx.id, this.mgrId, async (client) => {
             doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
             if (doc === undefined) return {}
@@ -1947,9 +1947,9 @@ export class PostgresAdapter extends PostgresAdapterBase {
               updates.push(`data = ${params.add(converted.data, '::json')}`)
             }
             await client.execute(
-              `UPDATE ${tdomain} 
-              SET ${updates.join(', ')}  
-              WHERE "workspaceId" = ${wsId} 
+              `UPDATE ${tdomain}
+              SET ${updates.join(', ')}
+              WHERE "workspaceId" = ${wsId}
                 AND _id = ${oId}`,
               params.getValues()
             )
@@ -2068,7 +2068,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
     forUpdate: boolean = false
   ): Promise<Doc | undefined> {
     const domain = this.hierarchy.getDomain(_class)
-    return ctx.with('find-doc', { _class }, async () => {
+    return ctx.with('find-doc', { domain }, async () => {
       const res = await client.execute(
         `SELECT * FROM "${translateDomain(domain)}" WHERE "workspaceId" = $1::uuid AND _id = $2::text ${
           forUpdate ? ' FOR UPDATE' : ''
@@ -2125,9 +2125,9 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
   async getModel (ctx: MeasureContext): Promise<Tx[]> {
     const res: DBDoc[] = await this.mgr.retry(undefined, this.mgrId, (client) => {
       const query = `
-        SELECT * 
-        FROM "${translateDomain(DOMAIN_MODEL_TX)}" 
-        WHERE "workspaceId" = $1::uuid 
+        SELECT *
+        FROM "${translateDomain(DOMAIN_MODEL_TX)}"
+        WHERE "workspaceId" = $1::uuid
         ORDER BY "modifiedOn"::bigint ASC, _id::text ASC
       `
       return client.execute(query, [this.workspaceId])

@@ -29,7 +29,7 @@
   import { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { onMount, onDestroy } from 'svelte'
-  import { chunterId } from '@hcengineering/chunter'
+  import { Chat, chunterId } from '@hcengineering/chunter'
   import view, { decodeObjectURI } from '@hcengineering/view'
   import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
   import { ActivityMessage } from '@hcengineering/activity'
@@ -40,6 +40,7 @@
   import { chatSpecials } from './utils'
   import { SelectChannelEvent } from './types'
   import { openChannel, openThreadInSidebar } from '../../navigation'
+  import chunter from '../../plugin'
 
   const notificationsClient = InboxNotificationsClientImpl.getClient()
   const contextByDocStore = notificationsClient.contextByDoc
@@ -58,6 +59,8 @@
   let currentSpecial: SpecialNavModel | undefined
 
   let object: Doc | undefined = undefined
+  let chat: Chat | undefined
+
   let replacedPanel: HTMLElement
   let needRestoreLoc = true
 
@@ -73,6 +76,7 @@
   async function loadObject (id?: string, _class?: Ref<Class<Doc>>): Promise<void> {
     if (id == null || _class == null || _class === '') {
       object = undefined
+      chat = undefined
       objectQuery.unsubscribe()
       return
     }
@@ -81,6 +85,7 @@
 
     if (_id === undefined) {
       object = undefined
+      chat = undefined
       objectQuery.unsubscribe()
       return
     }
@@ -90,8 +95,12 @@
       { _id },
       (res) => {
         object = res[0]
+        chat = (res[0] as any)?.$lookup?.chats?.[0]
       },
-      { limit: 1 }
+      {
+        limit: 1,
+        lookup: { _id: { chats: chunter.class.Chat } }
+      }
     )
   }
 
@@ -106,6 +115,7 @@
       currentSpecial = undefined
       selectedData = undefined
       object = undefined
+      chat = undefined
       if (needRestoreLoc) {
         needRestoreLoc = false
         restoreLocation(loc, chunterId)
@@ -119,6 +129,7 @@
     if (currentSpecial !== undefined) {
       selectedData = undefined
       object = undefined
+      chat = undefined
     } else {
       const [id, _class] = decodeObjectURI(loc.path[3])
       selectedData = { id, _class }
@@ -138,16 +149,20 @@
     }
 
     const detail = (event.detail ?? {}) as SelectChannelEvent
-    const _class = detail.object._class
-    const _id = detail.object._id
+    const selectedObject = detail.object
+    const selectedChat = detail.chat
 
-    const id = await getObjectLinkId(linkProviders, _id, _class, detail.object)
-
-    selectedData = { id, _class }
+    const _class = selectedObject._class
+    const _id = selectedObject._id
 
     if (_id !== object?._id) {
-      object = detail.object
+      object = selectedObject
+      chat = selectedChat
     }
+
+    const id = await getObjectLinkId(linkProviders, _id, _class, selectedObject)
+
+    selectedData = { id, _class }
 
     openChannel(selectedData.id, selectedData._class, undefined, true)
   }
@@ -174,7 +189,7 @@
       class:fly={$deviceInfo.navigator.float}
     >
       <div class="antiPanel-wrap__content hulyNavPanel-container">
-        <ChatNavigator {object} {currentSpecial} on:select={handleChannelSelected} />
+        <ChatNavigator {object} {chat} {currentSpecial} on:select={handleChannelSelected} />
       </div>
       {#if !($deviceInfo.isMobile && $deviceInfo.isPortrait && $deviceInfo.minWidth)}
         <Separator name="chat" float={$deviceInfo.navigator.float ? 'navigator' : true} index={0} />

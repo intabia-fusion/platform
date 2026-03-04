@@ -25,7 +25,6 @@ import contact, {
   getFirstName,
   getLastName,
   getName,
-  Organization,
   Person,
   PersonSpace,
   type UserProfile
@@ -294,6 +293,7 @@ async function createPersonSpace (
       private: true,
       archived: false,
       person,
+      account,
       members: [account]
     })
   ]
@@ -359,42 +359,21 @@ export async function OnChannelUpdate (txes: Tx[], control: TriggerControl): Pro
   return result
 }
 
-/**
- * @public
- */
-export async function personHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
-  const person = doc as Person
+export async function personUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${contactId}/${doc._id}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${getName(control.hierarchy, person, control.branding?.lastNameFirst)}</a>`
+  return concatLink(front, path)
 }
 
-/**
- * @public
- */
-export function personTextPresenter (doc: Doc, control: TriggerControl): string {
+export function personTitlePresenter (doc: Doc, control: TriggerControl): string {
   const person = doc as Person
   return `${getName(control.hierarchy, person, control.branding?.lastNameFirst)}`
 }
 
-/**
- * @public
- */
-export async function organizationHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
-  const organization = doc as Organization
+export async function organizationUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${contactId}/${doc._id}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${organization.name}</a>`
-}
-
-/**
- * @public
- */
-export function organizationTextPresenter (doc: Doc): string {
-  const organization = doc as Organization
-  return `${organization.name}`
+  return concatLink(front, path)
 }
 
 /**
@@ -498,10 +477,9 @@ export default async () => ({
     ManageCollaboratorsTrigger
   },
   function: {
-    PersonHTMLPresenter: personHTMLPresenter,
-    PersonTextPresenter: personTextPresenter,
-    OrganizationHTMLPresenter: organizationHTMLPresenter,
-    OrganizationTextPresenter: organizationTextPresenter,
+    PersonUrlPresenter: personUrlPresenter,
+    PersonTitlePresenter: personTitlePresenter,
+    OrganizationUrlPresenter: organizationUrlPresenter,
     ContactNameProvider: contactNameProvider,
     GetCurrentEmployeeName: getCurrentEmployeeName,
     GetCurrentEmployeeEmail: getCurrentEmployeeEmail,

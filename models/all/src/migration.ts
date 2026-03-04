@@ -17,7 +17,6 @@
 import { type MigrateOperation } from '@hcengineering/model'
 import { activityOperation } from '@hcengineering/model-activity'
 import { aiBotId, aiBotOperation } from '@hcengineering/model-ai-bot'
-import { analyticsCollectorOperation } from '@hcengineering/model-analytics-collector'
 import { attachmentOperation } from '@hcengineering/model-attachment'
 import { calendarOperation } from '@hcengineering/model-calendar'
 import { cardOperation } from '@hcengineering/model-card'
@@ -66,6 +65,7 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['rating', ratingOperation],
   ['activity', activityOperation],
   ['card', cardOperation],
+  ['contact', contactOperation],
   ['chunter', chunterOperation],
   ['calendar', calendarOperation],
   ['gmail', gmailOperation],
@@ -77,7 +77,6 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['preference', preferenceOperation],
   ['recruit', recruitOperation],
   ['view', viewOperation],
-  ['contact', contactOperation],
   ['guest', guestOperation],
   ['tags', tagsOperation],
   ['setting', settingOperation],
@@ -99,7 +98,6 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['textEditorOperation', textEditorOperation],
   // We should call notification migration after activityServer and chunter
   ['notification', notificationOperation],
-  ['analyticsCollector', analyticsCollectorOperation],
   ['workbench', workbenchOperation],
   ['testManagement', testManagementOperation],
   ['survey', surveyOperation],

@@ -40,7 +40,7 @@ export class TCategory extends TAttachedDoc implements Category {
 }
 
 @Model(inventory.class.Product, core.class.AttachedDoc, DOMAIN_INVENTORY)
-@UX(inventory.string.Product, inventory.icon.Products, undefined, 'name', undefined, inventory.string.Products)
+@UX(inventory.string.Product, inventory.icon.Products, undefined, 'name', undefined, inventory.string.Products, 'name')
 export class TProduct extends TAttachedDoc implements Product {
   // We need to declare, to provide property with label
   @Prop(TypeRef(inventory.class.Category), inventory.string.Category)

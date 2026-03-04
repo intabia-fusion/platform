@@ -28,9 +28,9 @@
     "Read": "既読",
     "Unread": "未読",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "{senderName} が更新しました",
-    "CommonNotificationChanged": "{senderName} が {property} を変更しました",
-    "CommonNotificationChangedProperty": "{senderName} が {property} を \"{newValue}\" に変更しました",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "{senderName} が更新しました",
     "ChangedCollaborators": "コラボレーターを変更しました",
     "NewCollaborators": "新しいコラボレーター",
     "RemovedCollaborators": "削除されたコラボレーター",
@@ -50,6 +50,13 @@
     "EnablePush": "プッシュ通知を有効にする",
     "NotificationBlockedInBrowser": "ブラウザで通知がブロックされています。ブラウザの設定で通知を有効にしてください",
     "General": "一般",
+    "Webpushes": "Webpushes",
+    "UnknownDevice": "不明なデバイス",
+    "RemoveWebpush": "削除",
+    "WebpushRemoveConfirm": "Webpushesが削除されます。確認しますか？",
+    "Value": "{value}",
+    "Current": "現在",
+    "Subscribe": "登録",
     "InboxNotificationsDescription": "Hulyの受信箱で個人通知を受け取ります。",
     "PushNotificationsDescription": "デスクトップで個人通知を受け取ります。",
     "CommonNotificationCollectionAdded": "{senderName} が {collection} を追加しました",
@@ -58,6 +65,8 @@
     "SoundNotificationsDescription": "イベントのサウンド通知を受け取ります。",
     "NoAccessToObject": "このオブジェクトへのアクセス権がありません",
     "ViewIn": "{app} で表示",
-    "Clear": "クリア"
+    "Clear": "クリア",
+    "YouAddedAsCollaborator": "コラボレーターに追加されました",
+    "YouRemovedFromCollaborators": "コラボレーターから削除されました"
   }
 }

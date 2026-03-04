@@ -28,9 +28,9 @@
     "Read": "Okundu",
     "Unread": "Okunmadı",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "{senderName} tarafından güncellendi",
-    "CommonNotificationChanged": "{senderName}, {property} değiştirdi",
-    "CommonNotificationChangedProperty": "{senderName}, {property} değerini \"{newValue}\" olarak değiştirdi",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "{senderName} tarafından güncellendi",
     "ChangedCollaborators": "İşbirlikçileri değiştirdi",
     "NewCollaborators": "Yeni işbirlikçiler",
     "RemovedCollaborators": "Kaldırılan işbirlikçiler",
@@ -50,6 +50,13 @@
     "EnablePush": "Push bildirimlerini etkinleştir",
     "NotificationBlockedInBrowser": "Bildirimler tarayıcınızda engellenmiş. Lütfen tarayıcı ayarlarınızdan bildirimleri etkinleştirin",
     "General": "Genel",
+    "Webpushes": "Webpushes",
+    "UnknownDevice": "Bilinmeyen cihaz",
+    "RemoveWebpush": "Kaldır",
+    "WebpushRemoveConfirm": "Webpushes silinecek. Onaylıyor musunuz?",
+    "Value": "{value}",
+    "Current": "mevcut",
+    "Subscribe": "Abone ol",
     "InboxNotificationsDescription": "Huly gelen kutunuzda kişisel bildirimler alın.",
     "PushNotificationsDescription": "Masaüstünde kişisel bildirimler alın.",
     "CommonNotificationCollectionAdded": "{senderName}, {collection} ekledi",
@@ -58,6 +65,8 @@
     "SoundNotificationsDescription": "Olaylar için sesli bildirimler alın.",
     "NoAccessToObject": "Artık bu nesneye erişiminiz yok",
     "ViewIn": "{app} içinde görüntüle",
-    "Clear": "Temizle"
+    "Clear": "Temizle",
+    "YouAddedAsCollaborator": "İşbirlikçi olarak eklendiniz",
+    "YouRemovedFromCollaborators": "İşbirlikçilerden kaldırıldınız"
   }
 }

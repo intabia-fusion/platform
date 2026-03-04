@@ -1,6 +1,5 @@
 {
   "string": {
-      "OnboardingChannelDescription": "User: {user}; Workspace: {workspace}",
       "Error": "Error: ",
       "InProject": " in project ",
       "NavigateToSpecial": "{app}: open {special}",
@@ -9,8 +8,6 @@
       "To": " to ",
       "Open": "open ",
       "Workbench": "Workbench: ",
-      "OnboardingChannel": "Onboarding Channel",
-      "OnboardingChannels": "Onboarding Channels",
       "WorkspaceId": "Workspace id",
       "WorkspaceName": "Workspace name",
       "WorkspaceUrl": "Workspace url",

@@ -28,9 +28,9 @@
     "Read": "Letto",
     "Unread": "Non letto",
     "CommonNotificationTitle": "{title}",
-    "CommonNotificationBody": "Aggiornato da {senderName}",
-    "CommonNotificationChanged": "{senderName} ha cambiato {property}",
-    "CommonNotificationChangedProperty": "{senderName} ha cambiato {property} in \"{newValue}\"",
+    "CommonNotificationTitleWithIdentifier": "{identifier}: {title}",
+    "MessageNotificationBody": "{senderName}: {message}",
+    "UpdateNotificationBody": "Aggiornato da {senderName}",
     "ChangedCollaborators": "Collaboratori cambiati",
     "NewCollaborators": "Nuovi collaboratori",
     "RemovedCollaborators": "Collaboratori rimossi",
@@ -50,6 +50,13 @@
     "EnablePush": "Abilita notifiche push",
     "NotificationBlockedInBrowser": "Le notifiche sono bloccate nel tuo browser. Abilita le notifiche nelle impostazioni del browser.",
     "General": "Generale",
+    "Webpushes": "Webpushes",
+    "UnknownDevice": "Dispositivo sconosciuto",
+    "RemoveWebpush": "Rimuovi",
+    "WebpushRemoveConfirm": "I webpushes verranno eliminati. Confermare?",
+    "Value": "{value}",
+    "Current": "attuale",
+    "Subscribe": "Iscriviti",
     "InboxNotificationsDescription": "Ricevi notifiche personali nella tua casella di posta Huly.",
     "PushNotificationsDescription": "Ricevi notifiche personali sul desktop.",
     "CommonNotificationCollectionAdded": "{senderName} ha aggiunto {collection}",
@@ -58,6 +65,8 @@
     "SoundNotificationsDescription": "Ricevi notifiche sonore per gli eventi.",
     "NoAccessToObject": "Non hai più accesso a questo oggetto",
     "ViewIn": "Visualizza in {app}",
-    "Clear": "Cancella"
+    "Clear": "Cancella",
+    "YouAddedAsCollaborator": "Sei stato aggiunto come collaboratore",
+    "YouRemovedFromCollaborators": "Sei stato rimosso dai collaboratori"
   }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import contact from '@hcengineering/contact'
 import documentsPlugin, {
   documentsId,
@@ -34,7 +34,7 @@ import tracker from '@hcengineering/model-tracker'
 import view, { classPresenter, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import converter from '@hcengineering/converter'
-import notification from '@hcengineering/notification'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import contacts from '@hcengineering/model-contact'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
@@ -1098,71 +1098,75 @@ export function defineNotifications (builder: Builder): void {
     core.space.Model,
     {
       label: documents.string.DocumentApplication,
-      icon: documents.icon.DocumentApplication
+      icon: documents.icon.DocumentApplication,
+      objectClass: documents.class.Document
     },
     documents.notification.DocumentsNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: false,
+      notifyAuthor: false,
       label: documents.string.Document,
       group: documents.notification.DocumentsNotificationGroup,
       field: 'content',
-      txClasses: [core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: documents.class.ControlledDocument,
+      attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p>',
+        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
         subjectTemplate: '{title}'
       }
     },
     documents.notification.ContentNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: false,
+      notifyAuthor: false,
       label: documents.string.Status,
       group: documents.notification.DocumentsNotificationGroup,
       field: 'state',
-      txClasses: [core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: documents.class.ControlledDocument,
+      attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: false,
       templates: {
         textTemplate: '{sender} changed {doc} status',
-        htmlTemplate: '<p>{sender} changed {doc} status</p>',
+        htmlTemplate: '<p>{sender} changed {doc} status</p> <p>{link}</p>',
         subjectTemplate: '{doc} status changed'
       }
     },
     documents.notification.StateNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: false,
+      notifyAuthor: false,
       label: documents.string.CoAuthors,
       group: documents.notification.DocumentsNotificationGroup,
       field: 'coAuthors',
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: documents.class.ControlledDocument,
+      attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} assigned you as a co-author of {doc}',
-        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p>',
+        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>',
         subjectTemplate: 'Co-authoring assignment for {doc}'
       }
     },

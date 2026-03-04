@@ -17,7 +17,7 @@
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc, SearchPresenterProvider } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-notification'
+import { Presenter } from '@hcengineering/server-activity'
 import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
 export * from './utils'
@@ -41,10 +41,9 @@ export default plugin(serverContactId, {
     ManageCollaboratorsTrigger: '' as Resource<TriggerFunc>
   },
   function: {
-    PersonHTMLPresenter: '' as Resource<Presenter>,
-    PersonTextPresenter: '' as Resource<Presenter>,
-    OrganizationHTMLPresenter: '' as Resource<Presenter>,
-    OrganizationTextPresenter: '' as Resource<Presenter>,
+    PersonUrlPresenter: '' as Resource<Presenter>,
+    PersonTitlePresenter: '' as Resource<Presenter>,
+    OrganizationUrlPresenter: '' as Resource<Presenter>,
 
     ContactNameProvider: '' as Resource<SearchPresenterProvider>,
     GetCurrentEmployeeName: '' as Resource<TemplateFieldServerFunc>,

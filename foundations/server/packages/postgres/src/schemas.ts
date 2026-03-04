@@ -89,6 +89,35 @@ const collaboratorSchema: Schema = {
   }
 }
 
+const chatSchema: Schema = {
+  ...baseSchema,
+  attachedTo: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  attachedToClass: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  account: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  pinned: {
+    type: 'bool',
+    notNull: true,
+    index: true
+  },
+  hidden: {
+    type: 'bool',
+    notNull: true,
+    index: true
+  }
+}
+
 const spaceSchema: Schema = {
   ...baseSchema,
   private: {
@@ -294,6 +323,14 @@ const githubLogin: Schema = {
   }
 }
 
+export const customIndexes: Record<string, { [key in 'unique']: string[] }[]> = {
+  [translateDomain('chunter_doc')]: [
+    {
+      unique: ['attachedTo', 'attachedToClass', 'account']
+    }
+  ]
+}
+
 export function addSchema (domain: string, schema: Schema): void {
   domainSchemas[translateDomain(domain)] = schema
   domainSchemaFields.set(domain, createSchemaFields(schema))
@@ -317,6 +354,7 @@ export const domainSchemas: Record<string, Schema> = {
   [translateDomain('github_user')]: githubLogin,
   [DOMAIN_RELATION]: relationSchema,
   [DOMAIN_COLLABORATOR]: collaboratorSchema,
+  [translateDomain('chunter_doc')]: chatSchema,
   kanban: defaultSchema
 }
 

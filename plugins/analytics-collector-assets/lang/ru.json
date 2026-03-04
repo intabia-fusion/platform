@@ -1,6 +1,5 @@
 {
   "string": {
-    "OnboardingChannelDescription": "User: {user}; Workspace: {workspace}",
     "Error": "Error: ",
     "InProject": " in project ",
     "NavigateToSpecial": "{app}: open {special}",
@@ -9,8 +8,6 @@
     "To": " to ",
     "Open": "open ",
     "Workbench": "Workbench: ",
-    "OnboardingChannel": "Канал обучения",
-    "OnboardingChannels": "Каналы обучения",
     "WorkspaceId": "Id пространства",
     "WorkspaceName": "Имя пространства",
     "WorkspaceUrl": "URL пространства",

@@ -18,10 +18,12 @@
   import notification, {
     ActivityInboxNotification,
     ActivityNotificationViewlet,
-    DisplayActivityInboxNotification
+    DisplayActivityInboxNotification,
+    NotificationType
   } from '@hcengineering/notification'
   import {
     ActivityMessagePreview,
+    BasePreview,
     combineActivityMessages,
     sortActivityMessages
   } from '@hcengineering/activity-resources'
@@ -110,6 +112,12 @@
 
     return result
   }
+
+  let type: NotificationType | undefined = undefined
+  $: typeId = value.allowedProviders?.[notification.providers.InboxNotificationProvider]?.[0]
+  $: void client.findOne(notification.class.NotificationType, { _id: typeId ?? '' }).then((res) => {
+    type = res
+  })
 </script>
 
 {#if displayMessage !== undefined}
@@ -121,6 +129,13 @@
         notification: value,
         actions
       }}
+      on:click
+    />
+  {:else if type?.notificationMessage}
+    <BasePreview
+      intlLabel={type?.notificationMessage}
+      account={value.createdBy ?? value.modifiedBy}
+      timestamp={value.createdOn ?? value.modifiedOn}
       on:click
     />
   {:else}

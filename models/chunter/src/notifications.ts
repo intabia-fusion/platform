@@ -16,7 +16,9 @@
 import { type Builder } from '@hcengineering/model'
 import notification from '@hcengineering/model-notification'
 import core, { defineCollaborators } from '@hcengineering/model-core'
-import activity from '@hcengineering/activity'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import { type MessageNotificationType } from '@hcengineering/notification'
+import { type ChatMessage, type ThreadMessage } from '@hcengineering/chunter'
 
 import chunter from './plugin'
 
@@ -49,84 +51,87 @@ export function defineNotifications (builder: Builder): void {
     chunter.ids.ChunterNotificationGroup
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ChatMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.DM,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: chunter.class.DirectMessage,
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} has sent you a message: {doc} {message}',
-        htmlTemplate: '<p><b>{sender}</b> has sent you a message {doc}</p> {message}',
-        subjectTemplate: 'You have new direct message in {doc}'
+        textTemplate: '{sender} has sent you a message: \n\n{message}',
+        htmlTemplate: '<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>',
+        subjectTemplate: 'You have new direct message'
       }
     },
     chunter.ids.DMNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ChatMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.ChannelMessages,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ChatMessage,
       objectClass: chunter.class.ChatMessage,
       attachedToClass: chunter.class.Channel,
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} has sent a message in {doc}: {message}',
-        htmlTemplate: '<p><b>{sender}</b> has sent a message in {doc}</p> {message}',
+        textTemplate: '{sender} has sent a message in {doc}: \n\n {message}',
+        htmlTemplate: '<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>',
         subjectTemplate: 'You have new message in {doc}'
       }
     },
     chunter.ids.ChannelNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<DocUpdateMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.JoinChannel,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: chunter.class.Channel,
       defaultEnabled: false,
       field: 'members',
       group: chunter.ids.ChunterNotificationGroup,
+      attachedToClass: chunter.class.Channel,
+      notificationMessage: chunter.string.YouJoinedChannel,
       templates: {
         textTemplate: 'You have been added to #{doc}',
-        htmlTemplate: '<p>You have been added to <b>#{doc}</b></p>',
+        htmlTemplate: '<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>',
         subjectTemplate: 'You have been added to #{doc}'
       }
     },
     chunter.ids.JoinChannelNotification
   )
 
-  builder.createDoc(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType<ThreadMessage>>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       label: chunter.string.ThreadMessage,
       generated: false,
       hidden: false,
-      txClasses: [core.class.TxCreateDoc],
+      messageClass: chunter.class.ThreadMessage,
       objectClass: chunter.class.ThreadMessage,
+      attachedToClass: activity.class.ActivityMessage,
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} replied to {doc}:\n\n{message}',
+        textTemplate: '{sender} replied to {doc}: \n\n{message}',
         htmlTemplate: '<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
+        subjectTemplate: 'New reply to {doc}'
       }
     },
     chunter.ids.ThreadNotification

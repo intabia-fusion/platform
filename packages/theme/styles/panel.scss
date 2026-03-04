@@ -50,7 +50,7 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  padding: var(--spacing-1_5) var(--spacing-1_5) var(--spacing-3) var(--spacing-2_5);
+  padding: var(--spacing-1_5) var(--spacing-1_5) var(--spacing-1_5) var(--spacing-2_5);
   font-weight: 700;
   font-size: 1.25rem;
   line-height: 1.5rem;
@@ -157,7 +157,7 @@
       .hulyNavGroup-header__tools { display: flex; }
     }
 
-    &:hover {
+    &:hover, &.showMenu, {
       .hulyNavGroup-header__actions { display: flex; }
     }
 
@@ -172,7 +172,7 @@
     &.isOpen + .hulyNavGroup-content {
       max-height: 100%;
 
-      &:not(:has(.nested)) { margin-bottom: var(--spacing-1_5); }
+      &:not(:has(.nested),.noPadding) { margin-bottom: var(--spacing-1_5); }
     }
   }
   &.nested .hulyNavGroup-header,
@@ -204,8 +204,8 @@
     &.isOpen { margin-bottom: 0; }
   }
 
-  &:not(.nested, .selectableHeader, .noDivider),
-  &.noDivider + &.noDivider { border-top: 1px solid var(--theme-navpanel-divider); }
+  &:not(.nested, .selectableHeader, .noDivider)
+  { border-top: 1px solid var(--theme-navpanel-divider); }
 
   .hulyNavGroup-content {
     overflow: hidden;

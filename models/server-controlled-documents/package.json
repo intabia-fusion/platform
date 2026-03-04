@@ -44,6 +44,7 @@
     "@hcengineering/request": "workspace:^0.7.0",
     "@hcengineering/server-controlled-documents": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-notification": "workspace:^0.7.0"
+    "@hcengineering/server-notification": "workspace:^0.7.0",
+    "@hcengineering/server-activity": "workspace:^0.7.0"
   }
 }

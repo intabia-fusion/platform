@@ -62,6 +62,11 @@ import contact, { Employee, formatName, Person } from '@hcengineering/contact'
 import communication, { Direct } from '@hcengineering/communication'
 import { CardPeer } from '@hcengineering/communication-types'
 import { getMetadata } from '@hcengineering/platform'
+import notification, { NotificationGroup } from '@hcengineering/notification'
+import {
+  getClassNotificationGroup,
+  generateAttributeNotificationType
+} from '@hcengineering/server-notification-resources'
 
 async function OnAttribute (ctx: TxCreateDoc<AnyAttribute>[], control: TriggerControl): Promise<Tx[]> {
   const attr = TxProcessor.createDoc2Doc(ctx[0])
@@ -248,6 +253,48 @@ function extractObjectData<T extends Doc> (doc: T): Data<T> {
   return data as Data<T>
 }
 
+async function createNotificationTypes (control: TriggerControl, tag: MasterTag): Promise<Tx[]> {
+  const res: Tx[] = []
+  const hierarchy = control.hierarchy
+
+  const group = await getClassNotificationGroup(control, tag._id)
+  const ignored = ['todos']
+  const enabled = ['comments']
+  const attributes = Array.from(hierarchy.getAllAttributes(tag._id, core.class.Doc).values()).filter(
+    (p) => p.hidden !== true && p.readonly !== true
+  )
+
+  if (group != null) {
+    for (const attr of attributes) {
+      if (ignored.includes(attr.name)) continue
+      const current = (
+        await control.findAll(control.ctx, notification.class.MessageNotificationType, {
+          attribute: attr._id,
+          group: group.parent ?? group._id
+        })
+      )[0]
+      if (current == null) {
+        res.push(...generateAttributeNotificationType(control, attr, group, enabled.includes(attr.name)))
+      }
+    }
+  } else {
+    const createTx = control.txFactory.createTxCreateDoc(notification.class.NotificationGroup, core.space.Model, {
+      label: tag.label,
+      icon: tag.icon ?? card.icon.Card,
+      objectClass: tag._id,
+      parent: card.ids.CardNotificationGroup as Ref<NotificationGroup>
+    })
+    res.push(createTx)
+    const g = TxProcessor.createDoc2Doc(createTx)
+    for (const attr of attributes) {
+      if (ignored.includes(attr.name)) continue
+      res.push(...generateAttributeNotificationType(control, attr, g, enabled.includes(attr.name)))
+    }
+  }
+
+  return res
+}
+
 async function OnMasterTagCreate (ctx: TxCreateDoc<MasterTag | Tag>[], control: TriggerControl): Promise<Tx[]> {
   const createTx = ctx[0]
   const tag = TxProcessor.createDoc2Doc(createTx)
@@ -260,7 +307,9 @@ async function OnMasterTagCreate (ctx: TxCreateDoc<MasterTag | Tag>[], control: 
   res.push(
     control.txFactory.createTxMixin(createTx.objectId, core.class.Mixin, core.space.Model, setting.mixin.UserMixin, {})
   )
+
   if (tag._class === card.class.MasterTag) {
+    res.push(...(await createNotificationTypes(control, tag as MasterTag)))
     const viewlets = await control.findAll(control.ctx, view.class.Viewlet, {
       attachTo: tag.extends,
       variant: { $exists: false }
@@ -879,28 +928,19 @@ export async function OnCardTag (ctx: TxMixin<Card, Card>[], control: TriggerCon
   return res
 }
 
-export async function CardTextPresenter (doc: Doc): Promise<string> {
-  const card = doc as Card
-
-  return card.title
-}
-
-export async function CardHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function CardUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const card = doc as Card
 
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
-
   const path = `${workbenchId}/${control.workspace.url}/${cardId}/${card._id}`
 
-  const link = concatLink(front, path)
-  return `<a href='${link}'>${card.title}</a>`
+  return concatLink(front, path)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    CardTextPresenter,
-    CardHTMLPresenter
+    CardUrlPresenter
   },
   trigger: {
     OnAttribute,

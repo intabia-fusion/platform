@@ -19,10 +19,12 @@
   import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
   import { EditBoxPopup } from '@hcengineering/view-resources'
   import TimePresenter from './TimePresenter.svelte'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
 
   // export let label: IntlString
   export let placeholder: IntlString
   export let value: number | undefined
+  export let object: Issue
   export let autoFocus: boolean = false
   // export let maxWidth: string = '10rem'
   export let onChange: (value: number | undefined) => void
@@ -31,6 +33,10 @@
   export let size: ButtonSize = 'small'
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = 'fit-content'
+  export let attributeKey: string
+
+  $: childInfos = object?.childInfo ?? []
+  $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
 
   let shown: boolean = false
 
@@ -63,7 +69,14 @@
   >
     <svelte:fragment slot="content">
       {#if value != null}
-        <span class="caption-color overflow-label pointer-events-none"><TimePresenter {value} /></span>
+        <span class="caption-color overflow-label pointer-events-none flex flex-row-center">
+          {#if childInfos.length > 0 && attributeKey === 'estimation'}
+            <TimePresenter {value} /><span>/</span>
+            <TimePresenter value={treeResult.totalEstimation} />
+          {:else}
+            <TimePresenter {value} />
+          {/if}
+        </span>
       {:else}
         <span class="content-dark-color pointer-events-none"><Label label={placeholder} /></span>
       {/if}
@@ -71,7 +84,10 @@
   </Button>
 {:else if readonly}
   {#if value != null}
-    <span class="caption-color overflow-label"><TimePresenter {value} /></span>
+    <span class="caption-color overflow-label flex flex-row-center">
+      <TimePresenter {value} /><span>/</span>
+      <TimePresenter value={treeResult.totalEstimation} />
+    </span>
   {:else}
     <span class="content-dark-color"><Label label={placeholder} /></span>
   {/if}

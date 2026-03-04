@@ -6,6 +6,7 @@
     "Category": "Category",
     "CollaborativeDocument": "Collaborative document",
     "ControlledDocument": "Controlled document",
+    "ControlledDocuments": "Controlled documents",
     "Requests": "Requests",
     "EffectiveDate": "Effective date",
     "PlannedEffectiveDate": "Planned effective date",
@@ -121,7 +122,7 @@
     "Archived": "Archived",
     "Deleted": "Deleted",
     "MetaAbstract": "Abstract",
-    
+
     "Obsolete": "Obsolete",
     "MakeDocumentObsolete": "Mark as obsolete",
     "MakeDocumentObsoleteDialog": "Mark {count, plural, =0 {document} other {documents}} as obsolete",
@@ -295,7 +296,7 @@
     "CreateDocumentDescription": "Grants users ability to create a document",
     "UpdateDocumentOwnerPermission": "Update document owner",
     "UpdateDocumentOwnerDescription": "Grants users ability to update a document owner",
-    
+
     "CreateDocumentCategoryPermission": "Create document category",
     "CreateDocumentCategoryDescription": "Grants users ability to create a document category",
     "UpdateDocumentCategoryPermission": "Update document category",

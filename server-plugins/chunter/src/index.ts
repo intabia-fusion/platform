@@ -16,30 +16,23 @@
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
-import { NotificationContentProvider, Presenter, TypeMatchFunc } from '@hcengineering/server-notification'
+import { TypeMatchFuncResource } from '@hcengineering/server-notification'
+import { Presenter } from '@hcengineering/server-activity'
 
-/**
- * @public
- */
 export const serverChunterId = 'server-chunter' as Plugin
+export { ChunterMiddleware } from './middleware'
 
-/**
- * @public
- */
 export default plugin(serverChunterId, {
   trigger: {
     ChunterTrigger: '' as Resource<TriggerFunc>,
-    OnChatMessageRemoved: '' as Resource<TriggerFunc>,
-    ChatNotificationsHandler: '' as Resource<TriggerFunc>,
-    OnUserStatus: '' as Resource<TriggerFunc>
+    OnUserStatus: '' as Resource<TriggerFunc>,
+    OnCollaboratorAdded: '' as Resource<TriggerFunc>,
+    OnCollaboratorRemoved: '' as Resource<TriggerFunc>
   },
   function: {
     CommentRemove: '' as Resource<ObjectDDParticipantFunc>,
-    ChannelHTMLPresenter: '' as Resource<Presenter>,
-    ChannelTextPresenter: '' as Resource<Presenter>,
-    ChunterNotificationContentProvider: '' as Resource<NotificationContentProvider>,
-    ChatMessageTextPresenter: '' as Resource<Presenter>,
-    ChatMessageHtmlPresenter: '' as Resource<Presenter>,
-    JoinChannelTypeMatch: '' as TypeMatchFunc
+    ChannelUrlPresenter: '' as Resource<Presenter>,
+    ChannelTitlePresenter: '' as Resource<Presenter>,
+    JoinChannelTypeMatch: '' as TypeMatchFuncResource
   }
 })

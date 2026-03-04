@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import { Person } from '@hcengineering/contact'
 import core, {
   concatLink,
   Doc,
@@ -29,16 +26,14 @@ import core, {
   TxUpdateDoc,
   WithLookup
 } from '@hcengineering/core'
-import { NotificationContent } from '@hcengineering/notification'
-import { getMetadata, IntlString } from '@hcengineering/platform'
+import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { NOTIFICATION_BODY_SIZE } from '@hcengineering/server-notification'
-import { stripTags } from '@hcengineering/text-core'
 import tracker, {
   Component,
   Issue,
   IssueParentInfo,
   TimeSpendReport,
+  reduceChildInfoTree,
   trackerId,
   type Project
 } from '@hcengineering/tracker'
@@ -57,98 +52,21 @@ async function updateSubIssues (
   })
 }
 
-/**
- * @public
- */
-export async function issueHTMLPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+export async function issueUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
   const issue = doc as Issue
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${trackerId}/${issue.identifier}`
-  const link = concatLink(front, path)
-  return `<a href="${link}">${issue.identifier}</a> ${issue.title}`
+  return concatLink(front, path)
 }
 
-/**
- * @public
- */
+export async function issueIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+  return await getIssueId(doc as Issue, control)
+}
+
 export async function getIssueId (doc: Issue, control: TriggerControl): Promise<string> {
   const issue = doc
   const project = (await control.findAll(control.ctx, tracker.class.Project, { _id: issue.space }))[0]
   return `${project?.identifier ?? '?'}-${issue.number}`
-}
-
-/**
- * @public
- */
-export async function issueTextPresenter (doc: Doc): Promise<string> {
-  const issue = doc as Issue
-  return `${issue.identifier} ${issue.title}`
-}
-
-/**
- * @public
- */
-export async function getIssueNotificationContent (
-  doc: Doc,
-  tx: TxCUD<Doc>,
-  target: Ref<Person>,
-  control: TriggerControl
-): Promise<NotificationContent> {
-  const issue = doc as Issue
-
-  const issueTitle = await issueTextPresenter(doc)
-
-  const title = tracker.string.IssueNotificationTitle
-  let body = tracker.string.IssueNotificationBody
-  const intlParams: Record<string, string | number> = {
-    issueTitle
-  }
-  const intlParamsNotLocalized: Record<string, IntlString> = {}
-
-  if (tx._class === core.class.TxCreateDoc) {
-    if (tx.objectClass === chunter.class.ChatMessage) {
-      const createTx = tx as TxCreateDoc<ChatMessage>
-      const message = createTx.attributes.message
-      const plainTextMessage = stripTags(message, NOTIFICATION_BODY_SIZE)
-      intlParams.message = plainTextMessage
-    }
-  } else if (tx._class === core.class.TxUpdateDoc) {
-    const updateTx = tx as TxUpdateDoc<Issue>
-
-    if (
-      updateTx.operations.assignee !== null &&
-      updateTx.operations.assignee !== undefined &&
-      updateTx.operations.assignee === target
-    ) {
-      body = tracker.string.IssueAssignedToYou
-    } else {
-      const attributes = control.hierarchy.getAllAttributes(doc._class)
-      for (const attrName in updateTx.operations) {
-        if (!Object.prototype.hasOwnProperty.call(updateTx.operations, attrName)) {
-          continue
-        }
-
-        const attr = attributes.get(attrName)
-        if (attr !== null && attr !== undefined) {
-          intlParamsNotLocalized.property = attr.label
-          if (attr.type._class === core.class.TypeString) {
-            body = tracker.string.IssueNotificationChangedProperty
-            intlParams.newValue = (issue as any)[attr.name]?.toString()
-          } else {
-            body = tracker.string.IssueNotificationChanged
-          }
-        }
-        break
-      }
-    }
-  }
-
-  return {
-    title,
-    body,
-    intlParams,
-    intlParamsNotLocalized
-  }
 }
 
 /**
@@ -288,7 +206,14 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
         )
       ]
       currentIssue.reportedTime += ccud.attributes.value
-      currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+      {
+        const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+          currentIssue.childInfo ?? [],
+          currentIssue.estimation,
+          currentIssue.reportedTime
+        )
+        currentIssue.remainingTime = Math.max(0, Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime)
+      }
       updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
       return res
     }
@@ -324,7 +249,17 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
           )
           currentIssue.reportedTime -= doc.value
           currentIssue.reportedTime += upd.operations.value
-          currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+          {
+            const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+              currentIssue.childInfo ?? [],
+              currentIssue.estimation,
+              currentIssue.reportedTime
+            )
+            currentIssue.remainingTime = Math.max(
+              0,
+              Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime
+            )
+          }
         }
 
         updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
@@ -360,7 +295,17 @@ async function doTimeReportUpdate (cud: TxCUD<TimeSpendReport>, control: Trigger
             )
           ]
           currentIssue.reportedTime -= doc.value
-          currentIssue.remainingTime = Math.max(0, currentIssue.estimation - currentIssue.reportedTime)
+          {
+            const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+              currentIssue.childInfo ?? [],
+              currentIssue.estimation,
+              currentIssue.reportedTime
+            )
+            currentIssue.remainingTime = Math.max(
+              0,
+              Math.max(currentIssue.estimation, totalEstimation) - totalReportedTime
+            )
+          }
           updateIssueParentEstimations(currentIssue, res, control, currentIssue.parents, currentIssue.parents)
           return res
         }
@@ -424,7 +369,14 @@ async function doIssueUpdate (updateTx: TxUpdateDoc<Issue>, control: TriggerCont
 
     // Remove from parent estimation list.
     const issue = await getCurrentIssue()
-    updateIssueParentEstimations(issue, res, control, issue.parents, updatedParents)
+    updateIssueParentEstimations(
+      issue,
+      res,
+      control,
+      issue.parents,
+      updatedParents,
+      updateTx.operations.attachedTo as Ref<Issue>
+    )
   }
 
   if (
@@ -437,7 +389,14 @@ async function doIssueUpdate (updateTx: TxUpdateDoc<Issue>, control: TriggerCont
 
     issue.estimation = updateTx.operations.estimation ?? issue.estimation
     issue.reportedTime = updateTx.operations.reportedTime ?? issue.reportedTime
-    issue.remainingTime = Math.max(0, issue.estimation - issue.reportedTime)
+    {
+      const { totalEstimation, totalReportedTime } = reduceChildInfoTree(
+        issue.childInfo ?? [],
+        issue.estimation,
+        issue.reportedTime
+      )
+      issue.remainingTime = Math.max(0, Math.max(issue.estimation, totalEstimation) - totalReportedTime)
+    }
 
     res.push(
       control.txFactory.createTxUpdateDoc(tracker.class.Issue, issue.space, issue._id, {
@@ -470,11 +429,13 @@ function updateIssueParentEstimations (
     space: Ref<Space>
     estimation: number
     reportedTime: number
+    attachedTo?: Ref<Issue>
   },
   res: Tx[],
   control: TriggerControl,
   sourceParents: IssueParentInfo[],
-  targetParents: IssueParentInfo[]
+  targetParents: IssueParentInfo[],
+  overrideParentId?: Ref<Issue>
 ): void {
   for (const pinfo of sourceParents) {
     res.push(
@@ -492,7 +453,8 @@ function updateIssueParentEstimations (
           childInfo: {
             childId: issue._id,
             estimation: issue.estimation,
-            reportedTime: issue.reportedTime
+            reportedTime: issue.reportedTime,
+            parentId: overrideParentId ?? issue.attachedTo
           }
         }
       })
@@ -507,9 +469,8 @@ async function issueLinkIdProvider (issue: Issue): Promise<string> {
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
-    IssueHTMLPresenter: issueHTMLPresenter,
-    IssueTextPresenter: issueTextPresenter,
-    IssueNotificationContentProvider: getIssueNotificationContent,
+    IssueIdentifierPresenter: issueIdentifierPresenter,
+    IssueUrlPresenter: issueUrlPresenter,
     IssueLinkIdProvider: issueLinkIdProvider
   },
   trigger: {

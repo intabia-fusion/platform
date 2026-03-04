@@ -1,6 +1,5 @@
 {
   "string": {
-    "OnboardingChannelDescription": "Usuário: {user}; Espaço de Trabalho: {workspace}",
     "Error": "Erro: ",
     "InProject": " no projeto ",
     "NavigateToSpecial": "{app}: abrir {special}",
@@ -9,8 +8,6 @@
     "To": " para ",
     "Open": "abrir ",
     "Workbench": "Mesa de trabalho: ",
-    "OnboardingChannel": "Canal de ambientação",
-    "OnboardingChannels": "Canais de ambientação",
     "WorkspaceId": "Id do espaço de trabalho",
     "WorkspaceName": "Nome do espaço de trabalho",
     "WorkspaceUrl": "URL do espaço de trabalho",

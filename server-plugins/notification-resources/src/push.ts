@@ -14,7 +14,7 @@
 //
 
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import serverNotification, { PUSH_NOTIFICATION_TITLE_SIZE } from '@hcengineering/server-notification'
+import serverNotification from '@hcengineering/server-notification'
 import {
   AccountUuid,
   Class,
@@ -47,10 +47,11 @@ import contact, {
   Person,
   PersonSpace
 } from '@hcengineering/contact'
-import { AvailableProvidersCache, AvailableProvidersCacheKey, getTranslatedNotificationContent } from './index'
 import { getPerson } from '@hcengineering/server-contact'
 
-async function createPushFromInbox (
+import { getTranslatedNotificationContent } from './utils'
+
+async function createPush (
   control: TriggerControl,
   n: InboxNotification,
   receiver: AccountUuid,
@@ -59,13 +60,7 @@ async function createPushFromInbox (
   subscriptions: PushSubscription[],
   senderPerson?: Person
 ): Promise<Tx | undefined> {
-  let { title, body } = await getTranslatedNotificationContent(n, n._class, control)
-
-  if (title === '' || body === '') {
-    return
-  }
-
-  title = title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE)
+  const { title, body } = await getTranslatedNotificationContent(n)
 
   const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
   const provider = linkProviders.find(({ _id }) => _id === n.objectClass)
@@ -96,9 +91,11 @@ async function createPushFromInbox (
   const messageInfo = getMessageInfo(n, control.hierarchy)
   return control.txFactory.createTxCreateDoc(notification.class.BrowserNotification, receiverSpace, {
     user: receiver,
-    title,
-    body,
-    senderId: n.createdBy ?? n.modifiedBy,
+    title: n.title ?? notification.string.CommonNotificationTitle,
+    body: n.body ?? notification.string.UpdateNotificationBody,
+    intlParams: n.intlParams ?? { title },
+    intlParamsNotLocalized: n.intlParamsNotLocalized,
+    sender: n.createdBy ?? n.modifiedBy,
     tag: n._id,
     objectId: n.objectId,
     objectClass: n.objectClass,
@@ -233,37 +230,33 @@ export async function PushNotificationsHandler (
   txes: TxCreateDoc<InboxNotification>[],
   control: TriggerControl
 ): Promise<Tx[]> {
-  const availableProviders: AvailableProvidersCache = control.contextCache.get(AvailableProvidersCacheKey) ?? new Map()
-
   const all: InboxNotification[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
-    .filter(
-      (it) =>
-        availableProviders.get(it._id)?.find((p) => p === notification.providers.PushNotificationProvider) !== undefined
-    )
+    .filter((it) => (it.allowedProviders?.[notification.providers.PushNotificationProvider]?.length ?? 0) !== 0)
 
-  if (all.length === 0) {
-    return []
-  }
+  if (all.length === 0) return []
 
   const receivers = new Set(all.map((it) => it.user))
   const subscriptions = (await control.queryFind(control.ctx, notification.class.PushSubscription, {})).filter((it) =>
     receivers.has(it.user)
   )
 
+  const subscriptionSettings = await control.queryFind(control.ctx, notification.class.PushSubscriptionSetting, {})
+  const filteredSubscriptions = subscriptions.filter((sub) => {
+    const setting = subscriptionSettings.find(({ attachedTo }) => attachedTo === sub._id)
+    return setting?.enabled !== false
+  })
   const res: Tx[] = []
 
   for (const inboxNotification of all) {
     const { user } = inboxNotification
-    const userSubscriptions = subscriptions.filter((it) => it.user === user)
+    const userSubscriptions = filteredSubscriptions.filter((it) => it.user === user)
 
     const senderSocialString = inboxNotification.createdBy ?? inboxNotification.modifiedBy
     const senderPerson = await getPerson(control, senderSocialString)
     const soundAlert =
-      availableProviders
-        .get(inboxNotification._id)
-        ?.find((p) => p === notification.providers.SoundNotificationProvider) !== undefined
-    const tx = await createPushFromInbox(
+      (inboxNotification.allowedProviders?.[notification.providers.SoundNotificationProvider]?.length ?? 0) > 0
+    const tx = await createPush(
       control,
       inboxNotification,
       user,

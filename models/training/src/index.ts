@@ -14,7 +14,7 @@
 //
 
 import activity from '@hcengineering/activity'
-import notification, { type NotificationType } from '@hcengineering/notification'
+import notification, { MessageNotificationType } from '@hcengineering/notification'
 import { type Asset, type IntlString } from '@hcengineering/platform'
 import type { BuildModelKey, KeyFilterPreset, Viewlet, ViewletDescriptor } from '@hcengineering/view'
 import questions from '@hcengineering/model-questions'
@@ -583,21 +583,22 @@ function defineTrainingRequest (builder: Builder): void {
 
   defineCollaborators(builder, training.class.TrainingRequest, { fields: ['trainees'] })
 
-  builder.createDoc<NotificationType>(
-    notification.class.NotificationType,
+  builder.createDoc<MessageNotificationType>(
+    notification.class.MessageNotificationType,
     core.space.Model,
     {
       hidden: false,
       generated: false,
-      allowedForAuthor: true,
+      notifyAuthor: true,
       label: training.string.TrainingRequest,
       group: training.notification.TrainingGroup,
-      txClasses: [core.class.TxCreateDoc, core.class.TxUpdateDoc],
+      messageClass: activity.class.DocUpdateMessage,
       objectClass: training.class.TrainingRequest,
+      attachedToClass: training.class.TrainingRequest,
       defaultEnabled: true,
       templates: {
         textTemplate: '{sender} sent you a training request {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p>',
+        htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>',
         subjectTemplate: 'Training request {doc}'
       }
     },

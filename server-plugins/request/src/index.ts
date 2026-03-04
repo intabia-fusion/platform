@@ -15,7 +15,8 @@
 
 import { Plugin, plugin, Resource } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
-import { Presenter, TypeMatchFunc } from '@hcengineering/server-notification'
+import { CreateNotificationResource, TypeMatchFuncResource } from '@hcengineering/server-notification'
+import { Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -27,9 +28,11 @@ export const serverRequestId = 'server-request' as Plugin
  */
 export default plugin(serverRequestId, {
   function: {
-    RequestTextPresenter: '' as Resource<Presenter>,
-    SendRequestMatch: '' as TypeMatchFunc,
-    RemoveRequestMatch: '' as TypeMatchFunc
+    RequestTitlePresenter: '' as Resource<Presenter>,
+    SendRequestMatch: '' as TypeMatchFuncResource,
+    RemoveRequestMatch: '' as TypeMatchFuncResource,
+    RemoveRequestCreateNotification: '' as CreateNotificationResource,
+    SendRequestCreateNotification: '' as CreateNotificationResource
   },
   trigger: {
     OnRequest: '' as Resource<TriggerFunc>
