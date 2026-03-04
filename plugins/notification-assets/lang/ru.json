@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Веб-пуши будут удалены. Продолжить?",
     "Value": "{value}",
     "Current": "текущий",
+    "Subscribe": "Подписаться",
     "InboxNotificationsDescription": "Получайте персональные уведомления на свой почтовый ящик Huly.",
     "PushNotificationsDescription": "Получайте персональные уведомления на рабочий стол.",
     "Sound": "Звук",

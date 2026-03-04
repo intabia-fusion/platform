@@ -463,7 +463,8 @@ const notification = plugin(notificationId, {
     RemoveWebpush: '' as IntlString,
     WebpushRemoveConfirm: '' as IntlString,
     Value: '' as IntlString,
-    Current: '' as IntlString
+    Current: '' as IntlString,
+    Subscribe: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,

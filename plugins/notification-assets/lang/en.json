@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "The webpushes will be deleted. Confirm?",
     "Value": "{value}",
     "Current": "current",
+    "Subscribe": "Subscribe",
     "InboxNotificationsDescription": "Receive personal notifications in your Huly inbox.",
     "PushNotificationsDescription": "Receive personal notifications on desktop.",
     "CommonNotificationCollectionAdded": "{senderName} added {collection}",
