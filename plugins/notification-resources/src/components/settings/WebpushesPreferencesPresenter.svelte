@@ -25,12 +25,9 @@
   )
 
   const settingsQuery = createQuery()
-  settingsQuery.query(
-    notification.class.PushSubscriptionSetting,
-    {},
-    (result) => {
-      settings = result
-    })
+  settingsQuery.query(notification.class.PushSubscriptionSetting, {}, (result) => {
+    settings = result
+  })
 
   $: getEnabled = (sub: PushSubscription): boolean => {
     const setting = settings.find(({ attachedTo }) => attachedTo === sub._id)
@@ -85,16 +82,11 @@
     }
   })
 
-  $: alreadySubscribed = currentEndpoint !== undefined && subscriptions.some(s => s.endpoint === currentEndpoint)
+  $: alreadySubscribed = currentEndpoint !== undefined && subscriptions.some((s) => s.endpoint === currentEndpoint)
 </script>
 
 <div class="flex mb-4">
-  <Button
-    kind="primary"
-    disabled={alreadySubscribed}
-    label={notification.string.Subscribe}
-    on:click={subscribePush}
-  />
+  <Button kind="primary" disabled={alreadySubscribed} label={notification.string.Subscribe} on:click={subscribePush} />
 </div>
 <div class="flex-col flex-gap-4">
   {#each subscriptions as subscription (subscription._id)}

@@ -536,15 +536,11 @@ export function createModel (builder: Builder): void {
     presenter: notification.component.GeneralPreferencesGroup
   })
 
-  builder.createDoc(
-    notification.class.NotificationPreferencesGroup,
-    core.space.Model,
-    {
-      label: notification.string.Webpushes,
-      icon: view.icon.Card,
-      presenter: notification.component.WebpushesPreferencesPresenter
-    }
-  )
+  builder.createDoc(notification.class.NotificationPreferencesGroup, core.space.Model, {
+    label: notification.string.Webpushes,
+    icon: view.icon.Card,
+    presenter: notification.component.WebpushesPreferencesPresenter
+  })
 
   builder.createDoc(
     notification.class.NotificationProvider,
