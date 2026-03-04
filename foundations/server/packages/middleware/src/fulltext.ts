@@ -132,7 +132,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
 
     // We need to filter all non indexed fields from query to make it work properly
     const findQuery: DocumentQuery<Doc> = {
-      $search: query.$search
+      $search: query.$search.endsWith('*') ? query.$search : query.$search + '*'
     }
 
     const childClasses = new Set<Ref<Class<Doc>>>()
