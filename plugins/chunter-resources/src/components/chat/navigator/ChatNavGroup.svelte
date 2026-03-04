@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder } from '@hcengineering/core'
+  import core, { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, LiveQuery } from '@hcengineering/presentation'
   import { Chat } from '@hcengineering/chunter'
@@ -171,6 +171,7 @@
 {#each sections as section (section.id)}
   <ChatNavSection
     id={section.id}
+    _class={section._class ?? core.class.Doc}
     objects={section.objects}
     objectId={object?._id}
     header={section.label}
@@ -179,6 +180,7 @@
     sortFn={model.sortFn}
     showEmpty={model.showEmpty}
     itemsCount={section.count}
+    {pinned}
     on:show-more={() => {
       if (section._class !== undefined) {
         const query = objectsQueryByClass.get(section._class)

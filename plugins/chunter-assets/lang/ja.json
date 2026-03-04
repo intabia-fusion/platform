@@ -135,8 +135,8 @@
     "NoThreadsYet": "まだスレッドはありません。",
     "SummarizeMessages": "内容を要約",
     "DeleteMessageDescription": "このメッセージを削除してもよろしいですか？この操作は元に戻せません。",
-    "Star": "{label}にスターを付ける",
-    "Unstar": "{label}のスターを解除",
+    "Star": "スターを付ける",
+    "Unstar": "スターを外す",
     "Hide": "{label}を非表示",
     "Leave": "{label}を退出",
     "HideAll": "すべて非表示"

@@ -134,8 +134,8 @@
     "NoThreadsYet": "Il n'y a pas encore de fils de discussion.",
     "SummarizeMessages": "Résumer la discussion",
     "DeleteMessageDescription": "Êtes-vous sûr de vouloir supprimer ce message ? Cette action ne peut pas être annulée.",
-    "Star": "Mettre {label} en favori",
-    "Unstar": "Retirer {label} des favoris",
+    "Star": "Mettre en favori",
+    "Unstar": "Retirer des favoris",
     "Hide": "Masquer {label}",
     "Leave": "Quitter {label}",
     "HideAll": "Tout masquer"

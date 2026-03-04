@@ -15,7 +15,7 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { statusByUserStore } from '@hcengineering/contact-resources'
-  import { Doc, reduceCalls, Ref } from '@hcengineering/core'
+  import core, { Class, Doc, notEmpty, reduceCalls, Ref } from '@hcengineering/core'
   import { getResource, IntlString, translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import ui, {
@@ -32,8 +32,15 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocIdentifier } from '@hcengineering/view-resources'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import {
+    getNotificationsCount,
+    InboxNotificationsClientImpl,
+    isActivityNotification,
+    isMentionNotification,
+    NotifyMarker
+  } from '@hcengineering/notification-resources'
   import { Chat } from '@hcengineering/chunter'
+  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
@@ -42,6 +49,7 @@
   import ChatNavItem from './ChatNavItem.svelte'
 
   export let id: string
+  export let _class: Ref<Class<Doc>> = core.class.Doc
   export let header: IntlString
   export let objects: { doc: Doc, chat?: Chat }[]
   export let itemsCount: number
@@ -49,13 +57,15 @@
   export let actions: Action[] = []
   export let createAction: Action | undefined
   export let objectId: Ref<Doc> | undefined
+  export let pinned: Chat[] = []
   export let sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const inboxClient = InboxNotificationsClientImpl.getClient()
-
   const contextByDocStore = inboxClient.contextByDoc
+  const contextsStore = inboxClient.contexts
+  const notificationsByContextStore = inboxClient.inboxNotificationsByContext
 
   let sortedItems: ChatNavItemModel[] = []
   let items: ChatNavItemModel[] = []
@@ -130,6 +140,37 @@
       menuOpened = false
     })
   }
+
+  let count: number = 0
+  let contexts: DocNotifyContext[] = []
+
+  $: pinnedIds = pinned.map((it) => it.attachedTo)
+  $: contexts =
+    _class === core.class.Doc
+      ? sortedItems.map((it) => $contextByDocStore.get(it.object._id)).filter(notEmpty)
+      : $contextsStore.filter((it) => hierarchy.isDerived(it.objectClass, _class) && !pinnedIds.includes(it.objectId))
+
+  async function calculateNotifications (
+    contexts: DocNotifyContext[],
+    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  ): Promise<void> {
+    const notifications = contexts
+      .flatMap((context) => notificationsByContext.get(context._id) ?? [])
+      .filter((n) => {
+        if (isActivityNotification(n)) return true
+
+        return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
+      })
+
+    count = await getNotificationsCount(contexts, notifications)
+  }
+
+  $: void calculateNotifications(contexts, $notificationsByContextStore)
+
+  $: notify = sortedItems.some((it) => {
+    const c = $contextByDocStore.get(it.id)
+    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotify ?? 0) < (c?.lastView ?? 0)
+  })
 </script>
 
 {#if sortedItems.length > 0 || showEmpty}
@@ -186,6 +227,23 @@
         >
           <IconMoreH size={'small'} />
         </button>
+      {/if}
+    </svelte:fragment>
+    <svelte:fragment slot="after" let:isOpen>
+      {#if !isOpen}
+        {#if count > 0}
+          <div class="antiHSpacer" />
+          <div class="notify">
+            <NotifyMarker {count} />
+          </div>
+          <div class="antiHSpacer" />
+        {:else if notify}
+          <div class="antiHSpacer" />
+          <div class="notify">
+            <NotifyMarker count={0} kind="simple" size="xx-small" color="gray" />
+          </div>
+          <div class="antiHSpacer" />
+        {/if}
       {/if}
     </svelte:fragment>
   </NavGroup>

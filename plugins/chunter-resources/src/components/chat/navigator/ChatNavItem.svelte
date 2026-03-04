@@ -119,7 +119,6 @@
       result.push({
         icon: view.icon.Star,
         label: chunter.string.Unstar,
-        labelParams: { label },
         group: 'edit',
         action: async () => {
           await client.updateCollection(
@@ -182,7 +181,8 @@
   {count}
   title={item.title}
   description={item.description}
-  secondaryNotifyMarker={context === undefined ? false : (context?.lastView ?? 0) < (context?.lastUpdate ?? 0)}
+  secondaryNotifyMarker={(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&
+    (context?.lastNotify ?? 0) < (context?.lastView ?? 0)}
   {actions}
   {type}
   on:click={() => {

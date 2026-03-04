@@ -135,8 +135,8 @@
     "NoThreadsYet": "Henüz başlık yok.",
     "SummarizeMessages": "Tartışmayı özetle",
     "DeleteMessageDescription": "Bu mesajı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-    "Star": "{label} yıldızla",
-    "Unstar": "{label} yıldızını kaldır",
+    "Star": "Yıldızla",
+    "Unstar": "Yıldızı kaldır",
     "Hide": "{label} gizle",
     "Leave": "{label} ayrıl",
     "HideAll": "Tümünü gizle"

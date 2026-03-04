@@ -13,14 +13,20 @@
 // limitations under the License.
 //
 
-import { type ActivityMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { type Channel, type ChatMessage } from '@hcengineering/chunter'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
-import { writable } from 'svelte/store'
+import { get, writable } from 'svelte/store'
 import view from '@hcengineering/view'
 import { type DocNotifyContext } from '@hcengineering/notification'
+import {
+  getNotificationsCount,
+  InboxNotificationsClientImpl,
+  isActivityNotification,
+  isMentionNotification
+} from '@hcengineering/notification-resources'
 
 import chunter from './plugin'
 
@@ -225,7 +231,27 @@ export default async (): Promise<Resources> => ({
     OpenThreadInSidebar: openThreadInSidebar,
     LocationDataResolver: locationDataResolver,
     ShowNotifyMarkerFn: async (contexts: DocNotifyContext[]): Promise<boolean> => {
-      return contexts.some((context) => (context.lastUpdateTimestamp ?? 0) > (context.lastViewedTimestamp ?? 0))
+      const hasUpdates = contexts.some((context) => (context.lastUpdate ?? 0) > (context.lastView ?? 0))
+      if (!hasUpdates) return false
+
+      const notificationClient = InboxNotificationsClientImpl.getClient()
+      const client = getClient()
+      const hierarchy = client.getHierarchy()
+
+      for (const context of contexts) {
+        if ((context.lastUpdate ?? 0) <= (context.lastView ?? 0)) continue
+
+        const notifications = get(notificationClient.inboxNotificationsByContext).get(context._id) ?? []
+        const activityNotifications = notifications.filter(isActivityNotification)
+        const mentionNotifications = notifications
+          .filter(isMentionNotification)
+          .filter((it) => hierarchy.isDerived(it.mentionedInClass, activity.class.ActivityMessage))
+        const unreadCount = await getNotificationsCount(context, [...activityNotifications, ...mentionNotifications])
+        if (unreadCount > 0) {
+          return true
+        }
+      }
+      return false
     }
   },
   actionImpl: {

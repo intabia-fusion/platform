@@ -53,7 +53,7 @@ import { type TxOperations } from './operations'
 import { isPredicate } from './predicate'
 import { type Branding, type BrandingMap } from './server'
 import { type DocumentQuery, type FindResult } from './storage'
-import { DOMAIN_TX, type Tx, type TxCreateDoc, type TxCUD, TxProcessor, type TxUpdateDoc } from './tx'
+import { DOMAIN_TX, type Tx, type TxCreateDoc, type TxCUD, TxMixin, TxProcessor, type TxUpdateDoc } from './tx'
 
 function toHex (value: number, chars: number): string {
   const result = value.toString(16)
@@ -841,6 +841,17 @@ export function pluginFilterTx (
     for (const c of configs.values()) {
       if (a.pluginId === c.pluginId) {
         for (const id of c.transactions) {
+          if (c.mixinFilter != null) {
+            const tx = stx.get(id as Ref<Tx>)
+            const mixinFilter = new Set(c.mixinFilter ?? [])
+            if (tx?._class === core.class.TxMixin) {
+              const cud = tx as TxMixin<Doc, Doc>
+              if (mixinFilter.has(cud.mixin)) {
+                totalExcluded.add(id as Ref<Tx>)
+              }
+            }
+          }
+
           if (c.classFilter !== undefined) {
             const filter = new Set(c.classFilter)
             const tx = stx.get(id as Ref<Tx>)

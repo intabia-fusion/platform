@@ -16,8 +16,9 @@ import core, {
   Ref,
   type Domain
 } from '@hcengineering/core'
-import chunter, { Chat, ChatMessage } from '@hcengineering/chunter'
+import chunter, { Chat } from '@hcengineering/chunter'
 import { PersonSpace } from '@hcengineering/contact'
+import notification, { InboxNotification } from '@hcengineering/notification'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
@@ -37,13 +38,21 @@ export class ChunterMiddleware extends BaseMiddleware {
     for (const _tx of txes) {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
-      if (_tx._class === core.class.TxCreateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)) {
-        if (hierarchy.isDerived(tx.objectClass, chunter.class.ThreadMessage)) continue
-        const createTx = _tx as TxCreateDoc<ChatMessage>
-        const message = TxProcessor.createDoc2Doc(createTx)
-        const chats = await this.getHiddenChats(message.attachedTo)
+      if (
+        _tx._class === core.class.TxCreateDoc &&
+        hierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)
+      ) {
+        if (hierarchy.isDerived(tx.objectClass, notification.class.ReactionInboxNotification)) continue
+        if (
+          hierarchy.isDerived(tx.objectClass, notification.class.CommonInboxNotification) &&
+          !hierarchy.isDerived(tx.objectClass, notification.class.MentionInboxNotification)
+        ) { continue }
 
-        const ttxes = this.getUnhideChatsTx(factory, message.attachedTo, chats)
+        const createTx = _tx as TxCreateDoc<InboxNotification>
+        const n = TxProcessor.createDoc2Doc(createTx)
+        const chats = await this.getHiddenChats(n.objectId)
+
+        const ttxes = this.getUnhideChatsTx(factory, n.objectId, chats)
 
         if (ttxes.length > 0) {
           await this.context.derived?.tx(ctx, ttxes)
@@ -61,7 +70,6 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       if (_tx._class === core.class.TxUpdateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.Chat)) {
         const updateTx = _tx as TxUpdateDoc<Chat>
-        console.log('UPDATE TX', updateTx)
         if (updateTx.attachedTo == null) continue
 
         const hidden = updateTx.operations.hidden

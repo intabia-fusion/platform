@@ -218,12 +218,11 @@ class Workspace {
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
 
-    res.push(...this.getUpdateContextTxes(contexts, tx.modifiedOn, sender.account, []))
-
     const settings = await this.cache.getSettings()
     const mentionType = matched.find((it) => it._id === notification.ids.MentionNotificationType)
 
     if (mentionType != null) {
+      res.push(...this.getUpdateContextTxes(contexts, tx.createdOn ?? tx.modifiedOn, sender.account, []))
       const result = await createMentionsData(
         client,
         this.cache,
@@ -237,15 +236,17 @@ class Workspace {
       res.push(...result.txes)
 
       for (const d of result.data) {
-        const updateContextTx = res.find(
-          (it): it is TxUpdateDoc<DocNotifyContext> =>
-            it._class === core.class.TxUpdateDoc &&
-            (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
-            (it as TxUpdateDoc<DocNotifyContext>).objectId === d.context?._id
-        )
+        if (client.hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)) {
+          const updateContextTx = res.find(
+            (it): it is TxUpdateDoc<DocNotifyContext> =>
+              it._class === core.class.TxUpdateDoc &&
+              (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+              (it as TxUpdateDoc<DocNotifyContext>).objectId === d.context?._id
+          )
 
-        if (updateContextTx != null) {
-          updateContextTx.operations.lastNotify = tx.modifiedOn
+          if (updateContextTx != null) {
+            updateContextTx.operations.lastNotify = tx.modifiedOn
+          }
         }
 
         res.push(
@@ -332,16 +333,17 @@ class Workspace {
           }
         }
 
-        const updateContextTx = res.find(
-          (it): it is TxUpdateDoc<DocNotifyContext> =>
-            it._class === core.class.TxUpdateDoc &&
-            (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
-            (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
-        )
-
-        if (updateContextTx != null) {
-          updateContextTx.operations.lastNotify = tx.modifiedOn
-        }
+        // TODO: add later
+        // const updateContextTx = res.find(
+        //   (it): it is TxUpdateDoc<DocNotifyContext> =>
+        //     it._class === core.class.TxUpdateDoc &&
+        //     (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+        //     (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
+        // )
+        //
+        // if (updateContextTx != null) {
+        //   updateContextTx.operations.lastNotify = tx.modifiedOn
+        // }
 
         res.push(
           ...(await this.createNotifications(
@@ -412,22 +414,21 @@ class Workspace {
     const context = (await this.cache.getContexts(doc._id)).find((it) => it.user === receiver.account)
     const sender = await this.cache.getSender(reaction.modifiedBy)
 
-    if (context != null) {
-      res.push(...this.getUpdateContextTxes([context], tx.modifiedOn, sender.account, []))
-    }
-
     const notifyResult: NotifyResult = Object.fromEntries(providers.map((p) => [p, [type]]))
 
-    const updateContextTx = res.find(
-      (it): it is TxUpdateDoc<DocNotifyContext> =>
-        it._class === core.class.TxUpdateDoc &&
-        (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
-        (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
-    )
-
-    if (updateContextTx != null) {
-      updateContextTx.operations.lastNotify = tx.modifiedOn
-    }
+    // TODO: add later
+    // const updateContextTx = res.find(
+    //   (it): it is TxUpdateDoc<DocNotifyContext> =>
+    //     it._class === core.class.TxUpdateDoc &&
+    //     (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
+    //     (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
+    // )
+    //
+    // if (updateContextTx != null) {
+    //   updateContextTx.operations.lastNotify = tx.modifiedOn
+    // } else if (context != null) {
+    //   res.push(this.txFactory.createTxUpdateDoc(context._class, context.space, context._id, { lastNotify: tx.modifiedOn }))
+    // }
 
     const txes = await this.createNotifications(
       notification.class.ReactionInboxNotification,
@@ -480,7 +481,7 @@ class Workspace {
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(message.modifiedBy)
 
-    res.push(...this.getUpdateContextTxes(contexts, message.modifiedOn, sender.account, _res))
+    res.push(...this.getUpdateContextTxes(contexts, message.createdOn ?? message.modifiedOn, sender.account, _res))
 
     const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
 
@@ -508,13 +509,12 @@ class Workspace {
       const type = types[0]
       if (type == null) continue
 
-      const updateContextTx = res.find(
+      const updateContextTx = [..._res, ...res].find(
         (it): it is TxUpdateDoc<DocNotifyContext> =>
           it._class === core.class.TxUpdateDoc &&
           (it as TxUpdateDoc<Doc>).objectClass === notification.class.DocNotifyContext &&
           (it as TxUpdateDoc<DocNotifyContext>).objectId === context?._id
       )
-
       if (updateContextTx != null) {
         updateContextTx.operations.lastNotify = message.modifiedOn
       }

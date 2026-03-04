@@ -134,8 +134,8 @@
     "NoThreadsYet": "No hay hilos todavía.",
     "SummarizeMessages": "Resumir la discusión",
     "DeleteMessageDescription": "¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.",
-    "Star": "Marcar {label}",
-    "Unstar": "Desmarcar {label}",
+    "Star": "Marcar",
+    "Unstar": "Desmarcar",
     "Hide": "Ocultar {label}",
     "Leave": "Abandonar {label}",
     "HideAll": "Ocultar todo"

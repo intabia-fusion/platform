@@ -135,8 +135,8 @@
     "NoThreadsYet": "Es gibt noch keine Threads.",
     "SummarizeMessages": "Diskussion zusammenfassen",
     "DeleteMessageDescription": "Sind Sie sicher, dass Sie diese Nachricht löschen möchten? Dies kann nicht rückgängig gemacht werden.",
-    "Star": "{label} markieren",
-    "Unstar": "{label} Markierung entfernen",
+    "Star": "Markieren",
+    "Unstar": "Markierung entfernen",
     "Hide": "{label} verbergen",
     "Leave": "{label} verlassen",
     "HideAll": "Alle verbergen"
