@@ -121,14 +121,12 @@ export async function getCollaboratorsFromDocFields (
   doc: Doc,
   mixin: ClassCollaborators<Doc>
 ): Promise<AccountUuid[]> {
-  return await ctx.with('get-collaborators-from-doc-fields', { _class: doc._class, _id: doc._id }, async (ctx) => {
+  return await ctx.with('get-collaborators-from-doc-fields', {}, async (ctx) => {
     const collaborators = new Set<AccountUuid>()
     if (mixin.allFields !== true) {
       for (const field of mixin.fields) {
         const value = (doc as any)[field]
-        const newCollaborators = await ctx.with('getKeyCollaborators', {}, (ctx) =>
-          getKeyCollaborators(ctx, control, doc._class, value, field)
-        )
+        const newCollaborators = await getKeyCollaborators(ctx, control, doc._class, value, field)
         if (newCollaborators !== undefined) {
           for (const newCollaborator of newCollaborators) {
             collaborators.add(newCollaborator)
@@ -140,9 +138,7 @@ export async function getCollaboratorsFromDocFields (
       // attr type will be checked into getKeyCollaborators
       for (const [field] of attrs) {
         const value = (doc as any)[field]
-        const newCollaborators = await ctx.with('getKeyCollaborators', {}, (ctx) =>
-          getKeyCollaborators(ctx, control, doc._class, value, field)
-        )
+        const newCollaborators = await getKeyCollaborators(ctx, control, doc._class, value, field)
         if (newCollaborators !== undefined) {
           for (const newCollaborator of newCollaborators) {
             collaborators.add(newCollaborator)
@@ -180,12 +176,7 @@ export async function getDocCached (
   const cached = docCache.get(_id)
   if (cached !== undefined) return cached
 
-  const doc = await ctx.with(
-    'find-doc',
-    { domain: control.hierarchy.findDomain(_class) },
-    async (ctx) => (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
-  )
-
+  const doc = (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
   if (doc === undefined) return undefined
 
   docCache.set(doc._id, doc)
@@ -295,7 +286,7 @@ export async function getCollaboratorsByTx (
     added: AccountUuid[]
     removed: AccountUuid[]
   }> {
-  return await ctx.with('get-doc-collaborators-by-tx', { _class: doc._class, _id: doc._id }, async (ctx) => {
+  return await ctx.with('get-doc-collaborators-by-tx', {}, async (ctx) => {
     const { hierarchy } = control
 
     const mixin = getClassCollaborators(control.modelDb, hierarchy, doc._class)

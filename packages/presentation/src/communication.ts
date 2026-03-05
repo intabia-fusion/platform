@@ -83,6 +83,8 @@ import view from '@hcengineering/view'
 import { get } from 'svelte/store'
 import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
 import { v4 as uuid } from 'uuid'
+import communication from '@hcengineering/communication'
+import { withTotal } from '@hcengineering/communication-shared'
 
 import { getCurrentWorkspaceUuid } from './file'
 import { addTxListener, removeTxListener, type TxListener } from './utils'
@@ -111,9 +113,11 @@ export async function setCommunicationClient (platformClient: PlatformClient): P
   if (client !== undefined) {
     client.close()
   }
-  const _client = new Client(platformClient)
-
   const token = getMetadata(presentation.metadata.Token) ?? ''
+  const enabled = getMetadata(communication.metadata.Enabled) ?? false
+
+  const _client = new Client(platformClient, enabled)
+
   const hulylakeUrl = getMetadata(presentation.metadata.HulylakeUrl) ?? ''
   const hulylake = getHulylakeClient(hulylakeUrl, getCurrentWorkspaceUuid(), token)
 
@@ -135,9 +139,14 @@ const COMMUNICATION = 'communication' as OperationDomain
 
 class Client {
   txHandler: TxListener
-  constructor (private readonly connection: PlatformClient) {
+  constructor (
+    private readonly connection: PlatformClient,
+    private readonly enabled: boolean
+  ) {
     this.txHandler = this.doHandleEvents.bind(this)
-    addTxListener(this.txHandler)
+    if (enabled) {
+      addTxListener(this.txHandler)
+    }
   }
 
   doHandleEvents (events: Tx[]): void {
@@ -357,6 +366,7 @@ class Client {
   }
 
   async findMessagesMeta (params: FindMessagesMetaParams): Promise<MessageMeta[]> {
+    if (!this.enabled) return []
     return (
       await this.connection.domainRequest<MessageMeta[]>(COMMUNICATION, {
         findMessagesMeta: { params }
@@ -365,6 +375,7 @@ class Client {
   }
 
   async findMessagesGroups (params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
+    if (!this.enabled) return []
     return (
       await this.connection.domainRequest<MessagesGroup[]>(COMMUNICATION, {
         findMessagesGroups: { params }
@@ -376,6 +387,7 @@ class Client {
     params: FindNotificationContextParams,
     subscription?: number | string
   ): Promise<NotificationContext[]> {
+    if (!this.enabled) return []
     return (
       await this.connection.domainRequest<NotificationContext[]>(COMMUNICATION, {
         findNotificationContexts: { params, subscription }
@@ -387,6 +399,7 @@ class Client {
     params: FindNotificationsParams,
     subscription?: number | string
   ): Promise<WithTotal<Notification>> {
+    if (!this.enabled) return withTotal([])
     return (
       await this.connection.domainRequest<WithTotal<Notification>>(COMMUNICATION, {
         findNotifications: { params, subscription }
@@ -395,6 +408,7 @@ class Client {
   }
 
   async findLabels (params: FindLabelsParams): Promise<Label[]> {
+    if (!this.enabled) return []
     return (
       await this.connection.domainRequest<Label[]>(COMMUNICATION, {
         findLabels: { params }
@@ -403,6 +417,7 @@ class Client {
   }
 
   async findCollaborators (params: FindCollaboratorsParams): Promise<Collaborator[]> {
+    if (!this.enabled) return []
     return (
       await this.connection.domainRequest<Collaborator[]>(COMMUNICATION, {
         findCollaborators: { params }
@@ -411,12 +426,14 @@ class Client {
   }
 
   async subscribeCard (cardId: CardID, subscription: string | number): Promise<void> {
+    if (!this.enabled) return
     await this.connection.domainRequest<Message[]>(COMMUNICATION, {
       subscribeCard: { cardId, subscription }
     })
   }
 
   async unsubscribeCard (cardId: CardID, subscription: string | number): Promise<void> {
+    if (!this.enabled) return
     await this.connection.domainRequest<Message[]>(COMMUNICATION, {
       unsubscribeCard: { cardId, subscription }
     })
@@ -427,6 +444,7 @@ class Client {
   }
 
   private async sendEvent (event: Event): Promise<EventResult> {
+    if (!this.enabled) return {}
     const lang = get(languageStore)
     if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
       addNotification(
