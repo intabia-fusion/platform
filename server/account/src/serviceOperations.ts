@@ -94,7 +94,7 @@ export async function listWorkspaces (
   const { region, mode, visited } = params
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  if (!['tool', 'backup', 'admin', 'github'].includes(extra?.service) && extra?.admin !== 'true') {
+  if (!['tool', 'backup', 'admin', 'github', 'workspace'].includes(extra?.service) && extra?.admin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -111,7 +111,7 @@ export async function listAccounts (
   const { extra } = decodeTokenVerbose(ctx, token)
   const isAdmin = extra?.admin === 'true'
 
-  if (!isAdmin) {
+  if (!isAdmin && extra?.service !== 'workspace') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -487,8 +487,7 @@ export async function updateBackupInfo (
   await db.workspaceStatus.update(
     { workspaceUuid: workspace },
     {
-      backupInfo,
-      lastProcessingTime: Date.now()
+      backupInfo
     }
   )
 }
@@ -514,8 +513,7 @@ export async function updateUsageInfo (
   await db.workspaceStatus.update(
     { workspaceUuid: workspace },
     {
-      usageInfo,
-      lastProcessingTime: Date.now()
+      usageInfo
     }
   )
 }
