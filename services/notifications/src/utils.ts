@@ -494,14 +494,6 @@ export async function getMessageNotificationContent (
   }
 }
 
-export async function getMessage (client: Client, tx: TxCreateDoc<ActivityMessage>): Promise<ActivityMessage> {
-  const raw = TxProcessor.createDoc2Doc(tx)
-
-  if (raw.attachedToTitle != null || raw.attachedToIdentifier != null || raw.attachedToUrl != null) return raw
-
-  return (await client.findOne(raw._class, { _id: raw._id })) ?? raw
-}
-
 function getUrlPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.UrlPresenter)
 }

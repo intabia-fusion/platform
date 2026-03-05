@@ -79,7 +79,6 @@ import WsCache from './cache'
 import { Client, NotifyResult } from './types'
 import {
   getAllowedProviders,
-  getMessage,
   getMessageNotificationContent,
   getMessageNotifyResult,
   getNotifiedUsers,
@@ -463,7 +462,7 @@ class Workspace {
     _res: Tx[]
   ): Promise<Tx[]> {
     const client = this.client
-    const message = await getMessage(client, tx)
+    const message = TxProcessor.createDoc2Doc(tx)
 
     const doc = await this.cache.getDoc(message.attachedTo, message.attachedToClass)
     if (doc === undefined) return []
