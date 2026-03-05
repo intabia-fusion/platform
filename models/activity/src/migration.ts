@@ -20,7 +20,7 @@ import {
   type Reaction,
   type DocUpdateAction
 } from '@hcengineering/activity'
-import contact from '@hcengineering/contact'
+import contact, { type Person } from '@hcengineering/contact'
 import core, {
   type AccountUuid,
   type Class,
@@ -30,6 +30,7 @@ import core, {
   DOMAIN_COLLABORATOR,
   generateId,
   groupByArray,
+  notEmpty,
   type PersonId,
   type Ref,
   type Space
@@ -60,6 +61,7 @@ import { activityId, DOMAIN_ACTIVITY, DOMAIN_REACTION, DOMAIN_USER_MENTION } fro
 import activity from './plugin'
 
 const DOMAIN_CHUNTER = 'chunter' as Domain
+const DOMAIN_CONTACT = 'contact' as Domain
 
 async function migrateReactions (client: MigrationClient): Promise<void> {
   await client.update(
@@ -395,7 +397,14 @@ async function migrateActivityAttributes (client: MigrationClient): Promise<void
 }
 
 async function migrateCollaboratorsActivity (client: MigrationClient): Promise<void> {
-  const accounts = (await client.accountClient.listAccounts()).map((it) => it.uuid)
+  const accounts = (
+    await client.find<Person>(DOMAIN_CONTACT, {
+      personUuid: { $exists: true },
+      'contact:mixin:Employee': { $exists: true }
+    })
+  )
+    .map((it) => it.personUuid)
+    .filter(notEmpty)
   const iterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
     _class: activity.class.DocUpdateMessage,
     'attributeUpdates.attrClass': 'notification:mixin:Collaborators'
@@ -571,7 +580,7 @@ export const activityOperation: MigrateOperation = {
         func: migrateAccountsInDocUpdates
       },
       {
-        state: 'migrate-collaborators-dum-v1',
+        state: 'migrate-collaborators-dum-v2',
         mode: 'upgrade',
         func: migrateCollaboratorsActivity
       },
