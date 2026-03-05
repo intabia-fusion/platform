@@ -128,7 +128,7 @@ class Workspace {
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.BrowserNotification)) return
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) return
 
-    const res: Tx[] = []
+    const res: TxCUD<Doc>[] = []
 
     res.push(...(await this.processTxNotifications(tx)))
 
@@ -147,13 +147,15 @@ class Workspace {
     this.inProgress = false
   }
 
-  private async applyTxes (txes: Tx[]): Promise<void> {
-    for (const resTx of txes) {
+  private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
+    for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
+      const batch = txes.slice(i, i + config.ApplyTxBatchSize)
+      const txApply = this.txFactory.createTxApplyIf(core.space.Tx, 'notifications', [], [], batch, undefined, true)
       try {
-        await this.rest.tx(resTx)
+        await this.rest.tx(txApply)
       } catch (e) {
         console.error(e)
-        this.ctx.error('Failed to send tx', { tx: resTx })
+        this.ctx.error('Failed to send tx batch', { tx: txApply, batchSize: batch.length })
       }
     }
   }
@@ -183,7 +185,7 @@ class Workspace {
     }
   }
 
-  async processTxNotifications (tx: TxCUD<Doc>): Promise<Tx[]> {
+  async processTxNotifications (tx: TxCUD<Doc>): Promise<TxCUD<Doc>[]> {
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.Reaction)) {
       return await this.processReaction(tx as TxCUD<Reaction>)
     }
@@ -212,7 +214,7 @@ class Workspace {
     const space = await this.cache.getDocSpace(txObject)
     if (space === undefined) return []
 
-    const res: Tx[] = []
+    const res: TxCUD<Doc>[] = []
     const doc = txAttachedToDoc ?? txObject
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
@@ -357,7 +359,7 @@ class Workspace {
     return res
   }
 
-  private async processReaction (tx: TxCUD<Reaction>): Promise<Tx[]> {
+  private async processReaction (tx: TxCUD<Reaction>): Promise<TxCUD<Doc>[]> {
     if (tx._class === core.class.TxCreateDoc) {
       return await this.processCreateReaction(tx as TxCreateDoc<Reaction>)
     } else if (tx._class === core.class.TxRemoveDoc) {
@@ -367,7 +369,7 @@ class Workspace {
     return []
   }
 
-  private async processCreateReaction (tx: TxCreateDoc<Reaction>): Promise<Tx[]> {
+  private async processCreateReaction (tx: TxCreateDoc<Reaction>): Promise<TxCUD<Doc>[]> {
     if (tx.attachedTo === undefined) return []
 
     const reaction = TxProcessor.createDoc2Doc(tx)
@@ -403,7 +405,7 @@ class Workspace {
     const providers: Ref<NotificationProvider>[] = getAllowedProviders(this.client, settings, receiver.socialIds, type)
     if (providers.length === 0 || !providers.includes(notification.providers.InboxNotificationProvider)) return []
 
-    const res: Tx[] = []
+    const res: TxCUD<Doc>[] = []
     const context = (await this.cache.getContexts(doc._id)).find((it) => it.user === receiver.account)
     const sender = await this.cache.getSender(reaction.modifiedBy)
 
@@ -440,13 +442,17 @@ class Workspace {
     return res
   }
 
-  private async processRemoveReaction (tx: TxRemoveDoc<Reaction>): Promise<Tx[]> {
+  private async processRemoveReaction (tx: TxRemoveDoc<Reaction>): Promise<TxCUD<Doc>[]> {
     const toRemove = await this.client.findAll(notification.class.ReactionInboxNotification, { ref: tx.objectId })
 
     return toRemove.map((it) => this.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
   }
 
-  private async processMessage (tx: TxCUD<ActivityMessage>, notifiedUsers: AccountUuid[], _res: Tx[]): Promise<Tx[]> {
+  private async processMessage (
+    tx: TxCUD<ActivityMessage>,
+    notifiedUsers: AccountUuid[],
+    _res: TxCUD<Doc>[]
+  ): Promise<TxCUD<Doc>[]> {
     if (tx._class === core.class.TxCreateDoc) {
       return await this.processCreateMessage(tx as TxCreateDoc<ActivityMessage>, notifiedUsers, _res)
     } else if (tx._class === core.class.TxRemoveDoc) {
@@ -459,8 +465,8 @@ class Workspace {
   private async processCreateMessage (
     tx: TxCreateDoc<ActivityMessage>,
     notifiedUsers: AccountUuid[],
-    _res: Tx[]
-  ): Promise<Tx[]> {
+    _res: TxCUD<Doc>[]
+  ): Promise<TxCUD<Doc>[]> {
     const client = this.client
     const message = TxProcessor.createDoc2Doc(tx)
 
@@ -470,7 +476,7 @@ class Workspace {
     const space = await this.cache.getDocSpace(doc)
     if (space === undefined) return []
 
-    const res: Tx[] = []
+    const res: TxCUD<Doc>[] = []
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(message.modifiedBy)
 
@@ -541,8 +547,8 @@ class Workspace {
     context: DocNotifyContext | undefined,
     receiver: Receiver,
     notifyResult: NotifyResult
-  ): Promise<Tx[]> {
-    const res: Tx[] = []
+  ): Promise<TxCUD<Doc>[]> {
+    const res: TxCUD<Doc>[] = []
 
     let contextId: Ref<DocNotifyContext>
     if (context != null) {
@@ -588,7 +594,7 @@ class Workspace {
     return createTx
   }
 
-  private async processRemoveMessage (tx: TxRemoveDoc<ActivityMessage>): Promise<Tx[]> {
+  private async processRemoveMessage (tx: TxRemoveDoc<ActivityMessage>): Promise<TxCUD<Doc>[]> {
     return []
   }
 
@@ -616,8 +622,8 @@ class Workspace {
     contexts: DocNotifyContext[],
     timestamp: Timestamp,
     author: AccountUuid | undefined,
-    _res: Tx[]
-  ): Tx[] {
+    _res: TxCUD<Doc>[]
+  ): TxCUD<Doc>[] {
     function getUpdateTx (_context: DocNotifyContext): TxUpdateDoc<DocNotifyContext> | undefined {
       return _res.find(
         (it): it is TxUpdateDoc<DocNotifyContext> =>
