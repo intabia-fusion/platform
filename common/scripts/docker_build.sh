@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-version=${DOCKER_VERSION:-$(git rev-parse HEAD)}
+version=$(git rev-parse HEAD)
 
 # Check for cleanup flag from environment
 cleanup=false

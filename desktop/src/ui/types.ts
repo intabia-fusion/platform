@@ -97,8 +97,6 @@ export interface Branding {
   defaultSpace?: string
   defaultSpecial?: string
   initWorkspace?: string
-  defaultInviteRole?: string
-  inviteLinkGeneratorRoles?: string[]
 }
 
 export type BrandingMap = Record<string, Branding>
