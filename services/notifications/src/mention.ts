@@ -21,7 +21,6 @@ import core, {
   type Markup,
   Ref,
   Space,
-  Tx,
   TxCUD,
   Blob,
   type TxRemoveDoc
@@ -240,9 +239,9 @@ function getMentionRefsData (
   return references
 }
 
-async function getRemoveMentionTxes (client: Client, mention: UserMentionInfo, tx: TxCUD<Doc>): Promise<Tx[]> {
+async function getRemoveMentionTxes (client: Client, mention: UserMentionInfo, tx: TxCUD<Doc>): Promise<TxCUD<Doc>[]> {
   const { txFactory, hierarchy } = client
-  const res: Tx[] = []
+  const res: TxCUD<Doc>[] = []
 
   res.push(txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id))
 
@@ -271,7 +270,7 @@ function getUpdateMentionTx (
   reference: MentionRef,
   space: Ref<Space>,
   mention: UserMentionInfo | undefined
-): Tx {
+): TxCUD<Doc> {
   const { txFactory } = client
   if (mention == null) {
     return txFactory.createTxCreateDoc(activity.class.UserMentionInfo, space, {
@@ -302,7 +301,7 @@ async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>)
   }
 
   if (hasMarkdown) {
-    const txes: Tx[] = []
+    const txes: TxCUD<Doc>[] = []
 
     const notifications = await client.findAll(notification.class.MentionInboxNotification, {
       mentionedIn: tx.objectId

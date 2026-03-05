@@ -23,7 +23,7 @@ import {
   MeasureContext,
   ModelDb,
   Ref,
-  Tx,
+  TxCUD,
   TxFactory,
   type WithLookup,
   WorkspaceInfoWithStatus
@@ -73,7 +73,7 @@ export interface Client {
 }
 
 export interface MentionResult {
-  txes: Tx[]
+  txes: TxCUD<Doc>[]
   data: {
     data: Partial<MentionInboxNotification>
     context: DocNotifyContext | undefined
