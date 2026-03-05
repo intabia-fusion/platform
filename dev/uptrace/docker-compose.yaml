@@ -1,0 +1,106 @@
+services:
+  # ClickHouse для uptrace
+  clickhouse-uptrace:
+    image: clickhouse/clickhouse-server:latest
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_USER: uptrace
+      CLICKHOUSE_PASSWORD: uptrace
+      CLICKHOUSE_DB: uptrace
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'localhost:8123/ping']
+      interval: 1s
+      timeout: 1s
+      retries: 30
+    volumes:
+      - clickhouse_uptrace_data:/var/lib/clickhouse
+# PostgreSQL для uptrace
+  uptrace-postgres:
+    image: postgres:18-alpine
+    restart: on-failure
+    shm_size: 64mb
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: uptrace
+      POSTGRES_PASSWORD: uptrace
+      POSTGRES_DB: uptrace
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U uptrace -d uptrace']
+      interval: 1s
+      timeout: 1s
+      retries: 30
+    volumes:
+      - uptrace_postgres_data:/var/lib/postgresql/data
+# Redis для uptrace
+  uptrace-redis:
+    image: redis:latest
+    restart: on-failure
+    command: redis-server --maxmemory 28mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 1s
+      retries: 30
+
+  # Uptrace - APM и observability платформа
+  uptrace:
+    image: 'uptrace/uptrace:2.1.0-beta'
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - ./uptrace.yaml:/etc/uptrace/config.yml
+    environment:
+      - UptraceSecret=ahxeethohzeiReBie0hi
+    ports:
+      - '14317:4317'
+      - '14318:80'
+    depends_on:
+      clickhouse-uptrace:
+        condition: service_healthy
+      uptrace-postgres:
+        condition: service_healthy
+      uptrace-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'localhost:80/api/v1/health']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+# OpenTelemetry Collector для сбора телеметрии
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+    depends_on:
+      uptrace:
+        condition: service_healthy
+volumes:
+  clickhouse_uptrace_data:
+  uptrace_postgres_data:

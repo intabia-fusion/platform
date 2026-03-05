@@ -1,5 +1,6 @@
 import type { MeasureContext, Metrics } from '@hcengineering/core'
-import { concatLink, MeasureMetricsContext, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import { RPCHandler } from '@hcengineering/rpc'
 import { generateToken } from '@hcengineering/server-token'
 import os from 'os'
 
@@ -110,6 +111,8 @@ export function initStatisticsContext (
       prev = undefined
     }
 
+    const rpcHandler = new RPCHandler()
+
     const intTimer = setInterval(() => {
       try {
         if (prev !== undefined) {
@@ -122,11 +125,11 @@ export function initStatisticsContext (
             serviceName: ops?.serviceName?.() ?? serviceName,
             cpu: getCPUInfo(),
             memory: getMemoryInfo(),
-            stats: metricsContext.metrics,
+            stats: metricsContext.metrics !== undefined ? metricsClean(metricsContext.metrics) : undefined,
             workspaces: ops?.getStats?.()
           }
 
-          const statData = JSON.stringify(data)
+          const statData = rpcHandler.serialize({ method: 'data', params: [data] }, true)
 
           void metricsContext.with(
             'sendStatistics',
@@ -135,7 +138,7 @@ export function initStatisticsContext (
               prev = fetch(concatLink(statsUrl, '/api/v1/statistics') + `/?name=${serviceId}`, {
                 method: 'PUT',
                 headers: {
-                  'Content-Type': 'application/json',
+                  'Content-Type': 'application/octet-stream',
                   authorization: `Bearer ${token}`
                 },
                 body: statData

@@ -216,7 +216,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       - MAILBOX_DOMAINS=huly.dev.local
       - MAILBOX_MAX_COUNT_PER_ACCOUNT=2
     restart: unless-stopped
@@ -229,7 +229,7 @@ services:
     environment:
       - PORT=4900
       - SERVER_SECRET=secret
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   # payment:
   #   image: intabiafusion/payment
@@ -246,7 +246,7 @@ services:
   #     - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
   #     - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
   #     - POLAR_SUBSCRIPTION_PLANS=${POLAR_SUBSCRIPTION_PLANS}
-  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   #   restart: unless-stopped
   workspace:
     image: intabiafusion/workspace
@@ -276,7 +276,7 @@ services:
       - BACKUP_BUCKET=${BACKUP_BUCKET_NAME}
       - MAIL_URL=
       # - INIT_WORKSPACE=staging-dev
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   collaborator:
     image: intabiafusion/collaborator
@@ -294,7 +294,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - STATS_URL=http://huly.local:4900
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   front:
     image: intabiafusion/front
@@ -334,7 +334,7 @@ services:
       - BACKUP_URL=http://huly.local:4039/api/backup,
       - EXCLUDED_APPLICATIONS_FOR_ANONYMOUS=["chunter", "notification"]
       # - DISABLE_SIGNUP=true
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       - PULSE_URL=ws://huly.local:8099/ws
       - DATALAKE_URL=http://huly.local:4030
       # - HULYLAKE_URL=http://huly.local:8096
@@ -384,7 +384,7 @@ services:
       - RATE_LIMIT_WINDOW=3000
       - FILES_URL=http://huly.local:4030/blob/:workspace/:blobId/:filename
       - COMMUNICATION_API_ENABLED=false
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       - HYLYLAKE_URL=http://huly.local:8096
       - AI_BOT_URL=http://huly.local:4010
       - WEB_PUSH_URL=http://notification:3335
@@ -398,7 +398,7 @@ services:
       - 4004:4004
     environment:
       - STATS_URL=http://huly.local:4901
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   fulltext:
     image: intabiafusion/fulltext
     extra_hosts:
@@ -425,7 +425,7 @@ services:
       - STATS_URL=http://huly.local:4900
       - REKONI_URL=http://huly.local:4004
       - ACCOUNTS_URL=http://huly.local:3000
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       # - HULYLAKE_URL=http://huly.local:8096
   print:
     image: intabiafusion/print
@@ -441,7 +441,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - STATS_URL=http://huly.local:4900
       - ACCOUNTS_URL=http://huly.local:3000
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   sign:
     image: intabiafusion/sign
     extra_hosts:
@@ -463,7 +463,7 @@ services:
       - SERVICE_ID=sign-service
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://huly.local:4900
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   love:
     image: intabiafusion/love
     extra_hosts:
@@ -646,7 +646,7 @@ services:
       - SERVICE_ID=analytics-collector-service
       - ACCOUNTS_URL=http://huly.local:3000
       - STATS_URL=http://huly.local:4900
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       # - POSTHOG_HOST=${POSTHOG_HOST}
       # - POSTHOG_API_KEY=${POSTHOG_API_KEY}
       # - MAX_PAYLOAD_SIZE=10mb
@@ -667,7 +667,7 @@ services:
       - STATS_URL=http://huly.local:4900
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - ACCOUNTS_URL=http://huly.local:3000
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   datalake:
     image: intabiafusion/datalake
@@ -694,7 +694,7 @@ services:
       - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin
       - REGION=
       - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   # hulylake:
   #   image: intabiafusion/hulylake
@@ -830,7 +830,7 @@ services:
   #     - INTERVAL=60
   #     - STORAGE=minio|minio?accessKey=minioadmin&secretKey=minioadmin
   #     - WORKSPACE_STORAGE=${STORAGE_CONFIG}
-  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   #     - QUEUE_CONFIG=${QUEUE_CONFIG}
   #     - TEMPORAL_ADDRESS=localhost:7233
   #   restart: unless-stopped
@@ -854,7 +854,7 @@ services:
       - STATS_URL=http://huly.local:4900
       - BUCKET_NAME=backups
       - STORAGE=minio|minio?accessKey=minioadmin&secretKey=minioadmin
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
 
   rating:
@@ -879,24 +879,8 @@ services:
       - ACCOUNTS_URL=http://huly.local:3000
       - COMMUNICATION_TIME_LOGGING_ENABLED=true
       - COMMUNICATION_API_ENABLED=false
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
       - HYLYLAKE_URL=http://huly.local:8096
-    restart: unless-stopped
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    ports:
-      - 16686:16686 # Web UI
-      - 4317:4317
-      - 4318:4318
-    volumes:
-      - telemetry:/badger
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - SPAN_STORAGE_TYPE=badger
-      - BADGER_DIRECTORY_VALUE=/badger/data
-      - BADGER_DIRECTORY_KEY=/badger/key
     restart: unless-stopped
   love-agent:
     image: intabiafusion/love-agent

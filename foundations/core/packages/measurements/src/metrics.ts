@@ -156,6 +156,24 @@ export function childMetrics (root: Metrics, path: string[]): Metrics {
   return oop
 }
 
+export function metricsClean (m: Metrics): Metrics {
+  // clean metrics from measure values.
+  return {
+    ...m,
+    measurements: metricsCleanMeasurements(m.measurements)
+  }
+}
+
+function metricsCleanMeasurements (m: Record<string, Metrics>): Record<string, Metrics> {
+  const result: Record<string, Metrics> = {}
+  for (const [k, v] of Object.entries(m)) {
+    if (!k.startsWith('#')) {
+      result[k] = metricsClean(v)
+    }
+  }
+  return result
+}
+
 /**
  * @public
  */

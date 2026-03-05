@@ -2,18 +2,23 @@ services:
   stream:
     image: intabiafusion/stream
     pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
     environment:
       - STREAM_ENDPOINT_URL=s3://localhost:9002
       - STREAM_INSECURE=true
       - STREAM_SERVER_SECRET=secret
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     ports:
       - 1081:1080
     restart: unless-stopped
   time-machine:
     image: intabiafusion/worker
     pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
     depends_on:
       redpanda:
         condition: service_started
@@ -25,6 +30,7 @@ services:
       - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   cockroach:
     image: cockroachdb/cockroach:v24.1.2
@@ -127,6 +133,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    extra_hosts:
+      - 'huly.local:host-gateway'
     links:
       - minio
       - cockroach
@@ -147,8 +155,11 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   workspace:
     image: intabiafusion/workspace
+    extra_hosts:
+      - 'huly.local:host-gateway'
     links:
       - cockroach
       - postgres
@@ -170,10 +181,13 @@ services:
       - ACCOUNTS_DB_URL=${DB_PG_URL}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   front:
     image: intabiafusion/front
     pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
     links:
       - account
       - minio
@@ -202,12 +216,15 @@ services:
       - STATS_URL=http://stats:4901
       - STATS_API=http://localhost:4901
       - USE_OTP=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   transactor:
     image: intabiafusion/transactor
     pull_policy: never
     depends_on:
       redpanda:
         condition: service_started
+    extra_hosts:
+      - 'huly.local:host-gateway'
     links:
       - elastic
       - minio
@@ -240,11 +257,14 @@ services:
       - ENABLE_COMPRESSION=true
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   collaborator:
     image: intabiafusion/collaborator
     links:
       - minio
       - transactor
+    extra_hosts:
+      - 'huly.local:host-gateway'
     ports:
       - 3079:3079
     environment:
@@ -254,18 +274,24 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FULLTEXT_URL=http://fulltext:4710
       - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   rekoni:
     image: intabiafusion/rekoni-service
     restart: on-failure
+    extra_hosts:
+      - 'huly.local:host-gateway'
     ports:
       - 4007:4004
     environment:
       - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
 
   fulltext:
     image: intabiafusion/fulltext
     restart: unless-stopped
+    extra_hosts:
+      - 'huly.local:host-gateway'
     depends_on:
       redpanda:
         condition: service_started
@@ -291,13 +317,17 @@ services:
       - REKONI_URL=http://rekoni:4007
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   stats:
     image: intabiafusion/stats
+    extra_hosts:
+      - 'huly.local:host-gateway'
     ports:
       - 4901:4901
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   notifications:
     image: intabiafusion/notifications
@@ -317,4 +347,5 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped

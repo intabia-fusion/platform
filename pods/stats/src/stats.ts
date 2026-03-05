@@ -5,6 +5,7 @@
 import { Analytics } from '@hcengineering/analytics'
 import { metricsAggregate, type MeasureContext } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
+import { RPCHandler } from '@hcengineering/rpc'
 import {
   getCPUInfo,
   getMemoryInfo,
@@ -17,7 +18,7 @@ import serverToken, { decodeToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type { IncomingHttpHeaders } from 'http'
 import Koa from 'koa'
-import bodyParser from 'koa-bodyparser'
+import bodyParser from 'koa-body'
 import Router from 'koa-router'
 
 const serviceTimeout = 5 * 60000
@@ -72,9 +73,12 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       credentials: true
     })
   )
+
   app.use(
     bodyParser({
-      jsonLimit: '150mb'
+      jsonLimit: '150mb',
+      text: true,
+      textLimit: '150mb'
     })
   )
 
@@ -176,7 +180,9 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       req.res.end()
     }
   })
-  router.put('/api/v1/statistics', (req, res) => {
+  const rpcHandler = new RPCHandler()
+
+  router.put('/api/v1/statistics', async (req, res) => {
     try {
       const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
       const payload = decodeToken(token)
@@ -184,10 +190,52 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       const serviceName = (req.query.name as string) ?? ''
       if (service) {
         ctx.info('put stats', { service: req.query.name, len: req.request.length })
-        statistics.set(serviceName, {
-          ...(req.request.body as ServiceStatistics),
-          lastUpdate: Date.now()
-        })
+
+        const contentType = req.headers['content-type']
+
+        if (contentType === 'application/octet-stream') {
+          // Read raw body from stream for RPC data
+          const chunks: Buffer[] = []
+          req.req.on('data', (chunk: Buffer) => {
+            chunks.push(chunk)
+          })
+
+          await new Promise<void>((resolve, reject) => {
+            req.req.on('end', resolve)
+            req.req.on('error', reject)
+          })
+
+          const rawBody = Buffer.concat(chunks)
+
+          ctx.info('put stats processing octet-stream', { rawBodyLength: rawBody.length })
+
+          try {
+            const deserialized = rpcHandler.readRequest(rawBody, true)
+            ctx.info('put stats deserialized', {
+              method: deserialized.method,
+              paramsCount: deserialized.params?.length
+            })
+
+            if (deserialized.method === 'data') {
+              statistics.set(serviceName, {
+                ...(deserialized.params?.[0] as ServiceStatistics),
+                lastUpdate: Date.now()
+              })
+            }
+          } catch (deserializeErr: any) {
+            ctx.error('put stats deserialization error', {
+              error: deserializeErr.message,
+              rawBodyLength: rawBody.length
+            })
+            throw deserializeErr
+          }
+        } else {
+          ctx.info('put stats processing json', { bodyType: typeof (req.request as any).body })
+          statistics.set(serviceName, {
+            ...((req.request as any).body as ServiceStatistics),
+            lastUpdate: Date.now()
+          })
+        }
       }
       req.res.writeHead(200)
       req.res.end()
