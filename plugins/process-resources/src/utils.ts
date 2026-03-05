@@ -21,6 +21,7 @@ import core, {
   type Doc,
   type DocumentQuery,
   type DocumentUpdate,
+  findProperty,
   generateId,
   matchQuery,
   type Ref,
@@ -449,7 +450,7 @@ export async function requestUserInput (
     userContext = { ...userContext, ...tr }
     changed = true
   }
-  const sub = await getSubProcessesUserInput(space, target, userContext)
+  const sub = await getSubProcessesUserInput(execution, space, target, userContext)
   if (sub !== undefined) {
     userContext = { ...userContext, ...sub }
     changed = true
@@ -543,6 +544,7 @@ function getEmptyContext (): ExecutionContext {
 }
 
 export async function getSubProcessesUserInput (
+  execution: Execution,
   space: Ref<Space>,
   transition: Transition,
   userContext: ExecutionContext
@@ -552,8 +554,28 @@ export async function getSubProcessesUserInput (
     if (action.methodId !== process.method.RunSubProcess) continue
     const processId = action.params._id as Ref<Process>
     if (processId === undefined) continue
-    const context = action.params.context ?? getEmptyContext()
-    const res = await newExecutionUserInput(processId, space, context)
+    const context: ExecutionContext = action.params.context ?? getEmptyContext()
+    const initTransition = getClient().getModel().findAllSync(process.class.Transition, {
+      process: processId,
+      from: null
+    })[0]
+    if (initTransition === undefined) continue
+    const card = action.params.card ?? execution.card
+    const client = getClient()
+    const mockExecution: Execution = {
+      _id: generateId(),
+      process: processId,
+      currentState: null as any,
+      card,
+      rollback: [],
+      context,
+      status: ExecutionStatus.Active,
+      space,
+      _class: process.class.Execution,
+      modifiedOn: 0,
+      modifiedBy: client.user
+    }
+    const res = await newExecutionUserInput(processId, space, mockExecution)
     if (action.context == null || res === undefined) continue
     userContext[action.context._id] = res
     changed = true
@@ -608,7 +630,7 @@ export async function createExecution (
   const mockExecution: Execution = {
     _id: executionId,
     process: _id,
-    currentState: initTransition.to,
+    currentState: null as any,
     card,
     rollback: [],
     context: getEmptyContext(),
@@ -626,7 +648,7 @@ export async function createExecution (
     space,
     {
       process: _id,
-      currentState: initTransition.to,
+      currentState: null as any,
       card,
       rollback: [],
       context: result?.context ?? getEmptyContext(),
@@ -689,7 +711,16 @@ export function todoTranstionCheck (
   context: Record<string, any>
 ): boolean {
   if (params._id === undefined) return false
-  return context.todo?._id === params._id
+  return context.todo?._id === params._id && checkResult(context, params.result)
+}
+
+function checkResult (context: Record<string, any>, results: Record<string, any> | undefined): boolean {
+  if (results === undefined) return true
+  for (const [key, value] of Object.entries(results)) {
+    const res = findProperty([context as any], key, value)
+    if (res.length === 0) return false
+  }
+  return true
 }
 
 export function timeTransitionCheck (

@@ -68,9 +68,24 @@ import { getClient, releaseClient, SERVICE_NAME } from './utils'
 import config from './config'
 
 const activeExecutions = new Set<Ref<Execution>>()
+const processedMessages = new Map<string, number>()
+const MAX_PROCESSED_MESSAGES = 1000
 
 export async function messageHandler (record: ProcessMessage, ws: WorkspaceUuid, ctx: MeasureContext): Promise<void> {
   if (record.account === core.account.ConfigUser) return
+  if (record._id !== undefined) {
+    if (processedMessages.has(record._id)) {
+      ctx.info('Skipping duplicate message', { _id: record._id, ws, record })
+      return
+    }
+    processedMessages.set(record._id, Date.now())
+    if (processedMessages.size > MAX_PROCESSED_MESSAGES) {
+      const first = processedMessages.keys().next().value
+      if (first !== undefined) {
+        processedMessages.delete(first)
+      }
+    }
+  }
   try {
     const client = new TxOperations(await getClient(ws), record.account)
     try {
@@ -164,7 +179,8 @@ async function findTransitions (
       process.class.Transition,
       {
         process: execution.process,
-        trigger: { $in: record.event }
+        from: null,
+        trigger: process.trigger.OnExecutionStart
       },
       { sort: { rank: SortingOrder.Ascending } }
     )
@@ -331,6 +347,17 @@ async function execute (execution: Execution, transition: Transition, control: P
     control.ctx.info('Execution already in progress', { execution: execution._id, transition: transition._id })
     return
   }
+
+  const fresh = await control.client.findOne(process.class.Execution, { _id: execution._id })
+  if (fresh === undefined || fresh.currentState !== execution.currentState) {
+    control.ctx.info('Skipping stale transition execution', {
+      execution: execution._id,
+      expectedState: execution.currentState,
+      actualState: fresh?.currentState
+    })
+    return
+  }
+
   activeExecutions.add(execution._id)
   try {
     await executeTransition(execution, transition, control)
@@ -482,13 +509,20 @@ async function executeTransition (
         const apply = client.txFactory.createTxApplyIf(
           core.space.Tx,
           `${execution._id}_${transition._id}`,
-          [],
+          [{ _class: process.class.Execution, query: { _id: execution._id, currentState: execution.currentState } }],
           [],
           res as TxCUD<Doc>[],
           'process',
           true
         )
-        await client.tx(apply)
+        const result = (await client.tx(apply)) as any
+        if (result.success === false) {
+          control.ctx.info('Transition apply failed (likely already processed)', {
+            execution: execution._id,
+            transition: transition._id
+          })
+          break
+        }
         await sendEvent(control, execution, transition, card, isDone)
         TxProcessor.applyUpdate(execution, executionUpdate)
         if (execution.parentId !== undefined) {
@@ -658,6 +692,7 @@ async function setTimer (control: ProcessControl, execution: Execution, transiti
     const producer = queue.getProducer<TimeMachineMessage>(control.ctx, QueueTopic.TimeMachine)
 
     const data: ProcessMessage = {
+      _id: `${execution._id}_${transition._id}`,
       account: core.account.System,
       event: [process.trigger.OnTime],
       createdOn: Date.now(),

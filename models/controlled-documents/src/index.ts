@@ -22,7 +22,7 @@ import documentsPlugin, {
   type DocumentSpace,
   type DocumentTemplate
 } from '@hcengineering/controlled-documents'
-import exportPlugin, { type RelationDefinition } from '@hcengineering/export'
+import exportPlugin from '@hcengineering/export'
 import { type Builder } from '@hcengineering/model'
 import chunter from '@hcengineering/model-chunter'
 import core, { defineCollaborators } from '@hcengineering/model-core'
@@ -75,6 +75,31 @@ import {
 export { documentsId } from '@hcengineering/controlled-documents/src/index'
 export * from './types'
 
+function defineRelationMetadata (builder: Builder): void {
+  const rel = (
+    ref: Ref<Class<Doc>>,
+    field: string,
+    targetClass: Ref<Class<Doc>>,
+    direction: 'forward' | 'inverse' = 'forward'
+  ): void => {
+    builder.createDoc(core.class.RelationMetadata, core.space.Model, {
+      sourceClass: ref,
+      field,
+      targetClass,
+      direction
+    })
+  }
+
+  rel(documents.class.Document, 'category', documents.class.DocumentCategory, 'forward')
+  rel(documents.class.Document, 'template', documents.class.Document, 'forward')
+  rel(documents.class.Document, 'meta', documents.class.ProjectMeta, 'inverse')
+  rel(documents.class.Document, 'document', documents.class.ProjectDocument, 'inverse')
+  rel(documents.class.HierarchyDocument, 'attachedTo', documents.class.DocumentMeta, 'forward')
+  rel(documents.class.ControlledDocument, 'changeControl', documents.class.ChangeControl, 'forward')
+  rel(documents.class.ProjectMeta, 'meta', documents.class.ProjectMeta, 'inverse')
+  rel(documents.class.ProjectMeta, 'document', documents.class.ProjectDocument, 'inverse')
+}
+
 export function createModel (builder: Builder): void {
   builder.createModel(
     TDocumentSpace,
@@ -104,6 +129,8 @@ export function createModel (builder: Builder): void {
 
     TDocumentComment
   )
+
+  defineRelationMetadata(builder)
 
   builder.mixin(documents.class.ControlledDocument, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: documents.function.ControlledDocumentTitleProvider
@@ -831,19 +858,6 @@ export function createModel (builder: Builder): void {
     documents.action.TransferDocument
   )
 
-  const relations: RelationDefinition[] = [
-    // Forward relations - migrate referenced documents first
-    { field: 'attachedTo', class: documents.class.DocumentMeta },
-    { field: 'changeControl', class: documents.class.ChangeControl },
-    { field: 'category', class: documents.class.DocumentCategory },
-    { field: 'template', class: documents.class.Document },
-    // Inverse relations - find documents that reference this one
-    // ProjectMeta references DocumentMeta via 'meta' field - must be migrated before ProjectDocument
-    { field: 'meta', class: documents.class.ProjectMeta, direction: 'inverse' },
-    // ProjectDocument references ControlledDocument via 'document' field
-    { field: 'document', class: documents.class.ProjectDocument, direction: 'inverse' }
-  ]
-
   createAction(
     builder,
     {
@@ -852,9 +866,6 @@ export function createModel (builder: Builder): void {
         component: exportPlugin.component.ExportToWorkspaceModal,
         fillProps: {
           _objects: 'value'
-        },
-        props: {
-          relations
         }
       },
       label: exportPlugin.string.ExportToWorkspace,
@@ -880,7 +891,6 @@ export function createModel (builder: Builder): void {
           _object: 'value'
         },
         props: {
-          relations,
           spaceExport: true,
           docClass: documents.class.ControlledDocument
         }
