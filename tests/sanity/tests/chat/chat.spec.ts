@@ -399,13 +399,13 @@ test.describe('Channel tests', () => {
     })
 
     await test.step('Star channel', async () => {
-      await channelPage.makeActionWithChannelInMenu(data.channelName, 'Star channel')
+      await channelPage.makeActionWithChannelInMenu(data.channelName, 'Star')
       await channelPage.checkChannelStarred(true, data.channelName)
       await channelPage.checkIfChannelDefaultExist(false, data.channelName)
     })
 
     await test.step('Unstar channel', async () => {
-      await channelPage.makeActionWithChannelInMenu(data.channelName, 'Unstar channel')
+      await channelPage.makeActionWithChannelInMenu(data.channelName, 'Unstar')
       await channelPage.checkChannelStarred(false, data.channelName)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     })
