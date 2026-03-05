@@ -238,6 +238,8 @@ export interface Branding {
   defaultSpace?: string
   defaultSpecial?: string
   initWorkspace?: string
+  defaultInviteRole?: string
+  inviteLinkGeneratorRoles?: string[]
 }
 
 export type BrandingMap = Record<string, Branding>
@@ -758,6 +760,9 @@ export async function configurePlatform() {
   setMetadata(workbench.metadata.DefaultApplication, myBranding.defaultApplication ?? 'tracker')
   setMetadata(workbench.metadata.DefaultSpace, myBranding.defaultSpace ?? tracker.project.DefaultProject)
   setMetadata(workbench.metadata.DefaultSpecial, myBranding.defaultSpecial ?? 'issues')
+
+  setMetadata(setting.metadata.DefaultInviteRole, myBranding.defaultInviteRole)
+  setMetadata(setting.metadata.DefaultInviteLinkGeneratorRoles, myBranding.inviteLinkGeneratorRoles)
 
   try {
     const parsed = JSON.parse(config.EXCLUDED_APPLICATIONS_FOR_ANONYMOUS ?? '')
