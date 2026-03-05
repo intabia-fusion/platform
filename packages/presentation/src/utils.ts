@@ -179,7 +179,10 @@ class UIClient extends TxOperations implements Client {
             modifiedOn: serverCreateTx.modifiedOn,
             modifiedBy: serverCreateTx.modifiedBy,
             createdOn: serverCreateTx.createdOn,
-            createdBy: serverCreateTx.createdBy
+            createdBy: serverCreateTx.createdBy,
+            meta: {
+              forceApply: true
+            }
           }
           extraUITx.push(updateTx)
         }

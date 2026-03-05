@@ -720,7 +720,7 @@ export class LiveQuery implements WithTx, Client {
         const searchRefresh = await this.checkSearch(q, tx.objectId)
         if (searchRefresh) return
       } else {
-        if (updatedDoc.modifiedOn < tx.modifiedOn) {
+        if (updatedDoc.modifiedOn < tx.modifiedOn || tx.meta?.forceApply === true) {
           await this.__updateDoc(q, updatedDoc, tx)
           const updateRefresh = this.checkUpdatedDocMatch(q, q.result, updatedDoc)
           if (updateRefresh) {
