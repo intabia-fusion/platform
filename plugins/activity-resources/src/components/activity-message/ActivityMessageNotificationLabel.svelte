@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, tooltip } from '@hcengineering/ui'
+  import { Label, languageStore, tooltip } from '@hcengineering/ui'
   import { DocNotifyContext } from '@hcengineering/notification'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
@@ -39,7 +39,7 @@
     })
 
   $: doc &&
-    getDocLinkTitle(client, doc._id, doc._class, doc).then((res) => {
+    getDocLinkTitle(client, doc._id, doc._class, doc, $languageStore).then((res) => {
       title = res
     })
 </script>

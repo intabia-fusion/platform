@@ -44,6 +44,7 @@ import {
   Mixin,
   Model,
   Prop,
+  ReadOnly,
   TypeAccountUuid,
   TypeBoolean,
   TypeRef,
@@ -82,6 +83,11 @@ export class TSpace extends TDoc implements Space {
 
   @Prop(TypeBoolean(), core.string.AutoJoin)
     autoJoin?: boolean
+
+  @Prop(TypeString(), core.string.Id)
+  @Hidden()
+  @ReadOnly()
+    referenceId?: string
 }
 
 @Model(core.class.SystemSpace, core.class.Space)

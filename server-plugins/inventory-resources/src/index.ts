@@ -16,14 +16,15 @@
 import { concatLink, Doc } from '@hcengineering/core'
 import { inventoryId, Product } from '@hcengineering/inventory'
 import { getMetadata } from '@hcengineering/platform'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import serverCore from '@hcengineering/server-core'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 /**
  * @public
  */
-export async function productUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const productUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const product = doc as Product
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${inventoryId}/Products/#${view.component.EditDoc}|${product._id}|${product._class}|content`

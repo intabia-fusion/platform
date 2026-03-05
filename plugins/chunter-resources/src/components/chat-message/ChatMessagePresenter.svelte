@@ -28,7 +28,7 @@
   import { Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, ShowMore } from '@hcengineering/ui'
+  import { Action, Button, IconEdit, languageStore, ShowMore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
 
@@ -222,7 +222,7 @@
 </script>
 
 {#if inline && object}
-  {#await getDocLinkTitle(client, object._id, object._class, object) then title}
+  {#await getDocLinkTitle(client, object._id, object._class, object, $languageStore) then title}
     <ActivityDocLink
       {object}
       {title}

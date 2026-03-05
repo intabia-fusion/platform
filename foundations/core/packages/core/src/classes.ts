@@ -483,6 +483,7 @@ export interface Space extends Doc {
   archived: boolean
   owners?: AccountUuid[]
   autoJoin?: boolean
+  referenceId?: string
 }
 
 /**

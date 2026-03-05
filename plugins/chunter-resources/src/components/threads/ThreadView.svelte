@@ -15,7 +15,14 @@
 <script lang="ts">
   import { Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Breadcrumbs, location as locationStore, Header, BreadcrumbItem, Loading } from '@hcengineering/ui'
+  import {
+    Breadcrumbs,
+    location as locationStore,
+    Header,
+    BreadcrumbItem,
+    Loading,
+    languageStore
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import activity, { ActivityMessage, DisplayActivityMessage } from '@hcengineering/activity'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
@@ -98,7 +105,7 @@
     })
 
   $: message &&
-    getChannelName(message.attachedTo, message.attachedToClass, channel).then((res) => {
+    getChannelName(message.attachedTo, message.attachedToClass, channel, $languageStore).then((res) => {
       channelName = res
     })
 

@@ -41,6 +41,7 @@
     "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/server-notification": "workspace:^0.7.0",
+    "@hcengineering/server-activity": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/controlled-documents": "workspace:^0.7.0",
     "@hcengineering/server-contact": "workspace:^0.7.0",

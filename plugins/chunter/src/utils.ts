@@ -24,6 +24,7 @@ export async function getDirectChannel (
     description: '',
     private: true,
     archived: false,
-    members: accIds
+    members: accIds,
+    type: accIds.length > 2 ? 'group' : 'person'
   })
 }

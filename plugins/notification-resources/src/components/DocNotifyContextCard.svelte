@@ -13,7 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, CheckBox, Component, IconMoreV, Label, Loading, showPopup, Spinner } from '@hcengineering/ui'
+  import {
+    ButtonIcon,
+    CheckBox,
+    Component,
+    IconMoreV,
+    Label,
+    languageStore,
+    Loading,
+    showPopup,
+    Spinner
+  } from '@hcengineering/ui'
   import notification, {
     ActivityNotificationViewlet,
     DisplayInboxNotification,
@@ -21,7 +31,7 @@
     InboxNotification
   } from '@hcengineering/notification'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { getDocTitle, getDocIdentifier, Menu } from '@hcengineering/view-resources'
+  import { getDocTitle, getDocIdentifier, Menu, getDocLabel } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { AccountRole, Class, Doc, getCurrentAccount, Ref, WithLookup } from '@hcengineering/core'
   import chunter from '@hcengineering/chunter'
@@ -205,7 +215,13 @@
           {#if idTitle}
             {idTitle}
           {:else}
-            <Label label={hierarchy.getClass(value.objectClass).label} />
+            {#await getDocLabel(client, object._id, object._class, object, $languageStore) then label}
+              {#if label}
+                {label}
+              {:else}
+                <Label label={hierarchy.getClass(value.objectClass).label} />
+              {/if}
+            {/await}
           {/if}
           <span class="title overflow-label clear-mins" {title}>
             {#if title}

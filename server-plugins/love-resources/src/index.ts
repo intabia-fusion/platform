@@ -51,6 +51,7 @@ import { getSocialStrings } from '@hcengineering/server-contact'
 import notification, { CommonInboxNotification } from '@hcengineering/notification'
 
 import { getInviteAllowedProviders } from './utils'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -263,7 +264,7 @@ export async function OnParticipantInfo (txes: Tx[], control: TriggerControl): P
   return result
 }
 
-export async function meetingMinutesUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const meetingMinutesUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const meetingMinutes = doc as MeetingMinutes
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 

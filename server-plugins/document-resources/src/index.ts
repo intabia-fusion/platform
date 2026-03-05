@@ -7,8 +7,9 @@ import { Class, Doc, DocumentQuery, FindOptions, FindResult, Hierarchy, Ref, con
 import document, { Document, documentId } from '@hcengineering/document'
 import { getMetadata } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import serverCore from '@hcengineering/server-core'
 import slugify from 'slugify'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 function getDocumentId (doc: Document): string {
   const slug = slugify(doc.title, { lower: true })
@@ -18,14 +19,14 @@ function getDocumentId (doc: Document): string {
 /**
  * @public
  */
-export async function documentUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const documentUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const document = doc as Document
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${documentId}/${getDocumentId(document)}`
   return concatLink(front, path)
 }
 
-export async function documentLinkIdProvider (doc: Document): Promise<string> {
+const documentLinkIdProvider: Presenter = async (doc: Document): Promise<string> => {
   return getDocumentId(doc)
 }
 

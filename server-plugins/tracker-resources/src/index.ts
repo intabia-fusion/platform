@@ -38,6 +38,7 @@ import tracker, {
   type Project
 } from '@hcengineering/tracker'
 import { workbenchId } from '@hcengineering/workbench'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 async function updateSubIssues (
   updateTx: TxUpdateDoc<Issue>,
@@ -52,18 +53,18 @@ async function updateSubIssues (
   })
 }
 
-export async function issueUrlPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const issueUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const issue = doc as Issue
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${trackerId}/${issue.identifier}`
   return concatLink(front, path)
 }
 
-export async function issueIdentifierPresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const issueIdentifierPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   return await getIssueId(doc as Issue, control)
 }
 
-export async function getIssueId (doc: Issue, control: TriggerControl): Promise<string> {
+export async function getIssueId (doc: Issue, control: Pick<TriggerControl, 'ctx' | 'findAll'>): Promise<string> {
   const issue = doc
   const project = (await control.findAll(control.ctx, tracker.class.Project, { _id: issue.space }))[0]
   return `${project?.identifier ?? '?'}-${issue.number}`

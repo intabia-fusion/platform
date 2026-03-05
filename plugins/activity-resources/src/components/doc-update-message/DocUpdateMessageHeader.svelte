@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Doc } from '@hcengineering/core'
-  import { Label } from '@hcengineering/ui'
+  import { Label, languageStore } from '@hcengineering/ui'
   import { IntlString } from '@hcengineering/platform'
   import { AttributeModel } from '@hcengineering/view'
   import activity, { DisplayDocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
@@ -37,7 +37,7 @@
   let linkData: LinkData | undefined = undefined
 
   $: !hideLink &&
-    getLinkData(message, object, parentObject, person).then((data) => {
+    getLinkData(message, object, parentObject, person, $languageStore).then((data) => {
       linkData = data
     })
 

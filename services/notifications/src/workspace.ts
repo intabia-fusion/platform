@@ -253,13 +253,7 @@ class Workspace {
           ...(await this.createNotifications(
             notification.class.MentionInboxNotification,
             d.data,
-            getMentionNotificationContent(
-              client.hierarchy,
-              txAttachedToDoc ?? txObject,
-              txObject,
-              d.data.markup,
-              sender
-            ),
+            await getMentionNotificationContent(client, txAttachedToDoc ?? txObject, txObject, d.data.markup, sender),
             doc,
             tx.modifiedOn,
             tx.modifiedBy,
@@ -525,7 +519,7 @@ class Workspace {
             attachedTo: message._id,
             attachedToClass: message._class
           },
-          getMessageNotificationContent(client.hierarchy, type, doc, message, sender),
+          await getMessageNotificationContent(client, type, doc, message, sender),
           doc,
           message.modifiedOn,
           message.modifiedBy,

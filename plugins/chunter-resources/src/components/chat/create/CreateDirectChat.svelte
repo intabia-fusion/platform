@@ -39,7 +39,7 @@
   })
 
   async function loadDmName (accs: AccountUuid[]): Promise<string> {
-    return await buildDmName(client, accs)
+    return await buildDmName(client, '', accs)
   }
 
   async function createDirectMessage (): Promise<void> {

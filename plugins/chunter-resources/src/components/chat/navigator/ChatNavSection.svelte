@@ -25,6 +25,7 @@
     IconAdd,
     IconMoreH,
     IconSize,
+    languageStore,
     Menu,
     ModernButton,
     NavGroup,
@@ -74,9 +75,13 @@
 
   let canShowMore = false
 
-  $: void getChatNavItems(objects, (res) => {
-    items = res
-  })
+  $: void getChatNavItems(
+    objects,
+    (res) => {
+      items = res
+    },
+    $languageStore
+  )
 
   $: sortedItems = sortFn(items, {
     contextByDoc: $contextByDocStore,
@@ -85,7 +90,11 @@
   $: canShowMore = itemsCount > items.length
 
   const getChatNavItems = reduceCalls(
-    async (objects: { doc: Doc, chat?: Chat }[], handler: (items: ChatNavItemModel[]) => void): Promise<void> => {
+    async (
+      objects: { doc: Doc, chat?: Chat }[],
+      handler: (items: ChatNavItemModel[]) => void,
+      lang: string
+    ): Promise<void> => {
       const items: ChatNavItemModel[] = []
 
       for (const { doc, chat } of objects) {
@@ -107,7 +116,7 @@
 
         const showIdentifier = isDocChat && !isPerson
         const identifier = showIdentifier ? await getDocIdentifier(client, doc._id, doc._class, doc) : undefined
-        const name = (await getChannelName(doc._id, doc._class, doc)) ?? (await translate(titleIntl, {}))
+        const name = (await getChannelName(doc._id, doc._class, doc, lang)) ?? (await translate(titleIntl, {}, lang))
 
         items.push({
           id: doc._id,

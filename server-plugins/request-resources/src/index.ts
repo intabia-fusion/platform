@@ -36,6 +36,7 @@ import {
 } from '@hcengineering/server-notification'
 import { Employee } from '@hcengineering/contact'
 import { getDocTitle } from '@hcengineering/server-activity-resources'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -105,7 +106,7 @@ async function OnRequestUpdate (ctx: TxUpdateDoc<Request>, control: TriggerContr
   return []
 }
 
-export async function requestTitlePresenter (doc: Doc, control: TriggerControl): Promise<string> {
+const requestTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const request = doc as Request
   const title = await translate(control.hierarchy.getClass(request._class).label, {})
 

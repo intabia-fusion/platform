@@ -27,12 +27,15 @@ import { Widget, WidgetTab } from '@hcengineering/workbench'
  * @public
  */
 export interface ChunterSpace extends Space {
+  // For new communication migration
   messages?: number
 
+  // For new communication migration
   __migratedToCard?: {
     card?: Ref<Doc>
     space?: Ref<Space>
   }
+  // For new communication migration
   __migratedUntil?: Timestamp
 }
 
@@ -46,7 +49,9 @@ export interface Channel extends ChunterSpace {
 /**
  * @public
  */
-export interface DirectMessage extends ChunterSpace {}
+export interface DirectMessage extends ChunterSpace {
+  type: 'person' | 'group'
+}
 
 /**
  * @public
@@ -214,7 +219,8 @@ export default plugin(chunterId, {
     Unstar: '' as IntlString,
     Hide: '' as IntlString,
     Leave: '' as IntlString,
-    HideAll: '' as IntlString
+    HideAll: '' as IntlString,
+    GroupChat: '' as IntlString
   },
   ids: {
     DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,

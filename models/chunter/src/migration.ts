@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { chunterId, type ThreadMessage } from '@hcengineering/chunter'
+import { chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -21,22 +21,30 @@ import core, {
   type Domain,
   type Ref,
   type Space,
-  DOMAIN_TX
+  DOMAIN_TX,
+  DOMAIN_SPACE,
+  type AccountUuid
 } from '@hcengineering/core'
 import {
   tryMigrate,
   tryUpgrade,
   type MigrateOperation,
   type MigrationClient,
-  type MigrationUpgradeClient
+  type MigrationUpgradeClient,
+  type MigrationDocumentQuery,
+  type MigrateUpdate
 } from '@hcengineering/model'
-import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
+import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
 import { getAllAccounts } from '@hcengineering/contact'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
-import { type DocUpdateMessage } from '@hcengineering/activity'
+import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
 
-import { DOMAIN_CHUNTER } from './index'
+import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
 import chunter from './plugin'
+import { createHash } from 'crypto'
+import { type Attachment } from '@hcengineering/attachment'
+import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 
@@ -203,6 +211,91 @@ async function removeChatSync (client: MigrationClient): Promise<void> {
   })
 }
 
+async function migrateDuplicatedDirects (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<DirectMessage>(DOMAIN_SPACE, { _class: chunter.class.DirectMessage })
+
+  const directsMap = new Map<string, Ref<DirectMessage>[]>()
+  const updates: { filter: MigrationDocumentQuery<DirectMessage>, update: MigrateUpdate<DirectMessage> }[] = []
+  const migrateFromTo = new Map<Ref<DirectMessage>, Ref<DirectMessage>>()
+
+  function getMembersHash (uuids: AccountUuid[]): string | undefined {
+    if (uuids.length === 0) return undefined
+
+    return createHash('sha256').update(uuids.slice().sort().join('|')).digest().toString('base64url')
+  }
+
+  while (true) {
+    const directs = (await iterator.next(500)) ?? []
+    if (directs.length === 0) break
+
+    for (const direct of directs) {
+      const accounts = Array.from(new Set(direct.members))
+      if (accounts.length > 2) {
+        updates.push({
+          filter: { _id: direct._id },
+          update: { type: 'group' }
+        })
+        continue
+      }
+
+      updates.push({
+        filter: { _id: direct._id },
+        update: { type: 'person' }
+      })
+
+      if (direct.referenceId != null) continue
+
+      const referenceId = getMembersHash(accounts)
+      if (referenceId === undefined) continue
+
+      directsMap.set(referenceId, [...(directsMap.get(referenceId) ?? []), direct._id])
+    }
+  }
+
+  for (const [referenceId, directs] of directsMap) {
+    if (directs.length === 0) continue
+    if (directs.length === 1) {
+      const direct = directs[0]
+      updates.push({
+        filter: { _id: direct },
+        update: { referenceId }
+      })
+    } else {
+      const toDirect = directs[0]
+      updates.push({
+        filter: { _id: toDirect },
+        update: { referenceId }
+      })
+      for (const from of directs.slice(1)) {
+        migrateFromTo.set(from, toDirect)
+      }
+    }
+  }
+
+  if (updates.length > 0) {
+    await client.bulk(DOMAIN_SPACE, updates)
+  }
+
+  for (const [from, to] of migrateFromTo) {
+    await client.update<ActivityMessage>(DOMAIN_ACTIVITY, { attachedTo: from }, { attachedTo: to, space: to })
+    await client.update<Reaction>(DOMAIN_REACTION, { space: from }, { space: to })
+    await client.update<Attachment>(DOMAIN_ATTACHMENT, { space: from }, { space: to })
+
+    const toContexts = await client.find<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectId: to })
+    for (const context of toContexts) {
+      await client.update<InboxNotification>(
+        DOMAIN_NOTIFICATION,
+        { objectId: from, user: context.user },
+        { objectId: to, docNotifyContext: context._id }
+      )
+    }
+
+    await client.deleteMany(DOMAIN_SPACE, { _id: from })
+    await client.deleteMany(DOMAIN_CHUNTER_DOC, { attacheTo: from })
+    await client.deleteMany<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectId: from })
+  }
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -282,6 +375,11 @@ export const chunterOperation: MigrateOperation = {
         state: 'remove-chat-sync-v2',
         mode: 'upgrade',
         func: removeChatSync
+      },
+      {
+        state: 'migrate-duplicated-directs-v1',
+        mode: 'upgrade',
+        func: migrateDuplicatedDirects
       }
     ])
   },

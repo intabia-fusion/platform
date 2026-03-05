@@ -34,10 +34,11 @@
 {#if value}
   {#await getDmName(client, value) then name}
     {#if type === 'link'}
-      <NavLink app={chunterId} space={value._id} {disabled}>
+      <NavLink app={chunterId} space={`${value._id}|${value._class}`} {disabled}>
         <div class="flex-presenter">
           {#if shouldShowAvatar}
             <DirectIcon {value} />
+            <span class="mr-1" />
           {/if}
           <span class="label">{name}</span>
         </div>

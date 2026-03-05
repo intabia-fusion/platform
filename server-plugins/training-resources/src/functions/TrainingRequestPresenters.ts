@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import type { Presenter } from '@hcengineering/server-activity'
+import serverCore from '@hcengineering/server-core'
+import type { Presenter, PresenterControl } from '@hcengineering/server-activity'
 import training, { trainingId, TrainingRequest } from '@hcengineering/training'
 import { getMetadata } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
@@ -22,7 +22,7 @@ import { concatLink } from '@hcengineering/core'
 
 export const TrainingRequestTitlePresenter: Presenter<TrainingRequest> = async (
   request: TrainingRequest,
-  control: TriggerControl
+  control: PresenterControl
 ) => {
   const trainingObject = (await control.findAll(control.ctx, training.class.Training, { _id: request.attachedTo }))[0]
 
@@ -35,7 +35,7 @@ export const TrainingRequestTitlePresenter: Presenter<TrainingRequest> = async (
 
 export const TrainingRequestUrlPresenter: Presenter<TrainingRequest> = async (
   request: TrainingRequest,
-  control: TriggerControl
+  control: PresenterControl
 ) => {
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   // TODO: Don't hardcode URLs, find a way to share routes info between front and server resources, and DRY

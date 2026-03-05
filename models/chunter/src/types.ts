@@ -23,7 +23,8 @@ import {
   TypeRef,
   TypeString,
   UX,
-  Hidden
+  Hidden,
+  ReadOnly
 } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass, TDoc, TSpace } from '@hcengineering/model-core'
 import type {
@@ -89,7 +90,12 @@ export class TChannel extends TChunterSpace implements Channel {
   chunter.string.DirectMessages,
   chunter.string.DirectMessages
 )
-export class TDirectMessage extends TChunterSpace implements DirectMessage {}
+export class TDirectMessage extends TChunterSpace implements DirectMessage {
+  @Prop(TypeString(), core.string.SpaceType)
+  @ReadOnly()
+  @Hidden()
+    type!: 'person' | 'group'
+}
 
 @Model(chunter.class.ChatMessage, activity.class.ActivityMessage)
 @UX(chunter.string.Message, chunter.icon.Thread, undefined, undefined, undefined, chunter.string.Threads)

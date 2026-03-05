@@ -28,7 +28,7 @@
     hasResource,
     reduceCalls
   } from '@hcengineering/presentation'
-  import { AnyComponent, Button, Component, IconMixin, IconMoreH } from '@hcengineering/ui'
+  import { AnyComponent, Button, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
   import view, { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -190,7 +190,7 @@
   let rawTitle: string = ''
 
   $: if (object !== undefined) {
-    void getDocLabel(pClient, object).then((t) => {
+    void getDocLabel(pClient, object._id, object._class, object, $languageStore).then((t) => {
       if (t) {
         rawTitle = t
       }

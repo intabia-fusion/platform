@@ -135,6 +135,11 @@ const spaceSchema: Schema = {
     type: 'bool',
     notNull: true,
     index: true
+  },
+  referenceId: {
+    type: 'text',
+    notNull: false,
+    index: true
   }
 }
 
@@ -323,10 +328,21 @@ const githubLogin: Schema = {
   }
 }
 
-export const customIndexes: Record<string, { [key in 'unique']: string[] }[]> = {
+type CustomIndexType = 'unique' | 'custom'
+
+export const customIndexes: Record<string, { [key in CustomIndexType]: string[] }[]> = {
   [translateDomain('chunter_doc')]: [
     {
-      unique: ['attachedTo', 'attachedToClass', 'account']
+      unique: ['attachedTo', 'attachedToClass', 'account'],
+      custom: []
+    }
+  ],
+  [DOMAIN_SPACE]: [
+    {
+      unique: [],
+      custom: [
+        'CREATE UNIQUE INDEX IF NOT EXISTS space_unique_workspaceId_referenceId__index ON space ("workspaceId", "referenceId") WHERE "referenceId" IS NOT NULL;'
+      ]
     }
   ]
 }
