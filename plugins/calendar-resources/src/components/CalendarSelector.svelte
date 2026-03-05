@@ -48,7 +48,7 @@
   $: items = calendars.map((p) => {
     return {
       _id: p._id,
-      label: p.name
+      label: p.name === 'HULY' ? 'Default' : p.name
     }
   })
 

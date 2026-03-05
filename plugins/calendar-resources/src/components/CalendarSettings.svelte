@@ -29,7 +29,7 @@
   )
 
   $: categories = groupByArray(calendars, (c) => {
-    return (c as ExternalCalendar).externalUser ?? 'HULY'
+    return (c as ExternalCalendar).externalUser ?? 'Default'
   })
 
   async function changeHidden (calendar: Calendar, value: boolean): Promise<void> {
@@ -110,7 +110,7 @@
               </div>
               <div></div>
               {#each cat[1] as _calendar}
-                <div>{_calendar.name}</div>
+                <div>{_calendar.name === 'HULY' ? 'Default' : _calendar.name}</div>
                 <VisibilityEditor
                   value={_calendar.visibility}
                   kind={'inline'}
