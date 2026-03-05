@@ -24,6 +24,7 @@ import core, {
   type Class,
   type Client,
   type Collection,
+  type Data,
   type Doc,
   type DocumentQuery,
   type DomainParams,
@@ -31,6 +32,7 @@ import core, {
   type DomainResult,
   type FindOptions,
   type FindResult,
+  generateId,
   getCurrentAccount,
   hasAccountRole,
   type Hierarchy,
@@ -48,10 +50,12 @@ import core, {
   type Space,
   type Tx,
   type TxApplyIf,
+  type TxCreateDoc,
   type TxCUD,
   TxOperations,
   TxProcessor,
   type TxResult,
+  type TxUpdateDoc,
   type Type,
   type TypeAny,
   type WithLookup,
@@ -104,6 +108,28 @@ export const uiContext = new MeasureMetricsContext('client-ui', {})
 
 export const pendingCreatedDocs = writable<Record<Ref<Doc>, boolean>>({})
 
+function getTxAttributesDiff<T extends Doc> (previous: Data<T>, current: Data<T>): Partial<Data<T>> {
+  const diff: Partial<Data<T>> = {}
+
+  for (const key of Object.keys(current ?? {})) {
+    const currentValue = (current as any)[key]
+    const previousValue = (previous as any)[key]
+
+    if (!deepEqual(currentValue, previousValue)) {
+      ;(diff as any)[key] = currentValue
+    }
+  }
+
+  for (const key of Object.keys(previous ?? {})) {
+    const hasInCurrent = Object.prototype.hasOwnProperty.call(current ?? {}, key)
+    if (!hasInCurrent) {
+      ;(diff as any)[key] = undefined
+    }
+  }
+
+  return diff
+}
+
 class UIClient extends TxOperations implements Client {
   constructor (
     client: Client,
@@ -112,13 +138,17 @@ class UIClient extends TxOperations implements Client {
     super(client, getCurrentAccount().primarySocialId)
   }
 
-  protected pendingTxes = new Set<Ref<Tx>>()
+  protected pendingTxes = new Map<Ref<Tx>, Tx>()
 
   async doNotify (...tx: Tx[]): Promise<void> {
     const pending = get(pendingCreatedDocs)
     let pendingUpdated = false
+
+    const extraUITx: Tx[] = []
+
     tx.forEach((t) => {
       if (this.pendingTxes.has(t._id)) {
+        const pendingTx = this.pendingTxes.get(t._id)
         this.pendingTxes.delete(t._id)
 
         // Only CUD tx can be pending now
@@ -128,6 +158,30 @@ class UIClient extends TxOperations implements Client {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete pending[innerTx.objectId]
           pendingUpdated = true
+
+          const pendingCreateTx = pendingTx as TxCreateDoc<Doc>
+          const serverCreateTx = innerTx as TxCreateDoc<Doc>
+          // When receiving a server tx, we must sync timestamps with server time
+          // and update fields if they were changed by the server
+          const diff = getTxAttributesDiff(pendingCreateTx?.attributes ?? {}, serverCreateTx.attributes)
+          const updateTx: TxUpdateDoc<Doc> = {
+            _id: generateId<TxUpdateDoc<Doc>>(),
+            _class: core.class.TxUpdateDoc,
+            space: serverCreateTx.space,
+            objectId: serverCreateTx.objectId,
+            objectClass: serverCreateTx.objectClass,
+            objectSpace: serverCreateTx.objectSpace,
+            operations: {
+              ...diff,
+              createdOn: serverCreateTx.createdOn,
+              modifiedOn: serverCreateTx.modifiedOn
+            } as any,
+            modifiedOn: serverCreateTx.modifiedOn,
+            modifiedBy: serverCreateTx.modifiedBy,
+            createdOn: serverCreateTx.createdOn,
+            createdBy: serverCreateTx.createdBy
+          }
+          extraUITx.push(updateTx)
         }
       }
     })
@@ -138,7 +192,8 @@ class UIClient extends TxOperations implements Client {
     // We still want to notify about all transactions because there might be queries created after
     // the early applied transaction
     // For old queries there's a check anyway that prevents the same document from being added twice
-    await this.provideNotify(...tx)
+    const allTx = [...tx, ...extraUITx]
+    await this.provideNotify(...allTx)
   }
 
   private async provideNotify (...tx: Tx[]): Promise<void> {
@@ -216,7 +271,7 @@ class UIClient extends TxOperations implements Client {
       pendingCreatedDocs.set(pending)
     }
 
-    this.pendingTxes.add(tx._id)
+    this.pendingTxes.set(tx._id, tx)
     await this.provideNotify(tx)
   }
 
