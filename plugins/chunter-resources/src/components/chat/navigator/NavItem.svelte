@@ -104,7 +104,7 @@
     {:else if secondaryNotifyMarker}
       <div class="antiHSpacer" />
       <div class="notify">
-        <NotifyMarker count={0} kind="simple" size="xx-small" />
+        <NotifyMarker count={0} kind="simple" size="xx-small" color="gray" />
       </div>
       <div class="antiHSpacer" />
     {/if}

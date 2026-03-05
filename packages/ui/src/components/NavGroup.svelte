@@ -176,6 +176,9 @@
         <slot name="actions" />
       </div>
     {/if}
+    {#if $$slots.after}
+      <slot name="after" {isOpen} />
+    {/if}
     {#if selected && type === 'nested-selectable'}
       <div class="hulyNavGroup-header__arrow"><IconOpenedArrow size={'small'} /></div>
     {/if}

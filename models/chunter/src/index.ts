@@ -64,7 +64,10 @@ export function createModel (builder: Builder): void {
       icon: chunter.icon.Chunter,
       alias: chunterId,
       hidden: false,
-      component: chunter.component.Chat
+      component: chunter.component.Chat,
+      position: 'top',
+      order: 200,
+      showNotifyMarkerFn: chunter.function.ShowNotifyMarkerFn
     },
     chunter.app.Chunter
   )

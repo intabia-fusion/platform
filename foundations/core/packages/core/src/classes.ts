@@ -299,6 +299,7 @@ export interface PluginConfiguration extends Doc {
 
   // If defined, will only remove classes in list.
   classFilter?: Ref<Class<Obj>>[]
+  mixinFilter?: Ref<Mixin<Doc>>[]
 }
 
 /**

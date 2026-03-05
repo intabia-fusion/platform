@@ -380,10 +380,12 @@ export async function hasInboxNotifications (
 }
 
 export async function getNotificationsCount (
-  context: DocNotifyContext | undefined,
+  context: DocNotifyContext | DocNotifyContext[] | undefined,
   notifications: InboxNotification[] = []
 ): Promise<number> {
-  if (context === undefined || notifications.length === 0) {
+  if (context == null) return 0
+  const contexts = Array.isArray(context) ? context : [context]
+  if (contexts.length === 0 || notifications.length === 0) {
     return 0
   }
 

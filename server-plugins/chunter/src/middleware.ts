@@ -18,7 +18,8 @@ import core, {
   type SessionData,
   AccountUuid
 } from '@hcengineering/core'
-import chunter, { Chat, ChatMessage, type DirectMessage } from '@hcengineering/chunter'
+import notification, { InboxNotification } from '@hcengineering/notification'
+import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'
 import { PersonSpace } from '@hcengineering/contact'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { createHash } from 'crypto'
@@ -41,13 +42,23 @@ export class ChunterMiddleware extends BaseMiddleware {
     for (const _tx of txes) {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
-      if (_tx._class === core.class.TxCreateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.ChatMessage)) {
-        if (hierarchy.isDerived(tx.objectClass, chunter.class.ThreadMessage)) continue
-        const createTx = _tx as TxCreateDoc<ChatMessage>
-        const message = TxProcessor.createDoc2Doc(createTx)
-        const chats = await this.getHiddenChats(message.attachedTo)
+      if (
+        _tx._class === core.class.TxCreateDoc &&
+        hierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)
+      ) {
+        if (hierarchy.isDerived(tx.objectClass, notification.class.ReactionInboxNotification)) continue
+        if (
+          hierarchy.isDerived(tx.objectClass, notification.class.CommonInboxNotification) &&
+          !hierarchy.isDerived(tx.objectClass, notification.class.MentionInboxNotification)
+        ) {
+          continue
+        }
 
-        const ttxes = this.getUnhideChatsTx(factory, message.attachedTo, chats)
+        const createTx = _tx as TxCreateDoc<InboxNotification>
+        const n = TxProcessor.createDoc2Doc(createTx)
+        const chats = await this.getHiddenChats(n.objectId)
+
+        const ttxes = this.getUnhideChatsTx(factory, n.objectId, chats)
 
         if (ttxes.length > 0) {
           await this.context.derived?.tx(ctx, ttxes)

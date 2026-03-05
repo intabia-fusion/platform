@@ -166,6 +166,7 @@ export function readViewportMessages (
   messagesToReadAccumulatorTimer = setTimeout(() => {
     const messagesToRead = [...messagesToReadAccumulator]
     messagesToReadAccumulator.clear()
+    if (messagesToRead.length === 0) return
     void readChannelMessages(sortActivityMessages(messagesToRead), contextId)
   }, 500)
 }

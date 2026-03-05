@@ -56,6 +56,7 @@ export interface Application extends Doc {
   navHeaderActions?: AnyComponent
   accessLevel?: AccountRole
   navFooterComponent?: AnyComponent
+  showNotifyMarkerFn?: Resource<(contexts: DocNotifyContext[]) => Promise<boolean>>
 }
 
 /** @public */

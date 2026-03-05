@@ -15,7 +15,7 @@
 
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
-import { MessageNotificationType } from '@hcengineering/notification'
+import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
@@ -242,6 +242,7 @@ export default plugin(chunterId, {
     CloseConversation: '' as Ref<Action>
   },
   function: {
+    ShowNotifyMarkerFn: '' as Resource<(contexts: DocNotifyContext[]) => Promise<boolean>>,
     CanTranslateMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanSummarizeMessages: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     OpenThreadInSidebar: '' as Resource<
