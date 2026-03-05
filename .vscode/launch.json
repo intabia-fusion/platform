@@ -61,7 +61,7 @@
         "REGION": "",
         "QUEUE_REGION": "",
         "FILES_URL": "http://huly.local:4030/blob/:workspace/:blobId/:filename",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318/v1/traces",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318",
         "BRANDING_PATH": "../../dev/branding.json"
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
@@ -162,7 +162,7 @@
         "MINIO_SECRET_KEY": "minioadmin",
         "MINIO_ENDPOINT": "localhost",
         // "DISABLE_SIGNUP": "true",
-        "OTLP_ENDPOINT": "http://huly.local:4318/v1/traces"
+        "OTLP_ENDPOINT": "http://huly.local:4318"
       },
       "runtimeVersion": "20",
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
@@ -568,7 +568,7 @@
         "FRONT_URL": "http://localhost:8080",
         "PORT": "3500",
         "STATS_URL": "http://huly.local:4900",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318/v1/traces"
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318"
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "sourceMaps": true,
@@ -590,7 +590,7 @@
         "COLLABORATOR_URL": "ws://huly.local:3078",
         "PLATFORM_OPERATION_LOGGING": "true",
         "STATS_URL": "http://huly.local:4900",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318/v1/traces",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318",
         "QUEUE_CONFIG": "huly.local:19092",
         "MODEL_JSON": "${workspaceRoot}/models/all/bundle/model.json",
         "REGION": "cockroach",

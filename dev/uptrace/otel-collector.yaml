@@ -1,0 +1,48 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # prometheus:
+  #   config:
+      # scrape_configs:
+      #   - job_name: 'postgres-device'
+      #     static_configs:
+      #       - targets: ['postgres-exporter-device:9187']
+      #     metrics_path: /metrics
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  resource:
+    attributes:
+      - key: service.namespace
+        value: platform
+        action: upsert
+
+exporters:
+  otlp/uptrace:
+    endpoint: uptrace:4317
+    tls:
+      insecure: true
+    headers:
+      uptrace-dsn: 'http://project1_secret@uptrace:80?grpc=4317'
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlp/uptrace]
+    metrics:
+      receivers: [otlp] #, prometheus]
+      processors: [batch, resource]
+      exporters: [otlp/uptrace]
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlp/uptrace]

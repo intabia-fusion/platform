@@ -1,0 +1,168 @@
+# Uptrace Configuration
+# https://uptrace.dev/get/hosted/config
+
+service:
+  env: hosted
+  secret: ${UPTRACE_SECRET:-changeme}
+
+site:
+  url: http://localhost:14318
+  ingest_url: http://localhost:14318?grpc=14317
+
+listen:
+  http:
+    addr: :80
+  grpc:
+    addr: :4317
+
+auth:
+  # Включена стандартная аутентификация
+  # Логин: admin@uptrace.local
+  # Пароль: admin
+
+seed_data:
+  update: true
+  delete: true
+
+  users:
+    - key: user1
+      name: Admin
+      email: admin@uptrace.local
+      password: admin
+      email_confirmed: true
+
+  user_tokens:
+    - key: user_token1
+      user_key: user1
+      token: user1_secret
+
+  orgs:
+    - key: org1
+      name: Platform
+
+  org_users:
+    - key: org_user1
+      org_key: org1
+      user_key: user1
+      role: owner
+
+  projects:
+    - key: project1
+      name: Platform
+      org_key: org1
+
+  project_tokens:
+    - key: project_token1
+      project_key: project1
+      token: project1_secret
+
+  project_users:
+    - key: project_user1
+      project_key: project1
+      org_user_key: org_user1
+      perm_level: admin
+
+ch_cluster:
+  cluster: uptrace1
+  replicated: false
+  distributed: false
+
+  shards:
+    - replicas:
+        - addr: clickhouse-uptrace:9000
+          database: uptrace
+          user: uptrace
+          password: uptrace
+          dial_timeout: 3s
+          write_timeout: 5s
+          max_retries: 3
+          max_execution_time: 15s
+
+pg:
+  addr: uptrace-postgres:5432
+  user: uptrace
+  password: uptrace
+  database: uptrace
+
+ch_schema:
+  compression: ZSTD(1)
+  spans_index: { storage_policy: default }
+  spans_data: { storage_policy: default }
+  span_links: { storage_policy: default }
+  logs_index: { storage_policy: default }
+  logs_data: { storage_policy: default }
+  events_index: { storage_policy: default }
+  events_data: { storage_policy: default }
+  metrics: { storage_policy: default }
+
+redis_cache:
+  addrs:
+    1: uptrace-redis:6379
+  username: ""
+  password: ""
+  db: 0
+
+certmagic:
+  enabled: false
+  staging_ca: false
+  http_challenge_addr: :80
+
+mailer:
+  smtp:
+    enabled: false
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    from: no-reply@uptrace.local
+
+spans:
+  max_threads: 10
+  max_insert_size: 10000
+  max_buffered_records: 100000
+
+span_links:
+  max_threads: 5
+  max_insert_size: 5000
+  max_buffered_records: 50000
+
+logs:
+  max_threads: 10
+  max_insert_size: 10000
+  max_buffered_records: 100000
+
+events:
+  max_threads: 5
+  max_insert_size: 5000
+  max_buffered_records: 50000
+
+metrics:
+  max_threads: 10
+  max_insert_size: 10000
+  max_buffered_records: 100000
+  max_cumulative_timeseries: 1000000
+
+trace:
+  query_limit: 200000
+  max_memory_usage_bytes: 200000000
+
+alerting:
+  disabled: false
+
+service_graph:
+  disabled: false
+
+sourcemaps:
+  disabled: false
+
+self_monitoring:
+  disabled: true
+
+telegram:
+  bot_token: ''
+
+logging:
+  level: INFO
+
+license:
+  key: ''
