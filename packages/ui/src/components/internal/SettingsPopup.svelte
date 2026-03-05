@@ -77,6 +77,7 @@
 
   const accentColors: Array<{ id: string, name: string, color: string }> = [
     { id: 'accent-intabia', name: 'Intabia', color: '#CF13A2' },
+    { id: 'accent-intabia2', name: 'Intabia2', color: '#6b3ad3' },
     { id: 'accent-huly', name: 'Huly', color: '#5e6ad2' },
     { id: 'accent-blue', name: 'Blue', color: '#3478F6' },
     { id: 'accent-purple', name: 'Purple', color: '#8A4292' },

@@ -496,7 +496,11 @@ export async function configurePlatform() {
   )
   setMetadata(presentation.metadata.CollaboratorUrl, config.COLLABORATOR_URL)
 
-  if( config.ACCENT_THEME != null && config.ACCENT_THEME.trim() !== '') {
+  const testingAccentTheme = localStorage.getItem('#testing.accent.theme')
+
+  if (testingAccentTheme != null) {
+    setForceAccent(testingAccentTheme as AccentColorType)
+  } else if (config.ACCENT_THEME != null && config.ACCENT_THEME.trim() !== '') {
     setForceAccent(config.ACCENT_THEME as AccentColorType)
   }
 

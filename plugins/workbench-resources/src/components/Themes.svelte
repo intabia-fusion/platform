@@ -27,6 +27,7 @@
   // Define all accent themes
   const accents = [
     { id: 'intabia', name: 'Intabia', color: '#cf13a2' },
+    { id: 'intabia2', name: 'Intabia2', color: '#6b3ad3' },
     { id: 'huly', name: 'Huly', color: '#3364e2' },
     { id: 'blue', name: 'Blue', color: '#3478f6' },
     { id: 'purple', name: 'Purple', color: '#8a4292' },

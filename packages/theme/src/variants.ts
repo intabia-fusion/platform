@@ -22,6 +22,7 @@ export type ThemeVariantType = (typeof ThemeVariant)[keyof typeof ThemeVariant]
 
 export const AccentColor = {
   Intabia: 'accent-intabia',
+  Intabia2: 'accent-intabia2',
   Huly: 'accent-huly',
   Blue: 'accent-blue',
   Purple: 'accent-purple',

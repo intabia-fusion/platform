@@ -177,6 +177,169 @@
   --theme-toggle-on-bg-color: var(--accent-color-base, #cf13a2);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #a60f82);
 }
+.accent-intabia2 {
+  --accent-color-base: #6b3ad3;
+  --primary-edit-border-color: var(--accent-color-primary, var(--accent-color-hover, var(--accent-color-base)));
+  --accent-color-hover: #a60f82;
+  --accent-color-focused: #a60f82;
+  --accent-color-pressed: #7c0b61;
+  --accent-color-active: var(--accent-color-pressed);
+  --accent-color-disabled: #e0d1ff99;
+
+  /* Primary (lighter purple variant used for subtle elements) */
+  --accent-color-primary: #6b3ad3;
+  --accent-color-primary-hover: #562ea9;
+  --accent-color-primary-focused: #562ea9;
+  --accent-color-primary-pressed: #40237f;
+  --accent-color-primary-active: var(--accent-color-primary-pressed);
+  --accent-color-primary-disabled: #e0d1ff99;
+
+  /* Secondary: use a darker, more stable background tone derived from the accent */
+  //--accent-color-secondary: #5c3b70;
+  //--accent-color-secondary-hover: #4a2e5a;
+  //--accent-color-secondary-focused: #4a2e5a;
+  //--accent-color-secondary-pressed: #5a2b76; /* stronger/vivid purple so secondary pressed is more distinct */
+  //--accent-color-secondary-disabled: rgba(92, 59, 112, 0.12);
+
+  /* Tertiary uses primary color with alpha steps for subtle surfaces */
+  --accent-color-tertiary: rgba(107, 58, 211, 0.102);
+  --accent-color-tertiary-hover: rgba(107, 58, 211, 0.251);
+  --accent-color-tertiary-focused: rgba(107, 58, 211, 0.251);
+  --accent-color-tertiary-pressed: rgba(107, 58, 211, 0.502);
+  --accent-color-tertiary-disabled: #e0d1ff99;
+
+  --accent-color-light: rgba(207, 19, 162, 0.1);
+  --accent-color-lighter: rgba(207, 19, 162, 0.05);
+  --accent-color-dark: rgba(207, 19, 162, 0.8);
+  --accent-color-border: rgba(207, 19, 162, 0.2);
+
+  /* Subtle button surfaces should use the tertiary (alpha) steps */
+  /* Use a light neutral hover overlay so tertiary hover maintains contrast */
+  --theme-button-default: var(--accent-color-tertiary, rgba(123, 123, 123, 0.08));
+  --theme-button-hovered: rgba(0, 0, 0, 0.04);
+  --theme-button-pressed: rgba(0, 0, 0, 0.06);
+
+  /* Icon-only button surfaces (used by ButtonIcon.svelte) — derive from tertiary with smaller alpha for hover/active */
+  --theme-button-icon-default: rgba(0, 0, 0, 0);
+  --theme-button-icon-hovered: var(--accent-color-tertiary-hover, rgba(0, 0, 0, .06));
+  --theme-button-icon-pressed: var(--accent-color-tertiary-pressed, rgba(0, 0, 0, .1));
+
+  /* Contrast tokens for selected / contrast buttons (mapped to accent-readable color) */
+  /* Use dark text on a light contrast background for this (dark) accent to improve readability */
+  --theme-button-contrast-color: #000;
+  --theme-button-contrast-enabled: #FFFFFF;
+  --theme-button-contrast-hovered: #F3F3F3;
+  --theme-button-contrast-pressed: #E9E9E9;
+  --theme-button-contrast-disabled: rgba(255, 255, 255, .6);
+  --theme-button-contrast-disabled-color: rgba(0, 0, 0, .5);
+  --theme-button-contrast-border: rgba(0, 0, 0, .09);
+
+  /* Checkbox and selector tokens for this accent (derived from accent colors) */
+  --theme-checkbox-color: #fff;
+  --theme-checkbox-bg-color: var(--accent-color-primary, var(--accent-color-base));
+  --theme-checkbox-border: var(--accent-color-border, rgba(0, 0, 0, .12));
+  --theme-checkbox-disabled: rgba(255, 255, 255, .6);
+
+  /* Selector tokens used by ModernCheckbox (aligned to CheckBox visuals) */
+  --selector-BackgroundColor: var(--theme-button-hovered, var(--accent-color-tertiary, rgba(123, 123, 123, 0.1)));
+  --selector-BorderColor: var(--theme-checkbox-border, var(--accent-color-border, rgba(0, 0, 0, .12)));
+  --selector-off-BackgroundColor: var(--accent-color-dark, rgba(0, 0, 0, .12));
+  --selector-hover-overlay-BackgroundColor: var(--theme-button-hovered, var(--accent-color-light, rgba(0,0,0,.08)));
+  --selector-disabled-BackgroundColor: var(--theme-checkbox-disabled, var(--accent-color-tertiary-disabled, rgba(0,0,0,.08)));
+  --selector-disabled-BorderColor: var(--theme-checkbox-border, var(--accent-color-border, rgba(0,0,0,.12)));
+  --selector-IconColor: var(--theme-checkbox-color, var(--global-on-accent-TextColor, #ffffff));
+
+  /* Global-accent tokens used by colored checkboxes */
+  --global-accent-TextColor: var(--accent-color-base, #cf13a2);
+  --global-on-accent-TextColor: #ffffff;
+
+  /* Secondary (filled) buttons should derive from the accent secondary tone */
+  /* --button-secondary-BackgroundColor: var(--accent-color-secondary); */
+  /* --button-secondary-hover-BackgroundColor: var(--accent-color-secondary-hover); */
+  /* --button-secondary-active-BackgroundColor: var(--accent-color-secondary-pressed); */
+  /* --button-secondary-BorderColor: transparent; */
+
+  /* Ensure subtle (secondary/tertiary) labels/icons contrast on dark secondary */
+  /* --button-subtle-LabelColor: #ffffff; */
+  /* --button-subtle-IconColor: #ffffff; */
+
+  /* Map legacy secondary tokens to the adjusted button tokens so older consumers stay in sync */
+  /* --secondary-button-default: var(--button-secondary-BackgroundColor); */
+  /* --secondary-button-hovered: var(--button-secondary-hover-BackgroundColor); */
+  /* --secondary-button-pressed: var(--button-secondary-active-BackgroundColor); */
+  /* --secondary-button-color: var(--button-subtle-LabelColor); */
+  /* --secondary-button-disabled: var(--button-disabled-BackgroundColor); */
+  /* --secondary-button-focused: #B887D4; */
+
+  /* Button text colors for all types */
+  /* Selector / focus / link (accent-aware) */
+  --selector-active-BackgroundColor: var(--theme-checkbox-bg-color, var(--accent-color-tertiary, var(--accent-color-base, #cf13a2)));
+  --theme-editbox-focus-border: var(--accent-color-base, #cf13a2);
+  --global-focus-BorderColor: var(--accent-color-base, #cf13a2);
+  --global-primary-LinkColor: var(--accent-color-base, #cf13a2);
+  --theme-link-color: var(--accent-color-base, #cf13a2);
+
+  /* Primary buttons on this (darkish) accent use white foregrounds */
+  --button-primary-LabelColor: #FFFFFF;
+  --button-primary-IconColor: #FFFFFF;
+  --primary-button-color: var(--button-primary-LabelColor, #fff);
+  --primary-button-content-color: var(--button-primary-IconColor, rgba(255, 255, 255, .8));
+
+  /* Explicit primary background states derived from the accent */
+  --primary-button-default: var(--accent-color-primary, var(--accent-color-base, #cf13a2));
+  --primary-button-hovered: var(--accent-color-primary-hover, var(--accent-color-hover, #a60f82));
+  --primary-button-pressed: var(--accent-color-primary-active, var(--accent-color-active, #7c0b61));
+  --primary-button-focused: var(--accent-color-primary-active, var(--accent-color-active, #7c0b61));
+  /* Disabled states should derive from the accent so Intabia disabled buttons remain visible */
+  --primary-button-disabled: hsl(259.2156862745098deg 25% 52.74509803921569%);
+  /* --primary-button-disabled-color: rgba(0, 0, 0, 0.6); */
+
+  /* Legacy Huly primary tokens (so .hulyButton.primary & legacy components use the accent) */
+  --button-primary-BackgroundColor: var(--accent-color-primary, var(--accent-color-base, #cf13a2));
+  --button-primary-hover-BackgroundColor: var(--accent-color-primary-hover, var(--accent-color-hover, #a60f82));
+  --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #7c0b61));
+  --button-accent-LabelColor: var(--button-primary-LabelColor, #FFFFFF);
+  --button-accent-IconColor: var(--button-primary-IconColor, #FFFFFF);
+
+  /* Negative/Destructive button colors (provide explicit values for non-huly accents) */
+  --button-negative-BackgroundColor: #CB4B42;
+  --button-negative-BorderColor: #d1d5de26;
+  /* Use a darker hover so white labels keep sufficient contrast on hover */
+  --button-negative-hover-BackgroundColor: #B34139;
+  --button-negative-active-BackgroundColor: #B34139;
+  --button-negative-loading-LabelColor: #ff9187;
+
+  /* --button-secondary-LabelColor: #FFFFFF; */
+  /* --button-secondary-IconColor: #FFFFFF; */
+  /* --secondary-button-color: var(--button-secondary-LabelColor, rgba(0, 0, 0, .8)); */
+  /* --secondary-button-content-color: var(--button-secondary-IconColor, rgba(0, 0, 0, .8)); */
+
+  /* Use a darker tertiary color for labels/icons to ensure contrast on hovered surfaces */
+  --button-tertiary-LabelColor: var(--accent-color-primary-pressed, #40237f);
+  /* --button-tertiary-IconColor: var(--accent-color-primary-pressed, #40237f); */
+  --tertiary-button-color: var(--button-tertiary-LabelColor, var(--accent-color-primary-pressed, #40237f));
+  --tertiary-button-content-color: var(--button-tertiary-IconColor, var(--accent-color-primary-pressed, #40237f));
+  /* Additional token used for icon-only tertiary buttons (expected by checks) */
+  --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor, var(--accent-color-primary-pressed, #40237f));
+
+  /* Attention button (special gradient) tuned to this accent */
+  --theme-button-attention-gradient: linear-gradient(135deg, var(--accent-color-primary), var(--accent-color-base));
+  --theme-button-attention-border: var(--accent-color-primary);
+  --theme-button-attention-hover-gradient: linear-gradient(135deg, var(--accent-color-primary-hover), var(--accent-color-hover));
+  --theme-button-attention-hover-border: var(--accent-color-hover);
+  --theme-button-attention-active-gradient: linear-gradient(135deg, var(--accent-color-primary-active), var(--accent-color-active));
+  --theme-button-attention-hover-shadow: 0 8px 24px rgba(107, 58, 211, 0.4);
+  --theme-button-attention-active-shadow: 0 4px 12px rgba(107, 58, 211, 0.6);
+  --theme-button-attention-focus-shadow: 0 0 0 3px rgba(107, 58, 211, 0.3);
+
+  /* Toggle switches for this accent */
+  --theme-toggle-sw-color: #fff;
+  --theme-toggle-on-sw-color: #fff;
+  --theme-toggle-bg-color: rgba(120, 120, 128, 0.32);
+  --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
+  --theme-toggle-on-bg-color: var(--accent-color-base, #cf13a2);
+  --theme-toggle-on-bg-hover: var(--accent-color-hover, #a60f82);
+}
 
 
 /* Huly is a special (legacy) accent: when selected it should NOT override theme tokens.
@@ -273,6 +436,24 @@
     --primary-button-disabled-color: #000;
 }
 .accent-dark-intabia {
+    --button-subtle-LabelColor: #ffffff;
+    /* Ensure tertiary labels/icons are white in dark theme for sufficient contrast */
+    --button-tertiary-LabelColor: #ffffff;
+    --button-tertiary-IconColor: #ffffff;
+}
+
+.accent-light-intabia2 {
+    /* Use a concrete light hover color so contrast checks compute against an explicit value */
+    --theme-button-hovered: #f0f0f0;
+    --theme-button-pressed: #e6e6e6;
+    /* --button-subtle-LabelColor: #ffffff; */
+    /* Ensure tertiary labels/icons are dark in light theme so ModernButton tertiary remains readable on light surfaces */
+    --button-tertiary-LabelColor: var(--accent-color-primary, #6b3ad3);
+    --button-tertiary-IconColor: var(--accent-color-primary, #6b3ad3);
+    --button-tertiary-icon-IconColor: var(--button-tertiary-IconColor, var(--accent-color-primary, #6b3ad3));
+    --primary-button-disabled-color: #000;
+}
+.accent-dark-intabia2 {
     --button-subtle-LabelColor: #ffffff;
     /* Ensure tertiary labels/icons are white in dark theme for sufficient contrast */
     --button-tertiary-LabelColor: #ffffff;
