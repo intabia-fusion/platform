@@ -16,11 +16,13 @@
   import { ModernButton, getCurrentLocation } from '@hcengineering/ui'
   import view, { decodeObjectURI } from '@hcengineering/view'
   import { Employee } from '@hcengineering/contact'
+  import { Asset } from '@hcengineering/platform'
+  import { createDirect } from '@hcengineering/chunter'
+  import { getClient } from '@hcengineering/presentation'
+  import { getCurrentAccount } from '@hcengineering/core'
 
   import chunter from '../plugin'
-  import { createDirect } from '../utils'
   import { openChannelInSidebar } from '../navigation'
-  import { Asset } from '@hcengineering/platform'
 
   export let employee: Employee
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
@@ -28,11 +30,12 @@
   export let type: 'type-button' | 'type-button-icon' = 'type-button'
 
   async function openDirect (): Promise<void> {
-    const dm = await createDirect([employee._id])
-    if (dm === undefined) {
-      return
-    }
+    if (employee.personUuid == null) return
 
+    const client = getClient()
+    const me = getCurrentAccount()
+    const dm = await createDirect(client, [me.uuid, employee.personUuid])
+    if (dm == null) return
     const loc = getCurrentLocation()
     const [_id] = decodeObjectURI(loc.path[3]) ?? []
 

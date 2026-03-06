@@ -14,15 +14,15 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-
-  import { Employee } from '@hcengineering/contact'
-  import { AccountUuid, Ref, notEmpty } from '@hcengineering/core'
+  import contact, { Employee } from '@hcengineering/contact'
+  import { AccountUuid, Ref, notEmpty, getCurrentAccount } from '@hcengineering/core'
   import { employeeByIdStore, SelectUsersPopup } from '@hcengineering/contact-resources'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Modal, showPopup } from '@hcengineering/ui'
+  import { createDirect } from '@hcengineering/chunter'
 
   import chunter from '../../../plugin'
-  import { buildDmName, createDirect } from '../../../utils'
+  import { buildDmName } from '../../../utils'
   import ChannelMembers from '../../ChannelMembers.svelte'
   import { openChannel } from '../../../navigation'
 
@@ -32,6 +32,8 @@
   let employeeIds: Ref<Employee>[] = []
   let dmName = ''
   let hidden = true
+
+  let creating = false
 
   $: accounts = employeeIds.map((e) => $employeeByIdStore.get(e)?.personUuid).filter(notEmpty)
   $: void loadDmName(accounts).then((r) => {
@@ -43,11 +45,25 @@
   }
 
   async function createDirectMessage (): Promise<void> {
-    const dmId = await createDirect(employeeIds)
+    try {
+      creating = true
+      const me = getCurrentAccount()
 
-    if (dmId !== undefined) {
+      const newDirectEmployeeIds = Array.from(new Set(employeeIds))
+      const employees: Employee[] = []
+
+      for (const _id of newDirectEmployeeIds) {
+        const employee = $employeeByIdStore.get(_id) ?? (await client.findOne(contact.mixin.Employee, { _id }))
+        if (employee != null) employees.push(employee)
+      }
+      const accounts = [...employees.map(({ personUuid }) => personUuid).filter(notEmpty), me.uuid]
+
+      const dmId = await createDirect(client, accounts)
+      if (dmId == null) return
       openChannel(dmId, chunter.class.DirectMessage)
       dispatch('close')
+    } finally {
+      creating = false
     }
   }
 
@@ -93,7 +109,8 @@
   {hidden}
   okLabel={presentation.string.Create}
   okAction={createDirectMessage}
-  canSave={employeeIds.length > 0}
+  canSave={employeeIds.length > 0 && !creating}
+  okLoading={creating}
   onCancel={handleCancel}
   on:close
 >

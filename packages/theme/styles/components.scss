@@ -356,7 +356,7 @@
         left: 50%;
         color: var(--theme-caption-color);
         transform: translate(-53%, -52%);
-        z-index: 2;
+        z-index: 3;
       }
       &::before {
         content: '';
@@ -369,7 +369,7 @@
         border: 1px solid var(--theme-divider-color);
         border-radius: 0.25rem;
         opacity: 0.9;
-        z-index: 1;
+        z-index: 2;
       }
     }
   }
