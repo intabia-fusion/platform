@@ -4,11 +4,10 @@
   import { getClient } from '@hcengineering/presentation'
   import { getCurrentLocation, location, Location } from '@hcengineering/ui'
   import { decodeObjectURI } from '@hcengineering/view'
-  import { Ref } from '@hcengineering/core'
-  import { chunterId } from '@hcengineering/chunter'
+  import { AccountUuid, getCurrentAccount } from '@hcengineering/core'
+  import { chunterId, createDirect } from '@hcengineering/chunter'
   import { notificationId } from '@hcengineering/notification'
 
-  import { createDirect } from '../utils'
   import { openChannel } from '../navigation'
   import chunter from '../plugin'
 
@@ -32,11 +31,12 @@
 
   async function openEmployeeDirect (): Promise<void> {
     if (person === undefined) return
+    const client = getClient()
+    const me = getCurrentAccount()
+    if (person.personUuid == null) return
 
-    const dm = await createDirect([person._id as Ref<Employee>])
-    if (dm === undefined) {
-      return
-    }
+    const dm = await createDirect(client, [me.uuid, person.personUuid as AccountUuid])
+    if (dm == null) return
 
     const loc = getCurrentLocation()
     const [_id] = decodeObjectURI(loc.path[3]) ?? []

@@ -19,7 +19,13 @@ import activity, {
 } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
 import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
-import { type Channel, type ChatMessage, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
+import {
+  type Channel,
+  type ChatMessage,
+  createDirect,
+  type DirectMessage,
+  type ThreadMessage
+} from '@hcengineering/chunter'
 import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@hcengineering/contact'
 import { employeeByAccountStore, PersonIcon } from '@hcengineering/contact-resources'
 import core, {
@@ -48,7 +54,6 @@ import { type AnySvelteComponent, languageStore } from '@hcengineering/ui'
 import { classIcon, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
-import { withRetry } from '@hcengineering/retry'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
@@ -476,75 +481,10 @@ export async function canSummarizeMessages (doc: Doc): Promise<boolean> {
 export async function startConversationAction (docs?: Employee | Employee[]): Promise<void> {
   if (docs === undefined) return
   const employees = Array.isArray(docs) ? docs : [docs]
-  const employeeIds = employees.map(({ _id }) => _id)
-
-  const dm = await createDirect(employeeIds)
-
-  if (dm !== undefined) {
-    await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
-  }
-}
-
-async function findExistingDirect (accounts: Set<AccountUuid>): Promise<Ref<DirectMessage> | undefined> {
-  if (accounts.size > 2) return undefined
-
+  const accounts = employees.map(({ personUuid }) => personUuid).filter(notEmpty)
   const client = getClient()
-  const existingDms = await client.findAll(chunter.class.DirectMessage, {})
+  const dm = await createDirect(client, accounts)
+  if (dm == null) return
 
-  let direct: DirectMessage | undefined
-
-  for (const dm of existingDms) {
-    const dmAccounts = new Set(dm.members)
-
-    if (dmAccounts.size !== accounts.size) continue
-
-    let match = true
-
-    for (const acc of dmAccounts) {
-      if (!accounts.has(acc)) {
-        match = false
-        break
-      }
-    }
-
-    if (match) {
-      direct = dm
-      break
-    }
-  }
-
-  return direct?._id
-}
-
-export async function createDirect (employeeIds: Array<Ref<Employee>>): Promise<Ref<DirectMessage>> {
-  const client = getClient()
-  const me = getCurrentAccount()
-
-  const newDirectEmployeeIds = Array.from(new Set(employeeIds))
-  const employees = await client.findAll(contact.mixin.Employee, { _id: { $in: newDirectEmployeeIds } })
-  const accounts = new Set([...employees.map(({ personUuid }) => personUuid).filter(notEmpty), me.uuid])
-
-  return await withRetry(
-    async (): Promise<Ref<DirectMessage>> => {
-      const direct = await findExistingDirect(accounts)
-
-      if (direct != null) {
-        const chat = await client.findOne(chunter.class.Chat, { attachedTo: direct })
-        if (chat?.hidden === true) {
-          await client.update(chat, { hidden: false })
-        }
-        return direct
-      }
-
-      return await client.createDoc(chunter.class.DirectMessage, core.space.Space, {
-        name: '',
-        description: '',
-        private: true,
-        archived: false,
-        members: Array.from(accounts),
-        type: accounts.size > 2 ? 'group' : 'person'
-      })
-    },
-    { maxRetries: 3 }
-  )
+  await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
 }
