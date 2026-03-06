@@ -73,6 +73,8 @@ export type ComponentsFilterMode = 'all' | 'backlog' | 'active' | 'closed'
 
 export type MilestoneViewMode = 'all' | 'planned' | 'active' | 'closed'
 
+export const useShowDaysStore = writable<boolean>(false)
+
 export const getIncludedMilestoneStatuses = (mode: MilestoneViewMode): MilestoneStatus[] => {
   switch (mode) {
     case 'all': {

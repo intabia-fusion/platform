@@ -1,13 +1,21 @@
 <script lang="ts">
-  import { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import { Asset, IntlString, translateCB } from '@hcengineering/platform'
-  import { ComponentExtensions } from '@hcengineering/presentation'
+  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { Issue, TrackerEvents } from '@hcengineering/tracker'
   import { IModeSelector, themeStore } from '@hcengineering/ui'
   import { ViewOptions, Viewlet } from '@hcengineering/view'
-  import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
+  import {
+    FilterBar,
+    selectionStore,
+    SpaceHeader,
+    ViewletContentView,
+    ViewletSettingButton
+  } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
+  import { useShowDaysStore } from '../../utils'
+  import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Issue> = {}
@@ -33,8 +41,26 @@
       label = res
     })
   }
+
+  let finalQuery: DocumentQuery<Doc> | undefined
+
+  $: $useShowDaysStore = (viewOptions as any)?.shouldShowDays === true
+
+  function filterIssues (docs: Doc[]): Issue[] {
+    const h = getClient().getHierarchy()
+    const result = (docs ?? []).filter(
+      (it) =>
+        h.isDerived(it._class, tracker.class.Issue) &&
+        (it as Issue).estimation != null &&
+        (it as Issue).reportedTime != null &&
+        (it as Issue).remainingTime != null
+    ) as Issue[]
+    console.log('##', docs, result)
+    return result
+  }
 </script>
 
+showDays- {$useShowDaysStore}
 <SpaceHeader
   _class={tracker.class.Issue}
   {icon}
@@ -66,6 +92,14 @@
       props={{ size: 'small', kind: 'tertiary', space }}
     />
   </svelte:fragment>
+  <svelte:fragment slot="extra">
+    {#if $selectionStore.docs.length > 0}
+      {@const issues = filterIssues($selectionStore.docs)}
+      {#if issues.length > 0}
+        <IssueStatistics docs={issues} itemsProj={issues} />
+      {/if}
+    {/if}
+  </svelte:fragment>
 </SpaceHeader>
 <FilterBar
   _class={tracker.class.Issue}
@@ -75,7 +109,7 @@
   on:change={(e) => (resultQuery = e.detail)}
 />
 <slot name="afterHeader" />
-{#if viewlet && viewOptions}
+{#if viewlet !== undefined && viewOptions !== undefined}
   <ViewletContentView
     _class={tracker.class.Issue}
     {viewlet}

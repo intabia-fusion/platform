@@ -91,8 +91,6 @@
   }
 
   $: circles = items.map((item, index) => calculateCircleData(item, index))
-
-  $: console.log('##', items, circles)
 </script>
 
 <svg class="svg-{size}" fill="none" viewBox="0 0 16 16">

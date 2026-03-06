@@ -16,24 +16,27 @@
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { floorFractionDigits, themeStore, tooltip } from '@hcengineering/ui'
   import tracker from '../../../plugin'
+  import { getContext } from 'svelte'
+  import { useShowDaysStore } from '../../../utils'
 
   export let id: string | undefined = undefined
   export let kind: 'link' | undefined = undefined
   export let value: number
   export let accent: boolean = false
 
-  // TODO: Make configurable?
-  // const hoursInWorkingDay = 8
-
   let label = ''
 
   $: hours = floorFractionDigits(value, 3)
 
-  $: void getLabel(hours, $themeStore.language)
+  $: void getLabel(hours, $themeStore.language, $useShowDaysStore)
 
-  async function getLabel (hours: number, language: string): Promise<void> {
+  async function getLabel (hours: number, language: string, showDays: boolean): Promise<void> {
     try {
-      label = await translate(tracker.string.TimeSpendHours, { value: hours }, language)
+      if (showDays) {
+        label = await translate(tracker.string.TimeSpendDays, { value: Math.floor((100 * hours) / 8) / 100 }, language)
+      } else {
+        label = await translate(tracker.string.TimeSpendHours, { value: hours }, language)
+      }
     } catch {}
   }
 </script>
@@ -45,7 +48,7 @@
   class:link={kind === 'link'}
   class:fs-bold={accent}
   on:click
-  use:tooltip={{ label: getEmbeddedLabel(label) }}
+  use:tooltip={{ label: getEmbeddedLabel(`${hours}h / ${floorFractionDigits(hours / 8, 3)}d`) }}
 >
   {label}
 </span>

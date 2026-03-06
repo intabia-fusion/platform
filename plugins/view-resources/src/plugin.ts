@@ -97,6 +97,7 @@ export default mergeIds(viewId, view, {
     SaveAs: '' as IntlString,
     Between: '' as IntlString,
     ShowColors: '' as IntlString,
+    ShowDays: '' as IntlString,
     Show: '' as IntlString,
     ChooseIcon: '' as IntlString,
     IconColor: '' as IntlString,

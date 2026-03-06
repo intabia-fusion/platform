@@ -32,18 +32,16 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="estimation-container" on:click>
-  {#if _estimation > 0}
-    <div class="icon">
-      <EstimationProgressCircle
-        items={[
-          { value: value.reportedTime + treeResult.totalReportedTime, max: _estimation },
-          ...(kind === 'list' && childInfos.length > 0
-            ? [{ value: value.reportedTime + treeResult.totalReportedTime, max: treeResult.totalEstimation }]
-            : [])
-        ]}
-      />
-    </div>
-  {/if}
+  <div class="icon">
+    <EstimationProgressCircle
+      items={[
+        { value: value.reportedTime + treeResult.totalReportedTime, max: _estimation },
+        ...(kind === 'list' && childInfos.length > 0
+          ? [{ value: value.reportedTime + treeResult.totalReportedTime, max: treeResult.totalEstimation }]
+          : [])
+      ]}
+    />
+  </div>
   <span class="overflow-label label flex-row-center flex-nowrap {kind}">
     <div
       class="flex flex-nowrap"

@@ -363,13 +363,13 @@ async function migrateIssueStatuses (client: MigrationClient): Promise<void> {
   )
 }
 
-async function migrateChildInfoParentId (client: MigrationClient): Promise<void> {
+export async function migrateChildInfoParentId (client: MigrationClient): Promise<void> {
   const issues = await client.find<Issue>(
     DOMAIN_TASK,
     {
       _class: tracker.class.Issue
     },
-    { projection: { _id: 1, childInfo: 1 } as any }
+    { projection: { _id: 1, childInfo: 1, attachedTo: 1 } as any }
   )
 
   const issuesWithChildren = issues.filter((it) => it.childInfo?.length > 0)
@@ -388,17 +388,8 @@ async function migrateChildInfoParentId (client: MigrationClient): Promise<void>
 
   if (childIdsToResolve.size === 0) return
 
-  // Load all child issues to get their attachedTo
-  const childIssues = await client.find<Issue>(
-    DOMAIN_TASK,
-    {
-      _id: { $in: Array.from(childIdsToResolve) }
-    },
-    { projection: { _id: 1, attachedTo: 1 } as any }
-  )
-
   const childToParent = new Map<Ref<Issue>, Ref<Issue>>()
-  for (const child of childIssues) {
+  for (const child of issues) {
     childToParent.set(child._id, child.attachedTo)
   }
 
@@ -458,7 +449,7 @@ export const trackerOperation: MigrateOperation = {
         func: migrateDefaultTypeMixins
       },
       {
-        state: 'childInfo-parentId',
+        state: 'childInfo-parentId-v2',
         mode: 'upgrade',
         func: migrateChildInfoParentId
       }
