@@ -3,9 +3,10 @@
   import { getCurrentAccount, Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Dropdown, Icon } from '@hcengineering/ui'
-  import { createEventDispatcher, onMount } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { translate } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
 
   export let value: Ref<Calendar> | undefined
   export let disabled: boolean = false
@@ -46,10 +47,10 @@
     change(target)
   }
 
-  let personalCalendarLabel = ''
+  let personalCalendarLabel: string = ''
 
-  onMount(async () => {
-    personalCalendarLabel = await translate(calendar.string.PersonalCalendar, {})
+  $: translateCB(calendar.string.PersonalCalendar, {}, $themeStore.language, (r) => {
+    personalCalendarLabel = r
   })
 
   $: items = calendars.map((p) => {
