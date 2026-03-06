@@ -23,6 +23,7 @@ export interface Tier extends Doc {
   priceMonthly: number
   storageLimitGB: number
   trafficLimitGB: number
+  meetingMinutesLimit: number // In minutes
   tokenLimit: number // In thousands of tokens
 
   index: number

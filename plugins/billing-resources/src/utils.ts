@@ -152,15 +152,18 @@ function getTierPlan (tierId: string): string {
 export function calculateLimits (tier: Tier | undefined): {
   storageLimit: number
   trafficLimit: number
+  meetingMinutesLimit: number
   tokenLimit: number
 } {
   const DEFAULT_STORAGE_GB = 10
   const DEFAULT_TRAFFIC_GB = 10
+  const DEFAULT_MEETING_MINUTES = 600
   const DEFAULT_TOKEN = 20
 
   return {
     storageLimit: (tier?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
     trafficLimit: (tier?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
+    meetingMinutesLimit: tier?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
     tokenLimit: (tier?.tokenLimit ?? DEFAULT_TOKEN) * 1000
   }
 }
@@ -168,11 +171,11 @@ export function calculateLimits (tier: Tier | undefined): {
 export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, tier: Tier | undefined): boolean {
   if (usageInfo == null) return false
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
-  const trafficUsedBytes = usageInfo.usage.livekitTrafficBytes ?? 0
+  const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
 
-  const { storageLimit, trafficLimit } = calculateLimits(tier)
+  const { storageLimit, meetingMinutesLimit } = calculateLimits(tier)
 
-  return storageUsedBytes > storageLimit || trafficUsedBytes > trafficLimit
+  return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit
 }
 
 export async function getCurrentSubscription (accountClient: AccountClient): Promise<SubscriptionData | undefined> {

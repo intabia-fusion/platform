@@ -18,11 +18,15 @@ import {
   AiTokensData,
   AiTokensUsage,
   AiTranscriptData,
+  AiTranscriptDailyUsage,
   AiTranscriptUsage,
   BillingDB,
   LiveKitEgressData,
+  LiveKitParticipantSessionData,
   LiveKitSessionData,
-  LiveKitUsageData
+  LiveKitUsageData,
+  ParticipantDailyUsage,
+  ParticipantMinutesUsage
 } from '../types'
 
 interface RetryOptions {
@@ -77,6 +81,28 @@ export class RetryDB implements BillingDB {
     await retry(() => this.db.setLiveKitEgress(ctx, data), this.options)
   }
 
+  async pushParticipantSessions (ctx: MeasureContext, data: LiveKitParticipantSessionData[]): Promise<void> {
+    await retry(() => this.db.pushParticipantSessions(ctx, data), this.options)
+  }
+
+  async getParticipantMinutes (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantMinutesUsage> {
+    return await retry(() => this.db.getParticipantMinutes(ctx, workspace, start, end), this.options)
+  }
+
+  async getParticipantDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantDailyUsage[]> {
+    return await retry(() => this.db.getParticipantDailyStats(ctx, workspace, start, end), this.options)
+  }
+
   async pushAiTranscriptData (ctx: MeasureContext, data: AiTranscriptData[]): Promise<void> {
     await retry(() => this.db.pushAiTranscriptData(ctx, data), this.options)
   }
@@ -92,6 +118,15 @@ export class RetryDB implements BillingDB {
     end?: Date
   ): Promise<AiTranscriptUsage> {
     return await retry(() => this.db.getAiTranscriptStats(ctx, workspace, start, end), this.options)
+  }
+
+  async getAiTranscriptDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<AiTranscriptDailyUsage[]> {
+    return await retry(() => this.db.getAiTranscriptDailyStats(ctx, workspace, start, end), this.options)
   }
 
   async pushAiTokensData (ctx: MeasureContext, data: AiTokensData[]): Promise<void> {

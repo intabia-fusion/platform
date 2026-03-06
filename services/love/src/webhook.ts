@@ -15,7 +15,7 @@ import {
   RoomServiceClient,
   type WebhookEvent
 } from 'livekit-server-sdk'
-import { saveLiveKitEgressBilling } from './billing'
+import { saveLiveKitEgressBilling, saveParticipantSessionBilling } from './billing'
 import config from './config'
 import { getRecordingPreset } from './preset'
 import { saveFile } from './storage'
@@ -201,6 +201,21 @@ export class WebhookProcessor {
       await this.eventProducer.send(this.ctx, roomName.workspace, [
         queueEvents.personJoined(roomName.meetingId, personRef, participant.identity ?? '')
       ])
+
+      // Track participant session duration for billing
+      const joinedAtMs = Number(participant.joinedAt ?? participant.joinedAtMs ?? 0)
+      if (joinedAtMs > 0) {
+        const joinedAt = joinedAtMs > 1e12 ? joinedAtMs : joinedAtMs * 1000
+        await saveParticipantSessionBilling(
+          this.ctx,
+          roomName.workspace,
+          `${roomName.workspace}_${roomName.meetingId}`,
+          participant.identity ?? personRef,
+          participant.sid,
+          joinedAt,
+          Date.now()
+        )
+      }
     }
   }
 

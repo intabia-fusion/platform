@@ -2,22 +2,20 @@
   export let data: { date: number, value: number }[] = []
   export let width: number
   export let height: number
+  export let sharedValues: number[] | undefined = undefined
+  export let color: string | undefined = undefined
 
   function createLines (
     data: { date: number, value: number }[],
     width: number,
-    height: number
+    height: number,
+    sharedValues: number[] | undefined
   ): { x1: number, y1: number, x2: number, y2: number }[] {
     const result: { x1: number, y1: number, x2: number, y2: number }[] = []
     const stepX = width / (data.length - 1)
-    const minValue = Math.min.apply(
-      Math,
-      data.map((d) => d.value)
-    )
-    let maxValue = Math.max.apply(
-      Math,
-      data.map((d) => d.value)
-    )
+    const values = sharedValues ?? data.map((d) => d.value)
+    const minValue = Math.min.apply(Math, values)
+    let maxValue = Math.max.apply(Math, values)
     if (maxValue === minValue) {
       maxValue += 10000
     }
@@ -34,11 +32,18 @@
     return result
   }
 
-  $: lines = createLines(data, width, height)
+  $: lines = createLines(data, width, height, sharedValues)
 </script>
 
 {#each lines as line}
-  <line x1={line.x1} x2={line.x2} y1={line.y1} y2={line.y2} class="line" />
+  <line
+    x1={line.x1}
+    x2={line.x2}
+    y1={line.y1}
+    y2={line.y2}
+    class="line"
+    style={color != null ? `stroke: ${color}` : ''}
+  />
 {/each}
 
 <style>

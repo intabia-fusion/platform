@@ -32,6 +32,7 @@ export class TTier extends TDoc implements Tier {
   description!: IntlString
   storageLimitGB!: number
   trafficLimitGB!: number
+  meetingMinutesLimit!: number
   tokenLimit!: number
 
   priceMonthly!: number
@@ -61,6 +62,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.CommonDescription,
       storageLimitGB: 10,
       trafficLimitGB: 10,
+      meetingMinutesLimit: 600,
       tokenLimit: 20,
       priceMonthly: 0,
       index: 0
@@ -76,6 +78,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.RareDescription,
       storageLimitGB: 100,
       trafficLimitGB: 100,
+      meetingMinutesLimit: 3000,
       tokenLimit: 200,
       priceMonthly: 19.99,
       index: 1,
@@ -92,6 +95,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.EpicDescription,
       storageLimitGB: 1000,
       trafficLimitGB: 500,
+      meetingMinutesLimit: 15000,
       tokenLimit: 2000,
       priceMonthly: 99.99,
       index: 2,
@@ -108,6 +112,7 @@ export function createModel (builder: Builder): void {
       description: billing.string.LegendaryDescription,
       storageLimitGB: 10000,
       trafficLimitGB: 2000,
+      meetingMinutesLimit: 60000,
       tokenLimit: 5000,
       priceMonthly: 399.99,
       index: 3,

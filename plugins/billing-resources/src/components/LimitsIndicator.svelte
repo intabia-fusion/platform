@@ -39,14 +39,14 @@
 
   // Calculate usage percentages from store data
   $: storageUsed = usageInfo?.usage?.storageBytes ?? 0
-  $: trafficUsed = usageInfo?.usage?.livekitTrafficBytes ?? 0
+  $: meetingMinutesUsed = usageInfo?.usage?.meetingMinutes ?? 0
   $: limits = calculateLimits(currentTier)
 
   $: storagePercent = limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
-  $: bandwidthPercent = limits.trafficLimit > 0 ? Math.min(trafficUsed / limits.trafficLimit, 1) : 0
+  $: meetingPercent = limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
 
   $: storageColor = storagePercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
-  $: bandwidthColor = bandwidthPercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
+  $: meetingColor = meetingPercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
 
   onMount(() => {
     addEventListener(workbench.event.NotifyConnection, connectionListener)
@@ -87,7 +87,13 @@
     <Progress color={storageColor} value={storageUsed} max={limits.storageLimit} fallback={0} small={true} />
   </div>
   <div class="progress-wrapper">
-    <Progress color={bandwidthColor} value={trafficUsed} max={limits.trafficLimit} fallback={0} small={true} />
+    <Progress
+      color={meetingColor}
+      value={meetingMinutesUsed}
+      max={limits.meetingMinutesLimit}
+      fallback={0}
+      small={true}
+    />
   </div>
 </button>
 

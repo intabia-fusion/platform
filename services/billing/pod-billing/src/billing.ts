@@ -15,7 +15,15 @@
 
 import type { Request, Response } from 'express'
 import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
-import { LiveKitSessionData, BillingDB, LiveKitEgressData, AiUsageData, AiTranscriptData, AiTokensData } from './types'
+import {
+  LiveKitSessionData,
+  BillingDB,
+  LiveKitEgressData,
+  LiveKitParticipantSessionData,
+  AiUsageData,
+  AiTranscriptData,
+  AiTokensData
+} from './types'
 import { generateToken } from '@hcengineering/server-token'
 import { StorageConfig } from '@hcengineering/server-core'
 import { createDatalakeClient, DatalakeConfig, WorkspaceStats } from '@hcengineering/datalake'
@@ -83,7 +91,9 @@ export async function handleGetStats (
     transcript: await db.getAiTranscriptStats(ctx, workspace, fromDate, toDate),
     tokens: await db.getAiTokensStats(ctx, workspace, fromDate, toDate)
   }
-  res.status(200).json({ liveKitStats, datalakeStats, aiStats })
+  const participantDailyStats = await db.getParticipantDailyStats(ctx, workspace, fromDate, toDate)
+  const transcriptDailyStats = await db.getAiTranscriptDailyStats(ctx, workspace, fromDate, toDate)
+  res.status(200).json({ liveKitStats, datalakeStats, aiStats, participantDailyStats, transcriptDailyStats })
 }
 
 export async function handleGetLiveKitStats (
@@ -151,6 +161,18 @@ export async function handlePushAiTranscriptData (
 ): Promise<void> {
   const data = (await req.body) as AiTranscriptData[]
   await db.pushAiTranscriptData(ctx, data)
+  res.status(204).send()
+}
+
+export async function handlePushParticipantSessions (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const data = (await req.body) as LiveKitParticipantSessionData[]
+  await db.pushParticipantSessions(ctx, data)
   res.status(204).send()
 }
 

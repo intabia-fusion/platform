@@ -12,7 +12,7 @@
       <Label {label} />
     </span>
   </div>
-  <div class="my-3 flex-grow flex-center stats">
+  <div class="mt-2 flex-grow flex-center stats">
     <span>
       {#if typeof text === 'string'}
         {text}
@@ -28,9 +28,9 @@
 <style lang="scss">
   .stats-card {
     flex: 1;
-    min-width: 12rem;
-    min-height: 10rem;
-    padding: 20px;
+    min-width: 10rem;
+    min-height: 5rem;
+    padding: 12px 16px;
     box-sizing: border-box;
     background-color: var(--theme-button-default);
     border: 1px solid var(--theme-button-border);
@@ -43,7 +43,7 @@
   }
   .stats > span {
     font-weight: 400;
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: var(--theme-caption-color);
     user-select: none;
   }

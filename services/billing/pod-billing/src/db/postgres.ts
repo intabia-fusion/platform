@@ -17,13 +17,17 @@ import {
   AiTokensData,
   AiTokensUsage,
   AiTranscriptData,
+  AiTranscriptDailyUsage,
   AiTranscriptUsage,
   BillingDB,
   LiveKitEgressData,
   LiveKitEgressUsageData,
+  LiveKitParticipantSessionData,
   LiveKitSessionData,
   LiveKitSessionsUsageData,
-  LiveKitUsageData
+  LiveKitUsageData,
+  ParticipantDailyUsage,
+  ParticipantMinutesUsage
 } from '../types'
 import postgres, { type Row, Sql } from 'postgres'
 import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
@@ -296,6 +300,131 @@ class PostgresDB implements BillingDB {
     }
   }
 
+  async pushParticipantSessions (ctx: MeasureContext, data: LiveKitParticipantSessionData[]): Promise<void> {
+    const uniqueSessions = new Map<string, LiveKitParticipantSessionData>()
+    for (const item of data) {
+      uniqueSessions.set(`${item.workspace}::${item.participantId}::${item.sessionId}`, item)
+    }
+    const uniqueValues = uniqueSessions.values()
+    for (let i = 0; i < uniqueSessions.size; i += BATCH_SIZE) {
+      const batch = uniqueValues.take(BATCH_SIZE)
+      const values = []
+      const params = []
+      let paramIndex = 1
+
+      for (const item of batch) {
+        values.push(
+          `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`
+        )
+        params.push(
+          item.workspace,
+          item.participantId,
+          item.sessionId,
+          item.room,
+          item.joinedAt,
+          item.leftAt,
+          item.durationSeconds
+        )
+      }
+
+      if (values.length === 0) continue
+
+      const query =
+        this.flavor === 'cockroach'
+          ? `
+          UPSERT INTO billing.livekit_participant_session (workspace, participant_id, session_id, room, joined_at, left_at, duration_seconds)
+          VALUES ${values.join(',')}
+        `
+          : `
+          INSERT INTO billing.livekit_participant_session (workspace, participant_id, session_id, room, joined_at, left_at, duration_seconds)
+          VALUES ${values.join(',')}
+          ON CONFLICT (workspace, participant_id, session_id)
+          DO UPDATE SET
+            left_at = EXCLUDED.left_at,
+            duration_seconds = EXCLUDED.duration_seconds
+        `
+      await this.execute(query, params)
+    }
+  }
+
+  async getParticipantMinutes (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantMinutesUsage> {
+    const query = `
+      SELECT
+        COALESCE(SUM(duration_seconds), 0) / 60.0 AS total_minutes
+      FROM billing.livekit_participant_session
+      WHERE
+        workspace = $1
+        AND joined_at >= $2
+        AND joined_at <= $3
+        AND duration_seconds > 0
+    `
+    const params = [workspace, start, end]
+    const result = await this.execute<{ total_minutes: string }[]>(query, params)
+    return {
+      totalMinutes: Math.round(Number(result[0]?.total_minutes ?? 0))
+    }
+  }
+
+  async getParticipantDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantDailyUsage[]> {
+    // First get daily minutes totals
+    const minutesQuery = `
+      SELECT
+        DATE_TRUNC('day', joined_at) AS day,
+        COALESCE(SUM(duration_seconds), 0) / 60.0 AS total_minutes
+      FROM billing.livekit_participant_session
+      WHERE
+        workspace = $1
+        AND joined_at >= $2
+        AND joined_at <= $3
+        AND duration_seconds > 0
+      GROUP BY DATE_TRUNC('day', joined_at)
+      ORDER BY day;
+    `
+    // Get max concurrent participants per session, then take the max per day
+    const participantsQuery = `
+      SELECT
+        DATE_TRUNC('day', ps.joined_at) AS day,
+        MAX(session_counts.participant_count) AS max_participants
+      FROM billing.livekit_participant_session ps
+      JOIN (
+        SELECT workspace, session_id, COUNT(*) AS participant_count
+        FROM billing.livekit_participant_session
+        WHERE workspace = $1 AND joined_at >= $2 AND joined_at <= $3
+        GROUP BY workspace, session_id
+      ) session_counts ON ps.workspace = session_counts.workspace AND ps.session_id = session_counts.session_id
+      WHERE ps.workspace = $1 AND ps.joined_at >= $2 AND ps.joined_at <= $3
+      GROUP BY DATE_TRUNC('day', ps.joined_at)
+      ORDER BY day;
+    `
+    const params = [workspace, start, end]
+    const minutesResult = await this.execute<{ day: string, total_minutes: string }[]>(minutesQuery, params)
+    const participantsResult = await this.execute<{ day: string, max_participants: string }[]>(
+      participantsQuery,
+      params
+    )
+
+    const participantsMap = new Map<string, number>()
+    for (const row of participantsResult) {
+      participantsMap.set(row.day, Number(row.max_participants ?? 0))
+    }
+
+    return minutesResult.map((row) => ({
+      day: row.day,
+      totalMinutes: Math.round(Number(row.total_minutes ?? 0)),
+      maxParticipants: participantsMap.get(row.day) ?? 0
+    }))
+  }
+
   async pushAiTranscriptData (ctx: MeasureContext, data: AiTranscriptData[]): Promise<void> {
     const stringType = this.flavor === 'cockroach' ? 'string' : 'text'
 
@@ -373,6 +502,31 @@ class PostgresDB implements BillingDB {
     return {
       totalDurationSeconds: Number(result[0]?.total_duration_seconds ?? 0)
     }
+  }
+
+  async getAiTranscriptDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<AiTranscriptDailyUsage[]> {
+    const query = `
+      SELECT
+        day,
+        total_duration_seconds
+      FROM billing.ai_transcript_usage
+      WHERE
+        workspace = $1::uuid
+        AND day >= $2::date
+        AND day <= $3::date
+      ORDER BY day;
+    `
+    const params = [workspace, start, end]
+    const result = await this.execute<{ day: string, total_duration_seconds: string }[]>(query, params)
+    return result.map((row) => ({
+      day: row.day,
+      totalDurationSeconds: Number(row.total_duration_seconds ?? 0)
+    }))
   }
 
   async getAiTranscriptLastData (ctx: MeasureContext): Promise<AiTranscriptData | undefined> {

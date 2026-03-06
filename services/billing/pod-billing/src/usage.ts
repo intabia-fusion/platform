@@ -136,12 +136,22 @@ export class UsageWorker {
       { workspace }
     )
 
-    const livekitTrafficBytes = liveKitUsage.sessions.reduce((acc, session) => acc + session.bandwidth, 0)
+    const participantMinutes = await ctx.with(
+      'get participant minutes',
+      {},
+      (ctx) => {
+        return this.db.getParticipantMinutes(ctx, workspace, periodStart, periodEnd)
+      },
+      { workspace }
+    )
+    const meetingMinutes = participantMinutes.totalMinutes
+    const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0)
     const storageBytes = storageUsage.size
 
     const usage: UsageStatus = {
       usage: {
-        livekitTrafficBytes,
+        meetingMinutes,
+        recordingSeconds,
         storageBytes,
         transcript:
           (await this.db.getAiTranscriptStats(ctx, workspace, periodStart, periodEnd))?.totalDurationSeconds ?? 0,
