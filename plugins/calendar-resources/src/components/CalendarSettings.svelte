@@ -105,7 +105,7 @@
             </div>
             {#each categories as cat}
               {#each cat[1] as _calendar}
-                {#if _calendar._id === (myAcc.uuid + '_calendar')}
+                {#if _calendar._id === myAcc.uuid + '_calendar'}
                   <Label label={calendar.string.PersonalCalendar} />
                 {:else}
                   {_calendar.name}

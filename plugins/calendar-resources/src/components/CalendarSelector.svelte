@@ -55,7 +55,7 @@
   $: items = calendars.map((p) => {
     return {
       _id: p._id,
-      label: p._id === (me.uuid + '_calendar') ? personalCalendarLabel : p.name
+      label: p._id === me.uuid + '_calendar' ? personalCalendarLabel : p.name
     }
   })
 
