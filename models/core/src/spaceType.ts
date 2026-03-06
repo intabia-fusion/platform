@@ -24,13 +24,14 @@ const roles = [
   {
     _id: core.role.Admin,
     name: 'Admin',
+    label: core.string.RoleAdmin,
     permissions: [core.permission.UpdateObject, core.permission.DeleteObject]
   }
 ]
 
 export function defineSpaceType (builder: Builder): void {
   for (const role of roles) {
-    const label = getRoleAttributeLabel(role.name)
+    const label = role.label ?? getRoleAttributeLabel(role.name)
     const roleAssgtType = ArrOf(TypeString())
 
     Prop(roleAssgtType, label)(TSpacesTypeData.prototype, role._id)

@@ -72,6 +72,7 @@
     "AccountId": "Account",
     "Version": "Version",
     "Collaborator": "Collaborator",
-    "Collaborators": "Collaborators"
+    "Collaborators": "Collaborators",
+    "RoleAdmin": "Role: Admin"
   }
 }
