@@ -124,6 +124,7 @@
     "WeekendDay": "Día de descanso",
     "SynchronizedCalendars": "Calendarios sincronizados",
     "Account": "Cuenta",
-    "NoCalendars": "No se seleccionaron calendarios para la sincronización"
+    "NoCalendars": "No se seleccionaron calendarios para la sincronización",
+    "PersonalCalendar": "Calendario personal"
   }
 }

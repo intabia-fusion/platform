@@ -124,6 +124,7 @@
     "WeekendDay": "Hafta sonu günü",
     "SynchronizedCalendars": "Senkronize takvimler",
     "Account": "Hesap",
-    "NoCalendars": "Senkronizasyon için takvim seçilmedi"
+    "NoCalendars": "Senkronizasyon için takvim seçilmedi",
+    "PersonalCalendar": "Kişisel Takvim"
   }
 }

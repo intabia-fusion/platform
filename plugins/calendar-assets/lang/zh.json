@@ -124,6 +124,7 @@
     "WeekendDay": "周末日",
     "SynchronizedCalendars": "已同步的日历",
     "Account": "帐户",
-    "NoCalendars": "未选择同步日历"
+    "NoCalendars": "未选择同步日历",
+    "PersonalCalendar": "个人日历"
   }
 }
