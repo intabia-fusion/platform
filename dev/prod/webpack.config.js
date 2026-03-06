@@ -196,7 +196,7 @@ const proxy = {
   'dev-server-test': devProxyTest,
   'dev-production': devFrontProxy,
   'dev-bold': devBoldProxy,
-  'dev-huly': devHulyProxy
+  'dev-platform': devHulyProxy
 }
 
 /**

@@ -20,17 +20,7 @@
   import tracker from '../../../plugin'
   import PersonCalendar from './PersonCalendar.svelte'
   import { Person } from '@hcengineering/contact'
-  import {
-    Button,
-    CheckBox,
-    DropdownLabels,
-    Icon,
-    IconActivityEdit,
-    IconCircleAdd,
-    IconEdit,
-    ModernToggle,
-    showPopup
-  } from '@hcengineering/ui'
+  import { Button, DropdownLabels, Icon, IconCircleAdd, ModernToggle, showPopup } from '@hcengineering/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
@@ -38,7 +28,6 @@
   import PersonReportsPopup from './PersonReportsPopup.svelte'
   import { getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
   import IssueStatusPresenter from '../IssueStatusPresenter.svelte'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   export let query: DocumentQuery<Issue> = {}
 
@@ -195,6 +184,7 @@
           {@const createdByMe = dayFrom === new Date(issue?.createdOn ?? 0).setHours(0, 0, 0, 0)}
           {@const closedByMe =
             dayFrom === new Date(issue?.modifiedOn ?? 0).setHours(0, 0, 0, 0) && issue?.isDone === true}
+          {@const issueReports = dayReports.filter((it) => it.attachedTo === issue?._id)}
           <div class="flex flex-row-center gap-2 flex-wrap mb-1">
             <div class="flex flex-row-center gap-2">
               {#if createdByMe}
@@ -207,7 +197,7 @@
                 <IssuePresenter value={issue} />
               {/if}
             </div>
-            {#if dayReports.length > 0}
+            {#if issueReports.length > 0}
               <Button
                 kind={'link'}
                 size={'x-small'}
@@ -216,9 +206,7 @@
                 }}
               >
                 <svelte:fragment slot="content">
-                  <TimePresenter
-                    value={dayReports.filter((it) => it.attachedTo === issue?._id).reduce((a, b) => a + b.value, 0)}
-                  />
+                  <TimePresenter value={issueReports.reduce((a, b) => a + b.value, 0)} />
                 </svelte:fragment>
               </Button>
             {/if}

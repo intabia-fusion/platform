@@ -18,7 +18,7 @@ import { SortingOrder } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import task from '@hcengineering/model-task'
-import view, { showColorsViewOption } from '@hcengineering/model-view'
+import view, { showColorsViewOption, showDaysViewOption } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
 import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@hcengineering/view'
 import tracker from './plugin'
@@ -76,7 +76,7 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
       action: view.function.HideArchived,
       label: view.string.HideArchived
     },
-    ...(!kanban ? [showColorsViewOption] : [])
+    ...(!kanban ? [showColorsViewOption, showDaysViewOption] : [showDaysViewOption])
   ]
 })
 
@@ -267,7 +267,7 @@ export function defineViewlets (builder: Builder): void {
       ['dueDate', SortingOrder.Ascending]
     ],
     groupDepth: 1,
-    other: [showColorsViewOption]
+    other: [showColorsViewOption, showDaysViewOption]
   }
 
   builder.createDoc(
@@ -309,7 +309,7 @@ export function defineViewlets (builder: Builder): void {
       ['dueDate', SortingOrder.Ascending]
     ],
     groupDepth: 1,
-    other: [showColorsViewOption]
+    other: [showColorsViewOption, showDaysViewOption]
   }
 
   builder.createDoc(
@@ -351,7 +351,7 @@ export function defineViewlets (builder: Builder): void {
       ['dueDate', SortingOrder.Ascending]
     ],
     groupDepth: 1,
-    other: [showColorsViewOption]
+    other: [showColorsViewOption, showDaysViewOption]
   }
 
   builder.createDoc(
@@ -396,7 +396,7 @@ export function defineViewlets (builder: Builder): void {
           ['dueDate', SortingOrder.Ascending],
           ['rank', SortingOrder.Ascending]
         ],
-        other: [showColorsViewOption]
+        other: [showColorsViewOption, showDaysViewOption]
       },
       configOptions: {
         strict: true,
@@ -502,7 +502,7 @@ export function defineViewlets (builder: Builder): void {
       ['modifiedOn', SortingOrder.Descending],
       ['createdOn', SortingOrder.Descending]
     ],
-    other: [showColorsViewOption]
+    other: [showColorsViewOption, showDaysViewOption]
   }
 
   builder.createDoc(
@@ -646,7 +646,7 @@ export function defineViewlets (builder: Builder): void {
       ['targetDate', SortingOrder.Descending],
       ['createdOn', SortingOrder.Descending]
     ],
-    other: [showColorsViewOption]
+    other: [showColorsViewOption, showDaysViewOption]
   }
 
   builder.createDoc(

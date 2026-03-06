@@ -14,12 +14,14 @@
 -->
 <script lang="ts">
   import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
-  import { floorFractionDigits, Label } from '@hcengineering/ui'
+  import { floorFractionDigits, Label, tooltip } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import EstimationProgressCircle from '../issues/timereport/EstimationProgressCircle.svelte'
   import TimePresenter from '../issues/timereport/TimePresenter.svelte'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   export let docs: Issue[] | undefined = undefined
+  export let itemsProj: Issue[] | undefined = undefined
   export let capacity: number | undefined = undefined
   export let category: string | undefined = undefined
 
@@ -31,7 +33,7 @@
     (noParents ?? [{ reportedTime: 0, childInfo: [], estimation: 0 } as unknown as Issue])
       .map((it) => {
         const tree = reduceChildInfoTree(it.childInfo ?? [], it.estimation, it.reportedTime)
-        return Math.max(it.estimation, tree.totalEstimation)
+        return Math.max(it.estimation ?? 0, tree.totalEstimation ?? 0)
       })
       .reduce((it, cur) => {
         return it + cur
@@ -52,19 +54,27 @@
   )
 </script>
 
-{#if docs && (category === 'milestone' || category === 'assignee')}
+{#if docs !== undefined}
   <FixedColumn key="estimation-editor">
     <!-- <Label label={tracker.string.MilestoneDay} value={}/> -->
     <div class="flex-row-center flex-no-shrink h-6" class:showWarning={totalEstimation > (capacity ?? 0)}>
-      <EstimationProgressCircle items={[{ value: totalReported, max: totalEstimation }]} />
-      <div class="w-2 min-w-2" />
-      {#if totalReported > 0}
-        <TimePresenter value={totalReported} />
-        /
-      {/if}
-      <TimePresenter value={totalEstimation} />
-      {#if capacity}
-        <Label label={tracker.string.CapacityValue} params={{ value: capacity }} />
+      {#if docs.length === itemsProj?.length}
+        {#if totalEstimation > 0}
+          <EstimationProgressCircle items={[{ value: totalReported, max: totalEstimation }]} />
+        {/if}
+        <div class="w-2 min-w-2" />
+        {#if totalReported > 0}
+          <TimePresenter value={totalReported} />
+          /
+        {/if}
+        <TimePresenter value={totalEstimation} />
+        {#if capacity}
+          <Label label={tracker.string.CapacityValue} params={{ value: capacity }} />
+        {/if}
+      {:else}
+        <div class="p-1">
+          ({docs.length}/{itemsProj?.length ?? 0})
+        </div>
       {/if}
     </div>
   </FixedColumn>

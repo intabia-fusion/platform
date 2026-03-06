@@ -484,6 +484,13 @@ export const showColorsViewOption: ViewOptionModel = {
   actionTarget: 'display',
   label: view.string.ShowColors
 }
+export const showDaysViewOption: ViewOptionModel = {
+  key: 'shouldShowDays',
+  type: 'toggle',
+  defaultValue: false,
+  actionTarget: 'display',
+  label: view.string.ShowDays
+}
 
 export function createModel (builder: Builder): void {
   builder.createModel(
