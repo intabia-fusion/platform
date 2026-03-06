@@ -14,31 +14,31 @@
 //
 import contact, { Channel, Employee, Person, SocialIdentity } from '@hcengineering/contact'
 import {
+  AccountUuid,
   Class,
-  concatLink,
   Doc,
   DocumentQuery,
+  Domain,
   FindOptions,
   FindResult,
+  groupByArray,
   Hierarchy,
   MeasureContext,
   Ref,
+  SocialIdType,
   Tx,
   TxCreateDoc,
   TxProcessor,
-  SocialIdType,
-  Domain,
-  groupByArray,
-  AccountUuid
+  WorkspaceUuid
 } from '@hcengineering/core'
 import gmail, { Message } from '@hcengineering/gmail'
-import { TriggerControl } from '@hcengineering/server-core'
-import { NotificationType, InboxNotification } from '@hcengineering/notification'
+import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
+import { InboxNotification, NotificationType } from '@hcengineering/notification'
 import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import { getMetadata } from '@hcengineering/platform'
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { getEmployeeByAcc } from '@hcengineering/server-contact'
-import { getNotificationMessages, getContentByTemplate } from '@hcengineering/server-notification-resources'
+import { getContentByTemplate, getNotificationMessages } from '@hcengineering/server-notification-resources'
 
 async function FindMessages (
   doc: Doc,
@@ -105,37 +105,37 @@ function isMailConfigured (): boolean {
   return mailURL !== undefined && mailURL !== ''
 }
 
+interface EmailNotification {
+  type: 'email'
+  data: {
+    text: string
+    html: string
+    subject: string
+    to: string[]
+  }
+}
+
 export async function sendEmailNotification (
   ctx: MeasureContext,
+  producer: PlatformQueueProducer<EmailNotification>,
+  workspace: WorkspaceUuid,
   text: string,
   html: string,
   subject: string,
   receiver: string
 ): Promise<void> {
   try {
-    const mailURL = getMetadata(serverNotification.metadata.MailUrl)
-    if (mailURL === undefined || mailURL === '') {
-      ctx.error('Please provide email service url to enable email notifications.')
-      return
-    }
-    const mailAuth: string | undefined = getMetadata(serverNotification.metadata.MailAuthToken)
-    const response = await fetch(concatLink(mailURL, '/send'), {
-      method: 'post',
-      keepalive: true,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(mailAuth != null ? { Authorization: `Bearer ${mailAuth}` } : {})
-      },
-      body: JSON.stringify({
-        text,
-        html,
-        subject,
-        to: [receiver]
-      })
-    })
-    if (!response.ok) {
-      ctx.error(`Failed to send email notification: ${response.statusText}`)
-    }
+    await producer.send(ctx, workspace, [
+      {
+        type: 'email',
+        data: {
+          text,
+          html,
+          subject,
+          to: [receiver]
+        }
+      }
+    ])
   } catch (err) {
     ctx.error('Could not send email notification', { err, receiver })
   }
@@ -143,6 +143,7 @@ export async function sendEmailNotification (
 
 async function notifyByEmail (
   control: TriggerControl,
+  producer: PlatformQueueProducer<EmailNotification>,
   types: Ref<NotificationType>[],
   doc: Doc,
   email: string,
@@ -152,7 +153,15 @@ async function notifyByEmail (
   const content = await getContentByTemplate(control, doc, types, inboxNotification, message)
 
   if (content !== undefined) {
-    await sendEmailNotification(control.ctx, content.text, content.html, content.subject, email)
+    await sendEmailNotification(
+      control.ctx,
+      producer,
+      control.workspace.uuid,
+      content.text,
+      content.html,
+      content.subject,
+      email
+    )
   }
 }
 
@@ -173,7 +182,11 @@ async function getEmployeeEmails (control: TriggerControl, employeeId: Ref<Perso
   }
 }
 
-async function processEmailNotifications (control: TriggerControl, notifications: InboxNotification[]): Promise<void> {
+async function processEmailNotifications (
+  control: TriggerControl,
+  producer: PlatformQueueProducer<EmailNotification>,
+  notifications: InboxNotification[]
+): Promise<void> {
   if (notifications.length === 0) return
 
   const docId = notifications[0].objectId
@@ -205,7 +218,7 @@ async function processEmailNotifications (control: TriggerControl, notifications
       if (emails.length === 0) continue
 
       const message = messages.get(n._id)
-      await notifyByEmail(control, types, doc, emails[0].value, n, message)
+      await notifyByEmail(control, producer, types, doc, emails[0].value, n, message)
     } catch (e) {
       control.ctx.error('Failed to process email notification', { e, notification: n })
     }
@@ -214,6 +227,8 @@ async function processEmailNotifications (control: TriggerControl, notifications
 
 async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], control: TriggerControl): Promise<Tx[]> {
   if (!isMailConfigured()) return []
+  if (control.queue == null) return []
+
   const all: InboxNotification[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
     .filter((it) => (it.allowedProviders?.[gmail.providers.EmailNotificationProvider]?.length ?? 0) > 0)
@@ -221,10 +236,10 @@ async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], con
   if (all === null) return []
 
   const notificationsByDocId = groupByArray(all, (it) => it.objectId)
-
+  const producer = control.queue.getProducer<EmailNotification>(control.ctx, QueueTopic.NotificationQueue)
   await Promise.all(
     Array.from(notificationsByDocId.entries()).map(([, notifications]) =>
-      processEmailNotifications(control, notifications)
+      processEmailNotifications(control, producer, notifications)
     )
   )
 

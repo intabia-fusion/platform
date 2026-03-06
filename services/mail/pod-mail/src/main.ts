@@ -29,6 +29,7 @@ import {
   PlatformQueueProducer,
   QueueTopic
 } from '@hcengineering/server-core'
+import { readToken } from '@hcengineering/server-client'
 
 import config from './config'
 import { MailClient } from './mail'
@@ -289,10 +290,12 @@ export async function handleSendMail (
   ctx: MeasureContext
 ): Promise<void> {
   // Extract request data
-  const { from, to, subject, text, html, attachments, headers, apiKey, password } = req.body
+  const { from, to, subject, text, html, attachments, headers, password } = req.body
+
+  const token = readToken(req.headers)
 
   // Validate authorization
-  if (!isAuthorized(apiKey)) {
+  if (!isAuthorized(token)) {
     ctx.warn('Unauthorized access attempt to send email', { from, to })
     res.status(401).send({ err: 'Unauthorized' })
     return

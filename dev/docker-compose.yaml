@@ -374,7 +374,8 @@ services:
       - METRICS_FILE=metrics.txt
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://huly.local:8087
-      - MAIL_URL=''
+#      - MAIL_URL=http://huly.local:8097
+#      - MAIL_AUTH_TOKEN=naephea1Rai7eeth1noh
       - ACCOUNTS_URL=http://huly.local:3000
       - LAST_NAME_FIRST=true
       - BRANDING_PATH=/var/cfg/branding.json

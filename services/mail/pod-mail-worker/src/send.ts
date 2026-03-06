@@ -19,8 +19,7 @@ export async function sendEmail (ctx: MeasureContext, message: MailMessage, secr
     },
     body: JSON.stringify({
       ...message,
-      password: secret,
-      apiKey: mailAuth
+      password: secret
     })
   })
   if (!response.ok) {
