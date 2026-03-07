@@ -56,10 +56,12 @@ describe('handleSendMail - Client Mode', () => {
       body: {
         text: 'Hello, world!',
         subject: 'Test Subject',
-        to: 'test@example.com',
-        apiKey: 'test-key' // Include apiKey to pass authorization check
+        to: 'test@example.com'
+      },
+      headers: {
+        authorization: 'Bearer test-key' // Include apiKey to pass authorization check
       }
-    } as Request
+    } as unknown as Request
 
     res = {
       status: jest.fn().mockReturnThis(),
