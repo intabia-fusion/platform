@@ -145,7 +145,7 @@ export class UsageWorker {
       { workspace }
     )
     const meetingMinutes = participantMinutes.totalMinutes
-    const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0)
+    const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0) * 60
     const storageBytes = storageUsage.size
 
     const usage: UsageStatus = {

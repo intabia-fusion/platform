@@ -242,7 +242,7 @@ export class RecordingProcessor {
         }
       }
     } catch (err: any) {
-      this.ctx.error('Failed to stop audio recording', {
+      this.ctx.error(`Failed to stop ${kind} recording`, {
         error: err?.message ?? String(err),
         meetingId,
         roomName

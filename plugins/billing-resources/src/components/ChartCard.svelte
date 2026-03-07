@@ -26,6 +26,7 @@
     return result
   }
 
+  let normalizedSeries: DataSeries[]
   $: normalizedSeries = series.map((s) => ({
     ...s,
     data: normalizeDataSet(s.data)

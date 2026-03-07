@@ -49,7 +49,7 @@ export const currentAudioRecording = derived(
     if (currentMeeting == null) {
       return undefined
     }
-    return pending.find((it) => it.format === 'audio')
+    return pending.find((it) => it.format === 'audio' && it.attachedTo === currentMeeting._id)
   }
 )
 
@@ -156,6 +156,7 @@ onClient(() => {
   const pendingRecordingPromise = new Promise<void>((resolve) => {
     pendingRecordingQuery.query(love.class.PendingRecording, {}, (result) => {
       pendingRecordings.set(result)
+      resolve()
     })
   })
 
