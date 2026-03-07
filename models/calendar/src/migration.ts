@@ -707,7 +707,7 @@ async function fillCalendarUserAndAccess (client: MigrationClient): Promise<void
         access: getCalendarAccess(_calendar)
       }
       if (_calendar._class === calendar.class.Calendar) {
-        update.name = 'HULY'
+        update.name = 'Default'
       }
 
       await client.update(DOMAIN_CALENDAR, { _id: _calendar._id }, update)

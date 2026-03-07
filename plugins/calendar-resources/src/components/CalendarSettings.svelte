@@ -29,7 +29,7 @@
   )
 
   $: categories = groupByArray(calendars, (c) => {
-    return (c as ExternalCalendar).externalUser ?? 'HULY'
+    return (c as ExternalCalendar).externalUser ?? 'Default'
   })
 
   async function changeHidden (calendar: Calendar, value: boolean): Promise<void> {
@@ -104,13 +104,12 @@
               <Label label={calendar.string.Hidden} />
             </div>
             {#each categories as cat}
-              <div></div>
-              <div class="fs-title flex-col-center">
-                {cat[0]}
-              </div>
-              <div></div>
               {#each cat[1] as _calendar}
-                <div>{_calendar.name}</div>
+                {#if _calendar._id === myAcc.uuid + '_calendar'}
+                  <Label label={calendar.string.PersonalCalendar} />
+                {:else}
+                  {_calendar.name}
+                {/if}
                 <VisibilityEditor
                   value={_calendar.visibility}
                   kind={'inline'}

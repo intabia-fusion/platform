@@ -5,6 +5,8 @@
   import { Dropdown, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
+  import { translateCB } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
 
   export let value: Ref<Calendar> | undefined
   export let disabled: boolean = false
@@ -45,10 +47,16 @@
     change(target)
   }
 
+  let personalCalendarLabel: string = ''
+
+  $: translateCB(calendar.string.PersonalCalendar, {}, $themeStore.language, (r) => {
+    personalCalendarLabel = r
+  })
+
   $: items = calendars.map((p) => {
     return {
       _id: p._id,
-      label: p.name
+      label: p._id === me.uuid + '_calendar' ? personalCalendarLabel : p.name
     }
   })
 

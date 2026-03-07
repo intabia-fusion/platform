@@ -293,7 +293,8 @@ const calendarPlugin = plugin(calendarId, {
     MeetingCanceledNotification: '' as IntlString,
     SynchronizedCalendars: '' as IntlString,
     Account: '' as IntlString,
-    NoCalendars: '' as IntlString
+    NoCalendars: '' as IntlString,
+    PersonalCalendar: '' as IntlString
   },
   handler: {
     DisconnectHandler: '' as Handler,

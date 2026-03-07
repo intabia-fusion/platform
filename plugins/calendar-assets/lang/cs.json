@@ -124,6 +124,7 @@
     "WeekendDay": "Víkendový den",
     "SynchronizedCalendars": "Synchronizované kalendáře",
     "Account": "Účet",
-    "NoCalendars": "Kalendáře pro synchronizaci nejsou vybrány"
+    "NoCalendars": "Kalendáře pro synchronizaci nejsou vybrány",
+    "PersonalCalendar": "Osobní kalendář"
   }
 }
