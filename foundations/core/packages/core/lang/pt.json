@@ -4,6 +4,8 @@
     "Space": "Espaço",
     "Spaces": "Espaços",
     "SpacesDescription": "Gestão do tipo de espaço para todas as espaços",
+    "TypedSpace": "Espaço tipado",
+    "SpaceType": "Tipo de espaço",
     "Modified": "Modificado",
     "ModifiedDate": "Data de modificação",
     "ModifiedBy": "Modificado por",
@@ -12,6 +14,11 @@
     "AttachedToClass": "Classe anexada",
     "Name": "Nome",
     "Description": "Descrição",
+    "ShortDescription": "Descrição breve",
+    "Descriptor": "Descritor",
+    "TargetClass": "Classe alvo",
+    "Role": "Função",
+    "Roles": "Funções",
     "Private": "Privado",
     "Archived": "Arquivado",
     "ClassLabel": "Tipo",
@@ -65,6 +72,7 @@
     "AccountId": "Conta",
     "Version": "Versão",
     "Collaborator": "Colaborador",
-    "Collaborators": "Colaboradores"
+    "Collaborators": "Colaboradores",
+    "RoleAdmin": "Função: Administrador"
   }
 }

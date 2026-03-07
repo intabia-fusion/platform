@@ -72,6 +72,7 @@
     "AccountId": "Účet",
     "Version": "Verze",
     "Collaborator": "Spolupracovník",
-    "Collaborators": "Spolupracovníci"
+    "Collaborators": "Spolupracovníci",
+    "RoleAdmin": "Role: Administrátor"
   }
 }

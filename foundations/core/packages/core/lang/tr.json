@@ -72,6 +72,7 @@
     "AccountId": "Hesap",
     "Version": "Sürüm",
     "Collaborator": "İşbirlikçi",
-    "Collaborators": "İşbirlikçiler"
+    "Collaborators": "İşbirlikçiler",
+    "RoleAdmin": "Rol: Yönetici"
   }
 }

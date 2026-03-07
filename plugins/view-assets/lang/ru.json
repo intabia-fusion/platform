@@ -83,7 +83,7 @@
     "Shown": "показано {len} результатов {total, plural, =-1 {} other {из #}}",
     "Total": "Всего: {total, plural, other{#}}",
     "ShowEmptyGroups": "Показывать пустые группы",
-    "Overdue": "Overdue",
+    "Overdue": "Прошедший",
     "Today": "Сегодня",
     "Yesterday": "Вчера",
     "ThisWeek": "Эта неделя",

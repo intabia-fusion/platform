@@ -72,6 +72,7 @@
     "AccountId": "Аккаунт",
     "Version": "Версия",
     "Collaborator": "Участник",
-    "Collaborators": "Участники"
+    "Collaborators": "Участники",
+    "RoleAdmin": "Роль: Админ"
   }
 }

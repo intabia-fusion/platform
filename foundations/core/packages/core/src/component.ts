@@ -300,7 +300,8 @@ export default plugin(coreId, {
     RBACDescr: '' as IntlString,
     Version: '' as IntlString,
     Collaborator: '' as IntlString,
-    Collaborators: '' as IntlString
+    Collaborators: '' as IntlString,
+    RoleAdmin: '' as IntlString
   },
   descriptor: {
     SpacesType: '' as Ref<SpaceTypeDescriptor>

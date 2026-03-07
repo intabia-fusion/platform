@@ -72,6 +72,7 @@
     "AccountId": "帐户",
     "Version": "版本",
     "Collaborator": "协作者",
-    "Collaborators": "协作者"
+    "Collaborators": "协作者",
+    "RoleAdmin": "角色：管理员"
   }
 }
