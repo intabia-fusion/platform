@@ -106,7 +106,8 @@ export class STT implements Stt {
       room: this.room.name,
       rootDir: this.rootDir,
       sessionNumber: this.sessionNumber,
-      meetingStartTime: this.meetingStartTime
+      meetingStartTime: this.meetingStartTime,
+      recordFullAudio: config.RecordFullAudio
     })
     if (!existsSync(this.rootDir)) {
       mkdirSync(this.rootDir, { recursive: true })
@@ -535,6 +536,11 @@ export class STT implements Stt {
   }
 
   private startSession (sid: string, streamDir: string): void {
+    // Skip full session recording if disabled
+    if (!config.RecordFullAudio) {
+      return
+    }
+
     const participant = this.participantBySid.get(sid)
     const participantName = sanitizePath(getParticipantDisplayName(participant, sid))
     const filename = `${participantName}_session_${this.sessionNumber}.wav`

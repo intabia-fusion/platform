@@ -18,7 +18,7 @@
 import { cli, defineAgent, type JobContext, JobRequest, ServerOptions } from '@livekit/agents'
 import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, TrackKind } from '@livekit/rtc-node'
 
-import { Metadata, TranscriptionStatus, Stt } from './type.js'
+import { Metadata, Stt } from './type.js'
 import config from './config.js'
 import { getStt } from './utils.js'
 import { generateToken, systemAccountUuid } from './token.js'

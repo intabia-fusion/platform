@@ -24,6 +24,7 @@ interface Config {
   LiveKitApiSecret: string
 
   Debug: boolean // Keep files after sending to ai-bot
+  RecordFullAudio: boolean // Record full audio session per participant (default: false)
 }
 
 const config: Config = (() => {
@@ -37,7 +38,8 @@ const config: Config = (() => {
     LiveKitApiSecret: process.env.LIVEKIT_API_SECRET,
     LiveKitApiUrl: process.env.LIVEKIT_URL,
 
-    Debug: process.env.DEBUG === 'true'
+    Debug: process.env.DEBUG === 'true',
+    RecordFullAudio: process.env.RECORD_FULL_AUDIO === 'true'
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
