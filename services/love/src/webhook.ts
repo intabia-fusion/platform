@@ -334,6 +334,22 @@ export class WebhookProcessor {
 
       await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
 
+      // Find and remove PendingRecording first (do this regardless of file save result)
+      const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
+      if (pendingRecording !== undefined) {
+        await wsClient.removePendingRecording(pendingRecording)
+        this.ctx.info('[Webhook] Removed PendingRecording after egress ended', {
+          egressId,
+          recordingId: pendingRecording._id,
+          format: pendingRecording.format
+        })
+      } else {
+        this.ctx.warn('[Webhook] PendingRecording not found for egress', {
+          egressId,
+          meetingId: roomName.meetingId
+        })
+      }
+
       // Process file results - save to storage and attach to meeting
       for (const fileResult of event.egressInfo.fileResults) {
         this.ctx.info('Processing egress file result', { egressId, filename: fileResult.filename })
@@ -351,23 +367,19 @@ export class WebhookProcessor {
 
             const preset = getRecordingPreset(config.RecordingPreset)
             // Use name from PendingRecording if available, otherwise generate from filename
-            const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
-            if (pendingRecording !== undefined) {
-              const name = pendingRecording.name ?? fileResult.filename.split('/').pop() ?? 'recording.mp4'
-              await wsClient.saveFile(storedBlob._id, name, storedBlob, preset, roomName.meetingId)
-              await wsClient.removePendingRecording(pendingRecording)
+            const name = pendingRecording?.name ?? fileResult.filename.split('/').pop() ?? 'recording.mp4'
+            await wsClient.saveFile(storedBlob._id, name, storedBlob, preset, roomName.meetingId)
 
-              await this.eventProducer.send(this.ctx, roomName.workspace, [
-                queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'ended', {
-                  ended: event.egressInfo.endedAt,
-                  storedBlob,
-                  name,
-                  preset
-                })
-              ])
-            }
+            await this.eventProducer.send(this.ctx, roomName.workspace, [
+              queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'ended', {
+                ended: event.egressInfo.endedAt,
+                storedBlob,
+                name,
+                preset
+              })
+            ])
           } else {
-            this.ctx.error('Not Stored file', { storedBlob })
+            this.ctx.error('Not Stored file', { filename: fileResult.filename })
           }
         }
       }

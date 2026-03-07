@@ -181,6 +181,8 @@ export class LiveKitPollingService {
           // Also clean up orphaned ParticipantInfo entries for finished meetings (at most once per hour)
           if (this.shouldRunCleanup(workspace)) {
             await wsClient.cleanupOrphanedParticipantInfos()
+            // Clean up orphaned PendingRecording entries for finished meetings
+            await wsClient.cleanupOrphanedPendingRecordings()
           }
         } catch (err: any) {
           this.ctx.error('[PollingService] Error checking unfinished meetings', {

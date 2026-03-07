@@ -390,6 +390,18 @@ export const main = async (): Promise<void> => {
 
       const metadata = language != null ? { transcription, language } : { transcription }
       await eventProducer.send(ctx, workspaceId, [queueEvents.updateMetadata(meetingId, roomName, metadata)])
+
+      // Start/stop audio recording alongside transcription
+      if (transcription === true) {
+        const sysToken = generateToken(systemAccountUuid, workspaceId, { service: 'love' })
+        const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
+        if (isWorkspaceLoginInfo(wsLoginInfo)) {
+          await recordingProcessor.startAudioRecording(roomName, workspaceId, meetingId, wsLoginInfo)
+        }
+      } else {
+        void recordingProcessor.stopAudioRecording(roomName, workspaceId, meetingId)
+      }
+
       res.status(200).send()
     } catch (e) {
       console.error(e)

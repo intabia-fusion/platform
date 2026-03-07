@@ -759,4 +759,56 @@ export class WorkspaceClient {
       return undefined
     }
   }
+
+  /**
+   * Clean up orphaned PendingRecording entries that reference finished meetings.
+   * This handles cases where PendingRecording was not cleaned up when a meeting finished
+   * (e.g., due to a missed egress_ended webhook or service restart before cleanup could complete).
+   */
+  async cleanupOrphanedPendingRecordings (): Promise<void> {
+    try {
+      // Find all PendingRecording entries first
+      const allPendingRecordings = await this.client.findAll(love.class.PendingRecording, {})
+
+      if (allPendingRecordings.length === 0) {
+        return
+      }
+
+      // Get unique meeting IDs from PendingRecording entries
+      const meetingIds = [...new Set(allPendingRecordings.map((rec) => rec.attachedTo as Ref<MeetingMinutes>))]
+
+      // Find which of these meetings are finished
+      const finishedMeetings = await this.client.findAll(love.class.MeetingMinutes, {
+        _id: { $in: meetingIds },
+        status: MeetingStatus.Finished
+      })
+
+      const finishedMeetingIds = new Set(finishedMeetings.map((m) => m._id))
+
+      // Remove PendingRecording entries that reference finished meetings
+      let removedCount = 0
+      for (const rec of allPendingRecordings) {
+        if (finishedMeetingIds.has(rec.attachedTo as Ref<MeetingMinutes>)) {
+          await this.client.remove(rec)
+          removedCount++
+          this.ctx.info('[WorkspaceClient.cleanupOrphanedPendingRecordings] Removed orphaned PendingRecording', {
+            recordingId: rec._id,
+            meeting: rec.attachedTo,
+            format: rec.format,
+            egressId: rec.egressId
+          })
+        }
+      }
+
+      if (removedCount > 0) {
+        this.ctx.info('[WorkspaceClient.cleanupOrphanedPendingRecordings] Cleaned up orphaned recordings', {
+          count: removedCount
+        })
+      }
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupOrphanedPendingRecordings] Failed', {
+        error: err?.message ?? String(err)
+      })
+    }
+  }
 }

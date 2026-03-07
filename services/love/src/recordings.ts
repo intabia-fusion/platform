@@ -1,6 +1,6 @@
 import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { MeasureContext, Ref, WorkspaceIds, WorkspaceUuid } from '@hcengineering/core'
-import { MeetingMinutes, queueEvents, QueueMeetingMessage, RecordingState } from '@hcengineering/love'
+import { MeetingMinutes, queueEvents, QueueMeetingMessage, RecordingFormat, RecordingState } from '@hcengineering/love'
 import {
   EgressClient,
   EncodedFileOutput,
@@ -49,6 +49,18 @@ export class RecordingProcessor {
         this.ctx.error('Meeting document not found when starting recording', { meetingId })
         throw new Error('Meeting not found')
       }
+
+      // Check if there's already an active video recording for this meeting
+      const existingRecordings = await wsClient.findPendingRecordingsByMeeting(meetingId)
+      const activeVideoRecording = existingRecordings.find((r) => r.format === 'video')
+      if (activeVideoRecording !== undefined) {
+        this.ctx.warn('Video recording already in progress for this meeting', {
+          meetingId,
+          existingEgressId: activeVideoRecording.egressId
+        })
+        return
+      }
+
       meetingTitle = meetingTitle.replace(/[^a-zA-Z0-9_-]/g, '_')
 
       const name = `${meetingTitle}_${dateStr}.mp4`
@@ -82,13 +94,160 @@ export class RecordingProcessor {
     if (existingRooms === undefined || existingRooms.length === 0) {
       return
     }
-    const egresses = await this.egressClient.listEgress({ active: true, roomName })
-    for (const egress of egresses) {
-      await this.egressClient.stopEgress(egress.egressId)
-    }
+    await this.stopRecordingByKind(roomName, workspaceId, meetingId, 'video')
     await this.eventProducer.send(this.ctx, workspaceId, [
       queueEvents.updateMetadata(meetingId, roomName, { recording: false })
     ])
+  }
+
+  async startAudioRecording (
+    roomName: string,
+    workspaceId: WorkspaceUuid,
+    meetingId: Ref<MeetingMinutes>,
+    wsLoginInfo: WorkspaceLoginInfo
+  ): Promise<void> {
+    // Check if LiveKit room exists before starting audio recording
+    const existingRooms = await this.roomClient.listRooms([roomName])
+    if (existingRooms === undefined || existingRooms.length === 0) {
+      this.ctx.warn('Cannot start audio recording: LiveKit room does not exist', { roomName })
+      return
+    }
+
+    if (this.storageConfig === undefined) {
+      this.ctx.error('Cannot start audio recording: no storage configuration')
+      return
+    }
+
+    const wsClient = await WorkspaceClient.create(wsLoginInfo.workspace, this.ctx)
+    try {
+      const meetingDoc = await wsClient.findMeetingById(meetingId)
+      if (meetingDoc === undefined) {
+        this.ctx.error('Meeting document not found when starting audio recording', { meetingId })
+        return
+      }
+
+      const wsIds = {
+        uuid: wsLoginInfo.workspace,
+        dataId: wsLoginInfo.workspaceDataId,
+        url: wsLoginInfo.workspaceUrl
+      }
+      const uploadParams = await getS3UploadParams(this.ctx, wsIds, this.storageConfig, this.s3storageConfig)
+      const { filepath, endpoint, accessKey, secret, region, bucket } = uploadParams
+
+      // Replace .mp4 extension with .ogg for audio
+      const audioFilepath = filepath.replace(/\.mp4$/, '.ogg')
+
+      this.ctx.info('Starting audio recording', { audioFilepath, endpoint, region, bucket, roomName })
+
+      const output = new EncodedFileOutput({
+        fileType: EncodedFileType.OGG,
+        filepath: audioFilepath,
+        disableManifest: true,
+        output: {
+          case: 's3',
+          value: new S3Upload({
+            endpoint,
+            accessKey,
+            region,
+            secret,
+            bucket,
+            forcePathStyle: true
+          })
+        }
+      })
+
+      const { egressId } = await this.egressClient.startRoomCompositeEgress(
+        roomName,
+        { file: output },
+        {
+          audioOnly: true,
+          webhooks:
+            config.WebHookUrl !== ''
+              ? [
+                  new WebhookConfig({
+                    url: config.WebHookUrl,
+                    signingKey: config.ApiKey
+                  })
+                ]
+              : []
+        }
+      )
+
+      const dateStr = new Date().toISOString().replace('T', '_').slice(0, 19)
+      const meetingTitle = meetingDoc.title.replace(/[^a-zA-Z0-9_-]/g, '_')
+      const name = `${meetingTitle}_${dateStr}.ogg`
+
+      await wsClient.createPendingRecording({
+        meeting: meetingId,
+        format: 'audio',
+        roomName,
+        name,
+        egressId
+      })
+
+      this.ctx.info('Audio recording started', { workspace: workspaceId, roomName, meetingId, egressId })
+    } catch (err: any) {
+      this.ctx.error('Failed to start audio recording', {
+        error: err?.message ?? String(err),
+        meetingId,
+        roomName
+      })
+    }
+  }
+
+  async stopAudioRecording (
+    roomName: string,
+    workspaceId: WorkspaceUuid,
+    meetingId: Ref<MeetingMinutes>
+  ): Promise<void> {
+    await this.stopRecordingByKind(roomName, workspaceId, meetingId, 'audio')
+  }
+
+  async stopRecordingByKind (
+    roomName: string,
+    workspaceId: WorkspaceUuid,
+    meetingId: Ref<MeetingMinutes>,
+    kind: RecordingFormat
+  ): Promise<void> {
+    const wsClient = await WorkspaceClient.create(workspaceId, this.ctx)
+    try {
+      // Find audio PendingRecording for this meeting
+      const pendingRecordings = await wsClient.findPendingRecordingsByMeeting(meetingId)
+      const audioPending = pendingRecordings.filter((r) => r.format === kind)
+
+      for (const pending of audioPending) {
+        if (pending.egressId !== undefined) {
+          try {
+            await this.egressClient.stopEgress(pending.egressId)
+            this.ctx.info(kind + ' recording stopping send', { egressId: pending.egressId })
+          } catch (err: any) {
+            const errorMsg = err?.message ?? String(err)
+            // Egress might already be stopped or completed - this is not an error
+            if (
+              (typeof errorMsg === 'string' && errorMsg?.includes('EGRESS_COMPLETE')) ||
+              (typeof errorMsg === 'string' && errorMsg?.includes('EGRESS_ABORTED')) ||
+              (typeof errorMsg === 'string' && errorMsg?.includes('cannot be stopped'))
+            ) {
+              this.ctx.info(kind + ' recording already stopped or completed', {
+                egressId: pending.egressId,
+                reason: errorMsg
+              })
+            } else {
+              this.ctx.error('Failed to stop ' + kind + ' egress', {
+                error: errorMsg,
+                egressId: pending.egressId
+              })
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      this.ctx.error('Failed to stop audio recording', {
+        error: err?.message ?? String(err),
+        meetingId,
+        roomName
+      })
+    }
   }
 
   private async startRecord (

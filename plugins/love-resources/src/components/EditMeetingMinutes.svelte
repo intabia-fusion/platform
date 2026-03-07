@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { MeetingMinutes, MeetingStatus, ParticipantInfo, Room } from '@hcengineering/love'
+  import { MeetingMinutes, MeetingStatus, PendingRecording, ParticipantInfo, Room } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
   import { joinMeeting, leaveMeeting } from '../meetings'
-  import { currentMeetingMinutes, currentRoom, infos, myConnectingSessionId, rooms } from '../stores'
+  import { currentMeetingMinutes, infos, myConnectingSessionId, rooms } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
   import { Ref } from '@hcengineering/core'
-  import RoomPreview from './RoomPreview.svelte'
   import ParticipantsPreview from './ParticipantsPreview.svelte'
+  import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
   import { openWidgetTab } from '@hcengineering/workbench-resources'
   import { videoVisible } from '../utils'
 
@@ -81,6 +81,13 @@
   $: roomInfos = getInfo(object._id, $infos)
 
   $: room = $rooms.find((it) => it._id === object.attachedTo)
+
+  const pendingQuery = createQuery()
+  let pendingRecordings: PendingRecording[] = []
+
+  $: pendingQuery.query(love.class.PendingRecording, { attachedTo: object._id }, (result) => {
+    pendingRecordings = result
+  })
 </script>
 
 <div class="flex flex-col">
@@ -130,6 +137,13 @@
       <ParticipantsPreview info={roomInfos} />
     </div>
   {/if}
+  {#if pendingRecordings.length > 0}
+    <div class="pending-recordings">
+      {#each pendingRecordings as recording}
+        <PendingRecordingPresenter value={recording} />
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -142,5 +156,11 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+  }
+  .pending-recordings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
   }
 </style>

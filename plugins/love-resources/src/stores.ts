@@ -6,6 +6,7 @@ import { createQuery, onClient } from '@hcengineering/presentation'
 import {
   isOffice,
   MeetingStatus,
+  type PendingRecording,
   type DevicesPreference,
   type Floor,
   type MeetingMinutes,
@@ -23,6 +24,7 @@ export const isLocalConnecting = derived(myConnectingSessionId, (v) => v !== nul
 
 export const rooms = writable<Room[]>([])
 export const meetings = writable<MeetingMinutes[]>([])
+export const pendingRecordings = writable<PendingRecording[]>([])
 
 export const myOffice = derived(rooms, (val) => {
   const personId = getCurrentEmployee()
@@ -40,6 +42,26 @@ export const currentMeetingMinutes = derived([meetings, myInfo], ([meetings, myI
 export const currentRoom = derived([rooms, myInfo], ([rooms, myInfo]) => {
   return myInfo !== undefined ? rooms.find((p) => p._id === myInfo.room) : undefined
 })
+
+export const currentAudioRecording = derived(
+  [pendingRecordings, currentMeetingMinutes],
+  ([pending, currentMeeting]) => {
+    if (currentMeeting == null) {
+      return undefined
+    }
+    return pending.find((it) => it.format === 'audio')
+  }
+)
+
+export const currentVideoRecording = derived(
+  [pendingRecordings, currentMeetingMinutes],
+  ([pending, currentMeeting]) => {
+    if (currentMeeting == null) {
+      return undefined
+    }
+    return pending.find((it) => it.format === 'video' && it.attachedTo === currentMeeting._id)
+  }
+)
 
 export const floors = writable<Floor[]>([])
 export const selectedFloor = writable<Ref<Floor> | undefined>(undefined)
@@ -80,6 +102,7 @@ const statusQuery = createQuery(true)
 const floorsQuery = createQuery(true)
 const preferencesQuery = createQuery(true)
 const meetingsQuery = createQuery(true)
+const pendingRecordingQuery = createQuery(true)
 
 onClient(() => {
   const roomPromise = new Promise<void>((resolve) =>
@@ -130,7 +153,20 @@ onClient(() => {
     )
   )
 
-  void Promise.all([roomPromise, infoPromise, floorPromise, preferencePromise, meetingsPromise]).then(() => {
+  const pendingRecordingPromise = new Promise<void>((resolve) => {
+    pendingRecordingQuery.query(love.class.PendingRecording, {}, (result) => {
+      pendingRecordings.set(result)
+    })
+  })
+
+  void Promise.all([
+    roomPromise,
+    infoPromise,
+    floorPromise,
+    preferencePromise,
+    meetingsPromise,
+    pendingRecordingPromise
+  ]).then(() => {
     officeLoaded.set(true)
   })
 })
