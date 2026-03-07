@@ -87,7 +87,10 @@ export class LoveController {
       // Check if already has ParticipantInfo (love-agent may still be in room)
       const existingParticipant = await this.getRoomParticipant(request.meetingId, this.currentPerson._id)
       if (existingParticipant !== undefined) {
-        this.ctx.info('Already has ParticipantInfo, skipping', { meeting: request.meetingId, participantId: existingParticipant._id })
+        this.ctx.info('Already has ParticipantInfo, skipping', {
+          meeting: request.meetingId,
+          participantId: existingParticipant._id
+        })
         this.connectedMeetings.add(request.meetingId)
         return
       }
