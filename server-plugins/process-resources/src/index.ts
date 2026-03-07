@@ -112,9 +112,11 @@ import {
   LockCard,
   LockSection,
   UnlockCard,
-  UnlockSection
+  UnlockSection,
+  LockField,
+  UnlockField
 } from './functions'
-import { ToDoCancellRollback, ToDoCloseRollback } from './rollback'
+import { FieldChangedRollback, ToDoCancellRollback, ToDoCloseRollback } from './rollback'
 
 async function putEventToQueue (value: Omit<ProcessMessage, 'account'>, control: TriggerControl): Promise<void> {
   if (control.queue === undefined) return
@@ -157,6 +159,7 @@ export async function OnProcessToDoClose (txes: Tx[], control: TriggerControl): 
         event: events,
         execution: todo.execution,
         createdOn: tx.modifiedOn,
+        _id: tx._id,
         context: {
           todo
         }
@@ -194,6 +197,7 @@ export async function OnCustomEvent (txes: Tx[], control: TriggerControl): Promi
         execution: customEvent.execution,
         createdOn: tx.modifiedOn,
         card: customEvent.card,
+        _id: tx._id,
         context: {
           eventType: customEvent.eventType,
           card
@@ -216,6 +220,7 @@ export async function OnExecutionCreate (txes: Tx[], control: TriggerControl): P
         event: [process.trigger.OnExecutionStart],
         execution: execution._id,
         createdOn: tx.modifiedOn,
+        _id: tx._id,
         context: {}
       },
       control
@@ -237,6 +242,7 @@ export async function OnProcessToDoRemove (txes: Tx[], control: TriggerControl):
         event: [process.trigger.OnToDoRemove],
         execution: removedTodo.execution,
         createdOn: tx.modifiedOn,
+        _id: tx._id,
         context: {
           todo: removedTodo
         }
@@ -266,6 +272,7 @@ export async function OnExecutionContinue (txes: Tx[], control: TriggerControl):
         event: [process.trigger.OnExecutionContinue],
         execution: execution._id,
         createdOn: tx.modifiedOn,
+        _id: tx._id,
         context: {}
       },
       control
@@ -476,6 +483,7 @@ export async function OnCardUpdate (txes: Tx[], control: TriggerControl): Promis
         event: [process.trigger.OnCardUpdate, process.trigger.WhenFieldChanges],
         card: cudTx.objectId,
         createdOn: tx.modifiedOn,
+        _id: tx._id,
         context: {
           card: card[0],
           operations: ops ?? {}
@@ -593,7 +601,9 @@ export default async () => ({
     LockCard,
     LockSection,
     UnlockCard,
-    UnlockSection
+    UnlockSection,
+    LockField,
+    UnlockField
   },
   transform: {
     CurrentDate,
@@ -637,7 +647,8 @@ export default async () => ({
   },
   rollbacks: {
     ToDoCloseRollback,
-    ToDoCancellRollback
+    ToDoCancellRollback,
+    FieldChangedRollback
   },
   trigger: {
     OnProcessRemove,

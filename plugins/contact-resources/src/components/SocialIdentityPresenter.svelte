@@ -15,7 +15,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
-  import contact, { SocialIdentity, SocialIdentityProvider } from '@hcengineering/contact'
+  import contact, { SocialIdentity, SocialIdentityProvider, getCurrentEmployee } from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
   import { SocialIdType } from '@hcengineering/core'
 
@@ -24,6 +24,7 @@
   export let shouldShowAvatar = true
 
   const client = getClient()
+  let isOwner = false
 
   onMount(() => {
     if (socialIdProvider == null) {
@@ -32,6 +33,10 @@
   })
 
   $: icon = socialIdProvider?.icon ?? contact.icon.Profile
+  $: {
+    const me = getCurrentEmployee()
+    isOwner = me != null && value.attachedTo === me
+  }
 </script>
 
 {#if socialIdProvider != null && value.type !== SocialIdType.HULY}
@@ -46,8 +51,12 @@
     </div>
 
     <div class="flex-col flex-gap-0-5">
-      <div>{value.displayValue ?? value.value}</div>
-      {#if shouldShowAvatar}
+      {#if isOwner}
+        <div>{value.displayValue ?? value.value}</div>
+        {#if shouldShowAvatar}
+          <div class="type"><Label label={socialIdProvider.label} /></div>
+        {/if}
+      {:else}
         <div class="type"><Label label={socialIdProvider.label} /></div>
       {/if}
     </div>

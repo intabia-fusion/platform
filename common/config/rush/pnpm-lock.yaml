@@ -4881,6 +4881,9 @@ importers:
       '@hcengineering/query':
         specifier: workspace:^0.7.17
         version: link:../../../core/packages/query
+      '@hcengineering/rank':
+        specifier: workspace:^0.7.17
+        version: link:../../../core/packages/rank
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core

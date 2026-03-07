@@ -29,6 +29,7 @@ import {
   TypeAccountUuid,
   TypeCollaborativeDoc,
   TypeNumber,
+  TypeRank,
   TypeRef,
   TypeString,
   UX
@@ -107,6 +108,7 @@ export class TDocument extends TDoc implements Document, Todoable {
   @Prop(Collection(time.class.ToDo), getEmbeddedLabel('Action Items'))
     todos?: CollectionSize<ToDo>
 
+  @Prop(TypeRank(), core.string.Rank)
   @Index(IndexKind.Indexed)
   @Hidden()
     rank!: Rank
