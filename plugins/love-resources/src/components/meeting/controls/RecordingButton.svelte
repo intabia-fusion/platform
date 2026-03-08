@@ -17,16 +17,18 @@
   import { isRecording, isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'
-  import { currentMeetingMinutes } from '../../../stores'
+  import { currentMeetingMinutes, currentVideoRecording } from '../../../stores'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
+
+  $: isVideoRecording = $isRecording && $currentVideoRecording !== undefined
 </script>
 
 {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && $isRecordingAvailable && $currentMeetingMinutes !== undefined}
   <ModernButton
-    icon={$isRecording ? love.icon.StopRecord : love.icon.Record}
-    tooltip={{ label: $isRecording ? love.string.StopRecord : love.string.Record }}
+    icon={isVideoRecording ? love.icon.StopRecord : love.icon.Record}
+    tooltip={{ label: isVideoRecording ? love.string.StopRecord : love.string.Record }}
     disabled={!$lkSessionConnected}
     {kind}
     {size}

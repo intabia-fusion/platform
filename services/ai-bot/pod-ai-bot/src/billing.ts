@@ -207,6 +207,36 @@ export async function updateDeepgramBilling (ctx: MeasureContext): Promise<void>
   ctx.info('Finished deepgram billing update')
 }
 
+export async function pushTranscriptDuration (
+  ctx: MeasureContext,
+  workspace: WorkspaceUuid,
+  durationSec: number
+): Promise<void> {
+  if (config.BillingUrl === '') return
+  try {
+    const token = generateToken(systemAccountUuid, undefined, { service: 'ai-bot' })
+    const billingClient = getBillingClient(config.BillingUrl, token)
+
+    const now = new Date()
+    const day = new Date(now)
+    day.setHours(0, 0, 0, 0)
+
+    const data: AiTranscriptData[] = [
+      {
+        workspace,
+        day: day.toISOString(),
+        lastRequestId: `local-${Date.now()}`,
+        lastStartTime: now.toISOString(),
+        durationSeconds: durationSec,
+        usd: 0
+      }
+    ]
+    await billingClient.postAiTranscriptData(data)
+  } catch (e) {
+    ctx.error('Failed to push transcript duration', { workspace, durationSec, e })
+  }
+}
+
 export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[]): Promise<void> {
   if (config.BillingUrl === '') return
   try {

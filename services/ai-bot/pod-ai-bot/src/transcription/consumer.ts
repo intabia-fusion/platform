@@ -5,6 +5,7 @@ import { parseRoomName } from '@hcengineering/love'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 
 import { TranscriptionQueueTask, TranscriptionProvider, TranscriptionConfig, AudioFormat } from './types'
+import { pushTranscriptDuration } from '../billing'
 import path from 'path'
 import { writeFile } from 'fs/promises'
 
@@ -394,6 +395,11 @@ export class TranscriptionConsumer {
         durationSec: task.durationSec,
         elapsedMs: elapsed
       })
+
+      // Report transcribed audio duration to billing
+      if (task.durationSec > 0) {
+        await pushTranscriptDuration(ctx, workspace, task.durationSec)
+      }
 
       // Cleanup storage
       await this.cleanupStorage(wsInfo.wsIds, task.blobId)

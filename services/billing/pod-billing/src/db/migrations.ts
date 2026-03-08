@@ -58,7 +58,7 @@ export function getMigrations (flavor: DBFlavor): [string, string][] {
     throw new Error(`Unsupported database flavor: ${flavor}`)
   }
 
-  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor)]
+  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor), migrationV4(flavor)]
 }
 
 function migrationV1 (flavor: SupportedFlavor): [string, string] {
@@ -132,4 +132,25 @@ function migrationV3 (flavor: SupportedFlavor): [string, string] {
     ALTER TABLE billing.livekit_session ALTER COLUMN bandwidth SET DEFAULT 0;
   `
   return ['fix_bandwidth_nulls_03', sql]
+}
+
+function migrationV4 (flavor: SupportedFlavor): [string, string] {
+  const types = dbTypes[flavor]
+
+  const sql = `
+    CREATE TABLE IF NOT EXISTS billing.livekit_participant_session (
+      workspace ${types.string255} NOT NULL,
+      participant_id ${types.string255} NOT NULL,
+      session_id ${types.string255} NOT NULL,
+      room ${types.string255} NOT NULL,
+      joined_at TIMESTAMP NOT NULL,
+      left_at TIMESTAMP,
+      duration_seconds ${types.float} NOT NULL DEFAULT 0,
+      CONSTRAINT pk_livekit_participant_session PRIMARY KEY (workspace, participant_id, session_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_livekit_participant_session_joined
+      ON billing.livekit_participant_session (joined_at);
+  `
+  return ['add_participant_sessions_04', sql]
 }

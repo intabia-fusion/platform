@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 import { AccessToken, EgressInfo } from 'livekit-server-sdk'
 import { getClient as getBillingClient, LiveKitSessionData } from '@hcengineering/billing-client'
@@ -153,5 +153,43 @@ export async function saveLiveKitEgressBilling (ctx: MeasureContext, egress: Egr
   } catch (err: any) {
     ctx.error('failed to save egress billing', { workspace, egress, err })
     throw new Error('Failed to save egress billing: ' + err)
+  }
+}
+
+export async function saveParticipantSessionBilling (
+  ctx: MeasureContext,
+  workspace: WorkspaceUuid,
+  room: string,
+  participantId: string,
+  sessionId: string,
+  joinedAt: number,
+  leftAt: number
+): Promise<void> {
+  if (config.BillingUrl === '') {
+    return
+  }
+
+  const durationSeconds = (leftAt - joinedAt) / 1000
+  if (durationSeconds <= 0) {
+    return
+  }
+
+  const token = generateToken(systemAccountUuid, undefined, { service: 'love' })
+  const billingClient = getBillingClient(config.BillingUrl, token)
+
+  try {
+    await billingClient.postParticipantSessions([
+      {
+        workspace,
+        participantId,
+        sessionId,
+        room,
+        joinedAt: new Date(joinedAt).toISOString(),
+        leftAt: new Date(leftAt).toISOString(),
+        durationSeconds
+      }
+    ])
+  } catch (err: any) {
+    ctx.error('failed to save participant session billing', { workspace, participantId, err })
   }
 }

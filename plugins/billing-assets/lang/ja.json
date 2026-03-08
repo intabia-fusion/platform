@@ -52,6 +52,8 @@
     "SelectPlanToBegin": "下記からプランを選択して開始してください",
     "StorageUsage": "ストレージ",
     "TrafficUsage": "ビデオ/オーディオトラフィック",
+    "MeetingMinutesUsage": "Meeting time",
+    "MaxParticipants": "Max participants",
     "Usage": "使用状況",
     "Of": "/",
     "UpgradePlan": "プランをアップグレード",

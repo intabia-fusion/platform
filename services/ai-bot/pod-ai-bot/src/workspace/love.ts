@@ -83,13 +83,18 @@ export class LoveController {
       return
     }
 
-    // Check if already connected
-    if (this.connectedMeetings.has(request.meetingId)) {
-      this.ctx.info('Already connected to meeting, skipping', { meeting: request.meetingId })
-      return
-    }
-
     if (request.transcription) {
+      // Check if already has ParticipantInfo (love-agent may still be in room)
+      const existingParticipant = await this.getRoomParticipant(request.meetingId, this.currentPerson._id)
+      if (existingParticipant !== undefined) {
+        this.ctx.info('Already has ParticipantInfo, skipping', {
+          meeting: request.meetingId,
+          participantId: existingParticipant._id
+        })
+        this.connectedMeetings.add(request.meetingId)
+        return
+      }
+
       this.ctx.info('Connecting', { room: mm.title, meeting: mm._id, transcription: request.transcription })
       this.connectedMeetings.add(request.meetingId)
       await this.requestTranscription(mm, request.language)
@@ -359,6 +364,7 @@ export class LoveController {
         love.class.ParticipantInfo,
         core.space.Workspace,
         {
+          kind: 'agent',
           x: xNow,
           y: yNow,
           meeting: meeting._id,

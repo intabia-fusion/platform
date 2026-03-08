@@ -15,7 +15,8 @@
       "Bash(./datalake-benchmark:*)",
       "Bash(npx tsc:*)",
       "Bash(bash benchmarks/run_benchmark.sh:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(git diff:*)"
     ]
   },
   "outputStyle": "default"

@@ -37,8 +37,8 @@ export const lkReconnected = writable<number>(0)
 
 export const lkIsConnecting = writable<boolean>(false)
 
-const LAST_PARTICIPANT_NOTIFICATION_DELAY_MS = 15 * 1000
-const AUTO_DISCONNECT_DELAY_MS = 60 * 1000
+const LAST_PARTICIPANT_NOTIFICATION_DELAY_MS = 60 * 1000
+const AUTO_DISCONNECT_DELAY_MS = 10 * 60 * 1000 // set 10 minutes
 
 export function getLiveKitClient (): LiveKitClient {
   return new LiveKitClient()

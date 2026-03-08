@@ -3,8 +3,13 @@
   import XAxis from './XAxis.svelte'
   import GridLines from './GridLines.svelte'
 
+  interface DataSeries {
+    color: string
+    data: { date: number, value: number }[]
+  }
+
   export let valueFormatter: (value: number) => Promise<string>
-  export let data: { date: number, value: number }[] = []
+  export let series: DataSeries[] = []
 
   const margin = {
     top: 20,
@@ -18,14 +23,19 @@
 
   $: innerWidth = width - margin.left - margin.right
   $: innerHeight = height - margin.top - margin.bottom
+
+  $: allValues = series.flatMap((s) => s.data.map((d) => d.value))
+  $: dates = series.length > 0 ? series[0].data.map((d) => d.date) : []
 </script>
 
 <div class="wrapper" bind:clientWidth={width}>
   <svg role="img" {width} {height}>
     <g transform={`translate(${margin.left}, ${margin.top})`}>
-      <XAxis height={innerHeight} width={innerWidth} values={data.map((d) => d.date)} />
-      <GridLines height={innerHeight} width={innerWidth} {valueFormatter} values={data.map((d) => d.value)} />
-      <Line height={innerHeight} width={innerWidth} {data} />
+      <XAxis height={innerHeight} width={innerWidth} values={dates} />
+      <GridLines height={innerHeight} width={innerWidth} {valueFormatter} values={allValues} />
+      {#each series as s}
+        <Line height={innerHeight} width={innerWidth} data={s.data} sharedValues={allValues} color={s.color} />
+      {/each}
     </g>
   </svg>
 </div>

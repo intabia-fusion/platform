@@ -181,6 +181,8 @@ export class LiveKitPollingService {
           // Also clean up orphaned ParticipantInfo entries for finished meetings (at most once per hour)
           if (this.shouldRunCleanup(workspace)) {
             await wsClient.cleanupOrphanedParticipantInfos()
+            // Clean up orphaned PendingRecording entries for finished meetings
+            await wsClient.cleanupOrphanedPendingRecordings()
           }
         } catch (err: any) {
           this.ctx.error('[PollingService] Error checking unfinished meetings', {
@@ -281,6 +283,13 @@ export class LiveKitPollingService {
         const personId = dbParticipant.person
         if (personId !== undefined && personId !== null) {
           const identityStr = personId as string
+          const liveKitParticipant = allParticipants.get(identityStr)
+
+          // Skip agents (AI bots) - they are managed by ai-bot service and may reconnect
+          if (liveKitParticipant?.kind === 4 || liveKitParticipant?.permission?.agent === true) {
+            continue
+          }
+
           if (!liveKitIdentities.has(identityStr)) {
             this.ctx.info('[PollingService] Removing stale ParticipantInfo (not in LiveKit)', {
               workspace,

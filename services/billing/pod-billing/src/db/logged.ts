@@ -18,11 +18,15 @@ import {
   AiTokensData,
   AiTokensUsage,
   AiTranscriptData,
+  AiTranscriptDailyUsage,
   AiTranscriptUsage,
   BillingDB,
   LiveKitEgressData,
+  LiveKitParticipantSessionData,
   LiveKitSessionData,
-  LiveKitUsageData
+  LiveKitUsageData,
+  ParticipantDailyUsage,
+  ParticipantMinutesUsage
 } from '../types'
 
 export class LoggedDB implements BillingDB {
@@ -56,6 +60,32 @@ export class LoggedDB implements BillingDB {
     await ctx.with('db.setLiveKitEgress', {}, () => this.db.setLiveKitEgress(this.ctx, data))
   }
 
+  async pushParticipantSessions (ctx: MeasureContext, data: LiveKitParticipantSessionData[]): Promise<void> {
+    await ctx.with('db.pushParticipantSessions', {}, () => this.db.pushParticipantSessions(this.ctx, data))
+  }
+
+  async getParticipantMinutes (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantMinutesUsage> {
+    return await ctx.with('db.getParticipantMinutes', {}, () =>
+      this.db.getParticipantMinutes(this.ctx, workspace, start, end)
+    )
+  }
+
+  async getParticipantDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<ParticipantDailyUsage[]> {
+    return await ctx.with('db.getParticipantDailyStats', {}, () =>
+      this.db.getParticipantDailyStats(this.ctx, workspace, start, end)
+    )
+  }
+
   async pushAiTranscriptData (ctx: MeasureContext, data: AiTranscriptData[]): Promise<void> {
     await ctx.with('db.pushAiTranscriptData', {}, () => this.db.pushAiTranscriptData(this.ctx, data))
   }
@@ -72,6 +102,17 @@ export class LoggedDB implements BillingDB {
   ): Promise<AiTranscriptUsage> {
     return await ctx.with('db.getAiTranscriptStats', {}, () =>
       this.db.getAiTranscriptStats(this.ctx, workspace, start, end)
+    )
+  }
+
+  async getAiTranscriptDailyStats (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    start: Date,
+    end: Date
+  ): Promise<AiTranscriptDailyUsage[]> {
+    return await ctx.with('db.getAiTranscriptDailyStats', {}, () =>
+      this.db.getAiTranscriptDailyStats(this.ctx, workspace, start, end)
     )
   }
 

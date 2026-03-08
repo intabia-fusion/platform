@@ -7,6 +7,7 @@ import {
   DatalakeStats,
   LiveKitEgressData,
   LiveKitEgressStats,
+  LiveKitParticipantSessionData,
   LiveKitSessionData,
   LiveKitSessionsStats,
   LiveKitStats
@@ -83,6 +84,13 @@ export class BillingClient {
     const path = '/api/v1/livekit/egress'
     const url = new URL(concatLink(this.endpoint, path))
     const body = JSON.stringify(egress)
+    await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
+  }
+
+  async postParticipantSessions (data: LiveKitParticipantSessionData[]): Promise<void> {
+    const path = '/api/v1/livekit/participants'
+    const url = new URL(concatLink(this.endpoint, path))
+    const body = JSON.stringify(data)
     await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
   }
 

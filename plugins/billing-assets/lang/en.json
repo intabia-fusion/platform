@@ -52,6 +52,8 @@
     "DialogConfirm": "Confirm",
     "StorageUsage": "Storage",
     "TrafficUsage": "Video/Audio traffic",
+    "MeetingMinutesUsage": "Meeting time",
+    "MaxParticipants": "Max participants",
     "Usage": "Usage",
     "Of": "of",
     "UpgradePlan": "Upgrade Plan",

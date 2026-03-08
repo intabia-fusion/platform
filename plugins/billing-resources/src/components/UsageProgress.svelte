@@ -18,29 +18,34 @@
   import plugin from '../plugin'
 
   export let label: IntlString
-  export let value: number // in bytes
-  export let limit: number // in bytes
+  export let value: number
+  export let limit: number
 
-  export let kind: 'bytes' | 'items' = 'bytes'
+  export let kind: 'bytes' | 'items' | 'minutes' = 'bytes'
 
   $: color = value >= limit ? PaletteColorIndexes.Firework : undefined
+
+  function formatMinutes (minutes: number): string {
+    const h = Math.floor(minutes / 60)
+    const m = Math.round(minutes % 60)
+    if (h > 0) return `${h}h ${m}m`
+    return `${m}m`
+  }
+
+  function formatValue (v: number): string {
+    if (kind === 'bytes') return humanReadableFileSize(v, 10, 0)
+    if (kind === 'minutes') return formatMinutes(v)
+    return humanReadableNumbers(v, 10, 0)
+  }
 </script>
 
 <div class="flex-col flex-gap-2">
   <div class="flex-between text-md">
     <span class="pr-2"><Label {label} /></span>
     <span class="flex-row-center flex-gap-1">
-      {#if kind === 'bytes'}
-        {humanReadableFileSize(value, 10, 0)}
-      {:else}
-        {humanReadableNumbers(value, 10, 0)}
-      {/if}
+      {formatValue(value)}
       <Label label={plugin.string.Of} />
-      {#if kind === 'bytes'}
-        {humanReadableFileSize(limit, 10, 0)}
-      {:else}
-        {humanReadableNumbers(limit, 10, 0)}
-      {/if}
+      {formatValue(limit)}
     </span>
   </div>
   <Progress {color} {value} max={limit} fallback={100} />

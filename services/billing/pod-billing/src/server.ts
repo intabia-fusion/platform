@@ -26,7 +26,8 @@ import {
   handleGetStats,
   handlePushAiTranscriptData,
   handleGetAiTranscriptLastData,
-  handlePushAiTokensData
+  handlePushAiTokensData,
+  handlePushParticipantSessions
 } from './billing'
 import { Config } from './config'
 import { withAdmin, withOwner, withToken } from './middleware'
@@ -157,6 +158,13 @@ export async function createServer (
     withToken,
     withAdmin,
     wrapRequest(ctx, 'getAiTranscriptLastData', handleGetAiTranscriptLastData)
+  )
+
+  app.post(
+    '/api/v1/livekit/participants',
+    withToken,
+    withAdmin,
+    wrapRequest(ctx, 'pushParticipantSessions', handlePushParticipantSessions)
   )
 
   app.post('/api/v1/ai/tokens', withToken, withAdmin, wrapRequest(ctx, 'pushAiTokensData', handlePushAiTokensData))
