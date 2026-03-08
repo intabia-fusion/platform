@@ -38,7 +38,7 @@ describe('middleware', () => {
     it('should prefer token with workspace over token without workspace', () => {
       // Create token without workspace (account token)
       const accountToken = generateToken(accountUuid, undefined, { authMethod: 'otp' })
-      
+
       // Create token with workspace (presentation token)
       const workspaceToken = generateToken(accountUuid, workspaceUuid, { authMethod: 'otp' })
 
@@ -155,7 +155,7 @@ describe('middleware', () => {
 
     it('should authorize with correct workspace token from cookies', () => {
       const workspaceToken = generateToken(accountUuid, workspaceUuid, {})
-      
+
       req.headers = {
         cookie: `account-metadata-Token=${generateToken(accountUuid, undefined, {})}; presentation-metadata-Token=${workspaceToken}`
       }
