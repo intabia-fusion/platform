@@ -383,7 +383,7 @@ export const main = async (): Promise<void> => {
       // Check if LiveKit room exists before updating transcription
       const existingRooms = await roomClient.listRooms([roomName])
       if (existingRooms === undefined || existingRooms.length === 0) {
-        ctx.error('Cannot update transcription: LiveKit room does not exist', { roomName })
+        ctx.warn('Cannot update transcription: LiveKit room does not exist', { roomName })
         res.status(404).send({ error: 'Room does not exist. Please ensure participants have joined the meeting.' })
         return
       }
