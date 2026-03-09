@@ -623,7 +623,8 @@ export class WorkspaceClient {
           startedAt: Date.now(),
           roomName: params.roomName,
           name: params.name,
-          egressId: params.egressId
+          egressId: params.egressId,
+          status: 'active'
         }
       )
       this.ctx.info('[WorkspaceClient.createPendingRecording] Created', {
@@ -686,6 +687,26 @@ export class WorkspaceClient {
         error: err?.message ?? String(err)
       })
       return undefined
+    }
+  }
+
+  /**
+   * Mark a PendingRecording as cancelled.
+   * Called when recording is stopped by user before egress completes.
+   */
+  async cancelPendingRecording (pendingRecording: PendingRecording): Promise<void> {
+    try {
+      await this.client.update(pendingRecording, { status: 'cancelled' })
+      this.ctx.info('[WorkspaceClient.cancelPendingRecording] Marked as cancelled', {
+        docId: pendingRecording._id,
+        egressId: pendingRecording.egressId,
+        format: pendingRecording.format
+      })
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cancelPendingRecording] Failed', {
+        error: err?.message ?? String(err),
+        docId: pendingRecording._id
+      })
     }
   }
 

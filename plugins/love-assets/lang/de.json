@@ -99,6 +99,7 @@
     "RecordingRecording": "Aufnahme",
     "RecordingFinished": "Beendet",
     "Recording": "Aufnahme",
+    "StoppingRecord": "Aufnahme wird beendet",
     "Language": "Sprache",
     "WithAudio": "Systemaudio einschließen",
     "ShareWithAudioTooltip": "Teile deinen Bildschirm mit Systemaudio. Starte die Bildschirmfreigabe neu, um Änderungen anzuwenden.",

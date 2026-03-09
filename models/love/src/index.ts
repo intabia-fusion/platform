@@ -196,6 +196,9 @@ export class TPendingRecording extends TAttachedDoc implements PendingRecording 
 
   @Prop(TypeNumber(), getEmbeddedLabel('Size'))
     size?: number
+
+  @Prop(TypeString(), getEmbeddedLabel('Status'))
+    status!: 'active' | 'cancelled' | 'completed'
 }
 
 @Model(love.class.DevicesPreference, preference.class.Preference)

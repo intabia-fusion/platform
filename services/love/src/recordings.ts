@@ -52,11 +52,14 @@ export class RecordingProcessor {
 
       // Check if there's already an active video recording for this meeting
       const existingRecordings = await wsClient.findPendingRecordingsByMeeting(meetingId)
-      const activeVideoRecording = existingRecordings.find((r) => r.format === 'video')
+      const activeVideoRecording = existingRecordings.find(
+        (r) => r.format === 'video' && (r.status === 'active' || r.status === 'completed' || r.status == null)
+      )
       if (activeVideoRecording !== undefined) {
         this.ctx.warn('Video recording already in progress for this meeting', {
           meetingId,
-          existingEgressId: activeVideoRecording.egressId
+          existingEgressId: activeVideoRecording.egressId,
+          status: activeVideoRecording.status
         })
         return
       }
@@ -89,11 +92,16 @@ export class RecordingProcessor {
   }
 
   async stopRecording (roomName: string, workspaceId: WorkspaceUuid, meetingId: Ref<MeetingMinutes>): Promise<void> {
+    this.ctx.info('[stopRecording] Called', { roomName, meetingId, workspace: workspaceId })
+
     // Check if LiveKit room exists before stopping recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {
+      this.ctx.warn('[stopRecording] LiveKit room does not exist, skipping stop', { roomName, meetingId })
       return
     }
+
+    this.ctx.info('[stopRecording] Room found, stopping video recording', { roomName, meetingId })
     await this.stopRecordingByKind(roomName, workspaceId, meetingId, 'video')
     await this.eventProducer.send(this.ctx, workspaceId, [
       queueEvents.updateMetadata(meetingId, roomName, { recording: false })
@@ -213,9 +221,12 @@ export class RecordingProcessor {
     try {
       // Find audio PendingRecording for this meeting
       const pendingRecordings = await wsClient.findPendingRecordingsByMeeting(meetingId)
-      const audioPending = pendingRecordings.filter((r) => r.format === kind)
+      const kindPending = pendingRecordings.filter((r) => r.format === kind)
 
-      for (const pending of audioPending) {
+      for (const pending of kindPending) {
+        // Mark as cancelled immediately so UI can show loading state
+        await wsClient.cancelPendingRecording(pending)
+
         if (pending.egressId !== undefined) {
           try {
             await this.egressClient.stopEgress(pending.egressId)

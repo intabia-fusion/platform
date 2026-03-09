@@ -99,6 +99,7 @@
     "RecordingRecording": "Recording",
     "RecordingFinished": "Finished",
     "Recording": "Recording",
+    "StoppingRecord": "Stopping recording...",
     "Language": "Language",
     "Kick": "Kick",
     "WithAudio": "Include system audio",

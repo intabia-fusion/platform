@@ -100,6 +100,7 @@
     "RecordingRecording": "録画",
     "RecordingFinished": "終了",
     "Recording": "録画",
+    "StoppingRecord": "録画を停止しています...",
     "Language": "言語",
     "Kick": "キック",
     "WithAudio": "システム音声を含む",

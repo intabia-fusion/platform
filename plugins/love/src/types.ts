@@ -212,6 +212,11 @@ export interface MeetingMinutes extends AttachedDoc {
 export type RecordingFormat = 'video' | 'audio'
 
 /**
+ * Recording status for PendingRecording
+ */
+export type RecordingStatus = 'active' | 'cancelled' | 'completed'
+
+/**
  * Pending recording document created when recording starts.
  * Used to track in-progress recordings until they complete (egress_ended).
  * Attached to MeetingMinutes as a collection to show recording progress in UI.
@@ -229,6 +234,8 @@ export interface PendingRecording extends AttachedDoc {
   name: string
   /** Current size in bytes (updated via egress_updated webhooks) */
   size?: number
+  /** Recording status: active, cancelled (stopping), or completed */
+  status: RecordingStatus
 }
 
 /**

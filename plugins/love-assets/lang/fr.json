@@ -100,6 +100,7 @@
     "RecordingRecording": "Enregistrement",
     "RecordingFinished": "Terminé",
     "Recording": "Enregistrement",
+    "StoppingRecord": "Arrêt de l'enregistrement...",
     "Language": "Langue",
     "Kick": "Expulser",
     "WithAudio": "Inclure l'audio du système",

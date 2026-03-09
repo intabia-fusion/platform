@@ -102,6 +102,7 @@
     "RecordingRecording": "Запись",
     "RecordingFinished": "Завершено",
     "Recording": "Запись",
+    "StoppingRecord": "Остановка записи...",
     "Language": "Язык",
     "Kick": "Выгнать",
     "WithAudio": "С системным звуком",

@@ -93,6 +93,7 @@ const love = plugin(loveId, {
     RecordingRecording: '' as IntlString,
     RecordingFinished: '' as IntlString,
     Recording: '' as IntlString,
+    StoppingRecord: '' as IntlString,
     Kick: '' as IntlString,
     EndMeeting: '' as IntlString,
     SearchMeetingMinutes: '' as IntlString,
