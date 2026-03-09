@@ -162,7 +162,7 @@ export class RecordingProcessor {
         {
           audioOnly: true,
           webhooks:
-            config.WebHookUrl !== ''
+            config.UseEgressWebHook && config.WebHookUrl !== ''
               ? [
                   new WebhookConfig({
                     url: config.WebHookUrl,
@@ -290,7 +290,7 @@ export class RecordingProcessor {
         layout: 'grid',
         encodingOptions: preset,
         webhooks:
-          config.WebHookUrl !== ''
+          config.UseEgressWebHook && config.WebHookUrl !== ''
             ? [
                 new WebhookConfig({
                   url: config.WebHookUrl,

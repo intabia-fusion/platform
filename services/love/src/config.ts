@@ -39,6 +39,7 @@ interface Config {
   Agents: string[] // A comma-separated list of agent types to run
 
   WebHookUrl: string
+  UseEgressWebHook: boolean
 
   // Polling configuration
   PollingIntervalMs: number
@@ -67,6 +68,7 @@ const envMap: { [key in keyof Config]: string } = {
   UseGlobalLiveKit: 'USE_GLOBAL_LIVEKIT',
   Agents: 'AGENTS',
   WebHookUrl: 'WEBHOOK_URL',
+  UseEgressWebHook: 'USE_EGRESS_WEBHOOK',
 
   PollingIntervalMs: 'POLLING_INTERVAL_MS'
 }
@@ -93,6 +95,7 @@ const config: Config = (() => {
     UseGlobalLiveKit: process.env[envMap.UseGlobalLiveKit] === 'true',
     Agents: (process.env[envMap.Agents] ?? '').split(','),
     WebHookUrl: process.env[envMap.WebHookUrl] ?? '',
+    UseEgressWebHook: process.env[envMap.UseEgressWebHook] === 'true',
     PollingIntervalMs: parseNumber(process.env[envMap.PollingIntervalMs]) ?? 30000 // Default: 30 seconds
   }
 

@@ -332,56 +332,54 @@ export class WebhookProcessor {
         return
       }
 
-      await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
-
       // Find and remove PendingRecording first (do this regardless of file save result)
       const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
       if (pendingRecording !== undefined) {
+        await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
         await wsClient.removePendingRecording(pendingRecording)
         this.ctx.info('[Webhook] Removed PendingRecording after egress ended', {
           egressId,
           recordingId: pendingRecording._id,
           format: pendingRecording.format
         })
+        // Process file results - save to storage and attach to meeting
+        for (const fileResult of event.egressInfo.fileResults) {
+          this.ctx.info('Processing egress file result', { egressId, filename: fileResult.filename })
+
+          if (this.storageConfig !== undefined) {
+            const storedBlob = await saveFile(
+              this.ctx,
+              wsIds,
+              this.storageConfig,
+              this.s3storageConfig,
+              fileResult.filename
+            )
+            if (storedBlob !== undefined) {
+              this.ctx.info('Stored file', { storedBlob })
+
+              const preset = getRecordingPreset(config.RecordingPreset)
+              // Use name from PendingRecording if available, otherwise generate from filename
+              const name = pendingRecording?.name ?? fileResult.filename.split('/').pop() ?? 'recording.mp4'
+              await wsClient.saveFile(storedBlob._id, name, storedBlob, preset, roomName.meetingId)
+
+              await this.eventProducer.send(this.ctx, roomName.workspace, [
+                queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'ended', {
+                  ended: event.egressInfo.endedAt,
+                  storedBlob,
+                  name,
+                  preset
+                })
+              ])
+            } else {
+              this.ctx.error('Not Stored file', { filename: fileResult.filename })
+            }
+          }
+        }
       } else {
         this.ctx.warn('[Webhook] PendingRecording not found for egress', {
           egressId,
           meetingId: roomName.meetingId
         })
-      }
-
-      // Process file results - save to storage and attach to meeting
-      for (const fileResult of event.egressInfo.fileResults) {
-        this.ctx.info('Processing egress file result', { egressId, filename: fileResult.filename })
-
-        if (this.storageConfig !== undefined) {
-          const storedBlob = await saveFile(
-            this.ctx,
-            wsIds,
-            this.storageConfig,
-            this.s3storageConfig,
-            fileResult.filename
-          )
-          if (storedBlob !== undefined) {
-            this.ctx.info('Stored file', { storedBlob })
-
-            const preset = getRecordingPreset(config.RecordingPreset)
-            // Use name from PendingRecording if available, otherwise generate from filename
-            const name = pendingRecording?.name ?? fileResult.filename.split('/').pop() ?? 'recording.mp4'
-            await wsClient.saveFile(storedBlob._id, name, storedBlob, preset, roomName.meetingId)
-
-            await this.eventProducer.send(this.ctx, roomName.workspace, [
-              queueEvents.egressEvent(roomName.meetingId, event.egressInfo.egressId, 'ended', {
-                ended: event.egressInfo.endedAt,
-                storedBlob,
-                name,
-                preset
-              })
-            ])
-          } else {
-            this.ctx.error('Not Stored file', { filename: fileResult.filename })
-          }
-        }
       }
     } catch (err: any) {
       this.ctx.error('egress_ended: failed to process recording', {

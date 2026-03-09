@@ -277,7 +277,7 @@ export class DatalakeImpl implements Datalake {
 
     const data = await this.db.getData(ctx, { hash, location })
     if (data !== null) {
-      await Promise.all([bucket.delete(ctx, filename), this.db.createBlob(ctx, { workspace, name, hash, location })])
+      await this.db.createBlob(ctx, { workspace, name, hash, location })
     } else {
       await this.db.createBlobData(ctx, { workspace, name, hash, location, filename, size, type: contentType })
     }
