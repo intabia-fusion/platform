@@ -1354,6 +1354,7 @@ export function createModel (builder: Builder): void {
       messageClass: activity.class.DocUpdateMessage,
       objectClass: recruit.class.Applicant,
       attachedToClass: recruit.class.Applicant,
+      isMention: true,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',

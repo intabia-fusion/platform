@@ -706,7 +706,8 @@ export function createModel (builder: Builder): void {
       objectClass: love.class.UserMeetingInvite,
       txClasses: [],
       defaultEnabled: true,
-      group: love.ids.LoveNotificationGroup
+      group: love.ids.LoveNotificationGroup,
+      isMention: true
     },
     love.ids.InviteNotification
   )

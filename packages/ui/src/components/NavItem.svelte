@@ -53,6 +53,7 @@
   export let forciblyСollapsed: boolean = false
   export let level: number = 0
   export let _id: any = undefined
+  export let pressed = false
 
   export let draggable: boolean = false
 
@@ -85,6 +86,7 @@
   class:indent
   class:disabled
   class:showMenu
+  class:pressed
   {draggable}
   class:noActions={$$slots.actions === undefined}
   on:dragstart
@@ -145,6 +147,7 @@
       {#if title}{title}{/if}
       <slot />
     {/if}
+    {#if $$slots.afterTitle}<slot name="afterTitle" />{/if}
   </span>
   {#if $$slots.extra}<slot name="extra" />{/if}
   {#if showMenu || $$slots.actions}
@@ -227,6 +230,8 @@
     }
     .hulyNavItem-label,
     .hulyNavItem-wideLabel {
+      display: flex;
+      align-items: center;
       text-align: left;
       color: var(--global-primary-TextColor);
     }
@@ -249,6 +254,11 @@
     &:not(.selected).showMenu {
       background-color: var(--global-ui-hover-highlight-BackgroundColor);
     }
+
+    &.pressed:not(.selected) {
+      background-color: var(--global-ui-hover-highlight-BackgroundColor);
+    }
+
     &.selected {
       cursor: default;
       background-color: var(--global-ui-highlight-BackgroundColor);

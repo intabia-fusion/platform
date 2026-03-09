@@ -26,6 +26,7 @@
   } from '@hcengineering/ui'
   import { NotifyMarker } from '@hcengineering/notification-resources'
   import { Asset, IntlString } from '@hcengineering/platform'
+  import notification from '@hcengineering/notification'
 
   export let _id: string
   export let icon: Asset | AnySvelteComponent | undefined
@@ -33,7 +34,6 @@
   export let iconSize: IconSize = 'small'
   export let withIconBackground: boolean = true
   export let isSelected: boolean = false
-  export let isSecondary: boolean = false
   export let count: number | null = null
   export let secondaryNotifyMarker: boolean = false
   export let title: string | undefined = undefined
@@ -42,6 +42,8 @@
   export let actions: Action[] = []
   export let elementsCount: number = 0
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
+  export let muted: boolean = false
+  export let pressed = false
 
   let menuOpened = false
   let inlineActions: Action[] = []
@@ -75,9 +77,17 @@
   {type}
   withBackground={withIconBackground}
   showMenu={menuOpened}
+  {pressed}
   on:click
   on:contextmenu
 >
+  <svelte:fragment slot="afterTitle">
+    {#if muted}
+      <span class="icon">
+        <Icon size="x-small" icon={notification.icon.BellCrossed} />
+      </span>
+    {/if}
+  </svelte:fragment>
   <svelte:fragment slot="actions">
     {#each inlineActions as action}
       <button
@@ -128,6 +138,12 @@
       color: var(--global-primary-TextColor);
       background-color: var(--global-ui-highlight-BackgroundColor);
     }
+  }
+
+  .icon {
+    color: var(--global-disabled-TextColor);
+    fill: var(--global-disabled-TextColor);
+    margin-left: 0.25rem;
   }
 
   .notify {

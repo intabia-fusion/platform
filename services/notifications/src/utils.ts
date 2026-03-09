@@ -40,7 +40,8 @@ import notification, {
   MessageNotificationType,
   TxNotificationType,
   InboxNotification,
-  NotificationContent
+  NotificationContent,
+  DocNotificationMode
 } from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
@@ -112,11 +113,12 @@ export async function getMessageNotifyResult (
   message: ActivityMessage,
   doc: Doc,
   receiver: Receiver,
-  notificationSettings: NotificationSettings
+  notificationSettings: NotificationSettings,
+  mode: DocNotificationMode
 ): Promise<NotifyResult> {
   const types = getMatchedMessageTypes(client, message, doc)
 
-  return await getNotifyResult(client, message, doc, receiver, notificationSettings, types)
+  return await getNotifyResult(client, message, doc, receiver, notificationSettings, types, mode)
 }
 
 function getMatchedMessageTypes (client: Client, message: ActivityMessage, doc: Doc): MessageNotificationType[] {
@@ -308,7 +310,8 @@ async function getNotifyResult (
   doc: Doc,
   receiver: Receiver,
   notificationSettings: NotificationSettings,
-  types: NotificationType[]
+  types: NotificationType[],
+  mode: DocNotificationMode
 ): Promise<NotifyResult> {
   const authorSocialId = obj.createdBy ?? obj.modifiedBy
   const result: NotifyResult = {}
@@ -317,7 +320,9 @@ async function getNotifyResult (
   const { hierarchy } = client
 
   for (const type of types) {
+    if (mode === 'mute') continue
     if (type.notifyAuthor !== true && receiver.socialIds.includes(authorSocialId)) continue
+    if (mode === 'mentions' && type.isMention !== true) continue
 
     if (hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
       const mixin = hierarchy.as(type, serverNotification.mixin.TypeMatch)
@@ -352,9 +357,10 @@ export async function getTxNotifyResult (
   doc: Doc,
   receiver: Receiver,
   notificationSettings: NotificationSettings,
-  types: TxNotificationType[]
+  types: TxNotificationType[],
+  mode: DocNotificationMode
 ): Promise<NotifyResult> {
-  return await getNotifyResult(client, tx, doc, receiver, notificationSettings, types)
+  return await getNotifyResult(client, tx, doc, receiver, notificationSettings, types, mode)
 }
 
 export function isMatchedTxType (client: Client, tx: TxCUD<Doc>, type: TxNotificationType): boolean {

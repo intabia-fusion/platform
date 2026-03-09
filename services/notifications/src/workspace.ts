@@ -237,6 +237,7 @@ class Workspace {
       res.push(...result.txes)
 
       for (const d of result.data) {
+        if (d.context?.settings?.mode === 'mute') continue
         if (client.hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)) {
           const updateContextTx = res.find(
             (it): it is TxUpdateDoc<DocNotifyContext> =>
@@ -279,7 +280,9 @@ class Workspace {
 
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
-      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, matched)
+      const mode = context?.settings?.mode ?? 'all'
+      if (mode === 'mute') continue
+      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, matched, mode)
 
       const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
       const type = types[0] as TxNotificationType
@@ -502,7 +505,9 @@ class Workspace {
 
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
-      const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings)
+      const mode = context?.settings?.mode ?? 'all'
+      if (mode === 'mute') continue
+      const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings, mode)
 
       const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
       const type = types[0]

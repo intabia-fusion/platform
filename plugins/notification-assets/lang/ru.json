@@ -2,6 +2,7 @@
   "string": {
     "Notification": "Уведомление",
     "Notifications": "Уведомления",
+    "EditNotifications": "Настроить уведомления",
     "NoNotifications": "Нет уведомлений",
     "EmailNotification": "Email",
     "PlatformNotification": "в системе",
@@ -67,6 +68,9 @@
     "ViewIn": "Посмотреть в {app}",
     "Clear": "Очистить",
     "YouAddedAsCollaborator": "Вы были добавлены как участник",
-    "YouRemovedFromCollaborators": "Вы были удалены из участников"
+    "YouRemovedFromCollaborators": "Вы были удалены из участников",
+    "AllNotifications": "Все уведомления",
+    "JustMentions": "Только упоминания",
+    "Mute": "Отключить"
   }
 }

@@ -157,7 +157,8 @@ function defineNotifications (builder: Builder): void {
         subjectTemplate: '{doc} was assigned to you'
       },
       priority: 200,
-      defaultEnabled: true
+      defaultEnabled: true,
+      isMention: true
     },
     tracker.ids.AssigneeNotification
   )

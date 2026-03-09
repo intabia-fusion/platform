@@ -13,6 +13,22 @@ export function defineActions (builder: Builder): void {
     { label: notification.string.Inbox, visible: true },
     notification.category.Notification
   )
+
+  createAction(builder, {
+    action: notification.actionImpl.EditDocNotifications,
+    actionPopup: notification.component.MutePopup,
+    visibilityTester: notification.function.EditDocNotificationsVisibilityTester,
+    label: notification.string.EditNotifications,
+    icon: notification.icon.Notifications,
+    input: 'focus',
+    category: notification.category.Notification,
+    target: core.class.Doc,
+    context: {
+      mode: ['context', 'browser'],
+      group: 'tools'
+    }
+  })
+
   createAction(
     builder,
     {

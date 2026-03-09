@@ -2,6 +2,7 @@
   "string": {
     "Notification": "Oznámení",
     "Notifications": "Oznámení",
+    "EditNotifications": "Upravit oznámení",
     "NoNotifications": "Žádná oznámení",
     "EmailNotification": "E-mail",
     "PlatformNotification": "na platformě",
@@ -67,6 +68,9 @@
     "ViewIn": "Zobrazit v {app}",
     "Clear": "Vymazat",
     "YouAddedAsCollaborator": "Byli jste přidáni jako spolupracovník",
-    "YouRemovedFromCollaborators": "Byli jste odebráni jako spolupracovník"
+    "YouRemovedFromCollaborators": "Byli jste odebráni jako spolupracovník",
+    "AllNotifications": "Všechna oznámení",
+    "JustMentions": "Pouze zmínky",
+    "Mute": "Ztlumit"
   }
 }

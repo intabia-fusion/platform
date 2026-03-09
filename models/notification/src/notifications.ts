@@ -30,6 +30,7 @@ export function defineNotifications (builder: Builder): void {
       objectClass: core.class.Collaborator,
       attachedToClass: core.class.Doc,
       defaultEnabled: true,
+      isMention: true,
       match: {
         action: 'create'
       },
@@ -56,6 +57,7 @@ export function defineNotifications (builder: Builder): void {
       objectClass: core.class.Collaborator,
       attachedToClass: core.class.Doc,
       defaultEnabled: true,
+      isMention: true,
       match: {
         action: 'remove'
       },
@@ -82,6 +84,7 @@ export function defineNotifications (builder: Builder): void {
       attrTypes: [core.class.TypeMarkup, core.class.TypeCollaborativeDoc],
       objectClass: core.class.Doc,
       defaultEnabled: true,
+      isMention: true,
       templates: {
         textTemplate: '{sender} mentioned you in {doc}: {message}',
         htmlTemplate: '<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>',

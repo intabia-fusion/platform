@@ -368,6 +368,7 @@ export function createModel (builder: Builder): void {
       group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
       txClasses: [core.class.TxCreateDoc],
       objectClass: time.class.ProjectToDo,
+      isMention: true,
       defaultEnabled: false,
       templates: {
         textTemplate: '{body}',

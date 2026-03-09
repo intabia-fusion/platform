@@ -67,6 +67,7 @@ export default mergeIds(notificationId, notification, {
     RemoveContextNotifications: '' as ViewAction,
     ClearAll: '' as ViewAction,
     ReadAll: '' as ViewAction,
-    UnreadAll: '' as ViewAction
+    UnreadAll: '' as ViewAction,
+    EditDocNotifications: '' as ViewAction
   }
 })

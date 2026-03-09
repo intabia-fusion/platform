@@ -96,7 +96,9 @@ export async function createMentionsData (
 
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
-      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [type])
+      const mode = context?.settings?.mode ?? 'all'
+      if (mode === 'mute') continue
+      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [type], mode)
 
       if ((notifyResult[notification.providers.InboxNotificationProvider]?.length ?? 0) === 0) continue
 

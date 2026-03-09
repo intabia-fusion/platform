@@ -2,6 +2,7 @@
   "string": {
     "Notification": "Bildirim",
     "Notifications": "Bildirimler",
+    "EditNotifications": "Bildirimleri düzenle",
     "NoNotifications": "Bildirim yok",
     "EmailNotification": "E-posta",
     "PlatformNotification": "platformda",
@@ -67,6 +68,9 @@
     "ViewIn": "{app} içinde görüntüle",
     "Clear": "Temizle",
     "YouAddedAsCollaborator": "İşbirlikçi olarak eklendiniz",
-    "YouRemovedFromCollaborators": "İşbirlikçilerden kaldırıldınız"
+    "YouRemovedFromCollaborators": "İşbirlikçilerden kaldırıldınız",
+    "AllNotifications": "Tüm bildirimler",
+    "JustMentions": "Sadece bahsetmeler",
+    "Mute": "Sessize al"
   }
 }
