@@ -13,16 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, languageStore, lowercaseFirstLetter } from '@hcengineering/ui'
+  import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
   import { getObjectLinkId, canLeaveSpace } from '@hcengineering/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
     isActivityNotification,
-    isMentionNotification
+    isMentionNotification,
+    MutePopup
   } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
@@ -67,13 +68,13 @@
     count = res === 0 ? null : res
   })
 
-  $: void getActions(item.object, item.chat).then((res) => {
+  $: void getActions(item.object, item.chat, context).then((res) => {
     actions = res
   })
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  async function getActions (object: Doc, chat?: Chat): Promise<Action[]> {
+  async function getActions (object: Doc, chat?: Chat, context?: DocNotifyContext): Promise<Action[]> {
     const result: Action[] = []
 
     result.push({
@@ -134,6 +135,17 @@
       })
     }
 
+    if (context != null) {
+      result.push({
+        icon: notification.icon.Notifications,
+        label: notification.string.EditNotifications,
+        group: 'tools',
+        component: MutePopup,
+        props: { value: object },
+        action: async () => {}
+      })
+    }
+
     const canLeave = await canLeaveSpace(object)
 
     if (!hierarchy.isDerived(object._class, chunter.class.DirectMessage) && canLeave) {
@@ -169,6 +181,19 @@
 
     return result
   }
+
+  let pressed = false
+
+  function handleContextMenu (event: MouseEvent): void {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (actions.length === 0) return
+    pressed = true
+    showPopup(Menu, { actions, ctx: { _id: item.id } }, event.target as HTMLElement, () => {
+      pressed = false
+    })
+  }
 </script>
 
 <NavItem
@@ -182,11 +207,14 @@
   title={item.title}
   description={item.description}
   secondaryNotifyMarker={(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&
-    (context?.lastNotify ?? 0) < (context?.lastView ?? 0)}
+    (context?.lastNotify ?? 0) < (context?.lastUpdate ?? 0)}
   {actions}
   {type}
+  muted={context?.settings?.mode === 'mute'}
+  {pressed}
   on:click={() => {
     const select = { chat: item.chat, object: item.object }
     dispatch('select', select)
   }}
+  on:contextmenu={handleContextMenu}
 />

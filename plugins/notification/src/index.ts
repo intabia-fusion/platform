@@ -157,6 +157,7 @@ export interface NotificationType extends Doc {
   priority?: number
 
   notificationMessage?: IntlString
+  isMention?: boolean
 }
 
 export interface MessageNotificationType<T extends ActivityMessage = ActivityMessage> extends NotificationType {
@@ -295,6 +296,9 @@ export type DisplayInboxNotification = DisplayActivityInboxNotification | InboxN
 /**
  * @public
  */
+
+export type DocNotificationMode = 'all' | 'mentions' | 'mute'
+
 export interface DocNotifyContext extends Doc<PersonSpace> {
   user: AccountUuid
   // Context
@@ -308,6 +312,10 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
 
   // Only for debug
   tx?: Ref<TxCUD<Doc>>
+
+  settings?: {
+    mode?: DocNotificationMode
+  }
 }
 
 /**
@@ -408,7 +416,8 @@ const notification = plugin(notificationId, {
     DocNotifyContextPresenter: '' as AnyComponent,
     NotificationCollaboratorsChanged: '' as AnyComponent,
     GeneralPreferencesGroup: '' as AnyComponent,
-    WebpushesPreferencesPresenter: '' as AnyComponent
+    WebpushesPreferencesPresenter: '' as AnyComponent,
+    MutePopup: '' as AnyComponent
   },
   action: {
     UnReadNotifyContext: '' as Ref<Action>,
@@ -464,7 +473,11 @@ const notification = plugin(notificationId, {
     WebpushRemoveConfirm: '' as IntlString,
     Value: '' as IntlString,
     Current: '' as IntlString,
-    Subscribe: '' as IntlString
+    Subscribe: '' as IntlString,
+    AllNotifications: '' as IntlString,
+    JustMentions: '' as IntlString,
+    Mute: '' as IntlString,
+    EditNotifications: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,
@@ -473,7 +486,8 @@ const notification = plugin(notificationId, {
     HasInboxNotifications: '' as Resource<
     (notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>
     >,
-    IsNotificationAllowed: '' as Resource<(type: NotificationType, providerId: Ref<NotificationProvider>) => boolean>
+    IsNotificationAllowed: '' as Resource<(type: NotificationType, providerId: Ref<NotificationProvider>) => boolean>,
+    EditDocNotificationsVisibilityTester: '' as Resource<(doc: Doc | Doc[] | undefined) => Promise<boolean>>
   },
   resolver: {
     Location: '' as Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>

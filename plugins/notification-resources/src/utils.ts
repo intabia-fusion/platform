@@ -53,6 +53,7 @@ import { getMetadata, getResource } from '@hcengineering/platform'
 import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
 import {
   getCurrentLocation,
+  getEventPositionElement,
   getLocation,
   type Location,
   locationStorageKeyId,
@@ -829,4 +830,25 @@ export function parseUserAgent (userAgent: string): string {
   const system = os.find(({ pattern }) => pattern.test(userAgent))?.name ?? 'Unknown OS'
 
   return `${browser} on ${system}`
+}
+
+export async function editDocNotificationsVisibilityTester (doc: Doc | Doc[] | undefined): Promise<boolean> {
+  if (doc == null) return false
+  const object = Array.isArray(doc) ? doc[0] : doc
+  if (object == null) return false
+
+  const client = getClient()
+  const classCollaborators = getClassCollaborators(client.getModel(), client.getHierarchy(), object._class)
+  if (classCollaborators === undefined) return false
+  const collaborator = await client.findOne(core.class.Collaborator, {
+    attachedTo: object._id,
+    collaborator: getCurrentAccount().uuid
+  })
+
+  return collaborator != null
+}
+
+export async function editDocNotificationsAction (doc: Doc | Doc[], evt: MouseEvent): Promise<void> {
+  const value = Array.isArray(doc) ? doc[0] : doc
+  showPopup(notification.component.MutePopup, { value }, getEventPositionElement(evt))
 }

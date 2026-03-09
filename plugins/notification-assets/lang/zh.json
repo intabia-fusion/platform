@@ -2,6 +2,7 @@
   "string": {
     "Notification": "通知",
     "Notifications": "通知",
+    "EditNotifications": "编辑通知",
     "NoNotifications": "没有通知",
     "EmailNotification": "电子邮件",
     "PlatformNotification": "平台内",
@@ -67,6 +68,9 @@
     "ViewIn": "在 {app} 中查看",
     "Clear": "清除",
     "YouAddedAsCollaborator": "您已被添加为合作者",
-    "YouRemovedFromCollaborators": "您已被移除为合作者"
+    "YouRemovedFromCollaborators": "您已被移除为合作者",
+    "AllNotifications": "所有通知",
+    "JustMentions": "仅提及",
+    "Mute": "静音"
   }
 }

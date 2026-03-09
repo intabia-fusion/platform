@@ -393,6 +393,7 @@ export function createModel (builder: Builder): void {
       messageClass: activity.class.DocUpdateMessage,
       objectClass: lead.class.Lead,
       attachedToClass: lead.class.Lead,
+      isMention: true,
       templates: {
         textTemplate: '{doc} was assigned to you by {sender}',
         htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',

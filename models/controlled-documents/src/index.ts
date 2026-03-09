@@ -1174,6 +1174,7 @@ export function defineNotifications (builder: Builder): void {
       objectClass: documents.class.ControlledDocument,
       attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: true,
+      isMention: true,
       templates: {
         textTemplate: '{sender} assigned you as a co-author of {doc}',
         htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>',

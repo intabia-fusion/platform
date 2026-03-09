@@ -2,6 +2,7 @@
   "string": {
     "Notification": "通知",
     "Notifications": "通知",
+    "EditNotifications": "通知を編集",
     "NoNotifications": "通知はありません",
     "EmailNotification": "メール",
     "PlatformNotification": "プラットフォーム内",
@@ -67,6 +68,9 @@
     "ViewIn": "{app} で表示",
     "Clear": "クリア",
     "YouAddedAsCollaborator": "コラボレーターに追加されました",
-    "YouRemovedFromCollaborators": "コラボレーターから削除されました"
+    "YouRemovedFromCollaborators": "コラボレーターから削除されました",
+    "AllNotifications": "すべての通知",
+    "JustMentions": "メンションのみ",
+    "Mute": "ミュート"
   }
 }

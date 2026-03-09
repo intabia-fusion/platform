@@ -596,6 +596,7 @@ function defineTrainingRequest (builder: Builder): void {
       objectClass: training.class.TrainingRequest,
       attachedToClass: training.class.TrainingRequest,
       defaultEnabled: true,
+      isMention: true,
       templates: {
         textTemplate: '{sender} sent you a training request {doc}',
         htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>',

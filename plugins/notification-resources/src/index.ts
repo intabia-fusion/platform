@@ -27,6 +27,7 @@ import MentionInboxNotificationPresenter from './components/inbox/MentionInboxNo
 import NotificationCollaboratorsChanged from './components/NotificationCollaboratorsChanged.svelte'
 import GeneralPreferencesGroup from './components/settings/GeneralPreferencesGroup.svelte'
 import WebpushesPreferencesPresenter from './components/settings/WebpushesPreferencesPresenter.svelte'
+import MutePopup from './components/MutePopup.svelte'
 import {
   unsubscribe,
   resolveLocation,
@@ -41,7 +42,9 @@ import {
   checkPermission,
   isNotificationAllowed,
   locationDataResolver,
-  removeContextNotifications
+  removeContextNotifications,
+  editDocNotificationsVisibilityTester,
+  editDocNotificationsAction
 } from './utils'
 
 import { InboxNotificationsClientImpl } from './inboxNotificationsClient'
@@ -51,6 +54,7 @@ export * from './inboxNotificationsClient'
 
 export { default as BrowserNotificatator } from './components/BrowserNotificatator.svelte'
 export { default as NotifyMarker } from './components/NotifyMarker.svelte'
+export { default as MutePopup } from './components/MutePopup.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -64,7 +68,8 @@ export default async (): Promise<Resources> => ({
     MentionInboxNotificationPresenter,
     NotificationCollaboratorsChanged,
     GeneralPreferencesGroup,
-    WebpushesPreferencesPresenter
+    WebpushesPreferencesPresenter,
+    MutePopup
   },
   function: {
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -74,7 +79,8 @@ export default async (): Promise<Resources> => ({
     HasInboxNotifications: hasInboxNotifications,
     CheckPushPermission: checkPermission,
     IsNotificationAllowed: isNotificationAllowed,
-    LocationDataResolver: locationDataResolver
+    LocationDataResolver: locationDataResolver,
+    EditDocNotificationsVisibilityTester: editDocNotificationsVisibilityTester
   },
   actionImpl: {
     Unsubscribe: unsubscribe,
@@ -83,7 +89,8 @@ export default async (): Promise<Resources> => ({
     RemoveContextNotifications: removeContextNotifications,
     ClearAll: clearAll,
     ReadAll: readAll,
-    UnreadAll: unreadAll
+    UnreadAll: unreadAll,
+    EditDocNotifications: editDocNotificationsAction
   },
   resolver: {
     Location: resolveLocation

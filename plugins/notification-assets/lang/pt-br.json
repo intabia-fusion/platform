@@ -2,6 +2,7 @@
   "string": {
     "Notification": "Notificação",
     "Notifications": "Notificações",
+    "EditNotifications": "Editar notificações",
     "NoNotifications": "Sem notificações",
     "EmailNotification": "E-mail",
     "PlatformNotification": "na plataforma",
@@ -67,6 +68,9 @@
     "ViewIn": "Ver em {app}",
     "Clear": "Limpar",
     "YouAddedAsCollaborator": "Você foi adicionado como colaborador",
-    "YouRemovedFromCollaborators": "Você foi removido como colaborador"
+    "YouRemovedFromCollaborators": "Você foi removido como colaborador",
+    "AllNotifications": "Todas as notificações",
+    "JustMentions": "Apenas menções",
+    "Mute": "Silenciar"
   }
 }
