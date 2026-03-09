@@ -1465,7 +1465,7 @@ export class TSessionManager implements SessionManager {
         await this.counters.withCounter('request', 1, () =>
           workspace.with(async (pipeline) => {
             await requestCtx.with(
-              '🧨' + request.method,
+              '🧨 ' + request.method,
               { source, mode: 'websocket' },
               (callTx) =>
                 f.apply(service, [
