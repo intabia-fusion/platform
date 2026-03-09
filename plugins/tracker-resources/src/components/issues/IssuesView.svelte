@@ -60,7 +60,6 @@
   }
 </script>
 
-showDays- {$useShowDaysStore}
 <SpaceHeader
   _class={tracker.class.Issue}
   {icon}
