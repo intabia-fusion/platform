@@ -631,7 +631,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     let clientFilterSpaces: Set<Ref<Space>> | undefined
 
     if (!isSystem(account, ctx) && account.role !== AccountRole.DocGuest && domain !== DOMAIN_MODEL) {
-      if (!isOwner(account, ctx) || !isSpace || !showArchived) {
+      if (!isOwner(account, ctx) || !isSpace) {
         if (newQuery[field] !== undefined) {
           const res = await this.mergeQuery(ctx, account, newQuery[field], domain, isSpace, showArchived)
           if (res === undefined) {
