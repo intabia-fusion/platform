@@ -178,7 +178,7 @@
 
   $: notify = sortedItems.some((it) => {
     const c = $contextByDocStore.get(it.id)
-    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotify ?? 0) < (c?.lastView ?? 0)
+    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotify ?? 0) < (c?.lastUpdate ?? 0)
   })
 </script>
 
