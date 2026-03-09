@@ -5,6 +5,86 @@ Changelog.
 ## [unreleased]
 
 * ⚙️ CHORE: Small follow-ups since v0.7.318 — update summary and adjust git-diff output for changelog generation; filter out 'Merge remote-tracking' merge commits and strip 'Signed-off-by:' footers from commit entries.
+
+## [0.7.347] - 2026-03-09
+
+* 🐛 BUG FIXES: · Fix transcript logs not an error · Fix for love engress handling
+* ⚙️ MISCELLANEOUS TASKS: · Remove debug log
+
+## [0.7.346] - 2026-03-08
+
+* ⚙️ MISCELLANEOUS TASKS: · Love billing updates (#36) · FND-18 Fixing translations (#33) · FUSIO-112 Renaming calendar from HULY to Default (#25) · Handle no documents to export (#10588) · Export product version with controlled docs (#10586) · Update changelog (#10579)
+* 🐛 BUG FIXES: · Fix cookie token selection (#37) · Fix tests · Fix email notifications (#35) · Fix direct ui · Fix LockFieldEditor.svelte formatting (#10578) · Fix npm publish (#10575)
+* 🚀 FEATURES: · Support default invite setting in branding (#10591) · feat: auto generate rank in middleware (#10577) · feat: implement field locking and unlocking functionality, including UI, backend logic, and i18n. (#10573) · feat: Implement `FieldChangedRollback` to revert document updates in … (#10572) · Action types for approval requests, enable field synchronization for … (#10565)
+
+## [0.7.345] - 2026-03-06
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-149: Time tracking improvements (#29) · Update instant tx on server answer (#27)
+* 🐛 BUG FIXES: · Fix workspace update not processing · Fix migration
+
+## [0.7.344] - 2026-03-05
+
+* ⚙️ MISCELLANEOUS TASKS: · Improve stats service + uptrace (#24) · Remove extra context · FUSIO-123 Fixing search (#23) · Added Delete button and Current browser
+* 🐛 BUG FIXES: · Fix docker notification build · Fix tests · Fix extra find · Fix dots · Fix migration · Fix formatting
+* 🚀 FEATURES: · Add directs list · Fnd-11: add chat notify marker
+
+## [0.7.343] - 2026-03-03
+
+* 🐛 BUG FIXES: · Fix duplicate issues because of undefined query match all · Fix account merge and delete source person · FND-4: Issue tracking fixes and improvements
+* 🚀 FEATURES: · Add stats url for notifications service
+
+## [0.7.342] - 2026-02-27
+
+* ⚙️ MISCELLANEOUS TASKS: · Upgrade rush and use node24 locally · Update common/scripts/docker.sh · Do not allow kick last owner (#10559) · Configure who should be able to send invitation link (#10555) · Time service (#10546) · Automation only processes (#10548)
+* 🐛 BUG FIXES: · Fix process middleware (#10568) · Fix tests · Fix default component enablement · Add tag process fixes (#10561) · Worker fixes (#10562) · Fix last messages button (#10558)
+* 🚀 FEATURES: · Action types for approval requests, enable field synchronization for … (#10565) · Add tags to markdown table (#10560) · Add ability to sort projects and hide archived (#10552) · Add translations
+
+## [0.7.341] - 2026-02-25
+
+* 🐛 BUG FIXES: · Fix concurrency · FND-106: Fix losing focus when switching language on ubuntu · Attempts to fix audio lose issues · Fix guest identity to match other social ids · Fix storage path parsing compatibility · Fix backup of wrong social ids
+* ⚙️ MISCELLANEOUS TASKS: · Allow access datalake with path · Allow skip queue for backup-restore · Migrate old collaborators activity · Update kvs and pulse versions (#10539) · Take upstream (#10538) · Show actions button instead of 'Copy all' (#10537)
+* 🚀 FEATURES: · Enable validate only on dev mode · Add ability to group by issues by project (#10531)
+
+## [0.7.339] - 2026-02-21
+
+* 🐛 BUG FIXES: · Fix streaming
+
+## [0.7.337] - 2026-02-20
+
+* 🐛 BUG FIXES: · FND-65: Fix colors in dark theme · Fix formatting · Fix backup clean blobs issue · Fix flacky test · Build fix · Fix date formatting in md table (#10523)
+* ⚙️ MISCELLANEOUS TASKS: · Update front benchmark data · Resolve position conflicts in rooms · Show Google login on mobile devices (#10524)
+* 🚀 FEATURES: · feat: Implement CancelSubProcess action, fix process execution flow. (#10530) · Add br compression · Add guide for macos signing · feat: Implement process import/export functionality, enhance process … (#10528)
+* 🔒 SECURITY: · Update space security and permissions (#10529)
+
+## [0.7.336] - 2026-02-19
+
+* 🐛 BUG FIXES: · Fix compile · Fixes for room office display
+
+## [0.7.335] - 2026-02-18
+
+* 🐛 BUG FIXES: · Fix formatting · Fix office, webhooks and connection's cache · fix: prevent datalake from error flood (#10521)
+
+## [0.7.334] - 2026-02-18
+
+* 🐛 BUG FIXES: · Office fixes
+
+## [0.7.333] - 2026-02-18
+
+* 🐛 BUG FIXES: · Fix participants video
+
+## [0.7.332] - 2026-02-18
+
+* 🐛 BUG FIXES: · Fix svelte-check · Formatting fix · Fix Kanban Milestone selector · Fix type in model · Fixes · Fix guest app flicking
+* 🚀 FEATURES: · Support configurable TTL for webpush's · Add project breadcrumb (#10515) · Support scheduled meetings · Support minified dev deployment (#10512) · feat: Redesign workspace join (#10507) · Add notifications properly
+* ⚙️ MISCELLANEOUS TASKS: · Disable Copy as markdown action for tracker for now · Allow for guests to update notification settings (#10517) · Allow to auto close meeting with guests · Card email notifications (#10509) · Cancel todo action (#10508) · Update todo for meetings
+
+## [0.7.331] - 2026-02-05
+
+* 🐛 BUG FIXES: · Fix milestones display and title presenter · FUSIO-100: Fix Download link and login styling · Fix: show print actions for individual documents (#10484) · Fix card formatting in markdown (#10475) · Fix custom attributes display in original view (#10480) · Fix rows order in relationsheep table compare (#10479)
+* ⚙️ MISCELLANEOUS TASKS: · Remove redundant files · Approve requests (#10486) · Update etc/hosts path for Windows (#10482) · Clean up export translations (#10483) · Improve headers legibility (#10473) · Remove mail URL from export pod (#10476)
+* ⚡ PERFORMANCE: · Stabilize measurement performance tests (#10485)
+* 🚀 FEATURES: · feat: Ability to select multiple docs and to export to pdf (#10468) · Add activity input for controlled docs (#10470) · feat: Add import notifications (#10464) · Enable Turkish language in dev setup (#10462) · feat(ui): add Turkish language to settings popup (#10441) · Add data converter plugin (#10460)
+
 ## [0.7.330] - 2026-01-27
 
 * 🐛 BUG FIXES: · Fix calendar color · Fix relationship table diff/refresh (#10446) · Fix widget bar icons for tabs · Fix download page · Fix custom attributes in markdown table (#10445) · Allow to specify and fix theme
