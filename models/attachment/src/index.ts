@@ -30,6 +30,7 @@ import {
   Prop,
   TypeBlob,
   TypeBoolean,
+  TypeNumber,
   TypeRef,
   TypeString,
   TypeTimestamp,
@@ -60,7 +61,7 @@ export class TAttachment extends TAttachedDoc implements Attachment {
   @Prop(TypeBlob(), attachment.string.File)
     file!: Ref<Blob>
 
-  @Prop(TypeString(), attachment.string.Size)
+  @Prop(TypeNumber(), attachment.string.Size)
     size!: number
 
   @Prop(TypeString(), attachment.string.Type)

@@ -21,7 +21,7 @@
   import workbench from '@hcengineering/workbench'
   import UsagePopup from './UsagePopup.svelte'
 
-  let pollInterval: number | undefined
+  let pollInterval: any
 
   const POLL_INTERVAL_MS = 60 * 60 * 1000 // 1 hour in milliseconds
 

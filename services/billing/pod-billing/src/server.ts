@@ -27,7 +27,8 @@ import {
   handlePushAiTranscriptData,
   handleGetAiTranscriptLastData,
   handlePushAiTokensData,
-  handlePushParticipantSessions
+  handlePushParticipantSessions,
+  handleGetLargestSpaces
 } from './billing'
 import { Config } from './config'
 import { withAdmin, withOwner, withToken } from './middleware'
@@ -145,6 +146,12 @@ export async function createServer (
     wrapRequest(ctx, 'getDatalakeStats', handleGetDatalakeStats)
   )
   app.get('/api/v1/:workspace/stats', withToken, withOwner, wrapRequest(ctx, 'getStats', handleGetStats))
+  app.get(
+    '/api/v1/:workspace/spaces/largest',
+    withToken,
+    withOwner,
+    wrapRequest(ctx, 'getLargestSpaces', handleGetLargestSpaces)
+  )
 
   app.post(
     '/api/v1/ai/transcript',

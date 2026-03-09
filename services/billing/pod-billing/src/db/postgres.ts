@@ -376,24 +376,10 @@ class PostgresDB implements BillingDB {
     start: Date,
     end: Date
   ): Promise<ParticipantDailyUsage[]> {
-    // First get daily minutes totals
-    const minutesQuery = `
-      SELECT
-        DATE_TRUNC('day', joined_at) AS day,
-        COALESCE(SUM(duration_seconds), 0) / 60.0 AS total_minutes
-      FROM billing.livekit_participant_session
-      WHERE
-        workspace = $1
-        AND joined_at >= $2
-        AND joined_at <= $3
-        AND duration_seconds > 0
-      GROUP BY DATE_TRUNC('day', joined_at)
-      ORDER BY day;
-    `
-    // Get max concurrent participants per session, then take the max per day
-    const participantsQuery = `
+    const query = `
       SELECT
         DATE_TRUNC('day', ps.joined_at) AS day,
+        COALESCE(SUM(ps.duration_seconds), 0) / 60.0 AS total_minutes,
         MAX(session_counts.participant_count) AS max_participants
       FROM billing.livekit_participant_session ps
       JOIN (
@@ -402,26 +388,24 @@ class PostgresDB implements BillingDB {
         WHERE workspace = $1 AND joined_at >= $2 AND joined_at <= $3
         GROUP BY workspace, session_id
       ) session_counts ON ps.workspace = session_counts.workspace AND ps.session_id = session_counts.session_id
-      WHERE ps.workspace = $1 AND ps.joined_at >= $2 AND ps.joined_at <= $3
+      WHERE
+        ps.workspace = $1
+        AND ps.joined_at >= $2
+        AND ps.joined_at <= $3
+        AND ps.duration_seconds > 0
       GROUP BY DATE_TRUNC('day', ps.joined_at)
       ORDER BY day;
     `
-    const params = [workspace, start, end]
-    const minutesResult = await this.execute<{ day: string, total_minutes: string }[]>(minutesQuery, params)
-    const participantsResult = await this.execute<{ day: string, max_participants: string }[]>(
-      participantsQuery,
-      params
-    )
+    const result = await this.execute<{ day: string, total_minutes: string, max_participants: string }[]>(query, [
+      workspace,
+      start,
+      end
+    ])
 
-    const participantsMap = new Map<string, number>()
-    for (const row of participantsResult) {
-      participantsMap.set(row.day, Number(row.max_participants ?? 0))
-    }
-
-    return minutesResult.map((row) => ({
+    return result.map((row) => ({
       day: row.day,
       totalMinutes: Math.round(Number(row.total_minutes ?? 0)),
-      maxParticipants: participantsMap.get(row.day) ?? 0
+      maxParticipants: Number(row.max_participants ?? 0)
     }))
   }
 

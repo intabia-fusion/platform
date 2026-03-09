@@ -83,6 +83,13 @@ export interface WorkspaceStats {
 }
 
 /** @public */
+export interface WorkspaceStatsByType {
+  type: string
+  count: number
+  size: number
+}
+
+/** @public */
 export class DatalakeClient {
   private readonly headers: Record<string, string>
 
@@ -103,6 +110,13 @@ export class DatalakeClient {
     const url = new URL(concatLink(this.endpoint, path))
     const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })
     return (await response.json()) as WorkspaceStats
+  }
+
+  async getWorkspaceStatsByType (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<WorkspaceStatsByType[]> {
+    const path = `/stats/${workspace}/by-type`
+    const url = new URL(concatLink(this.endpoint, path))
+    const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })
+    return (await response.json()) as WorkspaceStatsByType[]
   }
 
   async listObjects (

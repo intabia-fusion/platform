@@ -16,7 +16,7 @@
 import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import { type Readable } from 'stream'
 import { S3Bucket } from '../s3'
-import { WorkspaceStatsResult } from './db'
+import { WorkspaceStatsResult, WorkspaceStatsByTypeResult } from './db'
 
 export type Location = 'eu' | 'weur' | 'eeur' | 'wnam' | 'enam' | 'apac'
 
@@ -79,4 +79,5 @@ export interface Datalake {
   selectStorage: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<BlobStorage>
 
   getWorkspaceStats: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<WorkspaceStatsResult>
+  getWorkspaceStatsByType: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<WorkspaceStatsByTypeResult[]>
 }

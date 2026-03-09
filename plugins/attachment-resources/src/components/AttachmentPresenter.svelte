@@ -39,6 +39,7 @@
   export let showPreview = false
   export let preview = false
   export let disabled = false
+  export let showSize = true
 
   const dispatch = createEventDispatcher()
   let permissionsStore: Readable<PermissionsStore> | undefined = undefined
@@ -220,7 +221,7 @@
               </a>
             </div>
             <div class="info-content flex-row-center">
-              {#if value.size != null && value.size !== 0}{filesize(value.size, { spacer: '' })}{/if}
+              {#if value.size != null && value.size !== 0 && showSize}{filesize(value.size, { spacer: '' })}{/if}
               {#if !disabled}
                 <span class="actions inline-flex clear-mins ml-1 gap-1">
                   <span>•</span>
