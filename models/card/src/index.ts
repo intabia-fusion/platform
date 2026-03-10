@@ -1030,7 +1030,8 @@ function defineTabs (builder: Builder): void {
       label: card.string.Children,
       component: card.sectionComponent.ChildrenSection,
       order: 400,
-      navigation: []
+      navigation: [],
+      checkVisibility: card.function.CheckChildrenSectionVisibility
     },
     card.section.Children
   )
