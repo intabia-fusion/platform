@@ -795,10 +795,16 @@ export function reduceCalls<T extends (...args: ReduceParameters<T>) => Promise<
 
 export function isOwnerOrMaintainer (): boolean {
   const account = getCurrentAccount()
+  if (account == null) {
+    return false
+  }
   return hasAccountRole(account, AccountRole.Maintainer)
 }
 
 export function hasAccountRole (acc: Account, targerRole: AccountRole): boolean {
+  if (acc == null) {
+    return false
+  }
   return roleOrder[acc.role] >= roleOrder[targerRole]
 }
 
