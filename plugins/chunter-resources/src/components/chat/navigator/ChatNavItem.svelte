@@ -51,7 +51,7 @@
   let count: number | null = null
   let actions: Action[] = []
 
-  $: notifications = updateNotifications(context, $notificationsByContextStore)
+  $: notifications = getNotifications(context, $notificationsByContextStore)
 
   $: void getNotificationsCount(context, notifications).then((res) => {
     count = res === 0 ? null : res
@@ -61,7 +61,7 @@
     actions = res
   })
 
-  function updateNotifications (
+  function getNotifications (
     context: DocNotifyContext | undefined,
     notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
   ): InboxNotification[] {
