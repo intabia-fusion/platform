@@ -37,7 +37,7 @@ export interface ChatNavGroupModel {
   label?: IntlString
   sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
   wrap: boolean
-  actions?: Action[]
+  actionsFn: () => Action[]
   createAction?: Action
   maxSectionItems?: number
   query: DocumentQuery<Chat>

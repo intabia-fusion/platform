@@ -26,7 +26,7 @@ import { createHash } from 'crypto'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
-type ChatData = Pick<Chat, '_id' | '_class' | 'space'>
+type ChatData = Pick<Chat, '_id' | '_class' | 'space' | 'attachedTo' | 'attachedToClass'>
 
 export class ChunterMiddleware extends BaseMiddleware {
   private readonly hiddenChats = new Map<Ref<Doc>, ChatData[]>()
@@ -59,7 +59,6 @@ export class ChunterMiddleware extends BaseMiddleware {
         const chats = await this.getHiddenChats(n.objectId)
 
         const ttxes = this.getUnhideChatsTx(factory, n.objectId, chats)
-
         if (ttxes.length > 0) {
           await this.context.derived?.tx(ctx, ttxes)
         }
@@ -96,7 +95,7 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       if (_tx._class === core.class.TxUpdateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.Chat)) {
         const updateTx = _tx as TxUpdateDoc<Chat>
-        if (updateTx.attachedTo == null) {
+        if (updateTx.attachedTo == null || updateTx.attachedToClass == null) {
           this.throwForbidden()
           continue
         }
@@ -108,7 +107,9 @@ export class ChunterMiddleware extends BaseMiddleware {
             current.push({
               _id: updateTx.objectId,
               _class: updateTx.objectClass,
-              space: updateTx.objectSpace as Ref<PersonSpace>
+              space: updateTx.objectSpace as Ref<PersonSpace>,
+              attachedTo: updateTx.attachedTo,
+              attachedToClass: updateTx.attachedToClass
             })
           }
         } else if (hidden === false) {
@@ -125,9 +126,12 @@ export class ChunterMiddleware extends BaseMiddleware {
     return await this.provideTx(ctx, txes)
   }
 
-  private getUnhideChatsTx (factory: TxFactory, doc: Ref<Doc>, chats: ChatData[]): Tx[] {
-    this.hiddenChats.set(doc, [])
-    return chats.map((chat) => factory.createTxUpdateDoc(chat._class, chat.space, chat._id, { hidden: false }))
+  private getUnhideChatsTx (factory: TxFactory, attachedTo: Ref<Doc>, chats: ChatData[]): Tx[] {
+    this.hiddenChats.set(attachedTo, [])
+    return chats.map((chat) => {
+      const updateTx = factory.createTxUpdateDoc(chat._class, chat.space, chat._id, { hidden: false })
+      return factory.createTxCollectionCUD(chat.attachedToClass, chat.attachedTo, chat.space, 'chats', updateTx)
+    })
   }
 
   private async getHiddenChats (doc: Ref<Doc>): Promise<ChatData[]> {
