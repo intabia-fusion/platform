@@ -63,6 +63,17 @@ export const currentVideoRecording = derived(
   }
 )
 
+export const isCancellingVideoRecording = derived(
+  [pendingRecordings, currentMeetingMinutes],
+  ([pending, currentMeeting]) => {
+    if (currentMeeting == null) {
+      return false
+    }
+    const videoRec = pending.find((it) => it.format === 'video' && it.attachedTo === currentMeeting._id)
+    return videoRec?.status === 'cancelled'
+  }
+)
+
 export const floors = writable<Floor[]>([])
 export const selectedFloor = writable<Ref<Floor> | undefined>(undefined)
 export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, myOffice]) => {

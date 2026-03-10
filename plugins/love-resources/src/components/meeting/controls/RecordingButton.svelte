@@ -17,23 +17,27 @@
   import { isRecording, isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'
-  import { currentMeetingMinutes, currentVideoRecording } from '../../../stores'
+  import { currentMeetingMinutes, currentVideoRecording, isCancellingVideoRecording } from '../../../stores'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
 
   $: isVideoRecording = $isRecording && $currentVideoRecording !== undefined
+  $: isStopping = $isCancellingVideoRecording
 </script>
 
 {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && $isRecordingAvailable && $currentMeetingMinutes !== undefined}
   <ModernButton
     icon={isVideoRecording ? love.icon.StopRecord : love.icon.Record}
-    tooltip={{ label: isVideoRecording ? love.string.StopRecord : love.string.Record }}
-    disabled={!$lkSessionConnected}
+    tooltip={{
+      label: isStopping ? love.string.StoppingRecord : isVideoRecording ? love.string.StopRecord : love.string.Record
+    }}
+    disabled={!$lkSessionConnected || isStopping}
+    loading={isStopping}
     {kind}
     {size}
     on:click={() => {
-      if ($currentMeetingMinutes !== undefined) {
+      if ($currentMeetingMinutes !== undefined && !isStopping) {
         void loveClient.record($currentMeetingMinutes)
       }
     }}
