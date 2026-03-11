@@ -459,6 +459,17 @@ export function createModel (builder: Builder): void {
               baseQuery: {
                 role: 'GUEST'
               },
+              defaultConfig: [
+                { key: '', props: { showStatus: true } },
+                'city',
+                'attachments',
+                'modifiedOn',
+                {
+                  key: '$lookup.channels',
+                  label: contact.string.ContactInfo,
+                  sortingKey: ['$lookup.channels.lastMessage', 'channels']
+                }
+              ],
               createLabel: contact.string.Guest,
               createComponent: contact.component.CreateGuest
             }
