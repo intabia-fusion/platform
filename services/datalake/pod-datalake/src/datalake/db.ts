@@ -81,6 +81,12 @@ export interface WorkspaceStatsResult {
   size: number
 }
 
+export interface WorkspaceStatsByTypeResult {
+  type: string
+  count: number
+  size: number
+}
+
 export async function createDb (ctx: MeasureContext, connectionString: string): Promise<BlobDB> {
   const sql = postgres(connectionString, {
     max: 5,
@@ -121,6 +127,7 @@ export interface BlobDB {
   deleteBlobList: (ctx: MeasureContext, list: BlobIds) => Promise<void>
   getStats: (ctx: MeasureContext) => Promise<StatsResult>
   getWorkspaceStats: (ctx: MeasureContext, workspace: string) => Promise<WorkspaceStatsResult>
+  getWorkspaceStatsByType: (ctx: MeasureContext, workspace: string) => Promise<WorkspaceStatsByTypeResult[]>
 }
 
 export class PostgresDB implements BlobDB {
@@ -428,6 +435,47 @@ export class PostgresDB implements BlobDB {
       size: parseInt(stats.size ?? 0)
     }
   }
+
+  async getWorkspaceStatsByType (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsByTypeResult[]> {
+    const rows = await this.execute(
+      `
+      SELECT
+        CASE
+          WHEN d.type LIKE 'image/%' THEN 'image'
+          WHEN d.type LIKE 'video/%' THEN 'video'
+          WHEN d.type LIKE 'audio/%' THEN 'audio'
+          WHEN d.type = 'application/pdf'
+            OR d.type = 'application/ydoc'
+            OR d.type LIKE 'text/%'
+            OR d.type = 'application/msword'
+            OR d.type LIKE 'application/vnd.openxmlformats-officedocument%'
+            THEN 'document'
+          WHEN d.type = 'application/zip'
+            OR d.type = 'application/x-compressed'
+            OR d.type = 'application/x-zip-compressed'
+            OR d.type = 'application/gzip'
+            OR d.type = 'application/x-tar'
+            OR d.type = 'application/x-rar-compressed'
+            OR d.type = 'application/x-7z-compressed'
+            THEN 'archive'
+          ELSE 'other'
+        END AS type,
+        count(1) AS count,
+        sum(d.size) AS size
+      FROM blob.blob b
+      JOIN blob.data AS d ON b.hash = d.hash AND b.location = d.location
+      WHERE workspace = $1 AND deleted_at IS NULL
+      GROUP BY 1
+    `,
+      [workspace]
+    )
+
+    return rows.map((row: Row) => ({
+      type: row.type as string,
+      count: parseInt(row.count ?? 0),
+      size: parseInt(row.size ?? 0)
+    }))
+  }
 }
 
 export class RetryDB implements BlobDB {
@@ -486,6 +534,10 @@ export class RetryDB implements BlobDB {
 
   async getWorkspaceStats (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsResult> {
     return await retry(() => this.db.getWorkspaceStats(ctx, workspace), this.options)
+  }
+
+  async getWorkspaceStatsByType (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsByTypeResult[]> {
+    return await retry(() => this.db.getWorkspaceStatsByType(ctx, workspace), this.options)
   }
 }
 
@@ -557,6 +609,16 @@ export class LoggedDB implements BlobDB {
   async getWorkspaceStats (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsResult> {
     const params = { workspace }
     return await ctx.with('db.getWorkspaceStats', {}, () => this.db.getWorkspaceStats(this.ctx, workspace), params)
+  }
+
+  async getWorkspaceStatsByType (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsByTypeResult[]> {
+    const params = { workspace }
+    return await ctx.with(
+      'db.getWorkspaceStatsByType',
+      {},
+      () => this.db.getWorkspaceStatsByType(this.ctx, workspace),
+      params
+    )
   }
 }
 

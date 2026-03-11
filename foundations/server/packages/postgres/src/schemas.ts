@@ -118,6 +118,35 @@ const chatSchema: Schema = {
   }
 }
 
+const attachmentSchema: Schema = {
+  ...baseSchema,
+  attachedTo: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  attachedToClass: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  size: {
+    type: 'bigint',
+    notNull: true,
+    index: true
+  },
+  type: {
+    type: 'text',
+    notNull: true,
+    index: true
+  },
+  file: {
+    type: 'text',
+    notNull: true,
+    index: true
+  }
+}
+
 const spaceSchema: Schema = {
   ...baseSchema,
   private: {
@@ -371,7 +400,8 @@ export const domainSchemas: Record<string, Schema> = {
   [DOMAIN_RELATION]: relationSchema,
   [DOMAIN_COLLABORATOR]: collaboratorSchema,
   [translateDomain('chunter_doc')]: chatSchema,
-  kanban: defaultSchema
+  kanban: defaultSchema,
+  [translateDomain('attachment')]: attachmentSchema
 }
 
 export function getSchema (domain: string): Schema {

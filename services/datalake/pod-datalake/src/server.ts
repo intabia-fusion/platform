@@ -56,7 +56,8 @@ import {
   handleS3CreateBlobParams,
   handleUploadFormData,
   handleBlobSetParent,
-  handleWorkspaceStats
+  handleWorkspaceStats,
+  handleWorkspaceStatsByType
 } from './handlers'
 import { Datalake, Location } from './datalake'
 import { DatalakeImpl } from './datalake/datalake'
@@ -162,6 +163,13 @@ export async function createServer (
     withAdminAuthorization,
     withWorkspace,
     wrapRequest(ctx, 'workspaceStats', handleWorkspaceStats)
+  )
+
+  app.get(
+    '/stats/:workspace/by-type',
+    withAdminAuthorization,
+    withWorkspace,
+    wrapRequest(ctx, 'workspaceStatsByType', handleWorkspaceStatsByType)
   )
 
   app.get('/blob/:workspace', withAdminAuthorization, withWorkspace, wrapRequest(ctx, 'listBlobs', handleBlobList))

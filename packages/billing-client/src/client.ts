@@ -5,6 +5,7 @@ import {
   AiTranscriptData,
   BillingStats,
   DatalakeStats,
+  LargestSpaceInfo,
   LiveKitEgressData,
   LiveKitEgressStats,
   LiveKitParticipantSessionData,
@@ -115,6 +116,13 @@ export class BillingClient {
     const body = JSON.stringify(data)
 
     await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
+  }
+
+  async getLargestSpaces (workspace: WorkspaceUuid): Promise<LargestSpaceInfo[]> {
+    const path = `/api/v1/${workspace}/spaces/largest`
+    const url = new URL(concatLink(this.endpoint, path))
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as LargestSpaceInfo[]
   }
 }
 

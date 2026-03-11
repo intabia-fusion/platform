@@ -36,6 +36,7 @@
   import Subscriptions from './Subscriptions.svelte'
 
   import plugin from '../plugin'
+  import LargestSpaces from './LargestSpaces.svelte'
 
   interface SettingGroup {
     key: string
@@ -56,6 +57,12 @@
       icon: plugin.icon.Billing,
       label: plugin.string.ResourceUsage,
       component: ResourceUsage
+    },
+    {
+      key: 'files',
+      icon: plugin.icon.Billing,
+      label: plugin.string.LargestSpaces,
+      component: LargestSpaces
     }
   ]
 

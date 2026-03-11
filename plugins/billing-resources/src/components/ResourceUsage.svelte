@@ -16,6 +16,7 @@
   import { Loading, Scroller, formatDuration, formatNumberCompact, themeStore } from '@hcengineering/ui'
   import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import billingPlugin from '@hcengineering/billing'
+  import type { DatalakeStatsByType } from '@hcengineering/billing-client'
   import love from '@hcengineering/love'
   import view from '@hcengineering/view'
   import filesize from 'filesize'
@@ -23,38 +24,37 @@
   import drivePlugin from '@hcengineering/drive'
   import Category from './Category.svelte'
   import ChartCard from './ChartCard.svelte'
-  import { getBillingClient } from '../utils'
+  import StorageBreakdown from './StorageBreakdown.svelte'
+  import { getBillingClient, calculateLimits } from '../utils'
+  import { subscriptionStore } from '../stores/subscription'
 
   const billingClient = getBillingClient()
 
   let totalDatalakeSize = 0
   let totalDatalakeCount = 0
-  let totalSessionsDuration = 0
   let totalEgressDuration = 0
   let egressDurationByDay: { date: number, value: number }[] = []
   let totalTranscriptDuration = 0
   let totalTokensCount = 0
   let totalMeetingMinutes = 0
-  let totalTranscriptionMinutes = 0
   let maxParticipants = 0
   let meetingMinutesByDay: { date: number, value: number }[] = []
   let transcriptByDay: { date: number, value: number }[] = []
+  let datalakeByType: DatalakeStatsByType[] = []
 
   async function loadBillingData (): Promise<void> {
     if (billingClient == null) return
     const billingStats = await billingClient.getBillingStats(getCurrentWorkspaceUuid())
     totalDatalakeSize = billingStats.datalakeStats.size
     totalDatalakeCount = billingStats.datalakeStats.count
-    totalSessionsDuration = billingStats.liveKitStats.sessions.reduce((sum, s) => sum + s.minutes, 0) * 60000
+    datalakeByType = billingStats.datalakeStats.byType ?? []
     totalEgressDuration = billingStats.liveKitStats.egress.reduce((sum, e) => sum + e.minutes, 0) * 60000
     totalTranscriptDuration = billingStats.aiStats.transcript.totalDurationSeconds * 1000
     totalTokensCount = billingStats.aiStats.tokens.reduce((sum, s) => sum + s.totalTokens, 0)
 
     // Participant daily stats
     const participantDaily = billingStats.participantDailyStats ?? []
-    const transcriptionDaily = billingStats.transcriptDailyStats ?? []
     totalMeetingMinutes = participantDaily.reduce((sum, d) => sum + d.totalMinutes, 0)
-    totalTranscriptionMinutes = Math.round(transcriptionDaily.reduce((sum, d) => sum + d.totalDurationSeconds, 0) / 60)
     maxParticipants = participantDaily.reduce((max, d) => Math.max(max, d.maxParticipants), 0)
 
     meetingMinutesByDay = participantDaily.map((d) => {
@@ -89,6 +89,13 @@
           <StatsCard label={billingPlugin.string.DriveSize} text={filesize(totalDatalakeSize, { spacer: ' ' })} />
           <StatsCard label={billingPlugin.string.DriveCount} text={totalDatalakeCount.toString()} />
         </div>
+        {#if datalakeByType.length > 0}
+          <StorageBreakdown
+            byType={datalakeByType}
+            totalSize={totalDatalakeSize}
+            limit={calculateLimits($subscriptionStore.currentTier).storageLimit}
+          />
+        {/if}
       </Category>
       <Category icon={view.icon.AiStar} label={billingPlugin.string.AI}>
         <div class="row">

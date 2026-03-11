@@ -14,7 +14,8 @@
 //
 
 import type { Request, Response } from 'express'
-import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, Ref, Space, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import attachment from '@hcengineering/attachment'
 import {
   LiveKitSessionData,
   BillingDB,
@@ -26,8 +27,9 @@ import {
 } from './types'
 import { generateToken } from '@hcengineering/server-token'
 import { StorageConfig } from '@hcengineering/server-core'
-import { createDatalakeClient, DatalakeConfig, WorkspaceStats } from '@hcengineering/datalake'
+import { createDatalakeClient, DatalakeConfig, WorkspaceStats, WorkspaceStatsByType } from '@hcengineering/datalake'
 import { validate as uuidValidate } from 'uuid'
+import { getClient } from './client'
 
 export async function handleListLiveKitSessions (
   ctx: MeasureContext,
@@ -188,27 +190,88 @@ export async function handlePushAiTokensData (
   res.status(204).send()
 }
 
+export interface LargestSpaceResult {
+  spaceId: Ref<Space>
+  size: number
+}
+
+export async function handleGetLargestSpaces (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const workspace = getWorkspaceUuid(req)
+  const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+
+  const client = await getClient(token, workspace)
+
+  const attachments = await client.findAll(attachment.class.Attachment, {}, { projection: { space: 1, size: 1 } })
+
+  const spaceSizes = new Map<Ref<Space>, number>()
+
+  for (const att of attachments) {
+    if (att.space != null && att.size != null) {
+      const currentSize = spaceSizes.get(att.space) ?? 0
+      spaceSizes.set(att.space, currentSize + att.size)
+    }
+  }
+
+  const limit = 10
+  const sortedSpaces: LargestSpaceResult[] = Array.from(spaceSizes.entries())
+    .map(([spaceId, size]) => ({ spaceId, size }))
+    .sort((a, b) => b.size - a.size)
+    .slice(0, limit)
+
+  res.status(200).json(sortedSpaces)
+}
+
 export async function collectDatalakeStats (
   ctx: MeasureContext,
   workspace: WorkspaceUuid,
   storageConfigs: StorageConfig[]
-): Promise<WorkspaceStats> {
-  const result = {
+): Promise<WorkspaceStats & { byType: WorkspaceStatsByType[] }> {
+  const result: WorkspaceStats & { byType: WorkspaceStatsByType[] } = {
     count: 0,
-    size: 0
+    size: 0,
+    byType: []
   }
 
   const token = generateToken(systemAccountUuid, undefined, { service: 'billing' })
+
+  const byTypeMap = new Map<string, { count: number, size: number }>()
 
   for (const storageConfig of storageConfigs) {
     if (storageConfig.kind !== 'datalake') {
       continue
     }
     const client = createDatalakeClient(storageConfig as DatalakeConfig, token)
-    const storageStats = await client.getWorkspaceStats(ctx, workspace)
+
+    const [storageStats, statsByType] = await Promise.all([
+      client.getWorkspaceStats(ctx, workspace),
+      client.getWorkspaceStatsByType(ctx, workspace)
+    ])
+
     result.count += storageStats.count
     result.size += storageStats.size
+
+    for (const entry of statsByType) {
+      const existing = byTypeMap.get(entry.type)
+      if (existing !== undefined) {
+        existing.count += entry.count
+        existing.size += entry.size
+      } else {
+        byTypeMap.set(entry.type, { count: entry.count, size: entry.size })
+      }
+    }
   }
+
+  result.byType = Array.from(byTypeMap.entries()).map(([type, stats]) => ({
+    type,
+    count: stats.count,
+    size: stats.size
+  }))
 
   return result
 }

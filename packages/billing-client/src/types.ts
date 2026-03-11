@@ -22,6 +22,13 @@ export interface TranscriptDailyStats {
 export interface DatalakeStats {
   count: number
   size: number
+  byType: DatalakeStatsByType[]
+}
+
+export interface DatalakeStatsByType {
+  type: string
+  count: number
+  size: number
 }
 
 export interface LiveKitStats {
@@ -97,4 +104,9 @@ export interface AiTokensData {
   reason: string
   tokens: number
   date: string
+}
+
+export interface LargestSpaceInfo {
+  spaceId: string
+  size: number
 }

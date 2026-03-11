@@ -59,7 +59,7 @@
   let pollingCheckoutId: string | null = null
   let isPolling = false
   let pollAttempts = 0
-  let pollTimer: number | undefined
+  let pollTimer: any
   let isUpdating = false
   let isCanceling = false
   let isUncanceling = false
