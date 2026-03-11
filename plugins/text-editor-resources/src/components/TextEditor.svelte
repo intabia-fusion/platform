@@ -123,26 +123,6 @@
   let focused = false
   let posFocus: FocusPosition | undefined = undefined
 
-  // Saved selection range to restore after iBus focus loss
-  let savedRange: Range | null = null
-
-  function saveSelectionRange (): void {
-    const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      savedRange = sel.getRangeAt(0).cloneRange()
-    }
-  }
-
-  function restoreSelectionRange (): void {
-    if (savedRange !== null) {
-      const sel = window.getSelection()
-      if (sel) {
-        sel.removeAllRanges()
-        sel.addRange(savedRange)
-      }
-    }
-  }
-
   export function focus (position?: FocusPosition): void {
     posFocus = position
     needFocus = true
@@ -197,33 +177,10 @@
       onTransaction: () => {
         // force re-render so `editor.isActive` works as expected
         editor = editor
-        // Save selection on every transaction so we always have a fresh range
-        saveSelectionRange()
       },
-      onBlur: ({ event }) => {
-        // On Linux/Ubuntu, iBus/fcitx intercepts focus when switching keyboard layout.
-        // In that case relatedTarget is null and focus lands on document.body.
-        // We detect this and restore focus + selection after a short timeout.
-        const relatedTarget = event.relatedTarget as Node | null
-        const isFocusLostToSystem = relatedTarget === null || relatedTarget === document.body
-
-        if (isFocusLostToSystem) {
-          setTimeout(() => {
-            // Only restore if nothing meaningful grabbed focus in the meantime
-            if (document.activeElement === document.body || document.activeElement === null) {
-              focused = true
-              editor.commands.focus()
-              restoreSelectionRange()
-              // Do NOT dispatch 'blur' — from the app's perspective focus never left
-            }
-          }, 0)
-          // Tentatively mark as not focused; will be corrected above if iBus was the cause
-          focused = false
-        } else {
-          // Normal blur — focus moved to another real element
-          focused = false
-          dispatch('blur')
-        }
+      onBlur: () => {
+        focused = false
+        dispatch('blur')
       },
       onFocus: () => {
         focused = true
