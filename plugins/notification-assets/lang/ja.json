@@ -69,6 +69,8 @@
     "Clear": "クリア",
     "YouAddedAsCollaborator": "コラボレーターに追加されました",
     "YouRemovedFromCollaborators": "コラボレーターから削除されました",
+    "AddMeInCollaborators": "共同編集者に追加されました",
+    "RemoveMeFromCollaborators": "共同編集者から削除されました",
     "AllNotifications": "すべての通知",
     "JustMentions": "メンションのみ",
     "Mute": "ミュート"

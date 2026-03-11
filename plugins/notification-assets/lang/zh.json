@@ -69,6 +69,8 @@
     "Clear": "清除",
     "YouAddedAsCollaborator": "您已被添加为合作者",
     "YouRemovedFromCollaborators": "您已被移除为合作者",
+    "AddMeInCollaborators": "我被添加为协作者",
+    "RemoveMeFromCollaborators": "我被移出协作者",
     "AllNotifications": "所有通知",
     "JustMentions": "仅提及",
     "Mute": "静音"

@@ -69,6 +69,8 @@
     "Clear": "Cancella",
     "YouAddedAsCollaborator": "Sei stato aggiunto come collaboratore",
     "YouRemovedFromCollaborators": "Sei stato rimosso dai collaboratori",
+    "AddMeInCollaborators": "Sono stato aggiunto come collaboratore",
+    "RemoveMeFromCollaborators": "Sono stato rimosso dai collaboratori",
     "AllNotifications": "Tutte le notifiche",
     "JustMentions": "Solo menzioni",
     "Mute": "Silenzia"

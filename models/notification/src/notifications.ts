@@ -22,14 +22,14 @@ export function defineNotifications (builder: Builder): void {
     notification.class.MessageNotificationType,
     core.space.Model,
     {
-      hidden: true,
+      hidden: false,
       generated: false,
-      label: core.string.Collaborators,
+      label: notification.string.AddMeInCollaborators,
       group: notification.ids.NotificationGroup,
       messageClass: activity.class.DocUpdateMessage,
       objectClass: core.class.Collaborator,
       attachedToClass: core.class.Doc,
-      defaultEnabled: true,
+      defaultEnabled: false,
       isMention: true,
       match: {
         action: 'create'
@@ -49,14 +49,14 @@ export function defineNotifications (builder: Builder): void {
     notification.class.MessageNotificationType,
     core.space.Model,
     {
-      hidden: true,
+      hidden: false,
       generated: false,
-      label: core.string.Collaborators,
+      label: notification.string.RemoveMeFromCollaborators,
       group: notification.ids.NotificationGroup,
       messageClass: activity.class.DocUpdateMessage,
       objectClass: core.class.Collaborator,
       attachedToClass: core.class.Doc,
-      defaultEnabled: true,
+      defaultEnabled: false,
       isMention: true,
       match: {
         action: 'remove'
@@ -94,6 +94,33 @@ export function defineNotifications (builder: Builder): void {
     },
     notification.ids.MentionNotificationType
   )
+
+  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+    provider: notification.providers.InboxNotificationProvider,
+    ignoredTypes: [],
+    enabledTypes: [
+      notification.ids.MeAddedInCollaboratorsNotification,
+      notification.ids.MeRemovedFromCollaboratorsNotification
+    ]
+  })
+
+  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+    provider: notification.providers.PushNotificationProvider,
+    ignoredTypes: [],
+    enabledTypes: [
+      notification.ids.MeAddedInCollaboratorsNotification,
+      notification.ids.MeRemovedFromCollaboratorsNotification
+    ]
+  })
+
+  builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
+    provider: notification.providers.SoundNotificationProvider,
+    ignoredTypes: [],
+    enabledTypes: [
+      notification.ids.MeAddedInCollaboratorsNotification,
+      notification.ids.MeRemovedFromCollaboratorsNotification
+    ]
+  })
 }
 
 export function generateClassNotificationTypes (
