@@ -16,7 +16,9 @@
       "Bash(npx tsc:*)",
       "Bash(bash benchmarks/run_benchmark.sh:*)",
       "Bash(npx jest:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker compose:*)"
     ]
   },
   "outputStyle": "default"

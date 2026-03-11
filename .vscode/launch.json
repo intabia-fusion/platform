@@ -797,8 +797,8 @@
         "QUEUE_CONFIG": "huly.local:19092",
         "OPENAI_API_KEY": "changeme",
         "OPENAI_BASE_URL": "http://localhost:1234/v1",
-        "OPENAI_MODEL": "openai/gpt-oss-20b",
-        "LLM_PROVIDER": "server", // "gigachat", // "openai" | "gigachat"
+        "OPENAI_MODEL": "qwen/qwen3.5-9b",
+        "LLM_PROVIDER": "openai",
         "GIGACHAT_CREDENTIALS": "${GIGACHAT_AUTH_KEY}",
         "GIGACHAT_SCOPE": "GIGACHAT_API_PERS",
         "GIGACHAT_MODEL": "GigaChat-2",

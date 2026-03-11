@@ -14,6 +14,7 @@
 //
 import {
   AIEventRequest,
+  aiBotEmailSocialKey,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
   IdentityResponse
@@ -26,7 +27,8 @@ import contact, {
   ensureEmployee,
   getFirstName,
   getLastName,
-  Person
+  Person,
+  SocialIdentity
 } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -118,7 +120,73 @@ export class WorkspaceClient {
     await ensureEmployee(this.ctx, me, client, this.socialIds, async () => await getGlobalPerson(this.token))
   }
 
+  /**
+   * Remove duplicate AI bot Person records that were left after workspace backup/restore.
+   * Finds all SocialIdentity with aiBotEmailSocialKey, keeps only the Person matching
+   * current personUuid, and removes the rest along with their SocialIdentities.
+   */
+  private async cleanupDuplicatePersons (client: RestClient): Promise<void> {
+    try {
+      const aiSocialIdentities = await client.findAll<SocialIdentity>(contact.class.SocialIdentity, {
+        key: aiBotEmailSocialKey
+      })
+
+      if (aiSocialIdentities.length <= 1) {
+        return
+      }
+
+      const personIds = new Set(aiSocialIdentities.map((si) => si.attachedTo))
+      const persons = await client.findAll(contact.class.Person, {
+        _id: { $in: Array.from(personIds) }
+      })
+
+      const duplicatePersons = persons.filter((p) => p.personUuid !== this.personUuid)
+
+      if (duplicatePersons.length === 0) {
+        return
+      }
+
+      this.ctx.info('Cleaning up duplicate AI bot persons', {
+        workspace: this.wsIds.uuid,
+        duplicates: duplicatePersons.length,
+        keepPersonUuid: this.personUuid
+      })
+
+      const duplicatePersonIds = new Set(duplicatePersons.map((p) => p._id))
+
+      // Remove SocialIdentities attached to duplicate persons
+      for (const si of aiSocialIdentities) {
+        if (duplicatePersonIds.has(si.attachedTo)) {
+          await client.remove(si)
+        }
+      }
+
+      // Remove all SocialIdentities for duplicate persons (not just email ones)
+      for (const personId of duplicatePersonIds) {
+        const allSocialIds = await client.findAll<SocialIdentity>(contact.class.SocialIdentity, {
+          attachedTo: personId
+        })
+        for (const si of allSocialIds) {
+          await client.remove(si)
+        }
+      }
+
+      // Remove duplicate Person documents
+      for (const person of duplicatePersons) {
+        await client.remove(person)
+        this.ctx.info('Removed duplicate AI bot person', {
+          personId: person._id,
+          personUuid: person.personUuid,
+          name: person.name
+        })
+      }
+    } catch (err: any) {
+      this.ctx.error('Failed to cleanup duplicate AI bot persons', { err })
+    }
+  }
+
   private async initClient (): Promise<void> {
+    await this.cleanupDuplicatePersons(this.client)
     await this.ensureEmployee(this.client)
     await this.checkEmployeeInfo(this.client)
 

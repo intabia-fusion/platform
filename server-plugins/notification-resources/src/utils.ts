@@ -254,7 +254,7 @@ export async function getContentByTemplate (
   }
 
   const inboxLink = await getNotificationInboxLink(control, doc, message?._id)
-  const app = control.branding?.title ?? 'Huly'
+  const app = control.branding?.title ?? 'Platform'
 
   const inboxLinkText = await translate(notification.string.ViewIn, { app })
 
