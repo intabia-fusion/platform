@@ -3,9 +3,10 @@
   import notification, { type PushSubscription, type PushSubscriptionSetting } from '@hcengineering/notification'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import ModernToggle from '@hcengineering/ui/src/components/ModernToggle.svelte'
-  import { Button, Label, showPopup, getCurrentLocation } from '@hcengineering/ui'
+  import { Button, Label, showPopup, getCurrentLocation, tooltip } from '@hcengineering/ui'
   import { subscribePush, parseUserAgent } from '../../utils'
   import { onMount } from 'svelte'
+  import { getMetadata } from '@hcengineering/platform'
 
   let subscriptions: PushSubscription[] = []
   let settings: PushSubscriptionSetting[] = []
@@ -54,9 +55,9 @@
       MessageBox,
       {
         label: notification.string.Value,
-        labelProps: { value: parseUserAgent(sub.name as string) },
+        labelProps: { value: sub.name !== undefined ? parseUserAgent(sub.name) : '' },
         message: notification.string.WebpushRemoveConfirm,
-        params: { title: parseUserAgent(sub.name as string) },
+        params: { title: sub.name !== undefined ? parseUserAgent(sub.name) : '' },
         richMessage: true,
         dangerous: true,
         action: async () => {
@@ -73,20 +74,63 @@
 
   let currentEndpoint: string | undefined = undefined
 
-  onMount(async () => {
+  async function updateCurrentEndpoint (): Promise<void> {
     const loc = getCurrentLocation()
     const registration = await navigator.serviceWorker.getRegistration(`/${loc.path[0]}/${loc.path[1]}`)
     if (registration !== undefined) {
       const current = await registration.pushManager.getSubscription()
       currentEndpoint = current?.endpoint
     }
+  }
+
+  onMount(async () => {
+    if (!('serviceWorker' in navigator)) {
+      return
+    }
+    await updateCurrentEndpoint()
   })
 
   $: alreadySubscribed = currentEndpoint !== undefined && subscriptions.some((s) => s.endpoint === currentEndpoint)
+
+  async function subscribe (): Promise<void> {
+    const isSubscribed = await subscribePush()
+    if (isSubscribed) {
+      await updateCurrentEndpoint()
+    } else {
+      showPopup(MessageBox, {
+        label: notification.string.PushSubscribeError,
+        message: notification.string.PushSubscribeErrorMessage,
+        canSubmit: false
+      })
+    }
+  }
+
+  $: publicKey = getMetadata(notification.metadata.PushPublicKey)
+  $: browserSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+  $: permissionDenied = 'Notification' in window && Notification.permission === 'denied'
+
+  $: disabledReason = alreadySubscribed
+    ? notification.string.AlreadySubscribed
+    : publicKey === undefined
+      ? notification.string.PushNotConfigured
+      : !browserSupported
+          ? notification.string.PushNotSupported
+          : permissionDenied
+            ? notification.string.PushDenied
+            : undefined
+
+  $: buttonDisabled = alreadySubscribed || publicKey === undefined || !browserSupported
 </script>
 
 <div class="flex mb-4">
-  <Button kind="primary" disabled={alreadySubscribed} label={notification.string.Subscribe} on:click={subscribePush} />
+  <div use:tooltip={{ label: disabledReason }}>
+    <Button
+      kind="primary"
+      disabled={buttonDisabled}
+      label={notification.string.Subscribe}
+      on:click={() => subscribe()}
+    />
+  </div>
 </div>
 <div class="flex-col flex-gap-4">
   {#each subscriptions as subscription (subscription._id)}
@@ -100,7 +144,7 @@
               <Label label={notification.string.UnknownDevice} />
             {/if}
           </span>
-          {#if subscription.name === navigator.userAgent}(<Label label={notification.string.Current} />){/if}
+          {#if subscription.endpoint === currentEndpoint}(<Label label={notification.string.Current} />){/if}
         </span>
         <span class="description">{new Date(subscription.createdOn ?? 0).toLocaleDateString()}</span>
       </div>

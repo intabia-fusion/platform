@@ -57,6 +57,12 @@
     "WebpushRemoveConfirm": "The webpushes will be deleted. Confirm?",
     "Value": "{value}",
     "Current": "current",
+    "AlreadySubscribed": "This device is already subscribed to notifications",
+    "PushNotConfigured": "Push notifications are not configured on the server",
+    "PushNotSupported": "Your browser does not support push notifications",
+    "PushDenied": "Allow notifications in your browser settings",
+    "PushSubscribeError": "Error",
+    "PushSubscribeErrorMessage": "Failed to subscribe to notifications",
     "Subscribe": "Subscribe",
     "InboxNotificationsDescription": "Receive personal notifications in your Huly inbox.",
     "PushNotificationsDescription": "Receive personal notifications on desktop.",
@@ -73,7 +79,6 @@
     "RemoveMeFromCollaborators": "I was removed from collaborators",
     "AllNotifications": "All notifications",
     "JustMentions": "Just mentions",
-    "Mute": "Mute",
-    "EditNotifications": "Edit notifications"
+    "Mute": "Mute"
   }
 }
