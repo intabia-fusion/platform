@@ -192,9 +192,7 @@
       if (aIsCollection && !bIsCollection) return 1
       if (!aIsCollection && bIsCollection) return -1
 
-      const aLabel = a.label.split(':').pop() ?? a.label
-      const bLabel = b.label.split(':').pop() ?? b.label
-      return aLabel.toLocaleLowerCase().localeCompare(bLabel.toLocaleLowerCase())
+      return a.label.toLocaleLowerCase().localeCompare(b.label.toLocaleLowerCase())
     })
   }
 </script>

@@ -69,6 +69,8 @@
     "Clear": "Temizle",
     "YouAddedAsCollaborator": "İşbirlikçi olarak eklendiniz",
     "YouRemovedFromCollaborators": "İşbirlikçilerden kaldırıldınız",
+    "AddMeInCollaborators": "Katkıcı olarak eklendim",
+    "RemoveMeFromCollaborators": "Katkıcılar arasından çıkarıldım",
     "AllNotifications": "Tüm bildirimler",
     "JustMentions": "Sadece bahsetmeler",
     "Mute": "Sessize al"

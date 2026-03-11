@@ -69,6 +69,8 @@
     "Clear": "Löschen",
     "YouAddedAsCollaborator": "Sie wurden als Mitwirkender hinzugefügt",
     "YouRemovedFromCollaborators": "Sie wurden als Mitwirkender entfernt",
+    "AddMeInCollaborators": "Ich wurde als Mitwirkender hinzugefügt",
+    "RemoveMeFromCollaborators": "Ich wurde aus den Mitwirkenden entfernt",
     "AllNotifications": "Alle Benachrichtigungen",
     "JustMentions": "Nur Erwähnungen",
     "Mute": "Stummschalten"

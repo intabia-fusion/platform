@@ -477,7 +477,9 @@ const notification = plugin(notificationId, {
     AllNotifications: '' as IntlString,
     JustMentions: '' as IntlString,
     Mute: '' as IntlString,
-    EditNotifications: '' as IntlString
+    EditNotifications: '' as IntlString,
+    AddMeInCollaborators: '' as IntlString,
+    RemoveMeFromCollaborators: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,

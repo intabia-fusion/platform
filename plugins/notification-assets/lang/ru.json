@@ -71,6 +71,8 @@
     "YouRemovedFromCollaborators": "Вы были удалены из участников",
     "AllNotifications": "Все уведомления",
     "JustMentions": "Только упоминания",
-    "Mute": "Отключить"
+    "Mute": "Отключить",
+    "AddMeInCollaborators": "Меня добавили в участники",
+    "RemoveMeFromCollaborators": "Меня удалили из участников"
   }
 }

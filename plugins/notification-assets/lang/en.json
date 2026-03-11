@@ -69,6 +69,8 @@
     "Clear": "Clear",
     "YouAddedAsCollaborator": "You were added as a collaborator",
     "YouRemovedFromCollaborators": "You were removed as a collaborator",
+    "AddMeInCollaborators": "I was added as a collaborator",
+    "RemoveMeFromCollaborators": "I was removed from collaborators",
     "AllNotifications": "All notifications",
     "JustMentions": "Just mentions",
     "Mute": "Mute",
