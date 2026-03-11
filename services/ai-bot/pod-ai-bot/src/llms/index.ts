@@ -116,6 +116,10 @@ export function createLLMFromConfig (ctx: MeasureContext, server?: ClisrServer):
   }
 
   // No provider configured
-  ctx.warn('No LLM provider configured')
+  if (providerType === undefined) {
+    ctx.info('LLM provider not configured, disabled')
+  } else {
+    ctx.warn('No LLM provider configured', { provider: providerType })
+  }
   return undefined
 }

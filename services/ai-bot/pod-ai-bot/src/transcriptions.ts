@@ -53,6 +53,11 @@ export async function createTranscriptionsSupport (
     vadSpeechRatioThreshold: transcriptionConfig.vadSpeechRatioThreshold
   })
 
+  if (transcriptionConfig.provider === undefined || transcriptionConfig.provider === '') {
+    ctx.info('Transcription provider not configured, disabled')
+    return undefined
+  }
+
   const provider = createTranscriptionProvider(ctx, transcriptionConfig, server)
 
   try {

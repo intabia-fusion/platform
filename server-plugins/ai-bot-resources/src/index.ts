@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, Doc, PersonId, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+import core, { AccountUuid, Doc, PersonId, Ref, SortingOrder, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
 import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@hcengineering/chunter'
@@ -22,7 +22,7 @@ import contact, { Employee, SocialIdentity } from '@hcengineering/contact'
 import { MarkupNodeType, markupToJSON, traverseNode } from '@hcengineering/text'
 
 interface WorkspaceCacheEntry {
-  primary: SocialIdentity
+  primary: SocialIdentity[]
   all: PersonId[]
   employee: Employee
 }
@@ -36,21 +36,25 @@ async function getAIWorkspaceID (control: TriggerControl): Promise<WorkspaceCach
     | undefined
   if (typeof wsEntry === 'number') {
     if (Date.now() - wsEntry < 5000) {
-      // Check every 5 seconds.
+      control.ctx.info('[AIBot.getAIWorkspaceID] Cache cooldown, skipping')
       return undefined
     }
     wsEntry = undefined
   }
   if (wsEntry === undefined) {
-    const primaryIdentity = (
-      await control.findAll(control.ctx, contact.class.SocialIdentity, { key: aiBotEmailSocialKey }, { limit: 1 })
-    )[0]
+    const primaryIdentities = await control.findAll(
+      control.ctx,
+      contact.class.SocialIdentity,
+      { key: aiBotEmailSocialKey },
+      {}
+    )
 
-    if (primaryIdentity === undefined) return undefined
+    if (primaryIdentities.length === 0) return undefined
 
+    const attachedTo = primaryIdentities.map((it) => it.attachedTo as Ref<Employee>)
     const allAiSocialIds: PersonId[] = (
       await control.findAll(control.ctx, contact.class.SocialIdentity, {
-        attachedTo: primaryIdentity.attachedTo
+        attachedTo: { $in: attachedTo }
       })
     ).map((it) => it._id)
 
@@ -58,8 +62,8 @@ async function getAIWorkspaceID (control: TriggerControl): Promise<WorkspaceCach
       await control.findAll(
         control.ctx,
         contact.mixin.Employee,
-        { _id: primaryIdentity.attachedTo as Ref<Employee> },
-        { limit: 1 }
+        { _id: { $in: attachedTo } },
+        { limit: 1, sort: { modifiedOn: SortingOrder.Descending } }
       )
     ).shift()
     if (employee === undefined) {
@@ -67,7 +71,7 @@ async function getAIWorkspaceID (control: TriggerControl): Promise<WorkspaceCach
     }
     wsEntry = {
       all: allAiSocialIds,
-      primary: primaryIdentity,
+      primary: primaryIdentities,
       employee
     }
     control.cache.set(cacheKey, wsEntry)
@@ -78,7 +82,7 @@ async function getAIWorkspaceID (control: TriggerControl): Promise<WorkspaceCach
 async function OnMessageSend (originTxs: TxCreateDoc<ChatMessage>[], control: TriggerControl): Promise<Tx[]> {
   const wsID = await getAIWorkspaceID(control)
   if (wsID === undefined) {
-    // No activity for trigger
+    control.ctx.info('[AIBot.OnMessageSend] No AI workspace ID, skipping')
     return []
   }
 
@@ -86,6 +90,7 @@ async function OnMessageSend (originTxs: TxCreateDoc<ChatMessage>[], control: Tr
 
   const producer = control.queue?.getProducer<AIEventRequest>(control.ctx, QueueTopic.AIQueue)
   if (producer === undefined) {
+    control.ctx.info('[AIBot.OnMessageSend] No queue producer, skipping')
     return []
   }
 
@@ -108,7 +113,7 @@ async function OnMessageSend (originTxs: TxCreateDoc<ChatMessage>[], control: Tr
       traverseNode(jsonMarkup, (node) => {
         if (node.type === MarkupNodeType.reference && node.attrs != null) {
           const objectId = node.attrs.id as Ref<Doc>
-          if (objectId === wsID.primary.attachedTo) {
+          if (wsID.primary.some((it) => objectId === it.attachedTo)) {
             // AI bot has mentioned
             mentioned = true
             return false
@@ -123,7 +128,7 @@ async function OnMessageSend (originTxs: TxCreateDoc<ChatMessage>[], control: Tr
         await onBotDirectMessageSend(control, message, 'mentioned', wsID, producer)
       }
     } catch (err: any) {
-      control.ctx.error('Failed to prepare a ai bot message')
+      control.ctx.error('Failed to prepare a ai bot message', { err })
     }
     // }
   }
