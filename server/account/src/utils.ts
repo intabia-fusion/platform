@@ -572,7 +572,8 @@ export async function sendOtpEmail (
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
 
-  const lang = branding?.language
+  const lang = branding?.defaultLanguage
+
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
   const text = await translate(accountPlugin.string.OtpText, { code: otp, app }, lang)
@@ -1260,7 +1261,7 @@ export async function sendEmailConfirmation (
   const link = concatLink(front, `/login/confirm?id=${token}`)
 
   const name = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
-  const lang = branding?.language
+  const lang = branding?.defaultLanguage
   const text = await translate(accountPlugin.string.ConfirmationText, { name, link }, lang)
   const html = await translate(accountPlugin.string.ConfirmationHTML, { name, link }, lang)
   const subject = await translate(accountPlugin.string.ConfirmationSubject, { name }, lang)
@@ -1811,7 +1812,7 @@ export async function getInviteEmail (
   resend = false
 ): Promise<EmailInfo> {
   const ws = sanitizeEmail(workspace.name !== '' ? workspace.name : workspace.url)
-  const lang = branding?.language
+  const lang = branding?.defaultLanguage
 
   return {
     text: await translate(

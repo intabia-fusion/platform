@@ -753,7 +753,7 @@ describe('account utils', () => {
       } as unknown as MeasureContext
 
       const mockBranding: Branding = {
-        language: 'en',
+        defaultLanguage: 'en',
         title: 'Test App'
       }
 
@@ -1783,7 +1783,7 @@ describe('account utils', () => {
 
   describe('getInviteEmail', () => {
     const mockBranding: Branding = {
-      language: 'en',
+      defaultLanguage: 'en',
       front: 'https://app.example.com'
     }
 

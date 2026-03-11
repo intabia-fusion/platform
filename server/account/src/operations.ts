@@ -1305,7 +1305,7 @@ export async function requestPasswordReset (
   })
 
   const link = concatLink(front, `/login/recovery?id=${token}`)
-  const lang = branding?.language
+  const lang = branding?.defaultLanguage
   const text = await translate(accountPlugin.string.RecoveryText, { link }, lang)
   const html = await translate(accountPlugin.string.RecoveryHTML, { link }, lang)
   const subject = await translate(accountPlugin.string.RecoverySubject, {}, lang)

@@ -3,46 +3,46 @@
     "key": "huly-dev",
     "title": "Platform",
     "protocol": "http",
-    "language": "en",
+    "defaultLanguage": "en",
     "lastNameFirst": "true"
   },
   "huly.local:8087": {
     "key": "huly",
     "title": "Platform",
     "protocol": "http",
-    "language": "en",
+    "defaultLanguage": "en",
     "lastNameFirst": "true"
   },
   "host.docker.internal:8087": {
     "key": "huly-docker",
     "title": "Platform",
     "protocol": "http",
-    "language": "en",
+    "defaultLanguage": "en",
     "lastNameFirst": "true"
   },
   "huly.local:8081": {
     "key": "tracex-dev",
     "title": "TraceX",
     "protocol": "http",
-    "language": "en"
+    "defaultLanguage": "en"
   },
   "huly.local:8088": {
     "key": "tracex",
     "title": "TraceX",
     "protocol": "http",
-    "language": "en"
+    "defaultLanguage": "en"
   },
   "host.docker.internal:8088": {
     "key": "tracex-docker",
     "title": "Platform",
     "protocol": "http",
-    "language": "en",
+    "defaultLanguage": "en",
     "lastNameFirst": "true"
   },
   "example.localhost": {
     "key": "example",
     "title": "Example",
-    "language": "en",
+    "defaultLanguage": "en",
     "initWorkspace": "init"
   }
 }
