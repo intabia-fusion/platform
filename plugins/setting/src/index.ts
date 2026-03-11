@@ -305,6 +305,11 @@ export default plugin(settingId, {
     NotConnectedIntegration: '' as IntlString,
     IntegrationIsUnstable: '' as IntlString
   },
+  emailTemplate: {
+    IntegrationDisabledNotificationText: '' as IntlString,
+    IntegrationDisabledNotificationHtml: '' as IntlString,
+    IntegrationDisabledNotificationSubject: '' as IntlString
+  },
   icon: {
     AccountSettings: '' as Asset,
     Owners: '' as Asset,

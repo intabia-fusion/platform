@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "Alle Dokumente außer archivierten und veralteten",
     "ExportFilterAll": "Alle Dokumente",
     "ExportResultRecordTitle": "Export von Dokumenten aus dem Arbeitsbereich {workspace} ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

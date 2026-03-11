@@ -105,17 +105,14 @@
     "MoveApplication": "移至另一个职位",
     "SearchVacancy": "搜索职位...",
     "Organizations": "公司",
-
     "TemplateReplace": "您要应用新模板吗？",
     "TemplateReplaceConfirm": "所有字段将被新模板值覆盖",
     "Apply": "应用",
-
     "OpenVacancyList": "打开列表",
     "Export": "导出",
     "ConfigLabel": "招聘",
     "ConfigDescription": "用于管理人才/申请和职位的扩展。",
     "MyApplications": "我的申请",
-
     "ShowApplications": "显示申请",
     "GetTalentIds": "获取人才 ID",
     "HideDoneState": "隐藏已完成的申请",
@@ -130,5 +127,16 @@
     "ApplicationExists": "申请已存在",
     "TalentRequired": "请选择人才",
     "VacancyRequired": "请选择职位"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you",
+    "ApplicationCreateNotificationText": "{body}",
+    "ApplicationCreateNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ApplicationCreateNotificationSubject": "{title}",
+    "ReviewCreateNotificationText": "{body}",
+    "ReviewCreateNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ReviewCreateNotificationSubject": "{title}"
   }
 }

@@ -1,6 +1,6 @@
 {
   "string": {
-    "WorkspaceNamePattern": "Le nom doit comporter 40 caractères ou moins, ne doit pas être vide et ne doit pas contenir de caractères spéciaux (<, >, /)" ,
+    "WorkspaceNamePattern": "Le nom doit comporter 40 caractères ou moins, ne doit pas être vide et ne doit pas contenir de caractères spéciaux (<, >, /)",
     "Export": "Exporter",
     "DataToExport": "Données à exporter",
     "ExportDocuments": "Documents",
@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "Tous sauf archivés et obsolètes",
     "ExportFilterAll": "Tous les documents",
     "ExportResultRecordTitle": "Export de documents depuis l'espace de travail {workspace} ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

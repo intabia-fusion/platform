@@ -80,46 +80,99 @@ import cardEn from '@hcengineering/card-assets/lang/en.json'
 import mailEn from '@hcengineering/mail-assets/lang/en.json'
 import communicationEn from '@hcengineering/communication-assets/lang/en.json'
 
-export function registerStringLoaders (): void {
-  addStringsLoader(coreId, async (lang: string) => coreEng)
-  addStringsLoader(loginId, async (lang: string) => loginEng)
-  addStringsLoader(onboardId, async (lang: string) => onboardEn)
-  addStringsLoader(platformId, async (lang: string) => platformEng)
+import coreRu from '@hcengineering/core/lang/ru.json'
+import loginRu from '@hcengineering/login-assets/lang/ru.json'
+import platformRu from '@hcengineering/platform/lang/ru.json'
+import activityRu from '@hcengineering/activity-assets/lang/ru.json'
+import attachmentRu from '@hcengineering/attachment-assets/lang/ru.json'
+import calendarRu from '@hcengineering/calendar-assets/lang/ru.json'
+import chunterRu from '@hcengineering/chunter-assets/lang/ru.json'
+import contactRu from '@hcengineering/contact-assets/lang/ru.json'
+import documentsRu from '@hcengineering/controlled-documents-assets/lang/ru.json'
+import documentRu from '@hcengineering/document-assets/lang/ru.json'
+import exportRu from '@hcengineering/export-assets/lang/ru.json'
+import driveRu from '@hcengineering/drive-assets/lang/ru.json'
+import githubRu from '@hcengineering/github-assets/lang/ru.json'
+import gmailRu from '@hcengineering/gmail-assets/lang/ru.json'
+import hrRu from '@hcengineering/hr-assets/lang/ru.json'
+import inventoryRu from '@hcengineering/inventory-assets/lang/ru.json'
+import leadRu from '@hcengineering/lead-assets/lang/ru.json'
+import loveRu from '@hcengineering/love-assets/lang/ru.json'
+import notificationRu from '@hcengineering/notification-assets/lang/ru.json'
+import onboardRu from '@hcengineering/onboard-assets/lang/ru.json'
+import preferenceRu from '@hcengineering/preference-assets/lang/ru.json'
+import productsRu from '@hcengineering/products-assets/lang/ru.json'
+import recruitRu from '@hcengineering/recruit-assets/lang/ru.json'
+import requestRu from '@hcengineering/request-assets/lang/ru.json'
+import settingRu from '@hcengineering/setting-assets/lang/ru.json'
+import supportRu from '@hcengineering/support-assets/lang/ru.json'
+import tagsRu from '@hcengineering/tags-assets/lang/ru.json'
+import taskRu from '@hcengineering/task-assets/lang/ru.json'
+import telegramRu from '@hcengineering/telegram-assets/lang/ru.json'
+import templatesRu from '@hcengineering/templates-assets/lang/ru.json'
+import trackerRu from '@hcengineering/tracker-assets/lang/ru.json'
+import trainingRu from '@hcengineering/training-assets/lang/ru.json'
+import viewRu from '@hcengineering/view-assets/lang/ru.json'
+import workbenchRu from '@hcengineering/workbench-assets/lang/ru.json'
+import timeRu from '@hcengineering/time-assets/lang/ru.json'
+import surveyRu from '@hcengineering/survey-assets/lang/ru.json'
+import chatRu from '@hcengineering/chat-assets/lang/ru.json'
+import cardRu from '@hcengineering/card-assets/lang/ru.json'
+import mailRu from '@hcengineering/mail-assets/lang/ru.json'
+import communicationRu from '@hcengineering/communication-assets/lang/ru.json'
 
-  addStringsLoader(taskId, async (lang: string) => taskEn)
-  addStringsLoader(viewId, async (lang: string) => viewEn)
-  addStringsLoader(chunterId, async (lang: string) => chunterEn)
-  addStringsLoader(attachmentId, async (lang: string) => attachmentEn)
-  addStringsLoader(contactId, async (lang: string) => contactEn)
-  addStringsLoader(recruitId, async (lang: string) => recruitEn)
-  addStringsLoader(activityId, async (lang: string) => activityEn)
-  addStringsLoader(settingId, async (lang: string) => settingEn)
-  addStringsLoader(supportId, async (lang: string) => supportEn)
-  addStringsLoader(telegramId, async (lang: string) => telegramEn)
-  addStringsLoader(leadId, async (lang: string) => leadEn)
-  addStringsLoader(gmailId, async (lang: string) => gmailEn)
-  addStringsLoader(workbenchId, async (lang: string) => workbenchEn)
-  addStringsLoader(inventoryId, async (lang: string) => inventoryEn)
-  addStringsLoader(templatesId, async (lang: string) => templatesEn)
-  addStringsLoader(notificationId, async (lang: string) => notificationEn)
-  addStringsLoader(tagsId, async (lang: string) => tagsEn)
-  addStringsLoader(calendarId, async (lang: string) => calendarEn)
-  addStringsLoader(trackerId, async (lang: string) => trackerEn)
-  addStringsLoader(preferenceId, async (lang: string) => preferenceEn)
-  addStringsLoader(hrId, async (lang: string) => hrEn)
-  addStringsLoader(documentId, async (lang: string) => documentEn)
-  addStringsLoader(exportId, async (lang: string) => exportEn)
-  addStringsLoader(requestId, async (lang: string) => requestEn)
-  addStringsLoader(loveId, async (lang: string) => loveEn)
-  addStringsLoader(driveId, async (lang: string) => driveEn)
-  addStringsLoader(documentsId, async (lang: string) => documentsEn)
-  addStringsLoader(productsId, async (lang: string) => productsEn)
-  addStringsLoader(trainingId, async (lang: string) => trainingEn)
-  addStringsLoader(githubId, async (lang: string) => githubEn)
-  addStringsLoader(timeId, async (lang: string) => timeEn)
-  addStringsLoader(surveyId, async (lang: string) => surveyEn)
-  addStringsLoader(chatId, async (lang: string) => chatEn)
-  addStringsLoader(cardId, async (lang: string) => cardEn)
-  addStringsLoader(mailId, async (lang: string) => mailEn)
-  addStringsLoader(communicationId, async (lang: string) => communicationEn)
+function createLoader (en: any, ru: any): (lang: string) => Promise<any> {
+  return async (lang: string) => {
+    switch (lang) {
+      case 'en':
+        return en
+      case 'ru':
+        return ru
+      default:
+        return en
+    }
+  }
+}
+
+export function registerStringLoaders (): void {
+  addStringsLoader(coreId, createLoader(coreEng, coreRu))
+  addStringsLoader(loginId, createLoader(loginEng, loginRu))
+  addStringsLoader(onboardId, createLoader(onboardEn, onboardRu))
+  addStringsLoader(platformId, createLoader(platformEng, platformRu))
+  addStringsLoader(taskId, createLoader(taskEn, taskRu))
+  addStringsLoader(viewId, createLoader(viewEn, viewRu))
+  addStringsLoader(chunterId, createLoader(chunterEn, chunterRu))
+  addStringsLoader(attachmentId, createLoader(attachmentEn, attachmentRu))
+  addStringsLoader(contactId, createLoader(contactEn, contactRu))
+  addStringsLoader(recruitId, createLoader(recruitEn, recruitRu))
+  addStringsLoader(activityId, createLoader(activityEn, activityRu))
+  addStringsLoader(settingId, createLoader(settingEn, settingRu))
+  addStringsLoader(supportId, createLoader(supportEn, supportRu))
+  addStringsLoader(telegramId, createLoader(telegramEn, telegramRu))
+  addStringsLoader(leadId, createLoader(leadEn, leadRu))
+  addStringsLoader(gmailId, createLoader(gmailEn, gmailRu))
+  addStringsLoader(workbenchId, createLoader(workbenchEn, workbenchRu))
+  addStringsLoader(inventoryId, createLoader(inventoryEn, inventoryRu))
+  addStringsLoader(templatesId, createLoader(templatesEn, templatesRu))
+  addStringsLoader(notificationId, createLoader(notificationEn, notificationRu))
+  addStringsLoader(tagsId, createLoader(tagsEn, tagsRu))
+  addStringsLoader(calendarId, createLoader(calendarEn, calendarRu))
+  addStringsLoader(trackerId, createLoader(trackerEn, trackerRu))
+  addStringsLoader(preferenceId, createLoader(preferenceEn, preferenceRu))
+  addStringsLoader(hrId, createLoader(hrEn, hrRu))
+  addStringsLoader(documentId, createLoader(documentEn, documentRu))
+  addStringsLoader(exportId, createLoader(exportEn, exportRu))
+  addStringsLoader(requestId, createLoader(requestEn, requestRu))
+  addStringsLoader(loveId, createLoader(loveEn, loveRu))
+  addStringsLoader(driveId, createLoader(driveEn, driveRu))
+  addStringsLoader(documentsId, createLoader(documentsEn, documentsRu))
+  addStringsLoader(productsId, createLoader(productsEn, productsRu))
+  addStringsLoader(trainingId, createLoader(trainingEn, trainingRu))
+  addStringsLoader(githubId, createLoader(githubEn, githubRu))
+  addStringsLoader(timeId, createLoader(timeEn, timeRu))
+  addStringsLoader(surveyId, createLoader(surveyEn, surveyRu))
+  addStringsLoader(chatId, createLoader(chatEn, chatRu))
+  addStringsLoader(cardId, createLoader(cardEn, cardRu))
+  addStringsLoader(mailId, createLoader(mailEn, mailRu))
+  addStringsLoader(communicationId, createLoader(communicationEn, communicationRu))
 }

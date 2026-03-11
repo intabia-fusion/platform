@@ -290,5 +290,10 @@
     "ForbidCreateProjectPermission": "Forbid create project",
     "ForbidCreateProjectPermissionDescription": "Forbid users creating new projects"
   },
-  "status": {}
+  "status": {},
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you"
+  }
 }

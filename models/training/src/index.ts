@@ -598,9 +598,9 @@ function defineTrainingRequest (builder: Builder): void {
       defaultEnabled: true,
       isMention: true,
       templates: {
-        textTemplate: '{sender} sent you a training request {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>',
-        subjectTemplate: 'Training request {doc}'
+        text: training.emailTemplate.TrainingRequestNotificationText,
+        html: training.emailTemplate.TrainingRequestNotificationHtml,
+        subject: training.emailTemplate.TrainingRequestNotificationSubject
       }
     },
     training.notification.TrainingRequest

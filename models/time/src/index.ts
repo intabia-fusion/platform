@@ -373,9 +373,9 @@ export function createModel (builder: Builder): void {
       isMention: true,
       defaultEnabled: false,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: time.emailTemplate.ToDoCreatedText,
+        html: time.emailTemplate.ToDoCreatedHtml,
+        subject: time.emailTemplate.ToDoCreatedSubject
       }
     },
     time.ids.ToDoCreated

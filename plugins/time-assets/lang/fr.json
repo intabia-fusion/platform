@@ -29,7 +29,7 @@
     "Unplanned": "Non planifié",
     "Planned": "Planifié",
     "AddSlot": "Ajouter un créneau",
-    "SetPriority": "Définir la priorité\u2026",
+    "SetPriority": "Définir la priorité…",
     "NoPriority": "Aucune priorité",
     "LowPriority": "Priorité basse",
     "MediumPriority": "Priorité moyenne",
@@ -55,10 +55,14 @@
     "MarkedAsDone": "Terminé",
     "WorkSchedule": "Horaires de travail",
     "SummaryDuration": "Résumé",
-
     "UnassignToDo": "Désassigner la tâche",
     "UnassignToDoConfirm": "Voulez-vous désassigner la tâche ? La tâche sera retirée de la planification de l'assigné.",
     "ReassignToDo": "Changer l'assigné de la tâche",
     "ReassignToDoConfirm": "Voulez-vous changer l'assigné de la tâche ? La tâche sera retirée de la planification de l'assigné actuel."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

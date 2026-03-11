@@ -330,5 +330,16 @@
     "Reviewed": "Reviewed",
     "Rejected": "Rejected",
     "ToReview": "To Review"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}",
+    "StateNotificationText": "{sender} changed {doc} status",
+    "StateNotificationHtml": "<p>{sender} changed {doc} status</p> <p>{link}</p>",
+    "StateNotificationSubject": "{doc} status changed",
+    "CoAuthorsNotificationText": "{sender} assigned you as a co-author of {doc}",
+    "CoAuthorsNotificationHtml": "<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>",
+    "CoAuthorsNotificationSubject": "Co-authoring assignment for {doc}"
   }
 }

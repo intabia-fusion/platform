@@ -55,10 +55,14 @@
     "MarkedAsDone": "Выполнено",
     "WorkSchedule": "Расписание работы",
     "SummaryDuration": "Всего",
-
     "UnassignToDo": "Отменить назначение Действия",
     "UnassignToDoConfirm": "Вы хотите отменить назначение Действия? Действие будет удалено из планирования исполнителя.",
     "ReassignToDo": "Изменить исполнителя Действия",
     "ReassignToDoConfirm": "Вы хотите изменить исполнителя Действия? Действие будет удалено из планирования текущего исполнителя."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

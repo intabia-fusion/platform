@@ -64,9 +64,9 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} has sent you a message: \n\n{message}',
-        htmlTemplate: '<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>',
-        subjectTemplate: 'You have new direct message'
+        text: chunter.emailTemplate.DMNotificationText,
+        html: chunter.emailTemplate.DMNotificationHtml,
+        subject: chunter.emailTemplate.DMNotificationSubject
       }
     },
     chunter.ids.DMNotification
@@ -85,9 +85,9 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} has sent a message in {doc}: \n\n {message}',
-        htmlTemplate: '<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>',
-        subjectTemplate: 'You have new message in {doc}'
+        text: chunter.emailTemplate.ChannelNotificationText,
+        html: chunter.emailTemplate.ChannelNotificationHtml,
+        subject: chunter.emailTemplate.ChannelNotificationSubject
       }
     },
     chunter.ids.ChannelNotification
@@ -108,9 +108,9 @@ export function defineNotifications (builder: Builder): void {
       attachedToClass: chunter.class.Channel,
       notificationMessage: chunter.string.YouJoinedChannel,
       templates: {
-        textTemplate: 'You have been added to #{doc}',
-        htmlTemplate: '<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>',
-        subjectTemplate: 'You have been added to #{doc}'
+        text: chunter.emailTemplate.JoinChannelNotificationText,
+        html: chunter.emailTemplate.JoinChannelNotificationHtml,
+        subject: chunter.emailTemplate.JoinChannelNotificationSubject
       }
     },
     chunter.ids.JoinChannelNotification
@@ -129,9 +129,9 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: false,
       group: chunter.ids.ChunterNotificationGroup,
       templates: {
-        textTemplate: '{sender} replied to {doc}: \n\n{message}',
-        htmlTemplate: '<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>',
-        subjectTemplate: 'New reply to {doc}'
+        text: chunter.emailTemplate.ThreadNotificationText,
+        html: chunter.emailTemplate.ThreadNotificationHtml,
+        subject: chunter.emailTemplate.ThreadNotificationSubject
       }
     },
     chunter.ids.ThreadNotification

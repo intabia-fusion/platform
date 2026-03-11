@@ -71,6 +71,17 @@ const recruit = plugin(recruitId, {
     ForbidCreateVacancyPermission: '' as IntlString,
     ForbidCreateVacancyPermissionDescription: '' as IntlString
   },
+  emailTemplate: {
+    AssigneeNotificationText: '' as IntlString,
+    AssigneeNotificationHtml: '' as IntlString,
+    AssigneeNotificationSubject: '' as IntlString,
+    ApplicationCreateNotificationText: '' as IntlString,
+    ApplicationCreateNotificationHtml: '' as IntlString,
+    ApplicationCreateNotificationSubject: '' as IntlString,
+    ReviewCreateNotificationText: '' as IntlString,
+    ReviewCreateNotificationHtml: '' as IntlString,
+    ReviewCreateNotificationSubject: '' as IntlString
+  },
   icon: {
     RecruitApplication: '' as Asset,
     Vacancy: '' as Asset,

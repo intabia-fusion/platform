@@ -143,9 +143,9 @@ export function createReviewModel (builder: Builder): void {
       messageClass: activity.class.DocUpdateMessage,
       defaultEnabled: true,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: recruit.emailTemplate.ReviewCreateNotificationText,
+        html: recruit.emailTemplate.ReviewCreateNotificationHtml,
+        subject: recruit.emailTemplate.ReviewCreateNotificationSubject
       }
     },
     recruit.ids.ReviewCreateNotification

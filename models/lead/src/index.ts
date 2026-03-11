@@ -395,9 +395,9 @@ export function createModel (builder: Builder): void {
       attachedToClass: lead.class.Lead,
       isMention: true,
       templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
-        subjectTemplate: '{doc} was assigned to you'
+        text: lead.emailTemplate.AssigneeNotificationText,
+        html: lead.emailTemplate.AssigneeNotificationHtml,
+        subject: lead.emailTemplate.AssigneeNotificationSubject
       },
       defaultEnabled: true,
       priority: 200

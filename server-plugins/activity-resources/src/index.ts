@@ -323,19 +323,20 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
 async function getAttributesUpdatesText (
   attributeUpdates: DocAttributeUpdates,
   objectClass: Ref<Class<Doc>>,
-  hierarchy: Hierarchy
+  hierarchy: Hierarchy,
+  language: string
 ): Promise<string | undefined> {
-  const attrName = await getAttrName(attributeUpdates, objectClass, hierarchy)
+  const attrName = await getAttrName(attributeUpdates, objectClass, hierarchy, language)
 
   if (attrName === undefined) {
     return undefined
   }
 
   if (attributeUpdates.added.length > 0) {
-    return await translate(activity.string.NewObject, { object: attrName })
+    return await translate(activity.string.NewObject, { object: attrName }, language)
   }
   if (attributeUpdates.removed.length > 0) {
-    return await translate(activity.string.RemovedObject, { object: attrName })
+    return await translate(activity.string.RemovedObject, { object: attrName }, language)
   }
 
   if (attributeUpdates.set.length > 0) {
@@ -343,9 +344,9 @@ async function getAttributesUpdatesText (
     const isUnset = values.length > 0 && !values.some((value) => value !== null && value !== '')
 
     if (isUnset) {
-      return await translate(activity.string.UnsetObject, { object: attrName })
+      return await translate(activity.string.UnsetObject, { object: attrName }, language)
     } else {
-      return await translate(activity.string.ChangedObject, { object: attrName })
+      return await translate(activity.string.ChangedObject, { object: attrName }, language)
     }
   }
 
@@ -363,25 +364,32 @@ export async function getDocUpdateMessageMarkup (message: DocUpdateMessage, cont
   const collectionName = collectionAttribute?.label
 
   const name =
-    isOwn || collectionName === undefined ? await translate(objectName, {}) : await translate(collectionName, {})
+    isOwn || collectionName === undefined
+      ? await translate(objectName, {}, control.branding?.defaultLanguage)
+      : await translate(collectionName, {}, control.branding?.defaultLanguage)
 
   if (action === 'create') {
-    return await translate(activity.string.NewObject, { object: name })
+    return await translate(activity.string.NewObject, { object: name }, control.branding?.defaultLanguage)
   }
 
   if (action === 'remove') {
-    return await translate(activity.string.RemovedObject, { object: name })
+    return await translate(activity.string.RemovedObject, { object: name }, control.branding?.defaultLanguage)
   }
 
   if (action === 'update' && attributeUpdates !== undefined) {
-    const text = await getAttributesUpdatesText(attributeUpdates, objectClass, hierarchy)
+    const text = await getAttributesUpdatesText(
+      attributeUpdates,
+      objectClass,
+      hierarchy,
+      control.branding?.defaultLanguage ?? 'en'
+    )
 
     if (text !== undefined) {
       return text
     }
   }
 
-  return await translate(activity.string.UpdatedObject, { object: name })
+  return await translate(activity.string.UpdatedObject, { object: name }, control.branding?.defaultLanguage)
 }
 
 async function HandleCardActivity (txes: TxCUD<Card>[], control: TriggerControl): Promise<Tx[]> {

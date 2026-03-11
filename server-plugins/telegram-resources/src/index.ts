@@ -196,7 +196,10 @@ async function getTranslatedData (
   }> {
   const { hierarchy } = control
 
-  let { title, body } = await getTranslatedNotificationContent(inboxNotification)
+  let { title, body } = await getTranslatedNotificationContent(
+    inboxNotification,
+    control.branding?.defaultLanguage ?? 'en'
+  )
   let quote: string | undefined
 
   if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {

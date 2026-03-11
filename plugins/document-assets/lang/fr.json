@@ -53,5 +53,10 @@
     "Color": "Couleur",
     "ForbidCreateTeamspacePermission": "Interdire la création d'espace d'équipe",
     "ForbidCreateTeamspacePermissionDescription": "Interdit aux utilisateurs de créer de nouveaux espaces d'équipe"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}"
   }
 }

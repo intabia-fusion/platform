@@ -1129,9 +1129,9 @@ export function defineNotifications (builder: Builder): void {
       attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: false,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: documents.emailTemplate.ContentNotificationText,
+        html: documents.emailTemplate.ContentNotificationHtml,
+        subject: documents.emailTemplate.ContentNotificationSubject
       }
     },
     documents.notification.ContentNotification
@@ -1152,9 +1152,9 @@ export function defineNotifications (builder: Builder): void {
       attachedToClass: documents.class.ControlledDocument,
       defaultEnabled: false,
       templates: {
-        textTemplate: '{sender} changed {doc} status',
-        htmlTemplate: '<p>{sender} changed {doc} status</p> <p>{link}</p>',
-        subjectTemplate: '{doc} status changed'
+        text: documents.emailTemplate.StateNotificationText,
+        html: documents.emailTemplate.StateNotificationHtml,
+        subject: documents.emailTemplate.StateNotificationSubject
       }
     },
     documents.notification.StateNotification
@@ -1176,9 +1176,9 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: true,
       isMention: true,
       templates: {
-        textTemplate: '{sender} assigned you as a co-author of {doc}',
-        htmlTemplate: '<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>',
-        subjectTemplate: 'Co-authoring assignment for {doc}'
+        text: documents.emailTemplate.CoAuthorsNotificationText,
+        html: documents.emailTemplate.CoAuthorsNotificationHtml,
+        subject: documents.emailTemplate.CoAuthorsNotificationSubject
       }
     },
     documents.notification.CoAuthorsNotification

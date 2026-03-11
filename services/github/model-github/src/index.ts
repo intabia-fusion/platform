@@ -835,9 +835,9 @@ export function createModel (builder: Builder): void {
       objectClass: github.class.GithubPullRequest,
       attachedToClass: github.class.GithubPullRequest,
       templates: {
-        textTemplate: 'Pull request {doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>Pull request {doc} was assigned to you by {sender}</p> <p>{link}</p>',
-        subjectTemplate: 'Pull request {doc} was assigned to you'
+        text: github.emailTemplate.AssigneeNotificationText,
+        html: github.emailTemplate.AssigneeNotificationHtml,
+        subject: github.emailTemplate.AssigneeNotificationSubject
       },
       priority: 200,
       defaultEnabled: true

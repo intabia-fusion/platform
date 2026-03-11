@@ -87,6 +87,11 @@ const lead = plugin(leadId, {
     ForbidCreateFunnelPermission: '' as IntlString,
     ForbidCreateFunnelPermissionDescription: '' as IntlString
   },
+  emailTemplate: {
+    AssigneeNotificationText: '' as IntlString,
+    AssigneeNotificationHtml: '' as IntlString,
+    AssigneeNotificationSubject: '' as IntlString
+  },
   attribute: {
     State: '' as Ref<Attribute<Status>>
   },

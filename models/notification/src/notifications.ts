@@ -36,9 +36,9 @@ export function defineNotifications (builder: Builder): void {
       },
       notificationMessage: notification.string.YouAddedAsCollaborator,
       templates: {
-        textTemplate: '{sender} added you as a collaborator to {doc}.',
-        htmlTemplate: '<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>',
-        subjectTemplate: 'You were added as a collaborator to {doc}'
+        text: notification.emailTemplate.MeAddedInCollaboratorsNotificationText,
+        html: notification.emailTemplate.MeAddedInCollaboratorsNotificationHtml,
+        subject: notification.emailTemplate.MeAddedInCollaboratorsNotificationSubject
       },
       priority: 100
     },
@@ -63,9 +63,9 @@ export function defineNotifications (builder: Builder): void {
       },
       notificationMessage: notification.string.YouRemovedFromCollaborators,
       templates: {
-        textTemplate: '{sender} removed you as a collaborator from {doc}.',
-        htmlTemplate: '<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>',
-        subjectTemplate: 'You were removed as a collaborator from {doc}'
+        text: notification.emailTemplate.MeRemovedFromCollaboratorsNotificationText,
+        html: notification.emailTemplate.MeRemovedFromCollaboratorsNotificationHtml,
+        subject: notification.emailTemplate.MeRemovedFromCollaboratorsNotificationSubject
       },
       priority: 100
     },
@@ -86,9 +86,9 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: true,
       isMention: true,
       templates: {
-        textTemplate: '{sender} mentioned you in {doc}: {message}',
-        htmlTemplate: '<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>',
-        subjectTemplate: 'You were mentioned in {doc}'
+        text: notification.emailTemplate.MentionNotificationText,
+        html: notification.emailTemplate.MentionNotificationHtml,
+        subject: notification.emailTemplate.MentionNotificationSubject
       },
       priority: 50
     },
@@ -159,9 +159,9 @@ export function generateClassNotificationTypes (
       defaultEnabled: false,
       attachedToClass: _class,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{doc} updated'
+        text: notification.emailTemplate.GeneratedNotificationText,
+        html: notification.emailTemplate.GeneratedNotificationHtml,
+        subject: notification.emailTemplate.GeneratedNotificationSubject
       },
       label: attribute.label
     }

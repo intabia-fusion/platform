@@ -90,5 +90,10 @@
     "UnlinkInstallation": "Sind Sie sicher, dass Sie die GitHub App deinstallieren möchten? Die Synchronisation wird deaktiviert.",
     "RemoveInstallation": "Deinstallieren",
     "Suspended": "Ausgesetzt"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "Pull request {doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>Pull request {doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "Pull request {doc} was assigned to you"
   }
 }

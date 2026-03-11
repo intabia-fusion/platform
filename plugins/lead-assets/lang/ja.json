@@ -36,5 +36,10 @@
     "FunnelMembers": "メンバー",
     "ForbidCreateFunnelPermission": "ファネルの作成禁止",
     "ForbidCreateFunnelPermissionDescription": "ユーザーが新しいファネルを作成することを禁止します"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you"
   }
 }

@@ -216,5 +216,10 @@
     "SelectUsers": "Seleziona utenti",
     "ShowInTitle": "Mostra nel titolo",
     "SpaceMembersOnly": "Solo membri dello spazio"
+  },
+  "emailTemplate": {
+    "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
+    "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

@@ -23,7 +23,7 @@ const integrationTitlePresenter: Presenter = async (doc: Doc, control: Presenter
   const integration = doc as Integration
   const type = (await control.modelDb.findAll(setting.class.IntegrationType, { _id: integration.type }))[0]
   if (type === undefined) return ''
-  const label = await translate(type.label, {})
+  const label = await translate(type.label, {}, control.branding?.defaultLanguage)
   return `${label} (${integration.value})`
 }
 
