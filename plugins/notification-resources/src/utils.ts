@@ -34,7 +34,8 @@ import core, {
   SortingOrder,
   type TxOperations,
   type WithLookup,
-  getClassCollaborators
+  getClassCollaborators,
+  generateId
 } from '@hcengineering/core'
 import notification, {
   type ActivityInboxNotification,
@@ -111,14 +112,25 @@ export async function canReadNotifyContext (doc: DocNotifyContext): Promise<bool
 export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
   const inboxClient = InboxNotificationsClientImpl.getClient()
   const inboxNotifications = get(inboxClient.inboxNotificationsByContext).get(doc._id) ?? []
-
+  const me = getCurrentAccount()
   const ops = getClient().apply(undefined, 'readNotifyContext', true)
   try {
     await inboxClient.readNotifications(
       ops,
       inboxNotifications.map(({ _id }) => _id)
     )
-    await ops.update(doc, { lastView: Date.now() })
+
+    const state = await inboxClient.getReadState(doc.objectId)
+    if (state != null) {
+      await ops.update(state, {
+        [me.uuid]: {
+          messageId: generateId<ActivityMessage>(),
+          timestamp: Date.now()
+        }
+      })
+    } else {
+      await ops.update(doc, { lastView: Date.now() })
+    }
   } finally {
     await ops.commit()
   }
@@ -127,6 +139,8 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
 export async function removeContextNotifications (doc?: DocNotifyContext): Promise<void> {
   if (doc === undefined) return
 
+  const inboxClient = InboxNotificationsClientImpl.getClient()
+  const me = getCurrentAccount()
   const ops = getClient().apply(undefined, 'removeContextNotifications', true)
 
   try {
@@ -139,7 +153,17 @@ export async function removeContextNotifications (doc?: DocNotifyContext): Promi
     for (const notification of notifications) {
       await ops.removeDoc(notification._class, notification.space, notification._id)
     }
-    await ops.update(doc, { lastView: Date.now() })
+    const state = await inboxClient.getReadState(doc.objectId)
+    if (state != null) {
+      await ops.update(state, {
+        [me.uuid]: {
+          messageId: generateId<ActivityMessage>(),
+          timestamp: Date.now()
+        }
+      })
+    } else {
+      await ops.update(doc, { lastView: Date.now() })
+    }
   } finally {
     await ops.commit()
   }

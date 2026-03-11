@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity from '@hcengineering/activity'
+import activity, { type ActivityMessage } from '@hcengineering/activity'
 import core, {
   type Account,
   AccountRole,
   type Client,
   type Doc,
+  generateId,
   getCurrentAccount,
   type IdMap,
   type Ref,
@@ -188,22 +189,31 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
   async readDoc (_id: Ref<Doc>): Promise<void> {
     const client = getClient()
     const docNotifyContext = this._contextByDoc.get(_id)
+    const me = getCurrentAccount()
 
-    if (docNotifyContext === undefined || getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
+    if (me.role === AccountRole.ReadOnlyGuest) {
       return
     }
-
     const op = client.apply(undefined, 'readDoc', true)
-    const inboxNotifications = await client.findAll(
-      notification.class.InboxNotification,
-      { docNotifyContext: docNotifyContext._id, isViewed: false },
-      { projection: { _id: 1, _class: 1, space: 1 } }
-    )
 
-    for (const notification of inboxNotifications) {
-      await op.updateDoc(notification._class, notification.space, notification._id, { isViewed: true })
+    const read = await this.forceReadDocState(op, _id)
+
+    if (docNotifyContext != null) {
+      const inboxNotifications = await client.findAll(
+        notification.class.InboxNotification,
+        { docNotifyContext: docNotifyContext._id, isViewed: false },
+        { projection: { _id: 1, _class: 1, space: 1 } }
+      )
+
+      for (const notification of inboxNotifications) {
+        await op.updateDoc(notification._class, notification.space, notification._id, { isViewed: true })
+      }
+
+      if (!read) {
+        await op.update(docNotifyContext, { lastView: Date.now() })
+      }
     }
-    await op.update(docNotifyContext, { lastView: Date.now() })
+
     await op.commit()
   }
 
@@ -227,6 +237,8 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         collaborator: getCurrentAccount().uuid
       })
     }
+
+    await this.forceReadDocState(client, doc._id)
   }
 
   async readNotifications (client: TxOperations, ids: Array<Ref<InboxNotification>>): Promise<void> {
@@ -239,12 +251,19 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
     }
   }
 
-  async unreadNotifications (client: TxOperations, ids: Array<Ref<InboxNotification>>): Promise<void> {
-    const notificationsToUnread = (get(this.inboxNotifications) ?? []).filter(({ _id }) => ids.includes(_id))
-
-    for (const notification of notificationsToUnread) {
-      await client.update(notification, { isViewed: false })
+  private async forceReadDocState (client: TxOperations, attachedTo: Ref<Doc>): Promise<boolean> {
+    const me = getCurrentAccount()
+    const state = await this.getReadState(attachedTo)
+    if (state != null) {
+      await client.update(state, {
+        [me.uuid]: {
+          messageId: generateId<ActivityMessage>(),
+          timestamp: Date.now()
+        }
+      })
+      return true
     }
+    return false
   }
 
   async removeAllNotifications (): Promise<void> {
@@ -265,7 +284,14 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
       }
 
       for (const context of contexts) {
-        await ops.update(context, { lastView: Date.now() })
+        const lastUpdate = context.lastUpdate ?? 0
+        const lastView = context.lastView ?? 0
+        if (lastUpdate > lastView) {
+          const read = await this.forceReadDocState(ops, context.objectId)
+          if (!read) {
+            await ops.update(context, { lastView: Date.now() })
+          }
+        }
       }
     } finally {
       await ops.commit()
@@ -290,7 +316,14 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         await ops.updateDoc(notification._class, notification.space, notification._id, { isViewed: true })
       }
       for (const context of contexts) {
-        await ops.update(context, { lastView: Date.now() })
+        const lastUpdate = context.lastUpdate ?? 0
+        const lastView = context.lastView ?? 0
+        if (lastUpdate > lastView) {
+          const read = await this.forceReadDocState(ops, context.objectId)
+          if (!read) {
+            await ops.update(context, { lastView: Date.now() })
+          }
+        }
       }
     } finally {
       await ops.commit()

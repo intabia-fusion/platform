@@ -348,7 +348,6 @@ export interface InboxNotificationsClient {
   readDoc: (_id: Ref<Doc>) => Promise<void>
   forceReadDoc: (doc: Doc) => Promise<void>
   readNotifications: (client: TxOperations, ids: Array<Ref<InboxNotification>>) => Promise<void>
-  unreadNotifications: (client: TxOperations, ids: Array<Ref<InboxNotification>>) => Promise<void>
   removeAllNotifications: () => Promise<void>
   readAllNotifications: () => Promise<void>
 

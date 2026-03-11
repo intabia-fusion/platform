@@ -628,7 +628,6 @@
   }
 </script>
 
-{readState?._id}
 <div class="flex-col relative" class:h-full={fullHeight}>
   {#if !isThread && messages.length > 0 && selectedDate}
     <div class="selectedDate">
