@@ -107,4 +107,20 @@ export function createModel (builder: Builder): void {
       match: serverNotification.function.MeRemovedFromCollaboratorsNotificationTypeMatch
     }
   )
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverNotification.trigger.OnDocCreated,
+    txMatch: {
+      _class: core.class.TxCreateDoc
+    },
+    isAsync: false
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverNotification.trigger.OnDocSpaceChanged,
+    txMatch: {
+      _class: core.class.TxUpdateDoc
+    },
+    isAsync: true
+  })
 }

@@ -51,29 +51,28 @@
   let count: number | null = null
   let actions: Action[] = []
 
-  $: notifications = getNotifications(context, $notificationsByContextStore)
-
-  $: void getNotificationsCount(context, notifications).then((res) => {
-    count = res === 0 ? null : res
-  })
+  $: count = countNotifications(context, $notificationsByContextStore)
 
   $: void getActions(item.object, item.chat, context).then((res) => {
     actions = res
   })
 
-  function getNotifications (
+  function countNotifications (
     context: DocNotifyContext | undefined,
     notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): InboxNotification[] {
+  ): number | null {
     if (context === undefined) {
-      return []
+      return null
     }
 
-    return (notificationsByContext.get(context._id) ?? []).filter((n) => {
+    const notifications = (notificationsByContext.get(context._id) ?? []).filter((n) => {
       if (isActivityNotification(n)) return true
 
       return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
     })
+
+    const res = getNotificationsCount(context, notifications)
+    return res === 0 ? null : res
   }
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
@@ -211,7 +210,7 @@
   title={item.title}
   description={item.description}
   secondaryNotifyMarker={(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&
-    (context?.lastNotify ?? 0) < (context?.lastUpdate ?? 0)}
+    (context?.lastNotifiedMessage ?? 0) < (context?.lastUpdate ?? 0)}
   {actions}
   {type}
   muted={context?.settings?.mode === 'mute'}

@@ -94,6 +94,9 @@ export interface Action {
   props?: Record<string, any>
   isSubmenuRightClicking?: boolean
 
+  inlineComponent?: AnyComponent | AnySvelteComponent
+  inlineComponentProps?: Record<string, any>
+
   group?: string
 }
 

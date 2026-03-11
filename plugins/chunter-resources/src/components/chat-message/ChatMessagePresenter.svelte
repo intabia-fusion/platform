@@ -23,18 +23,23 @@
   import { Attachment } from '@hcengineering/attachment'
   import { AttachmentDocList, AttachmentImageSize } from '@hcengineering/attachment-resources'
   import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import contact, { getCurrentEmployee, Person, SocialIdentity } from '@hcengineering/contact'
-  import { getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
-  import { Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
+  import contact, { Employee, getCurrentEmployee, Person, SocialIdentity } from '@hcengineering/contact'
+  import { CombineAvatars, getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
+  import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import { Action, Button, IconEdit, languageStore, ShowMore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 
   import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
   import ChatMessageHeader from './ChatMessageHeader.svelte'
   import ChatMessageInput from './ChatMessageInput.svelte'
+  import DoubleCheck from '../icons/DoubleCheck.svelte'
+  import MessageReadMarker from './MessageReadMarker.svelte'
+  import MessageReadPopup from './MessageReadPopup.svelte'
 
   export let value: WithLookup<ChatMessage> | undefined
   export let doc: Doc | undefined = undefined
@@ -150,6 +155,17 @@
     editingMessageStore.set(value._id)
   }
 
+  const inboxClient = InboxNotificationsClientImpl.getClient()
+  const readStateByDocStore = inboxClient.readStateByDoc
+
+  $: if (value != null) {
+    void inboxClient.loadReadState(value.attachedTo)
+  }
+
+  $: readState = value != null ? $readStateByDocStore.get(value.attachedTo) : undefined
+
+  let readEmployees = new Map<AccountUuid, Employee>()
+
   let isEditing = false
   $: isEditing = $editingMessageStore === value?._id
   let additionalActions: Action[] = []
@@ -164,6 +180,25 @@
             icon: IconEdit,
             group: 'edit',
             action: handleEditAction
+          }
+        ]
+      : []),
+
+    ...(readEmployees.size > 0
+      ? [
+          {
+            label: getEmbeddedLabel('Seen'),
+            icon: DoubleCheck,
+            group: 'tools',
+            component: MessageReadPopup,
+            inlineComponent: CombineAvatars,
+            inlineComponentProps: {
+              _class: contact.class.Person,
+              items: Array.from(readEmployees.values()).map((it) => it._id),
+              size: 'tiny'
+            },
+            props: { value: Array.from(readEmployees.values()) },
+            action: async () => {}
           }
         ]
       : []),
@@ -286,6 +321,11 @@
             <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
           </div>
         {/if}
+        {#if !pending && isOwn && readState}
+          <span class="read-marker">
+            <MessageReadMarker bind:readEmployees createdOn={value.createdOn ?? value.modifiedOn} {readState} />
+          </span>
+        {/if}
       {:else if object}
         <ChatMessageInput
           bind:this={refInput}
@@ -311,3 +351,11 @@
     </svelte:fragment>
   </ActivityMessageTemplate>
 {/if}
+
+<style lang="scss">
+  .read-marker {
+    position: absolute;
+    bottom: 2px;
+    right: 1rem;
+  }
+</style>

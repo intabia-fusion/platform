@@ -45,7 +45,8 @@ import notification, {
   type PushSubscription,
   type BrowserNotification,
   type DocNotifyContext,
-  type InboxNotification
+  type InboxNotification,
+  type ReadState
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
@@ -56,7 +57,7 @@ import {
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
-import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY } from './index'
+import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
@@ -713,6 +714,43 @@ async function createChats (client: MigrationClient): Promise<void> {
   }
 }
 
+async function initReadStates (client: MigrationClient): Promise<void> {
+  const allClasses = client.hierarchy.getMixinClasses(activity.mixin.ActivityDoc)
+
+  for (const _class of allClasses) {
+    const domain = client.hierarchy.findDomain(_class)
+    if (domain === undefined) continue
+    client.logger.log('init read states for class', { _class, domain })
+    let processed = 0
+    const iterator = await client.traverse(domain, { _class }, { projection: { _id: 1, _class: 1, space: 1 } })
+    try {
+      while (true) {
+        const docs: Pick<Doc, '_id' | '_class' | 'space'>[] = (await iterator.next(500)) ?? []
+        if (docs.length === 0) break
+        processed += docs.length
+        client.logger.log('...processed', { count: processed })
+        await client.create<ReadState>(
+          DOMAIN_READ_STATE,
+          docs.map((doc) => ({
+            _id: generateId(),
+            _class: notification.class.ReadState,
+            space: doc.space,
+            attachedTo: doc._id,
+            attachedToClass: doc._class,
+            collection: 'readStates',
+            modifiedOn: Date.now(),
+            createdOn: Date.now(),
+            createdBy: core.account.System,
+            modifiedBy: core.account.System
+          }))
+        )
+      }
+    } finally {
+      await iterator.close()
+    }
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -935,6 +973,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'create-chats-by-collaborators-v1',
         mode: 'upgrade',
         func: createChats
+      },
+      {
+        state: 'init-read-states-v100',
+        mode: 'upgrade',
+        func: initReadStates
       }
     ])
   },

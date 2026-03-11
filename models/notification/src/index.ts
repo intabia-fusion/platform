@@ -48,7 +48,7 @@ import {
   TypeRef,
   type Builder
 } from '@hcengineering/model'
-import core, { TClass, TDoc } from '@hcengineering/model-core'
+import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
@@ -80,7 +80,10 @@ import {
   type PushSubscriptionSetting,
   type ReactionInboxNotification,
   type MessageNotificationType,
-  type TxNotificationType
+  type TxNotificationType,
+  DOMAIN_READ_STATE,
+  type ReadState,
+  ReadPosition
 } from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
@@ -90,7 +93,13 @@ import notification from './plugin'
 import { defineNotifications } from './notifications'
 import { defineActions } from './actions'
 
-export { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, notificationId } from '@hcengineering/notification'
+export {
+  DOMAIN_DOC_NOTIFY,
+  DOMAIN_NOTIFICATION,
+  DOMAIN_USER_NOTIFY,
+  DOMAIN_READ_STATE,
+  notificationId
+} from '@hcengineering/notification'
 export { notificationOperation } from './migration'
 export { notification as default }
 export { generateClassNotificationTypes } from './notifications'
@@ -227,7 +236,15 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeDate(), core.string.Date)
     lastNotify?: Timestamp
 
+  @Prop(TypeDate(), core.string.Date)
+    lastNotifiedMessage?: Timestamp
+
   tx?: Ref<TxCUD<Doc>>
+}
+
+@Model(notification.class.ReadState, core.class.Doc, DOMAIN_READ_STATE)
+export class TReadState extends TAttachedDoc implements ReadState {
+  [key: AccountUuid]: ReadPosition
 }
 
 @Model(notification.class.InboxNotification, core.class.Doc, DOMAIN_NOTIFICATION)
@@ -366,7 +383,8 @@ export function createModel (builder: Builder): void {
     TNotificationProviderSetting,
     TNotificationTypeSetting,
     TNotificationProviderDefaults,
-    TReactionInboxNotification
+    TReactionInboxNotification,
+    TReadState
   )
 
   builder.mixin(notification.class.BrowserNotification, core.class.Class, core.mixin.TransientConfiguration, {

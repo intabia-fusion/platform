@@ -40,7 +40,6 @@
     "Message": "消息",
     "ClearAll": "归档全部",
     "MarkReadAll": "全部标记为已读",
-    "MarkUnreadAll": "全部标记为未读",
     "RemoveAllConfirmationTitle": "归档所有通知？",
     "RemoveAllConfirmationMessage": "您确定要归档所有通知吗？此操作无法撤销。",
     "StarDocument": "标记文档为星标",

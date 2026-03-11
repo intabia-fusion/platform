@@ -40,7 +40,6 @@
     "Message": "Message",
     "ClearAll": "Clear all",
     "MarkReadAll": "Mark all as read",
-    "MarkUnreadAll": "Mark all as unread",
     "RemoveAllConfirmationTitle": "Remove all notifications?",
     "RemoveAllConfirmationMessage": "Are you sure you want to remove all notifications? This operation cannot be undone.",
     "StarDocument": "Star document",

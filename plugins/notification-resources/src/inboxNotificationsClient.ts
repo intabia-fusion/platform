@@ -23,19 +23,22 @@ import core, {
   type Ref,
   SortingOrder,
   toIdMap,
+  type Tx,
+  type TxCreateDoc,
   type TxOperations,
+  TxProcessor,
+  type TxUpdateDoc,
   type WithLookup
 } from '@hcengineering/core'
 import notification, {
   type ActivityInboxNotification,
   type DocNotifyContext,
   type InboxNotification,
-  type InboxNotificationsClient
+  type InboxNotificationsClient,
+  type ReadState
 } from '@hcengineering/notification'
-import { createQuery, getClient, onClient } from '@hcengineering/presentation'
+import { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { derived, get, writable } from 'svelte/store'
-
-import { isActivityNotification } from './utils'
 
 /**
  * @public
@@ -50,6 +53,8 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
     ([contexts]) => toIdMap(contexts),
     new Map() as IdMap<DocNotifyContext>
   )
+
+  readonly readStateByDoc = writable<Map<Ref<Doc>, ReadState | null>>(new Map())
 
   readonly activityInboxNotifications = writable<Array<WithLookup<ActivityInboxNotification>>>([])
   readonly otherInboxNotifications = writable<InboxNotification[]>([])
@@ -148,6 +153,36 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
       InboxNotificationsClientImpl._instance = new InboxNotificationsClientImpl()
     }
     return InboxNotificationsClientImpl._instance
+  }
+
+  async loadReadState (attachedTo: Ref<Doc>): Promise<void> {
+    const current = get(this.readStateByDoc).get(attachedTo)
+    if (current != null) {
+      return
+    }
+
+    const client = getClient()
+    const state = await client.findOne(notification.class.ReadState, { attachedTo })
+
+    this.readStateByDoc.update((readStateByDoc) => {
+      readStateByDoc.set(attachedTo, state ?? null)
+
+      return readStateByDoc
+    })
+  }
+
+  async getReadState (attachedTo: Ref<Doc>): Promise<ReadState | undefined> {
+    const current = get(this.readStateByDoc).get(attachedTo)
+    if (current != null) {
+      return current
+    }
+
+    const client = getClient()
+    const state = await client.findOne(notification.class.ReadState, { attachedTo })
+
+    this.readStateByDoc.update((readStateByDoc) => readStateByDoc.set(attachedTo, state ?? null))
+
+    return state
   }
 
   async readDoc (_id: Ref<Doc>): Promise<void> {
@@ -261,43 +296,37 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
       await ops.commit()
     }
   }
+}
 
-  async unreadAllNotifications (): Promise<void> {
-    const ops = getClient().apply(undefined, 'unreadAllNotifications', true)
-
-    try {
-      const inboxNotifications = await ops.findAll(
-        notification.class.InboxNotification,
-        {
-          user: getCurrentAccount().uuid,
-          isViewed: true,
-          archived: false
-        },
-        {
-          projection: { _id: 1, _class: 1, space: 1, docNotifyContext: 1 },
-          sort: { createdOn: SortingOrder.Ascending }
-        }
-      )
-      const contexts = get(this.contexts) ?? []
-
-      for (const notification of inboxNotifications) {
-        await ops.updateDoc(notification._class, notification.space, notification._id, { isViewed: false })
+addTxListener((txes: Tx[]) => {
+  for (const tx of txes) {
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<Doc>
+      if (createTx.objectClass !== notification.class.ReadState) continue
+      const notificationClient = InboxNotificationsClientImpl.getClient()
+      const state = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<ReadState>)
+      const current = get(notificationClient.readStateByDoc).has(state.attachedTo)
+      if (current == null) {
+        notificationClient.readStateByDoc.update((readStateByDoc) => {
+          return readStateByDoc.set(state.attachedTo, state)
+        })
       }
-      for (const context of contexts) {
-        const firstUnread = inboxNotifications.find(
-          (it) => it.docNotifyContext === context._id && isActivityNotification(it)
-        )
+    }
 
-        if (firstUnread === undefined) {
-          continue
+    if (tx._class === core.class.TxUpdateDoc) {
+      const updateTx = tx as TxUpdateDoc<Doc>
+      if (updateTx.attachedTo == null) continue
+      if (updateTx.objectClass !== notification.class.ReadState) continue
+      const notificationClient = InboxNotificationsClientImpl.getClient()
+      const attachedTo = updateTx.attachedTo
+      notificationClient.readStateByDoc.update((readStateByDoc) => {
+        const current = readStateByDoc.get(attachedTo)
+        if (current == null) {
+          return readStateByDoc
         }
 
-        const lastViewedTimestamp = (firstUnread.createdOn ?? firstUnread.modifiedOn) - 1
-
-        await ops.update(context, { lastView: lastViewedTimestamp })
-      }
-    } finally {
-      await ops.commit()
+        return readStateByDoc.set(attachedTo, TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<ReadState>))
+      })
     }
   }
-}
+})

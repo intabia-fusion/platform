@@ -40,7 +40,6 @@
     "Message": "Nachricht",
     "ClearAll": "Alle löschen",
     "MarkReadAll": "Alle als gelesen markieren",
-    "MarkUnreadAll": "Alle als ungelesen markieren",
     "RemoveAllConfirmationTitle": "Alle Benachrichtigungen archivieren?",
     "RemoveAllConfirmationMessage": "Sind Sie sicher, dass Sie alle Benachrichtigungen archivieren möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "StarDocument": "Dokument mit Stern markieren",

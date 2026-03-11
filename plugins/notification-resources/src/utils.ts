@@ -108,14 +108,6 @@ export async function canReadNotifyContext (doc: DocNotifyContext): Promise<bool
 /**
  * @public
  */
-export async function canUnReadNotifyContext (doc: DocNotifyContext): Promise<boolean> {
-  const canReadContext = await canReadNotifyContext(doc)
-  return !canReadContext
-}
-
-/**
- * @public
- */
 export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
   const inboxClient = InboxNotificationsClientImpl.getClient()
   const inboxNotifications = get(inboxClient.inboxNotificationsByContext).get(doc._id) ?? []
@@ -127,41 +119,6 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
       inboxNotifications.map(({ _id }) => _id)
     )
     await ops.update(doc, { lastView: Date.now() })
-  } finally {
-    await ops.commit()
-  }
-}
-
-/**
- * @public
- */
-export async function unReadNotifyContext (doc: DocNotifyContext): Promise<void> {
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const inboxNotifications = get(inboxClient.inboxNotificationsByContext).get(doc._id) ?? []
-  const notificationsToUnread = inboxNotifications.filter(({ isViewed }) => isViewed)
-
-  if (notificationsToUnread.length === 0) {
-    return
-  }
-
-  const ops = getClient().apply(undefined, 'unReadNotifyContext', true)
-
-  try {
-    await inboxClient.unreadNotifications(
-      ops,
-      notificationsToUnread.map(({ _id }) => _id)
-    )
-    const toUnread = inboxNotifications.find(isActivityNotification)
-
-    if (toUnread !== undefined) {
-      const createdOn = (toUnread as WithLookup<ActivityInboxNotification>)?.$lookup?.attachedTo?.createdOn
-
-      if (createdOn === undefined || createdOn === 0) {
-        return
-      }
-
-      await ops.diffUpdate(doc, { lastView: createdOn - 1 })
-    }
   } finally {
     await ops.commit()
   }
@@ -253,12 +210,6 @@ export async function readAll (): Promise<void> {
   const client = InboxNotificationsClientImpl.getClient()
 
   await client.readAllNotifications()
-}
-
-export async function unreadAll (): Promise<void> {
-  const client = InboxNotificationsClientImpl.getClient()
-
-  await client.unreadAllNotifications()
 }
 
 export function isActivityNotification (doc?: InboxNotification): doc is ActivityInboxNotification {
@@ -380,10 +331,10 @@ export async function hasInboxNotifications (
   return unreadInboxData.size > 0
 }
 
-export async function getNotificationsCount (
+export function getNotificationsCount (
   context: DocNotifyContext | DocNotifyContext[] | undefined,
   notifications: InboxNotification[] = []
-): Promise<number> {
+): number {
   if (context == null) return 0
   const contexts = Array.isArray(context) ? context : [context]
   if (contexts.length === 0 || notifications.length === 0) {

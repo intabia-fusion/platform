@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getDay, type Ref, type Timestamp } from '@hcengineering/core'
+import { getDay, type Timestamp } from '@hcengineering/core'
 import { get } from 'svelte/store'
 import { sortActivityMessages } from '@hcengineering/activity-resources'
 import { type ActivityMessage, type DisplayActivityMessage } from '@hcengineering/activity'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type ReadState } from '@hcengineering/notification'
 
 import { getClosestDate, readChannelMessages } from './utils'
 import { type ChannelDataProvider } from './channelDataProvider'
@@ -144,9 +144,9 @@ let messagesToReadAccumulatorTimer: any
 
 export function readViewportMessages (
   messages: ActivityMessage[],
-  contextId: Ref<DocNotifyContext>,
   scrollDiv?: HTMLElement | null,
-  contentDiv?: HTMLElement | null
+  contentDiv?: HTMLElement | null,
+  readState?: ReadState | null
 ): void {
   if (scrollDiv == null || contentDiv == null) return
 
@@ -167,6 +167,6 @@ export function readViewportMessages (
     const messagesToRead = [...messagesToReadAccumulator]
     messagesToReadAccumulator.clear()
     if (messagesToRead.length === 0) return
-    void readChannelMessages(sortActivityMessages(messagesToRead), contextId)
+    void readChannelMessages(sortActivityMessages(messagesToRead), readState)
   }, 500)
 }

@@ -96,6 +96,7 @@ export const NOTIFICATION_BODY_SIZE = 150
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
 
 export * from './utils'
+export * from './middleware'
 
 /**
  * @public
@@ -114,6 +115,8 @@ export default plugin(serverNotificationId, {
     OnAttributeCreate: '' as Resource<TriggerFunc>,
     OnAttributeUpdate: '' as Resource<TriggerFunc>,
     OnDocRemove: '' as Resource<TriggerFunc>,
+    OnDocCreated: '' as Resource<TriggerFunc>,
+    OnDocSpaceChanged: '' as Resource<TriggerFunc>,
     OnEmployeeDeactivate: '' as Resource<TriggerFunc>,
     PushNotificationsHandler: '' as Resource<TriggerFunc>,
     OnCollaboratorRemoved: '' as Resource<TriggerFunc>

@@ -31,7 +31,8 @@ import {
   AccountUuid,
   Tx,
   Type,
-  AnyAttribute
+  AnyAttribute,
+  AttachedDoc
 } from '@hcengineering/core'
 import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
@@ -48,6 +49,7 @@ export * from './types'
 export const DOMAIN_NOTIFICATION = 'notification' as Domain
 export const DOMAIN_DOC_NOTIFY = 'notification-dnc' as Domain
 export const DOMAIN_USER_NOTIFY = 'notification-user' as Domain
+export const DOMAIN_READ_STATE = 'notification-read-state' as Domain
 
 /**
  * @public
@@ -309,6 +311,7 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
   lastView?: Timestamp
   lastUpdate?: Timestamp
   lastNotify?: Timestamp
+  lastNotifiedMessage?: Timestamp
 
   // Only for debug
   tx?: Ref<TxCUD<Doc>>
@@ -318,6 +321,16 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+export interface ReadState extends AttachedDoc {
+  [key: AccountUuid]: ReadPosition
+}
+
+export interface ReadPosition {
+  messageId: Ref<ActivityMessage>
+  timestamp: Timestamp
+}
+
 /**
  * @public
  */
@@ -325,6 +338,8 @@ export interface InboxNotificationsClient {
   contextByDoc: Writable<Map<Ref<Doc>, DocNotifyContext>>
   contexts: Writable<DocNotifyContext[]>
   contextById: Readable<IdMap<DocNotifyContext>>
+
+  readStateByDoc: Readable<Map<Ref<Doc>, ReadState | null>>
 
   inboxNotifications: Readable<InboxNotification[]>
   activityInboxNotifications: Writable<ActivityInboxNotification[]>
@@ -336,7 +351,9 @@ export interface InboxNotificationsClient {
   unreadNotifications: (client: TxOperations, ids: Array<Ref<InboxNotification>>) => Promise<void>
   removeAllNotifications: () => Promise<void>
   readAllNotifications: () => Promise<void>
-  unreadAllNotifications: () => Promise<void>
+
+  getReadState: (attachedTo: Ref<Doc>) => Promise<ReadState | undefined>
+  loadReadState: (attachedTo: Ref<Doc>) => Promise<void>
 }
 
 /**
@@ -389,7 +406,9 @@ const notification = plugin(notificationId, {
     NotificationProvider: '' as Ref<Class<NotificationProvider>>,
     NotificationTypeSetting: '' as Ref<Class<NotificationTypeSetting>>,
     NotificationProviderSetting: '' as Ref<Class<NotificationProviderSetting>>,
-    NotificationProviderDefaults: '' as Ref<Mixin<NotificationProviderDefaults>>
+    NotificationProviderDefaults: '' as Ref<Mixin<NotificationProviderDefaults>>,
+
+    ReadState: '' as Ref<Class<ReadState>>
   },
   ids: {
     NotificationSettings: '' as Ref<Doc>,
@@ -420,7 +439,6 @@ const notification = plugin(notificationId, {
     MutePopup: '' as AnyComponent
   },
   action: {
-    UnReadNotifyContext: '' as Ref<Action>,
     ReadNotifyContext: '' as Ref<Action>,
     RemoveContextNotifications: '' as Ref<Action>
   },
@@ -449,7 +467,6 @@ const notification = plugin(notificationId, {
     All: '' as IntlString,
     ClearAll: '' as IntlString,
     MarkReadAll: '' as IntlString,
-    MarkUnreadAll: '' as IntlString,
     RemoveAllConfirmationTitle: '' as IntlString,
     RemoveAllConfirmationMessage: '' as IntlString,
     YouAddedCollaborators: '' as IntlString,

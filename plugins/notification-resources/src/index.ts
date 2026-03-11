@@ -32,13 +32,10 @@ import {
   unsubscribe,
   resolveLocation,
   canReadNotifyContext,
-  canUnReadNotifyContext,
   readNotifyContext,
-  unReadNotifyContext,
   hasInboxNotifications,
   clearAll,
   readAll,
-  unreadAll,
   checkPermission,
   isNotificationAllowed,
   locationDataResolver,
@@ -75,7 +72,6 @@ export default async (): Promise<Resources> => ({
     // eslint-disable-next-line @typescript-eslint/unbound-method
     GetInboxNotificationsClient: InboxNotificationsClientImpl.getClient,
     CanReadNotifyContext: canReadNotifyContext,
-    CanUnReadNotifyContext: canUnReadNotifyContext,
     HasInboxNotifications: hasInboxNotifications,
     CheckPushPermission: checkPermission,
     IsNotificationAllowed: isNotificationAllowed,
@@ -85,11 +81,9 @@ export default async (): Promise<Resources> => ({
   actionImpl: {
     Unsubscribe: unsubscribe,
     ReadNotifyContext: readNotifyContext,
-    UnReadNotifyContext: unReadNotifyContext,
     RemoveContextNotifications: removeContextNotifications,
     ClearAll: clearAll,
     ReadAll: readAll,
-    UnreadAll: unreadAll,
     EditDocNotifications: editDocNotificationsAction
   },
   resolver: {

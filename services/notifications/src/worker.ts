@@ -63,9 +63,11 @@ export class Worker {
     this.txTypes = this.sysModel
       .findAllSync(notification.class.TxNotificationType, {})
       .sort((a, b) => (a.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY) - (b.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY))
-    this.triggerClasses = [activity.class.ActivityMessage, ...this.txTypes.map((it) => it.objectClass)].filter(
-      (it) => it !== core.class.Doc
-    )
+    this.triggerClasses = [
+      notification.class.ReadState,
+      activity.class.ActivityMessage,
+      ...this.txTypes.map((it) => it.objectClass)
+    ].filter((it) => it !== core.class.Doc)
 
     this.interval = setInterval(
       () => {

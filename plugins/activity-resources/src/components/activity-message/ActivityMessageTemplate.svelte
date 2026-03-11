@@ -153,7 +153,7 @@
       const overrides = onReply ? new Map([[activity.action.Reply, onReply]]) : new Map()
       showMenu(
         event,
-        { object: message, baseMenuClass: activity.class.ActivityMessage, excludedActions, overrides },
+        { object: message, baseMenuClass: activity.class.ActivityMessage, excludedActions, overrides, actions },
         () => {
           isActionsOpened = false
         }
@@ -303,6 +303,8 @@
     display: flex;
     flex-shrink: 0;
     padding: 0.5rem 1rem;
+    padding-right: 2rem;
+    padding-bottom: 0.75rem;
     gap: 1rem;
     //overflow: hidden;
     border: 1px solid transparent;

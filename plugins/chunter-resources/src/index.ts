@@ -248,7 +248,7 @@ export default async (): Promise<Resources> => ({
         const mentionNotifications = notifications
           .filter(isMentionNotification)
           .filter((it) => hierarchy.isDerived(it.mentionedInClass, activity.class.ActivityMessage))
-        const unreadCount = await getNotificationsCount(context, [...activityNotifications, ...mentionNotifications])
+        const unreadCount = getNotificationsCount(context, [...activityNotifications, ...mentionNotifications])
         if (unreadCount > 0) {
           return true
         }

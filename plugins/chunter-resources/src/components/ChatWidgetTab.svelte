@@ -66,9 +66,7 @@
     })
   })
 
-  $: void getNotificationsCount(context, notifications).then((res) => {
-    count = res
-  })
+  $: count = getNotificationsCount(context, notifications)
 
   onDestroy(() => {
     unsubscribe()

@@ -21,7 +21,7 @@
     editingMessageStore
   } from '@hcengineering/activity-resources'
   import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
-  import { DocNotifyContext } from '@hcengineering/notification'
+  import { DocNotifyContext, ReadState } from '@hcengineering/notification'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller } from '@hcengineering/ui'
@@ -64,6 +64,7 @@
   const inboxClient = InboxNotificationsClientImpl.getClient()
   const contextByDocStore = inboxClient.contextByDoc
   const notificationsByContextStore = inboxClient.inboxNotificationsByContext
+  const readStateByDocStore = inboxClient.readStateByDoc
 
   // Stores
   const metadataStore = provider.metadataStore
@@ -80,6 +81,9 @@
 
   let messages: ActivityMessage[] = []
   let messagesCount = 0
+
+  let isReadStateLoaded = false
+  let readState: ReadState | undefined = undefined
 
   // Elements
   let scroller: Scroller | undefined | null = undefined
@@ -124,6 +128,14 @@
     read()
   }
 
+  $: void inboxClient.getReadState(object._id).then((it) => {
+    readState = it
+    isReadStateLoaded = true
+  })
+  $: readState = $readStateByDocStore.get(doc._id) ?? undefined
+
+  $: isLoading = $isLoadingStore || !isReadStateLoaded
+
   const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
     if (notifyContext !== undefined && !isFreeze()) {
       recheckNotifications(notifyContext)
@@ -131,12 +143,12 @@
     }
   })
 
-  $: void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
+  $: void initializeScroll(isLoading, separatorDiv, separatorIndex)
   $: adjustScrollPosition(selectedMessageId)
   $: void handleMessagesUpdated(messages.length)
 
   function adjustScrollPosition (selectedMessageId?: Ref<ActivityMessage>): void {
-    if ($isLoadingStore || !isScrollInitialized) {
+    if (isLoading || !isScrollInitialized) {
       return
     }
     const msgData = $metadataStore.find(({ _id }) => _id === selectedMessageId)
@@ -316,7 +328,7 @@
 
   function reinitializeScroll (): void {
     isScrollInitialized = false
-    void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
+    void initializeScroll(isLoading, separatorDiv, separatorIndex)
   }
 
   function handleJumpToDate (e: CustomEvent<{ date?: Timestamp }>): void {
@@ -344,8 +356,8 @@
   }
 
   function read (): void {
-    if (isFreeze() || notifyContext === undefined || !isScrollInitialized) return
-    readViewportMessages(messages, notifyContext._id, scrollDiv, contentDiv)
+    if (isFreeze() || !isScrollInitialized) return
+    readViewportMessages(messages, scrollDiv, contentDiv, readState)
   }
 
   function updateScrollData (): void {
@@ -576,10 +588,10 @@
     removeTxListener(newMessageTxListener)
   })
 
-  $: showBlankView = !$isLoadingStore && messages.length === 0 && !isThread
+  $: showBlankView = !isLoading && messages.length === 0 && !isThread
 
   export function editLastMessage (): void {
-    if ($isLoadingStore || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) return
+    if (isLoading || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) return
     if (!isScrollAtBottom) return
     const me = getCurrentAccount()
     let lastMessage: ChatMessage | undefined = undefined
@@ -616,6 +628,7 @@
   }
 </script>
 
+{readState?._id}
 <div class="flex-col relative" class:h-full={fullHeight}>
   {#if !isThread && messages.length > 0 && selectedDate}
     <div class="selectedDate">
@@ -627,7 +640,7 @@
     bind:scrollDiv
     bind:contentDiv
     bottomStart={!showBlankView}
-    loadingOverlay={$isLoadingStore || !isScrollInitialized}
+    loadingOverlay={isLoading || !isScrollInitialized}
     onScroll={handleScroll}
     onResize={handleResize}
     key={getKey(messages)}
