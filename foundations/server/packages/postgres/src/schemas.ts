@@ -220,12 +220,12 @@ const notificationSchema: Schema = {
   lastNotify: {
     type: 'bigint',
     notNull: false,
-    index: true
+    index: false
   },
   lastNotifiedMessage: {
     type: 'bigint',
     notNull: false,
-    index: true
+    index: false
   },
   isViewed: {
     type: 'bool',
