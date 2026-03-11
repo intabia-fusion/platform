@@ -86,7 +86,7 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     label: chunter.string.Starred,
     sortFn: sortAlphabetically,
     wrap: false,
-    actions: getPinnedActions(),
+    actionsFn: getPinnedActions,
     showEmpty: false,
     query: {
       pinned: true
@@ -97,7 +97,7 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     id: 'channels',
     sortFn: sortAlphabetically,
     wrap: true,
-    actions: getChannelsActions(),
+    actionsFn: getChannelsActions,
     createAction: createChannelAction,
     showEmpty: true,
     query: {
@@ -109,7 +109,7 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     id: 'direct',
     sortFn: sortDirects,
     wrap: true,
-    actions: getDirectActions(),
+    actionsFn: getDirectActions,
     createAction: createDirectAction,
     showEmpty: true,
     query: {
@@ -121,7 +121,7 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     id: 'activity',
     sortFn: sortActivityChannels,
     wrap: true,
-    actions: getActivityActions({ readAll: true, hideAll: true }),
+    actionsFn: () => getActivityActions({ readAll: true, hideAll: true }),
     maxSectionItems: 5,
     showEmpty: false,
     query: {

@@ -175,7 +175,7 @@
     objects={section.objects}
     objectId={object?._id}
     header={section.label}
-    actions={model.actions ?? []}
+    actions={model.actionsFn()}
     createAction={model.createAction}
     sortFn={model.sortFn}
     showEmpty={model.showEmpty}

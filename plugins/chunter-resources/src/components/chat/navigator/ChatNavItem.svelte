@@ -27,7 +27,7 @@
   } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
-  import { Doc, getCurrentAccount, Space } from '@hcengineering/core'
+  import { Doc, getCurrentAccount, Ref, Space } from '@hcengineering/core'
   import { Chat } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
 
@@ -46,23 +46,12 @@
   const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
   const notificationClient = InboxNotificationsClientImpl.getClient()
-
-  let notifications: InboxNotification[] = []
+  const notificationsByContextStore = notificationClient.inboxNotificationsByContext
 
   let count: number | null = null
   let actions: Action[] = []
 
-  notificationClient.inboxNotificationsByContext.subscribe((res) => {
-    if (context === undefined) {
-      return
-    }
-
-    notifications = (res.get(context._id) ?? []).filter((n) => {
-      if (isActivityNotification(n)) return true
-
-      return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
-    })
-  })
+  $: notifications = getNotifications(context, $notificationsByContextStore)
 
   $: void getNotificationsCount(context, notifications).then((res) => {
     count = res === 0 ? null : res
@@ -71,6 +60,21 @@
   $: void getActions(item.object, item.chat, context).then((res) => {
     actions = res
   })
+
+  function getNotifications (
+    context: DocNotifyContext | undefined,
+    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  ): InboxNotification[] {
+    if (context === undefined) {
+      return []
+    }
+
+    return (notificationsByContext.get(context._id) ?? []).filter((n) => {
+      if (isActivityNotification(n)) return true
+
+      return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
+    })
+  }
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
