@@ -6,7 +6,8 @@
     "ShowBadge": "Mostrar una insignia en el icono de la aplicación",
     "SoundAndAppearance": "Sonido y apariencia",
     "HaveGotANotification": "Has recibido una notificación",
-    "TotalNotificationsCount": "Tienes {count, plural, =1 {# notificación} other {# notificaciones}} en total"
+    "TotalNotificationsCount": "Tienes {count, plural, =1 {# notificación} other {# notificaciones}} en total",
+    "Desktop": "Escritorio"
   }
 }
 

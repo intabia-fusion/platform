@@ -63,7 +63,7 @@ export default plugin(desktopPreferencesId, {
     DesktopPreferencesPresenter: '' as AnyComponent
   },
   icon: {
-    NotificationMessage: '' as Asset
+    Desktop: '' as Asset
   },
   string: {
     ShowNotifications: '' as IntlString,
@@ -72,7 +72,8 @@ export default plugin(desktopPreferencesId, {
     BounceAppIcon: '' as IntlString,
     ShowBadge: '' as IntlString,
     HaveGotANotification: '' as IntlString,
-    TotalNotificationsCount: '' as IntlString
+    TotalNotificationsCount: '' as IntlString,
+    Desktop: '' as IntlString
   },
   ids: {
     DesktopNotificationPreferencesGroup: '' as Ref<NotificationPreferencesGroup>

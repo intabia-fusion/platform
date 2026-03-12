@@ -23,8 +23,12 @@
   import { chatId } from '@hcengineering/chat'
   import { inboxId } from '@hcengineering/inbox'
   import { getMetadata, getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { InboxNotificationsClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
+  import notification, {
+    DocNotifyContext,
+    InboxNotification,
+    NotificationAppearancePreference
+  } from '@hcengineering/notification'
   import { NotificationType } from '@hcengineering/communication-types'
 
   import AppItem from './AppItem.svelte'
@@ -124,7 +128,8 @@
     contexts: DocNotifyContext[],
     hasOldNotifications: boolean,
     hasNewNotifications: boolean,
-    hasNewMessagesNotifications: boolean
+    hasNewMessagesNotifications: boolean,
+    preference: NotificationAppearancePreference | undefined
   ): Promise<boolean> {
     const { alias } = app
     if (alias === inboxId) {
@@ -136,7 +141,7 @@
 
     if (app.showNotifyMarkerFn != null) {
       const fn = await getResource(app.showNotifyMarkerFn)
-      return await fn(contexts)
+      return await fn(contexts, preference)
     }
     return false
   }
@@ -155,7 +160,7 @@
     >
       {#each topApps as app}
         {@const customProps = customAppProps.get(app.alias) ?? {}}
-        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification) then notify}
+        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification, $appearancePreferences) then notify}
           <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
             <AppItem
               selected={app._id === active}

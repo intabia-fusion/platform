@@ -121,6 +121,17 @@ export function defineNotifications (builder: Builder): void {
       notification.ids.MeRemovedFromCollaboratorsNotification
     ]
   })
+
+  builder.createDoc(
+    notification.class.NotificationPreferencesGroup,
+    core.space.Model,
+    {
+      label: notification.string.Appearance,
+      icon: notification.icon.Appearance,
+      presenter: notification.component.NotificationAppearancePreferencesPresenter
+    },
+    notification.ids.NotificationAppearancePreferencesGroup
+  )
 }
 
 export function generateClassNotificationTypes (

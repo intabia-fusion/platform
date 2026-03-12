@@ -6,6 +6,7 @@
     "ShowBadge": "Zobrazit odznak na ikoně aplikace",
     "SoundAndAppearance": "Zvuk a vzhled",
     "HaveGotANotification": "Obdrželi jste upozornění",
-    "TotalNotificationsCount": "Máte celkem {count, plural, =1 {# upozornění} other {# upozornění}}"
+    "TotalNotificationsCount": "Máte celkem {count, plural, =1 {# upozornění} other {# upozornění}}",
+    "Desktop": "Desktop"
   }
 }

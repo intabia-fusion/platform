@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "共同編集者から削除されました",
     "AllNotifications": "すべての通知",
     "JustMentions": "メンションのみ",
-    "Mute": "ミュート"
+    "Mute": "ミュート",
+    "Appearance": "外観",
+    "ShowChatBadge": "チャットバッジを表示"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

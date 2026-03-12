@@ -83,7 +83,8 @@ import {
   type TxNotificationType,
   DOMAIN_READ_STATE,
   type ReadState,
-  ReadPosition
+  ReadPosition,
+  type NotificationAppearancePreference
 } from '@hcengineering/notification'
 import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
@@ -359,6 +360,11 @@ export class TNotificationProviderDefaults extends TDoc implements NotificationP
   enabledTypes!: Ref<NotificationType>[]
 }
 
+@Model(notification.class.NotificationAppearancePreference, preference.class.Preference)
+export class TNotificationAppearancePreference extends TPreference implements NotificationAppearancePreference {
+  showChatBadge!: boolean
+}
+
 export function createModel (builder: Builder): void {
   builder.createModel(
     TBrowserNotification,
@@ -384,7 +390,8 @@ export function createModel (builder: Builder): void {
     TNotificationTypeSetting,
     TNotificationProviderDefaults,
     TReactionInboxNotification,
-    TReadState
+    TReadState,
+    TNotificationAppearancePreference
   )
 
   builder.mixin(notification.class.BrowserNotification, core.class.Class, core.mixin.TransientConfiguration, {
