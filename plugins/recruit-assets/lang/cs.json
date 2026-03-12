@@ -105,17 +105,14 @@
     "MoveApplication": "Přesunout na jinou pozici",
     "SearchVacancy": "Hledat pozici...",
     "Organizations": "Společnosti",
-
     "TemplateReplace": "Chcete použít novou šablonu?",
     "TemplateReplaceConfirm": "Všechna pole budou přepsána hodnotami nové šablony",
     "Apply": "Použít",
-
     "OpenVacancyList": "Otevřít seznam",
     "Export": "Exportovat",
     "ConfigLabel": "Nábor",
     "ConfigDescription": "Rozšíření pro správu talentů/uchazečů a pozic.",
     "MyApplications": "Moje přihlášky",
-
     "ShowApplications": "Zobrazit přihlášky",
     "GetTalentIds": "Získat ID talentů",
     "HideDoneState": "Skrýt dokončené přihlášky",
@@ -130,5 +127,16 @@
     "ApplicationExists": "Přihláška již existuje",
     "TalentRequired": "Vyberte talent",
     "VacancyRequired": "Vyberte pozici"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you",
+    "ApplicationCreateNotificationText": "{body}",
+    "ApplicationCreateNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ApplicationCreateNotificationSubject": "{title}",
+    "ReviewCreateNotificationText": "{body}",
+    "ReviewCreateNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ReviewCreateNotificationSubject": "{title}"
   }
 }

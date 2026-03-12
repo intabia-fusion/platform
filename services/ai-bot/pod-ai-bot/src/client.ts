@@ -20,12 +20,13 @@ import { initStatisticsContext } from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
 
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
+import { type MeasureContext, newMetrics } from '@hcengineering/core'
 import { join } from 'path'
 import config from './config'
 import { registerLoaders } from './loaders'
 import { createTranscriptionProvider, TranscriptionConfig, TranscriptionOptions } from './transcription'
 import { ClisrClient, createCallbackClient } from '@intabiafusion/clisr'
+import { createLLMFromConfig, type LLMRequest } from './llms'
 
 export const startClient = async (): Promise<void> => {
   setMetadata(serverToken.metadata.Secret, config.ServerSecret)
@@ -69,9 +70,65 @@ export const startClient = async (): Promise<void> => {
   const methods: Record<string, ClisrClient['binaryHandler']> = {}
 
   let transcriptionEnabled = false
+  let llmEnabled = false
+
+  // Create LLM provider for client mode
+  const llmProvider = createLLMFromConfig(ctx)
+
+  // Build LLM request handler
+  async function handleLLMRequest (ctx: MeasureContext, args: any[]): Promise<any> {
+    if (llmProvider === undefined) {
+      throw new Error('LLM provider is not configured')
+    }
+    const request = args[0] as LLMRequest
+    switch (request.method) {
+      case 'translateHtml':
+        return await llmProvider.translateHtml(ctx, request.workspace, request.html, request.lang)
+      case 'summarizeMessages':
+        return await llmProvider.summarizeMessages(ctx, request.workspace, request.messages, request.lang)
+      case 'createChatCompletion':
+        return await llmProvider.createChatCompletion(
+          ctx,
+          request.workspace,
+          request.message,
+          request.user,
+          request.history,
+          request.skipCache,
+          request.reason
+        )
+      case 'createChatCompletionWithTools':
+        // Tools are not fully serializable, pass empty tools array
+        return await llmProvider.createChatCompletionWithTools(
+          [] as any,
+          request.message,
+          request.contextMode,
+          request.assistantMemory,
+          request.userMemory,
+          request.sharedContext,
+          request.user,
+          ctx,
+          request.workspace,
+          request.history,
+          request.skipCache,
+          request.reason
+        )
+      case 'requestSummary':
+        return await llmProvider.requestSummary(ctx, request.workspace, request.personMemory, request.history)
+      case 'countTokens':
+        return llmProvider.countTokens(request.messages)
+      default:
+        throw new Error(`Unknown LLM method: ${(request as any).method}`)
+    }
+  }
 
   const client = await createCallbackClient(ctx, config.ServerUrl, config.ApiToken, {
     clientHost: `ai-bot-client@${os.hostname()}`,
+    callback: async (ctx, task, args) => {
+      if (task === 'llm') {
+        return await handleLLMRequest(ctx, args)
+      }
+      throw new Error(`Unknown task: ${task}`)
+    },
     binaryExecutor: async (ctx, method, data, headers) => {
       const handler = methods[method]
       if (handler === undefined) {
@@ -81,25 +138,38 @@ export const startClient = async (): Promise<void> => {
     },
     onConnect: async (event) => {
       if (transcriptionEnabled) {
-        // Inform aibot client is enabled for transcriptions
         await client.request('transcription', [true])
+      }
+      if (llmEnabled) {
+        await client.request('llm', [true])
       }
     }
   })
 
-  try {
-    const provider = createTranscriptionProvider(ctx, transcriptionConfig)
+  // Register LLM capability
+  if (llmProvider !== undefined) {
+    llmEnabled = true
+    await client.request('llm', [true])
+    ctx.info('LLM provider registered with server', { provider: config.LLMProvider })
+  }
 
-    methods.transcribe = async (ctx, method, data, headers) => {
-      const options: TranscriptionOptions = headers?.options ?? {}
-      // OGG/Opus audio format - pass directly to provider
-      return await provider.transcribe(Buffer.from(data), options)
+  if (transcriptionConfig.provider !== undefined && transcriptionConfig.provider !== '') {
+    try {
+      const provider = createTranscriptionProvider(ctx, transcriptionConfig)
+
+      methods.transcribe = async (ctx, method, data, headers) => {
+        const options: TranscriptionOptions = headers?.options ?? {}
+        // OGG/Opus audio format - pass directly to provider
+        return await provider.transcribe(Buffer.from(data), options)
+      }
+      transcriptionEnabled = true
+      // Inform aibot client is enabled for transcriptions
+      await client.request('transcription', [true])
+    } catch (err: any) {
+      ctx.warn('Failed to create transcription provider', { error: err.message })
     }
-    transcriptionEnabled = true
-    // Inform aibot client is enabled for transcriptions
-    await client.request('transcription', [true])
-  } catch (err: any) {
-    ctx.warn('Failed to create transcription provider', { error: err.message })
+  } else {
+    ctx.info('Transcription provider not configured, skipping')
   }
 
   const onClose = (): void => {

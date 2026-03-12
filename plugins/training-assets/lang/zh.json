@@ -99,5 +99,10 @@
     "ViewTraineesResults": "学员的结果",
     "ConfigLabel": "培训",
     "ConfigDescription": "用于管理培训的扩展"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} sent you a training request {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Training request {doc}"
   }
 }

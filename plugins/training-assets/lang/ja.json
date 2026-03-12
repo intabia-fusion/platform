@@ -99,5 +99,10 @@
     "ViewTraineesResults": "受講者の結果",
     "ConfigLabel": "トレーニング",
     "ConfigDescription": "トレーニングを管理するための拡張機能"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} sent you a training request {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Training request {doc}"
   }
 }

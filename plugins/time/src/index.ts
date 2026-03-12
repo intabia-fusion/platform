@@ -170,5 +170,10 @@ export default plugin(timeId, {
     UnassignToDoConfirm: '' as IntlString,
     ReassignToDo: '' as IntlString,
     ReassignToDoConfirm: '' as IntlString
+  },
+  emailTemplate: {
+    ToDoCreatedText: '' as IntlString,
+    ToDoCreatedHtml: '' as IntlString,
+    ToDoCreatedSubject: '' as IntlString
   }
 })

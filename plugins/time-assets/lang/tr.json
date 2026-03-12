@@ -59,5 +59,10 @@
     "UnassignToDoConfirm": "Bu Eylem Öğesinin atamasını kaldırmak istiyor musunuz? Eylem Öğesi, atananın planlayıcısından kaldırılacak.",
     "ReassignToDo": "Eylem Öğesi atananı değiştir",
     "ReassignToDoConfirm": "Eylem Öğesi atananını değiştirmek istiyor musunuz? Eylem Öğesi, mevcut atananın planlayıcısından kaldırılacak."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

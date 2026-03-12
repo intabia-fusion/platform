@@ -90,6 +90,10 @@
     "UnlinkInstallation": "您确定要卸载 GitHub 应用吗？同步将被禁用。",
     "RemoveInstallation": "卸载",
     "Suspended": "已暂停"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "Pull request {doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>Pull request {doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "Pull request {doc} was assigned to you"
   }
 }
-

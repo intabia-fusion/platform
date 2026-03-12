@@ -273,5 +273,10 @@
     "ForbidCreateProjectPermission": "Interdire la création de projet",
     "ForbidCreateProjectPermissionDescription": "Interdit aux utilisateurs de créer de nouveaux projets"
   },
-  "status": {}
+  "status": {},
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you"
+  }
 }

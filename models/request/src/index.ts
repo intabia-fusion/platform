@@ -135,9 +135,9 @@ export function createModel (builder: Builder): void {
       notifyAuthor: true,
       defaultEnabled: true,
       templates: {
-        textTemplate: '{sender} sent you a request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> sent you a request for the {doc}</p> <p>{link}</p>',
-        subjectTemplate: '{doc}'
+        text: request.emailTemplate.NewRequestNotificationText,
+        html: request.emailTemplate.NewRequestNotificationHtml,
+        subject: request.emailTemplate.NewRequestNotificationSubject
       }
     },
     request.ids.CreateRequestNotification
@@ -157,9 +157,9 @@ export function createModel (builder: Builder): void {
       notifyAuthor: true,
       defaultEnabled: true,
       templates: {
-        textTemplate: '{sender} canceled the request for the {doc}',
-        htmlTemplate: '<p><b>{sender}</b> canceled the request for the {doc}</p> <p>{link}</p>',
-        subjectTemplate: '{doc}'
+        text: request.emailTemplate.CancelRequestNotificationText,
+        html: request.emailTemplate.CancelRequestNotificationHtml,
+        subject: request.emailTemplate.CancelRequestNotificationSubject
       }
     },
     request.ids.RemoveRequestNotification

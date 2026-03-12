@@ -55,10 +55,14 @@
     "MarkedAsDone": "Marcado como hecho",
     "WorkSchedule": "Horario de trabajo",
     "SummaryDuration": "Sumerio",
-
     "UnassignToDo": "Eliminar tarea asignada",
     "UnassignToDoConfirm": "¿Desea eliminar la tarea asignada? La tarea será removida del planificador del asignado.",
     "ReassignToDo": "Cambiar asignado de la tarea",
     "ReassignToDoConfirm": "¿Desea cambiar el asignado de la tarea? La tarea será removida del planificador actual del asignado."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

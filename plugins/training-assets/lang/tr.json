@@ -99,5 +99,10 @@
     "ViewTraineesResults": "Eğitim alanların sonuçları",
     "ConfigLabel": "Eğitimler",
     "ConfigDescription": "Eğitimleri yönetmek için uzantı"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} sent you a training request {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Training request {doc}"
   }
 }

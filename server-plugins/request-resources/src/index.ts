@@ -108,7 +108,7 @@ async function OnRequestUpdate (ctx: TxUpdateDoc<Request>, control: TriggerContr
 
 const requestTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const request = doc as Request
-  const title = await translate(control.hierarchy.getClass(request._class).label, {})
+  const title = await translate(control.hierarchy.getClass(request._class).label, {}, control.branding?.defaultLanguage)
 
   const attachedDoc = (
     await control.findAll(control.ctx, request.attachedToClass, { _id: request.attachedTo }, { limit: 1 })

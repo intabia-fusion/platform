@@ -60,7 +60,6 @@
     "ManageVacancyStatuses": "Управление типами вакансий",
     "EditVacancy": "Редактировать",
     "FullDescription": "Детальное описание",
-
     "CreateReview": "Запланировать Ревью",
     "CreateReviewParams": "Запланировать {label}",
     "Reviews": "Ревью",
@@ -84,7 +83,6 @@
     "PersonsLabel": "{name}",
     "AddDescription": "Добавить описание",
     "NumberSkills": "{count, plural, =0 {нет навыков} one {# навык} few {# навыка} other {# навыков}}",
-
     "GotoTalents": "Перейти к соискателям",
     "GotoVacancies": "Перейти к вакансиям",
     "GotoSkills": "Перейти к навыкам",
@@ -96,7 +94,7 @@
     "Parsing": "Обработка...",
     "CopyId": "Копировать ID",
     "CopyLink": "Копировать ссылку",
-    "HasActiveApplicant":"Только активные",
+    "HasActiveApplicant": "Только активные",
     "HasNoActiveApplicant": "Не активные",
     "NoneApplications": "Отсутствуют",
     "VacancyList": "Вакансии",
@@ -115,7 +113,6 @@
     "ConfigLabel": "Рекрутинг",
     "ConfigDescription": "Модуль по работе с соискателями/кандидатами и вакансиями",
     "MyApplications": "Мои кандидаты",
-
     "ShowApplications": "Показать кандидатов",
     "GetTalentIds": "Получить ID соискателей",
     "HideDoneState": "Скрыть завершенных кандидатов",
@@ -130,5 +127,16 @@
     "ApplicationExists": "Кандидат уже существует",
     "TalentRequired": "Пожалуйста, выберите соискателя",
     "VacancyRequired": "Пожалуйста, выберите вакансию"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{sender} назначил(а) вам {doc}",
+    "AssigneeNotificationHtml": "<p>{sender} назначил(а) вам {doc}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "Вам назначен(а) {doc}",
+    "ApplicationCreateNotificationText": "{body}",
+    "ApplicationCreateNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ApplicationCreateNotificationSubject": "{title}",
+    "ReviewCreateNotificationText": "{body}",
+    "ReviewCreateNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ReviewCreateNotificationSubject": "{title}"
   }
 }

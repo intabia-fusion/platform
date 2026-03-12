@@ -72,6 +72,11 @@ export const documentPlugin = plugin(documentId, {
     ForbidCreateTeamspacePermission: '' as IntlString,
     ForbidCreateTeamspacePermissionDescription: '' as IntlString
   },
+  emailTemplate: {
+    ContentNotificationText: '' as IntlString,
+    ContentNotificationHtml: '' as IntlString,
+    ContentNotificationSubject: '' as IntlString
+  },
   ids: {
     NoParent: '' as Ref<Document>,
     DocumentNotificationGroup: '' as Ref<NotificationGroup>,

@@ -51,5 +51,10 @@
     "ConfigDescription": "İşbirlikli doküman düzenleme için uzantı",
     "Icon": "İkon",
     "Color": "Renk"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}"
   }
 }

@@ -35,27 +35,20 @@
     "NoBacklinks": "没有反向链接",
     "NoHistory": "没有历史记录",
     "Untitled": "无标题",
-
     "Description": "描述",
-
     "CopyDocumentUrl": "复制文档 URL 到剪贴板",
     "DocumentUrlCopied": "已复制",
-
     "ViewMode": "查看",
     "EditMode": "编辑",
     "SuggestMode": "建议",
-
     "CompareTo": "比较...",
     "Star": "星标",
     "Unstar": "取消星标",
-
     "Lock": "锁定",
     "Unlock": "解锁",
     "Locked": "已锁定",
-
     "ConfigLabel": "文档",
     "ConfigDescription": "协作文档编辑扩展",
-
     "UnassignToDo": "未指派待办事项",
     "UnassignToDoConfirm": "您要取消指派待办事项吗？待办事项将从被指派人计划中移除。",
     "ReassignToDo": "更改待办事项被指派人",
@@ -64,5 +57,10 @@
     "Color": "颜色",
     "ForbidCreateTeamspacePermission": "禁止创建团队空间",
     "ForbidCreateTeamspacePermissionDescription": "禁止用户创建新团队空间"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}"
   }
 }

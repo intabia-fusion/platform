@@ -56,6 +56,12 @@
     "WebpushRemoveConfirm": "Webpushesが削除されます。確認しますか？",
     "Value": "{value}",
     "Current": "現在",
+    "AlreadySubscribed": "このデバイスはすでに通知を購読しています",
+    "PushNotConfigured": "プッシュ通知はサーバーで設定されていません",
+    "PushNotSupported": "お使いのブラウザはプッシュ通知をサポートしていません",
+    "PushDenied": "ブラウザの設定で通知を許可してください",
+    "PushSubscribeError": "エラー",
+    "PushSubscribeErrorMessage": "通知の購読に失敗しました",
     "Subscribe": "登録",
     "InboxNotificationsDescription": "Hulyの受信箱で個人通知を受け取ります。",
     "PushNotificationsDescription": "デスクトップで個人通知を受け取ります。",
@@ -68,8 +74,24 @@
     "Clear": "クリア",
     "YouAddedAsCollaborator": "コラボレーターに追加されました",
     "YouRemovedFromCollaborators": "コラボレーターから削除されました",
+    "AddMeInCollaborators": "共同編集者に追加されました",
+    "RemoveMeFromCollaborators": "共同編集者から削除されました",
     "AllNotifications": "すべての通知",
     "JustMentions": "メンションのみ",
     "Mute": "ミュート"
+  },
+  "emailTemplate": {
+    "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
+    "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>",
+    "MeAddedInCollaboratorsNotificationSubject": "You were added as a collaborator to {doc}",
+    "MeRemovedFromCollaboratorsNotificationText": "{sender} removed you as a collaborator from {doc}.",
+    "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>",
+    "MeRemovedFromCollaboratorsNotificationSubject": "You were removed as a collaborator from {doc}",
+    "MentionNotificationText": "{sender} mentioned you in {doc}: {message}",
+    "MentionNotificationHtml": "<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>",
+    "MentionNotificationSubject": "You were mentioned in {doc}",
+    "GeneratedNotificationText": "{body}",
+    "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "GeneratedNotificationSubject": "{doc} updated"
   }
 }

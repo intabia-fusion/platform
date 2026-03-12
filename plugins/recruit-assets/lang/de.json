@@ -105,17 +105,14 @@
     "MoveApplication": "Zu anderer Stelle verschieben",
     "SearchVacancy": "Stelle suchen...",
     "Organizations": "Unternehmen",
-
     "TemplateReplace": "Möchten Sie die neue Vorlage anwenden?",
     "TemplateReplaceConfirm": "Alle Felder werden mit den Werten der neuen Vorlage überschrieben",
     "Apply": "Anwenden",
-
     "OpenVacancyList": "Liste öffnen",
     "Export": "Exportieren",
     "ConfigLabel": "Rekrutierung",
     "ConfigDescription": "Erweiterung zur Verwaltung von Talenten/Bewerbern und Stellen.",
     "MyApplications": "Meine Bewerbungen",
-
     "ShowApplications": "Bewerbungen anzeigen",
     "GetTalentIds": "Talent-IDs abrufen",
     "HideDoneState": "Abgeschlossene Bewerbungen ausblenden",
@@ -130,5 +127,16 @@
     "ApplicationExists": "Bewerbung existiert bereits",
     "TalentRequired": "Bitte Talent auswählen",
     "VacancyRequired": "Bitte Stelle auswählen"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you",
+    "ApplicationCreateNotificationText": "{body}",
+    "ApplicationCreateNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ApplicationCreateNotificationSubject": "{title}",
+    "ReviewCreateNotificationText": "{body}",
+    "ReviewCreateNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ReviewCreateNotificationSubject": "{title}"
   }
 }

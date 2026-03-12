@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "Все кроме архивных и устаревших",
     "ExportFilterAll": "Все документы",
     "ExportResultRecordTitle": "Экспорт документов из пространства {workspace} ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

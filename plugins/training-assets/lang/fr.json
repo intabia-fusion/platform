@@ -99,5 +99,10 @@
     "ViewTraineesResults": "Résultats des stagiaires",
     "ConfigLabel": "Formations",
     "ConfigDescription": "Extension pour gérer les formations"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} sent you a training request {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Training request {doc}"
   }
 }

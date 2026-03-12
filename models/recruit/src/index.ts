@@ -1356,9 +1356,9 @@ export function createModel (builder: Builder): void {
       attachedToClass: recruit.class.Applicant,
       isMention: true,
       templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
-        subjectTemplate: '{doc} was assigned to you'
+        text: recruit.emailTemplate.AssigneeNotificationText,
+        html: recruit.emailTemplate.AssigneeNotificationHtml,
+        subject: recruit.emailTemplate.AssigneeNotificationSubject
       },
       priority: 200,
       defaultEnabled: true
@@ -1399,9 +1399,9 @@ export function createModel (builder: Builder): void {
       attachedToClass: recruit.class.Applicant,
       defaultEnabled: false,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: recruit.emailTemplate.ApplicationCreateNotificationText,
+        html: recruit.emailTemplate.ApplicationCreateNotificationHtml,
+        subject: recruit.emailTemplate.ApplicationCreateNotificationSubject
       }
     },
     recruit.ids.ApplicationCreateNotification

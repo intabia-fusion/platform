@@ -54,8 +54,8 @@
     "NewIssuePlaceholder": "Nueva",
     "ResumeDraft": "Continuar borrador",
     "SaveIssue": "Crear tarea",
-    "SetPriority": "Establecer prioridad\u2026",
-    "SetStatus": "Establecer estado\u2026",
+    "SetPriority": "Establecer prioridad…",
+    "SetStatus": "Establecer estado…",
     "SelectIssue": "Seleccionar tarea",
     "Priority": "Prioridad",
     "NoPriority": "Sin prioridad",
@@ -273,5 +273,10 @@
     "ForbidCreateProjectPermission": "Prohibir crear proyecto",
     "ForbidCreateProjectPermissionDescription": "Prohíbe a los usuarios crear nuevos proyectos"
   },
-  "status": {}
+  "status": {},
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you"
+  }
 }

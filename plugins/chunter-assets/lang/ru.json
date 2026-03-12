@@ -13,7 +13,7 @@
     "DirectMessage": "Личные сообщения",
     "EditUpdate": "Сохранить...",
     "EditCancel": "Отменить",
-    "Comments" : "Комментарии",
+    "Comments": "Комментарии",
     "About": "Информация",
     "Members": "Участники",
     "NoMembers": "Нет участников",
@@ -142,5 +142,19 @@
     "Leave": "Покинуть {label}",
     "HideAll": "Скрыть все",
     "Seen": "Прочитали"
+  },
+  "emailTemplate": {
+    "DMNotificationText": "{sender} отправил(а) вам сообщение: \n\n{message}",
+    "DMNotificationHtml": "<p><b>{sender}</b> отправил(а) вам сообщение: </p> {message} <p>{link}</p>",
+    "DMNotificationSubject": "У вас новое личное сообщение",
+    "ChannelNotificationText": "{sender} отправил(а) сообщение в {doc}: \n\n {message}",
+    "ChannelNotificationHtml": "<p><b>{sender}</b> отправил(а) сообщение в {doc}:</p> {message} <p>{link}</p>",
+    "ChannelNotificationSubject": "У вас новое сообщение в {doc}",
+    "JoinChannelNotificationText": "Вас добавили в #{doc}",
+    "JoinChannelNotificationHtml": "<p>Вас добавили в <b>#{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Вас добавили в #{doc}",
+    "ThreadNotificationText": "{sender} ответил(а) на {doc}: \n\n{message}",
+    "ThreadNotificationHtml": "<p><b>{sender}</b> ответил(а) на {doc}:</p><p>{message}</p><p>{link}</p>",
+    "ThreadNotificationSubject": "Новый ответ на {doc}"
   }
 }

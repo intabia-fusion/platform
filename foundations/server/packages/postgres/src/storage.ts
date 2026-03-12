@@ -630,7 +630,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
           return
         }
         if (query.space === acc.uuid) return // TODO: was it for private spaces? If so, need to fix it as they are not identified by acc.uuid now
-        if (domain === DOMAIN_SPACE && isOwner(acc) && showArchived) return
+        if (domain === DOMAIN_SPACE && isOwner(acc)) {
+          if (showArchived) return
+          return `AND (${domain}.archived = false OR ${domain}."_class" = '${core.class.SystemSpace}')`
+        }
         const key = domain === DOMAIN_SPACE ? '_id' : domain === DOMAIN_TX ? '"objectSpace"' : 'space'
         const privateCheck = domain === DOMAIN_SPACE ? ' OR sec.private = false' : ''
         const archivedCheck = showArchived ? '' : ' AND sec.archived = false'

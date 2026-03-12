@@ -60,7 +60,7 @@ async function createPush (
   subscriptions: PushSubscription[],
   senderPerson?: Person
 ): Promise<Tx | undefined> {
-  const { title, body } = await getTranslatedNotificationContent(n)
+  const { title, body } = await getTranslatedNotificationContent(n, control.branding?.defaultLanguage ?? 'en')
 
   const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
   const provider = linkProviders.find(({ _id }) => _id === n.objectClass)

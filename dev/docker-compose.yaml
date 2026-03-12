@@ -581,8 +581,8 @@ services:
       - OPENAI_API_KEY=token
       # - OPENAI_MODEL=gpt-4o-mini
       - OPENAI_BASE_URL=http://huly.local:1234/v1/
-      - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
-      - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
+      - OPENAI_SUMMARY_MODEL=qwen/qwen3.5-9b
+      - OPENAI_TRANSLATE_MODEL=qwen/qwen3.5-9b
 
       # GigaChat Configuration (only if using GigaChat)
       # - LLM_PROVIDER=gigachat

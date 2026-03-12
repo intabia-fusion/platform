@@ -56,6 +56,12 @@
     "WebpushRemoveConfirm": "Веб-пуши будут удалены. Продолжить?",
     "Value": "{value}",
     "Current": "текущий",
+    "AlreadySubscribed": "Это устройство уже подписано на уведомления",
+    "PushNotConfigured": "Push-уведомления не настроены на сервере",
+    "PushNotSupported": "Ваш браузер не поддерживает push-уведомления",
+    "PushDenied": "Разрешите уведомления в настройках браузера",
+    "PushSubscribeError": "Ошибка",
+    "PushSubscribeErrorMessage": "Не удалось подписаться на уведомления",
     "Subscribe": "Подписаться",
     "InboxNotificationsDescription": "Получайте персональные уведомления на свой почтовый ящик Huly.",
     "PushNotificationsDescription": "Получайте персональные уведомления на рабочий стол.",
@@ -70,6 +76,22 @@
     "YouRemovedFromCollaborators": "Вы были удалены из участников",
     "AllNotifications": "Все уведомления",
     "JustMentions": "Только упоминания",
-    "Mute": "Отключить"
+    "Mute": "Отключить",
+    "AddMeInCollaborators": "Меня добавили в участники",
+    "RemoveMeFromCollaborators": "Меня удалили из участников"
+  },
+  "emailTemplate": {
+    "MeAddedInCollaboratorsNotificationText": "{sender} добавил(а) вас как соавтора в {doc}.",
+    "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> добавил(а) вас как соавтора в {doc}.</p><p>{link}</p>",
+    "MeAddedInCollaboratorsNotificationSubject": "Вас добавили как соавтора в {doc}",
+    "MeRemovedFromCollaboratorsNotificationText": "{sender} удалил(а) вас из соавторов {doc}.",
+    "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> удалил(а) вас из соавторов в {doc}.</p><p>{link}</p>",
+    "MeRemovedFromCollaboratorsNotificationSubject": "Вас удалили из соавторов в {doc}",
+    "MentionNotificationText": "{sender} упомянул(а) вас в {doc}: {message}",
+    "MentionNotificationHtml": "<p><b>{sender}</b> упомянул(а) вас в {doc}:</p> <p>{message}</p> <p>{link}</p>",
+    "MentionNotificationSubject": "Вас упомянули в {doc}",
+    "GeneratedNotificationText": "{body}",
+    "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "GeneratedNotificationSubject": "{doc} обновлен(а)"
   }
 }

@@ -55,10 +55,14 @@
     "MarkedAsDone": "Dokončeno",
     "WorkSchedule": "Pracovní plán",
     "SummaryDuration": "Souhrn",
-
     "UnassignToDo": "Odebrat přiřazení akční položky",
     "UnassignToDoConfirm": "Chcete odebrat přiřazení této akční položky? Akční položka bude odebrána z plánovače přiřazeného uživatele.",
     "ReassignToDo": "Změnit přiřazení akční položky",
     "ReassignToDoConfirm": "Chcete změnit přiřazení akční položky? Akční položka bude odebrána z plánovače aktuálního přiřazeného uživatele."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

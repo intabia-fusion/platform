@@ -56,6 +56,12 @@
     "WebpushRemoveConfirm": "Os webpushes serão excluídos. Confirmar?",
     "Value": "{value}",
     "Current": "atual",
+    "AlreadySubscribed": "Este dispositivo já está inscrito para notificações",
+    "PushNotConfigured": "As notificações push não estão configuradas no servidor",
+    "PushNotSupported": "Seu navegador não suporta notificações push",
+    "PushDenied": "Permita notificações nas configurações do seu navegador",
+    "PushSubscribeError": "Erro",
+    "PushSubscribeErrorMessage": "Não foi possível inscrever-se para notificações",
     "Subscribe": "Inscrever-se",
     "InboxNotificationsDescription": "Receba notificações pessoais em sua caixa de entrada do Huly.",
     "PushNotificationsDescription": "Receba notificações pessoais no desktop.",
@@ -68,8 +74,24 @@
     "Clear": "Limpar",
     "YouAddedAsCollaborator": "Você foi adicionado como colaborador",
     "YouRemovedFromCollaborators": "Você foi removido como colaborador",
+    "AddMeInCollaborators": "Fui adicionado como colaborador",
+    "RemoveMeFromCollaborators": "Fui removido dos colaboradores",
     "AllNotifications": "Todas as notificações",
     "JustMentions": "Apenas menções",
     "Mute": "Silenciar"
+  },
+  "emailTemplate": {
+    "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
+    "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>",
+    "MeAddedInCollaboratorsNotificationSubject": "You were added as a collaborator to {doc}",
+    "MeRemovedFromCollaboratorsNotificationText": "{sender} removed you as a collaborator from {doc}.",
+    "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>",
+    "MeRemovedFromCollaboratorsNotificationSubject": "You were removed as a collaborator from {doc}",
+    "MentionNotificationText": "{sender} mentioned you in {doc}: {message}",
+    "MentionNotificationHtml": "<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>",
+    "MentionNotificationSubject": "You were mentioned in {doc}",
+    "GeneratedNotificationText": "{body}",
+    "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "GeneratedNotificationSubject": "{doc} updated"
   }
 }

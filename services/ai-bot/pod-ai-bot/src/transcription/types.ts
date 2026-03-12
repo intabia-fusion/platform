@@ -125,7 +125,7 @@ export interface TranscriptionProvider {
  * - 'deepgram' - Deepgram API
  * - 'server' - Will host a clisr server, and call using round-robin to do a transcription on it.
  */
-export type SttProviderType = 'openai' | 'deepgram' | 'server'
+export type SttProviderType = 'openai' | 'deepgram' | 'server' | ''
 
 /**
  * VAD (Voice Activity Detection) analysis result

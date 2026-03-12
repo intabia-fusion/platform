@@ -90,5 +90,10 @@
     "UnlinkInstallation": "GitHub Uygulamasını kaldırmak istediğinizden emin misiniz? Senkronizasyon devre dışı bırakılacak.",
     "RemoveInstallation": "Kaldır",
     "Suspended": "Askıya alındı"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "Pull request {doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>Pull request {doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "Pull request {doc} was assigned to you"
   }
 }

@@ -259,26 +259,20 @@
     "DeleteDocumentCategoryDescription": "Accorde aux utilisateurs la capacité de supprimer une catégorie de document",
     "ConfigLabel": "Documents contrôlés",
     "ConfigDescription": "Extension pour gérer les documents contrôlés",
-
     "Transfer": "Transfert",
     "TransferWarning": "Certains membres de l'équipe peuvent perdre la possibilité de visualiser ou de modifier ce document après cette action.",
     "TransferDocuments": "Transférer des documents contrôlés",
     "TransferDocumentsHint": "Documents à transférer dans l'espace sélectionné:",
-
     "CreateFolder": "Créer un nouveau dossier",
     "RenameFolder": "Renommer le dossier",
     "CreateChildFolder": "Créer un sous-dossier",
-
     "Obsolete": "Obsolète",
     "MakeDocumentObsolete": "Marquer comme obsolète",
     "MakeDocumentObsoleteDialog": "Marquer {count, plural, one {le document comme obsolète} other {les documents comme obsolètes}}",
     "MakeDocumentObsoleteConfirm": "Voulez-vous vraiment marquer les documents suivants comme obsolètes : {titles} ?",
-
     "LatestVersionHint": "dernier",
-
     "CannotDeleteFolder": "Le dossier ne peut pas être supprimé",
     "CannotDeleteFolderHint": "Veuillez déplacer tous les documents enfants vers un autre emplacement avant de supprimer le dossier.",
-
     "AllDocumentSpaces": "Tous les espaces de documents"
   },
   "controlledDocStates": {
@@ -289,5 +283,16 @@
     "Reviewed": "Révisé",
     "Rejected": "Rejeté",
     "ToReview": "À réviser"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}",
+    "StateNotificationText": "{sender} changed {doc} status",
+    "StateNotificationHtml": "<p>{sender} changed {doc} status</p> <p>{link}</p>",
+    "StateNotificationSubject": "{doc} status changed",
+    "CoAuthorsNotificationText": "{sender} assigned you as a co-author of {doc}",
+    "CoAuthorsNotificationHtml": "<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>",
+    "CoAuthorsNotificationSubject": "Co-authoring assignment for {doc}"
   }
 }

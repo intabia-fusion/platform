@@ -344,7 +344,8 @@ function getHiddenAttrs (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): Set<str
 export async function getAttrName (
   attributeUpdates: DocAttributeUpdates,
   objectClass: Ref<Class<Doc>>,
-  hierarchy: Hierarchy
+  hierarchy: Hierarchy,
+  language: string
 ): Promise<string | undefined> {
   const { attrKey, attrClass, isMixin } = attributeUpdates
   let attrObjectClass = objectClass
@@ -369,7 +370,7 @@ export async function getAttrName (
       return undefined
     }
 
-    return await translate(label, {})
+    return await translate(label, {}, language)
   } catch (e) {
     console.error(e)
     return undefined

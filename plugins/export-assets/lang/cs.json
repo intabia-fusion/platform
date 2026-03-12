@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "Vše kromě archivovaných a zastaralých",
     "ExportFilterAll": "Všechny dokumenty",
     "ExportResultRecordTitle": "Export dokumentů z pracovního prostoru {workspace} ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

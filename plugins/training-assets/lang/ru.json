@@ -99,5 +99,10 @@
     "ViewTraineesResults": "Результаты респондентов",
     "ConfigLabel": "Тренинги",
     "ConfigDescription": "Расширение для управления тренингами"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} отправил(а) вам запрос на обучение {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> отправил(а) вам запрос на обучение {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Запрос на обучение {doc}"
   }
 }

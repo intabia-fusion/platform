@@ -121,9 +121,9 @@ export interface NotificationPreferencesGroup extends Doc {
  * @public
  */
 export interface NotificationTemplate {
-  textTemplate: string
-  htmlTemplate: string
-  subjectTemplate: string
+  text: IntlString
+  html: IntlString
+  subject: IntlString
 }
 
 /**
@@ -489,11 +489,33 @@ const notification = plugin(notificationId, {
     WebpushRemoveConfirm: '' as IntlString,
     Value: '' as IntlString,
     Current: '' as IntlString,
+    AlreadySubscribed: '' as IntlString,
+    PushNotConfigured: '' as IntlString,
+    PushNotSupported: '' as IntlString,
+    PushDenied: '' as IntlString,
+    PushSubscribeError: '' as IntlString,
+    PushSubscribeErrorMessage: '' as IntlString,
     Subscribe: '' as IntlString,
     AllNotifications: '' as IntlString,
     JustMentions: '' as IntlString,
     Mute: '' as IntlString,
-    EditNotifications: '' as IntlString
+    EditNotifications: '' as IntlString,
+    AddMeInCollaborators: '' as IntlString,
+    RemoveMeFromCollaborators: '' as IntlString
+  },
+  emailTemplate: {
+    MeAddedInCollaboratorsNotificationText: '' as IntlString,
+    MeAddedInCollaboratorsNotificationHtml: '' as IntlString,
+    MeAddedInCollaboratorsNotificationSubject: '' as IntlString,
+    MeRemovedFromCollaboratorsNotificationText: '' as IntlString,
+    MeRemovedFromCollaboratorsNotificationHtml: '' as IntlString,
+    MeRemovedFromCollaboratorsNotificationSubject: '' as IntlString,
+    MentionNotificationText: '' as IntlString,
+    MentionNotificationHtml: '' as IntlString,
+    MentionNotificationSubject: '' as IntlString,
+    GeneratedNotificationText: '' as IntlString,
+    GeneratedNotificationHtml: '' as IntlString,
+    GeneratedNotificationSubject: '' as IntlString
   },
   function: {
     Notify: '' as Resource<NotifyFunc>,
