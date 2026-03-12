@@ -40,7 +40,6 @@
     "Message": "Сообщение",
     "ClearAll": "Очистить все",
     "MarkReadAll": "Отметить все как прочитанное",
-    "MarkUnreadAll": "Отметить все как непрочитанные",
     "RemoveAllConfirmationTitle": "Удалить все уведомления?",
     "RemoveAllConfirmationMessage": "Вы уверены, что хотите удалить все уведомления? Эту операцию невозможно отменить.",
     "StarDocument": "Добавить в избранное",

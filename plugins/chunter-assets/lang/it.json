@@ -137,22 +137,23 @@
     "DeleteMessageDescription": "Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata.",
     "Star": "Aggiungi ai preferiti",
     "Unstar": "Rimuovi dai preferiti",
-    "Hide": "Nascondi {label}",
+    "HideFromChatList": "Nascondi dalla lista chat",
     "Leave": "Lascia {label}",
-    "HideAll": "Nascondi tutto"
+    "HideAll": "Nascondi tutto",
+    "Seen": "Visto"
   },
   "emailTemplate": {
-    "DMNotificationText": "{sender} has sent you a message: \n\n{message}",
-    "DMNotificationHtml": "<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>",
-    "DMNotificationSubject": "You have new direct message",
-    "ChannelNotificationText": "{sender} has sent a message in {doc}: \n\n {message}",
-    "ChannelNotificationHtml": "<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>",
-    "ChannelNotificationSubject": "You have new message in {doc}",
-    "JoinChannelNotificationText": "You have been added to #{doc}",
-    "JoinChannelNotificationHtml": "<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "You have been added to #{doc}",
-    "ThreadNotificationText": "{sender} replied to {doc}: \n\n{message}",
-    "ThreadNotificationHtml": "<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>",
-    "ThreadNotificationSubject": "New reply to {doc}"
+    "DMNotificationText": "{sender} ti ha inviato un messaggio: \n\n{message}",
+    "DMNotificationHtml": "<p><b>{sender}</b> ti ha inviato un messaggio: </p> {message} <p>{link}</p>",
+    "DMNotificationSubject": "Hai un nuovo messaggio diretto",
+    "ChannelNotificationText": "{sender} ha inviato un messaggio in {doc}: \n\n {message}",
+    "ChannelNotificationHtml": "<p><b>{sender}</b> ha inviato un messaggio in {doc}:</p> {message} <p>{link}</p>",
+    "ChannelNotificationSubject": "Hai un nuovo messaggio in {doc}",
+    "JoinChannelNotificationText": "Sei stato aggiunto a #{doc}",
+    "JoinChannelNotificationHtml": "<p>Sei stato aggiunto a <b>#{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Sei stato aggiunto a #{doc}",
+    "ThreadNotificationText": "{sender} ha risposto a {doc}: \n\n{message}",
+    "ThreadNotificationHtml": "<p><b>{sender}</b> ha risposto a {doc}:</p><p>{message}</p><p>{link}</p>",
+    "ThreadNotificationSubject": "Nuova risposta a {doc}"
   }
 }

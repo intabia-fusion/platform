@@ -41,7 +41,7 @@ import core, {
   type Space,
   type Timestamp
 } from '@hcengineering/core'
-import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
+import { type DocNotifyContext, type InboxNotification, type ReadState } from '@hcengineering/notification'
 import {
   InboxNotificationsClientImpl,
   isActivityNotification,
@@ -304,7 +304,7 @@ export async function leaveChannel (channel: Space | undefined, value: AccountUu
 }
 
 // NOTE: Store timestamp updates to avoid unnecessary updates when if the server takes a long time to respond
-const contextsTimestampStore = writable<Map<Ref<DocNotifyContext>, number>>(new Map())
+const lastViewTimestampStore = writable<Map<Ref<Doc>, number>>(new Map())
 // NOTE: Sometimes user can read message before notification is created and we should mark it as viewed when notification is received
 export const chatReadMessagesStore = writable<Set<Ref<ActivityMessage>>>(new Set())
 
@@ -368,16 +368,13 @@ export function recheckNotifications (context: DocNotifyContext): void {
 
 export async function readChannelMessages (
   messages: DisplayActivityMessage[],
-  contextId: Ref<DocNotifyContext>
+  readState?: ReadState | null
 ): Promise<void> {
   if (messages.length === 0) {
     return
   }
 
   const inboxClient = InboxNotificationsClientImpl.getClient()
-  const context = get(inboxClient.contextById).get(contextId)
-  if (context === undefined) return
-
   const op = getClient().apply(undefined, 'readViewportMessages', true)
 
   try {
@@ -399,16 +396,31 @@ export async function readChannelMessages (
 
     chatReadMessagesStore.update((store) => new Set([...store, ...allIds]))
 
-    const storedTimestampUpdates = get(contextsTimestampStore).get(context._id)
-    const newTimestamp = messages[messages.length - 1].createdOn ?? 0
-    const prevTimestamp = Math.max(storedTimestampUpdates ?? 0, context.lastView ?? 0)
+    if (readState != null) {
+      const storedTimestampUpdates = get(lastViewTimestampStore).get(readState.attachedTo)
+      const newTimestamp = messages[messages.length - 1].createdOn ?? 0
+      const position = readState[getCurrentAccount().uuid]
+      const prevTimestamp = Math.max(storedTimestampUpdates ?? 0, position?.timestamp ?? 0)
+      const lastMessage = messages[messages.length - 1]
 
-    if (prevTimestamp < newTimestamp) {
-      contextsTimestampStore.update((store) => {
-        store.set(context._id, newTimestamp)
-        return store
-      })
-      await op.update(context, { lastView: newTimestamp })
+      if (prevTimestamp < newTimestamp) {
+        lastViewTimestampStore.update((store) => {
+          store.set(readState.attachedTo, newTimestamp)
+          return store
+        })
+        readState[getCurrentAccount().uuid] = { messageId: lastMessage._id, timestamp: newTimestamp }
+        await op.updateCollection(
+          readState._class,
+          readState.space,
+          readState._id,
+          readState.attachedTo,
+          readState.attachedToClass,
+          'readStates',
+          {
+            [getCurrentAccount().uuid]: { messageId: lastMessage._id, timestamp: newTimestamp }
+          }
+        )
+      }
     }
     await inboxClient.readNotifications(op, [...notifications, ...relatedMentions, ...reactionNotifications])
   } finally {

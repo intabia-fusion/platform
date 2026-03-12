@@ -40,7 +40,6 @@
     "Message": "Message",
     "ClearAll": "Tout archiver",
     "MarkReadAll": "Tout marquer comme lu",
-    "MarkUnreadAll": "Tout marquer comme non lu",
     "RemoveAllConfirmationTitle": "Archiver toutes les notifications ?",
     "RemoveAllConfirmationMessage": "Êtes-vous sûr de vouloir archiver toutes les notifications ? Cette opération est irréversible.",
     "StarDocument": "Document étoilé",

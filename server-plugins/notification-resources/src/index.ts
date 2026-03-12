@@ -34,6 +34,7 @@ import core, {
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
+import { isActivityDoc } from '@hcengineering/server-activity-resources'
 
 import { PushNotificationsHandler } from './push'
 import {
@@ -261,9 +262,48 @@ async function OnDocRemove (txes: TxCUD<Doc>[], control: TriggerControl): Promis
       res.push(...(await removeContextNotifications(control, [tx.objectId as Ref<DocNotifyContext>])))
     }
 
+    const readState = await control.findAll(control.ctx, notification.class.ReadState, { attachedTo: tx.objectId })
+    res.push(
+      ...readState.map((readState) =>
+        control.txFactory.createTxRemoveDoc(readState._class, readState.space, readState._id)
+      )
+    )
+
     res.push(...(await removeCollaboratorDoc(tx, control)))
   }
   return res
+}
+
+async function OnDocCreated (txes: TxCreateDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+  for (const tx of txes) {
+    if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
+    result.push(
+      control.txFactory.createTxCreateDoc(notification.class.ReadState, tx.objectSpace, {
+        attachedTo: tx.objectId,
+        attachedToClass: tx.objectClass,
+        collection: 'readStates'
+      })
+    )
+  }
+
+  return result
+}
+
+async function OnDocSpaceChanged (txes: TxUpdateDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+
+  for (const tx of txes) {
+    if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
+    const space = tx.operations.space
+    if (space == null) continue
+
+    const state = (await control.findAll(control.ctx, notification.class.ReadState, { attachedTo: tx.objectId }))[0]
+    if (state == null) continue
+    result.push(control.txFactory.createTxUpdateDoc(state._class, state.space, state._id, { space }))
+  }
+
+  return result
 }
 
 export * from './push'
@@ -276,6 +316,8 @@ export default async () => ({
     OnAttributeCreate,
     OnAttributeUpdate,
     OnDocRemove,
+    OnDocCreated,
+    OnDocSpaceChanged,
     OnEmployeeDeactivate,
     PushNotificationsHandler,
     OnCollaboratorRemoved

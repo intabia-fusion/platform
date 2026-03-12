@@ -138,22 +138,23 @@
     "DeleteMessageDescription": "このメッセージを削除してもよろしいですか？この操作は元に戻せません。",
     "Star": "スターを付ける",
     "Unstar": "スターを外す",
-    "Hide": "{label}を非表示",
+    "HideFromChatList": "チャットリストから非表示",
     "Leave": "{label}を退出",
-    "HideAll": "すべて非表示"
+    "HideAll": "すべて非表示",
+    "Seen": "閲覧済み"
   },
   "emailTemplate": {
-    "DMNotificationText": "{sender} has sent you a message: \n\n{message}",
-    "DMNotificationHtml": "<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>",
-    "DMNotificationSubject": "You have new direct message",
-    "ChannelNotificationText": "{sender} has sent a message in {doc}: \n\n {message}",
-    "ChannelNotificationHtml": "<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>",
-    "ChannelNotificationSubject": "You have new message in {doc}",
-    "JoinChannelNotificationText": "You have been added to #{doc}",
-    "JoinChannelNotificationHtml": "<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "You have been added to #{doc}",
-    "ThreadNotificationText": "{sender} replied to {doc}: \n\n{message}",
-    "ThreadNotificationHtml": "<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>",
-    "ThreadNotificationSubject": "New reply to {doc}"
+    "DMNotificationText": "{sender}からメッセージが届きました: \n\n{message}",
+    "DMNotificationHtml": "<p><b>{sender}</b>からメッセージが届きました: </p> {message} <p>{link}</p>",
+    "DMNotificationSubject": "新しいダイレクトメッセージがあります",
+    "ChannelNotificationText": "{sender}が{doc}にメッセージを送信しました: \n\n {message}",
+    "ChannelNotificationHtml": "<p><b>{sender}</b>が{doc}にメッセージを送信しました:</p> {message} <p>{link}</p>",
+    "ChannelNotificationSubject": "{doc}に新しいメッセージがあります",
+    "JoinChannelNotificationText": "#{doc}に追加されました",
+    "JoinChannelNotificationHtml": "<p><b>#{doc}</b>に追加されました</p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "#{doc}に追加されました",
+    "ThreadNotificationText": "{sender}が{doc}に返信しました: \n\n{message}",
+    "ThreadNotificationHtml": "<p><b>{sender}</b>が{doc}に返信しました:</p><p>{message}</p><p>{link}</p>",
+    "ThreadNotificationSubject": "{doc}への新しい返信"
   }
 }

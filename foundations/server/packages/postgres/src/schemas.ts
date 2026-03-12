@@ -207,6 +207,26 @@ const txSchema: Schema = {
 
 const notificationSchema: Schema = {
   ...baseSchema,
+  lastView: {
+    type: 'bigint',
+    notNull: false,
+    index: false
+  },
+  lastUpdate: {
+    type: 'bigint',
+    notNull: false,
+    index: true
+  },
+  lastNotify: {
+    type: 'bigint',
+    notNull: false,
+    index: false
+  },
+  lastNotifiedMessage: {
+    type: 'bigint',
+    notNull: false,
+    index: false
+  },
   isViewed: {
     type: 'bool',
     notNull: true,
@@ -357,12 +377,27 @@ const githubLogin: Schema = {
   }
 }
 
+const docReadStateSchema: Schema = {
+  ...defaultSchema,
+  attachedToClass: {
+    type: 'text',
+    notNull: true,
+    index: true
+  }
+}
+
 type CustomIndexType = 'unique' | 'custom'
 
 export const customIndexes: Record<string, { [key in CustomIndexType]: string[] }[]> = {
   [translateDomain('chunter_doc')]: [
     {
       unique: ['attachedTo', 'attachedToClass', 'account'],
+      custom: []
+    }
+  ],
+  [translateDomain('notification_read_state')]: [
+    {
+      unique: ['attachedTo', 'attachedToClass'],
       custom: []
     }
   ],
@@ -401,7 +436,8 @@ export const domainSchemas: Record<string, Schema> = {
   [DOMAIN_COLLABORATOR]: collaboratorSchema,
   [translateDomain('chunter_doc')]: chatSchema,
   kanban: defaultSchema,
-  [translateDomain('attachment')]: attachmentSchema
+  [translateDomain('attachment')]: attachmentSchema,
+  [translateDomain('notification_read_state')]: docReadStateSchema
 }
 
 export function getSchema (domain: string): Schema {

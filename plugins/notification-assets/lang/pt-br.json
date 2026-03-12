@@ -40,7 +40,6 @@
     "Message": "Mensagem",
     "ClearAll": "Arquivar tudo",
     "MarkReadAll": "Marcar tudo como lido",
-    "MarkUnreadAll": "Marcar tudo como não lido",
     "RemoveAllConfirmationTitle": "Arquivar todas as notificações?",
     "RemoveAllConfirmationMessage": "Tem certeza que deseja arquivar todas as notificações? Esta operação não pode ser desfeita.",
     "StarDocument": "Marcar documento",

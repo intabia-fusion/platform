@@ -47,7 +47,6 @@ export default mergeIds(notificationId, notification, {
   },
   function: {
     CanReadNotifyContext: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
-    CanUnReadNotifyContext: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     LocationDataResolver: '' as Resource<(loc: Location) => Promise<LocationData>>
   },
   category: {
@@ -57,17 +56,14 @@ export default mergeIds(notificationId, notification, {
   action: {
     Unsubscribe: '' as Ref<Action>,
     ClearAll: '' as Ref<Action>,
-    ReadAll: '' as Ref<Action>,
-    UnreadAll: '' as Ref<Action>
+    ReadAll: '' as Ref<Action>
   },
   actionImpl: {
     Unsubscribe: '' as ViewAction,
-    UnReadNotifyContext: '' as ViewAction,
     ReadNotifyContext: '' as ViewAction,
     RemoveContextNotifications: '' as ViewAction,
     ClearAll: '' as ViewAction,
     ReadAll: '' as ViewAction,
-    UnreadAll: '' as ViewAction,
     EditDocNotifications: '' as ViewAction
   }
 })

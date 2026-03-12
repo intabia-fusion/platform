@@ -37,7 +37,8 @@ import core, {
 import notification, {
   DocNotifyContext,
   type NotificationProviderSetting,
-  type NotificationTypeSetting
+  type NotificationTypeSetting,
+  ReadState
 } from '@hcengineering/notification'
 import contact, { Employee, Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
 import { Receiver, Sender } from '@hcengineering/server-notification'
@@ -49,6 +50,8 @@ class WsCache {
 
   private readonly contexts = new Map<Ref<Doc>, DocNotifyContext[]>()
   private readonly docs = new Map<Ref<Doc>, Doc>()
+
+  private readonly readStateByDoc = new Map<Ref<Doc>, ReadState>()
 
   private isSettingsLoaded = false
   private readonly notificationProviderSettings = new Map<
@@ -72,6 +75,7 @@ class WsCache {
   ) {}
 
   public tx (tx: TxCUD<Doc>): void {
+    this.clearLargeCaches()
     if (tx._class === core.class.TxCreateDoc) {
       this.txCreateDoc(tx as TxCreateDoc<Doc>)
     }
@@ -98,6 +102,12 @@ class WsCache {
       if (!current.some((it) => it._id === collab._id)) {
         this.collaborators.set(collab.attachedTo, [...current, collab])
       }
+    }
+
+    if (hierarchy.isDerived(doc._class, notification.class.ReadState)) {
+      const state = doc as ReadState
+      if (this.readStateByDoc.has(state.attachedTo)) return
+      this.readStateByDoc.set(state.attachedTo, state)
     }
 
     if (hierarchy.isDerived(doc._class, notification.class.DocNotifyContext)) {
@@ -149,6 +159,14 @@ class WsCache {
         updated.attachedTo,
         current.map((it) => (it._id === updated._id ? updated : it))
       )
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
+      const state = Array.from(this.readStateByDoc.values()).find((it) => it._id === tx.objectId)
+      if (state == null) return
+      const updated = this.updateOrMixin(tx, state)
+
+      this.readStateByDoc.set(updated.attachedTo, updated)
     }
 
     if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
@@ -220,6 +238,12 @@ class WsCache {
         current.filter((it) => it._id !== collab._id)
       )
       return
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
+      const state = Array.from(this.readStateByDoc.values()).find((it) => it._id === tx.objectId)
+      if (state == null) return
+      this.readStateByDoc.delete(state.attachedTo)
     }
 
     if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
@@ -381,6 +405,16 @@ class WsCache {
     }
 
     return space
+  }
+
+  public async getDocReadState (attachedTo: Ref<Doc>): Promise<ReadState | undefined> {
+    const current = this.readStateByDoc.get(attachedTo)
+    if (current !== undefined) return current
+    const readState = await this.client.findOne<ReadState>(notification.class.ReadState, { attachedTo })
+    if (readState !== undefined) {
+      this.readStateByDoc.set(attachedTo, readState)
+    }
+    return readState
   }
 
   private async getEmployeesInfo (collaborators: AccountUuid[]): Promise<EmployeeInfo[]> {
@@ -578,6 +612,31 @@ class WsCache {
     }
 
     return statuses
+  }
+
+  private clearLargeCaches (): void {
+    const maxSize = 1000
+    if (this.collaborators.size > maxSize) {
+      this.collaborators.clear()
+    }
+    if (this.docs.size > maxSize) {
+      this.docs.clear()
+    }
+    if (this.contexts.size > maxSize) {
+      this.contexts.clear()
+    }
+    if (this.readStateByDoc.size > maxSize) {
+      this.readStateByDoc.clear()
+    }
+    if (this.persons.size > maxSize) {
+      this.persons.clear()
+    }
+    if (this.employees.size > maxSize) {
+      this.employees.clear()
+    }
+    if (this.socialIds.size > maxSize) {
+      this.socialIds.clear()
+    }
   }
 }
 

@@ -22,6 +22,7 @@
   import Label from './Label.svelte'
   import MouseSpeedTracker from './MouseSpeedTracker.svelte'
   import { resizeObserver } from '../resize'
+  import Component from './Component.svelte'
 
   export let actions: Action[] = []
   export let ctx: any = undefined
@@ -175,6 +176,9 @@
             <span class="overflow-label pr-4 flex-grow"
               ><Label label={action.label} params={action.labelParams ?? {}} /></span
             >
+            {#if action.inlineComponent}
+              <Component is={action.inlineComponent} showLoading={false} props={action.inlineComponentProps ?? {}} />
+            {/if}
           </button>
         {:else}
           <!-- svelte-ignore a11y-mouse-events-have-key-events -->

@@ -13,7 +13,16 @@
 -->
 
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, WithLookup, mergeQueries } from '@hcengineering/core'
+  import {
+    Class,
+    Doc,
+    DocumentQuery,
+    FindOptions,
+    Ref,
+    WithLookup,
+    mergeQueries,
+    getCurrentAccount
+  } from '@hcengineering/core'
   import { Asset, IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { AnySvelteComponent, Breadcrumb, Component, Header, Loading } from '@hcengineering/ui'
@@ -27,7 +36,7 @@
   } from '@hcengineering/view-resources'
   import { deepEqual } from 'fast-equals'
   import { ComponentType } from 'svelte'
-  import { ChunterSpace } from '@hcengineering/chunter'
+  import chunter, { ChunterSpace } from '@hcengineering/chunter'
 
   export let _class: Ref<Class<ChunterSpace>>
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined
@@ -38,6 +47,7 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+  const me = getCurrentAccount()
 
   let viewlet: WithLookup<Viewlet> | undefined
   let preference: ViewletPreference | undefined
@@ -49,7 +59,13 @@
   $: _baseQuery = mergeQueries(mergeQueries({}, {}), viewlet?.baseQuery ?? {})
   $: query = { ..._baseQuery }
   $: searchQuery = search === '' ? query : { ...query, $search: `${search}*` }
-  $: resultQuery = isQueryLoaded ? { ...filterQuery, ...searchQuery } : undefined
+  $: resultQuery = isQueryLoaded
+    ? {
+        ...filterQuery,
+        ...searchQuery,
+        ...(_class === chunter.class.DirectMessage ? { members: me.uuid } : {})
+      }
+    : undefined
 
   let options = viewlet?.options
   let _options = viewlet?.options ?? {}

@@ -137,22 +137,23 @@
     "DeleteMessageDescription": "你确定要删除此消息吗？此操作无法撤销。",
     "Star": "加星标",
     "Unstar": "取消星标",
-    "Hide": "隐藏{label}",
+    "HideFromChatList": "从聊天列表中隐藏",
     "Leave": "离开{label}",
-    "HideAll": "全部隐藏"
+    "HideAll": "全部隐藏",
+    "Seen": "已读"
   },
   "emailTemplate": {
-    "DMNotificationText": "{sender} has sent you a message: \n\n{message}",
-    "DMNotificationHtml": "<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>",
-    "DMNotificationSubject": "You have new direct message",
-    "ChannelNotificationText": "{sender} has sent a message in {doc}: \n\n {message}",
-    "ChannelNotificationHtml": "<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>",
-    "ChannelNotificationSubject": "You have new message in {doc}",
-    "JoinChannelNotificationText": "You have been added to #{doc}",
-    "JoinChannelNotificationHtml": "<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "You have been added to #{doc}",
-    "ThreadNotificationText": "{sender} replied to {doc}: \n\n{message}",
-    "ThreadNotificationHtml": "<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>",
-    "ThreadNotificationSubject": "New reply to {doc}"
+    "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",
+    "DMNotificationHtml": "<p><b>{sender}</b>向您发送了一条消息: </p> {message} <p>{link}</p>",
+    "DMNotificationSubject": "您有新的直连消息",
+    "ChannelNotificationText": "{sender}在{doc}中发送了一条消息: \n\n {message}",
+    "ChannelNotificationHtml": "<p><b>{sender}</b>在{doc}中发送了一条消息:</p> {message} <p>{link}</p>",
+    "ChannelNotificationSubject": "您在{doc}中有新消息",
+    "JoinChannelNotificationText": "您已被添加到#{doc}",
+    "JoinChannelNotificationHtml": "<p>您已被添加到<b>#{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "您已被添加到#{doc}",
+    "ThreadNotificationText": "{sender}回复了{doc}: \n\n{message}",
+    "ThreadNotificationHtml": "<p><b>{sender}</b>回复了{doc}:</p><p>{message}</p><p>{link}</p>",
+    "ThreadNotificationSubject": "{doc}的新回复"
   }
 }

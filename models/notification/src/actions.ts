@@ -66,23 +66,6 @@ export function defineActions (builder: Builder): void {
   createAction(
     builder,
     {
-      action: notification.actionImpl.UnreadAll,
-      label: notification.string.MarkUnreadAll,
-      icon: view.icon.EyeCrossed,
-      input: 'none',
-      category: notification.category.Notification,
-      target: core.class.Doc,
-      context: {
-        mode: ['browser'],
-        group: 'edit'
-      }
-    },
-    notification.action.UnreadAll
-  )
-
-  createAction(
-    builder,
-    {
       action: notification.actionImpl.ReadNotifyContext,
       label: notification.string.MarkAsRead,
       icon: view.icon.Eye,
@@ -93,21 +76,6 @@ export function defineActions (builder: Builder): void {
       context: { mode: ['context', 'panel'], application: notification.app.Notification, group: 'edit' }
     },
     notification.action.ReadNotifyContext
-  )
-
-  createAction(
-    builder,
-    {
-      action: notification.actionImpl.UnReadNotifyContext,
-      label: notification.string.MarkAsUnread,
-      icon: view.icon.EyeCrossed,
-      input: 'focus',
-      visibilityTester: notification.function.CanUnReadNotifyContext,
-      category: notification.category.Notification,
-      target: notification.class.DocNotifyContext,
-      context: { mode: ['context', 'panel'], application: notification.app.Notification, group: 'edit' }
-    },
-    notification.action.UnReadNotifyContext
   )
 
   createAction(

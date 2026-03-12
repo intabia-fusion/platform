@@ -171,14 +171,14 @@
         return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
       })
 
-    count = await getNotificationsCount(contexts, notifications)
+    count = getNotificationsCount(contexts, notifications)
   }
 
   $: void calculateNotifications(contexts, $notificationsByContextStore)
 
   $: notify = sortedItems.some((it) => {
     const c = $contextByDocStore.get(it.id)
-    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotify ?? 0) < (c?.lastUpdate ?? 0)
+    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotifiedMessage ?? 0) < (c?.lastUpdate ?? 0)
   })
 </script>
 

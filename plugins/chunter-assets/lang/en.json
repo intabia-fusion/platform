@@ -137,10 +137,11 @@
     "DeleteMessageDescription": "Are you sure you want to delete this message? This cannot be undone.",
     "Star": "Star",
     "Unstar": "Unstar",
-    "Hide": "Hide {label}",
+    "HideFromChatList": "Hide from chat list",
     "Leave": "Leave {label}",
     "HideAll": "Hide all",
-    "GroupChat": "Group chat"
+    "GroupChat": "Group chat",
+    "Seen": "Seen"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} has sent you a message: \n\n{message}",
