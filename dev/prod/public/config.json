@@ -37,5 +37,6 @@
   "BILLING_URL": "http://huly.local:4041",
   "DESKTOP_UPDATES_URL": "https://platform-stage.intabia.ru/_dist",
   "LINK_PREVIEW_URL": "http://huly.local:4041",
-  "PUSH_PUBLIC_KEY": "pushPublicKey"
+  "PUSH_PUBLIC_KEY": "pushPublicKey",
+  "LANDING_URL": "http://huly.local:9078/landing/"
 }

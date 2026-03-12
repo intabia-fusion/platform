@@ -58,5 +58,6 @@ startFront(metricsContext, {
   USE_OTP: process.env.USE_OTP,
   SIGNUP_URL: process.env.SIGNUP_URL,
   ACCENT_THEME: process.env.ACCENT_THEME,
-  LOGIN_THEME: process.env.LOGIN_THEME
+  LOGIN_THEME: process.env.LOGIN_THEME,
+  LANDING_URL: process.env.LANDING_URL
 })
