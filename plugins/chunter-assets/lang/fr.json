@@ -139,6 +139,7 @@
     "Unstar": "Retirer des favoris",
     "Hide": "Masquer {label}",
     "Leave": "Quitter {label}",
-    "HideAll": "Tout masquer"
+    "HideAll": "Tout masquer",
+    "Seen": "Vu"
   }
 }

@@ -140,6 +140,7 @@
     "Unstar": "Yıldızı kaldır",
     "Hide": "{label} gizle",
     "Leave": "{label} ayrıl",
-    "HideAll": "Tümünü gizle"
+    "HideAll": "Tümünü gizle",
+    "Seen": "Okundu"
   }
 }

@@ -140,6 +140,7 @@
     "Hide": "Hide {label}",
     "Leave": "Leave {label}",
     "HideAll": "Hide all",
-    "GroupChat": "Group chat"
+    "GroupChat": "Group chat",
+    "Seen": "Seen"
   }
 }

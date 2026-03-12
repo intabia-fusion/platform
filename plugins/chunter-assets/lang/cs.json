@@ -139,6 +139,7 @@
     "Unstar": "Odebrat z oblíbených",
     "Hide": "Skrýt {label}",
     "Leave": "Opustit {label}",
-    "HideAll": "Skrýt vše"
+    "HideAll": "Skrýt vše",
+    "Seen": "Přečteno"
   }
 }

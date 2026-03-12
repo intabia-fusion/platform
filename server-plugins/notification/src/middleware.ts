@@ -23,12 +23,13 @@ import chunter, { ThreadMessage } from '@hcengineering/chunter'
 
 export class NotificationMiddleware extends BaseMiddleware {
   private readonly activeStates = new Map<Ref<ReadState>, ReadState>()
+  private intervalId: number | null = null
 
   private constructor (context: PipelineContext, next?: Middleware) {
     super(context, next)
 
-    // Clear if no updates 10 minutes, check every 20 minutes
-    setInterval(
+    // // Clear if no updates 10 minutes, check every 20 minutes
+    this.intervalId = setInterval(
       () => {
         const now = Date.now()
         for (const [key, value] of this.activeStates) {
@@ -148,5 +149,12 @@ export class NotificationMiddleware extends BaseMiddleware {
 
   private throwForbidden (): void {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  async close (): Promise<void> {
+    if (this.intervalId != null) {
+      clearInterval(this.intervalId)
+      this.intervalId = null
+    }
   }
 }

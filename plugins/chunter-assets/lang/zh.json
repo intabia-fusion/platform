@@ -139,6 +139,7 @@
     "Unstar": "取消星标",
     "Hide": "隐藏{label}",
     "Leave": "离开{label}",
-    "HideAll": "全部隐藏"
+    "HideAll": "全部隐藏",
+    "Seen": "已读"
   }
 }

@@ -140,6 +140,7 @@
     "Unstar": "Markierung entfernen",
     "Hide": "{label} verbergen",
     "Leave": "{label} verlassen",
-    "HideAll": "Alle verbergen"
+    "HideAll": "Alle verbergen",
+    "Seen": "Gelesen"
   }
 }

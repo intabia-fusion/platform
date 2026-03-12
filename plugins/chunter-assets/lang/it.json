@@ -139,6 +139,7 @@
     "Unstar": "Rimuovi dai preferiti",
     "Hide": "Nascondi {label}",
     "Leave": "Lascia {label}",
-    "HideAll": "Nascondi tutto"
+    "HideAll": "Nascondi tutto",
+    "Seen": "Visto"
   }
 }

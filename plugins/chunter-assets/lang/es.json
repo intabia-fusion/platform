@@ -139,6 +139,7 @@
     "Unstar": "Desmarcar",
     "Hide": "Ocultar {label}",
     "Leave": "Abandonar {label}",
-    "HideAll": "Ocultar todo"
+    "HideAll": "Ocultar todo",
+    "Seen": "Leído"
   }
 }

@@ -220,7 +220,8 @@ export default plugin(chunterId, {
     Hide: '' as IntlString,
     Leave: '' as IntlString,
     HideAll: '' as IntlString,
-    GroupChat: '' as IntlString
+    GroupChat: '' as IntlString,
+    Seen: '' as IntlString
   },
   ids: {
     DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,

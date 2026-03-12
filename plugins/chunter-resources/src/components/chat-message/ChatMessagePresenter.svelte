@@ -187,7 +187,7 @@
     ...(readEmployees.size > 0
       ? [
           {
-            label: getEmbeddedLabel('Seen'),
+            label: chunter.string.Seen,
             icon: DoubleCheck,
             group: 'tools',
             component: MessageReadPopup,
@@ -300,6 +300,13 @@
     <svelte:fragment slot="header">
       <ChatMessageHeader label={chunter.string.LeftComment} />
     </svelte:fragment>
+    <svelte:fragment slot="afterTime">
+      {#if !pending && isOwn && readState}
+        <div class="read-marker">
+          <MessageReadMarker bind:readEmployees createdOn={value.createdOn ?? value.modifiedOn} {readState} />
+        </div>
+      {/if}
+    </svelte:fragment>
     <svelte:fragment slot="content">
       {#if !isEditing}
         {#if withShowMore}
@@ -320,11 +327,6 @@
             {/if}
             <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
           </div>
-        {/if}
-        {#if !pending && isOwn && readState}
-          <span class="read-marker">
-            <MessageReadMarker bind:readEmployees createdOn={value.createdOn ?? value.modifiedOn} {readState} />
-          </span>
         {/if}
       {:else if object}
         <ChatMessageInput
@@ -354,8 +356,8 @@
 
 <style lang="scss">
   .read-marker {
-    position: absolute;
-    bottom: 2px;
-    right: 1rem;
+    display: flex;
+    margin-left: 0.25rem;
+    align-items: center;
   }
 </style>

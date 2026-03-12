@@ -36,6 +36,6 @@
   }
 </script>
 
-<span class="text-sm" use:tooltip={{ label: getEmbeddedLabel(fullDate) }}>
+<span use:tooltip={{ label: getEmbeddedLabel(fullDate) }}>
   {shortTime ? getShortTime(date) : getDisplayTime(date)}
 </span>

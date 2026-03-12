@@ -139,6 +139,7 @@
     "Unstar": "Remover destaque",
     "Hide": "Ocultar {label}",
     "Leave": "Sair de {label}",
-    "HideAll": "Ocultar tudo"
+    "HideAll": "Ocultar tudo",
+    "Seen": "Lido"
   }
 }

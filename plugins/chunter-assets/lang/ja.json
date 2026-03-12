@@ -140,6 +140,7 @@
     "Unstar": "スターを外す",
     "Hide": "{label}を非表示",
     "Leave": "{label}を退出",
-    "HideAll": "すべて非表示"
+    "HideAll": "すべて非表示",
+    "Seen": "閲覧済み"
   }
 }
