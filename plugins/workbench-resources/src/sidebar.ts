@@ -44,13 +44,15 @@ export interface SidebarState {
   widget?: Ref<Widget>
 }
 
-export const defaultSidebarState: SidebarState = {
-  variant: SidebarVariant.MINI,
-  float: false,
-  widgetsState: new Map()
+export function getDefaultSidebarState (): SidebarState {
+  return {
+    variant: SidebarVariant.MINI,
+    float: false,
+    widgetsState: new Map()
+  }
 }
 
-export const sidebarStore = writable<SidebarState>(defaultSidebarState)
+export const sidebarStore = writable<SidebarState>(getDefaultSidebarState())
 
 locationWorkspaceStore.subscribe((workspace) => {
   sidebarStore.set(getSidebarStateFromLocalStorage(workspace ?? ''))
@@ -70,26 +72,26 @@ function getSideBarLocalStorageKey (workspace: string): string | undefined {
 
 function getSidebarStateFromLocalStorage (workspace: string): SidebarState {
   const sidebarStateLocalStorageKey = getSideBarLocalStorageKey(workspace)
-  if (sidebarStateLocalStorageKey === undefined) return defaultSidebarState
+  if (sidebarStateLocalStorageKey === undefined) return getDefaultSidebarState()
   const state = window.localStorage.getItem(sidebarStateLocalStorageKey)
 
-  if (state == null || state === '') return defaultSidebarState
+  if (state == null || state === '') return getDefaultSidebarState()
 
   try {
     const parsed = JSON.parse(state)
     const device = get(deviceInfo)
+    const defaultState = getDefaultSidebarState()
 
     return {
-      ...defaultSidebarState,
+      ...defaultState,
       ...parsed,
-      variant:
-        device.isMobile && device.minWidth ? SidebarVariant.MINI : (parsed.variant ?? defaultSidebarState.variant),
+      variant: device.isMobile && device.minWidth ? SidebarVariant.MINI : (parsed.variant ?? defaultState.variant),
       widgetsState: new Map(Object.entries(parsed.widgetsState ?? {}))
     }
   } catch (e) {
     console.error(e)
-    setSidebarStateToLocalStorage(defaultSidebarState)
-    return defaultSidebarState
+    setSidebarStateToLocalStorage(getDefaultSidebarState())
+    return getDefaultSidebarState()
   }
 }
 
@@ -117,7 +119,7 @@ export function openWidget (
   tabs?: WidgetTab[]
 ): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget._id)
   const active = params?.active ?? true
   const openedByUser = params?.openedByUser ?? false
@@ -141,7 +143,7 @@ export function openWidget (
 
 export function closeWidget (widget: Ref<Widget>): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
 
   if (!widgetsState.has(widget) && state.widget !== widget && state.variant === SidebarVariant.MINI) {
     return
@@ -165,54 +167,63 @@ export function closeWidget (widget: Ref<Widget>): void {
 }
 
 export async function closeWidgetTab (widget: Widget, tab: string): Promise<void> {
-  const state = get(sidebarStore)
-  const { widgetsState } = state
-  const widgetState = widgetsState.get(widget._id)
+  const currentState = get(sidebarStore)
+  const currentWidgetState = currentState.widgetsState.get(widget._id)
 
-  if (widgetState === undefined) return
+  if (currentWidgetState === undefined) return
 
-  const tabs = widgetState.tabs
-  const newTabs = tabs.filter((it) => it.id !== tab)
-  const closedTab = tabs.find((it) => it.id === tab)
+  const closedTab = currentWidgetState.tabs.find((it) => it.id === tab)
 
   Analytics.handleEvent(WorkbenchEvents.SidebarCloseWidget, { widget: widget._id, tab: closedTab?.name })
 
   if (widget.onTabClose !== undefined && closedTab !== undefined) {
-    const fn = await getResource(widget.onTabClose)
-    void fn(closedTab)
-  }
-
-  if (newTabs.length === 0) {
-    if (widget.closeIfNoTabs === true) {
-      widgetsState.delete(widget._id)
-      sidebarStore.set({ ...state, widgetsState, variant: SidebarVariant.MINI })
-    } else {
-      widgetsState.set(widget._id, { ...widgetState, tabs: [], tab: undefined })
-      sidebarStore.set({ ...state, widgetsState })
+    try {
+      const fn = await getResource(widget.onTabClose)
+      void fn(closedTab)
+    } catch (e) {
+      console.error(e)
     }
-    return
   }
 
-  const shouldReplace = widgetState.tab === tab
+  sidebarStore.update((state) => {
+    const widgetsState = new Map(state.widgetsState)
+    const widgetState = widgetsState.get(widget._id)
 
-  if (!shouldReplace) {
-    widgetsState.set(widget._id, { ...widgetState, tabs: newTabs })
-  } else {
-    const index = tabs.findIndex((it) => it.id === widgetState.tab)
-    const newTab = index === -1 ? newTabs[0] : (tabs[index + 1] ?? tabs[index - 1] ?? newTabs[0])
+    if (widgetState === undefined) return state
 
-    widgetsState.set(widget._id, { ...widgetState, tabs: newTabs, tab: newTab.id })
-  }
+    const tabs = widgetState.tabs
+    const newTabs = tabs.filter((it) => it.id !== tab)
 
-  sidebarStore.set({
-    ...state,
-    ...widgetsState
+    if (newTabs.length === tabs.length) return state
+
+    if (newTabs.length === 0) {
+      if (widget.closeIfNoTabs === true) {
+        widgetsState.delete(widget._id)
+        return { ...state, widgetsState, variant: SidebarVariant.MINI }
+      } else {
+        widgetsState.set(widget._id, { ...widgetState, tabs: [], tab: undefined })
+        return { ...state, widgetsState }
+      }
+    }
+
+    const shouldReplace = widgetState.tab === tab
+
+    if (!shouldReplace) {
+      widgetsState.set(widget._id, { ...widgetState, tabs: newTabs })
+    } else {
+      const index = tabs.findIndex((it) => it.id === widgetState.tab)
+      const newTab = index === -1 ? newTabs[0] : (tabs[index + 1] ?? tabs[index - 1] ?? newTabs[0])
+
+      widgetsState.set(widget._id, { ...widgetState, tabs: newTabs, tab: newTab.id })
+    }
+
+    return { ...state, widgetsState }
   })
 }
 
 export function openWidgetTab (widget: Ref<Widget>, tab: string): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget)
 
   if (widgetState === undefined) return
@@ -232,7 +243,7 @@ export function openWidgetTab (widget: Ref<Widget>, tab: string): void {
 
 export function createWidgetTab (widget: Widget, tab: WidgetTab, newTab = false): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget._id)
   const currentTabs = widgetState?.tabs ?? []
   const opened = currentTabs.some(({ id }) => id === tab.id) ?? false
@@ -269,7 +280,7 @@ export function createWidgetTab (widget: Widget, tab: WidgetTab, newTab = false)
 
 export function pinWidgetTab (widget: Widget, tabId: string): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget._id)
 
   if (widgetState === undefined) return
@@ -288,7 +299,7 @@ export function pinWidgetTab (widget: Widget, tabId: string): void {
 
 export function unpinWidgetTab (widget: Widget, tabId: string): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget._id)
 
   if (widgetState === undefined) return
@@ -336,19 +347,20 @@ export function isElementFromSidebar (element: HTMLElement): boolean {
 
 export function minimizeSidebar (closedByUser = false): void {
   const state = get(sidebarStore)
-  const { widget, widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
+  const { widget } = state
   const widgetState = widget == null ? undefined : widgetsState.get(widget)
 
   if (widget !== undefined && widgetState !== undefined && closedByUser) {
     widgetsState.set(widget, { ...widgetState, closedByUser })
   }
 
-  sidebarStore.set({ ...state, ...widgetsState, widget: undefined, variant: SidebarVariant.MINI })
+  sidebarStore.set({ ...state, widgetsState, widget: undefined, variant: SidebarVariant.MINI })
 }
 
 export function updateTabData (widget: Ref<Widget>, tabId: string, data: Record<string, any>): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget)
 
   if (widgetState === undefined) return
@@ -365,7 +377,7 @@ export function updateTabData (widget: Ref<Widget>, tabId: string, data: Record<
 
 export function updateWidgetState (widget: Ref<Widget>, newState: Partial<WidgetState>): void {
   const state = get(sidebarStore)
-  const { widgetsState } = state
+  const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget)
 
   if (widgetState === undefined) return
