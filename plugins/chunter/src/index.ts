@@ -217,7 +217,7 @@ export default plugin(chunterId, {
     SummarizeMessages: '' as IntlString,
     Star: '' as IntlString,
     Unstar: '' as IntlString,
-    Hide: '' as IntlString,
+    HideFromChatList: '' as IntlString,
     Leave: '' as IntlString,
     HideAll: '' as IntlString,
     GroupChat: '' as IntlString,

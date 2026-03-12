@@ -138,16 +138,14 @@
       })
     }
 
-    if (context != null) {
-      result.push({
-        icon: notification.icon.Notifications,
-        label: notification.string.EditNotifications,
-        group: 'tools',
-        component: MutePopup,
-        props: { value: object },
-        action: async () => {}
-      })
-    }
+    result.push({
+      icon: notification.icon.Notifications,
+      label: notification.string.EditNotifications,
+      group: 'tools',
+      component: MutePopup,
+      props: { value: object },
+      action: async () => {}
+    })
 
     const canLeave = await canLeaveSpace(object)
 
@@ -164,8 +162,7 @@
     } else if (chat != null && !chat.hidden) {
       result.push({
         icon: view.icon.EyeCrossed,
-        label: chunter.string.Hide,
-        labelParams: { label },
+        label: chunter.string.HideFromChatList,
         group: 'remove',
         action: async () => {
           await client.updateCollection(

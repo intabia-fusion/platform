@@ -137,23 +137,23 @@
     "DeleteMessageDescription": "Opravdu chcete tuto zprávu smazat? Tuto akci nelze vrátit zpět.",
     "Star": "Přidat do oblíbených",
     "Unstar": "Odebrat z oblíbených",
-    "Hide": "Skrýt {label}",
+    "HideFromChatList": "Skrýt ze seznamu chatů",
     "Leave": "Opustit {label}",
     "HideAll": "Skrýt vše",
     "Seen": "Přečteno"
   },
   "emailTemplate": {
-    "DMNotificationText": "{sender} has sent you a message: \n\n{message}",
-    "DMNotificationHtml": "<p><b>{sender}</b> has sent you a message: </p> {message} <p>{link}</p>",
-    "DMNotificationSubject": "You have new direct message",
-    "ChannelNotificationText": "{sender} has sent a message in {doc}: \n\n {message}",
-    "ChannelNotificationHtml": "<p><b>{sender}</b> has sent a message in {doc}:</p> {message} <p>{link}</p>",
-    "ChannelNotificationSubject": "You have new message in {doc}",
-    "JoinChannelNotificationText": "You have been added to #{doc}",
-    "JoinChannelNotificationHtml": "<p>You have been added to <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "You have been added to #{doc}",
-    "ThreadNotificationText": "{sender} replied to {doc}: \n\n{message}",
-    "ThreadNotificationHtml": "<p><b>{sender}</b> replied to {doc}:</p><p>{message}</p><p>{link}</p>",
-    "ThreadNotificationSubject": "New reply to {doc}"
+    "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",
+    "DMNotificationHtml": "<p><b>{sender}</b> vám poslal zprávu: </p> {message} <p>{link}</p>",
+    "DMNotificationSubject": "Máte novou přímou zprávu",
+    "ChannelNotificationText": "{sender} poslal zprávu v {doc}: \n\n {message}",
+    "ChannelNotificationHtml": "<p><b>{sender}</b> poslal zprávu v {doc}:</p> {message} <p>{link}</p>",
+    "ChannelNotificationSubject": "Máte novou zprávu v {doc}",
+    "JoinChannelNotificationText": "Byli jste přidáni do #{doc}",
+    "JoinChannelNotificationHtml": "<p>Byli jste přidáni do <b>#{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Byli jste přidáni do #{doc}",
+    "ThreadNotificationText": "{sender} odpověděl na {doc}: \n\n{message}",
+    "ThreadNotificationHtml": "<p><b>{sender}</b> odpověděl na {doc}:</p><p>{message}</p><p>{link}</p>",
+    "ThreadNotificationSubject": "Nová odpověď na {doc}"
   }
 }
