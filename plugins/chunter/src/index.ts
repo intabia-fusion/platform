@@ -222,6 +222,20 @@ export default plugin(chunterId, {
     HideAll: '' as IntlString,
     GroupChat: '' as IntlString
   },
+  emailTemplate: {
+    DMNotificationText: '' as IntlString,
+    DMNotificationHtml: '' as IntlString,
+    DMNotificationSubject: '' as IntlString,
+    ChannelNotificationText: '' as IntlString,
+    ChannelNotificationHtml: '' as IntlString,
+    ChannelNotificationSubject: '' as IntlString,
+    JoinChannelNotificationText: '' as IntlString,
+    JoinChannelNotificationHtml: '' as IntlString,
+    JoinChannelNotificationSubject: '' as IntlString,
+    ThreadNotificationText: '' as IntlString,
+    ThreadNotificationHtml: '' as IntlString,
+    ThreadNotificationSubject: '' as IntlString
+  },
   ids: {
     DMNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
     ThreadNotification: '' as Ref<MessageNotificationType<ThreadMessage>>,

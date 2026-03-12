@@ -568,5 +568,10 @@ export default plugin(githubId, {
     AuthenticatedWithGithubEmployee: '' as IntlString,
     AuthenticatedWithGithubRequired: '' as IntlString,
     Suspended: '' as IntlString
+  },
+  emailTemplate: {
+    AssigneeNotificationText: '' as IntlString,
+    AssigneeNotificationHtml: '' as IntlString,
+    AssigneeNotificationSubject: '' as IntlString
   }
 })

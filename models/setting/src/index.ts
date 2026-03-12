@@ -660,9 +660,9 @@ export function createModel (builder: Builder): void {
       attachedToClass: setting.class.Integration,
       notifyAuthor: true,
       templates: {
-        textTemplate: 'Integration with {doc} was disabled',
-        htmlTemplate: '<p>Integration with {doc} was disabled</p> <p>{link}</p>',
-        subjectTemplate: 'Integration with {doc} was disabled'
+        text: setting.emailTemplate.IntegrationDisabledNotificationText,
+        html: setting.emailTemplate.IntegrationDisabledNotificationHtml,
+        subject: setting.emailTemplate.IntegrationDisabledNotificationSubject
       },
       defaultEnabled: true
     },

@@ -46,6 +46,11 @@ export const exportPlugin = plugin(exportId, {
     ImportedDocuments: '' as IntlString,
     ExportResultRecordTitle: '' as IntlString
   },
+  emailTemplate: {
+    ImportedDocumentsNotificationText: '' as IntlString,
+    ImportedDocumentsNotificationHtml: '' as IntlString,
+    ImportedDocumentsNotificationSubject: '' as IntlString
+  },
   component: {
     ExportButton: '' as AnyComponent,
     ExportSettings: '' as AnyComponent,

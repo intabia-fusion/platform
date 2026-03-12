@@ -35,30 +35,28 @@
     "NoBacklinks": "Žádné zpětné odkazy",
     "NoHistory": "Žádná předchozí historie",
     "Untitled": "Bez názvu",
-
     "Description": "Popis",
-
     "CopyDocumentUrl": "Kopírovat URL dokumentu do schránky",
     "DocumentUrlCopied": "Zkopírováno!",
-
     "ViewMode": "Zobrazit",
     "EditMode": "Upravit",
     "SuggestMode": "Navrhnout",
-
     "CompareTo": "Porovnat s...",
     "Star": "Připnout",
     "Unstar": "Odepnout",
-
     "Lock": "Uzamknout",
     "Unlock": "Odemknout",
     "Locked": "Uzamčeno",
-
     "ConfigLabel": "Dokumenty",
     "ConfigDescription": "Rozšíření pro spolupráci na úpravách dokumentů",
-
     "Icon": "Ikona",
     "Color": "Barva",
     "ForbidCreateTeamspacePermission": "Zakázat vytvoření týmového prostoru",
     "ForbidCreateTeamspacePermissionDescription": "Zakazuje uživatelům vytvářet nové týmové prostory"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}"
   }
 }

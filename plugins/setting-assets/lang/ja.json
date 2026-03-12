@@ -216,5 +216,10 @@
     "SelectUsers": "ユーザーを選択",
     "ShowInTitle": "タイトルに表示",
     "SpaceMembersOnly": "スペースメンバーのみ"
+  },
+  "emailTemplate": {
+    "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
+    "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

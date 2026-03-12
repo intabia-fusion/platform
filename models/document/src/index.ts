@@ -428,9 +428,9 @@ function defineDocument (builder: Builder): void {
       attachedToClass: document.class.Document,
       defaultEnabled: false,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p> <p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: document.emailTemplate.ContentNotificationText,
+        html: document.emailTemplate.ContentNotificationHtml,
+        subject: document.emailTemplate.ContentNotificationSubject
       }
     },
     document.ids.ContentNotification

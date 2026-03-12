@@ -56,30 +56,22 @@
     "Approval": "Aprobación",
     "Reviewer": "Revisor",
     "Approver": "Aprobador",
-
     "DeleteCategory": "¿Eliminar categoría?",
     "DeleteCategoryHint": "Esa acción no se puede deshacer",
     "DeleteCategoryWarning": "La categoría no se puede eliminar porque está en uso",
-
     "Latest": "Actual",
     "Draft": "Borrador",
-
     "Reviewers": "Revisores",
-
     "ViewMode": "Visualizando",
     "EditMode": "Editando",
     "ComparisonMode": "Comparando",
-
     "Compare": "Comparar:",
     "Against": "Contra:",
-
     "ComparisonModeNotSupported": "El modo de comparación no está soportado.",
-
     "CreateDraft": "Crear Borrador",
     "SendForApproval": "Enviar para aprobación",
     "SendForReview": "Enviar para revisión",
     "CompleteReview": "Completar revisión",
-
     "Approve": "Aprobar",
     "Reject": "Rechazar",
     "ConfirmApproval": "Confirmar aprobación",
@@ -96,7 +88,6 @@
     "AddApprovalDescription4": "si se planifica capacitación, la capacitación tiene estado 'Publicado'",
     "NoApprovalsDescription": "No hay aprobaciones para esta versión del documento",
     "CurrentVersion": "Versión actual",
-
     "DocumentTemplate": "Plantilla",
     "DocumentTemplates": "Plantillas",
     "DocumentCode": "Código de documento",
@@ -117,24 +108,20 @@
     "ShowResolved": "Mostrar comentarios resueltos",
     "Ordering": "Ordenamiento",
     "Title": "Título",
-
     "Effective": "Efectivo",
     "Archived": "Archivado",
     "Deleted": "Eliminado",
     "MetaAbstract": "Resumen",
-    
     "Obsolete": "Obsoleto",
     "MakeDocumentObsolete": "Marcar como obsoleto",
     "MakeDocumentObsoleteDialog": "Marcar {count, plural, =0 {documento} other {documentos}} como obsoleto",
     "MakeDocumentObsoleteConfirm": "¿Realmente deseas marcar los siguientes documentos como obsoletos: {titles}?",
-
     "ContentTab": "Contenido",
     "TeamTab": "Equipo",
     "MetaTab": "Metadatos",
     "ChangeControlTab": "Control de cambios",
     "ReleaseTab": "Publicación",
     "HistoryTab": "Historial",
-
     "ModificationDate": "Modificado en",
     "Modified": "Modificado",
     "Owner": "Propietario",
@@ -142,7 +129,6 @@
     "Unassigned": "Sin asignar",
     "Untitled": "Sin título",
     "Copy": "copia",
-
     "AccessWorkarea": "Acceder al Área de trabajo",
     "EffectiveLibrary": "Biblioteca efectiva",
     "WorkingLibrary": "Biblioteca de trabajo",
@@ -152,10 +138,8 @@
     "ReassignOwnershipToAnotherUser": "Reasignar propiedad a otro usuario",
     "MakeDocumentEffective": "Hacer documento efectivo",
     "CreateDraftQmsTemplates": "Crear borradores de plantillas QMS",
-
     "ChangeControl": "Control de Cambios",
     "ReviewInterval": "Intervalo de revisión",
-
     "SelectReviewers": "Seleccionar revisores",
     "SelectApprovers": "Seleccionar aprobadores",
     "RequestsToReviewTheDoc": "te solicita revisar el documento",
@@ -164,19 +148,15 @@
     "Template": "Plantilla",
     "GeneralInfo": "Información General",
     "InProgress": "En progreso",
-
     "EditDescription": "Editar descripción",
     "EditGuidance": "Editar guía",
-
     "NewDocument": "Nuevo documento",
     "NewDocumentCategory": "Nueva categoría",
     "NewDocumentTemplate": "Nueva plantilla",
-
     "LocationStepTitle": "Ubicación",
     "TemplateStepTitle": "Plantilla",
     "InfoStepTitle": "Información",
     "TeamStepTitle": "Equipo",
-
     "TitleAndDescr": "Título y descripción",
     "Reason": "Motivo",
     "AbstractPlaceholder": "¿De qué trata este documento? ¿Quién lo necesitará y cuándo? ...",
@@ -185,17 +165,13 @@
     "NewTemplatePlaceholder": "¿De qué trata esta plantilla? Describe cómo usarla correctamente...",
     "CustomReason": "Personalizado",
     "ReasonPlaceholder": "Especifica el motivo...",
-
     "EditDocument": "Editar documento",
-
     "Key": "Clave",
     "CommentsSequence": "Secuencia de comentarios",
-
     "Email": "Correo electrónico",
     "Password": "Contraseña",
     "FieldIsEmpty": "{field} está vacío",
     "ValidatingCredentials": "Validando credenciales...",
-
     "GeneralDocumentation": "Documentación general",
     "TechnicalDocumentation": "Documentación técnica",
     "UnsortedTemplates": "Plantillas sin clasificar",
@@ -203,53 +179,39 @@
     "Projects": "Proyectos",
     "ExternalSpace": "Espacio de proyecto",
     "DocumentSpaceType": "Tipo de espacio de documentos",
-
     "EffectiveImmediately": "Inmediatamente tras la aprobación",
     "EffectiveOn": "Hacer efectivo el",
-
     "PeriodicReviewToBeCompleted": "Revisión periódica a completar dentro de",
     "MonthsAfterEffectiveDate": "meses después de su fecha efectiva",
     "ToBePassedWithin": "A completar dentro de",
     "AttemptsAnd": "intentos y",
     "DaysAfterEffectiveDate": "días después de la fecha efectiva",
-
     "Index": "Índice",
     "Path": "Ruta",
-
     "CreateChildDocument": "Crear documento hijo",
     "CreateChildTemplate": "Crear plantilla hija",
-
     "All": "Todos",
-
     "Space": "Espacio",
     "SelectParent": "Selecciona el objeto padre para tu documento",
-
     "PrefixInUse": "Este prefijo ya está en uso por",
     "CodeInUse": "Este código ya está en uso por",
     "ChangeCode": "Cambiar Código",
     "ChangePrefix": "Cambiar Prefijo",
-
     "MarkDocAsDeleted": "Marcar documento como eliminado",
     "MarkDocsAsDeleted": "Marcar múltiples documentos como eliminados",
     "MarkDocAsDeletedConfirm": "¿Realmente deseas marcar los siguientes documentos como eliminados: {titles}?",
-
     "ArchiveDocs": "Archivar {count, plural, =0 {documento} other {documentos}}",
     "ArchiveDocsConfirm": "¿Realmente deseas archivar los siguientes documentos: {titles}?",
-
     "DocumentInHierarchy": "Documento en jerarquía",
     "FirstDraftVersion": "Esta es la primera versión borrador del documento. Aún no hay historial.",
     "FirstOrNotAvailable": "Esta es la primera versión disponible del documento. Aún no hay historial o no está disponible.",
-
     "EffectiveDocumentLifecycle": "Ciclo de vida del documento efectivo",
-
     "ReasonAndImpact": "Motivo e Impacto",
     "ImpactAnalysis": "Análisis de impacto",
     "ImpactedDocuments": "Documentos impactados",
-
     "CreateDocumentFailed": "Error al crear documento",
     "CreateDocumentTemplateFailed": "Error al crear plantilla",
     "TryAgain": "Por favor intenta de nuevo",
-
     "DescribeChanges": "Describe qué se cambió...",
     "DescribeReason": "Describe por qué se cambió...",
     "DescribeImpact": "Tiene un impacto en...",
@@ -273,17 +235,13 @@
     "Page": "Página ",
     "Of": " de ",
     "CreatedFromTemplate": "Creado desde plantilla: ",
-
     "ViewAll": "Ver todo",
     "Readonly": "Solo lectura",
-
     "NewDocumentSpace": "Nuevo espacio de documentos",
     "EditDocumentSpace": "Editar espacio de documentos",
-
     "DocSpaceDescriptionPlaceholder": "Describe tu espacio...",
     "Members": "Miembros",
     "CreateOrgSpace": "Crear espacio de organización",
-
     "ReviewDocumentPermission": "Revisar documento",
     "ReviewDocumentDescription": "Otorga a los usuarios la capacidad de revisar un documento",
     "ApproveDocumentPermission": "Aprobar documento",
@@ -296,7 +254,6 @@
     "CreateDocumentDescription": "Otorga a los usuarios la capacidad de crear un documento",
     "UpdateDocumentOwnerPermission": "Actualizar propietario del documento",
     "UpdateDocumentOwnerDescription": "Otorga a los usuarios la capacidad de actualizar el propietario de un documento",
-    
     "CreateDocumentCategoryPermission": "Crear categoría de documento",
     "CreateDocumentCategoryDescription": "Otorga a los usuarios la capacidad de crear una categoría de documento",
     "UpdateDocumentCategoryPermission": "Actualizar categoría de documento",
@@ -305,21 +262,16 @@
     "DeleteDocumentCategoryDescription": "Otorga a los usuarios la capacidad de eliminar una categoría de documento",
     "ConfigLabel": "Documentos Controlados",
     "ConfigDescription": "Extensión para gestionar documentos controlados",
-
     "Transfer": "Transferir",
     "TransferWarning": "Algunos miembros del equipo pueden perder la capacidad de ver o editar este documento después de esta acción.",
     "TransferDocuments": "Transferir documentos controlados",
     "TransferDocumentsHint": "Documentos a transferir al espacio seleccionado:",
-
     "CreateFolder": "Crear nueva carpeta",
     "RenameFolder": "Renombrar carpeta",
     "CreateChildFolder": "Crear carpeta hija",
-
     "LatestVersionHint": "última",
-
     "CannotDeleteFolder": "La carpeta no se puede eliminar",
     "CannotDeleteFolderHint": "Por favor mueve todos los documentos hijos a otra ubicación antes de eliminar la carpeta.",
-
     "AllDocumentSpaces": "Todos los espacios de documentos"
   },
   "controlledDocStates": {
@@ -330,6 +282,16 @@
     "Reviewed": "Revisado",
     "Rejected": "Rechazado",
     "ToReview": "A Revisar"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}",
+    "StateNotificationText": "{sender} changed {doc} status",
+    "StateNotificationHtml": "<p>{sender} changed {doc} status</p> <p>{link}</p>",
+    "StateNotificationSubject": "{doc} status changed",
+    "CoAuthorsNotificationText": "{sender} assigned you as a co-author of {doc}",
+    "CoAuthorsNotificationHtml": "<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>",
+    "CoAuthorsNotificationSubject": "Co-authoring assignment for {doc}"
   }
 }
-

@@ -55,30 +55,22 @@
     "Approval": "Schválení",
     "Reviewer": "Revizor",
     "Approver": "Schvalovatel",
-
     "DeleteCategory": "Smazat kategorii?",
     "DeleteCategoryHint": "Tuto akci nelze vrátit zpět.",
     "DeleteCategoryWarning": "Tuto kategorii nelze smazat, protože se používá.",
-
     "Latest": "Aktuální",
     "Draft": "Koncept",
-
     "Reviewers": "Revizoři",
-
     "ViewMode": "Zobrazení",
     "EditMode": "Úpravy",
     "ComparisonMode": "Porovnání",
-
     "Compare": "Porovnat:",
     "Against": "Proti:",
-
     "ComparisonModeNotSupported": "Porovnávací režim není podporován.",
-
     "CreateDraft": "Vytvořit koncept",
     "SendForApproval": "Odeslat ke schválení",
     "SendForReview": "Odeslat k revizi",
     "CompleteReview": "Dokončit revizi",
-
     "Approve": "Schválit",
     "Reject": "Zamítnout",
     "ConfirmApproval": "Potvrdit schválení",
@@ -95,7 +87,6 @@
     "AddApprovalDescription4": "pokud je plánováno školení, musí mít školení stav 'Vydané'",
     "NoApprovalsDescription": "Pro tuto verzi dokumentu nejsou žádná schválení",
     "CurrentVersion": "Aktuální verze",
-
     "DocumentTemplate": "Šablona",
     "DocumentTemplates": "Šablony",
     "DocumentCode": "Kód dokumentu",
@@ -116,19 +107,16 @@
     "ShowResolved": "Zobrazit vyřešené komentáře",
     "Ordering": "Řazení",
     "Title": "Název",
-
     "Effective": "Účinný",
     "Archived": "Archivováno",
     "Deleted": "Smazáno",
     "MetaAbstract": "Abstrakt",
-
     "ContentTab": "Obsah",
     "TeamTab": "Tým",
     "MetaTab": "Metadata",
     "ChangeControlTab": "Řízení změn",
     "ReleaseTab": "Vydání",
     "HistoryTab": "Historie",
-
     "ModificationDate": "Upraveno dne",
     "Modified": "Upraveno",
     "Owner": "Vlastník",
@@ -136,7 +124,6 @@
     "Unassigned": "Nepřiřazeno",
     "Untitled": "Bez názvu",
     "Copy": "Kopírovat",
-
     "AccessWorkarea": "Přístup do pracovní oblasti",
     "EffectiveLibrary": "Knihovna účinných dokumentů",
     "WorkingLibrary": "Knihovna pracovních dokumentů",
@@ -146,10 +133,8 @@
     "ReassignOwnershipToAnotherUser": "Převést vlastnictví na jiného uživatele",
     "MakeDocumentEffective": "Učinit dokument účinným",
     "CreateDraftQmsTemplates": "Vytvořit koncept QMS šablon",
-
     "ChangeControl": "Řízení změn",
     "ReviewInterval": "Interval revize",
-
     "SelectReviewers": "Vybrat revizory",
     "SelectApprovers": "Vybrat schvalovatele",
     "RequestsToReviewTheDoc": "žádá vás o revizi dokumentu",
@@ -158,19 +143,15 @@
     "Template": "Šablona",
     "GeneralInfo": "Obecné informace",
     "InProgress": "Probíhá",
-
     "EditDescription": "Upravit popis",
     "EditGuidance": "Upravit pokyny",
-
     "NewDocument": "Nový dokument",
     "NewDocumentCategory": "Nová kategorie",
     "NewDocumentTemplate": "Nová šablona",
-
     "LocationStepTitle": "Umístění",
     "TemplateStepTitle": "Šablona",
     "InfoStepTitle": "Informace",
     "TeamStepTitle": "Tým",
-
     "TitleAndDescr": "Název a popis",
     "Reason": "Důvod",
     "AbstractPlaceholder": "O čem je tento dokument? Kdo ho bude potřebovat a kdy? ...",
@@ -179,17 +160,13 @@
     "NewTemplatePlaceholder": "O čem je tato šablona? Popište, jak ji správně používat...",
     "CustomReason": "Vlastní důvod",
     "ReasonPlaceholder": "Specifikujte důvod...",
-
     "EditDocument": "Upravit dokument",
-
     "Key": "Klíč",
     "CommentsSequence": "Sekvence komentářů",
-
     "Email": "Email",
     "Password": "Heslo",
     "FieldIsEmpty": "{field} je prázdné",
     "ValidatingCredentials": "Ověřování přihlašovacích údajů...",
-
     "GeneralDocumentation": "Obecná dokumentace",
     "TechnicalDocumentation": "Technická dokumentace",
     "UnsortedTemplates": "Nezařazené šablony",
@@ -197,39 +174,29 @@
     "Projects": "Projekty",
     "ExternalSpace": "Prostor projektu",
     "DocumentSpaceType": "Typ prostoru dokumentů",
-
     "EffectiveImmediately": "Ihned po schválení",
     "EffectiveOn": "Platnost od",
-
     "PeriodicReviewToBeCompleted": "Periodická revize musí být dokončena do",
     "MonthsAfterEffectiveDate": "měsíců od data účinnosti",
     "ToBePassedWithin": "Musí být splněno do",
     "AttemptsAnd": "pokusů a",
     "DaysAfterEffectiveDate": "dní od data účinnosti",
-
     "Index": "Index",
     "Path": "Cesta",
-
     "CreateChildDocument": "Vytvořit podřízený dokument",
     "CreateChildTemplate": "Vytvořit podřízenou šablonu",
-
     "All": "Vše",
-
     "Space": "Prostor",
     "SelectParent": "Vyberte nadřazený objekt pro váš dokument",
-
     "PrefixInUse": "Tato předpona již používá",
     "CodeInUse": "Tento kód již používá",
     "ChangeCode": "Změnit kód",
     "ChangePrefix": "Změnit předponu",
-
     "MarkDocAsDeleted": "Označení dokumentu jako smazaného",
     "MarkDocsAsDeleted": "Označení více dokumentů jako smazaných",
     "MarkDocAsDeletedConfirm": "Opravdu chcete označit následující dokumenty jako smazané: {titles}?",
-
     "ArchiveDocs": "Archivovat {count, plural, =0 {dokument} other {dokumenty}}",
     "ArchiveDocsConfirm": "Opravdu chcete archivovat následující dokumenty: {titles}?",
-
     "DocumentInHierarchy": "Dokument v hierarchii",
     "FirstDraftVersion": "Toto je první konceptová verze dokumentu. Historie zatím není k dispozici.",
     "FirstOrNotAvailable": "Toto je první dostupná verze dokumentu. Historie zatím není k dispozici nebo není dostupná.",
@@ -290,26 +257,20 @@
     "DeleteDocumentCategoryDescription": "Uděluje uživatelům možnost smazat kategorii dokumentů",
     "ConfigLabel": "Řízené dokumenty",
     "ConfigDescription": "Rozšíření pro správu řízených dokumentů",
-
     "Transfer": "Přenos",
     "TransferWarning": "Někteří členové týmu mohou po této akci ztratit možnost prohlížet nebo upravovat tento dokument.",
     "TransferDocuments": "Přenos řízených dokumentů",
     "TransferDocumentsHint": "Dokumenty, které mají být přeneseny do vybraného prostoru:",
-
     "CreateFolder": "Vytvořit novou složku",
     "RenameFolder": "Přejmenovat složku",
     "CreateChildFolder": "Vytvořit podsložku",
-
     "Obsolete": "Zastaralé",
     "MakeDocumentObsolete": "Označit jako zastaralé",
     "MakeDocumentObsoleteDialog": "Označit {count, plural, one {dokument jako zastaralý} other {dokumenty jako zastaralé}}",
     "MakeDocumentObsoleteConfirm": "Opravdu chcete označit následující dokumenty jako zastaralé: {titles}?",
-
     "LatestVersionHint": "nejnovější",
-
     "CannotDeleteFolder": "Složku nelze smazat",
     "CannotDeleteFolderHint": "Před odstraněním složky prosím přesuňte všechny podřízené dokumenty na jiné místo.",
-
     "AllDocumentSpaces": "Všechny dokumentové prostory"
   },
   "controlledDocStates": {
@@ -320,5 +281,16 @@
     "Reviewed": "Revidováno",
     "Rejected": "Zamítnuto",
     "ToReview": "K revizi"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}",
+    "StateNotificationText": "{sender} changed {doc} status",
+    "StateNotificationHtml": "<p>{sender} changed {doc} status</p> <p>{link}</p>",
+    "StateNotificationSubject": "{doc} status changed",
+    "CoAuthorsNotificationText": "{sender} assigned you as a co-author of {doc}",
+    "CoAuthorsNotificationHtml": "<p>{sender} assigned you as a co-author of {doc}</p> <p>{link}</p>",
+    "CoAuthorsNotificationSubject": "Co-authoring assignment for {doc}"
   }
 }

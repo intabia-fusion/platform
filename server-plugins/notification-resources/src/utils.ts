@@ -34,6 +34,7 @@ import notification, {
   MessageNotificationType,
   NotificationGroup,
   notificationId,
+  NotificationTemplate,
   NotificationType
 } from '@hcengineering/notification'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
@@ -45,7 +46,7 @@ import {
   TypeMatchFunc
 } from '@hcengineering/server-notification'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import { getMetadata, getResource, translate } from '@hcengineering/platform'
+import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import serverView from '@hcengineering/server-view'
@@ -150,9 +151,9 @@ export function generateAttributeNotificationType (
     defaultEnabled,
     attachedToClass: attribute.attributeOf,
     templates: {
-      textTemplate: '{body}',
-      htmlTemplate: '<p>{body}</p><p>{link}</p>',
-      subjectTemplate: '{doc} updated'
+      text: notification.emailTemplate.GeneratedNotificationText,
+      html: notification.emailTemplate.GeneratedNotificationHtml,
+      subject: notification.emailTemplate.GeneratedNotificationSubject
     },
     label: attribute.label
   }
@@ -195,16 +196,17 @@ export async function getNotificationMessages (
 }
 
 export async function getTranslatedNotificationContent (
-  data: Data<InboxNotification>
+  data: Data<InboxNotification>,
+  language: string
 ): Promise<{ title: string, body: string, [key: string]: string }> {
   const params = { ...data.intlParams }
 
   for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
-    params[k] = await translate(v, params)
+    params[k] = await translate(v, params, language)
   }
 
-  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params)
-  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params)
+  const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params, language)
+  const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params, language)
 
   return { ...params, title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body: body.slice(0, NOTIFICATION_BODY_SIZE) }
 }
@@ -217,16 +219,17 @@ export async function getContentByTemplate (
   message: ActivityMessage | undefined
 ): Promise<TemplateContent | undefined> {
   const { hierarchy, modelDb } = control
+  const language = control.branding?.defaultLanguage ?? 'en'
   const types = _types.map((it) => modelDb.getObject(it)).filter(notEmpty)
 
   const type = types.find((it) => it.templates != null)
-  const templates = type?.templates ?? {
-    textTemplate: '{body}',
-    htmlTemplate: '<p>{body}.</p> <p>{link}</p>',
-    subjectTemplate: '{doc}'
+  const templates: NotificationTemplate = type?.templates ?? {
+    text: notification.emailTemplate.GeneratedNotificationText,
+    html: notification.emailTemplate.GeneratedNotificationHtml,
+    subject: notification.emailTemplate.GeneratedNotificationSubject
   }
 
-  const params: Record<string, string> = await getTranslatedNotificationContent(inboxNotification)
+  const params: Record<string, string> = await getTranslatedNotificationContent(inboxNotification, language)
 
   const title = (await getDocTitle(control, doc)) ?? ''
   const url = (inboxNotification.intlParams?.url ?? (await getDocUrl(control, doc)))?.toString()
@@ -256,14 +259,14 @@ export async function getContentByTemplate (
   const inboxLink = await getNotificationInboxLink(control, doc, message?._id)
   const app = control.branding?.title ?? 'Platform'
 
-  const inboxLinkText = await translate(notification.string.ViewIn, { app })
+  const inboxLinkText = await translate(notification.string.ViewIn, { app }, language)
 
   params.link = `<a href='${inboxLink}'>${inboxLinkText}</a>`
   const senderName = (inboxNotification?.intlParams?.senderName ?? 'System').toString()
 
-  const text = fillTemplate(templates.textTemplate, senderName, titleWithIdentifier, params)
-  const html = fillTemplate(templates.htmlTemplate, senderName, htmlTitle, params)
-  const subject = fillTemplate(templates.subjectTemplate, senderName, titleWithIdentifier, params)
+  const text = await fillTemplate(templates.text, senderName, titleWithIdentifier, params, language)
+  const html = await fillTemplate(templates.html, senderName, htmlTitle, params, language)
+  const subject = await fillTemplate(templates.subject, senderName, titleWithIdentifier, params, language)
 
   if (subject === '') return
 
@@ -313,21 +316,20 @@ export async function getNotificationInboxLink (
   return message !== undefined ? `${link}?message=${message}` : link
 }
 
-function fillTemplate (template: string, sender: string, doc: string, params: Record<string, string> = {}): string {
-  let res = replaceAll(template, '{sender}', sender)
-  res = replaceAll(res, '{doc}', doc)
-
-  for (const key in params) {
-    res = replaceAll(res, `{${key}}`, params[key])
-  }
-
-  return res
-}
-
-function replaceAll (str: string, find: string, replace: string): string {
-  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace)
-}
-
-function escapeRegExp (str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+async function fillTemplate (
+  template: IntlString,
+  sender: string,
+  doc: string,
+  params: Record<string, string>,
+  lang: string
+): Promise<string> {
+  return await translate(
+    template,
+    {
+      ...params,
+      sender,
+      doc
+    },
+    lang
+  )
 }

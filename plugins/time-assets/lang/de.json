@@ -29,7 +29,7 @@
     "Unplanned": "Ungeplant",
     "Planned": "Geplant",
     "AddSlot": "Zeitfenster hinzufügen",
-    "SetPriority": "Priorität setzen\u2026",
+    "SetPriority": "Priorität setzen…",
     "NoPriority": "Keine Priorität",
     "LowPriority": "Niedrige Priorität",
     "MediumPriority": "Mittlere Priorität",
@@ -55,10 +55,14 @@
     "MarkedAsDone": "Als erledigt markiert",
     "WorkSchedule": "Arbeitsplan",
     "SummaryDuration": "Zusammenfassung",
-
     "UnassignToDo": "Aufgabe nicht zuweisen",
     "UnassignToDoConfirm": "Möchten Sie diese Aufgabe nicht zuweisen? Die Aufgabe wird aus dem Planer des Zugewiesenen entfernt.",
     "ReassignToDo": "Aufgabenzuweisung ändern",
     "ReassignToDoConfirm": "Möchten Sie die Aufgabenzuweisung ändern? Die Aufgabe wird aus dem Planer des aktuellen Zugewiesenen entfernt."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

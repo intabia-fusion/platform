@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "Arşivlenmiş ve geçersiz hariç tümü",
     "ExportFilterAll": "Tüm belgeler",
     "ExportResultRecordTitle": "{workspace} çalışma alanından belge dışa aktarma ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

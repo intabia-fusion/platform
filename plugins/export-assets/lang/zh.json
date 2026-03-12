@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "除已归档和已过时外的全部",
     "ExportFilterAll": "全部文档",
     "ExportResultRecordTitle": "从工作区 {workspace} 导出文档 ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

@@ -55,10 +55,14 @@
     "MarkedAsDone": "Concluído",
     "WorkSchedule": "Horário de trabalho",
     "SummaryDuration": "Sumário",
-
     "UnassignToDo": "Remover tarefa atribuída",
     "UnassignToDoConfirm": "Você deseja remover a tarefa atribuída? A tarefa será removida do planejamento do responsável.",
     "ReassignToDo": "Alterar responsável pela tarefa",
     "ReassignToDoConfirm": "Você deseja alterar o responsável pela tarefa? A tarefa será removida do planejamento atual do responsável."
+  },
+  "emailTemplate": {
+    "ToDoCreatedNotificationText": "{body}",
+    "ToDoCreatedNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ToDoCreatedNotificationSubject": "{title}"
   }
 }

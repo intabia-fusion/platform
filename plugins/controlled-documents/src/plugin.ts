@@ -294,6 +294,17 @@ export const documentsPlugin = plugin(documentsId, {
     TransferDocumentsHint: '' as IntlString,
     ExportDocuments: '' as IntlString
   },
+  emailTemplate: {
+    ContentNotificationText: '' as IntlString,
+    ContentNotificationHtml: '' as IntlString,
+    ContentNotificationSubject: '' as IntlString,
+    StateNotificationText: '' as IntlString,
+    StateNotificationHtml: '' as IntlString,
+    StateNotificationSubject: '' as IntlString,
+    CoAuthorsNotificationText: '' as IntlString,
+    CoAuthorsNotificationHtml: '' as IntlString,
+    CoAuthorsNotificationSubject: '' as IntlString
+  },
   ids: {
     NoParent: '' as Ref<DocumentMeta>,
     NoProject: '' as Ref<Project>,

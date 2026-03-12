@@ -63,14 +63,14 @@ import { JoinChannelTypeMatch } from './utils'
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-const channelTitlePresenter: Presenter = async (doc: Doc): Promise<string> => {
+const channelTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const channel = doc as ChunterSpace
 
   if (channel._class === chunter.class.DirectMessage) {
     const direct = channel as DirectMessage
     return direct.type === 'person'
-      ? await translate(chunter.string.Direct, {})
-      : await translate(chunter.string.GroupChat, {})
+      ? await translate(chunter.string.Direct, {}, control.branding?.defaultLanguage)
+      : await translate(chunter.string.GroupChat, {}, control.branding?.defaultLanguage)
   }
 
   return `#${channel.name}`

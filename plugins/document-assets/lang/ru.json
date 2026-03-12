@@ -35,30 +35,28 @@
     "NoBacklinks": "Нет упоминаний",
     "NoHistory": "Нет истории изменений",
     "Untitled": "Без имени",
-
     "Description": "Описание",
-
     "CopyDocumentUrl": "Копировать URL-адрес документа в буфер обмена",
     "DocumentUrlCopied": "Скопировано!",
-
     "ViewMode": "Просмотр",
     "EditMode": "Редактирование",
     "SuggestMode": "Комментирование",
-
     "CompareTo": "Сравнить с...",
     "Star": "Добавить в закладки",
     "Unstar": "Удалить из закладок",
-
     "Lock": "Запретить изменения",
     "Unlock": "Разрешить изменения",
     "Locked": "Защищено от изменений",
-
     "ConfigLabel": "Документы",
     "ConfigDescription": "Расширение по работе с текстовыми документами",
-
     "Icon": "Иконка",
     "Color": "Цвет",
     "ForbidCreateTeamspacePermission": "Запретить создание пространства",
     "ForbidCreateTeamspacePermissionDescription": "Запрещает пользователям создавать новые пространства"
+  },
+  "emailTemplate": {
+    "ContentNotificationText": "{body}",
+    "ContentNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ContentNotificationSubject": "{title}"
   }
 }

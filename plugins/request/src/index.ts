@@ -83,6 +83,14 @@ const request = plugin(requestId, {
     NewRequestNotification: '' as IntlString,
     CancelRequestNotification: '' as IntlString
   },
+  emailTemplate: {
+    NewRequestNotificationText: '' as IntlString,
+    NewRequestNotificationHtml: '' as IntlString,
+    NewRequestNotificationSubject: '' as IntlString,
+    CancelRequestNotificationText: '' as IntlString,
+    CancelRequestNotificationHtml: '' as IntlString,
+    CancelRequestNotificationSubject: '' as IntlString
+  },
   icon: {
     Requests: '' as Asset
   }

@@ -99,5 +99,10 @@
     "ViewTraineesResults": "Výsledky školených",
     "ConfigLabel": "Školení",
     "ConfigDescription": "Rozšíření pro správu školení"
+  },
+  "emailTemplate": {
+    "TrainingRequestNotificationText": "{sender} sent you a training request {doc}",
+    "TrainingRequestNotificationHtml": "<p><b>{sender}</b> sent you a training request {doc}</p> <p>{link}</p>",
+    "TrainingRequestNotificationSubject": "Training request {doc}"
   }
 }

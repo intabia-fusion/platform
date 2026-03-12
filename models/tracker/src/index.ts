@@ -152,9 +152,9 @@ function defineNotifications (builder: Builder): void {
       attachedToClass: tracker.class.Issue,
       notificationMessage: tracker.string.IssueAssignedToYou,
       templates: {
-        textTemplate: '{doc} was assigned to you by {sender}',
-        htmlTemplate: '<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>',
-        subjectTemplate: '{doc} was assigned to you'
+        text: tracker.emailTemplate.AssigneeNotificationText,
+        html: tracker.emailTemplate.AssigneeNotificationHtml,
+        subject: tracker.emailTemplate.AssigneeNotificationSubject
       },
       priority: 200,
       defaultEnabled: true,

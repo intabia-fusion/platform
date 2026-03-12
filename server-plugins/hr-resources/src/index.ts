@@ -245,7 +245,7 @@ const RequestTitlePresenter: Presenter = async (doc: Doc, control: PresenterCont
   const request = doc as Request
   const employee = (await control.findAll(control.ctx, contact.mixin.Employee, { _id: request.attachedTo }))[0]
   const who = getName(control.hierarchy, employee, control.branding?.lastNameFirst)
-  const type = await translate(control.modelDb.getObject(request.type).label, {})
+  const type = await translate(control.modelDb.getObject(request.type).label, {}, control.branding?.defaultLanguage)
 
   const date = tzDateEqual(request.tzDate, request.tzDueDate)
     ? `on ${new Date(fromTzDate(request.tzDate)).toLocaleDateString()}`

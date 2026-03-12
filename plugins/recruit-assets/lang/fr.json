@@ -127,5 +127,16 @@
     "ApplicationExists": "La candidature existe déjà",
     "TalentRequired": "Veuillez sélectionner un talent",
     "VacancyRequired": "Veuillez sélectionner un poste vacant"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you",
+    "ApplicationCreateNotificationText": "{body}",
+    "ApplicationCreateNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ApplicationCreateNotificationSubject": "{title}",
+    "ReviewCreateNotificationText": "{body}",
+    "ReviewCreateNotificationHtml": "<p>{body}</p> <p>{link}</p>",
+    "ReviewCreateNotificationSubject": "{title}"
   }
 }

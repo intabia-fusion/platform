@@ -91,9 +91,9 @@ export function createModel (builder: Builder): void {
       objectClass: exportPlugin.class.ExportResultRecord,
       defaultEnabled: true,
       templates: {
-        textTemplate: '{body}',
-        htmlTemplate: '<p>{body}</p><p>{link}</p>',
-        subjectTemplate: '{title}'
+        text: exportPlugin.emailTemplate.ImportedDocumentsNotificationText,
+        html: exportPlugin.emailTemplate.ImportedDocumentsNotificationHtml,
+        subject: exportPlugin.emailTemplate.ImportedDocumentsNotificationSubject
       }
     },
     exportPlugin.ids.ImportedDocumentsNotification

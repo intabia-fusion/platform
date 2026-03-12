@@ -54,5 +54,10 @@
     "ExportFilterSkipArchivedObsolete": "アーカイブ・廃止を除くすべて",
     "ExportFilterAll": "すべてのドキュメント",
     "ExportResultRecordTitle": "ワークスペース {workspace} からのドキュメントのエクスポート ({date})"
+  },
+  "emailTemplate": {
+    "ImportedDocumentsNotificationText": "{body}",
+    "ImportedDocumentsNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "ImportedDocumentsNotificationSubject": "{title}"
   }
 }

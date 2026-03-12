@@ -134,6 +134,11 @@ export default plugin(trainingId, {
     ConfigLabel: '' as IntlString,
     ConfigDescription: '' as IntlString
   },
+  emailTemplate: {
+    TrainingRequestNotificationText: '' as IntlString,
+    TrainingRequestNotificationHtml: '' as IntlString,
+    TrainingRequestNotificationSubject: '' as IntlString
+  },
   icon: {
     Cancel: '' as Asset,
     Duplicate: '' as Asset,

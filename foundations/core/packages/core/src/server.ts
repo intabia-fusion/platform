@@ -128,7 +128,7 @@ export interface Branding {
   key?: string
   front?: string
   title?: string
-  language?: string
+  defaultLanguage?: string
   initWorkspace?: string
   lastNameFirst?: string
   protocol?: string

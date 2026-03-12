@@ -36,5 +36,10 @@
     "FunnelMembers": "Členové",
     "ForbidCreateFunnelPermission": "Zakázat vytvoření trychtýře",
     "ForbidCreateFunnelPermissionDescription": "Zakazuje uživatelům vytvářet nové trychtýře"
+  },
+  "emailTemplate": {
+    "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
+    "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
+    "AssigneeNotificationSubject": "{doc} was assigned to you"
   }
 }

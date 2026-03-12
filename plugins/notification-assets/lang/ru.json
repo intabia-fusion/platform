@@ -80,5 +80,19 @@
     "Mute": "Отключить",
     "AddMeInCollaborators": "Меня добавили в участники",
     "RemoveMeFromCollaborators": "Меня удалили из участников"
+  },
+  "emailTemplate": {
+    "MeAddedInCollaboratorsNotificationText": "{sender} добавил(а) вас как соавтора в {doc}.",
+    "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> добавил(а) вас как соавтора в {doc}.</p><p>{link}</p>",
+    "MeAddedInCollaboratorsNotificationSubject": "Вас добавили как соавтора в {doc}",
+    "MeRemovedFromCollaboratorsNotificationText": "{sender} удалил(а) вас из соавторов {doc}.",
+    "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> удалил(а) вас из соавторов в {doc}.</p><p>{link}</p>",
+    "MeRemovedFromCollaboratorsNotificationSubject": "Вас удалили из соавторов в {doc}",
+    "MentionNotificationText": "{sender} упомянул(а) вас в {doc}: {message}",
+    "MentionNotificationHtml": "<p><b>{sender}</b> упомянул(а) вас в {doc}:</p> <p>{message}</p> <p>{link}</p>",
+    "MentionNotificationSubject": "Вас упомянули в {doc}",
+    "GeneratedNotificationText": "{body}",
+    "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "GeneratedNotificationSubject": "{doc} обновлен(а)"
   }
 }

@@ -23,5 +23,13 @@
     "CancelRequest": "Отмена запроса",
     "NewRequestNotification": "Новый {name}",
     "CancelRequestNotification": "{name} отменен"
+  },
+  "emailTemplate": {
+    "NewRequestNotificationText": "{sender} отправил(а) вам запрос на {doc}",
+    "NewRequestNotificationHtml": "<p><b>{sender}</b> отправил(а) вам запрос на {doc}</p> <p>{link}</p>",
+    "NewRequestNotificationSubject": "{doc}",
+    "CancelRequestNotificationText": "{sender} отменил(а) запрос на {doc}",
+    "CancelRequestNotificationHtml": "<p><b>{sender}</b> отменил(а) запрос на {doc}</p> <p>{link}</p>",
+    "CancelRequestNotificationSubject": "{doc}"
   }
 }
