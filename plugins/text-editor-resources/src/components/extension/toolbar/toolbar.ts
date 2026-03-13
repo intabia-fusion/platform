@@ -382,7 +382,10 @@ export function ToolbarControlPlugin (editor: Editor, options: ToolbarOptions): 
         })
       }
 
-      const tippyNode = tippy(view.dom, getTippyProps())
+      const anchor = document.createElement('div')
+      document.body.appendChild(anchor)
+
+      const tippyNode = tippy(anchor, getTippyProps())
 
       editor.on('transaction', ({ editor, transaction: tr }) => {
         const meta = tr.getMeta(toolbarPluginKey) as ToolbarControlTxMeta
@@ -423,6 +426,7 @@ export function ToolbarControlPlugin (editor: Editor, options: ToolbarOptions): 
       return {
         destroy () {
           tippyNode.destroy()
+          anchor.remove()
           window.removeEventListener('mousemove', mousemove)
           window.removeEventListener('mousedown', mousedown)
           window.removeEventListener('mouseup', mouseup)
