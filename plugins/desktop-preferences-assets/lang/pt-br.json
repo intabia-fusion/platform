@@ -6,6 +6,7 @@
     "ShowBadge": "Mostrar um distintivo no ícone da aplicação",
     "SoundAndAppearance": "Som e aparência",
     "HaveGotANotification": "Recebeu uma notificação",
-    "TotalNotificationsCount": "Tem {count, plural, =1 {# notificação} other {# notificações}} no total"
+    "TotalNotificationsCount": "Tem {count, plural, =1 {# notificação} other {# notificações}} no total",
+    "Desktop": "Desktop"
   }
 }

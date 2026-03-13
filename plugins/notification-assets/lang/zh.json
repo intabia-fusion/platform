@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "我被移出协作者",
     "AllNotifications": "所有通知",
     "JustMentions": "仅提及",
-    "Mute": "静音"
+    "Mute": "静音",
+    "Appearance": "外观",
+    "ShowChatBadge": "显示聊天徽章"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

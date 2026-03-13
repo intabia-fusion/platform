@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "Sono stato rimosso dai collaboratori",
     "AllNotifications": "Tutte le notifiche",
     "JustMentions": "Solo menzioni",
-    "Mute": "Silenzia"
+    "Mute": "Silenzia",
+    "Appearance": "Aspetto",
+    "ShowChatBadge": "Mostra badge chat"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "Katkıcılar arasından çıkarıldım",
     "AllNotifications": "Tüm bildirimler",
     "JustMentions": "Sadece bahsetmeler",
-    "Mute": "Sessize al"
+    "Mute": "Sessize al",
+    "Appearance": "Görünüm",
+    "ShowChatBadge": "Uygulama chat bildirimlerindeki göstergeyi göster"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

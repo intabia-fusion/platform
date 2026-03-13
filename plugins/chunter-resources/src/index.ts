@@ -20,7 +20,7 @@ import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 import view from '@hcengineering/view'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
 import {
   getNotificationsCount,
   InboxNotificationsClientImpl,
@@ -232,7 +232,12 @@ export default async (): Promise<Resources> => ({
     CanSummarizeMessages: canSummarizeMessages,
     OpenThreadInSidebar: openThreadInSidebar,
     LocationDataResolver: locationDataResolver,
-    ShowNotifyMarkerFn: async (contexts: DocNotifyContext[]): Promise<boolean> => {
+    ShowNotifyMarkerFn: async (
+      contexts: DocNotifyContext[],
+      preference?: NotificationAppearancePreference
+    ): Promise<boolean> => {
+      if (preference?.showChatBadge === false) return false
+
       const hasUpdates = contexts.some((context) => (context.lastUpdate ?? 0) > (context.lastView ?? 0))
       if (!hasUpdates) return false
 

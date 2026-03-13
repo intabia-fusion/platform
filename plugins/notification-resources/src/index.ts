@@ -28,6 +28,8 @@ import NotificationCollaboratorsChanged from './components/NotificationCollabora
 import GeneralPreferencesGroup from './components/settings/GeneralPreferencesGroup.svelte'
 import WebpushesPreferencesPresenter from './components/settings/WebpushesPreferencesPresenter.svelte'
 import MutePopup from './components/MutePopup.svelte'
+import NotificationAppearancePreferencesPresenter from './components/settings/NotificationAppearancePreferencesPresenter.svelte'
+
 import {
   unsubscribe,
   resolveLocation,
@@ -48,6 +50,7 @@ import { InboxNotificationsClientImpl } from './inboxNotificationsClient'
 
 export * from './utils'
 export * from './inboxNotificationsClient'
+export * from './stores'
 
 export { default as BrowserNotificatator } from './components/BrowserNotificatator.svelte'
 export { default as NotifyMarker } from './components/NotifyMarker.svelte'
@@ -66,7 +69,8 @@ export default async (): Promise<Resources> => ({
     NotificationCollaboratorsChanged,
     GeneralPreferencesGroup,
     WebpushesPreferencesPresenter,
-    MutePopup
+    MutePopup,
+    NotificationAppearancePreferencesPresenter
   },
   function: {
     // eslint-disable-next-line @typescript-eslint/unbound-method

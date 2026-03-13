@@ -15,7 +15,7 @@
 //
 
 import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@hcengineering/core'
-import { type DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+import { type DocNotifyContext, InboxNotification, NotificationAppearancePreference } from '@hcengineering/notification'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
 import { AnyComponent, type AnySvelteComponent, Location, ResolvedLocation } from '@hcengineering/ui'
@@ -56,7 +56,9 @@ export interface Application extends Doc {
   navHeaderActions?: AnyComponent
   accessLevel?: AccountRole
   navFooterComponent?: AnyComponent
-  showNotifyMarkerFn?: Resource<(contexts: DocNotifyContext[]) => Promise<boolean>>
+  showNotifyMarkerFn?: Resource<
+  (contexts: DocNotifyContext[], preference?: NotificationAppearancePreference) => Promise<boolean>
+  >
 }
 
 /** @public */

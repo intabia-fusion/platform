@@ -44,8 +44,8 @@ export function createModel (builder: Builder): void {
     notification.class.NotificationPreferencesGroup,
     core.space.Model,
     {
-      label: desktopPreferences.string.SoundAndAppearance,
-      icon: desktopPreferences.icon.NotificationMessage,
+      label: desktopPreferences.string.Desktop,
+      icon: desktopPreferences.icon.Desktop,
       presenter: desktopPreferences.component.DesktopPreferencesPresenter
     },
     desktopPreferences.ids.DesktopNotificationPreferencesGroup

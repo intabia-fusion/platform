@@ -78,7 +78,8 @@
     "JustMentions": "Только упоминания",
     "Mute": "Отключить",
     "AddMeInCollaborators": "Меня добавили в участники",
-    "RemoveMeFromCollaborators": "Меня удалили из участников"
+    "RemoveMeFromCollaborators": "Меня удалили из участников",
+    "ShowChatBadge": "Показывать индикатор уведомлений чата"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} добавил(а) вас как соавтора в {doc}.",

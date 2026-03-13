@@ -20,7 +20,8 @@ const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(notification.icon, {
   Notifications: `${icons}#notifications`,
   Inbox: `${icons}#inbox`,
-  BellCrossed: `${icons}#bell-crossed`
+  BellCrossed: `${icons}#bell-crossed`,
+  Appearance: `${icons}#appearance`
 })
 loadMetadata(notification.sound, {
   InboxNotification: require('../assets/inbox-notification.wav')

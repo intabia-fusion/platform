@@ -6,6 +6,7 @@
     "ShowBadge": "アプリのアイコンにバッジを表示",
     "SoundAndAppearance": "サウンドと外観",
     "HaveGotANotification": "通知があります",
-    "TotalNotificationsCount": "合計 {count, plural, =1 {# 件} other {# 件}}"
+    "TotalNotificationsCount": "合計 {count, plural, =1 {# 件} other {# 件}}",
+    "Desktop": "デスクトップ"
   }
 }

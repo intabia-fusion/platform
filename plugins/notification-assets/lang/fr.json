@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "On m'a retiré des collaborateurs",
     "AllNotifications": "Toutes les notifications",
     "JustMentions": "Mentions seulement",
-    "Mute": "Couper le son"
+    "Mute": "Couper le son",
+    "Appearance": "Apparence",
+    "ShowChatBadge": "Afficher l'indicateur de chat"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

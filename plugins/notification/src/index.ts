@@ -373,6 +373,10 @@ export interface ActivityNotificationViewlet extends Doc {
  */
 export type NotifyFunc = (title: string, body: string, _id?: string, onClick?: () => void) => void
 
+export interface NotificationAppearancePreference extends Preference {
+  showChatBadge: boolean
+}
+
 /**
  * @public
  */
@@ -407,11 +411,13 @@ const notification = plugin(notificationId, {
     NotificationProviderSetting: '' as Ref<Class<NotificationProviderSetting>>,
     NotificationProviderDefaults: '' as Ref<Mixin<NotificationProviderDefaults>>,
 
-    ReadState: '' as Ref<Class<ReadState>>
+    ReadState: '' as Ref<Class<ReadState>>,
+    NotificationAppearancePreference: '' as Ref<Class<NotificationAppearancePreference>>
   },
   ids: {
     NotificationSettings: '' as Ref<Doc>,
     NotificationGroup: '' as Ref<NotificationGroup>,
+    NotificationAppearancePreferencesGroup: '' as Ref<NotificationPreferencesGroup>,
     MeAddedInCollaboratorsNotification: '' as Ref<MessageNotificationType>,
     MeRemovedFromCollaboratorsNotification: '' as Ref<MessageNotificationType>,
     MentionNotificationType: '' as Ref<TxNotificationType>
@@ -435,7 +441,8 @@ const notification = plugin(notificationId, {
     NotificationCollaboratorsChanged: '' as AnyComponent,
     GeneralPreferencesGroup: '' as AnyComponent,
     WebpushesPreferencesPresenter: '' as AnyComponent,
-    MutePopup: '' as AnyComponent
+    MutePopup: '' as AnyComponent,
+    NotificationAppearancePreferencesPresenter: '' as AnyComponent
   },
   action: {
     ReadNotifyContext: '' as Ref<Action>,
@@ -444,12 +451,14 @@ const notification = plugin(notificationId, {
   icon: {
     Notifications: '' as Asset,
     Inbox: '' as Asset,
-    BellCrossed: '' as Asset
+    BellCrossed: '' as Asset,
+    Appearance: '' as Asset
   },
   sound: {
     InboxNotification: '' as Asset
   },
   string: {
+    Appearance: '' as IntlString,
     Notification: '' as IntlString,
     Notifications: '' as IntlString,
     DontTrack: '' as IntlString,
@@ -501,7 +510,8 @@ const notification = plugin(notificationId, {
     Mute: '' as IntlString,
     EditNotifications: '' as IntlString,
     AddMeInCollaborators: '' as IntlString,
-    RemoveMeFromCollaborators: '' as IntlString
+    RemoveMeFromCollaborators: '' as IntlString,
+    ShowChatBadge: '' as IntlString
   },
   emailTemplate: {
     MeAddedInCollaboratorsNotificationText: '' as IntlString,

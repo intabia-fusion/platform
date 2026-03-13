@@ -6,6 +6,7 @@
     "ShowBadge": "Badge auf App-Symbol anzeigen",
     "SoundAndAppearance": "Ton und Erscheinungsbild",
     "HaveGotANotification": "Sie haben eine Benachrichtigung erhalten",
-    "TotalNotificationsCount": "Sie haben {count, plural, =1 {# Benachrichtigung} other {# Benachrichtigungen}} insgesamt"
+    "TotalNotificationsCount": "Sie haben {count, plural, =1 {# Benachrichtigung} other {# Benachrichtigungen}} insgesamt",
+    "Desktop": "Desktop"
   }
 }

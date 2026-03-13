@@ -78,7 +78,9 @@
     "RemoveMeFromCollaborators": "Odebrali mě ze spolupracovníků",
     "AllNotifications": "Všechna oznámení",
     "JustMentions": "Pouze zmínky",
-    "Mute": "Ztlumit"
+    "Mute": "Ztlumit",
+    "Appearance": "Vzhled",
+    "ShowChatBadge": "Zobrazovat značku chatu"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
