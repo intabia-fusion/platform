@@ -589,7 +589,13 @@ class InlineCommentView {
         })
       )
 
-      this.tippynode = tippy(view.dom, {
+      const anchor = document.createElement('div')
+      document.body.appendChild(anchor)
+      this.destructors.push(() => {
+        anchor.remove()
+      })
+
+      this.tippynode = tippy(anchor, {
         duration: 100,
         getReferenceClientRect,
         animation: 'shift-toward',
