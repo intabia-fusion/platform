@@ -57,12 +57,20 @@
   const signUpDisabled = getMetadata(login.metadata.DisableSignUp) ?? false
   const localLoginHidden = getMetadata(login.metadata.HideLocalLogin) ?? false
   const useOTP = getMetadata(presentation.metadata.UseOTP) === true
+  const landingUrl = getMetadata(login.metadata.LandingUrl)
   let navigateUrl: string | undefined
 
   onDestroy(location.subscribe(updatePageLoc))
 
   function updatePageLoc (loc: Location): void {
     const token = getMetadata(presentation.metadata.Token)
+    if (token == null && (loc.path[1] == null || loc.path[1] === '')) {
+      const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
+      if (lastAccount === null && landingUrl !== undefined && landingUrl !== '') {
+        window.location.href = landingUrl
+        return
+      }
+    }
     page = (loc.path[1] as Pages) ?? (token != null ? 'selectWorkspace' : 'login')
     if (page === 'join' && loc.query?.autoJoin !== undefined) {
       page = 'autoJoin'

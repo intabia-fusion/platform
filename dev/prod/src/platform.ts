@@ -192,6 +192,7 @@ export interface Config {
   PREVIEW_URL?: string
   STATS_URL?: string
   PRESENCE_URL?: string
+  LANDING_URL?: string
   USE_BINARY_PROTOCOL?: boolean
   TRANSACTOR_OVERRIDE?: string
   BACKUP_URL?: string
@@ -552,6 +553,7 @@ export async function configurePlatform() {
   setMetadata(sign.metadata.SignURL, config.SIGN_URL)
   setMetadata(presence.metadata.PresenceUrl, config.PRESENCE_URL ?? '')
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
+  setMetadata(login.metadata.LandingUrl, config.LANDING_URL ?? '')
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
