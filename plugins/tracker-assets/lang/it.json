@@ -271,7 +271,8 @@
     "Extensions": "Estensioni",
     "UnsetParentIssue": "Annulla l'issue genitore",
     "ForbidCreateProjectPermission": "Vieta creazione progetto",
-    "ForbidCreateProjectPermissionDescription": "Vieta agli utenti di creare nuovi progetti"
+    "ForbidCreateProjectPermissionDescription": "Vieta agli utenti di creare nuovi progetti",
+    "AdditionalProperties": "Proprietà aggiuntive"
   },
   "status": {},
   "emailTemplate": {

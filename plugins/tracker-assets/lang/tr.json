@@ -269,7 +269,10 @@
     "DefaultIssueStatus": "Varsayılan sorun durumu",
     "IssueStatus": "Durum",
     "Extensions": "Uzantılar",
-    "UnsetParentIssue": "Üst sorunu kaldır"
+    "UnsetParentIssue": "Üst sorunu kaldır",
+    "ForbidCreateProjectPermission": "Proje oluşturmayı yasakla",
+    "ForbidCreateProjectPermissionDescription": "Kullanıcıların yeni proje oluşturmasını yasakla",
+    "AdditionalProperties": "Ek özellikler"
   },
   "status": {},
   "emailTemplate": {

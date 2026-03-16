@@ -271,7 +271,8 @@
     "Extensions": "Дополнительно",
     "UnsetParentIssue": "Снять родительскую задачу",
     "ForbidCreateProjectPermission": "Запретить создание проекта",
-    "ForbidCreateProjectPermissionDescription": "Запрещает пользователям создавать новые проекты"
+    "ForbidCreateProjectPermissionDescription": "Запрещает пользователям создавать новые проекты",
+    "AdditionalProperties": "Дополнительные свойства"
   },
   "status": {},
   "emailTemplate": {
