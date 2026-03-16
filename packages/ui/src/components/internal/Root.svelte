@@ -97,6 +97,15 @@
           application = getMetadata(uiPlugin.metadata.DefaultApplication)
           if (application !== undefined) {
             const loc = getCurrentLocation()
+
+            const isRoot = loc.path.length === 0
+            const landingUrl = getMetadata(uiPlugin.metadata.LandingUrl)
+            const lastAccount = localStorage.getItem('login:metadata:LastAccount')
+            if (isRoot && lastAccount == null && landingUrl !== undefined && landingUrl !== '') {
+              window.location.href = landingUrl
+              return
+            }
+
             loc.path = [application]
             navigate(loc)
           }
