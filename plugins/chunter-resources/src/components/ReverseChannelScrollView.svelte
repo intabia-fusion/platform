@@ -588,7 +588,9 @@
   $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0 && !isThread
 
   export function editLastMessage (): void {
-    if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) { return }
+    if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) {
+      return
+    }
     if (!isScrollAtBottom) return
     const me = getCurrentAccount()
     let lastMessage: ChatMessage | undefined = undefined
