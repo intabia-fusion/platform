@@ -70,7 +70,8 @@
   let title = ''
   let innerWidth: number
   let descriptionBox: AttachmentStyleBoxCollabEditor
-  let showAllMixins: boolean
+  let showAllMixins: boolean = getShowAllMixins()
+  $: saveShowAllMixins(showAllMixins)
 
   const inboxClient = InboxNotificationsClientImpl.getClient()
 
@@ -183,6 +184,15 @@
     await client.update(issue, { attachedTo: tracker.ids.NoParent })
     Analytics.handleEvent(TrackerEvents.IssueParentUnset, { issue: issue.identifier ?? issue._id })
   }
+
+  function getShowAllMixins (): boolean {
+    const showAllMixins = localStorage.getItem('issue.showAllMixins')
+    return showAllMixins === null ? true : showAllMixins === 'true'
+  }
+
+  function saveShowAllMixins (showAllMixins: boolean): void {
+    localStorage.setItem('issue.showAllMixins', showAllMixins.toString())
+  }
 </script>
 
 {#if !embedded}
@@ -285,6 +295,7 @@
         iconProps={{ size: 'medium' }}
         kind={'icon'}
         selected={showAllMixins}
+        showTooltip={{ label: tracker.string.AdditionalProperties }}
         dataId={'btnMixin'}
         on:click={() => {
           showAllMixins = !showAllMixins

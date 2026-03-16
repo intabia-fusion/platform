@@ -619,7 +619,8 @@ const pluginState = plugin(trackerId, {
     NewProject: '' as IntlString,
     UnsetParentIssue: '' as IntlString,
     ForbidCreateProjectPermission: '' as IntlString,
-    ForbidCreateProjectPermissionDescription: '' as IntlString
+    ForbidCreateProjectPermissionDescription: '' as IntlString,
+    AdditionalProperties: '' as IntlString
   },
   emailTemplate: {
     AssigneeNotificationText: '' as IntlString,

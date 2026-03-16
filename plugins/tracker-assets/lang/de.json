@@ -271,7 +271,8 @@
     "Extensions": "Erweiterungen",
     "UnsetParentIssue": "Übergeordnete Aufgabe entfernen",
     "ForbidCreateProjectPermission": "Projekterstellung verbieten",
-    "ForbidCreateProjectPermissionDescription": "Verbietet Benutzern das Erstellen neuer Projekte"
+    "ForbidCreateProjectPermissionDescription": "Verbietet Benutzern das Erstellen neuer Projekte",
+    "AdditionalProperties": "Zusätzliche Eigenschaften"
   },
   "status": {},
   "emailTemplate": {
