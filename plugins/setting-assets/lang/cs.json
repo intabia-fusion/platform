@@ -213,7 +213,8 @@
     "ImportDocumentDescription": "Umožňuje uživatelům importovat dokumenty do pracovního prostoru",
     "SelectUsers": "Vybrat uživatele",
     "ShowInTitle": "Zobrazit v názvu",
-    "SpaceMembersOnly": "Pouze členové prostoru"
+    "SpaceMembersOnly": "Pouze členové prostoru",
+    "Reset": "Resetovat"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

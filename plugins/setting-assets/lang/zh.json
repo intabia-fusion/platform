@@ -215,7 +215,8 @@
     "ImportDocumentDescription": "授予用户将文档导入工作区的权限",
     "SelectUsers": "选择用户",
     "ShowInTitle": "在标题中显示",
-    "SpaceMembersOnly": "仅限空间成员"
+    "SpaceMembersOnly": "仅限空间成员",
+    "Reset": "重置"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

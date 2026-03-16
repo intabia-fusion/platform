@@ -215,7 +215,8 @@
     "ImportDocumentDescription": "Accorde aux utilisateurs la possibilité d'importer des documents dans l'espace de travail",
     "SelectUsers": "Sélectionner des utilisateurs",
     "ShowInTitle": "Afficher dans le titre",
-    "SpaceMembersOnly": "Membres de l'espace uniquement"
+    "SpaceMembersOnly": "Membres de l'espace uniquement",
+    "Reset": "Réinitialiser"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
