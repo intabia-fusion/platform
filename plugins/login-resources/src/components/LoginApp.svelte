@@ -64,9 +64,9 @@
 
   function updatePageLoc (loc: Location): void {
     const token = getMetadata(presentation.metadata.Token)
-    if (token == null && (loc.path[1] == null || loc.path[1] === '')) {
+    if (token == null && loc.path[0] === 'login:component:LoginApp' && loc.path[1] == null) {
       const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
-      if (lastAccount === null && landingUrl !== undefined && landingUrl !== '') {
+      if (lastAccount == null && landingUrl !== undefined && landingUrl !== '') {
         window.location.href = landingUrl
         return
       }
