@@ -787,10 +787,11 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
 
 export function parseUserAgent (userAgent: string): string {
   const browsers = [
-    { name: 'Chrome', pattern: /Chrome\/[\d.]+/ },
-    { name: 'Firefox', pattern: /Firefox\/[\d.]+/ },
-    { name: 'Safari', pattern: /Safari\/[\d.]+/ },
-    { name: 'Edge', pattern: /Edg\/[\d.]+/ }
+    { name: 'Edge', pattern: /Edg\/[\d.]+/ },
+    { name: 'Opera', pattern: /OPR\/[\d.]+/ },
+    { name: 'Chrome', pattern: /CriOS\/[\d.]+|Chrome\/[\d.]+/ },
+    { name: 'Firefox', pattern: /FxiOS\/[\d.]+|Firefox\/[\d.]+/ },
+    { name: 'Safari', pattern: /Safari\/[\d.]+/ }
   ]
 
   const os = [
