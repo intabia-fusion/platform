@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
-  import core, { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import contact from '@hcengineering/contact'
+  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import {
     AccordionItem,
     ButtonIcon,
@@ -91,9 +91,13 @@
     pressed = true
     const value: SelectPopupValueType[] = [
       { id: 'rename', icon: IconEdit, label: plugin.string.RenameAFloor },
-      { id: 'debug', icon: IconSettings, label: 'Debug Offices' as IntlString },
-      { id: 'clearAiBot', icon: IconDelete, label: 'Clear AI Bot Offices' as IntlString },
-      { id: 'searchAccounts', icon: IconSearch, label: 'Search Accounts' as IntlString }
+      ...(getMetadata(platform.metadata.DevModel) === true
+        ? [
+            { id: 'debug', icon: IconSettings, label: 'Debug Offices' as IntlString },
+            { id: 'clearAiBot', icon: IconDelete, label: 'Clear AI Bot Offices' as IntlString },
+            { id: 'searchAccounts', icon: IconSearch, label: 'Search Accounts' as IntlString }
+          ]
+        : [])
     ]
     showPopup(SelectPopup, { value }, eventToHTMLElement(e), (result) => {
       if (result === 'configure') {
