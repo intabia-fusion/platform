@@ -142,6 +142,10 @@ test.describe('Workspace tests', () => {
         password: '1234'
       }
 
+      // Join page shows initial screen first, click "Create new account"
+      const joinPage2 = new SignInJoinPage(page2)
+      await joinPage2.goToSignup()
+
       const signUpPage2 = new SignUpPage(page2)
       await signUpPage2.signUp(newUser2)
 
@@ -241,6 +245,11 @@ test.describe('Workspace tests', () => {
     const page2 = await browser.newPage()
     try {
       await page2.goto(linkText ?? '')
+
+      // Join page shows initial screen first, click "Create new account"
+      const joinPage2 = new SignInJoinPage(page2)
+      await joinPage2.goToSignup()
+
       const signUpPage2 = new SignUpPage(page2)
       await signUpPage2.signUp(newUser2)
       const leftSideMenuPage2 = new LeftSideMenuPage(page2)
