@@ -18,7 +18,8 @@
     ActivityMessagePresenter,
     canGroupMessages,
     messageInFocus,
-    editingMessageStore
+    editingMessageStore,
+    clearMessageInLocation
   } from '@hcengineering/activity-resources'
   import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
   import { DocNotifyContext, ReadState } from '@hcengineering/notification'
@@ -134,8 +135,6 @@
   })
   $: readState = $readStateByDocStore.get(doc._id) ?? undefined
 
-  $: isLoading = $isLoadingStore || !isReadStateLoaded
-
   const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
     if (notifyContext !== undefined && !isFreeze()) {
       recheckNotifications(notifyContext)
@@ -143,12 +142,12 @@
     }
   })
 
-  $: void initializeScroll(isLoading, separatorDiv, separatorIndex)
   $: adjustScrollPosition(selectedMessageId)
+  $: void initializeScroll($isLoadingStore || !isReadStateLoaded, separatorDiv, separatorIndex)
   $: void handleMessagesUpdated(messages.length)
 
   function adjustScrollPosition (selectedMessageId?: Ref<ActivityMessage>): void {
-    if (isLoading || !isScrollInitialized) {
+    if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized) {
       return
     }
     const msgData = $metadataStore.find(({ _id }) => _id === selectedMessageId)
@@ -159,9 +158,6 @@
       } else {
         scrollToMessage()
       }
-    } else if (selectedMessageId === undefined) {
-      provider.jumpToEnd()
-      reinitializeScroll()
     }
   }
 
@@ -328,7 +324,7 @@
 
   function reinitializeScroll (): void {
     isScrollInitialized = false
-    void initializeScroll(isLoading, separatorDiv, separatorIndex)
+    void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
   }
 
   function handleJumpToDate (e: CustomEvent<{ date?: Timestamp }>): void {
@@ -404,6 +400,7 @@
   async function handleScrollToLatestMessage (): Promise<void> {
     selectedMessageId = undefined
     messageInFocus.set(undefined)
+    clearMessageInLocation()
 
     const metadata = $metadataStore
     const lastMetadata = metadata[metadata.length - 1]
@@ -588,10 +585,12 @@
     removeTxListener(newMessageTxListener)
   })
 
-  $: showBlankView = !isLoading && messages.length === 0 && !isThread
+  $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0 && !isThread
 
   export function editLastMessage (): void {
-    if (isLoading || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) return
+    if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) {
+      return
+    }
     if (!isScrollAtBottom) return
     const me = getCurrentAccount()
     let lastMessage: ChatMessage | undefined = undefined
@@ -639,7 +638,7 @@
     bind:scrollDiv
     bind:contentDiv
     bottomStart={!showBlankView}
-    loadingOverlay={isLoading || !isScrollInitialized}
+    loadingOverlay={$isLoadingStore || !isReadStateLoaded || !isScrollInitialized}
     onScroll={handleScroll}
     onResize={handleResize}
     key={getKey(messages)}
