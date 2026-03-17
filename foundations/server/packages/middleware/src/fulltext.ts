@@ -36,6 +36,8 @@ import core, {
 } from '@hcengineering/core'
 import type { IndexedDoc, Middleware, MiddlewareCreator, PipelineContext } from '@hcengineering/server-core'
 import { BaseMiddleware } from '@hcengineering/server-core'
+import contact from  '@hcengineering/contact'
+
 /**
  * @public
  */
@@ -130,9 +132,15 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
 
     const attrs = this.context.hierarchy.getAllAttributes(_class)
 
+    let _search = query.$search.endsWith('*') ? query.$search : query.$search + '*'
+
+    if (this.context.hierarchy.isDerived(baseClass, contact.class.Person)) {
+      _search = _search.startsWith('*') ? _search : '*' + _search
+    }
+
     // We need to filter all non indexed fields from query to make it work properly
     const findQuery: DocumentQuery<Doc> = {
-      $search: query.$search.endsWith('*') ? query.$search : query.$search + '*'
+      $search: _search
     }
 
     const childClasses = new Set<Ref<Class<Doc>>>()
@@ -218,11 +226,11 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     let result =
       resultIds.length > 0
         ? await this.provideFindAll(
-          ctx,
-          _class,
-          { _id: { $in: Array.from(new Set(resultIds)) }, ...mainQuery },
-          options
-        )
+            ctx,
+            _class,
+            { _id: { $in: Array.from(new Set(resultIds)) }, ...mainQuery },
+            options
+          )
         : toFindResult([])
 
     // Just assign scores based on idex

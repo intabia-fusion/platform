@@ -16,7 +16,7 @@ import core, {
   Ref,
   type Domain,
   type SessionData,
-  AccountUuid
+  AccountUuid, type Class, type DocumentQuery, type FindOptions, type FindResult
 } from '@hcengineering/core'
 import notification, { InboxNotification } from '@hcengineering/notification'
 import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'
@@ -124,6 +124,22 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
 
     return await this.provideTx(ctx, txes)
+  }
+
+  async findAll<T extends Doc>(
+    ctx: MeasureContext,
+    _class: Ref<Class<T>>,
+    query: DocumentQuery<T>,
+    options?: FindOptions<T>
+  ): Promise<FindResult<T>> {
+    const { hierarchy } = this.context
+    if (hierarchy.isDerived(_class, chunter.class.DirectMessage)) {
+      if (query?.$search != null && query.$search !== '' && !query.$search.startsWith('*')) {
+        query.$search = query.$search.startsWith('*') ? query.$search : '*' + query.$search
+      }
+    }
+
+    return await this.provideFindAll(ctx, _class, query, options)
   }
 
   private getUnhideChatsTx (factory: TxFactory, attachedTo: Ref<Doc>, chats: ChatData[]): Tx[] {

@@ -272,20 +272,40 @@ class ElasticAdapter implements FullTextAdapter {
               bool: {
                 must: [
                   {
-                    simple_query_string: {
-                      query: query.query,
-                      analyze_wildcard: true,
-                      flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                      default_operator: 'and',
-                      fields: [
-                        'searchTitle^50', // boost
-                        'searchShortTitle^50',
-                        '*', // Search in all other fields without a boost
-                        'searchTitle.translit^10',
-                        'searchTitle.keyboard_latin_to_cyrillic^10',
-                        'searchTitle.keyboard_cyrillic_to_latin^10'
-                      ]
-                    }
+                    ...(query.query.startsWith('*')
+                      ? {
+                          query_string: {
+                            query: query.query,
+                            analyze_wildcard: true,
+                            allow_leading_wildcard: true,
+                            lenient: true,
+                            default_operator: 'and',
+                            fields: [
+                              'searchTitle^50', // boost
+                              'searchShortTitle^50',
+                              '*', // Search in all other fields without a boost
+                              'searchTitle.translit^10',
+                              'searchTitle.keyboard_latin_to_cyrillic^10',
+                              'searchTitle.keyboard_cyrillic_to_latin^10'
+                            ]
+                          }
+                        }
+                      : {
+                          simple_query_string: {
+                            query: query.query,
+                            analyze_wildcard: true,
+                            flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                            default_operator: 'and',
+                            fields: [
+                              'searchTitle^50', // boost
+                              'searchShortTitle^50',
+                              '*', // Search in all other fields without a boost
+                              'searchTitle.translit^10',
+                              'searchTitle.keyboard_latin_to_cyrillic^10',
+                              'searchTitle.keyboard_cyrillic_to_latin^10'
+                            ]
+                          }
+                        })
                   },
                   {
                     term: {
@@ -377,18 +397,36 @@ class ElasticAdapter implements FullTextAdapter {
       bool: {
         must: [
           {
-            simple_query_string: {
-              query: query.$search,
-              analyze_wildcard: true,
-              flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-              default_operator: 'and',
-              fields: [
-                '*',
-                'searchTitle.translit',
-                'searchTitle.keyboard_latin_to_cyrillic',
-                'searchTitle.keyboard_cyrillic_to_latin'
-              ]
-            }
+            ...(query.$search.startsWith('*')
+              ? {
+                  query_string: {
+                    query: query.$search,
+                    analyze_wildcard: true,
+                    allow_leading_wildcard: true,
+                    lenient: true,
+                    default_operator: 'and',
+                    fields: [
+                      '*',
+                      'searchTitle.translit',
+                      'searchTitle.keyboard_latin_to_cyrillic',
+                      'searchTitle.keyboard_cyrillic_to_latin'
+                    ]
+                  }
+                }
+              : {
+                  simple_query_string: {
+                    query: query.$search,
+                    analyze_wildcard: true,
+                    flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                    default_operator: 'and',
+                    fields: [
+                      '*',
+                      'searchTitle.translit',
+                      'searchTitle.keyboard_latin_to_cyrillic',
+                      'searchTitle.keyboard_cyrillic_to_latin'
+                    ]
+                  }
+                })
           },
           {
             term: {
