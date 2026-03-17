@@ -80,6 +80,7 @@ import billingPlugin, { billingId } from '@hcengineering/billing'
 import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
+import { fetchMetadataLocalStorage } from '@hcengineering/ui'
 
 async function loadAssets(): Promise<void> {
 
@@ -553,7 +554,18 @@ export async function configurePlatform() {
   setMetadata(sign.metadata.SignURL, config.SIGN_URL)
   setMetadata(presence.metadata.PresenceUrl, config.PRESENCE_URL ?? '')
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
-  setMetadata(uiPlugin.metadata.LandingUrl, config.LANDING_URL ?? '')
+  setMetadata(uiPlugin.metadata.OnRootNavigate, (path: string[]) => {
+    const isRoot = path.length === 0
+    if (!isRoot) {
+      return undefined
+    }
+    const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
+    const landingUrl = config.LANDING_URL
+    if (isRoot && lastAccount == null && landingUrl !== undefined && landingUrl !== '') {
+      return landingUrl
+    }
+    return undefined
+  })
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')

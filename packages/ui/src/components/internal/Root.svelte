@@ -98,11 +98,10 @@
           if (application !== undefined) {
             const loc = getCurrentLocation()
 
-            const isRoot = loc.path.length === 0
-            const landingUrl = getMetadata(uiPlugin.metadata.LandingUrl)
-            const lastAccount = localStorage.getItem('login:metadata:LastAccount')
-            if (isRoot && lastAccount == null && landingUrl !== undefined && landingUrl !== '') {
-              window.location.href = landingUrl
+            const onRootNavigate = getMetadata(uiPlugin.metadata.OnRootNavigate)
+            const redirectUrl = onRootNavigate?.(loc.path)
+            if (redirectUrl !== undefined) {
+              window.location.href = redirectUrl
               return
             }
 
