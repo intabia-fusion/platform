@@ -97,6 +97,14 @@
           application = getMetadata(uiPlugin.metadata.DefaultApplication)
           if (application !== undefined) {
             const loc = getCurrentLocation()
+
+            const onRootNavigate = getMetadata(uiPlugin.metadata.OnRootNavigate)
+            const redirectUrl = onRootNavigate?.(loc.path)
+            if (redirectUrl !== undefined) {
+              window.location.href = redirectUrl
+              return
+            }
+
             loc.path = [application]
             navigate(loc)
           }
