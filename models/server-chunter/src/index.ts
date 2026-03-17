@@ -22,6 +22,7 @@ import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core
 import serverChunter from '@hcengineering/server-chunter'
 import notification, { type NotificationType } from '@hcengineering/notification'
 import serverActivity from '@hcengineering/server-activity'
+import contact from '@hcengineering/contact'
 
 export { serverChunterId } from '@hcengineering/server-chunter'
 
@@ -69,6 +70,16 @@ export function createModel (builder: Builder): void {
     trigger: serverChunter.trigger.OnUserStatus,
     txMatch: {
       objectClass: core.class.UserStatus
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnPersonNameChanged,
+    txMatch: {
+      objectClass: contact.class.Person,
+      _class: core.class.TxUpdateDoc,
+      'operations.name': { $exists: true }
     },
     isAsync: true
   })

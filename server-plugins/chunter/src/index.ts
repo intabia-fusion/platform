@@ -27,7 +27,8 @@ export default plugin(serverChunterId, {
     ChunterTrigger: '' as Resource<TriggerFunc>,
     OnUserStatus: '' as Resource<TriggerFunc>,
     OnCollaboratorAdded: '' as Resource<TriggerFunc>,
-    OnCollaboratorRemoved: '' as Resource<TriggerFunc>
+    OnCollaboratorRemoved: '' as Resource<TriggerFunc>,
+    OnPersonNameChanged: '' as Resource<TriggerFunc>
   },
   function: {
     CommentRemove: '' as Resource<ObjectDDParticipantFunc>,

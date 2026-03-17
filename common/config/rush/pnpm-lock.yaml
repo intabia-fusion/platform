@@ -10058,6 +10058,9 @@ importers:
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
+      '@hcengineering/contact':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -35519,6 +35522,9 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
+      '@hcengineering/chunter':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/chunter
       '@hcengineering/communication-rest-client':
         specifier: workspace:^0.7.12
         version: link:../../foundations/communication/packages/rest-client

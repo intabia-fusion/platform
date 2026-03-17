@@ -22,7 +22,7 @@ import chunter, {
   DirectMessage,
   ThreadMessage
 } from '@hcengineering/chunter'
-import contact from '@hcengineering/contact'
+import contact, { formatName, type Person } from '@hcengineering/contact'
 import core, {
   Class,
   concatLink,
@@ -43,7 +43,8 @@ import core, {
   Collaborator,
   TxRemoveDoc,
   SortingOrder,
-  getClassCollaborators
+  getClassCollaborators,
+  AccountUuid
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { getMetadata, translate } from '@hcengineering/platform'
@@ -479,13 +480,41 @@ async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control
   return res
 }
 
+async function OnPersonNameChanged (txes: TxUpdateDoc<Person>[], control: TriggerControl): Promise<Tx[]> {
+  const res: Tx[] = []
+  for (const tx of txes) {
+    if (tx.objectClass !== contact.class.Person) continue
+    if (tx._class !== core.class.TxUpdateDoc) continue
+
+    const { name } = tx.operations
+    if (name == null) continue
+    const person = (await control.findAll(control.ctx, contact.class.Person, { _id: tx.objectId }))[0]
+    if (person?.personUuid == null) continue
+    const directs = await control.findAll(control.ctx, chunter.class.DirectMessage, { members: person.personUuid as AccountUuid })
+    for (const direct of directs) {
+      const persons = await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: direct.members } })
+      const directName = persons.map(p => formatName(p.name, control.branding?.lastNameFirst)).join(', ')
+      res.push(
+        control.txFactory.createTxUpdateDoc(
+          direct._class,
+          direct.space,
+          direct._id,
+          { name: directName }
+        )
+      )
+    }
+  }
+  return res
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     ChunterTrigger,
     OnUserStatus,
     OnCollaboratorAdded,
-    OnCollaboratorRemoved
+    OnCollaboratorRemoved,
+    OnPersonNameChanged
   },
   function: {
     CommentRemove,

@@ -393,7 +393,8 @@ export interface FullTextAdapter {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] }
+    options: SearchOptions & { scoring?: SearchScoring[] },
+    viewerId?: string
   ) => Promise<SearchStringResult>
 
   search: (
@@ -402,7 +403,8 @@ export interface FullTextAdapter {
     _classes: Ref<Class<Doc>>[],
     search: DocumentQuery<Doc>,
     size: number | undefined,
-    from?: number
+    from?: number,
+    viewerId?: string
   ) => Promise<IndexedDoc[]>
 
   close: () => Promise<void>

@@ -15,7 +15,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import attachmentPlugin, { type Attachment } from '@hcengineering/attachment'
-import contactPlugin from '@hcengineering/contact'
+import contactPlugin, { formatName } from '@hcengineering/contact'
 import core, {
   type AnyAttribute,
   type AttachedDoc,
@@ -96,6 +96,8 @@ import {
 } from '@hcengineering/communication-shared'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import chunter, { type DirectMessage } from '@hcengineering/chunter'
+import { type Person } from '@hcengineering/contact'
 
 export * from './types'
 export * from './utils'
@@ -546,6 +548,51 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
               indexedDoc.id = doc._id
               indexedDoc.space = doc.space
+
+              if (this.hierarchy.isDerived(doc._class, chunter.class.DirectMessage)) {
+                const direct = doc as DirectMessage
+
+                const members = direct.members ?? []
+                let persons: Person[] = []
+                try {
+                  persons = await this.storage.findAll(
+                    ctx,
+                    contactPlugin.class.Person,
+                    { personUuid: { $in: members } },
+                    { skipSpace: true, skipClass: true }
+                  )
+                } catch (e: any) {
+                  ctx.error('failed to find persons', { members, err: e })
+                }
+
+                if (members.length === 1) {
+                  const title = persons
+                    .map((p) => formatName(p.name))
+                    .filter((name) => name !== '')
+                    .join(' ')
+
+                  const memberDoc = { ...indexedDoc, viewerId: members[0], searchTitle: title, fulltextSummary: title }
+
+                  if (this.listener?.onIndexing !== undefined) {
+                    await this.listener.onIndexing(memberDoc)
+                  }
+                  await pushQueue.push(memberDoc)
+                  return
+                }
+
+                for (const member of members) {
+                  const otherPersons = persons.filter(p => p.personUuid !== member)
+                  const title = otherPersons.map(p => formatName(p.name)).filter((name) => name !== '').join(' ')
+
+                  const memberDoc = { ...indexedDoc, viewerId: member, searchTitle: title, fulltextSummary: title }
+
+                  if (this.listener?.onIndexing !== undefined) {
+                    await this.listener.onIndexing(memberDoc)
+                  }
+                  await pushQueue.push(memberDoc)
+                }
+                return
+              }
 
               if (this.listener?.onIndexing !== undefined) {
                 await this.listener.onIndexing(indexedDoc)

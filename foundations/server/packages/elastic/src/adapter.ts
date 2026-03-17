@@ -123,6 +123,10 @@ const mappings = {
       type: 'date',
       format: 'epoch_millis',
       index: true
+    },
+    viewerId: {
+      type: 'keyword',
+      index: true
     }
   }
 }
@@ -203,6 +207,11 @@ class ElasticAdapter implements FullTextAdapter {
                     transliteration_filter: {
                       type: 'icu_transform',
                       id: 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC'
+                    },
+                    remove_apostrophe: {
+                      type: 'pattern_replace',
+                      pattern: '[ʹ\\\'ʼ]',
+                      replacement: ''
                     }
                   },
                   analyzer: {
@@ -221,7 +230,7 @@ class ElasticAdapter implements FullTextAdapter {
                     translit_analyzer: {
                       type: 'custom',
                       tokenizer: 'standard',
-                      filter: ['lowercase', 'icu_folding', 'transliteration_filter']
+                      filter: ['lowercase', 'icu_folding', 'transliteration_filter', 'remove_apostrophe']
                     },
                     rebuilt_english: {
                       type: 'custom',
@@ -262,7 +271,8 @@ class ElasticAdapter implements FullTextAdapter {
     ctx: MeasureContext,
     workspaceId: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] }
+    options: SearchOptions & { scoring?: SearchScoring[] },
+    viewerId?: string
   ): Promise<SearchStringResult> {
     try {
       const elasticQuery: any = {
@@ -338,6 +348,17 @@ class ElasticAdapter implements FullTextAdapter {
         })
       }
 
+      if (viewerId !== undefined) {
+        filter.push({
+          bool: {
+            should: [
+              { bool: { must_not: { exists: { field: 'viewerId' } } } },
+              { term: { viewerId } }
+            ]
+          }
+        })
+      }
+
       if (filter.length > 0) {
         elasticQuery.query.function_score.query.bool.filter = filter
       }
@@ -390,7 +411,8 @@ class ElasticAdapter implements FullTextAdapter {
     _classes: Ref<Class<Doc>>[],
     query: DocumentQuery<Doc>,
     size: number | undefined,
-    from: number | undefined
+    from: number | undefined,
+    viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
     const request: any = {
@@ -446,6 +468,17 @@ class ElasticAdapter implements FullTextAdapter {
           }
         ]
       }
+    }
+
+    if (viewerId !== undefined) {
+      request.bool.filter.push({
+        bool: {
+          should: [
+            { bool: { must_not: { exists: { field: 'viewerId' } } } },
+            { term: { viewerId } }
+          ]
+        }
+      })
     }
 
     for (const [q, v] of Object.entries(query)) {
@@ -519,7 +552,8 @@ class ElasticAdapter implements FullTextAdapter {
       workspaceId,
       ...doc
     }
-    const fulltextId = this.getFulltextDocId(workspaceId, doc.id)
+    const internalId = doc.viewerId != null ? `${doc.id}_${doc.viewerId}` as Ref<Doc> : doc.id
+    const fulltextId = this.getFulltextDocId(workspaceId, internalId)
     if (doc.data === undefined) {
       await this.client.index({
         index: this.indexName,
@@ -563,8 +597,10 @@ class ElasticAdapter implements FullTextAdapter {
 
       const operations = part.flatMap((doc) => {
         const wsDoc = { workspaceId, ...doc }
+        const internalId = doc.viewerId != null ? `${doc.id}_${doc.viewerId}` as Ref<Doc> : doc.id
+        const fulltextId = this.getFulltextDocId(workspaceId, internalId)
         return [
-          { index: { _index: this.indexName, _id: this.getFulltextDocId(workspaceId, doc.id) } },
+          { index: { _index: this.indexName, _id: fulltextId } },
           { ...wsDoc, type: '_doc' }
         ]
       })
@@ -659,7 +695,7 @@ class ElasticAdapter implements FullTextAdapter {
                   must: [
                     {
                       terms: {
-                        _id: part.map((it) => this.getFulltextDocId(workspaceId, it)),
+                        id: part,
                         boost: 1.0
                       }
                     },
@@ -775,7 +811,7 @@ class ElasticAdapter implements FullTextAdapter {
             must: [
               {
                 terms: {
-                  _id: docs.map((it) => this.getFulltextDocId(workspaceId, it)),
+                  id: docs,
                   boost: 1.0
                 }
               },
