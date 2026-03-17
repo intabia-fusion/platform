@@ -581,8 +581,11 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                 }
 
                 for (const member of members) {
-                  const otherPersons = persons.filter(p => p.personUuid !== member)
-                  const title = otherPersons.map(p => formatName(p.name)).filter((name) => name !== '').join(' ')
+                  const otherPersons = persons.filter((p) => p.personUuid !== member)
+                  const title = otherPersons
+                    .map((p) => formatName(p.name))
+                    .filter((name) => name !== '')
+                    .join(' ')
 
                   const memberDoc = { ...indexedDoc, viewerId: member, searchTitle: title, fulltextSummary: title }
 

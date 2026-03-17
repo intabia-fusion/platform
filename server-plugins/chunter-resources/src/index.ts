@@ -490,18 +490,13 @@ async function OnPersonNameChanged (txes: TxUpdateDoc<Person>[], control: Trigge
     if (name == null) continue
     const person = (await control.findAll(control.ctx, contact.class.Person, { _id: tx.objectId }))[0]
     if (person?.personUuid == null) continue
-    const directs = await control.findAll(control.ctx, chunter.class.DirectMessage, { members: person.personUuid as AccountUuid })
+    const directs = await control.findAll(control.ctx, chunter.class.DirectMessage, {
+      members: person.personUuid as AccountUuid
+    })
     for (const direct of directs) {
       const persons = await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: direct.members } })
-      const directName = persons.map(p => formatName(p.name, control.branding?.lastNameFirst)).join(', ')
-      res.push(
-        control.txFactory.createTxUpdateDoc(
-          direct._class,
-          direct.space,
-          direct._id,
-          { name: directName }
-        )
-      )
+      const directName = persons.map((p) => formatName(p.name, control.branding?.lastNameFirst)).join(', ')
+      res.push(control.txFactory.createTxUpdateDoc(direct._class, direct.space, direct._id, { name: directName }))
     }
   }
   return res

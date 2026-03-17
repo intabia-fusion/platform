@@ -210,7 +210,7 @@ class ElasticAdapter implements FullTextAdapter {
                     },
                     remove_apostrophe: {
                       type: 'pattern_replace',
-                      pattern: '[ʹ\\\'ʼ]',
+                      pattern: "[ʹ\\'ʼ]",
                       replacement: ''
                     }
                   },
@@ -351,10 +351,7 @@ class ElasticAdapter implements FullTextAdapter {
       if (viewerId !== undefined) {
         filter.push({
           bool: {
-            should: [
-              { bool: { must_not: { exists: { field: 'viewerId' } } } },
-              { term: { viewerId } }
-            ]
+            should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
           }
         })
       }
@@ -473,10 +470,7 @@ class ElasticAdapter implements FullTextAdapter {
     if (viewerId !== undefined) {
       request.bool.filter.push({
         bool: {
-          should: [
-            { bool: { must_not: { exists: { field: 'viewerId' } } } },
-            { term: { viewerId } }
-          ]
+          should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
         }
       })
     }
@@ -552,7 +546,7 @@ class ElasticAdapter implements FullTextAdapter {
       workspaceId,
       ...doc
     }
-    const internalId = doc.viewerId != null ? `${doc.id}_${doc.viewerId}` as Ref<Doc> : doc.id
+    const internalId = doc.viewerId != null ? (`${doc.id}_${doc.viewerId}` as Ref<Doc>) : doc.id
     const fulltextId = this.getFulltextDocId(workspaceId, internalId)
     if (doc.data === undefined) {
       await this.client.index({
@@ -597,12 +591,9 @@ class ElasticAdapter implements FullTextAdapter {
 
       const operations = part.flatMap((doc) => {
         const wsDoc = { workspaceId, ...doc }
-        const internalId = doc.viewerId != null ? `${doc.id}_${doc.viewerId}` as Ref<Doc> : doc.id
+        const internalId = doc.viewerId != null ? (`${doc.id}_${doc.viewerId}` as Ref<Doc>) : doc.id
         const fulltextId = this.getFulltextDocId(workspaceId, internalId)
-        return [
-          { index: { _index: this.indexName, _id: fulltextId } },
-          { ...wsDoc, type: '_doc' }
-        ]
+        return [{ index: { _index: this.indexName, _id: fulltextId } }, { ...wsDoc, type: '_doc' }]
       })
 
       const response = await this.client.bulk({ refresh: true, body: operations })

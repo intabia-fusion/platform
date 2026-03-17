@@ -16,7 +16,11 @@ import core, {
   Ref,
   type Domain,
   type SessionData,
-  AccountUuid, type Class, type DocumentQuery, type FindOptions, type FindResult
+  AccountUuid,
+  type Class,
+  type DocumentQuery,
+  type FindOptions,
+  type FindResult
 } from '@hcengineering/core'
 import notification, { InboxNotification } from '@hcengineering/notification'
 import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'

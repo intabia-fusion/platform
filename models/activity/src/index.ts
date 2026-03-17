@@ -33,7 +33,7 @@ import {
   type Reaction,
   type ReplyProvider,
   type SavedMessage,
-  UserMentionInfo
+  type UserMentionInfo
 } from '@hcengineering/activity'
 import contact, { type Person } from '@hcengineering/contact'
 import core, {
