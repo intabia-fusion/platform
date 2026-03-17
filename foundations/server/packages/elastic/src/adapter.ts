@@ -31,6 +31,7 @@ import serverCore from '@hcengineering/server-core'
 
 import { Client, errors as esErr } from '@elastic/elasticsearch'
 import { getMetadata } from '@hcengineering/platform'
+import { KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN, KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC } from './utils'
 
 const DEFAULT_LIMIT = 200
 
@@ -39,7 +40,7 @@ function getIndexName (): string {
 }
 
 function getIndexVersion (): string {
-  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v2'
+  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v3'
 }
 
 const mappings = {
@@ -47,6 +48,30 @@ const mappings = {
     fulltextSummary: {
       type: 'text',
       analyzer: 'rebuilt_english'
+    },
+    searchTitle: {
+      type: 'text',
+      analyzer: 'standard',
+      fields: {
+        keyword: {
+          type: 'keyword',
+          ignore_above: 256
+        },
+        translit: {
+          type: 'text',
+          analyzer: 'translit_analyzer'
+        },
+        keyboard_latin_to_cyrillic: {
+          type: 'text',
+          analyzer: 'rebuilt_english',
+          search_analyzer: 'keyboard_latin_to_cyrillic_analyzer'
+        },
+        keyboard_cyrillic_to_latin: {
+          type: 'text',
+          analyzer: 'rebuilt_english',
+          search_analyzer: 'keyboard_cyrillic_to_latin_analyzer'
+        }
+      }
     },
     workspaceId: {
       type: 'keyword',
@@ -156,6 +181,16 @@ class ElasticAdapter implements FullTextAdapter {
             body: {
               settings: {
                 analysis: {
+                  char_filter: {
+                    keyboard_layout_mapping_latin_to_cyrillic: {
+                      type: 'mapping',
+                      mappings: KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC
+                    },
+                    keyboard_layout_mapping_cyrillic_to_latin: {
+                      type: 'mapping',
+                      mappings: KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN
+                    }
+                  },
                   filter: {
                     english_stemmer: {
                       type: 'stemmer',
@@ -164,9 +199,30 @@ class ElasticAdapter implements FullTextAdapter {
                     english_possessive_stemmer: {
                       type: 'stemmer',
                       language: 'possessive_english'
+                    },
+                    transliteration_filter: {
+                      type: 'icu_transform',
+                      id: 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC'
                     }
                   },
                   analyzer: {
+                    keyboard_latin_to_cyrillic_analyzer: {
+                      type: 'custom',
+                      char_filter: ['keyboard_layout_mapping_latin_to_cyrillic'],
+                      tokenizer: 'standard',
+                      filter: ['lowercase', 'english_stemmer']
+                    },
+                    keyboard_cyrillic_to_latin_analyzer: {
+                      type: 'custom',
+                      char_filter: ['keyboard_layout_mapping_cyrillic_to_latin'],
+                      tokenizer: 'standard',
+                      filter: ['lowercase', 'english_stemmer']
+                    },
+                    translit_analyzer: {
+                      type: 'custom',
+                      tokenizer: 'standard',
+                      filter: ['lowercase', 'icu_folding', 'transliteration_filter']
+                    },
                     rebuilt_english: {
                       type: 'custom',
                       tokenizer: 'standard',
@@ -224,7 +280,10 @@ class ElasticAdapter implements FullTextAdapter {
                       fields: [
                         'searchTitle^50', // boost
                         'searchShortTitle^50',
-                        '*' // Search in all other fields without a boost
+                        '*', // Search in all other fields without a boost
+                        'searchTitle.translit^10',
+                        'searchTitle.keyboard_latin_to_cyrillic^10',
+                        'searchTitle.keyboard_cyrillic_to_latin^10'
                       ]
                     }
                   },
@@ -322,7 +381,13 @@ class ElasticAdapter implements FullTextAdapter {
               query: query.$search,
               analyze_wildcard: true,
               flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-              default_operator: 'and'
+              default_operator: 'and',
+              fields: [
+                '*',
+                'searchTitle.translit',
+                'searchTitle.keyboard_latin_to_cyrillic',
+                'searchTitle.keyboard_cyrillic_to_latin'
+              ]
             }
           },
           {

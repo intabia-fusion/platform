@@ -72,7 +72,7 @@
     const resultQuery =
       search !== ''
         ? {
-            name: { $like: '%' + search + '%' },
+            $search: search,
             _id: { $in: Array.from(targets.keys()) }
           }
         : {

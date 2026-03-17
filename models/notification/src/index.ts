@@ -526,6 +526,16 @@ export function createModel (builder: Builder): void {
     }
   )
 
+  builder.mixin<Class<ReadState>, IndexingConfiguration<ReadState>>(
+    notification.class.ReadState,
+    core.class.Class,
+    core.mixin.IndexConfiguration,
+    {
+      searchDisabled: true,
+      indexes: []
+    }
+  )
+
   builder.mixin<Class<InboxNotification>, IndexingConfiguration<InboxNotification>>(
     notification.class.InboxNotification,
     core.class.Class,
@@ -547,6 +557,16 @@ export function createModel (builder: Builder): void {
 
   builder.mixin<Class<BrowserNotification>, IndexingConfiguration<BrowserNotification>>(
     notification.class.BrowserNotification,
+    core.class.Class,
+    core.mixin.IndexConfiguration,
+    {
+      searchDisabled: true,
+      indexes: []
+    }
+  )
+
+  builder.mixin<Class<PushSubscription>, IndexingConfiguration<PushSubscription>>(
+    notification.class.PushSubscription,
     core.class.Class,
     core.mixin.IndexConfiguration,
     {

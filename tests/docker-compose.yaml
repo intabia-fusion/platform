@@ -114,6 +114,8 @@ services:
       retries: 10
   elastic:
     image: 'elasticsearch:7.14.2'
+    command: >
+      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || yes | ./bin/elasticsearch-plugin install --silent analysis-icu; /usr/local/bin/docker-entrypoint.sh eswrapper"
     expose:
       - 9200
     ports:
