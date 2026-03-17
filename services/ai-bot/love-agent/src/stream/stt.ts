@@ -170,6 +170,8 @@ export class STT implements Stt {
     // If already finalizing, wait for the existing finalization to complete
     const existingPromise = this.pendingFinalizations.get(sid)
     if (existingPromise !== undefined) {
+      // Just wait for the existing finalization to complete
+      // Do not delete from map — the owner (original caller) handles cleanup
       await existingPromise
       return
     }
@@ -181,6 +183,11 @@ export class STT implements Stt {
       await finalizationPromise
     } finally {
       this.pendingFinalizations.delete(sid)
+      // Note: stoppedSids is NOT cleaned up here to avoid a race with streamToFiles().
+      // streamToFiles() checks stoppedSids.has(sid) after the for-await loop to decide
+      // whether to call finalizeChunk. If we cleared it here, streamToFiles() could see
+      // a false negative and trigger duplicate finalization.
+      // stoppedSids is cleaned up by streamToFiles() itself, or by close().
     }
   }
 
@@ -199,20 +206,31 @@ export class STT implements Stt {
       // Wait for all pending chunk finalizations to complete
       const pendingChunks = this.pendingChunkFinalizations.get(sid) ?? []
       if (pendingChunks.length > 0) {
-        await Promise.all(pendingChunks)
+        try {
+          await Promise.all(pendingChunks)
+        } catch (err) {
+          console.error('Error waiting for chunk finalizations', { sid, error: err })
+        }
       }
       this.pendingChunkFinalizations.delete(sid)
 
       // Wait for session finalization to complete (including ffmpeg conversion and upload)
-      await this.finalizeSession(sid)
-
+      try {
+        await this.finalizeSession(sid)
+      } catch (err) {
+        console.error('Error finalizing session', { sid, error: err })
+      }
+    } catch (e) {
+      console.error('Error in doStopWs', { sid, error: e })
+    } finally {
+      // Clean up resources except stoppedSids and pendingFinalizations:
+      // - stoppedSids is owned by streamToFiles() which checks it after the for-await loop
+      // - pendingFinalizations is owned by stopWs() which uses it to serialize concurrent calls
       this.streamBySid.delete(sid)
       this.sessionBySid.delete(sid)
       this.timingBySid.delete(sid)
       this.chunkStateBySid.delete(sid)
       this.sessionStateBySid.delete(sid)
-    } catch (e) {
-      console.error(e)
     }
   }
 
@@ -1043,18 +1061,35 @@ export class STT implements Stt {
   }
 
   async close (): Promise<void> {
-    for (const sid of this.chunkStateBySid.keys()) {
-      this.finalizeChunk(sid)
+    // Stop all active streams — close() is end of meeting, everything must shut down
+    const stopPromises: Promise<void>[] = []
+    for (const sid of this.trackBySid.keys()) {
+      stopPromises.push(this.stopWs(sid))
     }
-    // Wait for all session finalizations to complete in parallel
-    const sessionPromises: Promise<void>[] = []
-    for (const sid of this.sessionStateBySid.keys()) {
-      sessionPromises.push(this.finalizeSession(sid))
+    await Promise.all(stopPromises)
+
+    // Wait for any remaining pending chunk finalizations (conversion + upload)
+    const allChunkPromises: Promise<void>[] = []
+    for (const pending of this.pendingChunkFinalizations.values()) {
+      allChunkPromises.push(...pending)
     }
-    await Promise.all(sessionPromises)
+    if (allChunkPromises.length > 0) {
+      try {
+        await Promise.all(allChunkPromises)
+      } catch (err) {
+        console.error('Error waiting for chunk finalizations during close', { error: err })
+      }
+    }
+
     this.trackBySid.clear()
     this.participantBySid.clear()
     this.chunkStateBySid.clear()
     this.sessionStateBySid.clear()
+    this.streamBySid.clear()
+    this.timingBySid.clear()
+    this.sessionBySid.clear()
+    this.stoppedSids.clear()
+    this.pendingFinalizations.clear()
+    this.pendingChunkFinalizations.clear()
   }
 }
