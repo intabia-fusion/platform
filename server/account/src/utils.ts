@@ -1209,32 +1209,15 @@ export async function createWorkspaceRecord (
   }
 }
 
-export async function checkInvite (ctx: MeasureContext, invite: WorkspaceInvite, email: string): Promise<WorkspaceUuid> {
+export async function checkInvite (ctx: MeasureContext, invite: WorkspaceInvite): Promise<WorkspaceUuid> {
   if (invite.remainingUses === 0) {
-    ctx.warn('Invite limit exceeded', { email, ...invite })
+    ctx.warn('Invite limit exceeded', invite)
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   if (invite.expiresOn > 0 && invite.expiresOn < Date.now()) {
-    ctx.warn('Invite link expired', { email, ...invite })
+    ctx.warn('Invite link expired', invite)
     throw new PlatformError(new Status(Severity.ERROR, platform.status.ExpiredLink, {}))
-  }
-
-  // TODO: consider not using RegExp with user input as some regexes might
-  // be slow or even cause catastrophic backtracking
-  // if (
-  //   invite.emailPattern != null &&
-  //   invite.emailPattern.trim().length > 0 &&
-  //   !new RegExp(invite.emailPattern).test(email)
-  // ) {
-  //   ctx.error("Invite doesn't allow this email address", { email, ...invite })
-  //   Analytics.handleError(new Error(`Invite link email mask check failed ${invite.id} ${email} ${invite.emailPattern}`))
-  //   throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  // }
-
-  if (invite.email != null && invite.email.trim().length > 0 && invite.email !== email) {
-    ctx.warn("Invite doesn't allow this email address", { email, ...invite })
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   return invite.workspaceUuid
@@ -1444,13 +1427,12 @@ export async function getWorkspaceJoinInfo (
   if (email === undefined || email === '' || email === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
-  const normalizedEmail = cleanEmail(email)
   if (inviteId !== undefined && inviteId !== '' && inviteId !== null) {
     const invite = await getWorkspaceInvite(db, inviteId)
     if (invite == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
-    const workspaceUuid = await checkInvite(ctx, invite, normalizedEmail)
+    const workspaceUuid = await checkInvite(ctx, invite)
     const workspace = await getWorkspaceById(db, workspaceUuid)
     if (workspace == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
@@ -1631,7 +1613,7 @@ export async function joinWithProvider (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const workspaceUuid = await checkInvite(ctx, invite, normalizedEmail)
+  const workspaceUuid = await checkInvite(ctx, invite)
   const workspace = await getWorkspaceById(db, workspaceUuid)
 
   if (workspace == null) {

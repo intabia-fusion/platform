@@ -3,7 +3,8 @@
     "RequiredField": "Povinné pole {field}",
     "FieldsDoNotMatch": "{field} se neshoduje s {field2}",
     "ConnectingToServer": "Připojování k serveru....",
-    "IncorrectValue": "Nesprávná hodnota {field}"
+    "IncorrectValue": "Nesprávná hodnota {field}",
+    "JoinWorkspaceError": "Připojení k pracovnímu prostoru se nezdařilo"
   },
   "string": {
     "LogIn": "Přihlásit se",
@@ -89,11 +90,14 @@
     "Downloads": "Stáhnout desktopovou aplikaci",
     "BackLabel": "Zpět",
     "JoinWithThisAccount": "Připojit se tímto účtem",
+    "JoinAs": "Připojit se jako {name}",
     "UseDifferentAccount": "Použít jiný účet",
     "UseCurrentAccountToJoin": "Už jste přihlášeni?",
     "LogInAndJoin": "Přihlásit se a připojit",
     "SignUpAndJoin": "Registrovat se a připojit",
     "CreateNewAccount": "Vytvořit nový účet",
-    "SignedInAs": "Přihlášen jako {name}"
+    "SignedInAs": "Přihlášen jako {name}",
+    "HowToLogin": "Jak se chcete přihlásit?",
+    "AlreadySignedIn": "Připojit se s existujícím účtem"
   }
 }

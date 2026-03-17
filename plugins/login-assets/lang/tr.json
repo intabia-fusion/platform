@@ -3,7 +3,8 @@
     "RequiredField": "Gerekli alan {field}",
     "FieldsDoNotMatch": "{field}, {field2} ile eşleşmiyor",
     "ConnectingToServer": "Sunucuya bağlanılıyor....",
-    "IncorrectValue": "Yanlış değer {field}"
+    "IncorrectValue": "Yanlış değer {field}",
+    "JoinWorkspaceError": "Çalışma alanına katılma başarısız oldu"
   },
   "string": {
     "ChangePassword": "Parolayı değiştir",
@@ -88,11 +89,14 @@
     "Downloads": "Masaüstü uygulamasını indir",
     "BackLabel": "Geri",
     "JoinWithThisAccount": "Bu hesapla katıl",
+    "JoinAs": "{name} olarak katıl",
     "UseDifferentAccount": "Farklı hesap kullan",
     "UseCurrentAccountToJoin": "Zaten giriş yaptınız mı?",
     "LogInAndJoin": "Giriş yap ve katıl",
     "SignUpAndJoin": "Kayıt ol ve katıl",
     "CreateNewAccount": "Yeni hesap oluştur",
-    "SignedInAs": "{name} olarak giriş yapıldı"
+    "SignedInAs": "{name} olarak giriş yapıldı",
+    "HowToLogin": "Nasıl giriş yapmak istersiniz?",
+    "AlreadySignedIn": "Mevcut hesapla katıl"
   }
 }

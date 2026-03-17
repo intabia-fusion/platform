@@ -564,7 +564,21 @@ export async function checkJoined (inviteId: string): Promise<WorkspaceLoginInfo
   if (token == null) return
 
   try {
-    const workspaceLoginInfo = await getAccountClient(token).checkJoin(inviteId)
+    return await getAccountClient(token).checkJoin(inviteId)
+  } catch (err: any) {
+    if (!(err instanceof PlatformError)) {
+      Analytics.handleError(err)
+    }
+  }
+}
+
+export async function joinByInvite (inviteId: string): Promise<WorkspaceLoginInfo | undefined> {
+  const token = getMetadata(presentation.metadata.Token)
+
+  if (token == null) return
+
+  try {
+    const workspaceLoginInfo = await getAccountClient(token).joinByInvite(inviteId)
 
     return workspaceLoginInfo
   } catch (err: any) {
@@ -585,6 +599,20 @@ export async function checkAutoJoin (
     const autoJoinResult = await getAccountClient(token).checkAutoJoin(inviteId, firstName, lastName)
 
     return [OK, autoJoinResult]
+  } catch (err: any) {
+    if (err instanceof PlatformError) {
+      return [err.status, null]
+    } else {
+      Analytics.handleError(err)
+      return [unknownError(err), null]
+    }
+  }
+}
+
+export async function getInviteInfo (inviteId: string): Promise<[Status, WorkspaceInviteInfo | null]> {
+  try {
+    const inviteInfo = await getAccountClient(null).getInviteInfo(inviteId)
+    return [OK, inviteInfo]
   } catch (err: any) {
     if (err instanceof PlatformError) {
       return [err.status, null]

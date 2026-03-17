@@ -3,7 +3,8 @@
     "RequiredField": "Required field {field}",
     "FieldsDoNotMatch": "{field} don't match {field2}",
     "ConnectingToServer": "Connecting to server....",
-    "IncorrectValue": "Incorrect value {field}"
+    "IncorrectValue": "Incorrect value {field}",
+    "JoinWorkspaceError": "Failed to join workspace"
   },
   "string": {
     "ChangePassword": "Change password",
@@ -89,11 +90,14 @@
     "Downloads": "Download desktop app",
     "BackLabel": "Back",
     "JoinWithThisAccount": "Join with this account",
+    "JoinAs": "Join as {name}",
     "UseDifferentAccount": "Use different account",
     "UseCurrentAccountToJoin": "Already signed in?",
     "LogInAndJoin": "Log In & Join",
     "SignUpAndJoin": "Sign Up & Join",
     "CreateNewAccount": "Create new account",
-    "SignedInAs": "Signed in as {name}"
+    "SignedInAs": "Signed in as {name}",
+    "HowToLogin": "How would you like to log in?",
+    "AlreadySignedIn": "Join with existing account"
   }
 }

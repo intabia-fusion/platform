@@ -3,7 +3,8 @@
     "RequiredField": "Campo obrigatório {field}",
     "FieldsDoNotMatch": "{field} não coincide com {field2}",
     "ConnectingToServer": "Conectando ao servidor....",
-    "IncorrectValue": "Valor incorreto no campo {field}"
+    "IncorrectValue": "Valor incorreto no campo {field}",
+    "JoinWorkspaceError": "Falha ao entrar no espaço de trabalho"
   },
   "string": {
     "ChangePassword": "Mudar senha",
@@ -86,11 +87,15 @@
     "AccessExpired": "O tempo de acesso expirou. Por favor, solicite um novo link de acesso.",
     "AccessNotActive": "O tempo de acesso ainda não começou. Começa em: ",
     "JoinWithThisAccount": "Entrar com esta conta",
+    "JoinAs": "Entrar como {name}",
     "UseDifferentAccount": "Usar outra conta",
     "UseCurrentAccountToJoin": "Já está conectado?",
     "LogInAndJoin": "Entrar e participar",
     "SignUpAndJoin": "Cadastrar e participar",
     "CreateNewAccount": "Criar nova conta",
-    "SignedInAs": "Conectado como {name}"
+    "SignedInAs": "Conectado como {name}",
+    "HowToLogin": "Como você gostaria de fazer login?",
+    "AlreadySignedIn": "Entrar com conta existente",
+    "BackLabel": "Voltar"
   }
 }

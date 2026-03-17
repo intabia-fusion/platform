@@ -3,7 +3,8 @@
     "RequiredField": "Champ requis {field}",
     "FieldsDoNotMatch": "{field} ne correspond pas à {field2}",
     "ConnectingToServer": "Connexion au serveur...",
-    "IncorrectValue": "Valeur incorrecte {field}"
+    "IncorrectValue": "Valeur incorrecte {field}",
+    "JoinWorkspaceError": "Échec de la connexion à l'espace de travail"
   },
   "string": {
     "ChangePassword": "Changer le mot de passe",
@@ -88,11 +89,14 @@
     "Downloads": "Télécharger l'application de bureau",
     "BackLabel": "Retour",
     "JoinWithThisAccount": "Rejoindre avec ce compte",
+    "JoinAs": "Rejoindre en tant que {name}",
     "UseDifferentAccount": "Utiliser un autre compte",
     "UseCurrentAccountToJoin": "Déjà connecté ?",
     "LogInAndJoin": "Se connecter et rejoindre",
     "SignUpAndJoin": "S'inscrire et rejoindre",
     "CreateNewAccount": "Créer un nouveau compte",
-    "SignedInAs": "Connecté en tant que {name}"
+    "SignedInAs": "Connecté en tant que {name}",
+    "HowToLogin": "Comment souhaitez-vous vous connecter ?",
+    "AlreadySignedIn": "Rejoindre avec un compte existant"
   }
 }

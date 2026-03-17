@@ -3,7 +3,8 @@
     "RequiredField": "Требуется заполнить {field}",
     "FieldsDoNotMatch": "{field} не совпадает {field2}",
     "ConnectingToServer": "Подключение к серверу....",
-    "IncorrectValue": "Неправильное значение {field}"
+    "IncorrectValue": "Неправильное значение {field}",
+    "JoinWorkspaceError": "Не удалось присоединиться к рабочему пространству"
   },
   "string": {
     "LogIn": "Вход",
@@ -89,11 +90,14 @@
     "Downloads": "Скачать настольное приложение",
     "BackLabel": "Назад",
     "JoinWithThisAccount": "Присоединиться с этим аккаунтом",
+    "JoinAs": "Присоединиться как {name}",
     "UseDifferentAccount": "Использовать другой аккаунт",
     "UseCurrentAccountToJoin": "Уже вошли в аккаунт?",
     "LogInAndJoin": "Войти и присоединиться",
     "SignUpAndJoin": "Зарегистрироваться и присоединиться",
     "CreateNewAccount": "Создать новый аккаунт",
-    "SignedInAs": "Вы вошли как {name}"
+    "SignedInAs": "Вы вошли как {name}",
+    "HowToLogin": "Как вы хотите войти?",
+    "AlreadySignedIn": "Присоединиться с существующим аккаунтом"
   }
 }

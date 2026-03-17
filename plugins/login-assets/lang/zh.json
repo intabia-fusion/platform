@@ -3,7 +3,8 @@
     "RequiredField": "必填字段 {field}",
     "FieldsDoNotMatch": "{field} 与 {field2} 不匹配",
     "ConnectingToServer": "正在连接服务器....",
-    "IncorrectValue": "不正确的值 {field}"
+    "IncorrectValue": "不正确的值 {field}",
+    "JoinWorkspaceError": "加入工作区失败"
   },
   "string": {
     "ChangePassword": "更改密码",
@@ -88,11 +89,14 @@
     "Downloads": "下载桌面应用",
     "BackLabel": "返回",
     "JoinWithThisAccount": "使用此账户加入",
+    "JoinAs": "以 {name} 身份加入",
     "UseDifferentAccount": "使用其他账户",
     "UseCurrentAccountToJoin": "已登录？",
     "LogInAndJoin": "登录并加入",
     "SignUpAndJoin": "注册并加入",
     "CreateNewAccount": "创建新账户",
-    "SignedInAs": "已以 {name} 身份登录"
+    "SignedInAs": "已以 {name} 身份登录",
+    "HowToLogin": "您想如何登录？",
+    "AlreadySignedIn": "使用现有账户加入"
   }
 }
