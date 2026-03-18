@@ -31,28 +31,14 @@ async function dropElastic (elasticUrl: string, dataId: string): Promise<void> {
     node: elasticUrl
   })
   const productWs = dataId
-  await new Promise((resolve, reject) => {
-    client.indices.exists(
-      {
-        index: productWs
-      },
-      (err: any, result: any) => {
-        if (err != null) reject(err)
-        if (result.body === true) {
-          client.indices.delete(
-            {
-              index: productWs
-            },
-            (err: any, result: any) => {
-              if (err != null) reject(err)
-              resolve(result)
-            }
-          )
-        } else {
-          resolve(result)
-        }
-      }
-    )
-  })
+  // eslint-disable-next-line no-useless-catch
+  try {
+    const exists = await client.indices.exists({ index: productWs })
+    if (exists) {
+      await client.indices.delete({ index: productWs })
+    }
+  } catch (err) {
+    throw err
+  }
   await client.close()
 }

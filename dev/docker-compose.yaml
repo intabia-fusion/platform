@@ -156,9 +156,9 @@ services:
       retries: 10
     restart: unless-stopped
   elastic:
-    image: 'elasticsearch:7.14.2'
+    image: 'elasticsearch:8.19.1'
     command: >
-      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || yes | ./bin/elasticsearch-plugin install --silent analysis-icu; /usr/local/bin/docker-entrypoint.sh eswrapper"
+      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || ./bin/elasticsearch-plugin install --batch analysis-icu; exec /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
     expose:
       - 9200
     extra_hosts:
@@ -171,7 +171,9 @@ services:
       - ELASTICSEARCH_PORT_NUMBER=9200
       - BITNAMI_DEBUG=true
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms256m -Xmx450m
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms450m -Xmx450m
     healthcheck:
       interval: 20s
       retries: 10
@@ -181,6 +183,16 @@ services:
       resources:
         limits:
           memory: 1024m
+  kibana:
+    image: 'kibana:8.19.1'
+    ports:
+      - 5601:5601
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elastic:9200
+    depends_on:
+      elastic:
+        condition: service_healthy
+    restart: unless-stopped
   redis:
     image: redis:8.0.2-alpine3.21
     ports:
@@ -838,28 +850,28 @@ services:
   #     - QUEUE_CONFIG=${QUEUE_CONFIG}
   #     - TEMPORAL_ADDRESS=localhost:7233
   #   restart: unless-stopped
-  backup-api:
-    image: intabiafusion/backup-api
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    depends_on:
-      minio:
-        condition: service_healthy
-      stats:
-        condition: service_started
-      account:
-        condition: service_started
-    ports:
-      - 4039:4039
-    environment:
-      - PORT=4039
-      - SECRET=secret
-      - ACCOUNTS_URL=http://huly.local:3000
-      - STATS_URL=http://huly.local:4900
-      - BUCKET_NAME=backups
-      - STORAGE=minio|minio?accessKey=minioadmin&secretKey=minioadmin
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
-    restart: unless-stopped
+#  backup-api:
+#    image: intabiafusion/backup-api
+#    extra_hosts:
+#      - 'huly.local:host-gateway'
+#    depends_on:
+#      minio:
+#        condition: service_healthy
+#      stats:
+#        condition: service_started
+#      account:
+#        condition: service_started
+#    ports:
+#      - 4039:4039
+#    environment:
+#      - PORT=4039
+#      - SECRET=secret
+#      - ACCOUNTS_URL=http://huly.local:3000
+#      - STATS_URL=http://huly.local:4900
+#      - BUCKET_NAME=backups
+#      - STORAGE=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+#      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+#    restart: unless-stopped
 
   rating:
     image: intabiafusion/rating
