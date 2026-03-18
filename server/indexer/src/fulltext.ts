@@ -30,12 +30,19 @@ export async function searchFulltext (
   hierarchy: Hierarchy,
   adapter: FullTextAdapter,
   query: SearchQuery,
-  options: SearchOptions
+  options: SearchOptions,
+  viewerId?: string
 ): Promise<SearchResult> {
-  const resultRaw = (await adapter.searchString(ctx, workspaceId, query, {
-    ...options,
-    scoring: getScoringConfig(hierarchy, query.classes ?? [])
-  })) ?? { docs: [] }
+  const resultRaw = (await adapter.searchString(
+    ctx,
+    workspaceId,
+    query,
+    {
+      ...options,
+      scoring: getScoringConfig(hierarchy, query.classes ?? [])
+    },
+    viewerId
+  )) ?? { docs: [] }
 
   const result: SearchResult = {
     ...resultRaw,

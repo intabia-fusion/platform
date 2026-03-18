@@ -48,7 +48,6 @@
   export let ignoreUsers: Ref<Person>[] = []
   export let shadows: boolean = true
   export let width: 'medium' | 'large' | 'full' = 'medium'
-  export let searchField: string = 'name'
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let loading = false
 
@@ -67,7 +66,7 @@
     contact.mixin.Employee,
     {
       ...(docQuery ?? {}),
-      [searchField]: { $like: '%' + search + '%' },
+      $search: search,
       _id: {
         ...(typeof docQuery?._id === 'object' ? docQuery._id : {}),
         $nin: ignoreUsers

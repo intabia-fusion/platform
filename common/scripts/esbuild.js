@@ -45,6 +45,17 @@ async function bundle(config) {
       entryPoints: [config.entryPoint],
       bundle: true,
       platform: config.platform,
+      plugins: [{
+        name: 'ignore-apache-arrow',
+        setup(build) {
+          build.onResolve({ filter: /^apache-arrow\/Arrow\.node$/ }, args => {
+            return { path: args.path, namespace: 'ignore-arrow' }
+          })
+          build.onLoad({ filter: /.*/, namespace: 'ignore-arrow' }, args => {
+            return { contents: 'module.exports = {};' }
+          })
+        }
+      }],
       outfile: path.join(config.outdir, 'bundle.js'),
       logLevel: config.logLevel,
       minify: config.minify,

@@ -113,7 +113,9 @@ services:
       interval: 5s
       retries: 10
   elastic:
-    image: 'elasticsearch:7.14.2'
+    image: 'elasticsearch:8.19.1'
+    command: >
+      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || ./bin/elasticsearch-plugin install --batch analysis-icu; exec /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
     expose:
       - 9200
     ports:
@@ -122,6 +124,8 @@ services:
       - ELASTICSEARCH_PORT_NUMBER=9200
       - BITNAMI_DEBUG=true
       - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
       - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
     healthcheck:
       interval: 5s

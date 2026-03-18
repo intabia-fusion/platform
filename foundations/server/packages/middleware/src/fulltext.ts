@@ -32,10 +32,13 @@ import core, {
   type Ref,
   type SearchOptions,
   type SearchQuery,
-  type SearchResult
+  type SearchResult,
+  type SessionData
 } from '@hcengineering/core'
 import type { IndexedDoc, Middleware, MiddlewareCreator, PipelineContext } from '@hcengineering/server-core'
 import { BaseMiddleware } from '@hcengineering/server-core'
+import contact from '@hcengineering/contact'
+
 /**
  * @public
  */
@@ -75,6 +78,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async search<T extends Doc>(
+    ctx: MeasureContext<SessionData>,
     _classes: Ref<Class<T>>[],
     query: DocumentQuery<T>,
     fullTextLimit: number
@@ -92,7 +96,8 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
             workspace: this.context.workspace.uuid,
             _classes,
             query,
-            fullTextLimit
+            fullTextLimit,
+            viewerId: ctx.contextData?.account?.uuid
           })
         })
       ).json()
@@ -130,9 +135,15 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
 
     const attrs = this.context.hierarchy.getAllAttributes(_class)
 
+    let _search = query.$search.endsWith('*') ? query.$search : query.$search + '*'
+
+    if (this.context.hierarchy.isDerived(baseClass, contact.class.Person)) {
+      _search = _search.startsWith('*') ? _search : '*' + _search
+    }
+
     // We need to filter all non indexed fields from query to make it work properly
     const findQuery: DocumentQuery<Doc> = {
-      $search: query.$search.endsWith('*') ? query.$search : query.$search + '*'
+      $search: _search
     }
 
     const childClasses = new Set<Ref<Class<Doc>>>()
@@ -187,7 +198,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     const fullTextLimit = Math.min(5000, (options?.limit ?? 200) * 100)
 
     // Find main documents, not attached ones.
-    const { indexedDocMap } = await this.findDocuments<T>(classes, findQuery, fullTextLimit, baseClass, ids)
+    const { indexedDocMap } = await this.findDocuments<T>(ctx, classes, findQuery, fullTextLimit, baseClass, ids)
 
     for (const c of classes) {
       // We do not need to overlap
@@ -203,7 +214,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     }
     const { childDocs, childIndexedDocMap } =
       childClasses !== undefined && childClasses.size > 0
-        ? await this.findChildDocuments(Array.from(childClasses), childQuery, fullTextLimit, baseClass, childIds)
+        ? await this.findChildDocuments(ctx, Array.from(childClasses), childQuery, fullTextLimit, baseClass, childIds)
         : {
             childDocs: [],
             childIndexedDocMap: new Map()
@@ -246,13 +257,14 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async findDocuments<T extends Doc>(
+    ctx: MeasureContext<SessionData>,
     classes: Ref<Class<Doc>>[],
     findQuery: DocumentQuery<Doc>,
     fullTextLimit: number,
     baseClass: Ref<Class<T>>,
     ids: Set<Ref<Doc>>
   ): Promise<{ docs: IndexedDoc[], indexedDocMap: Map<Ref<Doc>, IndexedDoc> }> {
-    const docs = await this.search(classes, findQuery, fullTextLimit)
+    const docs = await this.search(ctx, classes, findQuery, fullTextLimit)
 
     const indexedDocMap = new Map<Ref<Doc>, IndexedDoc>()
 
@@ -278,13 +290,14 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async findChildDocuments<T extends Doc>(
+    ctx: MeasureContext<SessionData>,
     classes: Ref<Class<Doc>>[],
     findQuery: DocumentQuery<Doc>,
     fullTextLimit: number,
     baseClass: Ref<Class<T>>,
     ids: Set<Ref<Doc>>
   ): Promise<{ childDocs: IndexedDoc[], childIndexedDocMap: Map<Ref<Doc>, IndexedDoc> }> {
-    const childDocs = await this.search(classes, findQuery, fullTextLimit)
+    const childDocs = await this.search(ctx, classes, findQuery, fullTextLimit)
 
     const childIndexedDocMap = new Map<Ref<Doc>, IndexedDoc>()
 
@@ -318,7 +331,8 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
               workspace: this.context.workspace.uuid,
               token: this.token,
               query,
-              options
+              options,
+              viewerId: ctx.contextData?.account?.uuid
             })
           })
         ).json()

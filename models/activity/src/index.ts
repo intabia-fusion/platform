@@ -32,7 +32,8 @@ import {
   type IgnoreActivity,
   type Reaction,
   type ReplyProvider,
-  type SavedMessage
+  type SavedMessage,
+  type UserMentionInfo
 } from '@hcengineering/activity'
 import contact, { type Person } from '@hcengineering/contact'
 import core, {
@@ -387,6 +388,16 @@ export function createModel (builder: Builder): void {
 
   buildActions(builder)
   buildNotifications(builder)
+
+  builder.mixin<Class<UserMentionInfo>, IndexingConfiguration<UserMentionInfo>>(
+    activity.class.UserMentionInfo,
+    core.class.Class,
+    core.mixin.IndexConfiguration,
+    {
+      searchDisabled: true,
+      indexes: []
+    }
+  )
 }
 
 export default activity

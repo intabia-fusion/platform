@@ -25,7 +25,7 @@
 
   export let _class: Ref<Class<Employee>> = contact.mixin.Employee
   export let searchField: string = 'name'
-  export let searchMode: 'field' | 'fulltext' | 'disabled' = 'field'
+  export let searchMode: 'field' | 'fulltext' | 'disabled' = 'fulltext'
   export let groupBy = '_class'
   export let okLabel: IntlString = presentation.string.Ok
   export let placeholder: IntlString = presentation.string.Search

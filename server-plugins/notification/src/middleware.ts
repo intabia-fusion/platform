@@ -85,7 +85,6 @@ export class NotificationMiddleware extends BaseMiddleware {
           updateTx.operations[account.uuid]?.timestamp == null ||
           updateTx.operations[account.uuid]?.messageId == null
         ) {
-          this.throwForbidden()
           continue
         }
         const state = await this.getState(ctx, updateTx.objectId)
@@ -98,7 +97,6 @@ export class NotificationMiddleware extends BaseMiddleware {
           const updateTimestamp = updateTx.operations[account.uuid]?.timestamp ?? 0
 
           if (currentTimestamp > updateTimestamp) {
-            this.throwForbidden()
             continue
           }
 

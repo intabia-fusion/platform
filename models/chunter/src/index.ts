@@ -14,7 +14,7 @@
 //
 
 import activity, { type ActivityMessageControl } from '@hcengineering/activity'
-import { chunterId, type ChunterSpace } from '@hcengineering/chunter'
+import { type Chat, chunterId, type ChunterSpace } from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
@@ -22,7 +22,7 @@ import presentation from '@hcengineering/model-presentation'
 import view from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { WidgetType } from '@hcengineering/workbench'
-import { AccountRole } from '@hcengineering/core'
+import { AccountRole, type Class, type IndexingConfiguration } from '@hcengineering/core'
 
 import { defineActions } from './actions'
 import { defineNotifications } from './notifications'
@@ -344,6 +344,16 @@ export function createModel (builder: Builder): void {
     indexes: [],
     searchDisabled: true
   })
+
+  builder.mixin<Class<Chat>, IndexingConfiguration<Chat>>(
+    chunter.class.Chat,
+    core.class.Class,
+    core.mixin.IndexConfiguration,
+    {
+      searchDisabled: true,
+      indexes: []
+    }
+  )
 }
 
 export default chunter

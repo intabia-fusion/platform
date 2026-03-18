@@ -66,7 +66,7 @@
   let resultQuery: DocumentQuery<Staff> = {}
 
   function updateResultQuery (search: string): void {
-    resultQuery = search === '' ? {} : { name: { $like: '%' + search + '%' } }
+    resultQuery = search === '' ? {} : { $search: search }
   }
 
   const query = createQuery()

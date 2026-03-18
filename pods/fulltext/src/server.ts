@@ -54,6 +54,7 @@ interface FulltextSearch {
   token: string
   query: SearchQuery
   options: SearchOptions
+  viewerId?: string
 }
 
 interface Search {
@@ -61,6 +62,7 @@ interface Search {
   _classes: Ref<Class<Doc>>[]
   query: DocumentQuery<Doc>
   fullTextLimit: number
+  viewerId?: string
 }
 
 interface Reindex {
@@ -139,7 +141,9 @@ export async function startIndexer (
             decoded.workspace,
             request._classes,
             request.query,
-            request.fullTextLimit
+            request.fullTextLimit,
+            undefined,
+            request.viewerId
           )
         },
         {
@@ -170,7 +174,8 @@ export async function startIndexer (
             manager.sysHierarchy,
             manager.fulltextAdapter,
             request.query,
-            request.options
+            request.options,
+            request.viewerId
           )
           req.body = result
         },

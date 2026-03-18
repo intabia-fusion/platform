@@ -20,6 +20,7 @@ import {
   Doc,
   DocumentQuery,
   MeasureContext,
+  notEmpty,
   Ref,
   SearchOptions,
   SearchQuery,
@@ -28,9 +29,10 @@ import {
 } from '@hcengineering/core'
 import type { FullTextAdapter, IndexedDoc, SearchScoring, SearchStringResult } from '@hcengineering/server-core'
 import serverCore from '@hcengineering/server-core'
-
-import { Client, errors as esErr } from '@elastic/elasticsearch'
+import { Client, errors as esErr, estypes } from '@elastic/elasticsearch'
 import { getMetadata } from '@hcengineering/platform'
+
+import { KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN, KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC } from './utils'
 
 const DEFAULT_LIMIT = 200
 
@@ -39,14 +41,38 @@ function getIndexName (): string {
 }
 
 function getIndexVersion (): string {
-  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v2'
+  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v4'
 }
 
-const mappings = {
+const mappings: estypes.MappingTypeMapping = {
   properties: {
     fulltextSummary: {
       type: 'text',
       analyzer: 'rebuilt_english'
+    },
+    searchTitle: {
+      type: 'text',
+      analyzer: 'standard',
+      fields: {
+        keyword: {
+          type: 'keyword',
+          ignore_above: 256
+        },
+        translit: {
+          type: 'text',
+          analyzer: 'translit_analyzer'
+        },
+        keyboard_latin_to_cyrillic: {
+          type: 'text',
+          analyzer: 'rebuilt_english',
+          search_analyzer: 'keyboard_latin_to_cyrillic_analyzer'
+        },
+        keyboard_cyrillic_to_latin: {
+          type: 'text',
+          analyzer: 'rebuilt_english',
+          search_analyzer: 'keyboard_cyrillic_to_latin_analyzer'
+        }
+      }
     },
     workspaceId: {
       type: 'keyword',
@@ -98,6 +124,10 @@ const mappings = {
       type: 'date',
       format: 'epoch_millis',
       index: true
+    },
+    viewerId: {
+      type: 'keyword',
+      index: true
     }
   }
 }
@@ -125,7 +155,7 @@ class ElasticAdapter implements FullTextAdapter {
           index: [`${this.indexBaseName}_*`]
         })
       )
-      const allIndexes = Object.keys(existingVersions.body)
+      const allIndexes = Object.keys(existingVersions)
       const existingOldVersionIndices = allIndexes.filter((name) => name !== indexName)
       const existsIndex = allIndexes.find((it) => it === indexName) !== undefined
       let shouldDropExistingIndex = false
@@ -135,8 +165,8 @@ class ElasticAdapter implements FullTextAdapter {
             index: indexName
           })
         )
-        for (const [propName, propType] of Object.entries(mappings.properties)) {
-          if (mapping.body[indexName]?.mappings.properties?.[propName]?.type !== propType.type) {
+        for (const [propName, propType] of Object.entries(mappings.properties ?? {})) {
+          if ((mapping as any)[indexName]?.mappings?.properties?.[propName]?.type !== propType.type) {
             shouldDropExistingIndex = true
             break
           }
@@ -153,37 +183,71 @@ class ElasticAdapter implements FullTextAdapter {
         await ctx.with('create-index', { indexName }, () =>
           this.client.indices.create({
             index: indexName,
-            body: {
-              settings: {
-                analysis: {
-                  filter: {
-                    english_stemmer: {
-                      type: 'stemmer',
-                      language: 'english'
-                    },
-                    english_possessive_stemmer: {
-                      type: 'stemmer',
-                      language: 'possessive_english'
-                    }
+            settings: {
+              analysis: {
+                char_filter: {
+                  keyboard_layout_mapping_latin_to_cyrillic: {
+                    type: 'mapping',
+                    mappings: KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC
                   },
-                  analyzer: {
-                    rebuilt_english: {
-                      type: 'custom',
-                      tokenizer: 'standard',
-                      filter: ['english_possessive_stemmer', 'lowercase', 'english_stemmer']
-                    }
+                  keyboard_layout_mapping_cyrillic_to_latin: {
+                    type: 'mapping',
+                    mappings: KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN
+                  }
+                },
+                filter: {
+                  english_stemmer: {
+                    type: 'stemmer',
+                    language: 'english'
+                  },
+                  english_possessive_stemmer: {
+                    type: 'stemmer',
+                    language: 'possessive_english'
+                  },
+                  transliteration_filter: {
+                    type: 'icu_transform',
+                    id: 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC'
+                  },
+                  remove_apostrophe: {
+                    type: 'pattern_replace',
+                    pattern: "[ʹ\\'ʼ]",
+                    replacement: ''
+                  }
+                },
+                analyzer: {
+                  keyboard_latin_to_cyrillic_analyzer: {
+                    type: 'custom',
+                    char_filter: ['keyboard_layout_mapping_latin_to_cyrillic'],
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'english_stemmer']
+                  },
+                  keyboard_cyrillic_to_latin_analyzer: {
+                    type: 'custom',
+                    char_filter: ['keyboard_layout_mapping_cyrillic_to_latin'],
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'english_stemmer']
+                  },
+                  translit_analyzer: {
+                    type: 'custom',
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'icu_folding', 'transliteration_filter', 'remove_apostrophe']
+                  },
+                  rebuilt_english: {
+                    type: 'custom',
+                    tokenizer: 'standard',
+                    filter: ['english_possessive_stemmer', 'lowercase', 'english_stemmer']
                   }
                 }
-              },
-              mappings
-            }
+              }
+            },
+            mappings
           })
         )
       } else {
         await ctx.with('put-mapping', {}, () =>
           this.client.indices.putMapping({
             index: indexName,
-            body: mappings
+            ...mappings
           })
         )
       }
@@ -206,7 +270,8 @@ class ElasticAdapter implements FullTextAdapter {
     ctx: MeasureContext,
     workspaceId: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] }
+    options: SearchOptions & { scoring?: SearchScoring[] },
+    viewerId?: string
   ): Promise<SearchStringResult> {
     try {
       const elasticQuery: any = {
@@ -216,17 +281,40 @@ class ElasticAdapter implements FullTextAdapter {
               bool: {
                 must: [
                   {
-                    simple_query_string: {
-                      query: query.query,
-                      analyze_wildcard: true,
-                      flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                      default_operator: 'and',
-                      fields: [
-                        'searchTitle^50', // boost
-                        'searchShortTitle^50',
-                        '*' // Search in all other fields without a boost
-                      ]
-                    }
+                    ...(query.query.startsWith('*')
+                      ? {
+                          query_string: {
+                            query: query.query,
+                            analyze_wildcard: true,
+                            allow_leading_wildcard: true,
+                            lenient: true,
+                            default_operator: 'and',
+                            fields: [
+                              'searchTitle^50', // boost
+                              'searchShortTitle^50',
+                              '*', // Search in all other fields without a boost
+                              'searchTitle.translit^10',
+                              'searchTitle.keyboard_latin_to_cyrillic^10',
+                              'searchTitle.keyboard_cyrillic_to_latin^10'
+                            ]
+                          }
+                        }
+                      : {
+                          simple_query_string: {
+                            query: query.query,
+                            analyze_wildcard: true,
+                            flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                            default_operator: 'and',
+                            fields: [
+                              'searchTitle^50', // boost
+                              'searchShortTitle^50',
+                              '*', // Search in all other fields without a boost
+                              'searchTitle.translit^10',
+                              'searchTitle.keyboard_latin_to_cyrillic^10',
+                              'searchTitle.keyboard_cyrillic_to_latin^10'
+                            ]
+                          }
+                        })
                   },
                   {
                     term: {
@@ -259,13 +347,21 @@ class ElasticAdapter implements FullTextAdapter {
         })
       }
 
+      if (viewerId !== undefined) {
+        filter.push({
+          bool: {
+            should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
+          }
+        })
+      }
+
       if (filter.length > 0) {
         elasticQuery.query.function_score.query.bool.filter = filter
       }
 
       if (options.scoring !== undefined) {
         const scoringTerms: any[] = options.scoring.map((scoringOption): any => {
-          const field = Object.hasOwn(mappings.properties, scoringOption.attr)
+          const field = Object.hasOwn(mappings.properties ?? {}, scoringOption.attr)
             ? scoringOption.attr
             : `${scoringOption.attr}.keyword`
           return {
@@ -282,15 +378,18 @@ class ElasticAdapter implements FullTextAdapter {
 
       const result = await this.client.search({
         index: this.indexName,
-        body: elasticQuery
+        ...elasticQuery
       })
 
       const resp: SearchStringResult = { docs: [] }
-      if (result.body.hits !== undefined) {
-        if (result.body.hits.total?.value !== undefined) {
-          resp.total = result.body.hits.total?.value
+      if (result.hits !== undefined) {
+        const total = result.hits.total as any
+        if (total?.value !== undefined) {
+          resp.total = total.value
+        } else if (typeof total === 'number') {
+          resp.total = total
         }
-        resp.docs = result.body.hits.hits.map((hit: any) => ({ ...hit._source, _score: hit._score }))
+        resp.docs = result.hits.hits.map((hit: any) => ({ ...hit._source, _score: hit._score }))
       }
 
       return resp
@@ -311,19 +410,44 @@ class ElasticAdapter implements FullTextAdapter {
     _classes: Ref<Class<Doc>>[],
     query: DocumentQuery<Doc>,
     size: number | undefined,
-    from: number | undefined
+    from: number | undefined,
+    viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
     const request: any = {
       bool: {
         must: [
           {
-            simple_query_string: {
-              query: query.$search,
-              analyze_wildcard: true,
-              flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-              default_operator: 'and'
-            }
+            ...(query.$search.startsWith('*')
+              ? {
+                  query_string: {
+                    query: query.$search,
+                    analyze_wildcard: true,
+                    allow_leading_wildcard: true,
+                    lenient: true,
+                    default_operator: 'and',
+                    fields: [
+                      '*',
+                      'searchTitle.translit',
+                      'searchTitle.keyboard_latin_to_cyrillic',
+                      'searchTitle.keyboard_cyrillic_to_latin'
+                    ]
+                  }
+                }
+              : {
+                  simple_query_string: {
+                    query: query.$search,
+                    analyze_wildcard: true,
+                    flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                    default_operator: 'and',
+                    fields: [
+                      '*',
+                      'searchTitle.translit',
+                      'searchTitle.keyboard_latin_to_cyrillic',
+                      'searchTitle.keyboard_cyrillic_to_latin'
+                    ]
+                  }
+                })
           },
           {
             term: {
@@ -345,9 +469,17 @@ class ElasticAdapter implements FullTextAdapter {
       }
     }
 
+    if (viewerId !== undefined) {
+      request.bool.filter.push({
+        bool: {
+          should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
+        }
+      })
+    }
+
     for (const [q, v] of Object.entries(query)) {
       if (!q.startsWith('$')) {
-        const field = Object.hasOwn(mappings.properties, q) ? q : `${q}.keyword`
+        const field = Object.hasOwn(mappings.properties ?? {}, q) ? q : `${q}.keyword`
         if (typeof v === 'object') {
           if (v.$in !== undefined) {
             request.bool.should.push({
@@ -378,11 +510,9 @@ class ElasticAdapter implements FullTextAdapter {
         () =>
           this.client.search({
             index: this.indexName,
-            body: {
-              query: request,
-              size: size ?? 200,
-              from: from ?? 0
-            }
+            query: request,
+            size: size ?? 200,
+            from: from ?? 0
           }),
         {
           _classes,
@@ -391,7 +521,7 @@ class ElasticAdapter implements FullTextAdapter {
           query: request
         }
       )
-      const hits = result.body.hits.hits as any[]
+      const hits = (result.hits?.hits as any[]) ?? []
       return hits.map((hit) => ({ ...hit._source, _score: hit._score }))
     } catch (err: any) {
       if (err.name === 'ConnectionError') {
@@ -406,7 +536,7 @@ class ElasticAdapter implements FullTextAdapter {
 
   private getTerms (values: string[], field: string, extra: any = {}): any {
     return {
-      [Object.hasOwn(mappings.properties, field) ? field : `${field}.keyword`]: values,
+      [Object.hasOwn(mappings.properties ?? {}, field) ? field : `${field}.keyword`]: values,
       ...extra
     }
   }
@@ -416,21 +546,20 @@ class ElasticAdapter implements FullTextAdapter {
       workspaceId,
       ...doc
     }
-    const fulltextId = this.getFulltextDocId(workspaceId, doc.id)
+    const internalId = doc.viewerId != null ? (`${doc.id}_${doc.viewerId}` as Ref<Doc>) : doc.id
+    const fulltextId = this.getFulltextDocId(workspaceId, internalId)
     if (doc.data === undefined) {
       await this.client.index({
         index: this.indexName,
         id: fulltextId,
-        type: '_doc',
-        body: wsDoc
+        document: wsDoc
       })
     } else {
       await this.client.index({
         index: this.indexName,
         id: fulltextId,
-        type: '_doc',
         pipeline: 'attachment',
-        body: wsDoc
+        document: wsDoc
       })
     }
     return {}
@@ -445,9 +574,7 @@ class ElasticAdapter implements FullTextAdapter {
     await this.client.update({
       index: this.indexName,
       id: this.getFulltextDocId(workspaceId, id),
-      body: {
-        doc: update
-      }
+      doc: update
     })
 
     return {}
@@ -460,21 +587,20 @@ class ElasticAdapter implements FullTextAdapter {
 
       const operations = part.flatMap((doc) => {
         const wsDoc = { workspaceId, ...doc }
-        return [
-          { index: { _index: this.indexName, _id: this.getFulltextDocId(workspaceId, doc.id) } },
-          { ...wsDoc, type: '_doc' }
-        ]
+        const internalId = doc.viewerId != null ? (`${doc.id}_${doc.viewerId}` as Ref<Doc>) : doc.id
+        const fulltextId = this.getFulltextDocId(workspaceId, internalId)
+        return [{ index: { _index: this.indexName, _id: fulltextId } }, { ...wsDoc }]
       })
 
-      const response = await this.client.bulk({ refresh: true, body: operations })
-      if ((response as any).body.errors === true) {
-        const errors = response.body.items.filter((it: any) => it.index.error !== undefined)
-        const errorIds = new Set(errors.map((it: any) => it.index._id))
+      const response = await this.client.bulk({ refresh: true, operations })
+      if (response.errors) {
+        const errors = response.items.filter((it) => it.index?.error !== undefined)
+        const errorIds = new Set(errors.map((it) => it.index?._id).filter(notEmpty))
         const erroDocs = docs.filter((it) => errorIds.has(it.id))
         // Collect only errors
         const errs = Array.from(
-          errors.map((it: any) => {
-            return `${it.index.error.reason}: ${it.index.error.caused_by?.reason}`
+          errors.map((it) => {
+            return `${it.index?.error?.reason ?? ''}: ${it.index?.error?.caused_by?.reason ?? ''}`
           })
         ).join('\n')
 
@@ -508,14 +634,14 @@ class ElasticAdapter implements FullTextAdapter {
           if (v.$in !== undefined) {
             elasticQuery.bool.must.push({
               terms: {
-                [Object.hasOwn(mappings.properties, q) ? q : `${q}.keyword`]: v.$in
+                [Object.hasOwn(mappings.properties ?? {}, q) ? q : `${q}.keyword`]: v.$in
               }
             })
           }
         } else {
           elasticQuery.bool.must.push({
             term: {
-              [Object.hasOwn(mappings.properties, q) ? q : `${q}.keyword`]: {
+              [Object.hasOwn(mappings.properties ?? {}, q) ? q : `${q}.keyword`]: {
                 value: v
               }
             }
@@ -525,18 +651,15 @@ class ElasticAdapter implements FullTextAdapter {
     }
 
     await this.client.updateByQuery({
-      type: '_doc',
       index: this.indexName,
-      body: {
-        query: elasticQuery,
-        script: {
-          source:
-            'for(int i = 0; i < params.updateFields.size(); i++) { ctx._source[params.updateFields[i].key] = params.updateFields[i].value }',
-          params: {
-            updateFields: Object.entries(update).map(([key, value]) => ({ key, value }))
-          },
-          lang: 'painless'
-        }
+      query: elasticQuery,
+      script: {
+        source:
+          'for(int i = 0; i < params.updateFields.size(); i++) { ctx._source[params.updateFields[i].key] = params.updateFields[i].value }',
+        params: {
+          updateFields: Object.entries(update).map(([key, value]) => ({ key, value }))
+        },
+        lang: 'painless'
       }
     })
     return []
@@ -546,33 +669,27 @@ class ElasticAdapter implements FullTextAdapter {
     try {
       while (docs.length > 0) {
         const part = docs.splice(0, 5000)
-        await this.client.deleteByQuery(
-          {
-            type: '_doc',
-            index: this.indexName,
-            body: {
-              query: {
-                bool: {
-                  must: [
-                    {
-                      terms: {
-                        _id: part.map((it) => this.getFulltextDocId(workspaceId, it)),
-                        boost: 1.0
-                      }
-                    },
-                    {
-                      term: {
-                        workspaceId
-                      }
-                    }
-                  ]
+        await this.client.deleteByQuery({
+          index: this.indexName,
+          query: {
+            bool: {
+              must: [
+                {
+                  terms: {
+                    id: part,
+                    boost: 1.0
+                  }
+                },
+                {
+                  term: {
+                    workspaceId
+                  }
                 }
-              },
-              size: part.length
+              ]
             }
           },
-          undefined
-        )
+          max_docs: part.length
+        })
       }
     } catch (e: any) {
       if (e instanceof esErr.ResponseError && e.meta.statusCode === 404) {
@@ -601,14 +718,14 @@ class ElasticAdapter implements FullTextAdapter {
           if (v.$in !== undefined) {
             elasticQuery.bool.must.push({
               terms: {
-                [Object.hasOwn(mappings.properties, q) ? q : `${q}.keyword`]: v.$in
+                [Object.hasOwn(mappings.properties ?? {}, q) ? q : `${q}.keyword`]: v.$in
               }
             })
           }
         } else {
           elasticQuery.bool.must.push({
             term: {
-              [Object.hasOwn(mappings.properties, q) ? q : `${q}.keyword`]: {
+              [Object.hasOwn(mappings.properties ?? {}, q) ? q : `${q}.keyword`]: {
                 value: v
               }
             }
@@ -618,11 +735,8 @@ class ElasticAdapter implements FullTextAdapter {
     }
     try {
       await this.client.deleteByQuery({
-        type: '_doc',
         index: this.indexName,
-        body: {
-          query: elasticQuery
-        }
+        query: elasticQuery
       })
     } catch (e: any) {
       if (e instanceof esErr.ResponseError && e.meta.statusCode === 404) {
@@ -634,26 +748,20 @@ class ElasticAdapter implements FullTextAdapter {
 
   async clean (ctx: MeasureContext, workspaceId: WorkspaceUuid): Promise<void> {
     try {
-      await this.client.deleteByQuery(
-        {
-          type: '_doc',
-          index: this.indexName,
-          body: {
-            query: {
-              bool: {
-                must: [
-                  {
-                    term: {
-                      workspaceId
-                    }
-                  }
-                ]
+      await this.client.deleteByQuery({
+        index: this.indexName,
+        query: {
+          bool: {
+            must: [
+              {
+                term: {
+                  workspaceId
+                }
               }
-            }
+            ]
           }
-        },
-        undefined
-      )
+        }
+      })
     } catch (e: any) {
       if (e instanceof esErr.ResponseError && e.meta.statusCode === 404) {
         return
@@ -665,30 +773,27 @@ class ElasticAdapter implements FullTextAdapter {
   async load (ctx: MeasureContext, workspaceId: WorkspaceUuid, docs: Ref<Doc>[]): Promise<IndexedDoc[]> {
     const resp = await this.client.search({
       index: this.indexName,
-      type: '_doc',
-      body: {
-        query: {
-          bool: {
-            must: [
-              {
-                terms: {
-                  _id: docs.map((it) => this.getFulltextDocId(workspaceId, it)),
-                  boost: 1.0
-                }
-              },
-              {
-                term: {
-                  workspaceId
-                }
+      query: {
+        bool: {
+          must: [
+            {
+              terms: {
+                id: docs,
+                boost: 1.0
               }
-            ]
-          }
-        },
-        size: docs.length
-      }
+            },
+            {
+              term: {
+                workspaceId
+              }
+            }
+          ]
+        }
+      },
+      size: docs.length
     })
     return Array.from(
-      resp.body.hits.hits.map((hit: any) => ({ ...hit._source, id: this.getDocId(workspaceId, hit._id) }))
+      (resp.hits?.hits ?? []).map((hit: any) => ({ ...hit._source, id: this.getDocId(workspaceId, hit._id) }))
     )
   }
 }
