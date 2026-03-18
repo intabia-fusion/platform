@@ -205,6 +205,8 @@
       .catch((err) => {
         console.error('Failed to get presence.function.FolloweeDataSubscribe', err)
       })
+
+    window.addEventListener('keydown', handleKeydown, true)
   })
 
   onDestroy(() => {
@@ -223,7 +225,23 @@
       .catch((err) => {
         console.error('failed to get presence.function.FolloweeDataUnsubscribe', err)
       })
+    window.removeEventListener('keydown', handleKeydown, true)
   })
+
+  function handleKeydown (event: KeyboardEvent): void {
+    if (event.key === 'Delete' || event.key === 'Backspace') return
+    if (!selected) return
+    if (fullSize) return
+    if (cmdEditor !== undefined && cmdEditor.contains(window.document.activeElement)) return
+    event.preventDefault()
+    if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ' && !readonly) {
+      if (event.shiftKey && !disableRedo) {
+        commandsProcessor.redo()
+      } else if (!event.shiftKey && !disableUndo) {
+        commandsProcessor.undo()
+      }
+    }
+  }
 </script>
 
 {#if savedCmds !== undefined && savedProps !== undefined}
