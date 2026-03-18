@@ -25,7 +25,8 @@ export default mergeIds(loginId, login, {
     RequiredField: '' as StatusCode<{ field: string }>,
     FieldsDoNotMatch: '' as StatusCode<{ field: string, field2: string }>,
     ConnectingToServer: '' as StatusCode,
-    IncorrectValue: '' as StatusCode<{ field: string }>
+    IncorrectValue: '' as StatusCode<{ field: string }>,
+    JoinWorkspaceError: '' as StatusCode
   },
   string: {
     CreateWorkspace: '' as IntlString,
@@ -82,11 +83,14 @@ export default mergeIds(loginId, login, {
     DesktopApp: '' as IntlString,
     EditBoxPlaceholder: '' as IntlString,
     JoinWithThisAccount: '' as IntlString,
+    JoinAs: '' as IntlString<{ name: string }>,
     UseDifferentAccount: '' as IntlString,
     UseCurrentAccountToJoin: '' as IntlString,
     LogInAndJoin: '' as IntlString,
     SignUpAndJoin: '' as IntlString,
     CreateNewAccount: '' as IntlString,
-    SignedInAs: '' as IntlString<{ name: string }>
+    SignedInAs: '' as IntlString<{ name: string }>,
+    HowToLogin: '' as IntlString,
+    AlreadySignedIn: '' as IntlString
   }
 })

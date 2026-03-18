@@ -19,6 +19,7 @@
   import { doLogin, doLoginNavigate } from '../utils'
   import Form from './Form.svelte'
   import { recoveryAction } from '../actions'
+  import type { BottomAction } from '../index'
   import login from '../plugin'
 
   export let navigateUrl: string | undefined = undefined
@@ -27,6 +28,7 @@
   export let caption: IntlString = login.string.LogIn
   export let subtitle: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
+  export let extraBottomActions: BottomAction[] = []
 
   $: fields = [
     { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' },
@@ -51,7 +53,7 @@
   let isLoading = false
 
   const action = {
-    i18n: login.string.LogIn,
+    i18n: caption,
     func: async () => {
       isLoading = true
       try {
@@ -86,7 +88,7 @@
   {action}
   {signUpDisabled}
   {isLoading}
-  bottomActions={[recoveryAction]}
+  bottomActions={[recoveryAction, ...extraBottomActions]}
   ignoreInitialValidation
   withProviders
 />

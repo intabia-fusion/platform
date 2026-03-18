@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { OK, Severity, Status } from '@hcengineering/platform'
+  import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
+  import { type LoginInfo } from '@hcengineering/account-client'
   import { logIn } from '@hcengineering/workbench'
   import { signupStore } from '@hcengineering/analytics-providers'
 
@@ -32,6 +33,9 @@
   export let localLoginHidden = false
   export let navigateUrl: string | undefined = undefined
   export let useOTP = true // False only for dev/tests
+  export let caption: IntlString = login.string.SignUp
+  export let subtitle: string | undefined = undefined
+  export let onSignUp: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
 
   let fields: Array<Field>
   let form: Form
@@ -83,7 +87,7 @@
   })
 
   const action = {
-    i18n: login.string.SignUp,
+    i18n: caption,
     func: async () => {
       if (useOTP) {
         status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
@@ -100,7 +104,9 @@
 
         status = loginStatus
 
-        if (result != null) {
+        if (onSignUp !== undefined) {
+          void onSignUp(result, status)
+        } else if (result != null) {
           await logIn(result)
           goTo('confirmationSend')
         }
@@ -126,7 +132,7 @@
 </script>
 
 {#if step === OtpLoginSteps.Email}
-  <Form bind:this={form} caption={login.string.SignUp} {status} {fields} {object} {action} withProviders>
+  <Form bind:this={form} {caption} {subtitle} {status} {fields} {object} {action} withProviders>
     <div slot="after-fields" class="form-row">
       {#if useOTP}
         <label class="check-label">
@@ -152,6 +158,7 @@
     loginState="signup"
     password={object.password}
     retryOn={otpRetryOn}
+    onLogin={onSignUp}
     on:step={handleStep}
   />
 {/if}

@@ -3,7 +3,8 @@
     "RequiredField": "必須フィールド {field}",
     "FieldsDoNotMatch": "{field} が {field2} と一致しません",
     "ConnectingToServer": "サーバーに接続中....",
-    "IncorrectValue": "不正な値 {field}"
+    "IncorrectValue": "不正な値 {field}",
+    "JoinWorkspaceError": "ワークスペースへの参加に失敗しました"
   },
   "string": {
     "LogIn": "ログイン",
@@ -89,11 +90,14 @@
     "BackLabel": "戻る",
     "PasswordExpiredDesc": "パスワードの有効期限が切れています。続行するには新しいパスワードを設定してください。",
     "JoinWithThisAccount": "このアカウントで参加",
+    "JoinAs": "{name} として参加",
     "UseDifferentAccount": "別のアカウントを使用",
     "UseCurrentAccountToJoin": "すでにサインインしていますか？",
     "LogInAndJoin": "ログインして参加",
     "SignUpAndJoin": "サインアップして参加",
     "CreateNewAccount": "新規アカウントを作成",
-    "SignedInAs": "{name} としてサインイン中"
+    "SignedInAs": "{name} としてサインイン中",
+    "HowToLogin": "どのようにログインしますか？",
+    "AlreadySignedIn": "既存のアカウントで参加"
   }
 }

@@ -139,6 +139,10 @@ test.describe('Workspace tests', () => {
         password: '1234'
       }
 
+      // Join page shows initial screen first, click "Create new account"
+      const joinPage2 = new SignInJoinPage(page2)
+      await joinPage2.goToSignup()
+
       const signUpPage2 = new SignUpPage(page2)
       await signUpPage2.signUp(newUser2)
 
@@ -185,7 +189,7 @@ test.describe('Workspace tests', () => {
       const signUpPage2 = new SignUpPage(page2)
       await signUpPage2.signUp(newUser2)
 
-      // Ok we signed in, and no workspace present.
+      // User has an account but no active cookie session, use login to join
       await page2.goto(linkText ?? '')
       const joinPage = new SignInJoinPage(page2)
       await joinPage.join(newUser2)

@@ -3,7 +3,8 @@
     "RequiredField": "Campo obbligatorio {field}",
     "FieldsDoNotMatch": "{field} non corrisponde a {field2}",
     "ConnectingToServer": "Connessione al server....",
-    "IncorrectValue": "Valore non corretto {field}"
+    "IncorrectValue": "Valore non corretto {field}",
+    "JoinWorkspaceError": "Impossibile unirsi allo spazio di lavoro"
   },
   "string": {
     "ChangePassword": "Cambia password",
@@ -88,11 +89,14 @@
     "Downloads": "Scarica l'app desktop",
     "BackLabel": "Indietro",
     "JoinWithThisAccount": "Partecipa con questo account",
+    "JoinAs": "Partecipa come {name}",
     "UseDifferentAccount": "Usa un altro account",
     "UseCurrentAccountToJoin": "Già effettuato l'accesso?",
     "LogInAndJoin": "Accedi e partecipa",
     "SignUpAndJoin": "Iscriviti e partecipa",
     "CreateNewAccount": "Crea nuovo account",
-    "SignedInAs": "Accesso effettuato come {name}"
+    "SignedInAs": "Accesso effettuato come {name}",
+    "HowToLogin": "Come desideri accedere?",
+    "AlreadySignedIn": "Unisciti con un account esistente"
   }
 }

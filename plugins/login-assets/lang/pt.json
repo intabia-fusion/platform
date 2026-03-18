@@ -3,7 +3,8 @@
     "RequiredField": "Campo obrigatório {field}",
     "FieldsDoNotMatch": "{field} não coincidem com {field2}",
     "ConnectingToServer": "A ligar ao servidor....",
-    "IncorrectValue": "Valor incorreto {field}"
+    "IncorrectValue": "Valor incorreto {field}",
+    "JoinWorkspaceError": "Falha ao entrar no espaço de trabalho"
   },
   "string": {
     "ChangePassword": "Mudar senha",
@@ -88,11 +89,14 @@
     "Downloads": "Baixar o aplicativo para desktop",
     "BackLabel": "Voltar",
     "JoinWithThisAccount": "Participar com esta conta",
+    "JoinAs": "Participar como {name}",
     "UseDifferentAccount": "Usar outra conta",
     "UseCurrentAccountToJoin": "Já tem sessão iniciada?",
     "LogInAndJoin": "Entrar e participar",
     "SignUpAndJoin": "Registar e participar",
     "CreateNewAccount": "Criar nova conta",
-    "SignedInAs": "Sessão iniciada como {name}"
+    "SignedInAs": "Sessão iniciada como {name}",
+    "HowToLogin": "Como gostaria de iniciar sessão?",
+    "AlreadySignedIn": "Participar com conta existente"
   }
 }

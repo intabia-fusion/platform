@@ -3,7 +3,8 @@
     "RequiredField": "Pflichtfeld {field}",
     "FieldsDoNotMatch": "{field} stimmt nicht mit {field2} überein",
     "ConnectingToServer": "Verbindung zum Server wird hergestellt....",
-    "IncorrectValue": "Ungültiger Wert für {field}"
+    "IncorrectValue": "Ungültiger Wert für {field}",
+    "JoinWorkspaceError": "Fehler beim Beitritt zum Arbeitsbereich"
   },
   "string": {
     "ChangePassword": "Passwort ändern",
@@ -89,11 +90,14 @@
     "Downloads": "Desktop-App herunterladen",
     "BackLabel": "Zurück",
     "JoinWithThisAccount": "Mit diesem Konto beitreten",
+    "JoinAs": "Beitreten als {name}",
     "UseDifferentAccount": "Anderes Konto verwenden",
     "UseCurrentAccountToJoin": "Bereits angemeldet?",
     "LogInAndJoin": "Anmelden & beitreten",
     "SignUpAndJoin": "Registrieren & beitreten",
     "CreateNewAccount": "Neues Konto erstellen",
-    "SignedInAs": "Angemeldet als {name}"
+    "SignedInAs": "Angemeldet als {name}",
+    "HowToLogin": "Wie möchten Sie sich anmelden?",
+    "AlreadySignedIn": "Mit bestehendem Konto beitreten"
   }
 }

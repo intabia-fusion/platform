@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import platform, { getMetadata } from '@hcengineering/platform'
-  import { Popup, Scroller, deviceOptionsStore as deviceInfo, themeStore } from '@hcengineering/ui'
+  import { Popup, Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import workbench from '@hcengineering/workbench'
   import { onMount } from 'svelte'
   import login from '../plugin'
