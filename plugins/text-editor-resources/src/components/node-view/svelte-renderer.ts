@@ -56,6 +56,7 @@ export class SvelteRenderer {
   }
 
   updateProps (props: Record<string, any>): void {
+    Object.assign(this.props, props)
     this.component?.$set(props)
   }
 

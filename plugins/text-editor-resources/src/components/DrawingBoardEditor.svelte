@@ -229,12 +229,12 @@
   })
 
   function handleKeydown (event: KeyboardEvent): void {
-    if (fullSize) {
-      return
-    }
+    if (event.key === 'Delete' || event.key === 'Backspace') return
+    if (!selected) return
+    if (fullSize) return
     if (cmdEditor !== undefined && cmdEditor.contains(window.document.activeElement)) return
+    event.preventDefault()
     if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ' && !readonly) {
-      event.preventDefault()
       if (event.shiftKey && !disableRedo) {
         commandsProcessor.redo()
       } else if (!event.shiftKey && !disableUndo) {
