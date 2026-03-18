@@ -174,6 +174,7 @@ export function runAgent (): void {
   cli.runApp(
     new ServerOptions({
       jobMemoryLimitMB: parseInt(process.env.JOB_MEM_LIMIT ?? '512'),
+      numIdleProcesses: parseInt(process.env.NUM_IDLE_PROCESSES ?? '1'),
       port: 8881,
       agent: fileURLToPath(import.meta.url),
       requestFunc,
