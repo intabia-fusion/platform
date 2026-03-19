@@ -19,7 +19,6 @@ import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
-import view from '@hcengineering/view'
 import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
 import {
   getNotificationsCount,
@@ -94,7 +93,7 @@ import {
   canSummarizeMessages,
   DirectLabelProvider
 } from './utils'
-import DeleteMessagePresenter from './components/DeleteMessagePresenter.svelte'
+import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
 
 export { default as ChannelEmbeddedContent } from './components/ChannelEmbeddedContent.svelte'
 export { default as ChatMessageInput } from './components/chat-message/ChatMessageInput.svelte'
@@ -146,20 +145,10 @@ export function chatMessagesFilter (message: ActivityMessage): boolean {
 }
 
 export async function deleteChatMessage (message: ChatMessage): Promise<void> {
-  const client = getClient()
-
   showPopup(
-    MessageBox,
+    DeleteMessageConfirmationPopup,
     {
-      label: chunter.string.DeleteMessage,
-      message: chunter.string.DeleteMessageDescription,
-      component: DeleteMessagePresenter,
-      componentProps: { value: message },
-      dangerous: true,
-      okLabel: view.string.Delete,
-      action: async () => {
-        await client.remove(message)
-      }
+      message
     },
     'center'
   )
