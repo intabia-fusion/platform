@@ -175,7 +175,7 @@ class PostgresDB implements BillingDB {
     const query = `
       SELECT
           DATE_TRUNC('day', egress_start) AS day,
-          COALESCE(SUM(duration), 0) AS minutes
+          COALESCE(SUM(duration) / 60.0, 0) AS minutes
       FROM billing.livekit_egress
       WHERE
           workspace = $1
