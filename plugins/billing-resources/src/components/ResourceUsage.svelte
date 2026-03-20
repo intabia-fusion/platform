@@ -38,6 +38,8 @@
   let totalTokensCount = 0
   let totalMeetingMinutes = 0
   let maxParticipants = 0
+  let avgMeetingDuration = 0
+  let maxMeetingDuration = 0
   let meetingMinutesByDay: { date: number, value: number }[] = []
   let transcriptByDay: { date: number, value: number }[] = []
   let datalakeByType: DatalakeStatsByType[] = []
@@ -56,6 +58,11 @@
     const participantDaily = billingStats.participantDailyStats ?? []
     totalMeetingMinutes = participantDaily.reduce((sum, d) => sum + d.totalMinutes, 0)
     maxParticipants = participantDaily.reduce((max, d) => Math.max(max, d.maxParticipants), 0)
+    avgMeetingDuration =
+      participantDaily.length > 0
+        ? participantDaily.reduce((sum, d) => sum + d.avgMeetingDurationMinutes, 0) / participantDaily.length
+        : 0
+    maxMeetingDuration = participantDaily.reduce((max, d) => Math.max(max, d.maxMeetingDurationMinutes), 0)
 
     meetingMinutesByDay = participantDaily.map((d) => {
       const date = new Date(Date.parse(d.day))
@@ -112,10 +119,20 @@
             label={billingPlugin.string.MeetingMinutesUsage}
             text={formatDuration(totalMeetingMinutes * 60000, $themeStore.language)}
           />
-          <StatsCard label={billingPlugin.string.MaxParticipants} text={maxParticipants.toString()} />
           <StatsCard
             label={billingPlugin.string.OfficeEgressDuration}
             text={formatDuration(totalEgressDuration, $themeStore.language)}
+          />
+        </div>
+        <div class="row">
+          <StatsCard label={billingPlugin.string.MaxParticipants} text={maxParticipants.toString()} />
+          <StatsCard
+            label={billingPlugin.string.AvgMeetingDuration}
+            text={formatDuration(avgMeetingDuration * 60000, $themeStore.language)}
+          />
+          <StatsCard
+            label={billingPlugin.string.MaxMeetingDuration}
+            text={formatDuration(maxMeetingDuration * 60000, $themeStore.language)}
           />
         </div>
         <div class="row">

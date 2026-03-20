@@ -377,17 +377,24 @@ class PostgresDB implements BillingDB {
     end: Date
   ): Promise<ParticipantDailyUsage[]> {
     const query = `
+      WITH room_stats AS (
+        SELECT 
+          workspace,
+          room,
+          COUNT(*) AS participant_count,
+          EXTRACT(EPOCH FROM (MAX(left_at) - MIN(joined_at))) / 60.0 AS meeting_duration_minutes
+        FROM billing.livekit_participant_session
+        WHERE workspace = $1 AND joined_at >= $2 AND joined_at <= $3 AND duration_seconds > 0
+        GROUP BY workspace, room
+      )
       SELECT
         DATE_TRUNC('day', ps.joined_at) AS day,
         COALESCE(SUM(ps.duration_seconds), 0) / 60.0 AS total_minutes,
-        MAX(session_counts.participant_count) AS max_participants
+        MAX(rs.participant_count) AS max_participants,
+        COALESCE(AVG(rs.meeting_duration_minutes), 0) AS avg_meeting_duration_minutes,
+        COALESCE(MAX(rs.meeting_duration_minutes), 0) AS max_meeting_duration_minutes
       FROM billing.livekit_participant_session ps
-      JOIN (
-        SELECT workspace, session_id, COUNT(*) AS participant_count
-        FROM billing.livekit_participant_session
-        WHERE workspace = $1 AND joined_at >= $2 AND joined_at <= $3
-        GROUP BY workspace, session_id
-      ) session_counts ON ps.workspace = session_counts.workspace AND ps.session_id = session_counts.session_id
+      JOIN room_stats rs ON ps.workspace = rs.workspace AND ps.room = rs.room
       WHERE
         ps.workspace = $1
         AND ps.joined_at >= $2
@@ -396,16 +403,22 @@ class PostgresDB implements BillingDB {
       GROUP BY DATE_TRUNC('day', ps.joined_at)
       ORDER BY day;
     `
-    const result = await this.execute<{ day: string, total_minutes: string, max_participants: string }[]>(query, [
-      workspace,
-      start,
-      end
-    ])
+    const result = await this.execute<
+    {
+      day: string
+      total_minutes: string
+      max_participants: string
+      avg_meeting_duration_minutes: string
+      max_meeting_duration_minutes: string
+    }[]
+    >(query, [workspace, start, end])
 
     return result.map((row) => ({
       day: row.day,
       totalMinutes: Math.round(Number(row.total_minutes ?? 0)),
-      maxParticipants: Number(row.max_participants ?? 0)
+      maxParticipants: Number(row.max_participants ?? 0),
+      avgMeetingDurationMinutes: Math.round(Number(row.avg_meeting_duration_minutes ?? 0)),
+      maxMeetingDurationMinutes: Math.round(Number(row.max_meeting_duration_minutes ?? 0))
     }))
   }
 

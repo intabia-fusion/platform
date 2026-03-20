@@ -12,6 +12,8 @@ export interface ParticipantDailyStats {
   day: string
   totalMinutes: number
   maxParticipants: number
+  avgMeetingDurationMinutes: number
+  maxMeetingDurationMinutes: number
 }
 
 export interface TranscriptDailyStats {

@@ -64,6 +64,8 @@
     "TrafficUsage": "Видео/аудио трафик",
     "MeetingMinutesUsage": "Время встреч",
     "MaxParticipants": "Макс. участников",
+    "AvgMeetingDuration": "Средняя продолжительность встреч",
+    "MaxMeetingDuration": "Макс. продолжительность встреч",
     "Usage": "Использование",
     "Of": "из",
     "UpgradePlan": "Обновить план",

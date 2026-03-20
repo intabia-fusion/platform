@@ -64,6 +64,8 @@
     "TrafficUsage": "Video/Audio traffic",
     "MeetingMinutesUsage": "Meeting time",
     "MaxParticipants": "Max participants",
+    "AvgMeetingDuration": "Avg meeting duration",
+    "MaxMeetingDuration": "Max meeting duration",
     "Usage": "Usage",
     "Of": "of",
     "UpgradePlan": "Upgrade Plan",
