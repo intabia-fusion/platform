@@ -1,6 +1,14 @@
 <script lang="ts">
   import { pushRootBarComponent } from '@hcengineering/ui'
-  import { RemoteParticipant, RemoteTrack, RemoteTrackPublication, RoomEvent, Track } from 'livekit-client'
+  import {
+    Participant,
+    RemoteParticipant,
+    RemoteTrack,
+    RemoteTrackPublication,
+    RoomEvent,
+    Track,
+    TrackPublication
+  } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
   import { lkIsConnecting, lkReconnected, lkSessionConnected } from '../liveKitClient'
@@ -12,14 +20,31 @@
   let parentElement: HTMLDivElement
   let audioUnlocked = false
 
+  interface AudioContextState {
+    state: string
+    sampleRate?: number
+    currentTime?: number
+    error?: string
+  }
+
   /**
    * Ensure the Room-level AudioContext is resumed (unlocks autoplay).
    * LiveKit SDK handles this internally but we call it explicitly
    * to cover edge cases where browser blocked audio playback.
+   *
+   * When force is true, bypasses the audioUnlocked flag and checks the actual
+   * AudioContext state — needed when Safari suspends audio after initial unlock.
    */
-  async function ensureAudioUnlocked (): Promise<void> {
-    if (audioUnlocked) return
+  async function ensureAudioUnlocked (force: boolean = false): Promise<void> {
+    if (!force && audioUnlocked) return
     try {
+      // Check actual AudioContext state when forcing recovery
+      if (force) {
+        const ctxState = getAudioContextState()
+        if (ctxState.state === 'running') return
+        console.log('[WorkbenchExtension] AudioContext not running, forcing startAudio()', { state: ctxState.state })
+        audioUnlocked = false
+      }
       await lk.startAudio()
       audioUnlocked = true
       console.log('[WorkbenchExtension] Audio context unlocked via startAudio()')
@@ -49,6 +74,47 @@
       document.addEventListener('click', resumeHandler, { once: true })
       document.addEventListener('keydown', resumeHandler, { once: true })
     })
+  }
+
+  /**
+   * Get current audio context state for debugging Safari audio issues.
+   */
+  function getAudioContextState (): AudioContextState {
+    try {
+      // @ts-expect-error - accessing internal LiveKit audio context
+      const audioCtx = lk.audioContext
+      if (audioCtx != null) {
+        return {
+          state: audioCtx.state as string,
+          sampleRate: audioCtx.sampleRate as number,
+          currentTime: audioCtx.currentTime as number
+        }
+      }
+      return { state: 'not_available' }
+    } catch (e) {
+      return { state: 'error', error: String(e) }
+    }
+  }
+
+  /**
+   * Get current state of all audio elements for debugging.
+   */
+  function getAudioElementsState (): Array<{
+    id: string
+    paused: boolean
+    muted: boolean
+    volume: number
+    readyState: number
+  }> {
+    if (parentElement == null) return []
+    const audioElements = Array.from(parentElement.children) as HTMLAudioElement[]
+    return audioElements.map((el) => ({
+      id: el.id,
+      paused: el.paused,
+      muted: el.muted,
+      volume: el.volume,
+      readyState: el.readyState
+    }))
   }
 
   /**
@@ -129,6 +195,56 @@
     }
   }
 
+  function handleTrackMuted (publication: TrackPublication, participant: Participant): void {
+    if (publication.track?.kind !== Track.Kind.Audio) return
+
+    console.log('[WorkbenchExtension.handleTrackMuted] Audio track muted', {
+      trackSid: publication.trackSid,
+      participantId: participant.identity,
+      participantName: participant.name,
+      isLocal: participant.isLocal,
+      audioContextState: getAudioContextState(),
+      audioElements: getAudioElementsState()
+    })
+  }
+
+  function handleTrackUnmuted (publication: TrackPublication, participant: Participant): void {
+    if (publication.track?.kind !== Track.Kind.Audio) return
+
+    console.log('[WorkbenchExtension.handleTrackUnmuted] Audio track unmuted', {
+      trackSid: publication.trackSid,
+      participantId: participant.identity,
+      participantName: participant.name,
+      isLocal: participant.isLocal,
+      audioContextState: getAudioContextState(),
+      audioElementsBefore: getAudioElementsState()
+    })
+
+    // Safari fix: when remote participant unmutes, AudioContext may get suspended
+    // Force check actual AudioContext state and re-unlock if needed
+    if (!participant.isLocal) {
+      void ensureAudioUnlocked(true).then(() => {
+        // Check if any audio elements got paused after the unmute event
+        setTimeout(() => {
+          const pausedElements = getAudioElementsState().filter((el) => el.paused)
+          if (pausedElements.length > 0) {
+            console.warn(
+              '[WorkbenchExtension.handleTrackUnmuted] Found paused audio elements after unmute, retrying playback',
+              {
+                pausedCount: pausedElements.length,
+                pausedIds: pausedElements.map((el) => el.id)
+              }
+            )
+            retryPausedAudioElements()
+          }
+          console.log('[WorkbenchExtension.handleTrackUnmuted] Audio elements after recovery', {
+            audioElements: getAudioElementsState()
+          })
+        }, 100)
+      })
+    }
+  }
+
   /**
    * Re-attach all remote audio tracks. Called after LiveKit reconnect
    * to ensure audio elements reference the new MediaStreams.
@@ -203,6 +319,8 @@
     pushRootBarComponent('left', love.component.InvitesExt, 25)
     lk.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+    lk.on(RoomEvent.TrackMuted, handleTrackMuted)
+    lk.on(RoomEvent.TrackUnmuted, handleTrackUnmuted)
 
     // Subscribe to incoming meeting invites
     subscribeToIncomingInvites()
@@ -231,6 +349,8 @@
 
     lk.off(RoomEvent.TrackSubscribed, handleTrackSubscribed)
     lk.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+    lk.off(RoomEvent.TrackMuted, handleTrackMuted)
+    lk.off(RoomEvent.TrackUnmuted, handleTrackUnmuted)
     unsubReconnect?.()
     // Unsubscribe from incoming invites
     unsubscribeFromIncomingInvites()
