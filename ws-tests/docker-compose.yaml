@@ -166,6 +166,7 @@ services:
       - 3003:3003
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
+      - ./region-config.yaml:/var/cfg/region-config.yaml
     environment:
       - ACCOUNT_PORT=3003
       - QUEUE_CONFIG=${QUEUE_CONFIG}
@@ -174,9 +175,7 @@ services:
       - STATS_URL=http://huly.local:4901
       - WORKSPACE_LIMIT_PER_USER=100
       - DB_URL=${DB_EU_URL}
-      # - REGION_INFO=|America;europe| # Europe without name will not be available for creation of new workspaces.
-      - REGION_INFO=|America;europe|Europe
-      - TRANSACTOR_URL=ws://huly.local:3334;ws://huly.local:3334,ws://huly.local:3335;ws://huly.local:3335;europe
+      - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://huly.local:8083
       # - LAST_NAME_FIRST=true
@@ -295,7 +294,6 @@ services:
       - CALENDAR_URL=http://huly.local:8095
       - TELEGRAM_URL=http://huly.local:8086
       - REKONI_URL=http://huly.local:4007
-      - COLLABORATOR_URL=ws://huly.local:3079
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - GITHUB_URL=http://huly.local:3501
       - PRINT_URL=http://huly.local:4006

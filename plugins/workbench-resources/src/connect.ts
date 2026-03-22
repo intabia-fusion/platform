@@ -142,6 +142,9 @@ export async function connect (title: string): Promise<Client | undefined> {
   setMetadata(presentation.metadata.WorkspaceUuid, workspaceLoginInfo.workspace)
   setMetadata(presentation.metadata.WorkspaceName, workspaceLoginInfo.name ?? workspaceLoginInfo.workspaceUrl)
   setMetadata(presentation.metadata.Endpoint, workspaceLoginInfo.endpoint)
+  if (workspaceLoginInfo.collaboratorEndpoint != null && workspaceLoginInfo.collaboratorEndpoint !== '') {
+    setMetadata(presentation.metadata.CollaboratorUrl, workspaceLoginInfo.collaboratorEndpoint)
+  }
 
   const fetchWorkspace = await getResource(login.function.FetchWorkspace)
 

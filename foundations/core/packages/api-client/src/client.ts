@@ -76,7 +76,16 @@ export async function connect (url: string, options: ConnectOptions): Promise<Pl
     fullSocialIds: socialIds
   }
 
-  return await createClient(url, endpoint, token, wsLoginInfo.workspace, account, config, options)
+  return await createClient(
+    url,
+    endpoint,
+    token,
+    wsLoginInfo.workspace,
+    account,
+    config,
+    options,
+    wsLoginInfo.collaboratorEndpoint
+  )
 }
 
 async function createClient (
@@ -86,7 +95,8 @@ async function createClient (
   workspaceUuid: WorkspaceUuid,
   account: Account,
   config: ServerConfig,
-  options: ConnectOptions
+  options: ConnectOptions,
+  collaboratorEndpoint?: string
 ): Promise<PlatformClient> {
   addLocation(clientId, () => import(/* webpackChunkName: "client" */ '@hcengineering/client-resources'))
 
@@ -98,7 +108,7 @@ async function createClient (
     connectionTimeout
   })
 
-  return new PlatformClientImpl(url, workspaceUuid, token, config, connection, account)
+  return new PlatformClientImpl(url, workspaceUuid, token, config, connection, account, collaboratorEndpoint)
 }
 
 class PlatformClientImpl implements PlatformClient {
@@ -111,10 +121,11 @@ class PlatformClientImpl implements PlatformClient {
     private readonly token: string,
     private readonly config: ServerConfig,
     private readonly connection: Client,
-    private readonly account: Account
+    private readonly account: Account,
+    collaboratorEndpoint?: string
   ) {
     this.client = new TxOperations(connection, account.primarySocialId)
-    this.markup = createMarkupOperations(url, workspace, token, config)
+    this.markup = createMarkupOperations(url, workspace, token, collaboratorEndpoint ?? '')
   }
 
   // Client

@@ -763,7 +763,7 @@ async function getContent (
   _id: Ref<Card>,
   _class: Ref<Class<Card>>
 ): Promise<string> {
-  const collabClient = control.collaboratorFactory()
+  const collabClient = await control.collaboratorFactory()
   const data = source.split('-')
   const sourceId = data[0]
   const sourceAttr = data[1]

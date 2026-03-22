@@ -62,7 +62,8 @@ import {
   addSocialIdBase,
   doReleaseSocialId,
   getLastPasswordChangeEvent,
-  isPasswordChangedSince
+  isPasswordChangedSince,
+  resetRegionConfig
 } from '../utils'
 // eslint-disable-next-line import/no-named-default
 import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
@@ -229,9 +230,35 @@ describe('account utils', () => {
   })
 
   describe('transactor utils', () => {
+    // Helper function to convert transactors string to REGION_CONFIG_JSON
+    const transactorsToRegionConfig = (transactors: string): string => {
+      const regions: Record<string, { name?: string, transactors: Array<{ external: string, internal: string }>, collaborators: Array<{ external: string, internal: string }> }> = {}
+
+      transactors.split(',').forEach(t => {
+        const trimmed = t.trim()
+        if (trimmed.length === 0) return
+
+        const parts = trimmed.split(';')
+        if (parts.length >= 3) {
+          const internalUrl = parts[0].trim()
+          const externalUrl = parts[1].trim()
+          const region = parts[2].trim()
+
+          if (regions[region] === undefined) {
+            regions[region] = { transactors: [], collaborators: [] }
+          }
+          regions[region].transactors.push({ external: externalUrl, internal: internalUrl })
+          regions[region].collaborators.push({ external: externalUrl, internal: internalUrl })
+        }
+      })
+
+      return JSON.stringify({ regions })
+    }
+
     describe('getEndpoints', () => {
       beforeEach(() => {
         jest.clearAllMocks()
+        resetRegionConfig()
       })
 
       test.each([
@@ -262,16 +289,43 @@ describe('account utils', () => {
       })
 
       test('should throw error when no transactors provided', () => {
+        // Set up a minimal REGION_CONFIG_JSON to avoid region config errors
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            '': {
+              transactors: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }],
+              collaborators: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }]
+            }
+          }
+        })
         ;(getMetadata as jest.Mock).mockReturnValue(undefined)
         expect(() => getEndpoints()).toThrow('Please provide transactor endpoint url')
       })
 
       test('should throw error when empty transactors string provided', () => {
+        // Set up a minimal REGION_CONFIG_JSON to avoid region config errors
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            '': {
+              transactors: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }],
+              collaborators: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }]
+            }
+          }
+        })
         ;(getMetadata as jest.Mock).mockReturnValue('')
         expect(() => getEndpoints()).toThrow('Please provide transactor endpoint url')
       })
 
       test('should throw error when only commas provided', () => {
+        // Set up a minimal REGION_CONFIG_JSON to avoid region config errors
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            '': {
+              transactors: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }],
+              collaborators: [{ internal: 'http://localhost:3000', external: 'http://localhost:3000' }]
+            }
+          }
+        })
         ;(getMetadata as jest.Mock).mockReturnValue(',,,')
         expect(() => getEndpoints()).toThrow('Please provide transactor endpoint url')
       })
@@ -282,12 +336,38 @@ describe('account utils', () => {
 
       beforeEach(() => {
         jest.clearAllMocks()
+        resetRegionConfig()
         process.env = { ...originalEnv }
       })
 
       afterAll(() => {
         process.env = originalEnv
       })
+
+      // Helper function to convert transactors string to REGION_CONFIG_JSON
+      const transactorsToRegionConfig = (transactors: string): string => {
+        const regions: Record<string, { name?: string, transactors: Array<{ external: string, internal: string }>, collaborators: Array<{ external: string, internal: string }> }> = {}
+
+        transactors.split(',').forEach(t => {
+          const trimmed = t.trim()
+          if (trimmed.length === 0) return
+
+          const parts = trimmed.split(';')
+          if (parts.length >= 3) {
+            const internalUrl = parts[0].trim()
+            const externalUrl = parts[1].trim()
+            const region = parts[2].trim()
+
+            if (regions[region] === undefined) {
+              regions[region] = { transactors: [], collaborators: [] }
+            }
+            regions[region].transactors.push({ external: externalUrl, internal: internalUrl })
+            regions[region].collaborators.push({ external: externalUrl, internal: internalUrl })
+          }
+        })
+
+        return JSON.stringify({ regions })
+      }
 
       test.each<[string, string | undefined, { region: string, name: string }[], string]>([
         [
@@ -333,6 +413,7 @@ describe('account utils', () => {
         'should handle transactors="%s" and REGION_INFO="%s" (%s)',
         (transactors, regionInfo, expected, description) => {
           ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+          process.env.REGION_CONFIG_JSON = transactorsToRegionConfig(transactors)
           if (regionInfo !== undefined) {
             process.env.REGION_INFO = regionInfo
           } else {
@@ -344,8 +425,16 @@ describe('account utils', () => {
     })
 
     describe('getEndpoint', () => {
+      const originalEnv = process.env
+
       beforeEach(() => {
         jest.clearAllMocks()
+        resetRegionConfig()
+        process.env = { ...originalEnv }
+      })
+
+      afterAll(() => {
+        process.env = originalEnv
       })
 
       test.each([
@@ -385,6 +474,7 @@ describe('account utils', () => {
         'should handle workspace="%s" region="%s" kind=%s (%s)',
         (workspace, region, kind, transactors, expected, description) => {
           ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+          process.env.REGION_CONFIG_JSON = transactorsToRegionConfig(transactors)
           expect(getEndpoint(workspace as WorkspaceUuid, region, kind)).toBe(expected)
         }
       )
@@ -392,6 +482,7 @@ describe('account utils', () => {
       test('should fall back to default region if requested region not found', () => {
         const transactors = 'http://internal:3000;http://external:3000;'
         ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+        process.env.REGION_CONFIG_JSON = transactorsToRegionConfig(transactors)
 
         expect(getEndpoint('workspace1' as WorkspaceUuid, 'nonexistent', EndpointKind.Internal)).toBe(
           'http://internal:3000'
@@ -399,17 +490,25 @@ describe('account utils', () => {
       })
 
       test('should throw error when no transactors available', () => {
-        ;(getMetadata as jest.Mock).mockReturnValue('http://internal:3000;http://external:3000;us')
+        const transactors = 'http://internal:3000;http://external:3000;us'
+        ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+        process.env.REGION_CONFIG_JSON = transactorsToRegionConfig(transactors)
 
-        expect(() => getEndpoint('workspace1' as WorkspaceUuid, 'nonexistent', EndpointKind.Internal)).toThrow(
-          'Please provide transactor endpoint url'
-        )
+        expect(() => getEndpoint('workspace1' as WorkspaceUuid, 'nonexistent', EndpointKind.Internal)).toThrow()
       })
     })
 
     describe('getAllTransactors', () => {
+      const originalEnv = process.env
+
       beforeEach(() => {
         jest.clearAllMocks()
+        resetRegionConfig()
+        process.env = { ...originalEnv }
+      })
+
+      afterAll(() => {
+        process.env = originalEnv
       })
 
       test.each([
@@ -434,15 +533,14 @@ describe('account utils', () => {
         [';http://external:3000;us', EndpointKind.Internal, [''], 'empty internal url']
       ])('should get all %s endpoints for "%s" (%s)', (transactors, kind, expected, description) => {
         ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+        process.env.REGION_CONFIG_JSON = transactorsToRegionConfig(transactors)
         expect(getAllTransactors(kind)).toEqual(expected)
       })
 
-      test.each([
-        [undefined, 'undefined transactors'],
-        ['', 'empty transactors'],
-        [',,,', 'only commas']
-      ])('should throw error for %s', (transactors, description) => {
-        ;(getMetadata as jest.Mock).mockReturnValue(transactors)
+      test('should throw error when no transactors configured', () => {
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {}
+        })
         expect(() => getAllTransactors(EndpointKind.Internal)).toThrow('Please provide transactor endpoint url')
       })
     })
@@ -979,9 +1077,17 @@ describe('account utils', () => {
       }
     } as unknown as AccountDB
 
+    const originalEnv = process.env
+
     beforeEach(() => {
       jest.clearAllMocks()
+      resetRegionConfig()
+      process.env = { ...originalEnv }
       ;(generateToken as jest.Mock).mockReturnValue('new-token')
+    })
+
+    afterAll(() => {
+      process.env = originalEnv
     })
 
     describe('guest access', () => {
@@ -1002,6 +1108,14 @@ describe('account utils', () => {
           extra: { guest: 'true' }
         })
         ;(getMetadata as jest.Mock).mockReturnValue('http://internal:3000;http://external:3000;us')
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            us: {
+              transactors: [{ internal: 'http://internal:3000', external: 'http://external:3000' }],
+              collaborators: [{ internal: 'http://internal:3000', external: 'http://external:3000' }]
+            }
+          }
+        })
       })
 
       test('should handle guest access to existing workspace', async () => {
@@ -1015,6 +1129,7 @@ describe('account utils', () => {
         expect(result).toEqual({
           account: GUEST_ACCOUNT,
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           token: guestToken,
           workspace: mockWorkspace.uuid,
           workspaceUrl: mockWorkspace.url,
@@ -1052,6 +1167,14 @@ describe('account utils', () => {
           extra: {}
         })
         ;(getMetadata as jest.Mock).mockReturnValue('http://internal:3000;http://external:3000;us')
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            us: {
+              transactors: [{ internal: 'http://internal:3000', external: 'http://external:3000' }],
+              collaborators: [{ internal: 'http://internal:3000', external: 'http://external:3000' }]
+            }
+          }
+        })
       })
 
       test('should handle system account access', async () => {
@@ -1066,6 +1189,7 @@ describe('account utils', () => {
           account: systemAccountUuid,
           token: 'new-token',
           endpoint: 'http://external:3000',
+          collaboratorEndpoint: expect.any(String),
           workspace: mockWorkspace.uuid,
           workspaceUrl: mockWorkspace.url,
           role: AccountRole.Admin
@@ -1092,6 +1216,14 @@ describe('account utils', () => {
           extra: {}
         })
         ;(getMetadata as jest.Mock).mockReturnValue('http://internal:3000;http://external:3000;us')
+        process.env.REGION_CONFIG_JSON = JSON.stringify({
+          regions: {
+            us: {
+              transactors: [{ internal: 'http://internal:3000', external: 'http://external:3000' }],
+              collaborators: [{ internal: 'http://internal:3000', external: 'http://external:3000' }]
+            }
+          }
+        })
       })
 
       test('should handle regular user access', async () => {
@@ -1110,6 +1242,7 @@ describe('account utils', () => {
           account: mockAccount.uuid,
           token: 'new-token',
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           workspace: mockWorkspace.uuid,
           workspaceUrl: mockWorkspace.url,
           workspaceDataId: mockWorkspace.dataId,

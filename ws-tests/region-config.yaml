@@ -1,0 +1,20 @@
+# Region configuration for ws-tests
+# See docs/region_config.md for format details
+
+regions:
+  '':
+    name: America
+    transactors:
+      - external: ws://huly.local:3334
+        internal: ws://huly.local:3334
+    collaborators:
+      - external: ws://huly.local:3079
+        internal: ws://huly.local:3079
+  europe:
+    name: Europe
+    transactors:
+      - external: ws://huly.local:3335
+        internal: ws://huly.local:3335
+    collaborators:
+      - external: ws://huly.local:3079
+        internal: ws://huly.local:3079

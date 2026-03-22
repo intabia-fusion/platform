@@ -483,8 +483,12 @@ describe('account operations', () => {
       generatePersonUuid: jest.fn()
     } as unknown as AccountDB
 
+    const originalEnv = process.env
+
     beforeEach(() => {
       jest.clearAllMocks()
+      utils.resetRegionConfig()
+      process.env = { ...originalEnv }
       // Mock the metadata for endpoints
       ;(getMetadata as jest.Mock).mockImplementation((key) => {
         if (key === accountPlugin.metadata.Transactors) {
@@ -492,6 +496,23 @@ describe('account operations', () => {
         }
         return undefined
       })
+      // Set up REGION_CONFIG_JSON for region config
+      process.env.REGION_CONFIG_JSON = JSON.stringify({
+        regions: {
+          eu: {
+            transactors: [{ external: 'ws://external:3000', internal: 'ws://external:3000' }],
+            collaborators: [{ external: 'ws://external:3000', internal: 'ws://external:3000' }]
+          },
+          us: {
+            transactors: [{ external: 'ws://internal:3000', internal: 'ws://internal:3000' }],
+            collaborators: [{ external: 'ws://internal:3000', internal: 'ws://internal:3000' }]
+          }
+        }
+      })
+    })
+
+    afterAll(() => {
+      process.env = originalEnv
     })
 
     describe('endpoint selection', () => {

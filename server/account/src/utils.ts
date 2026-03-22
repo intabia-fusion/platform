@@ -18,7 +18,6 @@ import {
   type Branding,
   concatLink,
   generateId,
-  groupByArray,
   isActiveMode,
   type MeasureContext,
   type Person,
@@ -32,7 +31,8 @@ import {
   type WorkspaceDataId,
   type WorkspaceInfoWithStatus as WorkspaceInfoWithStatusCore,
   type WorkspaceMode,
-  type WorkspaceUuid
+  type WorkspaceUuid,
+  hashWorkspace
 } from '@hcengineering/core'
 import { getMongoClient } from '@hcengineering/mongo' // TODO: get rid of this import later
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
@@ -45,6 +45,14 @@ import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } 
 import { MongoAccountDB } from './collections/mongo'
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'
+import {
+  type RegionConfig,
+  loadRegionConfig,
+  resolveEndpoints,
+  resolveUrl,
+  toEndpointInfo,
+  getRegionsFromConfig
+} from './region-config'
 import {
   type Account,
   type AccountDB,
@@ -214,33 +222,9 @@ export function wrap (
   }
 }
 
-/**
- * Returns a hash code for a string.
- * (Compatible to Java's String.hashCode())
- *
- * The hash code for a string object is computed as
- *     s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]
- * using number arithmetic, where s[i] is the i th character
- * of the given string, n is the length of the string,
- * and ^ indicates exponentiation.
- * (The hash value of the empty string is zero.)
- *
- */
-function hashWorkspace (dbWorkspaceName: string): number {
-  return [...dbWorkspaceName].reduce((hash, c) => (Math.imul(31, hash) + c.charCodeAt(0)) | 0, 0)
-}
-
 export enum EndpointKind {
   Internal,
   External
-}
-
-const toTransactor = (line: string): EndpointInfo => {
-  const [internalUrl, externalUrl, region] = line
-    .split(';')
-    .map((it) => it.trim())
-    .map((it) => (it.length === 0 ? undefined : it))
-  return { internalUrl: internalUrl ?? '', region: region ?? '', externalUrl: externalUrl ?? internalUrl ?? '' }
 }
 
 /**
@@ -263,6 +247,24 @@ export const getEndpoints = (): string[] => {
   return endpoints
 }
 
+// Region config singleton
+let _regionConfig: RegionConfig | undefined
+
+export function initRegionConfig (): void {
+  _regionConfig = loadRegionConfig()
+}
+
+export function resetRegionConfig (): void {
+  _regionConfig = undefined
+}
+
+export function getRegionConfig (): RegionConfig {
+  if (_regionConfig === undefined) {
+    _regionConfig = loadRegionConfig()
+  }
+  return _regionConfig
+}
+
 // Info is static, so no need to calculate it every time.
 let regionInfo: RegionInfo[] = []
 
@@ -279,21 +281,23 @@ export const getRegions = (): RegionInfo[] => {
  */
 export const _getRegions = (): RegionInfo[] => {
   let _regionInfo: RegionInfo[] = []
-  const endpoints = getEndpoints()
-    .map(toTransactor)
-    .map((it) => ({ region: it.region.trim(), name: '' }))
+
+  // Try to derive from region config first
+  const config = getRegionConfig()
+  const configRegions = getRegionsFromConfig(config)
+
   if (process.env.REGION_INFO !== undefined) {
     _regionInfo = process.env.REGION_INFO.split(';')
       .map((it) => it.split('|'))
       .map((it) => ({ region: it[0].trim(), name: it[1].trim() }))
-    // We need to add all endpoints if they are not in info.
-    for (const endpoint of endpoints) {
-      if (_regionInfo.find((it) => it.region === endpoint.region) === undefined) {
-        _regionInfo.push(endpoint)
+    // We need to add all regions from config if they are not in info.
+    for (const configRegion of configRegions) {
+      if (_regionInfo.find((it) => it.region === configRegion.region) === undefined) {
+        _regionInfo.push(configRegion)
       }
     }
   } else {
-    _regionInfo = endpoints
+    _regionInfo = configRegions
   }
 
   return _regionInfo
@@ -306,7 +310,15 @@ export interface EndpointInfo {
 }
 
 export function getEndpointInfo (): Map<string, EndpointInfo[]> {
-  return groupByArray(getEndpoints().map(toTransactor), (it) => it.region)
+  const config = getRegionConfig()
+  const result = new Map<string, EndpointInfo[]>()
+  for (const [region, endpoints] of Object.entries(config.regions)) {
+    result.set(
+      region,
+      endpoints.transactors.map((t) => toEndpointInfo(t, region))
+    )
+  }
+  return result
 }
 
 export const selectKind = (kind: EndpointKind, it: EndpointInfo): string => {
@@ -314,21 +326,9 @@ export const selectKind = (kind: EndpointKind, it: EndpointInfo): string => {
 }
 
 export const getEndpoint = (workspace: WorkspaceUuid, region: string | undefined, kind: EndpointKind): string => {
-  const hash = hashWorkspace(workspace)
-  const _endpointInfo = getEndpointInfo()
-
-  let transactors = _endpointInfo.get(region ?? '') ?? []
-
-  if (transactors.length === 0) {
-    console.warn('No transactors for the target region, will use default region', { group: region })
-    transactors = _endpointInfo.get('') ?? []
-  }
-
-  if (transactors.length === 0) {
-    throw new Error('Please provide transactor endpoint url')
-  }
-
-  return selectKind(kind, transactors[Math.abs(hash % transactors.length)])
+  const config = getRegionConfig()
+  const resolved = resolveEndpoints(config, workspace, region)
+  return resolveUrl(resolved.transactor, kind)
 }
 
 export const getWorkspaceEndpoint = (
@@ -341,26 +341,37 @@ export const getWorkspaceEndpoint = (
   return byRegion[Math.abs(hash % byRegion.length)]
 }
 
+export const getCollaboratorEndpoint = (
+  workspace: WorkspaceUuid,
+  region: string | undefined,
+  kind: EndpointKind
+): string => {
+  const config = getRegionConfig()
+  const resolved = resolveEndpoints(config, workspace, region)
+  return resolveUrl(resolved.collaborator, kind)
+}
+
+export const getWorkspaceCollaboratorEndpoint = (
+  workspace: WorkspaceUuid,
+  region: string | undefined
+): EndpointInfo => {
+  const config = getRegionConfig()
+  const resolved = resolveEndpoints(config, workspace, region)
+  return toEndpointInfo(resolved.collaborator, resolved.effectiveRegion)
+}
+
 export function getAllTransactors (kind: EndpointKind): string[] {
-  const transactorsUrl = getMetadata(accountPlugin.metadata.Transactors)
-  if (transactorsUrl === undefined) {
+  const config = getRegionConfig()
+  const result: string[] = []
+  for (const endpoints of Object.values(config.regions)) {
+    for (const t of endpoints.transactors) {
+      result.push(resolveUrl(t, kind))
+    }
+  }
+  if (result.length === 0) {
     throw new Error('Please provide transactor endpoint url')
   }
-  const endpoints = transactorsUrl
-    .split(',')
-    .map((it) => it.trim())
-    .filter((it) => it.length > 0)
-
-  if (endpoints.length === 0) {
-    throw new Error('Please provide transactor endpoint url')
-  }
-
-  const toTransactor = (line: string): { internalUrl: string, group: string, externalUrl: string } => {
-    const [internalUrl, externalUrl, group] = line.split(';')
-    return { internalUrl, group: group ?? '', externalUrl: externalUrl ?? internalUrl }
-  }
-
-  return endpoints.map(toTransactor).map((it) => (kind === EndpointKind.External ? it.externalUrl : it.internalUrl))
+  return result
 }
 
 export function hashWithSalt (password: string, salt: Buffer): Buffer {
@@ -799,6 +810,7 @@ export async function selectWorkspace (
     return {
       account: accountUuid,
       endpoint: getEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
+      collaboratorEndpoint: getCollaboratorEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
       token,
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
@@ -817,6 +829,7 @@ export async function selectWorkspace (
         nbf
       }),
       endpoint: getEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
+      collaboratorEndpoint: getCollaboratorEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
       role: AccountRole.Admin
@@ -879,6 +892,7 @@ export async function selectWorkspace (
       nbf
     }),
     endpoint: getEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
+    collaboratorEndpoint: getCollaboratorEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
     workspace: workspace.uuid,
     workspaceUrl: workspace.url,
     workspaceDataId: workspace.dataId,

@@ -199,6 +199,7 @@ services:
       - 3000:3000
     volumes:
       - ./branding.json:/var/cfg/branding.json
+      - ./region-config.yaml:/var/cfg/region-config.yaml
     environment:
       - ACCOUNT_PORT=3000
       - IGNORE_EMAIL_SIGNUP=false # Set to true if you want to disable email/otp confirmations
@@ -208,10 +209,7 @@ services:
       - STATS_URL=http://huly.local:4900
       - WORKSPACE_LIMIT_PER_USER=10000
       - DB_URL=${DB_URL_PG}
-      # - DB_NS=account-2
-      # Pass only one region to disallow selection for new workspaces.
-      - REGION_INFO=|Default
-      - TRANSACTOR_URL=ws://huly.local:3332;;
+      - REGION_CONFIG=/var/cfg/region-config.yaml
       - MAIL_URL=
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://huly.local:8087
@@ -282,7 +280,7 @@ services:
       # - INIT_WORKSPACE=staging-dev
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
-  collaborator:
+  collaborator0:
     image: intabiafusion/collaborator
     extra_hosts:
       - 'huly.local:host-gateway'
@@ -294,6 +292,24 @@ services:
       - 3078:3078
     environment:
       - COLLABORATOR_PORT=3078
+      - SECRET=secret
+      - ACCOUNTS_URL=http://huly.local:3000
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - STATS_URL=http://huly.local:4900
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
+  collaborator1:
+    image: intabiafusion/collaborator
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    links:
+      - minio
+      - transactor
+      - stats
+    ports:
+      - 3077:3077
+    environment:
+      - COLLABORATOR_PORT=3077
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3000
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -321,7 +337,6 @@ services:
       - CALENDAR_URL=http://huly.local:8095
       - TELEGRAM_URL=http://huly.local:8086
       - REKONI_URL=http://huly.local:4004
-      - COLLABORATOR_URL=ws://huly.local:3078
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - GITHUB_URL=http://huly.local:3500
       - PRINT_URL=http://huly.local:4005

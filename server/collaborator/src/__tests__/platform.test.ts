@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { systemAccountUuid } from '@hcengineering/core'
 // Mock config before importing platform
 import { simpleClientFactory, Controller, WorkspaceClient } from '../platform'
 
@@ -106,7 +107,7 @@ describe('platform', () => {
 
       expect(client.workspace).toBe('workspace-1')
       expect(client.client).toBe(mockClient)
-      expect(mockGenerateToken).toHaveBeenCalledWith('1749089e-22e6-48de-af4e-165e18fbd2f9', 'workspace-1', {
+      expect(mockGenerateToken).toHaveBeenCalledWith(systemAccountUuid, 'workspace-1', {
         service: 'collaborator'
       })
     })

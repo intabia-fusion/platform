@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Test-only pgbouncer override.
 # Usage (from tests folder):
 #   docker compose -f ../dev/docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml up -d

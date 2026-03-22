@@ -17,7 +17,6 @@ import { concatLink } from '@hcengineering/core'
 
 export interface ServerConfig {
   ACCOUNTS_URL: string
-  COLLABORATOR_URL: string
   FILES_URL: string
   UPLOAD_URL: string
 }

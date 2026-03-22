@@ -1,0 +1,14 @@
+# Region configuration for local development
+# See docs/region_config.md for format details
+
+regions:
+  '':
+    name: Default
+    transactors:
+      - external: ws://huly.local:3332
+        internal: ws://huly.local:3332
+    collaborators:
+      - external: ws://huly.local:3078
+        internal: ws://huly.local:3078
+      - external: ws://huly.local:3077
+        internal: ws://huly.local:3077

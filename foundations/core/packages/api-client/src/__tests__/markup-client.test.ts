@@ -20,12 +20,7 @@ jest.mock('@hcengineering/text-markdown', () => ({
 }))
 
 describe('MarkupOperations', () => {
-  const mockConfig = {
-    ACCOUNTS_URL: 'https://accounts.example.com',
-    COLLABORATOR_URL: 'https://collaborator.example.com',
-    FILES_URL: 'https://files.example.com',
-    UPLOAD_URL: 'https://upload.example.com'
-  }
+  const collaboratorUrl = 'https://collaborator.example.com'
 
   const workspace = 'test-workspace' as any
   const token = 'test-token'
@@ -43,7 +38,7 @@ describe('MarkupOperations', () => {
     }
     ;(getClient as jest.Mock).mockReturnValue(mockCollaborator)
 
-    operations = createMarkupOperations(url, workspace, token, mockConfig)
+    operations = createMarkupOperations(url, workspace, token, collaboratorUrl)
   })
 
   describe('fetchMarkup', () => {
@@ -163,21 +158,21 @@ describe('MarkupOperations', () => {
 
   describe('initialization', () => {
     it('should initialize collaborator client with correct parameters', () => {
-      expect(getClient).toHaveBeenCalledWith(workspace, token, mockConfig.COLLABORATOR_URL)
+      expect(getClient).toHaveBeenCalledWith(workspace, token, collaboratorUrl)
     })
 
     it('should handle different workspace IDs', () => {
       const differentWorkspace = 'different-workspace' as any
-      createMarkupOperations(url, differentWorkspace, token, mockConfig)
+      createMarkupOperations(url, differentWorkspace, token, collaboratorUrl)
 
-      expect(getClient).toHaveBeenCalledWith(differentWorkspace, token, mockConfig.COLLABORATOR_URL)
+      expect(getClient).toHaveBeenCalledWith(differentWorkspace, token, collaboratorUrl)
     })
 
     it('should handle different tokens', () => {
       const differentToken = 'different-token'
-      createMarkupOperations(url, workspace, differentToken, mockConfig)
+      createMarkupOperations(url, workspace, differentToken, collaboratorUrl)
 
-      expect(getClient).toHaveBeenCalledWith(workspace, differentToken, mockConfig.COLLABORATOR_URL)
+      expect(getClient).toHaveBeenCalledWith(workspace, differentToken, collaboratorUrl)
     })
   })
 })

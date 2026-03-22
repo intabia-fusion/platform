@@ -6,7 +6,6 @@
   "TELEGRAM_URL": "https://platform.intabia.ru/_telegram",
   "GMAIL_URL": "https://platform.intabia.ru/_gmail",
   "CALENDAR_URL": "https://platform.intabia.ru/_calendar",
-  "COLLABORATOR_URL": "wss://platform.intabia.ru/_collaborator",
   "BRANDING_URL": "https://platform.intabia.ru/branding.json",
   "GITHUB_APP": "platform-for-github",
   "GITHUB_CLIENTID": "Iv1.e263a087de0910e0",

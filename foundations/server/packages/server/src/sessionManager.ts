@@ -740,6 +740,7 @@ export class TSessionManager implements SessionManager {
             },
             role: AccountRole.Owner,
             endpoint: { externalUrl: '', internalUrl: '', region: workspaceInfo.region ?? '' },
+            collaboratorEndpoint: { externalUrl: '', internalUrl: '', region: workspaceInfo.region ?? '' },
             progress: workspaceInfo.processingProgress,
             branding: workspaceInfo.branding
           }

@@ -449,6 +449,7 @@ export interface LoginInfoWorkspace {
   mode: WorkspaceMode
   version: WorkspaceVersion
   endpoint: EndpointInfo
+  collaboratorEndpoint: EndpointInfo
   role: AccountRole | null
 
   progress?: number
@@ -467,6 +468,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   workspaceUrl: string
   workspaceDataId?: WorkspaceDataId
   endpoint: string
+  collaboratorEndpoint?: string
   role: AccountRole
   allowGuestSignUp?: boolean
 }

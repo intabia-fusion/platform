@@ -45,7 +45,6 @@
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "SERVER_SECRET": "secret",
         "ENABLE_CONSOLE": "true",
-        "COLLABORATOR_URL": "ws://localhost:3078",
         "REKONI_URL": "http://localhost:4004",
         "FRONT_URL": "http://localhost:8080",
         "ACCOUNTS_URL": "http://localhost:3000",
@@ -90,7 +89,6 @@
         "STORAGE_CONFIG": "minio|localhost?accessKey=minioadmin&secretKey=minioadmin",
         "SERVER_SECRET": "secret",
         "ENABLE_CONSOLE": "true",
-        "COLLABORATOR_URL": "ws://localhost:3079",
         "FRONT_URL": "http://localhost:8083",
         "ACCOUNTS_URL": "http://localhost:3003",
         "MODEL_JSON": "${workspaceRoot}/models/all/bundle/model.json",
@@ -302,7 +300,6 @@
         "ACCOUNTS_URL": "http://localhost:3000",
         "UPLOAD_URL": "/files",
         "SERVER_PORT": "8087",
-        "COLLABORATOR_URL": "ws://localhost:3078",
         "CALENDAR_URL": "http://localhost:8095",
         "GMAIL_URL": "http://localhost:8088",
         "TELEGRAM_URL": "http://localhost:8086",
@@ -563,7 +560,6 @@
         "CLIENT_ID": "${env:POD_GITHUB_CLIENTID}",
         "CLIENT_SECRET": "${env:POD_GITHUB_CLIENT_SECRET}",
         "PRIVATE_KEY": "${env:POD_GITHUB_PRIVATE_KEY}",
-        "COLLABORATOR_URL": "ws://huly.local:3078",
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "PLATFORM_OPERATION_LOGGING": "true",
         "FRONT_URL": "http://localhost:8080",
@@ -588,7 +584,6 @@
         "MODEL_VERSION": "0.7.278",
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "ACCOUNTS_URL": "http://localhost:3000",
-        "COLLABORATOR_URL": "ws://huly.local:3078",
         "PLATFORM_OPERATION_LOGGING": "true",
         "STATS_URL": "http://huly.local:4900",
         "OTEL_EXPORTER_OTLP_ENDPOINT": "http://huly.local:4318",
@@ -630,7 +625,6 @@
       "env": {
         "SERVER_SECRET": "secret",
         "ACCOUNTS_URL": "http://localhost:3000",
-        "COLLABORATOR_URL": "ws://localhost:3078",
         "STORAGE_CONFIG": "minio|localhost?accessKey=minioadmin&secretKey=minioadmin",
         "MONGO_URL": "mongodb://localhost:27017"
       },
@@ -650,9 +644,7 @@
         "SECRET": "secret",
         "ACCOUNTS_URL": "http://localhost:3000",
         "QUEUE_CONFIG": "localhost:19092",
-        "QUEUE_REGION": "cockroach",
-        "TEMPORAL_ADDRESS": "localhost:7233",
-        "COLLABORATOR_URL": "ws://localhost:3078"
+        "QUEUE_REGION": "cockroach"
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "runtimeVersion": "20",

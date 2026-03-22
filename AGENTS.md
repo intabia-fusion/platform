@@ -134,8 +134,8 @@ Respond to user using Russian language, all comments should be in English.
 
 ```bash
 rush install         # Install deps
-rush build           # Build all
-rush build --to PKG  # Build specific
+rush fast-build:validate  # Build all
+rush validate --to PKG  # Build specific
 rush add -p PKG      # Add dependency
 ```
 
@@ -157,7 +157,7 @@ docker compose -f dev/docker-compose.yaml restart love-agent
 
 **Workflow for service changes:**
 1. Make code changes to service
-2. Run `rush build --to <package>` (builds TypeScript)
+2. Run `rush validate --to <package>` (builds TypeScript)
 3. Never Run `rushx format` in the package directory (format & lint) - MAY CAUSE FILE CORRUPTIONS. Lets user do it.
 4. Run `diagnostics` to check for errors
 5. Run `rush docker:build --to <package>` (builds Docker image)
@@ -179,9 +179,9 @@ docker compose -f dev/docker-compose.yaml restart aibot
 
 - ✅ `diagnostics()` - Check all files for errors/warnings (fast, uses language server)
 - ✅ `diagnostics({ path: "plugins/tracker-resources/src/utils.ts" })` - Check specific file
-- ❌ `rush build` - Don't use for error checking (runs full transpilation, slower)
+- ✅ `rush fast:build:validate` - Use for full build and validation.
 
-`rush build` performs transpilation which may succeed even with type errors. Always use `diagnostics` to verify code correctness.
+`rush fast-build:validate` performs transpilation and validation use it to check for compile errors. Or use LSP `diagnostics` to verify code correctness.
 
 ### Validation in Modified Projects
 
@@ -283,7 +283,6 @@ console.log('[ComponentName.methodName] Description', {
 ❌ Mixed concerns
 ❌ Circular deps
 ❌ Ignoring TS errors
-❌ Using `rush build` to check for errors
 ❌ Running formatting in parallel (causes content loss!)
 ❌ Using `--force` flag with formatter
 
