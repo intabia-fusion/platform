@@ -90,7 +90,8 @@ export default mergeIds(contactId, contact, {
     TranslateTo: '' as IntlString,
     DontTranslate: '' as IntlString,
     SelectLanguage: '' as IntlString,
-    SelectLanguages: '' as IntlString
+    SelectLanguages: '' as IntlString,
+    RecentlyUsed: '' as IntlString
   },
   function: {
     GetContactLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,

@@ -127,6 +127,7 @@
     "TranslateTo": "Translate to",
     "DontTranslate": "Don't translate",
     "SelectLanguage": "Select language",
-    "SelectLanguages": "Select languages"
+    "SelectLanguages": "Select languages",
+    "RecentlyUsed": "Recently used"
   }
 }

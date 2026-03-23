@@ -83,11 +83,14 @@ setMetadata(serverNotification.metadata.WebPushUrl, config.webPushUrl)
 setMetadata(serverCalendar.metadata.EndpointURL, process.env.CALENDAR_URL)
 setMetadata(serverCard.metadata.CommunicationEnabled, process.env.COMMUNICATION_API_ENABLED === 'true')
 
+const brandingMap = loadBrandingMap(config.brandingPath)
+console.log(`Started with branding: ${JSON.stringify(brandingMap, null, 2)}`)
+
 const { shutdown, sessionManager } = start(metricsContext, config.dbUrl, {
   fulltextUrl: config.fulltextUrl,
   storageConfig,
   port: config.serverPort,
-  brandingMap: loadBrandingMap(config.brandingPath),
+  brandingMap,
   accountsUrl: config.accountsUrl,
   enableCompression: config.enableCompression,
   communicationApiEnabled: process.env.COMMUNICATION_API_ENABLED === 'true',

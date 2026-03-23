@@ -127,6 +127,7 @@
     "TranslateTo": "翻訳先",
     "DontTranslate": "翻訳しない",
     "SelectLanguage": "言語を選択",
-    "SelectLanguages": "言語を選択"
+    "SelectLanguages": "言語を選択",
+    "RecentlyUsed": "最近使用した"
   }
 }

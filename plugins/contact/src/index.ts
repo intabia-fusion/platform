@@ -218,6 +218,11 @@ export interface Translation extends Preference {
   dontTranslate: string[]
 }
 
+export interface RecentlyUsedPersonsPreference extends Preference {
+  attachedTo: AccountUuid
+  assignees: Ref<Person>[]
+}
+
 /**
  * @public
  */
@@ -237,7 +242,8 @@ export const contactPlugin = plugin(contactId, {
     SocialIdentity: '' as Ref<Class<SocialIdentity>>,
     UserProfile: '' as Ref<MasterTag>,
     UserRole: '' as Ref<Class<UserRole>>,
-    Translation: '' as Ref<Class<Translation>>
+    Translation: '' as Ref<Class<Translation>>,
+    RecentlyUsedPersonsPreference: '' as Ref<Class<RecentlyUsedPersonsPreference>>
   },
   mixin: {
     Employee: '' as Ref<Class<Employee>>
