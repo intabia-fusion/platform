@@ -266,12 +266,12 @@ export interface AccountClient {
 }
 
 /** @public */
-export function getClient (accountsUrl?: string, token?: string, retryTimeoutMs?: number): AccountClient {
+export function getClient (accountsUrl?: string, token?: string, retryTimeoutMs?: number, origin?: string): AccountClient {
   if (accountsUrl === undefined) {
     throw new Error('Accounts url not specified')
   }
 
-  return new AccountClientImpl(accountsUrl, token, retryTimeoutMs)
+  return new AccountClientImpl(accountsUrl, token, retryTimeoutMs, origin)
 }
 
 interface Request {
@@ -286,7 +286,8 @@ class AccountClientImpl implements AccountClient {
   constructor (
     private readonly url: string,
     private readonly token?: string,
-    retryTimeoutMs?: number
+    retryTimeoutMs?: number,
+    private readonly origin?: string
   ) {
     if (url === '') {
       throw new Error('Accounts url not specified')
@@ -301,7 +302,10 @@ class AccountClientImpl implements AccountClient {
           ? {}
           : {
               Authorization: 'Bearer ' + this.token
-            })
+            }),
+        ...origin !== undefined
+          ? { 'X-Origin': origin }
+          : {}
       },
       ...(isBrowser ? { credentials: 'include' } : {})
     }
@@ -319,6 +323,18 @@ class AccountClientImpl implements AccountClient {
   private async _rpc<T>(request: Request): Promise<T> {
     const timezone = getClientTimezone()
     const meta: Record<string, string> = timezone !== undefined ? { 'x-timezone': timezone } : {}
+
+    console.log('RPC', request.method, {
+      ...this.request,
+      headers: {
+        ...this.request.headers,
+        'Content-Type': 'application/json',
+        Connection: 'keep-alive',
+        ...meta
+      },
+      method: 'POST',
+      body: JSON.stringify(request)
+    })
     const response = await fetch(this.url, {
       ...this.request,
       headers: {

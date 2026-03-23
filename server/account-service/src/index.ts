@@ -229,12 +229,22 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   }
 
   function getBranding (ctx: Koa.Context): Branding | null {
+    const keys = Object.keys(brandings)
+    if (keys.length === 0) return null
+
     let host: string | undefined
-    const origin = ctx.request.headers.origin ?? ctx.request.headers.referer
+    const origin = ctx.request.headers.origin ?? ctx.request.headers.referer ?? (ctx.request.headers['x-origin'] as string | undefined)
+
     if (origin !== undefined) {
       host = new URL(origin).host
     }
-    return host !== undefined ? brandings[host] : null
+    let branding: Branding | null = null
+
+    if (host !== undefined) {
+      branding = brandings[host]
+    }
+
+    return branding ?? brandings[keys[0]] ?? null
   }
 
   function getCookieOptions (ctx: Koa.Context): Cookies.SetOption[] {
