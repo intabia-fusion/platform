@@ -535,13 +535,22 @@
     }
   }
 
+  let readTimeout: number | undefined
+  function handleScrollThrottled (): void {
+    if (readTimeout !== undefined) return
+    readTimeout = window.setTimeout(() => {
+      readTimeout = undefined
+      updateSelectedDate()
+      read()
+    }, 100)
+  }
+
   async function handleScroll (): Promise<void> {
     updateScrollData()
     updateDownButtonVisibility($metadataStore, messages, scrollDiv)
     updateShouldScrollToNew()
     loadMore()
-    updateSelectedDate()
-    read()
+    handleScrollThrottled()
   }
 
   function handleResize (): void {
@@ -622,9 +631,6 @@
       editLastMessage()
     }
   }
-  function getKey (messages: ActivityMessage[]): string {
-    return `${messages.length}-${Math.max(...messages.map((m) => m.modifiedOn))}`
-  }
 </script>
 
 <div class="flex-col relative" class:h-full={fullHeight}>
@@ -641,7 +647,6 @@
     loadingOverlay={$isLoadingStore || !isReadStateLoaded || !isScrollInitialized}
     onScroll={handleScroll}
     onResize={handleResize}
-    key={getKey(messages)}
   >
     {#if showBlankView}
       <BlankView
