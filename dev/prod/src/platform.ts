@@ -420,6 +420,21 @@ function configureI18n(): void {
 }
 
 export async function configurePlatform() {
+  const config: Config = await loadServerConfig(configs[clientType ?? ''] ?? '/config.json')
+  console.log('loading configuration', config)
+
+  if (window.location.pathname === '/') {
+    const landingUrl = config.LANDING_URL
+    if (landingUrl !== undefined && landingUrl !== '') {
+      const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
+      if (lastAccount == null) {
+        window.location.href = landingUrl
+        await new Promise(() => {})
+      }
+    }
+  }
+  
+
   setMetadata(platform.metadata.LoadHelper, async (loader) => {
     for (let i = 0; i < 5; i++) {
       try {
@@ -436,12 +451,10 @@ export async function configurePlatform() {
   })
   configureI18n()
 
-  const config: Config = await loadServerConfig(configs[clientType ?? ''] ?? '/config.json')
   const branding: BrandingMap =
     config.BRANDING_URL !== undefined ? await (await fetch(config.BRANDING_URL, { keepalive: true })).json() : {}
   const myBranding = branding[window.location.host] ?? {}
 
-  console.log('loading configuration', config)
   console.log('loaded branding', myBranding)
 
   const title = myBranding.title ?? 'Platform'
@@ -554,18 +567,6 @@ export async function configurePlatform() {
   setMetadata(sign.metadata.SignURL, config.SIGN_URL)
   setMetadata(presence.metadata.PresenceUrl, config.PRESENCE_URL ?? '')
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
-  setMetadata(uiPlugin.metadata.OnRootNavigate, (path: string[]) => {
-    const isRoot = path.length === 0
-    if (!isRoot) {
-      return undefined
-    }
-    const lastAccount = fetchMetadataLocalStorage(login.metadata.LastAccount)
-    const landingUrl = config.LANDING_URL
-    if (isRoot && lastAccount == null && landingUrl !== undefined && landingUrl !== '') {
-      return landingUrl
-    }
-    return undefined
-  })
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
