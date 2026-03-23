@@ -74,8 +74,9 @@ export function getAccountClient (
 ): AccountClient {
   // TODO: make clients cache?
   const accountsUrl = getMetadata(login.metadata.AccountsUrl)
+  const frontUrl = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
 
-  return getAccountClientRaw(accountsUrl, token !== null ? token : undefined)
+  return getAccountClientRaw(accountsUrl, token !== null ? token : undefined, undefined, frontUrl)
 }
 
 /**

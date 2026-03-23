@@ -3,14 +3,14 @@
     "key": "huly-dev",
     "title": "Platform",
     "protocol": "http",
-    "defaultLanguage": "en",
+    "defaultLanguage": "ru",
     "lastNameFirst": "true"
   },
   "huly.local:8087": {
     "key": "huly",
     "title": "Platform",
     "protocol": "http",
-    "defaultLanguage": "en",
+    "defaultLanguage": "ru",
     "lastNameFirst": "true"
   },
   "host.docker.internal:8087": {
