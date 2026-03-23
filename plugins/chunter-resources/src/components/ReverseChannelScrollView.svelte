@@ -25,7 +25,7 @@
   import { DocNotifyContext, ReadState } from '@hcengineering/notification'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
-  import { ModernButton, Scroller } from '@hcengineering/ui'
+  import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
   import { ChatMessage } from '@hcengineering/chunter'
 
@@ -33,7 +33,6 @@
   import chunter from '../plugin'
   import { getScrollToDateOffset, getSelectedDate, jumpToDate, messageInView, readViewportMessages } from '../scroll'
   import { chatReadMessagesStore, recheckNotifications } from '../utils'
-  import BaseChatScroller from './BaseChatScroller.svelte'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -631,6 +630,8 @@
       editLastMessage()
     }
   }
+
+  $: loadingOverlay = $isLoadingStore || !isReadStateLoaded || !isScrollInitialized
 </script>
 
 <div class="flex-col relative" class:h-full={fullHeight}>
@@ -639,12 +640,20 @@
       <JumpToDateSelector {selectedDate} fixed on:jumpToDate={handleJumpToDate} idPrefix={`${uuid}-`} />
     </div>
   {/if}
-  <BaseChatScroller
-    bind:scroller
-    bind:scrollDiv
-    bind:contentDiv
+  {#if loadingOverlay}
+    <div class="overlay">
+      <Loading />
+    </div>
+  {/if}
+  <Scroller
+    bind:this={scroller}
+    bind:divScroll={scrollDiv}
+    bind:divBox={contentDiv}
+    scrollDirection="vertical-reverse"
+    noStretch={!showBlankView}
     bottomStart={!showBlankView}
-    loadingOverlay={$isLoadingStore || !isReadStateLoaded || !isScrollInitialized}
+    disableOverscroll
+    disablePointerEventsOnScroll
     onScroll={handleScroll}
     onResize={handleResize}
   >
@@ -711,7 +720,7 @@
         onKeyDown={handleKeyDown}
       />
     {/if}
-  </BaseChatScroller>
+  </Scroller>
   {#if !isThread && isLatestMessageButtonVisible}
     <div class="down-button absolute">
       <ModernButton
@@ -742,6 +751,17 @@
 {/if}
 
 <style lang="scss">
+  .overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: var(--theme-panel-color);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .selectedDate {
     position: absolute;
     top: 0;
