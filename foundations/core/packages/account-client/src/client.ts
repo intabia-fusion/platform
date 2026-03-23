@@ -266,7 +266,12 @@ export interface AccountClient {
 }
 
 /** @public */
-export function getClient (accountsUrl?: string, token?: string, retryTimeoutMs?: number, origin?: string): AccountClient {
+export function getClient (
+  accountsUrl?: string,
+  token?: string,
+  retryTimeoutMs?: number,
+  origin?: string
+): AccountClient {
   if (accountsUrl === undefined) {
     throw new Error('Accounts url not specified')
   }
@@ -303,9 +308,7 @@ class AccountClientImpl implements AccountClient {
           : {
               Authorization: 'Bearer ' + this.token
             }),
-        ...origin !== undefined
-          ? { 'X-Origin': origin }
-          : {}
+        ...(origin !== undefined ? { 'X-Origin': origin } : {})
       },
       ...(isBrowser ? { credentials: 'include' } : {})
     }

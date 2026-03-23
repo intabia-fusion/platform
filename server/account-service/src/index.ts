@@ -233,7 +233,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     if (keys.length === 0) return null
 
     let host: string | undefined
-    const origin = ctx.request.headers.origin ?? ctx.request.headers.referer ?? (ctx.request.headers['x-origin'] as string | undefined)
+    const origin =
+      ctx.request.headers.origin ??
+      ctx.request.headers.referer ??
+      (ctx.request.headers['x-origin'] as string | undefined)
 
     if (origin !== undefined) {
       host = new URL(origin).host
