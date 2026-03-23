@@ -198,24 +198,6 @@
         dataId={'btnMoreActions'}
         on:click={showContextMenu}
       />
-      <Button
-        icon={setting.icon.Setting}
-        iconProps={{ size: 'medium' }}
-        kind={'icon'}
-        showTooltip={{ label: setting.string.ClassSetting }}
-        dataId={'btnClassSetting'}
-        on:click={(ev) => {
-          ev.stopPropagation()
-          const loc = getCurrentResolvedLocation()
-          loc.path[2] = settingId
-          loc.path[3] = 'setting'
-          loc.path[4] = 'classes'
-          loc.path.length = 5
-          loc.query = { _class }
-          loc.fragment = undefined
-          navigate(loc)
-        }}
-      />
     </svelte:fragment>
 
     <svelte:fragment slot="custom-attributes">

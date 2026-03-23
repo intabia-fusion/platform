@@ -281,10 +281,15 @@
             ev.stopPropagation()
             const loc = getCurrentResolvedLocation()
             loc.path[2] = settingId
-            loc.path[3] = 'setting'
-            loc.path[4] = 'classes'
-            loc.path.length = 5
-            loc.query = { _class }
+            if (projectType?._id != null && issue?.kind != null) {
+              loc.path[3] = 'spaceTypes'
+              loc.path[4] = projectType?._id
+              loc.path[5] = 'taskTypes'
+              loc.path[6] = issue?.kind
+              loc.path.length = 7
+            } else {
+              loc.path.length = 3
+            }
             loc.fragment = undefined
             navigate(loc)
           }}
