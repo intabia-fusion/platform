@@ -122,6 +122,7 @@
     "HereDescription": "Bu {title} içindeki çevrimiçi üyeleri bilgilendir",
     "Guest": "Misafir",
     "Deleted": "Silindi",
-    "CannotMerge": "Hata: Global kişiler birleştirilemez"
+    "CannotMerge": "Hata: Global kişiler birleştirilemez",
+    "RecentlyUsed": "Son kullanımlar"
   }
 }

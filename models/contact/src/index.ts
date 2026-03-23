@@ -34,7 +34,8 @@ import {
   type SocialIdentity,
   type Status,
   type SocialIdentityProvider,
-  type Translation
+  type Translation,
+  type RecentlyUsedPersonsPreference
 } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -302,6 +303,12 @@ export class TTranslation extends TPreference implements Translation {
   dontTranslate!: string[]
 }
 
+@Model(contact.class.RecentlyUsedPersonsPreference, preference.class.Preference)
+export class TRecentlyUsedPersonsPreference extends TPreference implements RecentlyUsedPersonsPreference {
+  declare attachedTo: AccountUuid
+  assignees!: Ref<Person>[]
+}
+
 export function createModel (builder: Builder): void {
   builder.createModel(
     TAvatarProvider,
@@ -318,7 +325,8 @@ export function createModel (builder: Builder): void {
     TContactsTab,
     TPersonSpace,
     TUserRole,
-    TTranslation
+    TTranslation,
+    TRecentlyUsedPersonsPreference
   )
 
   builder.mixin(contact.class.PersonSpace, core.class.Class, core.mixin.TxAccessLevel, {
