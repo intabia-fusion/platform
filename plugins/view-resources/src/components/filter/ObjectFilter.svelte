@@ -15,8 +15,10 @@
 <script lang="ts">
   import {
     Doc,
+    DocumentQuery,
     FindResult,
     getObjectValue,
+    IndexKind,
     Ref,
     RefTo,
     SortingOrder,
@@ -117,15 +119,38 @@
       targets.add(object)
     }
 
-    const resultQuery =
-      search !== '' && clazz.filteringKey !== undefined
-        ? {
-            [clazz.filteringKey]: { $like: '%' + search + '%' },
-            _id: { $in: Array.from(targets.keys()) }
+    const resultQuery = getResultQuery(targets, search, clazz.filteringKey)
+
+    function getResultQuery (targets: Set<any>, search: string, filteringKey?: string): DocumentQuery<Doc> {
+      const _ids = Array.from(targets.keys())
+      if (search === '') {
+        return {
+          _id: { $in: _ids }
+        }
+      }
+
+      if (filteringKey !== undefined) {
+        const attr = client.getHierarchy().findAttribute(targetClass, filteringKey)
+        const isFulltext = attr?.index === IndexKind.FullText
+
+        if (!isFulltext) {
+          return {
+            [filteringKey]: { $like: '%' + search + '%' },
+            _id: { $in: _ids }
           }
-        : {
-            _id: { $in: Array.from(targets.keys()) }
+        } else {
+          return {
+            $search: search,
+            _id: { $in: _ids }
           }
+        }
+      }
+
+      return {
+        _id: { $in: _ids }
+      }
+    }
+
     const options = clazz.sortingKey !== undefined ? { sort: { [clazz.sortingKey]: SortingOrder.Ascending } } : {}
     objectsPromise = client.findAll(targetClass, resultQuery, options)
     values = await objectsPromise
