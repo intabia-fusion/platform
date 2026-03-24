@@ -98,6 +98,8 @@
     "CreateNewAccount": "Neues Konto erstellen",
     "SignedInAs": "Angemeldet als {name}",
     "HowToLogin": "Wie möchten Sie sich anmelden?",
-    "AlreadySignedIn": "Mit bestehendem Konto beitreten"
+    "AlreadySignedIn": "Mit bestehendem Konto beitreten",
+    "ExpiredLink": "Dieser Einladungslink ist abgelaufen",
+    "ExpiredLinkDescription": "Bitte fordern Sie einen neuen Einladungslink an"
   }
 }

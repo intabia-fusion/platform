@@ -98,6 +98,8 @@
     "CreateNewAccount": "Создать новый аккаунт",
     "SignedInAs": "Вы вошли как {name}",
     "HowToLogin": "Как вы хотите войти?",
-    "AlreadySignedIn": "Присоединиться с существующим аккаунтом"
+    "AlreadySignedIn": "Присоединиться с существующим аккаунтом",
+    "ExpiredLink": "Срок приглашения истёк",
+    "ExpiredLinkDescription": "Пожалуйста, запросите новую ссылку"
   }
 }

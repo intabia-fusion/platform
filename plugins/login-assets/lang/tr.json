@@ -57,6 +57,7 @@
     "WrongEmail": "Yanlış e-posta?",
     "ChangeEmail": "E-postayı değiştir",
     "SentTo": "Bir kod gönderdik: ",
+    "EnterCode": "Kodu girin",
     "CanFindCode": "Kodunuzu bulamıyor musunuz? Spam klasörünüze bakın.",
     "LoginWithPassword": "Şifre ile giriş yap",
     "LoginWithCode": "Kod ile giriş yap",
@@ -97,6 +98,8 @@
     "CreateNewAccount": "Yeni hesap oluştur",
     "SignedInAs": "{name} olarak giriş yapıldı",
     "HowToLogin": "Nasıl giriş yapmak istersiniz?",
-    "AlreadySignedIn": "Mevcut hesapla katıl"
+    "AlreadySignedIn": "Mevcut hesapla katıl",
+    "ExpiredLink": "Bu davet bağlantısının süresi doldu",
+    "ExpiredLinkDescription": "Lütfen yeni bir davet bağlantısı isteyin"
   }
 }

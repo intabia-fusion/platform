@@ -91,6 +91,8 @@ export default mergeIds(loginId, login, {
     CreateNewAccount: '' as IntlString,
     SignedInAs: '' as IntlString<{ name: string }>,
     HowToLogin: '' as IntlString,
-    AlreadySignedIn: '' as IntlString
+    AlreadySignedIn: '' as IntlString,
+    ExpiredLink: '' as IntlString,
+    ExpiredLinkDescription: '' as IntlString
   }
 })

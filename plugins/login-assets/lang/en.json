@@ -98,6 +98,8 @@
     "CreateNewAccount": "Create new account",
     "SignedInAs": "Signed in as {name}",
     "HowToLogin": "How would you like to log in?",
-    "AlreadySignedIn": "Join with existing account"
+    "AlreadySignedIn": "Join with existing account",
+    "ExpiredLink": "This invite link has expired",
+    "ExpiredLinkDescription": "Please request a new invite link"
   }
 }

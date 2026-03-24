@@ -57,6 +57,7 @@
     "WrongEmail": "¿Correo electrónico incorrecto?",
     "ChangeEmail": "Cambiar correo electrónico",
     "SentTo": "Hemos enviado un código a ",
+    "EnterCode": "Introduce el código",
     "CanFindCode": "¿No encuentras tu código? Revisa tu",
     "LoginWithPassword": "Iniciar sesión con contraseña",
     "LoginWithCode": "Iniciar sesión con código",
@@ -97,6 +98,8 @@
     "CreateNewAccount": "Crear nueva cuenta",
     "SignedInAs": "Conectado como {name}",
     "HowToLogin": "¿Cómo desea iniciar sesión?",
-    "AlreadySignedIn": "Unirse con cuenta existente"
+    "AlreadySignedIn": "Unirse con cuenta existente",
+    "ExpiredLink": "Este enlace de invitación ha caducado",
+    "ExpiredLinkDescription": "Por favor, solicita un nuevo enlace de invitación"
   }
 }
