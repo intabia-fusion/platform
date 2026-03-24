@@ -25,7 +25,7 @@
   import { DocNotifyContext, ReadState } from '@hcengineering/notification'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
-  import { ModernButton, Scroller } from '@hcengineering/ui'
+  import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
   import { ChatMessage } from '@hcengineering/chunter'
 
@@ -33,7 +33,6 @@
   import chunter from '../plugin'
   import { getScrollToDateOffset, getSelectedDate, jumpToDate, messageInView, readViewportMessages } from '../scroll'
   import { chatReadMessagesStore, recheckNotifications } from '../utils'
-  import BaseChatScroller from './BaseChatScroller.svelte'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -535,13 +534,22 @@
     }
   }
 
+  let readTimeout: number | undefined
+  function handleScrollThrottled (): void {
+    if (readTimeout !== undefined) return
+    readTimeout = window.setTimeout(() => {
+      readTimeout = undefined
+      updateSelectedDate()
+      read()
+    }, 100)
+  }
+
   async function handleScroll (): Promise<void> {
     updateScrollData()
     updateDownButtonVisibility($metadataStore, messages, scrollDiv)
     updateShouldScrollToNew()
     loadMore()
-    updateSelectedDate()
-    read()
+    handleScrollThrottled()
   }
 
   function handleResize (): void {
@@ -622,9 +630,8 @@
       editLastMessage()
     }
   }
-  function getKey (messages: ActivityMessage[]): string {
-    return `${messages.length}-${Math.max(...messages.map((m) => m.modifiedOn))}`
-  }
+
+  $: loadingOverlay = $isLoadingStore || !isReadStateLoaded || !isScrollInitialized
 </script>
 
 <div class="flex-col relative" class:h-full={fullHeight}>
@@ -633,15 +640,22 @@
       <JumpToDateSelector {selectedDate} fixed on:jumpToDate={handleJumpToDate} idPrefix={`${uuid}-`} />
     </div>
   {/if}
-  <BaseChatScroller
-    bind:scroller
-    bind:scrollDiv
-    bind:contentDiv
+  {#if loadingOverlay}
+    <div class="overlay">
+      <Loading />
+    </div>
+  {/if}
+  <Scroller
+    bind:this={scroller}
+    bind:divScroll={scrollDiv}
+    bind:divBox={contentDiv}
+    scrollDirection="vertical-reverse"
+    noStretch={!showBlankView}
     bottomStart={!showBlankView}
-    loadingOverlay={$isLoadingStore || !isReadStateLoaded || !isScrollInitialized}
+    disableOverscroll
+    disablePointerEventsOnScroll
     onScroll={handleScroll}
     onResize={handleResize}
-    key={getKey(messages)}
   >
     {#if showBlankView}
       <BlankView
@@ -706,7 +720,7 @@
         onKeyDown={handleKeyDown}
       />
     {/if}
-  </BaseChatScroller>
+  </Scroller>
   {#if !isThread && isLatestMessageButtonVisible}
     <div class="down-button absolute">
       <ModernButton
@@ -737,6 +751,17 @@
 {/if}
 
 <style lang="scss">
+  .overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: var(--theme-panel-color);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .selectedDate {
     position: absolute;
     top: 0;

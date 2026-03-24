@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
   import { statusByUserStore } from '@hcengineering/contact-resources'
   import core, { Class, Doc, notEmpty, reduceCalls, Ref } from '@hcengineering/core'
@@ -83,10 +84,20 @@
     $languageStore
   )
 
-  $: sortedItems = sortFn(items, {
-    contextByDoc: $contextByDocStore,
-    userStatusByAccount: $statusByUserStore
-  })
+  $: (() => {
+    const newSortedItems = sortFn(items, {
+      contextByDoc: $contextByDocStore,
+      userStatusByAccount: $statusByUserStore
+    })
+
+    // Check if the underlying identifiers (ids) changed order to skip Svelte updates if unnecessary
+    const oldIds = sortedItems.map((i) => i.id).join()
+    const newIds = newSortedItems.map((i) => i.id).join()
+
+    if (oldIds !== newIds || !deepEqual(sortedItems, newSortedItems)) {
+      sortedItems = newSortedItems
+    }
+  })()
   $: canShowMore = itemsCount > items.length
 
   const getChatNavItems = reduceCalls(
