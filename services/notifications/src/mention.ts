@@ -91,10 +91,14 @@ export async function createMentionsData (
   const space = await cache.getDocSpace(message ?? doc)
   if (space == null) return res
 
+  const notified = new Set<AccountUuid>()
   for (const reference of references) {
     const receivers = await getReceivers(client, cache, reference, space)
 
     for (const receiver of receivers) {
+      if (notified.has(receiver.account)) continue
+      notified.add(receiver.account)
+
       const context = contexts.find((it) => it.user === receiver.account)
       const mode = context?.settings?.mode ?? 'all'
       if (mode === 'mute') continue
