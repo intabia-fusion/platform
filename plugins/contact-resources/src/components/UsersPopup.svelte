@@ -87,6 +87,7 @@
   on:update
   on:close
   on:changeContent
+  searchMode="fulltext"
   on:created={(doc) => dispatch('close', doc.detail)}
   {readonly}
 >
