@@ -57,6 +57,7 @@
     "WrongEmail": "Email errata?",
     "ChangeEmail": "Cambia email",
     "SentTo": "Abbiamo inviato un codice a ",
+    "EnterCode": "Inserisci il codice",
     "CanFindCode": "Non riesci a trovare il tuo codice? Controlla la tua cartella spam.",
     "LoginWithPassword": "Accedi con la password",
     "LoginWithCode": "Accedi con il codice",
@@ -97,6 +98,8 @@
     "CreateNewAccount": "Crea nuovo account",
     "SignedInAs": "Accesso effettuato come {name}",
     "HowToLogin": "Come desideri accedere?",
-    "AlreadySignedIn": "Unisciti con un account esistente"
+    "AlreadySignedIn": "Unisciti con un account esistente",
+    "ExpiredLink": "Questo link di invito è scaduto",
+    "ExpiredLinkDescription": "Richiedi un nuovo link di invito"
   }
 }

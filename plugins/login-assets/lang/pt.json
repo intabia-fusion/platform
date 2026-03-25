@@ -57,6 +57,7 @@
     "WrongEmail": "Email errado?",
     "ChangeEmail": "Alterar email",
     "SentTo": "Enviamos um código para ",
+    "EnterCode": "Introduza o código",
     "CanFindCode": "Não encontra o seu código? Verifique a sua pasta de spam.",
     "LoginWithPassword": "Iniciar sessão com palavra-passe",
     "LoginWithCode": "Iniciar sessão com código",
@@ -97,6 +98,8 @@
     "CreateNewAccount": "Criar nova conta",
     "SignedInAs": "Sessão iniciada como {name}",
     "HowToLogin": "Como gostaria de iniciar sessão?",
-    "AlreadySignedIn": "Participar com conta existente"
+    "AlreadySignedIn": "Participar com conta existente",
+    "ExpiredLink": "Este link de convite expirou",
+    "ExpiredLinkDescription": "Por favor, solicite um novo link de convite"
   }
 }

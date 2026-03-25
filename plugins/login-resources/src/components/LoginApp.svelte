@@ -158,7 +158,7 @@
       {/if}
     </svelte:fragment>
     <svelte:fragment slot="extra-form-content">
-      {#if !desktopPlatform && page !== 'downloads'}
+      {#if !desktopPlatform && page !== 'downloads' && page !== 'join'}
         {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
         <div class="mt-4 flex flex-row-reverse mr-4">
           {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}

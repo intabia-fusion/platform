@@ -57,6 +57,7 @@
     "WrongEmail": "错误的电子邮件？",
     "ChangeEmail": "更改电子邮件",
     "SentTo": "我们已发送验证码到 ",
+    "EnterCode": "输入验证码",
     "CanFindCode": "找不到验证码？请检查您的垃圾邮件文件夹。",
     "LoginWithPassword": "使用密码登录",
     "LoginWithCode": "使用代码登录",
@@ -97,6 +98,8 @@
     "CreateNewAccount": "创建新账户",
     "SignedInAs": "已以 {name} 身份登录",
     "HowToLogin": "您想如何登录？",
-    "AlreadySignedIn": "使用现有账户加入"
+    "AlreadySignedIn": "使用现有账户加入",
+    "ExpiredLink": "此邀请链接已过期",
+    "ExpiredLinkDescription": "请申请新的邀请链接"
   }
 }

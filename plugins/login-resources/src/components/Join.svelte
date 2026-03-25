@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata, setMetadata, OK, Severity, Status } from '@hcengineering/platform'
+  import platform, { getMetadata, setMetadata, OK, Severity, Status } from '@hcengineering/platform'
   import { Analytics } from '@hcengineering/analytics'
   import { type LoginInfo, type WorkspaceLoginInfo } from '@hcengineering/account-client'
   import presentation from '@hcengineering/presentation'
@@ -31,6 +31,7 @@
   import SignupForm from './SignupForm.svelte'
   import LoginPasswordForm from './LoginPasswordForm.svelte'
   import LoginOtpForm from './LoginOtpForm.svelte'
+  import StatusControl from './StatusControl.svelte'
 
   const location = getCurrentLocation()
   const useOTP = getMetadata(presentation.metadata.UseOTP) === true
@@ -44,6 +45,7 @@
   let existingAccountName = ''
   let workspaceName = ''
   let joiningWithCurrentAccount = false
+  let invitationExpired = false
 
   // Login method for existing account
   let loginMethod: LoginMethods = LoginMethods.Password
@@ -69,9 +71,8 @@
     navigate({ path: [workbenchId, result.workspaceUrl] })
   }
 
-  async function handleJoinAfterAuth (loginInfo: LoginInfo | null, authStatus: Status): Promise<void> {
+  async function handleJoinAfterAuth (loginInfo: LoginInfo | null): Promise<void> {
     if (loginInfo == null) {
-      status = authStatus
       return
     }
 
@@ -124,7 +125,11 @@
   async function loadWorkspaceInfo (): Promise<void> {
     const inviteId = location.query?.inviteId
     if (inviteId != null) {
-      const [, info] = await getInviteInfo(inviteId)
+      const [inviteStatus, info] = await getInviteInfo(inviteId)
+      if (inviteStatus.code === platform.status.ExpiredLink) {
+        invitationExpired = true
+        return
+      }
       if (info?.name != null) {
         workspaceName = info.name
       }
@@ -179,7 +184,14 @@
   }
 </script>
 
-{#if step === 'initial'}
+{#if invitationExpired}
+  <div class="initial-container">
+    <div class="title mb-2">
+      <Label label={login.string.ExpiredLink} />
+    </div>
+    <div class="description"><Label label={login.string.ExpiredLinkDescription} /></div>
+  </div>
+{:else if step === 'initial'}
   <div class="initial-container">
     <div class="title"><Label label={login.string.Join} /></div>
     {#if workspaceName !== ''}
@@ -229,6 +241,12 @@
       </FormButton>
     </div>
 
+    {#if status !== OK}
+      <div class="status">
+        <StatusControl {status} />
+      </div>
+    {/if}
+
     <SignupForm
       caption={login.string.SignUpAndJoin}
       subtitle={workspaceName !== '' ? workspaceName : undefined}
@@ -243,6 +261,12 @@
         <Label label={login.string.BackLabel} />
       </FormButton>
     </div>
+
+    {#if status !== OK}
+      <div class="status">
+        <StatusControl {status} />
+      </div>
+    {/if}
 
     {#if loginMethod === LoginMethods.Otp}
       <LoginOtpForm
@@ -287,6 +311,7 @@
     font-weight: var(--login-title-font-weight, 500);
     font-size: var(--login-title-font-size, 1.25rem);
     color: var(--login-caption-color, var(--theme-caption-color));
+    text-align: center;
   }
 
   .workspace-name {
@@ -304,5 +329,13 @@
     width: 100%;
     max-width: 300px;
     margin-top: 1rem;
+  }
+
+  .description {
+    text-align: center;
+  }
+
+  .status {
+    margin: 0 2rem;
   }
 </style>

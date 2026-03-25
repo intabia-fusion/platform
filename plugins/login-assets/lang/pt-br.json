@@ -57,6 +57,7 @@
     "WrongEmail": "E-mail errado?",
     "ChangeEmail": "Alterar e-mail",
     "SentTo": "Enviamos um código para ",
+    "EnterCode": "Digite o código",
     "CanFindCode": "Não encontra o seu código? Verifique a sua pasta de spam.",
     "LoginWithPassword": "Iniciar sessão com senha",
     "LoginWithCode": "Iniciar sessão com código",
@@ -86,6 +87,8 @@
     "WhatIsYourName": "Qual é o seu nome?",
     "AccessExpired": "O tempo de acesso expirou. Por favor, solicite um novo link de acesso.",
     "AccessNotActive": "O tempo de acesso ainda não começou. Começa em: ",
+    "Downloads": "Baixar aplicativo desktop",
+    "BackLabel": "Voltar",
     "JoinWithThisAccount": "Entrar com esta conta",
     "JoinAs": "Entrar como {name}",
     "UseDifferentAccount": "Usar outra conta",
@@ -96,6 +99,7 @@
     "SignedInAs": "Conectado como {name}",
     "HowToLogin": "Como você gostaria de fazer login?",
     "AlreadySignedIn": "Entrar com conta existente",
-    "BackLabel": "Voltar"
+    "ExpiredLink": "Este link de convite expirou",
+    "ExpiredLinkDescription": "Por favor, solicite um novo link de convite"
   }
 }

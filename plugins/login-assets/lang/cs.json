@@ -98,6 +98,8 @@
     "CreateNewAccount": "Vytvořit nový účet",
     "SignedInAs": "Přihlášen jako {name}",
     "HowToLogin": "Jak se chcete přihlásit?",
-    "AlreadySignedIn": "Připojit se s existujícím účtem"
+    "AlreadySignedIn": "Připojit se s existujícím účtem",
+    "ExpiredLink": "Platnost odkazu na pozvánku vypršela",
+    "ExpiredLinkDescription": "Požádejte prosím o nový odkaz na pozvánku"
   }
 }
