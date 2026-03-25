@@ -57,7 +57,7 @@ import { recruitId } from '@hcengineering/recruit'
 import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
-import support, { supportId, supportLink, reportBugLink, docsLink, privacyPolicyLink } from '@hcengineering/support'
+import support, { supportId, supportLink, reportBugLink, privacyPolicyLink } from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -143,7 +143,7 @@ import '@hcengineering/ai-assistant-assets'
 import '@hcengineering/rating-assets'
 
 import analyticsCollector, { analyticsCollectorId } from '@hcengineering/analytics-collector'
-import { coreId } from '@hcengineering/core'
+import { concatLink, coreId } from '@hcengineering/core'
 import love, { loveId } from '@hcengineering/love'
 import presentation, { createFileStorage, presentationId } from '@hcengineering/presentation'
 import print, { printId } from '@hcengineering/print'
@@ -410,7 +410,10 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
 
   setMetadata(support.metadata.SupportLink, myBranding.support?.supportLink ?? supportLink)
   setMetadata(support.metadata.ReportBugLink, myBranding.support?.reportBugLink ?? reportBugLink)
-  setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? docsLink)
+
+  const frontUrl = config.FRONT_URL ?? window.location.origin
+  setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? concatLink(frontUrl, 'docs'))
+
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
 
   const languages =

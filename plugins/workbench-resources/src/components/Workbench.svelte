@@ -41,7 +41,7 @@
     reduceCalls
   } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import support, { supportLink, SupportStatus } from '@hcengineering/support'
+  import support, { SupportStatus } from '@hcengineering/support'
   import {
     AnyComponent,
     areLocationsEqual,
@@ -128,6 +128,7 @@
     tabsStore
   } from '../workbench'
   import { get } from 'svelte/store'
+  import HelpAndSupport from './HelpAndSupport.svelte'
 
   const HIDE_NAVIGATOR = 720
   const FLOAT_ASIDE = 1024 // lg
@@ -820,6 +821,10 @@
       return false
     }
   }
+
+  function helpAndSupport (): void {
+    showPopup(HelpAndSupport, {}, 'help-center')
+  }
 </script>
 
 {#if $myEmployeeStore && deactivated && !isAdminUser()}
@@ -929,16 +934,12 @@
           size={appsMini ? 'small' : 'large'}
           on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
         />
-        <a href={supportLink} target="_blank" rel="noopener noreferrer">
-          <AppItem
-            icon={support.icon.Support}
-            label={support.string.ContactUs}
-            size={appsMini ? 'small' : 'large'}
-            notify={supportStatus?.hasUnreadMessages}
-            selected={supportStatus?.visible}
-            loading={supportWidgetLoading}
-          />
-        </a>
+        <AppItem
+          icon={support.icon.Support}
+          label={support.string.ContactUs}
+          size={appsMini ? 'small' : 'large'}
+          on:click={helpAndSupport}
+        />
         <!-- {#await supportClient then client}
           {#if client}
             <AppItem

@@ -19,7 +19,6 @@
   import support from '@hcengineering/support'
   import {
     AnySvelteComponent,
-    Button,
     Icon,
     IconArrowLeft,
     Label,
@@ -33,12 +32,13 @@
     topSP
   } from '@hcengineering/ui'
   import view, { Action, ActionCategory } from '@hcengineering/view'
+  import { WorkbenchEvents } from '@hcengineering/workbench'
+  import { Analytics } from '@hcengineering/analytics'
+
   import workbench from '../plugin'
   import RightArrowIcon from './icons/Collapsed.svelte'
   import DocumentationIcon from './icons/Documentation.svelte'
   import KeyboardIcon from './icons/Keyboard.svelte'
-  import { WorkbenchEvents } from '@hcengineering/workbench'
-  import { Analytics } from '@hcengineering/analytics'
 
   let shortcuts = false
   let actions: Action[] = []
@@ -202,23 +202,23 @@
       </ListView>
     </Scroller>
   {/if}
-  <div class="footer">
-    <a href={getMetadata(support.metadata.PrivacyPolicyLink)} target="_blank">
-      <Button id="privacy-policy" kind={'ghost'} label={support.string.PrivacyPolicy} stopPropagation={false} />
-    </a>
-    <a href={getMetadata(support.metadata.ReportBugLink)} target="_blank">
-      <Button id="report-a-bug" kind={'primary'} label={support.string.ReportBug} stopPropagation={false} />
-    </a>
-    <a href={getMetadata(support.metadata.SupportLink)} target="_blank">
-      <Button
-        id="contact-us"
-        icon={support.icon.Support}
-        kind={'ghost'}
-        label={support.string.ContactUs}
-        stopPropagation={false}
-      />
-    </a>
-  </div>
+  <!--  <div class="footer">-->
+  <!--    <a href={getMetadata(support.metadata.PrivacyPolicyLink)} target="_blank">-->
+  <!--      <Button id="privacy-policy" kind={'ghost'} label={support.string.PrivacyPolicy} stopPropagation={false} />-->
+  <!--    </a>-->
+  <!--    <a href={getMetadata(support.metadata.ReportBugLink)} target="_blank">-->
+  <!--      <Button id="report-a-bug" kind={'primary'} label={support.string.ReportBug} stopPropagation={false} />-->
+  <!--    </a>-->
+  <!--    <a href={getMetadata(support.metadata.SupportLink)} target="_blank">-->
+  <!--      <Button-->
+  <!--        id="contact-us"-->
+  <!--        icon={support.icon.Support}-->
+  <!--        kind={'ghost'}-->
+  <!--        label={support.string.ContactUs}-->
+  <!--        stopPropagation={false}-->
+  <!--      />-->
+  <!--    </a>-->
+  <!--  </div>-->
 </div>
 
 <style lang="scss">
