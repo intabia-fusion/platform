@@ -52,7 +52,7 @@ import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
 import sign from '@hcengineering/sign'
-import support, { supportId, supportLink, reportBugLink, docsLink, privacyPolicyLink } from '@hcengineering/support'
+import support, { supportId, supportLink, reportBugLink,  privacyPolicyLink } from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -147,7 +147,7 @@ async function loadAssets(): Promise<void> {
   )
 }
 
-import { coreId } from '@hcengineering/core'
+import { concatLink, coreId } from '@hcengineering/core'
 import presentation, { loadServerConfig, createFileStorage, presentationId } from '@hcengineering/presentation'
 
 import { setMetadata } from '@hcengineering/platform'
@@ -433,7 +433,7 @@ export async function configurePlatform() {
       }
     }
   }
-  
+
 
   setMetadata(platform.metadata.LoadHelper, async (loader) => {
     for (let i = 0; i < 5; i++) {
@@ -576,7 +576,10 @@ export async function configurePlatform() {
 
   setMetadata(support.metadata.SupportLink, myBranding.support?.supportLink ?? supportLink)
   setMetadata(support.metadata.ReportBugLink, myBranding.support?.reportBugLink ?? reportBugLink)
-  setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? docsLink)
+
+  const frontUrl = config.FRONT_URL ?? window.location.origin
+  setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? concatLink(frontUrl, 'docs'))
+
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
 
   const languages = myBranding.languages
