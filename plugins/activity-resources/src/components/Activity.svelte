@@ -27,7 +27,7 @@
   import { Analytics } from '@hcengineering/analytics'
 
   import { editingMessageStore, messageInFocus } from '../activity'
-  import { combineActivityMessages, filterMessages } from '../activityMessagesUtils'
+  import { filterMessages, sortActivityMessages } from '../activityMessagesUtils'
   import { canGroupMessages, getMessageFromLoc, getSpace } from '../utils'
   import ActivityMessagePresenter from './activity-message/ActivityMessagePresenter.svelte'
   import ActivityExtensionComponent from './ActivityExtension.svelte'
@@ -232,7 +232,7 @@
       activity.class.ActivityMessage,
       { attachedTo: objectId, space: getSpace(object) },
       (result: ActivityMessage[]) => {
-        messages = combineActivityMessages(result, order)
+        messages = sortActivityMessages(result, order)
         isMessagesLoading = false
       },
       {

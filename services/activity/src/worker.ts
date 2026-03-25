@@ -13,28 +13,26 @@
 // limitations under the License.
 //
 
-import core, {
-  Class,
+import {
   Doc,
   Hierarchy,
   MeasureContext,
   ModelDb,
-  Ref,
   systemAccountUuid,
   Tx,
   TxCUD,
   TxProcessor,
   WorkspaceUuid
 } from '@hcengineering/core'
-import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
-import notification, { TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import activity from '@hcengineering/activity'
+import notification from '@hcengineering/notification'
 
 import Workspace from './workspace'
-import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
+import { getTransactorApiEndpoint, getWorkspaceInfo } from './utils'
 import config from './config'
 
 export class Worker {
@@ -42,10 +40,7 @@ export class Worker {
   private readonly sysModel = new ModelDb(this.sysHierarchy)
 
   private readonly workspaces = new Map<WorkspaceUuid, Workspace>()
-
-  private readonly txTypes: TxNotificationType[] = []
-  private readonly triggerClasses: Ref<Class<Doc>>[]
-
+  private readonly loadingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly storage: StorageAdapter
 
   private readonly interval: NodeJS.Timeout | undefined = undefined
@@ -60,14 +55,6 @@ export class Worker {
     this.sysModel.addTxes(ctx, modelTxes, true)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
-    this.txTypes = this.sysModel
-      .findAllSync(notification.class.TxNotificationType, {})
-      .sort((a, b) => (a.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY) - (b.priority ?? MAX_NOTIFICATION_TYPE_PRIORITY))
-    this.triggerClasses = [
-      notification.class.ReadState,
-      activity.class.ActivityMessage,
-      ...this.txTypes.map((it) => it.objectClass)
-    ].filter((it) => it !== core.class.Doc)
 
     this.interval = setInterval(
       () => {
@@ -76,8 +63,10 @@ export class Worker {
           if (workspace.isInProgress()) continue
           const time = workspace.getLastTxDate() ?? 0
           const diff = now - time
-          if (diff < 5 * 60 * 1000) continue
-          void workspace.close()
+          if (diff < 10 * 60 * 1000) continue
+          workspace.close().catch((e) => {
+            console.error('Error closing workspace', e)
+          })
           this.workspaces.delete(uuid)
         }
       },
@@ -90,6 +79,12 @@ export class Worker {
 
     const tx = _tx as TxCUD<Doc>
 
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.BrowserNotification)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.ReadState)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
+
     const exists = this.workspaces.get(ws)
 
     if (exists !== undefined) {
@@ -97,11 +92,30 @@ export class Worker {
       return
     }
 
-    if (!isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)) {
+    const loading = this.loadingWorkspaces.get(ws)
+    if (loading !== undefined) {
+      const resolveWs = await loading
+      if (resolveWs !== undefined) {
+        await resolveWs.tx(tx)
+      }
       return
     }
 
-    const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
+    const loadWsPromise = this.initWorkspace(ctx, ws)
+    this.loadingWorkspaces.set(ws, loadWsPromise)
+
+    try {
+      const workspace = await loadWsPromise
+      if (workspace !== undefined) {
+        await workspace.tx(tx)
+      }
+    } finally {
+      this.loadingWorkspaces.delete(ws)
+    }
+  }
+
+  private async initWorkspace (ctx: MeasureContext, ws: WorkspaceUuid): Promise<Workspace | undefined> {
+    const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId})
     const wsInfo = await getWorkspaceInfo(token)
     if (wsInfo === undefined) return
 
@@ -119,13 +133,12 @@ export class Worker {
       model,
       this.modelTxes,
       this.storage,
-      client,
-      this.txTypes
+      client
     )
 
     this.workspaces.set(ws, workspace)
 
-    await workspace.tx(tx)
+    return workspace
   }
 
   public close (): void {

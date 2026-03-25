@@ -19,7 +19,6 @@ import core, {
   type Client,
   type Collection,
   type Doc,
-  groupByArray,
   type Hierarchy,
   type Mixin,
   type Ref,
@@ -33,24 +32,23 @@ import {
   getDocLinkTitle,
   hasAttributePresenter
 } from '@hcengineering/view-resources'
-import contact, { type Person } from '@hcengineering/contact'
+import { type Person } from '@hcengineering/contact'
 import { getResource, type IntlString } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui'
 import activity, {
   type ActivityMessage,
   type ActivityMessagesFilter,
   type DisplayActivityMessage,
-  type DisplayDocUpdateMessage,
   type DocAttributeUpdates,
   type DocUpdateMessage
 } from '@hcengineering/activity'
 
 import { ActivityDirection } from './types'
 
-// Use 5 minutes to combine similar messages
-const combineThresholdMs = 5 * 60 * 1000
-// Use 10 seconds to combine update messages after creation.
-const createCombineThreshold = parseInt(localStorage.getItem('platform.activity.threshold') ?? '10 * 1000')
+// // Use 5 minutes to combine similar messages
+// const combineThresholdMs = 5 * 60 * 1000
+// // Use 10 seconds to combine update messages after creation.
+// const createCombineThreshold = parseInt(localStorage.getItem('platform.activity.threshold') ?? '10 * 1000')
 
 const valueTypes: ReadonlyArray<Ref<Class<Doc>>> = [
   core.class.TypeString,
@@ -198,91 +196,91 @@ function getMessageTime (message: ActivityMessage): number {
   return message.createdOn ?? message.modifiedOn
 }
 
-function combineByCreateThreshold (docUpdateMessages: DocUpdateMessage[]): DocUpdateMessage[] {
-  const createMessages = docUpdateMessages.filter(
-    ({ action, attachedTo, objectId }) => action === 'create' && attachedTo === objectId
-  )
-  return docUpdateMessages.filter((message) => {
-    const { _id, attachedTo } = message
-    const createMsg = createMessages.find((create) => create.attachedTo === attachedTo)
+// function combineByCreateThreshold (docUpdateMessages: DocUpdateMessage[]): DocUpdateMessage[] {
+//   const createMessages = docUpdateMessages.filter(
+//     ({ action, attachedTo, objectId }) => action === 'create' && attachedTo === objectId
+//   )
+//   return docUpdateMessages.filter((message) => {
+//     const { _id, attachedTo } = message
+//     const createMsg = createMessages.find((create) => create.attachedTo === attachedTo)
+//
+//     if (createMsg === undefined) {
+//       return true
+//     }
+//
+//     if (createMsg._id === _id) {
+//       return true
+//     }
+//
+//     const diff = getMessageTime(message) - getMessageTime(createMsg)
+//
+//     return diff > createCombineThreshold
+//   })
+// }
+//
+// function wrapMessages (
+//   hierarchy: Hierarchy,
+//   messages: ActivityMessage[]
+// ): { toCombine: DocUpdateMessage[], uncombined: ActivityMessage[] } {
+//   const toCombine: DocUpdateMessage[] = []
+//   const uncombined: ActivityMessage[] = []
+//
+//   for (const message of messages) {
+//     if (isDocUpdateMessage(message)) {
+//       if (hierarchy.isDerived(message.attachedToClass, contact.class.Channel)) {
+//         uncombined.push(message)
+//       } else {
+//         toCombine.push(message)
+//       }
+//     } else {
+//       uncombined.push(message)
+//     }
+//   }
+//
+//   return { toCombine, uncombined }
+// }
 
-    if (createMsg === undefined) {
-      return true
-    }
-
-    if (createMsg._id === _id) {
-      return true
-    }
-
-    const diff = getMessageTime(message) - getMessageTime(createMsg)
-
-    return diff > createCombineThreshold
-  })
-}
-
-function wrapMessages (
-  hierarchy: Hierarchy,
-  messages: ActivityMessage[]
-): { toCombine: DocUpdateMessage[], uncombined: ActivityMessage[] } {
-  const toCombine: DocUpdateMessage[] = []
-  const uncombined: ActivityMessage[] = []
-
-  for (const message of messages) {
-    if (isDocUpdateMessage(message)) {
-      if (hierarchy.isDerived(message.attachedToClass, contact.class.Channel)) {
-        uncombined.push(message)
-      } else {
-        toCombine.push(message)
-      }
-    } else {
-      uncombined.push(message)
-    }
-  }
-
-  return { toCombine, uncombined }
-}
-
-export function combineActivityMessages (
-  messages: ActivityMessage[],
-  sortingOrder: SortingOrder = SortingOrder.Ascending
-): DisplayActivityMessage[] {
-  const client = getClient()
-
-  const { uncombined, toCombine } = wrapMessages(client.getHierarchy(), messages)
-  const docUpdateMessages = combineByCreateThreshold(toCombine)
-
-  if (docUpdateMessages.length === 0) {
-    return sortActivityMessages(uncombined, sortingOrder)
-  }
-
-  const result: Array<DisplayActivityMessage | undefined> = [...uncombined]
-
-  const groupedByType: Map<string, DocUpdateMessage[]> = groupByArray(docUpdateMessages, getDocUpdateMessageKey)
-
-  for (const [, groupedMessages] of groupedByType) {
-    const cantMerge = groupedMessages.filter(
-      (message, index) => index !== groupedMessages.length - 1 && !canCombineMessage(message)
-    )
-    const cantMergeIds = new Set(cantMerge.map(({ _id }) => _id))
-
-    const canMerge = groupedMessages.filter(({ _id }) => !cantMergeIds.has(_id))
-    const forMerge = groupByTime(canMerge)
-
-    forMerge.forEach((messagesForMerge) => {
-      const merged = mergeDocUpdateMessages(messagesForMerge)
-
-      if (merged !== undefined) {
-        result.push(...merged)
-      }
-    })
-    result.push(...cantMerge)
-  }
-
-  return sortActivityMessages(
-    result.filter((msg): msg is DisplayActivityMessage => msg !== undefined),
-    sortingOrder
-  )
-}
+// export function combineActivityMessages (
+//   messages: ActivityMessage[],
+//   sortingOrder: SortingOrder = SortingOrder.Ascending
+// ): DisplayActivityMessage[] {
+//   const client = getClient()
+//
+//   const { uncombined, toCombine } = wrapMessages(client.getHierarchy(), messages)
+//   const docUpdateMessages = combineByCreateThreshold(toCombine)
+//
+//   if (docUpdateMessages.length === 0) {
+//     return sortActivityMessages(uncombined, sortingOrder)
+//   }
+//
+//   const result: Array<DisplayActivityMessage | undefined> = [...uncombined]
+//
+//   const groupedByType: Map<string, DocUpdateMessage[]> = groupByArray(docUpdateMessages, getDocUpdateMessageKey)
+//
+//   for (const [, groupedMessages] of groupedByType) {
+//     const cantMerge = groupedMessages.filter(
+//       (message, index) => index !== groupedMessages.length - 1 && !canCombineMessage(message)
+//     )
+//     const cantMergeIds = new Set(cantMerge.map(({ _id }) => _id))
+//
+//     const canMerge = groupedMessages.filter(({ _id }) => !cantMergeIds.has(_id))
+//     const forMerge = groupByTime(canMerge)
+//
+//     forMerge.forEach((messagesForMerge) => {
+//       const merged = mergeDocUpdateMessages(messagesForMerge)
+//
+//       if (merged !== undefined) {
+//         result.push(...merged)
+//       }
+//     })
+//     result.push(...cantMerge)
+//   }
+//
+//   return sortActivityMessages(
+//     result.filter((msg): msg is DisplayActivityMessage => msg !== undefined),
+//     sortingOrder
+//   )
+// }
 
 export function sortActivityMessages<T extends ActivityMessage> (
   messages: T[],
@@ -295,178 +293,178 @@ export function sortActivityMessages<T extends ActivityMessage> (
   )
 }
 
-function canCombineMessage (message: ActivityMessage): boolean {
-  const hasReactions = message.reactions !== undefined && message.reactions > 0
-  const isPinned = message.isPinned === true
-  const hasReplies = message.replies !== undefined && message.replies > 0
+// function canCombineMessage (message: ActivityMessage): boolean {
+//   const hasReactions = message.reactions !== undefined && message.reactions > 0
+//   const isPinned = message.isPinned === true
+//   const hasReplies = message.replies !== undefined && message.replies > 0
+//
+//   return !hasReactions && !isPinned && !hasReplies
+// }
+//
+// function groupByTime<T extends ActivityMessage> (messages: T[]): T[][] {
+//   const result: T[][] = []
+//
+//   for (const message1 of messages) {
+//     if (result.some((forMerge) => forMerge.includes(message1))) {
+//       continue
+//     }
+//
+//     const forMerge: T[] = [message1]
+//
+//     for (const message2 of messages) {
+//       if (message1._id === message2._id) {
+//         continue
+//       }
+//
+//       const timeDiff = (message2.createdOn ?? message2.modifiedOn) - (message1.createdOn ?? message1.modifiedOn)
+//
+//       if (timeDiff >= 0 && timeDiff < combineThresholdMs) {
+//         forMerge.push(message2)
+//       }
+//     }
+//
+//     result.push(forMerge)
+//   }
+//
+//   return result
+// }
+//
+// function getDocUpdateMessageKey (message: DocUpdateMessage): string {
+//   if (message.action === 'update') {
+//     return [message._class, message.attachedTo, message.createdBy, getAttributeUpdatesKey(message)].join('_')
+//   }
+//
+//   return [
+//     message._class,
+//     message.attachedTo,
+//     message.createdBy,
+//     message.updateCollection,
+//     message.objectId === message.attachedTo
+//   ].join('_')
+// }
 
-  return !hasReactions && !isPinned && !hasReplies
-}
+// function mergeDocUpdateAttributes (messages: DocUpdateMessage[]): DisplayDocUpdateMessage | undefined {
+//   const firstMessage = messages[0]
+//   const lastMessage = messages[messages.length - 1]
+//
+//   let mergedAttributeUpdates = firstMessage.attributeUpdates
+//
+//   messages.forEach((message) => {
+//     if (message._id !== firstMessage._id && message.attributeUpdates !== undefined) {
+//       mergedAttributeUpdates = mergeAttributeUpdates(message.attributeUpdates, mergedAttributeUpdates)
+//     }
+//   })
+//
+//   if (mergedAttributeUpdates === undefined) {
+//     return undefined
+//   }
+//
+//   const hasChanges =
+//     mergedAttributeUpdates.set.length > 0 ||
+//     mergedAttributeUpdates.added.length > 0 ||
+//     mergedAttributeUpdates.removed.length > 0
+//
+//   if (!hasChanges) {
+//     return undefined
+//   }
+//
+//   return {
+//     ...lastMessage,
+//     attributeUpdates: mergedAttributeUpdates,
+//     combinedMessagesIds: messages.map(({ _id }) => _id)
+//   }
+// }
 
-function groupByTime<T extends ActivityMessage> (messages: T[]): T[][] {
-  const result: T[][] = []
+// function mergeDocUpdateMessages (messages: DocUpdateMessage[]): DisplayDocUpdateMessage[] {
+//   if (messages.length === 0) {
+//     return []
+//   }
+//
+//   if (messages[0].action === 'update') {
+//     const merged = mergeDocUpdateAttributes(messages)
+//     return merged != null ? [merged] : []
+//   }
+//
+//   if (messages.length === 1) {
+//     return messages
+//   }
+//
+//   const removeMessages = messages.filter(({ action }) => action === 'remove')
+//   const createMessages = messages.filter(({ action }) => action === 'create')
+//   const removedObjectIds = removeMessages.map(({ objectId }) => objectId)
+//   const createdObjectIds = createMessages.map(({ objectId }) => objectId)
+//
+//   const createMessagesForMerge = createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId))
+//   const removeMessagesForMerge = removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
+//
+//   createMessagesForMerge.sort(activityMessagesComparator)
+//   removeMessagesForMerge.sort(activityMessagesComparator)
+//
+//   const res: DisplayDocUpdateMessage[] = []
+//
+//   if (createMessagesForMerge.length > 0) {
+//     res.push({
+//       ...createMessagesForMerge[createMessagesForMerge.length - 1],
+//       previousMessages: createMessagesForMerge.slice(0, -1),
+//       combinedMessagesIds: createMessagesForMerge.map(({ _id }) => _id)
+//     })
+//   }
+//
+//   if (removeMessagesForMerge.length > 0) {
+//     res.push({
+//       ...removeMessagesForMerge[removeMessagesForMerge.length - 1],
+//       previousMessages: removeMessagesForMerge.slice(0, -1),
+//       combinedMessagesIds: removeMessagesForMerge.map(({ _id }) => _id)
+//     })
+//   }
+//
+//   return res
+// }
 
-  for (const message1 of messages) {
-    if (result.some((forMerge) => forMerge.includes(message1))) {
-      continue
-    }
-
-    const forMerge: T[] = [message1]
-
-    for (const message2 of messages) {
-      if (message1._id === message2._id) {
-        continue
-      }
-
-      const timeDiff = (message2.createdOn ?? message2.modifiedOn) - (message1.createdOn ?? message1.modifiedOn)
-
-      if (timeDiff >= 0 && timeDiff < combineThresholdMs) {
-        forMerge.push(message2)
-      }
-    }
-
-    result.push(forMerge)
-  }
-
-  return result
-}
-
-function getDocUpdateMessageKey (message: DocUpdateMessage): string {
-  if (message.action === 'update') {
-    return [message._class, message.attachedTo, message.createdBy, getAttributeUpdatesKey(message)].join('_')
-  }
-
-  return [
-    message._class,
-    message.attachedTo,
-    message.createdBy,
-    message.updateCollection,
-    message.objectId === message.attachedTo
-  ].join('_')
-}
-
-function mergeDocUpdateAttributes (messages: DocUpdateMessage[]): DisplayDocUpdateMessage | undefined {
-  const firstMessage = messages[0]
-  const lastMessage = messages[messages.length - 1]
-
-  let mergedAttributeUpdates = firstMessage.attributeUpdates
-
-  messages.forEach((message) => {
-    if (message._id !== firstMessage._id && message.attributeUpdates !== undefined) {
-      mergedAttributeUpdates = mergeAttributeUpdates(message.attributeUpdates, mergedAttributeUpdates)
-    }
-  })
-
-  if (mergedAttributeUpdates === undefined) {
-    return undefined
-  }
-
-  const hasChanges =
-    mergedAttributeUpdates.set.length > 0 ||
-    mergedAttributeUpdates.added.length > 0 ||
-    mergedAttributeUpdates.removed.length > 0
-
-  if (!hasChanges) {
-    return undefined
-  }
-
-  return {
-    ...lastMessage,
-    attributeUpdates: mergedAttributeUpdates,
-    combinedMessagesIds: messages.map(({ _id }) => _id)
-  }
-}
-
-function mergeDocUpdateMessages (messages: DocUpdateMessage[]): DisplayDocUpdateMessage[] {
-  if (messages.length === 0) {
-    return []
-  }
-
-  if (messages[0].action === 'update') {
-    const merged = mergeDocUpdateAttributes(messages)
-    return merged != null ? [merged] : []
-  }
-
-  if (messages.length === 1) {
-    return messages
-  }
-
-  const removeMessages = messages.filter(({ action }) => action === 'remove')
-  const createMessages = messages.filter(({ action }) => action === 'create')
-  const removedObjectIds = removeMessages.map(({ objectId }) => objectId)
-  const createdObjectIds = createMessages.map(({ objectId }) => objectId)
-
-  const createMessagesForMerge = createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId))
-  const removeMessagesForMerge = removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
-
-  createMessagesForMerge.sort(activityMessagesComparator)
-  removeMessagesForMerge.sort(activityMessagesComparator)
-
-  const res: DisplayDocUpdateMessage[] = []
-
-  if (createMessagesForMerge.length > 0) {
-    res.push({
-      ...createMessagesForMerge[createMessagesForMerge.length - 1],
-      previousMessages: createMessagesForMerge.slice(0, -1),
-      combinedMessagesIds: createMessagesForMerge.map(({ _id }) => _id)
-    })
-  }
-
-  if (removeMessagesForMerge.length > 0) {
-    res.push({
-      ...removeMessagesForMerge[removeMessagesForMerge.length - 1],
-      previousMessages: removeMessagesForMerge.slice(0, -1),
-      combinedMessagesIds: removeMessagesForMerge.map(({ _id }) => _id)
-    })
-  }
-
-  return res
-}
-
-function mergeAttributeUpdates (
-  attributeUpdates: DocAttributeUpdates,
-  prevAttributeUpdates?: DocAttributeUpdates
-): DocAttributeUpdates {
-  if (prevAttributeUpdates === undefined) {
-    return attributeUpdates
-  }
-
-  if (attributeUpdates.attrKey !== prevAttributeUpdates.attrKey) {
-    return attributeUpdates
-  }
-
-  const added = attributeUpdates.added
-    .filter((item) => !prevAttributeUpdates.removed.includes(item))
-    .concat(prevAttributeUpdates.added.filter((item) => !attributeUpdates.removed.includes(item)))
-  const removed = attributeUpdates.removed
-    .filter((item) => !prevAttributeUpdates.added.includes(item))
-    .concat(prevAttributeUpdates.removed.filter((item) => !attributeUpdates.added.includes(item)))
-
-  const { prevValue } = prevAttributeUpdates
-  const { set, attrClass, attrKey, isMixin } = attributeUpdates
-
-  return {
-    attrKey,
-    attrClass,
-    prevValue,
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    set: prevValue ? set.filter((value) => value !== prevValue) : set,
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    added: prevValue ? added.filter((value) => value !== prevValue) : added,
-    removed,
-    isMixin
-  }
-}
-
-function getAttributeUpdatesKey (message: DocUpdateMessage): string {
-  if (message.attributeUpdates === undefined) {
-    return ''
-  }
-
-  const { attrKey, attrClass, isMixin } = message.attributeUpdates
-
-  return [attrKey, attrClass, isMixin].join('-')
-}
+// function mergeAttributeUpdates (
+//   attributeUpdates: DocAttributeUpdates,
+//   prevAttributeUpdates?: DocAttributeUpdates
+// ): DocAttributeUpdates {
+//   if (prevAttributeUpdates === undefined) {
+//     return attributeUpdates
+//   }
+//
+//   if (attributeUpdates.attrKey !== prevAttributeUpdates.attrKey) {
+//     return attributeUpdates
+//   }
+//
+//   const added = attributeUpdates.added
+//     .filter((item) => !prevAttributeUpdates.removed.includes(item))
+//     .concat(prevAttributeUpdates.added.filter((item) => !attributeUpdates.removed.includes(item)))
+//   const removed = attributeUpdates.removed
+//     .filter((item) => !prevAttributeUpdates.added.includes(item))
+//     .concat(prevAttributeUpdates.removed.filter((item) => !attributeUpdates.added.includes(item)))
+//
+//   const { prevValue } = prevAttributeUpdates
+//   const { set, attrClass, attrKey, isMixin } = attributeUpdates
+//
+//   return {
+//     attrKey,
+//     attrClass,
+//     prevValue,
+//     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+//     set: prevValue ? set.filter((value) => value !== prevValue) : set,
+//     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+//     added: prevValue ? added.filter((value) => value !== prevValue) : added,
+//     removed,
+//     isMixin
+//   }
+// }
+//
+// function getAttributeUpdatesKey (message: DocUpdateMessage): string {
+//   if (message.attributeUpdates === undefined) {
+//     return ''
+//   }
+//
+//   const { attrKey, attrClass, isMixin } = message.attributeUpdates
+//
+//   return [attrKey, attrClass, isMixin].join('-')
+// }
 
 export function referencesFilter (message: ActivityMessage, _class?: Ref<Doc>): boolean {
   return message._class === activity.class.ActivityReference
@@ -532,13 +530,13 @@ export async function getLinkData (
   }
 }
 
-function isDocUpdateMessage (message?: ActivityMessage): message is DocUpdateMessage {
-  if (message === undefined) {
-    return false
-  }
-
-  return message._class === activity.class.DocUpdateMessage
-}
+// function isDocUpdateMessage (message?: ActivityMessage): message is DocUpdateMessage {
+//   if (message === undefined) {
+//     return false
+//   }
+//
+//   return message._class === activity.class.DocUpdateMessage
+// }
 
 export function isActivityMessage (message?: Doc): message is ActivityMessage {
   if (message === undefined) {

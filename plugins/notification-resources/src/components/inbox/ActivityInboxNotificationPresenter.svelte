@@ -24,7 +24,6 @@
   import {
     ActivityMessagePreview,
     BasePreview,
-    combineActivityMessages,
     sortActivityMessages
   } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DisplayActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
@@ -47,7 +46,7 @@
   $: void updateDisplayMessage(value.combinedMessages)
 
   async function updateDisplayMessage (messages: ActivityMessage[]): Promise<void> {
-    const combinedMessages = combineActivityMessages(sortActivityMessages(messages))
+    const combinedMessages = sortActivityMessages(messages)
 
     displayMessage = combinedMessages[0]
   }

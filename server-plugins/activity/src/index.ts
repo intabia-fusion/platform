@@ -20,7 +20,6 @@ import { Mixin, Ref } from '@hcengineering/core'
 import { IdentifierPresenter, TitlePresenter, UrlPresenter } from './types'
 
 export * from './types'
-export * from './utils'
 
 /**
  * @public
@@ -32,7 +31,6 @@ export const serverActivityId = 'server-activity' as Plugin
  */
 export default plugin(serverActivityId, {
   trigger: {
-    ActivityMessagesHandler: '' as Resource<TriggerFunc>,
     OnDocRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>,
     HandleCardActivity: '' as Resource<TriggerFunc>

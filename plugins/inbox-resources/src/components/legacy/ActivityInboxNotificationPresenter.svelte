@@ -18,12 +18,10 @@
   import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@hcengineering/notification'
   import {
     ActivityMessagePreview,
-    combineActivityMessages,
     sortActivityMessages
   } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DisplayActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Person } from '@hcengineering/contact'
 
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
@@ -40,7 +38,7 @@
   $: void updateDisplayMessage(value.combinedMessages)
 
   async function updateDisplayMessage (messages: ActivityMessage[]): Promise<void> {
-    const combinedMessages = combineActivityMessages(sortActivityMessages(messages))
+    const combinedMessages = sortActivityMessages(messages)
 
     displayMessage = combinedMessages[0]
   }

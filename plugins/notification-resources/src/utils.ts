@@ -19,10 +19,9 @@ import activity, {
   type DocUpdateMessage
 } from '@hcengineering/activity'
 import {
-  activityMessagesComparator,
-  combineActivityMessages,
   isActivityMessageClass,
-  messageInFocus
+  messageInFocus,
+  sortActivityMessages
 } from '@hcengineering/activity-resources'
 import { Analytics } from '@hcengineering/analytics'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
@@ -286,7 +285,7 @@ export function getDisplayInboxNotifications (
       return (message as DocUpdateMessage).objectClass === objectClass
     })
 
-  const combinedMessages = combineActivityMessages(messages.sort(activityMessagesComparator), SortingOrder.Descending)
+  const combinedMessages = sortActivityMessages(messages, SortingOrder.Descending)
 
   for (const message of combinedMessages) {
     if (message._class === activity.class.DocUpdateMessage) {
