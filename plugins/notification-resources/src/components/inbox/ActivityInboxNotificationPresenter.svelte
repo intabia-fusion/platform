@@ -21,11 +21,7 @@
     DisplayActivityInboxNotification,
     NotificationType
   } from '@hcengineering/notification'
-  import {
-    ActivityMessagePreview,
-    BasePreview,
-    sortActivityMessages
-  } from '@hcengineering/activity-resources'
+  import { ActivityMessagePreview, BasePreview, sortActivityMessages } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DisplayActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Action, Component } from '@hcengineering/ui'
   import { getActions } from '@hcengineering/view-resources'

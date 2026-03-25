@@ -29,7 +29,7 @@ import {
 import { derived, get, type Readable, writable } from 'svelte/store'
 import activity, { type ActivityMessage, type ActivityReference } from '@hcengineering/activity'
 import attachment from '@hcengineering/attachment'
-import {  sortActivityMessages } from '@hcengineering/activity-resources'
+import { sortActivityMessages } from '@hcengineering/activity-resources'
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
 
 export type LoadMode = 'forward' | 'backward'

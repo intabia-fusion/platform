@@ -14,20 +14,19 @@
 //
 
 import core, {
-  Class,
-  Doc,
-  MeasureContext,
-  Ref,
-  Space,
-  TxCUD,
-  TxMixin,
+  type Class,
+  type Doc,
+  type MeasureContext,
+  type Ref,
+  type Space,
+  type TxCUD,
+  type TxMixin,
   TxProcessor,
-  TxRemoveDoc,
-  TxUpdateDoc
+  type TxRemoveDoc,
+  type TxUpdateDoc
 } from '@hcengineering/core'
 
-
-import { Client } from './types'
+import { type Client } from './types'
 
 class WsCache {
   private readonly docs = new Map<Ref<Doc>, Doc>()
@@ -48,10 +47,8 @@ class WsCache {
     }
   }
 
-
   private txUpdateDoc (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): void {
     const doc = this.docs.get(tx.objectId)
-    const { hierarchy } = this.client
 
     if (doc != null) {
       const updated = this.updateOrMixin(tx, doc)
@@ -61,7 +58,6 @@ class WsCache {
 
   private txRemoveDoc (tx: TxRemoveDoc<Doc>): void {
     this.docs.delete(tx.objectId)
-    const { hierarchy } = this.client
   }
 
   private updateOrMixin<T extends Doc>(tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, doc: T): T {
@@ -83,7 +79,6 @@ class WsCache {
     return doc
   }
 
-
   public async getDocSpace (doc: Doc): Promise<Space | undefined> {
     if (this.client.hierarchy.isDerived(doc._class, core.class.Space)) return doc as Space
     if (this.docs.has(doc.space)) return doc as Space
@@ -96,7 +91,6 @@ class WsCache {
 
     return space
   }
-
 
   private clearLargeCaches (): void {
     const maxSize = 1000

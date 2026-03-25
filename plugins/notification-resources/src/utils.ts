@@ -18,11 +18,7 @@ import activity, {
   type DisplayDocUpdateMessage,
   type DocUpdateMessage
 } from '@hcengineering/activity'
-import {
-  isActivityMessageClass,
-  messageInFocus,
-  sortActivityMessages
-} from '@hcengineering/activity-resources'
+import { isActivityMessageClass, messageInFocus, sortActivityMessages } from '@hcengineering/activity-resources'
 import { Analytics } from '@hcengineering/analytics'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 import core, {

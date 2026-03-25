@@ -15,27 +15,27 @@
 //
 
 import core, {
-  Class,
-  Doc,
+  type Class,
+  type Doc,
   type DocumentQuery,
   type FindOptions,
-  FindResult,
-  Hierarchy,
-  MeasureContext,
-  ModelDb,
-  Ref,
-  Timestamp,
-  Tx,
-  TxCUD,
+  type FindResult,
+  type Hierarchy,
+  type MeasureContext,
+  type ModelDb,
+  type Ref,
+  type Timestamp,
+  type Tx,
+  type TxCUD,
   TxFactory,
   type WithLookup,
-  WorkspaceInfoWithStatus
+  type WorkspaceInfoWithStatus,
+  type Branding
 } from '@hcengineering/core'
-import activity from '@hcengineering/activity'
-import { RestClient } from '@hcengineering/api-client'
-import { StorageAdapter } from '@hcengineering/storage'
+import { type RestClient } from '@hcengineering/api-client'
+import { type StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
-import { createPipeline, MiddlewareCreator, Pipeline, PipelineContext } from '@hcengineering/server-core'
+import { createPipeline, type MiddlewareCreator, type Pipeline, type PipelineContext } from '@hcengineering/server-core'
 import { getConfig } from '@hcengineering/server-pipeline'
 import {
   ContextNameMiddleware,
@@ -46,11 +46,10 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
-import notification from '@hcengineering/notification'
 
 import config from './config'
 import WsCache from './cache'
-import { Client} from './types'
+import { type Client } from './types'
 import { ActivityMessagesHandler } from './activity'
 
 class Workspace {
@@ -69,7 +68,8 @@ class Workspace {
     private readonly hierarchy: Hierarchy,
     private readonly model: ModelDb,
     private readonly rest: RestClient,
-    private readonly storage: StorageAdapter
+    private readonly storage: StorageAdapter,
+    private readonly branding?: Branding
   ) {
     this.client = this.getClient()
     this.cache = new WsCache(this.ctx, this.client)
@@ -77,28 +77,26 @@ class Workspace {
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     try {
-    this.inProgress = true
+      this.inProgress = true
 
-    const domain = this.hierarchy.getDomain(tx.objectClass)
+      const domain = this.hierarchy.getDomain(tx.objectClass)
 
-    if (domain === 'model') {
-      this.model.addTxes(this.ctx, [tx], true)
-      this.hierarchy.tx(tx)
-    }
+      if (domain === 'model') {
+        this.model.addTxes(this.ctx, [tx], true)
+        this.hierarchy.tx(tx)
+      }
 
-    this.cache.tx(tx)
+      this.cache.tx(tx)
 
-    const res: TxCUD<Doc>[] = await ActivityMessagesHandler(tx, this.getClient(), this.cache)
+      const res: TxCUD<Doc>[] = await ActivityMessagesHandler(tx, this.getClient(), this.cache)
 
-    if (res.length > 0) {
-      this.lastTxDate = tx.createdOn ?? tx.modifiedOn
-      await this.applyTxes(res)
-    }
-
-      }finally {
+      if (res.length > 0) {
+        this.lastTxDate = tx.createdOn ?? tx.modifiedOn
+        await this.applyTxes(res)
+      }
+    } finally {
       this.inProgress = false
     }
-
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
@@ -110,8 +108,6 @@ class Workspace {
       } catch (e) {
         console.error(e)
         this.ctx.error('Failed to send tx batch', { tx: txApply, batchSize: batch.length })
-        // Обязательно пробрасываем ошибку дальше, чтобы createConsumer 
-        // не сдвигал offset и Kafka могла заретраить сообщение.
         throw e
       }
     }
@@ -125,6 +121,7 @@ class Workspace {
       storage: this.storage,
       hierarchy: this.hierarchy,
       model: this.model,
+      branding: this.branding,
       findAll: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -157,7 +154,8 @@ class Workspace {
     modelDb: ModelDb,
     sysModel: Tx[],
     storage: StorageAdapter,
-    rest: RestClient
+    rest: RestClient,
+    branding?: Branding
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
       disableTriggers: true,
@@ -179,7 +177,7 @@ class Workspace {
         uuid: ws.uuid,
         url: ws.url
       },
-      branding: null,
+      branding: branding ?? null,
       modelDb,
       hierarchy,
       storageAdapter: storage,
@@ -196,7 +194,7 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage)
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding)
   }
 
   async close (): Promise<void> {

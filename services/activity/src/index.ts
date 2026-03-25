@@ -15,7 +15,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics, Tx } from '@hcengineering/core'
+import { newMetrics, type Tx } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
@@ -24,7 +24,7 @@ import serverToken from '@hcengineering/server-token'
 import { join } from 'path'
 import { readFileSync } from 'fs'
 
-import {Worker} from './worker'
+import { Worker } from './worker'
 import config from './config'
 
 async function main (): Promise<void> {

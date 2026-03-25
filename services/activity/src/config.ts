@@ -25,6 +25,7 @@ export interface Config {
   StorageConfig: string
   DbUrl: string
   ApplyTxBatchSize: number
+  BrandingPath: string
 }
 
 const config: Config = (() => {
@@ -36,7 +37,8 @@ const config: Config = (() => {
     ServiceId: process.env.SERVICE_ID ?? 'activity',
     StorageConfig: process.env.STORAGE_CONFIG,
     DbUrl: process.env.DB_URL,
-    ApplyTxBatchSize: parseInt(process.env.APPLY_TX_BATCH_SIZE ?? '100')
+    ApplyTxBatchSize: parseInt(process.env.APPLY_TX_BATCH_SIZE ?? '100'),
+    BrandingPath: process.env.BRANDING_PATH ?? ''
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

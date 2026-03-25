@@ -14,12 +14,7 @@
 //
 
 import activity from '@hcengineering/activity'
-import core, {
-  type Doc,
-  type Ref,
-  type Tx,
-  type TxCUD
-} from '@hcengineering/core'
+import core, { type Doc, type Ref, type Tx, type TxCUD } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 import { type Card } from '@hcengineering/card'
 

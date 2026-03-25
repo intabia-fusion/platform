@@ -13,20 +13,22 @@
 // limitations under the License.
 //
 
-import {
-  Doc,
+import core, {
+  type Doc,
   Hierarchy,
-  MeasureContext,
+  type MeasureContext,
   ModelDb,
   systemAccountUuid,
-  Tx,
-  TxCUD,
+  type Tx,
+  type TxCUD,
   TxProcessor,
-  WorkspaceUuid
+  type WorkspaceUuid,
+  type Branding
 } from '@hcengineering/core'
+import { loadBrandingMap } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
-import { StorageAdapter } from '@hcengineering/storage'
+import { type StorageAdapter } from '@hcengineering/storage'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import activity from '@hcengineering/activity'
 import notification from '@hcengineering/notification'
@@ -42,6 +44,7 @@ export class Worker {
   private readonly workspaces = new Map<WorkspaceUuid, Workspace>()
   private readonly loadingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly storage: StorageAdapter
+  private readonly brandingMap = loadBrandingMap(config.BrandingPath)
 
   private readonly interval: NodeJS.Timeout | undefined = undefined
 
@@ -59,7 +62,7 @@ export class Worker {
     this.interval = setInterval(
       () => {
         const now = Date.now()
-        for (const [uuid, workspace] of this.workspaces.entries()) {
+        for (const [uuid, workspace] of Array.from(this.workspaces.entries())) {
           if (workspace.isInProgress()) continue
           const time = workspace.getLastTxDate() ?? 0
           const diff = now - time
@@ -92,6 +95,8 @@ export class Worker {
       return
     }
 
+    if (tx.space === core.space.DerivedTx) return
+
     const loading = this.loadingWorkspaces.get(ws)
     if (loading !== undefined) {
       const resolveWs = await loading
@@ -115,7 +120,7 @@ export class Worker {
   }
 
   private async initWorkspace (ctx: MeasureContext, ws: WorkspaceUuid): Promise<Workspace | undefined> {
-    const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId})
+    const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
     const wsInfo = await getWorkspaceInfo(token)
     if (wsInfo === undefined) return
 
@@ -126,6 +131,12 @@ export class Worker {
 
     const { model, hierarchy } = await client.getModel(true)
 
+    const branding: Branding | undefined =
+      wsInfo.branding !== undefined && wsInfo.branding !== ''
+        ? this.brandingMap[wsInfo.branding]
+        : this.brandingMap[Object.keys(this.brandingMap)[0]]
+
+    console.log(wsInfo.branding, branding)
     const workspace = await Workspace.create(
       ctx.newChild(ws, {}),
       wsInfo,
@@ -133,7 +144,8 @@ export class Worker {
       model,
       this.modelTxes,
       this.storage,
-      client
+      client,
+      branding
     )
 
     this.workspaces.set(ws, workspace)

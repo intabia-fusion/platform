@@ -14,21 +14,21 @@
 //
 
 import {
-  Branding,
+  type Branding,
   type Class,
   type Doc,
   type DocumentQuery,
   type FindOptions,
-  FindResult,
-  Hierarchy,
-  MeasureContext,
-  ModelDb,
-  Ref,
-  TxFactory,
+  type FindResult,
+  type Hierarchy,
+  type MeasureContext,
+  type ModelDb,
+  type Ref,
+  type TxFactory,
   type WithLookup,
-  WorkspaceInfoWithStatus
+  type WorkspaceInfoWithStatus
 } from '@hcengineering/core'
-import { StorageAdapter } from '@hcengineering/storage'
+import { type StorageAdapter } from '@hcengineering/storage'
 
 export interface Client {
   ctx: MeasureContext

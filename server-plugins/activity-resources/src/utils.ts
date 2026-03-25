@@ -1,6 +1,4 @@
-import activity, {
-  type ActivityMessage
-} from '@hcengineering/activity'
+import activity, { type ActivityMessage } from '@hcengineering/activity'
 import cardPlugin, { type Card, type Tag } from '@hcengineering/card'
 import { type ActivityUpdate, ActivityUpdateType } from '@hcengineering/communication-types'
 import core, {

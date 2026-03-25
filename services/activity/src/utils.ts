@@ -18,44 +18,48 @@ import core, {
   type AnyAttribute,
   type ArrOf,
   type AttachedDoc,
-  Attribute,
+  type Attribute,
   type Class,
-  Collection,
+  type Collection,
   combineAttributes,
-  Doc,
+  type Doc,
   type Hierarchy,
   type Markup,
-  MeasureContext,
-  Mixin,
-  Ref,
+  type MeasureContext,
+  type Mixin,
+  type Ref,
   type RefTo,
   SortingOrder,
   type Space,
-  TxCreateDoc,
-  TxCUD,
-  TxMixin,
+  type TxCreateDoc,
+  type TxCUD,
+  type TxMixin,
   TxProcessor,
-  TxUpdateDoc,
+  type TxUpdateDoc,
   type Type,
-  WorkspaceInfoWithStatus
+  type WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import activity, {
-  ActivityMessage,
-  ActivityMessageControl,
-  DocAttributeUpdates,
-  DocUpdateAction,
+  type ActivityMessage,
+  type ActivityMessageControl,
+  type DocAttributeUpdates,
+  type DocUpdateAction,
   type DocUpdateMessage
 } from '@hcengineering/activity'
 import { getResource, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
-import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@hcengineering/server-activity'
+import serverActivity, {
+  type IdentifierPresenter,
+  type TitlePresenter,
+  type UrlPresenter
+} from '@hcengineering/server-activity'
 
-import { Client } from './types'
-import Cache from './cache'
+import { type Client } from './types'
+import type Cache from './cache'
 
 const externalRegions = process.env.EXTERNAL_REGIONS?.split(';') ?? []
 
-export async function getWorkspaceInfo(
+export async function getWorkspaceInfo (
   token: string
 ): Promise<(WorkspaceInfoWithStatus & { endpoint: string }) | undefined> {
   const accountClient = getAccountClient(token, 30000)
@@ -88,11 +92,11 @@ export async function getWorkspaceInfo(
   }
 }
 
-export function getTransactorApiEndpoint(ws: { endpoint: string }): string {
+export function getTransactorApiEndpoint (ws: { endpoint: string }): string {
   return ws.endpoint.replace('wss://', 'https://').replace('ws://', 'http://')
 }
 
-function getAttrClass(hierarchy: Hierarchy, attribute: AnyAttribute): Ref<Class<Doc>> {
+function getAttrClass (hierarchy: Hierarchy, attribute: AnyAttribute): Ref<Class<Doc>> {
   if (hierarchy.isDerived(attribute.type._class, core.class.RefTo)) {
     return (attribute.type as RefTo<Doc>).to
   } else if (hierarchy.isDerived(attribute.type._class, core.class.ArrOf)) {
@@ -103,19 +107,19 @@ function getAttrClass(hierarchy: Hierarchy, attribute: AnyAttribute): Ref<Class<
   return attribute.type._class
 }
 
-function getUrlPresenter(_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
+function getUrlPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.UrlPresenter)
 }
 
-function getIdentifierPresenter(_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IdentifierPresenter | undefined {
+function getIdentifierPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IdentifierPresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.IdentifierPresenter)
 }
 
-function getTitlePresenter(_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TitlePresenter | undefined {
+function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TitlePresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
 }
 
-export async function getDocTitle(client: Client, doc: Doc): Promise<string | undefined> {
+export async function getDocTitle (client: Client, doc: Doc): Promise<string | undefined> {
   if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
     const message = doc as ActivityMessage
     if (message.message != null && !isEmptyMarkup(message.message)) {
@@ -139,10 +143,7 @@ export async function getDocTitle(client: Client, doc: Doc): Promise<string | un
       workspace: client.workspace,
       hierarchy: client.hierarchy,
       modelDb: client.model,
-      branding: {
-        //TODO: fix me
-        // lastNameFirst: config.LastNameFirst
-      },
+      branding: client.branding ?? null,
       findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
     })
   }
@@ -153,7 +154,7 @@ export async function getDocTitle(client: Client, doc: Doc): Promise<string | un
   }
 }
 
-export async function getDocIdentifier(client: Client, doc: Doc): Promise<string | undefined> {
+export async function getDocIdentifier (client: Client, doc: Doc): Promise<string | undefined> {
   const IdentifierPresenter = getIdentifierPresenter(doc._class, client.hierarchy)
 
   if (IdentifierPresenter === undefined) return
@@ -164,15 +165,12 @@ export async function getDocIdentifier(client: Client, doc: Doc): Promise<string
     workspace: client.workspace,
     hierarchy: client.hierarchy,
     modelDb: client.model,
-    branding: {
-      //TODO: fix me
-      // lastNameFirst: config.LastNameFirst
-    },
+    branding: client.branding ?? null,
     findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   })
 }
 
-export async function getDocUrl(client: Client, doc: Doc): Promise<string | undefined> {
+export async function getDocUrl (client: Client, doc: Doc): Promise<string | undefined> {
   const UrlPresenter = getUrlPresenter(doc._class, client.hierarchy)
   if (UrlPresenter === undefined) return
   return await (
@@ -182,36 +180,33 @@ export async function getDocUrl(client: Client, doc: Doc): Promise<string | unde
     workspace: client.workspace,
     hierarchy: client.hierarchy,
     modelDb: client.model,
-    branding: {
-      //TODO: fix me
-      // lastNameFirst: config.LastNameFirst
-    },
+    branding: client.branding ?? null,
     findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   })
 }
 
-export function isActivityDoc(_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
+export function isActivityDoc (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): boolean {
   const mixin = hierarchy.classHierarchyMixin(_class, activity.mixin.ActivityDoc)
 
   return mixin !== undefined
 }
 
-export function isSpace(space: Doc, hierarchy: Hierarchy): space is Space {
+export function isSpace (space: Doc, hierarchy: Hierarchy): space is Space {
   return hierarchy.isDerived(space._class, core.class.Space)
 }
 
-export function isMarkupType(type: Ref<Class<Type<any>>>): boolean {
+export function isMarkupType (type: Ref<Class<Type<any>>>): boolean {
   return type === core.class.TypeMarkup
 }
 
-export function isCollaborativeType(type: Ref<Class<Type<any>>>): boolean {
+export function isCollaborativeType (type: Ref<Class<Type<any>>>): boolean {
   return type === core.class.TypeCollaborativeDoc
 }
 
 // Use 100 KB limit for attribute updates
 const valueSizeLimit = 100 * 1024 // 100 KB
 
-function valueSizeExceedsLimit(value: any): boolean {
+function valueSizeExceedsLimit (value: any): boolean {
   if (value == null) return false
   if (Array.isArray(value)) {
     return value.some((v) => valueSizeExceedsLimit(v))
@@ -223,7 +218,7 @@ function valueSizeExceedsLimit(value: any): boolean {
   return false
 }
 
-function getAvailableAttributesKeys(tx: TxCUD<Doc>, hierarchy: Hierarchy): string[] {
+function getAvailableAttributesKeys (tx: TxCUD<Doc>, hierarchy: Hierarchy): string[] {
   if (hierarchy.isDerived(tx._class, core.class.TxUpdateDoc)) {
     const updateTx = tx as TxUpdateDoc<Doc>
     const _class = updateTx.objectClass
@@ -267,7 +262,7 @@ function getAvailableAttributesKeys(tx: TxCUD<Doc>, hierarchy: Hierarchy): strin
   return []
 }
 
-function getModifiedAttributes(tx: TxCUD<Doc>, hierarchy: Hierarchy): Record<string, any> {
+function getModifiedAttributes (tx: TxCUD<Doc>, hierarchy: Hierarchy): Record<string, any> {
   if (hierarchy.isDerived(tx._class, core.class.TxUpdateDoc)) {
     const updateTx = tx as TxUpdateDoc<Doc>
 
@@ -280,7 +275,7 @@ function getModifiedAttributes(tx: TxCUD<Doc>, hierarchy: Hierarchy): Record<str
   return {}
 }
 
-export function getDocUpdateAction(hierarchy: Hierarchy, tx: TxCUD<Doc>): DocUpdateAction {
+export function getDocUpdateAction (hierarchy: Hierarchy, tx: TxCUD<Doc>): DocUpdateAction {
   if (hierarchy.isDerived(tx._class, core.class.TxCreateDoc)) {
     return 'create'
   }
@@ -297,7 +292,7 @@ interface AttributeDiff {
   removed: DocAttributeUpdates['removed']
 }
 
-export async function getAttributeDiff(
+export async function getAttributeDiff (
   client: Client,
   doc: Doc,
   prevDoc: Doc | undefined,
@@ -333,7 +328,7 @@ export async function getAttributeDiff(
   }
 }
 
-export async function getTxAttributesUpdates(
+export async function getTxAttributesUpdates (
   ctx: MeasureContext,
   client: Client,
   cache: Cache,
@@ -439,13 +434,13 @@ export async function getTxAttributesUpdates(
   return result
 }
 
-function getHiddenAttrs(hierarchy: Hierarchy, _class: Ref<Class<Doc>>): Set<string> {
+function getHiddenAttrs (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): Set<string> {
   return new Set(
     [...hierarchy.getAllAttributes(_class).entries()].filter(([, attr]) => attr.hidden === true).map(([k]) => k)
   )
 }
 
-export async function getAttrName(
+export async function getAttrName (
   attributeUpdates: DocAttributeUpdates,
   objectClass: Ref<Class<Doc>>,
   hierarchy: Hierarchy,
@@ -481,7 +476,7 @@ export async function getAttrName(
   }
 }
 
-export function getCollectionAttribute(
+export function getCollectionAttribute (
   hierarchy: Hierarchy,
   objectClass: Ref<Class<Doc>>,
   collection?: string
@@ -502,7 +497,7 @@ export function getCollectionAttribute(
   return undefined
 }
 
-export async function getDocUpdateMessageMarkup(message: DocUpdateMessage, client: Client): Promise<Markup> {
+export async function getDocUpdateMessageMarkup (message: DocUpdateMessage, client: Client): Promise<Markup> {
   const { hierarchy } = client
   const { attachedTo, attachedToClass, objectClass, objectId, action, updateCollection, attributeUpdates } = message
   const isOwn = attachedTo === objectId
@@ -541,7 +536,7 @@ export async function getDocUpdateMessageMarkup(message: DocUpdateMessage, clien
   return await translate(activity.string.UpdatedObject, { object: name }, client.branding?.defaultLanguage)
 }
 
-async function getAttributesUpdatesText(
+async function getAttributesUpdatesText (
   attributeUpdates: DocAttributeUpdates,
   objectClass: Ref<Class<Doc>>,
   hierarchy: Hierarchy,
@@ -574,7 +569,7 @@ async function getAttributesUpdatesText(
   return undefined
 }
 
-export async function buildRemovedDoc(
+export async function buildRemovedDoc (
   client: Client,
   _id: Ref<Doc>,
   _class: Ref<Class<Doc>>

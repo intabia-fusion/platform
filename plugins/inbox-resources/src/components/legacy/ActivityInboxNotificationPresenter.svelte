@@ -16,10 +16,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { matchQuery, Doc } from '@hcengineering/core'
   import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@hcengineering/notification'
-  import {
-    ActivityMessagePreview,
-    sortActivityMessages
-  } from '@hcengineering/activity-resources'
+  import { ActivityMessagePreview, sortActivityMessages } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DisplayActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
   import { Person } from '@hcengineering/contact'

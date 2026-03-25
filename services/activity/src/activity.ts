@@ -1,18 +1,17 @@
 import core, {
-  Data,
-  Doc,
+  type Data,
+  type Doc,
   matchQuery,
-  MeasureContext,
-  PersonId,
-  TxCreateDoc,
-  TxCUD,
+  type MeasureContext,
+  type PersonId,
+  type TxCreateDoc,
+  type TxCUD,
   TxProcessor
 } from '@hcengineering/core'
-import activity, { ActivityMessageControl,  DocUpdateMessage } from '@hcengineering/activity'
-import notification from '@hcengineering/notification'
+import activity, { type ActivityMessageControl, type DocUpdateMessage } from '@hcengineering/activity'
 
-import Cache from './cache'
-import { Client } from './types'
+import type Cache from './cache'
+import { type Client } from './types'
 import {
   buildRemovedDoc,
   getDocIdentifier,
@@ -25,14 +24,9 @@ import {
   isSpace
 } from './utils'
 
-export async function ActivityMessagesHandler(tx: TxCUD<Doc>, client: Client, cache: Cache): Promise<TxCUD<Doc>[]> {
+export async function ActivityMessagesHandler (tx: TxCUD<Doc>, client: Client, cache: Cache): Promise<TxCUD<Doc>[]> {
   if (tx.space === core.space.DerivedTx) return []
-  const { hierarchy, ctx } = client
-
-  if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return []
-  if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return []
-  if (hierarchy.isDerived(tx.objectClass, notification.class.ActivityInboxNotification)) return []
-  if (hierarchy.isDerived(tx.objectClass, notification.class.BrowserNotification)) return []
+  const { ctx } = client
 
   const result: TxCUD<Doc>[] = []
 
@@ -45,7 +39,7 @@ export async function ActivityMessagesHandler(tx: TxCUD<Doc>, client: Client, ca
   return result
 }
 
- async function generateDocUpdateMessages(
+async function generateDocUpdateMessages (
   ctx: MeasureContext,
   tx: TxCUD<Doc>,
   client: Client,
@@ -57,9 +51,10 @@ export async function ActivityMessagesHandler(tx: TxCUD<Doc>, client: Client, ca
 
   const { hierarchy } = client
 
-   if( hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return res
-  if (tx.attachedToClass !== undefined && hierarchy.isDerived(tx.attachedToClass, activity.class.ActivityMessage)) return res
-
+  if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return res
+  if (tx.attachedToClass !== undefined && hierarchy.isDerived(tx.attachedToClass, activity.class.ActivityMessage)) {
+    return res
+  }
 
   if (
     hierarchy.classHierarchyMixin(tx.objectClass, activity.mixin.IgnoreActivity) !== undefined ||
@@ -94,9 +89,7 @@ export async function ActivityMessagesHandler(tx: TxCUD<Doc>, client: Client, ca
       let doc = await cache.getDoc(tx.attachedTo, tx.attachedToClass)
 
       if (doc === undefined) {
-        const createTx = (
-          await client.findAll(core.class.TxCreateDoc, { objectId: tx.attachedTo }, { limit: 1 })
-        )[0]
+        const createTx = (await client.findAll(core.class.TxCreateDoc, { objectId: tx.attachedTo }, { limit: 1 }))[0]
 
         doc = createTx !== undefined ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
       }
@@ -137,7 +130,7 @@ export async function ActivityMessagesHandler(tx: TxCUD<Doc>, client: Client, ca
   return res
 }
 
-async function pushDocUpdateMessages(
+async function pushDocUpdateMessages (
   ctx: MeasureContext,
   client: Client,
   cache: Cache,
@@ -201,9 +194,7 @@ async function pushDocUpdateMessages(
   return res
 }
 
-
-
-async function getDocUpdateMessageTx(
+async function getDocUpdateMessageTx (
   client: Client,
   originTx: TxCUD<Doc>,
   object: Doc,
@@ -234,4 +225,3 @@ async function getDocUpdateMessageTx(
     modifiedBy ?? originTx.modifiedBy
   )
 }
-
