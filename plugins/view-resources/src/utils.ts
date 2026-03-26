@@ -720,6 +720,13 @@ export async function deleteObjects (client: TxOperations, objects: Doc[], skipC
   await ops.commit()
 }
 
+export async function canDeleteAsCreator (client: TxOperations, object: Doc): Promise<boolean> {
+  const currentAcc = getCurrentAccount()
+  if (currentAcc.role === AccountRole.Owner || isAdminUser()) return true
+  const socialStrings = new Set(await getAllSocialStringsByPersonRef(client, getCurrentEmployee()))
+  return socialStrings.has(object.createdBy as PersonId)
+}
+
 export function getMixinStyle (id: Ref<Class<Doc>>, selected: boolean, black: boolean): string {
   const color = getPlatformColorForText(id as string, black)
   return `
