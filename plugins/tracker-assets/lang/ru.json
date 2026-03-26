@@ -196,7 +196,7 @@
     "NewSubIssue": "Добавить подзадачу...",
     "AddLabel": "Добавить метку",
     "DeleteIssue": "Удалить {issueCount, plural, =1 {задачу} one {# задачу} few {# задачи} other {задач}}",
-    "DeleteIssueConfirm": "Вы действительно хотите удалить {issueCount, plural, =1 {задачу} one {# задачу} few {# задачи} other {задач}}{subIssueCount, plural, =0 {?} =1 { и подзадачу?} one { и # подзадачу?} other { и # подзадач?}}",
+    "DeleteIssueConfirm": "Вы действительно хотите удалить {issueCount, plural, =1 {задачу} one {# задачу} few {# задачи} other {задач}}{subIssueCount, plural, =0 {?} =1 { и подзадачу?} one { и # подзадачу?} few { и # подзадачи?} other { и # подзадач?}}",
     "Milestone": "Этап",
     "NoMilestone": "Без Этапа",
     "MoveToMilestone": "Выбрать Этап",

@@ -29,6 +29,9 @@
   export let skipCheck: boolean = false
   export let canDeleteExtra: boolean = true
   export let confirmation: IntlString | undefined = undefined
+  export let confirmationParams: Record<string, any> | undefined = undefined
+  export let title: IntlString | undefined = undefined
+  export let titleParams: Record<string, any> | undefined = undefined
 
   const me = getCurrentEmployee()
   const objectArray = Array.isArray(object) ? object : [object]
@@ -44,11 +47,12 @@
       getCurrentAccount().role === AccountRole.Owner ||
       isAdminUser()) &&
     canDeleteExtra
-  $: label = canDelete ? view.string.DeleteObject : view.string.DeletePopupNoPermissionTitle
+  $: label = canDelete ? (title ?? view.string.DeleteObject) : view.string.DeletePopupNoPermissionTitle
 </script>
 
 <Card
   {label}
+  labelProps={titleParams}
   okAction={deleteAction}
   canSave={canDelete}
   okLabel={canDelete ? view.string.LabelYes : ui.string.Ok}
@@ -62,7 +66,10 @@
   <div class="flex-grow flex-col">
     {#if canDelete}
       <div class="mb-2">
-        <Label label={confirmation ?? view.string.DeleteObjectConfirm} params={{ count: objectArray.length }} />
+        <Label
+          label={confirmation ?? view.string.DeleteObjectConfirm}
+          params={confirmationParams ?? { count: objectArray.length }}
+        />
         <div class="mt-2">
           {#if objectArray.length === 1}
             <ObjectPresenter _class={objectArray[0]._class} objectId={objectArray[0]._id} value={objectArray[0]} />

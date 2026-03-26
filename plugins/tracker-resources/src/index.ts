@@ -130,6 +130,7 @@ import IssueTemplates from './components/templates/IssueTemplates.svelte'
 import {
   AggregationManager,
   buildFilterKey,
+  canDeleteAsCreator,
   deleteObject,
   deleteObjects,
   setFilters
@@ -176,6 +177,7 @@ import view, { type Filter } from '@hcengineering/view'
 import EstimationValueEditor from './components/issues/timereport/EstimationValueEditor.svelte'
 import TimePresenter from './components/issues/timereport/TimePresenter.svelte'
 import { getTargetObjectFromUrl } from '@hcengineering/text-editor-resources'
+import contact from '@hcengineering/contact'
 
 export { default as AssigneeEditor } from './components/issues/AssigneeEditor.svelte'
 export { default as SubIssueList } from './components/issues/edit/SubIssueList.svelte'
@@ -259,15 +261,13 @@ async function deleteIssue (issue: Issue | Issue[]): Promise<void> {
   } else {
     subissues = issue.subIssues
   }
-  showPopup(MessageBox, {
-    label: tracker.string.DeleteIssue,
-    labelProps: { issueCount },
-    message: tracker.string.DeleteIssueConfirm,
-    params: {
-      issueCount,
-      subIssueCount: subissues
-    },
-    action: async () => {
+  showPopup(contact.component.DeleteConfirmationPopup, {
+    object: issue,
+    title: tracker.string.DeleteIssue,
+    titleParams: { issueCount },
+    confirmation: tracker.string.DeleteIssueConfirm,
+    confirmationParams: { issueCount, subIssueCount: subissues },
+    deleteAction: async () => {
       const objs = Array.isArray(issue) ? issue : [issue]
 
       const target = await getTargetObjectFromUrl(getCurrentLocation())
@@ -327,7 +327,7 @@ async function moveAndDeleteMilestones (
     message: tracker.string.MoveAndDeleteMilestoneConfirm,
     labelProps: {
       newMilestone: newMilestone?.label ?? noMilestoneLabel,
-      deleteMilestone: oldMilestones.map((p) => p.label)
+      deleteMilestone: oldMilestones.map((p) => p.label).join(', ')
     },
     action: async () => {
       for (const oldMilestone of oldMilestones) {
@@ -344,6 +344,19 @@ async function moveAndDeleteMilestones (
 async function deleteMilestone (milestones: Milestone | Milestone[]): Promise<void> {
   const client = getClient()
   const milestoneArray = Array.isArray(milestones) ? milestones : [milestones]
+
+  const canDelete = (await Promise.all(milestoneArray.map(async (m) => await canDeleteAsCreator(client, m)))).every(
+    (can) => can
+  )
+
+  if (!canDelete) {
+    showPopup(contact.component.DeleteConfirmationPopup, {
+      object: milestoneArray,
+      deleteAction: async () => {}
+    })
+    return
+  }
+
   // Check if available to move issues to another milestone
   const firstSearchedMilestone = await client.findOne(tracker.class.Milestone, {
     _id: { $nin: milestoneArray.map((p) => p._id) }
