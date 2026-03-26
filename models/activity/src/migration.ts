@@ -450,6 +450,7 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
           objectAttributes: {
             collaborator: add
           },
+          history: [],
           collection: doc.collection
         })
       }
@@ -474,6 +475,7 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
           objectAttributes: {
             collaborator: remove
           },
+          history: [],
           collection: doc.collection
         })
       }

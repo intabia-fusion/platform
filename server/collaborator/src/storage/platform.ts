@@ -282,7 +282,8 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
             added: [],
             removed: [],
             isMixin: hierarchy.isMixin(objectClass)
-          }
+          },
+          history: []
         }
         return await client.addCollection(
           activity.class.DocUpdateMessage,

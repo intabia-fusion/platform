@@ -27,6 +27,7 @@ import {
   type DocAttributeUpdates,
   type DocUpdateAction,
   type DocUpdateMessage,
+  type DocUpdateMessageHistory,
   type DocUpdateMessageViewlet,
   type DocUpdateMessageViewletAttributesConfig,
   type IgnoreActivity,
@@ -139,6 +140,8 @@ export class TDocUpdateMessage extends TActivityMessage implements DocUpdateMess
 
   updateCollection?: string
   attributeUpdates?: DocAttributeUpdates
+
+  history!: DocUpdateMessageHistory[]
 }
 
 @Model(activity.class.ActivityReference, activity.class.ActivityMessage)

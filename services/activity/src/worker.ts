@@ -85,8 +85,8 @@ export class Worker {
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) return
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.BrowserNotification)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.PushSubscription)) return
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.ReadState)) return
-    if (this.sysHierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
 
     const exists = this.workspaces.get(ws)
 
@@ -95,6 +95,7 @@ export class Worker {
       return
     }
 
+    if (this.sysHierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
     if (tx.space === core.space.DerivedTx) return
 
     const loading = this.loadingWorkspaces.get(ws)

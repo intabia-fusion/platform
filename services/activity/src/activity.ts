@@ -1,12 +1,16 @@
 import core, {
   type Data,
   type Doc,
+  groupByArray,
   matchQuery,
   type MeasureContext,
   type PersonId,
   type TxCreateDoc,
   type TxCUD,
-  TxProcessor
+  type TxFactory,
+  TxProcessor,
+  type TxRemoveDoc,
+  type TxUpdateDoc
 } from '@hcengineering/core'
 import activity, { type ActivityMessageControl, type DocUpdateMessage } from '@hcengineering/activity'
 
@@ -14,37 +18,37 @@ import type Cache from './cache'
 import { type Client } from './types'
 import {
   buildRemovedDoc,
+  canCombineMessage,
   getDocIdentifier,
   getDocTitle,
   getDocUpdateAction,
+  getDocUpdateMessageKey,
   getDocUpdateMessageMarkup,
   getDocUrl,
   getTxAttributesUpdates,
   isActivityDoc,
-  isSpace
+  isSpace,
+  mergeCollectionHistory,
+  mergeDocUpdateAttributes
 } from './utils'
+
+const CREATE_COMBINE_THRESHOLD = 10 * 1000 // Use 10 seconds to combine update messages after creation.
+const UPDATE_COMBINE_THRESHOLD = 5 * 60 * 1000 //  Use 5 minutes to combine similar messages
 
 export async function ActivityMessagesHandler (tx: TxCUD<Doc>, client: Client, cache: Cache): Promise<TxCUD<Doc>[]> {
   if (tx.space === core.space.DerivedTx) return []
-  const { ctx } = client
 
-  const result: TxCUD<Doc>[] = []
-
-  const txes = await ctx.with('generateDocUpdateMessages', {}, (ctx) =>
-    generateDocUpdateMessages(ctx, tx, client, [], cache)
+  return await client.ctx.with('generateDocUpdateMessages', {}, (ctx) =>
+    generateDocUpdateMessages(ctx, client, cache, tx, [])
   )
-
-  result.push(...txes)
-
-  return result
 }
 
 async function generateDocUpdateMessages (
   ctx: MeasureContext,
-  tx: TxCUD<Doc>,
   client: Client,
-  res: TxCUD<DocUpdateMessage>[] = [],
   cache: Cache,
+  tx: TxCUD<Doc>,
+  res: TxCUD<DocUpdateMessage>[] = [],
   skipAttachedTo = false
 ): Promise<TxCUD<DocUpdateMessage>[]> {
   if (tx.space === core.space.DerivedTx) return res
@@ -80,19 +84,13 @@ async function generateDocUpdateMessages (
   }
 
   if (tx.attachedTo !== undefined && tx.attachedToClass !== undefined && !skipAttachedTo) {
-    res = await generateDocUpdateMessages(ctx, tx, client, res, cache, true)
+    res = await generateDocUpdateMessages(ctx, client, cache, tx, res, true)
     if ([core.class.TxCreateDoc, core.class.TxRemoveDoc].includes(tx._class)) {
       if (!isActivityDoc(tx.attachedToClass, client.hierarchy)) {
         return res
       }
 
-      let doc = await cache.getDoc(tx.attachedTo, tx.attachedToClass)
-
-      if (doc === undefined) {
-        const createTx = (await client.findAll(core.class.TxCreateDoc, { objectId: tx.attachedTo }, { limit: 1 }))[0]
-
-        doc = createTx !== undefined ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
-      }
+      const doc = await cache.getDoc(tx.attachedTo, tx.attachedToClass)
 
       if (doc !== undefined) {
         return await ctx.with(
@@ -117,11 +115,11 @@ async function generateDocUpdateMessages (
     case core.class.TxUpdateDoc: {
       if (isActivityDoc(tx.objectClass, client.hierarchy)) {
         const doc = await cache.getDoc(tx.objectId, tx.objectClass)
+        if (doc == null) return res
         return await ctx.with(
           'pushDocUpdateMessages',
           {},
-          async (ctx) =>
-            await pushDocUpdateMessages(ctx, client, cache, res, doc ?? undefined, tx, undefined, controlRules)
+          async (ctx) => await pushDocUpdateMessages(ctx, client, cache, res, doc, tx, undefined, controlRules)
         )
       }
     }
@@ -135,12 +133,11 @@ async function pushDocUpdateMessages (
   client: Client,
   cache: Cache,
   res: TxCUD<DocUpdateMessage>[],
-  object: Doc | undefined,
+  object: Doc,
   tx: TxCUD<Doc>,
   modifiedBy?: PersonId,
   controlRules?: ActivityMessageControl[]
 ): Promise<TxCUD<DocUpdateMessage>[]> {
-  if (object === undefined) return res
   if (!isActivityDoc(object._class, client.hierarchy)) return res
 
   const raw: Data<DocUpdateMessage> = {
@@ -154,7 +151,8 @@ async function pushDocUpdateMessages (
     updateCollection: tx.collection,
     attachedToTitle: await getDocTitle(client, object),
     attachedToIdentifier: await getDocIdentifier(client, object),
-    attachedToUrl: await getDocUrl(client, object)
+    attachedToUrl: await getDocUrl(client, object),
+    history: []
   }
 
   if (tx.collection != null && tx._class === core.class.TxCreateDoc) {
@@ -171,9 +169,9 @@ async function pushDocUpdateMessages (
   }
 
   const attributesUpdates = await getTxAttributesUpdates(ctx, client, cache, tx, object, controlRules)
-
+  const createTxes: TxCreateDoc<DocUpdateMessage>[] = []
   for (const attributeUpdates of attributesUpdates) {
-    res.push(
+    createTxes.push(
       await getDocUpdateMessageTx(
         client,
         tx,
@@ -188,10 +186,192 @@ async function pushDocUpdateMessages (
   }
 
   if (attributesUpdates.length === 0 && raw.action !== 'update') {
-    res.push(await getDocUpdateMessageTx(client, tx, object, raw, modifiedBy))
+    const ttx = await getDocUpdateMessageTx(client, tx, object, raw, modifiedBy)
+    createTxes.push(ttx)
+  }
+
+  const combined = combineMessages(createTxes, cache.getRecentMessages(object._id), client.txFactory)
+
+  console.log('Combined messages', combined)
+  for (const ttx of combined.create) {
+    res.push(ttx)
+    cache.addRecentMessage(TxProcessor.createDoc2Doc(ttx))
+  }
+
+  for (const ttx of combined.remove) {
+    res.push(ttx)
+    cache.tx(ttx)
+  }
+
+  for (const ttx of combined.update) {
+    res.push(ttx)
+    cache.tx(ttx)
   }
 
   return res
+}
+
+function combineMessages (
+  txes: TxCreateDoc<DocUpdateMessage>[],
+  recent: DocUpdateMessage[],
+  factory: TxFactory
+): {
+    create: TxCreateDoc<DocUpdateMessage>[]
+    remove: TxRemoveDoc<DocUpdateMessage>[]
+    update: TxUpdateDoc<DocUpdateMessage>[]
+  } {
+  const created = txes.map((it) => {
+    const message = TxProcessor.createDoc2Doc(it)
+    return {
+      tx: it,
+      message,
+      key: getDocUpdateMessageKey(message)
+    }
+  })
+
+  const createTx: TxCreateDoc<DocUpdateMessage>[] = []
+  const removeTx: TxRemoveDoc<DocUpdateMessage>[] = []
+  const updateTx: TxUpdateDoc<DocUpdateMessage>[] = []
+
+  const recentGroupedByType = groupByArray(recent, getDocUpdateMessageKey)
+
+  for (const { key, message, tx } of created) {
+    const createMessage = recent.find(
+      (it) => it.createdBy === message.createdBy && it.action === 'create' && it.attachedTo === it.objectId
+    )
+
+    const createDiff =
+      (message.createdOn ?? message.modifiedOn) - (createMessage?.createdOn ?? createMessage?.modifiedOn ?? 0)
+
+    if (createMessage != null && createDiff <= CREATE_COMBINE_THRESHOLD) {
+      const innerUpdateTx = factory.createTxUpdateDoc(createMessage._class, createMessage.space, createMessage._id, {
+        $push: {
+          history: {
+            action: message.action,
+            createdOn: message.createdOn ?? message.modifiedOn ?? 0,
+            update: message.attributeUpdates,
+            objectId: message.objectId,
+            objectClass: message.objectClass,
+            objectTitle: message.objectTitle,
+            objectAttributes: message.objectAttributes
+          }
+        }
+      })
+      updateTx.push(
+        factory.createTxCollectionCUD(
+          tx.attachedToClass ?? message.objectClass,
+          tx.attachedTo ?? message.objectId,
+          createMessage.space,
+          tx.collection ?? 'docUpdateMessages',
+          innerUpdateTx
+        ) as TxUpdateDoc<DocUpdateMessage>
+      )
+      continue
+    }
+
+    const combinedWith = (recentGroupedByType.get(key) ?? []).filter(canCombineMessage).filter((it) => {
+      const timeDiff = (message.createdOn ?? message.modifiedOn) - (it.createdOn ?? it.modifiedOn)
+
+      return timeDiff >= 0 && timeDiff < UPDATE_COMBINE_THRESHOLD
+    })
+    console.log('Combined with', combinedWith)
+
+    if (combinedWith.length === 0) {
+      createTx.push(tx)
+      continue
+    }
+
+    if (message.action === 'update') {
+      const attributeUpdates = mergeDocUpdateAttributes(combinedWith, message)
+      console.log('Attribute updates', attributeUpdates)
+      if (attributeUpdates == null) {
+        const removes = combinedWith.map((it) => {
+          const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
+          return factory.createTxCollectionCUD(
+            it.attachedToClass,
+            it.attachedTo,
+            it.space,
+            'docUpdateMessages',
+            innerTx
+          ) as TxRemoveDoc<DocUpdateMessage>
+        })
+        removeTx.push(...removes)
+        continue
+      }
+
+      tx.attributes.attributeUpdates = attributeUpdates
+
+      tx.attributes.history = combinedWith.map((it) => ({
+        action: it.action,
+        createdOn: it.createdOn ?? it.modifiedOn ?? 0,
+        update: it.attributeUpdates,
+        objectId: it.objectId,
+        objectClass: it.objectClass,
+        objectTitle: it.objectTitle,
+        objectAttributes: it.objectAttributes
+      }))
+    } else if (message.action === 'create' || message.action === 'remove') {
+      const merged = mergeCollectionHistory(combinedWith, message)
+
+      if (merged === undefined || merged.length === 0) {
+        const removes = combinedWith.map((it) => {
+          const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
+          return factory.createTxCollectionCUD(
+            it.attachedToClass,
+            it.attachedTo,
+            it.space,
+            'docUpdateMessages',
+            innerTx
+          ) as TxRemoveDoc<DocUpdateMessage>
+        })
+        removeTx.push(...removes)
+        continue
+      }
+
+      const last = merged.pop()
+
+      if (last != null) {
+        tx.attributes.action = last.action
+        tx.attributes.objectId = last.objectId
+        tx.attributes.objectClass = last.objectClass
+        tx.attributes.objectTitle = last.objectTitle
+        tx.attributes.objectAttributes = last.objectAttributes
+        tx.attributes.attributeUpdates = last.update
+      }
+
+      tx.attributes.history = merged
+    } else {
+      tx.attributes.history = combinedWith.map((it) => ({
+        action: it.action,
+        createdOn: it.createdOn ?? it.modifiedOn ?? 0,
+        update: it.attributeUpdates,
+        objectId: it.objectId,
+        objectClass: it.objectClass,
+        objectTitle: it.objectTitle,
+        objectAttributes: it.objectAttributes
+      }))
+    }
+
+    const removes = combinedWith.map((it) => {
+      const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
+      return factory.createTxCollectionCUD(
+        it.attachedToClass,
+        it.attachedTo,
+        it.space,
+        'docUpdateMessages',
+        innerTx
+      ) as TxRemoveDoc<DocUpdateMessage>
+    })
+    removeTx.push(...removes)
+
+    createTx.push(tx)
+  }
+
+  return {
+    create: createTx,
+    remove: removeTx,
+    update: updateTx
+  }
 }
 
 async function getDocUpdateMessageTx (
@@ -200,7 +380,7 @@ async function getDocUpdateMessageTx (
   object: Doc,
   rawMessage: Data<DocUpdateMessage>,
   modifiedBy?: PersonId
-): Promise<TxCUD<DocUpdateMessage>> {
+): Promise<TxCreateDoc<DocUpdateMessage>> {
   const { hierarchy } = client
   const space = isSpace(object, hierarchy) ? object._id : object.space
   const innerTx = client.txFactory.createTxCreateDoc(
@@ -223,5 +403,5 @@ async function getDocUpdateMessageTx (
     innerTx,
     originTx.modifiedOn,
     modifiedBy ?? originTx.modifiedBy
-  )
+  ) as TxCreateDoc<DocUpdateMessage>
 }

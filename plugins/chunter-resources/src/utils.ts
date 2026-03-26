@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, {
-  type ActivityMessage,
-  type DisplayActivityMessage,
-  type DisplayDocUpdateMessage
-} from '@hcengineering/activity'
+import { type ActivityMessage } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
 import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
 import {
@@ -308,17 +304,8 @@ const lastViewTimestampStore = writable<Map<Ref<Doc>, number>>(new Map())
 // NOTE: Sometimes user can read message before notification is created and we should mark it as viewed when notification is received
 export const chatReadMessagesStore = writable<Set<Ref<ActivityMessage>>>(new Set())
 
-function getAllIds (messages: DisplayActivityMessage[]): Array<Ref<ActivityMessage>> {
-  return messages
-    .map((message) => {
-      const combined =
-        message._class === activity.class.DocUpdateMessage
-          ? (message as DisplayDocUpdateMessage)?.combinedMessagesIds
-          : undefined
-
-      return [message._id, ...(combined ?? [])]
-    })
-    .flat()
+function getAllIds (messages: ActivityMessage[]): Array<Ref<ActivityMessage>> {
+  return messages.map((message) => message._id)
 }
 
 let toReadTimer: any
@@ -366,10 +353,7 @@ export function recheckNotifications (context: DocNotifyContext): void {
   }, 500)
 }
 
-export async function readChannelMessages (
-  messages: DisplayActivityMessage[],
-  readState?: ReadState | null
-): Promise<void> {
+export async function readChannelMessages (messages: ActivityMessage[], readState?: ReadState | null): Promise<void> {
   if (messages.length === 0) {
     return
   }

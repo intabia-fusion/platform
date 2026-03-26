@@ -33,5 +33,6 @@ rush docker:build -p 20 \
 --to @hcengineering/pod-stream \
 --to @hcengineering/pod-worker \
 --to @hcengineering/pod-notification \
---to @hcengineering/pod-notifications
+--to @hcengineering/pod-notifications \
+--to @hcengineering/pod-activity
 # --to @hcengineering/pod-hulylake

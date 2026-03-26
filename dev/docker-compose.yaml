@@ -797,31 +797,6 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
     restart: unless-stopped
-  activity:
-    image: intabiafusion/activity
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    depends_on:
-      redpanda:
-        condition: service_started
-      account:
-        condition: service_started
-      postgres:
-        condition: service_started
-      transactor:
-        condition: service_started
-    volumes:
-      - ./branding.json:/var/cfg/branding.json
-    environment:
-      - SECRET=secret
-      - ACCOUNTS_URL=http://huly.local:3000
-      - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - QUEUE_REGION=
-      - DB_URL=${DB_URL_PG}
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - APPLY_TX_BATCH_SIZE=100
-      - BRANDING_PATH=/var/cfg/branding.json
-    restart: unless-stopped
   #  translate:
   #    image: intabiafusion/translate
   #    extra_hosts:
@@ -1059,6 +1034,31 @@ services:
       - PORT=4042
     ports:
       - 4042:4042
+    restart: unless-stopped
+  activity:
+    image: intabiafusion/activity
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      postgres:
+        condition: service_started
+      transactor:
+        condition: service_started
+    volumes:
+      - ./branding.json:/var/cfg/branding.json
+    environment:
+      - SECRET=secret
+      - ACCOUNTS_URL=http://huly.local:3000
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - DB_URL=${DB_URL_PG}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - APPLY_TX_BATCH_SIZE=100
+      - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   notifications:
     image: intabiafusion/notifications

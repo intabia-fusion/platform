@@ -46,6 +46,7 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 
 import config from './config'
 import WsCache from './cache'
@@ -69,10 +70,11 @@ class Workspace {
     private readonly model: ModelDb,
     private readonly rest: RestClient,
     private readonly storage: StorageAdapter,
-    private readonly branding?: Branding
+    private readonly branding: Branding | undefined,
+    recentMessages: DocUpdateMessage[] = []
   ) {
     this.client = this.getClient()
-    this.cache = new WsCache(this.ctx, this.client)
+    this.cache = new WsCache(this.ctx, this.client, recentMessages)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
@@ -88,6 +90,8 @@ class Workspace {
 
       this.cache.tx(tx)
 
+      if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
+
       const res: TxCUD<Doc>[] = await ActivityMessagesHandler(tx, this.getClient(), this.cache)
 
       if (res.length > 0) {
@@ -100,16 +104,13 @@ class Workspace {
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
-    for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
-      const batch = txes.slice(i, i + config.ApplyTxBatchSize)
-      const txApply = this.txFactory.createTxApplyIf(core.space.Tx, config.ServiceId, [], [], batch, undefined, true)
-      try {
-        await this.rest.tx(txApply)
-      } catch (e) {
-        console.error(e)
-        this.ctx.error('Failed to send tx batch', { tx: txApply, batchSize: batch.length })
-        throw e
-      }
+    const txApply = this.txFactory.createTxApplyIf(core.space.Tx, config.ServiceId, [], [], txes, undefined, true)
+    try {
+      await this.rest.tx(txApply)
+    } catch (e) {
+      console.error(e)
+      this.ctx.error('Failed to send tx apply', { tx: txApply })
+      throw e
     }
   }
 
@@ -194,10 +195,19 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding)
+    const cutoff = Date.now() - 10 * 60 * 1000
+    const recentMessages = await pipeline.findAll(
+      ctx,
+      activity.class.DocUpdateMessage,
+      { createdOn: { $gte: cutoff } },
+      {}
+    )
+
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, recentMessages)
   }
 
   async close (): Promise<void> {
+    this.cache.close()
     try {
       await this.pipeline.close()
     } catch (e) {

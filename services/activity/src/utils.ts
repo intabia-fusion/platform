@@ -44,7 +44,8 @@ import activity, {
   type ActivityMessageControl,
   type DocAttributeUpdates,
   type DocUpdateAction,
-  type DocUpdateMessage
+  type DocUpdateMessage,
+  type DocUpdateMessageHistory
 } from '@hcengineering/activity'
 import { getResource, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -379,7 +380,7 @@ export async function getTxAttributesUpdates (
 
     const attribute = hierarchy.findAttribute(updateObject._class, key)
 
-    attrClass = attribute != null ? getAttrClass(hierarchy, attribute) : attribute
+    attrClass = attribute != null ? getAttrClass(hierarchy, attribute) : undefined
 
     if (attrClass == null && attribute?.type?._class !== undefined) {
       attrClass = attribute.type._class
@@ -436,7 +437,9 @@ export async function getTxAttributesUpdates (
 
 function getHiddenAttrs (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): Set<string> {
   return new Set(
-    [...hierarchy.getAllAttributes(_class).entries()].filter(([, attr]) => attr.hidden === true).map(([k]) => k)
+    Array.from(hierarchy.getAllAttributes(_class).entries())
+      .filter(([, attr]) => attr.hidden === true)
+      .map(([k]) => k)
   )
 }
 
@@ -451,7 +454,7 @@ export async function getAttrName (
 
   try {
     if (isMixin) {
-      const keyedAttribute = [...hierarchy.getAllAttributes(attrClass).entries()]
+      const keyedAttribute = Array.from(hierarchy.getAllAttributes(attrClass).entries())
         .filter(([, value]) => value.hidden !== true)
         .map(([key, attr]) => ({ key, attr }))
         .find(({ key }) => key === attrKey)
@@ -596,4 +599,133 @@ export async function buildRemovedDoc (
     }
   }
   return doc
+}
+
+function getAttributeUpdatesKey (message: DocUpdateMessage): string {
+  if (message.attributeUpdates === undefined) return ''
+
+  const { attrKey, attrClass, isMixin } = message.attributeUpdates
+  return [attrKey, attrClass, isMixin].join('-')
+}
+
+export function getDocUpdateMessageKey (message: DocUpdateMessage): string {
+  if (message.action === 'update') {
+    return [message.createdBy, getAttributeUpdatesKey(message)].join('_')
+  }
+
+  return [message.createdBy, message.updateCollection, message.objectId === message.attachedTo].join('_')
+}
+
+export function canCombineMessage (message: ActivityMessage): boolean {
+  const hasReactions = message.reactions !== undefined && message.reactions > 0
+  const isPinned = message.isPinned === true
+  const hasReplies = message.replies !== undefined && message.replies > 0
+
+  return !hasReactions && !isPinned && !hasReplies
+}
+
+export function mergeDocUpdateAttributes (
+  recent: DocUpdateMessage[],
+  message: DocUpdateMessage
+): DocAttributeUpdates | undefined {
+  const firstMessage = recent[0]
+  const messages = [...recent, message]
+
+  let mergedAttributeUpdates = firstMessage.attributeUpdates
+
+  messages.forEach((it) => {
+    if (it._id !== firstMessage._id && it.attributeUpdates !== undefined) {
+      mergedAttributeUpdates = mergeAttributeUpdates(it.attributeUpdates, mergedAttributeUpdates)
+    }
+  })
+
+  if (mergedAttributeUpdates === undefined) return undefined
+
+  const hasChanges =
+    mergedAttributeUpdates.set.length > 0 ||
+    mergedAttributeUpdates.added.length > 0 ||
+    mergedAttributeUpdates.removed.length > 0
+
+  if (!hasChanges) return undefined
+
+  return mergedAttributeUpdates
+}
+
+export function mergeAttributeUpdates (
+  attributeUpdates: DocAttributeUpdates,
+  prevAttributeUpdates?: DocAttributeUpdates
+): DocAttributeUpdates {
+  if (prevAttributeUpdates === undefined) return attributeUpdates
+  if (attributeUpdates.attrKey !== prevAttributeUpdates.attrKey) return attributeUpdates
+
+  const added = attributeUpdates.added
+    .filter((item) => !prevAttributeUpdates.removed.includes(item))
+    .concat(prevAttributeUpdates.added.filter((item) => !attributeUpdates.removed.includes(item)))
+  const removed = attributeUpdates.removed
+    .filter((item) => !prevAttributeUpdates.added.includes(item))
+    .concat(prevAttributeUpdates.removed.filter((item) => !attributeUpdates.added.includes(item)))
+
+  const { prevValue } = prevAttributeUpdates
+  const { set, attrClass, attrKey, isMixin } = attributeUpdates
+
+  return {
+    attrKey,
+    attrClass,
+    prevValue,
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    set: prevValue ? set.filter((value) => value !== prevValue) : set,
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    added: prevValue ? added.filter((value) => value !== prevValue) : added,
+    removed,
+    isMixin
+  }
+}
+
+export function mergeCollectionHistory (
+  recent: DocUpdateMessage[],
+  message: DocUpdateMessage
+): DocUpdateMessageHistory[] | undefined {
+  const operations: DocUpdateMessageHistory[] = []
+
+  recent.forEach((r) => {
+    if (r.history !== undefined && r.history.length > 0) {
+      operations.push(...r.history)
+    }
+    operations.push({
+      action: r.action,
+      createdOn: r.createdOn ?? r.modifiedOn ?? 0,
+      objectId: r.objectId,
+      objectClass: r.objectClass,
+      objectTitle: r.objectTitle,
+      objectAttributes: r.objectAttributes,
+      update: r.attributeUpdates
+    })
+  })
+
+  operations.push({
+    action: message.action,
+    createdOn: message.createdOn ?? message.modifiedOn ?? 0,
+    objectId: message.objectId,
+    objectClass: message.objectClass,
+    objectTitle: message.objectTitle,
+    objectAttributes: message.objectAttributes,
+    update: message.attributeUpdates
+  })
+
+  const removeMessages = operations.filter(({ action }) => action === 'remove')
+  const createMessages = operations.filter(({ action }) => action === 'create')
+
+  const removedObjectIds = removeMessages.map(({ objectId }) => objectId)
+  const createdObjectIds = createMessages.map(({ objectId }) => objectId)
+
+  const createMessagesForMerge = createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId))
+  const removeMessagesForMerge = removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
+
+  const merged = [...createMessagesForMerge, ...removeMessagesForMerge]
+
+  if (merged.length === 0) return undefined
+
+  merged.sort((a, b) => a.createdOn - b.createdOn)
+
+  return merged
 }
