@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Las notificaciones push serán eliminadas. ¿Confirmar?",
     "Value": "{value}",
     "Current": "actual",
+    "PushOnDesktop": "Las notificaciones push para la aplicación de escritorio están implementadas de forma nativa",
     "AlreadySubscribed": "Este dispositivo ya está suscrito a las notificaciones",
     "PushNotConfigured": "Las notificaciones push no están configuradas en el servidor",
     "PushNotSupported": "Su navegador no admite notificaciones push",

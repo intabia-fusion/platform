@@ -498,6 +498,7 @@ const notification = plugin(notificationId, {
     WebpushRemoveConfirm: '' as IntlString,
     Value: '' as IntlString,
     Current: '' as IntlString,
+    PushOnDesktop: '' as IntlString,
     AlreadySubscribed: '' as IntlString,
     PushNotConfigured: '' as IntlString,
     PushNotSupported: '' as IntlString,

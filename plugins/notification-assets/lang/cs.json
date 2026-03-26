@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Webpushes budou smazány. Potvrdit?",
     "Value": "{value}",
     "Current": "aktuální",
+    "PushOnDesktop": "Push oznámení pro desktopovou aplikaci jsou implementována nativně",
     "AlreadySubscribed": "Toto zařízení je již přihlášeno k odběru oznámení",
     "PushNotConfigured": "Push oznámení nejsou na serveru nakonfigurována",
     "PushNotSupported": "Váš prohlížeč nepodporuje push oznámení",

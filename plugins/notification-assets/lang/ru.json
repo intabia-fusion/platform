@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Веб-пуши будут удалены. Продолжить?",
     "Value": "{value}",
     "Current": "текущий",
+    "PushOnDesktop": "Push-уведомления для десктопного приложения реализованы нативно",
     "AlreadySubscribed": "Это устройство уже подписано на уведомления",
     "PushNotConfigured": "Push-уведомления не настроены на сервере",
     "PushNotSupported": "Ваш браузер не поддерживает push-уведомления",
