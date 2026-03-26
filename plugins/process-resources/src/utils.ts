@@ -441,11 +441,12 @@ export async function requestUserInput (
   target: Transition,
   execution: Execution,
   userContext: ExecutionContext,
-  inputContext: Record<string, any> = {}
+  inputContext: Record<string, any> = {},
+  skipExisting: boolean = false
 ): Promise<{ context: ExecutionContext, state: Ref<State>, changed: boolean }> {
   const client = getClient()
   let changed = false
-  const tr = await getTransitionUserInput(processId, space, target, userContext)
+  const tr = await getTransitionUserInput(processId, space, target, userContext, skipExisting)
   if (tr !== undefined) {
     userContext = { ...userContext, ...tr }
     changed = true
@@ -463,7 +464,9 @@ export async function requestUserInput (
       process: processId,
       from: target.to
     })
-    .filter((t) => client.getModel().findObject(t.trigger)?.auto === true)
+    .filter(
+      (t) => client.getModel().findObject(t.trigger)?.auto === true && t.trigger !== process.trigger.OnSubProcessesDone
+    )
 
   if (nextAutoTransitions.length > 0) {
     const newExecution = {
@@ -496,7 +499,8 @@ export async function getTransitionUserInput (
   processId: Ref<Process>,
   space: Ref<Space>,
   transition: Transition,
-  userContext: ExecutionContext
+  userContext: ExecutionContext,
+  skipExisting: boolean = false
 ): Promise<ExecutionContext | undefined> {
   let changed = false
   for (const action of transition.actions) {
@@ -504,9 +508,20 @@ export async function getTransitionUserInput (
     const inputs: SelectedUserRequest[] = []
     for (const key in action.params) {
       const value = (action.params as any)[key]
-      const context = parseContext(value)
-      if (context !== undefined && context.type === 'userRequest') {
-        inputs.push(context)
+      if (typeof value === 'string') {
+        const context = parseContext(value)
+        if (context !== undefined && context.type === 'userRequest') {
+          if (skipExisting && userContext[context.id] !== undefined) continue
+          inputs.push(context)
+        }
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
+        for (const element of Object.values(value)) {
+          const context = parseContext(element)
+          if (context !== undefined && context.type === 'userRequest') {
+            if (skipExisting && userContext[context.id] !== undefined) continue
+            inputs.push(context)
+          }
+        }
       }
     }
     if (inputs.length > 0) {
@@ -554,7 +569,14 @@ export async function getSubProcessesUserInput (
     if (action.methodId !== process.method.RunSubProcess) continue
     const processId = action.params._id as Ref<Process>
     if (processId === undefined) continue
-    const context: ExecutionContext = action.params.context ?? getEmptyContext()
+    const context: ExecutionContext = JSON.parse(JSON.stringify(action.params.context ?? getEmptyContext()))
+    for (const [k, v] of Object.entries(context)) {
+      const c = parseContext(v)
+      if (c !== undefined && c.type === 'userRequest') {
+        if (userContext[c.id] !== undefined) continue
+        ;(context as any)[k] = userContext[c.id]
+      }
+    }
     const initTransition = getClient().getModel().findAllSync(process.class.Transition, {
       process: processId,
       from: null
@@ -575,9 +597,10 @@ export async function getSubProcessesUserInput (
       modifiedOn: 0,
       modifiedBy: client.user
     }
-    const res = await newExecutionUserInput(processId, space, mockExecution)
+    const res = await newExecutionUserInput(processId, space, mockExecution, true)
     if (action.context == null || res === undefined) continue
     userContext[action.context._id] = res
+    userContext = { ...userContext, ...res.context }
     changed = true
   }
   return changed ? userContext : undefined
@@ -586,7 +609,8 @@ export async function getSubProcessesUserInput (
 export async function newExecutionUserInput (
   _id: Ref<Process>,
   space: Ref<Space>,
-  execution: Execution
+  execution: Execution,
+  skipExisting: boolean = false
 ): Promise<{ context: ExecutionContext, state: Ref<State>, changed: boolean } | undefined> {
   const client = getClient()
   const initTransition = client.getModel().findAllSync(process.class.Transition, {
@@ -594,7 +618,7 @@ export async function newExecutionUserInput (
     from: null
   })[0]
   if (initTransition === undefined) return undefined
-  return await requestUserInput(_id, space, initTransition, execution, execution.context)
+  return await requestUserInput(_id, space, initTransition, execution, execution.context, {}, skipExisting)
 }
 
 export async function getNextStateUserInput (
