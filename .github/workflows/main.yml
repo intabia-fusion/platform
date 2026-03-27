@@ -25,28 +25,6 @@ on:
   workflow_dispatch:
 
 env:
-  CacheFolders: |
-    communication
-    common
-    desktop
-    desktop-package
-    foundations
-    dev
-    models
-    packages
-    plugins
-    pods
-    server
-    server-plugins
-    templates
-    services
-    workers
-    tests
-    rush.json
-    .prettierrc
-    tools
-    workers
-    ws-tests
   PublishTempFolder: publish_artifacts
   INIT_SCRIPTS_BRANCH: 'main'
 
@@ -65,16 +43,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
-        with:
-          path: |
-            common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       # - name: Cheking model is updated...
       #   run: node common/scripts/check_model_version.js
@@ -99,15 +67,6 @@ jobs:
 
       - name: Validate...
         run: node common/scripts/install-run-rush.js validate
-
-      - name: Cache build results
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-build-results
-        with:
-          path: ${{ env.CacheFolders}}
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
   svelte-check:
     needs: build
     runs-on: ubuntu-self
@@ -123,14 +82,11 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Cache build results
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-build-results
-        with:
-          path: ${{ env.CacheFolders}}
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+      - name: Installing...
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Validate...
+        run: node common/scripts/install-run-rush.js fast-build:validate
 
       - name: Checking svelte sources...
         run: node common/scripts/install-run-rush.js svelte-check -v
@@ -146,14 +102,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache build results
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-build-results
-        with:
-          path: ${{ env.CacheFolders}}
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+
+      - name: Installing...
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Validate...
+        run: node common/scripts/install-run-rush.js fast-build:validate
 
       - name: Formatting...
         run: node common/scripts/install-run-rush.js fast-format --branch ${{ github.base_ref || 'develop' }}
@@ -178,14 +132,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache build results
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-build-results
-        with:
-          path: ${{ env.CacheFolders}}
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
       - name: Login to Docker Hub
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
@@ -198,6 +144,13 @@ jobs:
         run: |
           cd ./tests
           ./prepare-tests.sh
+
+      - name: Installing...
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Validate...
+        run: node common/scripts/install-run-rush.js fast-build
+
       - name: Testing...
         run: node common/scripts/install-run-rush.js test --verbose
         env:
@@ -220,16 +173,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
-        with:
-          path: |
-            common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Checking for mis-matching dependencies...
         run: node common/scripts/install-run-rush.js check
@@ -319,16 +262,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
-        with:
-          path: |
-            common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Checking for mis-matching dependencies...
         run: node common/scripts/install-run-rush.js check
@@ -418,16 +351,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
-        with:
-          path: |
-            common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Checking for mis-matching dependencies...
         run: node common/scripts/install-run-rush.js check
@@ -531,16 +454,6 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: latest
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
-        with:
-          path: |
-            common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Installing...
         run: node common/scripts/install-run-rush.js install
