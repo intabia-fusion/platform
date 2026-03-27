@@ -14,10 +14,18 @@ on:
         required: false
         default: 'latest'
         type: string
+      runner:
+        description: 'Runner to use'
+        required: false
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - ubuntu-self
 
 jobs:
   docker-build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 60
     steps:
       - name: Set up QEMU
