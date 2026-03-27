@@ -168,8 +168,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -190,8 +188,6 @@ jobs:
         with:
           username: intabiafusion
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - name: Docker Build
         run: node common/scripts/install-run-rush.js docker
         env:
@@ -257,8 +253,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -279,8 +273,6 @@ jobs:
         with:
           username: intabiafusion
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - name: Docker Build
         run: node common/scripts/install-run-rush.js docker
         env:
@@ -346,8 +338,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -371,8 +361,6 @@ jobs:
         with:
           username: intabiafusion
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - name: Docker Build
         run: node common/scripts/install-run-rush.js docker
         env:
@@ -435,8 +423,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Configure docker
@@ -733,7 +719,7 @@ jobs:
           echo "rev=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
   dist-build-docker:
     needs: dist-build
-    runs-on: ubuntu-self
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
