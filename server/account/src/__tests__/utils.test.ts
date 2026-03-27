@@ -232,9 +232,16 @@ describe('account utils', () => {
   describe('transactor utils', () => {
     // Helper function to convert transactors string to REGION_CONFIG_JSON
     const transactorsToRegionConfig = (transactors: string): string => {
-      const regions: Record<string, { name?: string, transactors: Array<{ external: string, internal: string }>, collaborators: Array<{ external: string, internal: string }> }> = {}
+      const regions: Record<
+      string,
+      {
+        name?: string
+        transactors: Array<{ external: string, internal: string }>
+        collaborators: Array<{ external: string, internal: string }>
+      }
+      > = {}
 
-      transactors.split(',').forEach(t => {
+      transactors.split(',').forEach((t) => {
         const trimmed = t.trim()
         if (trimmed.length === 0) return
 
@@ -346,9 +353,16 @@ describe('account utils', () => {
 
       // Helper function to convert transactors string to REGION_CONFIG_JSON
       const transactorsToRegionConfig = (transactors: string): string => {
-        const regions: Record<string, { name?: string, transactors: Array<{ external: string, internal: string }>, collaborators: Array<{ external: string, internal: string }> }> = {}
+        const regions: Record<
+        string,
+        {
+          name?: string
+          transactors: Array<{ external: string, internal: string }>
+          collaborators: Array<{ external: string, internal: string }>
+        }
+        > = {}
 
-        transactors.split(',').forEach(t => {
+        transactors.split(',').forEach((t) => {
           const trimmed = t.trim()
           if (trimmed.length === 0) return
 
