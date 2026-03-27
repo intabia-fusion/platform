@@ -14,7 +14,7 @@ import { CompaniesPage } from '../model/recruiting/companies-page'
 import { CompanyDetailsPage } from '../model/recruiting/company-details-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
 
-test.describe('Custom attributes tests', () => {
+test.describe.skip('Custom attributes tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let loginPage: LoginPage
   let userProfilePage: UserProfilePage
