@@ -68,9 +68,9 @@
     "@hcengineering/theme": "workspace:^0.7.0",
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/hulypulse-client": "workspace:^0.7.0",
-    "@livekit/krisp-noise-filter": "^0.3.0",
-    "@livekit/track-processors": "^0.5.6",
-    "livekit-client": "^2.15.6",
+    "@livekit/krisp-noise-filter": "^0.4.1",
+    "@livekit/track-processors": "^0.7.2",
+    "livekit-client": "^2.18.0",
     "svelte": "^4.2.20"
   }
 }
