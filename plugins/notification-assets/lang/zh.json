@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Webpushes将被删除。确认吗？",
     "Value": "{value}",
     "Current": "当前",
+    "PushOnDesktop": "桌面端应用的推送通知已原生实现",
     "AlreadySubscribed": "此设备已订阅通知",
     "PushNotConfigured": "服务器未配置推送通知",
     "PushNotSupported": "您的浏览器不支持推送通知",

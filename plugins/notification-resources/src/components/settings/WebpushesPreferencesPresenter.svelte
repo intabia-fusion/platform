@@ -3,7 +3,7 @@
   import notification, { type PushSubscription, type PushSubscriptionSetting } from '@hcengineering/notification'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import ModernToggle from '@hcengineering/ui/src/components/ModernToggle.svelte'
-  import { Button, Label, showPopup, getCurrentLocation, tooltip } from '@hcengineering/ui'
+  import { Button, Label, showPopup, getCurrentLocation, tooltip, desktopPlatform } from '@hcengineering/ui'
   import { subscribePush, parseUserAgent } from '../../utils'
   import { onMount } from 'svelte'
   import { getMetadata } from '@hcengineering/platform'
@@ -109,17 +109,19 @@
   $: browserSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
   $: permissionDenied = 'Notification' in window && Notification.permission === 'denied'
 
-  $: disabledReason = alreadySubscribed
-    ? notification.string.AlreadySubscribed
-    : publicKey === undefined
-      ? notification.string.PushNotConfigured
-      : !browserSupported
-          ? notification.string.PushNotSupported
-          : permissionDenied
-            ? notification.string.PushDenied
-            : undefined
+  $: disabledReason = desktopPlatform
+    ? notification.string.PushOnDesktop
+    : alreadySubscribed
+      ? notification.string.AlreadySubscribed
+      : publicKey === undefined
+        ? notification.string.PushNotConfigured
+        : !browserSupported
+            ? notification.string.PushNotSupported
+            : permissionDenied
+              ? notification.string.PushDenied
+              : undefined
 
-  $: buttonDisabled = alreadySubscribed || publicKey === undefined || !browserSupported
+  $: buttonDisabled = desktopPlatform || alreadySubscribed || publicKey === undefined || !browserSupported
 </script>
 
 <div class="flex mb-4">

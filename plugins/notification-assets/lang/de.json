@@ -56,6 +56,7 @@
     "WebpushRemoveConfirm": "Die Webpushes werden gelöscht. Bestätigen?",
     "Value": "{value}",
     "Current": "aktuell",
+    "PushOnDesktop": "Push-Benachrichtigungen für die Desktop-App sind nativ implementiert",
     "AlreadySubscribed": "Dieses Gerät hat bereits Benachrichtigungen abonniert",
     "PushNotConfigured": "Push-Benachrichtigungen sind auf dem Server nicht konfiguriert",
     "PushNotSupported": "Ihr Browser unterstützt keine Push-Benachrichtigungen",
