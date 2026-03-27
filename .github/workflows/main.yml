@@ -59,14 +59,11 @@ jobs:
       - name: Model version from git tags
         run: node common/scripts/install-run-rush.js model-version
 
-      - name: Building...
-        run: node common/scripts/install-run-rush.js build
+      - name: Validate...
+        run: node common/scripts/install-run-rush.js fast-build:validate
 
       - name: Bundle...
-        run: node common/scripts/install-run-rush.js bundle
-
-      - name: Validate...
-        run: node common/scripts/install-run-rush.js validate
+        run: node common/scripts/install-run-rush.js fast-build:bundle
   svelte-check:
     needs: build
     runs-on: ubuntu-self
