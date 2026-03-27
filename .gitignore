@@ -83,6 +83,8 @@ dist
 typings
 types
 .validate
+.fast-build-cache.json
+.svelte-check
 tsconfig.tsbuildinfo
 ingest-attachment-*.zip
 tsdoc-metadata.json
@@ -118,3 +120,4 @@ tests/docker-compose.override.versions.yml
 benchmarks/front-benchmark/front-benchmark
 build-comparison/
 dev/gh-picker/gh-picker
+/dev/prod/.build_cache

@@ -61,6 +61,11 @@ function filesAreEqual(file1, file2) {
 let validationCount = 0
 const MAX_VALIDATIONS_BEFORE_CLEANUP = 10
 
+// Watch mode flag - set by parent to enable aggressive cache cleanup
+let watchMode = false
+const WATCH_MODE_MAX_CONTENT_CACHE = 100
+const WATCH_MODE_MAX_SOURCE_CACHE = 200
+
 // Cache for source file content within this worker
 const sourceFileContentCache = new Map()
 // Cache for parsed SourceFile objects (much faster than re-parsing)
@@ -79,16 +84,21 @@ function tryGC() {
 
 /**
  * Clear caches to free memory periodically
+ * In watch mode, uses lower thresholds to prevent memory growth
  */
 function clearCaches() {
-  if (sourceFileContentCache.size > 200) {
+  const maxContentCache = watchMode ? WATCH_MODE_MAX_CONTENT_CACHE : 200
+  const maxSourceCache = watchMode ? WATCH_MODE_MAX_SOURCE_CACHE : 500
+  const maxValidations = watchMode ? 3 : MAX_VALIDATIONS_BEFORE_CLEANUP
+
+  if (sourceFileContentCache.size > maxContentCache) {
     sourceFileContentCache.clear()
   }
-  if (sourceFileCache.size > 500) {
+  if (sourceFileCache.size > maxSourceCache) {
     sourceFileCache.clear()
   }
 
-  if (validationCount >= MAX_VALIDATIONS_BEFORE_CLEANUP) {
+  if (validationCount >= maxValidations) {
     sourceFileContentCache.clear()
     sourceFileCache.clear()
     validationCount = 0
@@ -627,7 +637,10 @@ if (parentPort) {
   parentPort.on('message', (task) => {
     const { id, type, cwd, reportMemory, dependencyTypesHashes, srcDir = 'src' } = task
 
-    if (type === 'validate') {
+    if (type === 'set-watch-mode') {
+      watchMode = true
+      parentPort.postMessage({ id, type: 'watch-mode-set', threadId })
+    } else if (type === 'validate') {
       try {
         const startMem = reportMemory ? getMemoryUsageMB() : null
         const result = validateTSC(cwd, { dependencyTypesHashes: dependencyTypesHashes || {}, srcDir })
