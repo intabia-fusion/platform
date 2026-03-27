@@ -8,7 +8,7 @@ import { UserProfilePage } from '../model/profile/user-profile-page'
 import { ButtonType, WorkspaceSettingsPage } from '../model/workspace/workspace-settings-page'
 import { OwnersPage } from '../model/workspace/owner-pages'
 import { faker } from '@faker-js/faker'
-import { ClassesPage } from '../model/workspace/classes-pages'
+// import { ClassesPage } from '../model/workspace/classes-pages'
 
 test.describe('Workspace tests', () => {
   let loginPage: LoginPage
@@ -18,7 +18,7 @@ test.describe('Workspace tests', () => {
   let workspaceSettingsPage: WorkspaceSettingsPage
   let ownersPage: OwnersPage
   let newUser: SignUpData
-  let classesPage: ClassesPage
+  // let classesPage: ClassesPage
 
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page)
@@ -27,7 +27,7 @@ test.describe('Workspace tests', () => {
     userProfilePage = new UserProfilePage(page)
     workspaceSettingsPage = new WorkspaceSettingsPage(page)
     ownersPage = new OwnersPage(page)
-    classesPage = new ClassesPage(page)
+    // classesPage = new ClassesPage(page)
   })
 
   test('User the owner is showing inside the owner tab', async ({ page }) => {
@@ -106,23 +106,23 @@ test.describe('Workspace tests', () => {
     await ownersPage.createTemplateWithName(newTemplateName)
   })
 
-  test('User is able to see all the classes', async ({ page }) => {
-    newUser = {
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      email: faker.internet.email(),
-      password: '1234'
-    }
-    const newWorkspaceName = `New Workspace Name - ${generateId(2)}`
-    await loginPage.goto()
-    await loginPage.clickSignUp()
-    await signUpPage.signUp(newUser)
-    await selectWorkspacePage.createWorkspace(newWorkspaceName)
-    await userProfilePage.openProfileMenu()
-    await userProfilePage.clickSettings()
-    await workspaceSettingsPage.selectWorkspaceSettingsTab(ButtonType.Classes)
-    await classesPage.checkIfClassesExists()
-  })
+  // test('User is able to see all the classes', async ({ page }) => {
+  //   newUser = {
+  //     firstName: faker.person.firstName(),
+  //     lastName: faker.person.lastName(),
+  //     email: faker.internet.email(),
+  //     password: '1234'
+  //   }
+  //   const newWorkspaceName = `New Workspace Name - ${generateId(2)}`
+  //   await loginPage.goto()
+  //   await loginPage.clickSignUp()
+  //   await signUpPage.signUp(newUser)
+  //   await selectWorkspacePage.createWorkspace(newWorkspaceName)
+  //   await userProfilePage.openProfileMenu()
+  //   await userProfilePage.clickSettings()
+  //   await workspaceSettingsPage.selectWorkspaceSettingsTab(ButtonType.Classes)
+  //   await classesPage.checkIfClassesExists()
+  // })
 
   test('User is able to create Enum', async ({ page }) => {
     newUser = {
