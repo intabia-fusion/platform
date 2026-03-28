@@ -520,10 +520,21 @@ func (m Model) renderCommitItem(item commitItem, isSelected bool) string {
 	// Info line
 	info := fmt.Sprintf("%s • %s", truncate(commit.Author, 15), commit.Date)
 
+	// Add conflict indicator
+	if commit.HasConflict {
+		info = "⚠ CONFLICT | " + info
+	}
+
 	if isSelected {
 		line1 := fmt.Sprintf("%s %s", checkbox, hash)
 		line2 := truncate(subject+" | "+info, m.leftWidth-4)
 		return selectedItemStyle.Render(line1 + "\n" + line2)
+	}
+
+	if commit.HasConflict {
+		line1 := fmt.Sprintf("%s %s", checkbox, hash)
+		line2 := errorStyle.Render(truncate(subject+" | "+info, m.leftWidth-4))
+		return line1 + "\n" + line2
 	}
 
 	line1 := fmt.Sprintf("%s %s", checkbox, hash)
@@ -655,6 +666,14 @@ func (m Model) cherryPickSelected() tea.Cmd {
 	}
 
 	return func() tea.Msg {
+		// Check if there's already a cherry-pick in progress
+		if HasCherryPickInProgress() {
+			// Abort the previous cherry-pick
+			if err := AbortCherryPick(); err != nil {
+				return cherryPickResultMsg{success: false, hash: "", err: fmt.Errorf("failed to abort previous cherry-pick: %v", err)}
+			}
+		}
+
 		// Cherry-pick commits in order (oldest first)
 		for i := len(selected) - 1; i >= 0; i-- {
 			commit := selected[i]

@@ -26,6 +26,7 @@ type Commit struct {
 	Author       string
 	Date         string
 	CherryPicked bool
+	HasConflict  bool   // True if cherry-pick would have conflicts
 	Diff         string // Full diff of the commit
 }
 
@@ -88,47 +89,75 @@ func GetCommitsFromUpstream(upstreamBranch string) ([]Commit, error) {
 	return commits, nil
 }
 
-// CheckCherryPicked checks if commits have been cherry-picked using git cherry
+// CheckCherryPicked checks if commits can be cleanly applied or are already applied
 func CheckCherryPicked(commits []Commit, upstreamBranch string) ([]Commit, error) {
 	if len(commits) == 0 {
 		return commits, nil
 	}
 
-	// Get cherry status for all commits
-	// git cherry -v shows: "- hash subject" (not cherry-picked) or "+ hash subject" (cherry-picked)
-	out, err := GitExec("cherry", "-v", "HEAD", upstreamBranch)
-	if err != nil {
-		return nil, err
-	}
+	// For each commit, check if it can be cleanly cherry-picked
+	for i := range commits {
+		commit := &commits[i]
 
-	// Parse cherry output
-	cherryMap := make(map[string]bool)
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	for _, line := range lines {
-		if len(line) < 2 {
+		// First check if commit is already an ancestor of HEAD (already applied via merge or cherry-pick)
+		_, err := GitExec("merge-base", "--is-ancestor", commit.Hash, "HEAD")
+		if err == nil {
+			// Commit is already in current branch
+			commit.CherryPicked = true
+			commit.HasConflict = false
 			continue
 		}
 
-		// Line format: "- hash" or "+ hash"
-		parts := strings.Fields(line)
-		if len(parts) >= 2 {
-			hash := parts[1]
-			// "+" means already applied (cherry-picked), "-" means not applied
-			cherryMap[hash] = line[0] == '+'
+		// Check if a commit with the same subject already exists in HEAD
+		// This catches cherry-picked commits (they have same subject but different hash)
+		out, _ := GitExec("log", "HEAD", "--format=%s", "--grep="+commit.Subject, "-1")
+		if strings.TrimSpace(out) == commit.Subject {
+			// Found a commit with the same subject in HEAD
+			commit.CherryPicked = true
+			commit.HasConflict = false
+			continue
 		}
-	}
 
-	// Update commits with cherry-pick status
-	// Invert the logic: git cherry marks as "+" (already applied) what we DON'T need
-	// We want to show commits that are NOT cherry-picked yet
-	for i := range commits {
-		if cherryPicked, ok := cherryMap[commits[i].Hash]; ok {
-			// "+" means already applied (cherry-picked) - we DON'T want to show these
-			// "-" means not applied yet - we DO want to show these
-			commits[i].CherryPicked = !cherryPicked
+		// Get the diff/patch for this commit
+		patch, err := GitExec("diff", commit.Hash+"^.."+commit.Hash)
+		if err != nil {
+			// Can't get diff, assume it might have conflicts
+			commit.CherryPicked = false
+			commit.HasConflict = false
+			continue
+		}
+
+		if strings.TrimSpace(patch) == "" {
+			// Empty patch, commit was already applied
+			commit.CherryPicked = true
+			commit.HasConflict = false
+			continue
+		}
+
+		// Check if patch can be applied cleanly using git apply --check
+		// This doesn't modify working directory
+		cmd := exec.Command("git", "apply", "--check", "-")
+		cmd.Stdin = strings.NewReader(patch)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		err = cmd.Run()
+
+		if err != nil {
+			// Check if error is because patch is already applied ("already exists in working directory")
+			stderrStr := stderr.String()
+			if strings.Contains(stderrStr, "already exists") || strings.Contains(stderrStr, "No changes") {
+				// Changes are already in HEAD, mark as cherry-picked
+				commit.CherryPicked = true
+				commit.HasConflict = false
+			} else {
+				// Patch would have conflicts
+				commit.CherryPicked = false
+				commit.HasConflict = true
+			}
 		} else {
-			// If not in cherry output, assume it's already cherry-picked
-			commits[i].CherryPicked = true
+			// Patch can be applied cleanly
+			commit.CherryPicked = false
+			commit.HasConflict = false
 		}
 	}
 
