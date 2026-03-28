@@ -88,32 +88,48 @@ func GetCommitsFromUpstream(upstreamBranch string) ([]Commit, error) {
 	return commits, nil
 }
 
-// CheckCherryPicked checks if commits have been cherry-picked
+// CheckCherryPicked checks if commits have been cherry-picked using git cherry
 func CheckCherryPicked(commits []Commit, upstreamBranch string) ([]Commit, error) {
 	if len(commits) == 0 {
 		return commits, nil
 	}
 
-	// Get list of commits that are in upstream but NOT in current branch
-	// These are the commits we need to cherry-pick
-	out, err := GitExec("log", "HEAD.."+upstreamBranch, "--format=%H")
+	// Get cherry status for all commits
+	// git cherry -v shows: "- hash subject" (not cherry-picked) or "+ hash subject" (cherry-picked)
+	out, err := GitExec("cherry", "-v", "HEAD", upstreamBranch)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build set of missing commit hashes
-	missingHashes := make(map[string]bool)
+	// Parse cherry output
+	cherryMap := make(map[string]bool)
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	for _, line := range lines {
-		if line != "" {
-			missingHashes[line] = true
+		if len(line) < 2 {
+			continue
+		}
+
+		// Line format: "- hash" or "+ hash"
+		parts := strings.Fields(line)
+		if len(parts) >= 2 {
+			hash := parts[1]
+			// "+" means already applied (cherry-picked), "-" means not applied
+			cherryMap[hash] = line[0] == '+'
 		}
 	}
 
-	// Mark commits as cherry-picked if they are NOT in the missing set
+	// Update commits with cherry-pick status
+	// Invert the logic: git cherry marks as "+" (already applied) what we DON'T need
+	// We want to show commits that are NOT cherry-picked yet
 	for i := range commits {
-		// Commit is cherry-picked if it's NOT in the missing hashes
-		commits[i].CherryPicked = !missingHashes[commits[i].Hash]
+		if cherryPicked, ok := cherryMap[commits[i].Hash]; ok {
+			// "+" means already applied (cherry-picked) - we DON'T want to show these
+			// "-" means not applied yet - we DO want to show these
+			commits[i].CherryPicked = !cherryPicked
+		} else {
+			// If not in cherry output, assume it's already cherry-picked
+			commits[i].CherryPicked = true
+		}
 	}
 
 	return commits, nil
