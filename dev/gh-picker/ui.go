@@ -508,10 +508,10 @@ func (m Model) renderCommitItem(item commitItem, isSelected bool) string {
 	}
 
 	// Format lines - compact 2-line display (no cherry-picked indicator since we filter them out)
-	hash := commit.ShortHash
+	hash := commit.Hash // Use full hash instead of ShortHash
 
 	// Truncate subject to fit
-	maxSubjectLen := m.leftWidth - 15
+	maxSubjectLen := m.leftWidth - 45 // Adjusted for full hash length
 	if maxSubjectLen < 10 {
 		maxSubjectLen = 10
 	}
@@ -552,7 +552,7 @@ func (m Model) renderRightPanel(focused bool) string {
 		commit := m.items[m.cursor].commit
 
 		// Commit info (compact)
-		b.WriteString(fmt.Sprintf("%s | %s | %s\n", commit.ShortHash, commit.Author, commit.Date))
+		b.WriteString(fmt.Sprintf("%s | %s | %s\n", commit.Hash, commit.Author, commit.Date))
 		b.WriteString(truncate(commit.Subject, m.rightWidth-4))
 		b.WriteString("\n")
 		b.WriteString(strings.Repeat("─", m.rightWidth-4))
