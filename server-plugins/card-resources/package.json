@@ -37,20 +37,21 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/server-notification-resources": "workspace:^0.7.0",
-    "@hcengineering/server-activity": "workspace:^0.7.0",
-    "@hcengineering/setting": "workspace:^0.7.0",
-    "@hcengineering/card": "workspace:^0.7.0",
+    "@hcengineering/activity": "workspace:^1.0.0",
+    "@hcengineering/view": "workspace:^1.0.0",
+    "@hcengineering/notification": "workspace:^1.0.0",
+    "@hcengineering/server-notification-resources": "workspace:^1.0.0",
+    "@hcengineering/server-activity": "workspace:^1.0.0",
+    "@hcengineering/setting": "workspace:^1.0.0",
+    "@hcengineering/card": "workspace:^1.0.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/workbench": "workspace:^0.7.0",
+    "@hcengineering/workbench": "workspace:^1.0.0",
     "@hcengineering/communication-types": "workspace:^0.7.12",
     "@hcengineering/communication-sdk-types": "workspace:^0.7.12",
-    "@hcengineering/communication": "workspace:^0.7.0",
-    "@hcengineering/server-contact": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0"
+    "@hcengineering/communication": "workspace:^1.0.0",
+    "@hcengineering/server-contact": "workspace:^1.0.0",
+    "@hcengineering/contact": "workspace:^1.0.0"
   }
 }

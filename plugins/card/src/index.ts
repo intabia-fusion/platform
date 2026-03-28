@@ -209,6 +209,10 @@ const cardPlugin = plugin(cardId, {
     CreateCard: '' as IntlString,
     Version: '' as IntlString,
     Versions: '' as IntlString,
+    LockSection: '' as IntlString,
+    UnLockSection: '' as IntlString,
+    SectionLocked: '' as IntlString,
+    SectionUnlocked: '' as IntlString,
     Default: '' as IntlString
   },
   section: {

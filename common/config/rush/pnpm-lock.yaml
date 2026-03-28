@@ -31462,6 +31462,9 @@ importers:
 
   ../../server-plugins/card-resources:
     dependencies:
+      '@hcengineering/activity':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/activity
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
@@ -36836,7 +36839,7 @@ importers:
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/workbench
-      '@intabiafusion/clisr':
+      '@hcengineering/clisr':
         specifier: workspace:^0.7.0
         version: link:../../../packages/clisr
       cors:
@@ -39529,7 +39532,7 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/server/packages/core
-      '@intabiafusion/clisr':
+      '@hcengineering/clisr':
         specifier: workspace:^0.7.0
         version: link:../../../packages/clisr
       '@types/nodemailer':

@@ -82,7 +82,7 @@ import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type BuildModelKey } from '@hcengineering/view'
 import { createActions } from './actions'
-import { definePermissions } from './permissions'
+import { defineActionPermissions, definePermissions } from './permissions'
 import card from './plugin'
 import notification, { type NotificationGroup } from '@hcengineering/notification'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
@@ -437,6 +437,7 @@ export function createModel (builder: Builder): void {
 
   defineTabs(builder)
   definePermissions(builder)
+  defineActionPermissions(builder)
 
   builder.mixin(card.class.Card, core.class.Class, view.mixin.ObjectIcon, {
     component: card.component.CardIcon
