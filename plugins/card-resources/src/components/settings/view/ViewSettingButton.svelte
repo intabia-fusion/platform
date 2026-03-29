@@ -15,12 +15,17 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { ButtonIcon, closeTooltip, showPopup } from '@hcengineering/ui'
   import view, { Viewlet } from '@hcengineering/view'
 
+  import { Data } from '@hcengineering/core'
+  import { AttributeConfig, Config } from '@hcengineering/view-resources'
   import ViewOptionsButton from './ViewOptionsButton.svelte'
   import ViewletSetting from './ViewSetting.svelte'
+<<<<<<< HEAD
   import { Data } from '@hcengineering/core'
+=======
+>>>>>>> 7da0bdfb9c (Process minor fixes (#10704))
 
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
   export let viewlet: Data<Viewlet> | undefined = undefined
@@ -41,7 +46,7 @@
       () => {
         pressed = false
       },
-      (result) => {
+      (result: (Config | AttributeConfig)[]) => {
         dispatch('save', result)
       }
     )
