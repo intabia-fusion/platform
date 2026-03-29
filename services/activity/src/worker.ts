@@ -107,7 +107,7 @@ export class Worker {
       return
     }
 
-    const loadWsPromise = this.initWorkspace(ctx, ws)
+    const loadWsPromise = this.initWorkspace(ctx, ws, tx)
     this.loadingWorkspaces.set(ws, loadWsPromise)
 
     try {
@@ -120,7 +120,11 @@ export class Worker {
     }
   }
 
-  private async initWorkspace (ctx: MeasureContext, ws: WorkspaceUuid): Promise<Workspace | undefined> {
+  private async initWorkspace (
+    ctx: MeasureContext,
+    ws: WorkspaceUuid,
+    initialTx: TxCUD<Doc>
+  ): Promise<Workspace | undefined> {
     const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
     const wsInfo = await getWorkspaceInfo(token)
     if (wsInfo === undefined) return
@@ -146,7 +150,8 @@ export class Worker {
       this.modelTxes,
       this.storage,
       client,
-      branding
+      branding,
+      initialTx.modifiedOn
     )
 
     this.workspaces.set(ws, workspace)

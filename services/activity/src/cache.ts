@@ -29,26 +29,34 @@ import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 
 import { type Client } from './types'
 
+export const CACHE_TTL_MS = 10 * 60 * 1000
+
 class WsCache {
   private readonly docs = new Map<Ref<Doc>, Doc>()
   private readonly recentMessages = new Map<Ref<DocUpdateMessage>, DocUpdateMessage>()
-  private readonly interval: NodeJS.Timeout | undefined
+  private logicalTime: number = 0
+  private lastCleanLogicalTime: number = 0
 
   constructor (
     private readonly ctx: MeasureContext,
     private readonly client: Client,
-    recentMessages: DocUpdateMessage[]
+    recentMessages: DocUpdateMessage[],
+    logicalTime?: number
   ) {
     this.recentMessages = new Map(recentMessages.map((msg) => [msg._id, msg]))
-    this.interval = setInterval(
-      () => {
-        this.cleanRecentMessages()
-      },
-      10 * 60 * 1000
-    )
+    this.logicalTime = logicalTime ?? Date.now()
+    this.lastCleanLogicalTime = this.logicalTime
   }
 
   public tx (tx: TxCUD<Doc>): void {
+    const txTime = tx.modifiedOn ?? 0
+    this.logicalTime = Math.max(this.logicalTime, txTime)
+
+    if (this.logicalTime - this.lastCleanLogicalTime > CACHE_TTL_MS) {
+      this.lastCleanLogicalTime = this.logicalTime
+      this.cleanRecentMessages()
+    }
+
     this.clearLargeCaches()
 
     if ([core.class.TxUpdateDoc, core.class.TxMixin].includes(tx._class)) {
@@ -135,12 +143,11 @@ class WsCache {
     const array = Array.from(this.recentMessages.values())
     return array
       .filter((msg) => msg.attachedTo === attachedTo)
-      .sort((a, b) => (b.createdOn ?? b.modifiedOn ?? 0) - (a.createdOn ?? a.modifiedOn ?? 0))
+      .sort((a, b) => (a.createdOn ?? a.modifiedOn ?? 0) - (b.createdOn ?? b.modifiedOn ?? 0))
   }
 
   private cleanRecentMessages (): void {
-    const now = Date.now()
-    const cutoff = now - 10 * 60 * 1000
+    const cutoff = this.logicalTime - CACHE_TTL_MS
 
     for (const [_id, message] of Array.from(this.recentMessages.entries())) {
       const date = message.createdOn ?? message.modifiedOn ?? 0
@@ -158,9 +165,8 @@ class WsCache {
   }
 
   public close (): void {
-    if (this.interval != null) {
-      clearInterval(this.interval)
-    }
+    this.docs.clear()
+    this.recentMessages.clear()
   }
 }
 

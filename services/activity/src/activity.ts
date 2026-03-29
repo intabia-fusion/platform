@@ -12,7 +12,11 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
-import activity, { type ActivityMessageControl, type DocUpdateMessage } from '@hcengineering/activity'
+import activity, {
+  type ActivityMessageControl,
+  type DocUpdateMessage,
+  type DocUpdateMessageHistory
+} from '@hcengineering/activity'
 
 import type Cache from './cache'
 import { type Client } from './types'
@@ -220,6 +224,7 @@ function combineMessages (
     remove: TxRemoveDoc<DocUpdateMessage>[]
     update: TxUpdateDoc<DocUpdateMessage>[]
   } {
+  console.log('New messages txes', [...txes])
   const created = txes.map((it) => {
     const message = TxProcessor.createDoc2Doc(it)
     return {
@@ -262,7 +267,7 @@ function combineMessages (
           tx.attachedToClass ?? message.objectClass,
           tx.attachedTo ?? message.objectId,
           createMessage.space,
-          tx.collection ?? 'docUpdateMessages',
+          'docUpdateMessages',
           innerUpdateTx
         ) as TxUpdateDoc<DocUpdateMessage>
       )
@@ -274,57 +279,72 @@ function combineMessages (
 
       return timeDiff >= 0 && timeDiff < UPDATE_COMBINE_THRESHOLD
     })
-    console.log('Combined with', combinedWith)
 
     if (combinedWith.length === 0) {
       createTx.push(tx)
       continue
     }
 
+    const pushRemoves = (items: DocUpdateMessage[]): void => {
+      const removes = items.map((it) => {
+        const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
+        return factory.createTxCollectionCUD(
+          it.attachedToClass,
+          it.attachedTo,
+          it.space,
+          'docUpdateMessages',
+          innerTx
+        ) as TxRemoveDoc<DocUpdateMessage>
+      })
+      removeTx.push(...removes)
+    }
+
+    const pushUpdate = (targetMsg: DocUpdateMessage): void => {
+      const innerUpdateTx = factory.createTxUpdateDoc(
+        targetMsg._class,
+        targetMsg.space,
+        targetMsg._id,
+        tx.attributes,
+        undefined,
+        tx.modifiedOn,
+        tx.modifiedBy
+      )
+
+      updateTx.push(
+        factory.createTxCollectionCUD(
+          targetMsg.attachedToClass,
+          targetMsg.attachedTo,
+          targetMsg.space,
+          tx.collection ?? 'docUpdateMessages',
+          innerUpdateTx
+        ) as TxUpdateDoc<DocUpdateMessage>
+      )
+    }
+
+    const mapToHistory = (it: DocUpdateMessage): DocUpdateMessageHistory => ({
+      action: it.action,
+      createdOn: it.createdOn ?? it.modifiedOn ?? 0,
+      update: it.attributeUpdates,
+      objectId: it.objectId,
+      objectClass: it.objectClass,
+      objectTitle: it.objectTitle,
+      objectAttributes: it.objectAttributes
+    })
+
     if (message.action === 'update') {
       const attributeUpdates = mergeDocUpdateAttributes(combinedWith, message)
-      console.log('Attribute updates', attributeUpdates)
       if (attributeUpdates == null) {
-        const removes = combinedWith.map((it) => {
-          const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
-          return factory.createTxCollectionCUD(
-            it.attachedToClass,
-            it.attachedTo,
-            it.space,
-            'docUpdateMessages',
-            innerTx
-          ) as TxRemoveDoc<DocUpdateMessage>
-        })
-        removeTx.push(...removes)
+        pushRemoves(combinedWith)
         continue
       }
 
       tx.attributes.attributeUpdates = attributeUpdates
-
-      tx.attributes.history = combinedWith.map((it) => ({
-        action: it.action,
-        createdOn: it.createdOn ?? it.modifiedOn ?? 0,
-        update: it.attributeUpdates,
-        objectId: it.objectId,
-        objectClass: it.objectClass,
-        objectTitle: it.objectTitle,
-        objectAttributes: it.objectAttributes
-      }))
-    } else if (message.action === 'create' || message.action === 'remove') {
+      tx.attributes.history = combinedWith.map(mapToHistory)
+    } else {
       const merged = mergeCollectionHistory(combinedWith, message)
 
       if (merged === undefined || merged.length === 0) {
-        const removes = combinedWith.map((it) => {
-          const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
-          return factory.createTxCollectionCUD(
-            it.attachedToClass,
-            it.attachedTo,
-            it.space,
-            'docUpdateMessages',
-            innerTx
-          ) as TxRemoveDoc<DocUpdateMessage>
-        })
-        removeTx.push(...removes)
+        pushRemoves(combinedWith)
         continue
       }
 
@@ -339,32 +359,13 @@ function combineMessages (
         tx.attributes.attributeUpdates = last.update
       }
 
+
+      console.log('Merged', merged)
       tx.attributes.history = merged
-    } else {
-      tx.attributes.history = combinedWith.map((it) => ({
-        action: it.action,
-        createdOn: it.createdOn ?? it.modifiedOn ?? 0,
-        update: it.attributeUpdates,
-        objectId: it.objectId,
-        objectClass: it.objectClass,
-        objectTitle: it.objectTitle,
-        objectAttributes: it.objectAttributes
-      }))
     }
 
-    const removes = combinedWith.map((it) => {
-      const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
-      return factory.createTxCollectionCUD(
-        it.attachedToClass,
-        it.attachedTo,
-        it.space,
-        'docUpdateMessages',
-        innerTx
-      ) as TxRemoveDoc<DocUpdateMessage>
-    })
-    removeTx.push(...removes)
-
-    createTx.push(tx)
+    pushRemoves(combinedWith.slice(1))
+    pushUpdate(combinedWith[0])
   }
 
   return {

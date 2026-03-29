@@ -49,7 +49,7 @@ import {
 import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 
 import config from './config'
-import WsCache from './cache'
+import WsCache, { CACHE_TTL_MS } from './cache'
 import { type Client } from './types'
 import { ActivityMessagesHandler } from './activity'
 
@@ -71,10 +71,11 @@ class Workspace {
     private readonly rest: RestClient,
     private readonly storage: StorageAdapter,
     private readonly branding: Branding | undefined,
-    recentMessages: DocUpdateMessage[] = []
+    recentMessages: DocUpdateMessage[] = [],
+    logicalTime?: number
   ) {
     this.client = this.getClient()
-    this.cache = new WsCache(this.ctx, this.client, recentMessages)
+    this.cache = new WsCache(this.ctx, this.client, recentMessages, logicalTime)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
@@ -156,7 +157,8 @@ class Workspace {
     sysModel: Tx[],
     storage: StorageAdapter,
     rest: RestClient,
-    branding?: Branding
+    branding: Branding | undefined,
+    logicalTime: number
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
       disableTriggers: true,
@@ -195,7 +197,7 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    const cutoff = Date.now() - 10 * 60 * 1000
+    const cutoff = logicalTime - CACHE_TTL_MS
     const recentMessages = await pipeline.findAll(
       ctx,
       activity.class.DocUpdateMessage,
@@ -203,7 +205,7 @@ class Workspace {
       {}
     )
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, recentMessages)
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, recentMessages, logicalTime)
   }
 
   async close (): Promise<void> {

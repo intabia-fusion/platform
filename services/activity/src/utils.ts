@@ -712,20 +712,21 @@ export function mergeCollectionHistory (
     update: message.attributeUpdates
   })
 
-  const removeMessages = operations.filter(({ action }) => action === 'remove')
-  const createMessages = operations.filter(({ action }) => action === 'create')
+  const state = new Map<Ref<Doc>, DocUpdateMessageHistory>()
 
-  const removedObjectIds = removeMessages.map(({ objectId }) => objectId)
-  const createdObjectIds = createMessages.map(({ objectId }) => objectId)
+  operations
+    .forEach((op) => {
+      const existing = state.get(op.objectId)
+      if (existing != null && existing.action !== op.action) {
+        state.delete(op.objectId)
+      } else {
+        state.set(op.objectId, op)
+      }
+    })
 
-  const createMessagesForMerge = createMessages.filter(({ objectId }) => !removedObjectIds.includes(objectId))
-  const removeMessagesForMerge = removeMessages.filter(({ objectId }) => !createdObjectIds.includes(objectId))
-
-  const merged = [...createMessagesForMerge, ...removeMessagesForMerge]
+  const merged = Array.from(state.values())
 
   if (merged.length === 0) return undefined
-
-  merged.sort((a, b) => a.createdOn - b.createdOn)
 
   return merged
 }

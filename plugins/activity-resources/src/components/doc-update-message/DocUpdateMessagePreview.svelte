@@ -16,7 +16,7 @@
 <script lang="ts">
   import activity, {
     ActivityMessagePreviewType,
-    DisplayDocUpdateMessage,
+    DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
   import { Action, Component, Icon } from '@hcengineering/ui'
@@ -33,7 +33,7 @@
   import DocUpdateMessageAttributes from './DocUpdateMessageAttributes.svelte'
 
   export let doc: Doc | undefined
-  export let value: DisplayDocUpdateMessage
+  export let value: DocUpdateMessage
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
   export let actions: Action[] = []
@@ -97,7 +97,7 @@
       <span class="customContent flex-presenter">
         <Icon size="small" icon={viewlet.icon ?? activity.icon.Activity} />
         <span class="ml-2" />
-        {#each value?.previousMessages ?? [] as msg}
+        {#each value?.history ?? [] as msg}
           <Component
             is={viewlet.component}
             props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, preview: true, onClick }}

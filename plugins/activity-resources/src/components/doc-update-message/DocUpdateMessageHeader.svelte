@@ -17,14 +17,14 @@
   import { Label, languageStore } from '@hcengineering/ui'
   import { IntlString } from '@hcengineering/platform'
   import { AttributeModel } from '@hcengineering/view'
-  import activity, { DisplayDocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import activity, { DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
   import { Person } from '@hcengineering/contact'
 
   import { LinkData, getLinkData } from '../../activityMessagesUtils'
   import ActivityDocLink from '../ActivityDocLink.svelte'
   import { getIsTextType } from '../../utils'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let viewlet: DocUpdateMessageViewlet | undefined
   export let person: Person | undefined
   export let object: Doc | undefined

@@ -17,7 +17,6 @@
     ActivityMessage,
     ActivityMessageViewType,
     DisplayActivityMessage,
-    DisplayDocUpdateMessage,
     DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
@@ -38,7 +37,7 @@
   import { getIsTextType } from '../../utils'
   import { Person } from '@hcengineering/contact'
 
-  export let value: DisplayDocUpdateMessage
+  export let value: DocUpdateMessage
   export let doc: Doc | undefined = undefined
   export let showNotify: boolean = false
   export let isHighlighted: boolean = false
@@ -197,7 +196,7 @@
       {#if viewlet?.component && object}
         <ShowMore>
           <div class="customContent">
-            {#each value?.previousMessages ?? [] as msg}
+            {#each value?.history ?? [] as msg}
               <Component
                 is={viewlet.component}
                 props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, onClick }}

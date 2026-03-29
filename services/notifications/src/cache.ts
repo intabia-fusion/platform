@@ -18,6 +18,7 @@ import core, {
   Class,
   Collaborator,
   Doc,
+  DocumentQuery,
   getClassCollaborators,
   groupByArray,
   MeasureContext,
@@ -369,15 +370,16 @@ class WsCache {
     return collaborators
   }
 
-  public async getDoc (_id: Ref<Doc>, _class: Ref<Class<Doc>>): Promise<Doc | undefined> {
-    if (this.docs.has(_id)) return this.docs.get(_id)
-    const doc = await this.client.findOne(_class, { _id })
+  public async getDoc<T extends Doc = Doc> (_id: Ref<T>, _class: Ref<Class<T>>): Promise<T | undefined> {
+    if (this.docs.has(_id)) return this.docs.get(_id) as T
+    const query = { _id } as unknown as DocumentQuery<T>
+    const doc = await this.client.findOne(_class, query)
     if (doc !== undefined) {
       this.docs.set(_id, doc)
     } else {
       this.docs.delete(_id)
     }
-    return doc
+    return doc as T | undefined
   }
 
   public async getContexts (_id: Ref<Doc>): Promise<DocNotifyContext[]> {
