@@ -170,8 +170,9 @@ function getOptimalWorkerCount(requestedWorkers, taskType = 'default') {
   switch (taskType) {
     case 'typescript':
       // TypeScript validation uses worker_threads (shared heap)
-      // Actual per-thread usage is ~800-1000MB including TS program cache
-      memoryPerWorker = process.platform === 'darwin' ? 900 : 1200
+      // Each worker holds TS program + source caches in memory
+      // With optimizations: ~600-800MB per worker is realistic
+      memoryPerWorker = process.platform === 'darwin' ? 700 : 900
       break
     case 'docker':
       // Docker builds are I/O bound, use less memory
@@ -190,12 +191,14 @@ function getOptimalWorkerCount(requestedWorkers, taskType = 'default') {
 
   // Use the minimum of requested, CPU count, and memory-based limit
   // For typescript workers, allow at least half of CPU count (worker_threads share heap)
-  // For typescript workers, allow at least half of CPU count (worker_threads share heap)
   let minWorkers = 1
+  let maxWorkers = cpuCount
   if (taskType === 'typescript') {
-    minWorkers = Math.max(2, Math.floor(cpuCount / 2))
+    // Hard limit: max 6 workers for validation to prevent OOM
+    maxWorkers = Math.min(cpuCount, 6)
+    minWorkers = Math.min(maxWorkers, Math.max(2, Math.floor(cpuCount / 2)))
   }
-  const optimal = Math.max(minWorkers, Math.min(requestedWorkers, cpuCount, maxWorkersByMemory))
+  const optimal = Math.max(minWorkers, Math.min(requestedWorkers, maxWorkers, maxWorkersByMemory))
 
   return {
     workers: optimal,

@@ -168,6 +168,17 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
   // Map to store typesHash for each validated package (used by dependents)
   const packageTypesHashes = new Map()
 
+  // Track memory usage
+  let peakMemoryMB = 0
+  function updatePeakMemory() {
+    const usage = process.memoryUsage()
+    const currentMB = Math.round(usage.rss / 1024 / 1024)
+    if (currentMB > peakMemoryMB) {
+      peakMemoryMB = currentMB
+    }
+  }
+  const memoryInterval = setInterval(updatePeakMemory, 1000)
+
   console.log(`\n=== Phase: Validating ${packages.length} packages ===`)
   console.log(`    Using ${validationWorkers} validation workers`)
 
@@ -269,10 +280,12 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
 
   await pool.terminate()
 
+  clearInterval(memoryInterval)
   results.time = performance.now() - startTime
 
   console.log(`\nValidated: ${results.successCount}/${results.total} packages in ${Math.round(results.time)}ms`)
   if (results.cacheHits > 0) console.log(`  (${results.cacheHits} from cache)`)
+  console.log(`  Peak memory: ${peakMemoryMB}MB`)
 
   // Print timing summary
   if (timings.length > 0) {

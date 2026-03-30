@@ -60,17 +60,26 @@ function filesAreEqual(file1, file2) {
 
 // Track validation count for memory management
 let validationCount = 0
-const MAX_VALIDATIONS_BEFORE_CLEANUP = 10
+const MAX_VALIDATIONS_BEFORE_CLEANUP = 5
 
 // Watch mode flag - set by parent to enable aggressive cache cleanup
 let watchMode = false
-const WATCH_MODE_MAX_CONTENT_CACHE = 100
-const WATCH_MODE_MAX_SOURCE_CACHE = 200
+const WATCH_MODE_MAX_CONTENT_CACHE = 50
+const WATCH_MODE_MAX_SOURCE_CACHE = 100
 
 // Cache for source file content within this worker
 const sourceFileContentCache = new Map()
 // Cache for parsed SourceFile objects (much faster than re-parsing)
 const sourceFileCache = new Map()
+
+// LRU tracking for cache eviction
+const contentCacheAccessOrder = []
+const sourceCacheAccessOrder = []
+const MAX_CONTENT_CACHE_SIZE = 150
+const MAX_SOURCE_CACHE_SIZE = 300
+
+// Memory limit for worker (in MB) - will trigger aggressive cleanup
+const MEMORY_LIMIT_MB = 800
 
 /**
  * Try to trigger garbage collection if available
@@ -87,23 +96,51 @@ function tryGC() {
  * Clear caches to free memory periodically
  * In watch mode, uses lower thresholds to prevent memory growth
  */
-function clearCaches() {
-  const maxContentCache = watchMode ? WATCH_MODE_MAX_CONTENT_CACHE : 200
-  const maxSourceCache = watchMode ? WATCH_MODE_MAX_SOURCE_CACHE : 500
-  const maxValidations = watchMode ? 3 : MAX_VALIDATIONS_BEFORE_CLEANUP
+function clearCaches(force = false) {
+  const maxContentCache = watchMode ? WATCH_MODE_MAX_CONTENT_CACHE : 100
+  const maxSourceCache = watchMode ? WATCH_MODE_MAX_SOURCE_CACHE : 200
+  const maxValidations = watchMode ? 2 : MAX_VALIDATIONS_BEFORE_CLEANUP
 
-  if (sourceFileContentCache.size > maxContentCache) {
-    sourceFileContentCache.clear()
-  }
-  if (sourceFileCache.size > maxSourceCache) {
-    sourceFileCache.clear()
-  }
+  // Check memory usage
+  const memUsage = getMemoryUsageMB()
+  const shouldCleanup = force || 
+                       memUsage.heapUsed > MEMORY_LIMIT_MB ||
+                       sourceFileContentCache.size > maxContentCache ||
+                       sourceFileCache.size > maxSourceCache ||
+                       validationCount >= maxValidations
 
-  if (validationCount >= maxValidations) {
+  if (shouldCleanup) {
     sourceFileContentCache.clear()
     sourceFileCache.clear()
+    contentCacheAccessOrder.length = 0
+    sourceCacheAccessOrder.length = 0
     validationCount = 0
     tryGC()
+    
+    if (force || memUsage.heapUsed > MEMORY_LIMIT_MB) {
+      // Force aggressive cleanup
+      if (global.gc) {
+        global.gc()
+      }
+    }
+  }
+}
+
+/**
+ * Clean up memory after validation
+ */
+function cleanupAfterValidation() {
+  validationCount++
+
+  // Always clear source file cache after each validation
+  // (content cache is kept for performance)
+  sourceFileCache.clear()
+  sourceCacheAccessOrder.length = 0
+
+  // Check if we need aggressive cleanup
+  const memUsage = getMemoryUsageMB()
+  if (memUsage.heapUsed > MEMORY_LIMIT_MB) {
+    clearCaches(true)
   }
 }
 
@@ -422,12 +459,22 @@ function createCachingCompilerHost(options, cwd) {
       if (fileName.includes('node_modules') && fileName.endsWith('.d.ts')) {
         const cached = sourceFileContentCache.get(fileName)
         if (cached !== undefined) {
+          // Update LRU order
+          const idx = contentCacheAccessOrder.indexOf(fileName)
+          if (idx > -1) contentCacheAccessOrder.splice(idx, 1)
+          contentCacheAccessOrder.push(fileName)
           return cached
         }
 
         const content = ts.sys.readFile(fileName)
         if (content !== undefined) {
+          // Evict oldest if at capacity
+          if (sourceFileContentCache.size >= MAX_CONTENT_CACHE_SIZE) {
+            const oldest = contentCacheAccessOrder.shift()
+            if (oldest) sourceFileContentCache.delete(oldest)
+          }
           sourceFileContentCache.set(fileName, content)
+          contentCacheAccessOrder.push(fileName)
         }
         return content
       }
@@ -443,12 +490,22 @@ function createCachingCompilerHost(options, cwd) {
         const cacheKey = `${fileName}:${languageVersion}`
         const cached = sourceFileCache.get(cacheKey)
         if (cached) {
+          // Update LRU order
+          const idx = sourceCacheAccessOrder.indexOf(cacheKey)
+          if (idx > -1) sourceCacheAccessOrder.splice(idx, 1)
+          sourceCacheAccessOrder.push(cacheKey)
           return cached
         }
 
         const sourceFile = defaultHost.getSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile)
         if (sourceFile) {
+          // Evict oldest if at capacity
+          if (sourceFileCache.size >= MAX_SOURCE_CACHE_SIZE) {
+            const oldest = sourceCacheAccessOrder.shift()
+            if (oldest) sourceFileCache.delete(oldest)
+          }
           sourceFileCache.set(cacheKey, sourceFile)
+          sourceCacheAccessOrder.push(cacheKey)
         }
         return sourceFile
       }
@@ -606,9 +663,8 @@ function validateTSC(cwd, options = {}) {
   // Release TypeScript program
   program = null
 
-  // Increment validation count and clean up periodically
-  validationCount++
-  clearCaches()
+  // Clean up memory after validation
+  cleanupAfterValidation()
 
   if (hasErrors) {
     throw new Error(stderr.join('\n'))
