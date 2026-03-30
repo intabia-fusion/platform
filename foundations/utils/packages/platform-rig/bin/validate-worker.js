@@ -12,7 +12,8 @@ const {
   statSync,
   copyFileSync,
   rmSync,
-  unlinkSync
+  unlinkSync,
+  utimesSync
 } = require('fs')
 const crypto = require('crypto')
 const ts = require('typescript')
@@ -253,6 +254,10 @@ function syncDirectory(srcDir, destDir) {
       writeFileSync(destFile, srcContent)
       copied++
     } else {
+      // Even if content matches, update mtime to reflect that sync happened
+      // This ensures dependent packages detect the change via typesHash
+      const now = new Date()
+      utimesSync(destFile, now, now)
       unchanged++
     }
   }
@@ -512,7 +517,8 @@ function validateTSC(cwd, options = {}) {
     return {
       skipped: true,
       fromCache: true,
-      syncResult
+      syncResult,
+      typesHash
     }
   }
 

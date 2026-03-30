@@ -165,63 +165,107 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
   let completedCount = 0
   const timings = []
 
+  // Map to store typesHash for each validated package (used by dependents)
+  const packageTypesHashes = new Map()
+
   console.log(`\n=== Phase: Validating ${packages.length} packages ===`)
   console.log(`    Using ${validationWorkers} validation workers`)
 
-  // Process packages in parallel with limited concurrency
-  const queue = [...packages]
+  // Process packages in waves based on dependencies (like transpile phase)
+  const pending = new Set(packages)
+  const completed = new Set()
 
-  async function worker() {
-    while (queue.length > 0) {
-      const packageName = queue.shift()
-      const node = graph.get(packageName)
-      const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
-      const pkgStart = performance.now()
+  async function validatePackage(packageName) {
+    const node = graph.get(packageName)
+    const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
+    const pkgStart = performance.now()
 
-      try {
-        const result = await pool.validate(node.project.fullPath, { srcDir, force })
-        const pkgTime = Math.round(performance.now() - pkgStart)
-        completedCount++
+    // Collect types hashes from dependencies
+    const dependencyTypesHashes = {}
+    for (const dep of node.dependencies) {
+      if (packages.includes(dep) && packageTypesHashes.has(dep)) {
+        dependencyTypesHashes[dep] = packageTypesHashes.get(dep)
+      }
+    }
 
-        if (result.success) {
-          results.successCount++
-          if (result.fromCache) results.cacheHits++
-          const cacheInfo = result.fromCache ? ' (cached)' : ''
-          const syncInfo = result.syncResult ? ` [${result.syncResult.copied}c/${result.syncResult.unchanged}u/${result.syncResult.removed}r]` : ''
-          const cacheStatsInfo = result.cacheStats ? ` src:${result.cacheStats.sourceFiles}` : ''
-          console.log(`    [V ${completedCount}/${packages.length}] ${packageName} validated${cacheInfo}${syncInfo}${cacheStatsInfo} ${pkgTime}ms`)
-          if (!result.fromCache) {
-            timings.push({ package: packageName, time: pkgTime })
-          }
-          // Mark validate phase as completed in unified cache
-          const packageHash = packageHashes.get(packageName)
-          if (packageHash) {
-            markPhaseCompleted(node.project.fullPath, packageHash, 'validate')
-          }
-        } else {
-          results.errors.push({ package: packageName, error: result.error })
-          const errMsg = result.error ? (result.error.message || String(result.error)) : 'unknown'
-          const firstLine = errMsg.split('\n')[0].substring(0, 200)
-          console.error(`    [V ${completedCount}/${packages.length}] ${packageName} validation failed ${pkgTime}ms`)
-          console.error(`      ${firstLine}`)
-          timings.push({ package: packageName, time: pkgTime, failed: true })
+    try {
+      const result = await pool.validate(node.project.fullPath, { srcDir, force, dependencyTypesHashes })
+      const pkgTime = Math.round(performance.now() - pkgStart)
+
+      if (result.success) {
+        results.successCount++
+        if (result.fromCache) results.cacheHits++
+        const cacheInfo = result.fromCache ? ' (cached)' : ''
+        const syncInfo = result.syncResult ? ` [${result.syncResult.copied}c/${result.syncResult.unchanged}u/${result.syncResult.removed}r]` : ''
+        const cacheStatsInfo = result.cacheStats ? ` src:${result.cacheStats.sourceFiles}` : ''
+        console.log(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validated${cacheInfo}${syncInfo}${cacheStatsInfo} ${pkgTime}ms`)
+        if (!result.fromCache) {
+          timings.push({ package: packageName, time: pkgTime })
         }
-      } catch (err) {
-        const pkgTime = Math.round(performance.now() - pkgStart)
-        completedCount++
-        results.errors.push({ package: packageName, error: err })
-        console.error(`    [V ${completedCount}/${packages.length}] ${packageName} validation error: ${err.message} ${pkgTime}ms`)
+        // Store typesHash for dependents to use
+        if (result.typesHash) {
+          packageTypesHashes.set(packageName, result.typesHash)
+        }
+
+        // Mark validate phase as completed in unified cache
+        const packageHash = packageHashes.get(packageName)
+        if (packageHash) {
+          markPhaseCompleted(node.project.fullPath, packageHash, 'validate')
+        }
+      } else {
+        results.errors.push({ package: packageName, error: result.error })
+        const errMsg = result.error ? (result.error.message || String(result.error)) : 'unknown'
+        const firstLine = errMsg.split('\n')[0].substring(0, 200)
+        console.error(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validation failed ${pkgTime}ms`)
+        console.error(`      ${firstLine}`)
         timings.push({ package: packageName, time: pkgTime, failed: true })
       }
+
+      return result
+    } catch (err) {
+      const pkgTime = Math.round(performance.now() - pkgStart)
+      results.errors.push({ package: packageName, error: err })
+      console.error(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validation error: ${err.message} ${pkgTime}ms`)
+      timings.push({ package: packageName, time: pkgTime, failed: true })
+      return { success: false, error: err }
     }
   }
 
-  // Start workers
-  const workers = []
-  for (let i = 0; i < validationWorkers; i++) {
-    workers.push(worker())
+  // Process in dependency order waves
+  while (completed.size < packages.length) {
+    // Find packages ready to validate (all deps completed)
+    const ready = []
+    for (const name of pending) {
+      const node = graph.get(name)
+      const depsCompleted = [...node.dependencies].filter(d => packages.includes(d))
+        .every(d => completed.has(d))
+      if (depsCompleted) {
+        ready.push(name)
+      }
+    }
+
+    if (ready.length === 0) {
+      throw new Error('Circular dependency detected in validation phase')
+    }
+
+    // Validate ready packages in parallel with limited concurrency
+    const validatePromises = ready.map(async (name) => {
+      await validatePackage(name)
+      completedCount++
+      completed.add(name)
+      pending.delete(name)
+    })
+
+    // Limit concurrency to validationWorkers
+    const chunks = []
+    for (let i = 0; i < validatePromises.length; i += validationWorkers) {
+      chunks.push(validatePromises.slice(i, i + validationWorkers))
+    }
+
+    for (const chunk of chunks) {
+      await Promise.all(chunk)
+    }
   }
-  await Promise.all(workers)
 
   await pool.terminate()
 
