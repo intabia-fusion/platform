@@ -162,6 +162,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   workspace:
     image: intabiafusion/workspace
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -264,6 +265,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   collaborator:
     image: intabiafusion/collaborator
+    pull_policy: never
     links:
       - minio
       - transactor
@@ -282,6 +284,7 @@ services:
     restart: unless-stopped
   rekoni:
     image: intabiafusion/rekoni-service
+    pull_policy: never
     restart: on-failure
     extra_hosts:
       - 'huly.local:host-gateway'
@@ -293,6 +296,7 @@ services:
 
   fulltext:
     image: intabiafusion/fulltext
+    pull_policy: never
     restart: unless-stopped
     extra_hosts:
       - 'huly.local:host-gateway'
@@ -324,6 +328,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
   stats:
     image: intabiafusion/stats
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     ports:
@@ -335,6 +340,7 @@ services:
     restart: unless-stopped
   notifications:
     image: intabiafusion/notifications
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     depends_on:

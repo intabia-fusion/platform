@@ -107,6 +107,7 @@ services:
       retries: 10
   datalake:
     image: intabiafusion/datalake
+    pull_policy: never
     depends_on:
       minio:
         condition: service_healthy
@@ -186,6 +187,7 @@ services:
     restart: unless-stopped
   stats:
     image: intabiafusion/stats
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     ports:
@@ -196,6 +198,7 @@ services:
     restart: unless-stopped
   workspace:
     image: intabiafusion/workspace
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -221,6 +224,7 @@ services:
     restart: unless-stopped
   workspace_europe:
     image: intabiafusion/workspace
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -246,6 +250,7 @@ services:
     restart: unless-stopped
   collaborator:
     image: intabiafusion/collaborator
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -264,6 +269,7 @@ services:
     restart: unless-stopped
   front:
     image: intabiafusion/front
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -302,6 +308,7 @@ services:
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -368,6 +375,7 @@ services:
     restart: unless-stopped
   rekoni:
     image: intabiafusion/rekoni-service
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     restart: unless-stopped
@@ -377,6 +385,7 @@ services:
       - STATS_URL=http://huly.local:4901
   fulltext:
     image: intabiafusion/fulltext
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     restart: unless-stopped
@@ -399,6 +408,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3003
   fulltext-europe:
     image: intabiafusion/fulltext
+    pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
     links:
@@ -422,6 +432,7 @@ services:
     restart: unless-stopped
   aiBot:
     image: intabiafusion/ai-bot
+    pull_policy: never
     ports:
       - 4011:4011
     extra_hosts:

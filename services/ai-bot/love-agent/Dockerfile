@@ -9,7 +9,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 COPY package.json package.json
 COPY pnpm-lock.yaml pnpm-lock.yaml
 
-RUN pnpm install
+RUN pnpm install --ignore-scripts=false
 COPY ./bundle .
 
 EXPOSE 4012
