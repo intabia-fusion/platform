@@ -475,6 +475,18 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    [B ${completedCount.bundle}/${packagesToBundle.length}] ${packageName} bundled${cacheInfo} in ${time}ms`)
+            } else {
+              // Handle errors
+              results.bundle.errors.push(...result.errors)
+              const time = Math.round(performance.now() - pkgStart)
+              console.error(`    [B ${completedCount.bundle}/${packagesToBundle.length}] ${packageName} bundle FAILED in ${time}ms`)
+              if (result.errors && result.errors.length > 0) {
+                for (const err of result.errors) {
+                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
+                  if (err.error?.stdout) console.error(`      stdout: ${err.error.stdout}`)
+                  if (err.error?.stderr) console.error(`      stderr: ${err.error.stderr}`)
+                }
+              }
             }
             break
           }
@@ -488,6 +500,18 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    [P ${completedCount.package}/${packagesToPackage.length}] ${packageName} packaged${cacheInfo} in ${time}ms`)
+            } else {
+              // Handle errors
+              results.package.errors.push(...result.errors)
+              const time = Math.round(performance.now() - pkgStart)
+              console.error(`    [P ${completedCount.package}/${packagesToPackage.length}] ${packageName} package FAILED in ${time}ms`)
+              if (result.errors && result.errors.length > 0) {
+                for (const err of result.errors) {
+                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
+                  if (err.error?.stdout) console.error(`      stdout: ${err.error.stdout}`)
+                  if (err.error?.stderr) console.error(`      stderr: ${err.error.stderr}`)
+                }
+              }
             }
             break
           }
@@ -537,10 +561,23 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
   // Print results
   if (packagesToBundle.length > 0) {
     console.log(`\nBundled: ${results.bundle.successCount}/${results.bundle.total} packages`)
+    if (results.bundle.cacheHits > 0) console.log(`  (${results.bundle.cacheHits} from cache)`)
+    if (results.bundle.errors.length > 0) {
+      console.error(`\n  ${results.bundle.errors.length} bundle error(s):`)
+      for (const err of results.bundle.errors) {
+        console.error(`    - ${err.package}: ${err.error?.message || err.error}`)
+      }
+    }
   }
   if (packagesToPackage.length > 0) {
     console.log(`Packaged: ${results.package.successCount}/${results.package.total} packages`)
     if (results.package.cacheHits > 0) console.log(`  (${results.package.cacheHits} from cache)`)
+    if (results.package.errors.length > 0) {
+      console.error(`\n  ${results.package.errors.length} package error(s):`)
+      for (const err of results.package.errors) {
+        console.error(`    - ${err.package}: ${err.error?.message || err.error}`)
+      }
+    }
   }
   if (packagesToDockerBuild.length > 0) {
     console.log(`Docker built: ${results.dockerBuild.successCount}/${results.dockerBuild.total} packages`)
