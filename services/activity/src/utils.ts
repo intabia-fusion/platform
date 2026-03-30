@@ -714,15 +714,14 @@ export function mergeCollectionHistory (
 
   const state = new Map<Ref<Doc>, DocUpdateMessageHistory>()
 
-  operations
-    .forEach((op) => {
-      const existing = state.get(op.objectId)
-      if (existing != null && existing.action !== op.action) {
-        state.delete(op.objectId)
-      } else {
-        state.set(op.objectId, op)
-      }
-    })
+  operations.forEach((op) => {
+    const existing = state.get(op.objectId)
+    if (existing != null && existing.action !== op.action) {
+      state.delete(op.objectId)
+    } else {
+      state.set(op.objectId, op)
+    }
+  })
 
   const merged = Array.from(state.values())
 

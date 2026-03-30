@@ -467,7 +467,8 @@ class Workspace {
 
       const updateTx = tx as TxUpdateDoc<DocUpdateMessage>
       const ops = updateTx.operations
-      const historyChanged = ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
+      const historyChanged =
+        ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
 
       if (historyChanged) {
         return await this.processUpdateMessage(updateTx, notifiedUsers, _res)

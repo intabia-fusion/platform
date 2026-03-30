@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import activity, { DisplayDocUpdateMessage } from '@hcengineering/activity'
+  import activity, { DocUpdateMessage } from '@hcengineering/activity'
   import { employeeRefByAccountUuidStore, PersonRefPresenter } from '@hcengineering/contact-resources'
   import { Collaborator } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Icon, Label } from '@hcengineering/ui'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let value: Collaborator | undefined
 
   $: person = value ? $employeeRefByAccountUuidStore.get(value?.collaborator) : undefined

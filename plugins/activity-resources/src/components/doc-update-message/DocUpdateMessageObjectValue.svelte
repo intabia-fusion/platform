@@ -28,12 +28,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { AnyComponent, Component } from '@hcengineering/ui'
   import view, { ObjectPanel } from '@hcengineering/view'
-  import {
-    buildRemovedDoc,
-    DocNavLink,
-    getDocTitle,
-    isAttachedDoc
-  } from '@hcengineering/view-resources'
+  import { buildRemovedDoc, DocNavLink, getDocTitle, isAttachedDoc } from '@hcengineering/view-resources'
   import contact from '@hcengineering/contact'
 
   export let message: DocUpdateMessageHistory

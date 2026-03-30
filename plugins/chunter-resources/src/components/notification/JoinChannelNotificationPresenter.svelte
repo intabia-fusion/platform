@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreviewType, DisplayDocUpdateMessage } from '@hcengineering/activity'
+  import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
 
   import chunter from '../../plugin'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 

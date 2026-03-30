@@ -638,9 +638,13 @@ async function migrateAggregateDocUpdateMessages (client: MigrationClient): Prom
   }
 
   const attachedToSet = new Set<Ref<Doc>>()
-  const iterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
-    _class: activity.class.DocUpdateMessage
-  }, { projection: { attachedTo: 1 } })
+  const iterator = await client.traverse<DocUpdateMessage>(
+    DOMAIN_ACTIVITY,
+    {
+      _class: activity.class.DocUpdateMessage
+    },
+    { projection: { attachedTo: 1 } }
+  )
 
   while (true) {
     const docs = await iterator.next(1000)
@@ -693,7 +697,7 @@ async function migrateAggregateDocUpdateMessages (client: MigrationClient): Prom
       const key = getDocUpdateMessageKey(msg)
       const combinedWith = grouped.get(key) ?? []
 
-      const validCombinedWith = combinedWith.filter(it => {
+      const validCombinedWith = combinedWith.filter((it) => {
         const timeDiff = (msg.createdOn ?? msg.modifiedOn ?? 0) - (it.createdOn ?? it.modifiedOn ?? 0)
         return timeDiff >= 0 && timeDiff < UPDATE_COMBINE_THRESHOLD
       })
@@ -793,7 +797,10 @@ async function migrateAggregateDocUpdateMessages (client: MigrationClient): Prom
     }
 
     if (toUpdate.size > 0) {
-      const groupedUpdates = new Map<string, { filter: MigrationDocumentQuery<DocUpdateMessage>, update: MigrateUpdate<DocUpdateMessage> }[]>()
+      const groupedUpdates = new Map<
+      string,
+      { filter: MigrationDocumentQuery<DocUpdateMessage>, update: MigrateUpdate<DocUpdateMessage> }[]
+      >()
 
       for (const [id, up] of toUpdate.entries()) {
         const query: MigrationDocumentQuery<DocUpdateMessage> = { _id: id }

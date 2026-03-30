@@ -24,7 +24,7 @@
     languageStore
   } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import activity, { ActivityMessage, DisplayActivityMessage } from '@hcengineering/activity'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import contact from '@hcengineering/contact'
   import attachment from '@hcengineering/attachment'
@@ -50,7 +50,7 @@
   const channelQuery = createQuery()
 
   let channel: Doc | undefined = undefined
-  let message: DisplayActivityMessage | undefined = $threadMessagesStore?._id === _id ? $threadMessagesStore : undefined
+  let message: ActivityMessage | undefined = $threadMessagesStore?._id === _id ? $threadMessagesStore : undefined
   let isLoading = true
   let channelName: string | undefined = undefined
 
@@ -84,7 +84,7 @@
     activity.class.ActivityMessage,
     { _id },
     (result: ActivityMessage[]) => {
-      message = result[0] as DisplayActivityMessage
+      message = result[0]
       isLoading = false
       if (message === undefined) {
         dispatch('close')

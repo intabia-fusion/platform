@@ -196,7 +196,6 @@ async function pushDocUpdateMessages (
 
   const combined = combineMessages(createTxes, cache.getRecentMessages(object._id), client.txFactory)
 
-  console.log('Combined messages', combined)
   for (const ttx of combined.create) {
     res.push(ttx)
     cache.addRecentMessage(TxProcessor.createDoc2Doc(ttx))
@@ -224,7 +223,6 @@ function combineMessages (
     remove: TxRemoveDoc<DocUpdateMessage>[]
     update: TxUpdateDoc<DocUpdateMessage>[]
   } {
-  console.log('New messages txes', [...txes])
   const created = txes.map((it) => {
     const message = TxProcessor.createDoc2Doc(it)
     return {
@@ -358,9 +356,6 @@ function combineMessages (
         tx.attributes.objectAttributes = last.objectAttributes
         tx.attributes.attributeUpdates = last.update
       }
-
-
-      console.log('Merged', merged)
       tx.attributes.history = merged
     }
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessagePreviewType, DisplayDocUpdateMessage } from '@hcengineering/activity'
+  import activity, { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
@@ -22,7 +22,7 @@
 
   import request from '../plugin'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let type: ActivityMessagePreviewType = 'full'
 
   const me = getCurrentEmployee()

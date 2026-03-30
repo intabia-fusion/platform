@@ -370,7 +370,7 @@ class WsCache {
     return collaborators
   }
 
-  public async getDoc<T extends Doc = Doc> (_id: Ref<T>, _class: Ref<Class<T>>): Promise<T | undefined> {
+  public async getDoc<T extends Doc = Doc>(_id: Ref<T>, _class: Ref<Class<T>>): Promise<T | undefined> {
     if (this.docs.has(_id)) return this.docs.get(_id) as T
     const query = { _id } as unknown as DocumentQuery<T>
     const doc = await this.client.findOne(_class, query)

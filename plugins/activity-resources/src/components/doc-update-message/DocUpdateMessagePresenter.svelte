@@ -16,7 +16,6 @@
   import activity, {
     ActivityMessage,
     ActivityMessageViewType,
-    DisplayActivityMessage,
     DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
@@ -74,7 +73,7 @@
 
   let viewlet: DocUpdateMessageViewlet | undefined
   let attributeModel: AttributeModel | undefined = undefined
-  let parentMessage: DisplayActivityMessage | undefined = undefined
+  let parentMessage: ActivityMessage | undefined = undefined
   let parentObject: Doc | undefined
   let object: Doc | undefined
   let isObjectRemoved: boolean = false
@@ -98,7 +97,7 @@
   }
 
   $: void getParentMessage(value.attachedToClass, value.attachedTo, value.space).then((res) => {
-    parentMessage = res as DisplayActivityMessage
+    parentMessage = res as ActivityMessage
   })
 
   let person: Person | undefined

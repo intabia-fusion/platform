@@ -141,7 +141,6 @@ export class Worker {
         ? this.brandingMap[wsInfo.branding]
         : this.brandingMap[Object.keys(this.brandingMap)[0]]
 
-    console.log(wsInfo.branding, branding)
     const workspace = await Workspace.create(
       ctx.newChild(ws, {}),
       wsInfo,

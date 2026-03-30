@@ -16,12 +16,12 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessagePreviewType, DisplayDocUpdateMessage } from '@hcengineering/activity'
+  import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { Action } from '@hcengineering/ui'
   import training from '@hcengineering/training'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let actions: Action[] = []
   export let type: ActivityMessagePreviewType = 'full'
 </script>

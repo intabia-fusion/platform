@@ -15,12 +15,12 @@
 <script lang="ts">
   import { getCurrentAccount } from '@hcengineering/core'
   import contact from '@hcengineering/contact'
-  import { DisplayDocUpdateMessage } from '@hcengineering/activity'
+  import { DocUpdateMessage } from '@hcengineering/activity'
   import notification from '@hcengineering/notification'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { Action, Icon, Label } from '@hcengineering/ui'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let actions: Action[] = []
 
   $: attributeUpdates = message.attributeUpdates ?? { added: [], removed: [], set: [] }

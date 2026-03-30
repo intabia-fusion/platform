@@ -39,7 +39,10 @@
   let valueMessages: DocUpdateMessageHistory[] = []
   let objects: Doc[] = []
 
-  $: valueMessages = message.history?.length && !isOwn ? [...message.history, message as DocUpdateMessageHistory] : [message as DocUpdateMessageHistory]
+  $: valueMessages =
+    message.history?.length && !isOwn
+      ? [...message.history, message as DocUpdateMessageHistory]
+      : [message as DocUpdateMessageHistory]
 
   $: objectsQuery.query(message.objectClass, { _id: { $in: valueMessages.map((it) => it.objectId) } }, (res) => {
     objects = res

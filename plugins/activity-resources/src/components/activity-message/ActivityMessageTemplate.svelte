@@ -13,12 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, {
-    ActivityMessage,
-    ActivityMessageViewlet,
-    ActivityMessageViewType,
-    DisplayActivityMessage
-  } from '@hcengineering/activity'
+  import activity, { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@hcengineering/activity'
   import { Person } from '@hcengineering/contact'
   import { Avatar, SystemAvatar } from '@hcengineering/contact-resources'
   import core, { Ref, type SocialId } from '@hcengineering/core'
@@ -38,8 +33,8 @@
   import ActivityMessagePresenter from './ActivityMessagePresenter.svelte'
   import InlineAction from './InlineAction.svelte'
 
-  export let message: DisplayActivityMessage
-  export let parentMessage: DisplayActivityMessage | undefined = undefined
+  export let message: ActivityMessage
+  export let parentMessage: ActivityMessage | undefined = undefined
 
   export let viewlet: ActivityMessageViewlet | undefined = undefined
   export let person: Person | undefined = undefined
