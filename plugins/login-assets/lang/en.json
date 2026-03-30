@@ -100,6 +100,7 @@
     "HowToLogin": "How would you like to log in?",
     "AlreadySignedIn": "Join with existing account",
     "ExpiredLink": "This invite link has expired",
-    "ExpiredLinkDescription": "Please request a new invite link"
+    "ExpiredLinkDescription": "Please request a new invite link",
+    "UsageConditions": "Terms of Use"
   }
 }

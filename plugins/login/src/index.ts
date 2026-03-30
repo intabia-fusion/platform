@@ -63,7 +63,10 @@ export default plugin(loginId, {
       MinLowerChars: number
     }>,
     DesktopUpdatesUrl: '' as Metadata<string>,
-    DesktopUpdatesChannel: '' as Metadata<string[][]>
+    DesktopUpdatesChannel: '' as Metadata<string[][]>,
+    Copyright: '' as Metadata<string>,
+    UsageUrl: '' as Metadata<string>,
+    SupportUrl: '' as Metadata<string>
   },
   component: {
     LoginApp: '' as AnyComponent,
@@ -98,7 +101,8 @@ export default plugin(loginId, {
     BackLabel: '' as IntlString,
     Email: '' as IntlString,
     Password: '' as IntlString,
-    PasswordRepeat: '' as IntlString
+    PasswordRepeat: '' as IntlString,
+    UsageConditions: '' as IntlString
   },
   function: {
     SendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,

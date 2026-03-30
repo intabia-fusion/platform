@@ -100,6 +100,7 @@
     "HowToLogin": "どのようにログインしますか？",
     "AlreadySignedIn": "既存のアカウントで参加",
     "ExpiredLink": "この招待リンクは有効期限が切れています",
-    "ExpiredLinkDescription": "新しい招待リンクをリクエストしてください"
+    "ExpiredLinkDescription": "新しい招待リンクをリクエストしてください",
+    "UsageConditions": "利用規約"
   }
 }

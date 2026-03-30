@@ -217,6 +217,9 @@ export interface Config {
 
   ACCENT_THEME?: string
   LOGIN_THEME?: string
+  COPYRIGHT?: string
+  USAGE_URL?: string
+  SUPPORT_URL?: string
 }
 
 export interface Branding {
@@ -500,6 +503,10 @@ export async function configurePlatform() {
 
   setMetadata(login.metadata.DesktopUpdatesUrl, updatesUrl)
   setMetadata(login.metadata.DesktopUpdatesChannel, updatesChannels)
+
+  setMetadata(login.metadata.Copyright, config.COPYRIGHT ?? 'Интабия Фьюжн')
+  setMetadata(login.metadata.UsageUrl, config.USAGE_URL)
+  setMetadata(login.metadata.SupportUrl, config.SUPPORT_URL)
 
   setMetadata(login.metadata.PasswordValidations, PASSWORD_REQUIREMENTS[config.PASSWORD_STRICTNESS ?? 'none'])
 

@@ -349,6 +349,9 @@ services:
       - EXPORT_URL=http://huly.local:4009
       - LINK_PREVIEW_URL=http://huly.local:4042
       - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
+      - USAGE_URL=http://huly.local:8080/terms
+      - COPYRIGHT=
+      - SUPPORT_URL=https://t.me/intabia
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor

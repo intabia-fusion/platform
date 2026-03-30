@@ -100,6 +100,7 @@
     "HowToLogin": "Come desideri accedere?",
     "AlreadySignedIn": "Unisciti con un account esistente",
     "ExpiredLink": "Questo link di invito è scaduto",
-    "ExpiredLinkDescription": "Richiedi un nuovo link di invito"
+    "ExpiredLinkDescription": "Richiedi un nuovo link di invito",
+    "UsageConditions": "Condizioni d'uso"
   }
 }

@@ -100,6 +100,7 @@
     "HowToLogin": "¿Cómo desea iniciar sesión?",
     "AlreadySignedIn": "Unirse con cuenta existente",
     "ExpiredLink": "Este enlace de invitación ha caducado",
-    "ExpiredLinkDescription": "Por favor, solicita un nuevo enlace de invitación"
+    "ExpiredLinkDescription": "Por favor, solicita un nuevo enlace de invitación",
+    "UsageConditions": "Condiciones de uso"
   }
 }

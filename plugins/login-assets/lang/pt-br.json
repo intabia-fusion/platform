@@ -100,6 +100,7 @@
     "HowToLogin": "Como você gostaria de fazer login?",
     "AlreadySignedIn": "Entrar com conta existente",
     "ExpiredLink": "Este link de convite expirou",
-    "ExpiredLinkDescription": "Por favor, solicite um novo link de convite"
+    "ExpiredLinkDescription": "Por favor, solicite um novo link de convite",
+    "UsageConditions": "Condições de uso"
   }
 }
