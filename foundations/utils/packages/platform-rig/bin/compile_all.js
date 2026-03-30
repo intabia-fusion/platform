@@ -247,9 +247,8 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
       } else {
         results.errors.push({ package: packageName, error: result.error })
         const errMsg = result.error ? (result.error.message || String(result.error)) : 'unknown'
-        const firstLine = errMsg.split('\n')[0].substring(0, 200)
         console.error(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validation failed ${pkgTime}ms`)
-        console.error(`      ${firstLine}`)
+        console.error(`      ${errMsg}`)
         timings.push({ package: packageName, time: pkgTime, failed: true })
       }
 
@@ -447,6 +446,16 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    [D ${completedCount.dockerBuild}/${packagesToDockerBuild.length}] ${packageName} docker built${cacheInfo} in ${Math.round(time / 1000)}s`)
+            } else {
+              // Handle errors
+              results.dockerBuild.errors.push(...result.errors)
+              const time = Math.round(performance.now() - pkgStart)
+              console.error(`    [D ${completedCount.dockerBuild}/${packagesToDockerBuild.length}] ${packageName} docker build FAILED in ${Math.round(time / 1000)}s`)
+              if (result.errors && result.errors.length > 0) {
+                for (const err of result.errors) {
+                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
+                }
+              }
             }
             break
           }
@@ -481,6 +490,12 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
   if (packagesToDockerBuild.length > 0) {
     console.log(`Docker built: ${results.dockerBuild.successCount}/${results.dockerBuild.total} packages`)
     if (results.dockerBuild.cacheHits > 0) console.log(`  (${results.dockerBuild.cacheHits} from cache)`)
+    if (results.dockerBuild.errors.length > 0) {
+      console.error(`\n  ${results.dockerBuild.errors.length} docker build error(s):`)
+      for (const err of results.dockerBuild.errors) {
+        console.error(`    - ${err.package}: ${err.error?.message || err.error}`)
+      }
+    }
   }
 
   return results

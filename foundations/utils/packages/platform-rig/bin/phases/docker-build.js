@@ -92,6 +92,11 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
           const error = new Error(`Docker build failed with exit code ${code}`)
           error.stdout = stdout
           error.stderr = stderr
+          // Log error details to console
+          console.error(`[docker-build] ${packageName} failed:`)
+          console.error(`  Exit code: ${code}`)
+          if (stderr) console.error(`  stderr: ${stderr}`)
+          if (stdout) console.error(`  stdout: ${stdout}`)
           resolve({ success: false, error, time })
         }
       })

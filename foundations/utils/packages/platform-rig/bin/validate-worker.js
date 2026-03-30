@@ -729,7 +729,9 @@ if (parentPort) {
           }
         })
       } catch (err) {
-        parentPort.postMessage({ id, success: false, error: err.message, threadId })
+        // Return full error with stack trace for better debugging
+        const fullError = err.stack || err.message || String(err)
+        parentPort.postMessage({ id, success: false, error: fullError, threadId })
       }
     } else if (type === 'get-types-hash') {
       // Get types hash for a package without validation
