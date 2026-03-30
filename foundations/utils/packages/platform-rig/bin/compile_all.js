@@ -150,7 +150,7 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
   if (packages.length === 0) return { successCount: 0, total: 0, cacheHits: 0, errors: [], time: 0 }
 
   const { getWorkerPool } = require('./libs/workers')
-  const { markPhaseCompleted } = require('./libs/cache')
+  const { markPhaseCompleted, isPhaseCached } = require('./libs/cache')
   const pool = await getWorkerPool(validationWorkers)
 
   const startTime = performance.now()
@@ -191,6 +191,26 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
     const pkgStart = performance.now()
 
+    // Get pre-calculated package hash
+    const packageHash = packageHashes.get(packageName)
+
+    // Check if validation is cached
+    if (!force && packageHash && isPhaseCached(node.project.fullPath, packageHash, 'validate')) {
+      // Get typesHash from cache for dependents
+      const typesDir = join(node.project.fullPath, 'types')
+      if (existsSync(typesDir)) {
+        const { calculateTypesHash } = require('./validate-worker')
+        const typesHash = calculateTypesHash(typesDir)
+        packageTypesHashes.set(packageName, typesHash)
+      }
+      
+      results.successCount++
+      results.cacheHits++
+      const pkgTime = Math.round(performance.now() - pkgStart)
+      console.log(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validated (cached) ${pkgTime}ms`)
+      return { success: true, fromCache: true }
+    }
+
     // Collect types hashes from dependencies
     const dependencyTypesHashes = {}
     for (const dep of node.dependencies) {
@@ -200,13 +220,14 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     }
 
     try {
-      const result = await pool.validate(node.project.fullPath, { srcDir, force, dependencyTypesHashes })
+      const result = await pool.validate(node.project.fullPath, { srcDir, force, dependencyTypesHashes, packageHash })
       const pkgTime = Math.round(performance.now() - pkgStart)
 
       if (result.success) {
         results.successCount++
-        if (result.fromCache) results.cacheHits++
-        const cacheInfo = result.fromCache ? ' (cached)' : ''
+        // Note: cacheHits is already incremented above for packages that hit the cache
+        // Worker-level cache is disabled, so we don't check result.fromCache here
+        const cacheInfo = ''
         const syncInfo = result.syncResult ? ` [${result.syncResult.copied}c/${result.syncResult.unchanged}u/${result.syncResult.removed}r]` : ''
         const cacheStatsInfo = result.cacheStats ? ` src:${result.cacheStats.sourceFiles}` : ''
         console.log(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validated${cacheInfo}${syncInfo}${cacheStatsInfo} ${pkgTime}ms`)

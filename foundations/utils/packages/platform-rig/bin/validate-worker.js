@@ -455,14 +455,24 @@ function createCachingCompilerHost(options, cwd) {
     ...defaultHost,
 
     readFile(fileName) {
+      // Normalize path to handle symlinks and relative paths
+      // This ensures the same file from different package paths gets the same cache key
+      let normalizedPath = fileName
+      try {
+        normalizedPath = require('fs').realpathSync(fileName)
+      } catch {
+        // If realpath fails, use original path
+        normalizedPath = fileName
+      }
+      
       // Only cache .d.ts files from node_modules
-      if (fileName.includes('node_modules') && fileName.endsWith('.d.ts')) {
-        const cached = sourceFileContentCache.get(fileName)
+      if (normalizedPath.includes('node_modules') && normalizedPath.endsWith('.d.ts')) {
+        const cached = sourceFileContentCache.get(normalizedPath)
         if (cached !== undefined) {
           // Update LRU order
-          const idx = contentCacheAccessOrder.indexOf(fileName)
+          const idx = contentCacheAccessOrder.indexOf(normalizedPath)
           if (idx > -1) contentCacheAccessOrder.splice(idx, 1)
-          contentCacheAccessOrder.push(fileName)
+          contentCacheAccessOrder.push(normalizedPath)
           return cached
         }
 
@@ -473,8 +483,8 @@ function createCachingCompilerHost(options, cwd) {
             const oldest = contentCacheAccessOrder.shift()
             if (oldest) sourceFileContentCache.delete(oldest)
           }
-          sourceFileContentCache.set(fileName, content)
-          contentCacheAccessOrder.push(fileName)
+          sourceFileContentCache.set(normalizedPath, content)
+          contentCacheAccessOrder.push(normalizedPath)
         }
         return content
       }
@@ -485,9 +495,17 @@ function createCachingCompilerHost(options, cwd) {
     // Cache parsed SourceFile objects for node_modules .d.ts files
     // This avoids re-parsing the same files repeatedly across packages
     getSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile) {
+      // Normalize path to handle symlinks
+      let normalizedPath = fileName
+      try {
+        normalizedPath = require('fs').realpathSync(fileName)
+      } catch {
+        normalizedPath = fileName
+      }
+      
       // Only cache .d.ts files from node_modules (they don't change)
-      if (fileName.includes('node_modules') && fileName.endsWith('.d.ts') && !shouldCreateNewSourceFile) {
-        const cacheKey = `${fileName}:${languageVersion}`
+      if (normalizedPath.includes('node_modules') && normalizedPath.endsWith('.d.ts') && !shouldCreateNewSourceFile) {
+        const cacheKey = `${normalizedPath}:${languageVersion}`
         const cached = sourceFileCache.get(cacheKey)
         if (cached) {
           // Update LRU order
@@ -551,32 +569,6 @@ function validateTSC(cwd, options = {}) {
 
   if (!existsSync(buildDir)) {
     mkdirSync(buildDir, { recursive: true })
-  }
-
-  // Calculate current package hash
-  const currentHash = calculatePackageHash(cwd, dependencyTypesHashes, srcDir)
-
-  // Load cached state
-  const cachedState = loadValidationCache(buildDir)
-
-  // Check if we can use cached emit
-  if (!force && cachedState && cachedState.packageHash === currentHash && existsSync(emitDir)) {
-    // Hash matches! Just sync emit dir to types dir
-    const syncResult = syncDirectory(emitDir, typesDir)
-
-    // Calculate and save types hash
-    const typesHash = calculateTypesHash(typesDir)
-    saveValidationCache(buildDir, {
-      ...cachedState,
-      typesHash
-    })
-
-    return {
-      skipped: true,
-      fromCache: true,
-      syncResult,
-      typesHash
-    }
   }
 
   // Create emit directory
@@ -660,11 +652,16 @@ function validateTSC(cwd, options = {}) {
   const hasErrors = allDiagnostics.length > 0
   const emitSkipped = emitResult.emitSkipped
 
-  // Release TypeScript program
+  // Release TypeScript program - this is the main memory consumer
+  // Our LRU caches (sourceFileContentCache and sourceFileCache) are kept
+  // They have their own size limits and eviction policies
   program = null
 
-  // Clean up memory after validation
-  cleanupAfterValidation()
+  // Increment validation counter and run GC every 5 validations
+  validationCount++
+  if (validationCount % 5 === 0) {
+    tryGC()
+  }
 
   if (hasErrors) {
     throw new Error(stderr.join('\n'))
@@ -677,15 +674,8 @@ function validateTSC(cwd, options = {}) {
   // Sync emit directory to types directory
   const syncResult = syncDirectory(emitDir, typesDir)
 
-  // Calculate and save types hash
+  // Calculate types hash
   const typesHash = calculateTypesHash(typesDir)
-
-  // Save cache state
-  saveValidationCache(buildDir, {
-    packageHash: currentHash,
-    typesHash,
-    timestamp: Date.now()
-  })
 
   return {
     skipped: false,
@@ -712,6 +702,16 @@ if (parentPort) {
         const typesDir = join(cwd, 'types')
         const typesHash = calculateTypesHash(typesDir)
 
+        // Calculate approximate cache size in MB
+        let cacheSizeMB = 0
+        for (const [key, value] of sourceFileContentCache) {
+          cacheSizeMB += key.length + (value?.length || 0)
+        }
+        for (const [key, value] of sourceFileCache) {
+          cacheSizeMB += key.length * 2 // rough estimate for SourceFile objects
+        }
+        cacheSizeMB = Math.round(cacheSizeMB / 1024 / 1024)
+
         parentPort.postMessage({
           id,
           success: true,
@@ -722,7 +722,10 @@ if (parentPort) {
           memory: reportMemory ? { before: startMem, after: endMem } : undefined,
           threadId,
           cacheStats: {
-            sourceFiles: sourceFileContentCache.size
+            contentCacheSize: sourceFileContentCache.size,
+            sourceCacheSize: sourceFileCache.size,
+            cacheSizeMB,
+            validationCount
           }
         })
       } catch (err) {

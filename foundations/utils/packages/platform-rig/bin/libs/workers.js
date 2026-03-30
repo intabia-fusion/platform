@@ -113,7 +113,7 @@ class ValidateWorkerPool {
   }
 
   validate(cwd, options = {}) {
-    const { srcDir = 'src', force = false, dependencyTypesHashes = {} } = options
+    const { srcDir = 'src', force = false, dependencyTypesHashes = {}, packageHash } = options
     return new Promise((resolve, reject) => {
       const task = {
         id: ++this.taskId,
@@ -121,7 +121,8 @@ class ValidateWorkerPool {
         cwd,
         srcDir,
         force,
-        dependencyTypesHashes
+        dependencyTypesHashes,
+        packageHash
       }
 
       this.pending.push({ task, resolve, reject })

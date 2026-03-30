@@ -196,14 +196,20 @@ function getOptimalWorkerCount(requestedWorkers, taskType = 'default') {
   if (taskType === 'typescript') {
     // Hard limit: max 6 workers for validation to prevent OOM
     maxWorkers = Math.min(cpuCount, 6)
+    // Min workers: at least 2, but respect requestedWorkers if it's lower
     minWorkers = Math.min(maxWorkers, Math.max(2, Math.floor(cpuCount / 2)))
   }
-  const optimal = Math.max(minWorkers, Math.min(requestedWorkers, maxWorkers, maxWorkersByMemory))
+  // Respect requestedWorkers if explicitly set (don't let minWorkers override it)
+  const effectiveRequested = Math.min(requestedWorkers, maxWorkers, maxWorkersByMemory)
+  const optimal = Math.max(minWorkers, effectiveRequested)
+  // But if requestedWorkers is explicitly lower than minWorkers, use requestedWorkers
+  // (user knows what they want, e.g., for CI with limited resources)
+  const finalOptimal = requestedWorkers < minWorkers ? requestedWorkers : optimal
 
   return {
-    workers: optimal,
+    workers: finalOptimal,
     availableMemoryMB: availableMem,
-    limitedByMemory: optimal < requestedWorkers && maxWorkersByMemory < requestedWorkers
+    limitedByMemory: finalOptimal < requestedWorkers && maxWorkersByMemory < requestedWorkers
   }
 }
 
