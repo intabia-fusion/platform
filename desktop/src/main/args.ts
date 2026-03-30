@@ -18,6 +18,7 @@ import { OptionValues, program } from 'commander'
 program
   .name('Platform')
   .allowUnknownOption()
+  .allowExcessArguments(true)
   .option('-s, --server <url>', 'Remote server URL (front). E.g. https://platform.intabia.ru')
 
 let opts: OptionValues | null = null
