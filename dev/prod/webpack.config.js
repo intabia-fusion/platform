@@ -44,7 +44,7 @@ const dev =
   devServerTest
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
-const doValidate = !prod || process.env.DO_VALIDATE === 'true'
+const doValidate = process.env.DO_VALIDATE === 'true'
 
 const doCompression = prod
 
@@ -238,11 +238,14 @@ module.exports = [
     }
   },
   {
-    cache: useCache
+    cache: useCache || prod
       ? {
           type: 'filesystem',
           allowCollectingMemory: true,
-          cacheLocation: path.resolve(__dirname, '.build_dev')
+          cacheLocation: path.resolve(__dirname, prod ? '.build_cache' : '.build_dev'),
+          buildDependencies: {
+            config: [__filename]
+          }
         }
       : undefined,
     entry: {
@@ -539,11 +542,15 @@ module.exports = [
             new CompressionPlugin({
               filename: '[path][base].gz',
               algorithm: 'gzip',
+              threshold: 10240, // Only compress files > 10KB
+              minRatio: 0.8,
             }),
             new CompressionPlugin({
               filename: '[path][base].br',
               algorithm: 'brotliCompress',
-              compressionOptions: { level: 11 }
+              compressionOptions: { level: 11 },
+              threshold: 10240, // Only compress files > 10KB
+              minRatio: 0.8,
             })
           ]
         : []),
@@ -555,7 +562,30 @@ module.exports = [
       new DefinePlugin({
         'process.env.CLIENT_TYPE': JSON.stringify(process.env.CLIENT_TYPE)
       }),
-      ...(doValidate ? [new ForkTsCheckerWebpackPlugin()] : [])
+      ...(doValidate
+        ? [
+            new ForkTsCheckerWebpackPlugin({
+              typescript: {
+                mode: 'write-references',
+                diagnosticOptions: {
+                  syntactic: true,
+                  semantic: true,
+                  declaration: false,
+                  global: false
+                }
+              },
+              eslint: undefined,
+              issue: {
+                scope: 'all',
+                exclude: [
+                  {
+                    severity: 'warning'
+                  }
+                ]
+              }
+            })
+          ]
+        : [])
     ],
     watchOptions: {
       // for some systems, watching many files can result in a lot of CPU or memory usage
