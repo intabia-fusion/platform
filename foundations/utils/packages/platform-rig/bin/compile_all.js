@@ -67,7 +67,11 @@ function parseArgs(args) {
     } else if (arg === '--to') {
       const next = args[i + 1]
       if (next !== undefined && !next.startsWith('-')) {
-        toPackage = next
+        if (toPackage) {
+          toPackage += ',' + next
+        } else {
+          toPackage = next
+        }
         i++
       }
     } else if (arg === '--help' || arg === '-h') {
@@ -79,6 +83,20 @@ function parseArgs(args) {
   }
 
   // Read Rush custom parameters from environment variables
+  // Check RUSH_INVOKED_ARGS for multiple --to flags (Rush passes all args here)
+  if (!toPackage && process.env.RUSH_INVOKED_ARGS) {
+    const rushArgs = process.env.RUSH_INVOKED_ARGS.split(' ')
+    const toPackages = []
+    for (let i = 0; i < rushArgs.length; i++) {
+      if (rushArgs[i] === '--to' && i + 1 < rushArgs.length) {
+        toPackages.push(rushArgs[i + 1])
+        i++
+      }
+    }
+    if (toPackages.length > 0) {
+      toPackage = toPackages.join(',')
+    }
+  }
   if (!toPackage) {
     toPackage = process.env.RUSH_TO || process.env.TO || null
   }
@@ -390,6 +408,42 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
 
   const completedCount = { bundle: 0, package: 0, dockerBuild: 0 }
 
+  /**
+   * Calculate package hash including all dependencies (transitive)
+   * This ensures that when a dependency changes, dependent packages are rebuilt
+   */
+  function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set()) {
+    // Prevent circular dependencies
+    if (processed.has(packageName)) {
+      return ''
+    }
+    processed.add(packageName)
+
+    const node = graph.get(packageName)
+    if (!node) {
+      return ''
+    }
+
+    // Get base hash of this package
+    const baseHash = packageHashes.get(packageName) || ''
+    const parts = [baseHash]
+
+    // Add hashes of all dependencies
+    for (const depName of node.dependencies) {
+      const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed)
+      if (depHash) {
+        parts.push(`${depName}:${depHash}`)
+      }
+    }
+
+    // Sort to ensure consistent hash
+    parts.sort()
+
+    // Combine into final hash
+    const crypto = require('crypto')
+    return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
+  }
+
   async function worker() {
     while (true) {
       const task = taskQueue.getNextTask()
@@ -405,7 +459,8 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
       const { taskType, packageName } = task
       const node = graph.get(packageName)
       const pkgStart = performance.now()
-      const packageHash = packageHashes.get(packageName)
+      // Always include dependency hashes to ensure rebuilds when any dependency changes
+      const packageHash = calculatePackageHashWithDeps(packageName, graph, packageHashes)
 
       try {
         let result
@@ -548,9 +603,42 @@ async function compileAll(rootDir, options = {}) {
   const packagesToBundle = []
   const packagesToPackage = []
   const packagesToDockerBuild = []
+
+  // If --to is specified, collect target packages and all their dependencies
+  let targetPackages = null
+  if (toPackage) {
+    // Parse multiple --to packages (comma-separated)
+    const targets = toPackage.split(',').map(t => t.trim()).filter(Boolean)
+    targetPackages = new Set()
+
+    // Helper to get all dependencies recursively
+    function getAllDependencies(packageName, visited = new Set()) {
+      if (visited.has(packageName)) return
+      visited.add(packageName)
+
+      const node = graph.get(packageName)
+      if (!node) return
+
+      targetPackages.add(packageName)
+
+      // Add all dependencies
+      for (const dep of node.dependencies) {
+        getAllDependencies(dep, visited)
+      }
+    }
+
+    // Collect all targets and their dependencies
+    for (const target of targets) {
+      getAllDependencies(target)
+    }
+
+    console.log(`\nFiltering to ${targetPackages.size} packages (targets: ${targets.join(', ')})`)
+  }
+
   for (const [name, node] of graph) {
-    if (toPackage) {
-      // TODO: Filter based on target package and dependencies
+    // Skip if --to is specified and this package is not in the target set
+    if (targetPackages && !targetPackages.has(name)) {
+      continue
     }
 
     if (node.phaseBuild === 'compile transpile src' ||

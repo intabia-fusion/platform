@@ -65,6 +65,8 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
 
     return new Promise((resolve) => {
       const startTime = performance.now()
+      console.log(`    [docker-build] Starting ${packageName}...`)
+      
       const child = spawn('rushx', ['docker:build'], {
         cwd,
         stdio: ['pipe', 'pipe', 'pipe']
@@ -72,16 +74,73 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
 
       let stdout = ''
       let stderr = ''
+      let lastLogLine = ''
+      let progressInterval = null
+      let progressTimeout = null
+      let hasOutput = false
+      let isCompleted = false
+
+      // Helper to get last non-empty line
+      const getLastLogLine = (output) => {
+        const lines = output.split('\n').filter(line => line.trim())
+        return lines[lines.length - 1] || ''
+      }
+
+      // Setup progress logging for long-running docker builds (>15s)
+      const setupProgressLogging = () => {
+        const checkProgress = () => {
+          if (isCompleted) return
+          const elapsed = Math.round((performance.now() - startTime) / 1000)
+          if (elapsed >= 15) {
+            const lastLine = getLastLogLine(stdout + stderr)
+            console.log(`    [docker-build] ${packageName} still building... (${elapsed}s elapsed, hasOutput: ${hasOutput})`)
+            if (lastLine) {
+              console.log(`      Last log: ${lastLine.substring(0, 200)}`)
+            } else if (!hasOutput) {
+              console.log(`      No output received yet`)
+            }
+          }
+        }
+        
+        // First check after 15 seconds
+        progressTimeout = setTimeout(() => {
+          if (isCompleted) return
+          checkProgress()
+          // Then every 15 seconds
+          if (!isCompleted) {
+            progressInterval = setInterval(checkProgress, 15000)
+          }
+        }, 15000)
+      }
+
+      setupProgressLogging()
 
       child.stdout?.on('data', (data) => {
-        stdout += data.toString()
+        const str = data.toString()
+        stdout += str
+        lastLogLine = getLastLogLine(stdout + stderr)
+        hasOutput = true
       })
       child.stderr?.on('data', (data) => {
-        stderr += data.toString()
+        const str = data.toString()
+        stderr += str
+        lastLogLine = getLastLogLine(stdout + stderr)
+        hasOutput = true
       })
 
       child.on('close', (code) => {
+        isCompleted = true
         const time = performance.now() - startTime
+        
+        // Clear progress timers
+        if (progressTimeout) {
+          clearTimeout(progressTimeout)
+          progressTimeout = null
+        }
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
 
         if (code === 0) {
           if (packageHash) {
@@ -102,6 +161,16 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
       })
 
       child.on('error', (err) => {
+        isCompleted = true
+        // Clear progress timers on error
+        if (progressTimeout) {
+          clearTimeout(progressTimeout)
+          progressTimeout = null
+        }
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
         resolve({ success: false, error: err })
       })
     })

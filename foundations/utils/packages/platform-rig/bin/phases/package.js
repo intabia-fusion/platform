@@ -50,6 +50,32 @@ async function runPackagePhase(graph, packageNames, concurrency, options = {}) {
 
       let stdout = ''
       let stderr = ''
+      let progressInterval = null
+      let progressTimeout = null
+      let isCompleted = false
+
+      // Setup progress logging for long-running packages (>15s)
+      const setupProgressLogging = () => {
+        const checkProgress = () => {
+          if (isCompleted) return
+          const elapsed = Math.round((performance.now() - startTime) / 1000)
+          if (elapsed >= 15) {
+            console.log(`    [package] ${packageName} still packaging... (${elapsed}s elapsed)`)
+          }
+        }
+        
+        // First check after 15 seconds
+        progressTimeout = setTimeout(() => {
+          if (isCompleted) return
+          checkProgress()
+          // Then every 15 seconds
+          if (!isCompleted) {
+            progressInterval = setInterval(checkProgress, 15000)
+          }
+        }, 15000)
+      }
+
+      setupProgressLogging()
 
       child.stdout?.on('data', (data) => {
         stdout += data.toString()
@@ -59,7 +85,18 @@ async function runPackagePhase(graph, packageNames, concurrency, options = {}) {
       })
 
       child.on('close', (code) => {
+        isCompleted = true
         const time = performance.now() - startTime
+        
+        // Clear progress timers
+        if (progressTimeout) {
+          clearTimeout(progressTimeout)
+          progressTimeout = null
+        }
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
 
         if (code === 0) {
           if (packageHash) {
@@ -75,6 +112,16 @@ async function runPackagePhase(graph, packageNames, concurrency, options = {}) {
       })
 
       child.on('error', (err) => {
+        isCompleted = true
+        // Clear progress timers on error
+        if (progressTimeout) {
+          clearTimeout(progressTimeout)
+          progressTimeout = null
+        }
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
         resolve({ success: false, error: err })
       })
     })
