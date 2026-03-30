@@ -44,6 +44,8 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
+    volumes:
+      - ./branding-test.json:/var/cfg/branding.json
     environment:
       - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
       - QUEUE_CONFIG=${QUEUE_CONFIG}

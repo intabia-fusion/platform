@@ -464,6 +464,8 @@ services:
         condition: service_started
       cockroach:
         condition: service_started
+    volumes:
+      - ./branding-test.json:/var/cfg/branding.json
     environment:
       - DB_URL=${DB_PG_URL}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
