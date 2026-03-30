@@ -307,20 +307,20 @@ export function createModel (builder: Builder): void {
     },
     setting.ids.Configure
   )
-  builder.createDoc(
-    setting.class.WorkspaceSettingCategory,
-    core.space.Model,
-    {
-      name: 'classes',
-      label: setting.string.Classes,
-      icon: setting.icon.Clazz,
-      component: setting.component.ClassSetting,
-      group: 'settings-editor',
-      role: AccountRole.Maintainer,
-      order: 4500
-    },
-    setting.ids.ClassSetting
-  )
+  // builder.createDoc(
+  //   setting.class.WorkspaceSettingCategory,
+  //   core.space.Model,
+  //   {
+  //     name: 'classes',
+  //     label: setting.string.Classes,
+  //     icon: setting.icon.Clazz,
+  //     component: setting.component.ClassSetting,
+  //     group: 'settings-editor',
+  //     role: AccountRole.Maintainer,
+  //     order: 4500
+  //   },
+  //   setting.ids.ClassSetting
+  // )
   builder.createDoc(
     setting.class.WorkspaceSettingCategory,
     core.space.Model,

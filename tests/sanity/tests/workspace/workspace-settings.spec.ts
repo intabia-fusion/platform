@@ -106,7 +106,7 @@ test.describe('Workspace tests', () => {
     await ownersPage.createTemplateWithName(newTemplateName)
   })
 
-  test('User is able to see all the classes', async ({ page }) => {
+  test.skip('User is able to see all the classes', async ({ page }) => {
     newUser = {
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
