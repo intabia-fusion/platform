@@ -14,11 +14,12 @@
 //
 
 import {
-  type DocAttributeUpdates,
   type ActivityMessage,
+  type DocAttributeUpdates,
+  type DocUpdateAction,
   type DocUpdateMessage,
-  type Reaction,
-  type DocUpdateAction
+  type DocUpdateMessageHistory,
+  type Reaction
 } from '@hcengineering/activity'
 import contact, { type Person } from '@hcengineering/contact'
 import core, {
@@ -33,6 +34,7 @@ import core, {
   notEmpty,
   type PersonId,
   type Ref,
+  SortingOrder,
   type Space
 } from '@hcengineering/core'
 import {
@@ -52,8 +54,10 @@ import {
 } from '@hcengineering/model-core'
 import notification, {
   type ActivityInboxNotification,
+  type DocNotifyContext,
   DOMAIN_DOC_NOTIFY,
   DOMAIN_NOTIFICATION,
+  type MentionInboxNotification,
   type ReactionInboxNotification
 } from '@hcengineering/notification'
 
@@ -498,6 +502,322 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
   }
 }
 
+async function migrateAggregateDocUpdateMessages (client: MigrationClient): Promise<void> {
+  const CREATE_COMBINE_THRESHOLD = 10 * 1000
+  const UPDATE_COMBINE_THRESHOLD = 5 * 60 * 1000
+
+  const canCombineMessage = (message: ActivityMessage): boolean => {
+    const hasReactions = message.reactions !== undefined && message.reactions > 0
+    const isPinned = message.isPinned === true
+    const hasReplies = message.replies !== undefined && message.replies > 0
+    return !hasReactions && !isPinned && !hasReplies
+  }
+
+  const getAttributeUpdatesKey = (message: DocUpdateMessage): string => {
+    if (message.attributeUpdates === undefined) return ''
+    const { attrKey, attrClass, isMixin } = message.attributeUpdates
+    return [attrKey, attrClass, isMixin].join('-')
+  }
+
+  const getDocUpdateMessageKey = (message: DocUpdateMessage): string => {
+    if (message.action === 'update') {
+      return [message.createdBy, getAttributeUpdatesKey(message)].join('_')
+    }
+    return [message.createdBy, message.updateCollection, message.objectId === message.attachedTo].join('_')
+  }
+
+  const mapToHistory = (it: DocUpdateMessage): DocUpdateMessageHistory => ({
+    action: it.action,
+    createdOn: it.createdOn ?? it.modifiedOn ?? 0,
+    update: it.attributeUpdates,
+    objectId: it.objectId,
+    objectClass: it.objectClass,
+    objectTitle: it.objectTitle,
+    objectAttributes: it.objectAttributes
+  })
+
+  const mergeAttributeUpdates = (
+    attributeUpdates: DocAttributeUpdates,
+    prevAttributeUpdates?: DocAttributeUpdates
+  ): DocAttributeUpdates => {
+    if (prevAttributeUpdates === undefined) return attributeUpdates
+    if (attributeUpdates.attrKey !== prevAttributeUpdates.attrKey) return attributeUpdates
+
+    const added = attributeUpdates.added
+      .filter((item) => !prevAttributeUpdates.removed.includes(item))
+      .concat(prevAttributeUpdates.added.filter((item) => !attributeUpdates.removed.includes(item)))
+    const removed = attributeUpdates.removed
+      .filter((item) => !prevAttributeUpdates.added.includes(item))
+      .concat(prevAttributeUpdates.removed.filter((item) => !attributeUpdates.added.includes(item)))
+
+    const { prevValue } = prevAttributeUpdates
+    const { set, attrClass, attrKey, isMixin } = attributeUpdates
+
+    return {
+      attrKey,
+      attrClass,
+      prevValue,
+      set: prevValue !== undefined ? set.filter((value) => value !== prevValue) : set,
+      added: prevValue !== undefined ? added.filter((value) => value !== prevValue) : added,
+      removed,
+      isMixin
+    }
+  }
+
+  const mergeDocUpdateAttributes = (
+    recent: DocUpdateMessage[],
+    message: DocUpdateMessage
+  ): DocAttributeUpdates | undefined => {
+    const firstMessage = recent[0]
+    const messages = [...recent, message]
+
+    let mergedAttributeUpdates = firstMessage.attributeUpdates
+
+    messages.forEach((it) => {
+      if (it._id !== firstMessage._id && it.attributeUpdates !== undefined) {
+        mergedAttributeUpdates = mergeAttributeUpdates(it.attributeUpdates, mergedAttributeUpdates)
+      }
+    })
+
+    if (mergedAttributeUpdates === undefined) return undefined
+
+    const hasChanges =
+      mergedAttributeUpdates.set.length > 0 ||
+      mergedAttributeUpdates.added.length > 0 ||
+      mergedAttributeUpdates.removed.length > 0
+
+    if (!hasChanges) return undefined
+    return mergedAttributeUpdates
+  }
+
+  const mergeCollectionHistory = (
+    recent: DocUpdateMessage[],
+    message: DocUpdateMessage
+  ): DocUpdateMessageHistory[] | undefined => {
+    const operations: DocUpdateMessageHistory[] = []
+
+    recent.forEach((r) => {
+      if (r.history !== undefined && r.history.length > 0) {
+        operations.push(...r.history)
+      }
+      operations.push({
+        action: r.action,
+        createdOn: r.createdOn ?? r.modifiedOn ?? 0,
+        objectId: r.objectId,
+        objectClass: r.objectClass,
+        objectTitle: r.objectTitle,
+        objectAttributes: r.objectAttributes,
+        update: r.attributeUpdates
+      })
+    })
+
+    operations.push({
+      action: message.action,
+      createdOn: message.createdOn ?? message.modifiedOn ?? 0,
+      objectId: message.objectId,
+      objectClass: message.objectClass,
+      objectTitle: message.objectTitle,
+      objectAttributes: message.objectAttributes,
+      update: message.attributeUpdates
+    })
+
+    const state = new Map<Ref<Doc>, DocUpdateMessageHistory>()
+
+    operations.forEach((op) => {
+      const existing = state.get(op.objectId)
+      if (existing != null && existing.action !== op.action) {
+        state.delete(op.objectId)
+      } else {
+        state.set(op.objectId, op)
+      }
+    })
+
+    const merged = Array.from(state.values())
+    if (merged.length === 0) return undefined
+    return merged
+  }
+
+  const attachedToSet = new Set<Ref<Doc>>()
+  const iterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
+    _class: activity.class.DocUpdateMessage
+  }, { projection: { attachedTo: 1 } })
+
+  while (true) {
+    const docs = await iterator.next(1000)
+    if (docs == null || docs.length === 0) break
+    for (const d of docs) attachedToSet.add(d.attachedTo)
+  }
+
+  client.logger.log(`Found ${attachedToSet.size} unique attachedTo objects. Aggregating...`, {})
+  let processedFiles = 0
+
+  for (const attachedTo of Array.from(attachedToSet)) {
+    const msgs = await client.find<DocUpdateMessage>(
+      DOMAIN_ACTIVITY,
+      { _class: activity.class.DocUpdateMessage, attachedTo },
+      { sort: { createdOn: SortingOrder.Ascending } }
+    )
+
+    const grouped = new Map<string, DocUpdateMessage[]>()
+    const toDelete = new Set<Ref<DocUpdateMessage>>()
+    const toUpdate = new Map<Ref<DocUpdateMessage>, MigrateUpdate<DocUpdateMessage>>()
+
+    for (const msg of msgs) {
+      if (!canCombineMessage(msg)) continue
+
+      const createMessage = Array.from(grouped.values())
+        .map((it) => it[0])
+        .find((it) => it.createdBy === msg.createdBy && it.action === 'create' && it.attachedTo === it.objectId)
+
+      if (createMessage != null) {
+        const createDiff =
+          (msg.createdOn ?? msg.modifiedOn ?? 0) - (createMessage.createdOn ?? createMessage.modifiedOn ?? 0)
+
+        if (createDiff >= 0 && createDiff <= CREATE_COMBINE_THRESHOLD) {
+          const historyItem = mapToHistory(msg)
+
+          createMessage.history = [...(createMessage.history ?? []), historyItem]
+
+          const existingUpdate = toUpdate.get(createMessage._id) ?? {}
+
+          toUpdate.set(createMessage._id, {
+            ...existingUpdate,
+            history: createMessage.history
+          })
+
+          toDelete.add(msg._id)
+          continue
+        }
+      }
+
+      const key = getDocUpdateMessageKey(msg)
+      const combinedWith = grouped.get(key) ?? []
+
+      const validCombinedWith = combinedWith.filter(it => {
+        const timeDiff = (msg.createdOn ?? msg.modifiedOn ?? 0) - (it.createdOn ?? it.modifiedOn ?? 0)
+        return timeDiff >= 0 && timeDiff < UPDATE_COMBINE_THRESHOLD
+      })
+
+      if (validCombinedWith.length === 0) {
+        grouped.set(key, [msg])
+        continue
+      }
+
+      const anchor = validCombinedWith[0]
+      const others = validCombinedWith.slice(1)
+
+      if (msg.action === 'update') {
+        const attributeUpdates = mergeDocUpdateAttributes(validCombinedWith, msg)
+        if (attributeUpdates == null) {
+          toDelete.add(msg._id)
+          toDelete.add(anchor._id)
+          for (const o of others) toDelete.add(o._id)
+          grouped.delete(key)
+          continue
+        }
+
+        const history = validCombinedWith.map(mapToHistory)
+
+        anchor.attributeUpdates = attributeUpdates
+        anchor.history = history
+
+        toUpdate.set(anchor._id, {
+          attributeUpdates,
+          history
+        })
+
+        toDelete.add(msg._id)
+        for (const o of others) toDelete.add(o._id)
+        grouped.set(key, [anchor])
+      } else {
+        const merged = mergeCollectionHistory(validCombinedWith, msg)
+        if (merged === undefined || merged.length === 0) {
+          toDelete.add(msg._id)
+          toDelete.add(anchor._id)
+          for (const o of others) toDelete.add(o._id)
+          grouped.delete(key)
+          continue
+        }
+
+        const last = merged.pop()
+        if (last == null) {
+          toDelete.add(msg._id)
+          toDelete.add(anchor._id)
+          for (const o of others) toDelete.add(o._id)
+          grouped.delete(key)
+          continue
+        }
+
+        anchor.action = last.action
+        anchor.objectId = last.objectId
+        anchor.objectClass = last.objectClass
+        anchor.objectTitle = last.objectTitle
+        anchor.objectAttributes = last.objectAttributes
+        anchor.attributeUpdates = last.update
+        anchor.history = merged
+
+        toUpdate.set(anchor._id, {
+          action: last.action,
+          objectId: last.objectId,
+          objectClass: last.objectClass,
+          objectTitle: last.objectTitle,
+          objectAttributes: last.objectAttributes,
+          attributeUpdates: last.update,
+          history: merged
+        })
+        toDelete.add(msg._id)
+        for (const o of others) toDelete.add(o._id)
+        grouped.set(key, [anchor])
+      }
+    }
+
+    if (toDelete.size > 0) {
+      const arr = Array.from(toDelete)
+      await client.deleteMany<DocNotifyContext>(DOMAIN_DOC_NOTIFY, {
+        _class: notification.class.DocNotifyContext,
+        objectId: { $in: arr }
+      })
+      await client.deleteMany<ActivityInboxNotification>(DOMAIN_NOTIFICATION, {
+        _class: notification.class.ActivityInboxNotification,
+        attachedTo: { $in: arr }
+      })
+      await client.deleteMany<ReactionInboxNotification>(DOMAIN_NOTIFICATION, {
+        _class: notification.class.ReactionInboxNotification,
+        attachedTo: { $in: arr }
+      })
+      await client.deleteMany<MentionInboxNotification>(DOMAIN_NOTIFICATION, {
+        _class: notification.class.MentionInboxNotification,
+        mentionedIn: { $in: arr }
+      })
+      await client.deleteMany(DOMAIN_ACTIVITY, { _id: { $in: arr } })
+    }
+
+    if (toUpdate.size > 0) {
+      const groupedUpdates = new Map<string, { filter: MigrationDocumentQuery<DocUpdateMessage>, update: MigrateUpdate<DocUpdateMessage> }[]>()
+
+      for (const [id, up] of toUpdate.entries()) {
+        const query: MigrationDocumentQuery<DocUpdateMessage> = { _id: id }
+        const keyList = Object.keys(up).sort().join(',')
+
+        const group = groupedUpdates.get(keyList) ?? []
+        group.push({ filter: query, update: up })
+        groupedUpdates.set(keyList, group)
+      }
+
+      for (const dbUpdates of groupedUpdates.values()) {
+        for (let i = 0; i < dbUpdates.length; i += 100) {
+          await client.bulk(DOMAIN_ACTIVITY, dbUpdates.slice(i, i + 100))
+        }
+      }
+    }
+
+    processedFiles++
+    if (processedFiles % 100 === 0) {
+      client.logger.log(`...aggregated streams for ${processedFiles} objects`, {})
+    }
+  }
+}
+
 export const activityOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, activityId, [
@@ -590,6 +910,11 @@ export const activityOperation: MigrateOperation = {
         state: 'migrate-activity-attributes-v1',
         mode: 'upgrade',
         func: migrateActivityAttributes
+      },
+      {
+        state: 'aggregate-doc-update-messages-v1',
+        mode: 'upgrade',
+        func: migrateAggregateDocUpdateMessages
       }
     ])
   },
