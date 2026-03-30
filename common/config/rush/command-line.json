@@ -390,6 +390,46 @@
     },
     {
       "commandKind": "global",
+      "name": "fast-build:watch",
+      "summary": "Fast compile and watch for changes",
+      "description": "Compiles all packages with esbuild and watches for file changes, rebuilding only affected packages and their dependents",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/watch_all.js . --parallel"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:watch:validate",
+      "summary": "Fast compile, validate and watch for changes",
+      "description": "Compiles and validates all packages with esbuild and watches for file changes",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/watch_all.js . --parallel --validate"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:lint",
+      "summary": "Fast compile, validate and ESLint check",
+      "description": "Compiles all packages, runs TypeScript validation, then ESLint check (no fix) on packages with '_phase:format'",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --lint"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:svelte-check",
+      "summary": "Fast compile, validate and svelte-check",
+      "description": "Compiles all packages, runs TypeScript validation, then svelte-check on packages with '_phase:svelte-check'",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --svelte-check"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:check",
+      "summary": "Fast compile with all checks (validate + lint + svelte-check)",
+      "description": "Compiles all packages and runs TypeScript validation, ESLint check, and svelte-check",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --validate --lint --svelte-check"
+    },
+    {
+      "commandKind": "global",
       "name": "fast-build",
       "summary": "Fast compile all packages with esbuild",
       "description": "Compiles all packages that have '_phase:build': 'compile transpile src' using esbuild directly, bypassing Rush's dependency resolution for faster builds",
@@ -411,6 +451,14 @@
       "description": "Compiles all packages and runs bundle phase for packages with '_phase:bundle'",
       "safeForSimultaneousRushProcesses": false,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:package",
+      "summary": "Fast compile, bundle and package",
+      "description": "Compiles all packages, runs bundle phase, then package phase for packages with '_phase:package'",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle --package"
     },
     {
       "commandKind": "global",
@@ -463,26 +511,26 @@
       "required": false,
       "longName": "--to",
       "description": "Only compile the specified package and its dependencies",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:docker-build"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate"]
     },
     {
       "parameterKind": "flag",
       "longName": "--list",
       "description": "Only print the list of packages in compilation order (no actual compilation)",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:docker-build"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
     },
     {
       "parameterKind": "flag",
       "longName": "--verbose",
       "shortName": "-v",
       "description": "Show detailed output for each package",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:docker-build"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate"]
     },
     {
       "parameterKind": "flag",
-      "longName": "--no-cache",
-      "description": "Clear TypeScript validation cache before running (forces full revalidation)",
-      "associatedCommands": ["fast-build:validate"]
+      "longName": "--force",
+      "description": "Disable all caching (forces full rebuild, revalidation, relint)",
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:lint", "fast-build:svelte-check", "fast-build:check", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
     }
     // {
     //   /**
