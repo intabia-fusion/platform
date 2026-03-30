@@ -101,6 +101,7 @@
     "AlreadySignedIn": "Mevcut hesapla katıl",
     "ExpiredLink": "Bu davet bağlantısının süresi doldu",
     "ExpiredLinkDescription": "Lütfen yeni bir davet bağlantısı isteyin",
-    "UsageConditions": "Kullanım Koşulları"
+    "UsageConditions": "Kullanım Koşulları",
+    "IntabiaFusion": "Intabia Fusion"
   }
 }

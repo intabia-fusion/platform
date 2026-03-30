@@ -101,6 +101,7 @@
     "AlreadySignedIn": "Join with existing account",
     "ExpiredLink": "This invite link has expired",
     "ExpiredLinkDescription": "Please request a new invite link",
-    "UsageConditions": "Terms of Use"
+    "UsageConditions": "Terms of Use",
+    "IntabiaFusion": "Intabia Fusion"
   }
 }

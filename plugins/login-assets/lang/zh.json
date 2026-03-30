@@ -101,6 +101,7 @@
     "AlreadySignedIn": "使用现有账户加入",
     "ExpiredLink": "此邀请链接已过期",
     "ExpiredLinkDescription": "请申请新的邀请链接",
-    "UsageConditions": "使用条款"
+    "UsageConditions": "使用条款",
+    "IntabiaFusion": "Intabia Fusion"
   }
 }

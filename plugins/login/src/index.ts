@@ -102,7 +102,8 @@ export default plugin(loginId, {
     Email: '' as IntlString,
     Password: '' as IntlString,
     PasswordRepeat: '' as IntlString,
-    UsageConditions: '' as IntlString
+    UsageConditions: '' as IntlString,
+    IntabiaFusion: '' as IntlString
   },
   function: {
     SendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,

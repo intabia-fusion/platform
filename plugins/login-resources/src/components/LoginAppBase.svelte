@@ -15,7 +15,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata } from '@hcengineering/platform'
+  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
   import { Popup, Scroller, deviceOptionsStore as deviceInfo, Button } from '@hcengineering/ui'
   import workbench from '@hcengineering/workbench'
   import { onMount } from 'svelte'
@@ -55,6 +55,7 @@
     setLoginTheme(v)
   }
   const currentYear = new Date().getFullYear()
+  const copyright = getMetadata(login.metadata.Copyright) as IntlString
 </script>
 
 <div
@@ -117,7 +118,7 @@
 
     <Popup />
     <div class="footer">
-      <span>© {currentYear}, {getMetadata(login.metadata.Copyright)}</span>
+      <span>© {currentYear}, <Label label={copyright} /></span>
       {#if getMetadata(login.metadata.UsageUrl)}
         <NavLink href={getMetadata(login.metadata.UsageUrl)}><Label label={login.string.UsageConditions} /></NavLink>
       {/if}

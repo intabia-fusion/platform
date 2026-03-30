@@ -504,7 +504,7 @@ export async function configurePlatform() {
   setMetadata(login.metadata.DesktopUpdatesUrl, updatesUrl)
   setMetadata(login.metadata.DesktopUpdatesChannel, updatesChannels)
 
-  setMetadata(login.metadata.Copyright, config.COPYRIGHT ?? 'Интабия Фьюжн')
+  setMetadata(login.metadata.Copyright, config.COPYRIGHT ?? login.string.IntabiaFusion)
   setMetadata(login.metadata.UsageUrl, config.USAGE_URL)
   setMetadata(login.metadata.SupportUrl, config.SUPPORT_URL)
 

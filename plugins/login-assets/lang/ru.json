@@ -101,6 +101,7 @@
     "AlreadySignedIn": "Присоединиться с существующим аккаунтом",
     "ExpiredLink": "Срок приглашения истёк",
     "ExpiredLinkDescription": "Пожалуйста, запросите новую ссылку",
-    "UsageConditions": "Условия использования"
+    "UsageConditions": "Условия использования",
+    "IntabiaFusion": "Интабия Фьюжн"
   }
 }

@@ -101,6 +101,7 @@
     "AlreadySignedIn": "Mit bestehendem Konto beitreten",
     "ExpiredLink": "Dieser Einladungslink ist abgelaufen",
     "ExpiredLinkDescription": "Bitte fordern Sie einen neuen Einladungslink an",
-    "UsageConditions": "Nutzungsbedingungen"
+    "UsageConditions": "Nutzungsbedingungen",
+    "IntabiaFusion": "Intabia Fusion"
   }
 }
