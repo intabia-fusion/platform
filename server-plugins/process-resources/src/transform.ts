@@ -508,4 +508,3 @@ export function DayFromDate (value: Date): number {
 }
 
 // #endregion
-

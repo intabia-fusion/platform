@@ -45,7 +45,7 @@ import presentation from '@hcengineering/model-presentation'
 import { TToDo } from '@hcengineering/model-time'
 import view, { createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@hcengineering/platform'
 import {
   type ApproveRequest,
   type CheckFunc,
