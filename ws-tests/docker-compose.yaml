@@ -453,3 +453,24 @@ services:
       - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
       - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
       - OPENAI_BASE_URL=http://huly.local:1234/v1/
+  activity:
+    image: intabiafusion/activity
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      cockroach:
+        condition: service_started
+    environment:
+      - DB_URL=${DB_PG_URL}
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - ACCOUNTS_URL=http://huly.local:3003
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - SECRET=secret
+      - BRANDING_PATH=/var/cfg/branding.json
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped

@@ -56,3 +56,6 @@ services:
   notifications:
     environment:
       - DB_URL=${DB_PURE_PG_URL}
+  activity:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
