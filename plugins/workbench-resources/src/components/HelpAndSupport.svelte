@@ -95,7 +95,7 @@
       title: workbench.string.Documentation,
       description: workbench.string.OpenPlatformGuide,
       onClick: () => {
-        window.open(getMetadata(support.metadata.DocsLink), '_blank')
+        window.open(getMetadata(support.metadata.DocsLink), '_blank', 'externalBrowser=yes')
         Analytics.handleEvent(WorkbenchEvents.DocumentationOpened)
       }
     },

@@ -122,7 +122,7 @@ function runTheApp (): void {
   }
 
   function hookOpenWindow (window: BrowserWindow): void {
-    window.webContents.setWindowOpenHandler(({ url }) => {
+    window.webContents.setWindowOpenHandler(({ url, features }) => {
       console.log('opening window', url)
 
       /*
@@ -133,7 +133,7 @@ function runTheApp (): void {
         As we load only our index.html there is no security problem to pass such URLs
         to open arg as well
       */
-      if (url.indexOf(FRONT_URL) !== 0 && url.indexOf('file://') !== 0) {
+      if ((url.indexOf(FRONT_URL) !== 0 && url.indexOf('file://') !== 0) || features?.includes('externalBrowser=yes')) {
         void shell.openExternal(url)
       } else {
         void (async (): Promise<void> => {
