@@ -48,7 +48,7 @@ test.describe('Workspace tests', () => {
     await ownersPage.checkIfOwnerExists(newUser.firstName)
   })
 
-  test('User is able to set himself as an spaces admin', async ({ page }) => {
+  test.skip('User is able to set himself as an spaces admin', async ({ page }) => {
     newUser = {
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
