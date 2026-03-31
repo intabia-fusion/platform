@@ -209,7 +209,7 @@
     "PasswordAgingRuleDescription": "Количество дней, после которых пользователи должны будут изменить свой пароль.",
     "OfficeSettings": "Настройки офиса",
     "OfficeDefaultSettings": "Настройки по умолчанию для переговорных",
-    "DefaultStartWithTranscription": "Включить транскрипцию в новых комнатах",
+    "DefaultStartWithTranscription": "Включить транскрибацию в новых комнатах",
     "DefaultStartWithRecording": "Включить запись в новых комнатах",
     "ImportDocumentPermission": "Импорт документов",
     "ImportDocumentDescription": "Предоставляет пользователям возможность импортировать документы в рабочее пространство",
