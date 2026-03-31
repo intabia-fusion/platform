@@ -66,6 +66,15 @@
             await client.remove(setting)
           }
           await client.remove(sub)
+          if (sub.endpoint === currentEndpoint) {
+            const loc = getCurrentLocation()
+            const registration = await navigator.serviceWorker.getRegistration(`/${loc.path[0]}/${loc.path[1]}`)
+            const browserSub = await registration?.pushManager.getSubscription()
+            if (browserSub !== undefined) {
+              await browserSub?.unsubscribe()
+            }
+          }
+          await updateCurrentEndpoint()
         }
       },
       undefined
@@ -92,8 +101,13 @@
 
   $: alreadySubscribed = currentEndpoint !== undefined && subscriptions.some((s) => s.endpoint === currentEndpoint)
 
+  let subscribing = false
+
   async function subscribe (): Promise<void> {
+    if (subscribing) return
+    subscribing = true
     const isSubscribed = await subscribePush()
+    subscribing = false
     if (isSubscribed) {
       await updateCurrentEndpoint()
     } else {
@@ -127,6 +141,7 @@
 <div class="flex mb-4">
   <div use:tooltip={{ label: disabledReason }}>
     <Button
+      loading={subscribing}
       kind="primary"
       disabled={buttonDisabled}
       label={notification.string.Subscribe}
