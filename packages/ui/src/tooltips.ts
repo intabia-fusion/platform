@@ -72,8 +72,7 @@ export function tooltip (node: HTMLElement, options?: LabelAndProps): any {
     clearTimeout(toHandler)
   }
 
-  const hasContent = (o?: LabelAndProps): boolean =>
-    o?.label !== undefined || o?.component !== undefined
+  const hasContent = (o?: LabelAndProps): boolean => o?.label !== undefined || o?.component !== undefined
 
   if (hasContent(options)) {
     node.addEventListener('mouseleave', hide)
