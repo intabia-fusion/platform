@@ -37,7 +37,7 @@ import {
   mergeDocUpdateAttributes
 } from './utils'
 
-const CREATE_COMBINE_THRESHOLD = 10 * 1000 // Use 10 seconds to combine update messages after creation.
+const CREATE_COMBINE_THRESHOLD = 100 // Use 100 ms to combine update messages after creation.
 const UPDATE_COMBINE_THRESHOLD = 5 * 60 * 1000 //  Use 5 minutes to combine similar messages
 
 export async function ActivityMessagesHandler (tx: TxCUD<Doc>, client: Client, cache: Cache): Promise<TxCUD<Doc>[]> {
@@ -73,6 +73,7 @@ async function generateDocUpdateMessages (
     return res
   }
 
+  console.log('tx', tx)
   // Check if we have override control over transaction => activity mappings
   const controlRules = client.model.findAllSync<ActivityMessageControl>(activity.class.ActivityMessageControl, {
     objectClass: { $in: hierarchy.getAncestors(tx.objectClass) }

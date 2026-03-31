@@ -503,7 +503,7 @@ async function migrateCollaboratorsActivity (client: MigrationClient): Promise<v
 }
 
 async function migrateAggregateDocUpdateMessages (client: MigrationClient): Promise<void> {
-  const CREATE_COMBINE_THRESHOLD = 10 * 1000
+  const CREATE_COMBINE_THRESHOLD = 100
   const UPDATE_COMBINE_THRESHOLD = 5 * 60 * 1000
 
   const canCombineMessage = (message: ActivityMessage): boolean => {
