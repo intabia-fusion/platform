@@ -596,39 +596,71 @@ async function migrateAggregateDocUpdateMessages (client: MigrationClient): Prom
   ): DocUpdateMessageHistory[] | undefined => {
     const operations: DocUpdateMessageHistory[] = []
 
+    const collect = (it: DocUpdateMessage | DocUpdateMessageHistory): void => {
+      const update = (it as any).update ?? (it as any).attributeUpdates
+      if (update != null && (update.added.length > 0 || update.removed.length > 0)) {
+        update.added.forEach((id: Ref<Doc>) => {
+          operations.push({
+            action: 'create',
+            createdOn: it.createdOn ?? (it as any).modifiedOn ?? 0,
+            objectId: id,
+            objectClass: it.objectClass,
+            objectTitle: it.objectTitle,
+            objectAttributes: it.objectAttributes,
+            update: undefined
+          })
+        })
+        update.removed.forEach((id: Ref<Doc>) => {
+          operations.push({
+            action: 'remove',
+            createdOn: it.createdOn ?? (it as any).modifiedOn ?? 0,
+            objectId: id,
+            objectClass: it.objectClass,
+            objectTitle: it.objectTitle,
+            objectAttributes: it.objectAttributes,
+            update: undefined
+          })
+        })
+      } else {
+        operations.push({
+          action: it.action,
+          createdOn: it.createdOn ?? (it as any).modifiedOn ?? (it as any).createdOn ?? 0,
+          objectId: it.objectId,
+          objectClass: it.objectClass,
+          objectTitle: it.objectTitle,
+          objectAttributes: it.objectAttributes,
+          update: (it as any).update ?? (it as any).attributeUpdates
+        })
+      }
+    }
+
     recent.forEach((r) => {
       if (r.history !== undefined && r.history.length > 0) {
-        operations.push(...r.history)
+        r.history.forEach(collect)
+      } else {
+        collect(r)
       }
-      operations.push({
-        action: r.action,
-        createdOn: r.createdOn ?? r.modifiedOn ?? 0,
-        objectId: r.objectId,
-        objectClass: r.objectClass,
-        objectTitle: r.objectTitle,
-        objectAttributes: r.objectAttributes,
-        update: r.attributeUpdates
-      })
     })
 
-    operations.push({
-      action: message.action,
-      createdOn: message.createdOn ?? message.modifiedOn ?? 0,
-      objectId: message.objectId,
-      objectClass: message.objectClass,
-      objectTitle: message.objectTitle,
-      objectAttributes: message.objectAttributes,
-      update: message.attributeUpdates
-    })
+    collect(message)
 
     const state = new Map<Ref<Doc>, DocUpdateMessageHistory>()
 
+    const getIdentityId = (op: DocUpdateMessageHistory): Ref<Doc> => {
+      if (client.hierarchy.isDerived(op.objectClass, core.class.Collaborator)) {
+        return op.objectAttributes?.collaborator ?? op.objectId
+      }
+
+      return op.objectId
+    }
+
     operations.forEach((op) => {
-      const existing = state.get(op.objectId)
+      const id = getIdentityId(op)
+      const existing = state.get(id)
       if (existing != null && existing.action !== op.action) {
-        state.delete(op.objectId)
+        state.delete(id)
       } else {
-        state.set(op.objectId, op)
+        state.set(id, op)
       }
     })
 
