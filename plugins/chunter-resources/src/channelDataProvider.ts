@@ -40,6 +40,7 @@ export interface MessageMetadata {
   createdOn?: Timestamp
   modifiedOn: Timestamp
   createdBy?: PersonId
+  replies?: number
 }
 
 interface Chunk {
@@ -208,7 +209,16 @@ export class ChannelDataProvider implements IChannelDataProvider {
         void this.loadInitialMessages(undefined, loadAll)
       },
       {
-        projection: { _id: 1, _class: 1, space: 1, createdOn: 1, createdBy: 1, attachedTo: 1, modifiedOn: 1 },
+        projection: {
+          _id: 1,
+          _class: 1,
+          space: 1,
+          createdOn: 1,
+          createdBy: 1,
+          attachedTo: 1,
+          modifiedOn: 1,
+          replies: 1
+        },
         sort: { createdOn: SortingOrder.Ascending }
       }
     )
