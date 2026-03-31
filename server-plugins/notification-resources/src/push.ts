@@ -15,18 +15,7 @@
 
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import serverNotification from '@hcengineering/server-notification'
-import {
-  AccountUuid,
-  Class,
-  concatLink,
-  Data,
-  Doc,
-  Hierarchy,
-  Ref,
-  Tx,
-  TxCreateDoc,
-  TxProcessor
-} from '@hcengineering/core'
+import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
   InboxNotification,
@@ -40,14 +29,7 @@ import serverView from '@hcengineering/server-view'
 import { getMetadata, getResource } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
-import contact, {
-  type AvatarInfo,
-  getAvatarProviderId,
-  getGravatarUrl,
-  Person,
-  PersonSpace
-} from '@hcengineering/contact'
-import { getPerson } from '@hcengineering/server-contact'
+import { PersonSpace } from '@hcengineering/contact'
 
 import { getTranslatedNotificationContent } from './utils'
 
@@ -57,8 +39,7 @@ async function createPush (
   receiver: AccountUuid,
   soundAlert: boolean,
   receiverSpace: Ref<PersonSpace>,
-  subscriptions: PushSubscription[],
-  senderPerson?: Person
+  subscriptions: PushSubscription[]
 ): Promise<Tx | undefined> {
   const { title, body } = await getTranslatedNotificationContent(n, control.branding?.defaultLanguage ?? 'en')
 
@@ -85,7 +66,7 @@ async function createPush (
   const path = [workbenchId, control.workspace.url, notificationId, encodeObjectURI(id, n.objectClass)]
 
   if (subscriptions.length > 0) {
-    await createPushNotification(control, receiver, title, body, n._id, subscriptions, senderPerson, path)
+    await createPushNotification(control, receiver, title, body, n._id, subscriptions, path)
   }
 
   const messageInfo = getMessageInfo(n, control.hierarchy)
@@ -154,7 +135,6 @@ export async function createPushNotification (
   body: string,
   _id: string,
   subscriptions: PushSubscription[],
-  senderAvatar?: Data<AvatarInfo>,
   path?: string[]
 ): Promise<void> {
   const pushURL: string | undefined = getMetadata(serverNotification.metadata.WebPushUrl)
@@ -174,17 +154,6 @@ export async function createPushNotification (
   data.domain = concatLink(front, domainPath)
   if (path !== undefined) {
     data.url = concatLink(front, path.join('/'))
-  }
-  if (senderAvatar != null) {
-    const provider = getAvatarProviderId(senderAvatar.avatarType)
-    if (provider === contact.avatarProvider.Image) {
-      if (senderAvatar.avatar != null) {
-        const url = await control.storageAdapter.getUrl(control.ctx, control.workspace, senderAvatar.avatar)
-        data.icon = url.includes('://') ? url : concatLink(front, url)
-      }
-    } else if (provider === contact.avatarProvider.Gravatar && senderAvatar.avatarProps?.url !== undefined) {
-      data.icon = getGravatarUrl(senderAvatar.avatarProps?.url, 512)
-    }
   }
 
   void sendPushToSubscription(pushURL, authToken, control, target, userSubscriptions, data)
@@ -252,8 +221,6 @@ export async function PushNotificationsHandler (
     const { user } = inboxNotification
     const userSubscriptions = filteredSubscriptions.filter((it) => it.user === user)
 
-    const senderSocialString = inboxNotification.createdBy ?? inboxNotification.modifiedBy
-    const senderPerson = await getPerson(control, senderSocialString)
     const soundAlert =
       (inboxNotification.allowedProviders?.[notification.providers.SoundNotificationProvider]?.length ?? 0) > 0
     const tx = await createPush(
@@ -262,8 +229,7 @@ export async function PushNotificationsHandler (
       user,
       soundAlert,
       inboxNotification.space,
-      userSubscriptions,
-      senderPerson
+      userSubscriptions
     )
 
     if (tx !== undefined) {
