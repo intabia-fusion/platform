@@ -100,6 +100,8 @@
     "HowToLogin": "Как вы хотите войти?",
     "AlreadySignedIn": "Присоединиться с существующим аккаунтом",
     "ExpiredLink": "Срок приглашения истёк",
-    "ExpiredLinkDescription": "Пожалуйста, запросите новую ссылку"
+    "ExpiredLinkDescription": "Пожалуйста, запросите новую ссылку",
+    "UsageConditions": "Условия использования",
+    "IntabiaFusion": "Интабия Фьюжн"
   }
 }

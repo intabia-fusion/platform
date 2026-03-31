@@ -100,6 +100,8 @@
     "HowToLogin": "Comment souhaitez-vous vous connecter ?",
     "AlreadySignedIn": "Rejoindre avec un compte existant",
     "ExpiredLink": "Ce lien d'invitation a expiré",
-    "ExpiredLinkDescription": "Veuillez demander un nouveau lien d'invitation"
+    "ExpiredLinkDescription": "Veuillez demander un nouveau lien d'invitation",
+    "UsageConditions": "Conditions d'utilisation",
+    "IntabiaFusion": "Intabia Fusion"
   }
 }

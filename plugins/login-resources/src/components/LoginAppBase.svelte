@@ -15,8 +15,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata } from '@hcengineering/platform'
-  import { Popup, Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
+  import { Popup, Scroller, deviceOptionsStore as deviceInfo, Button } from '@hcengineering/ui'
   import workbench from '@hcengineering/workbench'
   import { onMount } from 'svelte'
   import login from '../plugin'
@@ -33,6 +33,9 @@
   export let wide: boolean = false
 
   import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
+  import Label from './internal/Label.svelte'
+  import { NavLink } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
 
   onMount(() => {
     // Initialize login theme from platform metadata if provided
@@ -51,6 +54,8 @@
     // set local override and apply accent class immediately (no store change)
     setLoginTheme(v)
   }
+  const currentYear = new Date().getFullYear()
+  const copyright = getMetadata(login.metadata.Copyright) as IntlString
 </script>
 
 <div
@@ -112,6 +117,25 @@
     </div>
 
     <Popup />
+    <div class="footer">
+      <span>© {currentYear}, <Label label={copyright} /></span>
+      {#if getMetadata(login.metadata.UsageUrl)}
+        <NavLink href={getMetadata(login.metadata.UsageUrl)}><Label label={login.string.UsageConditions} /></NavLink>
+      {/if}
+      {#if getMetadata(login.metadata.SupportUrl)}
+        <span class="support">
+          <Button
+            kind={'regular'}
+            borderStyle={'none'}
+            size={'small'}
+            label={setting.string.Support}
+            on:click={() => {
+              window.open(getMetadata(login.metadata.SupportUrl), '_blank')
+            }}
+          />
+        </span>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -246,6 +270,21 @@
     height: 100%;
   }
 
+  .footer {
+    position: fixed;
+    left: 1.75rem;
+    bottom: 1rem;
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    width: calc(100vw - 3.5rem);
+    align-items: center;
+  }
+
+  .support {
+    margin-left: auto;
+  }
+
   /* Intabia-scoped primary button visuals */
   .login-theme-intabia .antiButton.primary {
     border-radius: var(--primary-button-border-radius, 0.5rem);
@@ -339,6 +378,17 @@
       width: calc(100% - 2rem) !important;
       margin-left: 1rem !important;
       margin-right: 1rem !important;
+    }
+
+    .footer {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .support {
+      margin-left: 0;
+      order: -1;
     }
   }
 </style>

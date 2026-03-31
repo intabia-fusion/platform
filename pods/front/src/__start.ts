@@ -59,5 +59,8 @@ startFront(metricsContext, {
   SIGNUP_URL: process.env.SIGNUP_URL,
   ACCENT_THEME: process.env.ACCENT_THEME,
   LOGIN_THEME: process.env.LOGIN_THEME,
-  LANDING_URL: process.env.LANDING_URL
+  LANDING_URL: process.env.LANDING_URL,
+  COPYRIGHT: process.env.COPYRIGHT,
+  USAGE_URL: process.env.USAGE_URL,
+  SUPPORT_URL: process.env.SUPPORT_URL
 })
