@@ -93,18 +93,18 @@ function parseEsbuildArgs(bundleScript, packagePath) {
     outdir: 'bundle',
     platform: 'node',
     minify: false,
-    keepNames: false,
+    keepNames: true,
     sourcemap: false,
     logLevel: 'error',
     external: ['snappy'],
     define: {}
   }
 
-  // Extract arguments
-  const argMatches = bundleScript.match(/--(\w+)=([^\s]+)/g)
+  // Extract arguments (supports both --key=value and --key:value formats)
+  const argMatches = bundleScript.match(/--([\w-]+)[:=]([^\s]+)/g)
   if (argMatches) {
     for (const match of argMatches) {
-      const [key, value] = match.slice(2).split('=')
+      const [key, value] = match.slice(2).split(/[:=]/)
       switch (key) {
         case 'entry':
         case 'entryPoint':
@@ -145,16 +145,17 @@ async function runEsbuildDirect(cwd, config) {
   // Build define object - start fresh, don't copy boolean flags
   const define = {}
 
-  if (config.define.MODEL_VERSION) {
-    const version = getModelVersion()
-    if (version) {
-      define['process.env.MODEL_VERSION'] = JSON.stringify(version)
-    }
+  // Build define object - always include VERSION like standard build does
+  // This matches the behavior of common/scripts/esbuild.js
+  const version = getVersion()
+  if (version) {
+    define['process.env.VERSION'] = JSON.stringify(version)
   }
-  if (config.define.VERSION) {
-    const version = getVersion()
-    if (version) {
-      define['process.env.VERSION'] = JSON.stringify(version)
+
+  if (config.define.MODEL_VERSION) {
+    const modelVersion = getModelVersion()
+    if (modelVersion) {
+      define['process.env.MODEL_VERSION'] = JSON.stringify(modelVersion)
     }
   }
   if (config.define.GIT_REVISION) {
@@ -166,21 +167,11 @@ async function runEsbuildDirect(cwd, config) {
 
   try {
     await esbuild.build({
-      entryPoints: [path.join(cwd, config.entryPoint)],
+      absWorkingDir: cwd,
+      entryPoints: [config.entryPoint],
       bundle: true,
       platform: config.platform,
-      plugins: [{
-        name: 'ignore-apache-arrow',
-        setup(build) {
-          build.onResolve({ filter: /^apache-arrow\/Arrow\.node$/ }, args => {
-            return { path: args.path, namespace: 'ignore-arrow' }
-          })
-          build.onLoad({ filter: /.*/, namespace: 'ignore-arrow' }, args => {
-            return { contents: 'module.exports = {};' }
-          })
-        }
-      }],
-      outfile: path.join(cwd, config.outdir, 'bundle.js'),
+      outfile: path.join(config.outdir, 'bundle.js'),
       logLevel: config.logLevel,
       minify: config.minify,
       keepNames: config.keepNames,

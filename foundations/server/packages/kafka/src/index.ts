@@ -139,9 +139,11 @@ class PlatformQueueImpl implements PlatformQueue {
       const admin = this.kafka.admin()
       try {
         await admin.connect()
-        await admin.createTopics({ topics: [{ topic: kTopic, numPartitions: numPartitions ?? 1 }] })
+        const partitions = numPartitions ?? 1
+        console.log(`Creating topic ${kTopic} with ${partitions} partitions`)
+        await admin.createTopics({ topics: [{ topic: kTopic, numPartitions: partitions }] })
       } catch (err: any) {
-        console.error('Failed to create topic', kTopic, err)
+        console.error('Failed to create topic', kTopic, 'partitions:', numPartitions, err)
       } finally {
         await admin.disconnect()
       }

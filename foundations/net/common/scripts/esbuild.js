@@ -10,7 +10,7 @@ const defaultConfig = {
   outdir: 'bundle',
   platform: 'node',
   minify: false,
-  keepNames: false,
+  keepNames: true,
   sourcemap: false,
   logLevel: 'error',
   external: ['snappy'],

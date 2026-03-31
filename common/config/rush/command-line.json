@@ -467,6 +467,14 @@
       "description": "Compiles all packages, runs bundle phase, then docker-build for packages with '_phase:docker-build'",
       "safeForSimultaneousRushProcesses": false,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --docker-build"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:docker",
+      "summary": "Fast compile, bundle and docker build packages",
+      "description": "Compiles all packages, runs bundle phase, then docker-build for packages with '_phase:docker-build'",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "./common/scripts/docker-fast.sh"
     }
   ],
 
