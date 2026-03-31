@@ -21,6 +21,8 @@ import { type Card } from '@hcengineering/card'
 import { ReferenceTrigger } from './references'
 import { generateActivity } from './newActivity'
 
+export { ActivityMiddleware } from './middleware'
+
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const tx of txes) {

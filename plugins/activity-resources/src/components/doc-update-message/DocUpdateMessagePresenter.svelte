@@ -196,10 +196,12 @@
         <ShowMore>
           <div class="customContent">
             {#each value?.history ?? [] as msg}
-              <Component
-                is={viewlet.component}
-                props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, onClick }}
-              />
+              {#if value.action === 'update' || msg.objectId !== value.objectId}
+                <Component
+                  is={viewlet.component}
+                  props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, onClick }}
+                />
+              {/if}
             {/each}
             <Component
               is={viewlet.component}

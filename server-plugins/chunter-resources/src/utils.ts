@@ -22,7 +22,13 @@ export const JoinChannelTypeMatch: TypeMatchFunc = (
     const added = message.attributeUpdates?.added ?? []
     const set = message.attributeUpdates?.set ?? []
 
-    return added.includes(receiver.account) || set.includes(receiver.account)
+    const historyAdded = message.history?.flatMap((h) => h.update?.added ?? []) ?? []
+    const historySet = message.history?.flatMap((h) => h.update?.set ?? []) ?? []
+
+    const currentlyAdded = added.filter((a) => !historyAdded.includes(a))
+    const currentlySet = set.filter((s) => !historySet.includes(s))
+
+    return currentlyAdded.includes(receiver.account) || currentlySet.includes(receiver.account)
   }
 
   if (message.action === 'create') {

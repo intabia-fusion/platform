@@ -10,7 +10,8 @@ import core, {
   type TxFactory,
   TxProcessor,
   type TxRemoveDoc,
-  type TxUpdateDoc
+  type TxUpdateDoc,
+  type Hierarchy
 } from '@hcengineering/core'
 import activity, {
   type ActivityMessageControl,
@@ -164,7 +165,8 @@ async function pushDocUpdateMessages (
     raw.objectTitle = await getDocTitle(client, collectionDoc)
     raw.objectAttributes = raw.objectTitle != null ? undefined : (tx as TxCreateDoc<Doc>).attributes
   } else if (tx.collection != null && tx._class === core.class.TxRemoveDoc) {
-    const collectionDoc = await buildRemovedDoc(client, tx.objectId, tx.objectClass)
+    const collectionDoc =
+      (tx as TxRemoveDoc<Doc>).removedDoc ?? (await buildRemovedDoc(client, tx.objectId, tx.objectClass))
 
     if (collectionDoc != null) {
       raw.objectTitle = await getDocTitle(client, collectionDoc)
@@ -194,7 +196,7 @@ async function pushDocUpdateMessages (
     createTxes.push(ttx)
   }
 
-  const combined = combineMessages(createTxes, cache.getRecentMessages(object._id), client.txFactory)
+  const combined = combineMessages(createTxes, cache.getRecentMessages(object._id), client.txFactory, client.hierarchy)
 
   for (const ttx of combined.create) {
     res.push(ttx)
@@ -217,7 +219,8 @@ async function pushDocUpdateMessages (
 function combineMessages (
   txes: TxCreateDoc<DocUpdateMessage>[],
   recent: DocUpdateMessage[],
-  factory: TxFactory
+  factory: TxFactory,
+  hierarchy: Hierarchy
 ): {
     create: TxCreateDoc<DocUpdateMessage>[]
     remove: TxRemoveDoc<DocUpdateMessage>[]
@@ -283,84 +286,110 @@ function combineMessages (
       continue
     }
 
-    const pushRemoves = (items: DocUpdateMessage[]): void => {
-      const removes = items.map((it) => {
-        const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
-        return factory.createTxCollectionCUD(
-          it.attachedToClass,
-          it.attachedTo,
-          it.space,
-          'docUpdateMessages',
-          innerTx
-        ) as TxRemoveDoc<DocUpdateMessage>
-      })
-      removeTx.push(...removes)
-    }
-
-    const pushUpdate = (targetMsg: DocUpdateMessage): void => {
-      const innerUpdateTx = factory.createTxUpdateDoc(
-        targetMsg._class,
-        targetMsg.space,
-        targetMsg._id,
-        tx.attributes,
-        undefined,
-        tx.modifiedOn,
-        tx.modifiedBy
-      )
-
-      updateTx.push(
-        factory.createTxCollectionCUD(
-          targetMsg.attachedToClass,
-          targetMsg.attachedTo,
-          targetMsg.space,
-          tx.collection ?? 'docUpdateMessages',
-          innerUpdateTx
-        ) as TxUpdateDoc<DocUpdateMessage>
-      )
-    }
-
-    const mapToHistory = (it: DocUpdateMessage): DocUpdateMessageHistory => ({
-      action: it.action,
-      createdOn: it.createdOn ?? it.modifiedOn ?? 0,
-      update: it.attributeUpdates,
-      objectId: it.objectId,
-      objectClass: it.objectClass,
-      objectTitle: it.objectTitle,
-      objectAttributes: it.objectAttributes
-    })
-
     if (message.action === 'update') {
       const attributeUpdates = mergeDocUpdateAttributes(combinedWith, message)
       if (attributeUpdates == null) {
-        pushRemoves(combinedWith)
+        removeTx.push(...getRemoveTx(combinedWith, factory))
         continue
       }
 
       tx.attributes.attributeUpdates = attributeUpdates
       tx.attributes.history = combinedWith.map(mapToHistory)
-    } else {
-      const merged = mergeCollectionHistory(combinedWith, message)
 
+      removeTx.push(...getRemoveTx(combinedWith.slice(1), factory))
+      updateTx.push(...getUpdateTx(combinedWith[0], factory, tx))
+      continue
+    } else {
+      const merged = mergeCollectionHistory(combinedWith, message, hierarchy)
       if (merged === undefined || merged.length === 0) {
-        pushRemoves(combinedWith)
+        removeTx.push(...getRemoveTx(combinedWith, factory))
         continue
       }
 
-      const last = merged.pop()
+      const creates = merged.filter((m) => m.action === 'create')
+      const removes = merged.filter((m) => m.action === 'remove')
 
-      if (last != null) {
-        tx.attributes.action = last.action
-        tx.attributes.objectId = last.objectId
-        tx.attributes.objectClass = last.objectClass
-        tx.attributes.objectTitle = last.objectTitle
-        tx.attributes.objectAttributes = last.objectAttributes
-        tx.attributes.attributeUpdates = last.update
+      const availableTargets = [...combinedWith]
+
+      const processSubset = (subset: DocUpdateMessageHistory[]): void => {
+        if (subset.length === 0) return
+
+        const last = subset[subset.length - 1]
+
+        const attrs = { ...tx.attributes }
+        if (last != null) {
+          attrs.action = last.action
+          attrs.objectId = last.objectId
+          attrs.objectClass = last.objectClass
+          attrs.objectTitle = last.objectTitle
+          attrs.objectAttributes = last.objectAttributes
+          attrs.attributeUpdates = last.update
+        }
+        attrs.history = subset
+
+        const target = availableTargets.shift()
+        if (target != null) {
+          const innerUpdateTx = factory.createTxUpdateDoc(
+            target._class,
+            target.space,
+            target._id,
+            attrs,
+            undefined,
+            tx.modifiedOn,
+            tx.modifiedBy
+          )
+
+          updateTx.push(
+            factory.createTxCollectionCUD(
+              target.attachedToClass,
+              target.attachedTo,
+              target.space,
+              tx.collection ?? 'docUpdateMessages',
+              innerUpdateTx
+            ) as TxUpdateDoc<DocUpdateMessage>
+          )
+        } else {
+          const newInnerTx = factory.createTxCreateDoc(
+            tx.objectClass,
+            tx.objectSpace,
+            attrs,
+            undefined,
+            tx.modifiedOn,
+            tx.modifiedBy
+          )
+
+          if (tx.attachedTo != null && tx.attachedToClass != null) {
+            createTx.push(
+              factory.createTxCollectionCUD(
+                tx.attachedToClass,
+                tx.attachedTo,
+                tx.objectSpace,
+                tx.collection ?? 'docUpdateMessages',
+                newInnerTx,
+                tx.modifiedOn,
+                tx.modifiedBy
+              ) as TxCreateDoc<DocUpdateMessage>
+            )
+          } else {
+            createTx.push(newInnerTx)
+          }
+        }
       }
-      tx.attributes.history = merged
-    }
 
-    pushRemoves(combinedWith.slice(1))
-    pushUpdate(combinedWith[0])
+      const createLastIndex = merged.map((m) => m.action).lastIndexOf('create')
+      const removeLastIndex = merged.map((m) => m.action).lastIndexOf('remove')
+
+      if (createLastIndex < removeLastIndex) {
+        processSubset(creates)
+        processSubset(removes)
+      } else {
+        processSubset(removes)
+        processSubset(creates)
+      }
+
+      removeTx.push(...getRemoveTx(availableTargets, factory))
+      continue
+    }
   }
 
   return {
@@ -369,6 +398,56 @@ function combineMessages (
     update: updateTx
   }
 }
+
+const getRemoveTx = (items: DocUpdateMessage[], factory: TxFactory): TxRemoveDoc<DocUpdateMessage>[] => {
+  const removes = items.map((it) => {
+    const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
+    return factory.createTxCollectionCUD(
+      it.attachedToClass,
+      it.attachedTo,
+      it.space,
+      'docUpdateMessages',
+      innerTx
+    ) as TxRemoveDoc<DocUpdateMessage>
+  })
+  return removes
+}
+
+const getUpdateTx = (
+  targetMsg: DocUpdateMessage,
+  factory: TxFactory,
+  tx: TxCreateDoc<DocUpdateMessage>
+): TxUpdateDoc<DocUpdateMessage>[] => {
+  const innerUpdateTx = factory.createTxUpdateDoc(
+    targetMsg._class,
+    targetMsg.space,
+    targetMsg._id,
+    tx.attributes,
+    undefined,
+    tx.modifiedOn,
+    tx.modifiedBy
+  )
+
+  return [
+    factory.createTxCollectionCUD(
+      targetMsg.attachedToClass,
+      targetMsg.attachedTo,
+      targetMsg.space,
+      'docUpdateMessages',
+      innerUpdateTx
+    ) as TxUpdateDoc<DocUpdateMessage>
+  ]
+}
+
+const mapToHistory = (it: DocUpdateMessage): DocUpdateMessageHistory => ({
+  action: it.action,
+  createdOn: it.createdOn ?? it.modifiedOn ?? 0,
+  update: it.attributeUpdates,
+  objectId: it.objectId,
+  objectClass: it.objectClass,
+  objectTitle: it.objectTitle,
+  objectAttributes: it.objectAttributes
+})
 
 async function getDocUpdateMessageTx (
   client: Client,

@@ -301,7 +301,9 @@ export interface TxUpdateDoc<T extends Doc> extends TxCUD<T> {
 /**
  * @public
  */
-export interface TxRemoveDoc<T extends Doc> extends TxCUD<T> {}
+export interface TxRemoveDoc<T extends Doc> extends TxCUD<T> {
+  removedDoc?: T
+}
 
 /**
  * @public
