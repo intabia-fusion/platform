@@ -293,8 +293,11 @@ async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
         return meeting
       }
     } catch (err: any) {
-      // Concurrent creation happened — pick the existing one (if available)
-      const existing = await client.findOne(love.class.MeetingMinutes, { attachedTo: room._id })
+      // Concurrent creation happened — pick the existing one with Active/Pending status (if available)
+      const existing = await client.findOne(love.class.MeetingMinutes, {
+        attachedTo: room._id,
+        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+      })
       if (existing !== undefined) return existing
       throw err
     }
