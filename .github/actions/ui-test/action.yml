@@ -1,0 +1,132 @@
+name: 'UI Test'
+description: 'Run UI tests with optional API tests support'
+
+inputs:
+  test-folder:
+    description: 'Test folder (tests or ws-tests)'
+    required: true
+  prepare-script:
+    description: 'Prepare script to run'
+    required: true
+  build-package:
+    description: 'Package to build before tests'
+    required: true
+  run-api-tests:
+    description: 'Whether to run API tests (true/false)'
+    required: false
+    default: 'false'
+  artifact-name-suffix:
+    description: 'Suffix for artifact names'
+    required: true
+  enable-profiling:
+    description: 'Whether to enable profiling (true/false)'
+    required: false
+    default: 'false'
+  docker-access-token:
+    description: 'Docker Hub access token for rate limit retry'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare server (with rate limit retry)
+      shell: bash
+      run: |
+        set -o pipefail
+        cd ./${{ inputs.test-folder }}
+        export DO_CLEAN=true
+        # DO_CLEAN=false: docker system prune -a between test runs deletes locally built images needed by subsequent tests
+        if ${{ inputs.prepare-script }} 2>&1 | tee /tmp/prepare-server.log; then
+          echo "Prepare succeeded"
+        else
+          if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-server.log; then
+            echo "Rate limit hit, logging in to Docker Hub and retrying..."
+            echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
+            ${{ inputs.prepare-script }}
+          else
+            echo "Prepare failed (not a rate limit issue)"
+            cat /tmp/prepare-server.log
+            exit 1
+          fi
+        fi
+      env:
+        DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
+
+    - name: Build test package
+      shell: bash
+      run: |
+        node common/scripts/install-run-rush.js build --to ${{ inputs.build-package }}
+
+    - name: Install Playwright
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/sanity
+        node ../../common/scripts/install-run-rushx.js ci
+
+    - name: Run API tests
+      if: inputs.run-api-tests == 'true'
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/api-tests
+        node ../../common/scripts/install-run-rush.js validate --to @hcengineering/api-tests
+        node ../../common/scripts/install-run-rushx.js api-test --verbose
+
+    - name: Start profiling
+      if: inputs.enable-profiling == 'true'
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}
+        ./profile-start.sh
+
+    - name: Run UI tests
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/sanity
+        node ../../common/scripts/install-run-rushx.js uitest
+
+    - name: Download profile
+      if: inputs.enable-profiling == 'true'
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}
+        ./profile-download.sh
+        npm install -g cpupro
+        ./profile-generate.sh
+
+    - name: Upload profiling results
+      if: inputs.enable-profiling == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: profiling-${{ inputs.artifact-name-suffix }}
+        path: ./${{ inputs.test-folder }}/profiles
+
+    - name: Store docker logs
+      if: always()
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/sanity
+        mkdir -p logs
+        cd logs
+        docker ps -a --format '{{.Names}}' | xargs -I {} sh -c 'docker logs {} > {}_logs.log 2>&1'
+
+    - name: Upload API test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-results-api-${{ inputs.artifact-name-suffix }}
+        path: ./${{ inputs.test-folder }}/api-tests/playwright-report/
+
+    - name: Upload UI test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-results-${{ inputs.artifact-name-suffix }}
+        path: ./${{ inputs.test-folder }}/sanity/playwright-report/
+
+    - name: Upload Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-logs-${{ inputs.artifact-name-suffix }}
+        path: ./${{ inputs.test-folder }}/sanity/logs

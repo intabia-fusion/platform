@@ -29,6 +29,7 @@ services:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   datalake:
     image: intabiafusion/datalake
+    pull_policy: never
     depends_on:
       minio:
         condition: service_healthy
