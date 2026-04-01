@@ -22,7 +22,7 @@
     NotificationTypeSetting
   } from '@hcengineering/notification'
   import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, isDisabled } from '@hcengineering/presentation'
   import {
     Breadcrumb,
     defineSeparators,
@@ -129,23 +129,25 @@
           <div class="antiNav-divider line" />
         {/if}
         {#each groups as gr (gr._id)}
-          {@const types = client
-            .getModel()
-            .findAllSync(notification.class.NotificationType, { group: gr._id, hidden: { $ne: true } }, { limit: 1 })}
-          {#if types.length > 0}
-            <NavItem
-              icon={gr.icon}
-              label={gr.label}
-              selected={gr._id === group}
-              on:click={() => {
-                group = gr._id
-                currentPreferenceGroup = undefined
-                const loc = getCurrentResolvedLocation()
-                loc.path[4] = group
-                loc.path.length = 5
-                navigate(loc)
-              }}
-            />
+          {#if !isDisabled(gr._id)}
+            {@const types = client
+              .getModel()
+              .findAllSync(notification.class.NotificationType, { group: gr._id, hidden: { $ne: true } }, { limit: 1 })}
+            {#if types.length > 0}
+              <NavItem
+                icon={gr.icon}
+                label={gr.label}
+                selected={gr._id === group}
+                on:click={() => {
+                  group = gr._id
+                  currentPreferenceGroup = undefined
+                  const loc = getCurrentResolvedLocation()
+                  loc.path[4] = group
+                  loc.path.length = 5
+                  navigate(loc)
+                }}
+              />
+            {/if}
           {/if}
         {/each}
         <div class="antiNav-space" />
