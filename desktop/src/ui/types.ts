@@ -18,6 +18,7 @@ import { ScreenSource } from '@hcengineering/love'
 import { Plugin } from '@hcengineering/platform'
 import { Ref, Class, Doc } from '@hcengineering/core'
 import { IpcRendererEvent } from 'electron'
+import { ActivityMessage } from '@hcengineering/activity'
 
 export interface Config {
   ACCOUNTS_URL: string
@@ -128,6 +129,8 @@ export interface NotificationParams {
   cardId?: string
   objectId?: Ref<Doc>
   objectClass?: Ref<Class<Doc>>
+  messageId?: Ref<ActivityMessage>
+  threadId?: Ref<ActivityMessage>
 }
 
 export const MenuBarActions = [
