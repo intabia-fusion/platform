@@ -141,7 +141,9 @@
     "HideFromChatList": "チャットリストから非表示",
     "Leave": "{label}を退出",
     "HideAll": "すべて非表示",
-    "Seen": "閲覧済み"
+    "Seen": "閲覧済み",
+    "ChannelsAndDMs": "チャンネルとDM",
+    "CreateDirect": "ダイレクトメッセージを作成"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}からメッセージが届きました: \n\n{message}",

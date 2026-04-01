@@ -141,7 +141,9 @@
     "HideFromChatList": "Скрыть из списка чатов",
     "Leave": "Покинуть {label}",
     "HideAll": "Скрыть все",
-    "Seen": "Прочитали"
+    "Seen": "Прочитали",
+    "ChannelsAndDMs": "Каналы и ЛС",
+    "CreateDirect": "Создать личный чат"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} отправил(а) вам сообщение: \n\n{message}",

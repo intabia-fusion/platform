@@ -35,7 +35,8 @@ export default mergeIds(chunterId, chunter, {
     SavedMessages: '' as AnyComponent,
     Threads: '' as AnyComponent,
     ChunterBrowser: '' as AnyComponent,
-    ChannelIcon: '' as AnyComponent
+    ChannelIcon: '' as AnyComponent,
+    ChannelsAndDMs: '' as AnyComponent
   },
   function: {
     GetDmName: '' as Resource<(client: Client, space: Space) => Promise<string>>,
@@ -104,6 +105,8 @@ export default mergeIds(chunterId, chunter, {
     LatestMessages: '' as IntlString,
     ResolveThread: '' as IntlString,
     NoThreadsYet: '' as IntlString,
-    DeleteMessageDescription: '' as IntlString
+    DeleteMessageDescription: '' as IntlString,
+    ChannelsAndDMs: '' as IntlString,
+    CreateDirect: '' as IntlString
   }
 })

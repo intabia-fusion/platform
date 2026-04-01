@@ -141,7 +141,9 @@
     "Leave": "Leave {label}",
     "HideAll": "Hide all",
     "GroupChat": "Group chat",
-    "Seen": "Seen"
+    "Seen": "Seen",
+    "ChannelsAndDMs": "Channels & DMs",
+    "CreateDirect": "Create direct chat"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} has sent you a message: \n\n{message}",

@@ -141,7 +141,9 @@
     "HideFromChatList": "Aus Chatliste ausblenden",
     "Leave": "{label} verlassen",
     "HideAll": "Alle verbergen",
-    "Seen": "Gelesen"
+    "Seen": "Gelesen",
+    "ChannelsAndDMs": "Kanäle und DMs",
+    "CreateDirect": "Direkte Nachricht erstellen"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} hat Ihnen eine Nachricht gesendet: \n\n{message}",

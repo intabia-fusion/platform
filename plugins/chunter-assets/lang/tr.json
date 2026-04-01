@@ -141,7 +141,9 @@
     "HideFromChatList": "Sohbet listesinden gizle",
     "Leave": "{label} ayrıl",
     "HideAll": "Tümünü gizle",
-    "Seen": "Okundu"
+    "Seen": "Okundu",
+    "ChannelsAndDMs": "Kanallar ve DM'ler",
+    "CreateDirect": "Direkte mesaj oluştur"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} size bir mesaj gönderdi: \n\n{message}",

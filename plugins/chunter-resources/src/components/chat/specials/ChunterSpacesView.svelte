@@ -13,7 +13,7 @@
 -->
 
 <script lang="ts">
-  import {
+  import core, {
     Class,
     Doc,
     DocumentQuery,
@@ -25,9 +25,22 @@
   } from '@hcengineering/core'
   import { Asset, IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Breadcrumb, Component, Header, Loading } from '@hcengineering/ui'
+  import {
+    AnyComponent,
+    AnySvelteComponent,
+    Breadcrumb,
+    Button,
+    Component,
+    Header,
+    IconAdd,
+    Loading,
+    SearchInput,
+    showPopup
+  } from '@hcengineering/ui'
   import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
+    FilterBar,
+    FilterButton,
     getResultOptions,
     getResultQuery,
     getViewletSpecialActions,
@@ -44,6 +57,9 @@
   export let label: IntlString
   export let filterQuery: DocumentQuery<ChunterSpace> = {}
   export let search: string = ''
+  export let createLabel: IntlString | undefined = undefined
+  export let createComponent: AnyComponent | undefined = undefined
+  export let createComponentProps: Record<string, any> = {}
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -99,14 +115,14 @@
         : initialQuery
     isQueryLoaded = true
   }
+
+  function showCreateDialog (): void {
+    if (createComponent === undefined) return
+    showPopup(createComponent, { ...createComponentProps }, 'top')
+  }
 </script>
 
-<Header
-  adaptive={'disabled'}
-  hideActions={viewletActions == null || viewletActions.length === 0}
-  hideExtra
-  freezeBefore
->
+<Header adaptive={'default'} hideActions={false} hideExtra={false} freezeBefore>
   <svelte:fragment slot="beforeTitle">
     <ViewletSelector
       bind:viewlet
@@ -122,11 +138,40 @@
   </svelte:fragment>
 
   <Breadcrumb {label} size={'large'} isCurrent />
+
+  <svelte:fragment slot="search">
+    <SearchInput bind:value={search} collapsed />
+    <FilterButton {_class} />
+  </svelte:fragment>
+
+  <svelte:fragment slot="actions">
+    {#if createLabel && createComponent}
+      <Button
+        icon={IconAdd}
+        label={createLabel}
+        kind={'primary'}
+        on:click={() => {
+          showCreateDialog()
+        }}
+      />
+    {/if}
+
+    <slot name="extra" />
+  </svelte:fragment>
 </Header>
 
 {#if !viewlet?.$lookup?.descriptor?.component || viewlet?.attachTo !== _class || (preference !== undefined && viewlet?._id !== preference.attachedTo)}
   <Loading />
 {:else if viewOptions && viewlet}
+  <FilterBar
+    {_class}
+    space={core.space.Space}
+    query={searchQuery}
+    {viewOptions}
+    on:change={(e) => {
+      resultQuery = { ...query, ...e.detail }
+    }}
+  />
   <Component
     is={viewlet.$lookup.descriptor.component}
     props={{

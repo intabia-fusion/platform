@@ -74,8 +74,15 @@ export const chatSpecials: SpecialNavModel[] = [
   {
     id: 'browser',
     label: chunter.string.ChunterBrowser,
-    icon: chunter.icon.ChannelBrowser,
+    icon: chunter.icon.ChunterBrowser,
     component: chunter.component.ChunterBrowser,
+    position: 'top'
+  },
+  {
+    id: 'lists',
+    label: chunter.string.ChannelsAndDMs,
+    icon: chunter.icon.ChannelBrowser,
+    component: chunter.component.ChannelsAndDMs,
     position: 'top'
   }
 ]
