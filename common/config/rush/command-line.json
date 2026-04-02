@@ -393,7 +393,7 @@
       "name": "fast-build:watch",
       "summary": "Fast compile and watch for changes",
       "description": "Compiles all packages with esbuild and watches for file changes, rebuilding only affected packages and their dependents",
-      "safeForSimultaneousRushProcesses": false,
+      "safeForSimultaneousRushProcesses": true,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/watch_all.js . --parallel"
     },
     {
@@ -401,7 +401,7 @@
       "name": "fast-build:watch:validate",
       "summary": "Fast compile, validate and watch for changes",
       "description": "Compiles and validates all packages with esbuild and watches for file changes",
-      "safeForSimultaneousRushProcesses": false,
+      "safeForSimultaneousRushProcesses": true,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/watch_all.js . --parallel --validate"
     },
     {
