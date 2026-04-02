@@ -162,6 +162,42 @@ Examples:
 }
 
 /**
+ * Calculate package hash including all dependencies (transitive)
+ * This ensures that when a dependency changes, dependent packages are rebuilt
+ */
+function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set()) {
+  // Prevent circular dependencies
+  if (processed.has(packageName)) {
+    return ''
+  }
+  processed.add(packageName)
+
+  const node = graph.get(packageName)
+  if (!node) {
+    return ''
+  }
+
+  // Get base hash of this package
+  const baseHash = packageHashes.get(packageName) || ''
+  const parts = [baseHash]
+
+  // Add hashes of all dependencies
+  for (const depName of node.dependencies) {
+    const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed)
+    if (depHash) {
+      parts.push(`${depName}:${depHash}`)
+    }
+  }
+
+  // Sort to ensure consistent hash
+  parts.sort()
+
+  // Combine into final hash
+  const crypto = require('crypto')
+  return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
+}
+
+/**
  * Run validation phase with worker pool
  */
 async function runValidationPhase(packages, graph, validationWorkers, force, packageHashes) {
@@ -209,8 +245,8 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
     const pkgStart = performance.now()
 
-    // Get pre-calculated package hash
-    const packageHash = packageHashes.get(packageName)
+    // Get hash including all dependencies (like bundle phase)
+    const packageHash = calculatePackageHashWithDeps(packageName, graph, packageHashes)
 
     // Check if validation is cached
     if (!force && packageHash && isPhaseCached(node.project.fullPath, packageHash, 'validate')) {
@@ -258,7 +294,6 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
         }
 
         // Mark validate phase as completed in unified cache
-        const packageHash = packageHashes.get(packageName)
         if (packageHash) {
           markPhaseCompleted(node.project.fullPath, packageHash, 'validate')
         }
@@ -407,42 +442,6 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
   }
 
   const completedCount = { bundle: 0, package: 0, dockerBuild: 0 }
-
-  /**
-   * Calculate package hash including all dependencies (transitive)
-   * This ensures that when a dependency changes, dependent packages are rebuilt
-   */
-  function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set()) {
-    // Prevent circular dependencies
-    if (processed.has(packageName)) {
-      return ''
-    }
-    processed.add(packageName)
-
-    const node = graph.get(packageName)
-    if (!node) {
-      return ''
-    }
-
-    // Get base hash of this package
-    const baseHash = packageHashes.get(packageName) || ''
-    const parts = [baseHash]
-
-    // Add hashes of all dependencies
-    for (const depName of node.dependencies) {
-      const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed)
-      if (depHash) {
-        parts.push(`${depName}:${depHash}`)
-      }
-    }
-
-    // Sort to ensure consistent hash
-    parts.sort()
-
-    // Combine into final hash
-    const crypto = require('crypto')
-    return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
-  }
 
   async function worker() {
     while (true) {
