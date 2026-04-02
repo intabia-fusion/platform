@@ -227,7 +227,7 @@ async function generateSvelteTypes(options = {}) {
   for (const svelteFile of svelteFiles) {
     try {
       const content = readFileSync(svelteFile, 'utf-8')
-      svelte2tsx(content, {
+      const result = svelte2tsx(content, {
         filename: svelteFile,
         isTsFile: true,
         mode: 'dts'
@@ -241,9 +241,7 @@ async function generateSvelteTypes(options = {}) {
         mkdirSync(outputDir, { recursive: true })
       }
 
-      // Generate simple .d.ts file for Svelte components
-      const dtsContent = `import { SvelteComponentTyped } from 'svelte';\nexport default class extends SvelteComponentTyped<any, any, any> {}\n`
-      writeFileSync(outputPath, dtsContent)
+      writeFileSync(outputPath, result.code)
     } catch (err) {
       console.error(`Error generating types for ${svelteFile}:`, err.message)
     }

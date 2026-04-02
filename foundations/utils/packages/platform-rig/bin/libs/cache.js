@@ -32,6 +32,52 @@ const crypto = require('crypto')
 const CACHE_VERSION = 2
 
 /**
+ * Output directories for each phase that need to be verified
+ */
+const phaseOutputDirs = {
+  transpile: ['lib'],
+  validate: ['types'],
+  bundle: ['bundle'],
+  package: ['dist'],
+  'docker-build': []
+}
+
+/**
+ * Calculate hash of output directory contents for a phase
+ * @param {string} packagePath - Path to package directory
+ * @param {string} phase - Phase name
+ * @returns {string|null} MD5 hash of output files, or null if no outputs
+ */
+function calculateOutputHash(packagePath, phase) {
+  const dirs = phaseOutputDirs[phase]
+  if (!dirs || dirs.length === 0) return null
+  return calculateOutputHashForDirs(packagePath, dirs)
+}
+
+/**
+ * Calculate hash of specific output directories
+ * @param {string} packagePath - Path to package directory
+ * @param {string[]} dirs - Directory names relative to package
+ * @returns {string|null} MD5 hash, or null if any dir doesn't exist
+ */
+function calculateOutputHashForDirs(packagePath, dirs) {
+  const parts = []
+  for (const dir of dirs) {
+    const dirPath = join(packagePath, dir)
+    if (!fs.existsSync(dirPath)) return null
+
+    const sigs = collectFileSignatures(dirPath)
+    const sortedKeys = Object.keys(sigs).sort()
+    for (const key of sortedKeys) {
+      parts.push(`${dir}:${key}=${sigs[key]}`)
+    }
+  }
+
+  if (parts.length === 0) return null
+  return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
+}
+
+/**
  * Collect file signatures (mtime:size) recursively
  * @param {string} dir - Directory to scan
  * @param {Set<string>} [extensions] - Optional set of file extensions to include (e.g., ['.ts', '.js'])
@@ -192,9 +238,10 @@ function savePackageCache(packagePath, cache) {
  * @param {string} packageHash - Current package hash (may differ per phase)
  * @param {string} phase - Phase name (e.g., 'transpile', 'bundle', 'package', 'docker-build')
  * @param {Function} [outputCheck] - Optional function to verify output exists
+ * @param {string[]} [outputDirs] - Optional override for output directories to hash
  * @returns {boolean} True if phase is cached and valid
  */
-function isPhaseCached(packagePath, packageHash, phase, outputCheck = null) {
+function isPhaseCached(packagePath, packageHash, phase, outputCheck = null, outputDirs = null) {
   const cache = loadPackageCache(packagePath)
   if (!cache) return false
 
@@ -203,6 +250,14 @@ function isPhaseCached(packagePath, packageHash, phase, outputCheck = null) {
 
   // Each phase stores its own hash — compare only against that phase's hash
   if (phaseEntry.hash !== packageHash) return false
+
+  // Verify output hash matches what was stored (detects deleted/corrupted outputs)
+  if (phaseEntry.outputHash) {
+    const currentOutputHash = outputDirs
+      ? calculateOutputHashForDirs(packagePath, outputDirs)
+      : calculateOutputHash(packagePath, phase)
+    if (currentOutputHash !== phaseEntry.outputHash) return false
+  }
 
   // Run optional output check
   if (outputCheck && !outputCheck(packagePath)) {
@@ -218,8 +273,9 @@ function isPhaseCached(packagePath, packageHash, phase, outputCheck = null) {
  * @param {string} packageHash - Current package hash (may differ per phase)
  * @param {string} phase - Phase name
  * @param {Object} [metadata] - Optional metadata to store (e.g., { errorCount: 0, warningCount: 5 })
+ * @param {string[]} [outputDirs] - Optional override for output directories to hash
  */
-function markPhaseCompleted(packagePath, packageHash, phase, metadata = null) {
+function markPhaseCompleted(packagePath, packageHash, phase, metadata = null, outputDirs = null) {
   let cache = loadPackageCache(packagePath)
 
   if (!cache) {
@@ -230,11 +286,17 @@ function markPhaseCompleted(packagePath, packageHash, phase, metadata = null) {
     cache.phases = {}
   }
 
+  // Calculate output hash AFTER phase completed
+  const outputHash = outputDirs
+    ? calculateOutputHashForDirs(packagePath, outputDirs)
+    : calculateOutputHash(packagePath, phase)
+
   // Store the hash *inside* the phase entry so each phase tracks its own hash
   // independently.  Other phases are left untouched.
   cache.phases[phase] = {
     hash: packageHash,
     completedAt: Date.now(),
+    outputHash,
     ...metadata
   }
 
@@ -302,6 +364,7 @@ function invalidateCache(packagePath) {
 module.exports = {
   collectFileSignatures,
   calculatePackageHash,
+  calculateOutputHash,
   loadPackageCache,
   savePackageCache,
   isPhaseCached,

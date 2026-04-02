@@ -248,8 +248,12 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     // Get hash including all dependencies (like bundle phase)
     const packageHash = calculatePackageHashWithDeps(packageName, graph, packageHashes)
 
+    // Validate produces types/ directory
+    const outputDirs = ['types']
+    const outputsExist = outputDirs.every(d => existsSync(join(node.project.fullPath, d)))
+
     // Check if validation is cached
-    if (!force && packageHash && isPhaseCached(node.project.fullPath, packageHash, 'validate')) {
+    if (!force && packageHash && outputsExist && isPhaseCached(node.project.fullPath, packageHash, 'validate', null, outputDirs)) {
       // Get typesHash from cache for dependents
       const typesDir = join(node.project.fullPath, 'types')
       if (existsSync(typesDir)) {
@@ -295,7 +299,7 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
 
         // Mark validate phase as completed in unified cache
         if (packageHash) {
-          markPhaseCompleted(node.project.fullPath, packageHash, 'validate')
+          markPhaseCompleted(node.project.fullPath, packageHash, 'validate', null, outputDirs)
         }
       } else {
         results.errors.push({ package: packageName, error: result.error })

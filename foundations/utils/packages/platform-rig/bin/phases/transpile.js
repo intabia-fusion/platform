@@ -53,12 +53,13 @@ async function runTranspilePhase(graph, packageNames, concurrency, options = {})
       .filter(d => packageNames.includes(d))
       .some(d => upstreamChanged.has(d))
 
-    // Check if lib/ directory exists (must rebuild if not)
-    const libExists = existsSync(join(packagePath, 'lib'))
+    // ui-esbuild produces both lib/ and types/, regular transpile produces only lib/
+    const outputDirs = isUiEsbuild ? ['lib', 'types'] : ['lib']
+    const outputsExist = outputDirs.every(d => existsSync(join(packagePath, d)))
 
-    // Skip if cached and no upstream changes and lib exists
-    if (!force && !hasUpstreamChanges && libExists && packageHash) {
-      if (isPhaseCached(packagePath, packageHash, 'transpile')) {
+    // Skip if cached and no upstream changes and outputs exist
+    if (!force && !hasUpstreamChanges && outputsExist && packageHash) {
+      if (isPhaseCached(packagePath, packageHash, 'transpile', null, outputDirs)) {
         return { success: true, filesCount: 0, skipped: true }
       }
     }
@@ -72,7 +73,7 @@ async function runTranspilePhase(graph, packageNames, concurrency, options = {})
       const filesToTranspile = collectFiles(join(packagePath, srcDir))
       if (filesToTranspile.length === 0) {
         if (packageHash) {
-          markPhaseCompleted(packagePath, packageHash, 'transpile')
+          markPhaseCompleted(packagePath, packageHash, 'transpile', null, outputDirs)
         }
         return { success: true, filesCount: 0 }
       }
@@ -88,7 +89,7 @@ async function runTranspilePhase(graph, packageNames, concurrency, options = {})
 
       // Mark phase as completed
       if (packageHash) {
-        markPhaseCompleted(packagePath, packageHash, 'transpile')
+        markPhaseCompleted(packagePath, packageHash, 'transpile', null, outputDirs)
       }
 
       // Mark this package as changed
