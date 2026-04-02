@@ -59,7 +59,7 @@ class Workspace {
   private inProgress = false
   private lastTxDate: Timestamp | undefined = undefined
 
-  private readonly txFactory = new TxFactory(core.account.System)
+  private readonly txFactory = new TxFactory(core.account.System, true)
   private readonly client: Client
 
   private constructor (
@@ -105,7 +105,15 @@ class Workspace {
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
-    const txApply = this.txFactory.createTxApplyIf(core.space.Tx, config.ServiceId, [], [], txes, undefined, true)
+    const txApply = this.txFactory.createTxApplyIf(
+      core.space.DerivedTx,
+      config.ServiceId,
+      [],
+      [],
+      txes,
+      undefined,
+      true
+    )
     try {
       await this.rest.tx(txApply)
     } catch (e) {
