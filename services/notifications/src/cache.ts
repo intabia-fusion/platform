@@ -396,7 +396,8 @@ class WsCache {
 
   public async getDocSpace (doc: Doc): Promise<Space | undefined> {
     if (this.client.hierarchy.isDerived(doc._class, core.class.Space)) return doc as Space
-    if (this.docs.has(doc.space)) return doc as Space
+    const curent = this.docs.get(doc.space)
+    if (curent !== undefined) return curent as Space
 
     const space = await this.client.findOne<Space>(core.class.Space, { _id: doc.space }, { limit: 1 })
 
