@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { pushRootBarComponent } from '@hcengineering/ui'
+  import { isSafari, pushRootBarComponent } from '@hcengineering/ui'
   import {
     Participant,
     RemoteParticipant,
@@ -19,12 +19,33 @@
 
   let parentElement: HTMLDivElement
   let audioUnlocked = false
+  let safariAudioCheckInterval: ReturnType<typeof setInterval> | undefined
+
+  const isSafariBrowser = typeof navigator !== 'undefined' && isSafari()
 
   interface AudioContextState {
     state: string
     sampleRate?: number
     currentTime?: number
     error?: string
+  }
+
+  interface AudioTrackDiagnostics {
+    trackSid: string
+    participantId: string
+    participantName: string
+    isMuted: boolean
+    mediaTrackReadyState: string
+    mediaTrackEnabled: boolean
+    mediaTrackMuted: boolean
+    elementExists: boolean
+    elementPaused: boolean
+    elementVolume: number
+    elementReadyState: number
+    streamActive: boolean
+    streamAudioTrackCount: number
+    streamAudioTrackState: string
+    hasAudioOutput: boolean
   }
 
   /**
@@ -117,6 +138,88 @@
     }))
   }
 
+  // Audio output monitoring via AnalyserNode on MediaStream (not HTMLAudioElement)
+  const audioAnalysers = new Map<string, { analyser: AnalyserNode, source: MediaStreamAudioSourceNode }>()
+
+  /**
+   * Monitor actual audio output by attaching an AnalyserNode to the MediaStream.
+   * Uses MediaStreamAudioSourceNode (not MediaElementAudioSourceNode) to avoid
+   * intercepting the audio element's output pipeline.
+   * Returns true if the stream is producing non-silent audio.
+   */
+  function hasAudioOutput (element: HTMLAudioElement, trackSid: string): boolean {
+    let entry = audioAnalysers.get(trackSid)
+    if (entry == null) {
+      try {
+        // @ts-expect-error - accessing internal LiveKit audio context
+        const ctx: AudioContext | undefined = lk.audioContext
+        if (ctx == null) return true // Cannot check, assume OK
+        const stream = element.srcObject as MediaStream | null
+        if (stream == null || stream.getAudioTracks().length === 0) return false
+        const source = ctx.createMediaStreamSource(stream)
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 256
+        source.connect(analyser)
+        // Do NOT connect analyser to destination - we only observe, not play
+        entry = { analyser, source }
+        audioAnalysers.set(trackSid, entry)
+      } catch {
+        return true // Cannot attach analyser, assume OK
+      }
+    }
+    const data = new Uint8Array(entry.analyser.frequencyBinCount)
+    entry.analyser.getByteFrequencyData(data)
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] > 0) return true
+    }
+    return false
+  }
+
+  function cleanupAnalyser (trackSid: string): void {
+    const entry = audioAnalysers.get(trackSid)
+    if (entry != null) {
+      try {
+        entry.source.disconnect()
+        entry.analyser.disconnect()
+      } catch {}
+      audioAnalysers.delete(trackSid)
+    }
+  }
+
+  /**
+   * Collect full diagnostics for all remote audio tracks.
+   */
+  function collectAudioDiagnostics (): AudioTrackDiagnostics[] {
+    const result: AudioTrackDiagnostics[] = []
+    for (const participant of lk.remoteParticipants.values()) {
+      for (const publication of participant.trackPublications.values()) {
+        if (publication.track?.kind !== Track.Kind.Audio || !publication.isSubscribed) continue
+        const mediaTrack = publication.track.mediaStreamTrack
+        const element = parentElement?.querySelector<HTMLAudioElement>(`#${CSS.escape(publication.trackSid)}`)
+        const stream = element?.srcObject as MediaStream | null
+        const streamAudioTrack = stream?.getAudioTracks()[0]
+        result.push({
+          trackSid: publication.trackSid,
+          participantId: participant.identity,
+          participantName: participant.name ?? 'unknown',
+          isMuted: publication.isMuted,
+          mediaTrackReadyState: mediaTrack?.readyState ?? 'no_track',
+          mediaTrackEnabled: mediaTrack?.enabled ?? false,
+          mediaTrackMuted: mediaTrack?.muted ?? true,
+          elementExists: element != null,
+          elementPaused: element?.paused ?? true,
+          elementVolume: element?.volume ?? 0,
+          elementReadyState: element?.readyState ?? 0,
+          streamActive: stream?.active ?? false,
+          streamAudioTrackCount: stream?.getAudioTracks().length ?? 0,
+          streamAudioTrackState: streamAudioTrack?.readyState ?? 'no_stream_track',
+          hasAudioOutput: element != null ? hasAudioOutput(element, publication.trackSid) : false
+        })
+      }
+    }
+    return result
+  }
+
   /**
    * Retry playing all paused audio elements in the container.
    */
@@ -187,6 +290,7 @@
         participant: participant.identity,
         participantName: participant.name
       })
+      cleanupAnalyser(publication.trackSid)
       const element = parentElement?.querySelector(`#${CSS.escape(publication.trackSid)}`)
       if (element != null) {
         track.detach(element as HTMLMediaElement)
@@ -198,51 +302,76 @@
   function handleTrackMuted (publication: TrackPublication, participant: Participant): void {
     if (publication.track?.kind !== Track.Kind.Audio) return
 
-    console.log('[WorkbenchExtension.handleTrackMuted] Audio track muted', {
+    console.log('[WorkbenchExtension.handleTrackMuted]', {
       trackSid: publication.trackSid,
-      participantId: participant.identity,
-      participantName: participant.name,
-      isLocal: participant.isLocal,
-      audioContextState: getAudioContextState(),
-      audioElements: getAudioElementsState()
+      participant: participant.name,
+      isLocal: participant.isLocal
     })
+    // Reset silent counter - track is legitimately muted
+    silentTrackCounts.delete(publication.trackSid)
   }
 
   function handleTrackUnmuted (publication: TrackPublication, participant: Participant): void {
     if (publication.track?.kind !== Track.Kind.Audio) return
 
-    console.log('[WorkbenchExtension.handleTrackUnmuted] Audio track unmuted', {
+    console.log('[WorkbenchExtension.handleTrackUnmuted]', {
       trackSid: publication.trackSid,
-      participantId: participant.identity,
-      participantName: participant.name,
+      participant: participant.name,
       isLocal: participant.isLocal,
-      audioContextState: getAudioContextState(),
-      audioElementsBefore: getAudioElementsState()
+      audioCtx: getAudioContextState().state
     })
 
-    // Safari fix: when remote participant unmutes, AudioContext may get suspended
-    // Force check actual AudioContext state and re-unlock if needed
     if (!participant.isLocal) {
-      void ensureAudioUnlocked(true).then(() => {
-        // Check if any audio elements got paused after the unmute event
-        setTimeout(() => {
-          const pausedElements = getAudioElementsState().filter((el) => el.paused)
-          if (pausedElements.length > 0) {
-            console.warn(
-              '[WorkbenchExtension.handleTrackUnmuted] Found paused audio elements after unmute, retrying playback',
-              {
-                pausedCount: pausedElements.length,
-                pausedIds: pausedElements.map((el) => el.id)
-              }
-            )
-            retryPausedAudioElements()
-          }
-          console.log('[WorkbenchExtension.handleTrackUnmuted] Audio elements after recovery', {
-            audioElements: getAudioElementsState()
-          })
-        }, 100)
-      })
+      if (isSafariBrowser) {
+        // Safari fix: on unmute, detach and re-attach the audio element
+        // to force Safari to re-establish audio routing which it silently drops
+        void safariReattachTrack(publication, participant)
+      } else {
+        // Non-Safari: ensure AudioContext is running and retry paused elements
+        void ensureAudioUnlocked(true).then(() => {
+          setTimeout(() => {
+            const pausedElements = getAudioElementsState().filter((el) => el.paused)
+            if (pausedElements.length > 0) {
+              console.warn('[WorkbenchExtension.handleTrackUnmuted] Retrying paused elements', {
+                ids: pausedElements.map((el) => el.id)
+              })
+              retryPausedAudioElements()
+            }
+          }, 100)
+        })
+      }
     }
+  }
+
+  /**
+   * Safari-specific: detach and re-attach a single audio track
+   * to force Safari to re-establish audio routing.
+   */
+  async function safariReattachTrack (publication: TrackPublication, participant: Participant): Promise<void> {
+    await ensureAudioUnlocked(true)
+
+    const track = publication.track
+    if (track == null || parentElement == null) return
+
+    cleanupAnalyser(publication.trackSid)
+
+    const existingElement = parentElement.querySelector(`#${CSS.escape(publication.trackSid)}`)
+    if (existingElement != null) {
+      track.detach(existingElement as HTMLMediaElement)
+      existingElement.remove()
+    }
+
+    const element = track.attach() as HTMLAudioElement
+    element.id = publication.trackSid
+    element.autoplay = true
+    parentElement.appendChild(element)
+
+    console.log('[WorkbenchExtension.safariReattachTrack] Re-attached', {
+      trackSid: publication.trackSid,
+      participant: participant.name
+    })
+
+    safePlay(element, publication.trackSid)
   }
 
   /**
@@ -254,10 +383,11 @@
 
     console.log('[WorkbenchExtension] Reattaching audio tracks after reconnect')
 
-    // Detach tracks before removing elements to avoid dangling references in LiveKit SDK
+    // Cleanup analysers and detach tracks before removing elements
     for (const participant of lk.remoteParticipants.values()) {
       for (const publication of participant.trackPublications.values()) {
         if (publication.track?.kind === Track.Kind.Audio && publication.isSubscribed) {
+          cleanupAnalyser(publication.trackSid)
           const element = parentElement.querySelector(`#${CSS.escape(publication.trackSid)}`)
           if (element != null) {
             publication.track.detach(element as HTMLMediaElement)
@@ -285,6 +415,122 @@
     console.log('[WorkbenchExtension] Reattached audio tracks', { count })
 
     void ensureAudioUnlocked()
+  }
+
+  /**
+   * Periodic audio health check.
+   * Detects audio loss by monitoring MediaStreamTrack.readyState,
+   * stale srcObject references, and actual audio output via AnalyserNode.
+   * Logs diagnostics periodically (throttled) and triggers recovery if needed.
+   */
+  const AUDIO_CHECK_INTERVAL_MS = 5000
+  let lastRecoveryTime = 0
+  const RECOVERY_COOLDOWN_MS = 10000
+  let healthCheckCount = 0
+  // Log full diagnostics every N checks (every ~30s) to avoid flooding console
+  const DIAGNOSTICS_LOG_INTERVAL = 6
+  // Count consecutive silent checks per track to avoid false positives
+  const silentTrackCounts = new Map<string, number>()
+  const SILENT_THRESHOLD = 3 // Trigger recovery after 3 consecutive silent checks (~15s)
+
+  function startSafariAudioHealthCheck (): void {
+    if (!isSafariBrowser) return
+    stopSafariAudioHealthCheck()
+
+    safariAudioCheckInterval = setInterval(() => {
+      if (parentElement == null) return
+
+      healthCheckCount++
+      let needsRecovery = false
+      const now = Date.now()
+      const problems: string[] = []
+
+      for (const participant of lk.remoteParticipants.values()) {
+        for (const publication of participant.trackPublications.values()) {
+          if (publication.track?.kind !== Track.Kind.Audio || !publication.isSubscribed) continue
+          if (publication.isMuted) continue
+
+          const mediaTrack = publication.track.mediaStreamTrack
+          if (mediaTrack == null) continue
+          const trackKey = `${participant.identity}/${publication.trackSid}`
+
+          // Check if the MediaStreamTrack ended unexpectedly
+          if (mediaTrack.readyState === 'ended') {
+            problems.push(`${trackKey}: MediaStreamTrack ended`)
+            needsRecovery = true
+            continue
+          }
+
+          const element = parentElement.querySelector<HTMLAudioElement>(`#${CSS.escape(publication.trackSid)}`)
+          if (element == null) {
+            problems.push(`${trackKey}: audio element missing`)
+            needsRecovery = true
+            continue
+          }
+
+          const stream = element.srcObject as MediaStream | null
+          if (stream == null || stream.getAudioTracks().length === 0) {
+            problems.push(`${trackKey}: no active stream`)
+            needsRecovery = true
+            continue
+          }
+
+          const streamTrack = stream.getAudioTracks()[0]
+          if (streamTrack != null && streamTrack.readyState === 'ended') {
+            problems.push(`${trackKey}: stream audio track ended`)
+            needsRecovery = true
+            continue
+          }
+
+          // Check actual audio output via AnalyserNode
+          if (!hasAudioOutput(element, publication.trackSid)) {
+            const count = (silentTrackCounts.get(publication.trackSid) ?? 0) + 1
+            silentTrackCounts.set(publication.trackSid, count)
+            if (count >= SILENT_THRESHOLD) {
+              problems.push(`${trackKey}: silent for ${count} checks (~${(count * AUDIO_CHECK_INTERVAL_MS) / 1000}s)`)
+              needsRecovery = true
+            }
+          } else {
+            silentTrackCounts.delete(publication.trackSid)
+          }
+        }
+      }
+
+      // Periodic diagnostics log (throttled)
+      if (healthCheckCount % DIAGNOSTICS_LOG_INTERVAL === 0) {
+        const diag = collectAudioDiagnostics()
+        if (diag.length > 0) {
+          console.log('[WorkbenchExtension.healthCheck] Audio diagnostics', {
+            checkNumber: healthCheckCount,
+            audioContext: getAudioContextState(),
+            tracks: diag
+          })
+        }
+      }
+
+      if (problems.length > 0) {
+        console.warn('[WorkbenchExtension.healthCheck] Audio problems detected', { problems })
+      }
+
+      if (needsRecovery && now - lastRecoveryTime > RECOVERY_COOLDOWN_MS) {
+        lastRecoveryTime = now
+        silentTrackCounts.clear()
+        console.log('[WorkbenchExtension.healthCheck] Triggering audio recovery', {
+          problems,
+          audioContext: getAudioContextState(),
+          diagnostics: collectAudioDiagnostics()
+        })
+        audioUnlocked = false
+        reattachAllAudioTracks()
+      }
+    }, AUDIO_CHECK_INTERVAL_MS)
+  }
+
+  function stopSafariAudioHealthCheck (): void {
+    if (safariAudioCheckInterval != null) {
+      clearInterval(safariAudioCheckInterval)
+      safariAudioCheckInterval = undefined
+    }
   }
 
   /**
@@ -331,6 +577,9 @@
     // Unlock audio context
     void ensureAudioUnlocked()
 
+    // Start Safari audio health check
+    startSafariAudioHealthCheck()
+
     // Listen for reconnect events to re-attach audio elements
     unsubReconnect = lkReconnected.subscribe(() => {
       // Skip initial subscription call (value is 0)
@@ -352,6 +601,11 @@
     lk.off(RoomEvent.TrackMuted, handleTrackMuted)
     lk.off(RoomEvent.TrackUnmuted, handleTrackUnmuted)
     unsubReconnect?.()
+    stopSafariAudioHealthCheck()
+    // Cleanup all audio analysers
+    for (const trackSid of [...audioAnalysers.keys()]) {
+      cleanupAnalyser(trackSid)
+    }
     // Unsubscribe from incoming invites
     unsubscribeFromIncomingInvites()
     // Do not disconnect if the current session initiated a connect (user is in the process of connecting)
