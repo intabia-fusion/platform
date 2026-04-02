@@ -25,7 +25,6 @@ import {
   closePopup,
   createApp,
   getCurrentResolvedLocation,
-  Menu,
   navigate,
   parseLocation,
   pushRootBarProgressComponent,
@@ -220,9 +219,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (notificationParams.objectId != null && notificationParams.objectClass != null) {
       const encodedObjectURI = encodeObjectURI(notificationParams.objectId, notificationParams.objectClass)
       const notificationLocation = {
-        path: [workbenchId, workspace, app, encodedObjectURI],
+        path: notificationParams.threadId != null
+          ? [workbenchId, workspace, app, encodedObjectURI, notificationParams.threadId]
+          : [workbenchId, workspace, app, encodedObjectURI],
         fragment: undefined,
-        query: undefined
+        query: notificationParams.messageId != null
+          ? { message: notificationParams.messageId }
+          : undefined
       }
 
       void resolveLocation(notificationLocation).then((resolvedLocation) => {

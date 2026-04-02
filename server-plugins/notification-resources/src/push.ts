@@ -18,6 +18,8 @@ import serverNotification from '@hcengineering/server-notification'
 import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
+  getNotificationMessageId,
+  getNotificationThreadId,
   InboxNotification,
   MentionInboxNotification,
   notificationId,
@@ -30,6 +32,7 @@ import { getMetadata, getResource } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import { PersonSpace } from '@hcengineering/contact'
+import chunter, { ThreadMessage } from '@hcengineering/chunter'
 
 import { getTranslatedNotificationContent } from './utils'
 
@@ -43,30 +46,40 @@ async function createPush (
 ): Promise<Tx | undefined> {
   const { title, body } = await getTranslatedNotificationContent(n, control.branding?.defaultLanguage ?? 'en')
 
-  const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
-  const provider = linkProviders.find(({ _id }) => _id === n.objectClass)
+  const objectIdentity = await getObjectIdentity(n, control)
 
-  let id: string = n.objectId
+  const linkProviders = control.modelDb.findAllSync(serverView.mixin.ServerLinkIdProvider, {})
+  const provider = linkProviders.find(({ _id }) => _id === objectIdentity._class)
+
+  let id: string = objectIdentity._id
 
   if (provider !== undefined) {
     const encodeFn = await getResource(provider.encode)
     const cache: Map<Ref<Doc>, Doc> = control.contextCache.get('PushNotificationsHandler') ?? new Map()
-    const doc = cache.get(n.objectId) ?? (await control.findAll(control.ctx, n.objectClass, { _id: n.objectId }))[0]
+    const doc =
+      cache.get(objectIdentity._id) ??
+      (await control.findAll(control.ctx, objectIdentity._class, { _id: objectIdentity._id }))[0]
 
     if (doc === undefined) {
       return
     }
 
-    cache.set(n.objectId, doc)
+    cache.set(doc._id, doc)
     control.contextCache.set('PushNotificationsHandler', cache)
 
     id = await encodeFn(doc, control)
   }
 
-  const path = [workbenchId, control.workspace.url, notificationId, encodeObjectURI(id, n.objectClass)]
+  const messageId = getNotificationMessageId(n, control.hierarchy)
+  const threadId = getNotificationThreadId(n, control.hierarchy)
+  const path =
+    threadId != null
+      ? [workbenchId, control.workspace.url, notificationId, encodeObjectURI(id, n.objectClass), threadId]
+      : [workbenchId, control.workspace.url, notificationId, encodeObjectURI(id, n.objectClass)]
+  const query = messageId != null ? { message: messageId } : undefined
 
   if (subscriptions.length > 0) {
-    await createPushNotification(control, receiver, title, body, n._id, subscriptions, path)
+    await createPushNotification(control, receiver, title, body, n._id, subscriptions, path, query)
   }
 
   const messageInfo = getMessageInfo(n, control.hierarchy)
@@ -135,7 +148,8 @@ export async function createPushNotification (
   body: string,
   _id: string,
   subscriptions: PushSubscription[],
-  path?: string[]
+  path?: string[],
+  query?: Record<string, string>
 ): Promise<void> {
   const pushURL: string | undefined = getMetadata(serverNotification.metadata.WebPushUrl)
   // TODO: Remove auth token after migration to new services
@@ -153,7 +167,12 @@ export async function createPushNotification (
   const domainPath = `${workbenchId}/${control.workspace.url}`
   data.domain = concatLink(front, domainPath)
   if (path !== undefined) {
-    data.url = concatLink(front, path.join('/'))
+    let url = concatLink(front, path.join('/'))
+    if (query !== undefined) {
+      const searchParams = new URLSearchParams(query)
+      url += '?' + searchParams.toString()
+    }
+    data.url = url
   }
 
   void sendPushToSubscription(pushURL, authToken, control, target, userSubscriptions, data)
@@ -238,4 +257,36 @@ export async function PushNotificationsHandler (
   }
 
   return res
+}
+
+async function getObjectIdentity (
+  inboxNotification: InboxNotification,
+  control: TriggerControl
+): Promise<Pick<Doc, '_id' | '_class'>> {
+  const { hierarchy } = control
+  if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
+    return {
+      _id: inboxNotification.objectId,
+      _class: inboxNotification.objectClass
+    }
+  }
+
+  const activityNotification = inboxNotification as ActivityInboxNotification
+
+  if (
+    hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
+    hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+  ) {
+    const attachedTo = (
+      await control.findAll<ThreadMessage>(control.ctx, activityNotification.attachedToClass, {
+        _id: activityNotification.attachedTo as Ref<ThreadMessage>
+      })
+    )[0]
+
+    if (attachedTo != null) {
+      return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
+    }
+  }
+
+  return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
 }
