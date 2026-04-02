@@ -14,13 +14,15 @@
 //
 
 import { formatName, getPersonByPersonId } from '@hcengineering/contact'
-import { Ref, SortingOrder, TxOperations } from '@hcengineering/core'
+import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
 import notification, {
   notificationId,
   ActivityInboxNotification,
   CommonInboxNotification,
   DocNotifyContext,
-  InboxNotification
+  InboxNotification,
+  getNotificationMessageId,
+  getNotificationThreadId
 } from '@hcengineering/notification'
 import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
 import { createNotificationsQuery, getClient } from '@hcengineering/presentation'
@@ -31,6 +33,9 @@ import { activePreferences } from '@hcengineering/desktop-preferences-resources'
 import { getDisplayInboxData, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 import { inboxId } from '@hcengineering/inbox'
 import communication from '@hcengineering/communication'
+import activity from '@hcengineering/activity'
+import chunter, { ThreadMessage } from '@hcengineering/chunter'
+
 import { ipcMainExposed } from './typesUtils'
 
 let client: TxOperations
@@ -231,11 +236,14 @@ export function configureNotifications (): void {
             })
           }
 
+          const object = getNotificationObjectIdentity(notification, client.getHierarchy())
           electronAPI.sendNotification({
             silent: !preferences.playSound,
             application: notificationId,
-            objectId: notification.objectId,
-            objectClass: notification.objectClass,
+            objectId: object?._id ?? notification.objectId,
+            objectClass: object?._class ?? notification.objectClass,
+            messageId: getNotificationMessageId(notification, client.getHierarchy()),
+            threadId: getNotificationThreadId(notification, client.getHierarchy()),
             ...notificationData
           })
         }
@@ -275,4 +283,28 @@ export function configureNotifications (): void {
       ipcMainExposed().setBadge(0)
     }
   })
+}
+
+function getNotificationObjectIdentity (
+  inboxNotification: WithLookup<InboxNotification>,
+  hierarchy: Hierarchy
+): Pick<Doc, '_id' | '_class'> {
+  if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
+    return { _id: inboxNotification.objectId, _class: inboxNotification.objectClass }
+  }
+
+  const activityNotification = inboxNotification as WithLookup<ActivityInboxNotification>
+
+  if (
+    hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
+    hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+  ) {
+    const attachedTo = activityNotification.$lookup?.attachedTo as ThreadMessage | undefined
+
+    if (attachedTo != null) {
+      return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
+    }
+  }
+
+  return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
 }

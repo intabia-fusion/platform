@@ -154,6 +154,8 @@
 {#if step === OtpLoginSteps.Otp && object.username !== ''}
   <OtpForm
     email={object.username}
+    firstname={object.first}
+    lastname={object.last}
     {navigateUrl}
     loginState="signup"
     password={object.password}

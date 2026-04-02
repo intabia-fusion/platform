@@ -22,7 +22,7 @@ import {
   type PlatformQueue,
   type PlatformQueueProducer
 } from '@hcengineering/server-core'
-import { Kafka, Partitioners, type Consumer, type Producer, CompressionTypes } from 'kafkajs'
+import { Kafka, Partitioners, type Consumer, type Producer, CompressionTypes, type Admin } from 'kafkajs'
 import type * as tls from 'tls'
 
 export interface QueueConfig {
@@ -133,19 +133,38 @@ class PlatformQueueImpl implements PlatformQueue {
     return result
   }
 
-  async checkCreateTopic (topic: QueueTopic | string, topics: Set<string>, numPartitions?: number): Promise<void> {
+  async checkCreateTopic (
+    admin: Admin,
+    topic: QueueTopic | string,
+    topics: Set<string>,
+    numPartitions?: number
+  ): Promise<void> {
     const kTopic = getKafkaTopicId(topic, this.config)
     if (!topics.has(kTopic)) {
-      const admin = this.kafka.admin()
+      const partitions = numPartitions ?? 1
+      console.info(`Creating topic ${kTopic} with ${partitions} partitions`)
       try {
-        await admin.connect()
-        const partitions = numPartitions ?? 1
-        console.log(`Creating topic ${kTopic} with ${partitions} partitions`)
         await admin.createTopics({ topics: [{ topic: kTopic, numPartitions: partitions }] })
+        topics.add(kTopic)
+        console.info(`Topic ${kTopic} created successfully`)
       } catch (err: any) {
-        console.error('Failed to create topic', kTopic, 'partitions:', numPartitions, err)
-      } finally {
-        await admin.disconnect()
+        // Always check if topic exists after any error - another service may have created it
+        const currentTopics = new Set(await admin.listTopics())
+        if (currentTopics.has(kTopic)) {
+          console.info(`Topic ${kTopic} already exists (created by another service), skipping`)
+          topics.add(kTopic)
+        } else {
+          // Check if it's a fatal error or just "already exists" wrapped in different error type
+          const errorType = err?.errors?.[0]?.type
+          const errorCode = err?.errors?.[0]?.code
+          if (errorType === 'TOPIC_ALREADY_EXISTS' || errorCode === 36) {
+            console.info(`Topic ${kTopic} already exists (error code), skipping`)
+            topics.add(kTopic)
+          } else {
+            // Only log real errors, not race conditions between services
+            console.info(`Topic ${kTopic} creation failed (${errorType}:${errorCode}), will retry on next startup`)
+          }
+        }
       }
     }
   }
@@ -157,7 +176,7 @@ class PlatformQueueImpl implements PlatformQueue {
       const existing = new Set(await admin.listTopics())
       topics = Array.isArray(topics) ? topics : [topics]
       for (const topic of topics) {
-        await this.checkCreateTopic(topic, existing, partitions)
+        await this.checkCreateTopic(admin, topic, existing, partitions)
       }
     } finally {
       await admin.disconnect()
@@ -169,15 +188,15 @@ class PlatformQueueImpl implements PlatformQueue {
     try {
       await admin.connect()
       const topics = new Set(await admin.listTopics())
-      await this.checkCreateTopic(QueueTopic.Tx, topics, tx)
-      await this.checkCreateTopic(QueueTopic.Fulltext, topics, 5)
-      await this.checkCreateTopic(QueueTopic.Workspace, topics, 1)
-      await this.checkCreateTopic(QueueTopic.Users, topics, 1)
-      await this.checkCreateTopic(QueueTopic.Process, topics, 1)
-      await this.checkCreateTopic(QueueTopic.AIQueue, topics, 10)
-      await this.checkCreateTopic(QueueTopic.TranscriptionQueue, topics, 10)
-      await this.checkCreateTopic(QueueTopic.NotificationQueue, topics, 2)
-      await this.checkCreateTopic(QueueTopic.LoveQueue, topics, 1)
+      await this.checkCreateTopic(admin, QueueTopic.Tx, topics, tx)
+      await this.checkCreateTopic(admin, QueueTopic.Fulltext, topics, 5)
+      await this.checkCreateTopic(admin, QueueTopic.Workspace, topics, 1)
+      await this.checkCreateTopic(admin, QueueTopic.Users, topics, 1)
+      await this.checkCreateTopic(admin, QueueTopic.Process, topics, 1)
+      await this.checkCreateTopic(admin, QueueTopic.AIQueue, topics, 10)
+      await this.checkCreateTopic(admin, QueueTopic.TranscriptionQueue, topics, 10)
+      await this.checkCreateTopic(admin, QueueTopic.NotificationQueue, topics, 2)
+      await this.checkCreateTopic(admin, QueueTopic.LoveQueue, topics, 1)
     } finally {
       await admin.disconnect()
     }
@@ -305,7 +324,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
     await this.doSubscribe()
 
     await this.cc.run({
-      eachMessage: async ({ topic, message, pause, heartbeat }) => {
+      eachMessage: async ({ message, pause, heartbeat }) => {
         const msgKey = message.key?.toString() ?? ''
         const msgData = JSON.parse(message.value?.toString() ?? '{}')
         const meta = JSON.parse(message.headers?.meta?.toString() ?? '{}')
@@ -487,7 +506,7 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
     }
 
     await this.cc.run({
-      eachMessage: async ({ topic, partition, message, pause, heartbeat }) => {
+      eachMessage: async ({ partition, message, pause, heartbeat }) => {
         const msgKey = message.key?.toString() ?? ''
         const msgData = JSON.parse(message.value?.toString() ?? '{}')
         const meta = JSON.parse(message.headers?.meta?.toString() ?? '{}')

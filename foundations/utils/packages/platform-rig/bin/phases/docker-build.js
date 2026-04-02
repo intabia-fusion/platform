@@ -11,16 +11,49 @@ const {
   markPhaseCompleted
 } = require('../libs/cache')
 
+// Check if Docker is available
+function isDockerAvailable() {
+  try {
+    const { execSync } = require('child_process')
+    execSync('docker --version', { stdio: 'pipe' })
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
- * Check if docker image exists by running docker images command
- * This is a lightweight check that doesn't require building
+ * Extract docker image name from package's docker:build script
  */
-async function hasDockerImage(packageName) {
-  return new Promise((resolve) => {
-    // Extract image name from package name (e.g., @hcengineering/pod-server -> pod-server)
-    const imageName = packageName.replace(/^@[^/]+\//, '')
+function getDockerImageName(cwd) {
+  try {
+    const packageJsonPath = join(cwd, 'package.json')
+    if (!fs.existsSync(packageJsonPath)) return null
     
-    const child = spawn('docker', ['images', '--format', '{{.Repository}}:{{.Tag}}', imageName], {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+    const dockerBuildScript = pkg.scripts?.['docker:build']
+    if (!dockerBuildScript) return null
+    
+    // Extract image name from script like:
+    // "../../common/scripts/docker_build.sh intabiafusion/rating"
+    const match = dockerBuildScript.match(/docker_build\.sh\s+([^\s]+)/)
+    if (match) {
+      return match[1]
+    }
+    
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if docker image exists with matching hash label
+ * Returns: { exists: boolean, hashMatch: boolean }
+ */
+async function checkDockerImage(imageName, packageHash) {
+  return new Promise((resolve) => {
+    const child = spawn('docker', ['images', '--format', '{{.Repository}}:{{.Tag}}', imageName + ':latest'], {
       stdio: ['pipe', 'pipe', 'pipe']
     })
 
@@ -30,18 +63,52 @@ async function hasDockerImage(packageName) {
     })
 
     child.on('close', (code) => {
-      // If we got any output, the image exists
-      resolve(code === 0 && stdout.trim().length > 0)
+      if (code !== 0 || !stdout.trim()) {
+        resolve({ exists: false, hashMatch: false })
+        return
+      }
+
+      // Image exists, check PACKAGE_HASH label
+      const inspectChild = spawn('docker', ['inspect', '-f', '{{index .Config.Labels "PACKAGE_HASH"}}', imageName + ':latest'], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      })
+
+      let labelOutput = ''
+      inspectChild.stdout?.on('data', (data) => {
+        labelOutput += data.toString().trim()
+      })
+
+      inspectChild.on('close', (inspectCode) => {
+        if (inspectCode !== 0 || !labelOutput) {
+          // Can't get label, assume hash doesn't match
+          resolve({ exists: true, hashMatch: false })
+          return
+        }
+
+        const imageHash = labelOutput
+        const hashMatch = imageHash === packageHash
+        resolve({ exists: true, hashMatch })
+      })
+
+      inspectChild.on('error', () => {
+        resolve({ exists: true, hashMatch: false })
+      })
     })
 
     child.on('error', () => {
-      resolve(false)
+      resolve({ exists: false, hashMatch: false })
     })
   })
 }
 
 async function runDockerBuildPhase(graph, packageNames, concurrency, options = {}) {
   const { force = false, packageHash } = options
+
+  // Check if Docker is available
+  if (!isDockerAvailable()) {
+    console.error('[docker-build] Error: Docker is not available. Please install Docker or ensure it is running.')
+    process.exit(1)
+  }
 
   const results = {
     successCount: 0,
@@ -55,21 +122,34 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
     const node = graph.get(packageName)
     const cwd = node.project.fullPath
 
-    // Check cache using pre-calculated package hash
-    if (!force && packageHash) {
-      const imageExists = await hasDockerImage(packageName)
-      if (imageExists && isPhaseCached(cwd, packageHash, 'docker-build')) {
+    // Get docker image name from package.json
+    const imageName = getDockerImageName(cwd)
+
+    // Check cache: image must exist with matching hash and phase must be cached
+    if (!force && packageHash && imageName) {
+      const imageCheck = await checkDockerImage(imageName, packageHash)
+      if (imageCheck.exists && imageCheck.hashMatch && isPhaseCached(cwd, packageHash, 'docker-build')) {
         return { success: true, fromCache: true }
+      }
+      // Log why we're rebuilding
+      if (imageCheck.exists && !imageCheck.hashMatch) {
+        console.log(`    [docker-build] ${packageName} - image hash mismatch, rebuilding...`)
+      } else if (imageCheck.exists && !isPhaseCached(cwd, packageHash, 'docker-build')) {
+        console.log(`    [docker-build] ${packageName} - phase cache miss, rebuilding...`)
+      } else if (!imageCheck.exists) {
+        console.log(`    [docker-build] ${packageName} - image '${imageName}' not found, building...`)
       }
     }
 
     return new Promise((resolve) => {
       const startTime = performance.now()
       console.log(`    [docker-build] Starting ${packageName}...`)
-      
+
+      // Pass packageHash to docker build for labeling
       const child = spawn('rushx', ['docker:build'], {
         cwd,
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, PACKAGE_HASH: packageHash || '' }
       })
 
       let stdout = ''

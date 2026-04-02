@@ -155,7 +155,7 @@ export function getIsTextType (attributeModel?: AttributeModel): boolean {
 
 const groupMessagesThresholdMs = 15 * 60 * 1000
 
-type MessageData = Pick<ActivityMessage, '_class' | 'createdBy' | 'createdOn' | 'modifiedOn'>
+type MessageData = Pick<ActivityMessage, '_class' | 'createdBy' | 'createdOn' | 'modifiedOn' | 'replies'>
 
 export function canGroupMessages (message: MessageData, prevMessage?: MessageData): boolean {
   if (prevMessage === undefined) {
@@ -165,6 +165,11 @@ export function canGroupMessages (message: MessageData, prevMessage?: MessageDat
   if (message.createdBy !== prevMessage.createdBy || message._class !== prevMessage._class) {
     return false
   }
+
+  const replies1 = message.replies ?? 0
+  const replies2 = prevMessage.replies ?? 0
+
+  if (replies1 > 0 || replies2 > 0) return false
 
   const time1 = message.createdOn ?? message.modifiedOn
   const time2 = prevMessage.createdOn ?? prevMessage.modifiedOn

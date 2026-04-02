@@ -57,7 +57,7 @@ services:
       - --mode dev-container
       - --smp 1
       - --default-log-level=info
-      - --memory 256M
+      - --memory 768M
     ports:
       - 18083:18083
       - 18084:18084

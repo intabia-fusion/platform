@@ -16,21 +16,22 @@
 <script lang="ts">
   import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack } from '@hcengineering/ui'
   import FormButton from './internal/FormButton.svelte'
-  import { translateCB, OK, Severity, Status } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import { OK, Severity, Status } from '@hcengineering/platform'
   import Label from './internal/Label.svelte'
   import LoginCodeInput from './internal/LoginCodeInput.svelte'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { Timestamp } from '@hcengineering/core'
   import { LoginInfo } from '@hcengineering/account-client'
 
-  import { BottomAction, doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp } from '../index'
+  import { BottomAction, doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp, signUpOtp } from '../index'
   import login from '../plugin'
   import BottomActionComponent from './BottomAction.svelte'
   import StatusControl from './StatusControl.svelte'
 
   export let navigateUrl: string | undefined = undefined
   export let email: string
+  export let firstname: string = ''
+  export let lastname: string = ''
   export let retryOn: Timestamp
   export let loginState: 'login' | 'signup' | 'none' = 'none'
   export let canChangeEmail = true
@@ -206,7 +207,8 @@
 
   async function resendCode (): Promise<void> {
     status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
-    const [otpStatus, result] = await loginOtp(email)
+    const [otpStatus, result] =
+      loginState === 'signup' ? await signUpOtp(email, firstname, lastname) : await loginOtp(email)
     status = otpStatus
 
     if (result?.sent === true && otpStatus === OK) {

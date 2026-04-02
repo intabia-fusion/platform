@@ -1,11 +1,81 @@
 /**
  * Common caching utilities for fast-build phases
  * Provides unified package hash calculation and phase-based caching
+ *
+ * Cache format (v2 - per-phase hashes):
+ * {
+ *   "version": 2,
+ *   "phases": {
+ *     "transpile": { "hash": "abc123", "completedAt": 1234567890 },
+ *     "bundle":    { "hash": "def456", "completedAt": 1234567890 },
+ *     "validate":  { "hash": "abc123", "completedAt": 1234567890 },
+ *     "package":   { "hash": "def456", "completedAt": 1234567890 },
+ *     "docker-build": { "hash": "def456", "completedAt": 1234567890 }
+ *   }
+ * }
+ *
+ * Previously (v1), there was a single top-level "hash" field shared by all phases.
+ * This caused an infinite rebuild cycle: transpile uses a base hash while
+ * bundle/package/docker use a composite hash (including dependency hashes).
+ * When one phase wrote its hash, it invalidated ALL other phases because
+ * the single hash didn't match. On the next run the other phase would
+ * overwrite the hash again, wiping the first phase's cache — ad infinitum.
+ *
+ * With v2, each phase stores its own hash independently, so phases using
+ * different hash strategies (base vs composite) no longer conflict.
  */
 
 const { join } = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
+
+const CACHE_VERSION = 2
+
+/**
+ * Output directories for each phase that need to be verified
+ */
+const phaseOutputDirs = {
+  transpile: ['lib'],
+  validate: ['types'],
+  bundle: ['bundle'],
+  package: ['dist'],
+  'docker-build': []
+}
+
+/**
+ * Calculate hash of output directory contents for a phase
+ * @param {string} packagePath - Path to package directory
+ * @param {string} phase - Phase name
+ * @returns {string|null} MD5 hash of output files, or null if no outputs
+ */
+function calculateOutputHash(packagePath, phase) {
+  const dirs = phaseOutputDirs[phase]
+  if (!dirs || dirs.length === 0) return null
+  return calculateOutputHashForDirs(packagePath, dirs)
+}
+
+/**
+ * Calculate hash of specific output directories
+ * @param {string} packagePath - Path to package directory
+ * @param {string[]} dirs - Directory names relative to package
+ * @returns {string|null} MD5 hash, or null if any dir doesn't exist
+ */
+function calculateOutputHashForDirs(packagePath, dirs) {
+  const parts = []
+  for (const dir of dirs) {
+    const dirPath = join(packagePath, dir)
+    if (!fs.existsSync(dirPath)) return null
+
+    const sigs = collectFileSignatures(dirPath)
+    const sortedKeys = Object.keys(sigs).sort()
+    for (const key of sortedKeys) {
+      parts.push(`${dir}:${key}=${sigs[key]}`)
+    }
+  }
+
+  if (parts.length === 0) return null
+  return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
+}
 
 /**
  * Collect file signatures (mtime:size) recursively
@@ -41,13 +111,13 @@ function collectFileSignatures(dir, extensions = null) {
 /**
  * Calculate unified package hash based on all source inputs
  * This hash is used across all phases to detect changes
- * 
+ *
  * Includes:
  * - src/ directory (source files)
  * - package.json
  * - tsconfig.json (if exists)
  * - Any additional config files provided
- * 
+ *
  * @param {string} packagePath - Path to package directory
  * @param {string[]} [extraFiles] - Additional files to include in hash
  * @returns {string} MD5 hash
@@ -93,7 +163,7 @@ function calculatePackageHash(packagePath, extraFiles = []) {
       const stat = fs.statSync(tsconfigPath)
       parts.push(`tsconfig.json:${stat.mtimeMs}:${stat.size}`)
     } catch { /* ignore */ }
-    }
+  }
 
   // Include extra files
   for (const file of extraFiles) {
@@ -111,14 +181,40 @@ function calculatePackageHash(packagePath, extraFiles = []) {
 
 /**
  * Load package cache from .fast-build-cache.json
+ * Handles migration from v1 format transparently.
  * @param {string} packagePath - Path to package directory
- * @returns {Object|null} Cache object or null
+ * @returns {Object|null} Cache object (always v2 format) or null
  */
 function loadPackageCache(packagePath) {
   const cachePath = join(packagePath, '.fast-build-cache.json')
   try {
     if (fs.existsSync(cachePath)) {
-      return JSON.parse(fs.readFileSync(cachePath, 'utf-8'))
+      const raw = JSON.parse(fs.readFileSync(cachePath, 'utf-8'))
+
+      // Already v2
+      if (raw.version === CACHE_VERSION && raw.phases) {
+        return raw
+      }
+
+      // Migrate v1 → v2
+      // v1 format: { hash: "...", timestamp: ..., phases: { transpile: { completedAt: ... }, ... } }
+      if (raw.hash && raw.phases) {
+        const migrated = { version: CACHE_VERSION, phases: {} }
+        for (const [phase, meta] of Object.entries(raw.phases)) {
+          if (meta && typeof meta === 'object') {
+            migrated.phases[phase] = {
+              hash: raw.hash,
+              ...meta
+            }
+          }
+        }
+        // Write back migrated format
+        savePackageCache(packagePath, migrated)
+        return migrated
+      }
+
+      // Unrecognised format — discard
+      return null
     }
   } catch { /* ignore corrupted cache */ }
   return null
@@ -127,7 +223,7 @@ function loadPackageCache(packagePath) {
 /**
  * Save package cache to .fast-build-cache.json
  * @param {string} packagePath - Path to package directory
- * @param {Object} cache - Cache object to save
+ * @param {Object} cache - Cache object to save (v2 format)
  */
 function savePackageCache(packagePath, cache) {
   const cachePath = join(packagePath, '.fast-build-cache.json')
@@ -139,50 +235,68 @@ function savePackageCache(packagePath, cache) {
 /**
  * Check if a phase is cached and valid
  * @param {string} packagePath - Path to package directory
- * @param {string} packageHash - Current package hash
+ * @param {string} packageHash - Current package hash (may differ per phase)
  * @param {string} phase - Phase name (e.g., 'transpile', 'bundle', 'package', 'docker-build')
  * @param {Function} [outputCheck] - Optional function to verify output exists
+ * @param {string[]} [outputDirs] - Optional override for output directories to hash
  * @returns {boolean} True if phase is cached and valid
  */
-function isPhaseCached(packagePath, packageHash, phase, outputCheck = null) {
+function isPhaseCached(packagePath, packageHash, phase, outputCheck = null, outputDirs = null) {
   const cache = loadPackageCache(packagePath)
   if (!cache) return false
-  if (cache.hash !== packageHash) return false
-  if (!cache.phases || !cache.phases[phase]) return false
-  
+
+  const phaseEntry = cache.phases && cache.phases[phase]
+  if (!phaseEntry) return false
+
+  // Each phase stores its own hash — compare only against that phase's hash
+  if (phaseEntry.hash !== packageHash) return false
+
+  // Verify output hash matches what was stored (detects deleted/corrupted outputs)
+  if (phaseEntry.outputHash) {
+    const currentOutputHash = outputDirs
+      ? calculateOutputHashForDirs(packagePath, outputDirs)
+      : calculateOutputHash(packagePath, phase)
+    if (currentOutputHash !== phaseEntry.outputHash) return false
+  }
+
   // Run optional output check
   if (outputCheck && !outputCheck(packagePath)) {
     return false
   }
-  
+
   return true
 }
 
 /**
  * Mark a phase as completed in cache
  * @param {string} packagePath - Path to package directory
- * @param {string} packageHash - Current package hash
+ * @param {string} packageHash - Current package hash (may differ per phase)
  * @param {string} phase - Phase name
  * @param {Object} [metadata] - Optional metadata to store (e.g., { errorCount: 0, warningCount: 5 })
+ * @param {string[]} [outputDirs] - Optional override for output directories to hash
  */
-function markPhaseCompleted(packagePath, packageHash, phase, metadata = null) {
+function markPhaseCompleted(packagePath, packageHash, phase, metadata = null, outputDirs = null) {
   let cache = loadPackageCache(packagePath)
 
-  // If hash changed or no cache, start fresh
-  if (!cache || cache.hash !== packageHash) {
-    cache = {
-      hash: packageHash,
-      timestamp: Date.now(),
-      phases: {}
-    }
+  if (!cache) {
+    cache = { version: CACHE_VERSION, phases: {} }
   }
 
   if (!cache.phases) {
     cache.phases = {}
   }
 
+  // Calculate output hash AFTER phase completed
+  const outputHash = outputDirs
+    ? calculateOutputHashForDirs(packagePath, outputDirs)
+    : calculateOutputHash(packagePath, phase)
+
+  // Store the hash *inside* the phase entry so each phase tracks its own hash
+  // independently.  Other phases are left untouched.
   cache.phases[phase] = {
+    hash: packageHash,
     completedAt: Date.now(),
+    outputHash,
     ...metadata
   }
 
@@ -198,21 +312,40 @@ function markPhaseCompleted(packagePath, packageHash, phase, metadata = null) {
  */
 function getPhaseMetadata(packagePath, packageHash, phase) {
   const cache = loadPackageCache(packagePath)
-  if (!cache || cache.hash !== packageHash) return null
-  if (!cache.phases || !cache.phases[phase]) return null
-  return cache.phases[phase]
+  if (!cache) return null
+
+  const phaseEntry = cache.phases && cache.phases[phase]
+  if (!phaseEntry) return null
+  if (phaseEntry.hash !== packageHash) return null
+
+  return phaseEntry
 }
 
 /**
- * Get list of completed phases for a package
+ * Get list of completed phases for a package whose hash still matches.
+ * Because each phase may use a different hash, the caller must provide
+ * a map of phase→hash or a single hash (applied to all phases).
+ *
+ * When a single string is provided the behaviour matches the old API:
+ * only phases whose stored hash equals that string are returned.
+ *
  * @param {string} packagePath - Path to package directory
- * @param {string} packageHash - Current package hash
+ * @param {string|Object} packageHash - Hash string or { phase: hash } map
  * @returns {string[]} Array of completed phase names
  */
 function getCompletedPhases(packagePath, packageHash) {
   const cache = loadPackageCache(packagePath)
-  if (!cache || cache.hash !== packageHash) return []
-  return Object.keys(cache.phases || {})
+  if (!cache || !cache.phases) return []
+
+  const result = []
+  for (const [phase, entry] of Object.entries(cache.phases)) {
+    if (!entry) continue
+    const expectedHash = typeof packageHash === 'string' ? packageHash : packageHash[phase]
+    if (expectedHash && entry.hash === expectedHash) {
+      result.push(phase)
+    }
+  }
+  return result
 }
 
 /**
@@ -231,6 +364,7 @@ function invalidateCache(packagePath) {
 module.exports = {
   collectFileSignatures,
   calculatePackageHash,
+  calculateOutputHash,
   loadPackageCache,
   savePackageCache,
   isPhaseCached,
