@@ -13,7 +13,8 @@ import account, {
   getMethods,
   cleanExpiredOtp,
   accountPlugin,
-  type AccountNotification
+  type AccountNotification,
+  initRegionConfig
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -83,9 +84,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const oldAccsUrl = process.env.OLD_ACCOUNTS_URL ?? (dbUrl.startsWith('mongodb://') ? dbUrl : undefined)
   const oldAccsNs = process.env.OLD_ACCOUNTS_NS
 
+  const hasRegionConfig = process.env.REGION_CONFIG !== undefined || process.env.REGION_CONFIG_JSON !== undefined
   const transactorUri = process.env.TRANSACTOR_URL
-  if (transactorUri === undefined) {
-    console.log('Please provide transactor url')
+  if (transactorUri === undefined && !hasRegionConfig) {
+    console.log('Please provide transactor url or region config')
     process.exit(1)
   }
 
@@ -127,6 +129,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   }
 
   setMetadata(account.metadata.Transactors, transactorUri)
+  initRegionConfig()
   setMetadata(platform.metadata.locale, lang)
   setMetadata(account.metadata.ProductName, productName)
   setMetadata(account.metadata.OtpTimeToLiveSec, parseInt(process.env.OTP_TIME_TO_LIVE ?? '60'))

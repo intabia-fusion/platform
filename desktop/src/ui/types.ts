@@ -27,7 +27,6 @@ export interface Config {
   BRANDING_URL?: string
   CALENDAR_URL: string
   COLLABORATOR?: string
-  COLLABORATOR_URL: string
   CONFIG_URL: string
   DESKTOP_UPDATES_CHANNEL?: string // deprecated, kept for backwards compatibility of old desktop versions that will still need to be upgraded
   DESKTOP_UPDATES_CHANNELS?: string

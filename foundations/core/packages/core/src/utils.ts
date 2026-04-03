@@ -1025,3 +1025,34 @@ export function toRank (str: string | undefined): Rank | undefined {
   }
   return '0|' + str.replaceAll(/[-:_]/g, '').toLowerCase()
 }
+
+/**
+ * Hash a workspace name to a number for consistent endpoint selection.
+ * Uses Java's String.hashCode() algorithm.
+ * @public
+ */
+export function hashWorkspace (dbWorkspaceName: string): number {
+  return [...dbWorkspaceName].reduce((hash, c) => (Math.imul(31, hash) + c.charCodeAt(0)) | 0, 0)
+}
+
+/**
+ * Select a URL from a comma-separated list using hash-based routing.
+ * @public
+ */
+export function selectUrl (urls: string, workspaceId: string): string {
+  const urlList = urls
+    .split(',')
+    .map((it) => it.trim())
+    .filter((it) => it.length > 0)
+
+  if (urlList.length === 0) {
+    return urls
+  }
+
+  if (urlList.length === 1) {
+    return urlList[0]
+  }
+
+  const hash = hashWorkspace(workspaceId)
+  return urlList[Math.abs(hash % urlList.length)]
+}

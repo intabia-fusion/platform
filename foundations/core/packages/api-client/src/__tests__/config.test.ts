@@ -15,7 +15,6 @@ describe('loadServerConfig', () => {
   it('should load server config successfully', async () => {
     const mockConfig = {
       ACCOUNTS_URL: 'https://accounts.example.com',
-      COLLABORATOR_URL: 'https://collaborator.example.com',
       FILES_URL: 'https://files.example.com',
       UPLOAD_URL: 'https://upload.example.com'
     }
@@ -51,7 +50,6 @@ describe('loadServerConfig', () => {
       ok: true,
       json: async () => ({
         ACCOUNTS_URL: '',
-        COLLABORATOR_URL: '',
         FILES_URL: '',
         UPLOAD_URL: ''
       })
@@ -66,7 +64,6 @@ describe('loadServerConfig', () => {
       ok: true,
       json: async () => ({
         ACCOUNTS_URL: '',
-        COLLABORATOR_URL: '',
         FILES_URL: '',
         UPLOAD_URL: ''
       })

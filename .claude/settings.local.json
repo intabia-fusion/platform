@@ -18,7 +18,8 @@
       "Bash(npx jest:*)",
       "Bash(git diff:*)",
       "Bash(docker exec:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(rush build:*)"
     ]
   },
   "outputStyle": "default"

@@ -35,7 +35,6 @@ ENV_ARGS=(
   -e "FILES_URL=http://huly.local:4030/blob/:workspace/:blobId/:filename"
   -e MODEL_VERSION=test
   -e REKONI_URL=http://huly.local:4004
-  -e COLLABORATOR_URL=ws://huly.local:3078
   -e GMAIL_URL=http://huly.local:8093
   -e CALENDAR_URL=http://huly.local:8095
   -e TELEGRAM_URL=http://huly.local:8086

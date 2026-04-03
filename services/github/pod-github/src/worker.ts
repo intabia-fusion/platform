@@ -129,8 +129,6 @@ export class GithubWorker implements IntegrationManager {
 
   repositoryManager: RepositorySyncMapper
 
-  collaborator: CollaboratorClient
-
   periodicTimer: any
 
   personMapper: UsersSyncManager
@@ -391,6 +389,7 @@ export class GithubWorker implements IntegrationManager {
     readonly storageAdapter: StorageAdapter,
     readonly workspace: WorkspaceIds,
     readonly branding: Branding | null,
+    readonly collaborator: CollaboratorClient,
     readonly periodicSyncInterval = 60 * 60 * 1000
   ) {
     const token = generateToken(systemAccountUuid, this.workspace.uuid, { service: 'github', mode: 'github' })
@@ -400,8 +399,6 @@ export class GithubWorker implements IntegrationManager {
     this.liveQuery = new LiveQuery(client)
 
     this.repositoryManager = new RepositorySyncMapper(this._client, this.app)
-
-    this.collaborator = createCollaboratorClient(this.workspace.uuid)
 
     this.personMapper = new UsersSyncManager(
       this.ctx.newChild('users', {}, { span: false }),
@@ -1799,6 +1796,8 @@ export class GithubWorker implements IntegrationManager {
 
       await GithubWorker.checkIntegrations(client, installations)
 
+      const collaborator = await createCollaboratorClient(workspace.uuid)
+
       worker = new GithubWorker(
         ctx,
         platformWorker.getRateLimiter(endpoint ?? ''),
@@ -1808,7 +1807,8 @@ export class GithubWorker implements IntegrationManager {
         app,
         storageAdapter,
         workspace,
-        branding
+        branding,
+        collaborator
       )
       ctx.info('Init worker', { workspace: workspace.url, workspaceId: workspace.uuid })
       void worker.init().catch((err) => {

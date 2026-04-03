@@ -483,8 +483,12 @@ describe('account operations', () => {
       generatePersonUuid: jest.fn()
     } as unknown as AccountDB
 
+    const originalEnv = process.env
+
     beforeEach(() => {
       jest.clearAllMocks()
+      utils.resetRegionConfig()
+      process.env = { ...originalEnv }
       // Mock the metadata for endpoints
       ;(getMetadata as jest.Mock).mockImplementation((key) => {
         if (key === accountPlugin.metadata.Transactors) {
@@ -492,6 +496,23 @@ describe('account operations', () => {
         }
         return undefined
       })
+      // Set up REGION_CONFIG_JSON for region config
+      process.env.REGION_CONFIG_JSON = JSON.stringify({
+        regions: {
+          eu: {
+            transactors: [{ external: 'ws://external:3000', internal: 'ws://external:3000' }],
+            collaborators: [{ external: 'ws://external:3000', internal: 'ws://external:3000' }]
+          },
+          us: {
+            transactors: [{ external: 'ws://internal:3000', internal: 'ws://internal:3000' }],
+            collaborators: [{ external: 'ws://internal:3000', internal: 'ws://internal:3000' }]
+          }
+        }
+      })
+    })
+
+    afterAll(() => {
+      process.env = originalEnv
     })
 
     describe('endpoint selection', () => {
@@ -539,8 +560,10 @@ describe('account operations', () => {
           socialId: 'social-id-1',
           token: 'mocked-token-test-person-id-workspace-uuid-{}-{}',
           workspace: mockWorkspaceEu.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: 'test-workspace',
           endpoint: 'ws://external:3000',
+          collaboratorEndpoint: 'ws://external:3000',
           role: AccountRole.User
         })
       })
@@ -569,8 +592,10 @@ describe('account operations', () => {
           socialId: 'social-id-1',
           token: 'mocked-token-test-person-id-workspace-uuid-{}-{}',
           workspace: mockWorkspaceUs.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: 'test-workspace',
           endpoint: 'ws://internal:3000',
+          collaboratorEndpoint: 'ws://internal:3000',
           role: AccountRole.User
         })
       })
@@ -586,8 +611,10 @@ describe('account operations', () => {
           socialId: 'social-id-1',
           token: 'mocked-token-test-person-id-workspace-uuid-{}-{}',
           workspace: mockWorkspaceEu.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: 'test-workspace',
           endpoint: 'ws://external:3000',
+          collaboratorEndpoint: 'ws://external:3000',
           role: AccountRole.User
         })
       })
@@ -668,8 +695,10 @@ describe('account operations', () => {
         socialId: 'social-id-1',
         token: expect.stringContaining(`"sub":"${subAccount}"`),
         workspace: mockWorkspace.uuid,
+        workspaceDataId: undefined,
         workspaceUrl: mockWorkspace.url,
         endpoint: expect.any(String),
+        collaboratorEndpoint: expect.any(String),
         role: AccountRole.User
       })
     })
@@ -721,8 +750,10 @@ describe('account operations', () => {
           name: `${grantFirstName} ${grantLastName}`,
           token: expect.stringContaining(grantAccount),
           workspace: grantWorkspace.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: grantWorkspace.url,
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           socialId: 'social-id-1',
           role: grantRole
         })
@@ -763,8 +794,10 @@ describe('account operations', () => {
           token: expect.stringContaining(grantAccount),
           socialId: 'social-id-1',
           workspace: grantWorkspace.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: grantWorkspace.url,
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           role: AccountRole.Guest
         })
       })
@@ -815,8 +848,10 @@ describe('account operations', () => {
           socialId: 'social-id-1',
           token: expect.stringContaining(`"sub":"${generatedUuid}"`),
           workspace: mockWorkspace.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: mockWorkspace.url,
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           role: AccountRole.User
         })
       })
@@ -854,8 +889,10 @@ describe('account operations', () => {
           socialId: 'social-id-1',
           token: expect.stringContaining(`"sub":"${existingUuid}"`),
           workspace: mockWorkspace.uuid,
+          workspaceDataId: undefined,
           workspaceUrl: mockWorkspace.url,
           endpoint: expect.any(String),
+          collaboratorEndpoint: expect.any(String),
           role: AccountRole.User
         })
       })
@@ -927,8 +964,10 @@ describe('account operations', () => {
         socialId: 'social-id-1',
         token: expect.stringContaining(`"nbf":${notBefore},"exp":${expiration}`),
         workspace: mockWorkspace.uuid,
+        workspaceDataId: undefined,
         workspaceUrl: mockWorkspace.url,
         endpoint: expect.any(String),
+        collaboratorEndpoint: expect.any(String),
         role: AccountRole.User
       })
     })

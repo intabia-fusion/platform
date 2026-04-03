@@ -4,7 +4,6 @@
   "ANALYTICS_COLLECTOR_URL": "https://collector.hc.engineering",
   "BRANDING_URL": "https://front.hc.engineering/stage-branding_v2.json",
   "CALENDAR_URL": "https://calendar.hc.engineering/",
-  "COLLABORATOR_URL": "wss://collaborator.hc.engineering",
   "DESKTOP_UPDATES_CHANNEL": "front",
   "GITHUB_APP": "huly-github-staging",
   "GITHUB_CLIENTID": "Iv1.cd9d3f7987474b5e",

@@ -4,10 +4,10 @@ export MONGO_URL=mongodb://localhost:27017
 export DB_URL=postgresql://root@localhost:26257/defaultdb?sslmode=disable
 export ACCOUNT_DB_URL=postgresql://root@localhost:26257/defaultdb?sslmode=disable
 export ACCOUNTS_URL=http://localhost:3000
-export TRANSACTOR_URL="ws://huly.local:3333,ws://huly.local:3332;;cockroach"
+export REGION_CONFIG_JSON='{"regions":{"":{"transactors":[{"external":"ws://huly.local:3333","internal":"ws://huly.local:3333"},{"external":"ws://huly.local:3332","internal":"ws://huly.local:3332"}],"collaborators":[{"external":"ws://huly.local:3079","internal":"ws://huly.local:3079"}]},"cockroach":{"transactors":[{"external":"ws://huly.local:3332","internal":"ws://huly.local:3332"}],"collaborators":[{"external":"ws://huly.local:3079","internal":"ws://huly.local:3079"}]}}}'
 export ELASTIC_URL=http://localhost:9200
 export SERVER_SECRET=secret
 export QUEUE_CONFIG=localhost:19092
 
 # Restore workspace contents in mongo/elastic
-node ../dev/tool/bundle/bundle.js $@
+node ../dev/tool/bundle/bundle.js "$@"

@@ -86,7 +86,9 @@ import {
   getPersonName,
   getRegions,
   getRolePower,
+  getCollaboratorEndpoint,
   getWorkspaceById,
+  getWorkspaceCollaboratorEndpoint,
   getWorkspaceEndpoint,
   getWorkspaceInfoWithStatusById,
   getWorkspaceInvite,
@@ -574,6 +576,7 @@ export async function createWorkspace (
     name: getPersonName(person),
     token: generateToken(account, workspaceUuid, extra),
     endpoint: getEndpoint(workspaceUuid, region, EndpointKind.External),
+    collaboratorEndpoint: getCollaboratorEndpoint(workspaceUuid, region, EndpointKind.External),
     workspace: workspaceUuid,
     workspaceUrl,
     role: AccountRole.Owner
@@ -1880,6 +1883,7 @@ export async function getLoginInfoByToken (
 
     const endpointKind = meta?.clientNetworkPosition === 'internal' ? EndpointKind.Internal : EndpointKind.External
     const endpoint = getEndpoint(workspace.uuid, workspace.region, endpointKind)
+    const collaboratorEndpoint = getCollaboratorEndpoint(workspace.uuid, workspace.region, endpointKind)
 
     if (isDocGuest) {
       return {
@@ -1888,6 +1892,7 @@ export async function getLoginInfoByToken (
         workspaceDataId: workspace.dataId,
         workspaceUrl: workspace.url,
         endpoint,
+        collaboratorEndpoint,
         role: AccountRole.DocGuest
       } satisfies WorkspaceLoginInfo
     }
@@ -1908,6 +1913,7 @@ export async function getLoginInfoByToken (
       workspaceDataId: workspace.dataId,
       workspaceUrl: workspace.url,
       endpoint,
+      collaboratorEndpoint,
       role
     } satisfies WorkspaceLoginInfo
   } else {
@@ -1995,6 +2001,7 @@ export async function getLoginWithWorkspaceInfo (
             dataId: it.dataId,
             mode: it.status.mode,
             endpoint: getWorkspaceEndpoint(info, it.uuid, it.region),
+            collaboratorEndpoint: getWorkspaceCollaboratorEndpoint(it.uuid, it.region),
             role: roles.get(it.uuid) ?? null,
             version: {
               versionMajor: it.status.versionMajor,

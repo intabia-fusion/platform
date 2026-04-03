@@ -43,7 +43,7 @@ export interface ProcessMessage {
 export interface ProcessControl {
   ctx: MeasureContext
   client: TxOperations
-  collaboratorFactory: () => CollaboratorClient
+  collaboratorFactory: () => Promise<CollaboratorClient>
   cache: Map<string, any>
   messageContext: Record<string, any>
   workspace: WorkspaceUuid

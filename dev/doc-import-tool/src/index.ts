@@ -50,12 +50,6 @@ export function docImportTool (): void {
     process.exit(1)
   }
 
-  const collaboratorUrl = process.env.COLLABORATOR_URL
-  if (collaboratorUrl === undefined) {
-    console.error('please provide collaborator url')
-    process.exit(1)
-  }
-
   const collaborator = process.env.COLLABORATOR
 
   const uploadUrl = process.env.UPLOAD_URL ?? '/files'

@@ -18,8 +18,6 @@ interface Config {
   EnterpriseHostname: string
   Port: number
 
-  CollaboratorURL: string
-
   BotName: string
 
   BrandingPath: string
@@ -46,8 +44,6 @@ const envMap: { [key in keyof Config]: string } = {
   AllowedWorkspaces: 'ALLOWED_WORKSPACES',
   BotName: 'BOT_NAME',
 
-  CollaboratorURL: 'COLLABORATOR_URL',
-
   BrandingPath: 'BRANDING_PATH',
 
   WorkspaceInactivityInterval: 'WORKSPACE_INACTIVITY_INTERVAL',
@@ -66,9 +62,6 @@ const required: Array<keyof Config> = [
   'ClientID',
   'ClientSecret',
   'PrivateKey',
-
-  'CollaboratorURL',
-
   'BotName'
 ]
 
@@ -89,8 +82,6 @@ const config: Config = (() => {
     EnterpriseHostname: process.env[envMap.EnterpriseHostname],
     Port: parseInt(process.env[envMap.Port] ?? '3500'),
     BotName: process.env[envMap.BotName] ?? 'ao-huly-dev[bot]',
-
-    CollaboratorURL: process.env[envMap.CollaboratorURL],
 
     BrandingPath: process.env[envMap.BrandingPath] ?? '',
     WorkspaceInactivityInterval: parseInt(process.env[envMap.WorkspaceInactivityInterval] ?? '3'), // In days

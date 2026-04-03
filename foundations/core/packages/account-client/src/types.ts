@@ -38,6 +38,7 @@ export interface LoginInfoWorkspace {
   mode: WorkspaceMode
   version: WorkspaceVersion
   endpoint: EndpointInfo
+  collaboratorEndpoint: EndpointInfo
   role: AccountRole | null
   progress?: number
   branding?: string
@@ -60,6 +61,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   workspaceDataId?: WorkspaceDataId
   workspaceUrl: string
   endpoint: string
+  collaboratorEndpoint?: string
   token: string
   role: AccountRole
   allowGuestSignUp?: boolean

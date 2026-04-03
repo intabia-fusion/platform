@@ -26,16 +26,15 @@ import { type CollaboratorClient, getClient } from '@hcengineering/collaborator-
 import { htmlToJSON, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 
-import { type ServerConfig } from '../config'
 import { type MarkupOperations, type MarkupFormat, type MarkupRef } from './types'
 
 export function createMarkupOperations (
   url: string,
   workspace: WorkspaceUuid,
   token: string,
-  config: ServerConfig
+  collaboratorUrl: string
 ): MarkupOperations {
-  return new MarkupOperationsImpl(url, workspace, token, config)
+  return new MarkupOperationsImpl(url, workspace, token, collaboratorUrl)
 }
 
 class MarkupOperationsImpl implements MarkupOperations {
@@ -47,11 +46,11 @@ class MarkupOperationsImpl implements MarkupOperations {
     private readonly url: string,
     private readonly workspace: WorkspaceUuid,
     private readonly token: string,
-    private readonly config: ServerConfig
+    collaboratorUrl: string
   ) {
     this.refUrl = concatLink(this.url, `/browse?workspace=${workspace}`)
     this.imageUrl = concatLink(this.url, `/files?workspace=${workspace}&file=`)
-    this.collaborator = getClient(workspace, token, config.COLLABORATOR_URL)
+    this.collaborator = getClient(workspace, token, collaboratorUrl)
   }
 
   async fetchMarkup (

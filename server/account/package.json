@@ -33,7 +33,8 @@
     "@types/jest": "^29.5.5",
     "@types/otp-generator": "^4.0.2",
     "@types/pg": "^8.11.6",
-    "@types/node": "^22.18.1"
+    "@types/node": "^22.18.1",
+    "@types/js-yaml": "^4.0.9"
   },
   "dependencies": {
     "@hcengineering/mongo": "workspace:^0.7.17",
@@ -47,6 +48,7 @@
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/server-storage": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-pipeline": "workspace:^0.7.0"
+    "@hcengineering/server-pipeline": "workspace:^0.7.0",
+    "js-yaml": "^4.1.0"
   }
 }

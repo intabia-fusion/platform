@@ -5,7 +5,7 @@ export MINIO_ACCESS_KEY=minioadmin
 export MINIO_SECRET_KEY=minioadmin
 export MINIO_ENDPOINT=huly.local:9002
 export ACCOUNTS_URL=http://huly.local:3003
-export TRANSACTOR_URL=ws://huly.local:3334
+export REGION_CONFIG=./region-config.yaml
 export ACCOUNT_DB_URL=postgresql://root@huly.local:26258/defaultdb?sslmode=disable
 export MONGO_URL=mongodb://huly.local:27018
 export ELASTIC_URL=http://huly.local:9201
@@ -19,4 +19,4 @@ if [ -f "./bundle.js" ]; then
   BUNDLE_PATH="./bundle.js"
 fi
 
-node ${TOOL_OPTIONS} --max-old-space-size=8096 $BUNDLE_PATH $@
+node ${TOOL_OPTIONS} --max-old-space-size=8096 $BUNDLE_PATH "$@"

@@ -62,14 +62,6 @@ export function startFront (ctx: MeasureContext, extraConfig?: Record<string, st
     process.exit(1)
   }
 
-  const collaboratorUrl = process.env.COLLABORATOR_URL
-  if (collaboratorUrl === undefined) {
-    console.error('please provide collaborator url')
-    process.exit(1)
-  }
-
-  const collaborator = process.env.COLLABORATOR
-
   const modelVersion = process.env.MODEL_VERSION
   if (modelVersion === undefined) {
     console.error('please provide model version requirement')
@@ -141,8 +133,6 @@ export function startFront (ctx: MeasureContext, extraConfig?: Record<string, st
     telegramUrl,
     rekoniUrl,
     calendarUrl,
-    collaboratorUrl,
-    collaborator,
     brandingUrl,
     previewUrl,
     pushPublicKey,

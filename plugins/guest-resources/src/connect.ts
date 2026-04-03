@@ -75,6 +75,9 @@ export async function connect (title: string): Promise<Client | undefined> {
   setMetadata(presentation.metadata.WorkspaceName, workspaceLoginInfo.name ?? workspaceLoginInfo.workspaceUrl)
   setMetadata(presentation.metadata.WorkspaceDataId, workspaceLoginInfo.workspaceDataId)
   setMetadata(presentation.metadata.Endpoint, workspaceLoginInfo.endpoint)
+  if (workspaceLoginInfo.collaboratorEndpoint != null && workspaceLoginInfo.collaboratorEndpoint !== '') {
+    setMetadata(presentation.metadata.CollaboratorUrl, workspaceLoginInfo.collaboratorEndpoint)
+  }
 
   if (_token !== exchangedToken && _client !== undefined) {
     await _client.close()

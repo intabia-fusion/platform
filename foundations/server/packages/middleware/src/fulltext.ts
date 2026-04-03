@@ -16,6 +16,7 @@
 import { Analytics } from '@hcengineering/analytics'
 import core, {
   docKey,
+  hashWorkspace,
   isFullTextAttribute,
   isIndexedAttribute,
   toFindResult,
@@ -55,12 +56,8 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     super(context, next)
     const fulltextEndpoints = fulltextUrl.split(';').map((it) => it.trim())
 
-    const hash = this.hashWorkspace(context.workspace.uuid)
+    const hash = hashWorkspace(context.workspace.uuid)
     this.fulltextEndpoint = fulltextEndpoints[Math.abs(hash % fulltextEndpoints.length)]
-  }
-
-  hashWorkspace (dbWorkspaceName: string): number {
-    return [...dbWorkspaceName].reduce((hash, c) => (Math.imul(31, hash) + c.charCodeAt(0)) | 0, 0)
   }
 
   static create (url: string, token: string): MiddlewareCreator {

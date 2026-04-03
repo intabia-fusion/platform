@@ -1,6 +1,5 @@
 {
   "ACCOUNTS_URL": "/account",
-  "COLLABORATOR_URL": "ws://huly.local:3079",
   "UPLOAD_URL": "/files",
   "TELEGRAM_URL": "http://huly.local:8088",
   "GMAIL_URL": "http://huly.local:8089",

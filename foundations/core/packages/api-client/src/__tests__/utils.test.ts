@@ -13,7 +13,6 @@ jest.mock('@hcengineering/account-client')
 describe('getWorkspaceToken', () => {
   const mockConfig = {
     ACCOUNTS_URL: 'https://accounts.example.com',
-    COLLABORATOR_URL: 'https://collaborator.example.com',
     FILES_URL: 'https://files.example.com',
     UPLOAD_URL: 'https://upload.example.com'
   }

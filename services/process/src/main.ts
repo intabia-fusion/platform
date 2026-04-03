@@ -92,7 +92,7 @@ export async function messageHandler (record: ProcessMessage, ws: WorkspaceUuid,
       const control: ProcessControl = {
         ctx,
         client,
-        collaboratorFactory: () => createCollaboratorClient(ws),
+        collaboratorFactory: async () => await createCollaboratorClient(ws),
         cache: new Map<string, any>(),
         messageContext: record.context,
         workspace: ws,

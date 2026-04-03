@@ -4,12 +4,15 @@ services:
     pull_policy: never
     extra_hosts:
       - 'huly.local:host-gateway'
+    depends_on:
+      datalake:
+        condition: service_started
     environment:
-      - STREAM_ENDPOINT_URL=s3://localhost:9002
+      - STREAM_ENDPOINT_URL=datalake://datalake:4031
       - STREAM_INSECURE=true
       - STREAM_SERVER_SECRET=secret
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - STREAM_REGION=
+      - STREAM_QUEUE_CONFIG=${QUEUE_CONFIG}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     ports:
       - 1081:1080
@@ -171,6 +174,7 @@ services:
       - 3003:3003
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
+      - ./region-config.yaml:/var/cfg/region-config.yaml
     environment:
       - ACCOUNT_PORT=3003
       - QUEUE_CONFIG=${QUEUE_CONFIG}
@@ -178,8 +182,7 @@ services:
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - WORKSPACE_LIMIT_PER_USER=100
       - DB_URL=${DB_PG_URL}
-      - REGION_INFO=|America
-      - TRANSACTOR_URL=ws://transactor:3334;ws://localhost:3334
+      - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
@@ -202,7 +205,7 @@ services:
     environment:
       - SERVER_SECRET=secret
       - DB_URL=${DB_PG_URL}
-      - TRANSACTOR_URL=ws://transactor:3334;ws://localhost:3334
+      - TRANSACTOR_URL=ws://transactor0:3334;ws://localhost:3334,ws://transactor1:3335;ws://localhost:3335
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - REGION=
@@ -212,7 +215,19 @@ services:
       - STATS_URL=http://stats:4901
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
-  front:
+  nginx:
+    image: nginx:alpine
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      - front0
+      - front1
+    ports:
+      - 8083:8083
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+  front0:
     image: intabiafusion/front
     pull_policy: never
     extra_hosts:
@@ -221,11 +236,11 @@ services:
       - account
       - minio
       - elastic
-      - collaborator
+      - collaborator0
+      - collaborator1
       - stats
-      - transactor
-    ports:
-      - 8083:8083
+      - transactor0
+      - transactor1
     volumes:
       - ./branding-test.json:/app/dist/branding-test.json
     environment:
@@ -239,14 +254,50 @@ services:
       - CALENDAR_URL=http://localhost:8095
       - REKONI_URL=http://rekoni:4007
       - TELEGRAM_URL=http://localhost:8086
-      - COLLABORATOR_URL=ws://localhost:3079
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - BRANDING_URL=http://localhost:8083/branding-test.json
       - STATS_URL=http://stats:4901
       - STATS_API=http://localhost:4901
+      - STREAM_URL=http://localhost:1081/recording
+      - DATALAKE_URL=http://localhost:4031
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
-  transactor:
+  front1:
+    image: intabiafusion/front
+    pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    links:
+      - account
+      - minio
+      - elastic
+      - collaborator0
+      - collaborator1
+      - stats
+      - transactor0
+      - transactor1
+    volumes:
+      - ./branding-test.json:/app/dist/branding-test.json
+    environment:
+      - SERVER_PORT=8084
+      - SERVER_SECRET=secret
+      - ACCOUNTS_URL_INTERNAL=http://account:3003
+      - ACCOUNTS_URL=http://localhost:3003
+      - UPLOAD_URL=/files
+      - ELASTIC_URL=http://elastic:9200
+      - GMAIL_URL=http://localhost:8088
+      - CALENDAR_URL=http://localhost:8095
+      - REKONI_URL=http://rekoni:4007
+      - TELEGRAM_URL=http://localhost:8086
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - BRANDING_URL=http://localhost:8083/branding-test.json
+      - STATS_URL=http://stats:4901
+      - STATS_API=http://localhost:4901
+      - STREAM_URL=http://localhost:1081/recording
+      - DATALAKE_URL=http://localhost:4031
+      - USE_OTP=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+  transactor0:
     image: intabiafusion/transactor
     pull_policy: never
     depends_on:
@@ -278,7 +329,6 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://localhost:8083
       - ACCOUNTS_URL=http://account:3003
-      - COLLABORATOR_URL=http://collaborator:3079
       - LAST_NAME_FIRST=true
       - BRANDING_PATH=/var/cfg/branding.json
       - FULLTEXT_URL=http://fulltext:4710
@@ -287,18 +337,78 @@ services:
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
-  collaborator:
+  transactor1:
+    image: intabiafusion/transactor
+    pull_policy: never
+    depends_on:
+      redpanda:
+        condition: service_started
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    links:
+      - elastic
+      - minio
+      - rekoni
+      - cockroach
+      - postgres
+      - account
+      - stats
+      - redpanda
+    ports:
+      - 3335:3335
+    volumes:
+      - ./branding-test.json:/var/cfg/branding.json
+    environment:
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION=
+      - SERVER_PORT=3335
+      - SERVER_SECRET=secret
+      - DB_URL=${DB_PG_URL}
+      - METRICS_CONSOLE=false
+      - METRICS_FILE=metrics.txt
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - FRONT_URL=http://localhost:8083
+      - ACCOUNTS_URL=http://account:3003
+      - LAST_NAME_FIRST=true
+      - BRANDING_PATH=/var/cfg/branding.json
+      - FULLTEXT_URL=http://fulltext:4710
+      - STATS_URL=http://stats:4901
+      - ENABLE_COMPRESSION=true
+      - RATE_LIMIT_MAX=25000
+      - RATE_LIMIT_WINDOW=1000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+  collaborator0:
     image: intabiafusion/collaborator
     pull_policy: never
     links:
       - minio
-      - transactor
+      - transactor0
+      - transactor1
     extra_hosts:
       - 'huly.local:host-gateway'
     ports:
       - 3079:3079
     environment:
       - COLLABORATOR_PORT=3079
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - FULLTEXT_URL=http://fulltext:4710
+      - STATS_URL=http://stats:4901
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
+  collaborator1:
+    image: intabiafusion/collaborator
+    links:
+      - minio
+      - transactor0
+      - transactor1
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    ports:
+      - 3080:3080
+    environment:
+      - COLLABORATOR_PORT=3080
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -372,7 +482,7 @@ services:
         condition: service_started
       account:
         condition: service_started
-      transactor:
+      transactor0:
         condition: service_started
     environment:
       - SECRET=secret
@@ -381,5 +491,31 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
+  datalake:
+    image: intabiafusion/datalake
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      minio:
+        condition: service_healthy
+      cockroach:
+        condition: service_started
+      stats:
+        condition: service_started
+      account:
+        condition: service_started
+    ports:
+      - 4031:4031
+    environment:
+      - PORT=4031
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - STATS_URL=http://stats:4901
+      - STREAM_URL=http://stream:1080/recording
+      - DB_URL=${DB_PG_URL}
+      - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped

@@ -165,7 +165,6 @@ export interface Config {
   DATALAKE_URL?: string
   MODEL_VERSION: string
   VERSION: string
-  COLLABORATOR_URL: string
   COLLABORATOR?: string
   REKONI_URL: string
   TELEGRAM_URL: string
@@ -516,7 +515,6 @@ export async function configurePlatform() {
     presentation.metadata.FileStorage,
     createFileStorage(config.UPLOAD_URL, config.DATALAKE_URL, config.HULYLAKE_URL)
   )
-  setMetadata(presentation.metadata.CollaboratorUrl, config.COLLABORATOR_URL)
 
   const testingAccentTheme = localStorage.getItem('#testing.accent.theme')
 
