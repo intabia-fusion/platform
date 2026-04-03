@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Icon, Label } from '@hcengineering/ui'
   import { Asset, IntlString } from '@hcengineering/platform'
-  import activity, { DisplayDocUpdateMessage, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import activity, { DocUpdateMessage, DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { Doc } from '@hcengineering/core'
   import attachment from '@hcengineering/attachment'
@@ -23,7 +23,7 @@
 
   import DocUpdateMessageObjectValue from './DocUpdateMessageObjectValue.svelte'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessage
   export let viewlet: DocUpdateMessageViewlet | undefined
   export let objectName: IntlString | undefined
   export let collectionName: IntlString | undefined
@@ -36,10 +36,10 @@
 
   const isOwn = message.objectId === message.attachedTo
 
-  let valueMessages: DocUpdateMessage[] = []
+  let valueMessages: DocUpdateMessageHistory[] = []
   let objects: Doc[] = []
 
-  $: valueMessages = message.previousMessages?.length ? [...message.previousMessages, message] : [message]
+  $: valueMessages = message.history?.length && !isOwn ? message.history : [message as DocUpdateMessageHistory]
 
   $: objectsQuery.query(message.objectClass, { _id: { $in: valueMessages.map((it) => it.objectId) } }, (res) => {
     objects = res
@@ -66,7 +66,7 @@
         <Label label={activity.string.Removed} />
       {/if}
       <span class="lower">
-        {#if collectionName && (message.previousMessages?.length || !isOwn)}
+        {#if collectionName && (message.history?.length || !isOwn)}
           <Label label={collectionName} />:
         {:else if objectName}
           <Label label={objectName} />:
@@ -77,6 +77,8 @@
       {#each valueMessages as valueMessage, index}
         <DocUpdateMessageObjectValue
           message={valueMessage}
+          space={message.space}
+          createdBy={message.createdBy ?? message.modifiedBy}
           {viewlet}
           {preview}
           doc={objects.find((it) => it._id === valueMessage.objectId)}
@@ -102,7 +104,7 @@
       <Label label={activity.string.Removed} />
     {/if}
     <span class="lower">
-      {#if collectionName && (message.previousMessages?.length || !isOwn)}
+      {#if collectionName && (message.history?.length || !isOwn)}
         <Label label={collectionName} />:
       {:else if objectName}
         <Label label={objectName} />:
@@ -113,6 +115,8 @@
       {#each valueMessages as valueMessage, index}
         <DocUpdateMessageObjectValue
           message={valueMessage}
+          space={message.space}
+          createdBy={message.createdBy ?? message.modifiedBy}
           {viewlet}
           {preview}
           doc={objects.find((it) => it._id === valueMessage.objectId)}
@@ -152,6 +156,7 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
+    row-gap: 0.5rem;
 
     &.preview {
       flex-wrap: nowrap;

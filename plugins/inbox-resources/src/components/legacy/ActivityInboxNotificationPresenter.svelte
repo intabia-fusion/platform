@@ -16,14 +16,9 @@
   import { getClient } from '@hcengineering/presentation'
   import { matchQuery, Doc } from '@hcengineering/core'
   import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@hcengineering/notification'
-  import {
-    ActivityMessagePreview,
-    combineActivityMessages,
-    sortActivityMessages
-  } from '@hcengineering/activity-resources'
-  import activity, { ActivityMessage, DisplayActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+  import { ActivityMessagePreview, sortActivityMessages } from '@hcengineering/activity-resources'
+  import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Person } from '@hcengineering/contact'
 
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
@@ -35,19 +30,19 @@
   const client = getClient()
 
   let viewlet: ActivityNotificationViewlet | undefined = undefined
-  let displayMessage: DisplayActivityMessage | undefined = undefined
+  let displayMessage: ActivityMessage | undefined = undefined
 
   $: void updateDisplayMessage(value.combinedMessages)
 
   async function updateDisplayMessage (messages: ActivityMessage[]): Promise<void> {
-    const combinedMessages = combineActivityMessages(sortActivityMessages(messages))
+    const combinedMessages = sortActivityMessages(messages)
 
     displayMessage = combinedMessages[0]
   }
 
   $: updateViewlet(viewlets, displayMessage)
 
-  function matchViewlet (viewlet: ActivityNotificationViewlet, message: DisplayActivityMessage): boolean {
+  function matchViewlet (viewlet: ActivityNotificationViewlet, message: ActivityMessage): boolean {
     const hierarchy = client.getHierarchy()
     const matched = matchQuery([message], viewlet.messageMatch, message._class, hierarchy, true)[0]
     if (matched !== undefined) return true
@@ -65,7 +60,7 @@
     return false
   }
 
-  function updateViewlet (viewlets: ActivityNotificationViewlet[], message?: DisplayActivityMessage): void {
+  function updateViewlet (viewlets: ActivityNotificationViewlet[], message?: ActivityMessage): void {
     if (viewlets.length === 0 || message === undefined) {
       viewlet = undefined
       return

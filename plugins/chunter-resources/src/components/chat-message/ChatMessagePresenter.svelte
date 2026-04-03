@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, ActivityMessageViewType, DisplayActivityMessage } from '@hcengineering/activity'
+  import activity, { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
   import {
     ActivityDocLink,
     ActivityMessageTemplate,
@@ -72,7 +72,7 @@
   const STALE_TIMEOUT_MS = 5000
   const me = getCurrentEmployee()
 
-  let parentMessage: DisplayActivityMessage | undefined = undefined
+  let parentMessage: ActivityMessage | undefined = undefined
   let object: Doc | undefined
 
   let refInput: ChatMessageInput
@@ -114,7 +114,7 @@
 
   $: value !== undefined &&
     getParentMessage(value.attachedToClass, value.attachedTo, value.space).then((res) => {
-      parentMessage = res as DisplayActivityMessage
+      parentMessage = res as ActivityMessage
     })
 
   $: if (doc !== undefined && value?.attachedTo === doc._id) {

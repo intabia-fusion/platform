@@ -13,17 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, {
-  type ActivityMessage,
-  type DisplayDocUpdateMessage,
-  type DocUpdateMessage
-} from '@hcengineering/activity'
-import {
-  activityMessagesComparator,
-  combineActivityMessages,
-  isActivityMessageClass,
-  messageInFocus
-} from '@hcengineering/activity-resources'
+import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
+import { isActivityMessageClass, messageInFocus, sortActivityMessages } from '@hcengineering/activity-resources'
 import { Analytics } from '@hcengineering/analytics'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 import core, {
@@ -286,12 +277,12 @@ export function getDisplayInboxNotifications (
       return (message as DocUpdateMessage).objectClass === objectClass
     })
 
-  const combinedMessages = combineActivityMessages(messages.sort(activityMessagesComparator), SortingOrder.Descending)
+  const combinedMessages = sortActivityMessages(messages, SortingOrder.Descending)
 
   for (const message of combinedMessages) {
     if (message._class === activity.class.DocUpdateMessage) {
-      const displayMessage = message as DisplayDocUpdateMessage
-      const ids: Array<Ref<ActivityMessage>> = displayMessage.combinedMessagesIds ?? [displayMessage._id]
+      const displayMessage = message as DocUpdateMessage
+      const ids: Array<Ref<ActivityMessage>> = [displayMessage._id]
       const activityNotification = activityNotifications.find(({ attachedTo }) => attachedTo === message._id)
 
       if (activityNotification === undefined) {

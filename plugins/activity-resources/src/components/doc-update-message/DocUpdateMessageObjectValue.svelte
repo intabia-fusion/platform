@@ -13,21 +13,27 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DisplayDocUpdateMessage, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import core, { Class, Doc, generateId, Ref, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+  import { DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import core, {
+    Class,
+    Doc,
+    generateId,
+    PersonId,
+    Ref,
+    Space,
+    Timestamp,
+    TxCreateDoc,
+    TxProcessor
+  } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { AnyComponent, Component } from '@hcengineering/ui'
   import view, { ObjectPanel } from '@hcengineering/view'
-  import {
-    buildRemovedDoc,
-    checkIsObjectRemoved,
-    DocNavLink,
-    getDocTitle,
-    isAttachedDoc
-  } from '@hcengineering/view-resources'
+  import { buildRemovedDoc, DocNavLink, getDocTitle, isAttachedDoc } from '@hcengineering/view-resources'
   import contact from '@hcengineering/contact'
 
-  export let message: DisplayDocUpdateMessage
+  export let message: DocUpdateMessageHistory
+  export let space: Ref<Space>
+  export let createdBy: PersonId
   export let viewlet: DocUpdateMessageViewlet | undefined
   export let doc: Doc | undefined
   export let preview = false
@@ -50,7 +56,7 @@
     return (await getDocTitle(client, object._id, object._class, object)) ?? ''
   }
 
-  function buildObject (message: DocUpdateMessage): Doc | undefined {
+  function buildObject (message: DocUpdateMessageHistory): Doc | undefined {
     if (message.objectAttributes == null) return undefined
 
     const createTx: TxCreateDoc<Doc> = {
@@ -59,16 +65,16 @@
       space: core.space.Workspace,
       objectId: message.objectId,
       objectClass: message.objectClass,
-      objectSpace: message.space,
+      objectSpace: space,
       attributes: message.objectAttributes ?? {},
-      modifiedBy: message.createdBy ?? message.modifiedBy,
-      modifiedOn: message.createdOn ?? message.modifiedOn
+      modifiedBy: createdBy,
+      modifiedOn: message.createdOn
     }
 
     return TxProcessor.createDoc2Doc(createTx)
   }
 
-  async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, attachedTo: Ref<Doc>, doc?: Doc): Promise<void> {
+  async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
     if (doc != null) {
       object = doc
       return
@@ -78,7 +84,7 @@
     object = buildObject(message) ?? (await buildRemovedDoc(client, _id, _class))
   }
 
-  $: void loadObject(message.objectId, message.objectClass, message.attachedTo, doc)
+  $: void loadObject(message.objectId, message.objectClass, doc)
 
   function getPanelComponent (object: Doc, objectPanel?: ObjectPanel): AnyComponent {
     if (objectPanel !== undefined) {

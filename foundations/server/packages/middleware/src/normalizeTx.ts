@@ -13,33 +13,33 @@
 // limitations under the License.
 //
 import core, {
-  type MeasureContext,
-  type Tx,
-  type SessionData,
-  type TxApplyIf,
-  type Ref,
   type Class,
   type Doc,
-  type Space,
-  type PersonId,
-  TxProcessor,
-  type TxWorkspaceEvent,
+  type MeasureContext,
+  type Mixin,
   type OperationDomain,
-  type TxDomainEvent,
-  type TxCUD,
-  type TxModelUpgrade,
+  type PersonId,
+  type Ref,
+  type SessionData,
+  type Space,
+  type Tx,
+  type TxApplyIf,
   type TxCreateDoc,
-  type TxUpdateDoc,
-  type TxRemoveDoc,
+  type TxCUD,
+  type TxDomainEvent,
   type TxMixin,
-  type Mixin
+  type TxModelUpgrade,
+  TxProcessor,
+  type TxRemoveDoc,
+  type TxUpdateDoc,
+  type TxWorkspaceEvent
 } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
-  type TxMiddlewareResult,
-  type PipelineContext
+  type PipelineContext,
+  type TxMiddlewareResult
 } from '@hcengineering/server-core'
 
 // Helper types to require update in validation after Tx types are changed
@@ -240,8 +240,11 @@ export class NormalizeTxMiddleware extends BaseMiddleware implements Middleware 
       const updateDoc: ExplicitTx<TxUpdateDoc<Doc>> = Object.assign(baseCUD, { operations, retrieve })
       return updateDoc
     } else if (baseCUD._class === core.class.TxRemoveDoc) {
-      const removeDoc: ExplicitTx<TxRemoveDoc<Doc>> = baseCUD
-      return removeDoc
+      const { removedDoc } = source as Record<keyof TxRemoveDoc<Doc>, unknown>
+
+      return Object.assign(baseCUD, {
+        removedDoc: removedDoc as Doc | undefined
+      })
     } else if (baseCUD._class === core.class.TxMixin) {
       const { mixin, attributes } = source as Record<keyof TxMixin<Doc, Doc>, unknown>
       if (typeof mixin !== 'string' || typeof attributes !== 'object' || attributes === null) {

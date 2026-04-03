@@ -1,11 +1,6 @@
-import { Class, Doc, Ref, TxCUD } from '@hcengineering/core'
+import { Class, Doc } from '@hcengineering/core'
 import { Resource } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
-
-export interface DocObjectCache {
-  docs: Map<Ref<Doc>, Doc | null>
-  transactions: Map<Ref<Doc>, TxCUD<Doc>[]>
-}
 
 export type PresenterControl = Pick<
 TriggerControl,

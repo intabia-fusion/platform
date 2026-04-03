@@ -50,23 +50,6 @@ export function createModel (builder: Builder): void {
   builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverActivity.trigger.ActivityMessagesHandler,
-    txMatch: {
-      objectClass: {
-        $nin: [
-          activity.class.ActivityMessage,
-          notification.class.DocNotifyContext,
-          notification.class.ActivityInboxNotification,
-          notification.class.MentionInboxNotification,
-          notification.class.ReactionInboxNotification,
-          notification.class.BrowserNotification
-        ]
-      }
-    },
-    isAsync: true
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.HandleCardActivity,
     isAsync: true,
     txMatch: {

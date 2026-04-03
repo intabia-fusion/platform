@@ -16,8 +16,6 @@
   import activity, {
     ActivityMessage,
     ActivityMessageViewType,
-    DisplayActivityMessage,
-    DisplayDocUpdateMessage,
     DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
@@ -38,7 +36,7 @@
   import { getIsTextType } from '../../utils'
   import { Person } from '@hcengineering/contact'
 
-  export let value: DisplayDocUpdateMessage
+  export let value: DocUpdateMessage
   export let doc: Doc | undefined = undefined
   export let showNotify: boolean = false
   export let isHighlighted: boolean = false
@@ -75,7 +73,7 @@
 
   let viewlet: DocUpdateMessageViewlet | undefined
   let attributeModel: AttributeModel | undefined = undefined
-  let parentMessage: DisplayActivityMessage | undefined = undefined
+  let parentMessage: ActivityMessage | undefined = undefined
   let parentObject: Doc | undefined
   let object: Doc | undefined
   let isObjectRemoved: boolean = false
@@ -99,7 +97,7 @@
   }
 
   $: void getParentMessage(value.attachedToClass, value.attachedTo, value.space).then((res) => {
-    parentMessage = res as DisplayActivityMessage
+    parentMessage = res as ActivityMessage
   })
 
   let person: Person | undefined
@@ -197,11 +195,13 @@
       {#if viewlet?.component && object}
         <ShowMore>
           <div class="customContent">
-            {#each value?.previousMessages ?? [] as msg}
-              <Component
-                is={viewlet.component}
-                props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, onClick }}
-              />
+            {#each value?.history ?? [] as msg}
+              {#if value.action === 'update' || msg.objectId !== value.objectId}
+                <Component
+                  is={viewlet.component}
+                  props={{ message: msg, _id: msg.objectId, _class: msg.objectClass, onClick }}
+                />
+              {/if}
             {/each}
             <Component
               is={viewlet.component}

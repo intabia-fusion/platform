@@ -32,6 +32,30 @@ services:
       - QUEUE_REGION=
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
+  activity:
+    image: intabiafusion/activity
+    pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./branding-test.json:/var/cfg/branding.json
+    environment:
+      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - ACCOUNTS_URL=http://huly.local:3003
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - SECRET=secret
+      - BRANDING_PATH=/var/cfg/branding.json
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
   cockroach:
     image: cockroachdb/cockroach:v24.1.2
     ports:

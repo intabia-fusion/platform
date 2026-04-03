@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { DisplayActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import { Action, Component } from '@hcengineering/ui'
   import { Class, Doc, Ref, Space } from '@hcengineering/core'
@@ -22,7 +22,7 @@
   import activity from '../../plugin'
 
   export let doc: Doc | undefined
-  export let value: DisplayActivityMessage
+  export let value: ActivityMessage
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
   export let actions: Action[] = []

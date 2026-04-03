@@ -29,7 +29,7 @@ import {
 import { derived, get, type Readable, writable } from 'svelte/store'
 import activity, { type ActivityMessage, type ActivityReference } from '@hcengineering/activity'
 import attachment from '@hcengineering/attachment'
-import { combineActivityMessages, sortActivityMessages } from '@hcengineering/activity-resources'
+import { sortActivityMessages } from '@hcengineering/activity-resources'
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
 
 export type LoadMode = 'forward' | 'backward'
@@ -304,7 +304,7 @@ export class ChannelDataProvider implements IChannelDataProvider {
         ...(this.tailStart !== undefined ? { createdOn: { $gte: this.tailStart } } : {})
       },
       async (res) => {
-        const result = combineActivityMessages(res.reverse())
+        const result = res.reverse()
         this.tailStore.set(result)
 
         this.isTailLoaded.set(true)
@@ -381,7 +381,7 @@ export class ChannelDataProvider implements IChannelDataProvider {
     return {
       from: from.createdOn ?? from.modifiedOn,
       to: to.createdOn ?? to.modifiedOn,
-      data: isBackward ? combineActivityMessages(messages.reverse()) : combineActivityMessages(messages)
+      data: isBackward ? messages.reverse() : messages
     }
   }
 

@@ -979,7 +979,7 @@ services:
       - SMTP_HOST=mailpit
       - SMTP_USERNAME=platform
       - SMTP_PASSWORD=platform
-      - SMTP_PORT=1025
+      - SMTP_PORT=1026
       - SMTP_TLS_MODE=ignore
       - SMTP_ALLOW_SELF_SIGNED=true
   mail_client:
@@ -997,7 +997,7 @@ services:
       - SMTP_HOST=mailpit
       - SMTP_USERNAME=platform
       - SMTP_PASSWORD=platform
-      - SMTP_PORT=1025
+      - SMTP_PORT=1026
       - SMTP_TLS_MODE=ignore
       - SMTP_ALLOW_SELF_SIGNED=true
   mailpit:
@@ -1009,7 +1009,7 @@ services:
       - mailpit:/data
     ports:
       - 8025:8025
-      - 1025:1025
+      - 1026:1026
     environment:
       MP_MAX_MESSAGES: 5000
       MP_DATABASE: /data/mailpit.db
@@ -1034,6 +1034,31 @@ services:
       - PORT=4042
     ports:
       - 4042:4042
+    restart: unless-stopped
+  activity:
+    image: intabiafusion/activity
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      postgres:
+        condition: service_started
+      transactor:
+        condition: service_started
+    volumes:
+      - ./branding.json:/var/cfg/branding.json
+    environment:
+      - SECRET=secret
+      - ACCOUNTS_URL=http://huly.local:3000
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - DB_URL=${DB_URL_PG}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - APPLY_TX_BATCH_SIZE=100
+      - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   notifications:
     image: intabiafusion/notifications

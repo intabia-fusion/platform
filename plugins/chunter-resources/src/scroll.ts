@@ -15,7 +15,7 @@
 import { getDay, type Timestamp } from '@hcengineering/core'
 import { get } from 'svelte/store'
 import { sortActivityMessages } from '@hcengineering/activity-resources'
-import { type ActivityMessage, type DisplayActivityMessage } from '@hcengineering/activity'
+import { type ActivityMessage } from '@hcengineering/activity'
 import { type ReadState } from '@hcengineering/notification'
 
 import { getClosestDate, readChannelMessages } from './utils'
@@ -139,7 +139,7 @@ export function messageInView (msgElement: Element, containerRect: DOMRect): boo
   return rect.bottom > containerRect.top && rect.top < containerRect.bottom
 }
 
-const messagesToReadAccumulator: Set<DisplayActivityMessage> = new Set<DisplayActivityMessage>()
+const messagesToReadAccumulator: Set<ActivityMessage> = new Set<ActivityMessage>()
 let messagesToReadAccumulatorTimer: any
 
 export function readViewportMessages (

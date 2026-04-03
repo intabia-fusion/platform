@@ -208,7 +208,8 @@ class Workspace {
 
       for (const context of ctx) {
         const current = context.lastView ?? 0
-        if (current >= ts) continue
+        if (current > ts) continue
+        context.lastView = Math.max(current, ts)
         res.push(
           this.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
             lastView: ts
@@ -461,6 +462,17 @@ class Workspace {
       return await this.processCreateMessage(tx as TxCreateDoc<ActivityMessage>, notifiedUsers, _res)
     } else if (tx._class === core.class.TxRemoveDoc) {
       return await this.processRemoveMessage(tx as TxRemoveDoc<ActivityMessage>)
+    } else if (tx._class === core.class.TxUpdateDoc) {
+      if (!this.client.hierarchy.isDerived(tx.objectClass, activity.class.DocUpdateMessage)) return []
+
+      const updateTx = tx as TxUpdateDoc<DocUpdateMessage>
+      const ops = updateTx.operations
+      const historyChanged =
+        ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
+
+      if (historyChanged) {
+        return await this.processUpdateMessage(updateTx, notifiedUsers, _res)
+      }
     }
 
     return []
@@ -621,6 +633,84 @@ class Workspace {
 
   private async processRemoveMessage (tx: TxRemoveDoc<ActivityMessage>): Promise<TxCUD<Doc>[]> {
     return []
+  }
+
+  private async processUpdateMessage (
+    tx: TxUpdateDoc<DocUpdateMessage>,
+    notifiedUsers: AccountUuid[],
+    _res: TxCUD<Doc>[]
+  ): Promise<TxCUD<Doc>[]> {
+    const client = this.client
+    const _message = await this.cache.getDoc(tx.objectId, tx.objectClass)
+    if (_message === undefined) return []
+
+    const message = TxProcessor.updateDoc2Doc(_message, tx)
+
+    const doc = await this.cache.getDoc(message.attachedTo, message.attachedToClass)
+    if (doc === undefined) return []
+
+    const space = await this.cache.getDocSpace(doc)
+    if (space === undefined) return []
+
+    const res: TxCUD<Doc>[] = []
+    const contexts = await this.cache.getContexts(doc._id)
+    const sender = await this.cache.getSender(tx.modifiedBy)
+
+    res.push(...this.updateContextLastUpdate(contexts, tx.modifiedOn, sender.account, _res))
+
+    const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
+
+    if (message.objectClass === core.class.Collaborator) {
+      const acc = message.objectAttributes?.collaborator as AccountUuid | undefined
+      if (acc != null && !collaborators.includes(acc)) collaborators.push(acc)
+    }
+
+    if (collaborators.length === 0) return res
+
+    const settings = await this.cache.getSettings()
+    const receivers = await this.cache.getReceivers(collaborators)
+
+    if (receivers.length === 0) return res
+
+    const oldNotifications = (await this.client.findAll(notification.class.ActivityInboxNotification, {
+      attachedTo: message._id
+    })) as InboxNotification[]
+
+    for (const receiver of receivers) {
+      const context = contexts.find((it) => it.user === receiver.account)
+      const mode = context?.settings?.mode ?? 'all'
+      if (mode === 'mute') continue
+
+      const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings, mode)
+      const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
+      const type = types[0]
+      if (type == null) continue
+
+      const oldNotification = oldNotifications.find((it) => it.user === receiver.account)
+      if (oldNotification != null) {
+        res.push(this.txFactory.createTxRemoveDoc(oldNotification._class, oldNotification.space, oldNotification._id))
+      }
+
+      res.push(
+        ...(await this.createNotifications(
+          notification.class.ActivityInboxNotification,
+          {
+            attachedTo: message._id,
+            attachedToClass: message._class
+          },
+          await getMessageNotificationContent(client, type, doc, message, sender),
+          doc,
+          tx.modifiedOn,
+          tx.modifiedBy,
+          context,
+          receiver,
+          notifyResult,
+          true,
+          res
+        ))
+      )
+    }
+    return res
   }
 
   private async getCollaboratorAccounts (doc: Doc, space: Space): Promise<AccountUuid[]> {

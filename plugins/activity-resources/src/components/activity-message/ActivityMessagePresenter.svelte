@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DisplayActivityMessage, ActivityMessageViewType, ActivityMessage } from '@hcengineering/activity'
+  import { ActivityMessageViewType, ActivityMessage } from '@hcengineering/activity'
   import view from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
   import { Action, Component } from '@hcengineering/ui'
   import { Class, Doc, Ref } from '@hcengineering/core'
 
-  export let value: DisplayActivityMessage
+  export let value: ActivityMessage
   export let doc: Doc | undefined = undefined
   export let showNotify: boolean = false
   export let isHighlighted: boolean = false
