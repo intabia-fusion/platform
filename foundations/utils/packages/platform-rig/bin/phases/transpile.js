@@ -1,4 +1,19 @@
 /**
+  Copyright © 2026 Intabia Fusion.
+
+  Licensed under the Eclipse Public License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may
+  obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+/**
  * Transpile phase - synchronous execution
  * Fast esbuild transpilation with change detection
  */
@@ -12,6 +27,26 @@ const {
   markPhaseCompleted,
   invalidateCache 
 } = require('../libs/cache')
+
+// ANSI color codes
+const COLORS = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m'
+}
+
+function color(text, colorCode) {
+  return `${colorCode}${text}${COLORS.reset}`
+}
+
+function success(text) { return color(text, COLORS.green) }
+function error(text) { return color(text, COLORS.red) }
+function dim(text) { return color(text, COLORS.dim) }
 
 async function runTranspilePhase(graph, packageNames, concurrency, options = {}) {
   const { force = false, packageHashes } = options
@@ -131,11 +166,11 @@ async function runTranspilePhase(graph, packageNames, concurrency, options = {})
         } else {
           results.successCount++
           const svelteInfo = graph.get(name).phaseBuild === 'compile ui-esbuild' ? ' (svelte)' : ''
-          console.log(`    [${completedCount}/${packageNames.length}] ${name} transpiled${svelteInfo} (${result.filesCount} files)`)
+          console.log(`    ${success('T')} ${dim(completedCount)}/${packageNames.length} ${name} ${success('transpiled')}${svelteInfo} ${dim('(' + result.filesCount + ' files)')}`)
         }
       } else {
         results.errors.push({ package: name, error: result.error })
-        console.error(`    [${completedCount}/${packageNames.length}] ${name} transpile failed: ${result.error.message}`)
+        console.error(`    ${error('T')} ${dim(completedCount)}/${packageNames.length} ${name} ${error('FAILED')}`)
       }
 
       completed.add(name)

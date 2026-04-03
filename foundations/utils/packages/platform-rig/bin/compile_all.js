@@ -8,6 +8,31 @@ const { BuildTaskQueue, TaskType } = require('./libs/task-queue')
 const { CpuTracker, getOptimalWorkerCount, getDefaultWorkerCount } = require('./libs/utils')
 const { calculatePackageHash } = require('./libs/cache')
 
+// ANSI color codes
+const COLORS = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m'
+}
+
+function color(text, colorCode) {
+  return `${colorCode}${text}${COLORS.reset}`
+}
+
+function success(text) { return color(text, COLORS.green) }
+function error(text) { return color(text, COLORS.red) }
+function warn(text) { return color(text, COLORS.yellow) }
+function info(text) { return color(text, COLORS.cyan) }
+function dim(text) { return color(text, COLORS.dim) }
+function bold(text) { return color(text, COLORS.bold) }
+
 // Import phases
 const { runTranspilePhase } = require('./phases/transpile')
 const { runBundlePhase } = require('./phases/bundle-phase')
@@ -265,7 +290,7 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
       results.successCount++
       results.cacheHits++
       const pkgTime = Math.round(performance.now() - pkgStart)
-      console.log(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validated (cached) ${pkgTime}ms`)
+      console.log(`    ${success('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${success('validated')} (cached) ${dim(pkgTime + 'ms')}`)
       return { success: true, fromCache: true }
     }
 
@@ -283,12 +308,12 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
 
       if (result.success) {
         results.successCount++
-        // Note: cacheHits is already incremented above for packages that hit the cache
+        // Note: cache_hits is already incremented above for packages that hit the cache
         // Worker-level cache is disabled, so we don't check result.fromCache here
         const cacheInfo = ''
         const syncInfo = result.syncResult ? ` [${result.syncResult.copied}c/${result.syncResult.unchanged}u/${result.syncResult.removed}r]` : ''
-        const cacheStatsInfo = result.cacheStats ? ` src:${result.cacheStats.sourceFiles}` : ''
-        console.log(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validated${cacheInfo}${syncInfo}${cacheStatsInfo} ${pkgTime}ms`)
+        const cacheStatsInfo = result.cacheStats?.sourceCacheSize ? ` src:${result.cacheStats.sourceCacheSize} files` : ''
+        console.log(`    ${success('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${success('validated')}${cacheInfo}${syncInfo}${cacheStatsInfo} ${dim(pkgTime + 'ms')}`)
         if (!result.fromCache) {
           timings.push({ package: packageName, time: pkgTime })
         }
@@ -304,8 +329,8 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
       } else {
         results.errors.push({ package: packageName, error: result.error })
         const errMsg = result.error ? (result.error.message || String(result.error)) : 'unknown'
-        console.error(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validation failed ${pkgTime}ms`)
-        console.error(`      ${errMsg}`)
+        console.error(`    ${error('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${error('FAILED')} ${dim(pkgTime + 'ms')}`)
+        console.error(`      ${errMsg.split('\n')[0]}`)
         timings.push({ package: packageName, time: pkgTime, failed: true })
       }
 
@@ -313,7 +338,8 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     } catch (err) {
       const pkgTime = Math.round(performance.now() - pkgStart)
       results.errors.push({ package: packageName, error: err })
-      console.error(`    [V ${completedCount + 1}/${packages.length}] ${packageName} validation error: ${err.message} ${pkgTime}ms`)
+      console.error(`    ${error('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${error('ERROR')} ${dim(pkgTime + 'ms')}`)
+      console.error(`      ${err.message.split('\n')[0]}`)
       timings.push({ package: packageName, time: pkgTime, failed: true })
       return { success: false, error: err }
     }
@@ -477,17 +503,16 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.cacheHits > 0) results.bundle.cacheHits++
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
-              console.log(`    [B ${completedCount.bundle}/${packagesToBundle.length}] ${packageName} bundled${cacheInfo} in ${time}ms`)
+              console.log(`    ${success('B')} ${dim(completedCount.bundle)}/${packagesToBundle.length} ${packageName} ${success('bundled')}${cacheInfo} ${dim(time + 'ms')}`)
             } else {
               // Handle errors
               results.bundle.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
-              console.error(`    [B ${completedCount.bundle}/${packagesToBundle.length}] ${packageName} bundle FAILED in ${time}ms`)
+              console.error(`    ${error('B')} ${dim(completedCount.bundle)}/${packagesToBundle.length} ${packageName} ${error('FAILED')} ${dim(time + 'ms')}`)
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
-                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
-                  if (err.error?.stdout) console.error(`      stdout: ${err.error.stdout}`)
-                  if (err.error?.stderr) console.error(`      stderr: ${err.error.stderr}`)
+                  const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
+                  console.error(`      ${errMsg}`)
                 }
               }
             }
@@ -502,17 +527,16 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.cacheHits > 0) results.package.cacheHits++
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
-              console.log(`    [P ${completedCount.package}/${packagesToPackage.length}] ${packageName} packaged${cacheInfo} in ${time}ms`)
+              console.log(`    ${success('P')} ${dim(completedCount.package)}/${packagesToPackage.length} ${packageName} ${success('packaged')}${cacheInfo} ${dim(time + 'ms')}`)
             } else {
               // Handle errors
               results.package.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
-              console.error(`    [P ${completedCount.package}/${packagesToPackage.length}] ${packageName} package FAILED in ${time}ms`)
+              console.error(`    ${error('P')} ${dim(completedCount.package)}/${packagesToPackage.length} ${packageName} ${error('FAILED')} ${dim(time + 'ms')}`)
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
-                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
-                  if (err.error?.stdout) console.error(`      stdout: ${err.error.stdout}`)
-                  if (err.error?.stderr) console.error(`      stderr: ${err.error.stderr}`)
+                  const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
+                  console.error(`      ${errMsg}`)
                 }
               }
             }
@@ -527,15 +551,16 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.cacheHits > 0) results.dockerBuild.cacheHits++
               const time = Math.round(performance.now() - pkgStart)
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
-              console.log(`    [D ${completedCount.dockerBuild}/${packagesToDockerBuild.length}] ${packageName} docker built${cacheInfo} in ${Math.round(time / 1000)}s`)
+              console.log(`    ${success('D')} ${dim(completedCount.dockerBuild)}/${packagesToDockerBuild.length} ${packageName} ${success('docker built')}${cacheInfo} ${dim(Math.round(time / 1000) + 's')}`)
             } else {
               // Handle errors
               results.dockerBuild.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
-              console.error(`    [D ${completedCount.dockerBuild}/${packagesToDockerBuild.length}] ${packageName} docker build FAILED in ${Math.round(time / 1000)}s`)
+              console.error(`    ${error('D')} ${dim(completedCount.dockerBuild)}/${packagesToDockerBuild.length} ${packageName} ${error('FAILED')} ${dim(Math.round(time / 1000) + 's')}`)
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
-                  console.error(`      Error: ${err.error?.message || err.error || 'Unknown error'}`)
+                  const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
+                  console.error(`      ${errMsg}`)
                 }
               }
             }
@@ -722,7 +747,8 @@ async function compileAll(rootDir, options = {}) {
   if (transpileResults.errors.length > 0) {
     console.error('\nTranspile errors:')
     for (const err of transpileResults.errors) {
-      console.error(`  ${err.package}: ${err.error}`)
+      const errMsg = err.error?.message || err.error || 'Unknown error'
+      console.error(`  ${error(err.package)}: ${errMsg.split('\n')[0]}`)
     }
     return { success: false, errors: transpileResults.errors.length }
   }
@@ -811,4 +837,4 @@ main().catch(err => {
   process.exit(1)
 })
 
-module.exports = { compileAll }
+module.exports = { compileAll, runValidationPhase, calculatePackageHashWithDeps }
