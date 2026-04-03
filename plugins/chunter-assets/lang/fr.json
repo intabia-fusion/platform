@@ -140,7 +140,9 @@
     "HideFromChatList": "Masquer de la liste de discussion",
     "Leave": "Quitter {label}",
     "HideAll": "Tout masquer",
-    "Seen": "Vu"
+    "Seen": "Vu",
+    "ChannelsAndDMs": "Canal et messages privés",
+    "CreateDirect": "Créer un message direct"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vous a envoyé un message : \n\n{message}",

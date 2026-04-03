@@ -140,7 +140,9 @@
     "HideFromChatList": "Skrýt ze seznamu chatů",
     "Leave": "Opustit {label}",
     "HideAll": "Skrýt vše",
-    "Seen": "Přečteno"
+    "Seen": "Přečteno",
+    "ChannelsAndDMs": "Kanály a privátní zprávy",
+    "CreateDirect": "Vytvořit přímou zprávu"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",

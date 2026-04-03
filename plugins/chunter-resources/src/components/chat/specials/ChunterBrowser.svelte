@@ -1,6 +1,5 @@
 <!--
-// Copyright © 2023 Hardcore Engineering Inc.
-//
+// Copyright © 2026 Intabia Fusion.
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
@@ -17,24 +16,22 @@
   import { FileBrowser } from '@hcengineering/attachment-resources'
   import { Scroller, Switcher } from '@hcengineering/ui'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import contact from '@hcengineering/contact'
-  import MessagesBrowser from './MessagesBrowser.svelte'
   import { FilterBar, FilterButton } from '@hcengineering/view-resources'
   import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import ChunterSpacesView from './ChunterSpacesView.svelte'
   import { IntlString } from '@hcengineering/platform'
 
   import { userSearch } from '../../../index'
   import { SearchType } from '../../../utils'
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
+  import MessagesBrowser from './MessagesBrowser.svelte'
 
   let userSearch_: string = ''
   userSearch.subscribe((v) => (userSearch_ = v))
 
   const localStorageKey = 'chunter-browser-st__v1'
   const saved = localStorage.getItem(localStorageKey)
-  let searchType: SearchType = saved ? parseInt(saved, 10) : SearchType.Messages
+  let searchType: SearchType = saved !== null && saved !== '' ? parseInt(saved, 10) : SearchType.Messages
   $: localStorage.setItem(localStorageKey, searchType.toString())
 
   const tabs = [
@@ -49,18 +46,6 @@
       icon: attachment.icon.FileBrowser,
       labelIntl: attachment.string.Files,
       tooltip: attachment.string.Files
-    },
-    {
-      id: SearchType.Channels,
-      icon: chunter.icon.Hashtag,
-      labelIntl: chunter.string.Channels,
-      tooltip: chunter.string.Channels
-    },
-    {
-      id: SearchType.Directs,
-      icon: contact.icon.Contacts,
-      labelIntl: chunter.string.DirectMessages,
-      tooltip: chunter.string.DirectMessages
     }
   ]
 
@@ -82,28 +67,6 @@
       label: attachment.string.Files,
       props: {
         requestedSpaceClasses: [chunter.class.Channel, chunter.class.DirectMessage]
-      }
-    },
-    {
-      searchType: SearchType.Channels,
-      component: ChunterSpacesView,
-      filterClass: chunter.class.Channel,
-      label: chunter.string.Channels,
-      props: {
-        _class: chunter.class.Channel,
-        icon: chunter.icon.ChannelBrowser,
-        label: chunter.string.Channels
-      }
-    },
-    {
-      searchType: SearchType.Directs,
-      component: ChunterSpacesView,
-      filterClass: chunter.class.DirectMessage,
-      label: chunter.string.DirectMessages,
-      props: {
-        _class: chunter.class.DirectMessage,
-        icon: contact.class.Contact,
-        label: chunter.string.DirectMessages
       }
     }
   ]
@@ -159,25 +122,3 @@
     />
   </Scroller>
 {/if}
-
-<style lang="scss">
-  .browser {
-    flex-grow: 2;
-    display: flex;
-    justify-content: flex-start;
-    flex-direction: column-reverse;
-    background-color: var(--theme-panel-color);
-  }
-
-  .bar {
-    flex-grow: 1;
-    display: flex;
-    justify-content: flex-start;
-    max-height: 4rem;
-  }
-
-  .component {
-    flex-grow: 2;
-    height: 0;
-  }
-</style>

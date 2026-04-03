@@ -140,7 +140,9 @@
     "HideFromChatList": "从聊天列表中隐藏",
     "Leave": "离开{label}",
     "HideAll": "全部隐藏",
-    "Seen": "已读"
+    "Seen": "已读",
+    "ChannelsAndDMs": "频道和私信",
+    "CreateDirect": "创建私信"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",

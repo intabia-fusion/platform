@@ -64,6 +64,7 @@ import WorkbenchTabExtension from './components/WorkbenchTabExtension.svelte'
 import DirectMessageButton from './components/DirectMessageButton.svelte'
 import EmployeePresenter from './components/ChunterEmployeePresenter.svelte'
 import InlineCommentThread from './components/inline-comment/InlineCommentThread.svelte'
+import ChannelsAndDMs from './components/chat/specials/ChannelsAndDMs.svelte'
 
 import {
   chunterSpaceLinkFragmentProvider,
@@ -193,7 +194,8 @@ export default async (): Promise<Resources> => ({
     WorkbenchTabExtension,
     DirectMessageButton,
     EmployeePresenter,
-    InlineCommentThread
+    InlineCommentThread,
+    ChannelsAndDMs
   },
   activity: {
     ChannelCreatedMessage,
