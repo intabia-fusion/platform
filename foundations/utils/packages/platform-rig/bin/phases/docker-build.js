@@ -224,7 +224,7 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
 
         if (code === 0) {
           if (packageHash) {
-            markPhaseCompleted(cwd, packageHash, 'docker-build')
+            markPhaseCompleted(cwd, packageHash, 'docker-build', null, [])
           }
           resolve({ success: true, time })
         } else {

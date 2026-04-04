@@ -450,7 +450,7 @@ async function runBundlePhase(graph, packageNames, concurrency, options = {}) {
 
     // Check cache using pre-calculated package hash
     if (!force && packageHash) {
-      if (isPhaseCached(cwd, packageHash, 'bundle', (pkgPath) => hasBundleOutput(pkgPath, bundleScript))) {
+      if (isPhaseCached(cwd, packageHash, 'bundle', (pkgPath) => hasBundleOutput(pkgPath, bundleScript), ['bundle'])) {
         return { success: true, fromCache: true }
       }
     }
@@ -468,7 +468,7 @@ async function runBundlePhase(graph, packageNames, concurrency, options = {}) {
     }
 
     if (result.success && packageHash) {
-      markPhaseCompleted(cwd, packageHash, 'bundle')
+      markPhaseCompleted(cwd, packageHash, 'bundle', null, ['bundle'])
     }
     return result
   }

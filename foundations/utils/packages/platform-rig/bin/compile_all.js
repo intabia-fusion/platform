@@ -7,31 +7,7 @@ const { performance } = require('perf_hooks')
 const { BuildTaskQueue, TaskType } = require('./libs/task-queue')
 const { CpuTracker, getOptimalWorkerCount, getDefaultWorkerCount } = require('./libs/utils')
 const { calculatePackageHash } = require('./libs/cache')
-
-// ANSI color codes
-const COLORS = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  gray: '\x1b[90m'
-}
-
-function color(text, colorCode) {
-  return `${colorCode}${text}${COLORS.reset}`
-}
-
-function success(text) { return color(text, COLORS.green) }
-function error(text) { return color(text, COLORS.red) }
-function warn(text) { return color(text, COLORS.yellow) }
-function info(text) { return color(text, COLORS.cyan) }
-function dim(text) { return color(text, COLORS.dim) }
-function bold(text) { return color(text, COLORS.bold) }
+const { success, error, warn, info, dim, bold, colorizeErrorMessage } = require('./libs/colors')
 
 // Import phases
 const { runTranspilePhase } = require('./phases/transpile')
@@ -329,8 +305,9 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
       } else {
         results.errors.push({ package: packageName, error: result.error })
         const errMsg = result.error ? (result.error.message || String(result.error)) : 'unknown'
+        const { colored } = colorizeErrorMessage(errMsg.split('\n')[0])
         console.error(`    ${error('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${error('FAILED')} ${dim(pkgTime + 'ms')}`)
-        console.error(`      ${errMsg.split('\n')[0]}`)
+        console.error(`      ${colored}`)
         timings.push({ package: packageName, time: pkgTime, failed: true })
       }
 
@@ -338,8 +315,9 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     } catch (err) {
       const pkgTime = Math.round(performance.now() - pkgStart)
       results.errors.push({ package: packageName, error: err })
+      const { colored } = colorizeErrorMessage(err.message.split('\n')[0])
       console.error(`    ${error('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${error('ERROR')} ${dim(pkgTime + 'ms')}`)
-      console.error(`      ${err.message.split('\n')[0]}`)
+      console.error(`      ${colored}`)
       timings.push({ package: packageName, time: pkgTime, failed: true })
       return { success: false, error: err }
     }
@@ -512,7 +490,8 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
                   const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
-                  console.error(`      ${errMsg}`)
+                  const { colored } = colorizeErrorMessage(errMsg)
+                  console.error(`      ${colored}`)
                 }
               }
             }
@@ -536,7 +515,8 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
                   const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
-                  console.error(`      ${errMsg}`)
+                  const { colored } = colorizeErrorMessage(errMsg)
+                  console.error(`      ${colored}`)
                 }
               }
             }
@@ -560,7 +540,8 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               if (result.errors && result.errors.length > 0) {
                 for (const err of result.errors) {
                   const errMsg = err.error?.message || err.error?.stderr?.trim()?.split('\n')?.slice(-1)?.[0] || 'Unknown error'
-                  console.error(`      ${errMsg}`)
+                  const { colored } = colorizeErrorMessage(errMsg)
+                  console.error(`      ${colored}`)
                 }
               }
             }
@@ -743,6 +724,17 @@ async function compileAll(rootDir, options = {}) {
   console.log(`\n=== Phase 1: Transpiling ${packagesToTranspile.length} packages ===`)
   const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force, packageHashes })
   console.log(`Transpiled: ${transpileResults.successCount}/${transpileResults.total} packages in ${Math.round(transpileResults.time)}ms`)
+
+  // Update package hashes for changed packages after transpile
+  // This ensures validation uses correct hashes for packages that were rebuilt
+  if (transpileResults.changedPackages && transpileResults.changedPackages.size > 0) {
+    for (const pkg of transpileResults.changedPackages) {
+      const node = graph.get(pkg)
+      if (node && node.project && node.project.fullPath) {
+        packageHashes.set(pkg, calculatePackageHash(node.project.fullPath))
+      }
+    }
+  }
 
   if (transpileResults.errors.length > 0) {
     console.error('\nTranspile errors:')

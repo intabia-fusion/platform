@@ -94,8 +94,13 @@ function collectFileSignatures(dir, extensions = null) {
       Object.assign(signatures, collectFileSignatures(fullPath, extensions))
     } else {
       // Skip if extensions filter is provided and file doesn't match
-      if (extensions && !extensions.has(entry.name.slice(entry.name.lastIndexOf('.')))) {
-        continue
+      if (extensions) {
+        const ext = entry.name.slice(entry.name.lastIndexOf('.'))
+        // Special handling for .d.ts files
+        const isMatch = extensions.has(ext) || (ext === '.ts' && entry.name.endsWith('.d.ts') && extensions.has('.d.ts'))
+        if (!isMatch) {
+          continue
+        }
       }
       try {
         const stat = fs.lstatSync(fullPath)
@@ -165,6 +170,15 @@ function calculatePackageHash(packagePath, extraFiles = []) {
     } catch { /* ignore */ }
   }
 
+  // Include Dockerfile if exists (for docker-build phase)
+  const dockerfilePath = join(packagePath, 'Dockerfile')
+  if (fs.existsSync(dockerfilePath)) {
+    try {
+      const stat = fs.statSync(dockerfilePath)
+      parts.push(`Dockerfile:${stat.mtimeMs}:${stat.size}`)
+    } catch { /* ignore */ }
+  }
+
   // Include extra files
   for (const file of extraFiles) {
     const filePath = join(packagePath, file)
@@ -176,6 +190,43 @@ function calculatePackageHash(packagePath, extraFiles = []) {
     }
   }
 
+  return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
+}
+
+/**
+ * Calculate hash of output directory contents
+ * Used to detect if output was modified/corrupted after build
+ * @param {string} packagePath - Path to package directory
+ * @param {string} phase - Phase name (used to determine output dirs)
+ * @returns {string|null} MD5 hash of all output files, or null if any dir doesn't exist
+ */
+function calculateOutputHash(packagePath, phase) {
+  const dirs = phaseOutputDirs[phase]
+  if (!dirs || dirs.length === 0) return null
+  return calculateOutputHashForDirs(packagePath, dirs)
+}
+
+/**
+ * Calculate hash of specific output directories
+ * @param {string} packagePath - Path to package directory
+ * @param {string[]} dirs - Directory names relative to package
+ * @returns {string|null} MD5 hash, or null if any dir doesn't exist
+ */
+function calculateOutputHashForDirs(packagePath, dirs) {
+  const parts = []
+  for (const dir of dirs) {
+    const dirPath = join(packagePath, dir)
+    if (!fs.existsSync(dirPath)) return null
+
+    // Hash all files in output directory
+    const sigs = collectFileSignatures(dirPath)
+    const sortedKeys = Object.keys(sigs).sort()
+    for (const key of sortedKeys) {
+      parts.push(`${dir}:${key}=${sigs[key]}`)
+    }
+  }
+
+  if (parts.length === 0) return null
   return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
 }
 
@@ -365,6 +416,7 @@ module.exports = {
   collectFileSignatures,
   calculatePackageHash,
   calculateOutputHash,
+  calculateOutputHashForDirs,
   loadPackageCache,
   savePackageCache,
   isPhaseCached,

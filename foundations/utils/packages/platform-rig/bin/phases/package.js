@@ -36,7 +36,7 @@ async function runPackagePhase(graph, packageNames, concurrency, options = {}) {
 
     // Check cache using pre-calculated package hash
     if (!force && packageHash) {
-      if (isPhaseCached(cwd, packageHash, 'package', hasPackageOutput)) {
+      if (isPhaseCached(cwd, packageHash, 'package', hasPackageOutput, ['dist'])) {
         return { success: true, fromCache: true }
       }
     }
@@ -100,7 +100,7 @@ async function runPackagePhase(graph, packageNames, concurrency, options = {}) {
 
         if (code === 0) {
           if (packageHash) {
-            markPhaseCompleted(cwd, packageHash, 'package')
+            markPhaseCompleted(cwd, packageHash, 'package', null, ['dist'])
           }
           resolve({ success: true, time })
         } else {
