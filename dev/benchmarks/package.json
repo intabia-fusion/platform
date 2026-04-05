@@ -1,0 +1,32 @@
+{
+  "name": "@hcengineering/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "license": "EPL-2.0",
+  "scripts": {
+    "bench": "ts-node -T --project tsconfig.json src/run.ts",
+    "setup": "ts-node -T --project tsconfig.json src/run.ts --scenario setup",
+    "rest-throughput": "ts-node -T --project tsconfig.json src/run.ts --scenario rest-throughput",
+    "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace"
+  },
+  "dependencies": {
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/api-client": "workspace:^0.7.18",
+    "@hcengineering/account-client": "workspace:^0.7.21",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/server-token": "workspace:^0.7.17",
+    "@hcengineering/contact": "workspace:^0.7.0",
+    "@hcengineering/tracker": "workspace:^0.7.0",
+    "@hcengineering/task": "workspace:^0.7.0",
+    "@hcengineering/rank": "workspace:^0.7.17",
+    "@hcengineering/rpc": "workspace:^0.7.17",
+    "snappyjs": "^0.7.0"
+  },
+  "devDependencies": {
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "@types/node": "^22.18.1"
+  }
+}

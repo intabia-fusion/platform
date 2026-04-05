@@ -382,9 +382,11 @@ services:
         condition: service_started
     ports:
       - 3332:3332
+      - 9229:9229
     volumes:
       - ./branding.json:/var/cfg/branding.json
     environment:
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_PORT=3332
       - REGION=
