@@ -252,7 +252,8 @@ const config: Config = (() => {
     // Service endpoints
     LoveEndpoint: yamlConfig?.services?.love?.endpoint ?? process.env.LOVE_ENDPOINT ?? '',
     DataLabApiKey: yamlConfig?.services?.datalab?.apiKey ?? process.env.DATALAB_API_KEY ?? '',
-    BillingUrl: yamlConfig?.services?.billing?.url ?? process.env.BILLING_URL ?? '',
+    BillingUrl: yamlConfig?.services?.billing?.url ?? process.env.BILLING_API_TOKEN ?? '',
+    BillingApiToken: yamlConfig?.services?.billing?.token ?? process.env.BILLING_URL ?? '',
 
     // Deepgram configuration
     DeepgramPollIntervalMinutes:

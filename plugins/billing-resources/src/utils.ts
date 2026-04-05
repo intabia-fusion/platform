@@ -67,6 +67,18 @@ export function getPaymentClient (): PaymentClient | null {
   return getPaymentClientRaw(paymentUrl, token)
 }
 
+export function getBillingApiUrl (): string {
+  const billingUrl = getMetadata(billing.metadata.BillingURL) ?? ''
+  if (billingUrl === '') {
+    return ''
+  }
+  return billingUrl + '/api/v1/admin/products?category=platform&include=plans.prices'
+}
+
+export function getBillingApiToken (): string {
+  return getMetadata(billing.metadata.BillingApiToken) ?? ''
+}
+
 export async function isLimitExceeded (): Promise<boolean> {
   try {
     const accountClient = getAccountClient()

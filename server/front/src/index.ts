@@ -344,6 +344,7 @@ export function start (
     DISABLE_SIGNUP: config.disableSignUp,
     HIDE_LOCAL_LOGIN: config.hideLocalLogin,
     BILLING_URL: config.billingUrl,
+    BILLING_API_TOKEN: config.billingApiToken,
     PAYMENT_URL: config.paymentUrl,
     PULSE_URL: config.pulseUrl,
     HULYLAKE_URL: config.hulylakeUrl,

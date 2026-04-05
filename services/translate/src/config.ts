@@ -42,6 +42,7 @@ const config: Config = (() => {
     OpenAIModel: (process.env.OPENAI_MODEL ?? 'gpt-4o-mini') as OpenAI.ChatModel,
     OpenAIBaseUrl: process.env.OPENAI_BASE_URL ?? '',
     BillingUrl: process.env.BILLING_URL ?? ''
+    BillingApiToken: process.env.BILLING_API_TOKEN ?? ''
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

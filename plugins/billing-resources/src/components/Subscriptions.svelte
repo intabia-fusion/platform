@@ -36,7 +36,7 @@
   import { onMount, onDestroy } from 'svelte'
 
   import plugin from '../plugin'
-  import { getAccountClient, getPaymentClient } from '../utils'
+  import { getAccountClient, getPaymentClient, getBillingApiUrl, getBillingApiToken } from '../utils'
 
   import UsageSection from './UsageSection.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
@@ -67,6 +67,128 @@
   const POLL_INTERVAL = 2000
 
   let usageInfo: UsageStatus | null = null
+
+  // API products
+  interface ApiProduct {
+    id: string
+    type: string
+    attributes: {
+      id: number
+      name: string
+      description: string
+      image: string | null
+      slug: string
+      stock: number | null
+      per_user_limit: number | null
+      sort: number | null
+      allow_quantity: string
+      email_template: string | null
+      hidden: boolean
+      updated_at: string
+      created_at: string
+    }
+    relationships: {
+      plans: {
+        data: Array<{ type: string; id: string }>
+      }
+    }
+  }
+
+  interface ApiPlan {
+    id: string
+    type: string
+    attributes: {
+      id: number
+      name: string
+      type: string
+      billing_period: number | null
+      billing_unit: string | null
+      sort: number
+    }
+    relationships: {
+      prices: {
+        data: Array<{ type: string; id: string }>
+      }
+    }
+  }
+
+  interface ApiPrice {
+    id: string
+    type: string
+    attributes: {
+      id: number
+      price: string
+      setup_fee: number | null
+      currency_code: string
+    }
+  }
+
+  interface ApiResponse {
+    data: ApiProduct[]
+    links: Record<string, string>
+    meta: Record<string, any>
+    included: Array<ApiPlan | ApiPrice>
+  }
+
+  let apiProducts: ApiProduct[] = []
+  let apiPlans: ApiPlan[] = []
+  let apiPrices: ApiPrice[] = []
+  let apiLoading = true
+
+  async function fetchApiProducts (): Promise<void> {
+    const apiUrl = getBillingApiUrl()
+    const apiToken = getBillingApiToken()
+
+    if (apiUrl === '' || apiToken === '') {
+      console.warn('Billing API URL or token not configured')
+      apiLoading = false
+      return
+    }
+
+    apiLoading = true
+    try {
+      const response = await fetch(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: ApiResponse = await response.json()
+      apiProducts = data.data
+      apiPlans = data.included.filter((item): item is ApiPlan => item.type === 'plans') as ApiPlan[]
+      apiPrices = data.included.filter((item): item is ApiPrice => item.type === 'prices') as ApiPrice[]
+    } catch (error) {
+      console.error('Error fetching products from API:', error)
+      await showErrorNotification()
+    } finally {
+      apiLoading = false
+    }
+  }
+
+  function getPlanForProduct (productId: string): ApiPlan | undefined {
+    const product = apiProducts.find((p) => p.id === productId)
+    if (product == null) return undefined
+
+    const planId = product.relationships.plans.data[0]?.id
+    if (planId == null) return undefined
+
+    return apiPlans.find((p) => p.id === planId)
+  }
+
+  function getPriceForPlan (planId: string): ApiPrice | undefined {
+    const plan = apiPlans.find((p) => p.id === planId)
+    if (plan == null) return undefined
+
+    const priceId = plan.relationships.prices.data[0]?.id
+    if (priceId == null) return undefined
+
+    return apiPrices.find((p) => p.id === priceId)
+  }
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
 
@@ -395,6 +517,9 @@
       // First, load current subscriptions
       await fetchSubscriptions()
 
+      // Then fetch products from billing API
+      await fetchApiProducts()
+
       // Then fetch usage stats
       await fetchUsageStats()
 
@@ -415,9 +540,9 @@
   <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
     <div class="hulyComponent-content gapV-8">
       <div class="flex-col flex-gap-4">
-        <!-- <div class="section-title">
+        <div class="section-title">
           <Label label={plugin.string.ActivePlan} />
-        </div> -->
+        </div>
         <div class="current-tier-card w-full flex-gap-4">
           {#if loading || isCheckoutPolling}
             <Loading />
@@ -426,8 +551,8 @@
             {/if}
           {:else if currentTier === undefined}
             <div class="no-plan-container flex-col flex-gap-4">
-              <!-- <div class="fs-title text-lg"><Label label={plugin.string.NoActivePlan} /></div>
-              <div class="text-md"><Label label={plugin.string.SelectPlanToBegin} /></div> -->
+              <div class="fs-title text-lg"><Label label={plugin.string.NoActivePlan} /></div>
+              <div class="text-md"><Label label={plugin.string.SelectPlanToBegin} /></div>
 
               {#if usageInfo !== null}
                 <div class="usage-section">
@@ -436,7 +561,7 @@
               {/if}
             </div>
           {:else}
-            <!-- <div class="current-tier-card-title">
+            <div class="current-tier-card-title">
               <div class="flex-row-center">
                 <div class="fs-title"><Label label={currentTier.label} /></div>
                 {#if currentSubscription?.status === 'active'}
@@ -453,7 +578,7 @@
                   </span>
                 </div>
               {/if}
-            </div> -->
+            </div>
 
             {#if usageInfo !== null}
               <div class="usage-section">
@@ -461,7 +586,7 @@
               </div>
             {/if}
 
-            <!-- <div class="curr-tier-footer">
+            <div class="curr-tier-footer">
               {#if currentSubscription?.periodEnd}
                 {@const date = formatEndDate(currentSubscription.periodEnd)}
                 {#if isCurrentCanceled}
@@ -490,82 +615,48 @@
                   }}
                 />
               {/if}
-            </div> -->
+            </div>
           {/if}
         </div>
       </div>
 
-      <!-- <div class="flex-col flex-gap-4">
+      <div class="flex-col flex-gap-4">
         <div class="section-title">
           <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
         </div>
-        <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
-          <div class="flex-row-top flex-gap-4 flex-no-shrink mb-3">
-            {#each tiers as tier}
-              {@const color =
-                tier.color !== null && tier.color !== undefined && tier.color.length > 0
-                  ? getPlatformColorByName(tier.color, $themeStore.dark)
-                  : null}
-              {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
-              <div
-                class="tier-card"
-                style={color !== null && color !== undefined ? `${bgAttr}: ${color.background};` : ''}
-              >
-                <div class="tier-card-content">
-                  <div class="fs-title text-lg">
-                    <Label label={tier.label} />
-                  </div>
-                  <div class="flex-row-center items-end">
-                    <span class="fs-title text-xl">
-                      ${tier.priceMonthly}
-                    </span>
-                    <span class="ml-1 lower">
-                      <Label label={plugin.string.Monthly} />
-                    </span>
-                  </div>
-                  <div class="mb-2 h-16">
-                    <Label label={tier.description} />
-                  </div>
-
-                  <div class="tier-features">
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedUsers} />
+        {#if apiLoading}
+          <Loading />
+        {:else if apiProducts.length > 0}
+          <div class="products-grid">
+            {#each apiProducts as product}
+              {@const plan = getPlanForProduct(product.id)}
+              {@const price = plan != null ? getPriceForPlan(plan.id) : undefined}
+              <div class="product-card">
+                <div class="product-card-content">
+                  <div class="product-name">{product.attributes.name}</div>
+                  {#if price != null}
+                    <div class="product-price">
+                      <span class="price-value">{price.attributes.price}</span>
+                      <span class="price-currency">{price.attributes.currency_code}</span>
+                      {#if plan != null && plan.attributes.billing_period != null}
+                        <span class="price-period">
+                          / {plan.attributes.billing_period}
+                          {plan.attributes.billing_unit ?? 'мес'}
+                        </span>
+                      {/if}
                     </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedObjects} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.StorageLimit} params={{ ...formatSize(tier.storageLimitGB) }} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.TrafficLimit} params={{ ...formatSize(tier.trafficLimitGB) }} />
-                    </div>
-                  </div>
-                </div>
-                <div class="tier-card-footer">
-                  {#if !isReadOnly && (currentTier === undefined || currentTier._id !== tier._id)}
-                    <Button
-                      label={currentTier === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
-                      size={'large'}
-                      kind={currentTier === undefined || tier.priceMonthly > currentTier.priceMonthly
-                        ? 'primary'
-                        : 'regular'}
-                      disabled={loading || isCheckoutPolling || isUpdating}
-                      on:click={() => {
-                        void handlePlanChange(tier._id)
-                      }}
-                    />
                   {/if}
+                  <div class="product-description">
+                    {@html product.attributes.description}
+                  </div>
                 </div>
               </div>
             {/each}
           </div>
-        </Scroller>
-      </div> -->
+        {:else}
+          <div class="text-md">Нет доступных подписок</div>
+        {/if}
+      </div>
     </div>
   </Scroller>
 {/if}
@@ -652,6 +743,88 @@
     flex-direction: row-reverse;
     margin-top: var(--spacing-3);
     height: 2.25rem;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-4);
+    width: 100%;
+  }
+
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--theme-divider-color);
+    border-radius: var(--medium-BorderRadius);
+    padding: var(--spacing-3);
+    background-color: var(--theme-button-default);
+    min-height: 200px;
+  }
+
+  .product-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+
+  .product-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .price-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .price-currency {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--theme-content-color);
+  }
+
+  .price-period {
+    font-size: 0.875rem;
+    color: var(--theme-content-color);
+    opacity: 0.7;
+  }
+
+  .product-description {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--theme-content-color);
+    opacity: 0.8;
+  }
+
+  .product-description :global(p) {
+    margin: 0.5rem 0;
+  }
+
+  .product-description :global(hr) {
+    border: none;
+    border-top: 1px solid var(--theme-divider-color);
+    margin: 0.75rem 0;
+  }
+
+  .product-description :global(ul) {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0;
+  }
+
+  .product-description :global(li) {
+    margin: 0.25rem 0;
+  }
+
+  .product-description :global(strong) {
+    font-weight: 600;
   }
 
   .processing {

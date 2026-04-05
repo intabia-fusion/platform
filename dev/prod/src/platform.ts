@@ -203,6 +203,7 @@ export interface Config {
   USE_OTP?: string
   COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
+  BILLING_API_TOKEN?: string
   PAYMENT_URL?: string
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS?: string
   PULSE_URL?: string
@@ -574,6 +575,7 @@ export async function configurePlatform() {
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
+  setMetadata(billingPlugin.metadata.BillingApiToken, config.BILLING_API_TOKEN ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
 
   setMetadata(presentation.metadata.PulseUrl, config.PULSE_URL)

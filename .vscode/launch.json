@@ -833,8 +833,9 @@
         "LIVEKIT_API_KEY": "devkey",
         "LIVEKIT_API_SECRET": "secret",
         "LIVEKIT_WEBHOOK_API_KEY": "whkey",
-        "LIVEKIT_WEBHOOK_API_SECRET":"whsecret",
-        "BILLING_URL": "http://huly.local:4041",
+        "LIVEKIT_WEBHOOK_API_SECRET": "whsecret",
+        "BILLING_URL": "https://billing-dev1.intabia.ru",
+        "BILLING_API_TOKEN": "PAYM21f5b036c175658daa40dd17f58a1a6fbaf24dc1391b88be68c0433e6642bdf8",
         "BILLING_POLL_INTERVAL": "15",
         "QUEUE_CONFIG": "huly.local:19092",
         "QUEUE_REGION": "",
@@ -1019,29 +1020,29 @@
         "ACCOUNTS_URL": "http://localhost:3000",
         "STORAGE_CONFIG": "datalake|http://huly.local:4030",
         "TRANSACTOR_URL": "ws://localhost:3333",
-        "SERVICE_ID": "export-service",
+        "SERVICE_ID": "export-service"
       },
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}/services/export/pod-export"
     },
     {
-    "name": "Debug Notifications",
-    "type": "node",
-    "request": "launch",
-    "args": ["src/index.ts"],
-    "env": {
-    "SECRET": "secret",
-    "ACCOUNTS_URL": "http://localhost:3000",
-    "QUEUE_CONFIG": "localhost:19092",
-    "QUEUE_REGION": "",
-    "MODEL_JSON": "${workspaceRoot}/models/all/bundle/model.json",
-    "STORAGE_CONFIG": "datalake|http://localhost:4030",
-    "DB_URL": "postgresql://postgres:postgres@huly.local:5432"
-    },
-    "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
-    "sourceMaps": true,
-    "cwd": "${workspaceRoot}/services/notifications"
+      "name": "Debug Notifications",
+      "type": "node",
+      "request": "launch",
+      "args": ["src/index.ts"],
+      "env": {
+        "SECRET": "secret",
+        "ACCOUNTS_URL": "http://localhost:3000",
+        "QUEUE_CONFIG": "localhost:19092",
+        "QUEUE_REGION": "",
+        "MODEL_JSON": "${workspaceRoot}/models/all/bundle/model.json",
+        "STORAGE_CONFIG": "datalake|http://localhost:4030",
+        "DB_URL": "postgresql://postgres:postgres@huly.local:5432"
+      },
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}/services/notifications"
     },
     {
       "name": "Debug Activity",

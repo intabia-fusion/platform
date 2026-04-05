@@ -64,6 +64,7 @@ export interface Config {
   USE_OTP?: string
   COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
+  BILLING_API_TOKEN?: string
   PAYMENT_URL?: string
   PULSE_URL?: string
   PASSWORD_STRICTNESS?: 'very_strict' | 'strict' | 'normal' | 'none'

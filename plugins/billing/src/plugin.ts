@@ -25,7 +25,9 @@ export const billingPlugin = plugin(billingId, {
     Tier: '' as Ref<Class<Tier>>
   },
   metadata: {
-    BillingURL: '' as Metadata<string>
+    BillingURL: '' as Metadata<string>,
+    BillingApiUrl: '' as Metadata<string>,
+    BillingApiToken: '' as Metadata<string>
   },
   component: {
     Settings: '' as AnyComponent,
