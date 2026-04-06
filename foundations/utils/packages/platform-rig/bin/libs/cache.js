@@ -33,6 +33,28 @@ const { xxh64 } = require('@node-rs/xxhash')
 const CACHE_VERSION = 2
 
 /**
+ * Find repository root by looking for rush.json
+ * Walks up from the given directory until found
+ */
+function findRepoRoot(startPath) {
+  let current = startPath
+  const root = process.platform === 'win32' ? '/' : '/'
+  
+  while (current !== root) {
+    if (fs.existsSync(join(current, 'rush.json'))) {
+      return current
+    }
+    const parent = join(current, '..')
+    if (parent === current) break
+    current = parent
+  }
+  
+  // Fallback: try to find from common known structure
+  // platform-rig/bin/libs/cache.js -> foundations/utils/packages/platform-rig/bin/libs -> foundations/utils/packages -> foundations/utils -> foundations
+  return null
+}
+
+/**
  * Output directories for each phase that need to be verified
  */
 const phaseOutputDirs = {
@@ -127,6 +149,7 @@ function collectFileSignatures(dir, extensions = null) {
  * - src/ directory (source files)
  * - package.json
  * - tsconfig.json (if exists)
+ * - common/scripts/version.txt (global version file)
  * - Any additional config files provided
  *
  * @param {string} packagePath - Path to package directory
@@ -173,6 +196,12 @@ function calculatePackageHash(packagePath, extraFiles = []) {
   pushFileSig('package.json', join(packagePath, 'package.json'))
   pushFileSig('tsconfig.json', join(packagePath, 'tsconfig.json'))
   pushFileSig('Dockerfile', join(packagePath, 'Dockerfile'))
+
+  // Global version file — when it changes, all packages must rebuild.
+  const rootDir = findRepoRoot(packagePath)
+  if (rootDir) {
+    pushFileSig('common/scripts/version.txt', join(rootDir, 'common', 'scripts', 'version.txt'))
+  }
 
   for (const file of extraFiles) {
     pushFileSig(file, join(packagePath, file))
