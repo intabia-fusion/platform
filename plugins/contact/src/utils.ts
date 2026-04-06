@@ -439,7 +439,7 @@ export async function ensureEmployeeForPerson (
 
     if (personRef === undefined) {
       // Local person not found: neither by personUuid nor by a local social identity
-      // Creating a new local person
+      // Creating a new local person using TxApplyIf to prevent race conditions
       await ctx.with('create-person', {}, async () => {
         if (globalPerson === undefined) {
           console.error('Cannot get global person')
@@ -460,7 +460,25 @@ export async function ensureEmployeeForPerson (
           data,
           personRef
         )
-        await client.tx(createPersonTx)
+
+        // Use TxApplyIf with notMatch to atomically check that no Person with this personUuid exists
+        // This prevents duplicate Person creation under concurrent ensureEmployee calls
+        const applyTx = txFactory.createTxApplyIf(
+          contact.space.Contacts,
+          `ensure-person-${person.uuid}`,
+          [],
+          [{ _class: contact.class.Person, query: { personUuid: person.uuid } }],
+          [createPersonTx],
+          'ensureEmployee'
+        )
+        await client.tx(applyTx)
+
+        // Re-check: if our TxApplyIf was rejected (another concurrent call won the race),
+        // find the Person that was created by the winner
+        const existingPerson = await client.findOne(contact.class.Person, { personUuid: person.uuid })
+        if (existingPerson !== undefined) {
+          personRef = existingPerson._id
+        }
       })
     } else if (personByUuid === undefined) {
       // Local person found only by social identity, need to set personUuid
@@ -584,7 +602,19 @@ export async function ensureEmployeeForPerson (
             role: employeeRole
           }
         )
-        await client.tx(createEmployeeTx)
+
+        // Use TxApplyIf to prevent duplicate Employee mixin creation under concurrent calls.
+        // Without this, two parallel ensureEmployee calls can both see no Employee and both
+        // send TxMixin, triggering OnEmployeeCreate twice and creating duplicate PersonSpaces.
+        const applyTx = txFactory.createTxApplyIf(
+          contact.space.Contacts,
+          `ensure-employee-${person.uuid}`,
+          [],
+          [{ _class: contact.mixin.Employee, query: { _id: personRef, active: true } }],
+          [createEmployeeTx],
+          'ensureEmployee'
+        )
+        await client.tx(applyTx)
       })
     }
 
