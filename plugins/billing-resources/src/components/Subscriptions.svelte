@@ -13,19 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
-  import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
-  import { Tier } from '@hcengineering/billing'
+  import { type SubscriptionData } from '@hcengineering/account-client'
+  import { type CheckoutStatus } from '@hcengineering/payment-client'
   import { getMetadata, translate } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import { type Ref, SortingOrder, UsageStatus } from '@hcengineering/core'
+  import billing, { type Tier } from '@hcengineering/billing'
+  import { UsageStatus } from '@hcengineering/core'
   import {
-    IconCheckmark,
     Label,
     Loading,
     Scroller,
     Button,
-    getPlatformColorByName,
     themeStore,
     getLocation,
     navigate,
@@ -36,7 +34,8 @@
   import { onMount, onDestroy } from 'svelte'
 
   import plugin from '../plugin'
-  import { getAccountClient, getPaymentClient } from '../utils'
+  import { getAccountClient, getPaymentClient, getPaymenterClient } from '../utils'
+  import { type PaymenterPlanInfo } from '@hcengineering/paymenter-client'
 
   import UsageSection from './UsageSection.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
@@ -44,52 +43,36 @@
   const client = getClient()
   const paymentClient = getPaymentClient()
 
-  const tiers = client.getModel().findAllSync(plugin.class.Tier, {}, { sort: { index: SortingOrder.Ascending } })
-  const tierByPlan = tiers.reduce<Record<string, Tier>>((acc, tier) => {
-    const { plan } = getTypeAndPlan(tier._id)
-    acc[plan] = tier
-    return acc
-  }, {})
+  const paymenterClient = getPaymenterClient()
+
+  const tiers = client.getModel().findAllSync(billing.class.Tier, {})
+  const tierByPlan: Record<string, Tier> = {}
+  for (const tier of tiers) {
+    const parts = (tier._id as string).split(':')
+    if (parts.length >= 3) {
+      tierByPlan[parts[2].toLowerCase()] = tier
+    }
+  }
 
   export let isReadOnly: boolean = false
 
   let currentSubscription: SubscriptionData | undefined = undefined
-  $: currentTier = currentSubscription != null ? tierByPlan[currentSubscription.plan] : undefined
+  let currentTier: any = undefined
   let loading = true
   let pollingCheckoutId: string | null = null
   let isPolling = false
   let pollAttempts = 0
   let pollTimer: any
-  let isUpdating = false
   let isCanceling = false
   let isUncanceling = false
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
 
   let usageInfo: UsageStatus | null = null
+  let paymenterPlans: PaymenterPlanInfo[] = []
+  let paymenterLoading = false
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
-
-  async function subscribe (tierId: Ref<Tier>): Promise<void> {
-    if (paymentClient == null) {
-      return
-    }
-
-    const workspace = getMetadata(presentation.metadata.WorkspaceUuid)
-    if (workspace === undefined) {
-      console.warn('Workspace metadata not available')
-      return
-    }
-
-    try {
-      const request: SubscribeRequest = getTypeAndPlan(tierId)
-      const { checkoutUrl } = await paymentClient.createSubscription(workspace, request)
-      window.location.href = checkoutUrl
-    } catch (error) {
-      console.error('Error while upgrading plan:', error)
-      await showErrorNotification()
-    }
-  }
 
   async function showErrorNotification (): Promise<void> {
     addNotification(
@@ -99,93 +82,6 @@
       undefined,
       NotificationSeverity.Error
     )
-  }
-
-  async function showPlanChangeConfirmation (newPlan: string, newTier: Tier): Promise<void> {
-    if (currentTier === undefined) {
-      return
-    }
-
-    const isDowngrade = newTier.priceMonthly < currentTier.priceMonthly
-    const priceDifference = Math.abs(newTier.priceMonthly - currentTier.priceMonthly)
-
-    const title = isDowngrade ? plugin.string.ConfirmDowngrade : plugin.string.ConfirmUpgrade
-    const descriptionKey = isDowngrade ? plugin.string.DowngradeDescription : plugin.string.UpgradeDescription
-
-    showPopup(MessageBox, {
-      label: title,
-      message: descriptionKey,
-      params: { amount: priceDifference.toFixed(2) },
-      action: async () => {
-        await executeUpdate(newPlan)
-      }
-    })
-  }
-
-  async function handlePlanChange (newTierId: Ref<Tier>): Promise<void> {
-    const { plan: newPlan } = getTypeAndPlan(newTierId)
-    const newTier = tierByPlan[newPlan]
-
-    if (currentSubscription?.id === undefined) {
-      // No active subscription, create new one
-      await subscribe(newTierId)
-      return
-    }
-
-    if (currentTier === undefined) {
-      // No current tier selected, should not happen but guard against it
-      return
-    }
-
-    // If subscription is canceled, show uncancel confirmation first
-    if (isCurrentCanceled) {
-      showPopup(MessageBox, {
-        label: plugin.string.ConfirmUncancel,
-        message: plugin.string.UncancelDescription,
-        action: async () => {
-          // After uncanceling, show the plan change confirmation
-          await showPlanChangeConfirmation(newPlan, newTier)
-        }
-      })
-    } else {
-      await showPlanChangeConfirmation(newPlan, newTier)
-    }
-  }
-
-  async function executeUpdate (newPlan: string): Promise<void> {
-    if (paymentClient == null) {
-      return
-    }
-    if (currentSubscription?.id === undefined) {
-      return
-    }
-
-    try {
-      isUpdating = true
-
-      // If subscription is canceled, uncancel it first
-      if (isCurrentCanceled) {
-        currentSubscription = await paymentClient.uncancelSubscription(currentSubscription.id)
-      }
-
-      // Now update the plan
-      const updateResult = await paymentClient.updateSubscriptionPlan(currentSubscription.id, newPlan)
-
-      // Check if it's a CheckoutResponse (free-to-paid upgrade requires checkout)
-      if ('checkoutUrl' in updateResult) {
-        // Redirect to checkout URL for free-to-paid upgrade
-        window.location.href = (updateResult as any).checkoutUrl
-        return
-      }
-
-      // It's a SubscriptionData - direct update successful
-      currentSubscription = updateResult
-    } catch (error) {
-      console.error('Error updating subscription:', error)
-      await showErrorNotification()
-    } finally {
-      isUpdating = false
-    }
   }
 
   async function handleCancel (): Promise<void> {
@@ -299,8 +195,47 @@
     }
   }
 
-  function formatSize (gb: number): { limit: number, unit: string } {
-    return gb < 1000 ? { limit: gb, unit: 'GB' } : { limit: Math.floor(gb / 1000), unit: 'TB' }
+  async function fetchPaymenterPlans (): Promise<void> {
+    if (paymenterClient == null) return
+    paymenterLoading = true
+    try {
+      paymenterPlans = await paymenterClient.getPlans()
+    } catch (err) {
+      console.error('Error fetching Paymenter plans:', err)
+      paymenterPlans = []
+    } finally {
+      paymenterLoading = false
+    }
+  }
+
+  function getPlanData (plan: PaymenterPlanInfo): {
+    planId: string
+    label: string
+    slug: string
+    price: number
+    currencySymbol: string
+    currencyCode: string
+    billingPeriodText: string
+  } {
+    const currencyCode = plan.currencyCode ?? 'RUB'
+    const currencySymbol = currencyCode === 'RUB' ? '₽' : currencyCode === 'USD' ? '$' : currencyCode
+
+    let billingPeriodText = ''
+    if (plan.planType === 'recurring' && plan.billingPeriod === 1 && plan.billingUnit === 'month') {
+      billingPeriodText = plugin.string.Monthly
+    } else if (plan.planType === 'recurring' && plan.billingUnit != null && plan.billingPeriod != null) {
+      billingPeriodText = `/${plan.billingPeriod} ${plan.billingUnit}`
+    }
+
+    return {
+      planId: plan.planId,
+      label: plan.productName,
+      slug: plan.productSlug,
+      price: plan.price,
+      currencySymbol,
+      currencyCode,
+      billingPeriodText
+    }
   }
 
   async function pollCheckoutStatus (checkoutId: string): Promise<void> {
@@ -378,18 +313,6 @@
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  function getTypeAndPlan (tierId: Ref<Tier>): { type: SubscriptionType, plan: string } {
-    const parts = tierId.split(':')
-    if (parts.length !== 3) {
-      throw new Error(`Invalid tier id: ${tierId}`)
-    }
-
-    return {
-      type: parts[1] as SubscriptionType,
-      plan: parts[2].toLowerCase()
-    }
-  }
-
   onMount(() => {
     void (async () => {
       // First, load current subscriptions
@@ -397,6 +320,9 @@
 
       // Then fetch usage stats
       await fetchUsageStats()
+
+      // Fetch Paymenter plans
+      await fetchPaymenterPlans()
 
       // Then check if we need to poll for a new subscription from checkout
       checkForCheckoutParam()
@@ -495,77 +421,59 @@
         </div>
       </div>
 
-      <!-- <div class="flex-col flex-gap-4">
-        <div class="section-title">
-          <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
+      <div class="flex-col flex-gap-4">
+        <div class="plans-header">
+          <div class="section-title">
+            <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
+          </div>
+          <Button
+            label={plugin.string.GoToStore}
+            size={'small'}
+            kind={'primary'}
+            on:click={() => {
+              const paymenterUrl = getMetadata(billing.metadata.PaymenterURL)
+              if (paymenterUrl !== undefined && paymenterUrl !== '') {
+                window.open(`${paymenterUrl}/products/platform`, '_blank')
+              }
+            }}
+          />
         </div>
-        <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
-          <div class="flex-row-top flex-gap-4 flex-no-shrink mb-3">
-            {#each tiers as tier}
-              {@const color =
-                tier.color !== null && tier.color !== undefined && tier.color.length > 0
-                  ? getPlatformColorByName(tier.color, $themeStore.dark)
-                  : null}
-              {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
-              <div
-                class="tier-card"
-                style={color !== null && color !== undefined ? `${bgAttr}: ${color.background};` : ''}
-              >
-                <div class="tier-card-content">
-                  <div class="fs-title text-lg">
-                    <Label label={tier.label} />
-                  </div>
-                  <div class="flex-row-center items-end">
-                    <span class="fs-title text-xl">
-                      ${tier.priceMonthly}
-                    </span>
-                    <span class="ml-1 lower">
-                      <Label label={plugin.string.Monthly} />
-                    </span>
-                  </div>
-                  <div class="mb-2 h-16">
-                    <Label label={tier.description} />
-                  </div>
-
-                  <div class="tier-features">
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedUsers} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedObjects} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.StorageLimit} params={{ ...formatSize(tier.storageLimitGB) }} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.TrafficLimit} params={{ ...formatSize(tier.trafficLimitGB) }} />
-                    </div>
-                  </div>
+        <div class="plans-grid">
+          {#each paymenterPlans as plan}
+            {@const planData = getPlanData(plan)}
+            <div class="tier-card">
+              <div class="tier-card-content">
+                <div class="fs-title text-lg">
+                  <Label label={planData.label} />
                 </div>
-                <div class="tier-card-footer">
-                  {#if !isReadOnly && (currentTier === undefined || currentTier._id !== tier._id)}
-                    <Button
-                      label={currentTier === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
-                      size={'large'}
-                      kind={currentTier === undefined || tier.priceMonthly > currentTier.priceMonthly
-                        ? 'primary'
-                        : 'regular'}
-                      disabled={loading || isCheckoutPolling || isUpdating}
-                      on:click={() => {
-                        void handlePlanChange(tier._id)
-                      }}
-                    />
+                <div class="flex-row-center items-end">
+                  <span class="fs-title text-xl">
+                    {planData.currencySymbol}{planData.price}
+                  </span>
+                  {#if planData.billingPeriodText}
+                    <span class="ml-1 lower">
+                      <Label label={planData.billingPeriodText} />
+                    </span>
                   {/if}
                 </div>
               </div>
-            {/each}
-          </div>
-        </Scroller>
-      </div> -->
+              <div class="tier-card-footer">
+                <Button
+                  label={plugin.string.GoTo}
+                  size={'small'}
+                  kind={'primary'}
+                  on:click={() => {
+                    const paymenterUrl = getMetadata(billing.metadata.PaymenterURL)
+                    if (paymenterUrl !== undefined && paymenterUrl !== '') {
+                      window.open(`${paymenterUrl}/products/platform/${planData.slug}`, '_blank')
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          {/each}
+        </div>
+        </div>
     </div>
   </Scroller>
 {/if}
@@ -599,16 +507,25 @@
     padding: 0.125rem 0.5rem;
   }
 
+  .plans-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: var(--spacing-4);
+  }
+
   .tier-card {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    flex-shrink: 0;
-    width: 15rem;
-    // max-height: 22rem;
     border: 1px solid var(--theme-divider-color);
     border-radius: var(--medium-BorderRadius);
-    padding: var(--spacing-2);
+    padding: var(--spacing-3);
     background-color: var(--theme-button-default);
   }
 
@@ -616,46 +533,15 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-3);
-    min-height: 0;
-  }
-
-  .tier-features {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-1);
-  }
-
-  .feature-item {
-    display: flex;
-    gap: var(--spacing-0_5);
-    font-size: 0.8125rem;
-  }
-
-  .feature-bullet {
-    color: var(--theme-state-positive-color);
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  .curr-tier-footer {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: var(--spacing-2);
-    border-top: 1px solid var(--theme-divider-color);
+    gap: var(--spacing-2);
   }
 
   .tier-card-footer {
     display: flex;
-    flex-direction: row-reverse;
+    justify-content: flex-end;
     margin-top: var(--spacing-3);
-    height: 2.25rem;
-  }
-
-  .processing {
-    text-align: center;
+    padding-top: var(--spacing-2);
+    border-top: 1px solid var(--theme-divider-color);
   }
 
   .usage-section {

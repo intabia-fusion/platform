@@ -204,6 +204,8 @@ export interface Config {
   COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
+  PAYMENTER_URL?: string
+  PAYMENTER_TOKEN?: string
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS?: string
   PULSE_URL?: string
   HULYLAKE_URL?: string
@@ -574,6 +576,8 @@ export async function configurePlatform() {
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
+  setMetadata(billingPlugin.metadata.PaymenterURL, config.PAYMENTER_URL ?? '')
+  setMetadata(billingPlugin.metadata.PaymenterToken, config.PAYMENTER_TOKEN ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
 
   setMetadata(presentation.metadata.PulseUrl, config.PULSE_URL)

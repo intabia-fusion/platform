@@ -65,6 +65,8 @@ export interface Config {
   COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
+  PAYMENTER_URL?: string
+  PAYMENTER_TOKEN?: string
   PULSE_URL?: string
   PASSWORD_STRICTNESS?: 'very_strict' | 'strict' | 'normal' | 'none'
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS?: string

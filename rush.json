@@ -717,6 +717,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@hcengineering/paymenter-client",
+      "projectFolder": "packages/paymenter-client",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@hcengineering/prod",
       "projectFolder": "dev/prod",
       "shouldPublish": false

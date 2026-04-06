@@ -26,6 +26,11 @@ import {
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
 import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
 import {
+  getClient as getPaymenterClientRaw,
+  type PaymenterClient,
+  type PaymenterPlanInfo
+} from '@hcengineering/paymenter-client'
+import {
   type UsageStatus,
   type WorkspaceInfoWithStatus,
   AccountRole,
@@ -65,6 +70,16 @@ export function getPaymentClient (): PaymentClient | null {
   }
 
   return getPaymentClientRaw(paymentUrl, token)
+}
+
+export function getPaymenterClient (): PaymenterClient | null {
+  const paymenterUrl = getMetadata(billing.metadata.PaymenterURL) ?? ''
+  const token = getMetadata(billing.metadata.PaymenterToken) ?? ''
+  if (paymenterUrl === '' || token === '') {
+    return null
+  }
+
+  return getPaymenterClientRaw(paymenterUrl, token)
 }
 
 export async function isLimitExceeded (): Promise<boolean> {
