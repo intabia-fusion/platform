@@ -93,29 +93,48 @@ function rateLimitToHeaders (rateLimit?: RateLimitInfo): OutgoingHttpHeaders {
   }
 }
 
+function rtcEtag (entity: Buffer): string {
+  if (entity.length === 0) {
+    return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"'
+  }
+
+  // compute hash of entity
+  const hash = createHash('sha1').update(entity).digest('base64').substring(0, 27)
+
+  // compute length of entity
+  const len = entity.length
+
+  return '"' + len.toString(16) + '-' + hash + '"'
+}
+
 async function sendJson (
   req: Request,
   res: ExpressResponse,
   result: any,
-  extraHeaders?: OutgoingHttpHeaders
+  extraHeaders?: OutgoingHttpHeaders,
+  etag?: boolean
 ): Promise<void> {
-  // Calculate ETag
+  // Calculate ETag only for find operations (default false)
   let body: Buffer = Buffer.from(JSON.stringify(result, rpcJSONReplacer), 'utf8')
 
-  const etag = createHash('sha256').update(body).digest('hex')
   const headers: OutgoingHttpHeaders = {
     ...(extraHeaders ?? {}),
     ...keepAliveOptions,
     'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-cache',
-    ETag: etag
+    'Cache-Control': 'no-cache'
   }
 
-  // Check if the ETag matches
-  if (req.headers['if-none-match'] === etag) {
-    res.writeHead(304, headers)
-    res.end()
-    return
+  // Calculate etag only when requested (for find operations)
+  if (etag === true) {
+    const etagValue = rtcEtag(body)
+    headers.ETag = etagValue
+
+    // Check if the ETag matches
+    if (req.headers['if-none-match'] === etagValue) {
+      res.writeHead(304, headers)
+      res.end()
+      return
+    }
   }
 
   const contentEncodings: string[] =
@@ -269,7 +288,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       }
 
       const result = await session.findAllRaw(ctx, _class, query, options)
-      await sendJson(req, res, result, rateLimitToHeaders(rateLimit))
+      await sendJson(req, res, result, rateLimitToHeaders(rateLimit), true)
     })
   })
 
@@ -278,7 +297,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       const { _class, query, options }: any = (await retrieveJson(req)) ?? {}
 
       const result = await session.findAllRaw(ctx, _class, query, options)
-      await sendJson(req, res, result, rateLimitToHeaders(rateLimit))
+      await sendJson(req, res, result, rateLimitToHeaders(rateLimit), true)
     })
   })
 
@@ -591,7 +610,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         limit: req.query.limit !== undefined ? parseInt(req.query.limit as string) : undefined
       }
       const result = await session.searchFulltextRaw(ctx, query, options)
-      await sendJson(req, res, result, rateLimitToHeaders(rateLimit))
+      await sendJson(req, res, result, rateLimitToHeaders(rateLimit), true)
     })
   })
 

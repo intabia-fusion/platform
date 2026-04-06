@@ -160,9 +160,62 @@ describe('rest-api-server', () => {
         }
       }
     )
+    console.log('SPACES', JSON.stringify(spaces))
+    // There should be exactly 1 PersonSpace per account.
+    // If more than 1 appears it indicates a race condition in ensureEmployee / OnEmployeeCreate
+    // where multiple Person documents are created for the same account UUID.
     expect(spaces.length).toBe(1)
     expect(spaces[0].name).toBe('Personal space')
     expect(spaces[0].$lookup?.person?.name).toBe('Appleseed,John')
+  })
+
+  it('no duplicate persons for same account', async () => {
+    const conn = connect()
+    const persons = await conn.findAll(contact.class.Person, { personUuid: apiWorkspace1.info.account as any })
+    // Each account should map to exactly one Person in a workspace
+    expect(persons.length).toBe(1)
+  })
+
+  it('single employee mixin per person', async () => {
+    const conn = await connectTx()
+    const persons = await conn.findAll(contact.class.Person, { personUuid: apiWorkspace1.info.account as any })
+    expect(persons.length).toBe(1)
+
+    const employees = await conn.findAll(contact.mixin.Employee, { _id: persons[0]._id as any })
+    expect(employees.length).toBe(1)
+    expect(employees[0].active).toBe(true)
+    expect(employees[0].role).toBe('USER')
+  })
+
+  it('single personal space per account', async () => {
+    const conn = connect()
+    const personalSpaces = await conn.findAll(contact.class.PersonSpace, {
+      account: apiWorkspace1.info.account as any
+    })
+    expect(personalSpaces.length).toBe(1)
+    expect(personalSpaces[0].name).toBe('Personal space')
+    expect(personalSpaces[0].private).toBe(true)
+  })
+
+  it('employee mixin matches person', async () => {
+    const txConn = await connectTx()
+    const persons = await txConn.findAll(contact.class.Person, { personUuid: apiWorkspace1.info.account as any })
+    expect(persons.length).toBe(1)
+    const personId = persons[0]._id
+
+    // Employee mixin should reference the same Person document
+    const employee = await txConn.findOne(contact.mixin.Employee, { _id: personId as any })
+    expect(employee).not.toBeNull()
+    expect(employee?._id).toBe(personId)
+    expect(employee?.active).toBe(true)
+
+    // PersonSpace should reference the same Person
+    const conn = connect()
+    const personalSpaces = await conn.findAll(contact.class.PersonSpace, {
+      person: personId as any
+    })
+    expect(personalSpaces.length).toBe(1)
+    expect(personalSpaces[0].account).toBe(apiWorkspace1.info.account)
   })
 
   it('find channels', async () => {

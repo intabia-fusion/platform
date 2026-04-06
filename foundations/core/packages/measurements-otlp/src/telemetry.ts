@@ -73,11 +73,9 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
   st = platformNow()
   contextData: object = {}
   isDone = false
-  doneTrace: string = ''
 
   private done (value?: number, override?: boolean): void {
     if (!this.isDone) {
-      this.doneTrace = new Error().stack ?? ''
       this.isDone = true
       updateMeasure(this.metrics, this.st, this.params, this.fullParams, (spend) => {}, value, override)
       this.span?.end()

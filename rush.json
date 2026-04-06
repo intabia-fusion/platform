@@ -602,6 +602,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/benchmarks",
+      "projectFolder": "dev/benchmarks",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/importer",
       "projectFolder": "packages/importer",
       "shouldPublish": false
