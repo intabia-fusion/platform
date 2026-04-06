@@ -498,6 +498,8 @@ services:
         condition: service_started
       transactor0:
         condition: service_started
+    volumes:
+      - ./branding-test.json:/var/cfg/branding.json
     environment:
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3003
@@ -507,6 +509,7 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+      - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   datalake:
     image: intabiafusion/datalake

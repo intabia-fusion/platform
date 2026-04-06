@@ -14,6 +14,7 @@
 //
 
 import {
+  Branding,
   type Class,
   type Doc,
   type DocumentQuery,
@@ -59,6 +60,7 @@ export interface Client {
   model: ModelDb
   hierarchy: Hierarchy
   txFactory: TxFactory
+  branding: Branding | undefined
   findAll: <T extends Doc>(
     _class: Ref<Class<T>>,
     query: DocumentQuery<T>,

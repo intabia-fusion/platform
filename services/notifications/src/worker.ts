@@ -14,6 +14,7 @@
 //
 
 import core, {
+  type Branding,
   Class,
   Doc,
   Hierarchy,
@@ -32,6 +33,7 @@ import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
 import notification, { TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import { loadBrandingMap } from '@hcengineering/server-core'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
@@ -49,6 +51,8 @@ export class Worker {
   private readonly storage: StorageAdapter
 
   private readonly interval: NodeJS.Timeout | undefined = undefined
+
+  private readonly brandingMap = loadBrandingMap(config.BrandingPath)
 
   constructor (
     ctx: MeasureContext,
@@ -111,7 +115,10 @@ export class Worker {
     const client = createRestClient(endpoint, ws, token)
 
     const { model, hierarchy } = await client.getModel(true)
-
+    const branding: Branding | undefined =
+      wsInfo.branding !== undefined && wsInfo.branding !== ''
+        ? this.brandingMap[wsInfo.branding]
+        : this.brandingMap[Object.keys(this.brandingMap)[0]]
     const workspace = await Workspace.create(
       ctx.newChild(ws, {}),
       wsInfo,
@@ -120,6 +127,7 @@ export class Worker {
       this.modelTxes,
       this.storage,
       client,
+      branding,
       this.txTypes
     )
 

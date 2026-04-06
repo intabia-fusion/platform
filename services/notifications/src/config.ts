@@ -27,10 +27,10 @@ export interface Config {
   ServiceId: string
   StorageConfig: string
   AllowedNotificationProviders: (Ref<NotificationProvider> | 'all')[]
-  LastNameFirst: string
   DbUrl: string
   ApplyTxBatchSize: number
   FrontUrl: string
+  BrandingPath: string
 }
 
 function getAllowedProviders (): (Ref<NotificationProvider> | 'all')[] {
@@ -49,10 +49,10 @@ const config: Config = (() => {
     ServiceId: process.env.SERVICE_ID ?? 'notifications-service',
     StorageConfig: process.env.STORAGE_CONFIG,
     AllowedNotificationProviders: getAllowedProviders(),
-    LastNameFirst: process.env.LAST_NAME_FIRST ?? 'false',
     DbUrl: process.env.DB_URL,
     ApplyTxBatchSize: parseInt(process.env.APPLY_TX_BATCH_SIZE ?? '100'),
-    FrontUrl: process.env.FRONT_URL
+    FrontUrl: process.env.FRONT_URL,
+    BrandingPath: process.env.BRANDING_PATH ?? ''
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
