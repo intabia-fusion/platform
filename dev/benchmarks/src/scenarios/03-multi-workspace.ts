@@ -16,8 +16,7 @@
 import core, {
   MeasureMetricsContext,
   pickPrimarySocialId,
-  TxOperations,
-  type Ref
+  TxOperations
 } from '@hcengineering/core'
 import {
   createRestClient,
@@ -27,7 +26,7 @@ import {
 } from '@hcengineering/api-client'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { ensureEmployee } from '@hcengineering/contact'
-import tracker, { type Issue, type Project } from '@hcengineering/tracker'
+import tracker, { type Project } from '@hcengineering/tracker'
 
 import type { BenchConfig } from '../config'
 import {
@@ -37,7 +36,6 @@ import {
   createIssue,
   ensureProject,
   generateRanks,
-  printStats,
   trackError
 } from '../helpers'
 import { createWorkspaces, connectToWorkspaces, type WorkspaceInfo } from '../workspace-manager'
@@ -161,7 +159,8 @@ async function runWorkspaceWorker (
         } else if (roll < 0.7) {
           await client.findAll(tracker.class.Issue, { space: project._id }, { limit: 50 })
         } else if (roll < 0.95) {
-          await createIssue(client, project, getSeq(), getRank(), `MW-${wsInfo.name}-${getSeq()}`)
+          const seq = getSeq()
+          await createIssue(client, project, seq, getRank(), `MW-${wsInfo.name}-${seq}`)
         } else {
           // Update random issue
           const issues = await client.findAll(tracker.class.Issue, { space: project._id }, { limit: 10 })
@@ -229,13 +228,14 @@ export async function runMultiWorkspace (cfg: BenchConfig): Promise<MultiWorkspa
   const perWorkspace = allResults.flat()
 
   // Aggregate stats
-  const allTimings: number[] = []
   const allErrors = new Map<string, number>()
   let totalWallMs = 0
 
   for (const r of perWorkspace) {
     totalWallMs = Math.max(totalWallMs, r.stats.wallMs)
-    // We don't have raw timings, but we can approximate from stats
+    for (const [msg, cnt] of r.stats.errors) {
+      allErrors.set(msg, (allErrors.get(msg) ?? 0) + cnt)
+    }
   }
 
   // Print per-workspace results
@@ -271,11 +271,19 @@ export async function runMultiWorkspace (cfg: BenchConfig): Promise<MultiWorkspa
   // Build aggregate
   const aggregate = calcStats(
     `multi-ws(${workspaces.length}ws x ${clientsPerWs}cl)`,
-    [], // no raw timings available
+    [],
     totalWallMs,
     allErrors
   )
   aggregate.realOpsPerSec = totalOps
+  aggregate.failed = totalFailed
+  aggregate.avgMs =
+    perWorkspace.length > 0
+      ? Math.round(perWorkspace.reduce((sum, r) => sum + r.stats.avgMs, 0) / perWorkspace.length)
+      : 0
+  aggregate.p95Ms = perWorkspace.reduce((max, r) => Math.max(max, r.stats.p95Ms), 0)
+  aggregate.p99Ms = perWorkspace.reduce((max, r) => Math.max(max, r.stats.p99Ms), 0)
+  aggregate.maxMs = perWorkspace.reduce((max, r) => Math.max(max, r.stats.maxMs), 0)
 
   return {
     workspaceCount: workspaces.length,

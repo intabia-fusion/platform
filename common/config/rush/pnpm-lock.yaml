@@ -41427,9 +41427,6 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/rank':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/rank
       '@hcengineering/rpc':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rpc

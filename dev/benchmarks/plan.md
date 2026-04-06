@@ -3,7 +3,7 @@
 ## Goal
 
 Determine server capacity limits and identify bottlenecks under realistic and extreme load.
-All tests accept `--accountUrl` (or env `HULY_URL`) to target any environment.
+All tests accept `--url` (or env `HULY_URL`) to target any environment.
 
 ## Architecture
 
@@ -332,6 +332,56 @@ Output format: console table + optional JSON file (`--output results.json`).
 6. **Recovery**: After overload, how fast does the server recover?
 7. **Rate limiter**: Does the 25000/1000ms rate limit actually protect the server?
 8. **Session management**: Does the RPC session cache (rpc.ts:149) leak under churn?
+
+## Quick Start: dev environment
+
+The primary benchmarking environment is `dev/docker-compose.yaml` (postgres).
+
+### 1. Run the benchmark
+
+```bash
+cd dev/benchmarks
+rushx bench --scenario rest-throughput
+```
+
+Default parameters (from `src/config.ts`):
+- `--url http://huly.local:8087`
+- `--email user1 --password 1234`
+- `--workspace bench-ws`
+- `--clients 1,5,10,20,50`
+- `--duration 15`
+
+### 2. Collect transactor statistics
+
+After the benchmark, fetch the transactor's internal measurements (MeasureContext tree):
+
+```bash
+cd dev/benchmarks
+./fetch_stats.sh > transactor_stats.json
+```
+
+The `fetch_stats.sh` script calls the stats service at `http://huly.local:4900/api/v1/statistics`
+with an admin token and the transactor container name. The response is a JSON tree of
+`{ operations, value (ms), measurements, topResult }` entries — useful for identifying
+server-side bottlenecks (triggers, DB queries, etc.).
+
+### 3. Reset transactor statistics
+
+To get clean measurements for a single benchmark run, reset stats before running:
+
+Open `http://huly.local:4900` in the browser (stats UI), or restart the transactor container.
+
+### Key URLs (dev environment)
+
+| Service | URL |
+|---------|-----|
+| Frontend | `http://huly.local:8087` |
+| Stats service | `http://huly.local:4900` |
+| Transactor HTTP | `http://localhost:3332` |
+
+Results are tracked in `stats.md` in this directory.
+
+---
 
 ## Baseline Reference (from ws-tests stress results)
 

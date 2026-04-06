@@ -32,7 +32,7 @@ import core, {
   type Space
 } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import contact, { ensureEmployee } from '@hcengineering/contact'
+import { ensureEmployee } from '@hcengineering/contact'
 import tracker, { type Issue, IssuePriority, type Project } from '@hcengineering/tracker'
 import { makeRank } from '@hcengineering/rank'
 

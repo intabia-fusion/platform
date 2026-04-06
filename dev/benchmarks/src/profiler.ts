@@ -16,7 +16,7 @@
 import { generateToken } from '@hcengineering/server-token'
 import { systemAccountUuid } from '@hcengineering/core'
 import { writeFile, mkdir } from 'fs/promises'
-import { dirname, resolve } from 'path'
+import { resolve } from 'path'
 import { existsSync } from 'fs'
 
 function getAdminToken (): string {

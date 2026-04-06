@@ -33,6 +33,7 @@ import core, {
   type SocialId,
   type Space,
   type TxCreateDoc,
+  type PersonId,
   type TxOperations,
   type WorkspaceUuid
 } from '@hcengineering/core'
@@ -87,13 +88,30 @@ describe('error-handling', () => {
     return await createRestTxOperations(apiWorkspace.endpoint, apiWorkspace.workspaceId, apiWorkspace.token)
   }
 
-  function createSpaceTx (primarySocialId: string, spaceName: string, objectId?: string): TxCreateDoc<Space> {
+  // Ensures operation settles (resolve or reject) within timeout.
+  // Purpose: detect server hangs. Whether the server throws or silently no-ops is not asserted here.
+  async function expectNoHang<T> (op: Promise<T>, timeoutMs = 5000): Promise<void> {
+    let timer: NodeJS.Timeout | undefined
+    const timeout = new Promise<'__hang__'>((resolve) => {
+      timer = setTimeout(() => {
+        resolve('__hang__')
+      }, timeoutMs)
+    })
+    try {
+      const outcome = await Promise.race([op.then(() => 'ok' as const).catch(() => 'ok' as const), timeout])
+      expect(outcome).not.toBe('__hang__')
+    } finally {
+      if (timer !== undefined) clearTimeout(timer)
+    }
+  }
+
+  function createSpaceTx (primarySocialId: PersonId, spaceName: string, objectId?: string): TxCreateDoc<Space> {
     return {
       _class: core.class.TxCreateDoc,
       space: core.space.Tx,
       _id: generateId(),
       objectSpace: core.space.Model,
-      modifiedBy: primarySocialId as any,
+      modifiedBy: primarySocialId,
       modifiedOn: Date.now(),
       attributes: {
         name: spaceName,
@@ -136,7 +154,7 @@ describe('error-handling', () => {
       await expect(conn.findAll(core.class.Space, {})).rejects.toThrow()
     })
 
-    it('request with expired token should return error', async () => {
+    it('request with invalid signature token should return error', async () => {
       const expiredToken = generateToken(apiWorkspace.info.account, apiWorkspace.workspaceId, undefined, 'wrong-secret')
       const conn = createRestClient(apiWorkspace.endpoint, apiWorkspace.workspaceId, expiredToken)
       await expect(conn.findAll(core.class.Space, {})).rejects.toThrow()
@@ -166,13 +184,8 @@ describe('error-handling', () => {
       // First create should succeed
       await conn.tx(createSpaceTx(account.primarySocialId, spaceName, objectId))
 
-      // Second create with same objectId should not hang
-      try {
-        await conn.tx(createSpaceTx(account.primarySocialId, spaceName, objectId))
-      } catch (err: any) {
-        // Expected to throw or return error - either way should not hang
-        expect(err).toBeDefined()
-      }
+      // Second create with same objectId must complete (resolve or reject) — must not hang
+      await expectNoHang(conn.tx(createSpaceTx(account.primarySocialId, spaceName, objectId)))
     })
 
     it('tx with empty body should return error', async () => {
@@ -199,21 +212,14 @@ describe('error-handling', () => {
 
     it('update non-existent document should handle gracefully', async () => {
       const conn = await connectTx()
-      try {
-        await conn.updateDoc(core.class.Space, core.space.Model, generateId(), { name: 'non-existent' })
-      } catch (err: any) {
-        // Should throw or return error, not hang
-        expect(err).toBeDefined()
-      }
+      await expectNoHang(
+        conn.updateDoc(core.class.Space, core.space.Model, generateId(), { name: 'non-existent' })
+      )
     })
 
     it('remove non-existent document should handle gracefully', async () => {
       const conn = await connectTx()
-      try {
-        await conn.removeDoc(core.class.Space, core.space.Model, generateId())
-      } catch (err: any) {
-        expect(err).toBeDefined()
-      }
+      await expectNoHang(conn.removeDoc(core.class.Space, core.space.Model, generateId()))
     })
   })
 
@@ -391,12 +397,7 @@ describe('error-handling', () => {
   describe('ensure-person-errors', () => {
     it('ensurePerson with empty values should handle gracefully', async () => {
       const conn = connect()
-      try {
-        await conn.ensurePerson('' as any, '', '', '')
-      } catch (err: any) {
-        // Should return error, not hang
-        expect(err).toBeDefined()
-      }
+      await expect(conn.ensurePerson('' as any, '', '', '')).rejects.toThrow()
     })
 
     it('ensurePerson called concurrently for same person should not create duplicates', async () => {
