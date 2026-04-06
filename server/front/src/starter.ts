@@ -108,7 +108,6 @@ export function startFront (ctx: MeasureContext, extraConfig?: Record<string, st
   const hideLocalLogin = process.env.HIDE_LOCAL_LOGIN
 
   const billingUrl = process.env.BILLING_URL
-  const billingApiToken = process.env.BILLING_API_TOKEN
 
   const paymentUrl = process.env.PAYMENT_URL
 

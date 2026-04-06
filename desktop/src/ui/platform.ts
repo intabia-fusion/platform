@@ -404,7 +404,6 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(exportPlugin.metadata.ExportUrl, config.EXPORT_URL ?? '')
 
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
-  setMetadata(billingPlugin.metadata.BillingApiToken, config.BILLING_API_TOKEN ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
   setMetadata(presentation.metadata.SignupUrl, config.SIGNUP_URL ?? 'https://huly.io/signup')
 
