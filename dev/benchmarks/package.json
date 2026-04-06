@@ -6,6 +6,7 @@
   "scripts": {
     "bench": "ts-node -T --project tsconfig.json src/run.ts",
     "setup": "ts-node -T --project tsconfig.json src/run.ts --scenario setup",
+    "format": "echo 'not yet'",
     "rest-throughput": "ts-node -T --project tsconfig.json src/run.ts --scenario rest-throughput",
     "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace"
   },

@@ -111,14 +111,14 @@ describe('rest-api-server', () => {
     )
   }, 10000)
 
-  function connect (ws?: WorkspaceToken, asSystem = false): RestClient {
+  function connect(ws?: WorkspaceToken, asSystem = false): RestClient {
     const tok = ws ?? apiWorkspace1
     const token = asSystem ? generateToken(systemAccountUuid, tok.workspaceId, undefined, 'secret') : tok.token
 
     return createRestClient(tok.endpoint, tok.workspaceId, token)
   }
 
-  async function connectTx (ws?: WorkspaceToken): Promise<TxOperations> {
+  async function connectTx(ws?: WorkspaceToken): Promise<TxOperations> {
     const tok = ws ?? apiWorkspace1
     return await createRestTxOperations(tok.endpoint, tok.workspaceId, tok.token)
   }
@@ -160,6 +160,7 @@ describe('rest-api-server', () => {
         }
       }
     )
+    console.log('SPACES', JSON.stringify(spaces))
     expect(spaces.length).toBe(1)
     expect(spaces[0].name).toBe('Personal space')
     expect(spaces[0].$lookup?.person?.name).toBe('Appleseed,John')
@@ -281,7 +282,7 @@ describe('rest-api-server', () => {
   })
 })
 
-async function checkFindPerformance (conn: RestClient): Promise<void> {
+async function checkFindPerformance(conn: RestClient): Promise<void> {
   let ops = 0
   let total = 0
   const attempts = 500

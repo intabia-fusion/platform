@@ -37,7 +37,7 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
-import contact, { ensureEmployee } from '@hcengineering/contact'
+import { ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
 
 describe('error-handling', () => {
@@ -87,11 +87,7 @@ describe('error-handling', () => {
     return await createRestTxOperations(apiWorkspace.endpoint, apiWorkspace.workspaceId, apiWorkspace.token)
   }
 
-  function createSpaceTx (
-    primarySocialId: string,
-    spaceName: string,
-    objectId?: string
-  ): TxCreateDoc<Space> {
+  function createSpaceTx (primarySocialId: string, spaceName: string, objectId?: string): TxCreateDoc<Space> {
     return {
       _class: core.class.TxCreateDoc,
       space: core.space.Tx,
@@ -117,9 +113,7 @@ describe('error-handling', () => {
   describe('invalid-class-and-query', () => {
     it('findAll with non-existent class should return error', async () => {
       const conn = connect()
-      await expect(
-        conn.findAll('non:existent:Class' as Ref<Class<Doc>>, {})
-      ).rejects.toThrow()
+      await expect(conn.findAll('non:existent:Class' as Ref<Class<Doc>>, {})).rejects.toThrow()
     })
 
     it('findAll with malformed query should not hang', async () => {
@@ -130,9 +124,7 @@ describe('error-handling', () => {
 
     it('findAll with empty class string should return error', async () => {
       const conn = connect()
-      await expect(
-        conn.findAll('' as Ref<Class<Doc>>, {})
-      ).rejects.toThrow()
+      await expect(conn.findAll('' as Ref<Class<Doc>>, {})).rejects.toThrow()
     })
   })
 
@@ -145,12 +137,7 @@ describe('error-handling', () => {
     })
 
     it('request with expired token should return error', async () => {
-      const expiredToken = generateToken(
-        apiWorkspace.info.account,
-        apiWorkspace.workspaceId,
-        undefined,
-        'wrong-secret'
-      )
+      const expiredToken = generateToken(apiWorkspace.info.account, apiWorkspace.workspaceId, undefined, 'wrong-secret')
       const conn = createRestClient(apiWorkspace.endpoint, apiWorkspace.workspaceId, expiredToken)
       await expect(conn.findAll(core.class.Space, {})).rejects.toThrow()
     })
@@ -213,12 +200,7 @@ describe('error-handling', () => {
     it('update non-existent document should handle gracefully', async () => {
       const conn = await connectTx()
       try {
-        await conn.updateDoc(
-          core.class.Space,
-          core.space.Model,
-          generateId() as Ref<Space>,
-          { name: 'non-existent' }
-        )
+        await conn.updateDoc(core.class.Space, core.space.Model, generateId(), { name: 'non-existent' })
       } catch (err: any) {
         // Should throw or return error, not hang
         expect(err).toBeDefined()
@@ -228,11 +210,7 @@ describe('error-handling', () => {
     it('remove non-existent document should handle gracefully', async () => {
       const conn = await connectTx()
       try {
-        await conn.removeDoc(
-          core.class.Space,
-          core.space.Model,
-          generateId() as Ref<Space>
-        )
+        await conn.removeDoc(core.class.Space, core.space.Model, generateId())
       } catch (err: any) {
         expect(err).toBeDefined()
       }
@@ -244,9 +222,7 @@ describe('error-handling', () => {
   describe('concurrent-operations', () => {
     it('parallel findAll should not cause server errors', async () => {
       const conn = connect()
-      const promises = Array.from({ length: 20 }, () =>
-        conn.findAll(core.class.Space, {})
-      )
+      const promises = Array.from({ length: 20 }, () => conn.findAll(core.class.Space, {}))
       const results = await Promise.all(promises)
       for (const result of results) {
         expect(result.length).toBeGreaterThan(0)
@@ -323,8 +299,15 @@ describe('error-handling', () => {
 
       // Should either succeed or fail with error, not hang
       const result = await Promise.race([
-        conn.tx(tx).then(() => 'done').catch(() => 'error'),
-        new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 30000))
+        conn
+          .tx(tx)
+          .then(() => 'done')
+          .catch(() => 'error'),
+        new Promise<string>((resolve) =>
+          setTimeout(() => {
+            resolve('timeout')
+          }, 30000)
+        )
       ])
       expect(result).not.toBe('timeout')
     })
@@ -373,9 +356,7 @@ describe('error-handling', () => {
   describe('rate-limiting', () => {
     it('burst of requests should be handled gracefully', async () => {
       const conn = connect()
-      const promises = Array.from({ length: 50 }, () =>
-        conn.findAll(core.class.Space, {}, { limit: 1 })
-      )
+      const promises = Array.from({ length: 50 }, () => conn.findAll(core.class.Space, {}, { limit: 1 }))
 
       const results = await Promise.allSettled(promises)
       const succeeded = results.filter((r) => r.status === 'fulfilled')
@@ -427,9 +408,7 @@ describe('error-handling', () => {
       )
 
       const results = await Promise.allSettled(promises)
-      const succeeded = results.filter(
-        (r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled'
-      )
+      const succeeded = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
 
       if (succeeded.length > 1) {
         // All successful results should have the same uuid
