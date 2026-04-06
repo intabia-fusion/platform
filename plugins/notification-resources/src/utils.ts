@@ -629,7 +629,9 @@ export function pushAvailable (): boolean {
   )
 }
 
-export async function subscribePush (): Promise<boolean> {
+export type PushSubscribeResult = 'success' | 'permission_denied' | 'network_error' | 'not_supported'
+
+export async function subscribePush (): Promise<PushSubscribeResult> {
   const client = getClient()
   const publicKey = getMetadata(notification.metadata.PushPublicKey)
   if ('serviceWorker' in navigator && 'PushManager' in window && publicKey !== undefined) {
@@ -645,6 +647,10 @@ export async function subscribePush (): Promise<boolean> {
       }
       const current = await registration.pushManager.getSubscription()
       if (current == null) {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          return 'permission_denied'
+        }
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: publicKey
@@ -677,15 +683,18 @@ export async function subscribePush (): Promise<boolean> {
       }
       addWorkerListener()
       pushAllowed.set(true)
-      return true
+      return 'success'
     } catch (err) {
-      console.error('Service Worker registration failed:', err)
+      const error = err as Error
+      console.error('Service Worker registration failed:', error)
       pushAllowed.set(false)
-      return false
+      if (error?.name === 'AbortError') return 'network_error'
+      if (error?.name === 'NotAllowedError') return 'permission_denied'
+      return 'network_error'
     }
   }
   pushAllowed.set(false)
-  return false
+  return 'not_supported'
 }
 
 async function cleanTag (_id: Ref<Doc>): Promise<void> {

@@ -106,14 +106,21 @@
   async function subscribe (): Promise<void> {
     if (subscribing) return
     subscribing = true
-    const isSubscribed = await subscribePush()
+    const subscribeResult = await subscribePush()
     subscribing = false
-    if (isSubscribed) {
+    if (subscribeResult === 'success') {
       await updateCurrentEndpoint()
     } else {
       showPopup(MessageBox, {
         label: notification.string.PushSubscribeError,
-        message: notification.string.PushSubscribeErrorMessage,
+        message:
+          subscribeResult === 'permission_denied'
+            ? notification.string.PushSubscribeErrorPermissionDenied
+            : subscribeResult === 'network_error'
+              ? notification.string.PushSubscribeErrorNetwork
+              : subscribeResult === 'not_supported'
+                ? notification.string.PushSubscribeErrorNotSupported
+                : notification.string.PushSubscribeErrorDefault,
         canSubmit: false
       })
     }
