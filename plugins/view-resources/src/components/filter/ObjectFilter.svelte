@@ -130,10 +130,10 @@
       }
 
       if (filteringKey !== undefined) {
-        const attr = client.getHierarchy().findAttribute(targetClass, filteringKey)
+        const hierarchy = client.getHierarchy()
+        const attr = hierarchy.findAttribute(targetClass, filteringKey)
         const isFulltext = attr?.index === IndexKind.FullText
-
-        if (!isFulltext) {
+        if (!isFulltext || attr.indexOptions?.searchTitle !== true) {
           return {
             [filteringKey]: { $like: '%' + search + '%' },
             _id: { $in: _ids }
@@ -141,6 +141,7 @@
         } else {
           return {
             $search: search,
+            $searchStrict: true,
             _id: { $in: _ids }
           }
         }
@@ -153,7 +154,11 @@
 
     const options = clazz.sortingKey !== undefined ? { sort: { [clazz.sortingKey]: SortingOrder.Ascending } } : {}
     objectsPromise = client.findAll(targetClass, resultQuery, options)
-    values = await objectsPromise
+    const objectResult = await objectsPromise
+    values =
+      resultQuery.$search != null
+        ? objectResult.sort((a, b) => (b.$source?.$score ?? 0) - (a.$source?.$score ?? 0))
+        : objectResult
     if (grouppingManager !== undefined) {
       values = grouppingManager.groupValues(values as Doc[], targets)
     }

@@ -66,6 +66,7 @@ export type DocumentQuery<T extends Doc> = {
   [P in keyof T]?: ObjQueryType<T[P]>
 } & {
   $search?: string
+  $searchStrict?: boolean // Search only by searchTitle and ignore search by attached docs (comments, attachments etc)
   // support nested queries e.g. 'user.friends.name'
   // this will mark all unrecognized properties as any (including nested queries)
   [key: string]: any
@@ -247,6 +248,8 @@ export interface SearchQuery {
  * @public
  */
 export interface SearchOptions {
+  strict?: boolean // Search only by searchTitle
+  viewerId?: string
   limit?: number
 }
 
