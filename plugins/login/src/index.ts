@@ -66,7 +66,9 @@ export default plugin(loginId, {
     DesktopUpdatesChannel: '' as Metadata<string[][]>,
     Copyright: '' as Metadata<string>,
     UsageUrl: '' as Metadata<string>,
-    SupportUrl: '' as Metadata<string>
+    SupportUrl: '' as Metadata<string>,
+    PersonalDataUrl: '' as Metadata<string>,
+    RulesUrl: '' as Metadata<string>
   },
   component: {
     LoginApp: '' as AnyComponent,

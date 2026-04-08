@@ -4,6 +4,7 @@
   import type { Field } from '../types'
   import Form from './Form.svelte'
   import login from '../plugin'
+  import ConsentCheckboxes from './ConsentCheckboxes.svelte'
 
   export let proceedButton: IntlString = login.string.Proceed
   export let handleProceed: (firstName: string | undefined, lastName: string | undefined) => void | Promise<void>
@@ -14,6 +15,8 @@
   export let proceedDisabled: boolean = true
 
   let status: Status = OK
+  let agreedPersonalData: boolean
+  let agreedRules: boolean
 
   let fields: Field[]
   $: fields = [
@@ -39,17 +42,14 @@
       }
     }
   }
+
+  $: proceedDisabled = !agreedPersonalData || !agreedRules
 </script>
 
 <slot name="before-form" />
-<Form
-  {caption}
-  {status}
-  {proceedDisabled}
-  {fields}
-  object={formData}
-  {action}
-  ignoreInitialValidation
-  {signUpDisabled}
-/>
+<Form {caption} {status} {proceedDisabled} {fields} object={formData} {action} ignoreInitialValidation {signUpDisabled}>
+  <div slot="after-fields" class="form-row">
+    <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
+  </div>
+</Form>
 <slot name="after-form" />

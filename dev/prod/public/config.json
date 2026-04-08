@@ -39,5 +39,7 @@
   "PUSH_PUBLIC_KEY": "pushPublicKey",
   "LANDING_URL": "http://huly.local:9078/landing/",
   "USAGE_URL": "http://huly.local:8080/terms",
-  "SUPPORT_URL": "https://t.me/intabia"
+  "SUPPORT_URL": "https://t.me/intabia",
+  "PERSONAL_DATA_URL": "https://huly.local:8080/legal/personal_data",
+  "RULES_URL": "https://huly.local:8080/legal/rules"
 }

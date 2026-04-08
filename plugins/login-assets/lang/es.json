@@ -82,6 +82,8 @@
     "Proceed": "Continuar",
     "SetPasswordLater": "Estableceré una contraseña más tarde",
     "SetPasswordNow": "Establecer contraseña ahora",
+    "AgreedPersonalData": "Acepto los términos de la <a href=\"{link}\" target=\"_blank\">Política de procesamiento de datos personales</a> y doy mi consentimiento para el procesamiento de mis datos",
+    "AgreedRules": "Acepto los términos del <a href=\"{link}\" target=\"_blank\">Acuerdo de usuario</a>",
     "LoginAsGuest": "Continuar como invitado",
     "SignUpToCreateWorkspace": "No hay espacios de trabajo con acceso de invitado. Por favor, regístrese para crear el suyo.",
     "WhatIsYourName": "¿Cuál es su nombre?",

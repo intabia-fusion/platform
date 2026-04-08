@@ -420,7 +420,7 @@
       </div>
     {:else if errorMessage}
       <div class="center" role="alert">
-        <div class="message">{errorMessage}</div>
+        <div class="message"><Label label={errorMessage} /></div>
         <div class="actions">
           <Button on:click={goHome} label={ui.string.Back}></Button>
         </div>

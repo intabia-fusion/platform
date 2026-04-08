@@ -82,6 +82,8 @@
     "Proceed": "Proceed",
     "SetPasswordLater": "I'll set a password later",
     "SetPasswordNow": "Set password now",
+    "AgreedPersonalData": "I accept the terms of the <a href=\"{link}\" target=\"_blank\">Personal Data Processing Policy</a> and consent to the processing of my data",
+    "AgreedRules": "I accept the terms of the <a href=\"{link}\" target=\"_blank\">User Agreement</a>",
     "LoginAsGuest": "Continue as a guest",
     "SignUpToCreateWorkspace": "There are no workspaces with guest access. Please sign up to create your own.",
     "WhatIsYourName": "What is your name?",
