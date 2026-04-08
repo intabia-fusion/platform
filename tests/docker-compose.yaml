@@ -519,3 +519,24 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
+  billing:
+    image: intabiafusion/billing
+    pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      account:
+        condition: service_started
+    ports:
+      - 4043:4043
+    environment:
+      - PORT=4043
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - USAGE_UPDATE_INTERVAL=30
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
