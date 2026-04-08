@@ -31,6 +31,7 @@ import core, {
   type Hyperlink,
   type Mixin as IMixin,
   type IndexKind,
+  type IndexOptions,
   type Interface,
   type Markup,
   type MarkupBlobRef,
@@ -178,9 +179,12 @@ export function ReadOnly () {
 /**
  * @public
  */
-export function Index (kind: IndexKind) {
+export function Index (kind: IndexKind, options?: IndexOptions) {
   return function (target: any, propertyKey: string): void {
     setIndex(target, propertyKey, kind)
+    if (options !== undefined) {
+      setAttr(target, propertyKey, 'indexOptions', options)
+    }
   }
 }
 

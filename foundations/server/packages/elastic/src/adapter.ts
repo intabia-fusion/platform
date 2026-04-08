@@ -270,10 +270,19 @@ class ElasticAdapter implements FullTextAdapter {
     ctx: MeasureContext,
     workspaceId: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] },
-    viewerId?: string
+    options: SearchOptions & { scoring?: SearchScoring[] }
   ): Promise<SearchStringResult> {
     try {
+      const { strict, viewerId } = options
+      const fields = [
+        'searchTitle^50',
+        'searchShortTitle^50',
+        'searchTitle.translit^10',
+        'searchTitle.keyboard_latin_to_cyrillic^10',
+        'searchTitle.keyboard_cyrillic_to_latin^10',
+        ...(strict === true ? [] : ['*'])
+      ]
+
       const elasticQuery: any = {
         query: {
           function_score: {
@@ -283,20 +292,33 @@ class ElasticAdapter implements FullTextAdapter {
                   {
                     ...(query.query.startsWith('*')
                       ? {
-                          query_string: {
-                            query: query.query,
-                            analyze_wildcard: true,
-                            allow_leading_wildcard: true,
-                            lenient: true,
-                            default_operator: 'and',
-                            fields: [
-                              'searchTitle^50', // boost
-                              'searchShortTitle^50',
-                              '*', // Search in all other fields without a boost
-                              'searchTitle.translit^10',
-                              'searchTitle.keyboard_latin_to_cyrillic^10',
-                              'searchTitle.keyboard_cyrillic_to_latin^10'
-                            ]
+                          bool: {
+                            should: [
+                              {
+                                // Clause 1: Prefix priority
+                                simple_query_string: {
+                                  query: query.query.substring(1),
+                                  analyze_wildcard: true,
+                                  flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                                  default_operator: 'and',
+                                  fields,
+                                  boost: 10
+                                }
+                              },
+                              {
+                                // Clause 2: Match anywhere
+                                query_string: {
+                                  query: query.query,
+                                  analyze_wildcard: true,
+                                  allow_leading_wildcard: true,
+                                  lenient: true,
+                                  default_operator: 'and',
+                                  fields,
+                                  boost: 1
+                                }
+                              }
+                            ],
+                            minimum_should_match: 1
                           }
                         }
                       : {
@@ -305,14 +327,7 @@ class ElasticAdapter implements FullTextAdapter {
                             analyze_wildcard: true,
                             flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
                             default_operator: 'and',
-                            fields: [
-                              'searchTitle^50', // boost
-                              'searchShortTitle^50',
-                              '*', // Search in all other fields without a boost
-                              'searchTitle.translit^10',
-                              'searchTitle.keyboard_latin_to_cyrillic^10',
-                              'searchTitle.keyboard_cyrillic_to_latin^10'
-                            ]
+                            fields
                           }
                         })
                   },
@@ -414,24 +429,48 @@ class ElasticAdapter implements FullTextAdapter {
     viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
+    const fields = [
+      'searchTitle^50',
+      'searchShortTitle^50',
+      'searchTitle.translit^10',
+      'searchTitle.keyboard_latin_to_cyrillic^10',
+      'searchTitle.keyboard_cyrillic_to_latin^10',
+      ...(query.$searchStrict === true ? [] : ['*'])
+    ]
+
     const request: any = {
       bool: {
         must: [
           {
             ...(query.$search.startsWith('*')
               ? {
-                  query_string: {
-                    query: query.$search,
-                    analyze_wildcard: true,
-                    allow_leading_wildcard: true,
-                    lenient: true,
-                    default_operator: 'and',
-                    fields: [
-                      '*',
-                      'searchTitle.translit',
-                      'searchTitle.keyboard_latin_to_cyrillic',
-                      'searchTitle.keyboard_cyrillic_to_latin'
-                    ]
+                  bool: {
+                    should: [
+                      {
+                        // Clause 1: Prefix priority
+                        simple_query_string: {
+                          query: query.$search.substring(1),
+                          analyze_wildcard: true,
+                          flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                          default_operator: 'and',
+                          fields,
+                          boost: 10
+                        }
+                      },
+                      {
+                        // Clause 2: Match anywhere
+                        query_string: {
+                          query: query.$search,
+                          analyze_wildcard: true,
+                          allow_leading_wildcard: true,
+                          lenient: true,
+                          default_operator: 'and',
+                          fields,
+                          boost: 1
+                        }
+                      }
+                    ],
+                    minimum_should_match: 1
                   }
                 }
               : {
@@ -440,12 +479,7 @@ class ElasticAdapter implements FullTextAdapter {
                     analyze_wildcard: true,
                     flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
                     default_operator: 'and',
-                    fields: [
-                      '*',
-                      'searchTitle.translit',
-                      'searchTitle.keyboard_latin_to_cyrillic',
-                      'searchTitle.keyboard_cyrillic_to_latin'
-                    ]
+                    fields
                   }
                 })
           },

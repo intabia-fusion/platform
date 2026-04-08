@@ -205,6 +205,11 @@ export enum IndexKind {
   IndexedDsc
 }
 
+export interface IndexOptions {
+  // If true, will be added to searchTitle in Elastic
+  searchTitle?: boolean
+}
+
 /**
  * @public
  */
@@ -221,6 +226,7 @@ export interface Attribute<T extends PropertyType> extends Doc, UXObject {
   name: string
   type: Type<T>
   index?: IndexKind
+  indexOptions?: IndexOptions
   shortLabel?: IntlString
   isCustom?: boolean
   defaultValue?: any

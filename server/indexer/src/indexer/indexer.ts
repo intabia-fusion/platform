@@ -482,6 +482,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
               const content = getContent(this.hierarchy, attributes, doc)
 
               indexedDoc.fulltextSummary = ''
+              indexedDoc.searchTitle = ''
 
               for (const [, v] of Object.entries(content)) {
                 if (v.attr.type._class === core.class.TypeBlob) {
@@ -503,6 +504,15 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                     })
                   } else {
                     indexedDoc.fulltextSummary += '\n' + v.value
+                  }
+
+                  if (v.attr.indexOptions?.searchTitle === true && v.value != null && searchPresenter == null) {
+                    const titlePart = Array.isArray(v.value) ? v.value.join(' ') : v.value.toString()
+                    if ((indexedDoc.searchTitle ?? '').length === 0) {
+                      indexedDoc.searchTitle = titlePart
+                    } else {
+                      indexedDoc.searchTitle += ' ' + titlePart
+                    }
                   }
 
                   continue

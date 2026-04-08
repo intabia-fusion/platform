@@ -127,7 +127,7 @@ export class TSocialIdentityProvider extends TDoc implements SocialIdentityProvi
 @UX(contact.string.Contact, contact.icon.Person, 'CONT', 'name', undefined, contact.string.Persons)
 export class TContact extends TDoc implements Contact {
   @Prop(TypeString(), contact.string.Name)
-  @Index(IndexKind.FullText)
+  @Index(IndexKind.FullText, { searchTitle: true })
     name!: string
 
   @Prop(TypeString(), contact.string.Avatar)
