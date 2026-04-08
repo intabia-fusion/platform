@@ -200,9 +200,17 @@ class PostgresDB implements BillingDB {
         FROM billing.livekit_session
         WHERE workspace = $1
       `
-    const params = [workspace]
+    const rows = await this.execute<any[]>(query, [workspace])
 
-    return await this.execute<LiveKitSessionData[]>(query, params)
+    return rows.map((row) => ({
+      workspace: row.workspace,
+      room: row.room,
+      sessionId: row.session_id,
+      sessionStart: row.session_start,
+      sessionEnd: row.session_end,
+      bandwidth: Number(row.bandwidth),
+      minutes: Number(row.minutes)
+    }))
   }
 
   async listLiveKitEgress (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<LiveKitEgressData[] | null> {
@@ -211,8 +219,15 @@ class PostgresDB implements BillingDB {
         FROM billing.livekit_egress
         WHERE workspace = $1
       `
-    const params = [workspace]
-    return await this.execute<LiveKitEgressData[]>(query, params)
+    const rows = await this.execute<any[]>(query, [workspace])
+    return rows.map((row) => ({
+      workspace: row.workspace,
+      room: row.room,
+      egressId: row.egress_id,
+      egressStart: row.egress_start,
+      egressEnd: row.egress_end,
+      duration: Number(row.duration)
+    }))
   }
 
   async setLiveKitSessions (ctx: MeasureContext, data: LiveKitSessionData[]): Promise<void> {
@@ -423,10 +438,22 @@ class PostgresDB implements BillingDB {
   }
 
   async pushAiTranscriptData (ctx: MeasureContext, data: AiTranscriptData[]): Promise<void> {
+    const aggregated = new Map<string, AiTranscriptData>()
+    for (const item of data) {
+      const key = `${item.workspace}::${item.day}`
+      const existing = aggregated.get(key)
+      if (existing !== undefined) {
+        existing.durationSeconds += item.durationSeconds
+        existing.usd += item.usd
+      } else {
+        aggregated.set(key, { ...item })
+      }
+    }
+    const deduped = Array.from(aggregated.values())
     const stringType = this.flavor === 'cockroach' ? 'string' : 'text'
 
-    for (let i = 0; i < data.length; i += BATCH_SIZE) {
-      const batch = data.slice(i, i + BATCH_SIZE)
+    for (let i = 0; i < deduped.length; i += BATCH_SIZE) {
+      const batch = deduped.slice(i, i + BATCH_SIZE)
       if (batch.length === 0) continue
 
       const values: string[] = []
@@ -549,11 +576,22 @@ class PostgresDB implements BillingDB {
   }
 
   async pushAiTokensData (ctx: MeasureContext, data: AiTokensData[]): Promise<void> {
+    const aggregated = new Map<string, AiTokensData>()
+    for (const item of data) {
+      const key = `${item.workspace}::${item.date}::${item.reason}`
+      const existing = aggregated.get(key)
+      if (existing !== undefined) {
+        existing.tokens += item.tokens
+      } else {
+        aggregated.set(key, { ...item })
+      }
+    }
+    const deduped = Array.from(aggregated.values())
     const stringType = this.flavor === 'cockroach' ? 'string' : 'text'
     const int8Type = this.flavor === 'cockroach' ? 'int8' : 'bigint'
 
-    for (let i = 0; i < data.length; i += BATCH_SIZE) {
-      const batch = data.slice(i, i + BATCH_SIZE)
+    for (let i = 0; i < deduped.length; i += BATCH_SIZE) {
+      const batch = deduped.slice(i, i + BATCH_SIZE)
       if (batch.length === 0) continue
 
       const values: string[] = []
