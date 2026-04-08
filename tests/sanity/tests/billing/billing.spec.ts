@@ -54,7 +54,7 @@ test.describe('Billing API — data that UI displays', () => {
     // UI: totalTranscriptDuration = aiStats.transcript.totalDurationSeconds * 1000
     const today = new Date().toISOString()
     const todayStr = new Date().toISOString().slice(0, 10)
-    const pushRes1 = await request.post(`${BILLING_URL}/api/v1/ai/transcript`, {
+    await request.post(`${BILLING_URL}/api/v1/ai/transcript`, {
       headers: getAdminHeaders(),
       data: [
         {
@@ -77,7 +77,7 @@ test.describe('Billing API — data that UI displays', () => {
     })
     const yesterday = new Date(Date.now() - 86400000).toISOString()
     const yesterdayStr = yesterday.slice(0, 10)
-    const pushRes2 = await request.post(`${BILLING_URL}/api/v1/ai/transcript`, {
+    await request.post(`${BILLING_URL}/api/v1/ai/transcript`, {
       headers: getAdminHeaders(),
       data: [
         {
@@ -403,9 +403,7 @@ test.describe('Billing API — data that UI displays', () => {
     expect(maxParticipants).toBeGreaterThanOrEqual(3)
   })
 
-  test('Office — maxMeetingDuration gives the longest meeting', async ({
-    request
-  }) => {
+  test('Office — maxMeetingDuration gives the longest meeting', async ({ request }) => {
     const now = new Date()
 
     // Meeting 1: 9:00 - 9:30 (30 min)
@@ -453,10 +451,7 @@ test.describe('Billing API — data that UI displays', () => {
     expect(maxDuration).toBeLessThanOrEqual(30)
   })
 
-  test('Office — avgMeetingDurationMinutes gives the average meeting duration', async ({
-    request
-  }) => {
-    const now = new Date()
+  test('Office — avgMeetingDurationMinutes gives the average meeting duration', async ({ request }) => {
     const yesterday = new Date(Date.now() - 86400000)
 
     // Meeting 1: 9:00 - 9:30 (30 min)
