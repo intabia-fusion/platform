@@ -82,6 +82,8 @@
     "Proceed": "Pokračovat",
     "SetPasswordLater": "Nastavím heslo později",
     "SetPasswordNow": "Nastavit heslo nyní",
+    "AgreedPersonalData": "Souhlasím s podmínkami <a href=\"{link}\" target=\"_blank\">Zásad zpracování osobních údajů</a> a uděluji souhlas se zpracováním mých údajů",
+    "AgreedRules": "Souhlasím s podmínkami <a href=\"{link}\" target=\"_blank\">Uživatelské smlouvy</a>",
     "LoginAsGuest": "Pokračovat jako host",
     "SignUpToCreateWorkspace": "Neexistují žádné pracovní prostory s přístupem pro hosty. Prosím, zaregistrujte se a vytvořte si vlastní.",
     "WhatIsYourName": "Jak se jmenujete?",

@@ -82,6 +82,8 @@
     "Proceed": "继续",
     "SetPasswordLater": "稍后设置密码",
     "SetPasswordNow": "现在设置密码",
+    "AgreedPersonalData": "我接受<a href=\"{link}\" target=\"_blank\">个人信息处理政策</a>条款，并同意处理我的个人数据",
+    "AgreedRules": "我接受<a href=\"{link}\" target=\"_blank\">用户协议</a>条款",
     "LoginAsGuest": "以访客身份继续",
     "SignUpToCreateWorkspace": "没有支持访客访问的工作区。请注册以创建您自己的工作区。",
     "WhatIsYourName": "您的姓名是什么？",

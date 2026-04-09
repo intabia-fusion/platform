@@ -28,6 +28,7 @@
   import type { Field } from '../types'
   import OtpForm from './OtpForm.svelte'
   import { onMount } from 'svelte'
+  import ConsentCheckboxes from './ConsentCheckboxes.svelte'
 
   export let signUpDisabled = false
   export let localLoginHidden = false
@@ -40,6 +41,9 @@
   let fields: Array<Field>
   let form: Form
   let withPassword = !useOTP
+  let agreedPersonalData: boolean
+  let agreedRules: boolean
+  let proceedDisabled = true
 
   $: {
     fields = [
@@ -129,10 +133,12 @@
   function handleStep (event: CustomEvent<OtpLoginSteps>): void {
     step = event.detail
   }
+
+  $: proceedDisabled = !agreedPersonalData || !agreedRules
 </script>
 
 {#if step === OtpLoginSteps.Email}
-  <Form bind:this={form} {caption} {subtitle} {status} {fields} {object} {action} withProviders>
+  <Form bind:this={form} {caption} {subtitle} {status} {fields} {object} {action} {proceedDisabled} withProviders>
     <div slot="after-fields" class="form-row">
       {#if useOTP}
         <label class="check-label">
@@ -147,6 +153,7 @@
           <Label label={login.string.SetPasswordNow} />
         </label>
       {/if}
+      <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
     </div>
   </Form>
 {/if}
@@ -178,10 +185,10 @@
   /* Checkbox row for "Set password now" */
   .check-label {
     display: inline-flex;
-    align-items: center;
     gap: 0.5rem;
     font-size: 0.95rem;
     color: var(--login-content-color, var(--theme-content-color));
+    margin-bottom: 0.5rem;
   }
 
   /* Custom-styled checkbox so it's visible across themes (Intabia/Huly).
@@ -196,6 +203,7 @@
     background: var(--login-button-default, var(--theme-button-default, #ffffff));
     border-radius: 0.2rem;
     display: inline-block;
+    flex-shrink: 0;
     position: relative;
     box-sizing: border-box;
     vertical-align: middle;

@@ -15,6 +15,8 @@ export class SignUpPage extends CommonPage {
   inputEmail = (): Locator => this.page.locator('input[name="email"]')
   inputNewPassword = (): Locator => this.page.locator('input[name="password"]')
   inputRepeatPassword = (): Locator => this.page.locator('input[name="password2"]')
+  checkboxPersonalData = (): Locator => this.page.locator('[data-testid="checkbox-personal-data"]')
+  checkboxRules = (): Locator => this.page.locator('[data-testid="checkbox-rules"]')
   buttonSignUp = (): Locator => this.page.locator('button', { hasText: 'Sign Up' })
 
   async enterFirstName (firstName: string): Promise<void> {
@@ -37,6 +39,19 @@ export class SignUpPage extends CommonPage {
     await this.inputRepeatPassword().fill(password)
   }
 
+  async checkPersonalData (): Promise<void> {
+    await this.checkboxPersonalData().check()
+  }
+
+  async checkRules (): Promise<void> {
+    await this.checkboxRules().check()
+  }
+
+  async acceptConsents (): Promise<void> {
+    await this.checkPersonalData()
+    await this.checkRules()
+  }
+
   async clickSignUp (): Promise<void> {
     await this.buttonSignUp().click()
   }
@@ -47,6 +62,7 @@ export class SignUpPage extends CommonPage {
     await this.enterEmail(data.email)
     await this.enterPassword(data.password)
     await this.enterRepeatPassword(data.password)
+    await this.acceptConsents()
     expect(await this.buttonSignUp().isEnabled()).toBe(true)
     await this.buttonSignUp().click()
   }

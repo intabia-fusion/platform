@@ -76,6 +76,8 @@ export default mergeIds(loginId, login, {
     Proceed: '' as IntlString,
     SetPasswordLater: '' as IntlString,
     SetPasswordNow: '' as IntlString,
+    AgreedPersonalData: '' as IntlString,
+    AgreedRules: '' as IntlString,
     SignUpToCreateWorkspace: '' as IntlString,
     WhatIsYourName: '' as IntlString,
     AccessExpired: '' as IntlString,

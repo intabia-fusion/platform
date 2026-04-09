@@ -219,6 +219,8 @@ export interface Config {
   COPYRIGHT?: string
   USAGE_URL?: string
   SUPPORT_URL?: string
+  PERSONAL_DATA_URL?: string
+  RULES_URL?: string
 }
 
 export interface Branding {
@@ -584,6 +586,9 @@ export async function configurePlatform() {
 
   const frontUrl = config.FRONT_URL ?? window.location.origin
   setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? concatLink(frontUrl, 'docs'))
+
+  setMetadata(login.metadata.PersonalDataUrl, config.PERSONAL_DATA_URL ?? `${frontUrl}/legal/personal_data`)
+  setMetadata(login.metadata.RulesUrl, config.RULES_URL ?? `${frontUrl}/legal/rules`)
 
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
 

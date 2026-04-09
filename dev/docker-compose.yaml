@@ -367,6 +367,8 @@ services:
       - USAGE_URL=http://huly.local:8080/terms
       - COPYRIGHT=
       - SUPPORT_URL=https://t.me/intabia
+      - PERSONAL_DATA_URL=https://huly.local:8080/legal/personal_data
+      - RULES_URL=https://huly.local:8080/legal/rules
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor
