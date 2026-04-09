@@ -34,7 +34,9 @@ export enum QueueTopic {
   // Events about meetings and operations with meetings
   LoveQueue = 'love-queue',
 
-  TimeMachine = 'timeMachine'
+  TimeMachine = 'timeMachine',
+
+  CrmQueue = 'crm'
 }
 
 export interface ConsumerHandle {

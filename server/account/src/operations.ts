@@ -39,7 +39,7 @@ import platform, { getMetadata, PlatformError, Severity, Status, translate } fro
 import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@hcengineering/server-token'
 
 import { isAdminEmail } from './admin'
-import { accountPlugin } from './plugin'
+import { accountPlugin, type CrmNotification } from './plugin'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
   AccountEventType,
@@ -361,6 +361,36 @@ export async function signUpOtp (
 }
 
 /**
+ * Sends CRM notification for newly created account if user has no pending invites.
+ * Only users who came to create their own workspace (not invited) should be sent to CRM.
+ */
+async function sendCrmNotificationIfNotInvited (
+  ctx: MeasureContext,
+  db: AccountDB,
+  email: string,
+  personUuid: PersonUuid,
+  meta?: Meta
+): Promise<void> {
+  const crmQueue = getMetadata(accountPlugin.metadata.CrmQueue)
+
+  const person = await db.person.findOne({ uuid: personUuid })
+  if (person == null) {
+    ctx.warn('CRM notification skipped: person not found', { personUuid })
+    return
+  }
+
+  const body: CrmNotification = {
+    firstName: person.firstName,
+    lastName: person.lastName,
+    email,
+    cookies: meta?.cookies
+  }
+
+  await crmQueue?.send(ctx, '' as WorkspaceUuid, [body], personUuid)
+  ctx.info('CRM notification sending', body)
+}
+
+/**
  * Validates email OTP for login/sign up/new social id
  */
 export async function validateOtp (
@@ -524,7 +554,8 @@ export async function createWorkspace (
   params: {
     workspaceName: string
     region?: string
-  }
+  },
+  meta?: Meta
 ): Promise<WorkspaceLoginInfo> {
   const { workspaceName, region } = params
 
@@ -569,6 +600,16 @@ export async function createWorkspace (
   await db.assignWorkspace(account, workspaceUuid, AccountRole.Owner)
 
   ctx.info('Creating workspace record done', { workspaceName, region, account: socialId.personUuid })
+
+  // Send CRM notification for newly created workspace
+  const emailSocialId = await db.socialId.findOne({
+    type: SocialIdType.EMAIL,
+    personUuid: socialId.personUuid,
+    verifiedOn: { $gt: 0 }
+  })
+  if (emailSocialId != null) {
+    await sendCrmNotificationIfNotInvited(ctx, db, emailSocialId.value, socialId.personUuid, meta)
+  }
 
   return {
     account,

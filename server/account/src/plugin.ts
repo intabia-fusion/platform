@@ -17,6 +17,13 @@ export interface AccountNotification {
   data: any
 }
 
+export interface CrmNotification {
+  firstName: string
+  lastName: string
+  email: string
+  cookies?: string
+}
+
 /**
  * @public
  */
@@ -29,7 +36,8 @@ export const accountPlugin = plugin(accountId, {
     OtpRetryDelaySec: '' as Metadata<number>,
     WsLivenessDays: '' as Metadata<number>,
     AllowReadonlyGuests: '' as Metadata<boolean>,
-    MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>
+    MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
+    CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>
   },
   string: {
     ConfirmationText: '' as IntlString,

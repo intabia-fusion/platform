@@ -2662,6 +2662,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/pod-crm",
+      "projectFolder": "services/crm/pod-crm",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/rating",
       "projectFolder": "plugins/rating",
       "shouldPublish": false
