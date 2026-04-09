@@ -152,8 +152,8 @@
           />
           <Label label={login.string.SetPasswordNow} />
         </label>
-        <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
       {/if}
+      <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
     </div>
   </Form>
 {/if}

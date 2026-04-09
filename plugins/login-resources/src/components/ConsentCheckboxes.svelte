@@ -26,11 +26,11 @@
 </script>
 
 <label class="check-label">
-  <input type="checkbox" bind:checked={agreedPersonalData} />
+  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
   <span><Html value={personalDatalabel} /></span>
 </label>
 <label class="check-label">
-  <input type="checkbox" bind:checked={agreedRules} />
+  <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
   <span><Html value={rulesLabel} /></span>
 </label>
 
