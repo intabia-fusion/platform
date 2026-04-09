@@ -53,8 +53,8 @@
 <Card
   {label}
   labelProps={titleParams}
-  okAction={deleteAction}
-  canSave={canDelete}
+  okAction={canDelete ? deleteAction : () => {}}
+  canSave={true}
   okLabel={canDelete ? view.string.LabelYes : ui.string.Ok}
   on:close={() => dispatch('close')}
 >
