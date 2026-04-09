@@ -542,7 +542,7 @@ jobs:
         with:
           version: latest
       - name: Cache node modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-node-platform
         with:
@@ -666,43 +666,43 @@ jobs:
       #     source-dir: desktop-package/${{ env.PublishTempFolder}}
       #     destination-dir: ./
       - name: Upload MacOS
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-MacOS-x64
           path: ./desktop-package/deploy/Platform-macos-*-x64.dmg
       - name: Upload MacOS Zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-MacOS-zip
           path: ./desktop-package/deploy/Platform-macos*.zip
       - name: Upload MacOS arm64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-MacOS-arm64
           path: ./desktop-package/deploy/Platform-macos-*-arm64.dmg
       - name: Upload Windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-Windows
           path: ./desktop-package/deploy/Platform-windows-*.exe
       - name: Upload Windows zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-Windows-zip
           path: ./desktop-package/deploy/Platform-windows-*.zip
       - name: Upload Linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-Linux-arm64
           path: ./desktop-package/deploy/Platform-linux-*-arm64.zip
       - name: Upload Linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-Linux-x64
           path: ./desktop-package/deploy/Platform-linux-*-x64.zip
 
       - name: Upload Linux App image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Platform-Linux-AppImage
           path: ./desktop-package/deploy/Platform-linux-*.AppImage
@@ -719,12 +719,12 @@ jobs:
           node ../common/scripts/install-run-rushx.js bundle:server
 
       - name: Upload server bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: server-bundle
           path: ./desktop-package/bundle
       - name: Upload manifests (yml + blockmap)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: desktop-manifests
           path: |
@@ -760,52 +760,52 @@ jobs:
             }
 
       - name: Download Platform-MacOS-x64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-MacOS-x64
           path: ./desktop-package/deploy
       - name: Download Platform-MacOS-arm64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-MacOS-arm64
           path: ./desktop-package/deploy
       - name: Download Platform-MacOS-zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-MacOS-zip
           path: ./desktop-package/deploy
       - name: Download Platform-Windows
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-Windows
           path: ./desktop-package/deploy
       - name: Download Platform-Windows-zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-Windows-zip
           path: ./desktop-package/deploy
       # - name: Download Platform-Linux-arm64
-      #   uses: actions/download-artifact@v4
+      #   uses: actions/download-artifact@v5
       #   with:
       #     name: Platform-Linux-arm64
       #     path: ./desktop-package/deploy
       - name: Download Platform-Linux-x64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-Linux-x64
           path: ./desktop-package/deploy
       - name: Download Platform-Linux-AppImage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Platform-Linux-AppImage
           path: ./desktop-package/deploy
       - name: Download server-bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: server-bundle
           path: ./desktop-package/bundle
       - name: Download desktop-manifests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: desktop-manifests
           path: ./desktop-package/deploy
