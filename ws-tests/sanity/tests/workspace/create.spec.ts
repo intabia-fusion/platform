@@ -105,6 +105,7 @@ test.describe('Workspace tests', () => {
     await signUpPage.checkInfo(page, "Repeat password don't match Password")
     await signUpPage.enterRepeatPassword(newUser.password)
     await signUpPage.checkInfoSectionNotExist(page)
+    await signUpPage.acceptConsents()
     await signUpPage.clickSignUp()
     await selectWorkspacePage.checkInfo(page, 'Required field Workspace name')
     await selectWorkspacePage.enterWorkspaceName(newWorkspaceName)
