@@ -17,6 +17,7 @@
   import {
     type AvatarInfo,
     AvatarProvider,
+    Contact,
     getAvatarColorForId,
     getAvatarDisplayName,
     getAvatarProvider,
@@ -74,7 +75,7 @@
   let element: HTMLElement
   let avatarInst: AvatarInstance
 
-  $: displayName = getAvatarDisplayName(name)
+  $: displayName = getAvatarDisplayName(name ?? (person as Contact)?.name)
   $: bColor = borderColor !== undefined ? getPlatformColor(borderColor, $themeStore.dark) : undefined
 
   const update = reduceCalls(async function (
