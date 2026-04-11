@@ -19,7 +19,9 @@
       "Bash(git diff:*)",
       "Bash(docker exec:*)",
       "Bash(docker compose:*)",
-      "Bash(rush build:*)"
+      "Bash(rush build:*)",
+      "Bash(rush fast-build:validate)",
+      "Bash(rush fast-build:lint)"
     ]
   },
   "outputStyle": "default"

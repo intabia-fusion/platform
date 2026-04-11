@@ -58,21 +58,38 @@ rush add -p PKG                 # Add dependency
 
 ### Validation Workflow
 
-After modifying packages:
+After modifying packages, validate ONLY the affected package(s) — never run a global validate, it will hit unrelated broken packages and obscure real failures.
+
+**Preferred (scoped, fast, uses cache)**:
 
 ```bash
-# Check with diagnostics (uses LSP)
-diagnostics()                                    # All files
-diagnostics({ path: "path/to/file.ts" })         # Specific file
+# Strictest: lint supersets validate (compile + typecheck + eslint).
+# Use this as the default check after edits.
+rush fast-build:lint --to @hcengineering/<pkg>
 
-# Validate modified packages
-cd <package-dir>
-rushx build
-rushx _phase:validate
-
-# Full validation
-rush fast-build:validate --to @hcengineering/specific-pkg
+# Lighter: compile + typecheck only, no eslint. Use when you only need
+# to confirm types compile and do not care about lint rules yet.
+rush fast-build:validate --to @hcengineering/<pkg>
 ```
+
+`fast-build:lint` is a strict superset of `fast-build:validate` — it runs the same compile/typecheck plus eslint. Prefer `:lint` for the final check; `:validate` is only useful for a faster intermediate pass.
+
+If the cache reports "(cached)" but you know the file changed, the cache is content-hashed — a real content change will invalidate it automatically. To force a rebuild add `--force`.
+
+**Direct per-package (no dependency walk, fastest after edits within one package)**:
+
+```bash
+cd <package-dir>
+rushx _phase:validate      # compile + validate only this package
+rushx build                # if the package exposes a build script
+```
+
+Note: not every package defines `lint` in `package.json`. If `rushx lint` fails with "command not defined", use `rushx _phase:validate` or go through `rush fast-build:lint --to <pkg>`.
+
+**Do NOT**:
+- Run `rush fast-build:validate` without `--to` (global, slow, trips on unrelated failures).
+- Run `rush build` for error checking.
+- Run `rushx format` (user handles it).
 
 ### Docker Workflow
 
