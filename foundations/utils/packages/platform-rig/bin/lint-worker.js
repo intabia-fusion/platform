@@ -34,11 +34,12 @@ function collectSourceFiles(dir, result = []) {
 async function lintPackage(cwd, options = {}) {
   const { srcDir = 'src', chunkSize = 50 } = options
   const srcPath = join(cwd, srcDir)
+  const startedAt = Date.now()
 
   const files = collectSourceFiles(srcPath)
   if (files.length === 0) {
     const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
-    return { success: true, errorCount: 0, warningCount: 0, total: 0, output: '', memoryMB }
+    return { success: true, errorCount: 0, warningCount: 0, total: 0, output: '', memoryMB, durationMs: Date.now() - startedAt }
   }
 
   let eslint = new ESLint({ fix: false, cwd, cache: false })
@@ -75,7 +76,8 @@ async function lintPackage(cwd, options = {}) {
     warningCount,
     total: files.length,
     output,
-    memoryMB: peakMB
+    memoryMB: peakMB,
+    durationMs: Date.now() - startedAt
   }
 }
 

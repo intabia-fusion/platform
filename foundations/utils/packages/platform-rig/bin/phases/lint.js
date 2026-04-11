@@ -62,10 +62,12 @@ async function runLintPhase(graph, packageNames, concurrency, options = {}) {
   const pool = await getNamedWorkerPool('lint', lintConcurrency, join(__dirname, '..', 'lint-worker.js'), {
     workerOptions: {
       resourceLimits: {
-        maxOldGenerationSizeMb: 8192,
+        maxOldGenerationSizeMb: 4096,
         maxYoungGenerationSizeMb: 512
       }
-    }
+    },
+    recycleAfter: 15,
+    recycleMemoryMB: 2500
   })
 
   let completedCount = 0
@@ -94,7 +96,8 @@ async function runLintPhase(graph, packageNames, concurrency, options = {}) {
 
     const taskStart = performance.now()
     const result = await pool.runTask('lint', cwd, { srcDir: 'src' })
-    const taskTime = Math.round(performance.now() - taskStart)
+    const waitTime = Math.round(performance.now() - taskStart)
+    const taskTime = result.durationMs !== undefined ? result.durationMs : waitTime
     completedCount++
 
     timings.push({ package: name, time: taskTime, failed: !result.success })

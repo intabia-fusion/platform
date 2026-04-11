@@ -9,16 +9,40 @@
 
 const { parentPort, threadId } = require('worker_threads')
 const { join, relative, basename } = require('path')
+const { createRequire } = require('module')
 const { readFileSync, writeFileSync, existsSync, readdirSync, lstatSync } = require('fs')
 
 const prettier = require('prettier')
 const { ESLint } = require('eslint')
 
-let pluginSvelte
-try {
-  pluginSvelte = require('prettier-plugin-svelte')
-} catch {
-  // optional
+const pluginCache = new Map()
+
+function resolvePluginFromCwd(pluginName, cwd) {
+  const key = `${cwd}::${pluginName}`
+  if (pluginCache.has(key)) return pluginCache.get(key)
+  try {
+    const req = createRequire(join(cwd, 'noop.js'))
+    const mod = req(pluginName)
+    pluginCache.set(key, mod)
+    return mod
+  } catch {
+    pluginCache.set(key, null)
+    return null
+  }
+}
+
+function resolvePluginList(plugins, cwd) {
+  if (!Array.isArray(plugins)) return []
+  const result = []
+  for (const p of plugins) {
+    if (typeof p === 'string') {
+      const mod = resolvePluginFromCwd(p, cwd)
+      if (mod) result.push(mod)
+    } else if (p) {
+      result.push(p)
+    }
+  }
+  return result
 }
 
 function collectSourceFiles(dir, result = []) {
@@ -39,131 +63,116 @@ function collectSourceFiles(dir, result = []) {
   return result
 }
 
-async function runPrettierInMemory(files, cwd) {
-  const output = new Map() // file -> Buffer (formatted content)
-  const errors = []
-
-  for (const file of files) {
-    try {
-      const options = await prettier.resolveConfig(file)
-      const info = await prettier.getFileInfo(file)
-      if (info.ignored) continue
-
-      const input = readFileSync(file, 'utf8')
-      const prettierOptions = {
-        ...(options || {}),
-        filepath: file,
-        plugins: []
-      }
-      if (pluginSvelte && file.endsWith('.svelte')) {
-        prettierOptions.plugins = [pluginSvelte]
-        prettierOptions.parser = 'svelte'
-      }
-
-      const formatted = await prettier.format(input, prettierOptions)
-      output.set(file, formatted)
-    } catch (err) {
-      errors.push(`${relative(cwd, file)}: ${err.message}`)
-    }
-  }
-
-  return { output, errors }
-}
-
 /**
- * Run ESLint with fix on in-memory sources.
- * Uses lintText so we avoid writing unchanged files to disk (webpack triggers).
- */
-async function runEslintFixInMemory(sourceMap, cwd) {
-  const eslint = new ESLint({ fix: true, cwd })
-  const results = []
-  const fixed = new Map()
-  const errors = []
-
-  for (const [file, content] of sourceMap) {
-    // lintText with filePath so ESLint picks up the right config
-    try {
-      const fileResults = await eslint.lintText(content, { filePath: file })
-      const r = fileResults[0]
-      results.push(r)
-      if (r.output !== undefined) {
-        fixed.set(file, r.output)
-      } else {
-        fixed.set(file, content)
-      }
-      if (r.errorCount > 0 && r.output === undefined) {
-        // Non-fixable errors
-      }
-    } catch (err) {
-      errors.push(`${relative(cwd, file)}: ${err.message}`)
-    }
-  }
-
-  return { fixed, results, errors }
-}
-
-/**
- * Format a package: prettier → eslint --fix, all in-memory.
- * Writes back only files whose final content differs from disk.
+ * Format a package in-memory: for each file run prettier → eslint --fix via lintText,
+ * then write to disk ONLY if final content differs from original. No intermediate
+ * writes — webpack watchers never see half-formatted files.
  */
 async function formatPackage(cwd, options = {}) {
   const { srcDir = 'src' } = options
   const srcPath = join(cwd, srcDir)
+  const startedAt = Date.now()
 
   const files = collectSourceFiles(srcPath)
   if (files.length === 0) {
-    return { success: true, changed: 0, total: 0, errors: [] }
+    return { success: true, changed: 0, total: 0, errors: [], memoryMB: 0, durationMs: Date.now() - startedAt }
   }
 
-  // Step 1: prettier in memory
-  const { output: prettierOut, errors: prettierErrors } = await runPrettierInMemory(files, cwd)
+  let eslint = new ESLint({ fix: true, cwd, cache: false })
 
-  // Build source map for eslint (files that prettier processed)
-  const afterPrettier = new Map()
-  for (const file of files) {
-    if (prettierOut.has(file)) {
-      afterPrettier.set(file, prettierOut.get(file))
-    } else {
-      // fallback: original content
-      try { afterPrettier.set(file, readFileSync(file, 'utf8')) } catch { /* skip */ }
-    }
-  }
-
-  // Step 2: eslint --fix in memory
-  const { fixed, results, errors: eslintErrors } = await runEslintFixInMemory(afterPrettier, cwd)
-
-  // Collect lint formatter output for logs
-  const formatter = await (new ESLint({ cwd })).loadFormatter('stylish')
-  const resultText = formatter.format(results)
-
-  const hasLintErrors = results.some((r) => r.errorCount > 0)
-
-  // Step 3: write back only changed files (diff by buffer)
+  const errors = []
   let changedCount = 0
-  const writeErrors = []
+  let errorCount = 0
+  let warningCount = 0
+  let peakMB = 0
+  let failingResults = null
+
   for (const file of files) {
-    const newContent = fixed.get(file)
-    if (newContent === undefined) continue
+    let original
     try {
-      const current = readFileSync(file, 'utf8')
-      if (current !== newContent) {
-        writeFileSync(file, newContent, 'utf8')
-        changedCount++
+      original = readFileSync(file, 'utf8')
+    } catch (err) {
+      errors.push(`${relative(cwd, file)}: read: ${err.message}`)
+      continue
+    }
+
+    let content = original
+
+    // prettier in memory
+    try {
+      const cfg = await prettier.resolveConfig(file)
+      const info = await prettier.getFileInfo(file, { resolveConfig: false })
+      if (info.ignored) {
+        continue
+      }
+      const resolvedPlugins = resolvePluginList(cfg && cfg.plugins, cwd)
+      content = await prettier.format(original, {
+        ...(cfg || {}),
+        filepath: file,
+        plugins: resolvedPlugins
+      })
+    } catch (err) {
+      errors.push(`${relative(cwd, file)}: prettier: ${err.message}`)
+      content = original
+    }
+
+    // eslint --fix in memory
+    try {
+      const lintResults = await eslint.lintText(content, { filePath: file })
+      const r = lintResults[0]
+      if (r) {
+        errorCount += r.errorCount
+        warningCount += r.warningCount
+        if (r.errorCount > 0 || r.warningCount > 0) {
+          if (!failingResults) failingResults = []
+          failingResults.push(r)
+        }
+        if (r.output !== undefined) content = r.output
       }
     } catch (err) {
-      writeErrors.push(`${relative(cwd, file)}: ${err.message}`)
+      errors.push(`${relative(cwd, file)}: eslint: ${err.message}`)
     }
+
+    // Single atomic write only if final content differs
+    if (content !== original) {
+      try {
+        writeFileSync(file, content, 'utf8')
+        changedCount++
+      } catch (err) {
+        errors.push(`${relative(cwd, file)}: write: ${err.message}`)
+      }
+    }
+
+    const mb = Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
+    if (mb > peakMB) peakMB = mb
   }
 
-  const allErrors = [...prettierErrors, ...eslintErrors, ...writeErrors]
+  let lintOutput = ''
+  if (failingResults) {
+    try {
+      const formatter = await eslint.loadFormatter('stylish')
+      lintOutput = formatter.format(failingResults)
+    } catch {}
+  }
+
+  eslint = null
+  failingResults = null
+
+  if (typeof prettier.clearConfigCache === 'function') {
+    prettier.clearConfigCache()
+  }
 
   return {
-    success: !hasLintErrors && allErrors.length === 0,
+    success: errorCount === 0 && errors.length === 0,
     changed: changedCount,
     total: files.length,
-    errors: allErrors,
-    lintOutput: resultText,
-    hasLintErrors
+    errors,
+    errorCount,
+    warningCount,
+    lintOutput,
+    hasLintErrors: errorCount > 0,
+    memoryMB: peakMB,
+    durationMs: Date.now() - startedAt
   }
 }
 

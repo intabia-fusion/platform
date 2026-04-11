@@ -19,77 +19,106 @@ class GenericWorkerPool {
     this.workerOptions = poolOptions.workerOptions || {}
     this.workerCurrentTask = new Map()
     this.terminated = false
+    this.recycleAfter = poolOptions.recycleAfter || 0 // 0 = never recycle by count
+    this.recycleMemoryMB = poolOptions.recycleMemoryMB || 0 // 0 = never recycle by memory
+    this.workerTaskCount = new Map()
+  }
+
+  _spawnWorker(i) {
+    const worker = new Worker(this.workerPath, this.workerOptions)
+    worker._workerId = i
+    this.workerStats.set(i, { totalIdleTime: 0, totalWorkTime: 0, taskCount: 0, lastTaskCompletedAt: null })
+    this.workerTaskCount.set(i, 0)
+
+    const readyPromise = new Promise((resolve) => {
+      const onMessage = (msg) => {
+        if (msg.type === 'ready') {
+          worker.off('message', onMessage)
+          if (msg.memory) {
+            this.workerMemory.set(i, msg.memory)
+          }
+          resolve()
+        }
+      }
+      worker.on('message', onMessage)
+    })
+
+    worker.on('message', (msg) => {
+      if (msg.id !== undefined) {
+        const callback = this.callbacks.get(msg.id)
+        if (callback) {
+          this.callbacks.delete(msg.id)
+          callback(msg)
+        }
+
+        const timing = this.taskTimings.get(msg.id)
+        if (timing) {
+          const completedAt = performance.now()
+          const workTime = completedAt - timing.startedAt
+          const stats = this.workerStats.get(timing.workerId)
+          if (stats) {
+            stats.totalWorkTime += workTime
+            stats.taskCount++
+            stats.lastTaskCompletedAt = completedAt
+          }
+          this.taskTimings.delete(msg.id)
+        }
+
+        if (msg.memory && msg.threadId !== undefined) {
+          this.workerMemory.set(msg.threadId, msg.memory.after || msg.memory)
+        }
+
+        const count = (this.workerTaskCount.get(i) || 0) + 1
+        this.workerTaskCount.set(i, count)
+
+        const memMB = msg.memoryMB || 0
+        const needRecycle =
+          (this.recycleAfter > 0 && count >= this.recycleAfter) ||
+          (this.recycleMemoryMB > 0 && memMB >= this.recycleMemoryMB)
+
+        if (needRecycle && !this.terminated) {
+          this._recycleWorker(i)
+        } else {
+          this.available.push(worker)
+          this._processNext()
+        }
+      }
+    })
+
+    worker.on('error', (err) => {
+      this._failWorkerTask(i, err)
+    })
+
+    worker.on('exit', (code) => {
+      if (this.terminated) return
+      if (code !== 0) {
+        this._failWorkerTask(i, new Error(`Worker ${i} exited with code ${code}`))
+      }
+    })
+
+    this.workers[i] = worker
+    return readyPromise
+  }
+
+  async _recycleWorker(i) {
+    const oldWorker = this.workers[i]
+    if (!oldWorker) return
+    try { oldWorker.postMessage({ type: 'exit' }) } catch {}
+    try { await oldWorker.terminate() } catch {}
+    this.workerTaskCount.set(i, 0)
+    const ready = this._spawnWorker(i)
+    await ready
+    this.available.push(this.workers[i])
+    this._processNext()
   }
 
   async init() {
     const readyPromises = []
-
     for (let i = 0; i < this.size; i++) {
-      const worker = new Worker(this.workerPath, this.workerOptions)
-      worker._workerId = i
-      this.workers.push(worker)
-      this.workerStats.set(i, { totalIdleTime: 0, totalWorkTime: 0, taskCount: 0, lastTaskCompletedAt: null })
-
-      const readyPromise = new Promise((resolve) => {
-        const onMessage = (msg) => {
-          if (msg.type === 'ready') {
-            worker.off('message', onMessage)
-            if (msg.memory) {
-              this.workerMemory.set(i, msg.memory)
-            }
-            resolve()
-          }
-        }
-        worker.on('message', onMessage)
-      })
-      readyPromises.push(readyPromise)
-
-      worker.on('message', (msg) => {
-        if (msg.id !== undefined) {
-          const callback = this.callbacks.get(msg.id)
-          if (callback) {
-            this.callbacks.delete(msg.id)
-            callback(msg)
-          }
-
-          const timing = this.taskTimings.get(msg.id)
-          if (timing) {
-            const completedAt = performance.now()
-            const workTime = completedAt - timing.startedAt
-            const stats = this.workerStats.get(timing.workerId)
-            if (stats) {
-              stats.totalWorkTime += workTime
-              stats.taskCount++
-              stats.lastTaskCompletedAt = completedAt
-            }
-            this.taskTimings.delete(msg.id)
-          }
-
-          if (msg.memory && msg.threadId !== undefined) {
-            this.workerMemory.set(msg.threadId, msg.memory.after || msg.memory)
-          }
-          this.available.push(worker)
-          this._processNext()
-        }
-      })
-
-      worker.on('error', (err) => {
-        console.error(`Worker ${i} error:`, err.message || err)
-        this._failWorkerTask(i, err)
-      })
-
-      worker.on('exit', (code) => {
-        if (this.terminated) return
-        if (code !== 0) {
-          const err = new Error(`Worker ${i} exited with code ${code} (likely OOM)`)
-          console.error(err.message)
-          this._failWorkerTask(i, err)
-        }
-      })
+      readyPromises.push(this._spawnWorker(i))
     }
-
     await Promise.all(readyPromises)
-    this.available = [...this.workers]
+    this.available = this.workers.filter(w => w !== null).slice()
   }
 
   _failWorkerTask(workerId, err) {

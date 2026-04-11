@@ -7,8 +7,28 @@
 
 const { performance } = require('perf_hooks')
 const { join } = require('path')
+const fs = require('fs')
 
-const { isPhaseCached, markPhaseCompleted } = require('../libs/cache')
+// Estimate package weight by counting source files. Heavier packages first = shorter tail.
+function estimatePackageWeight(cwd) {
+  let count = 0
+  const stack = [join(cwd, 'src')]
+  while (stack.length > 0) {
+    const dir = stack.pop()
+    if (!fs.existsSync(dir)) continue
+    try {
+      for (const entry of fs.readdirSync(dir)) {
+        const full = join(dir, entry)
+        const stat = fs.lstatSync(full)
+        if (stat.isDirectory()) stack.push(full)
+        else if (/\.(ts|svelte|js)$/.test(entry) && !entry.endsWith('.d.ts')) count++
+      }
+    } catch {}
+  }
+  return count
+}
+
+const { isPhaseCached, markPhaseCompleted, calculatePackageHash } = require('../libs/cache')
 const { getNamedWorkerPool } = require('../libs/workers')
 const { success, error, dim } = require('../libs/colors')
 
@@ -19,20 +39,45 @@ const { success, error, dim } = require('../libs/colors')
 async function runFormatPhase(graph, packageNames, concurrency, options = {}) {
   const { force = false, packageHashes } = options
 
+  // Format workers retain @typescript-eslint/parser Program per package (unavoidable leak).
+  // Cap concurrency + aggressive recycle to keep total memory bounded.
+  const formatConcurrency = Math.max(1, Math.min(concurrency, 6))
+
   const results = {
     successCount: 0,
     cacheHits: 0,
     total: packageNames.length,
     errors: [],
-    time: 0
+    time: 0,
+    peakMemoryMB: 0
   }
 
   const startTime = performance.now()
-  const pool = await getNamedWorkerPool('format', concurrency, join(__dirname, '..', 'format-worker.js'))
+  // Each package loads a fresh @typescript-eslint/parser Program that is retained forever
+  // in the plugin's internal programCache. Recycle aggressively by memory threshold.
+  const pool = await getNamedWorkerPool('format', formatConcurrency, join(__dirname, '..', 'format-worker.js'), {
+    workerOptions: {
+      resourceLimits: {
+        maxOldGenerationSizeMb: 2560,
+        maxYoungGenerationSizeMb: 256
+      }
+    },
+    recycleAfter: 2
+  })
 
   let completedCount = 0
+  const timings = []
 
-  const promises = packageNames.map(async (name) => {
+  // Longest-first scheduling: heavy packages go into queue early so tail isn't starved
+  const sortedNames = [...packageNames].sort((a, b) => {
+    const na = graph.get(a)
+    const nb = graph.get(b)
+    const wa = (na && na.project) ? estimatePackageWeight(na.project.fullPath) : 0
+    const wb = (nb && nb.project) ? estimatePackageWeight(nb.project.fullPath) : 0
+    return wb - wa
+  })
+
+  const promises = sortedNames.map(async (name) => {
     const node = graph.get(name)
 
     if (!node.phaseFormat) {
@@ -53,19 +98,33 @@ async function runFormatPhase(graph, packageNames, concurrency, options = {}) {
       return
     }
 
+    const taskStart = performance.now()
     const result = await pool.runTask('format', cwd, { srcDir: 'src' })
+    const waitTime = Math.round(performance.now() - taskStart)
+    // Actual in-worker duration reported by worker; fallback to full wait time
+    const taskTime = result.durationMs !== undefined ? result.durationMs : waitTime
     completedCount++
 
+    timings.push({ package: name, time: taskTime, failed: !result.success })
+
+    if (result.memoryMB !== undefined && result.memoryMB > results.peakMemoryMB) {
+      results.peakMemoryMB = result.memoryMB
+    }
+
     if (result.success) {
-      if (hash) {
-        markPhaseCompleted(cwd, hash, 'format', null, [])
+      // After formatting, file mtimes change → package hash changes.
+      // Store the NEW hash so the next run sees the files as up-to-date.
+      const finalHash = result.changed > 0 ? calculatePackageHash(cwd) : hash
+      if (finalHash) {
+        markPhaseCompleted(cwd, finalHash, 'format', null, [])
       }
       results.successCount++
       const changedInfo = result.changed !== undefined ? ` (${result.changed} changed)` : ''
-      console.log(`    [F] ${completedCount}/${packageNames.length} ${success(name)} formatted${changedInfo}`)
+      const memInfo = result.memoryMB !== undefined ? ` ${dim(result.memoryMB + 'MB')}` : ''
+      console.log(`    [F] ${completedCount}/${packageNames.length} ${success(name)} formatted ${dim(taskTime + 'ms')}${memInfo}${changedInfo}`)
     } else {
       results.errors.push({ package: name, error: result.error })
-      console.error(`    [F] ${completedCount}/${packageNames.length} ${error(name)} FAILED`)
+      console.error(`    [F] ${completedCount}/${packageNames.length} ${error(name)} FAILED ${dim(taskTime + 'ms')}`)
       if (result.lintOutput) process.stderr.write(result.lintOutput + '\n')
       if (result.errors && result.errors.length > 0) {
         process.stderr.write(result.errors.join('\n') + '\n')
@@ -75,6 +134,20 @@ async function runFormatPhase(graph, packageNames, concurrency, options = {}) {
 
   await Promise.all(promises)
   results.time = performance.now() - startTime
+
+  if (timings.length > 0) {
+    const sorted = timings.sort((a, b) => b.time - a.time)
+    const slowCount = Math.min(5, sorted.length)
+    console.log(`\n    Top ${slowCount} slowest format packages:`)
+    for (let i = 0; i < slowCount; i++) {
+      const t = sorted[i]
+      const failInfo = t.failed ? ' FAILED' : ''
+      console.log(`      ${(t.time / 1000).toFixed(1)}s ${t.package}${failInfo}`)
+    }
+  }
+  if (results.peakMemoryMB > 0) {
+    console.log(`    Peak worker memory: ${results.peakMemoryMB}MB`)
+  }
 
   return results
 }
