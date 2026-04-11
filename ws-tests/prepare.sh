@@ -6,12 +6,12 @@
 if [ -f "docker-compose.override.yml" ]; then
     echo "Using docker-compose.override.yml"
     docker compose -p sanity -f docker-compose.yaml -f docker-compose.override.yml kill
-    docker compose -p sanity -f docker-compose.yaml -f docker-compose.override.yml down --volumes
-    docker compose -p sanity -f docker-compose.yaml -f docker-compose.override.yml up -d --force-recreate --renew-anon-volumes
+    docker compose -p sanity -f docker-compose.yaml -f docker-compose.override.yml down --volumes --remove-orphans
+    docker compose -p sanity -f docker-compose.yaml -f docker-compose.override.yml up -d --force-recreate --renew-anon-volumes --remove-orphans
 else
     docker compose -p sanity kill
-    docker compose -p sanity down --volumes
-    docker compose -p sanity up -d --force-recreate --renew-anon-volumes
+    docker compose -p sanity down --volumes --remove-orphans
+    docker compose -p sanity up -d --force-recreate --renew-anon-volumes --remove-orphans
 fi
 docker_exit=$?
 if [ ${docker_exit} -eq 0 ]; then

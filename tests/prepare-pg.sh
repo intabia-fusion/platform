@@ -17,8 +17,8 @@ else
 fi
 
 docker compose ${COMPOSE_FILES} -p sanity kill
-docker compose ${COMPOSE_FILES} -p sanity down --volumes
-docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes
+docker compose ${COMPOSE_FILES} -p sanity down --volumes --remove-orphans
+docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes --remove-orphans
 
 docker_exit=$?
 if [ ${docker_exit} -eq 0 ]; then

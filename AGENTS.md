@@ -149,7 +149,11 @@ git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' |
 
 ## License Headers
 
-**TypeScript**:
+**Existing files**: NEVER replace or rewrite the existing license header. Only ADD a `Copyright © <year> Intabia Fusion.` line alongside the original copyright (keep original Hardcore Engineering / other copyrights intact). Do not touch the license terms block.
+
+**New files only**: use the full header below.
+
+**TypeScript** (new files):
 ```ts
 /**
   Copyright © 2026 Intabia Fusion.
@@ -159,7 +163,7 @@ git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' |
 */
 ```
 
-**Svelte** (HTML comment, `//` prefix):
+**Svelte** (new files, HTML comment, `//` prefix):
 ```svelte
 <!--
 // Copyright © 2026 Intabia Fusion.
@@ -167,4 +171,15 @@ git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' |
 // you may not use this file except in compliance with the License.
 // See https://www.eclipse.org/legal/epl-2.0
 -->
+```
+
+**Existing file example** (add Intabia line, keep original):
+```ts
+//
+// Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// ... (rest unchanged)
+//
 ```
