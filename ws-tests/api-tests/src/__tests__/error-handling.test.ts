@@ -212,9 +212,7 @@ describe('error-handling', () => {
 
     it('update non-existent document should handle gracefully', async () => {
       const conn = await connectTx()
-      await expectNoHang(
-        conn.updateDoc(core.class.Space, core.space.Model, generateId(), { name: 'non-existent' })
-      )
+      await expectNoHang(conn.updateDoc(core.class.Space, core.space.Model, generateId(), { name: 'non-existent' }))
     })
 
     it('remove non-existent document should handle gracefully', async () => {
