@@ -43,6 +43,7 @@ import love, { loveId } from '@hcengineering/love'
 import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
 import presence, { presenceId } from '@hcengineering/presence'
+import { pulseId } from '@hcengineering/pulse'
 import print, { printId } from '@hcengineering/print'
 import { processId } from '@hcengineering/process'
 import { productsId } from '@hcengineering/products'
@@ -205,7 +206,6 @@ export interface Config {
   BILLING_URL?: string
   PAYMENT_URL?: string
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS?: string
-  PULSE_URL?: string
   HULYLAKE_URL?: string
   DISABLED_FEATURES?: string
   SIGNUP_URL?: string
@@ -578,7 +578,6 @@ export async function configurePlatform() {
   setMetadata(billingPlugin.metadata.BillingURL, config.BILLING_URL ?? '')
   setMetadata(presentation.metadata.PaymentUrl, config.PAYMENT_URL ?? '')
 
-  setMetadata(presentation.metadata.PulseUrl, config.PULSE_URL)
   setMetadata(presentation.metadata.HulylakeUrl, config.HULYLAKE_URL ?? '')
 
   setMetadata(support.metadata.SupportLink, myBranding.support?.supportLink ?? supportLink)
@@ -767,7 +766,7 @@ export async function configurePlatform() {
 
   setMetadata(client.metadata.FilterModel, 'ui')
   setMetadata(client.metadata.ExtraFilter, disabledFeatures)
-  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin])
+  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin, pulseId as Plugin])
   setMetadata(login.metadata.TransactorOverride, config.TRANSACTOR_OVERRIDE)
 
   // Use binary response transfer for faster performance and small transfer sizes.

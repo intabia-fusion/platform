@@ -41,7 +41,6 @@ ENV_ARGS=(
   -e "STORAGE_CONFIG=minio|localhost?accessKey=minioadmin&secretKey=minioadmin"
   -e BRANDING_URL=http://huly.local:8087/branding.json
   -e DATALAKE_URL=http://huly.local:4030
-  -e PULSE_URL=ws://huly.local:8099/ws
   -e LINK_PREVIEW_URL=http://huly.local:4042
 )
 

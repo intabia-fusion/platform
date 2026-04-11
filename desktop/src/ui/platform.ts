@@ -50,6 +50,7 @@ import login, { loginId } from '@hcengineering/login'
 import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
 import presence, { presenceId } from '@hcengineering/presence'
+import { pulseId } from '@hcengineering/pulse'
 import { processId } from '@hcengineering/process'
 import { productsId } from '@hcengineering/products'
 import { questionsId } from '@hcengineering/questions'
@@ -354,7 +355,6 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(recorder.metadata.StreamUrl, config.STREAM_URL ?? '')
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)
   setMetadata(presentation.metadata.HulylakeUrl, config.HULYLAKE_URL ?? '')
-  setMetadata(presentation.metadata.PulseUrl, config.PULSE_URL ?? '')
 
   const disabledFeatures = (config.DISABLED_FEATURES ?? '').split(',').map(it => it.trim()).filter(it => it.length > 0)
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))
@@ -524,7 +524,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
 
   setMetadata(client.metadata.FilterModel, 'ui')
   setMetadata(client.metadata.ExtraFilter, disabledFeatures)
-  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin])
+  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin, pulseId as Plugin])
 
   // Use binary response transfer for faster performance and small transfer sizes.
   setMetadata(client.metadata.UseBinaryProtocol, true)

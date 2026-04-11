@@ -28,12 +28,22 @@
   const personId = getCurrentEmployee()
 
   async function doUpdatePresence (): Promise<void> {
-    const presence = { personId, objectId: presenceId ?? object._id, objectClass: object._class }
-    await updatePresence(presence, presenceTtlSeconds)
+    const presence = {
+      personId,
+      objectId: presenceId ?? object._id,
+      objectClass: object._class,
+      space: object.space
+    }
+    await updatePresence(presence)
   }
 
   async function doDeletePresence (object: Doc, presenceId?: string): Promise<void> {
-    const presence = { personId, objectId: presenceId ?? object._id, objectClass: object._class }
+    const presence = {
+      personId,
+      objectId: presenceId ?? object._id,
+      objectClass: object._class,
+      space: object.space
+    }
     await deletePresence(presence)
   }
 
