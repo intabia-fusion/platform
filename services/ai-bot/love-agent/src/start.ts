@@ -19,7 +19,9 @@ import { runAgent } from './agent.js'
 export const start = async (): Promise<void> => {
   const { LiveKitApiUrl, PlatformUrl, Debug } = config
   console.log('Starting love worker', {
-    LiveKitApiUrl, PlatformUrl, Debug
+    LiveKitApiUrl,
+    PlatformUrl,
+    Debug
   })
 
   runAgent()
