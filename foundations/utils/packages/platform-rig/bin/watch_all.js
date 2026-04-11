@@ -22,6 +22,7 @@ const { performance } = require('perf_hooks')
 const { buildDependencyGraph, getAllDependencies } = require('./libs/graph')
 const { getDefaultWorkerCount, getOptimalWorkerCount } = require('./libs/utils')
 const { runTranspilePhase } = require('./phases/transpile')
+const { runLintPhase } = require('./phases/lint')
 const { getWorkerPool, terminateWorkerPool } = require('./libs/workers')
 const { calculatePackageHash, isPhaseCached, markPhaseCompleted } = require('./libs/cache')
 const { success, error, warn, info, dim, bold, colorizeErrorMessage } = require('./libs/colors')
@@ -69,6 +70,7 @@ function parseArgs(args) {
   let parallel = getDefaultWorkerCount()
   let verbose = false
   let doValidate = false
+  let doLint = false
   let force = false
   let toPackage = null
   let rootDir = ''
@@ -89,6 +91,9 @@ function parseArgs(args) {
       verbose = true
     } else if (arg === '--validate') {
       doValidate = true
+    } else if (arg === '--lint') {
+      doLint = true
+      doValidate = true  // --lint implies --validate
     } else if (arg === '--force' || arg === '-f') {
       force = true
     } else if (arg === '--to') {
@@ -120,7 +125,7 @@ function parseArgs(args) {
     verbose = process.env.RUSH_VERBOSE === '1' || process.env.VERBOSE === '1'
   }
 
-  return { parallel, verbose, doValidate, force, toPackage, rootDir, debounceMs }
+  return { parallel, verbose, doValidate, doLint, force, toPackage, rootDir, debounceMs }
 }
 
 function printUsage() {
@@ -134,6 +139,7 @@ Options:
   --parallel, -p <n>     Number of parallel workers (default: auto)
   --verbose, -v          Show detailed output
   --validate             Also run TypeScript validation after transpile
+  --lint                 Run ESLint check (no fix) after validation (implies --validate)
   --force, -f            Disable all caching (forces full rebuild)
   --to <package>         Only watch the specified package and its dependencies
   --debounce <ms>        Debounce interval in ms (default: 300)
@@ -147,6 +153,7 @@ Description:
 Examples:
   watch_all .
   watch_all . --validate
+  watch_all . --lint
   watch_all . --to @hcengineering/core --verbose
 `)
 }
@@ -465,14 +472,28 @@ async function main() {
   }
 
   // Run initial validation
+  let initialValidateResult = null
   if (validationPool && packagesToValidate.length > 0) {
     console.log(`\n${bold('=== Initial validation (' + packagesToValidate.length + ' packages) ===')}`)
-    const initialValidateResult = await runValidation(validationPool, graph, packagesToValidate, packageHashes, options.force)
-    
+    initialValidateResult = await runValidation(validationPool, graph, packagesToValidate, packageHashes, options.force)
+
     // Track successfully validated packages
     if (initialValidateResult.errorCount === 0) {
       for (const pkg of packagesToValidate) {
         validatedPackages.add(pkg)
+      }
+    }
+  }
+
+  // Run initial lint after successful validation (only when --lint flag is passed)
+  if (options.doLint && packagesToValidate.length > 0 && initialValidateResult && initialValidateResult.errorCount === 0) {
+    const packagesToLint = packagesToValidate.filter(name => graph.get(name)?.phaseFormat)
+    if (packagesToLint.length > 0) {
+      console.log(`\n${bold('=== Initial lint (' + packagesToLint.length + ' packages) ===')}`)
+      const lintResult = await runLintPhase(graph, packagesToLint, validationWorkers, { force: options.force, packageHashes })
+      console.log(`Linted: ${lintResult.successCount}/${lintResult.total} in ${Math.round(lintResult.time)}ms${lintResult.cacheHits > 0 ? ` (${lintResult.cacheHits} from cache)` : ''}`)
+      if (lintResult.errors.length > 0) {
+        console.error(`  ${error(lintResult.errors.length + ' lint error(s)')}`)
       }
     }
   }
@@ -598,6 +619,25 @@ async function main() {
                 validatedPackages.add(pkg)
               }
               console.log(success(`  All validations passed`))
+
+              // Run lint on validated packages (only when --lint flag is passed)
+              if (options.doLint) {
+                const pkgsToLint = [...pkgsToValidate].filter(name => graph.get(name)?.phaseFormat)
+                if (pkgsToLint.length > 0) {
+                  const lintList = pkgsToLint.map(p => p.replace(/@hcengineering\//g, '')).join(', ')
+                  console.log(`Linting ${info(pkgsToLint.length + ' package(s)')}: ${info(lintList)}`)
+                  try {
+                    const lintResult = await runLintPhase(graph, pkgsToLint, validationWorkers, { force: options.force, packageHashes })
+                    if (lintResult.errors.length === 0) {
+                      console.log(success(`  All lints passed`))
+                    } else {
+                      console.error(error(`  ${lintResult.errors.length} lint error(s)`))
+                    }
+                  } catch (err) {
+                    console.error(error(`  Lint failed: ${err.message}`))
+                  }
+                }
+              }
             } else {
               console.error(error(`  ${validateResult.errorCount} validation(s) failed`))
             }

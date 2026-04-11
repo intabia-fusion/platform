@@ -2,26 +2,30 @@ const { Worker } = require('worker_threads')
 const { join } = require('path')
 
 let workerPool = null
+const namedPools = new Map()
 
-class ValidateWorkerPool {
-  constructor(size) {
+class GenericWorkerPool {
+  constructor(size, workerPath, poolOptions = {}) {
     this.size = size
     this.workers = []
     this.available = []
     this.pending = []
     this.taskId = 0
     this.callbacks = new Map()
-    this.workerPath = join(__dirname, '..', 'validate-worker.js')
+    this.workerPath = workerPath
     this.workerMemory = new Map()
     this.workerStats = new Map()
     this.taskTimings = new Map()
+    this.workerOptions = poolOptions.workerOptions || {}
+    this.workerCurrentTask = new Map()
+    this.terminated = false
   }
 
   async init() {
     const readyPromises = []
 
     for (let i = 0; i < this.size; i++) {
-      const worker = new Worker(this.workerPath)
+      const worker = new Worker(this.workerPath, this.workerOptions)
       worker._workerId = i
       this.workers.push(worker)
       this.workerStats.set(i, { totalIdleTime: 0, totalWorkTime: 0, taskCount: 0, lastTaskCompletedAt: null })
@@ -70,12 +74,50 @@ class ValidateWorkerPool {
       })
 
       worker.on('error', (err) => {
-        console.error('Worker error:', err)
+        console.error(`Worker ${i} error:`, err.message || err)
+        this._failWorkerTask(i, err)
+      })
+
+      worker.on('exit', (code) => {
+        if (this.terminated) return
+        if (code !== 0) {
+          const err = new Error(`Worker ${i} exited with code ${code} (likely OOM)`)
+          console.error(err.message)
+          this._failWorkerTask(i, err)
+        }
       })
     }
 
     await Promise.all(readyPromises)
     this.available = [...this.workers]
+  }
+
+  _failWorkerTask(workerId, err) {
+    const taskId = this.workerCurrentTask.get(workerId)
+    if (taskId !== undefined) {
+      const callback = this.callbacks.get(taskId)
+      this.callbacks.delete(taskId)
+      this.taskTimings.delete(taskId)
+      this.workerCurrentTask.delete(workerId)
+      if (callback) {
+        callback({ success: false, error: err.message || String(err) })
+      }
+    }
+    // Remove dead worker from available pool; fail pending tasks if no workers remain
+    const worker = this.workers[workerId]
+    if (worker) {
+      const idx = this.available.indexOf(worker)
+      if (idx >= 0) this.available.splice(idx, 1)
+      this.workers[workerId] = null
+    }
+    const aliveCount = this.workers.filter(w => w !== null).length
+    if (aliveCount === 0 && this.pending.length > 0) {
+      const pendingErr = new Error('All workers died, cannot process remaining tasks')
+      while (this.pending.length > 0) {
+        const { resolve } = this.pending.shift()
+        resolve({ success: false, error: pendingErr.message })
+      }
+    }
   }
 
   _processNext() {
@@ -92,19 +134,33 @@ class ValidateWorkerPool {
       }
 
       this.taskTimings.set(task.id, { startedAt, workerId })
+      this.workerCurrentTask.set(workerId, task.id)
+
+      const wrappedResolve = (value) => {
+        this.workerCurrentTask.delete(workerId)
+        resolve(value)
+      }
 
       this.callbacks.set(task.id, (result) => {
-        if (result.success) {
-          resolve({
-            success: true,
-            skipped: result.skipped || false,
-            fromCache: result.fromCache || false,
-            typesHash: result.typesHash,
-            syncResult: result.syncResult,
-            cacheStats: result.cacheStats
-          })
+        if (task.type === 'validate') {
+          if (result.success) {
+            wrappedResolve({
+              success: true,
+              skipped: result.skipped || false,
+              fromCache: result.fromCache || false,
+              typesHash: result.typesHash,
+              syncResult: result.syncResult,
+              cacheStats: result.cacheStats
+            })
+          } else {
+            wrappedResolve({ success: false, error: new Error(result.error) })
+          }
         } else {
-          resolve({ success: false, error: new Error(result.error) })
+          if (result.success) {
+            wrappedResolve(result)
+          } else {
+            wrappedResolve({ ...result, error: result.error instanceof Error ? result.error : new Error(result.error || 'Unknown error') })
+          }
         }
       })
 
@@ -130,6 +186,19 @@ class ValidateWorkerPool {
     })
   }
 
+  runTask(type, cwd, options = {}) {
+    return new Promise((resolve, reject) => {
+      const task = {
+        id: ++this.taskId,
+        type,
+        cwd,
+        ...options
+      }
+      this.pending.push({ task, resolve, reject })
+      this._processNext()
+    })
+  }
+
   /**
    * Enable watch mode on all workers (reduces cache sizes to prevent memory growth)
    */
@@ -145,21 +214,45 @@ class ValidateWorkerPool {
   }
 
   async terminate() {
+    this.terminated = true
     for (const worker of this.workers) {
-      worker.postMessage({ type: 'exit' })
+      if (worker) {
+        try { worker.postMessage({ type: 'exit' }) } catch (e) {}
+      }
     }
-    await Promise.all(this.workers.map(w => w.terminate()))
+    await Promise.all(this.workers.filter(w => w !== null).map(w => w.terminate().catch(() => {})))
     this.workers = []
     this.available = []
   }
 }
 
+// Alias for backwards compatibility
+const ValidateWorkerPool = GenericWorkerPool
+
 async function getWorkerPool(size) {
   if (!workerPool) {
-    workerPool = new ValidateWorkerPool(size)
+    workerPool = new GenericWorkerPool(size, join(__dirname, '..', 'validate-worker.js'))
     await workerPool.init()
   }
   return workerPool
+}
+
+async function getNamedWorkerPool(name, size, workerPath, poolOptions = {}) {
+  let pool = namedPools.get(name)
+  if (!pool) {
+    pool = new GenericWorkerPool(size, workerPath, poolOptions)
+    await pool.init()
+    namedPools.set(name, pool)
+  }
+  return pool
+}
+
+async function terminateNamedWorkerPool(name) {
+  const pool = namedPools.get(name)
+  if (pool) {
+    await pool.terminate()
+    namedPools.delete(name)
+  }
 }
 
 async function terminateWorkerPool() {
@@ -167,10 +260,17 @@ async function terminateWorkerPool() {
     await workerPool.terminate()
     workerPool = null
   }
+  for (const [name, pool] of namedPools) {
+    await pool.terminate()
+  }
+  namedPools.clear()
 }
 
 module.exports = {
+  GenericWorkerPool,
   ValidateWorkerPool,
   getWorkerPool,
+  getNamedWorkerPool,
+  terminateNamedWorkerPool,
   terminateWorkerPool
 }

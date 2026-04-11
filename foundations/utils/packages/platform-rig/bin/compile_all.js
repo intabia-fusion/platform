@@ -14,6 +14,8 @@ const { runTranspilePhase } = require('./phases/transpile')
 const { runBundlePhase } = require('./phases/bundle-phase')
 const { runPackagePhase } = require('./phases/package')
 const { runDockerBuildPhase } = require('./phases/docker-build')
+const { runFormatPhase } = require('./phases/format')
+const { runLintPhase } = require('./phases/lint')
 
 /**
  * Parse command line arguments
@@ -22,6 +24,8 @@ function parseArgs(args) {
   let parallel = getDefaultWorkerCount()
   let verbose = false
   let doValidate = false
+  let doLint = false
+  let doFormat = false
   let force = false
   let doBundle = false
   let doPackage = false
@@ -52,6 +56,11 @@ function parseArgs(args) {
       verbose = true
     } else if (arg === '--validate') {
       doValidate = true
+    } else if (arg === '--lint') {
+      doLint = true
+      doValidate = true  // --lint implies --validate
+    } else if (arg === '--format') {
+      doFormat = true
     } else if (arg === '--force' || arg === '-f') {
       force = true
     } else if (arg === '--bundle') {
@@ -108,7 +117,7 @@ function parseArgs(args) {
     verbose = process.env.RUSH_VERBOSE === '1' || process.env.VERBOSE === '1'
   }
 
-  return { parallel, verbose, doValidate, force, doBundle, doPackage, doDockerBuild, help, list, toPackage, rootDir, forceWorkers }
+  return { parallel, verbose, doValidate, doLint, doFormat, force, doBundle, doPackage, doDockerBuild, help, list, toPackage, rootDir, forceWorkers }
 }
 
 function printUsage() {
@@ -124,7 +133,9 @@ Options:
                        Parallel compilation respects dependency order (builds in waves)
   --force-workers      Force exact worker count, ignore memory limits (use with caution!)
   --verbose, -v        Show detailed output for each package
-  --validate           Also run TypeScript validation for packages with "_phase:validate": "compile validate"
+  --validate           Also run TypeScript validation for packages with "_phase:validate"
+  --lint               Run ESLint check (no fix) after validation (implies --validate); for packages with "_phase:format"
+  --format             Run format phase only (no transpile/validate) for packages with "_phase:format"
   --force, -f          Disable all caching (forces full rebuild, revalidation)
   --bundle             Run bundle phase for packages with "_phase:bundle"
   --docker-build       Run docker-build phase (implies --bundle)
@@ -138,6 +149,12 @@ Description:
 
   When --validate is specified, also runs TypeScript validation for packages that have
   "_phase:validate": "compile validate" in their scripts.
+
+  When --lint is specified (implies --validate), also runs ESLint check (no fix) for
+  packages that have "_phase:format" defined.
+
+  When --format is specified, runs only the format phase for packages with "_phase:format".
+  No transpile or validate phases are executed (standalone formatter command).
 
   When --bundle is specified, runs the bundle phase for packages with "_phase:bundle".
 
@@ -159,6 +176,10 @@ Examples:
   compile-all . --docker-build --to @hcengineering/pod-server
   compile-all . --list
   compile-all . --to @hcengineering/core
+  compile-all . --format
+  compile-all . --format --to @hcengineering/core
+  compile-all . --lint
+  compile-all . --lint --to @hcengineering/core
 `)
 }
 
@@ -386,44 +407,6 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
 /**
  * Run build pipeline (bundle -> package -> docker-build)
  */
-async function runLintPhaseWrapper(packages, graph, force, packageHashes) {
-  if (packages.length === 0) return { successCount: 0, total: 0, cacheHits: 0, errors: [], time: 0 }
-
-  console.log(`\n=== Phase: Linting ${packages.length} packages ===`)
-  console.log(`    Running sequentially to save memory...`)
-
-  // Run with concurrency = 1 to prevent OOM
-  const results = await runLintPhase(graph, packages, 1, { force, packageHashes })
-
-  console.log(`\nLint: ${results.successCount}/${results.total} packages in ${Math.round(results.time)}ms`)
-  if (results.cacheHits > 0) console.log(`  (${results.cacheHits} from cache)`)
-  if (results.errors.length > 0) console.error(`  ${results.errors.length} package(s) with lint errors`)
-
-  return results
-}
-
-/**
- * Run svelte-check phase
- */
-async function runSvelteCheckPhaseWrapper(packages, graph, force, packageHashes) {
-  if (packages.length === 0) return { successCount: 0, total: 0, cacheHits: 0, errors: [], time: 0 }
-
-  console.log(`\n=== Phase: Svelte-check ${packages.length} packages ===`)
-  console.log(`    Running sequentially to save memory...`)
-
-  // Run with concurrency = 1 to prevent OOM
-  const results = await runSvelteCheckPhase(graph, packages, 1, { force, packageHashes })
-
-  console.log(`\nSvelte-check: ${results.successCount}/${results.total} packages in ${Math.round(results.time)}ms`)
-  if (results.cacheHits > 0) console.log(`  (${results.cacheHits} from cache)`)
-  if (results.errors.length > 0) console.error(`  ${results.errors.length} package(s) with svelte-check errors`)
-
-  return results
-}
-
-/**
- * Run build pipeline (bundle -> package -> docker-build)
- */
 async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToDockerBuild, graph, buildWorkers, force, packageHashes) {
   const taskQueue = new BuildTaskQueue(graph, { concurrency: buildWorkers })
 
@@ -610,6 +593,8 @@ async function compileAll(rootDir, options = {}) {
     parallel = 4,
     verbose = false,
     doValidate = false,
+    doLint = false,
+    doFormat = false,
     force = false,
     doBundle = false,
     doPackage = false,
@@ -646,6 +631,7 @@ async function compileAll(rootDir, options = {}) {
   // Collect packages for each phase
   const packagesToTranspile = []
   const packagesToValidate = []
+  const packagesToFormat = []
   const packagesToBundle = []
   const packagesToPackage = []
   const packagesToDockerBuild = []
@@ -697,6 +683,10 @@ async function compileAll(rootDir, options = {}) {
       packagesToValidate.push(name)
     }
 
+    if (node.phaseFormat) {
+      packagesToFormat.push(name)
+    }
+
     if (doBundle && node.phaseBundle && node.phaseBundle !== 'echo done') {
       packagesToBundle.push(name)
     }
@@ -714,10 +704,38 @@ async function compileAll(rootDir, options = {}) {
     console.log('\nPackages to process:')
     console.log(`  Transpile: ${packagesToTranspile.length}`)
     console.log(`  Validate: ${packagesToValidate.length}`)
+    console.log(`  Format: ${packagesToFormat.length}`)
     console.log(`  Bundle: ${packagesToBundle.length}`)
     console.log(`  Package: ${packagesToPackage.length}`)
     console.log(`  Docker-build: ${packagesToDockerBuild.length}`)
     return { success: true, listOnly: true }
+  }
+
+  // Format-only mode: skip transpile/validate/bundle entirely
+  if (doFormat) {
+    const formatTargets = packagesToFormat
+    console.log(`\n=== Phase: Formatting ${formatTargets.length} packages ===`)
+    const formatResults = await runFormatPhase(graph, formatTargets, validationWorkers, { force, packageHashes })
+    console.log(`Formatted: ${formatResults.successCount}/${formatResults.total} packages in ${Math.round(formatResults.time)}ms`)
+    if (formatResults.cacheHits > 0) console.log(`  (${formatResults.cacheHits} from cache)`)
+
+    cpuTracker.stop()
+    const cpuStats = cpuTracker.getStats()
+    const totalTime = performance.now() - startTime
+    console.log(`\n=== Summary ===`)
+    console.log(`Total time: ${Math.round(totalTime)}ms`)
+    console.log(`CPU usage: avg ${cpuStats.avg}%, peak ${cpuStats.peak}%`)
+
+    if (formatResults.errors.length > 0) {
+      console.error('\nFormat errors:')
+      for (const err of formatResults.errors) {
+        const errMsg = err.error?.message || err.error || 'Unknown error'
+        console.error(`  ${error(err.package)}: ${errMsg.split('\n')[0]}`)
+      }
+      return { success: false, errors: formatResults.errors.length }
+    }
+
+    return { success: true, time: totalTime, cpuStats }
   }
 
   // Phase 1: Transpile
@@ -749,9 +767,29 @@ async function compileAll(rootDir, options = {}) {
   let validateResults = { successCount: 0, total: 0, cacheHits: 0, errors: [] }
   if (doValidate && packagesToValidate.length > 0) {
     validateResults = await runValidationPhase(packagesToValidate, graph, validationWorkers, force, packageHashes)
-    if (validateResults.errors.length > 0) {
-      console.error('\nValidation errors - stopping build')
-      return { success: false, errors: validateResults.errors.length }
+
+    if (doLint) {
+      // Lint phase: run ESLint without fix on packages with phaseFormat.
+      // Only runs when --lint flag is passed.
+      let lintResults = { successCount: 0, total: 0, cacheHits: 0, errors: [] }
+      const packagesToLint = packagesToValidate.filter(name => graph.get(name)?.phaseFormat)
+      if (packagesToLint.length > 0) {
+        console.log(`\n=== Phase: Linting ${packagesToLint.length} packages ===`)
+        lintResults = await runLintPhase(graph, packagesToLint, validationWorkers, { force, packageHashes })
+        console.log(`Linted: ${lintResults.successCount}/${lintResults.total} packages in ${Math.round(lintResults.time)}ms`)
+        if (lintResults.cacheHits > 0) console.log(`  (${lintResults.cacheHits} from cache)`)
+      }
+
+      if (validateResults.errors.length > 0 || lintResults.errors.length > 0) {
+        const total = validateResults.errors.length + lintResults.errors.length
+        console.error(`\n${validateResults.errors.length} validation error(s), ${lintResults.errors.length} lint error(s) - stopping build`)
+        return { success: false, errors: total }
+      }
+    } else {
+      if (validateResults.errors.length > 0) {
+        console.error('\nValidation errors - stopping build')
+        return { success: false, errors: validateResults.errors.length }
+      }
     }
   }
 
@@ -811,6 +849,12 @@ async function main() {
   try {
     const result = await compileAll(rootDir, options)
 
+    // Terminate all worker pools so the process can exit cleanly
+    try {
+      const { terminateWorkerPool } = require('./libs/workers')
+      await terminateWorkerPool()
+    } catch { /* ignore */ }
+
     if (result.listOnly) {
       process.exit(0)
     }
@@ -818,8 +862,13 @@ async function main() {
     if (!result.success) {
       process.exit(1)
     }
+    process.exit(0)
   } catch (err) {
     console.error('Error:', err.message)
+    try {
+      const { terminateWorkerPool } = require('./libs/workers')
+      await terminateWorkerPool()
+    } catch { /* ignore */ }
     process.exit(1)
   }
 }

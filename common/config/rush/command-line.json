@@ -414,6 +414,14 @@
     },
     {
       "commandKind": "global",
+      "name": "fast-build:watch:lint",
+      "summary": "Fast compile, validate, lint and watch for changes",
+      "description": "Watches packages, runs compile, TypeScript validation and ESLint check on changes",
+      "safeForSimultaneousRushProcesses": true,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/watch_all.js . --parallel --validate --lint"
+    },
+    {
+      "commandKind": "global",
       "name": "fast-build:svelte-check",
       "summary": "Fast compile, validate and svelte-check",
       "description": "Compiles all packages, runs TypeScript validation, then svelte-check on packages with '_phase:svelte-check'",
@@ -440,9 +448,17 @@
       "commandKind": "global",
       "name": "fast-build:validate",
       "summary": "Fast compile and validate all packages",
-      "description": "Compiles and validates all packages that have '_phase:build': 'compile transpile src' using esbuild and TypeScript",
+      "description": "Compiles and validates all packages that have '_phase:build': 'compile transpile src' using esbuild and TypeScript. Use 'fast-build:lint' to also run ESLint check.",
       "safeForSimultaneousRushProcesses": false,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --validate"
+    },
+    {
+      "commandKind": "global",
+      "name": "fast-build:format",
+      "summary": "Fast format packages (prettier + eslint --fix)",
+      "description": "Runs prettier and eslint --fix in worker pool for packages with '_phase:format'. Uses per-package cache (.fast-build-cache.json) keyed by current package hash only",
+      "safeForSimultaneousRushProcesses": false,
+      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --format"
     },
     {
       "commandKind": "global",
@@ -519,26 +535,26 @@
       "required": false,
       "longName": "--to",
       "description": "Only compile the specified package and its dependencies",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:lint", "fast-build:format", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate", "fast-build:watch:lint"]
     },
     {
       "parameterKind": "flag",
       "longName": "--list",
       "description": "Only print the list of packages in compilation order (no actual compilation)",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:lint", "fast-build:format", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
     },
     {
       "parameterKind": "flag",
       "longName": "--verbose",
       "shortName": "-v",
       "description": "Show detailed output for each package",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:lint", "fast-build:format", "fast-build:bundle", "fast-build:package", "fast-build:docker-build", "fast-build:watch", "fast-build:watch:validate", "fast-build:watch:lint"]
     },
     {
       "parameterKind": "flag",
       "longName": "--force",
       "description": "Disable all caching (forces full rebuild, revalidation, relint)",
-      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:lint", "fast-build:svelte-check", "fast-build:check", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
+      "associatedCommands": ["fast-build", "fast-build:validate", "fast-build:format", "fast-build:lint", "fast-build:watch:lint", "fast-build:svelte-check", "fast-build:check", "fast-build:bundle", "fast-build:package", "fast-build:docker-build"]
     }
     // {
     //   /**
