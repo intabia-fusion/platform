@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+jspm_packages/
+bower_components/
+
+# Build output
+lib/
+dist/
+build/
+bundle/
+bundle.js
+bundle.js.map
+**/bundle/model.json
+.build/
+.fast-build-cache.json
+tsconfig.tsbuildinfo
+tsdoc-metadata.json
+types/
+typings/
+
+# Rush / monorepo temp
+.heft/
+.rush/
+**/.rush/temp/
+common/temp/
+common/deploy/
+_api-extractor-temp/
+temp/
+.tmp/
+
+# Coverage / test artifacts
+coverage/
+.nyc_output/
+lib-cov/
+tests/sanity/screenshots/
+tests/db_dump/
+tests/profiles/
+ws-tests/docker-compose.override.yml
+
+# Logs
+*.log
+**/logs/**
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.rush-logs/
+metrics.txt
+
+# Caches
+.eslintcache
+.svelte-check/
+.validate/
+.format/
+.wrangler/
+
+# Generated / vendor
+pods/workspace/init/
+pods/workspace/init-scripts/
+pods/front/dist/
+services/github/pod-github/src/github.graphql
+dump/
+deploy/
+/combined_dependencies
+build-comparison/
+
+# Binaries / archives
+*.tgz
+*.pyc
+*.cpuprofile
+ingest-attachment-*.zip
+benchmarks/front-benchmark/front-benchmark
+dev/gh-picker/gh-picker
+tools/apm/apm.js
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/settings.json
+
+# Reports
+dev/tool/report*.csv
+dev/tool/history.json
+
+# Misc agents
+.aider*
