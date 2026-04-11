@@ -5510,12 +5510,21 @@ importers:
       eslint-plugin-promise:
         specifier: ^6.1.1
         version: 6.6.0(eslint@8.57.1)
+      eslint-plugin-svelte:
+        specifier: ^2.35.1
+        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
+      prettier-plugin-svelte:
+        specifier: ^3.4.0
+        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
       sass:
         specifier: ^1.80.0
         version: 1.93.3
+      svelte-eslint-parser:
+        specifier: ^0.33.1
+        version: 0.33.1(svelte@4.2.20)
       svelte-loader:
         specifier: ^3.2.0
         version: 3.2.4(svelte@4.2.20)
