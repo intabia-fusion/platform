@@ -28,6 +28,7 @@
 const { join } = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
+const { xxh64 } = require('@node-rs/xxhash')
 
 const CACHE_VERSION = 2
 
@@ -104,9 +105,14 @@ function collectFileSignatures(dir, extensions = null) {
       }
       try {
         const stat = fs.lstatSync(fullPath)
-        signatures[fullPath] = `${stat.mtimeMs}:${stat.size}`
+        if (!stat.isFile()) continue
+        // Content-based hash: robust across git checkouts that bump mtime.
+        // xxh64 is ~5–10x faster than md5, source files typically <100KB.
+        const content = fs.readFileSync(fullPath)
+        const hash = xxh64(content).toString(16)
+        signatures[fullPath] = `${hash}:${stat.size}`
       } catch {
-        // Ignore stat errors
+        // Ignore stat/read errors
       }
     }
   }
@@ -152,42 +158,24 @@ function calculatePackageHash(packagePath, extraFiles = []) {
     }
   }
 
-  // Include package.json
-  const pkgPath = join(packagePath, 'package.json')
-  if (fs.existsSync(pkgPath)) {
+  // Content-hash helper — robust to git checkout mtime bumps.
+  const pushFileSig = (label, absPath) => {
+    if (!fs.existsSync(absPath)) return
     try {
-      const stat = fs.statSync(pkgPath)
-      parts.push(`package.json:${stat.mtimeMs}:${stat.size}`)
+      const stat = fs.statSync(absPath)
+      if (!stat.isFile()) return
+      const content = fs.readFileSync(absPath)
+      const hash = xxh64(content).toString(16)
+      parts.push(`${label}:${hash}:${stat.size}`)
     } catch { /* ignore */ }
   }
 
-  // Include tsconfig.json if exists
-  const tsconfigPath = join(packagePath, 'tsconfig.json')
-  if (fs.existsSync(tsconfigPath)) {
-    try {
-      const stat = fs.statSync(tsconfigPath)
-      parts.push(`tsconfig.json:${stat.mtimeMs}:${stat.size}`)
-    } catch { /* ignore */ }
-  }
+  pushFileSig('package.json', join(packagePath, 'package.json'))
+  pushFileSig('tsconfig.json', join(packagePath, 'tsconfig.json'))
+  pushFileSig('Dockerfile', join(packagePath, 'Dockerfile'))
 
-  // Include Dockerfile if exists (for docker-build phase)
-  const dockerfilePath = join(packagePath, 'Dockerfile')
-  if (fs.existsSync(dockerfilePath)) {
-    try {
-      const stat = fs.statSync(dockerfilePath)
-      parts.push(`Dockerfile:${stat.mtimeMs}:${stat.size}`)
-    } catch { /* ignore */ }
-  }
-
-  // Include extra files
   for (const file of extraFiles) {
-    const filePath = join(packagePath, file)
-    if (fs.existsSync(filePath)) {
-      try {
-        const stat = fs.statSync(filePath)
-        parts.push(`${file}:${stat.mtimeMs}:${stat.size}`)
-      } catch { /* ignore */ }
-    }
+    pushFileSig(file, join(packagePath, file))
   }
 
   return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
