@@ -183,6 +183,7 @@ const cardPlugin = plugin(cardId, {
     Feed: '' as Asset,
     All: '' as Asset,
     Duplicate: '' as Asset,
+    Grid: '' as Asset,
     Lock: '' as Asset
   },
   extensions: {
@@ -203,6 +204,7 @@ const cardPlugin = plugin(cardId, {
     AddTag: '' as IntlString,
     Feed: '' as IntlString,
     AllCards: '' as IntlString,
+    Grid: '' as IntlString,
     Favorites: '' as IntlString,
     CreateCard: '' as IntlString,
     Version: '' as IntlString,
