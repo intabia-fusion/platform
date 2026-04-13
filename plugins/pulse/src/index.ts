@@ -1,5 +1,4 @@
-<!--
-// Copyright © 2024 Anticrm Platform Contributors.
+//
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -12,10 +11,10 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
+//
 
-<script lang="ts">
-  let parentElement: HTMLDivElement
-</script>
+import pulsePlugin, { pulseId } from './plugin'
 
-<div bind:this={parentElement} class="hidden"></div>
+export * from './types'
+export { pulseId }
+export default pulsePlugin

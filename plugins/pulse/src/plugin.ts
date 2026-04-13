@@ -1,5 +1,4 @@
-<!--
-// Copyright © 2024 Anticrm Platform Contributors.
+//
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -12,10 +11,22 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
+//
 
-<script lang="ts">
-  let parentElement: HTMLDivElement
-</script>
+import type { Class, Ref } from '@hcengineering/core'
+import type { Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { DocumentPresence, TypingIndicator } from './types'
 
-<div bind:this={parentElement} class="hidden"></div>
+/** @public */
+export const pulseId = 'pulse' as Plugin
+
+/** @public */
+const pulsePlugin = plugin(pulseId, {
+  class: {
+    DocumentPresence: '' as Ref<Class<DocumentPresence>>,
+    TypingIndicator: '' as Ref<Class<TypingIndicator>>
+  }
+})
+
+export default pulsePlugin

@@ -1,5 +1,4 @@
-<!--
-// Copyright © 2024 Anticrm Platform Contributors.
+//
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -12,10 +11,23 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
+//
 
-<script lang="ts">
-  let parentElement: HTMLDivElement
-</script>
+import type { Class, Doc, PersonId, Ref, Timestamp } from '@hcengineering/core'
+import type { Person } from '@hcengineering/contact'
+import type { IntlString } from '@hcengineering/platform'
 
-<div bind:this={parentElement} class="hidden"></div>
+/** @public */
+export interface DocumentPresence extends Doc {
+  objectId: Ref<Doc>
+  objectClass: Ref<Class<Doc>>
+  person: Ref<Person>
+  lastActive: Timestamp
+}
+
+/** @public */
+export interface TypingIndicator extends Doc {
+  objectId: string
+  socialId: PersonId
+  status?: IntlString
+}

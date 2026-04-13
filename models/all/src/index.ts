@@ -116,6 +116,7 @@ import communication, { communicationId, createModel as communicationModel } fro
 import { emojiId, createModel as emojiModel } from '@hcengineering/model-emoji'
 import { inboxId, createModel as inboxModel } from '@hcengineering/model-inbox'
 import { presenceId, createModel as presenceModel } from '@hcengineering/model-presence'
+import { pulseId, createModel as pulseModel } from '@hcengineering/model-pulse'
 import processes, { processId, createModel as processModel } from '@hcengineering/model-process'
 import {
   serverDocumentsId,
@@ -477,6 +478,7 @@ export default function buildModel (): Builder {
       }
     ],
     [presenceModel, presenceId],
+    [pulseModel, pulseId],
     [
       chatModel,
       chatId,

@@ -155,6 +155,7 @@
     "@hcengineering/presence": "workspace:^0.7.0",
     "@hcengineering/presence-resources": "workspace:^0.7.0",
     "@hcengineering/presentation": "workspace:^0.7.0",
+    "@hcengineering/pulse": "workspace:^0.7.0",
     "@hcengineering/print": "workspace:^0.7.0",
     "@hcengineering/print-assets": "workspace:^0.7.0",
     "@hcengineering/print-resources": "workspace:^0.7.0",
