@@ -87,8 +87,6 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  let sortOrder = SortingOrder.Descending
-
   let lookup = buildConfigLookup(hierarchy, _class, config, options?.lookup)
   let associations = buildConfigAssociation(config)
 
