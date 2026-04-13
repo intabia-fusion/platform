@@ -56,7 +56,7 @@ runs:
     - name: Build test package
       shell: bash
       run: |
-        node common/scripts/install-run-rush.js build --to ${{ inputs.build-package }}
+        node common/scripts/install-run-rush.js fast-build --to ${{ inputs.build-package }}
 
     - name: Install Playwright
       shell: bash
@@ -69,7 +69,7 @@ runs:
       shell: bash
       run: |
         cd ./${{ inputs.test-folder }}/api-tests
-        node ../../common/scripts/install-run-rush.js validate --to @hcengineering/api-tests
+        node ../../common/scripts/install-run-rush.js fast-build:validate --to @hcengineering/api-tests
         node ../../common/scripts/install-run-rushx.js api-test --verbose
 
     - name: Start profiling

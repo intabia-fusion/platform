@@ -98,10 +98,10 @@ jobs:
         run: node common/scripts/install-run-rush.js model-version
 
       - name: Bundle...
-        run: node common/scripts/install-run-rush.js bundle
+        run: node common/scripts/install-run-rush.js fast-build:bundle
 
       - name: Validate...
-        run: node common/scripts/install-run-rush.js validate
+        run: node common/scripts/install-run-rush.js fast-build:validate
 
       - name: Cache build results
         uses: actions/cache@v5
@@ -136,7 +136,7 @@ jobs:
           restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
 
       - name: Checking svelte sources...
-        run: node common/scripts/install-run-rush.js svelte-check -v
+        run: node common/scripts/install-run-rush.js fast-build:svelte-check
   formatting:
     needs: build
     runs-on: ubuntu-latest
@@ -208,7 +208,7 @@ jobs:
             fi
           fi
       - name: Testing...
-        run: node common/scripts/install-run-rush.js test --verbose
+        run: node common/scripts/install-run-rush.js fast-build:test --verbose
         env:
           DB_URL: 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
           ELASTIC_URL: 'http://localhost:9201'
@@ -255,13 +255,13 @@ jobs:
       - name: Docker Build (with rate limit retry)
         run: |
           set -o pipefail
-          if node common/scripts/install-run-rush.js docker 2>&1 | tee /tmp/docker-build.log; then
+          if node common/scripts/install-run-rush.js fast-build:docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
             if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              node common/scripts/install-run-rush.js docker
+              node common/scripts/install-run-rush.js fast-build:docker
             else
               echo "Docker build failed (not a rate limit issue)"
               cat /tmp/docker-build.log
@@ -325,13 +325,13 @@ jobs:
       - name: Docker Build (with rate limit retry)
         run: |
           set -o pipefail
-          if node common/scripts/install-run-rush.js docker 2>&1 | tee /tmp/docker-build.log; then
+          if node common/scripts/install-run-rush.js fast-build:docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
             if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              node common/scripts/install-run-rush.js docker
+              node common/scripts/install-run-rush.js fast-build:docker
             else
               echo "Docker build failed (not a rate limit issue)"
               cat /tmp/docker-build.log
@@ -395,13 +395,13 @@ jobs:
       - name: Docker Build (with rate limit retry)
         run: |
           set -o pipefail
-          if node common/scripts/install-run-rush.js docker 2>&1 | tee /tmp/docker-build.log; then
+          if node common/scripts/install-run-rush.js fast-build:docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
             if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              node common/scripts/install-run-rush.js docker
+              node common/scripts/install-run-rush.js fast-build:docker
             else
               echo "Docker build failed (not a rate limit issue)"
               cat /tmp/docker-build.log
@@ -540,7 +540,7 @@ jobs:
       - name: Model version from git tags
         run: node common/scripts/install-run-rush.js model-version
       - name: Package
-        run: node common/scripts/install-run-rush.js package --to desktop -v
+        run: node common/scripts/install-run-rush.js fast-build:package --to desktop -v
       - name: Bump package JSON version
         run: |
           cd desktop-package
