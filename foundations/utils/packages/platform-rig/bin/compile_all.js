@@ -788,9 +788,14 @@ async function compileAll(rootDir, options = {}) {
     return { success: true, time: totalTime, cpuStats }
   }
 
+  // When --force is used with a "leaf" phase (--test, --lint, --svelte-check),
+  // only force that specific phase — prerequisite phases (transpile, validate) use cache.
+  const hasLeafPhase = doTest || doLint || doSvelteCheck
+  const forcePrerequisites = force && !hasLeafPhase
+
   // Phase 1: Transpile
   console.log(`\n=== Phase 1: Transpiling ${packagesToTranspile.length} packages ===`)
-  const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force, packageHashes })
+  const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force: forcePrerequisites, packageHashes })
   console.log(`Transpiled: ${transpileResults.successCount}/${transpileResults.total} packages in ${Math.round(transpileResults.time)}ms`)
 
   // Update package hashes for changed packages after transpile
@@ -819,7 +824,7 @@ async function compileAll(rootDir, options = {}) {
   // Phase 2: Validate (with worker pool)
   let validateResults = { successCount: 0, total: 0, cacheHits: 0, errors: [] }
   if (doValidate && packagesToValidate.length > 0) {
-    validateResults = await runValidationPhase(packagesToValidate, graph, validationWorkers, force, packageHashes)
+    validateResults = await runValidationPhase(packagesToValidate, graph, validationWorkers, forcePrerequisites, packageHashes)
 
     if (doLint) {
       // Lint phase: run ESLint without fix on packages with phaseFormat.

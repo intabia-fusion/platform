@@ -4,12 +4,34 @@
 const { spawn } = require('child_process')
 const { performance } = require('perf_hooks')
 const { join } = require('path')
-const { readdirSync, statSync } = require('fs')
+const { readdirSync } = require('fs')
+
+const crypto = require('crypto')
 
 const {
   isPhaseCached,
   markPhaseCompleted
 } = require('../libs/cache')
+const { success, error, dim, colorizeErrorMessage } = require('../libs/colors')
+
+// Environment variables that affect test execution and should invalidate cache
+const TEST_ENV_VARS = [
+  'DB_URL',
+  'ELASTIC_URL',
+  'MONGO_URL',
+  'POSTGRES_URL'
+]
+
+/**
+ * Compute a hash suffix from test-relevant environment variables.
+ * When any of these change, the test cache is invalidated.
+ */
+function getTestEnvHash () {
+  const parts = TEST_ENV_VARS
+    .map(name => `${name}=${process.env[name] ?? ''}`)
+    .sort()
+  return crypto.createHash('md5').update(parts.join('\n')).digest('hex').substring(0, 8)
+}
 
 /**
  * Check if a directory contains any test files (*.test.ts, *.spec.ts, *.test.js, *.spec.js)
@@ -47,11 +69,17 @@ async function runTestPhase (graph, packageNames, concurrency, options = {}) {
 
   const startTime = performance.now()
   let completedCount = 0
+  const timings = []
+  const envHash = getTestEnvHash()
+
+  console.log(`    Using ${concurrency} test workers`)
 
   async function testPackage (packageName) {
     const node = graph.get(packageName)
     const cwd = node.project.fullPath
-    const packageHash = packageHashes?.get(packageName)
+    const baseHash = packageHashes?.get(packageName)
+    // Include env vars in hash so cache invalidates when test env changes
+    const packageHash = baseHash ? `${baseHash}-${envHash}` : undefined
 
     // Check cache
     if (!force && packageHash) {
@@ -127,10 +155,10 @@ async function runTestPhase (graph, packageNames, concurrency, options = {}) {
           }
           resolve({ success: true, time })
         } else {
-          const error = new Error(`Test failed with exit code ${code}`)
-          error.stdout = stdout
-          error.stderr = stderr
-          resolve({ success: false, error, time })
+          const err = new Error(`Test failed with exit code ${code}`)
+          err.stdout = stdout
+          err.stderr = stderr
+          resolve({ success: false, error: err, time })
         }
       })
 
@@ -164,20 +192,30 @@ async function runTestPhase (graph, packageNames, concurrency, options = {}) {
         if (result.fromCache) {
           results.cacheHits++
           if (verbose) {
-            console.log(`    [test] ${completedCount}/${packageNames.length} ${name} (cached)`)
+            console.log(`    ${success('T')} ${dim(completedCount)}/${packageNames.length} ${dim(name)} ${dim('(cached)')}`)
           }
         } else if (result.skipped) {
           results.skippedCount++
           if (verbose) {
-            console.log(`    [test] ${completedCount}/${packageNames.length} ${name} (no tests)`)
+            console.log(`    ${success('T')} ${dim(completedCount)}/${packageNames.length} ${dim(name)} ${dim('(no tests)')}`)
           }
         } else {
           const time = result.time ? Math.round(result.time) + 'ms' : ''
-          console.log(`    [test] ${completedCount}/${packageNames.length} ${name} ${time}`)
+          timings.push({ package: name, time: Math.round(result.time || 0), failed: false })
+          console.log(`    ${success('T')} ${dim(completedCount)}/${packageNames.length} ${name} ${success('passed')} ${dim(time)}`)
         }
       } else {
         results.errors.push({ package: name, error: result.error })
-        console.log(`    [test] ${completedCount}/${packageNames.length} ${name} FAILED`)
+        const time = result.time ? Math.round(result.time) + 'ms' : ''
+        timings.push({ package: name, time: Math.round(result.time || 0), failed: true })
+        console.error(`    ${error('T')} ${dim(completedCount)}/${packageNames.length} ${name} ${error('FAILED')} ${dim(time)}`)
+        if (result.error?.stderr) {
+          const lines = result.error.stderr.split('\n').filter(l => l.trim()).slice(-5)
+          for (const line of lines) {
+            const { colored } = colorizeErrorMessage(line)
+            console.error(`      ${colored}`)
+          }
+        }
       }
       return result
     })
@@ -186,6 +224,19 @@ async function runTestPhase (graph, packageNames, concurrency, options = {}) {
   }
 
   results.time = performance.now() - startTime
+
+  // Print timing summary
+  if (timings.length > 0) {
+    const sorted = timings.sort((a, b) => b.time - a.time)
+    const slowCount = Math.min(10, sorted.length)
+    console.log(`\n    Top ${slowCount} slowest test packages:`)
+    for (let i = 0; i < slowCount; i++) {
+      const t = sorted[i]
+      const failInfo = t.failed ? ' FAILED' : ''
+      console.log(`      ${(t.time / 1000).toFixed(1)}s ${t.package}${failInfo}`)
+    }
+  }
+
   return results
 }
 

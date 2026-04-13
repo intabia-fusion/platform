@@ -8,7 +8,6 @@
 const { performance } = require('perf_hooks')
 const { join } = require('path')
 const { spawn } = require('child_process')
-const { existsSync, mkdirSync } = require('fs')
 const crypto = require('crypto')
 
 const { isPhaseCached, markPhaseCompleted } = require('../libs/cache')
@@ -39,16 +38,25 @@ function calculatePackageHashWithDeps(packageName, graph, packageHashes, process
 }
 
 /**
- * Run svelte-check for a single package
+ * Find svelte-check binary — walk up node_modules/.bin from package dir
+ */
+function findSvelteCheckBin(cwd) {
+  let dir = cwd
+  while (dir !== '/') {
+    const bin = join(dir, 'node_modules', '.bin', 'svelte-check')
+    if (require('fs').existsSync(bin)) return bin
+    dir = require('path').dirname(dir)
+  }
+  return 'svelte-check' // fallback — will fail with ENOENT if not in PATH
+}
+
+/**
+ * Run svelte-check for a single package directly (no rushx overhead)
  */
 function runSvelteCheckForPackage(cwd) {
   return new Promise((resolve) => {
-    const checkDir = join(cwd, '.svelte-check')
-    if (!existsSync(checkDir)) {
-      mkdirSync(checkDir, { recursive: true })
-    }
-
-    const child = spawn('svelte-check', ['--output', 'human'], {
+    const bin = findSvelteCheckBin(cwd)
+    const child = spawn(bin, ['--output', 'human'], {
       cwd,
       stdio: ['pipe', 'pipe', 'pipe']
     })
@@ -112,26 +120,27 @@ async function runSvelteCheckPhase(graph, packageNames, concurrency, options = {
       completedCount++
       results.successCount++
       results.cacheHits++
-      console.log(`    [S] ${completedCount}/${packageNames.length} ${dim(name)} ${dim('(cached)')}`)
+      const pkgTime = 0
+      console.log(`    ${success('S')} ${dim(completedCount)}/${packageNames.length} ${name} ${success('svelte-checked')} (cached) ${dim(pkgTime + 'ms')}`)
       return
     }
 
     const taskStart = performance.now()
     const result = await runSvelteCheckForPackage(cwd)
-    const taskTime = Math.round(performance.now() - taskStart)
+    const pkgTime = Math.round(performance.now() - taskStart)
     completedCount++
 
-    timings.push({ package: name, time: taskTime, failed: !result.success })
+    timings.push({ package: name, time: pkgTime, failed: !result.success })
 
     if (result.success) {
       if (hash) {
         markPhaseCompleted(cwd, hash, 'svelte-check', null, [])
       }
       results.successCount++
-      console.log(`    [S] ${completedCount}/${packageNames.length} ${success(name)} svelte-checked ${dim(taskTime + 'ms')}`)
+      console.log(`    ${success('S')} ${dim(completedCount)}/${packageNames.length} ${name} ${success('svelte-checked')} ${dim(pkgTime + 'ms')}`)
     } else {
       results.errors.push({ package: name, error: result.error, output: result.output })
-      console.error(`    [S] ${completedCount}/${packageNames.length} ${error(name)} FAILED ${dim(taskTime + 'ms')}`)
+      console.error(`    ${error('S')} ${dim(completedCount)}/${packageNames.length} ${name} ${error('FAILED')} ${dim(pkgTime + 'ms')}`)
       if (result.output) process.stderr.write(result.output + '\n')
     }
   }
