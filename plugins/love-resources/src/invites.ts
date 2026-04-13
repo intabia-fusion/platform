@@ -100,9 +100,16 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
 
   const expiresAt = Date.now() + inviteRequestSecondsToLive * 1000
 
-  const apply = getClient().apply('create-invites:' + currentPerson)
+  const client = getClient()
   for (const person of validPersons) {
-    // Create new invite-request in sender's personal space
+    // Use per-person apply with notMatch to prevent duplicate pending invites
+    const apply = client.apply('create-invite:' + currentPerson + ':' + person)
+    apply.notMatch(love.class.UserMeetingInvite, {
+      kind: 'invite-request',
+      from: currentPerson,
+      to: person,
+      status: 'pending'
+    })
     await apply.createDoc(love.class.UserMeetingInvite, mySpace, {
       kind: 'invite-request',
       from: currentPerson,
@@ -111,8 +118,8 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
       status: 'pending',
       ...(meetingId !== undefined && { meeting: meetingId })
     })
+    await apply.commit()
   }
-  await apply.commit()
 }
 
 /**
