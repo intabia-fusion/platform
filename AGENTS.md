@@ -122,9 +122,36 @@ docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate
 ### Patterns
 - Errors: always handle (Error subclasses, catch promises)
 - Async: async/await, Promise.all() for parallel
+- Fire-and-forget promises: wrap body in try/catch. `void doSomething()` callers won't catch rejections -- unhandled promise rejections crash the app. Guard all async work inside the function, not at call site.
 - State: Svelte stores, separate business logic
 - APIs: JSDoc public interfaces, tests alongside code
 - IntlString: add entries to `component-assets/lang` for every locale (min English), run `diagnostics()`
+
+### Svelte Action Pattern
+Actions with `update()` must re-subscribe/rerun when ANY dependency changes, not just the "primary" one:
+```typescript
+interface ActionParams {
+  objectId: Ref<Doc>
+  personId: PersonId
+  onCallback: (data: Data[]) => void
+}
+
+// BAD: only handles objectId change
+update (params: ActionParams) {
+  if (params.objectId !== objectId) {
+    objectId = params.objectId
+    resubscribe()
+  }
+}
+// GOOD: handles all dependencies
+update (params: ActionParams) {
+  const needResubscribe = params.objectId !== objectId || params.personId !== personId
+  objectId = params.objectId
+  personId = params.personId
+  onCallback = params.onCallback
+  if (needResubscribe) resubscribe()
+}
+```
 
 ## Debugging Workflow
 
@@ -172,21 +199,48 @@ git log --pretty=format:'- %h %s' <range> | grep -v -F 'Merge remote-tracking' |
 
 **TypeScript** (new files):
 ```ts
-/**
-  Copyright © 2026 Intabia Fusion.
-  Licensed under the Eclipse Public License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  See https://www.eclipse.org/legal/epl-2.0
-*/
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 ```
 
-**Svelte** (new files, HTML comment, `//` prefix):
+**TypeScript** (modified files with prior copyright):
+```ts
+//
+// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// ...
+```
+Keep existing copyright lines, add `Intabia Fusion` line if missing.
+
+**Svelte** (HTML comment, `//` prefix):
 ```svelte
 <!--
 // Copyright © 2026 Intabia Fusion.
+//
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// See https://www.eclipse.org/legal/epl-2.0
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
 -->
 ```
 

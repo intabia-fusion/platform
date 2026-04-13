@@ -61,12 +61,14 @@ export function presence (node: HTMLElement, params: PresenceActionParams): any 
 
   return {
     update: (params: PresenceActionParams) => {
-      if (objectId !== params.objectId || objectClass !== params.objectClass) {
-        personId = params.personId
-        objectId = params.objectId
-        objectClass = params.objectClass
-        onPresence = params.onPresence
+      const needResubscribe =
+        objectId !== params.objectId || objectClass !== params.objectClass || personId !== params.personId
+      personId = params.personId
+      objectId = params.objectId
+      objectClass = params.objectClass
+      onPresence = params.onPresence
 
+      if (needResubscribe) {
         presenceMap = new Map<string, Ref<Person>>()
         onPresence(presenceMap)
         runQuery()
@@ -79,15 +81,15 @@ export function presence (node: HTMLElement, params: PresenceActionParams): any 
 }
 
 export async function updatePresence (info: PresenceInfo): Promise<void> {
-  const client = getClient()
-  const id = presenceDocId(info.objectId, info.personId)
-  const existing = await client.findOne(pulse.class.DocumentPresence, { _id: id })
-  const now = Date.now()
-  if (existing !== undefined) {
-    await client.diffUpdate(existing, { lastActive: now })
-    return
-  }
   try {
+    const client = getClient()
+    const id = presenceDocId(info.objectId, info.personId)
+    const existing = await client.findOne(pulse.class.DocumentPresence, { _id: id })
+    const now = Date.now()
+    if (existing !== undefined) {
+      await client.diffUpdate(existing, { lastActive: now })
+      return
+    }
     await client.createDoc(
       pulse.class.DocumentPresence,
       info.space,
@@ -100,19 +102,19 @@ export async function updatePresence (info: PresenceInfo): Promise<void> {
       id
     )
   } catch (err) {
-    console.warn('failed to create presence doc:', err)
+    console.warn('failed to update presence:', err)
   }
 }
 
 export async function deletePresence (info: PresenceInfo): Promise<void> {
-  const client = getClient()
-  const id = presenceDocId(info.objectId, info.personId)
-  const existing = await client.findOne(pulse.class.DocumentPresence, { _id: id })
-  if (existing !== undefined) {
-    try {
+  try {
+    const client = getClient()
+    const id = presenceDocId(info.objectId, info.personId)
+    const existing = await client.findOne(pulse.class.DocumentPresence, { _id: id })
+    if (existing !== undefined) {
       await client.removeDoc(pulse.class.DocumentPresence, existing.space, existing._id)
-    } catch (err) {
-      console.warn('failed to delete presence doc:', err)
     }
+  } catch (err) {
+    console.warn('failed to delete presence:', err)
   }
 }

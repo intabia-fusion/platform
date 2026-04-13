@@ -58,11 +58,12 @@ export function typing (node: HTMLElement, params: TypingActionParams): any {
 
   return {
     update: (params: TypingActionParams) => {
-      if (objectId !== params.objectId) {
-        socialId = params.socialId
-        objectId = params.objectId
-        onTyping = params.onTyping
+      const needResubscribe = objectId !== params.objectId || socialId !== params.socialId
+      socialId = params.socialId
+      objectId = params.objectId
+      onTyping = params.onTyping
 
+      if (needResubscribe) {
         state = new Map<string, TypingInfo>()
         onTyping(state)
         runQuery()
@@ -80,29 +81,29 @@ export async function setTyping (
   space: Ref<Space>,
   status?: IntlString
 ): Promise<void> {
-  const client = getClient()
-  const id = typingDocId(objectId, socialId)
-  const existing = await client.findOne(pulse.class.TypingIndicator, { _id: id })
-  if (existing !== undefined) {
-    await client.diffUpdate(existing, { status })
-    return
-  }
   try {
+    const client = getClient()
+    const id = typingDocId(objectId, socialId)
+    const existing = await client.findOne(pulse.class.TypingIndicator, { _id: id })
+    if (existing !== undefined) {
+      await client.diffUpdate(existing, { status })
+      return
+    }
     await client.createDoc(pulse.class.TypingIndicator, space, { objectId, socialId, status }, id)
   } catch (err) {
-    console.warn('failed to create typing doc:', err)
+    console.warn('failed to set typing:', err)
   }
 }
 
 export async function clearTyping (socialId: PersonId, objectId: string): Promise<void> {
-  const client = getClient()
-  const id = typingDocId(objectId, socialId)
-  const existing = await client.findOne(pulse.class.TypingIndicator, { _id: id })
-  if (existing !== undefined) {
-    try {
+  try {
+    const client = getClient()
+    const id = typingDocId(objectId, socialId)
+    const existing = await client.findOne(pulse.class.TypingIndicator, { _id: id })
+    if (existing !== undefined) {
       await client.removeDoc(pulse.class.TypingIndicator, existing.space, existing._id)
-    } catch (err) {
-      console.warn('failed to delete typing doc:', err)
     }
+  } catch (err) {
+    console.warn('failed to clear typing:', err)
   }
 }
