@@ -73,7 +73,6 @@ async function generateDocUpdateMessages (
     return res
   }
 
-  console.log('tx', tx)
   // Check if we have override control over transaction => activity mappings
   const controlRules = client.model.findAllSync<ActivityMessageControl>(activity.class.ActivityMessageControl, {
     objectClass: { $in: hierarchy.getAncestors(tx.objectClass) }
