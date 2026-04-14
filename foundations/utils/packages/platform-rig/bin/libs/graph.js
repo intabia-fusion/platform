@@ -118,6 +118,7 @@ async function getPackageInfoAsync(packageJsonPath) {
       dependencies: [],
       phaseBuild: null,
       phaseValidate: null,
+      phaseTest: null,
       phaseBundle: null,
       phasePackage: null,
       phaseDockerBuild: null,
@@ -133,6 +134,7 @@ async function getPackageInfoAsync(packageJsonPath) {
 function parsePackageJson(packageJson) {
   const phaseBuild = packageJson.scripts?.['_phase:build']
   const phaseValidate = packageJson.scripts?.['_phase:validate']
+  const phaseTest = packageJson.scripts?.['_phase:test']
   const phaseBundle = packageJson.scripts?.['_phase:bundle']
   const phasePackage = packageJson.scripts?.['_phase:package']
   const phaseDockerBuild = packageJson.scripts?.['_phase:docker-build']
@@ -159,6 +161,7 @@ function parsePackageJson(packageJson) {
     dependencies,
     phaseBuild,
     phaseValidate,
+    phaseTest,
     phaseBundle,
     phasePackage,
     phaseDockerBuild,
@@ -194,6 +197,7 @@ async function buildDependencyGraph(rootDir, verbose) {
       dependencies,
       phaseBuild,
       phaseValidate,
+      phaseTest,
       phaseBundle,
       phasePackage,
       phaseDockerBuild,
@@ -210,6 +214,7 @@ async function buildDependencyGraph(rootDir, verbose) {
       dependents: new Set(),
       phaseBuild,
       phaseValidate,
+      phaseTest,
       phaseBundle,
       phasePackage,
       phaseDockerBuild,

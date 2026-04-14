@@ -16,6 +16,8 @@ const { runPackagePhase } = require('./phases/package')
 const { runDockerBuildPhase } = require('./phases/docker-build')
 const { runFormatPhase } = require('./phases/format')
 const { runLintPhase } = require('./phases/lint')
+const { runTestPhase } = require('./phases/test')
+const { runSvelteCheckPhase } = require('./phases/svelte-check')
 
 /**
  * Parse command line arguments
@@ -24,12 +26,14 @@ function parseArgs(args) {
   let parallel = getDefaultWorkerCount()
   let verbose = false
   let doValidate = false
+  let doTest = false
   let doLint = false
   let doFormat = false
   let force = false
   let doBundle = false
   let doPackage = false
   let doDockerBuild = false
+  let doSvelteCheck = false
   let help = false
   let list = false
   let toPackage = null
@@ -56,6 +60,9 @@ function parseArgs(args) {
       verbose = true
     } else if (arg === '--validate') {
       doValidate = true
+    } else if (arg === '--test') {
+      doTest = true
+      doValidate = true  // --test implies --validate
     } else if (arg === '--lint') {
       doLint = true
       doValidate = true  // --lint implies --validate
@@ -72,6 +79,9 @@ function parseArgs(args) {
       doDockerBuild = true
       doPackage = true  // docker-build implies package
       doBundle = true  // docker-build implies bundle
+    } else if (arg === '--svelte-check') {
+      doSvelteCheck = true
+      doValidate = true  // svelte-check implies validate
     } else if (arg === '--list' || arg === '-l') {
       list = true
     } else if (arg === '--to') {
@@ -117,7 +127,7 @@ function parseArgs(args) {
     verbose = process.env.RUSH_VERBOSE === '1' || process.env.VERBOSE === '1'
   }
 
-  return { parallel, verbose, doValidate, doLint, doFormat, force, doBundle, doPackage, doDockerBuild, help, list, toPackage, rootDir, forceWorkers }
+  return { parallel, verbose, doValidate, doTest, doLint, doFormat, force, doBundle, doPackage, doDockerBuild, doSvelteCheck, help, list, toPackage, rootDir, forceWorkers }
 }
 
 function printUsage() {
@@ -134,11 +144,13 @@ Options:
   --force-workers      Force exact worker count, ignore memory limits (use with caution!)
   --verbose, -v        Show detailed output for each package
   --validate           Also run TypeScript validation for packages with "_phase:validate"
+  --test               Run tests for packages with "_phase:test" (implies --validate)
   --lint               Run ESLint check (no fix) after validation (implies --validate); for packages with "_phase:format"
   --format             Run format phase only (no transpile/validate) for packages with "_phase:format"
   --force, -f          Disable all caching (forces full rebuild, revalidation)
   --bundle             Run bundle phase for packages with "_phase:bundle"
   --docker-build       Run docker-build phase (implies --bundle)
+  --svelte-check       Run svelte-check for packages with "_phase:svelte-check" (implies --validate)
   --list, -l           Only print the list of packages in compilation order (no actual compilation)
   --to <package>       Only compile the specified package and its dependencies
   --help, -h           Show this help message
@@ -160,6 +172,9 @@ Description:
 
   When --docker-build is specified, runs bundle first, then docker-build for packages
   with "_phase:docker-build".
+
+  When --svelte-check is specified (implies --validate), runs svelte-check for packages
+  with "_phase:svelte-check" defined.
 
   When --to is specified, only the specified package and all its dependencies will be compiled.
 
@@ -586,6 +601,27 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
 }
 
 /**
+ * Print consolidated error summary at end of log.
+ * Reprints all errors so AI and humans can find them without scrolling.
+ */
+function printErrorSummary(allErrors) {
+  if (allErrors.length === 0) return
+  console.error(`\n${'='.repeat(60)}`)
+  console.error(`=== ERROR SUMMARY (${allErrors.length} error(s)) ===`)
+  console.error(`${'='.repeat(60)}`)
+  for (const err of allErrors) {
+    const errMsg = err.error?.stderr || err.error?.stdout || err.error?.message || err.error || 'Unknown error'
+    const output = err.output || ''
+    console.error(`\n[${err.phase}] ${error(err.package)}:`)
+    console.error(errMsg)
+    if (output && !errMsg.includes(output.substring(0, 50))) {
+      console.error(output)
+    }
+  }
+  console.error(`${'='.repeat(60)}`)
+}
+
+/**
  * Main compilation function
  */
 async function compileAll(rootDir, options = {}) {
@@ -593,12 +629,14 @@ async function compileAll(rootDir, options = {}) {
     parallel = 4,
     verbose = false,
     doValidate = false,
+    doTest = false,
     doLint = false,
     doFormat = false,
     force = false,
     doBundle = false,
     doPackage = false,
     doDockerBuild = false,
+    doSvelteCheck = false,
     list = false,
     toPackage = null,
     forceWorkers = false
@@ -631,10 +669,12 @@ async function compileAll(rootDir, options = {}) {
   // Collect packages for each phase
   const packagesToTranspile = []
   const packagesToValidate = []
+  const packagesToTest = []
   const packagesToFormat = []
   const packagesToBundle = []
   const packagesToPackage = []
   const packagesToDockerBuild = []
+  const packagesToSvelteCheck = []
 
   // If --to is specified, collect target packages and all their dependencies
   let targetPackages = null
@@ -683,6 +723,10 @@ async function compileAll(rootDir, options = {}) {
       packagesToValidate.push(name)
     }
 
+    if (doTest && node.phaseTest) {
+      packagesToTest.push(name)
+    }
+
     if (node.phaseFormat) {
       packagesToFormat.push(name)
     }
@@ -698,16 +742,22 @@ async function compileAll(rootDir, options = {}) {
     if (doDockerBuild && node.phaseDockerBuild) {
       packagesToDockerBuild.push(name)
     }
+
+    if (doSvelteCheck && node.phaseSvelteCheck) {
+      packagesToSvelteCheck.push(name)
+    }
   }
 
   if (list) {
     console.log('\nPackages to process:')
     console.log(`  Transpile: ${packagesToTranspile.length}`)
     console.log(`  Validate: ${packagesToValidate.length}`)
+    console.log(`  Test: ${packagesToTest.length}`)
     console.log(`  Format: ${packagesToFormat.length}`)
     console.log(`  Bundle: ${packagesToBundle.length}`)
     console.log(`  Package: ${packagesToPackage.length}`)
     console.log(`  Docker-build: ${packagesToDockerBuild.length}`)
+    console.log(`  Svelte-check: ${packagesToSvelteCheck.length}`)
     return { success: true, listOnly: true }
   }
 
@@ -738,9 +788,14 @@ async function compileAll(rootDir, options = {}) {
     return { success: true, time: totalTime, cpuStats }
   }
 
+  // When --force is used with a "leaf" phase (--test, --lint, --svelte-check),
+  // only force that specific phase — prerequisite phases (transpile, validate) use cache.
+  const hasLeafPhase = doTest || doLint || doSvelteCheck
+  const forcePrerequisites = force && !hasLeafPhase
+
   // Phase 1: Transpile
   console.log(`\n=== Phase 1: Transpiling ${packagesToTranspile.length} packages ===`)
-  const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force, packageHashes })
+  const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force: forcePrerequisites, packageHashes })
   console.log(`Transpiled: ${transpileResults.successCount}/${transpileResults.total} packages in ${Math.round(transpileResults.time)}ms`)
 
   // Update package hashes for changed packages after transpile
@@ -763,10 +818,13 @@ async function compileAll(rootDir, options = {}) {
     return { success: false, errors: transpileResults.errors.length }
   }
 
+  // Collect all errors across phases for final summary
+  const allErrors = []
+
   // Phase 2: Validate (with worker pool)
   let validateResults = { successCount: 0, total: 0, cacheHits: 0, errors: [] }
   if (doValidate && packagesToValidate.length > 0) {
-    validateResults = await runValidationPhase(packagesToValidate, graph, validationWorkers, force, packageHashes)
+    validateResults = await runValidationPhase(packagesToValidate, graph, validationWorkers, forcePrerequisites, packageHashes)
 
     if (doLint) {
       // Lint phase: run ESLint without fix on packages with phaseFormat.
@@ -781,15 +839,56 @@ async function compileAll(rootDir, options = {}) {
       }
 
       if (validateResults.errors.length > 0 || lintResults.errors.length > 0) {
+        for (const err of validateResults.errors) allErrors.push({ phase: 'validate', ...err })
+        for (const err of lintResults.errors) allErrors.push({ phase: 'lint', ...err })
         const total = validateResults.errors.length + lintResults.errors.length
         console.error(`\n${validateResults.errors.length} validation error(s), ${lintResults.errors.length} lint error(s) - stopping build`)
+        printErrorSummary(allErrors)
         return { success: false, errors: total }
       }
     } else {
       if (validateResults.errors.length > 0) {
+        for (const err of validateResults.errors) allErrors.push({ phase: 'validate', ...err })
         console.error('\nValidation errors - stopping build')
+        printErrorSummary(allErrors)
         return { success: false, errors: validateResults.errors.length }
       }
+    }
+  }
+
+  // Phase: Svelte-check (runs after validate)
+  if (doSvelteCheck && packagesToSvelteCheck.length > 0) {
+    console.log(`\n=== Phase: Svelte-checking ${packagesToSvelteCheck.length} packages ===`)
+    const svelteCheckResults = await runSvelteCheckPhase(graph, packagesToSvelteCheck, validationWorkers, { force, packageHashes })
+    console.log(`Svelte-checked: ${svelteCheckResults.successCount}/${svelteCheckResults.total} packages in ${Math.round(svelteCheckResults.time)}ms`)
+    if (svelteCheckResults.cacheHits > 0) console.log(`  (${svelteCheckResults.cacheHits} from cache)`)
+
+    if (svelteCheckResults.errors.length > 0) {
+      for (const err of svelteCheckResults.errors) allErrors.push({ phase: 'svelte-check', ...err })
+      console.error('\nSvelte-check errors - stopping build')
+      printErrorSummary(allErrors)
+      return { success: false, errors: svelteCheckResults.errors.length }
+    }
+  }
+
+  // Phase: Test
+  if (doTest && packagesToTest.length > 0) {
+    console.log(`\n=== Phase: Testing ${packagesToTest.length} packages ===`)
+    const testResults = await runTestPhase(graph, packagesToTest, validationWorkers, { force, packageHashes, verbose })
+    console.log(`Tested: ${testResults.successCount}/${testResults.total} packages in ${Math.round(testResults.time)}ms`)
+    if (testResults.cacheHits > 0) console.log(`  (${testResults.cacheHits} from cache)`)
+    if (testResults.skippedCount > 0) console.log(`  (${testResults.skippedCount} skipped — no test files)`)
+
+    if (testResults.errors.length > 0) {
+      for (const err of testResults.errors) allErrors.push({ phase: 'test', ...err })
+      console.error('\nTest errors:')
+      for (const err of testResults.errors) {
+        const errMsg = err.error?.stderr || err.error?.stdout || err.error?.message || err.error || 'Unknown error'
+        console.error(`  ${error(err.package)}:`)
+        console.error(errMsg)
+      }
+      printErrorSummary(allErrors)
+      return { success: false, errors: testResults.errors.length }
     }
   }
 
@@ -817,8 +916,12 @@ async function compileAll(rootDir, options = {}) {
   console.log(`Total time: ${Math.round(totalTime)}ms`)
   console.log(`CPU usage: avg ${cpuStats.avg}%, peak ${cpuStats.peak}%`)
 
+  if (allErrors.length > 0) {
+    printErrorSummary(allErrors)
+  }
+
   return {
-    success: true,
+    success: allErrors.length === 0,
     time: totalTime,
     cpuStats
   }
