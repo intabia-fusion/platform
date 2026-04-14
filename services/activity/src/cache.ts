@@ -34,6 +34,7 @@ export const CACHE_TTL_MS = 10 * 60 * 1000
 class WsCache {
   private readonly docs = new Map<Ref<Doc>, Doc>()
   private readonly recentMessages = new Map<Ref<DocUpdateMessage>, DocUpdateMessage>()
+  private readonly attachedToIndex = new Map<Ref<Doc>, Set<Ref<DocUpdateMessage>>>()
   private logicalTime: number = 0
   private lastCleanLogicalTime: number = 0
 
@@ -43,7 +44,9 @@ class WsCache {
     recentMessages: DocUpdateMessage[],
     logicalTime?: number
   ) {
-    this.recentMessages = new Map(recentMessages.map((msg) => [msg._id, msg]))
+    for (const msg of recentMessages) {
+      this.addRecentMessage(msg)
+    }
     this.logicalTime = logicalTime ?? Date.now()
     this.lastCleanLogicalTime = this.logicalTime
   }
@@ -81,7 +84,7 @@ class WsCache {
       const message = this.recentMessages.get(tx.objectId as Ref<DocUpdateMessage>)
       if (message != null) {
         const updated = this.updateOrMixin(tx, message)
-        this.recentMessages.set(updated._id, updated)
+        this.addRecentMessage(updated) // This will overwrite in maps
       }
     }
   }
@@ -92,7 +95,11 @@ class WsCache {
     const { hierarchy } = this.client
 
     if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
-      this.recentMessages.delete(tx.objectId as Ref<DocUpdateMessage>)
+      const msg = this.recentMessages.get(tx.objectId as Ref<DocUpdateMessage>)
+      if (msg != null) {
+        this.recentMessages.delete(msg._id)
+        this.attachedToIndex.get(msg.attachedTo)?.delete(msg._id)
+      }
     }
   }
 
@@ -138,22 +145,43 @@ class WsCache {
 
   public addRecentMessage (msg: DocUpdateMessage): void {
     this.recentMessages.set(msg._id, msg)
+    let set = this.attachedToIndex.get(msg.attachedTo)
+    if (set === undefined) {
+      set = new Set()
+      this.attachedToIndex.set(msg.attachedTo, set)
+    }
+    set.add(msg._id)
   }
 
   public getRecentMessages (attachedTo: Ref<Doc>): DocUpdateMessage[] {
-    const array = Array.from(this.recentMessages.values())
-    return array
-      .filter((msg) => msg.attachedTo === attachedTo)
-      .sort((a, b) => (a.createdOn ?? a.modifiedOn ?? 0) - (b.createdOn ?? b.modifiedOn ?? 0))
+    const ids = this.attachedToIndex.get(attachedTo)
+    if (ids === undefined) return []
+
+    const result: DocUpdateMessage[] = []
+    for (const id of ids) {
+      const msg = this.recentMessages.get(id)
+      if (msg != null) {
+        result.push(msg)
+      }
+    }
+
+    return result.sort((a, b) => (a.createdOn ?? a.modifiedOn ?? 0) - (b.createdOn ?? b.modifiedOn ?? 0))
   }
 
   private cleanRecentMessages (): void {
     const cutoff = this.logicalTime - CACHE_TTL_MS
 
-    for (const [_id, message] of Array.from(this.recentMessages.entries())) {
-      const date = message.createdOn ?? message.modifiedOn ?? 0
+    for (const [id, msg] of this.recentMessages.entries()) {
+      const date = msg.createdOn ?? msg.modifiedOn ?? 0
       if (date < cutoff) {
-        this.recentMessages.delete(_id)
+        this.recentMessages.delete(id)
+        const set = this.attachedToIndex.get(msg.attachedTo)
+        if (set != null) {
+          set.delete(id)
+          if (set.size === 0) {
+            this.attachedToIndex.delete(msg.attachedTo)
+          }
+        }
       }
     }
   }
@@ -168,6 +196,7 @@ class WsCache {
   public close (): void {
     this.docs.clear()
     this.recentMessages.clear()
+    this.attachedToIndex.clear()
   }
 }
 
