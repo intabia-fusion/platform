@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getMetadata, IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { Asset, getMetadata, IntlString, translate } from '@hcengineering/platform'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import support from '@hcengineering/support'
+  import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
   import {
     AnySvelteComponent,
     Icon,
@@ -31,6 +32,7 @@
     navigate,
     topSP
   } from '@hcengineering/ui'
+  import { themeStore } from '@hcengineering/theme'
   import view, { Action, ActionCategory } from '@hcengineering/view'
   import { WorkbenchEvents } from '@hcengineering/workbench'
   import { Analytics } from '@hcengineering/analytics'
@@ -46,6 +48,21 @@
   let selection: number = 0
 
   const client = getClient()
+
+  async function openSupportMail (): Promise<void> {
+    const email = getMetadata(support.metadata.SupportEmail)
+    if (email === undefined || email === '') return
+    const workspace = `"${getMetadata(presentation.metadata.WorkspaceName) ?? ''}"`
+    const user = await getCurrentEmployeeName()
+    const date = new Date().toLocaleDateString($themeStore.language ?? 'en')
+    const subject = await translate(
+      workbench.string.ContactSupportSubject,
+      { workspace, date, user },
+      $themeStore.language
+    )
+    Analytics.handleEvent(WorkbenchEvents.ContactSupport)
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}`, '_blank', 'externalBrowser=yes')
+  }
 
   function navigateToSettings () {
     closePopup()
@@ -112,6 +129,14 @@
       onClick: () => {
         shortcuts = true
         Analytics.handleEvent(WorkbenchEvents.KeyboardShortcutsOpened)
+      }
+    },
+    {
+      icon: support.icon.Support,
+      title: workbench.string.ContactSupport,
+      description: workbench.string.ContactSupportDescription,
+      onClick: () => {
+        void openSupportMail()
       }
     }
   ]

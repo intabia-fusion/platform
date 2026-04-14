@@ -62,6 +62,7 @@ startFront(metricsContext, {
   COPYRIGHT: process.env.COPYRIGHT,
   USAGE_URL: process.env.USAGE_URL,
   SUPPORT_URL: process.env.SUPPORT_URL,
+  SUPPORT_EMAIL: process.env.SUPPORT_EMAIL,
   LICENSE_URL: process.env.LICENSE_URL,
   USERAGREEMENT_URL: process.env.USERAGREEMENT_URL,
   CONFIDENTIAL_URL: process.env.CONFIDENTIAL_URL,

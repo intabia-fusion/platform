@@ -58,7 +58,7 @@ import { recruitId } from '@hcengineering/recruit'
 import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
-import support, { supportId, supportLink, reportBugLink, privacyPolicyLink } from '@hcengineering/support'
+import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -414,6 +414,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? concatLink(frontUrl, 'docs'))
 
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
+  setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
   const languages =
     myBranding.languages !== undefined && myBranding.languages !== ''
