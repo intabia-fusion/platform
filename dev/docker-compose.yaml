@@ -369,6 +369,7 @@ services:
       - LICENSE_URL=https://huly.local:8080/legal/license
       - USERAGREEMENT_URL=https://huly.local:8080/legal/user-agreement
       - CONFIDENTIAL_URL=https://huly.local:8080/legal/confidential
+      - SUPPORT_EMAIL=platform@intabia.ru
       - PERSONAL_DATA_URL=https://huly.local:8080/legal/personal_data
     restart: unless-stopped
   transactor:

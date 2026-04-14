@@ -24,6 +24,7 @@ export { deleteSupportConversation, updateSupportConversation } from './utils'
 export const supportLink = 'https://huly.link/slack'
 export const reportBugLink = 'https://github.com/hcengineering/platform/issues/new'
 export const privacyPolicyLink = 'https://v1.huly.io/legal/privacy/'
+export const defaultSupportEmail = 'platform@intabia.ru'
 
 /**
  * @public
@@ -45,7 +46,8 @@ export default plugin(supportId, {
     SupportLink: '' as Metadata<string>,
     ReportBugLink: '' as Metadata<string>,
     DocsLink: '' as Metadata<string>,
-    PrivacyPolicyLink: '' as Metadata<string>
+    PrivacyPolicyLink: '' as Metadata<string>,
+    SupportEmail: '' as Metadata<string>
   },
   string: {
     ContactUs: '' as IntlString,

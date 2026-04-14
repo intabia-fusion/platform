@@ -53,7 +53,7 @@ import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
 import sign from '@hcengineering/sign'
-import support, { supportId, supportLink, reportBugLink,  privacyPolicyLink } from '@hcengineering/support'
+import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -222,6 +222,7 @@ export interface Config {
   LICENSE_URL?: string
   USERAGREEMENT_URL?: string
   CONFIDENTIAL_URL?: string
+  SUPPORT_EMAIL?: string
   PERSONAL_DATA_URL?: string
 }
 
@@ -594,6 +595,7 @@ export async function configurePlatform() {
   setMetadata(login.metadata.PersonalDataUrl, config.PERSONAL_DATA_URL ?? `${frontUrl}/legal/agreement`)
 
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
+  setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
   const languages = myBranding.languages
     ? myBranding.languages.split(',').map((l) => l.trim())
