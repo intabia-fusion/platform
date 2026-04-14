@@ -67,8 +67,10 @@ export default plugin(loginId, {
     Copyright: '' as Metadata<string>,
     UsageUrl: '' as Metadata<string>,
     SupportUrl: '' as Metadata<string>,
-    PersonalDataUrl: '' as Metadata<string>,
-    RulesUrl: '' as Metadata<string>
+    LicenseUrl: '' as Metadata<string>,
+    UserAgreementUrl: '' as Metadata<string>,
+    ConfidentialUrl: '' as Metadata<string>,
+    PersonalDataUrl: '' as Metadata<string>
   },
   component: {
     LoginApp: '' as AnyComponent,
