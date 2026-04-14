@@ -73,17 +73,19 @@ var (
 
 // KeyMap defines keybindings
 type KeyMap struct {
-	Up         key.Binding
-	Down       key.Binding
-	Toggle     key.Binding
-	ToggleAll  key.Binding
-	CherryPick key.Binding
-	Refresh    key.Binding
-	PageUp     key.Binding
-	PageDown   key.Binding
-	Tab        key.Binding
-	Quit       key.Binding
-	Help       key.Binding
+	Up          key.Binding
+	Down        key.Binding
+	Toggle      key.Binding
+	ToggleAll   key.Binding
+	CherryPick  key.Binding
+	Refresh     key.Binding
+	PageUp      key.Binding
+	PageDown    key.Binding
+	Tab         key.Binding
+	Quit        key.Binding
+	Help        key.Binding
+	Ignore      key.Binding
+	ShowIgnored key.Binding
 }
 
 // DefaultKeyMap returns default keybindings
@@ -133,6 +135,14 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "switch focus"),
 		),
+		Ignore: key.NewBinding(
+			key.WithKeys("x"),
+			key.WithHelp("x", "ignore commit"),
+		),
+		ShowIgnored: key.NewBinding(
+			key.WithKeys("i"),
+			key.WithHelp("i", "toggle ignored view"),
+		),
 	}
 }
 
@@ -144,22 +154,25 @@ type commitItem struct {
 
 // Model is the application model
 type Model struct {
-	keys          KeyMap
-	commits       []Commit
-	items         []commitItem
-	upstream      string
-	currentBranch string
-	loading       bool
-	err           error
-	message       string
-	showHelp      bool
-	width         int
-	height        int
-	cursor        int  // Current position in commit list
-	scrollOffset  int  // Scroll offset for right panel
-	leftWidth     int  // Width of left panel
-	rightWidth    int  // Width of right panel
-	focusRight    bool // Focus is on right panel (for scrolling)
+	keys              KeyMap
+	commits           []Commit
+	items             []commitItem
+	upstream          string
+	currentBranch     string
+	loading           bool
+	err               error
+	message           string
+	showHelp          bool
+	width             int
+	height            int
+	cursor            int  // Current position in commit list
+	scrollOffset      int  // Scroll offset for right panel
+	leftWidth         int  // Width of left panel
+	rightWidth        int  // Width of right panel
+	focusRight        bool // Focus is on right panel (for scrolling)
+	ignored           map[string]bool
+	showIgnored       bool   // Viewing ignored commits instead of missing
+	pendingCursorHash string // Hash to restore cursor to after refresh
 }
 
 // Init initializes the model
@@ -179,6 +192,10 @@ func initialModel() Model {
 func initialModelWithBranch(upstreamBranch string) Model {
 	// Try to get current branch
 	currentBranch, _ := GetCurrentBranch()
+	ignored, _ := LoadIgnored()
+	if ignored == nil {
+		ignored = make(map[string]bool)
+	}
 
 	return Model{
 		keys:          DefaultKeyMap(),
@@ -190,6 +207,7 @@ func initialModelWithBranch(upstreamBranch string) Model {
 		cursor:        0,
 		scrollOffset:  0,
 		focusRight:    false,
+		ignored:       ignored,
 	}
 }
 
@@ -221,6 +239,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keys.Refresh):
+			m.loading = true
+			m.message = ""
+			if m.cursor >= 0 && m.cursor < len(m.items) {
+				m.pendingCursorHash = m.items[m.cursor].commit.Hash
+			}
+			return m, loadCommits(m.upstream)
+
+		case key.Matches(msg, m.keys.Ignore):
+			if m.cursor >= 0 && m.cursor < len(m.items) {
+				hash := m.items[m.cursor].commit.Hash
+				if m.showIgnored {
+					delete(m.ignored, hash)
+				} else {
+					m.ignored[hash] = true
+				}
+				if err := SaveIgnored(m.ignored); err != nil {
+					m.message = errorStyle.Render(fmt.Sprintf("ignore save failed: %v", err))
+					return m, nil
+				}
+				// Remove current item from view, keep cursor position
+				m.items = append(m.items[:m.cursor], m.items[m.cursor+1:]...)
+				if m.cursor >= len(m.items) && m.cursor > 0 {
+					m.cursor--
+				}
+				m.scrollOffset = 0
+				if m.cursor < len(m.items) {
+					return m, loadDiff(m.items[m.cursor].commit.Hash)
+				}
+			}
+			return m, nil
+
+		case key.Matches(msg, m.keys.ShowIgnored):
+			m.showIgnored = !m.showIgnored
 			m.loading = true
 			m.message = ""
 			return m, loadCommits(m.upstream)
@@ -339,15 +390,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i, c := range m.commits {
 			m.items[i] = commitItem{commit: c, selected: false}
 		}
-		// Filter to show only missing commits
-		m.items = filterMissingCommits(m.items)
+		if m.showIgnored {
+			m.items = filterIgnoredView(m.items, m.ignored)
+		} else {
+			m.items = filterMissingCommits(m.items)
+			m.items = filterOutIgnored(m.items, m.ignored)
+		}
+		// Restore cursor to remembered hash if possible
 		m.cursor = 0
+		if m.pendingCursorHash != "" {
+			for i, it := range m.items {
+				if it.commit.Hash == m.pendingCursorHash {
+					m.cursor = i
+					break
+				}
+			}
+			m.pendingCursorHash = ""
+		}
 		m.scrollOffset = 0
 		if len(m.items) == 0 {
-			m.message = "All commits are already cherry-picked!"
+			if m.showIgnored {
+				m.message = "No ignored commits."
+			} else {
+				m.message = "All commits are already cherry-picked!"
+			}
 		} else {
-			// Load diff for first commit
-			return m, loadDiff(m.items[0].commit.Hash)
+			return m, loadDiff(m.items[m.cursor].commit.Hash)
 		}
 		return m, nil
 
@@ -370,7 +438,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case cherryPickResultMsg:
 		if msg.success {
 			m.message = successStyle.Render(fmt.Sprintf("✓ Cherry-picked %s", msg.hash[:7]))
-			// Refresh the list
+			// Remember cursor hash to restore after refresh
+			if m.cursor >= 0 && m.cursor < len(m.items) {
+				m.pendingCursorHash = m.items[m.cursor].commit.Hash
+			}
+			m.loading = true
 			return m, loadCommits(m.upstream)
 		} else {
 			m.message = errorStyle.Render(fmt.Sprintf("✗ Failed: %v", msg.err))
@@ -392,8 +464,12 @@ func (m Model) View() string {
 	var b strings.Builder
 
 	// Title (single line, compact)
-	b.WriteString(titleStyle.Render(fmt.Sprintf(" Cherry-Pick: %s → %s ",
-		m.upstream, m.currentBranch)))
+	mode := "Missing"
+	if m.showIgnored {
+		mode = "Ignored"
+	}
+	b.WriteString(titleStyle.Render(fmt.Sprintf(" Cherry-Pick [%s]: %s → %s ",
+		mode, m.upstream, m.currentBranch)))
 	b.WriteString("\n")
 
 	// Stats - single line, compact
@@ -403,8 +479,8 @@ func (m Model) View() string {
 			selectedCount++
 		}
 	}
-	stats := fmt.Sprintf("Missing: %d | Selected: %d | Tab: switch focus | ?: help | q: quit",
-		len(m.items), selectedCount)
+	stats := fmt.Sprintf("%s: %d | Selected: %d | Ignored total: %d | x: ignore | i: view ignored | ?: help | q: quit",
+		mode, len(m.items), selectedCount, len(m.ignored))
 	b.WriteString(infoStyle.Render(stats))
 	b.WriteString("\n")
 
@@ -646,6 +722,8 @@ func (m Model) helpView() string {
 	b.WriteString("  a       - Toggle all\n")
 	b.WriteString("  c       - Cherry-pick selected\n")
 	b.WriteString("  r       - Refresh commits\n")
+	b.WriteString("  x       - Ignore commit (or unignore in ignored view)\n")
+	b.WriteString("  i       - Toggle view between missing and ignored\n")
 	b.WriteString("  ?       - Toggle help\n")
 	b.WriteString("  q/esc   - Quit\n")
 	return b.String()
@@ -704,6 +782,31 @@ func filterMissingCommits(items []commitItem) []commitItem {
 		}
 	}
 	return filtered
+}
+
+// filterOutIgnored drops commits present in ignored set
+func filterOutIgnored(items []commitItem, ignored map[string]bool) []commitItem {
+	if len(ignored) == 0 {
+		return items
+	}
+	out := items[:0]
+	for _, it := range items {
+		if !ignored[it.commit.Hash] {
+			out = append(out, it)
+		}
+	}
+	return out
+}
+
+// filterIgnoredView keeps only commits that are in ignored set
+func filterIgnoredView(items []commitItem, ignored map[string]bool) []commitItem {
+	var out []commitItem
+	for _, it := range items {
+		if ignored[it.commit.Hash] {
+			out = append(out, it)
+		}
+	}
+	return out
 }
 
 func truncate(s string, maxLen int) string {
