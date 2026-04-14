@@ -84,4 +84,8 @@
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
+
+  .check-label :global(a) {
+    color: var(--login-content-color);
+  }
 </style>
