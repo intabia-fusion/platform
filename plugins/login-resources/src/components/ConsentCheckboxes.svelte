@@ -27,11 +27,11 @@
 
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
-  <span><Html value={personalDatalabel} /></span>
+  <span class="consent-link"><Html value={personalDatalabel} /></span>
 </label>
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
-  <span><Html value={rulesLabel} /></span>
+  <span class="consent-link"><Html value={rulesLabel} /></span>
 </label>
 
 <style lang="scss">
@@ -83,9 +83,5 @@
     border: solid var(--login-button-text-color, var(--primary-button-color, #ffffff));
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
-  }
-
-  .check-label :global(a) {
-    color: var(--login-content-color);
   }
 </style>

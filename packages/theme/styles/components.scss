@@ -2533,3 +2533,7 @@
 
   .hideOnDrag { opacity: 0 !important; }
 }
+
+.consent-link a {
+  color: var(--login-content-color);
+}
