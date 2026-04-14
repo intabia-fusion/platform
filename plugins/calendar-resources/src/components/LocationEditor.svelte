@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, EditBox, Icon, IconArrowRight, parseURL } from '@hcengineering/ui'
+  import { Button, EditBox, Icon, IconArrowRight, parseURL, desktopPlatform } from '@hcengineering/ui'
   import calendar from '../plugin'
 
   export let value: string | undefined
@@ -12,11 +12,11 @@
     return url.startsWith('http://') || url.startsWith('https://')
   }
 
-  function open () {
+  function open (): void {
     if (value == null) return
     const url = parseURL(value)
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      window.open(url, '_blank')
+      window.open(url, desktopPlatform ? '_self' : '_blank')
     }
   }
 </script>
