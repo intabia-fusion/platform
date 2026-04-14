@@ -124,7 +124,19 @@
   type RangeMode = 'week' | 'twoWeeks' | 'month'
   let rangeMode: RangeMode = 'week'
   let rangeSelected: string | number | undefined = 'week'
-  $: rangeMode = (rangeSelected ?? 'week') as RangeMode
+
+  function toRangeMode (value: string | number | undefined): RangeMode {
+    switch (value) {
+      case 'week':
+      case 'twoWeeks':
+      case 'month':
+        return value
+      default:
+        return 'week'
+    }
+  }
+
+  $: rangeMode = toRangeMode(rangeSelected)
 
   function startOfWeek (date: Date, weekStartsOn: number): Date {
     const result = new Date(date)
@@ -141,10 +153,20 @@
     return result
   }
 
+  function getPeriodEndMs (periodStart: Date, mode: RangeMode): number {
+    const nextPeriodStart = new Date(periodStart)
+    if (mode === 'month') {
+      nextPeriodStart.setMonth(nextPeriodStart.getMonth() + 1)
+    } else {
+      nextPeriodStart.setDate(nextPeriodStart.getDate() + (mode === 'week' ? 7 : 14))
+    }
+    return nextPeriodStart.getTime() - 1
+  }
+
   $: firstDayOfWeek = $deviceInfo.firstDayOfWeek ?? 1
   $: periodStart = rangeMode === 'month' ? startOfMonth(currentDate) : startOfWeek(currentDate, firstDayOfWeek)
   $: periodDays = rangeMode === 'week' ? 7 : rangeMode === 'twoWeeks' ? 14 : daysInMonth(currentDate)
-  $: periodEndMs = periodStart.getTime() + periodDays * 24 * 60 * 60 * 1000 - 1
+  $: periodEndMs = getPeriodEndMs(periodStart, rangeMode)
   $: navStep = (rangeMode === 'week' ? 7 : rangeMode === 'twoWeeks' ? 14 : 'month') as number | 'month'
 
   $: periodTotal = reports
@@ -201,7 +223,7 @@
     {@const dayFrom = new Date(day).setHours(0, 0, 0, 0)}
     {@const dayTo = new Date(day).setHours(23, 59, 59, 999)}
     {@const dayReports = reports.filter(
-      (it) => it.employee === person && it.date != null && new Date(it.date).setHours(0, 0, 0, 0) === dayFrom
+      (it) => it.employee === person && it.date != null && dayFrom <= it.date && it.date <= dayTo
     )}
     <!-- {@const personIds = getPersonByPersonRef(person) -->
     {@const taskIds = new Set(dayReports.map((it) => it.attachedTo))}
