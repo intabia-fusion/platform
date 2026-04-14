@@ -366,8 +366,10 @@ services:
       - USAGE_URL=http://huly.local:8080/terms
       - COPYRIGHT=
       - SUPPORT_URL=https://t.me/intabia
+      - LICENSE_URL=https://huly.local:8080/legal/license
+      - USERAGREEMENT_URL=https://huly.local:8080/legal/user-agreement
+      - CONFIDENTIAL_URL=https://huly.local:8080/legal/confidential
       - PERSONAL_DATA_URL=https://huly.local:8080/legal/personal_data
-      - RULES_URL=https://huly.local:8080/legal/rules
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor

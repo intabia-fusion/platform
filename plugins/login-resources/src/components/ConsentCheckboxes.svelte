@@ -6,6 +6,19 @@
   export let agreedPersonalData: boolean = false
   export let agreedRules: boolean = false
 
+  let rulesLabel = ''
+  $: void translate(
+    login.string.AgreedRules,
+    {
+      linkLicense: getMetadata(login.metadata.LicenseUrl),
+      linkUserAgreement: getMetadata(login.metadata.UserAgreementUrl),
+      linkConfidential: getMetadata(login.metadata.ConfidentialUrl)
+    },
+    $themeStore.language
+  ).then((res) => {
+    rulesLabel = res
+  })
+
   let personalDatalabel = ''
   $: void translate(
     login.string.AgreedPersonalData,
@@ -14,24 +27,15 @@
   ).then((res) => {
     personalDatalabel = res
   })
-
-  let rulesLabel = ''
-  $: void translate(
-    login.string.AgreedRules,
-    { link: getMetadata(login.metadata.RulesUrl) },
-    $themeStore.language
-  ).then((res) => {
-    rulesLabel = res
-  })
 </script>
 
 <label class="check-label">
-  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
-  <span><Html value={personalDatalabel} /></span>
-</label>
-<label class="check-label">
   <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
   <span><Html value={rulesLabel} /></span>
+</label>
+<label class="check-label">
+  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
+  <span><Html value={personalDatalabel} /></span>
 </label>
 
 <style lang="scss">
