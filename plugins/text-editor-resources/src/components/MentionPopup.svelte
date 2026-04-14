@@ -171,7 +171,7 @@
         {/if}
         {#if items.length > 0}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <ListView bind:this={list} bind:selection count={items.length}>
+          <ListView bind:this={list} bind:selection count={items.length} getKey={(idx) => items[idx]?.item?.id ?? idx}>
             <svelte:fragment slot="category" let:item={num}>
               {@const item = items[num]}
               {#if item.num === 0}
