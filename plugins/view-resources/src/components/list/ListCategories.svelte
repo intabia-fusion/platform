@@ -435,7 +435,7 @@
             ? { $in: category.values.flatMap((x) => x._id) }
             : resultQuery[groupByKey]?.$in?.length !== 0
               ? undefined
-              : (category ?? null)
+              : []
       }
     }
 

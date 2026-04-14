@@ -174,7 +174,7 @@
   "error": {
     "MethodNotFound": "Method not found: {methodId}",
     "AttributeNotExists": "Attribute not exists: {key}",
-    "RelatedObjectNotFound": "Related object not f  ound: {attr}",
+    "RelatedObjectNotFound": "Related object not found: {attr}",
     "RelationNotExists": "Relation not exists: {association}",
     "EmptyAttributeContextValue": "Empty attribute value: {attr}",
     "UserRequestedValueNotProvided": "User requested value not provided: {attr}",
