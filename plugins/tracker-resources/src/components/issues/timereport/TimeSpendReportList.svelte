@@ -20,7 +20,19 @@
   import tracker from '../../../plugin'
   import PersonCalendar from './PersonCalendar.svelte'
   import { Person } from '@hcengineering/contact'
-  import { Button, DropdownLabels, Icon, IconCircleAdd, ModernToggle, showPopup } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonIcon,
+    DropdownLabelsIntl,
+    Icon,
+    IconAdd,
+    IconCircleAdd,
+    Label,
+    ModernToggle,
+    daysInMonth,
+    deviceOptionsStore as deviceInfo,
+    showPopup
+  } from '@hcengineering/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
@@ -31,7 +43,6 @@
 
   export let query: DocumentQuery<Issue> = {}
 
-  // const reportQuery = createQuery()
   const issueQuery = createQuery()
 
   let issues: IdMap<Issue> = new Map()
@@ -110,41 +121,70 @@
 
   let currentDate: Date = new Date()
 
-  let timeMode: 'x1' | 'x2' | 'x4'
+  type RangeMode = 'week' | 'twoWeeks' | 'month'
+  let rangeMode: RangeMode = 'week'
+  let rangeSelected: string | number | undefined = 'week'
+  $: rangeMode = (rangeSelected ?? 'week') as RangeMode
 
-  const timeModes: Record<typeof timeMode, number> = {
-    x1: 1,
-    x2: 2,
-    x4: 4
+  function startOfWeek (date: Date, weekStartsOn: number): Date {
+    const result = new Date(date)
+    result.setHours(0, 0, 0, 0)
+    const diff = (result.getDay() - weekStartsOn + 7) % 7
+    result.setDate(result.getDate() - diff)
+    return result
   }
+
+  function startOfMonth (date: Date): Date {
+    const result = new Date(date)
+    result.setHours(0, 0, 0, 0)
+    result.setDate(1)
+    return result
+  }
+
+  $: firstDayOfWeek = $deviceInfo.firstDayOfWeek ?? 1
+  $: periodStart = rangeMode === 'month' ? startOfMonth(currentDate) : startOfWeek(currentDate, firstDayOfWeek)
+  $: periodDays = rangeMode === 'week' ? 7 : rangeMode === 'twoWeeks' ? 14 : daysInMonth(currentDate)
+  $: periodEndMs = periodStart.getTime() + periodDays * 24 * 60 * 60 * 1000 - 1
+  $: navStep = (rangeMode === 'week' ? 7 : rangeMode === 'twoWeeks' ? 14 : 'month') as number | 'month'
+
+  $: periodTotal = reports
+    .filter((it) => it.date != null && it.date >= periodStart.getTime() && it.date <= periodEndMs)
+    .reduce((a, b) => a + b.value, 0)
 </script>
 
-<TimeReportHeader bind:currentDate>
+<TimeReportHeader bind:currentDate step={navStep}>
   <ModernToggle label={tracker.string.TimeSpendReports} bind:checked={onlyReports} />
-  <DropdownLabels
+  <DropdownLabelsIntl
     items={[
-      { id: 'x1', label: 'x1' },
-      { id: 'x2', label: 'x2' },
-      { id: 'x4', label: 'x4' }
+      { id: 'week', label: tracker.string.TimeRangeWeek },
+      { id: 'twoWeeks', label: tracker.string.TimeRangeTwoWeeks },
+      { id: 'month', label: tracker.string.TimeRangeMonth }
     ]}
-    bind:selected={timeMode}
+    bind:selected={rangeSelected}
     kind={'regular'}
     size={'medium'}
-    showDropdownIcon
   />
+  <div class="flex-row-center gap-1 ml-2">
+    <span class="content-dark-color text-sm"><Label label={tracker.string.TimeRangePeriodTotal} />:</span>
+    <span class="fs-title"><TimePresenter value={periodTotal} /></span>
+  </div>
   <div class="hulyHeader-divider short" />
 </TimeReportHeader>
 <PersonCalendar
   persons={finalPersons}
-  startDate={currentDate}
-  maxDays={7 * (timeModes[timeMode] ?? 1)}
-  multipler={timeModes[timeMode] ?? 1}
+  {currentDate}
+  startDate={periodStart}
+  maxDays={periodDays}
+  minColWidthRem={onlyReports ? 3 : 8}
+  anchor={'start'}
+  rowHeightRem={onlyReports ? 3 : 8}
+  personInfoInline={onlyReports}
 >
   <svelte:fragment slot="person-info" let:person let:leftDay let:rightDay>
-    {@const ld = leftDay.getTime()}
-    {@const rd = rightDay.getTime()}
+    {@const ld = new Date(leftDay).setHours(0, 0, 0, 0)}
+    {@const rd = new Date(rightDay).setHours(23, 59, 59, 999)}
     {@const allReports = reports.filter(
-      (it) => it.employee === person && it.date != null && ld < it.date && it.date < rd
+      (it) => it.employee === person && it.date != null && ld <= it.date && it.date <= rd
     )}
     <Button
       kind={'link'}
@@ -161,7 +201,7 @@
     {@const dayFrom = new Date(day).setHours(0, 0, 0, 0)}
     {@const dayTo = new Date(day).setHours(23, 59, 59, 999)}
     {@const dayReports = reports.filter(
-      (it) => it.employee === person && it.date != null && dayFrom < it.date && it.date <= dayTo
+      (it) => it.employee === person && it.date != null && new Date(it.date).setHours(0, 0, 0, 0) === dayFrom
     )}
     <!-- {@const personIds = getPersonByPersonRef(person) -->
     {@const taskIds = new Set(dayReports.map((it) => it.attachedTo))}
@@ -178,41 +218,106 @@
               authorRefs.get(it.modifiedBy) === person &&
               dayFrom === new Date(it.modifiedOn ?? 0).setHours(0, 0, 0, 0)))
       )}
-    <div style:overflow="auto" style:height="{height}rem" class="p-1">
-      <div class="flex flex-col p-1">
-        {#each dayIssues as issue}
-          {@const createdByMe = dayFrom === new Date(issue?.createdOn ?? 0).setHours(0, 0, 0, 0)}
-          {@const closedByMe =
-            dayFrom === new Date(issue?.modifiedOn ?? 0).setHours(0, 0, 0, 0) && issue?.isDone === true}
-          {@const issueReports = dayReports.filter((it) => it.attachedTo === issue?._id)}
-          <div class="flex flex-row-center gap-2 flex-wrap mb-1">
-            <div class="flex flex-row-center gap-2">
-              {#if createdByMe}
-                <Icon icon={IconCircleAdd} size={'small'} />
-              {/if}
-              {#if closedByMe || dayReports.length > 0}
-                <IssueStatusPresenter value={issue} />
-              {/if}
-              {#if createdByMe || closedByMe || dayReports.length > 0}
-                <IssuePresenter value={issue} />
+    {#if onlyReports}
+      {@const dayTotal = dayReports.reduce((a, b) => a + b.value, 0)}
+      <div class="dayCell flex-center" style:height="{height}rem">
+        {#if dayTotal > 0}
+          <Button
+            kind={'link'}
+            size={'x-small'}
+            on:click={() => {
+              showPopup(PersonReportsPopup, { person, ld: dayFrom, rd: dayTo })
+            }}
+          >
+            <svelte:fragment slot="content">
+              <TimePresenter value={dayTotal} />
+            </svelte:fragment>
+          </Button>
+        {:else}
+          <div class="dayCellAdd">
+            <ButtonIcon
+              icon={IconAdd}
+              size={'extra-small'}
+              kind={'tertiary'}
+              on:click={() => {
+                showPopup(PersonReportsPopup, { person, ld: dayFrom, rd: dayTo })
+              }}
+            />
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div class="dayCell" style:overflow="auto" style:height="{height}rem" class:p-1={true}>
+        {#if dayReports.length === 0 && dayIssues.length === 0}
+          <div class="dayCellAdd dayCellAdd--center">
+            <ButtonIcon
+              icon={IconAdd}
+              size={'extra-small'}
+              kind={'tertiary'}
+              on:click={() => {
+                showPopup(PersonReportsPopup, { person, ld: dayFrom, rd: dayTo })
+              }}
+            />
+          </div>
+        {/if}
+        <div class="flex flex-col p-1">
+          {#each dayIssues as issue}
+            {@const createdByMe = dayFrom === new Date(issue?.createdOn ?? 0).setHours(0, 0, 0, 0)}
+            {@const closedByMe =
+              dayFrom === new Date(issue?.modifiedOn ?? 0).setHours(0, 0, 0, 0) && issue?.isDone === true}
+            {@const issueReports = dayReports.filter((it) => it.attachedTo === issue?._id)}
+            <div class="flex flex-row-center gap-2 flex-wrap mb-1">
+              <div class="flex flex-row-center gap-2">
+                {#if createdByMe}
+                  <Icon icon={IconCircleAdd} size={'small'} />
+                {/if}
+                {#if closedByMe || dayReports.length > 0}
+                  <IssueStatusPresenter value={issue} />
+                {/if}
+                {#if createdByMe || closedByMe || dayReports.length > 0}
+                  <IssuePresenter value={issue} />
+                {/if}
+              </div>
+              {#if issueReports.length > 0}
+                <Button
+                  kind={'link'}
+                  size={'x-small'}
+                  on:click={() => {
+                    showPopup(EstimationPopup, { object: issue })
+                  }}
+                >
+                  <svelte:fragment slot="content">
+                    <TimePresenter value={issueReports.reduce((a, b) => a + b.value, 0)} />
+                  </svelte:fragment>
+                </Button>
               {/if}
             </div>
-            {#if issueReports.length > 0}
-              <Button
-                kind={'link'}
-                size={'x-small'}
-                on:click={() => {
-                  showPopup(EstimationPopup, { object: issue })
-                }}
-              >
-                <svelte:fragment slot="content">
-                  <TimePresenter value={issueReports.reduce((a, b) => a + b.value, 0)} />
-                </svelte:fragment>
-              </Button>
-            {/if}
-          </div>
-        {/each}
+          {/each}
+        </div>
       </div>
-    </div>
+    {/if}
   </svelte:fragment>
 </PersonCalendar>
+
+<style lang="scss">
+  .dayCell {
+    position: relative;
+
+    .dayCellAdd {
+      opacity: 0;
+      transition: opacity 0.1s ease-in-out;
+      z-index: 1;
+
+      &.dayCellAdd--center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    &:hover .dayCellAdd {
+      opacity: 1;
+    }
+  }
+</style>

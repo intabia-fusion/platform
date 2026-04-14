@@ -28,14 +28,21 @@
   } from '@hcengineering/ui'
 
   export let currentDate: Date = new Date()
+  // Step for navigation: number of days to shift, or 'month' for a calendar-month step.
+  export let step: number | 'month' = 1
 
   function inc (val: number): void {
     if (val === 0) {
       currentDate = new Date()
       return
     }
-    currentDate.setDate(currentDate.getDate() + val)
-    currentDate = currentDate
+    const next = new Date(currentDate)
+    if (step === 'month') {
+      next.setMonth(next.getMonth() + val)
+    } else {
+      next.setDate(next.getDate() + val * step)
+    }
+    currentDate = next
   }
 
   function getTitle (day: Date, now: Timestamp): IntlString {
