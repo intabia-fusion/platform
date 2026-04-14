@@ -27,11 +27,15 @@ func main() {
 }
 
 func run() error {
-	// Parse command line flags
 	upstreamBranch := flag.String("branch", "upstream/develop", "Branch to compare with (default: upstream/develop)")
+	outgoing := flag.Bool("outgoing", false, "Start in outgoing mode (HEAD -> upstream)")
 	flag.Parse()
 
-	p := tea.NewProgram(initialModelWithBranch(*upstreamBranch), tea.WithAltScreen())
+	m := initialModelWithBranch(*upstreamBranch)
+	if *outgoing {
+		m.mode = ModeOutgoing
+	}
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	_, err := p.Run()
 	return err
 }
