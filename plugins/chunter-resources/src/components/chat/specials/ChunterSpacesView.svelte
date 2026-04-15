@@ -43,7 +43,6 @@
     FilterButton,
     getResultOptions,
     getResultQuery,
-    getViewletSpecialActions,
     ViewletSelector,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
@@ -55,7 +54,6 @@
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined
   export let iconProps: any | undefined = undefined
   export let label: IntlString
-  export let filterQuery: DocumentQuery<ChunterSpace> = {}
   export let search: string = ''
   export let createLabel: IntlString | undefined = undefined
   export let createComponent: AnyComponent | undefined = undefined
@@ -75,6 +73,7 @@
   $: _baseQuery = mergeQueries(mergeQueries({}, {}), viewlet?.baseQuery ?? {})
   $: query = { ..._baseQuery }
   $: searchQuery = search === '' ? query : { ...query, $search: `${search}*` }
+  $: filterQuery = {}
   $: resultQuery = isQueryLoaded
     ? {
         ...filterQuery,
@@ -93,8 +92,6 @@
 
   $: void updateQuery(_baseQuery, viewOptions, viewlet)
   $: void updateOptions(viewlet?.options, viewOptions, viewlet)
-
-  $: viewletActions = viewlet != null ? getViewletSpecialActions(client, viewlet) : []
 
   async function updateOptions (
     _options: FindOptions<Doc> | undefined,
@@ -169,7 +166,7 @@
     query={searchQuery}
     {viewOptions}
     on:change={(e) => {
-      resultQuery = { ...query, ...e.detail }
+      filterQuery = { ...e.detail }
     }}
   />
   <Component
