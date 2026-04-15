@@ -223,7 +223,11 @@ export async function formatCustomAttributeValue (
 
   if (typeof value === 'string') {
     if (isIntlString(value)) {
-      return await translate(value as unknown as IntlString, {}, language)
+      try {
+        return await translate(value as unknown as IntlString, {}, language)
+      } catch {
+        console.warn('Failed to translate intl string', value)
+      }
     }
 
     const isRef = attrType?._class === core.class.RefTo
@@ -330,7 +334,11 @@ async function formatValueFallback (
     }
 
     if (isIntlString(value)) {
-      return await translate(value as unknown as IntlString, {}, language)
+      try {
+        return await translate(value as unknown as IntlString, {}, language)
+      } catch {
+        console.warn('Failed to translate intl string', value)
+      }
     }
     if (attr.key === DocumentAttributeKey.CreatedBy || attr.key === DocumentAttributeKey.ModifiedBy) {
       return await loadPersonName(value as PersonId, hierarchy, userCache)
