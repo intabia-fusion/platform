@@ -71,7 +71,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case migrateResultMsg:
+		m.migrating = false
 		if msg.err != nil {
+			m.loading = false
 			m.message = errorStyle.Render(fmt.Sprintf("✗ Migrate failed: %v", msg.err))
 			return m, nil
 		}
@@ -83,8 +85,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.message = successStyle.Render(fmt.Sprintf(
-			"✓ Migrated %d commits to %s. Push: git push -u upstream %s",
-			len(msg.hashes), msg.branch, msg.branch))
+			"✓ Migrated %d commits to %s (worktree: %s). Push: cd %s && git push -u upstream %s",
+			len(msg.hashes), msg.branch, msg.worktree, msg.worktree, msg.branch))
 		m.loading = true
 		return m, loadCommitsFor(m.mode, m.upstream)
 	}
@@ -280,6 +282,9 @@ func (m Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		hashes := m.selectedHashes()
 		m.loading = true
+		m.migrating = true
+		m.migratingBranch = name
+		m.migratingCount = len(hashes)
 		return m, migrateCmd(name, m.upstream, m.currentBranch, m.selectedFolder, hashes)
 	case tea.KeyBackspace:
 		if len(m.promptValue) > 0 {

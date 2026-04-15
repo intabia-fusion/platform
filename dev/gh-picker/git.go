@@ -32,7 +32,15 @@ type Commit struct {
 
 // GitExec runs a git command and returns the output
 func GitExec(args ...string) (string, error) {
+	return GitExecIn("", args...)
+}
+
+// GitExecIn runs a git command in the given directory (empty = current)
+func GitExecIn(dir string, args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -145,14 +153,33 @@ func CherryPick(hash string) error {
 	return err
 }
 
+// CherryPickIn performs cherry-pick in the given worktree directory
+func CherryPickIn(dir, hash string) error {
+	_, err := GitExecIn(dir, "cherry-pick", hash)
+	return err
+}
+
+// WorktreeAdd creates a new worktree at path with a new branch based on startPoint
+func WorktreeAdd(path, branch, startPoint string) error {
+	_, err := GitExec("worktree", "add", "-b", branch, path, startPoint)
+	return err
+}
+
 // CherryPickPaths applies only given paths from commit and creates a commit
 // reusing the original author/message. Returns error if nothing changed or git fails.
 func CherryPickPaths(hash string, paths []string) error {
 	if len(paths) == 0 {
 		return fmt.Errorf("no paths to apply from %s", hash)
 	}
-	// Capture patch limited to paths
-	args := []string{"show", hash, "--binary", "--color=never", "--"}
+	return CherryPickPathsIn("", hash, paths)
+}
+
+// CherryPickPathsIn is CherryPickPaths but runs in the given worktree dir
+func CherryPickPathsIn(dir, hash string, paths []string) error {
+	if len(paths) == 0 {
+		return fmt.Errorf("no paths to apply from %s", hash)
+	}
+	args := []string{"diff", "--binary", "--color=never", hash + "^.." + hash, "--"}
 	args = append(args, paths...)
 	patch, err := GitExec(args...)
 	if err != nil {
@@ -161,16 +188,17 @@ func CherryPickPaths(hash string, paths []string) error {
 	if strings.TrimSpace(patch) == "" {
 		return fmt.Errorf("no changes in commit %s under requested paths", hash)
 	}
-	// Apply to index + working tree
 	cmd := exec.Command("git", "apply", "--index", "--3way")
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	cmd.Stdin = strings.NewReader(patch)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("git apply: %v (stderr: %s)", err, stderr.String())
 	}
-	// Reuse original commit metadata
-	if _, err := GitExec("commit", "--no-verify", "-C", hash); err != nil {
+	if _, err := GitExecIn(dir, "commit", "--no-verify", "-C", hash); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
 	return nil

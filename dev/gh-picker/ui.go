@@ -168,6 +168,9 @@ type Model struct {
 	progressDone      int
 	progressTotal     int
 	progressStarted   time.Time
+	migrating         bool
+	migratingBranch   string
+	migratingCount    int
 }
 
 // Init initializes the model

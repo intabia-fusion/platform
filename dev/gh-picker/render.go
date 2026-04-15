@@ -23,6 +23,9 @@ import (
 func (m Model) View() string {
 	if m.loading {
 		spin := lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render("◉")
+		if m.migrating {
+			return fmt.Sprintf("\n\n  %s Migrating %d commits to %s...\n", spin, m.migratingCount, m.migratingBranch)
+		}
 		progress := m.renderProgress()
 		return fmt.Sprintf("\n\n  %s Loading commits from %s...\n%s\n", spin, m.upstream, progress)
 	}

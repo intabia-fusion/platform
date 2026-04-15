@@ -13,6 +13,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -40,9 +41,10 @@ type cherryPickResultMsg struct {
 }
 
 type migrateResultMsg struct {
-	branch string
-	hashes []string
-	err    error
+	branch   string
+	hashes   []string
+	worktree string
+	err      error
 }
 
 // progressMsg is emitted while long operations are running
@@ -173,44 +175,53 @@ func (m Model) loadDiffCmd(hash string) tea.Cmd {
 // commits (optionally limited to folder paths) onto it, then returns to the
 // original branch. If folder is "", full commits are cherry-picked.
 func migrateCmd(branch, upstream, origBranch, folder string, hashes []string) tea.Cmd {
+	_ = origBranch
 	return func() tea.Msg {
-		if HasCherryPickInProgress() {
-			_ = AbortCherryPick()
+		repoRoot, err := GitExec("rev-parse", "--show-toplevel")
+		if err != nil {
+			return migrateResultMsg{err: fmt.Errorf("repo root: %w", err)}
 		}
-		if err := CreateBranchFrom(branch, upstream); err != nil {
-			return migrateResultMsg{err: fmt.Errorf("create branch: %w", err)}
+		root := trimNL(repoRoot)
+		wtDir := filepath.Join(filepath.Dir(root), "merges", branch)
+		if err := WorktreeAdd(wtDir, branch, upstream); err != nil {
+			return migrateResultMsg{err: fmt.Errorf("worktree add: %w", err)}
 		}
-		if err := CheckoutBranch(branch); err != nil {
-			return migrateResultMsg{err: fmt.Errorf("checkout new branch: %w", err)}
-		}
-		// Oldest first
+		applied := make([]string, 0, len(hashes))
 		for i := len(hashes) - 1; i >= 0; i-- {
 			h := hashes[i]
 			var err error
 			if folder == "" {
-				err = CherryPick(h)
+				err = CherryPickIn(wtDir, h)
 			} else {
 				paths, perr := GetCommitFilesInFolder(h, folder)
 				if perr != nil {
 					err = perr
 				} else if len(paths) == 0 {
-					// Commit had no files under folder - skip
 					continue
 				} else {
-					err = CherryPickPaths(h, paths)
+					err = CherryPickPathsIn(wtDir, h, paths)
 				}
 			}
 			if err != nil {
-				_ = AbortCherryPick()
-				_ = CheckoutBranch(origBranch)
-				return migrateResultMsg{err: fmt.Errorf("apply %s: %w", h, err)}
+				_, _ = GitExecIn(wtDir, "cherry-pick", "--abort")
+				return migrateResultMsg{err: fmt.Errorf("apply %s: %w", h[:8], err)}
 			}
+			applied = append(applied, h)
 		}
-		if err := CheckoutBranch(origBranch); err != nil {
-			return migrateResultMsg{err: fmt.Errorf("return to %s: %w", origBranch, err)}
+		if len(applied) == 0 {
+			_, _ = GitExec("worktree", "remove", "--force", wtDir)
+			_, _ = GitExec("branch", "-D", branch)
+			return migrateResultMsg{err: fmt.Errorf("no commits applied (none had files under %q)", folder)}
 		}
-		return migrateResultMsg{branch: branch, hashes: hashes}
+		return migrateResultMsg{branch: branch, hashes: applied, worktree: wtDir}
 	}
+}
+
+func trimNL(s string) string {
+	for len(s) > 0 && (s[len(s)-1] == '\n' || s[len(s)-1] == '\r' || s[len(s)-1] == ' ') {
+		s = s[:len(s)-1]
+	}
+	return s
 }
 
 func (m Model) cherryPickSelected() tea.Cmd {
