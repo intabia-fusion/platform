@@ -82,7 +82,7 @@
     "Proceed": "Продолжить",
     "SetPasswordLater": "Я установлю пароль позже",
     "SetPasswordNow": "Установить пароль сейчас",
-    "AgreedRules": "Я согласен с <a href=\"{linkLicense}\" target=\"_blank\">Лицензионным соглашением</a>, <a href=\"{linkUserAgreement}\" target=\"_blank\">Пользовательским соглашением</a>, <a href=\"{linkConfidential}\" target=\"_blank\">Политикой конфиденциальности</a>",
+    "AgreedRules": "Я согласен с <a href=\"{linkLicense}\" target=\"_blank\">Лицензионным договором</a>, <a href=\"{linkUserAgreement}\" target=\"_blank\">Пользовательским соглашением</a>, <a href=\"{linkConfidential}\" target=\"_blank\">Политикой конфиденциальности</a>",
     "AgreedPersonalData": "Я даю <a href=\"{link}\" target=\"_blank\">Согласие на обработку персональных данных</a>",
     "LoginAsGuest": "Продолжить как гость",
     "SignUpToCreateWorkspace": "Нет рабочих пространств с гостевым доступом. Пожалуйста, зарегистрируйтесь, чтобы создать своё.",
