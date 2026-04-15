@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -33,6 +34,7 @@ import { Client, errors as esErr, estypes } from '@elastic/elasticsearch'
 import { getMetadata } from '@hcengineering/platform'
 
 import { KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN, KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC } from './utils'
+import { type EmbeddingProvider, createEmbeddingProvider } from './embedding'
 
 const DEFAULT_LIMIT = 200
 
@@ -42,6 +44,13 @@ function getIndexName (): string {
 
 function getIndexVersion (): string {
   return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v4'
+}
+
+function isVectorSearchSupported (): boolean {
+  return getMetadata(serverCore.metadata.ElasticVectorSearch) ?? false
+}
+function getEmbeddingModel (): string {
+  return getMetadata(serverCore.metadata.ElasticEmbeddingModel) ?? 'Xenova/multilingual-e5-small'
 }
 
 const mappings: estypes.MappingTypeMapping = {
@@ -128,6 +137,12 @@ const mappings: estypes.MappingTypeMapping = {
     viewerId: {
       type: 'keyword',
       index: true
+    },
+    embedding: {
+      type: 'dense_vector',
+      dims: 384,
+      index: true,
+      similarity: 'cosine'
     }
   }
 }
@@ -140,7 +155,8 @@ class ElasticAdapter implements FullTextAdapter {
   constructor (
     private readonly client: Client,
     private readonly indexBaseName: string,
-    readonly indexVersion: string
+    readonly indexVersion: string,
+    private readonly embeddingProvider?: EmbeddingProvider
   ) {
     this.indexName = `${indexBaseName}_${indexVersion}`
     this.getFulltextDocId = (workspaceId, doc) => `${doc}@${workspaceId}` as Ref<Doc>
@@ -273,95 +289,16 @@ class ElasticAdapter implements FullTextAdapter {
     options: SearchOptions & { scoring?: SearchScoring[] }
   ): Promise<SearchStringResult> {
     try {
-      const { strict, viewerId } = options
-      const fields = [
-        'searchTitle^50',
-        'searchShortTitle^50',
-        'searchTitle.translit^10',
-        'searchTitle.keyboard_latin_to_cyrillic^10',
-        'searchTitle.keyboard_cyrillic_to_latin^10',
-        ...(strict === true ? [] : ['*'])
-      ]
+      const { viewerId } = options
 
-      const elasticQuery: any = {
-        query: {
-          function_score: {
-            query: {
-              bool: {
-                must: [
-                  {
-                    ...(query.query.startsWith('*')
-                      ? {
-                          bool: {
-                            should: [
-                              {
-                                // Clause 1: Prefix priority
-                                simple_query_string: {
-                                  query: query.query.substring(1),
-                                  analyze_wildcard: true,
-                                  flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                                  default_operator: 'and',
-                                  fields,
-                                  boost: 10
-                                }
-                              },
-                              {
-                                // Clause 2: Match anywhere
-                                query_string: {
-                                  query: query.query,
-                                  analyze_wildcard: true,
-                                  allow_leading_wildcard: true,
-                                  lenient: true,
-                                  default_operator: 'and',
-                                  fields,
-                                  boost: 1
-                                }
-                              }
-                            ],
-                            minimum_should_match: 1
-                          }
-                        }
-                      : {
-                          simple_query_string: {
-                            query: query.query,
-                            analyze_wildcard: true,
-                            flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                            default_operator: 'and',
-                            fields
-                          }
-                        })
-                  },
-                  {
-                    term: {
-                      workspaceId
-                    }
-                  }
-                ]
-              }
-            },
-            boost_mode: 'sum'
-          }
-        },
-        size: options.limit ?? DEFAULT_LIMIT
-      }
-
-      const filter: any = [
-        {
-          exists: { field: 'searchTitle' }
-        }
-      ]
+      const filter: any[] = [{ exists: { field: 'searchTitle' } }]
 
       if (query.spaces !== undefined) {
-        filter.push({
-          terms: this.getTerms(query.spaces, 'space')
-        })
+        filter.push({ terms: this.getTerms(query.spaces, 'space') })
       }
       if (query.classes !== undefined) {
-        filter.push({
-          terms: this.getTerms(query.classes, '_class')
-        })
+        filter.push({ terms: this.getTerms(query.classes, '_class') })
       }
-
       if (viewerId !== undefined) {
         filter.push({
           bool: {
@@ -370,25 +307,95 @@ class ElasticAdapter implements FullTextAdapter {
         })
       }
 
-      if (filter.length > 0) {
-        elasticQuery.query.function_score.query.bool.filter = filter
-      }
+      const limit = options.limit ?? DEFAULT_LIMIT
+      let elasticQuery: any
 
-      if (options.scoring !== undefined) {
-        const scoringTerms: any[] = options.scoring.map((scoringOption): any => {
-          const field = Object.hasOwn(mappings.properties ?? {}, scoringOption.attr)
-            ? scoringOption.attr
-            : `${scoringOption.attr}.keyword`
-          return {
-            term: {
-              [field]: {
-                value: scoringOption.value,
-                boost: scoringOption.boost
+      if (query.query.startsWith('emb:') && this.embeddingProvider !== undefined) {
+        // Vector-only search: embed the query text and run kNN
+        const queryText = query.query.slice('emb:'.length)
+        const queryVec = await this.embeddingProvider.embedQuery(queryText)
+        elasticQuery = {
+          knn: {
+            field: 'embedding',
+            query_vector: queryVec,
+            k: limit,
+            num_candidates: limit * 5,
+            filter: [{ term: { workspaceId } }, ...filter]
+          },
+          size: limit
+        }
+      } else {
+        // Fulltext-only search: existing BM25 / function_score logic
+        const { strict } = options
+        const fields = [
+          'searchTitle^50',
+          'searchShortTitle^50',
+          'searchTitle.translit^10',
+          'searchTitle.keyboard_latin_to_cyrillic^10',
+          'searchTitle.keyboard_cyrillic_to_latin^10',
+          ...(strict === true ? [] : ['*'])
+        ]
+
+        const textClause = query.query.startsWith('*')
+          ? {
+              bool: {
+                should: [
+                  {
+                    simple_query_string: {
+                      query: query.query.substring(1),
+                      analyze_wildcard: true,
+                      flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                      default_operator: 'and',
+                      fields,
+                      boost: 10
+                    }
+                  },
+                  {
+                    query_string: {
+                      query: query.query,
+                      analyze_wildcard: true,
+                      allow_leading_wildcard: true,
+                      lenient: true,
+                      default_operator: 'and',
+                      fields,
+                      boost: 1
+                    }
+                  }
+                ],
+                minimum_should_match: 1
               }
             }
-          }
-        })
-        elasticQuery.query.function_score.query.bool.should = scoringTerms
+          : {
+              simple_query_string: {
+                query: query.query,
+                analyze_wildcard: true,
+                flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                default_operator: 'and',
+                fields
+              }
+            }
+
+        const boolQuery: any = {
+          must: [textClause, { term: { workspaceId } }]
+        }
+
+        if (filter.length > 0) {
+          boolQuery.filter = filter
+        }
+
+        if (options.scoring !== undefined) {
+          boolQuery.should = options.scoring.map((scoringOption): any => {
+            const field = Object.hasOwn(mappings.properties ?? {}, scoringOption.attr)
+              ? scoringOption.attr
+              : `${scoringOption.attr}.keyword`
+            return { term: { [field]: { value: scoringOption.value, boost: scoringOption.boost } } }
+          })
+        }
+
+        elasticQuery = {
+          query: { function_score: { query: { bool: boolQuery }, boost_mode: 'sum' } },
+          size: limit
+        }
       }
 
       const result = await this.client.search({
@@ -615,6 +622,22 @@ class ElasticAdapter implements FullTextAdapter {
   }
 
   async updateMany (ctx: MeasureContext, workspaceId: WorkspaceUuid, docs: IndexedDoc[]): Promise<TxResult[]> {
+    if (this.embeddingProvider !== undefined) {
+      const textsWithIndex = docs
+        .map((doc, i) => ({ i, text: doc.fulltextSummary ?? '' }))
+        .filter(({ text }) => text.length > 0)
+      if (textsWithIndex.length > 0) {
+        try {
+          const embeddings = await this.embeddingProvider.embedDocuments(textsWithIndex.map(({ text }) => text))
+          textsWithIndex.forEach(({ i }, ei) => {
+            docs[i] = { ...docs[i], embedding: embeddings[ei] }
+          })
+        } catch (err: any) {
+          ctx.warn('[embedding] Failed to generate document embeddings', { error: err?.message })
+        }
+      }
+    }
+
     const parts = Array.from(docs)
     while (parts.length > 0) {
       const part = parts.splice(0, 500)
@@ -842,5 +865,10 @@ export async function createElasticAdapter (url: string): Promise<FullTextAdapte
   const indexBaseName = getIndexName()
   const indexVersion = getIndexVersion()
 
-  return new ElasticAdapter(client, indexBaseName, indexVersion)
+  let embeddingProvider: EmbeddingProvider | undefined
+  if (isVectorSearchSupported()) {
+    embeddingProvider = await createEmbeddingProvider(getEmbeddingModel())
+  }
+
+  return new ElasticAdapter(client, indexBaseName, indexVersion, embeddingProvider)
 }
