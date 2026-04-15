@@ -29,7 +29,7 @@
   } from '@hcengineering/ui'
 
   export let headerHeightRem = 4.375
-  const minColWidthRem = 2.5
+  export let minColWidthRem = 2.5
   export let rowHeightRem = 8
 
   export let currentDate: Date = new Date()
@@ -38,6 +38,10 @@
   export let persons: (Ref<Person> | null)[]
   export let multipler = 1
   export let highlightToday = true
+  // 'end' - legacy mode, days go backward from currentDate; 'start' - days go forward from startDate
+  export let anchor: 'end' | 'start' = 'end'
+  // When true, renders person info next to the name instead of below it.
+  export let personInfoInline = false
 
   const todayDate = new Date()
 
@@ -64,26 +68,32 @@
   let containerWidth: number = window.outerWidth
   $: containerWidthRem = containerWidth / $deviceInfo.fontSize
 
-  // $: sideDays = Math.round((maxDays - 1) / 2)
-  $: values = [
-    ...Array.from(Array(maxDays - 1).keys())
-      .reverse()
-      .map((it) => currentDate.getDate() - (it + 1)),
-    currentDate.getDate()
-    // ...Array.from(Array(sideDays).keys()).map((it) => currentDate.getDate() + (it + 1))
-  ]
+  // For 'end' anchor: days go backward from currentDate. For 'start' anchor: days go forward from startDate.
+  $: values =
+    anchor === 'start'
+      ? Array.from(Array(maxDays).keys())
+      : [
+          ...Array.from(Array(maxDays - 1).keys())
+            .reverse()
+            .map((it) => currentDate.getDate() - (it + 1)),
+          currentDate.getDate()
+        ]
 
   $: columnWidthRem = getColumnWidth(containerWidthRem - headerWidthRem, currentDate, maxDays) * multipler
 
-  $: leftDay = (values ?? []).length > 0 ? getDay(startDate, values[0] - currentDate.getDate()) : startDate
-  $: rightDay =
-    (values ?? []).length > 0 ? getDay(startDate, values[values.length - 1] - currentDate.getDate()) : startDate
+  function resolveDay (value: number): Date {
+    return anchor === 'start' ? getDay(startDate, value) : getDay(startDate, value - currentDate.getDate())
+  }
+
+  $: leftDay = (values ?? []).length > 0 ? resolveDay(values[0]) : startDate
+  $: rightDay = (values ?? []).length > 0 ? resolveDay(values[values.length - 1]) : startDate
 </script>
 
 <Scroller horizontal fade={{ multipler: { top: headerHeightRem, left: headerWidthRem } }} noFade>
   <div
     use:resizeObserver={(evt) => {
-      containerWidth = evt.clientWidth
+      const parent = evt.parentElement
+      containerWidth = parent != null ? parent.clientWidth : evt.clientWidth
     }}
     class="timeline"
   >
@@ -109,8 +119,8 @@
       <div class="timeline-resource-content">
         {#each persons as person}
           <div class="timeline-row" style={getRowStyle()}>
-            <div class="timeline-resource-cell flex-row-center">
-              <div class="flex flex-col">
+            <div class="timeline-resource-cell flex-row-center" class:compact={personInfoInline}>
+              <div class="flex {personInfoInline ? 'flex-row-center gap-2' : 'flex-col'}">
                 {#if person != null}
                   <PersonPresenter value={person} />
                 {:else}
@@ -127,7 +137,7 @@
       <div class="timeline-header timeline-grid-header">
         <div class="timeline-row flex" style={getHeaderStyle()}>
           {#each values as value}
-            {@const day = getDay(startDate, value - currentDate.getDate())}
+            {@const day = resolveDay(value)}
             {@const today = areDatesEqual(todayDate, day)}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div class="flex-col">
@@ -155,7 +165,7 @@
             <div class="timeline-events" />
 
             {#each values as value, i}
-              {@const day = getDay(startDate, value - currentDate.getDate())}
+              {@const day = resolveDay(value)}
               {@const today = areDatesEqual(todayDate, day)}
               {@const weekend = isWeekend(day)}
               <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -187,10 +197,11 @@
   $timeline-weekend-stroke-color: var(--theme-calendar-weekend-stroke-color);
 
   .timeline {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     display: grid;
     grid-auto-flow: column;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto auto;
     grid-template-rows: auto 1fr;
   }
 
@@ -317,6 +328,10 @@
     width: 100%;
     height: 100%;
     padding: 1rem 2rem;
+
+    &.compact {
+      padding: 0.25rem 0.75rem;
+    }
   }
 
   .timeline-event-wrapper {

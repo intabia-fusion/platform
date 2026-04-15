@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
+  import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
   import { AttachedData, Class, DocumentUpdate, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
@@ -35,12 +35,13 @@
   export let value: TimeSpendReport | undefined
   export let placeholder: IntlString = tracker.string.TimeSpendReportValue
   export let defaultTimeReportDay: TimeReportDayType = TimeReportDayType.PreviousWorkDay
+  export let initialDate: number | undefined = undefined
 
   const data = {
-    date: value?.date ?? getTimeReportDate(defaultTimeReportDay),
+    date: value?.date ?? initialDate ?? getTimeReportDate(defaultTimeReportDay),
     description: value?.description ?? '',
     value: value?.value,
-    employee: value?.employee ?? assignee ?? null
+    employee: value?.employee ?? assignee ?? getCurrentEmployee() ?? null
   }
 
   let selectedTimeReportDay = getTimeReportDayType(data.date)
