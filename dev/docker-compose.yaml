@@ -366,8 +366,11 @@ services:
       - USAGE_URL=http://huly.local:8080/terms
       - COPYRIGHT=
       - SUPPORT_URL=https://t.me/intabia
+      - LICENSE_URL=https://huly.local:8080/legal/license
+      - USERAGREEMENT_URL=https://huly.local:8080/legal/user-agreement
+      - CONFIDENTIAL_URL=https://huly.local:8080/legal/confidential
+      - SUPPORT_EMAIL=platform@intabia.ru
       - PERSONAL_DATA_URL=https://huly.local:8080/legal/personal_data
-      - RULES_URL=https://huly.local:8080/legal/rules
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor
@@ -985,7 +988,7 @@ services:
       - SMTP_HOST=mailpit
       - SMTP_USERNAME=platform
       - SMTP_PASSWORD=platform
-      - SMTP_PORT=1026
+      - SMTP_PORT=1025
       - SMTP_TLS_MODE=ignore
       - SMTP_ALLOW_SELF_SIGNED=true
   mail_client:
@@ -1003,7 +1006,7 @@ services:
       - SMTP_HOST=mailpit
       - SMTP_USERNAME=platform
       - SMTP_PASSWORD=platform
-      - SMTP_PORT=1026
+      - SMTP_PORT=1025
       - SMTP_TLS_MODE=ignore
       - SMTP_ALLOW_SELF_SIGNED=true
   mailpit:
@@ -1015,7 +1018,7 @@ services:
       - mailpit:/data
     ports:
       - 8025:8025
-      - 1026:1026
+      - 1025:1025
     environment:
       MP_MAX_MESSAGES: 5000
       MP_DATABASE: /data/mailpit.db

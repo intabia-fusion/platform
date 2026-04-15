@@ -89,78 +89,53 @@ func GetCommitsFromUpstream(upstreamBranch string) ([]Commit, error) {
 	return commits, nil
 }
 
-// CheckCherryPicked checks if commits can be cleanly applied or are already applied
-func CheckCherryPicked(commits []Commit, upstreamBranch string) ([]Commit, error) {
-	if len(commits) == 0 {
-		return commits, nil
+// CheckCherryPickedOne inspects a single commit and fills CherryPicked/HasConflict fields
+func CheckCherryPickedOne(commit *Commit) {
+	if _, err := GitExec("merge-base", "--is-ancestor", commit.Hash, "HEAD"); err == nil {
+		commit.CherryPicked = true
+		commit.HasConflict = false
+		return
 	}
-
-	// For each commit, check if it can be cleanly cherry-picked
-	for i := range commits {
-		commit := &commits[i]
-
-		// First check if commit is already an ancestor of HEAD (already applied via merge or cherry-pick)
-		_, err := GitExec("merge-base", "--is-ancestor", commit.Hash, "HEAD")
-		if err == nil {
-			// Commit is already in current branch
+	if out, _ := GitExec("log", "HEAD", "--format=%s", "--grep="+commit.Subject, "-1"); strings.TrimSpace(out) == commit.Subject {
+		commit.CherryPicked = true
+		commit.HasConflict = false
+		return
+	}
+	patch, err := GitExec("diff", commit.Hash+"^.."+commit.Hash)
+	if err != nil {
+		commit.CherryPicked = false
+		commit.HasConflict = false
+		return
+	}
+	if strings.TrimSpace(patch) == "" {
+		commit.CherryPicked = true
+		commit.HasConflict = false
+		return
+	}
+	cmd := exec.Command("git", "apply", "--check", "-")
+	cmd.Stdin = strings.NewReader(patch)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		stderrStr := stderr.String()
+		if strings.Contains(stderrStr, "already exists") || strings.Contains(stderrStr, "No changes") {
 			commit.CherryPicked = true
 			commit.HasConflict = false
-			continue
-		}
-
-		// Check if a commit with the same subject already exists in HEAD
-		// This catches cherry-picked commits (they have same subject but different hash)
-		out, _ := GitExec("log", "HEAD", "--format=%s", "--grep="+commit.Subject, "-1")
-		if strings.TrimSpace(out) == commit.Subject {
-			// Found a commit with the same subject in HEAD
-			commit.CherryPicked = true
-			commit.HasConflict = false
-			continue
-		}
-
-		// Get the diff/patch for this commit
-		patch, err := GitExec("diff", commit.Hash+"^.."+commit.Hash)
-		if err != nil {
-			// Can't get diff, assume it might have conflicts
-			commit.CherryPicked = false
-			commit.HasConflict = false
-			continue
-		}
-
-		if strings.TrimSpace(patch) == "" {
-			// Empty patch, commit was already applied
-			commit.CherryPicked = true
-			commit.HasConflict = false
-			continue
-		}
-
-		// Check if patch can be applied cleanly using git apply --check
-		// This doesn't modify working directory
-		cmd := exec.Command("git", "apply", "--check", "-")
-		cmd.Stdin = strings.NewReader(patch)
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
-		err = cmd.Run()
-
-		if err != nil {
-			// Check if error is because patch is already applied ("already exists in working directory")
-			stderrStr := stderr.String()
-			if strings.Contains(stderrStr, "already exists") || strings.Contains(stderrStr, "No changes") {
-				// Changes are already in HEAD, mark as cherry-picked
-				commit.CherryPicked = true
-				commit.HasConflict = false
-			} else {
-				// Patch would have conflicts
-				commit.CherryPicked = false
-				commit.HasConflict = true
-			}
 		} else {
-			// Patch can be applied cleanly
 			commit.CherryPicked = false
-			commit.HasConflict = false
+			commit.HasConflict = true
 		}
+		return
 	}
+	commit.CherryPicked = false
+	commit.HasConflict = false
+}
 
+// CheckCherryPicked batch variant (no progress reporting)
+func CheckCherryPicked(commits []Commit, upstreamBranch string) ([]Commit, error) {
+	for i := range commits {
+		CheckCherryPickedOne(&commits[i])
+	}
 	return commits, nil
 }
 
@@ -168,6 +143,37 @@ func CheckCherryPicked(commits []Commit, upstreamBranch string) ([]Commit, error
 func CherryPick(hash string) error {
 	_, err := GitExec("cherry-pick", hash)
 	return err
+}
+
+// CherryPickPaths applies only given paths from commit and creates a commit
+// reusing the original author/message. Returns error if nothing changed or git fails.
+func CherryPickPaths(hash string, paths []string) error {
+	if len(paths) == 0 {
+		return fmt.Errorf("no paths to apply from %s", hash)
+	}
+	// Capture patch limited to paths
+	args := []string{"show", hash, "--binary", "--color=never", "--"}
+	args = append(args, paths...)
+	patch, err := GitExec(args...)
+	if err != nil {
+		return fmt.Errorf("get patch: %w", err)
+	}
+	if strings.TrimSpace(patch) == "" {
+		return fmt.Errorf("no changes in commit %s under requested paths", hash)
+	}
+	// Apply to index + working tree
+	cmd := exec.Command("git", "apply", "--index", "--3way")
+	cmd.Stdin = strings.NewReader(patch)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git apply: %v (stderr: %s)", err, stderr.String())
+	}
+	// Reuse original commit metadata
+	if _, err := GitExec("commit", "--no-verify", "-C", hash); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+	return nil
 }
 
 // AbortCherryPick aborts current cherry-pick
@@ -195,4 +201,101 @@ func GetCommitDiff(hash string) (string, error) {
 		return "", err
 	}
 	return out, nil
+}
+
+// GetCommitDiffInFolder returns diff for commit limited to paths under folder
+func GetCommitDiffInFolder(hash, folder string) (string, error) {
+	pathspec := folder
+	if !strings.HasSuffix(pathspec, "/") {
+		pathspec += "/"
+	}
+	out, err := GitExec("show", hash, "--stat", "-p", "--color=never", "--", pathspec)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
+// GetCommitFilesInFolder returns files changed in commit that live under folder
+func GetCommitFilesInFolder(hash, folder string) ([]string, error) {
+	files, err := GetCommitFiles(hash)
+	if err != nil {
+		return nil, err
+	}
+	if folder == "" {
+		return files, nil
+	}
+	prefix := folder
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	var out []string
+	for _, f := range files {
+		if strings.HasPrefix(f, prefix) {
+			out = append(out, f)
+		}
+	}
+	return out, nil
+}
+
+// GetOutgoingCommits returns commits in HEAD not in upstream
+func GetOutgoingCommits(upstreamBranch string) ([]Commit, error) {
+	format := "%H|%h|%s|%an|%ad"
+	out, err := GitExec("log", upstreamBranch+"..HEAD", "--format="+format, "--date=short")
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if len(lines) == 1 && lines[0] == "" {
+		return []Commit{}, nil
+	}
+	commits := make([]Commit, 0, len(lines))
+	for _, line := range lines {
+		parts := strings.SplitN(line, "|", 5)
+		if len(parts) < 5 {
+			continue
+		}
+		commits = append(commits, Commit{
+			Hash:      parts[0],
+			ShortHash: parts[1],
+			Subject:   parts[2],
+			Author:    parts[3],
+			Date:      parts[4],
+		})
+	}
+	return commits, nil
+}
+
+// GetCommitFiles returns list of files changed in commit
+func GetCommitFiles(hash string) ([]string, error) {
+	out, err := GitExec("show", "--name-only", "--format=", hash)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			files = append(files, line)
+		}
+	}
+	return files, nil
+}
+
+// BranchExists checks if local branch exists
+func BranchExists(name string) bool {
+	_, err := GitExec("rev-parse", "--verify", "refs/heads/"+name)
+	return err == nil
+}
+
+// CreateBranchFrom creates new branch from start point without checking out
+func CreateBranchFrom(name, startPoint string) error {
+	_, err := GitExec("branch", name, startPoint)
+	return err
+}
+
+// CheckoutBranch switches to given branch
+func CheckoutBranch(name string) error {
+	_, err := GitExec("checkout", name)
+	return err
 }

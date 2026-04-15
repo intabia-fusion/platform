@@ -6,6 +6,19 @@
   export let agreedPersonalData: boolean = false
   export let agreedRules: boolean = false
 
+  let rulesLabel = ''
+  $: void translate(
+    login.string.AgreedRules,
+    {
+      linkLicense: getMetadata(login.metadata.LicenseUrl),
+      linkUserAgreement: getMetadata(login.metadata.UserAgreementUrl),
+      linkConfidential: getMetadata(login.metadata.ConfidentialUrl)
+    },
+    $themeStore.language
+  ).then((res) => {
+    rulesLabel = res
+  })
+
   let personalDatalabel = ''
   $: void translate(
     login.string.AgreedPersonalData,
@@ -13,15 +26,6 @@
     $themeStore.language
   ).then((res) => {
     personalDatalabel = res
-  })
-
-  let rulesLabel = ''
-  $: void translate(
-    login.string.AgreedRules,
-    { link: getMetadata(login.metadata.RulesUrl) },
-    $themeStore.language
-  ).then((res) => {
-    rulesLabel = res
   })
 </script>
 

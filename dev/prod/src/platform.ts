@@ -53,7 +53,7 @@ import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
 import sign from '@hcengineering/sign'
-import support, { supportId, supportLink, reportBugLink,  privacyPolicyLink } from '@hcengineering/support'
+import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -219,8 +219,11 @@ export interface Config {
   COPYRIGHT?: string
   USAGE_URL?: string
   SUPPORT_URL?: string
+  LICENSE_URL?: string
+  USERAGREEMENT_URL?: string
+  CONFIDENTIAL_URL?: string
+  SUPPORT_EMAIL?: string
   PERSONAL_DATA_URL?: string
-  RULES_URL?: string
 }
 
 export interface Branding {
@@ -586,10 +589,13 @@ export async function configurePlatform() {
   const frontUrl = config.FRONT_URL ?? window.location.origin
   setMetadata(support.metadata.DocsLink, myBranding.support?.docsLink ?? concatLink(frontUrl, 'docs'))
 
-  setMetadata(login.metadata.PersonalDataUrl, config.PERSONAL_DATA_URL ?? `${frontUrl}/legal/personal_data`)
-  setMetadata(login.metadata.RulesUrl, config.RULES_URL ?? `${frontUrl}/legal/rules`)
+  setMetadata(login.metadata.LicenseUrl, config.LICENSE_URL ?? `${frontUrl}/legal/license`)
+  setMetadata(login.metadata.UserAgreementUrl, config.USERAGREEMENT_URL ?? `${frontUrl}/legal/user-agreement`)
+  setMetadata(login.metadata.ConfidentialUrl, config.CONFIDENTIAL_URL ?? `${frontUrl}/legal/confidential`)
+  setMetadata(login.metadata.PersonalDataUrl, config.PERSONAL_DATA_URL ?? `${frontUrl}/legal/agreement`)
 
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
+  setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
   const languages = myBranding.languages
     ? myBranding.languages.split(',').map((l) => l.trim())

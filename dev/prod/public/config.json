@@ -38,6 +38,9 @@
   "PUSH_PUBLIC_KEY": "pushPublicKey",
   "USAGE_URL": "http://huly.local:8080/terms",
   "SUPPORT_URL": "https://t.me/intabia",
-  "PERSONAL_DATA_URL": "https://huly.local:8080/legal/personal_data",
-  "RULES_URL": "https://huly.local:8080/legal/rules"
+  "SUPPORT_EMAIL": "platform@intabia.ru",
+  "LICENSE_URL": "https://huly.local:8080/legal/license",
+  "USERAGREEMENT_URL": "https://huly.local:8080/legal/user-agreement",
+  "CONFIDENTIAL_URL": "https://huly.local:8080/legal/confidential",
+  "PERSONAL_DATA_URL": "https://huly.local:8080/legal/agreement"
 }
