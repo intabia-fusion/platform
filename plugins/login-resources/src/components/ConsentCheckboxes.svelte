@@ -30,12 +30,12 @@
 </script>
 
 <label class="check-label">
-  <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
-  <span><Html value={rulesLabel} /></span>
+  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
+  <span class="consent-link"><Html value={personalDatalabel} /></span>
 </label>
 <label class="check-label">
-  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
-  <span><Html value={personalDatalabel} /></span>
+  <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
+  <span class="consent-link"><Html value={rulesLabel} /></span>
 </label>
 
 <style lang="scss">
