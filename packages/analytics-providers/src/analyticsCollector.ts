@@ -288,6 +288,13 @@ export class AnalyticsCollectorProvider implements AnalyticProvider {
     this.addEvent(AnalyticEventType.CustomEvent, { event, ...params }, event)
   }
 
+  handleMetric (name: string, value: number, labels?: Record<string, any>): void {
+    this.addEvent(AnalyticEventType.Metric, { metric: name, value, labels: labels ?? {} }, name)
+    if (this.events.length >= this.maxBatchSize) {
+      void this.sendEvents()
+    }
+  }
+
   handleError (error: Error): void {
     const currentId = this.isAuthenticated && (this.email != null || this.email !== '') ? this.email : this.anonymousId
 

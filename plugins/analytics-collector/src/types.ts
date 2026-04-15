@@ -20,7 +20,8 @@ export enum AnalyticEventType {
   SetGroup = 'setGroup',
   Navigation = 'navigation',
   Error = 'error',
-  CustomEvent = 'customEvent'
+  CustomEvent = 'customEvent',
+  Metric = 'metric'
 }
 
 export interface AnalyticEvent {

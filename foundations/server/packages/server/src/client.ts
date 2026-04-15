@@ -219,9 +219,9 @@ export class ClientSession implements Session {
       return
     }
     try {
-      const result = await this.counter.withCounter('find-' + domain, 1, () =>
-        this.findAllRaw(ctx, _class, query, options)
-      )
+      const result = await this.counter.withCounter('find', 1, () => this.findAllRaw(ctx, _class, query, options), {
+        domain
+      })
 
       await this.counter.withCounter('clientSendMemory', this.estimateSize(result), () =>
         ctx.sendResponse(ctx.requestId, result)
@@ -308,19 +308,24 @@ export class ClientSession implements Session {
     const domain =
       ctx.pipeline.context.hierarchy.findDomain(
         TxProcessor.isExtendsCUD(tx._class) ? (tx as TxCUD<Doc>).objectClass : tx._class
-      ) ?? ''
-    await this.counter.withCounter('tx-' + domain, 1, async () => {
-      try {
-        const { broadcastPromise, asyncsPromise } = await this.txRaw(ctx, tx)
-        await broadcastPromise
-        if (asyncsPromise !== undefined) {
-          await asyncsPromise
+      ) ?? 'unknown'
+    await this.counter.withCounter(
+      'tx',
+      1,
+      async () => {
+        try {
+          const { broadcastPromise, asyncsPromise } = await this.txRaw(ctx, tx)
+          await broadcastPromise
+          if (asyncsPromise !== undefined) {
+            await asyncsPromise
+          }
+        } catch (err) {
+          await ctx.sendError(ctx.requestId, 'Failed to tx', unknownError(err))
+          ctx.ctx.error('failed to tx', { err })
         }
-      } catch (err) {
-        await ctx.sendError(ctx.requestId, 'Failed to tx', unknownError(err))
-        ctx.ctx.error('failed to tx', { err })
-      }
-    })
+      },
+      { domain }
+    )
   }
 
   broadcast (ctx: MeasureContext, socket: ConnectionSocket, tx: Tx[]): void {
@@ -436,20 +441,25 @@ export class ClientSession implements Session {
 
   async domainRequest (ctx: ClientSessionCtx, domain: OperationDomain, params: DomainParams): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    await this.counter.withCounter('dr-' + domain, 1, async () => {
-      try {
-        const { asyncsPromise, broadcastPromise } = await this.domainRequestRaw(ctx, domain, params)
+    await this.counter.withCounter(
+      'domainRequest',
+      1,
+      async () => {
+        try {
+          const { asyncsPromise, broadcastPromise } = await this.domainRequestRaw(ctx, domain, params)
 
-        await broadcastPromise
+          await broadcastPromise
 
-        if (asyncsPromise !== undefined) {
-          await asyncsPromise
+          if (asyncsPromise !== undefined) {
+            await asyncsPromise
+          }
+        } catch (err) {
+          await ctx.sendError(ctx.requestId, 'Failed to domainRequest', unknownError(err))
+          ctx.ctx.error('failed to domainRequest', { err })
         }
-      } catch (err) {
-        await ctx.sendError(ctx.requestId, 'Failed to domainRequest', unknownError(err))
-        ctx.ctx.error('failed to domainRequest', { err })
-      }
-    })
+      },
+      { domain }
+    )
   }
 
   async domainRequestRaw (

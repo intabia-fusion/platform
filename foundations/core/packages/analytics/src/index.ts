@@ -13,6 +13,7 @@ export interface AnalyticProvider {
   setWorkspace: (ws: string, guest: boolean) => void
   handleEvent: (event: string, params: Record<string, string>) => void
   handleError: (error: Error) => void
+  handleMetric?: (name: string, value: number, labels?: Record<string, any>) => void
   navigate: (path: string) => void
   logout: () => void
 }
@@ -60,6 +61,12 @@ export const Analytics = {
   handleError (error: Error): void {
     providers.forEach((provider) => {
       provider.handleError(error)
+    })
+  },
+
+  handleMetric (name: string, value: number, labels?: Record<string, any>): void {
+    providers.forEach((provider) => {
+      provider.handleMetric?.(name, value, labels)
     })
   },
 

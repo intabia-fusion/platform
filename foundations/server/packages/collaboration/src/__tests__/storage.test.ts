@@ -153,6 +153,7 @@ const mockContext: MeasureContext = {
   with: jest.fn().mockImplementation((name, params, fn) => fn()),
   withSync: jest.fn().mockImplementation((name, params, fn) => fn()),
   measure: jest.fn(),
+  recordDuration: jest.fn(),
   newChild: jest.fn().mockReturnThis(),
   end: jest.fn(),
   logger: {} as any,

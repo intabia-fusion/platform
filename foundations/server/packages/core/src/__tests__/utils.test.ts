@@ -358,6 +358,67 @@ describe('OneSecondCountersImpl', () => {
       ])
     })
   })
+
+  describe('labels', () => {
+    it('should track same counter name with different labels separately', () => {
+      counters.add('find', 1, { domain: 'tx' })
+      counters.add('find', 2, { domain: 'account' })
+      counters.add('find', 3, { domain: 'tx' })
+
+      const full = Array.from(counters.entriesFull())
+      expect(full).toHaveLength(2)
+      const tx = full.find((e) => e[1].labels?.domain === 'tx')?.[1]
+      const account = full.find((e) => e[1].labels?.domain === 'account')?.[1]
+      expect(tx?.value).toBe(4)
+      expect(tx?.counter).toBe('find')
+      expect(account?.value).toBe(2)
+    })
+
+    it('should key labels stably regardless of key order', () => {
+      counters.add('m', 1, { a: '1', b: '2' })
+      counters.add('m', 1, { b: '2', a: '1' })
+      const full = Array.from(counters.entriesFull())
+      expect(full).toHaveLength(1)
+      expect(full[0][1].value).toBe(2)
+    })
+
+    it('should ignore undefined values in label key', () => {
+      counters.add('m', 1, { a: '1', b: undefined })
+      counters.add('m', 1, { a: '1' })
+      const full = Array.from(counters.entriesFull())
+      expect(full).toHaveLength(1)
+      expect(full[0][1].value).toBe(2)
+    })
+
+    it('withCounter should decrement labelled counter after timeout', async () => {
+      await counters.withCounter('find', 1, async () => 'ok', { domain: 'tx' })
+      ageTimeouts(2000)
+      counters.check()
+      const full = Array.from(counters.entriesFull()).filter((e) => e[1].counter === 'find')
+      expect(full[0][1].value).toBe(0)
+      expect(full[0][1].labels).toEqual({ domain: 'tx' })
+    })
+
+    it('withCounter should decrement correct bucket when same name has multiple label sets', async () => {
+      const p1 = counters.withCounter('find', 1, async () => 'a', { domain: 'tx' })
+      const p2 = counters.withCounter('find', 1, async () => 'b', { domain: 'account' })
+      await Promise.all([p1, p2])
+      ageTimeouts(2000)
+      counters.check()
+      const full = Array.from(counters.entriesFull())
+        .filter((e) => e[1].counter === 'find')
+        .sort((a, b) => (a[1].labels?.domain as string).localeCompare(b[1].labels?.domain as string))
+      expect(full).toHaveLength(2)
+      expect(full[0][1].value).toBe(0)
+      expect(full[1][1].value).toBe(0)
+    })
+
+    it('entries() should remain back-compat [name, number] for no-label counters', () => {
+      counters.add('simple', 5)
+      const entries = Array.from(counters.entries())
+      expect(entries).toEqual([['simple', 5]])
+    })
+  })
 })
 
 describe('estimateDocSize', () => {

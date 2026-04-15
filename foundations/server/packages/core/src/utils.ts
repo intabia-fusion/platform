@@ -26,6 +26,7 @@ import core, {
   type MeasureContext,
   type ModelDb,
   type OperationDomain,
+  type ParamsType,
   type PermissionsGrant,
   type PersonId,
   type Ref,
@@ -429,21 +430,53 @@ export async function calcHashHash (ctx: MeasureContext, domain: Domain, adapter
   }
 }
 
-type TimerOp = [number, string, number, boolean]
+type TimerOp = [number, string, number, boolean, ParamsType | undefined]
+
+// Stable JSON key for labels; undefined/empty -> ''
+export function labelsKey (labels?: ParamsType): string {
+  if (labels === undefined) return ''
+  const keys = Object.keys(labels)
+  if (keys.length === 0) return ''
+  keys.sort()
+  const parts: string[] = []
+  for (const k of keys) {
+    const v = labels[k]
+    if (v === undefined) continue
+    parts.push(k + '=' + String(v))
+  }
+  return parts.join(',')
+}
+
+export interface CounterEntry {
+  counter: string
+  labels?: ParamsType
+  value: number
+}
 
 export class OneSecondCountersImpl implements OneSecondCounters {
-  private readonly counters = new Map<string, number>()
+  private readonly counters = new Map<string, CounterEntry>()
   private readonly counterTimeouts = new Map<number, TimerOp>()
   ids: number = 0
 
-  add (counter: string, count: number): void {
-    this.counters.set(counter, (this.counters.get(counter) ?? 0) + count)
+  private keyOf (counter: string, labels?: ParamsType): string {
+    const lk = labelsKey(labels)
+    return lk === '' ? counter : counter + '\u0000' + lk
   }
 
-  async withCounter<T>(counter: string, count: number, op: () => Promise<T>): Promise<T> {
-    this.add(counter, count)
+  add (counter: string, count: number, labels?: ParamsType): void {
+    const k = this.keyOf(counter, labels)
+    const existing = this.counters.get(k)
+    if (existing !== undefined) {
+      existing.value += count
+    } else {
+      this.counters.set(k, { counter, labels, value: count })
+    }
+  }
+
+  async withCounter<T>(counter: string, count: number, op: () => Promise<T>, labels?: ParamsType): Promise<T> {
+    this.add(counter, count, labels)
     const id = ++this.ids
-    const vv: TimerOp = [platformNow(), counter, count, false]
+    const vv: TimerOp = [platformNow(), counter, count, false, labels]
     this.counterTimeouts.set(id, vv)
     try {
       return await op()
@@ -453,23 +486,33 @@ export class OneSecondCountersImpl implements OneSecondCounters {
   }
 
   entries (): MapIterator<[string, number]> {
+    const src = this.counters
+    function * gen (): Generator<[string, number]> {
+      for (const [k, v] of src.entries()) {
+        yield [k, v.value]
+      }
+    }
+    return gen() as unknown as MapIterator<[string, number]>
+  }
+
+  entriesFull (): MapIterator<[string, CounterEntry]> {
     return this.counters.entries()
   }
 
   check (): void {
     // Check for timeouts
     const now = platformNow()
-    for (const [k, [timeout, counter, count, completed]] of [...this.counterTimeouts.entries()]) {
+    for (const [k, [timeout, counter, count, completed, labels]] of [...this.counterTimeouts.entries()]) {
       // Regular 1 second timeout: if operation completed after at least 1s, decrement once
       if (completed && timeout + 1000 < now) {
-        this.add(counter, -count)
+        this.add(counter, -count, labels)
         this.counterTimeouts.delete(k)
         continue
       }
 
       // Hard timeout for stuck tasks: if not completed but exceeded hard timeout, decrement once
       if (!completed && timeout + 60 * 1000 < now) {
-        this.add(counter, -count)
+        this.add(counter, -count, labels)
         this.counterTimeouts.delete(k)
       }
     }

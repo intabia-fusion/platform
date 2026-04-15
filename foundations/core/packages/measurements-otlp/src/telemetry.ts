@@ -24,6 +24,7 @@ import {
   trace,
   type Context,
   type Gauge,
+  type Histogram,
   type Meter,
   type Tracer
 } from '@opentelemetry/api'
@@ -42,19 +43,34 @@ import { NodeSDK } from '@opentelemetry/sdk-node'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-node'
 
 class MetricsContext {
-  counters = new Map<string, { counter: Gauge, value: 0 }>()
+  // One Gauge per counter name. We do NOT skip equal values: OTLP periodic reader
+  // needs fresh observations per export window, otherwise gauges disappear from the stream.
+  counters = new Map<string, { counter: Gauge }>()
+  histograms = new Map<string, Histogram>()
   constructor (readonly meter?: Meter) {}
 
-  getCounter (name: string): { counter: Gauge, value: number } | undefined {
+  getCounter (name: string): { counter: Gauge } | undefined {
     if (this.meter === undefined) {
       return undefined
     }
     let counter = this.counters.get(name)
     if (counter === undefined) {
-      counter = { counter: this.meter.createGauge(name), value: 0 }
+      counter = { counter: this.meter.createGauge(name) }
       this.counters.set(name, counter)
     }
     return counter
+  }
+
+  getHistogram (name: string): Histogram | undefined {
+    if (this.meter === undefined) {
+      return undefined
+    }
+    let h = this.histograms.get(name)
+    if (h === undefined) {
+      h = this.meter.createHistogram(name, { unit: 'ms' })
+      this.histograms.set(name, h)
+    }
+    return h
   }
 }
 
@@ -113,13 +129,21 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
     this.logger = logger ?? (this.logParams != null ? consoleLogger(this.logParams ?? {}) : noParamsLogger)
   }
 
-  measure (name: string, value: number, override?: boolean): void {
+  measure (name: string, value: number, labelsOrOverride?: ParamsType | boolean, override?: boolean): void {
+    const isLabels = typeof labelsOrOverride === 'object' && labelsOrOverride !== null
+    const labels = isLabels ? labelsOrOverride : undefined
     const cnt = this.meter?.getCounter(name)
     if (cnt !== undefined) {
-      if (cnt.value !== value) {
-        cnt.counter.record(value, this.params)
-        cnt.value = value
-      }
+      const attrs: Record<string, any> = { ...this.params, ...(labels ?? {}) }
+      cnt.counter.record(value, attrs)
+    }
+  }
+
+  recordDuration (name: string, ms: number, labels?: ParamsType): void {
+    const h = this.meter?.getHistogram(name)
+    if (h !== undefined) {
+      const attrs: Record<string, any> = { ...this.params, ...(labels ?? {}) }
+      h.record(ms, attrs)
     }
   }
 
@@ -222,9 +246,13 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
               span?.setAttribute(k, typeof v === 'object' ? JSON.stringify(v) : v)
             }
           }
+          const elapsed = platformNowDiff((c as OpenTelemetryMetricsContext).st)
           c.end()
+          if (opt?.metric !== undefined) {
+            this.recordDuration(opt.metric, elapsed, { op: name, ...params })
+          }
           if (opt?.log === true) {
-            this.logger.logOperation(name, platformNowDiff((c as OpenTelemetryMetricsContext).st), {
+            this.logger.logOperation(name, elapsed, {
               ...params,
               ...fullParams
             })
@@ -238,6 +266,12 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
       }
     } finally {
       if (needFinally) {
+        if (opt?.metric !== undefined) {
+          this.recordDuration(opt.metric, platformNowDiff((c as OpenTelemetryMetricsContext).st), {
+            op: name,
+            ...params
+          })
+        }
         c.end()
       }
     }
@@ -492,6 +526,26 @@ export function reportOTELError (error: Error, attributes?: Record<string, any>)
         'error.stack': error.stack
       }
     })
+  }
+}
+
+let externalMetricsCtx: MetricsContext | undefined
+
+/**
+ * Record an external metric observation (from browser clients, external sources, etc.).
+ * - Names ending with `.duration`, `_duration`, `.ms` or `_ms` use a Histogram.
+ * - Otherwise a Gauge is used.
+ */
+export function recordOTELMetric (scope: string, name: string, value: number, labels: Record<string, any> = {}): void {
+  if (sdkServiceName === undefined) return
+  if (externalMetricsCtx === undefined) {
+    externalMetricsCtx = new MetricsContext(otelMetrics.getMeter(scope, sdkServiceVersion))
+  }
+  const isDuration = /(\.duration|_duration|\.ms|_ms)$/.test(name)
+  if (isDuration) {
+    externalMetricsCtx.getHistogram(name)?.record(value, labels)
+  } else {
+    externalMetricsCtx.getCounter(name)?.counter.record(value, labels)
   }
 }
 

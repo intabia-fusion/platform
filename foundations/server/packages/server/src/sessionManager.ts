@@ -258,15 +258,19 @@ export class TSessionManager implements SessionManager {
   }
 
   private handleWorkspaceTick (): void {
-    this.ctx.measure('sessions', this.sessions.size, true)
+    this.ctx.measure('sessions', this.sessions.size, { kind: 'total' }, true)
 
     if (this.ticks % ticksPerSecond === 0) {
       // Let's update workspace statistics every 10 seconds
       this.sendUserWorkspaceStats()
 
       // Send extra counters and clear them to collect again
-      for (const [c, v] of [...this.counters.entries()]) {
-        this.ctx.measure('_' + c, v, true)
+      for (const [, entry] of this.counters.entriesFull()) {
+        if (entry.labels !== undefined) {
+          this.ctx.measure(entry.counter, entry.value, entry.labels, true)
+        } else {
+          this.ctx.measure(entry.counter, entry.value, true)
+        }
       }
       this.counters.check()
     }
@@ -350,13 +354,13 @@ export class TSessionManager implements SessionManager {
       }
     }
 
-    this.ctx.measure('sessions-user', user, true)
-    this.ctx.measure('sessions-system', sys, true)
-    this.ctx.measure('sessions-anonymous', anonymous, true)
+    this.ctx.measure('sessions', user, { kind: 'user' }, true)
+    this.ctx.measure('sessions', sys, { kind: 'system' }, true)
+    this.ctx.measure('sessions', anonymous, { kind: 'anonymous' }, true)
 
-    this.ctx.measure('workspaces', this.workspaces.size, true)
-    this.ctx.measure('workspaces-user', userWorkspaces, true)
-    this.ctx.measure('workspaces-systemonly', sysOnlyWorkspaces, true)
+    this.ctx.measure('workspaces', this.workspaces.size, { kind: 'all' }, true)
+    this.ctx.measure('workspaces', userWorkspaces, { kind: 'user' }, true)
+    this.ctx.measure('workspaces', sysOnlyWorkspaces, { kind: 'systemonly' }, true)
   }
 
   private handleSessionTick (now: number): void {
@@ -535,7 +539,7 @@ export class TSessionManager implements SessionManager {
       }
     }
 
-    this.ctx.measure('sessions-hung', hungSessions, true)
+    this.ctx.measure('sessions', hungSessions, { kind: 'hung' }, true)
 
     const hungSessionsPercent = totalSessions > 0 ? (100 * hungSessions) / totalSessions : 0
 

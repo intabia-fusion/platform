@@ -1,0 +1,481 @@
+schema: v2
+id: foundation.server.overview
+name: "Foundation: Server Overview"
+tags:
+- foundation
+- server
+- metrics
+version: v1
+time_offset: 15m
+
+table:
+- metrics:
+  - find as $find
+  - tx as $tx
+  - sessions as $sessions
+  - workspaces as $workspaces
+  query:
+  - avg($sessions{kind='user'}) as sessions_user
+  - avg($sessions{kind='system'}) as sessions_system
+  - avg($sessions{kind='anonymous'}) as sessions_anon
+  - avg($sessions{kind='hung'}) as sessions_hung
+  - avg($workspaces{kind='all'}) as workspaces_all
+  - avg($workspaces{kind='user'}) as workspaces_user
+  - sum($find{}) as find_inflight
+  - sum($tx{}) as tx_inflight
+  overrides: []
+
+grid_rows:
+- title: Sessions and Workspaces
+  items:
+  - title: Sessions by kind
+    description: Count of active sessions grouped by kind (user/system/anonymous/hung)
+    width: 12
+    height: 28
+    type: chart
+    metrics:
+    - sessions as $sessions
+    query:
+    - avg($sessions{}) as count
+    - group by kind::str
+    properties: []
+    overrides: []
+  - title: Workspaces by kind
+    description: Count of workspaces grouped by kind (all/user/systemonly)
+    width: 12
+    height: 28
+    x_axis: 12
+    type: chart
+    metrics:
+    - workspaces as $workspaces
+    query:
+    - avg($workspaces{}) as count
+    - group by kind::str
+    properties: []
+    overrides: []
+
+- title: Database - find operations
+  items:
+  - title: Find in-flight by domain
+    description: Concurrent findAll operations grouped by domain
+    width: 24
+    height: 28
+    type: chart
+    metrics:
+    - find as $find
+    query:
+    - avg($find{}) as inflight
+    - group by domain::str
+    properties: []
+    overrides: []
+  - title: Find total in-flight
+    description: Total concurrent findAll across all domains
+    width: 12
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - find as $find
+    query:
+    - sum($find{}) as total
+    properties: []
+    overrides: []
+  - title: Find top domains (max)
+    description: Peak concurrency per domain
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 28
+    type: table
+    metrics:
+    - find as $find
+    query:
+    - max($find{}) as peak
+    - group by domain::str
+    properties: []
+    overrides: []
+
+- title: Database - tx operations
+  items:
+  - title: Tx in-flight by domain
+    description: Concurrent tx operations grouped by domain
+    width: 24
+    height: 28
+    type: chart
+    metrics:
+    - tx as $tx
+    query:
+    - avg($tx{}) as inflight
+    - group by domain::str
+    properties: []
+    overrides: []
+  - title: Tx total in-flight
+    width: 12
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - tx as $tx
+    query:
+    - sum($tx{}) as total
+    properties: []
+    overrides: []
+  - title: Tx top domains (max)
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 28
+    type: table
+    metrics:
+    - tx as $tx
+    query:
+    - max($tx{}) as peak
+    - group by domain::str
+    properties: []
+    overrides: []
+
+- title: Database - query latency (histogram)
+  items:
+  - title: Query avg by op
+    description: Avg latency per DB operation type
+    width: 12
+    height: 28
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    - group by op::str
+    properties: []
+    overrides: []
+  - title: Query max by op
+    description: Max latency per DB operation type
+    width: 12
+    height: 28
+    x_axis: 12
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - max($dur{}) as max_ms
+    - group by op::str
+    properties: []
+    overrides: []
+  - title: Query avg by domain
+    description: Avg latency per domain
+    width: 12
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    - group by domain::str
+    properties: []
+    overrides: []
+  - title: Query max by domain
+    description: Max latency per domain
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 28
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - max($dur{}) as max_ms
+    - group by domain::str
+    properties: []
+    overrides: []
+  - title: Query avg (all)
+    description: Overall avg latency
+    width: 12
+    height: 28
+    y_axis: 56
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    properties: []
+    overrides: []
+  - title: Query count by op
+    description: Sample count per op (throughput indicator)
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 56
+    type: chart
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - count($dur{}) as samples
+    - group by op::str
+    properties: []
+    overrides: []
+  - title: Slow ops (max by op+domain)
+    description: Top slow op/domain pairs by max latency
+    width: 24
+    height: 32
+    y_axis: 84
+    type: table
+    metrics:
+    - db_query_duration as $dur
+    query:
+    - max($dur{}) as max_ms
+    - group by op::str
+    - group by domain::str
+    properties: []
+    overrides: []
+
+- title: Request pipeline
+  items:
+  - title: Request in-flight
+    description: Concurrent request handlers in sessionManager
+    width: 12
+    height: 28
+    type: chart
+    metrics:
+    - request as $req
+    query:
+    - avg($req{}) as inflight
+    properties: []
+    overrides: []
+  - title: loadModel in-flight
+    width: 4
+    height: 28
+    x_axis: 12
+    type: chart
+    metrics:
+    - loadModel as $lm
+    query:
+    - avg($lm{}) as loadModel
+    properties: []
+    overrides: []
+  - title: startWorkspace in-flight
+    width: 4
+    height: 28
+    x_axis: 16
+    type: chart
+    metrics:
+    - startWorkspace as $sw
+    query:
+    - avg($sw{}) as startWorkspace
+    properties: []
+    overrides: []
+  - title: addSession in-flight
+    width: 4
+    height: 28
+    x_axis: 20
+    type: chart
+    metrics:
+    - addSession as $as
+    query:
+    - avg($as{}) as addSession
+    properties: []
+    overrides: []
+  - title: clientSendMemory (MB)
+    description: Bytes buffered per client response (rough MB units)
+    width: 24
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - clientSendMemory as $csm
+    query:
+    - avg($csm{}) as avg_mb
+    properties: []
+    overrides: []
+
+- title: Client metrics
+  items:
+  - title: Client tx avg (ms)
+    description: Client-side tx call avg latency
+    width: 12
+    height: 28
+    type: chart
+    metrics:
+    - client_tx_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    properties: []
+    overrides: []
+  - title: Client tx max (ms)
+    description: Client-side tx call max latency
+    width: 12
+    height: 28
+    x_axis: 12
+    type: chart
+    metrics:
+    - client_tx_duration as $dur
+    query:
+    - max($dur{}) as max_ms
+    properties: []
+    overrides: []
+  - title: Client find avg (ms)
+    description: Client-side findAll/findOne avg latency
+    width: 12
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - client_find_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    properties: []
+    overrides: []
+  - title: Client find max (ms)
+    description: Client-side findAll/findOne max latency
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 28
+    type: chart
+    metrics:
+    - client_find_duration as $dur
+    query:
+    - max($dur{}) as max_ms
+    properties: []
+    overrides: []
+  - title: Client find by op
+    description: Avg duration per op
+    width: 12
+    height: 28
+    y_axis: 56
+    type: chart
+    metrics:
+    - client_find_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    - group by op::str
+    properties: []
+    overrides: []
+  - title: Client tx by op
+    description: Avg duration per op
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 56
+    type: chart
+    metrics:
+    - client_tx_duration as $dur
+    query:
+    - avg($dur{}) as avg_ms
+    - group by op::str
+    properties: []
+    overrides: []
+  - title: Client memory used (MB)
+    description: Browser JS heap used
+    width: 8
+    height: 28
+    y_axis: 84
+    type: chart
+    metrics:
+    - client_memory_used_mb as $used
+    query:
+    - avg($used{}) as used_mb
+    properties: []
+    overrides: []
+  - title: Client memory total (MB)
+    description: Browser JS heap total
+    width: 8
+    height: 28
+    x_axis: 8
+    y_axis: 84
+    type: chart
+    metrics:
+    - client_memory_total_mb as $total
+    query:
+    - avg($total{}) as total_mb
+    properties: []
+    overrides: []
+  - title: Client memory limit (MB)
+    description: Browser JS heap limit
+    width: 8
+    height: 28
+    x_axis: 16
+    y_axis: 84
+    type: chart
+    metrics:
+    - client_memory_limit_mb as $limit
+    query:
+    - avg($limit{}) as limit_mb
+    properties: []
+    overrides: []
+
+- title: Network deltas
+  items:
+  - title: msg-receive-delta avg
+    description: Client-to-server message delay avg (ms)
+    width: 12
+    height: 28
+    type: chart
+    metrics:
+    - msg_receive_delta as $rd
+    query:
+    - avg($rd{}) as avg_ms
+    properties: []
+    overrides: []
+  - title: msg-receive-delta max
+    description: Client-to-server message delay max (ms)
+    width: 12
+    height: 28
+    x_axis: 12
+    type: chart
+    metrics:
+    - msg_receive_delta as $rd
+    query:
+    - max($rd{}) as max_ms
+    properties: []
+    overrides: []
+  - title: msg-send-delta avg
+    description: Server send latency avg (ms)
+    width: 12
+    height: 28
+    y_axis: 28
+    type: chart
+    metrics:
+    - msg_send_delta as $sd
+    query:
+    - avg($sd{}) as avg_ms
+    properties: []
+    overrides: []
+  - title: msg-send-delta max
+    description: Server send latency max (ms)
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 28
+    type: chart
+    metrics:
+    - msg_send_delta as $sd
+    query:
+    - max($sd{}) as max_ms
+    properties: []
+    overrides: []
+  - title: receive-data avg (bytes)
+    description: Inbound WS frame avg size
+    width: 12
+    height: 28
+    y_axis: 56
+    type: chart
+    metrics:
+    - receive_data as $rx
+    query:
+    - avg($rx{}) as avg_bytes
+    properties: []
+    overrides: []
+  - title: receive-data max (bytes)
+    description: Inbound WS frame max size
+    width: 12
+    height: 28
+    x_axis: 12
+    y_axis: 56
+    type: chart
+    metrics:
+    - receive_data as $rx
+    query:
+    - max($rx{}) as max_bytes
+    properties: []
+    overrides: []

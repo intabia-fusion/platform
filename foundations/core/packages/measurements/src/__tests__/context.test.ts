@@ -140,6 +140,37 @@ describe('context', () => {
       expect(metrics.measurements['#custom'].value).toBe(100)
     })
 
+    it('should measure with labels object', () => {
+      const metrics = newMetrics()
+      const ctx = new MeasureMetricsContext('test', {}, {}, metrics, logger)
+
+      ctx.measure('db.find', 5, { domain: 'tx' })
+
+      expect(metrics.measurements['#db.find']).toBeDefined()
+      expect(metrics.measurements['#db.find'].value).toBe(5)
+      expect(metrics.measurements['#db.find'].namedParams).toEqual({ domain: 'tx' })
+    })
+
+    it('should measure with labels and override flag', () => {
+      const metrics = newMetrics()
+      const ctx = new MeasureMetricsContext('test', {}, {}, metrics, logger)
+
+      ctx.measure('gauge', 10, { kind: 'user' }, true)
+      ctx.measure('gauge', 3, { kind: 'user' }, true)
+
+      // override writes to metrics.operations (gauge-style)
+      expect(metrics.measurements['#gauge'].operations).toBe(3)
+    })
+
+    it('should treat boolean in third arg as override (back-compat)', () => {
+      const metrics = newMetrics()
+      const ctx = new MeasureMetricsContext('test', {}, {}, metrics, logger)
+
+      ctx.measure('legacy', 7, true)
+      ctx.measure('legacy', 4, true)
+      expect(metrics.measurements['#legacy'].operations).toBe(4)
+    })
+
     it('should log info messages', () => {
       const mockLogger: MeasureLogger = {
         info: jest.fn(),
@@ -282,6 +313,66 @@ describe('context', () => {
       const params = ctx.getParams()
 
       expect(params).toEqual({})
+    })
+  })
+
+  describe('with metric option', () => {
+    it('records duration histogram for async op', async () => {
+      const metrics = newMetrics()
+      const ctx = new MeasureMetricsContext('root', {}, {}, metrics)
+      const spy = jest.spyOn(ctx, 'recordDuration')
+
+      await ctx.with('findAll', { domain: 'tx' }, async () => 'ok', undefined, { metric: 'db.query.duration' })
+
+      expect(spy).toHaveBeenCalledTimes(1)
+      const [name, ms, labels] = spy.mock.calls[0]
+      expect(name).toBe('db.query.duration')
+      expect(typeof ms).toBe('number')
+      expect(ms).toBeGreaterThanOrEqual(0)
+      expect(labels).toEqual({ op: 'findAll', domain: 'tx' })
+    })
+
+    it('records duration histogram for sync-returning op', async () => {
+      const ctx = new MeasureMetricsContext('root', {}, {}, newMetrics())
+      const spy = jest.spyOn(ctx, 'recordDuration')
+
+      await ctx.with('quick', { domain: 'space' }, () => 42, undefined, { metric: 'db.query.duration' })
+
+      // sync path resolves via Promise.resolve, metric recorded in finally
+      expect(spy).toHaveBeenCalledWith(
+        'db.query.duration',
+        expect.any(Number),
+        expect.objectContaining({ op: 'quick', domain: 'space' })
+      )
+    })
+
+    it('records duration on error', async () => {
+      const ctx = new MeasureMetricsContext('root', {}, {}, newMetrics())
+      const spy = jest.spyOn(ctx, 'recordDuration')
+
+      await expect(
+        ctx.with(
+          'failing',
+          { domain: 'x' },
+          async () => {
+            throw new Error('boom')
+          },
+          undefined,
+          { metric: 'db.query.duration' }
+        )
+      ).rejects.toThrow('boom')
+
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy.mock.calls[0][2]).toEqual({ op: 'failing', domain: 'x' })
+    })
+
+    it('does not record without metric option', async () => {
+      const ctx = new MeasureMetricsContext('root', {}, {}, newMetrics())
+      const spy = jest.spyOn(ctx, 'recordDuration')
+
+      await ctx.with('noMetric', {}, async () => 'ok')
+
+      expect(spy).not.toHaveBeenCalled()
     })
   })
 

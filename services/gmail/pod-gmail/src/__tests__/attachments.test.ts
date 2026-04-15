@@ -37,6 +37,7 @@ describe('AttachmentHandler', () => {
       close: jest.fn()
     },
     measure: jest.fn(),
+    recordDuration: jest.fn(),
     error: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),

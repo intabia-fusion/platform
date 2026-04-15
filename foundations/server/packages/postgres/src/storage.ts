@@ -209,6 +209,8 @@ class ValuesVariables {
   }
 }
 
+const DB_QUERY_DURATION = 'db.query.duration'
+
 abstract class PostgresAdapterBase implements DbAdapter {
   protected readonly _helper: DBCollectionHelper
   protected readonly tableFields = new Map<string, string[]>()
@@ -459,12 +461,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
   ): Promise<FindResult<T>> {
     let fquery: any = ''
     const vars = new ValuesVariables()
+    const domain = translateDomain(this.hierarchy.getDomain(_class))
     return ctx.with(
       'findAll',
-      {},
+      { domain },
       async () => {
         try {
-          const domain = translateDomain(this.hierarchy.getDomain(_class))
           const sqlChunks: string[] = []
 
           const joins = this.buildJoins<T>(_class, options)
@@ -571,7 +573,8 @@ abstract class PostgresAdapterBase implements DbAdapter {
           .replace(/(FROM|WHERE|ORDER BY|GROUP BY|LIMIT|OFFSET|LEFT JOIN|RIGHT JOIN|INNER JOIN|JOIN)/gi, '\n$1')
           .split('\n'),
         sql: vars.injectVars(fquery)
-      })
+      }),
+      { metric: DB_QUERY_DURATION }
     )
   }
 
@@ -1565,7 +1568,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           bulk = createBulk('_id, "%hash%"')
         }
 
-        const docs = await ctx.with('next', {}, () => bulk.next())
+        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1618,7 +1621,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           bulk = createBulk('*')
         }
 
-        const docs = await ctx.with('next', {}, () => bulk.next())
+        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1635,67 +1638,79 @@ abstract class PostgresAdapterBase implements DbAdapter {
   }
 
   load (ctx: MeasureContext, domain: Domain, docs: Ref<Doc>[]): Promise<Doc[]> {
-    return ctx.with('load', { domain }, async () => {
-      if (docs.length === 0) {
-        return []
-      }
+    return ctx.with(
+      'load',
+      { domain },
+      async () => {
+        if (docs.length === 0) {
+          return []
+        }
 
-      return await this.mgr.retry('', this.mgrId, async (client) => {
-        const res = await client.execute(
-          `SELECT *
+        return await this.mgr.retry('', this.mgrId, async (client) => {
+          const res = await client.execute(
+            `SELECT *
           FROM ${translateDomain(domain)}
           WHERE "workspaceId" = $1::uuid
                     AND _id = ANY($2::text[])`,
-          [this.workspaceId, docs]
-        )
-        return res.map((p) => parseDocWithProjection(p, domain))
-      })
-    })
+            [this.workspaceId, docs]
+          )
+          return res.map((p) => parseDocWithProjection(p, domain))
+        })
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
   }
 
   upload (ctx: MeasureContext, domain: Domain, docs: Doc[], handleConflicts: boolean = true): Promise<void> {
-    return ctx.with('upload', { domain }, async (ctx) => {
-      const schemaFields = getSchemaAndFields(domain)
-      const filedsWithData = [...schemaFields.fields, 'data']
+    return ctx.with(
+      'upload',
+      { domain },
+      async (ctx) => {
+        const schemaFields = getSchemaAndFields(domain)
+        const filedsWithData = [...schemaFields.fields, 'data']
 
-      const insertFields = filedsWithData.map((field) => `"${field}"`)
-      const onConflict = handleConflicts ? filedsWithData.map((field) => `"${field}" = EXCLUDED."${field}"`) : []
+        const insertFields = filedsWithData.map((field) => `"${field}"`)
+        const onConflict = handleConflicts ? filedsWithData.map((field) => `"${field}" = EXCLUDED."${field}"`) : []
 
-      const insertStr = insertFields.join(', ')
-      const onConflictStr = onConflict.join(', ')
+        const insertStr = insertFields.join(', ')
+        const onConflictStr = onConflict.join(', ')
 
-      try {
-        const tdomain = translateDomain(domain)
-        const batchSize = 200
-        for (let i = 0; i < docs.length; i += batchSize) {
-          const part = docs.slice(i, i + batchSize)
-          const values = new ValuesVariables()
-          const vars: string[] = []
-          const wsId = values.add(this.workspaceId, '::uuid')
-          for (const doc of part) {
-            if (!('%hash%' in doc) || doc['%hash%'] === '' || doc['%hash%'] == null) {
-              ;(doc as any)['%hash%'] = this.curHash() // We need to set current hash
+        try {
+          const tdomain = translateDomain(domain)
+          const batchSize = 200
+          for (let i = 0; i < docs.length; i += batchSize) {
+            const part = docs.slice(i, i + batchSize)
+            const values = new ValuesVariables()
+            const vars: string[] = []
+            const wsId = values.add(this.workspaceId, '::uuid')
+            for (const doc of part) {
+              if (!('%hash%' in doc) || doc['%hash%'] === '' || doc['%hash%'] == null) {
+                ;(doc as any)['%hash%'] = this.curHash() // We need to set current hash
+              }
+              const d = convertDoc(domain, doc, this.workspaceId, schemaFields)
+              const variables = [
+                wsId,
+                ...schemaFields.fields.map((field) => values.add(d[field], `::${schemaFields.schema[field].type}`)),
+                values.add(d.data, '::json')
+              ]
+              vars.push(`(${variables.join(', ')})`)
             }
-            const d = convertDoc(domain, doc, this.workspaceId, schemaFields)
-            const variables = [
-              wsId,
-              ...schemaFields.fields.map((field) => values.add(d[field], `::${schemaFields.schema[field].type}`)),
-              values.add(d.data, '::json')
-            ]
-            vars.push(`(${variables.join(', ')})`)
-          }
 
-          const vals = vars.join(',')
-          const query = `INSERT INTO ${tdomain} ("workspaceId", ${insertStr}) VALUES ${vals} ${
-            handleConflicts ? `ON CONFLICT ("workspaceId", _id) DO UPDATE SET ${onConflictStr}` : ''
-          };`
-          await this.mgr.retry(ctx.id, this.mgrId, async (client) => await client.execute(query, values.getValues()))
+            const vals = vars.join(',')
+            const query = `INSERT INTO ${tdomain} ("workspaceId", ${insertStr}) VALUES ${vals} ${
+              handleConflicts ? `ON CONFLICT ("workspaceId", _id) DO UPDATE SET ${onConflictStr}` : ''
+            };`
+            await this.mgr.retry(ctx.id, this.mgrId, async (client) => await client.execute(query, values.getValues()))
+          }
+        } catch (err: any) {
+          ctx.error('failed to upload', { err })
+          throw err
         }
-      } catch (err: any) {
-        ctx.error('failed to upload', { err })
-        throw err
-      }
-    })
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
   }
 
   async clean (ctx: MeasureContext, domain: Domain, docs: Ref<Doc>[]): Promise<void> {
@@ -1705,10 +1720,16 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
     for (let i = 0; i < docs.length; i += batchSize) {
       const part = docs.slice(i, i + batchSize)
-      await ctx.with('clean', {}, () => {
-        const params = [this.workspaceId, part]
-        return this.mgr.retry(ctx.id, this.mgrId, (client) => client.execute(query, params))
-      })
+      await ctx.with(
+        'clean',
+        { domain },
+        () => {
+          const params = [this.workspaceId, part]
+          return this.mgr.retry(ctx.id, this.mgrId, (client) => client.execute(query, params))
+        },
+        undefined,
+        { metric: DB_QUERY_DURATION }
+      )
     }
   }
 
@@ -1719,27 +1740,36 @@ abstract class PostgresAdapterBase implements DbAdapter {
     query?: DocumentQuery<P>
   ): Promise<Map<T, number>> {
     const key = isDataField(domain, field) ? `data ->> '${field}'` : `"${field}"`
-    return ctx.with('groupBy', { domain }, async (ctx) => {
-      try {
-        const vars = new ValuesVariables()
-        const sqlChunks: string[] = [
-          `SELECT ${key} as _${field}, Count(*) AS count`,
-          `FROM ${translateDomain(domain)}`,
-          `WHERE ${this.buildRawQuery(vars, domain, query ?? {})}`,
-          `GROUP BY _${field}`
-        ]
-        const finalSql = sqlChunks.join(' ')
-        return await this.mgr.retry(ctx.id, this.mgrId, async (connection) => {
-          const result = await connection.execute(finalSql, vars.getValues())
-          return new Map(
-            result.map((r) => [r[`_${field.toLowerCase()}`], typeof r.count === 'string' ? parseInt(r.count) : r.count])
-          )
-        })
-      } catch (err) {
-        ctx.error('Error while grouping by', { domain, field })
-        throw err
-      }
-    })
+    return ctx.with(
+      'groupBy',
+      { domain },
+      async (ctx) => {
+        try {
+          const vars = new ValuesVariables()
+          const sqlChunks: string[] = [
+            `SELECT ${key} as _${field}, Count(*) AS count`,
+            `FROM ${translateDomain(domain)}`,
+            `WHERE ${this.buildRawQuery(vars, domain, query ?? {})}`,
+            `GROUP BY _${field}`
+          ]
+          const finalSql = sqlChunks.join(' ')
+          return await this.mgr.retry(ctx.id, this.mgrId, async (connection) => {
+            const result = await connection.execute(finalSql, vars.getValues())
+            return new Map(
+              result.map((r) => [
+                r[`_${field.toLowerCase()}`],
+                typeof r.count === 'string' ? parseInt(r.count) : r.count
+              ])
+            )
+          })
+        } catch (err) {
+          ctx.error('Error while grouping by', { domain, field })
+          throw err
+        }
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
   }
 
   @withContext('insert')
@@ -1824,34 +1854,40 @@ export class PostgresAdapter extends PostgresAdapterBase {
   }
 
   private async txMixin (ctx: MeasureContext, tx: TxMixin<Doc, Doc>, schemaFields: SchemaAndFields): Promise<TxResult> {
-    await ctx.with('tx-mixin', { domain: this.hierarchy.findDomain(tx.objectClass) }, async (ctx) => {
-      await this.mgr.write(ctx.id, this.mgrId, async (client) => {
-        const doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
-        if (doc === undefined) return
-        TxProcessor.updateMixin4Doc(doc, tx)
-        ;(doc as any)['%hash%'] = this.curHash()
-        const domain = this.hierarchy.getDomain(tx.objectClass)
-        const converted = convertDoc(domain, doc, this.workspaceId, schemaFields)
-        const { extractedFields } = parseUpdate(tx.attributes as Partial<Doc>, schemaFields)
+    await ctx.with(
+      'tx-mixin',
+      { domain: this.hierarchy.findDomain(tx.objectClass) },
+      async (ctx) => {
+        await this.mgr.write(ctx.id, this.mgrId, async (client) => {
+          const doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
+          if (doc === undefined) return
+          TxProcessor.updateMixin4Doc(doc, tx)
+          ;(doc as any)['%hash%'] = this.curHash()
+          const domain = this.hierarchy.getDomain(tx.objectClass)
+          const converted = convertDoc(domain, doc, this.workspaceId, schemaFields)
+          const { extractedFields } = parseUpdate(tx.attributes as Partial<Doc>, schemaFields)
 
-        const params = new ValuesVariables()
+          const params = new ValuesVariables()
 
-        const wsId = params.add(this.workspaceId, '::uuid')
-        const oId = params.add(tx.objectId, '::text')
-        const updates: string[] = []
-        for (const key of new Set([...Object.keys(extractedFields), ...['modifiedOn', 'modifiedBy', '%hash%']])) {
-          const val = (doc as any)[key]
-          updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
-        }
-        updates.push(`data = ${params.add(converted.data, '::json')}`)
-        await client.execute(
-          `UPDATE ${translateDomain(domain)}
+          const wsId = params.add(this.workspaceId, '::uuid')
+          const oId = params.add(tx.objectId, '::text')
+          const updates: string[] = []
+          for (const key of new Set([...Object.keys(extractedFields), ...['modifiedOn', 'modifiedBy', '%hash%']])) {
+            const val = (doc as any)[key]
+            updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
+          }
+          updates.push(`data = ${params.add(converted.data, '::json')}`)
+          await client.execute(
+            `UPDATE ${translateDomain(domain)}
           SET ${updates.join(', ')}
           WHERE "workspaceId" = ${wsId} AND _id = ${oId}`,
-          params.getValues()
-        )
-      })
-    })
+            params.getValues()
+          )
+        })
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
     return {}
   }
 
@@ -1925,43 +1961,49 @@ export class PostgresAdapter extends PostgresAdapterBase {
       let doc: Doc | undefined
       const ops: any = { '%hash%': this.curHash(), ...tx.operations }
       result.push(
-        await ctx.with('tx-update-doc', { domain: this.hierarchy.findDomain(tx.objectClass) }, async (ctx) => {
-          await this.mgr.write(ctx.id, this.mgrId, async (client) => {
-            doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
-            if (doc === undefined) return {}
-            ops.modifiedBy = tx.modifiedBy
-            ops.modifiedOn = tx.modifiedOn
-            TxProcessor.applyUpdate(doc, ops)
-            ;(doc as any)['%hash%'] = this.curHash()
-            const converted = convertDoc(domain, doc, this.workspaceId, schemaFields)
-            const updates: string[] = []
-            const params = new ValuesVariables()
+        await ctx.with(
+          'tx-update-doc',
+          { domain: this.hierarchy.findDomain(tx.objectClass) },
+          async (ctx) => {
+            await this.mgr.write(ctx.id, this.mgrId, async (client) => {
+              doc = await this.findDoc(ctx, client, tx.objectClass, tx.objectId, true)
+              if (doc === undefined) return {}
+              ops.modifiedBy = tx.modifiedBy
+              ops.modifiedOn = tx.modifiedOn
+              TxProcessor.applyUpdate(doc, ops)
+              ;(doc as any)['%hash%'] = this.curHash()
+              const converted = convertDoc(domain, doc, this.workspaceId, schemaFields)
+              const updates: string[] = []
+              const params = new ValuesVariables()
 
-            const { extractedFields, remainingData } = parseUpdate(ops, schemaFields)
+              const { extractedFields, remainingData } = parseUpdate(ops, schemaFields)
 
-            const wsId = params.add(this.workspaceId, '::uuid')
-            const oId = params.add(tx.objectId, '::text')
+              const wsId = params.add(this.workspaceId, '::uuid')
+              const oId = params.add(tx.objectId, '::text')
 
-            for (const key of new Set([...Object.keys(extractedFields), ...['modifiedOn', 'modifiedBy', '%hash%']])) {
-              const val = (doc as any)[key]
-              updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
-            }
-            if (Object.keys(remainingData).length > 0) {
-              updates.push(`data = ${params.add(converted.data, '::json')}`)
-            }
-            await client.execute(
-              `UPDATE ${tdomain}
+              for (const key of new Set([...Object.keys(extractedFields), ...['modifiedOn', 'modifiedBy', '%hash%']])) {
+                const val = (doc as any)[key]
+                updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
+              }
+              if (Object.keys(remainingData).length > 0) {
+                updates.push(`data = ${params.add(converted.data, '::json')}`)
+              }
+              await client.execute(
+                `UPDATE ${tdomain}
               SET ${updates.join(', ')}
               WHERE "workspaceId" = ${wsId}
                 AND _id = ${oId}`,
-              params.getValues()
-            )
-          })
-          if (tx.retrieve === true && doc !== undefined) {
-            return { object: doc }
-          }
-          return {}
-        })
+                params.getValues()
+              )
+            })
+            if (tx.retrieve === true && doc !== undefined) {
+              return { object: doc }
+            }
+            return {}
+          },
+          undefined,
+          { metric: DB_QUERY_DURATION }
+        )
       )
     }
     if ((withoutOperator ?? [])?.length > 0) {
@@ -1976,91 +2018,99 @@ export class PostgresAdapter extends PostgresAdapterBase {
     txes: TxUpdateDoc<T>[],
     schemaFields: SchemaAndFields
   ): Promise<TxResult[]> {
-    return ctx.with('update jsonb_set', {}, async (_ctx) => {
-      const operations: {
-        objectClass: Ref<Class<Doc>>
-        objectId: Ref<Doc>
-        updates: string[]
-        fields: string[]
-        params: any[]
-        retrieve: boolean
-      }[] = []
+    return ctx.with(
+      'update jsonb_set',
+      { domain },
+      async (_ctx) => {
+        const operations: {
+          objectClass: Ref<Class<Doc>>
+          objectId: Ref<Doc>
+          updates: string[]
+          fields: string[]
+          params: any[]
+          retrieve: boolean
+        }[] = []
 
-      for (const tx of txes) {
-        const fields: string[] = ['modifiedBy', 'modifiedOn', '%hash%']
-        const updates: string[] = ['"modifiedBy" = $2', '"modifiedOn" = $3', '"%hash%" = $4']
-        const params: any[] = [tx.modifiedBy, tx.modifiedOn, this.curHash()]
-        let paramsIndex = params.length
-        const { extractedFields, remainingData } = parseUpdate(tx.operations, schemaFields)
-        const { space, attachedTo, ...ops } = tx.operations as any
-        for (const key in extractedFields) {
-          fields.push(key)
-          updates.push(`"${key}" = $${paramsIndex++}`)
-          params.push((extractedFields as any)[key])
-        }
-        if (Object.keys(remainingData).length > 0) {
-          const jsonData: Record<string, any> = {}
-          // const vals: string[] = []
-          for (const key in remainingData) {
-            if (ops[key] === undefined) continue
-            const val = (remainingData as any)[key]
-            jsonData[key] = val
+        for (const tx of txes) {
+          const fields: string[] = ['modifiedBy', 'modifiedOn', '%hash%']
+          const updates: string[] = ['"modifiedBy" = $2', '"modifiedOn" = $3', '"%hash%" = $4']
+          const params: any[] = [tx.modifiedBy, tx.modifiedOn, this.curHash()]
+          let paramsIndex = params.length
+          const { extractedFields, remainingData } = parseUpdate(tx.operations, schemaFields)
+          const { space, attachedTo, ...ops } = tx.operations as any
+          for (const key in extractedFields) {
+            fields.push(key)
+            updates.push(`"${key}" = $${paramsIndex++}`)
+            params.push((extractedFields as any)[key])
           }
-          fields.push('data')
-          params.push(jsonData)
-          updates.push(`data = COALESCE(data || $${paramsIndex++}::jsonb)`)
-        }
-        operations.push({
-          objectClass: tx.objectClass,
-          objectId: tx.objectId,
-          updates,
-          fields,
-          params,
-          retrieve: tx.retrieve ?? false
-        })
-      }
-      const tdomain = translateDomain(domain)
-      const result: TxResult[] = []
-      try {
-        const schema = getSchema(domain)
-        const groupedUpdates = groupByArray(operations, (it) => it.fields.join(','))
-        for (const groupedOps of groupedUpdates.values()) {
-          for (let i = 0; i < groupedOps.length; i += 200) {
-            const part = groupedOps.slice(i, i + 200)
-            let idx = 1
-            const indexes: string[] = []
-            const data: any[] = []
-            data.push(this.workspaceId)
-            for (const op of part) {
-              indexes.push(
-                `($${++idx}::${schema._id.type ?? 'text'}, ${op.fields.map((it) => (it === 'data' ? `$${++idx}::jsonb` : `$${++idx}::${schema[it].type ?? 'text'}`)).join(',')})`
-              )
-              data.push(op.objectId)
-              data.push(...op.params)
+          if (Object.keys(remainingData).length > 0) {
+            const jsonData: Record<string, any> = {}
+            // const vals: string[] = []
+            for (const key in remainingData) {
+              if (ops[key] === undefined) continue
+              const val = (remainingData as any)[key]
+              jsonData[key] = val
             }
-            const op = `UPDATE ${tdomain} SET ${part[0].fields.map((it) => (it === 'data' ? 'data = COALESCE(data || update_data._data)' : `"${it}" = update_data."_${it}"`)).join(', ')}
+            fields.push('data')
+            params.push(jsonData)
+            updates.push(`data = COALESCE(data || $${paramsIndex++}::jsonb)`)
+          }
+          operations.push({
+            objectClass: tx.objectClass,
+            objectId: tx.objectId,
+            updates,
+            fields,
+            params,
+            retrieve: tx.retrieve ?? false
+          })
+        }
+        const tdomain = translateDomain(domain)
+        const result: TxResult[] = []
+        try {
+          const schema = getSchema(domain)
+          const groupedUpdates = groupByArray(operations, (it) => it.fields.join(','))
+          for (const groupedOps of groupedUpdates.values()) {
+            for (let i = 0; i < groupedOps.length; i += 200) {
+              const part = groupedOps.slice(i, i + 200)
+              let idx = 1
+              const indexes: string[] = []
+              const data: any[] = []
+              data.push(this.workspaceId)
+              for (const op of part) {
+                indexes.push(
+                  `($${++idx}::${schema._id.type ?? 'text'}, ${op.fields.map((it) => (it === 'data' ? `$${++idx}::jsonb` : `$${++idx}::${schema[it].type ?? 'text'}`)).join(',')})`
+                )
+                data.push(op.objectId)
+                data.push(...op.params)
+              }
+              const op = `UPDATE ${tdomain} SET ${part[0].fields.map((it) => (it === 'data' ? 'data = COALESCE(data || update_data._data)' : `"${it}" = update_data."_${it}"`)).join(', ')}
             FROM (values ${indexes.join(',')}) AS update_data(__id, ${part[0].fields.map((it) => `"_${it}"`).join(',')})
             WHERE "workspaceId" = $1::uuid AND "_id" = update_data.__id`
 
-            await this.mgr.retry(ctx.id, this.mgrId, (client) =>
-              _ctx.with('bulk-update', {}, () => client.execute(op, data))
-            )
-          }
-        }
-        const toRetrieve = operations.filter((it) => it.retrieve)
-        if (toRetrieve.length > 0) {
-          await this.mgr.retry(ctx.id, this.mgrId, async (client) => {
-            for (const op of toRetrieve) {
-              const object = await this.findDoc(_ctx, client, op.objectClass, op.objectId)
-              result.push({ object })
+              await this.mgr.retry(ctx.id, this.mgrId, (client) =>
+                _ctx.with('bulk-update', { domain }, () => client.execute(op, data), undefined, {
+                  metric: DB_QUERY_DURATION
+                })
+              )
             }
-          })
+          }
+          const toRetrieve = operations.filter((it) => it.retrieve)
+          if (toRetrieve.length > 0) {
+            await this.mgr.retry(ctx.id, this.mgrId, async (client) => {
+              for (const op of toRetrieve) {
+                const object = await this.findDoc(_ctx, client, op.objectClass, op.objectId)
+                result.push({ object })
+              }
+            })
+          }
+        } catch (err: any) {
+          ctx.error('failed to update docs', { err })
         }
-      } catch (err: any) {
-        ctx.error('failed to update docs', { err })
-      }
-      return result
-    })
+        return result
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
   }
 
   private findDoc (
@@ -2071,16 +2121,22 @@ export class PostgresAdapter extends PostgresAdapterBase {
     forUpdate: boolean = false
   ): Promise<Doc | undefined> {
     const domain = this.hierarchy.getDomain(_class)
-    return ctx.with('find-doc', { domain }, async () => {
-      const res = await client.execute(
-        `SELECT * FROM "${translateDomain(domain)}" WHERE "workspaceId" = $1::uuid AND _id = $2::text ${
-          forUpdate ? ' FOR UPDATE' : ''
-        }`,
-        [this.workspaceId, _id]
-      )
-      const dbDoc = res[0]
-      return dbDoc !== undefined ? parseDoc(dbDoc, getSchema(domain)) : undefined
-    })
+    return ctx.with(
+      'find-doc',
+      { domain },
+      async () => {
+        const res = await client.execute(
+          `SELECT * FROM "${translateDomain(domain)}" WHERE "workspaceId" = $1::uuid AND _id = $2::text ${
+            forUpdate ? ' FOR UPDATE' : ''
+          }`,
+          [this.workspaceId, _id]
+        )
+        const dbDoc = res[0]
+        return dbDoc !== undefined ? parseDoc(dbDoc, getSchema(domain)) : undefined
+      },
+      undefined,
+      { metric: DB_QUERY_DURATION }
+    )
   }
 }
 

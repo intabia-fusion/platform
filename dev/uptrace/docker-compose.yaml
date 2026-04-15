@@ -6,7 +6,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1024M
+          memory: 2024M
     ulimits:
       nofile:
         soft: 262144
@@ -65,7 +65,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 1024M
     volumes:
       - ./uptrace.yaml:/etc/uptrace/config.yml
     environment:
