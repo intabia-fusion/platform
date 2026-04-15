@@ -14,6 +14,7 @@ import account, {
   cleanExpiredOtp,
   accountPlugin,
   type AccountNotification,
+  type CrmNotification,
   initRegionConfig
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
@@ -101,6 +102,9 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
+
+  const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
+  setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
 
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
@@ -226,6 +230,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       if (['internal', 'external'].includes(val)) {
         meta.clientNetworkPosition = val as ClientNetworkPosition
       }
+    }
+
+    if (headers?.cookie !== undefined) {
+      meta.cookies = headers.cookie
     }
 
     return meta
@@ -491,6 +499,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const close = (): void => {
     onClose?.()
     void notificationProducer.close()
+    void crmProducer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

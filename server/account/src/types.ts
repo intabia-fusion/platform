@@ -501,6 +501,7 @@ export type ClientNetworkPosition = 'internal' | 'external'
 export interface Meta {
   timezone?: string
   clientNetworkPosition?: ClientNetworkPosition
+  cookies?: string
 }
 
 export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, Person {
