@@ -289,7 +289,7 @@ describe('Server Provider for Client Distribution', () => {
 
       // Simulate delay
       mockServer.binaryRequest.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await new Promise((resolve) => setTimeout(resolve, 50))
         return { text: 'result', language: 'en' }
       })
 
@@ -297,7 +297,8 @@ describe('Server Provider for Client Distribution', () => {
       await mockServer.binaryRequest(mockCtx, 'transcribe', audioData, { options: { audioFormat: 'ogg' } }, () => true)
       const duration = Date.now() - startTime
 
-      expect(duration).toBeGreaterThanOrEqual(10)
+      // Allow small timer slop across platforms
+      expect(duration).toBeGreaterThanOrEqual(45)
     })
   })
 
