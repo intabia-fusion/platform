@@ -21,7 +21,11 @@
       "Bash(docker compose:*)",
       "Bash(rush build:*)",
       "Bash(rush fast-build:validate)",
-      "Bash(rush fast-build:lint)"
+      "Bash(rush fast-build:lint)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep:*)",
+      "Bash(git show:*)",
+      "Bash(docker image inspect:*)"
     ]
   },
   "outputStyle": "default"

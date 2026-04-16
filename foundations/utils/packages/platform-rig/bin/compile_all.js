@@ -13,7 +13,7 @@ const { success, error, warn, info, dim, bold, colorizeErrorMessage } = require(
 const { runTranspilePhase } = require('./phases/transpile')
 const { runBundlePhase } = require('./phases/bundle-phase')
 const { runPackagePhase } = require('./phases/package')
-const { runDockerBuildPhase } = require('./phases/docker-build')
+const { runDockerBuildPhase, preloadDockerImages, getDockerImageName } = require('./phases/docker-build')
 const { runFormatPhase } = require('./phases/format')
 const { runLintPhase } = require('./phases/lint')
 const { runTestPhase } = require('./phases/test')
@@ -425,6 +425,25 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
 async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToDockerBuild, graph, buildWorkers, force, packageHashes) {
   const taskQueue = new BuildTaskQueue(graph, { concurrency: buildWorkers })
 
+  // Preload docker image metadata in a single `docker inspect` call
+  // instead of spawning 2 docker processes per package later.
+  let dockerImageCache = null
+  if (packagesToDockerBuild.length > 0 && !force) {
+    const imageNames = []
+    for (const pkg of packagesToDockerBuild) {
+      const node = graph.get(pkg)
+      if (!node) continue
+      const name = getDockerImageName(node.project.fullPath)
+      if (name) imageNames.push(name)
+    }
+    if (imageNames.length > 0) {
+      const preloadStart = performance.now()
+      dockerImageCache = await preloadDockerImages(imageNames)
+      const preloadTime = Math.round(performance.now() - preloadStart)
+      console.log(`    [docker-build] preloaded ${imageNames.length} image states in ${preloadTime}ms`)
+    }
+  }
+
   if (packagesToBundle.length > 0) {
     taskQueue.addTasks(TaskType.BUNDLE, packagesToBundle)
   }
@@ -522,7 +541,7 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
           }
 
           case TaskType.DOCKER_BUILD: {
-            result = await runDockerBuildPhase(graph, [packageName], 1, { force, packageHash })
+            result = await runDockerBuildPhase(graph, [packageName], 1, { force, packageHash, imageCache: dockerImageCache })
             completedCount.dockerBuild++
             if (result.successCount > 0) {
               results.dockerBuild.successCount++

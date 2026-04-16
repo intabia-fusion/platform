@@ -48,61 +48,84 @@ function getDockerImageName(cwd) {
 }
 
 /**
- * Check if docker image exists with matching hash label
- * Returns: { exists: boolean, hashMatch: boolean }
+ * Preload docker image info for a batch of images in a single `docker inspect` call.
+ * Returns Map<imageName, { exists: boolean, hash: string|null }>.
+ * Images not present in docker are returned as { exists: false, hash: null }.
  */
-async function checkDockerImage(imageName, packageHash) {
+async function preloadDockerImages(imageNames) {
+  const cache = new Map()
+  const unique = Array.from(new Set(imageNames.filter(Boolean)))
+  for (const name of unique) {
+    cache.set(name, { exists: false, hash: null })
+  }
+  if (unique.length === 0) return cache
+
   return new Promise((resolve) => {
-    const child = spawn('docker', ['images', '--format', '{{.Repository}}:{{.Tag}}', imageName + ':latest'], {
+    const refs = unique.map(n => n + ':latest')
+    // Image may carry multiple tags; emit all tags joined by space, then hash.
+    const fmt = '{{range .RepoTags}}{{.}} {{end}}\t{{index .Config.Labels "PACKAGE_HASH"}}'
+    const child = spawn('docker', ['image', 'inspect', '--format', fmt, ...refs], {
       stdio: ['pipe', 'pipe', 'pipe']
     })
 
     let stdout = ''
-    child.stdout?.on('data', (data) => {
-      stdout += data.toString()
+    child.stdout?.on('data', (data) => { stdout += data.toString() })
+    child.stderr?.on('data', () => {}) // swallow "No such image" errors
+
+    child.on('close', () => {
+      for (const line of stdout.split('\n')) {
+        const trimmed = line.trim()
+        if (!trimmed) continue
+        const [repoTagsStr, hash] = trimmed.split('\t')
+        if (!repoTagsStr) continue
+        const cleanHash = hash && hash !== '<no value>' ? hash : null
+        for (const tag of repoTagsStr.trim().split(/\s+/)) {
+          const name = tag.replace(/:[^:]*$/, '')
+          if (cache.has(name)) {
+            cache.set(name, { exists: true, hash: cleanHash })
+          }
+        }
+      }
+      resolve(cache)
     })
 
+    child.on('error', () => resolve(cache))
+  })
+}
+
+/**
+ * Check if docker image exists with matching hash label.
+ * Uses preloaded imageCache when available to avoid per-package docker calls.
+ */
+async function checkDockerImage(imageName, packageHash, imageCache) {
+  if (imageCache && imageCache.has(imageName)) {
+    const entry = imageCache.get(imageName)
+    return { exists: entry.exists, hashMatch: entry.exists && entry.hash === packageHash }
+  }
+  // Fallback: single inspect call
+  return new Promise((resolve) => {
+    const fmt = '{{index .Config.Labels "PACKAGE_HASH"}}'
+    const child = spawn('docker', ['image', 'inspect', '-f', fmt, imageName + ':latest'], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    })
+    let stdout = ''
+    let stderr = ''
+    child.stdout?.on('data', (d) => { stdout += d.toString() })
+    child.stderr?.on('data', (d) => { stderr += d.toString() })
     child.on('close', (code) => {
-      if (code !== 0 || !stdout.trim()) {
+      if (code !== 0) {
         resolve({ exists: false, hashMatch: false })
         return
       }
-
-      // Image exists, check PACKAGE_HASH label
-      const inspectChild = spawn('docker', ['inspect', '-f', '{{index .Config.Labels "PACKAGE_HASH"}}', imageName + ':latest'], {
-        stdio: ['pipe', 'pipe', 'pipe']
-      })
-
-      let labelOutput = ''
-      inspectChild.stdout?.on('data', (data) => {
-        labelOutput += data.toString().trim()
-      })
-
-      inspectChild.on('close', (inspectCode) => {
-        if (inspectCode !== 0 || !labelOutput) {
-          // Can't get label, assume hash doesn't match
-          resolve({ exists: true, hashMatch: false })
-          return
-        }
-
-        const imageHash = labelOutput
-        const hashMatch = imageHash === packageHash
-        resolve({ exists: true, hashMatch })
-      })
-
-      inspectChild.on('error', () => {
-        resolve({ exists: true, hashMatch: false })
-      })
+      const imageHash = stdout.trim()
+      resolve({ exists: true, hashMatch: imageHash === packageHash && !!imageHash })
     })
-
-    child.on('error', () => {
-      resolve({ exists: false, hashMatch: false })
-    })
+    child.on('error', () => resolve({ exists: false, hashMatch: false }))
   })
 }
 
 async function runDockerBuildPhase(graph, packageNames, concurrency, options = {}) {
-  const { force = false, packageHash } = options
+  const { force = false, packageHash, imageCache } = options
 
   // Check if Docker is available
   if (!isDockerAvailable()) {
@@ -127,7 +150,7 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
 
     // Check cache: image must exist with matching hash and phase must be cached
     if (!force && packageHash && imageName) {
-      const imageCheck = await checkDockerImage(imageName, packageHash)
+      const imageCheck = await checkDockerImage(imageName, packageHash, imageCache)
       if (imageCheck.exists && imageCheck.hashMatch && isPhaseCached(cwd, packageHash, 'docker-build')) {
         return { success: true, fromCache: true }
       }
@@ -272,4 +295,4 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
   return results
 }
 
-module.exports = { runDockerBuildPhase }
+module.exports = { runDockerBuildPhase, preloadDockerImages, getDockerImageName }
