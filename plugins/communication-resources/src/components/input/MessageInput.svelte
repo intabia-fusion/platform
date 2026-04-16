@@ -24,7 +24,7 @@
   import { areEqualMarkups, isEmptyMarkup } from '@hcengineering/text'
   import { showPopup, ThrottledCaller } from '@hcengineering/ui'
   import { FileUploadCallbackParams, getUploadHandlers, UploadHandlerDefinition } from '@hcengineering/uploader'
-  import { createEventDispatcher, tick } from 'svelte'
+  import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import { getDraft, getEmptyDraft, messageToDraft, removeDraft, saveDraft } from '../../draft'
   import communication from '../../plugin'
@@ -129,6 +129,13 @@
 
     void clearTyping(acc.primarySocialId, card._id)
   }
+
+  onDestroy(() => {
+    void clearTyping(acc.primarySocialId, card._id)
+    if (card.peerId) {
+      void clearTyping(acc.primarySocialId, `peer:${card.peerId}`)
+    }
+  })
 
   async function fileSelected (): Promise<void> {
     progress = true

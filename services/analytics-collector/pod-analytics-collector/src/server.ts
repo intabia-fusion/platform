@@ -14,7 +14,7 @@
 //
 
 import { AnalyticEvent, AnalyticEventType } from '@hcengineering/analytics-collector'
-import { reportOTEL, reportOTELError } from '@hcengineering/analytics-service'
+import { recordOTELMetric, reportOTEL, reportOTELError } from '@hcengineering/analytics-service'
 import type { MeasureContext } from '@hcengineering/core'
 import { extractToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
@@ -272,6 +272,14 @@ export function createServer (ctx: MeasureContext): Express {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           const { error_message, error_type, error_stack } = evt.properties ?? {}
           reportOTELError({ message: error_message ?? 'Unknown error', stack: error_stack, name: error_type ?? '' })
+        } else if (evt.event === AnalyticEventType.Metric) {
+          const props = evt.properties ?? {}
+          const metricName = typeof props.metric === 'string' ? props.metric : ''
+          const value = typeof props.value === 'number' ? props.value : Number(props.value)
+          if (metricName !== '' && Number.isFinite(value)) {
+            const labels = typeof props.labels === 'object' && props.labels !== null ? props.labels : {}
+            recordOTELMetric('client', metricName, value, { ...labels, distinct_id: evt.distinct_id })
+          }
         } else {
           reportOTEL('info', evt.event, evt.timestamp, { ...evt.properties, distinct_id: evt.distinct_id })
         }

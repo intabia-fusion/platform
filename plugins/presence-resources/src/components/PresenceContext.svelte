@@ -23,7 +23,7 @@
   export let object: Doc
   export let presenceId: string | undefined = undefined
   export let presenceTtlSeconds: number = 5
-  export let presenceUpdateSeconds: number = 2
+  export let presenceUpdateSeconds: number = 5
 
   const personId = getCurrentEmployee()
 

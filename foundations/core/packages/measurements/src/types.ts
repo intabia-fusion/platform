@@ -75,6 +75,10 @@ export interface WithOptions {
 
   // If passed, will not send an error into span, for some cases we need to throw error from with, without reporting it.
   suspendErrors?: boolean
+
+  // If set, operation duration will be recorded as histogram with this metric name.
+  // Labels: { op: <with name>, ...params }
+  metric?: string
 }
 
 /**
@@ -122,7 +126,11 @@ export interface MeasureContext<Q = any> {
   parent?: MeasureContext
   getParams: () => ParamsType
 
-  measure: (name: string, value: number, override?: boolean) => void
+  measure: (name: string, value: number, labelsOrOverride?: ParamsType | boolean, override?: boolean) => void
+
+  // Record a duration sample (ms) into a histogram-style metric with optional labels.
+  // Use for latency/duration distributions - db query timing, request handling, etc.
+  recordDuration: (name: string, ms: number, labels?: ParamsType) => void
 
   // Capture error
   error: (message: string, obj?: Record<string, any>) => void

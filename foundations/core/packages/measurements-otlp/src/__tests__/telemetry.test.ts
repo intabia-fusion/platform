@@ -145,10 +145,10 @@ describe('telemetry', () => {
 
     it('should measure custom value with meter', () => {
       const metrics = newMetrics()
+      const record = jest.fn()
       const mockMeter = {
         getCounter: jest.fn(() => ({
-          counter: { record: jest.fn() },
-          value: 0
+          counter: { record }
         }))
       }
 
@@ -170,6 +170,166 @@ describe('telemetry', () => {
       ctx.measure('custom', 100)
 
       expect(mockMeter.getCounter).toHaveBeenCalledWith('custom')
+      expect(record).toHaveBeenCalledWith(100, { op: 'test' })
+    })
+
+    it('should merge labels with context params on record', () => {
+      const metrics = newMetrics()
+      const record = jest.fn()
+      const entry = { counter: { record } }
+      const mockMeter = {
+        getCounter: jest.fn(() => entry)
+      }
+
+      const ctx = new OpenTelemetryMetricsContext(
+        'test',
+        tracer,
+        undefined,
+        undefined,
+        { op: 'test' },
+        {},
+        metrics,
+        mockLogger,
+        undefined,
+        undefined,
+        undefined,
+        mockMeter as any
+      )
+
+      ctx.measure('db.find', 3, { domain: 'tx' })
+      expect(record).toHaveBeenLastCalledWith(3, { op: 'test', domain: 'tx' })
+
+      ctx.measure('db.find', 3, { domain: 'account' })
+      expect(record).toHaveBeenCalledTimes(2)
+
+      // we no longer skip equal values - fresh observations per tick are required for OTLP
+      ctx.measure('db.find', 3, { domain: 'tx' })
+      expect(record).toHaveBeenCalledTimes(3)
+
+      ctx.measure('db.find', 5, { domain: 'tx' })
+      expect(record).toHaveBeenLastCalledWith(5, { op: 'test', domain: 'tx' })
+      expect(record).toHaveBeenCalledTimes(4)
+    })
+
+    it('should accept boolean override via legacy signature', () => {
+      const metrics = newMetrics()
+      const record = jest.fn()
+      const mockMeter = {
+        getCounter: jest.fn(() => ({ counter: { record } }))
+      }
+      const ctx = new OpenTelemetryMetricsContext(
+        'test',
+        tracer,
+        undefined,
+        undefined,
+        {},
+        {},
+        metrics,
+        mockLogger,
+        undefined,
+        undefined,
+        undefined,
+        mockMeter as any
+      )
+      ctx.measure('legacy', 1, true)
+      expect(record).toHaveBeenCalledWith(1, {})
+    })
+
+    it('records histogram via with({ metric })', async () => {
+      const metrics = newMetrics()
+      const histRecord = jest.fn()
+      const mockMeter = {
+        getCounter: jest.fn(() => ({ counter: { record: jest.fn() } })),
+        getHistogram: jest.fn(() => ({ record: histRecord }))
+      }
+      const ctx = new OpenTelemetryMetricsContext(
+        'root',
+        tracer,
+        undefined,
+        undefined,
+        {},
+        {},
+        metrics,
+        mockLogger,
+        undefined,
+        undefined,
+        undefined,
+        mockMeter as any
+      )
+
+      await ctx.with('findAll', { domain: 'tx' }, async () => 'ok', undefined, { metric: 'db.query.duration' })
+
+      expect(mockMeter.getHistogram).toHaveBeenCalledWith('db.query.duration')
+      expect(histRecord).toHaveBeenCalledTimes(1)
+      const [ms, attrs] = histRecord.mock.calls[0]
+      expect(typeof ms).toBe('number')
+      expect(ms).toBeGreaterThanOrEqual(0)
+      expect(attrs).toEqual({ op: 'findAll', domain: 'tx' })
+    })
+
+    it('records histogram on error via with({ metric })', async () => {
+      const metrics = newMetrics()
+      const histRecord = jest.fn()
+      const mockMeter = {
+        getCounter: jest.fn(() => ({ counter: { record: jest.fn() } })),
+        getHistogram: jest.fn(() => ({ record: histRecord }))
+      }
+      const ctx = new OpenTelemetryMetricsContext(
+        'root',
+        tracer,
+        undefined,
+        undefined,
+        {},
+        {},
+        metrics,
+        mockLogger,
+        undefined,
+        undefined,
+        undefined,
+        mockMeter as any
+      )
+
+      await expect(
+        ctx.with(
+          'boom',
+          { domain: 'x' },
+          async () => {
+            throw new Error('e')
+          },
+          undefined,
+          { metric: 'db.query.duration' }
+        )
+      ).rejects.toThrow('e')
+
+      expect(histRecord).toHaveBeenCalledTimes(1)
+      expect(histRecord.mock.calls[0][1]).toEqual({ op: 'boom', domain: 'x' })
+    })
+
+    it('no histogram recorded without metric option', async () => {
+      const metrics = newMetrics()
+      const histRecord = jest.fn()
+      const mockMeter = {
+        getCounter: jest.fn(() => ({ counter: { record: jest.fn() } })),
+        getHistogram: jest.fn(() => ({ record: histRecord }))
+      }
+      const ctx = new OpenTelemetryMetricsContext(
+        'root',
+        tracer,
+        undefined,
+        undefined,
+        {},
+        {},
+        metrics,
+        mockLogger,
+        undefined,
+        undefined,
+        undefined,
+        mockMeter as any
+      )
+
+      await ctx.with('plain', {}, async () => 'ok')
+
+      expect(histRecord).not.toHaveBeenCalled()
     })
 
     it('should log info with OTLP logger', () => {

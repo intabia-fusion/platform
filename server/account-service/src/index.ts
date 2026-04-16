@@ -486,7 +486,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
           ctx.res.end(JSON.stringify(response))
         }
       },
-      { method: request.method }
+      { method: request.method },
+      { metric: 'account.rpc.duration' }
     )
   })
 

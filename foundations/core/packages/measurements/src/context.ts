@@ -93,11 +93,48 @@ export class MeasureMetricsContext implements MeasureContext {
     this.logger = logger ?? (this.logParams != null ? consoleLogger(this.logParams ?? {}) : noParamsLogger)
   }
 
-  measure (name: string, value: number, override?: boolean): void {
-    const c = new MeasureMetricsContext('#' + name, {}, {}, childMetrics(this.metrics, ['#' + name]), this.logger, this)
+  measure (name: string, value: number, labelsOrOverride?: ParamsType | boolean, override?: boolean): void {
+    const isLabels = typeof labelsOrOverride === 'object' && labelsOrOverride !== null
+    const labels = isLabels ? labelsOrOverride : undefined
+    const ov = isLabels ? override : labelsOrOverride
+    const c = new MeasureMetricsContext(
+      '#' + name,
+      labels ?? {},
+      {},
+      childMetrics(this.metrics, ['#' + name]),
+      this.logger,
+      this
+    )
     c.contextData = this.contextData
-    c.done(value, override)
+    c.done(value, ov)
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let root: MeasureContext = this
+    while (root.parent != null) root = root.parent
+    const sink = (root as MeasureMetricsContext).externalMetricSink
+    sink?.(name, value, labels)
   }
+
+  recordDuration (name: string, ms: number, labels?: ParamsType): void {
+    // In-memory metrics implementation: accumulate via childMetrics
+    const c = new MeasureMetricsContext(
+      '@' + name,
+      labels ?? {},
+      {},
+      childMetrics(this.metrics, ['@' + name]),
+      this.logger,
+      this
+    )
+    c.contextData = this.contextData
+    c.done(ms)
+    // Propagate to external sink (root-level registration). Traverse to root.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let root: MeasureContext = this
+    while (root.parent != null) root = root.parent
+    const sink = (root as MeasureMetricsContext).externalMetricSink
+    sink?.(name, ms, labels)
+  }
+
+  externalMetricSink?: (name: string, value: number, labels?: ParamsType) => void
 
   newChild (
     name: string,
@@ -130,15 +167,20 @@ export class MeasureMetricsContext implements MeasureContext {
     opt?: WithOptions
   ): Promise<T> {
     const c = this.newChild(name, params, { fullParams, logger: this.logger })
+    const metric = opt?.metric
     let needFinally = true
     try {
       const value = op(c)
       if (value instanceof Promise) {
         needFinally = false
         return value.finally(() => {
+          const elapsed = platformNowDiff((c as MeasureMetricsContext).st)
           c.end()
+          if (metric !== undefined) {
+            this.recordDuration(metric, elapsed, { op: name, ...params })
+          }
           if (opt?.log === true) {
-            this.logger.logOperation(name, platformNowDiff((c as MeasureMetricsContext).st), {
+            this.logger.logOperation(name, elapsed, {
               ...params,
               ...fullParams
             })
@@ -152,6 +194,9 @@ export class MeasureMetricsContext implements MeasureContext {
       }
     } finally {
       if (needFinally) {
+        if (metric !== undefined) {
+          this.recordDuration(metric, platformNowDiff((c as MeasureMetricsContext).st), { op: name, ...params })
+        }
         c.end()
       }
     }
@@ -206,7 +251,9 @@ export class NoMetricsContext implements MeasureContext {
     this.logger = logger ?? consoleLogger({})
   }
 
-  measure (name: string, value: number, override?: boolean): void {}
+  measure (name: string, value: number, labelsOrOverride?: ParamsType | boolean, override?: boolean): void {}
+
+  recordDuration (name: string, ms: number, labels?: ParamsType): void {}
 
   newChild (
     name: string,

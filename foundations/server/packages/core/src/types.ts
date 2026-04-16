@@ -33,6 +33,7 @@ import {
   type ModelDb,
   type Obj,
   type OperationDomain,
+  type ParamsType,
   type PersonId,
   type Ref,
   type SearchOptions,
@@ -577,7 +578,7 @@ export interface ClientSessionCtx {
 //
 export interface OneSecondCounters {
   // Will increment and decrement on any issue or timeout.
-  withCounter: <T>(counter: string, count: number, op: () => Promise<T>) => Promise<T>
+  withCounter: <T>(counter: string, count: number, op: () => Promise<T>, labels?: ParamsType) => Promise<T>
 }
 
 /**
