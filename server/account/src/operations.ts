@@ -607,7 +607,7 @@ export async function createWorkspace (
     personUuid: socialId.personUuid,
     verifiedOn: { $gt: 0 }
   })
-  if (emailSocialId != null) {
+  if (emailSocialId != null && created === 0) {
     await sendCrmNotificationIfNotInvited(ctx, db, emailSocialId.value, socialId.personUuid, meta)
   }
 
