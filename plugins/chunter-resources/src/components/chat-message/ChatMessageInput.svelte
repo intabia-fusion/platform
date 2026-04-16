@@ -20,7 +20,7 @@
   import { Class, Doc, generateId, getCurrentAccount, Ref, type CommitResult, Markup } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import { getObjectId } from '@hcengineering/view-resources'
   import { ThrottledCaller } from '@hcengineering/ui'
   import { getSpace, editingMessageStore } from '@hcengineering/activity-resources'
@@ -113,6 +113,10 @@
       void setTyping(acc.primarySocialId, object._id, object.space)
     })
   }
+
+  onDestroy(() => {
+    void deleteTypingInfo()
+  })
 
   function onUpdate (event: CustomEvent<{ message: Markup, attachments: number }>): void {
     if (!isEmptyMarkup(event.detail.message)) {
