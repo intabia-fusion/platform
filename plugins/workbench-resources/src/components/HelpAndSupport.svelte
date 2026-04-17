@@ -61,7 +61,13 @@
       $themeStore.language
     )
     Analytics.handleEvent(WorkbenchEvents.ContactSupport)
-    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}`, '_blank', 'externalBrowser=yes')
+    const link = document.createElement('a')
+    link.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`
+    link.rel = 'noopener noreferrer'
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   function navigateToSettings () {
