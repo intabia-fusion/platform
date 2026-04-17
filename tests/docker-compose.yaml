@@ -489,6 +489,7 @@ services:
       - ACCOUNTS_URL=http://huly.local:3003
       - DB_URL=${DB_PG_URL}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - FRONT_URL=http://localhost:8083
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
