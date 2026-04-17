@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getMetadata, translate } from '@hcengineering/platform'
-  import { Html, themeStore } from '@hcengineering/ui'
+  import { themeStore } from '@hcengineering/ui'
   import login from '../plugin'
 
   export let agreedPersonalData: boolean = false
@@ -31,11 +31,13 @@
 
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
-  <span class="consent-link"><Html value={personalDatalabel} /></span>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  <span class="consent-link">{@html personalDatalabel}</span>
 </label>
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
-  <span class="consent-link"><Html value={rulesLabel} /></span>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  <span class="consent-link">{@html rulesLabel}</span>
 </label>
 
 <style lang="scss">
