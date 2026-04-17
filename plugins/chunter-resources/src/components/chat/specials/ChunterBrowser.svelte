@@ -29,9 +29,9 @@
   let userSearch_: string = ''
   userSearch.subscribe((v) => (userSearch_ = v))
 
-  const localStorageKey = 'chunter-browser-st__v1'
-  const saved = localStorage.getItem(localStorageKey)
-  let searchType: SearchType = saved !== null && saved !== '' ? parseInt(saved, 10) : SearchType.Messages
+  const localStorageKey = 'chunter-browser-st__v2'
+
+  let searchType: SearchType = initSearchType()
   $: localStorage.setItem(localStorageKey, searchType.toString())
 
   const tabs = [
@@ -73,6 +73,17 @@
 
   let searchValue: string = ''
   let filterQuery: DocumentQuery<Doc> = {}
+
+  function initSearchType (): SearchType {
+    const saved = localStorage.getItem(localStorageKey)
+    const parsed = Number(saved)
+
+    if (Object.values(SearchType).includes(parsed as SearchType)) {
+      return parsed as SearchType
+    }
+
+    return SearchType.Messages
+  }
 </script>
 
 <Header
