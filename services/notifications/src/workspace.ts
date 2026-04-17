@@ -515,6 +515,7 @@ class Workspace {
     const receivers = await this.cache.getReceivers(collaborators)
 
     if (receivers.length === 0) return res
+    const contentByType = new Map<Ref<NotificationType>, NotificationContent>()
 
     for (const receiver of receivers) {
       const context = contexts.find((it) => it.user === receiver.account)
@@ -526,6 +527,10 @@ class Workspace {
       const type = types[0]
       if (type == null) continue
 
+      const content =
+        contentByType.get(type._id) ?? (await getMessageNotificationContent(client, type, doc, message, sender))
+      contentByType.set(type._id, content)
+
       res.push(
         ...(await this.createNotifications(
           notification.class.ActivityInboxNotification,
@@ -533,7 +538,7 @@ class Workspace {
             attachedTo: message._id,
             attachedToClass: message._class
           },
-          await getMessageNotificationContent(client, type, doc, message, sender),
+          content,
           doc,
           message.modifiedOn,
           message.modifiedBy,
