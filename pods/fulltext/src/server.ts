@@ -89,6 +89,7 @@ export async function startIndexer (
     config: FulltextDBConfiguration
     externalStorage: StorageAdapter
     elasticIndexName: string
+    isVectorSearchEnabled: boolean
     port: number
     serverSecret: string
     accountsUrl: string
@@ -101,6 +102,7 @@ export async function startIndexer (
   setMetadata(serverToken.metadata.Service, 'fulltext')
   setMetadata(serverCore.metadata.ElasticIndexName, opt.elasticIndexName)
   setMetadata(serverClientPlugin.metadata.Endpoint, opt.accountsUrl)
+  setMetadata(serverCore.metadata.ElasticVectorSearch, opt.isVectorSearchEnabled)
 
   registerTxAdapterFactory('mongodb', createMongoTxAdapter)
   registerAdapterFactory('mongodb', createMongoAdapter)

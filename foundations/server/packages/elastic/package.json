@@ -59,7 +59,8 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@elastic/elasticsearch": "^8.19.1",
-    "@hcengineering/analytics": "workspace:^0.7.17"
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@huggingface/transformers": "^4.1.0"
   },
   "repository": "https://github.com/hcengineering/huly.server",
   "publishConfig": {

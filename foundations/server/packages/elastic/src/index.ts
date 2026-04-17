@@ -15,3 +15,5 @@
 //
 
 export { createElasticAdapter } from './adapter'
+export type { EmbeddingProvider } from './embedding'
+export { createEmbeddingProvider } from './embedding'

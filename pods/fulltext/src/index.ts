@@ -95,6 +95,9 @@ if (elasticIndexName === undefined) {
   process.exit(1)
 }
 
+const isVectorSearchEnabled = process.env.VECTOR_SEARCH_ENABLED === 'true'
+console.log('isVectorSearchEnabled', isVectorSearchEnabled)
+
 const servicePort = parseInt(process.env.PORT ?? '4700')
 metricsContext.info('Starting stats service')
 
@@ -117,6 +120,7 @@ const onClose = startIndexer(metricsContext, {
   config,
   externalStorage,
   elasticIndexName,
+  isVectorSearchEnabled,
   dbURL,
   hulylakeUrl,
   port: servicePort,
