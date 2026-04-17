@@ -1,10 +1,6 @@
 schema: v2
 id: foundation.server.overview
 name: "Foundation: Server Overview"
-tags:
-- foundation
-- server
-- metrics
 version: v1
 time_offset: 15m
 
