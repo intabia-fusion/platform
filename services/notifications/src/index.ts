@@ -17,15 +17,12 @@ import { MeasureContext, newMetrics, Tx } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
+import serverCore, { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { Analytics } from '@hcengineering/analytics'
 import { join } from 'path'
 import { readFileSync } from 'fs'
-
-import { Worker } from './worker'
-import config from './config'
 import {
   registerAdapterFactory,
   registerDestroyFactory,
@@ -40,6 +37,9 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
+
+import { Worker } from './worker'
+import config from './config'
 
 void main().catch((err) => {
   console.error(err)
@@ -56,6 +56,7 @@ async function main (): Promise<void> {
   setMetadata(serverToken.metadata.Secret, config.Secret)
   setMetadata(serverToken.metadata.Service, config.ServiceId)
   setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
+  setMetadata(serverCore.metadata.FrontUrl, config.FrontUrl)
 
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)

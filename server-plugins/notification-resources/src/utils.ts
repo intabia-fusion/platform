@@ -232,7 +232,8 @@ export async function getContentByTemplate (
   const params: Record<string, string> = await getTranslatedNotificationContent(inboxNotification, language)
 
   const title = (await getDocTitle(control, doc)) ?? ''
-  const url = (inboxNotification.intlParams?.url ?? (await getDocUrl(control, doc)))?.toString()
+  const url = await getUrlWithMessage(control, doc, inboxNotification, message?._id)
+
   const identifier = (inboxNotification.intlParams?.identifier ?? (await getDocIdentifier(control, doc)))?.toString()
 
   const titleWithIdentifier = identifier != null ? `${identifier}: ${title}` : title
@@ -332,4 +333,29 @@ async function fillTemplate (
     },
     lang
   )
+}
+
+async function getUrlWithMessage (
+  control: TriggerControl,
+  doc: Doc,
+  inboxNotification: InboxNotification,
+  messageId?: Ref<ActivityMessage>
+): Promise<string | undefined> {
+  const baseUrl = inboxNotification.intlParams?.url?.toString() ?? (await getDocUrl(control, doc))?.toString()
+  if (baseUrl == null || baseUrl === '') return
+
+  const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
+
+  try {
+    const url = front !== '' ? new URL(baseUrl, front) : new URL(baseUrl)
+
+    if (messageId != null) {
+      url.searchParams.set('message', messageId)
+    }
+
+    return url.toString()
+  } catch (e) {
+    control.ctx.error('Invalid url', { baseUrl, front, e })
+    return baseUrl
+  }
 }

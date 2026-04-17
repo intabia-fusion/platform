@@ -1086,6 +1086,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - FRONT_URL=http://huly.local:8087
       - STATS_URL=http://huly.local:4900
   notification:
     image: intabiafusion/notification
