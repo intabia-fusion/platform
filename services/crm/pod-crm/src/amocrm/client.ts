@@ -51,7 +51,8 @@ export class AmoCrmClient {
 
     const leadCustomFields: AmoCrmLeadCustomFieldValue[] = []
     for (const [name, value] of Object.entries(cookieValues)) {
-      const id = customFields.get(name)
+      // Yandex Metric start with _ym, need delete first symbol for AmoCRM
+      const id = customFields.get(name.startsWith('_') ? name.substring(1) : name)
       if (id !== undefined) {
         leadCustomFields.push({
           field_id: id,
