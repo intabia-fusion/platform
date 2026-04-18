@@ -133,6 +133,10 @@ function normalizeWorkspaceDeps(packagePath) {
 /**
  * Publish a single package
  */
+function sleepSync(ms) {
+  execSync(`sleep ${Math.max(0.1, ms / 1000)}`)
+}
+
 function publishPackage(packagePath, packageName) {
   const originalPackageJson = normalizeWorkspaceDeps(packagePath)
 
@@ -142,17 +146,40 @@ function publishPackage(packagePath, packageName) {
     } catch {
       // Ignore pkg fix errors (e.g. npm < 10)
     }
-    console.log(`Publishing ${packageName}...`)
-    execSync('npm publish', {
-      cwd: packagePath,
-      stdio: 'inherit',
-      encoding: 'utf-8'
-    })
-    console.log(`✓ Successfully published ${packageName}`)
-    return true
-  } catch (err) {
-    console.error(`✗ Failed to publish ${packageName}:`, err.message)
-    return false
+    let attempt = 0
+    let backoff = 10000
+    while (true) {
+      attempt++
+      try {
+        console.log(`Publishing ${packageName} (attempt ${attempt})...`)
+        execSync('npm publish 2>&1', {
+          cwd: packagePath,
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        })
+        console.log(`✓ Successfully published ${packageName}`)
+        return true
+      } catch (err) {
+        const output = String((err.stdout || '') + (err.stderr || '') + (err.message || ''))
+        process.stdout.write(output)
+        const rateLimited = output.includes('E429') || output.includes('rate limit')
+        const alreadyPublished =
+          output.includes('cannot publish over') ||
+          (output.includes('E403') && output.includes('previously published'))
+        if (alreadyPublished) {
+          console.log(`⊘ Already published: ${packageName}`)
+          return true
+        }
+        if (rateLimited) {
+          console.log(`rate-limited, backoff ${backoff}ms then retry (attempt ${attempt})`)
+          sleepSync(backoff)
+          backoff = Math.min(backoff * 2, 300000)
+          continue
+        }
+        console.error(`✗ Failed to publish ${packageName} (non-retryable)`)
+        return false
+      }
+    }
   } finally {
     if (originalPackageJson != null) {
       try {
