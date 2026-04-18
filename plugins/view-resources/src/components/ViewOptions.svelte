@@ -100,7 +100,7 @@
     {/each}
   {/if}
   {#if hasMultipleSelections(config.orderBy)}
-    <div class="antiCard-menu__item ordering">
+    <div class="antiCard-menu__item ordering-primary">
       <span class="overflow-label"><Label label={view.string.Ordering} /></span>
       <DropdownLabelsIntl
         label={view.string.Ordering}
@@ -147,7 +147,11 @@
           }}
         />
       {:else if isDropdownType(model)}
-        {@const items = model.values.filter(({ hidden }) => !hidden?.(viewOptions))}
+        {@const items = model.values.filter(({ id, hidden }) => {
+          if (hidden?.(viewOptions) === true) return false
+          if (model.hideGroupByDuplicates === true && viewOptions.groupBy[0] === id) return false
+          return true
+        })}
         <DropdownLabelsIntl
           label={model.label}
           kind={'regular'}

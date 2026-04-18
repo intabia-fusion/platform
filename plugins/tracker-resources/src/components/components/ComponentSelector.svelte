@@ -18,9 +18,10 @@
   import { createQuery } from '@hcengineering/presentation'
   import { Component } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, ButtonShape, SelectPopup, eventToHTMLElement, showPopup, PopupResult } from '@hcengineering/ui'
+  import { Button, ButtonShape, eventToHTMLElement, showPopup, PopupResult } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import ComponentPresenter from './ComponentPresenter.svelte'
+  import ComponentSelectorPopup from './ComponentSelectorPopup.svelte'
 
   export let value: Ref<Component> | null | undefined
   export let space: DocumentQuery<Component>['space'] | undefined = undefined
@@ -102,6 +103,8 @@
 
   let selectPopupResult: PopupResult | undefined
 
+  $: popupSpace = typeof space === 'string' ? space : undefined
+
   // We need update SelectPopup when it active
   $: selectPopupResult?.update({ value: components })
 
@@ -112,8 +115,12 @@
     }
 
     selectPopupResult = showPopup(
-      SelectPopup,
-      { value: components, placeholder: popupPlaceholder, searchable: true },
+      ComponentSelectorPopup,
+      {
+        value: components,
+        placeholder: popupPlaceholder,
+        space: popupSpace
+      },
       eventToHTMLElement(event),
       (result: any) => {
         onChange?.(result)
@@ -124,10 +131,10 @@
 </script>
 
 {#if isAction}
-  <SelectPopup
+  <ComponentSelectorPopup
     value={components}
     placeholder={popupPlaceholder}
-    searchable
+    space={popupSpace}
     on:close={(evt) => {
       if (onChange !== undefined) onChange(evt.detail)
     }}

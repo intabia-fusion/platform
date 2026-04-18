@@ -148,7 +148,7 @@ export class IssuesPage extends CommonTrackerPage {
   issueName = (name: string): Locator => this.page.locator(`text="${name}"`)
   issuesButton = (): Locator => this.page.locator('.antiPanel-navigator').locator('text="Issues"')
   viewButton = (): Locator => this.page.locator('button[data-id="btn-viewOptions"]')
-  orderingButton = (): Locator => this.page.locator('.ordering button')
+  orderingButton = (): Locator => this.page.locator('.ordering-primary button')
   modifiedDateMenuItem = (): Locator => this.page.locator('button.menu-item', { hasText: 'Modified date' })
   estimationContainer = (): Locator => this.page.locator('.estimation-container').first()
   addTimeReportButton = (): Locator => this.page.locator('button:has-text("Add time report")')

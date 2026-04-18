@@ -475,6 +475,8 @@ export interface ViewletViewAction extends Doc {
   descriptor?: Ref<ViewletDescriptor>
   extension: ComponentExtensionId
   config?: Record<string, any>
+  /** Placement of the action in the header. Default is 'actions'. */
+  location?: 'actions' | 'extra'
   /** When descriptor is set: show only when viewlet.attachTo is this class or a subclass. */
   applicableToClass?: Ref<Class<Doc>>
   /** When descriptor is set: hide when viewlet.attachTo is this class or a subclass. */
@@ -818,6 +820,8 @@ export interface DropdownViewOption extends ViewOption {
   type: 'dropdown'
   defaultValue: string
   values: Array<{ label: IntlString, id: string, hidden?: (viewOptions: ViewOptions) => boolean }>
+  /** When true, hide items whose `id` equals current `viewOptions.groupBy[0]`. */
+  hideGroupByDuplicates?: boolean
 }
 
 /**
