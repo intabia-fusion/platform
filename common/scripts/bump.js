@@ -66,13 +66,16 @@ function isAlreadyPublished (name, version) {
   // HTTPS HEAD/GET against registry — no rate limit impact like `npm view`.
   return new Promise((resolve) => {
     const registryUrl = process.env.NPM_REGISTRY || 'https://registry.npmjs.org'
-    const url = `${registryUrl}/${encodeURIComponent(name)}/${version}`
+    // encodeURIComponent(name) encodes "/" as %2F, but npm registry wants the slash literal.
+    const safeName = name.replace('/', '%2f')
+    const url = `${registryUrl}/${safeName}/${version}`
     const client = url.startsWith('https:') ? https : http
     const req = client.get(url, (res) => {
+      console.log(`check ${name}@${version} -> ${res.statusCode}`)
       resolve(res.statusCode === 200)
       res.resume()
     })
-    req.on('error', () => resolve(false))
+    req.on('error', (err) => { console.log(`check ${name} error: ${err.message}`); resolve(false) })
     req.setTimeout(5000, () => { req.destroy(); resolve(false) })
   })
 }
@@ -128,7 +131,7 @@ async function publish (name) {
     const original = normalizeWorkspaceDeps(package.path)
     try {
       console.log(`publishing ${name} (attempt ${attempt})`)
-      execSync('npm publish --access public 2>&1', { encoding: 'utf-8', cwd: package.path })
+      execSync('npm publish 2>&1', { encoding: 'utf-8', cwd: package.path })
       console.log('published:', name)
       restorePackageJson(package.path, original)
       return
