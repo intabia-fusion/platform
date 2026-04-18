@@ -657,6 +657,7 @@ export interface DisplayProps {
   compression?: boolean
   grow?: boolean
   dividerBefore?: boolean // should show divider before
+  custom?: boolean // render as custom attribute label
 }
 
 /**
@@ -727,6 +728,7 @@ export interface ObjectFactory extends Class<Obj> {
 export interface ViewletPreference extends Preference {
   attachedTo: Ref<Viewlet>
   config: (BuildModelKey | string)[]
+  customAttributes?: string[]
 }
 
 /**

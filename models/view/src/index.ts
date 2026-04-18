@@ -322,6 +322,7 @@ export class TObjectIcon extends TClass implements ObjectIcon {
 export class TViewletPreference extends TPreference implements ViewletPreference {
   declare attachedTo: Ref<Viewlet>
   config!: (BuildModelKey | string)[]
+  customAttributes?: string[]
 }
 
 @Model(view.class.ViewletDescriptor, core.class.Doc, DOMAIN_MODEL)

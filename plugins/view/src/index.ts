@@ -202,6 +202,7 @@ const view = plugin(viewId, {
   },
   string: {
     CustomizeView: '' as IntlString,
+    CustomAttributes: '' as IntlString,
     LabelNA: '' as IntlString,
     View: '' as IntlString,
     FilteredViews: '' as IntlString,

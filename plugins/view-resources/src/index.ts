@@ -187,6 +187,7 @@ export { default as PersonIdFilter } from './components/filter/PersonIdFilter.sv
 export { default as PersonIdFilterValuePresenter } from './components/filter/PersonIdFilterValuePresenter.svelte'
 export { default as FoldersBrowser } from './components/folders/FoldersBrowser.svelte'
 export { default as List } from './components/list/List.svelte'
+export { default as ListPresenter } from './components/list/ListPresenter.svelte'
 export { default as ListView } from './components/list/ListView.svelte'
 export { default as NavLink } from './components/navigator/NavLink.svelte'
 export { default as StatusPresenter } from './components/status/StatusPresenter.svelte'
