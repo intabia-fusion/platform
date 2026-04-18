@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type Class, type Data, type Doc, type Ref } from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type AttributeCategory } from '@hcengineering/view'
+import { type Class, type Data, type Doc, type Ref } from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type AttributeCategory } from '@intabiafusion/view'
 import view from '.'
 
 export function createAction<T extends Doc = Doc, P = Record<string, any>> (

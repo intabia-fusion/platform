@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, getObjectValue } from '@hcengineering/core'
-  import inventory, { Category } from '@hcengineering/inventory'
-  import { IconMoreV } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import { showMenu } from '@hcengineering/view-resources'
+  import { Doc, Ref, getObjectValue } from '@intabiafusion/core'
+  import inventory, { Category } from '@intabiafusion/inventory'
+  import { IconMoreV } from '@intabiafusion/ui'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { showMenu } from '@intabiafusion/view-resources'
   import HierarchyElement from './HierarchyElement.svelte'
   import Collapse from './icons/Collapse.svelte'
   import Expand from './icons/Expand.svelte'

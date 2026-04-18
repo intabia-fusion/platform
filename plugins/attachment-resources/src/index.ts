@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
-import attachment, { type Attachment } from '@hcengineering/attachment'
-import core, { SortingOrder, type Markup, type ObjQueryType, type SortingQuery } from '@hcengineering/core'
-import { type IntlString, type Resources } from '@hcengineering/platform'
-import { PDFViewer, deleteFile, getClient, uploadFile } from '@hcengineering/presentation'
+import activity, { type ActivityMessage, type DocUpdateMessage } from '@intabiafusion/activity'
+import attachment, { type Attachment } from '@intabiafusion/attachment'
+import core, { SortingOrder, type Markup, type ObjQueryType, type SortingQuery } from '@intabiafusion/core'
+import { type IntlString, type Resources } from '@intabiafusion/platform'
+import { PDFViewer, deleteFile, getClient, uploadFile } from '@intabiafusion/presentation'
 
 import AccordionEditor from './components/AccordionEditor.svelte'
 import AddAttachment from './components/AddAttachment.svelte'

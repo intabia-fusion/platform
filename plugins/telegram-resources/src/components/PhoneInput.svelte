@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AsYouType } from 'libphonenumber-js'
-  import { EditBox } from '@hcengineering/ui'
-  import type { IntlString } from '@hcengineering/platform'
+  import { EditBox } from '@intabiafusion/ui'
+  import type { IntlString } from '@intabiafusion/platform'
 
   export let value: string = ''
   export let label: IntlString

@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // import core from '@hcengineering/core'
-  import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import type { AnySvelteComponent, EditStyle } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  // import core from '@intabiafusion/core'
+  import type { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import type { AnySvelteComponent, EditStyle } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { KeyedAttribute, getAttribute, updateAttribute } from '../attributes'
   import { getAttributePresenterClass, getClient } from '../utils'
 

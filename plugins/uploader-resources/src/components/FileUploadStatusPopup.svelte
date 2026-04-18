@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, IconClose, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Button, IconClose, Label, ProgressCircle, Scroller, tooltip } from '@intabiafusion/ui'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import IconCompleted from './icons/Completed.svelte'

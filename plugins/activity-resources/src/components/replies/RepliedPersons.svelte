@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { notEmpty, Ref } from '@hcengineering/core'
-  import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
+  import { notEmpty, Ref } from '@intabiafusion/core'
+  import { Avatar, getPersonByPersonRefStore } from '@intabiafusion/contact-resources'
+  import { Person } from '@intabiafusion/contact'
 
   export let repliedPersons: Ref<Person>[] = []
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { CollaborativeDoc, Doc, Ref } from '@hcengineering/core'
+import core, { CollaborativeDoc, Doc, Ref } from '@intabiafusion/core'
 import { encodeDocumentId, decodeDocumentId } from '../utils'
 
 describe('utils', () => {

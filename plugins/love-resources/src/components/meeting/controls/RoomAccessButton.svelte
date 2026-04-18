@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { isOffice, Room, RoomAccess, roomAccessIcon } from '@hcengineering/love'
+  import { isOffice, Room, RoomAccess, roomAccessIcon } from '@intabiafusion/love'
   import love from '../../../plugin'
-  import { ButtonBaseSize, eventToHTMLElement, ModernButton, showPopup } from '@hcengineering/ui'
+  import { ButtonBaseSize, eventToHTMLElement, ModernButton, showPopup } from '@intabiafusion/ui'
   import RoomAccessPopup from '../../RoomAccessPopup.svelte'
-  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
 
   export let room: Room
   export let size: ButtonBaseSize = 'large'

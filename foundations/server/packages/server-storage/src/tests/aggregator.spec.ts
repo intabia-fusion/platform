@@ -4,8 +4,8 @@ import {
   type MeasureContext,
   type WorkspaceUuid,
   type WorkspaceIds
-} from '@hcengineering/core'
-import type { NamedStorageAdapter } from '@hcengineering/storage'
+} from '@intabiafusion/core'
+import type { NamedStorageAdapter } from '@intabiafusion/storage'
 import { FallbackStorageAdapter } from '../fallback'
 import { MemStorageAdapter } from './memAdapters'
 

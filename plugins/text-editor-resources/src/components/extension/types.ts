@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Blob, Ref } from '@hcengineering/core'
+import type { Blob, Ref } from '@intabiafusion/core'
 
 /**
  * @public

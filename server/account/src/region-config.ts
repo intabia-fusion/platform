@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-import { type WorkspaceUuid, hashWorkspace } from '@hcengineering/core'
+import { type WorkspaceUuid, hashWorkspace } from '@intabiafusion/core'
 import { readFileSync } from 'fs'
 import yaml from 'js-yaml'
 

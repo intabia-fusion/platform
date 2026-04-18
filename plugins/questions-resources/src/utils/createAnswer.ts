@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Answer, AnswerDataOf, Question } from '@hcengineering/questions'
-import { type AttachedData, type Class, type Doc, type Ref, type Space, type TxOperations } from '@hcengineering/core'
+import type { Answer, AnswerDataOf, Question } from '@intabiafusion/questions'
+import { type AttachedData, type Class, type Doc, type Ref, type Space, type TxOperations } from '@intabiafusion/core'
 
 export async function createAnswer<Parent extends Doc, Q extends Question<any>, A extends Answer<Q, any>> (
   client: TxOperations,

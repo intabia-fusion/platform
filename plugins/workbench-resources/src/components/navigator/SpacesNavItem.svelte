@@ -14,19 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref, Space } from '@hcengineering/core'
-  import core from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
+  import type { Ref, Space } from '@intabiafusion/core'
+  import core from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, IconEdit } from '@intabiafusion/ui'
   import {
     NavLink,
     TreeItem,
     getActions as getContributedActions,
     getSpacePresenter,
     classIcon
-  } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  } from '@intabiafusion/view-resources'
+  import { SpacesNavModel } from '@intabiafusion/workbench'
   import { getSpaceName } from '../../utils'
 
   export let model: SpacesNavModel

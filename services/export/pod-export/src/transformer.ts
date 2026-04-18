@@ -19,7 +19,7 @@ import {
   type TransformOperation,
   OperationType,
   type OperationConfig
-} from '@hcengineering/export'
+} from '@intabiafusion/export'
 
 export class Transformer {
   private readonly skipAttributes: Set<string>

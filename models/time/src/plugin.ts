@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@hcengineering/core'
-import { type Application } from '@hcengineering/model-workbench'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { timeId } from '@hcengineering/time'
-import time from '@hcengineering/time-resources/src/plugin'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ActionCategory } from '@hcengineering/view'
+import { type Client, type Doc, type Ref } from '@intabiafusion/core'
+import { type Application } from '@intabiafusion/model-workbench'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { timeId } from '@intabiafusion/time'
+import time from '@intabiafusion/time-resources/src/plugin'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ActionCategory } from '@intabiafusion/view'
 
 export default mergeIds(timeId, time, {
   action: {

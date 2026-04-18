@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import media, { mediaId } from '@hcengineering/media'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import media, { mediaId } from '@intabiafusion/media'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 
 export default mergeIds(mediaId, media, {
   component: {

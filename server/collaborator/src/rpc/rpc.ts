@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
-import type { StorageAdapter } from '@hcengineering/server-core'
+import { MeasureContext } from '@intabiafusion/core'
+import type { StorageAdapter } from '@intabiafusion/server-core'
 import { Hocuspocus } from '@hocuspocus/server'
 import { Transformer } from '@hocuspocus/transformer'
 import { Context } from '../context'

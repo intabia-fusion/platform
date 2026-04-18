@@ -24,9 +24,9 @@
     SortingOrder,
     Space,
     type WithLookup
-  } from '@hcengineering/core'
-  import { getResourceC, translate } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { getResourceC, translate } from '@intabiafusion/platform'
+  import presentation, { getClient } from '@intabiafusion/presentation'
   import ui, {
     addNotification,
     deviceOptionsStore,
@@ -38,8 +38,8 @@
     Loading,
     resizeObserver,
     themeStore
-  } from '@hcengineering/ui'
-  import { Filter, GrouppingManager } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { Filter, GrouppingManager } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '../../filter'
   import view from '../../plugin'

@@ -2,10 +2,10 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { TrainingRequest } from '@hcengineering/training'
-import type { Employee } from '@hcengineering/contact'
-import type { Ref } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
+import type { TrainingRequest } from '@intabiafusion/training'
+import type { Employee } from '@intabiafusion/contact'
+import type { Ref } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
 import { canChangeTrainingRequestOwner } from './canChangeTrainingRequestOwner'
 
 export async function changeTrainingRequestOwner (request: TrainingRequest, owner: Ref<Employee>): Promise<void> {

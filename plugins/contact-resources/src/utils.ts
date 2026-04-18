@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type AccountClient, getClient as getAccountClientRaw } from '@hcengineering/account-client'
+import { type AccountClient, getClient as getAccountClientRaw } from '@intabiafusion/account-client'
 import {
   addEmployeeListenrer,
   AvatarType,
@@ -49,7 +49,7 @@ import {
   type PersonsByPermission,
   type MembersBySpace,
   type SocialIdentity
-} from '@hcengineering/contact'
+} from '@intabiafusion/contact'
 import core, {
   type AccountUuid,
   type AggregateValue,
@@ -74,12 +74,12 @@ import core, {
   type TypedSpace,
   type UserStatus,
   type WithLookup
-} from '@hcengineering/core'
-import login from '@hcengineering/login'
-import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
-import { getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
-import presentation, { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
-import { type TemplateDataProvider } from '@hcengineering/templates'
+} from '@intabiafusion/core'
+import login from '@intabiafusion/login'
+import notification, { type DocNotifyContext, type InboxNotification } from '@intabiafusion/notification'
+import { getMetadata, getResource, type IntlString, translate } from '@intabiafusion/platform'
+import presentation, { addTxListener, createQuery, getClient, onClient } from '@intabiafusion/presentation'
+import { type TemplateDataProvider } from '@intabiafusion/templates'
 import {
   getCurrentResolvedLocation,
   getPanelURI,
@@ -87,10 +87,10 @@ import {
   type Location,
   type ResolvedLocation,
   type TabItem
-} from '@hcengineering/ui'
-import view, { type Filter, type GrouppingManager } from '@hcengineering/view'
-import { accessDeniedStore, FilterQuery } from '@hcengineering/view-resources'
-import { type LocationData } from '@hcengineering/workbench'
+} from '@intabiafusion/ui'
+import view, { type Filter, type GrouppingManager } from '@intabiafusion/view'
+import { accessDeniedStore, FilterQuery } from '@intabiafusion/view-resources'
+import { type LocationData } from '@intabiafusion/workbench'
 import { derived, get, type Readable, writable } from 'svelte/store'
 
 import contact from './plugin'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
   import tracker from '../../../plugin'
   import CopyToClipboardButton from './CopyToClipboardButton.svelte'
 

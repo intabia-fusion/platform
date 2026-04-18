@@ -1,4 +1,4 @@
-import { MongoClientReference, getMongoClient } from '@hcengineering/mongo'
+import { MongoClientReference, getMongoClient } from '@intabiafusion/mongo'
 import { MongoClient } from 'mongodb'
 
 import config from './config'

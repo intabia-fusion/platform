@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Photo } from '@hcengineering/attachment'
-  import { Class, Doc, Ref, Space, type WithLookup } from '@hcengineering/core'
-  import { setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { createQuery, getBlobRef, getClient, uploadFile } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Spinner } from '@hcengineering/ui'
+  import { Photo } from '@intabiafusion/attachment'
+  import { Class, Doc, Ref, Space, type WithLookup } from '@intabiafusion/core'
+  import { setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { createQuery, getBlobRef, getClient, uploadFile } from '@intabiafusion/presentation'
+  import { Button, IconAdd, Label, Spinner } from '@intabiafusion/ui'
   import attachment from '../plugin'
   import { showAttachmentPreviewPopup } from '../utils'
   import UploadDuo from './icons/UploadDuo.svelte'

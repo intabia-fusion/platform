@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { parseContext, Process, Trigger } from '@hcengineering/process'
-  import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { parseContext, Process, Trigger } from '@intabiafusion/process'
+  import { Component, Icon, IconError, Label, tooltip } from '@intabiafusion/ui'
 
   export let value: Ref<Trigger>
   export let process: Process

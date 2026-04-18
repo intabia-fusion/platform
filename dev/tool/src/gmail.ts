@@ -17,14 +17,14 @@ import core, {
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid
-} from '@hcengineering/core'
-import { getClient as getKvsClient } from '@hcengineering/kvs-client'
-import { getAccountsFromTxes, getSocialKeyByOldEmail } from '@hcengineering/model-core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { getClient as getKvsClient } from '@intabiafusion/kvs-client'
+import { getAccountsFromTxes, getSocialKeyByOldEmail } from '@intabiafusion/model-core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
 
-import { type PipelineFactory, createDummyStorageAdapter, wrapPipeline } from '@hcengineering/server-core'
-import { createBackupPipeline, createEmptyBroadcastOps } from '@hcengineering/server-pipeline'
+import { type PipelineFactory, createDummyStorageAdapter, wrapPipeline } from '@intabiafusion/server-core'
+import { createBackupPipeline, createEmptyBroadcastOps } from '@intabiafusion/server-pipeline'
 import type { Db } from 'mongodb'
 
 // Old token and history types

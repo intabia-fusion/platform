@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import cardPlugin, { type Card } from '@hcengineering/card'
+import cardPlugin, { type Card } from '@intabiafusion/card'
 import core, {
   generateId,
   getCurrentAccount,
@@ -27,9 +27,9 @@ import core, {
   type TxMixin,
   type TxResult,
   type TxUpdateDoc
-} from '@hcengineering/core'
-import { BasePresentationMiddleware, type PresentationMiddleware } from '@hcengineering/presentation'
-import { type ApproveRequest, ExecutionStatus, isUpdateTx, type ProcessToDo } from '@hcengineering/process'
+} from '@intabiafusion/core'
+import { BasePresentationMiddleware, type PresentationMiddleware } from '@intabiafusion/presentation'
+import { type ApproveRequest, ExecutionStatus, isUpdateTx, type ProcessToDo } from '@intabiafusion/process'
 import process from './plugin'
 import { createExecution, getNextStateUserInput, pickTransition, requestResult } from './utils'
 

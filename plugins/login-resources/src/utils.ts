@@ -24,9 +24,9 @@ import type {
   LoginInfoRequest,
   LoginInfoByToken,
   LoginInfoRequestData
-} from '@hcengineering/account-client'
-import { getClient as getAccountClientRaw } from '@hcengineering/account-client'
-import { Analytics } from '@hcengineering/analytics'
+} from '@intabiafusion/account-client'
+import { getClient as getAccountClientRaw } from '@intabiafusion/account-client'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   AccountRole,
   concatLink,
@@ -36,8 +36,8 @@ import {
   type WorkspaceUuid,
   type WorkspaceInfoWithStatus,
   type WorkspaceUserOperation
-} from '@hcengineering/core'
-import { loginId } from '@hcengineering/login'
+} from '@intabiafusion/core'
+import { loginId } from '@intabiafusion/login'
 import platform, {
   OK,
   PlatformError,
@@ -48,8 +48,8 @@ import platform, {
   translate,
   unknownError,
   unknownStatus
-} from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+} from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
 import {
   getCurrentLocation,
   isSameSegments,
@@ -58,8 +58,8 @@ import {
   navigate,
   setMetadataLocalStorage,
   type Location
-} from '@hcengineering/ui'
-import { logIn, workbenchId } from '@hcengineering/workbench'
+} from '@intabiafusion/ui'
+import { logIn, workbenchId } from '@intabiafusion/workbench'
 
 import { LoginEvents } from './analytics'
 import { type Pages } from './index'

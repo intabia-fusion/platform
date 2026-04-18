@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
-  import { closeTooltip, Label, resizeObserver } from '@hcengineering/ui'
+  import { Timestamp } from '@intabiafusion/core'
+  import { closeTooltip, Label, resizeObserver } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../plugin'
-  import { TimestampPresenter } from '@hcengineering/view-resources'
+  import { TimestampPresenter } from '@intabiafusion/view-resources'
 
   const dispatch = createEventDispatcher()
 

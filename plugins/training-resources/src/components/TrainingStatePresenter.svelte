@@ -16,9 +16,9 @@
 -->
 <script lang="ts" context="module">
   import type { ComponentProps } from 'svelte'
-  import type { IntlString } from '@hcengineering/platform'
-  import { StateTag, StateType } from '@hcengineering/ui'
-  import { TrainingState } from '@hcengineering/training'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { StateTag, StateType } from '@intabiafusion/ui'
+  import { TrainingState } from '@intabiafusion/training'
 
   import training from '../plugin'
 

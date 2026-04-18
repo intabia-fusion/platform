@@ -2,11 +2,11 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { findQuestions, updateQuestion } from '@hcengineering/questions-resources'
-import type { Training } from '@hcengineering/training'
-import type { Employee } from '@hcengineering/contact'
-import type { Ref } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
+import { findQuestions, updateQuestion } from '@intabiafusion/questions-resources'
+import type { Training } from '@intabiafusion/training'
+import type { Employee } from '@intabiafusion/contact'
+import type { Ref } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
 import { canChangeTrainingOwner } from './canChangeTrainingOwner'
 
 export async function changeTrainingOwner (training: Training, owner: Ref<Employee>): Promise<void> {

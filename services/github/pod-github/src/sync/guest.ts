@@ -2,11 +2,11 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { Branding, generateUuid, PersonUuid, TxOperations, WorkspaceIds, WorkspaceUuid } from '@hcengineering/core'
-import { MarkupMarkType, MarkupNode, MarkupNodeType, traverseNode } from '@hcengineering/text'
-import { getPublicLink } from '@hcengineering/server-guest-resources'
-import { Task } from '@hcengineering/task'
-import { generateToken } from '@hcengineering/server-token'
+import { Branding, generateUuid, PersonUuid, TxOperations, WorkspaceIds, WorkspaceUuid } from '@intabiafusion/core'
+import { MarkupMarkType, MarkupNode, MarkupNodeType, traverseNode } from '@intabiafusion/text'
+import { getPublicLink } from '@intabiafusion/server-guest-resources'
+import { Task } from '@intabiafusion/task'
+import { generateToken } from '@intabiafusion/server-token'
 
 const githubLinkText = process.env.LINK_TEXT ?? 'Huly&reg;:'
 

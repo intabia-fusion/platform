@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/server",
-  "version": "0.7.18",
+  "name": "@intabiafusion/server",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@hcengineering/node-package",
+  "template": "@intabiafusion/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "cross-env": "~7.0.3",
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -36,16 +36,16 @@
     "eslint-plugin-svelte": "^2.35.1"
   },
   "dependencies": {
-    "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/rpc": "workspace:^0.7.17",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-token": "workspace:^0.7.17",
+    "@intabiafusion/account-client": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/rpc": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
     "utf-8-validate": "^6.0.4"
   },
-  "repository": "https://github.com/hcengineering/huly.server",
+  "repository": "https://github.com/intabia-fusion/foundation",
   "publishConfig": {
     "access": "public"
   },

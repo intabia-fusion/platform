@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { IconSize } from '@hcengineering/ui'
+  import { Person } from '@intabiafusion/contact'
+  import { IconSize } from '@intabiafusion/ui'
   import Avatar from './Avatar.svelte'
 
   export let value: Person | undefined

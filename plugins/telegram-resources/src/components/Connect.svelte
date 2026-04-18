@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { IntlString, PlatformError } from '@hcengineering/platform'
-  import ui, { Button, EditBox, IconClose, Label, IconError } from '@hcengineering/ui'
+  import platform, { IntlString, PlatformError } from '@intabiafusion/platform'
+  import ui, { Button, EditBox, IconClose, Label, IconError } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { type Integration } from '@hcengineering/account-client'
+  import { type Integration } from '@intabiafusion/account-client'
   import { isValidPhoneNumber } from 'libphonenumber-js'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import PhoneInput from './PhoneInput.svelte'
   import PinPad from './PinPad.svelte'

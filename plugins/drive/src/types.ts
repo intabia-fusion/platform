@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { AttachedDoc, Blob, CollectionSize, Doc, Ref, Type, TypedSpace } from '@hcengineering/core'
+import { AttachedDoc, Blob, CollectionSize, Doc, Ref, Type, TypedSpace } from '@intabiafusion/core'
 
 import drive from './plugin'
 

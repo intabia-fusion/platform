@@ -23,16 +23,16 @@ import core, {
   type TxCUD,
   type TxRemoveDoc,
   type TxUpdateDoc
-} from '@hcengineering/core'
-import type { Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import rating, { ReactionKind, type DocReaction } from '@hcengineering/rating'
+} from '@intabiafusion/core'
+import type { Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import rating, { ReactionKind, type DocReaction } from '@intabiafusion/rating'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
 /**
  * @public

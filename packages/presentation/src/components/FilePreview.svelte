@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BlobMetadata, type Blob, type Ref } from '@hcengineering/core'
+  import { BlobMetadata, type Blob, type Ref } from '@intabiafusion/core'
   import {
     Button,
     Component,
@@ -21,7 +21,7 @@
     resizeObserver,
     deviceOptionsStore as deviceInfo,
     Loading
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
 
   import presentation from '../plugin'
 

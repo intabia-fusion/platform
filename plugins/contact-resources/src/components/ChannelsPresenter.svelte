@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Channel } from '@hcengineering/contact'
-  import { getResource } from '@hcengineering/platform'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { showPopup } from '@hcengineering/ui'
-  import { ViewAction } from '@hcengineering/view'
+  import type { Channel } from '@intabiafusion/contact'
+  import { getResource } from '@intabiafusion/platform'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { showPopup } from '@intabiafusion/ui'
+  import { ViewAction } from '@intabiafusion/view'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
 
   export let value: Channel[] | Channel | null

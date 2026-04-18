@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, Status } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import task, { Project, ProjectType } from '@hcengineering/task'
-  import { resizeObserver } from '@hcengineering/ui'
-  import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
+  import { IdMap, Ref, Status } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import task, { Project, ProjectType } from '@intabiafusion/task'
+  import { resizeObserver } from '@intabiafusion/ui'
+  import { ObjectPresenter, statusStore } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { typeStore } from '../..'
 

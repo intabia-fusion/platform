@@ -4,9 +4,9 @@
 //
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import type { Asset, IntlString } from '@hcengineering/platform'
-  import { translateCB } from '@hcengineering/platform'
+  import { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
+  import { translateCB } from '@intabiafusion/platform'
   import {
     Breadcrumb,
     Header,
@@ -15,9 +15,9 @@
     ModeSelector,
     SearchInput,
     themeStore
-  } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference, type ViewletViewAction } from '@hcengineering/view'
-  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/ui'
+  import view, { ViewOptions, Viewlet, ViewletPreference, type ViewletViewAction } from '@intabiafusion/view'
+  import { ComponentExtensions, getClient } from '@intabiafusion/presentation'
   import { getViewletSpecialActions } from '../viewletUtils'
 
   import FilterBar from './filter/FilterBar.svelte'

@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import contact, { getCurrentEmployee } from '@hcengineering/contact'
-import { getContactChannel } from '@hcengineering/contact-resources'
-import { getClient } from '@hcengineering/presentation'
-import { type TemplateDataProvider } from '@hcengineering/templates'
-import { getMetadata } from '@hcengineering/platform'
+import contact, { getCurrentEmployee } from '@intabiafusion/contact'
+import { getContactChannel } from '@intabiafusion/contact-resources'
+import { getClient } from '@intabiafusion/presentation'
+import { type TemplateDataProvider } from '@intabiafusion/templates'
+import { getMetadata } from '@intabiafusion/platform'
 
 import telegram from './plugin'
 

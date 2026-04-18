@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
-import { NotificationContent } from '@hcengineering/notification'
-import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
-import { IntlString } from '@hcengineering/platform'
-import { getSenderName, normalizeTextMessage, Sender } from '@hcengineering/server-notification'
+import activity, { ActivityMessage, Reaction } from '@intabiafusion/activity'
+import { NotificationContent } from '@intabiafusion/notification'
+import { isEmptyMarkup, markupToText } from '@intabiafusion/text-core'
+import { IntlString } from '@intabiafusion/platform'
+import { getSenderName, normalizeTextMessage, Sender } from '@intabiafusion/server-notification'
 
 import config from './config'
 

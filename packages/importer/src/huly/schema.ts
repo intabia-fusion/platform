@@ -1,5 +1,5 @@
-import card from '@hcengineering/card'
-import core from '@hcengineering/core'
+import card from '@intabiafusion/card'
+import core from '@intabiafusion/core'
 import * as fs from 'fs'
 import * as path from 'path'
 

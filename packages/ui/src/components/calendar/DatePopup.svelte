@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangeMode, convertToDay } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { DateRangeMode, convertToDay } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import {
     ActionIcon,

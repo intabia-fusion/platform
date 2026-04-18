@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { mergeIds } from '@hcengineering/platform'
-import { achievementId } from '@hcengineering/achievement'
-import achievement from '@hcengineering/achievement-resources/src/plugin'
-import { type Ref } from '@hcengineering/core'
-import { type ComponentPointExtension } from '@hcengineering/presentation'
+import { mergeIds } from '@intabiafusion/platform'
+import { achievementId } from '@intabiafusion/achievement'
+import achievement from '@intabiafusion/achievement-resources/src/plugin'
+import { type Ref } from '@intabiafusion/core'
+import { type ComponentPointExtension } from '@intabiafusion/presentation'
 
 export default mergeIds(achievementId, achievement, {
   extensions: {

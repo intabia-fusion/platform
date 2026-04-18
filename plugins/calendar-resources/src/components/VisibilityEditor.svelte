@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Visibility } from '@hcengineering/calendar'
+  import { Visibility } from '@intabiafusion/calendar'
   import {
     Button,
     ButtonMenu,
@@ -22,7 +22,7 @@
     eventToHTMLElement,
     showPopup,
     ModernPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
 

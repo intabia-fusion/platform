@@ -23,10 +23,10 @@ import questions, {
   type SingleChoiceAssessmentAnswer,
   type SingleChoiceQuestion,
   type SingleChoiceQuestionAnswer
-} from '@hcengineering/questions'
-import type { Ref } from '@hcengineering/core'
-import { mergeIds, type Resource } from '@hcengineering/platform'
-import type { Action, ViewActionAvailabilityFunction, ViewActionFunction } from '@hcengineering/view'
+} from '@intabiafusion/questions'
+import type { Ref } from '@intabiafusion/core'
+import { mergeIds, type Resource } from '@intabiafusion/platform'
+import type { Action, ViewActionAvailabilityFunction, ViewActionFunction } from '@intabiafusion/view'
 
 export default mergeIds(questionsId, questions, {
   action: {

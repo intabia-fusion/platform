@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { Analytics } from '@intabiafusion/analytics'
+import { MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
 import { type Request, type Response } from 'express'
 
 import { type Datalake } from '../datalake'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { concatLink } from '@hcengineering/core'
-  import { getMetadata } from '@hcengineering/platform'
-  import presentation, { NavLink } from '@hcengineering/presentation'
-  import { trackerId, type Issue, type IssueParentInfo } from '@hcengineering/tracker'
-  import { getCurrentLocation, locationToUrl } from '@hcengineering/ui'
+  import { concatLink } from '@intabiafusion/core'
+  import { getMetadata } from '@intabiafusion/platform'
+  import presentation, { NavLink } from '@intabiafusion/presentation'
+  import { trackerId, type Issue, type IssueParentInfo } from '@intabiafusion/tracker'
+  import { getCurrentLocation, locationToUrl } from '@intabiafusion/ui'
 
   export let value: Issue | undefined
 

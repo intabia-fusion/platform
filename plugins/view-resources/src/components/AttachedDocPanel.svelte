@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedDoc, Class, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { AttachedDoc, Class, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Component } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   export let _id: Ref<AttachedDoc>
   export let _class: Ref<Class<AttachedDoc>>

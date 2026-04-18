@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc } from '@hcengineering/core'
-  import { Button, ButtonKind, ButtonSize, IconAttachment, tooltip } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import type { Doc } from '@intabiafusion/core'
+  import { Button, ButtonKind, ButtonSize, IconAttachment, tooltip } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import AttachmentPopup from './AttachmentPopup.svelte'
 
   export let value: number | undefined

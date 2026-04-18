@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Project } from '@hcengineering/controlled-documents'
+  import { Project } from '@intabiafusion/controlled-documents'
 
   export let value: Project | undefined
   export let inline: boolean = false

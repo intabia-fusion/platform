@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
-  import { IconSize } from '@hcengineering/ui'
-  import contact from '@hcengineering/contact'
+  import type { Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { IconSize } from '@intabiafusion/ui'
+  import contact from '@intabiafusion/contact'
 
   import { getObjectPresenter } from '../utils'
   import ObjectIcon from './ObjectIcon.svelte'

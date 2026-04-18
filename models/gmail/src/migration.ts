@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Doc, type Ref, type Space } from '@hcengineering/core'
-import { gmailId } from '@hcengineering/gmail'
+import core, { type Class, type Doc, type Ref, type Space } from '@intabiafusion/core'
+import { gmailId } from '@intabiafusion/gmail'
 import {
   migrateSpace,
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
+} from '@intabiafusion/model'
 import { DOMAIN_GMAIL } from '.'
-import notification from '@hcengineering/notification'
-import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
+import notification from '@intabiafusion/notification'
+import { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
 
 import gmail from './plugin'
 

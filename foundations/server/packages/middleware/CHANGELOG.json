@@ -1,9 +1,9 @@
 {
-  "name": "@hcengineering/middleware",
+  "name": "@intabiafusion/middleware",
   "entries": [
     {
       "version": "0.7.22",
-      "tag": "@hcengineering/middleware_v0.7.22",
+      "tag": "@intabiafusion/middleware_v0.7.22",
       "date": "Wed, 26 Nov 2025 16:04:43 GMT",
       "comments": {
         "patch": [
@@ -13,14 +13,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.17` to `0.7.18`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.17` to `0.7.18`"
           }
         ]
       }
     },
     {
       "version": "0.7.21",
-      "tag": "@hcengineering/middleware_v0.7.21",
+      "tag": "@intabiafusion/middleware_v0.7.21",
       "date": "Sat, 22 Nov 2025 15:29:49 GMT",
       "comments": {
         "patch": [
@@ -32,7 +32,7 @@
     },
     {
       "version": "0.7.20",
-      "tag": "@hcengineering/middleware_v0.7.20",
+      "tag": "@intabiafusion/middleware_v0.7.20",
       "date": "Wed, 19 Nov 2025 06:47:45 GMT",
       "comments": {
         "patch": [
@@ -49,7 +49,7 @@
     },
     {
       "version": "0.7.19",
-      "tag": "@hcengineering/middleware_v0.7.19",
+      "tag": "@intabiafusion/middleware_v0.7.19",
       "date": "Fri, 07 Nov 2025 16:12:16 GMT",
       "comments": {
         "patch": [
@@ -61,7 +61,7 @@
     },
     {
       "version": "0.7.18",
-      "tag": "@hcengineering/middleware_v0.7.18",
+      "tag": "@intabiafusion/middleware_v0.7.18",
       "date": "Thu, 06 Nov 2025 10:21:28 GMT",
       "comments": {
         "patch": [
@@ -71,14 +71,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.16` to `0.7.17`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.16` to `0.7.17`"
           }
         ]
       }
     },
     {
       "version": "0.7.17",
-      "tag": "@hcengineering/middleware_v0.7.17",
+      "tag": "@intabiafusion/middleware_v0.7.17",
       "date": "Thu, 30 Oct 2025 23:32:01 GMT",
       "comments": {
         "patch": [
@@ -90,7 +90,7 @@
     },
     {
       "version": "0.7.16",
-      "tag": "@hcengineering/middleware_v0.7.16",
+      "tag": "@intabiafusion/middleware_v0.7.16",
       "date": "Thu, 30 Oct 2025 20:53:38 GMT",
       "comments": {
         "patch": [
@@ -102,7 +102,7 @@
     },
     {
       "version": "0.7.15",
-      "tag": "@hcengineering/middleware_v0.7.15",
+      "tag": "@intabiafusion/middleware_v0.7.15",
       "date": "Mon, 27 Oct 2025 16:26:11 GMT",
       "comments": {
         "patch": [
@@ -112,14 +112,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.14` to `0.7.15`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.14` to `0.7.15`"
           }
         ]
       }
     },
     {
       "version": "0.7.10",
-      "tag": "@hcengineering/middleware_v0.7.10",
+      "tag": "@intabiafusion/middleware_v0.7.10",
       "date": "Tue, 21 Oct 2025 19:29:19 GMT",
       "comments": {
         "patch": [
@@ -129,14 +129,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.7` to `0.7.8`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.7` to `0.7.8`"
           }
         ]
       }
     },
     {
       "version": "0.7.9",
-      "tag": "@hcengineering/middleware_v0.7.9",
+      "tag": "@intabiafusion/middleware_v0.7.9",
       "date": "Fri, 17 Oct 2025 05:15:22 GMT",
       "comments": {
         "patch": [
@@ -146,38 +146,38 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.6` to `0.7.7`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.6` to `0.7.7`"
           }
         ]
       }
     },
     {
       "version": "0.7.8",
-      "tag": "@hcengineering/middleware_v0.7.8",
+      "tag": "@intabiafusion/middleware_v0.7.8",
       "date": "Wed, 15 Oct 2025 18:58:52 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.5` to `0.7.6`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.5` to `0.7.6`"
           }
         ]
       }
     },
     {
       "version": "0.7.7",
-      "tag": "@hcengineering/middleware_v0.7.7",
+      "tag": "@intabiafusion/middleware_v0.7.7",
       "date": "Tue, 14 Oct 2025 10:31:32 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.4` to `0.7.5`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.4` to `0.7.5`"
           }
         ]
       }
     },
     {
       "version": "0.7.6",
-      "tag": "@hcengineering/middleware_v0.7.6",
+      "tag": "@intabiafusion/middleware_v0.7.6",
       "date": "Tue, 14 Oct 2025 05:23:10 GMT",
       "comments": {
         "patch": [
@@ -187,14 +187,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.3` to `0.7.4`"
           }
         ]
       }
     },
     {
       "version": "0.7.5",
-      "tag": "@hcengineering/middleware_v0.7.5",
+      "tag": "@intabiafusion/middleware_v0.7.5",
       "date": "Mon, 13 Oct 2025 18:19:06 GMT",
       "comments": {
         "patch": [
@@ -206,7 +206,7 @@
     },
     {
       "version": "0.7.4",
-      "tag": "@hcengineering/middleware_v0.7.4",
+      "tag": "@intabiafusion/middleware_v0.7.4",
       "date": "Mon, 13 Oct 2025 12:15:35 GMT",
       "comments": {
         "patch": [
@@ -216,14 +216,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.2` to `0.7.3`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.2` to `0.7.3`"
           }
         ]
       }
     },
     {
       "version": "0.7.3",
-      "tag": "@hcengineering/middleware_v0.7.3",
+      "tag": "@intabiafusion/middleware_v0.7.3",
       "date": "Sat, 11 Oct 2025 18:26:50 GMT",
       "comments": {
         "patch": [
@@ -233,14 +233,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.1` to `0.7.2`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.1` to `0.7.2`"
           }
         ]
       }
     },
     {
       "version": "0.7.2",
-      "tag": "@hcengineering/middleware_v0.7.2",
+      "tag": "@intabiafusion/middleware_v0.7.2",
       "date": "Fri, 10 Oct 2025 14:32:03 GMT",
       "comments": {
         "patch": [
@@ -253,14 +253,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.0` to `0.7.1`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.0` to `0.7.1`"
           }
         ]
       }
     },
     {
       "version": "0.7.1",
-      "tag": "@hcengineering/middleware_v0.7.1",
+      "tag": "@intabiafusion/middleware_v0.7.1",
       "date": "Thu, 09 Oct 2025 16:43:17 GMT",
       "comments": {
         "patch": [
@@ -272,7 +272,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/middleware_v0.7.0",
+      "tag": "@intabiafusion/middleware_v0.7.0",
       "date": "Thu, 09 Oct 2025 16:41:02 GMT",
       "comments": {
         "none": [

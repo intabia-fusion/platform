@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Lead } from '@hcengineering/lead'
+  import { WithLookup } from '@intabiafusion/core'
+  import { Lead } from '@intabiafusion/lead'
 
   export let value: WithLookup<Lead>
   export let shouldUseMargin: boolean = false

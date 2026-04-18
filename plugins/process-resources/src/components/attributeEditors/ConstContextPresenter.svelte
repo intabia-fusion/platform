@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import type { Process, SelectedConst } from '@hcengineering/process'
-  import { AnyComponent, Component } from '@hcengineering/ui'
-  import { findAttributePresenter } from '@hcengineering/view-resources'
+  import core from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import type { Process, SelectedConst } from '@intabiafusion/process'
+  import { AnyComponent, Component } from '@intabiafusion/ui'
+  import { findAttributePresenter } from '@intabiafusion/view-resources'
   import { readonly } from 'svelte/store'
 
   export let contextValue: SelectedConst

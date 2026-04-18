@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, HTMLViewer } from '@hcengineering/presentation'
-  import { TelegramMessage } from '@hcengineering/telegram'
-  import { Ref } from '@hcengineering/core'
+  import { createQuery, HTMLViewer } from '@intabiafusion/presentation'
+  import { TelegramMessage } from '@intabiafusion/telegram'
+  import { Ref } from '@intabiafusion/core'
 
   import telegram from '../plugin'
 

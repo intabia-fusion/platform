@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Role, Tag } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
-  import { ObjectPopup } from '@hcengineering/presentation'
+  import { MasterTag, Role, Tag } from '@intabiafusion/card'
+  import core, { Ref } from '@intabiafusion/core'
+  import { ObjectPopup } from '@intabiafusion/presentation'
   import card from '../../plugin'
 
   export let masterTag: MasterTag | Tag

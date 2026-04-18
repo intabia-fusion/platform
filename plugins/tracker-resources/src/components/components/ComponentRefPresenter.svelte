@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AggregateValue, Ref } from '@hcengineering/core'
+  import { AggregateValue, Ref } from '@intabiafusion/core'
   import ComponentPresenter from './ComponentPresenter.svelte'
-  import { Component } from '@hcengineering/tracker'
+  import { Component } from '@intabiafusion/tracker'
 
   import { componentStore } from '../../component'
 

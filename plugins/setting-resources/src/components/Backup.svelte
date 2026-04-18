@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { getMetadata } from '@hcengineering/platform'
-  import presentation, { getFileUrl } from '@hcengineering/presentation'
-  import { Breadcrumb, Button, Expandable, Header, Label, Loading, Scroller } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { getMetadata } from '@intabiafusion/platform'
+  import presentation, { getFileUrl } from '@intabiafusion/presentation'
+  import { Breadcrumb, Button, Expandable, Header, Label, Loading, Scroller } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { onMount } from 'svelte'
   import setting from '../plugin'
   import { BackupInfo, BackupSnapshot } from '../types'

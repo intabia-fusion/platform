@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { Space, WithLookup } from '@hcengineering/core'
-  import { SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
-  import { RelatedIssueTarget } from '@hcengineering/tracker'
-  import { Button, Icon, IconArrowRight, IconDelete, Label } from '@hcengineering/ui'
-  import { FixedColumn } from '@hcengineering/view-resources'
+  import core, { Space, WithLookup } from '@intabiafusion/core'
+  import { SpaceSelector, createQuery, getClient } from '@intabiafusion/presentation'
+  import { RelatedIssueTarget } from '@intabiafusion/tracker'
+  import { Button, Icon, IconArrowRight, IconDelete, Label } from '@intabiafusion/ui'
+  import { FixedColumn } from '@intabiafusion/view-resources'
   import tracker from '../plugin'
 
   export let value: Space | undefined

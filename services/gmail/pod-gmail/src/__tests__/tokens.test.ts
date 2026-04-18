@@ -1,13 +1,13 @@
-import { AccountUuid, PersonId, WorkspaceUuid, type MeasureContext } from '@hcengineering/core'
-import { AccountClient, IntegrationSecret } from '@hcengineering/account-client'
-import { getAccountClient } from '@hcengineering/server-client'
-import { gmailIntegrationKind } from '@hcengineering/gmail'
+import { AccountUuid, PersonId, WorkspaceUuid, type MeasureContext } from '@intabiafusion/core'
+import { AccountClient, IntegrationSecret } from '@intabiafusion/account-client'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { gmailIntegrationKind } from '@intabiafusion/gmail'
 
 import { TokenStorage } from '../tokens'
 import { SecretType, Token } from '../types'
 
 // Mock the getAccountClient function
-jest.mock('@hcengineering/server-client', () => ({
+jest.mock('@intabiafusion/server-client', () => ({
   getAccountClient: jest.fn()
 }))
 

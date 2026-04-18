@@ -25,10 +25,10 @@ import {
   type MixinData,
   makeCollabId,
   makeDocCollabId
-} from '@hcengineering/core'
-import { setPlatformStatus, translate, unknownError } from '@hcengineering/platform'
-import { copyMarkup } from '@hcengineering/presentation'
-import { themeStore } from '@hcengineering/ui'
+} from '@intabiafusion/core'
+import { setPlatformStatus, translate, unknownError } from '@intabiafusion/platform'
+import { copyMarkup } from '@intabiafusion/presentation'
+import { themeStore } from '@intabiafusion/ui'
 import documents, {
   type ControlledDocument,
   type Document,
@@ -42,8 +42,8 @@ import documents, {
   DocumentState,
   createChangeControl,
   createControlledDocFromTemplate as controlledDocFromTemplate
-} from '@hcengineering/controlled-documents'
-import { getCurrentEmployee } from '@hcengineering/contact'
+} from '@intabiafusion/controlled-documents'
+import { getCurrentEmployee } from '@intabiafusion/contact'
 import documentsRes from './plugin'
 import { getDocumentVersionString } from './utils'
 

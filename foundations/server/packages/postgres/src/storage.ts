@@ -64,7 +64,7 @@ import core, {
   type WithLookup,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type ConnectionMgr,
   createDBClient,
@@ -72,7 +72,7 @@ import {
   type DBResult,
   doFetchTypes,
   getDBClient
-} from '@hcengineering/postgres-base'
+} from '@intabiafusion/postgres-base'
 import {
   calcHashHash,
   type DbAdapter,
@@ -82,7 +82,7 @@ import {
   type RawFindIterator,
   type ServerFindOptions,
   type TxAdapter
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 import type postgres from 'postgres'
 import {
   getDocFieldsByDomains,

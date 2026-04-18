@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Timestamp, getCurrentAccount, AccountUuid } from '@hcengineering/core'
-  import { ReadState, ReadPosition } from '@hcengineering/notification'
-  import { employeeByAccountStore } from '@hcengineering/contact-resources'
-  import { Employee } from '@hcengineering/contact'
+  import { Timestamp, getCurrentAccount, AccountUuid } from '@intabiafusion/core'
+  import { ReadState, ReadPosition } from '@intabiafusion/notification'
+  import { employeeByAccountStore } from '@intabiafusion/contact-resources'
+  import { Employee } from '@intabiafusion/contact'
 
   import DoubleCheck from '../icons/DoubleCheck.svelte'
   import Check from '../icons/Check.svelte'

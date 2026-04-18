@@ -25,9 +25,9 @@ import {
   type Space,
   type WithLookup,
   matchQuery
-} from '@hcengineering/core'
-import { type Component } from '@hcengineering/tracker'
-import { type GrouppingManager } from '@hcengineering/view'
+} from '@intabiafusion/core'
+import { type Component } from '@intabiafusion/tracker'
+import { type GrouppingManager } from '@intabiafusion/view'
 import { get, writable } from 'svelte/store'
 
 export const componentStore = writable<DocManager<Component>>(new DocManager([]))

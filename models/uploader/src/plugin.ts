@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { uploaderId } from '@hcengineering/uploader'
-import uploader from '@hcengineering/uploader-resources/src/plugin'
+import { mergeIds } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { uploaderId } from '@intabiafusion/uploader'
+import uploader from '@intabiafusion/uploader-resources/src/plugin'
 
 export default mergeIds(uploaderId, uploader, {
   component: {

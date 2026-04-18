@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Class, type Doc, type Domain, IndexKind, type Ref } from '@hcengineering/core'
-import { ArrOf, type Builder, Index, Model, Prop, TypeNumber, TypeRef, TypeString, UX } from '@hcengineering/model'
-import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
-import view from '@hcengineering/model-view'
-import { type Asset, type IntlString } from '@hcengineering/platform'
+import { type Class, type Doc, type Domain, IndexKind, type Ref } from '@intabiafusion/core'
+import { ArrOf, type Builder, Index, Model, Prop, TypeNumber, TypeRef, TypeString, UX } from '@intabiafusion/model'
+import core, { TAttachedDoc, TDoc } from '@intabiafusion/model-core'
+import view from '@intabiafusion/model-view'
+import { type Asset, type IntlString } from '@intabiafusion/platform'
 import type {
   ExpertKnowledge,
   InitialKnowledge,
@@ -24,10 +24,10 @@ import type {
   TagCategory,
   TagElement,
   TagReference
-} from '@hcengineering/tags'
+} from '@intabiafusion/tags'
 import tags from './plugin'
 
-export { type TagCategory, type TagElement, type TagReference, tagsId } from '@hcengineering/tags'
+export { type TagCategory, type TagElement, type TagReference, tagsId } from '@intabiafusion/tags'
 export { tagsOperation } from './migration'
 export { tags as default }
 

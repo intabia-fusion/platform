@@ -14,8 +14,8 @@
 // -->
 
 <script lang="ts">
-  import { type Attachment } from '@hcengineering/attachment'
-  import { type WithLookup, Ref } from '@hcengineering/core'
+  import { type Attachment } from '@intabiafusion/attachment'
+  import { type WithLookup, Ref } from '@intabiafusion/core'
   import { AttachmentImageSize } from '../types'
   import AttachmentList from './AttachmentList.svelte'
   import LinkPreviewList from './LinkPreviewList.svelte'

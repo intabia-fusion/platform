@@ -28,6 +28,6 @@ import { configurePlatformDevServer } from './platform-dev'
   ) {
     configurePlatformDevServer()
   }
-  const pl = await import(/* webpackChunkName: "platform-ui" */ '@hcengineering/ui')
+  const pl = await import(/* webpackChunkName: "platform-ui" */ '@intabiafusion/ui')
   pl.createApp(document.body)
 })()

@@ -1,4 +1,4 @@
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   AccountRole,
   type AnyAttribute,
@@ -19,15 +19,15 @@ import core, {
   type TxCUD,
   TxProcessor,
   type TxResult
-} from '@hcengineering/core'
-import platform, { getResource, PlatformError, translate } from '@hcengineering/platform'
-import { BasePresentationMiddleware, type PresentationMiddleware } from '@hcengineering/presentation'
-import view, { type IAggregationManager } from '@hcengineering/view'
-import notification from '@hcengineering/notification'
-import { addNotification, NotificationSeverity } from '@hcengineering/ui'
+} from '@intabiafusion/core'
+import platform, { getResource, PlatformError, translate } from '@intabiafusion/platform'
+import { BasePresentationMiddleware, type PresentationMiddleware } from '@intabiafusion/presentation'
+import view, { type IAggregationManager } from '@intabiafusion/view'
+import notification from '@intabiafusion/notification'
+import { addNotification, NotificationSeverity } from '@intabiafusion/ui'
 import ReadOnlyNotification from './components/ReadOnlyNotification.svelte'
 import ForbiddenNotification from './components/ForbiddenNotification.svelte'
-import { getCurrentLanguage } from '@hcengineering/theme'
+import { getCurrentLanguage } from '@intabiafusion/theme'
 
 /**
  * @public

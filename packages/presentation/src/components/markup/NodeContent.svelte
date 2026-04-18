@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, Blob } from '@hcengineering/core'
-  import { AttrValue, MarkupNode, MarkupNodeType } from '@hcengineering/text'
+  import { Class, Doc, Ref, Blob } from '@intabiafusion/core'
+  import { AttrValue, MarkupNode, MarkupNodeType } from '@intabiafusion/text'
 
   import CodeBlockNode from './CodeBlockNode.svelte'
   import ObjectNode from './ObjectNode.svelte'
   import MarkdownNode from './MarkdownNode.svelte'
   import Node from './Node.svelte'
   import { getBlobRef } from '../../preview'
-  import { ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import { ParsedTextWithEmojis } from '@intabiafusion/emoji'
 
   export let node: MarkupNode
   export let singleTextNode = false

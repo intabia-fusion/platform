@@ -6,12 +6,12 @@
     DocumentState,
     DocumentValidationState,
     emptyBundle
-  } from '@hcengineering/controlled-documents'
+  } from '@intabiafusion/controlled-documents'
 
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, Scroller } from '@hcengineering/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Label, Scroller } from '@intabiafusion/ui'
 
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
+  import chunter, { ChatMessage } from '@intabiafusion/chunter'
   import documentsRes from '../../../plugin'
   import {
     $controlledDocument as controlledDocument,
@@ -22,7 +22,7 @@
   import DocumentApprovalItem from './DocumentApprovalItem.svelte'
   import RightPanelTabHeader from './RightPanelTabHeader.svelte'
   import { extractValidationWorkflow } from '../../../utils'
-  import { Ref } from '@hcengineering/core'
+  import { Ref } from '@intabiafusion/core'
 
   const client = getClient()
   const hierarchy = client.getHierarchy()

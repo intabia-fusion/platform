@@ -14,7 +14,7 @@
 //
 
 import type { BaseEvent } from './common'
-import { CardID, PeerKind, PeerExtra, WorkspaceUuid } from '@hcengineering/communication-types'
+import { CardID, PeerKind, PeerExtra, WorkspaceUuid } from '@intabiafusion/communication-types'
 
 // Peer events only for system
 export enum PeerEventType {

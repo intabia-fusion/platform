@@ -4,12 +4,12 @@
 //
 -->
 <script lang="ts">
-  import { PersonId } from '@hcengineering/core'
-  import ui, { Label, Location, Spinner, Button, location } from '@hcengineering/ui'
+  import { PersonId } from '@intabiafusion/core'
+  import ui, { Label, Location, Spinner, Button, location } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
   import github from '../plugin'
   import { sendGHServiceRequest } from './utils'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata } from '@intabiafusion/platform'
 
   let autoClose = 10
 

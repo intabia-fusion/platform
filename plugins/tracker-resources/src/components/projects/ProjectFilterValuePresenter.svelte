@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { IconWithEmoji, createQuery } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/tracker'
-  import { Icon, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { IconWithEmoji, createQuery } from '@intabiafusion/presentation'
+  import { Project } from '@intabiafusion/tracker'
+  import { Icon, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@intabiafusion/ui'
   import tracker from '../../plugin'
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
 
   export let value: [Ref<Project>, Ref<Project>[]][]
 

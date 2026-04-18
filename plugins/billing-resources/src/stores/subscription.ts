@@ -14,9 +14,9 @@
 //
 
 import { writable, derived, get } from 'svelte/store'
-import { type SubscriptionData } from '@hcengineering/account-client'
-import { type Tier } from '@hcengineering/billing'
-import { type UsageStatus, type WorkspaceInfoWithStatus } from '@hcengineering/core'
+import { type SubscriptionData } from '@intabiafusion/account-client'
+import { type Tier } from '@intabiafusion/billing'
+import { type UsageStatus, type WorkspaceInfoWithStatus } from '@intabiafusion/core'
 import { checkUsageAgainstLimits } from '../utils'
 
 export interface SubscriptionState {

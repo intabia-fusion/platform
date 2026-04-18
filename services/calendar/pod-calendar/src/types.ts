@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { RecurringRule } from '@hcengineering/calendar'
-import type { AccountUuid, PersonId, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import { RecurringRule } from '@intabiafusion/calendar'
+import type { AccountUuid, PersonId, Timestamp, WorkspaceUuid } from '@intabiafusion/core'
 import type { NextFunction, Request, Response } from 'express'
 import type { Credentials } from 'google-auth-library'
 

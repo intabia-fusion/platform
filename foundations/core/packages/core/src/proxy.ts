@@ -1,4 +1,4 @@
-import { PlatformError, unknownError } from '@hcengineering/platform'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
 import { type Ref } from '.'
 import type { Doc, Mixin } from './classes'
 

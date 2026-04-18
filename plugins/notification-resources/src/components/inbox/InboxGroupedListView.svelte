@@ -17,11 +17,11 @@
     ActivityNotificationViewlet,
     DisplayInboxNotification,
     DocNotifyContext
-  } from '@hcengineering/notification'
-  import { Ref } from '@hcengineering/core'
+  } from '@intabiafusion/notification'
+  import { Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
-  import { ListView } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
+  import { ListView } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
 
   import { InboxNotificationsClientImpl } from '../../inboxNotificationsClient'
   import DocNotifyContextCard from '../DocNotifyContextCard.svelte'

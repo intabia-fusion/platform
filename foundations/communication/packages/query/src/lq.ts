@@ -23,7 +23,7 @@ import {
   type FindLabelsParams,
   FindCollaboratorsParams,
   Collaborator
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 import { deepEqual } from 'fast-equals'
 import type {
   QueryCallback,
@@ -31,8 +31,8 @@ import type {
   EventResult,
   PagedQueryCallback,
   FindClient
-} from '@hcengineering/communication-sdk-types'
-import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+} from '@intabiafusion/communication-sdk-types'
+import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
 
 import type { FindParams, QueryId, AnyQuery, MessageQueryParams, QueryOptions, MessageQueryOptions, NotificationContextQueryOptions } from './types'
 import { MessagesQuery } from './messages/query'

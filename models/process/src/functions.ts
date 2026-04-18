@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import contact from '@hcengineering/contact'
-import core from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
+import contact from '@intabiafusion/contact'
+import core from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
 import process from './plugin'
 
 export function defineFunctions (builder: Builder): void {

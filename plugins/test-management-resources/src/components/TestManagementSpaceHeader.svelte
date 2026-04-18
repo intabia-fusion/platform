@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, Loading, SelectPopupValueType } from '@hcengineering/ui'
-  import { TestProject } from '@hcengineering/test-management'
+  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, Loading, SelectPopupValueType } from '@intabiafusion/ui'
+  import { TestProject } from '@intabiafusion/test-management'
 
   import { showCreateTestCasePopup, showCreateTestSuitePopup, showCreateProjectPopup } from '../utils'
   import { getTestSuiteIdFromLocation } from '../navigation'

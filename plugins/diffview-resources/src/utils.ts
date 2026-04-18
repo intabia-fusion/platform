@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type DiffFile } from '@hcengineering/diffview'
+import { type DiffFile } from '@intabiafusion/diffview'
 
 export function isDevNullName (name: string): boolean {
   return name === '/dev/null'

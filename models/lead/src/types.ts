@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Employee } from '@hcengineering/contact'
+import type { Employee } from '@intabiafusion/contact'
 import {
   IndexKind,
   type MarkupBlobRef,
@@ -23,8 +23,8 @@ import {
   type Status,
   type Timestamp,
   type AccountUuid
-} from '@hcengineering/core'
-import { type Customer, type Funnel, type Lead } from '@hcengineering/lead'
+} from '@intabiafusion/core'
+import { type Customer, type Funnel, type Lead } from '@intabiafusion/lead'
 import {
   Collection,
   Index,
@@ -38,17 +38,17 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@hcengineering/model'
-import attachment from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
-import contact, { TContact } from '@hcengineering/model-contact'
-import core from '@hcengineering/model-core'
-import task, { TProject, TTask } from '@hcengineering/model-task'
+} from '@intabiafusion/model'
+import attachment from '@intabiafusion/model-attachment'
+import chunter from '@intabiafusion/model-chunter'
+import contact, { TContact } from '@intabiafusion/model-contact'
+import core from '@intabiafusion/model-core'
+import task, { TProject, TTask } from '@intabiafusion/model-task'
 
 import lead from './plugin'
-import { getEmbeddedLabel } from '@hcengineering/platform'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
 
-export { leadId } from '@hcengineering/lead'
+export { leadId } from '@intabiafusion/lead'
 export { leadOperation } from './migration'
 export { default } from './plugin'
 

@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import core from '@hcengineering/core'
-import serverCore from '@hcengineering/server-core'
-import serverRequest from '@hcengineering/server-request'
-import serverNotification from '@hcengineering/server-notification'
-import request from '@hcengineering/model-request'
-import notification from '@hcengineering/notification'
-import serverActivity from '@hcengineering/server-activity'
+import core from '@intabiafusion/core'
+import serverCore from '@intabiafusion/server-core'
+import serverRequest from '@intabiafusion/server-request'
+import serverNotification from '@intabiafusion/server-notification'
+import request from '@intabiafusion/model-request'
+import notification from '@intabiafusion/notification'
+import serverActivity from '@intabiafusion/server-activity'
 
-export { serverRequestId } from '@hcengineering/server-request'
+export { serverRequestId } from '@intabiafusion/server-request'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

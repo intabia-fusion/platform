@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Space } from '@hcengineering/core'
+import core, { type Ref, type Space } from '@intabiafusion/core'
 import {
   migrateSpace,
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import { DOMAIN_PREFERENCE, preferenceId } from '@hcengineering/preference'
+} from '@intabiafusion/model'
+import { DOMAIN_PREFERENCE, preferenceId } from '@intabiafusion/preference'
 
 export const preferenceOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {

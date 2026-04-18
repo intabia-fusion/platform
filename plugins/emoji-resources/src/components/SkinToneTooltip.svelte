@@ -4,9 +4,9 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
   import { createEventDispatcher } from 'svelte'
-  import { ButtonBase, closeTooltip } from '@hcengineering/ui'
+  import { ButtonBase, closeTooltip } from '@intabiafusion/ui'
 
-  import { Emoji } from '@hcengineering/emoji'
+  import { Emoji } from '@intabiafusion/emoji'
   import { getEmojiSkins } from '../utils'
 
   export let emoji: Emoji.Emoji

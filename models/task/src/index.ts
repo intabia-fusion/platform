@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Person } from '@hcengineering/contact'
-import contact from '@hcengineering/contact'
+import type { Person } from '@intabiafusion/contact'
+import contact from '@intabiafusion/contact'
 import {
   DOMAIN_MODEL,
   IndexKind,
@@ -24,7 +24,7 @@ import {
   type Status,
   type StatusCategory,
   type Timestamp
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   ArrOf,
   Collection,
@@ -42,9 +42,9 @@ import {
   TypeString,
   UX,
   type Builder
-} from '@hcengineering/model'
-import attachment from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
+} from '@intabiafusion/model'
+import attachment from '@intabiafusion/model-attachment'
+import chunter from '@intabiafusion/model-chunter'
 import core, {
   TAttachedDoc,
   TClass,
@@ -52,17 +52,17 @@ import core, {
   TSpaceType,
   TSpaceTypeDescriptor,
   TTypedSpace
-} from '@hcengineering/model-core'
-import { createPublicLinkAction } from '@hcengineering/model-guest'
+} from '@intabiafusion/model-core'
+import { createPublicLinkAction } from '@intabiafusion/model-guest'
 import view, {
   classPresenter,
   createAction,
   template,
   actionTemplates as viewTemplates
-} from '@hcengineering/model-view'
-import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
-import setting from '@hcengineering/setting'
-import tags from '@hcengineering/tags'
+} from '@intabiafusion/model-view'
+import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
+import setting from '@intabiafusion/setting'
+import tags from '@intabiafusion/tags'
 import {
   type KanbanCard,
   type Project,
@@ -76,13 +76,13 @@ import {
   type TaskTypeClass,
   type TaskTypeDescriptor,
   type TaskTypeKind
-} from '@hcengineering/task'
-import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
+} from '@intabiafusion/task'
+import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
 
 import task from './plugin'
 
-export { createProjectType, taskId } from '@hcengineering/task'
+export { createProjectType, taskId } from '@intabiafusion/task'
 export { createSequence, migrateDefaultStatusesBase, taskOperation } from './migration'
 export { default } from './plugin'
 

@@ -31,14 +31,14 @@ import core, {
   type TxCUD,
   TxProcessor,
   systemAccountUuid
-} from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 export const DOMAIN_PREFERENCE = 'preference' as Domain
 
 /**

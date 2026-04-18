@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton } from '@hcengineering/ui'
-  import IconMembers from '@hcengineering/contact-resources/src/components/icons/Members.svelte'
+  import { ModernButton } from '@intabiafusion/ui'
+  import IconMembers from '@intabiafusion/contact-resources/src/components/icons/Members.svelte'
   import love from '../../../plugin'
   import { showParticipantsInModal } from '../../../stores'
 </script>

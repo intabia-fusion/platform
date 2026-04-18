@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Asset, IntlString, type Plugin, plugin } from '@hcengineering/platform'
+import { Asset, IntlString, type Plugin, plugin } from '@intabiafusion/platform'
 
 export const inboxId = 'inbox' as Plugin
 

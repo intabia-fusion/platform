@@ -37,7 +37,7 @@ The Platform uses two types of version tags to distinguish between production-re
   - Example: `v0.7.310`, `v0.7.307`, `v0.6.501`
   - These versions are recommended for production deployments
   - Suitable for self-hosted installations
-  - Published with release notes on [GitHub Releases](https://github.com/hcengineering/platform/releases)
+  - Published with release notes on [GitHub Releases](https://github.com/intabia-fusion/foundation/releases)
 
 - **Development Versions (`s*`)** - Pre-release builds for developers
   - Example: `s0.7.313`, `s0.7.292`, `s0.7.288`

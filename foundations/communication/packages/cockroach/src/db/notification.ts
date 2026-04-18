@@ -32,8 +32,8 @@ import {
   WithTotal,
   BlobID,
   SocialID
-} from '@hcengineering/communication-types'
-import { withTotal } from '@hcengineering/communication-shared'
+} from '@intabiafusion/communication-types'
+import { withTotal } from '@intabiafusion/communication-shared'
 import {
   CollaboratorQuery,
   CollaboratorUpdate,
@@ -42,7 +42,7 @@ import {
   NotificationContextUpdate,
   NotificationQuery,
   NotificationUpdate
-} from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-sdk-types'
 
 import { BaseDb } from './base'
 import { getCondition } from './utils'

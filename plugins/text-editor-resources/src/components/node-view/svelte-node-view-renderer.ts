@@ -28,7 +28,7 @@ import { type Node } from '@tiptap/pm/model'
 import { type Decoration, DecorationSet } from '@tiptap/pm/view'
 import { createNodeViewContext } from './context'
 import { SvelteRenderer } from './svelte-renderer'
-import { type AnyComponent } from '@hcengineering/ui'
+import { type AnyComponent } from '@intabiafusion/ui'
 
 export interface SvelteNodeViewRendererOptions extends NodeViewRendererOptions {
   update?: (node: Node, decorations: readonly Decoration[]) => boolean

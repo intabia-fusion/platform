@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@hcengineering/core",
+      "packageName": "@intabiafusion/core",
       "comment": "Fix object clone",
       "type": "patch"
     }
   ],
-  "packageName": "@hcengineering/core"
+  "packageName": "@intabiafusion/core"
 }

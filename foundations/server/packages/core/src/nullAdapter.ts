@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type WorkspaceIds, type Hierarchy, type MeasureContext, type ModelDb } from '@hcengineering/core'
+import { type WorkspaceIds, type Hierarchy, type MeasureContext, type ModelDb } from '@intabiafusion/core'
 import type { DbAdapter } from './adapter'
 import { DummyDbAdapter } from './mem'
 

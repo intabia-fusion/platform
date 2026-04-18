@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/collaboration",
-  "version": "0.7.17",
+  "name": "@intabiafusion/collaboration",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Hardcore Engineering Inc.",
-  "template": "@hcengineering/node-package",
+  "template": "@intabiafusion/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -18,7 +18,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -35,14 +35,14 @@
     "eslint-plugin-svelte": "^2.35.1"
   },
   "dependencies": {
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/text": "workspace:^0.7.18",
-    "@hcengineering/text-ydoc": "workspace:^0.7.18",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/text": "workspace:^1.0.0",
+    "@intabiafusion/text-ydoc": "workspace:^1.0.0",
     "base64-js": "^1.5.1",
     "yjs": "^13.6.27"
   },
-  "repository": "https://github.com/hcengineering/huly.server",
+  "repository": "https://github.com/intabia-fusion/foundation",
   "publishConfig": {
     "access": "public"
   },

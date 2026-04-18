@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@hcengineering/communication-server",
+      "packageName": "@intabiafusion/communication-server",
       "comment": "update deps",
       "type": "patch"
     }
   ],
-  "packageName": "@hcengineering/communication-server"
+  "packageName": "@intabiafusion/communication-server"
 }

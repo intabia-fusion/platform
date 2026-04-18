@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient, type KeyedAttribute } from '@hcengineering/presentation'
-  import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
-  import view, { AttributeCategory } from '@hcengineering/view'
+  import { AttachmentStyleBoxCollabEditor } from '@intabiafusion/attachment-resources'
+  import core, { Class, Doc, Mixin, Ref } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { Panel } from '@intabiafusion/panel'
+  import { getResource } from '@intabiafusion/platform'
+  import presentation, { createQuery, getClient, type KeyedAttribute } from '@intabiafusion/presentation'
+  import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@intabiafusion/ui'
+  import view, { AttributeCategory } from '@intabiafusion/view'
   import {
     DocAttributeBar,
     DocNavLink,
@@ -14,9 +14,9 @@
     getDocAttrsInfo,
     getDocMixins,
     showMenu
-  } from '@hcengineering/view-resources'
+  } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { Organization } from '@hcengineering/contact'
+  import { Organization } from '@intabiafusion/contact'
 
   import contact from '../plugin'
   import EditOrganization from './EditOrganization.svelte'

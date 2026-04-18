@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, getCurrentAccount } from '@hcengineering/core'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { AnyComponent, AnySvelteComponent, ButtonSize } from '@hcengineering/ui'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, getCurrentAccount } from '@intabiafusion/core'
+  import { Asset, getResource } from '@intabiafusion/platform'
+  import { AnyComponent, AnySvelteComponent, ButtonSize } from '@intabiafusion/ui'
   import { ObjectCreate } from '../types'
   import { createQuery } from '../utils'
   import DocPopup from './DocPopup.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
+import activity from '@intabiafusion/activity'
 import type {
   Attachment,
   AttachmentMetadata,
@@ -21,8 +21,8 @@ import type {
   Embedding,
   Photo,
   SavedAttachments
-} from '@hcengineering/attachment'
-import { AccountRole, IndexKind, type Blob, type Class, type Doc, type Domain, type Ref } from '@hcengineering/core'
+} from '@intabiafusion/attachment'
+import { AccountRole, IndexKind, type Blob, type Class, type Doc, type Domain, type Ref } from '@intabiafusion/core'
 import {
   Hidden,
   Index,
@@ -36,17 +36,17 @@ import {
   TypeTimestamp,
   UX,
   type Builder
-} from '@hcengineering/model'
-import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
-import preference, { TPreference } from '@hcengineering/model-preference'
-import view, { createAction } from '@hcengineering/model-view'
-import workbench, { WidgetType } from '@hcengineering/workbench'
-import { getEmbeddedLabel } from '@hcengineering/platform'
-import presentation from '@hcengineering/model-presentation'
+} from '@intabiafusion/model'
+import core, { TAttachedDoc, TDoc } from '@intabiafusion/model-core'
+import preference, { TPreference } from '@intabiafusion/model-preference'
+import view, { createAction } from '@intabiafusion/model-view'
+import workbench, { WidgetType } from '@intabiafusion/workbench'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/model-presentation'
 
 import attachment from './plugin'
 
-export { attachmentId } from '@hcengineering/attachment'
+export { attachmentId } from '@intabiafusion/attachment'
 export { attachmentOperation } from './migration'
 
 export const DOMAIN_ATTACHMENT = 'attachment' as Domain

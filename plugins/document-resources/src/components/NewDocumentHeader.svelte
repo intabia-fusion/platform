@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AccountRole, Ref, Space, getCurrentAccount } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { HeaderButton, showPopup } from '@hcengineering/ui'
-  import { openDoc } from '@hcengineering/view-resources'
-  import { Analytics } from '@hcengineering/analytics'
-  import { DocumentEvents } from '@hcengineering/document'
+  import core, { AccountRole, Ref, Space, getCurrentAccount } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { HeaderButton, showPopup } from '@intabiafusion/ui'
+  import { openDoc } from '@intabiafusion/view-resources'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { DocumentEvents } from '@intabiafusion/document'
 
   import document from '../plugin'
   import { getDocumentIdFromFragment } from '../utils'

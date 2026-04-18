@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event, ReccuringEvent, ReccuringInstance, RecurringRule } from '@hcengineering/calendar'
-  import { Person } from '@hcengineering/contact'
-  import { DocumentUpdate, Ref } from '@hcengineering/core'
-  import presentation, { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
+  import { Event, ReccuringEvent, ReccuringInstance, RecurringRule } from '@intabiafusion/calendar'
+  import { Person } from '@intabiafusion/contact'
+  import { DocumentUpdate, Ref } from '@intabiafusion/core'
+  import presentation, { ComponentExtensions, getClient } from '@intabiafusion/presentation'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
   import {
     Button,
     EditBox,
@@ -28,7 +28,7 @@
     getUserTimezone,
     showPopup,
     Scroller
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'

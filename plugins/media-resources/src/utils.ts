@@ -21,8 +21,8 @@ import {
   type MediaSessionEvents,
   getMediaDevices,
   cleanupDeviceLabel
-} from '@hcengineering/media'
-import { type IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+} from '@intabiafusion/media'
+import { type IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
 import EventEmitter from 'events'
 import { onDestroy } from 'svelte'
 import type TypedEventEmitter from 'typed-emitter'

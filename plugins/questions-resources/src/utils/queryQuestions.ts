@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import questions, { type Question } from '@hcengineering/questions'
-import { type Doc, type FindResult, SortingOrder } from '@hcengineering/core'
-import { type LiveQuery } from '@hcengineering/presentation'
+import questions, { type Question } from '@intabiafusion/questions'
+import { type Doc, type FindResult, SortingOrder } from '@intabiafusion/core'
+import { type LiveQuery } from '@intabiafusion/presentation'
 
 export function queryQuestions<Parent extends Doc, Collection extends Extract<keyof Parent, string> | string> (
   query: LiveQuery,

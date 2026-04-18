@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Class, Data, Doc, Hierarchy, Ref } from '@hcengineering/core'
+  import { Class, Data, Doc, Hierarchy, Ref } from '@intabiafusion/core'
   import { InlineAttributeBarEditor } from '..'
   import { KeyedAttribute } from '../attributes'
   import { getClient, getFiltredKeys, isCollectionAttr, isCollabAttr, isMarkupAttr } from '../utils'

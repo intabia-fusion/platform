@@ -1,8 +1,8 @@
-import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
-import { getCurrentEmployee, type Person } from '@hcengineering/contact'
-import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
-import { type Ref } from '@hcengineering/core'
-import { createQuery, onClient } from '@hcengineering/presentation'
+import { aiBotSocialIdentityStore } from '@intabiafusion/ai-bot-resources'
+import { getCurrentEmployee, type Person } from '@intabiafusion/contact'
+import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@intabiafusion/contact-resources'
+import { type Ref } from '@intabiafusion/core'
+import { createQuery, onClient } from '@intabiafusion/presentation'
 import {
   isOffice,
   MeetingStatus,
@@ -13,7 +13,7 @@ import {
   type Office,
   type ParticipantInfo,
   type Room
-} from '@hcengineering/love'
+} from '@intabiafusion/love'
 import { derived, get, writable } from 'svelte/store'
 
 import love from './plugin'

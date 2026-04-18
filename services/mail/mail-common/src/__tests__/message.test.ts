@@ -15,10 +15,10 @@
 //
 
 import { createMessages } from '../message'
-import { WorkspaceLoginInfo } from '@hcengineering/account-client'
-import { PersonSpace } from '@hcengineering/contact'
-import { MeasureContext, PersonId, PersonUuid, Ref, TxOperations } from '@hcengineering/core'
-import { KeyValueClient } from '@hcengineering/kvs-client'
+import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { PersonSpace } from '@intabiafusion/contact'
+import { MeasureContext, PersonId, PersonUuid, Ref, TxOperations } from '@intabiafusion/core'
+import { KeyValueClient } from '@intabiafusion/kvs-client'
 import { Producer } from 'kafkajs'
 import { Attachment, BaseConfig, EmailContact, EmailMessage, MailRecipient } from '../types'
 import { PersonCacheFactory } from '../person'

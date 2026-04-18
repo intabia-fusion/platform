@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { UserInfo, getPersonByPersonRef } from '@hcengineering/contact-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Person } from '@intabiafusion/contact'
+  import { UserInfo, getPersonByPersonRef } from '@intabiafusion/contact-resources'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
 
-  import { IconArrowLeft, Location, ModernButton, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import { IconArrowLeft, Location, ModernButton, Scroller, location, navigate, panelstore } from '@intabiafusion/ui'
 
-  import { MeetingMinutes, ParticipantInfo, Room, loveId } from '@hcengineering/love'
-  import { getClient } from '@hcengineering/presentation'
-  import view from '@hcengineering/view'
-  import { getObjectLinkFragment } from '@hcengineering/view-resources'
+  import { MeetingMinutes, ParticipantInfo, Room, loveId } from '@intabiafusion/love'
+  import { getClient } from '@intabiafusion/presentation'
+  import view from '@intabiafusion/view'
+  import { getObjectLinkFragment } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
   import { currentMeetingMinutes, infos, myInfo } from '../stores'

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { TaskKindSelector } from '@hcengineering/task-resources'
-  import tracker, { Component, IssueDraft, Milestone, Project } from '@hcengineering/tracker'
-  import { IconCircles, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { FixedColumn } from '@hcengineering/view-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { ActionContext, createQuery } from '@intabiafusion/presentation'
+  import { TaskKindSelector } from '@intabiafusion/task-resources'
+  import tracker, { Component, IssueDraft, Milestone, Project } from '@intabiafusion/tracker'
+  import { IconCircles, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { FixedColumn } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { flip } from 'svelte/animate'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'

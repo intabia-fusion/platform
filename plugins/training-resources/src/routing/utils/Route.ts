@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Location, ResolvedLocation } from '@hcengineering/ui'
+import type { Location, ResolvedLocation } from '@intabiafusion/ui'
 
 /** @public */
 export type RouteParams = Record<string, any>

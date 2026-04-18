@@ -23,8 +23,8 @@ import {
   type Ref,
   clone,
   toFindResult
-} from '@hcengineering/core'
-import { BaseMiddleware, type Middleware, type PipelineContext } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { BaseMiddleware, type Middleware, type PipelineContext } from '@intabiafusion/server-core'
 /**
  * @public
  */

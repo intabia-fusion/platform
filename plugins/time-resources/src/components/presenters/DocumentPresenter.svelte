@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Document } from '@hcengineering/document'
-  import { DocReferencePresenter } from '@hcengineering/view-resources'
+  import type { Document } from '@intabiafusion/document'
+  import { DocReferencePresenter } from '@intabiafusion/view-resources'
 
   export let value: Document
 </script>

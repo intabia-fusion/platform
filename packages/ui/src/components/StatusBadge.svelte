@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Status } from '@hcengineering/platform'
+  import type { Status } from '@intabiafusion/platform'
   import { tooltip as tp } from '../tooltips'
   import type { LabelAndProps } from '../types'
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
-  import { getResource, IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, ObjectSearchPopup, ObjectSearchResult } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
-  import { Action, closePopup, Menu, showPopup } from '@hcengineering/ui'
-  import activity from '@hcengineering/activity'
+  import { Class, Doc, Ref, RelatedDocument } from '@intabiafusion/core'
+  import { getResource, IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient, ObjectSearchPopup, ObjectSearchResult } from '@intabiafusion/presentation'
+  import { Issue } from '@intabiafusion/tracker'
+  import { Action, closePopup, Menu, showPopup } from '@intabiafusion/ui'
+  import activity from '@intabiafusion/activity'
 
   import { updateIssueRelation } from '../issues'
   import tracker from '../plugin'

@@ -1,4 +1,4 @@
-import { type AnyAttribute, type Client } from '@hcengineering/core'
+import { type AnyAttribute, type Client } from '@intabiafusion/core'
 
 /**
  * @public
@@ -8,7 +8,7 @@ export interface KeyedAttribute {
   attr: AnyAttribute
 }
 
-export { updateAttribute } from '@hcengineering/core'
+export { updateAttribute } from '@intabiafusion/core'
 
 export function getAttribute (client: Client, object: any, key: KeyedAttribute): any {
   // Check if attr is mixin and return its value

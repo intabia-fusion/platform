@@ -1,8 +1,8 @@
-import { type Class, type IndexingConfiguration, type Doc, type Domain, type Ref } from '@hcengineering/core'
-import { type PublicLink, type Restrictions } from '@hcengineering/guest'
-import { type Builder, Model } from '@hcengineering/model'
-import core, { TDoc } from '@hcengineering/model-core'
-import { type Location } from '@hcengineering/ui/src/types'
+import { type Class, type IndexingConfiguration, type Doc, type Domain, type Ref } from '@intabiafusion/core'
+import { type PublicLink, type Restrictions } from '@intabiafusion/guest'
+import { type Builder, Model } from '@intabiafusion/model'
+import core, { TDoc } from '@intabiafusion/model-core'
+import { type Location } from '@intabiafusion/ui/src/types'
 import guest from './plugin'
 
 export const GUEST_DOMAIN = 'guest' as Domain
@@ -41,6 +41,6 @@ export function createModel (builder: Builder): void {
   )
 }
 
-export { guestId } from '@hcengineering/guest'
+export { guestId } from '@intabiafusion/guest'
 export * from './migration'
 export * from './utils'

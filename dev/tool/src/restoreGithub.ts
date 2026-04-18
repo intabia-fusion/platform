@@ -1,8 +1,8 @@
-import { type IntegrationKind, type PersonId, type WorkspaceUuid, systemAccountUuid } from '@hcengineering/core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
-import { type Integration } from '@hcengineering/account-client'
-import { getDBClient } from '@hcengineering/postgres'
+import { type IntegrationKind, type PersonId, type WorkspaceUuid, systemAccountUuid } from '@intabiafusion/core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
+import { type Integration } from '@intabiafusion/account-client'
+import { getDBClient } from '@intabiafusion/postgres'
 
 const GITHUB_INTEGRATION: IntegrationKind = 'github' as any
 

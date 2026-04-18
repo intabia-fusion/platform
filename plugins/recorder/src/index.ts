@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Ref } from '@hcengineering/core'
-import { type Drive } from '@hcengineering/drive'
-import { Asset, plugin, Plugin, Resource, Metadata } from '@hcengineering/platform'
-import { type UploadHandler } from '@hcengineering/uploader'
+import { type Ref } from '@intabiafusion/core'
+import { type Drive } from '@intabiafusion/drive'
+import { Asset, plugin, Plugin, Resource, Metadata } from '@intabiafusion/platform'
+import { type UploadHandler } from '@intabiafusion/uploader'
 
 /**
  * @public

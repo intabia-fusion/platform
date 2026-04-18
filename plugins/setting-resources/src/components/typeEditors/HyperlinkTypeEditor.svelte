@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IndexKind } from '@hcengineering/core'
-  import { TypeHyperlink } from '@hcengineering/model'
+  import { IndexKind } from '@intabiafusion/core'
+  import { TypeHyperlink } from '@intabiafusion/model'
   import { createEventDispatcher, onMount } from 'svelte'
 
   const dispatch = createEventDispatcher()

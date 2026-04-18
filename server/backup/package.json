@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/server-backup",
-  "version": "0.7.0",
+  "name": "@intabiafusion/server-backup",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -23,7 +23,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -40,20 +40,20 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/account": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/model-contact": "workspace:^0.7.0",
-    "@hcengineering/client-resources": "workspace:^0.7.18",
-    "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/model": "workspace:^0.7.17",
-    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/account": "workspace:^1.0.0",
+    "@intabiafusion/contact": "workspace:^1.0.0",
+    "@intabiafusion/model-contact": "workspace:^1.0.0",
+    "@intabiafusion/client-resources": "workspace:^1.0.0",
+    "@intabiafusion/client": "workspace:^1.0.0",
+    "@intabiafusion/model": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
     "tar-stream": "^3.1.7",
-    "@hcengineering/server-tool": "workspace:^0.7.0",
-    "@hcengineering/server-client": "workspace:^0.7.17",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/server-core": "workspace:^0.7.18",
+    "@intabiafusion/server-tool": "workspace:^1.0.0",
+    "@intabiafusion/server-client": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
     "fast-equals": "^5.2.2"
   }
 }

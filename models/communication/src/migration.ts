@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MigrateOperation } from '@hcengineering/model'
+import { type MigrateOperation } from '@intabiafusion/model'
 
 export const communicationOperation: MigrateOperation = {
   async migrate (): Promise<void> {},

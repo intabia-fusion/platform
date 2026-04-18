@@ -12,10 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { UserVote } from '@hcengineering/communication'
-  import { employeeByAccountStore, CombineAvatars } from '@hcengineering/contact-resources'
-  import { notEmpty } from '@hcengineering/core'
-  import contact from '@hcengineering/contact'
+  import { UserVote } from '@intabiafusion/communication'
+  import { employeeByAccountStore, CombineAvatars } from '@intabiafusion/contact-resources'
+  import { notEmpty } from '@intabiafusion/core'
+  import contact from '@intabiafusion/contact'
 
   export let value: UserVote[]
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type DocumentTemplate } from '@hcengineering/controlled-documents'
+  import { type DocumentTemplate } from '@intabiafusion/controlled-documents'
 
-  import { Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Label, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   import ChangeDocPrefixPopup from '../popups/ChangeDocPrefixPopup.svelte'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
-  import { ViewOptionModel, ViewOptions, Viewlet, BuildModelKey } from '@hcengineering/view'
+  import { ButtonIcon, showPopup, closeTooltip } from '@intabiafusion/ui'
+  import { ViewOptionModel, ViewOptions, Viewlet, BuildModelKey } from '@intabiafusion/view'
   import view from '../plugin'
   import { getViewOptions, viewOptionStore, defaultOptions, getDefaults } from '../viewOptions'
   import ViewOptionsButton from './ViewOptionsButton.svelte'

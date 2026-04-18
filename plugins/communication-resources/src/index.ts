@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 
 import PollPresenter from './components/poll/PollPresenter.svelte'
 import CreatePoll from './components/poll/CreatePoll.svelte'

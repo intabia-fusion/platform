@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { Class, Doc, Ref, RelatedDocument } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { AttributeModel } from '@intabiafusion/view'
   import { getObjectPresenter } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let objectId: Ref<Doc> | undefined = undefined
   export let _class: Ref<Class<Doc>> | undefined = undefined

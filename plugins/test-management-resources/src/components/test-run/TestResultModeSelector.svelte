@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IModeSelector, ModeSelector, resolvedLocationStore } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
+  import { IModeSelector, ModeSelector, resolvedLocationStore } from '@intabiafusion/ui'
+  import { IntlString } from '@intabiafusion/platform'
 
   import { getCurrentMode, onModeChanged } from '../../navigation'
 

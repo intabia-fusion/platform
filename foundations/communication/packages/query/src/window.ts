@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Window } from '@hcengineering/communication-types'
+import type { Window } from '@intabiafusion/communication-types'
 
 import type { PagedQuery } from './types'
 

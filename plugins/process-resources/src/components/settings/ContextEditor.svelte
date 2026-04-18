@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { ContextId, Process, ProcessContext } from '@hcengineering/process'
-  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { EditBox, getCurrentLocation, Grid, Modal, navigate } from '@hcengineering/ui'
+  import core from '@intabiafusion/core'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { ContextId, Process, ProcessContext } from '@intabiafusion/process'
+  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
+  import { EditBox, getCurrentLocation, Grid, Modal, navigate } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import ProcessContextRawPresenter from '../contextEditors/ProcessContextRawPresenter.svelte'
   import AsideStepEditor from './AsideStepEditor.svelte'

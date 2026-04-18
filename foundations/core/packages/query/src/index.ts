@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   Association,
   AssociationQuery,
@@ -64,8 +64,8 @@ import core, {
   type DomainRequestOptions,
   type DomainResult,
   type OperationDomain
-} from '@hcengineering/core'
-import { PlatformError } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError } from '@intabiafusion/platform'
 import { deepEqual } from 'fast-equals'
 import { Refs } from './refs'
 import { ResultArray } from './results'

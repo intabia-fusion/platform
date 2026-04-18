@@ -12,10 +12,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { type OfficeSettings } from '@hcengineering/setting'
-  import { Breadcrumb, Header, Label, Scroller, Toggle } from '@hcengineering/ui'
+  import core from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { type OfficeSettings } from '@intabiafusion/setting'
+  import { Breadcrumb, Header, Label, Scroller, Toggle } from '@intabiafusion/ui'
   import settingsRes from '../plugin'
 
   let loading = true

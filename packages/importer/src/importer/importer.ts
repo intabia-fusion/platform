@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import attachment, { type Attachment, type Drawing } from '@hcengineering/attachment'
-import chunter, { type ChatMessage } from '@hcengineering/chunter'
-import { type Employee, type Person } from '@hcengineering/contact'
+import attachment, { type Attachment, type Drawing } from '@intabiafusion/attachment'
+import chunter, { type ChatMessage } from '@intabiafusion/chunter'
+import { type Employee, type Person } from '@intabiafusion/contact'
 import documents, {
   type ChangeControl,
   type ControlledDocument,
@@ -28,7 +28,7 @@ import documents, {
   type OrgSpace,
   type ProjectDocument,
   useDocumentTemplate
-} from '@hcengineering/controlled-documents'
+} from '@intabiafusion/controlled-documents'
 import core, {
   type AttachedData,
   type AttachedDoc,
@@ -50,17 +50,17 @@ import core, {
   type TxOperations,
   type PersonId,
   type AccountUuid
-} from '@hcengineering/core'
-import document, { type Document, getFirstRank, type Teamspace } from '@hcengineering/document'
+} from '@intabiafusion/core'
+import document, { type Document, getFirstRank, type Teamspace } from '@intabiafusion/document'
 import task, {
   createProjectType,
   makeRank,
   type ProjectType,
   type TaskType,
   type TaskTypeWithFactory
-} from '@hcengineering/task'
-import { jsonToMarkup } from '@hcengineering/text'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+} from '@intabiafusion/task'
+import { jsonToMarkup } from '@intabiafusion/text'
+import { markdownToMarkup } from '@intabiafusion/text-markdown'
 import tracker, {
   type Issue,
   type IssueParentInfo,
@@ -68,8 +68,8 @@ import tracker, {
   type IssueStatus,
   type Project,
   TimeReportDayType
-} from '@hcengineering/tracker'
-import view from '@hcengineering/view'
+} from '@intabiafusion/tracker'
+import view from '@intabiafusion/view'
 import { type Props, type UnifiedUpdate, type UnifiedDoc, type UnifiedFile, type UnifiedMixin } from '../types'
 import { type Logger } from './logger'
 import { type MarkdownPreprocessor, NoopMarkdownPreprocessor } from './preprocessor'

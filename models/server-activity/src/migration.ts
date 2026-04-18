@@ -19,8 +19,8 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   type MigrateMode
-} from '@hcengineering/model'
-import { serverActivityId } from '@hcengineering/server-activity'
+} from '@intabiafusion/model'
+import { serverActivityId } from '@intabiafusion/server-activity'
 
 export const activityServerOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode: MigrateMode): Promise<void> {

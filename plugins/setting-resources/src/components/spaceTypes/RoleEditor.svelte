@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import core, { Permission, Ref, Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import { AttributeEditor, MessageBox, createQuery, getClient } from '@intabiafusion/presentation'
+  import core, { Permission, Ref, Role, SpaceType, SpaceTypeDescriptor } from '@intabiafusion/core'
   import {
     ButtonIcon,
     Icon,
@@ -26,9 +26,9 @@
     getCurrentResolvedLocation,
     navigate,
     showPopup
-  } from '@hcengineering/ui'
-  import { ObjectBoxPopup } from '@hcengineering/view-resources'
-  import { deleteSpaceTypeRole } from '@hcengineering/setting'
+  } from '@intabiafusion/ui'
+  import { ObjectBoxPopup } from '@intabiafusion/view-resources'
+  import { deleteSpaceTypeRole } from '@intabiafusion/setting'
 
   import PersonIcon from '../icons/Person.svelte'
   import settingRes from '../../plugin'

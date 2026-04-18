@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { AccountUuid, Collaborator, Ref } from '@hcengineering/core'
-  import { IconSize } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import { Employee, Person } from '@hcengineering/contact'
+  import { AccountUuid, Collaborator, Ref } from '@intabiafusion/core'
+  import { IconSize } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Employee, Person } from '@intabiafusion/contact'
 
   import ContactPresenter from '../ContactPresenter.svelte'
   import contact from '../../plugin'

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, Enum, Ref } from '@hcengineering/core'
-  import { ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
+  import type { Class, Doc, DocumentQuery, Enum, Ref } from '@intabiafusion/core'
+  import { ObjectCreate, ObjectPopup } from '@intabiafusion/presentation'
 
   export let _class: Ref<Class<Enum>>
   export let selected: Ref<Enum> | undefined

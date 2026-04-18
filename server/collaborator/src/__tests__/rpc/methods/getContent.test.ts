@@ -14,7 +14,7 @@
 //
 
 import { getContent } from '../../../rpc/methods/getContent'
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 
 describe('getContent', () => {
   const mockCtx: MeasureContext = {

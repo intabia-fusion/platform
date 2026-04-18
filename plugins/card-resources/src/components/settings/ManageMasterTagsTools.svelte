@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import { clearSettingsStore } from '@intabiafusion/setting-resources'
   import {
     ButtonIcon,
     getCurrentResolvedLocation,
@@ -21,7 +21,7 @@
     IconAttachment,
     navigate,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import card from '../../plugin'
   import CreateTag from '../CreateTag.svelte'
 

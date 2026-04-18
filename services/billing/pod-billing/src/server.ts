@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
-import { StorageConfig } from '@hcengineering/server-core'
+import { MeasureContext } from '@intabiafusion/core'
+import { StorageConfig } from '@intabiafusion/server-core'
 
 import {
   handleListLiveKitSessions,

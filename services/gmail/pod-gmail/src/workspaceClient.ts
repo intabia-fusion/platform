@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import contact, { type Channel as PlatformChannel, type Person, Employee } from '@hcengineering/contact'
+import contact, { type Channel as PlatformChannel, type Person, Employee } from '@intabiafusion/contact'
 import core, {
   type WorkspaceUuid,
   type Client,
@@ -30,16 +30,16 @@ import core, {
   PersonId,
   AccountUuid,
   TxOperations
-} from '@hcengineering/core'
-import gmailP, { type NewMessage } from '@hcengineering/gmail'
-import type { StorageAdapter } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import gmailP, { type NewMessage } from '@intabiafusion/gmail'
+import type { StorageAdapter } from '@intabiafusion/server-core'
+import { generateToken } from '@intabiafusion/server-token'
 import { getClient } from './client'
 import { GmailClient } from './gmail'
 import { type Channel, type ProjectCredentials, type User } from './types'
 import { getAccountSocialIds } from './accounts'
 import { cleanIntegrations } from './integrations'
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+import { CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
 
 export class WorkspaceClient {
   private messageSubscribed: boolean = false

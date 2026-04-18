@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
-  import { type Class, type Ref } from '@hcengineering/core'
-  import { TestSuite } from '@hcengineering/test-management'
-  import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { Panel } from '@hcengineering/panel'
-  import { EditBox, Breadcrumb } from '@hcengineering/ui'
+  import { ActionContext, createQuery, getClient } from '@intabiafusion/presentation'
+  import { type Class, type Ref } from '@intabiafusion/core'
+  import { TestSuite } from '@intabiafusion/test-management'
+  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
+  import { Panel } from '@intabiafusion/panel'
+  import { EditBox, Breadcrumb } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import testManagement from '../../plugin'

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import achievement from '@hcengineering/achievement'
-  import { Label } from '@hcengineering/ui'
+  import achievement from '@intabiafusion/achievement'
+  import { Label } from '@intabiafusion/ui'
 </script>
 
 <div class="header-container gap-2 px-4">

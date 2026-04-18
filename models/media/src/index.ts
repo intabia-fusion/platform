@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import presentation from '@hcengineering/model-presentation'
-import workbench from '@hcengineering/model-workbench'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import presentation from '@intabiafusion/model-presentation'
+import workbench from '@intabiafusion/model-workbench'
 
 import media from './plugin'
 
-export { mediaId } from '@hcengineering/media'
+export { mediaId } from '@intabiafusion/media'
 export { media as default }
 
 export function createModel (builder: Builder): void {

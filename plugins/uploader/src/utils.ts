@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Client, type DocumentQuery } from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
+import { Client, type DocumentQuery } from '@intabiafusion/core'
+import { getResource } from '@intabiafusion/platform'
 
 import uploader from './plugin'
 import type { FileUploadOptions, FileUploadPopupOptions, FileWithPath, UploadHandlerDefinition } from './types'

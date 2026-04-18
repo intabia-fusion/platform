@@ -14,8 +14,8 @@
 //
 
 import postgres, { type ParameterOrJSON } from 'postgres'
-import { SortingOrder, WorkspaceUuid } from '@hcengineering/communication-types'
-import { Domain } from '@hcengineering/communication-sdk-types'
+import { SortingOrder, WorkspaceUuid } from '@intabiafusion/communication-types'
+import { Domain } from '@intabiafusion/communication-sdk-types'
 
 import { SqlRow, type Logger, type Options, type SqlResult } from '../types'
 import { SqlClient } from '../client'

@@ -14,19 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { SearchResultDoc, Ref, Class, Doc } from '@hcengineering/core'
+  import core, { SearchResultDoc, Ref, Class, Doc } from '@intabiafusion/core'
   import presentation, {
     SearchResult,
     reduceCalls,
     searchFor,
     type SearchItem,
     getClient
-  } from '@hcengineering/presentation'
-  import { Label, ListView, resizeObserver } from '@hcengineering/ui'
+  } from '@intabiafusion/presentation'
+  import { Label, ListView, resizeObserver } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import contact from '@hcengineering/contact'
+  import contact from '@intabiafusion/contact'
   import { getReferenceLabel, getReferenceObject } from './extension/reference'
-  import { translate } from '@hcengineering/platform'
+  import { translate } from '@intabiafusion/platform'
 
   export let query: string = ''
   export let multipleMentions: boolean = false

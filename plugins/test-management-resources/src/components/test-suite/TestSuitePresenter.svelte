@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { TestSuite } from '@hcengineering/test-management'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { tooltip } from '@hcengineering/ui'
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import { TestSuite } from '@intabiafusion/test-management'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { tooltip } from '@intabiafusion/ui'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
 
   export let value: TestSuite | undefined
   export let inline: boolean = false

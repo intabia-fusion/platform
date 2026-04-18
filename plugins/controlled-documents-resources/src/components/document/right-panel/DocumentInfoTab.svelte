@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import documents, { DocumentState, type Document, type DocumentTemplate } from '@hcengineering/controlled-documents'
-  import { PersonPresenter } from '@hcengineering/contact-resources'
-  import { DateRangeMode } from '@hcengineering/core'
-  import { DatePresenter, Label, Scroller, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
+  import documents, { DocumentState, type Document, type DocumentTemplate } from '@intabiafusion/controlled-documents'
+  import { PersonPresenter } from '@intabiafusion/contact-resources'
+  import { DateRangeMode } from '@intabiafusion/core'
+  import { DatePresenter, Label, Scroller, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
 
   import documentsRes from '../../../plugin'
   import {

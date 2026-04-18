@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { Doc, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Grid, Label, Toggle } from '@hcengineering/ui'
+  import core, { Doc, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Grid, Label, Toggle } from '@intabiafusion/ui'
 
-  import desktopPreferences, { PreferenceKey } from '@hcengineering/desktop-preferences'
+  import desktopPreferences, { PreferenceKey } from '@intabiafusion/desktop-preferences'
 
   import { activePreferences } from '../utils'
 

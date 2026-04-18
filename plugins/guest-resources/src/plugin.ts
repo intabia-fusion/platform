@@ -1,5 +1,5 @@
-import guest, { guestId } from '@hcengineering/guest'
-import { type IntlString, mergeIds } from '@hcengineering/platform'
+import guest, { guestId } from '@intabiafusion/guest'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(guestId, guest, {
   string: {

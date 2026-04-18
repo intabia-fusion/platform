@@ -19,7 +19,7 @@ import {
   type AccountUuid,
   type WorkspaceMode,
   type WorkspaceUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { AccountPostgresDbCollection, PostgresAccountDB, PostgresDbCollection } from '../collections/postgres/postgres'
 import { type Sql } from 'postgres'
 

@@ -15,7 +15,7 @@
 
 import { CollaboratorsQuery, LabelsQuery, MessagesQuery, NotificationContextsQuery, NotificationsQuery } from './query'
 
-export type { MessageQueryParams } from '@hcengineering/communication-query'
+export type { MessageQueryParams } from '@intabiafusion/communication-query'
 export { initLiveQueries, refreshLiveQueries, closeLiveQueries } from './init'
 
 export function createMessagesQuery (dontDestroy?: boolean): MessagesQuery {

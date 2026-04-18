@@ -7,7 +7,7 @@
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../client'
-import { MeasureMetricsContext } from '@hcengineering/measurements'
+import { MeasureMetricsContext } from '@intabiafusion/measurements'
 import type { ClientSocketFactory } from '../types'
 import { encodeBinaryRequest, decodeBinaryRequest, encodeBinaryResponse, decodeBinaryResponse } from '../types'
 

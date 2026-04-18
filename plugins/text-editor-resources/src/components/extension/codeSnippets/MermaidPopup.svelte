@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { Modal, ButtonIcon, IconClose, IconMaximize, IconMinimize } from '@hcengineering/ui'
+  import { Modal, ButtonIcon, IconClose, IconMaximize, IconMinimize } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let svg: string

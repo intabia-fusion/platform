@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
-  import { tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@hcengineering/ui'
-  import { ParticipantInfo } from '@hcengineering/love'
-  import { formatName } from '@hcengineering/contact'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Avatar, getPersonByPersonRefStore } from '@intabiafusion/contact-resources'
+  import { tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@intabiafusion/ui'
+  import { ParticipantInfo } from '@intabiafusion/love'
+  import { formatName } from '@intabiafusion/contact'
   import ParticipantsList from './ParticipantsList.svelte'
 
   export let label: string

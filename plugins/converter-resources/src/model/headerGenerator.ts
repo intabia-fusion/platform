@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Hierarchy, Ref } from '@hcengineering/core'
-import { translate, type IntlString } from '@hcengineering/platform'
-import type { AttributeModel } from '@hcengineering/view'
+import type { Class, Doc, Hierarchy, Ref } from '@intabiafusion/core'
+import { translate, type IntlString } from '@intabiafusion/platform'
+import type { AttributeModel } from '@intabiafusion/view'
 import { isIntlString } from '../formatter/utils'
 
 /**

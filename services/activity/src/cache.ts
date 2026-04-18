@@ -24,8 +24,8 @@ import core, {
   TxProcessor,
   type TxRemoveDoc,
   type TxUpdateDoc
-} from '@hcengineering/core'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+} from '@intabiafusion/core'
+import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
 
 import { type Client } from './types'
 

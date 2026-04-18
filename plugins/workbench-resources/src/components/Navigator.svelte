@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, Ref, SortingOrder, Space, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import preference, { SpacePreference } from '@hcengineering/preference'
-  import { createQuery, getClient, isAdminUser } from '@hcengineering/presentation'
-  import { Scroller, NavItem, Component } from '@hcengineering/ui'
-  import { NavLink } from '@hcengineering/view-resources'
-  import type { Application, NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
+  import core, { Doc, Ref, SortingOrder, Space, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import preference, { SpacePreference } from '@intabiafusion/preference'
+  import { createQuery, getClient, isAdminUser } from '@intabiafusion/presentation'
+  import { Scroller, NavItem, Component } from '@intabiafusion/ui'
+  import { NavLink } from '@intabiafusion/view-resources'
+  import type { Application, NavigatorModel, SpecialNavModel } from '@intabiafusion/workbench'
   import { getSpecialSpaceClass } from '../utils'
   import SpacesNav from './navigator/SpacesNav.svelte'
   import StarredNav from './navigator/StarredNav.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MarkupNode } from '@hcengineering/text-core'
+import { MarkupNode } from '@intabiafusion/text-core'
 import { MarkdownParser } from './parser'
 import { MarkdownState, storeMarks, storeNodes } from './serializer'
 

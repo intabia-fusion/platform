@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/login'
-  import { getAccount, getAccountDisplayName, getWorkspaces, navigateToWorkspace } from '@hcengineering/login-resources'
-  import { OK } from '@hcengineering/platform'
+  import { LoginInfo, WorkspaceLoginInfo } from '@intabiafusion/login'
+  import { getAccount, getAccountDisplayName, getWorkspaces, navigateToWorkspace } from '@intabiafusion/login-resources'
+  import { OK } from '@intabiafusion/platform'
   import { onMount } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import { OnboardSteps } from '../index'
   import onboard from '../plugin'

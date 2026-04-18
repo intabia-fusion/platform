@@ -1,6 +1,6 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult, AudioFormat } from '../types'
 
 /**

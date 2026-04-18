@@ -1,5 +1,5 @@
-import { Association, Class, Doc, Ref } from '@hcengineering/core'
-import { _parseId, Resource } from '@hcengineering/platform'
+import { Association, Class, Doc, Ref } from '@intabiafusion/core'
+import { _parseId, Resource } from '@intabiafusion/platform'
 import { ProcessFunction, processId } from '.'
 import {
   Func,

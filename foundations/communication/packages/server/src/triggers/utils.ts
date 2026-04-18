@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type AccountUuid, type Markdown, type SocialID } from '@hcengineering/communication-types'
+import { type AccountUuid, type Markdown, type SocialID } from '@intabiafusion/communication-types'
 
 import { TriggerCtx } from '../types'
 

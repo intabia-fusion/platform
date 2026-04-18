@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Mixin } from '@hcengineering/core'
-import { type Resources } from '@hcengineering/platform'
-import { getClient, MessageBox } from '@hcengineering/presentation'
-import { showPopup } from '@hcengineering/ui'
-import { deleteObject } from '@hcengineering/view-resources/src/utils'
+import { type Class, type Doc, type Mixin } from '@intabiafusion/core'
+import { type Resources } from '@intabiafusion/platform'
+import { getClient, MessageBox } from '@intabiafusion/presentation'
+import { showPopup } from '@intabiafusion/ui'
+import { deleteObject } from '@intabiafusion/view-resources/src/utils'
 import ClassSetting from './components/ClassSetting.svelte'
 import CreateMixin from './components/CreateMixin.svelte'
 import EditEnum from './components/EditEnum.svelte'
@@ -31,7 +31,7 @@ import Privacy from './components/Privacy.svelte'
 import Profile from './components/Profile.svelte'
 import Settings from './components/Settings.svelte'
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import ClassAttributes from './components/ClassAttributes.svelte'
 import ClassAttributesList from './components/ClassAttributesList.svelte'
 import Configure from './components/Configure.svelte'

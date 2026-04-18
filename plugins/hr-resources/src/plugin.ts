@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import hr, { hrId } from '@hcengineering/hr'
-import { type IntlString, mergeIds } from '@hcengineering/platform'
+import hr, { hrId } from '@intabiafusion/hr'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(hrId, hr, {
   string: {

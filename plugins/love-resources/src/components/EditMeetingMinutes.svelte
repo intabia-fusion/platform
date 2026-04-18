@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { MeetingMinutes, MeetingStatus, PendingRecording, ParticipantInfo, Room } from '@hcengineering/love'
+  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
+  import { EditBox, ModernButton } from '@intabiafusion/ui'
+  import { MeetingMinutes, MeetingStatus, PendingRecording, ParticipantInfo, Room } from '@intabiafusion/love'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
   import { joinMeeting, leaveMeeting } from '../meetings'
   import { currentMeetingMinutes, infos, myConnectingSessionId, rooms } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
-  import { getMetadata } from '@hcengineering/platform'
-  import { Ref } from '@hcengineering/core'
+  import { getMetadata } from '@intabiafusion/platform'
+  import { Ref } from '@intabiafusion/core'
   import ParticipantsPreview from './ParticipantsPreview.svelte'
   import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
-  import { openWidgetTab } from '@hcengineering/workbench-resources'
+  import { openWidgetTab } from '@intabiafusion/workbench-resources'
   import { videoVisible } from '../utils'
 
   export let object: MeetingMinutes

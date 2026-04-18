@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
-  import core, { WithLookup } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import type { Class, Doc, DocumentQuery, Ref, Space } from '@intabiafusion/core'
+  import core, { WithLookup } from '@intabiafusion/core'
+  import { IntlString, Asset } from '@intabiafusion/platform'
+  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     Button,
@@ -26,15 +26,15 @@
     Header,
     LinkWrapper,
     Breadcrumbs
-  } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view, { ViewOptions, Viewlet } from '@intabiafusion/view'
   import {
     FilterButton,
     ViewletSelector,
     ViewletSettingButton,
     DocNavLink,
     classIcon
-  } from '@hcengineering/view-resources'
+  } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../plugin'
 

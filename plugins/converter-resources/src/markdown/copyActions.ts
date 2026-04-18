@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import type { Doc } from '@hcengineering/core'
-import { translate } from '@hcengineering/platform'
-import { addNotification, NotificationSeverity } from '@hcengineering/ui'
-import { getCurrentLanguage } from '@hcengineering/theme'
-import view from '@hcengineering/view'
-import { getClient } from '@hcengineering/presentation'
-import { copyMarkdown, SimpleNotification } from '@hcengineering/view-resources'
+import type { Doc } from '@intabiafusion/core'
+import { translate } from '@intabiafusion/platform'
+import { addNotification, NotificationSeverity } from '@intabiafusion/ui'
+import { getCurrentLanguage } from '@intabiafusion/theme'
+import view from '@intabiafusion/view'
+import { getClient } from '@intabiafusion/presentation'
+import { copyMarkdown, SimpleNotification } from '@intabiafusion/view-resources'
 
 import type { CopyAsMarkdownTableProps, CopyRelationshipTableAsMarkdownProps } from '../types'
 import { buildTableMetadata, buildRelationshipTableMetadata } from '../data'

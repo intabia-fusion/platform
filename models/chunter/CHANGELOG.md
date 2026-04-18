@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/model-chunter
+# Change Log - @intabiafusion/model-chunter
 
 This log was last generated on Sun, 08 Aug 2021 10:14:57 GMT and should not be manually modified.
 

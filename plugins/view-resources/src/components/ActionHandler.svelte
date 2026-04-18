@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import core, { Doc, Hierarchy, Ref, Space, TxRemoveDoc, type Tx } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { addTxListener, contextStore, getClient, reduceCalls } from '@hcengineering/presentation'
-  import { AnyComponent, Component } from '@hcengineering/ui'
-  import { Action, ViewContextType } from '@hcengineering/view'
+  import { Analytics } from '@intabiafusion/analytics'
+  import core, { Doc, Hierarchy, Ref, Space, TxRemoveDoc, type Tx } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { addTxListener, contextStore, getClient, reduceCalls } from '@intabiafusion/presentation'
+  import { AnyComponent, Component } from '@intabiafusion/ui'
+  import { Action, ViewContextType } from '@intabiafusion/view'
   import { fly } from 'svelte/transition'
   import { getContextActionsSync, getSelection } from '../actions'
   import { ListSelectionProvider, SelectionStore, focusStore, previewDocument, selectionStore } from '../selection'

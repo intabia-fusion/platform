@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EmployeePresenter } from '@hcengineering/contact-resources'
-  import contact from '@hcengineering/contact-resources/src/plugin'
-  import { Ref } from '@hcengineering/core'
-  import type { Request, RequestType, Staff } from '@hcengineering/hr'
-  import { Label, LabelAndProps, Scroller, tableHRscheduleY, tooltip } from '@hcengineering/ui'
+  import { EmployeePresenter } from '@intabiafusion/contact-resources'
+  import contact from '@intabiafusion/contact-resources/src/plugin'
+  import { Ref } from '@intabiafusion/core'
+  import type { Request, RequestType, Staff } from '@intabiafusion/hr'
+  import { Label, LabelAndProps, Scroller, tableHRscheduleY, tooltip } from '@intabiafusion/ui'
   import hr from '../../plugin'
   import {
     getHolidayDatesForEmployee,
@@ -29,7 +29,7 @@
     weekDays
   } from '../../utils'
   import RequestsPopup from '../RequestsPopup.svelte'
-  import { Department } from '@hcengineering/hr'
+  import { Department } from '@intabiafusion/hr'
 
   export let currentDate: Date = new Date()
 

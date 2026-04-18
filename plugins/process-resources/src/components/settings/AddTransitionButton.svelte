@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { State } from '@hcengineering/process'
-  import { Button, IconAdd, showPopup } from '@hcengineering/ui'
+  import { State } from '@intabiafusion/process'
+  import { Button, IconAdd, showPopup } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'
 

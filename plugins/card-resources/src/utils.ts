@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type AccountClient, getClient as getAccountClientRaw } from '@hcengineering/account-client'
-import { Analytics } from '@hcengineering/analytics'
-import { type Card, CardEvents, cardId, type CardSpace, type MasterTag, type Tag } from '@hcengineering/card'
-import { chatId } from '@hcengineering/chat'
-import communication from '@hcengineering/communication'
+import { type AccountClient, getClient as getAccountClientRaw } from '@intabiafusion/account-client'
+import { Analytics } from '@intabiafusion/analytics'
+import { type Card, CardEvents, cardId, type CardSpace, type MasterTag, type Tag } from '@intabiafusion/card'
+import { chatId } from '@intabiafusion/chat'
+import communication from '@intabiafusion/communication'
 import core, {
   AccountRole,
   type Class,
@@ -39,9 +39,9 @@ import core, {
   toRank,
   type TxOperations,
   type WithLookup
-} from '@hcengineering/core'
-import login from '@hcengineering/login'
-import { getMetadata, translate } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import login from '@intabiafusion/login'
+import { getMetadata, translate } from '@intabiafusion/platform'
 import presentation, {
   createMarkup,
   getClient,
@@ -49,8 +49,8 @@ import presentation, {
   IconWithEmoji,
   MessageBox,
   type ObjectSearchResult
-} from '@hcengineering/presentation'
-import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
+} from '@intabiafusion/presentation'
+import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
 import {
   getCurrentLocation,
   getCurrentResolvedLocation,
@@ -61,13 +61,13 @@ import {
   navigate,
   type ResolvedLocation,
   showPopup
-} from '@hcengineering/ui'
-import view, { canCopyLink, encodeObjectURI } from '@hcengineering/view'
-import { accessDeniedStore } from '@hcengineering/view-resources'
-import workbench, { type LocationData, type Widget, type WidgetTab } from '@hcengineering/workbench'
-import { createWidgetTab } from '@hcengineering/workbench-resources'
+} from '@intabiafusion/ui'
+import view, { canCopyLink, encodeObjectURI } from '@intabiafusion/view'
+import { accessDeniedStore } from '@intabiafusion/view-resources'
+import workbench, { type LocationData, type Widget, type WidgetTab } from '@intabiafusion/workbench'
+import { createWidgetTab } from '@intabiafusion/workbench-resources'
 
-import attachment from '@hcengineering/attachment'
+import attachment from '@intabiafusion/attachment'
 import CardSearchItem from './components/CardSearchItem.svelte'
 import CreateSpace from './components/navigator/CreateSpace.svelte'
 import card from './plugin'

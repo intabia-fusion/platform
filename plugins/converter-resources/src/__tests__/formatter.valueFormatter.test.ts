@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import core, { type Doc } from '@hcengineering/core'
-import type { AttributeModel } from '@hcengineering/view'
+import core, { type Doc } from '@intabiafusion/core'
+import type { AttributeModel } from '@intabiafusion/view'
 import { formatValue } from '../formatter/valueFormatter'
 
-jest.mock('@hcengineering/platform', () => {
-  const actual = jest.requireActual('@hcengineering/platform')
+jest.mock('@intabiafusion/platform', () => {
+  const actual = jest.requireActual('@intabiafusion/platform')
   return {
     ...actual,
     translate: jest.fn(async (str: unknown) => String(str)),

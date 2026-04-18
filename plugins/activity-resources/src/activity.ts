@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { type ActivityMessage, type SavedMessage } from '@hcengineering/activity'
-import core, { type Ref, SortingOrder, type WithLookup } from '@hcengineering/core'
-import { createQuery, onClient } from '@hcengineering/presentation'
+import activity, { type ActivityMessage, type SavedMessage } from '@intabiafusion/activity'
+import core, { type Ref, SortingOrder, type WithLookup } from '@intabiafusion/core'
+import { createQuery, onClient } from '@intabiafusion/presentation'
 import { writable } from 'svelte/store'
-import attachment from '@hcengineering/attachment'
-import { getCurrentLocation, navigate } from '@hcengineering/ui'
+import attachment from '@intabiafusion/attachment'
+import { getCurrentLocation, navigate } from '@intabiafusion/ui'
 
 export const savedMessagesStore = writable<Array<WithLookup<SavedMessage>>>([])
 export const messageInFocus = writable<Ref<ActivityMessage> | undefined>(undefined)

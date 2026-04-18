@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Project } from '@hcengineering/task'
+  import { Project } from '@intabiafusion/task'
   import TeamCalendar from './TeamCalendar.svelte'
   import TeamCalendarDay from './TeamCalendarDay.svelte'
-  import { Ref } from '@hcengineering/core'
+  import { Ref } from '@intabiafusion/core'
   import Header from '../../Header.svelte'
-  import { DropdownLabels, DropdownLabelsIntl } from '@hcengineering/ui'
+  import { DropdownLabels, DropdownLabelsIntl } from '@intabiafusion/ui'
   import time from '../../../plugin'
 
   export let space: Ref<Project>

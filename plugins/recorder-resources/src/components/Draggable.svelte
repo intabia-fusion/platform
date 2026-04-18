@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { resizeObserver } from '@hcengineering/ui'
+  import { resizeObserver } from '@intabiafusion/ui'
   import { onMount } from 'svelte'
 
   export let key: string | undefined = undefined

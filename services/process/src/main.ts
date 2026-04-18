@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import cardPlugin, { Card } from '@hcengineering/card'
-import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import { ActivityProcess, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
+import cardPlugin, { Card } from '@intabiafusion/card'
+import { CreateMessageEvent, MessageEventType } from '@intabiafusion/communication-sdk-types'
+import { ActivityProcess, ActivityUpdateType, MessageType } from '@intabiafusion/communication-types'
 import core, {
   Doc,
   generateId,
@@ -31,9 +31,9 @@ import core, {
   TxProcessor,
   TxUpdateDoc,
   WorkspaceUuid
-} from '@hcengineering/core'
-import { getPlatformQueue } from '@hcengineering/kafka'
-import { getResource } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { getPlatformQueue } from '@intabiafusion/kafka'
+import { getResource } from '@intabiafusion/platform'
 import process, {
   Execution,
   ExecutionError,
@@ -51,8 +51,8 @@ import process, {
   Transition,
   Trigger,
   UserResult
-} from '@hcengineering/process'
-import { QueueTopic } from '@hcengineering/server-core'
+} from '@intabiafusion/process'
+import { QueueTopic } from '@intabiafusion/server-core'
 import serverProcess, {
   ExecuteResult,
   MethodImpl,
@@ -60,8 +60,8 @@ import serverProcess, {
   ProcessMessage,
   TimeMachineMessage,
   TriggerImpl
-} from '@hcengineering/server-process'
-import { getContextValue } from '@hcengineering/server-process-resources'
+} from '@intabiafusion/server-process'
+import { getContextValue } from '@intabiafusion/server-process-resources'
 import { createCollaboratorClient } from './collaborator'
 import { isError } from './errors'
 import { getClient, releaseClient, SERVICE_NAME } from './utils'

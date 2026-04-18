@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import documents, { DocumentState } from '@hcengineering/controlled-documents'
-  import { type Blob, type Ref, generateId } from '@hcengineering/core'
-  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Editor, Heading } from '@hcengineering/text-editor'
+  import attachment, { Attachment } from '@intabiafusion/attachment'
+  import documents, { DocumentState } from '@intabiafusion/controlled-documents'
+  import { type Blob, type Ref, generateId } from '@intabiafusion/core'
+  import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Editor, Heading } from '@intabiafusion/text-editor'
   import {
     CollaboratorEditor,
     NodeHighlightType,
@@ -27,12 +27,12 @@
     getNodeElement,
     highlightUpdateCommand,
     selectNode
-  } from '@hcengineering/text-editor-resources'
-  import { Component, EditBox, Label, Scroller } from '@hcengineering/ui'
-  import { getCollaborationUser } from '@hcengineering/view-resources'
+  } from '@intabiafusion/text-editor-resources'
+  import { Component, EditBox, Label, Scroller } from '@intabiafusion/ui'
+  import { getCollaborationUser } from '@intabiafusion/view-resources'
   import { merge } from 'effector'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
-  import activity from '@hcengineering/activity'
+  import activity from '@intabiafusion/activity'
   import plugin from '../../plugin'
 
   import {

@@ -32,15 +32,15 @@ import {
   type WithLookup,
   AccountUuid,
   type SocialIdType
-} from '@hcengineering/core'
-import type { Asset, Metadata, Plugin, Resource } from '@hcengineering/platform'
-import { IntlString, plugin } from '@hcengineering/platform'
-import { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
-import type { AnyComponent, ColorDefinition, ResolvedLocation, Location, ComponentExtensionId } from '@hcengineering/ui'
-import { Action, FilterMode, Viewlet } from '@hcengineering/view'
+} from '@intabiafusion/core'
+import type { Asset, Metadata, Plugin, Resource } from '@intabiafusion/platform'
+import { IntlString, plugin } from '@intabiafusion/platform'
+import { TemplateField, TemplateFieldCategory } from '@intabiafusion/templates'
+import type { AnyComponent, ColorDefinition, ResolvedLocation, Location, ComponentExtensionId } from '@intabiafusion/ui'
+import { Action, FilterMode, Viewlet } from '@intabiafusion/view'
 import type { Readable } from 'svelte/store'
-import { Card, MasterTag, Role } from '@hcengineering/card'
-import { Preference } from '@hcengineering/preference'
+import { Card, MasterTag, Role } from '@intabiafusion/card'
+import { Preference } from '@intabiafusion/preference'
 
 import { PermissionsStore } from './types'
 

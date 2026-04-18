@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref } from '@hcengineering/core'
-  import { Department } from '@hcengineering/hr'
-  import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
-  import { getActions as getContributedActions, TreeElement } from '@hcengineering/view-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { Department } from '@intabiafusion/hr'
+  import { getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, IconEdit } from '@intabiafusion/ui'
+  import { getActions as getContributedActions, TreeElement } from '@intabiafusion/view-resources'
   import hr from '../../plugin'
 
   export let departments: Ref<Department>[]

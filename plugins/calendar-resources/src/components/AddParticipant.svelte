@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
-  import { CreateGuest, getPersonRefByPersonId } from '@hcengineering/contact-resources'
-  import { Ref, type PersonId } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
-  import { themeStore } from '@hcengineering/theme'
-  import { Button, IconAdd, closePopup, registerFocus, resizeObserver, showPopup } from '@hcengineering/ui'
+  import contact, { Person } from '@intabiafusion/contact'
+  import { CreateGuest, getPersonRefByPersonId } from '@intabiafusion/contact-resources'
+  import { Ref, type PersonId } from '@intabiafusion/core'
+  import { IntlString, translateCB } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { Integration } from '@intabiafusion/setting'
+  import { themeStore } from '@intabiafusion/theme'
+  import { Button, IconAdd, closePopup, registerFocus, resizeObserver, showPopup } from '@intabiafusion/ui'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
   import calendar from '../plugin'
   import ParticipantsPopup from './ParticipantsPopup.svelte'

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import core, { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
-  import { IntlString, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+  import core, { Association, Class, Data, Doc, Ref } from '@intabiafusion/core'
+  import { IntlString, translate } from '@intabiafusion/platform'
+  import { createQuery, getClient, MessageBox } from '@intabiafusion/presentation'
   import {
     Breadcrumb,
     Button,
@@ -11,10 +11,10 @@
     Separator,
     showPopup,
     twoPanelsSeparators
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view-resources/src/plugin'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view-resources/src/plugin'
   import settings from '../plugin'
-  import card from '@hcengineering/card'
+  import card from '@intabiafusion/card'
   import AssociationEditor from './AssociationEditor.svelte'
 
   export let _classes: Ref<Class<Doc>>[] = [core.class.Doc]

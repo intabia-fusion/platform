@@ -3,18 +3,18 @@
 //
 
 import { createMarkupOperations } from '../markup/client'
-import { getClient } from '@hcengineering/collaborator-client'
-import { makeCollabId } from '@hcengineering/core'
+import { getClient } from '@intabiafusion/collaborator-client'
+import { makeCollabId } from '@intabiafusion/core'
 
 // Mock dependencies
-jest.mock('@hcengineering/collaborator-client')
-jest.mock('@hcengineering/text', () => ({
+jest.mock('@intabiafusion/collaborator-client')
+jest.mock('@intabiafusion/text', () => ({
   htmlToJSON: jest.fn((html) => ({ type: 'doc', content: [{ type: 'text', text: html }] })),
   jsonToHTML: jest.fn((json) => json.content?.[0]?.text ?? ''),
   jsonToMarkup: jest.fn((json) => json.content?.[0]?.text ?? ''),
   markupToJSON: jest.fn((markup) => ({ type: 'doc', content: [{ type: 'text', text: markup }] }))
 }))
-jest.mock('@hcengineering/text-markdown', () => ({
+jest.mock('@intabiafusion/text-markdown', () => ({
   markdownToMarkup: jest.fn((md) => md),
   markupToMarkdown: jest.fn((json) => json.content?.[0]?.text ?? '')
 }))

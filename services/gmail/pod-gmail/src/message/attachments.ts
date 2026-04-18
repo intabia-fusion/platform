@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 import { randomUUID } from 'crypto'
-import attachment, { Attachment } from '@hcengineering/attachment'
-import { Blob, MeasureContext, Ref, TxOperations } from '@hcengineering/core'
-import { StorageAdapter } from '@hcengineering/server-core'
-import { type Attachment as AttachedFile } from '@hcengineering/mail-common'
+import attachment, { Attachment } from '@intabiafusion/attachment'
+import { Blob, MeasureContext, Ref, TxOperations } from '@intabiafusion/core'
+import { StorageAdapter } from '@intabiafusion/server-core'
+import { type Attachment as AttachedFile } from '@intabiafusion/mail-common'
 import { gmail_v1 } from 'googleapis'
-import { WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
 
 import { encode64 } from '../base64'
 import { addFooter } from '../utils'

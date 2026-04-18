@@ -25,8 +25,8 @@ import {
   UX,
   Hidden,
   ReadOnly
-} from '@hcengineering/model'
-import core, { TAttachedDoc, TClass, TDoc, TSpace } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import core, { TAttachedDoc, TClass, TDoc, TSpace } from '@intabiafusion/model-core'
 import type {
   Channel,
   ChatMessage,
@@ -36,7 +36,7 @@ import type {
   ObjectChatPanel,
   ThreadMessage,
   Chat
-} from '@hcengineering/chunter'
+} from '@intabiafusion/chunter'
 import {
   type AccountUuid,
   type Class,
@@ -46,11 +46,11 @@ import {
   type Ref,
   type Space,
   type Timestamp
-} from '@hcengineering/core'
-import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@hcengineering/contact'
-import activity, { type ActivityMessage } from '@hcengineering/activity'
-import { TActivityMessage } from '@hcengineering/model-activity'
-import attachment from '@hcengineering/model-attachment'
+} from '@intabiafusion/core'
+import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@intabiafusion/contact'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
+import { TActivityMessage } from '@intabiafusion/model-activity'
+import attachment from '@intabiafusion/model-attachment'
 
 import chunter from './plugin'
 

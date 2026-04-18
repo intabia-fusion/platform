@@ -1,4 +1,4 @@
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+import { CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
 import { gmail_v1 } from 'googleapis'
 import {
   markdownToHtml,
@@ -7,10 +7,10 @@ import {
   getMailHeaders,
   MailHeader,
   getEmailMessageIdFromHulyId
-} from '@hcengineering/mail-common'
-import { Card } from '@hcengineering/card'
-import { MeasureContext, PersonId } from '@hcengineering/core'
-import { AccountClient } from '@hcengineering/account-client'
+} from '@intabiafusion/mail-common'
+import { Card } from '@intabiafusion/card'
+import { MeasureContext, PersonId } from '@intabiafusion/core'
+import { AccountClient } from '@intabiafusion/account-client'
 
 import { encode64 } from '../../base64'
 import { addFooter } from '../../utils'

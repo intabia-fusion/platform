@@ -14,14 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { Class, Data, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Icon, Label, resizeObserver, Scroller, Spinner, ButtonIcon, IconAdd } from '@hcengineering/ui'
-  import view, { BuildModelKey } from '@hcengineering/view'
-  import { Table } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { Class, Data, Doc, DocumentQuery, Ref, Space } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Icon, Label, resizeObserver, Scroller, Spinner, ButtonIcon, IconAdd } from '@intabiafusion/ui'
+  import view, { BuildModelKey } from '@intabiafusion/view'
+  import { Table } from '@intabiafusion/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { FileUploadCallbackParams, uploadFiles } from '@intabiafusion/uploader'
   import { createEventDispatcher } from 'svelte'
 
   import attachment from '../plugin'

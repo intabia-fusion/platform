@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import { type Lookup, type MeasureContext, type ReverseLookups, getObjectValue } from '.'
 import type { Class, Doc, Ref } from './classes'
 

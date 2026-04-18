@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { DocumentUpdate, Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import tracker, { Project, ProjectTargetPreference } from '@hcengineering/tracker'
+  import { DocumentUpdate, Ref } from '@intabiafusion/core'
+  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import tracker, { Project, ProjectTargetPreference } from '@intabiafusion/tracker'
   import {
     Button,
     ButtonWithDropdown,
@@ -13,8 +13,8 @@
     eventToHTMLElement,
     showPopup,
     type SelectPopupValueType
-  } from '@hcengineering/ui'
-  import { GithubIntegrationRepository } from '@hcengineering/github'
+  } from '@intabiafusion/ui'
+  import { GithubIntegrationRepository } from '@intabiafusion/github'
   import { Writable } from 'svelte/store'
   import github from '../plugin'
   import { integrationRepositories } from './utils'

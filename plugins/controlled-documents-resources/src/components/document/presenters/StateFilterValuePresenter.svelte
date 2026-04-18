@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { DocumentState } from '@hcengineering/controlled-documents'
+  import { DocumentState } from '@intabiafusion/controlled-documents'
   import StatePresenter from './StatePresenter.svelte'
   import { documentStatesOrder } from '../../../utils'
 

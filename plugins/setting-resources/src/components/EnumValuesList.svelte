@@ -22,8 +22,8 @@
     showPopup,
     eventToHTMLElement,
     ModernEditbox
-  } from '@hcengineering/ui'
-  import type { DropdownIntlItem } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
+  import type { DropdownIntlItem } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'
 

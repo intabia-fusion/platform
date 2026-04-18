@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { concatLink, type Client, type Doc, type Ref } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import { getCurrentResolvedLocation, locationToUrl } from '@hcengineering/ui'
-import presentation from '@hcengineering/presentation'
-import type { TableMetadata, Viewlet } from '@hcengineering/view'
+import { concatLink, type Client, type Doc, type Ref } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import { getCurrentResolvedLocation, locationToUrl } from '@intabiafusion/ui'
+import presentation from '@intabiafusion/presentation'
+import type { TableMetadata, Viewlet } from '@intabiafusion/view'
 import type { CopyAsMarkdownTableProps, CopyRelationshipTableAsMarkdownProps } from '../types'
 import { loadViewletConfig } from '../model/viewletLoader'
 import { modelToConfig } from '../model/tableModel'

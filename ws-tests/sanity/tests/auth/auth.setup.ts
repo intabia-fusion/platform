@@ -1,7 +1,7 @@
 import { Page, test as setup } from '@playwright/test'
 import path from 'path'
 
-import { LoginPage, PlatformURI, PlatformUser, PlatformUserSecond, setTestOptions } from '@hcengineering/tests-sanity'
+import { LoginPage, PlatformURI, PlatformUser, PlatformUserSecond, setTestOptions } from '@intabiafusion/tests-sanity'
 import { existsSync } from 'fs'
 
 const authFile = path.join(__dirname, '../../.auth/storage.json')

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import contact, { type Person } from '@hcengineering/contact'
-import { type Doc, type Space, type Ref } from '@hcengineering/core'
-import { type MarkupNode, MarkupNodeType } from '@hcengineering/text'
+import contact, { type Person } from '@intabiafusion/contact'
+import { type Doc, type Space, type Ref } from '@intabiafusion/core'
+import { type MarkupNode, MarkupNodeType } from '@intabiafusion/text'
 
 export interface MarkdownPreprocessor {
   process: (json: MarkupNode, id: Ref<Doc>, spaceId: Ref<Space>) => MarkupNode

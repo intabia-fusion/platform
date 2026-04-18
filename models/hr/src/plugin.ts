@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@hcengineering/core'
-import { hrId } from '@hcengineering/hr'
-import hr from '@hcengineering/hr-resources/src/plugin'
-import { type NotificationGroup } from '@hcengineering/notification'
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { hrId } from '@intabiafusion/hr'
+import hr from '@intabiafusion/hr-resources/src/plugin'
+import { type NotificationGroup } from '@intabiafusion/notification'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ActionCategory, type ViewAction } from '@intabiafusion/view'
 
 export default mergeIds(hrId, hr, {
   string: {

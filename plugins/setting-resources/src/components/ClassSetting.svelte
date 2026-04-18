@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Obj, Ref, isOwnerOrMaintainer } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import core, { Class, Doc, Obj, Ref, isOwnerOrMaintainer } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import {
     AnySvelteComponent,
     Scroller,
@@ -30,7 +30,7 @@
     twoPanelsSeparators,
     Separator,
     NavGroup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import setting from '../plugin'
   import { filterDescendants } from '../utils'
   import ClassAttributes from './ClassAttributes.svelte'

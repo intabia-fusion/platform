@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/text-core
+# Change Log - @intabiafusion/text-core
 
 This log was last generated on Mon, 27 Oct 2025 16:46:51 GMT and should not be manually modified.
 

@@ -3,9 +3,9 @@
 -->
 
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import type { Training } from '@hcengineering/training'
-  import { AttributeBarEditor, Card, KeyedAttribute } from '@hcengineering/presentation'
+  import { Label } from '@intabiafusion/ui'
+  import type { Training } from '@intabiafusion/training'
+  import { AttributeBarEditor, Card, KeyedAttribute } from '@intabiafusion/presentation'
   import training from '../plugin'
   import { createTrainingRequest, type CreateTrainingRequestData } from '../utils'
   import PanelTitle from './PanelTitle.svelte'

@@ -17,8 +17,8 @@
   import { afterUpdate, createEventDispatcher, SvelteComponent } from 'svelte'
   import { Writable, writable } from 'svelte/store'
 
-  import activity from '@hcengineering/activity'
-  import { AccountRole, Doc, getCurrentAccount } from '@hcengineering/core'
+  import activity from '@intabiafusion/activity'
+  import { AccountRole, Doc, getCurrentAccount } from '@intabiafusion/core'
   import {
     Component,
     deviceOptionsStore as deviceInfo,
@@ -26,10 +26,10 @@
     Scroller,
     resizeObserver,
     HeaderAdaptive
-  } from '@hcengineering/ui'
-  import type { ButtonItem } from '@hcengineering/ui'
-  import { getResource } from '@hcengineering/platform'
-  import presence from '@hcengineering/presence'
+  } from '@intabiafusion/ui'
+  import type { ButtonItem } from '@intabiafusion/ui'
+  import { getResource } from '@intabiafusion/platform'
+  import presence from '@intabiafusion/presence'
 
   export let title: string | undefined = undefined
   export let withoutActivity: boolean = false

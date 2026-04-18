@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { AttachedDoc, Class, Doc, Ref } from '@hcengineering/core'
-import type { Asset, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
+import { AttachedDoc, Class, Doc, Ref } from '@intabiafusion/core'
+import type { Asset, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
 
 /**
  * @public

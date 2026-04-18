@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { generateId, type Doc, type Domain, type FieldIndexConfig } from '@hcengineering/core'
-import { PlatformError, unknownStatus } from '@hcengineering/platform'
-import { type DomainHelperOperations } from '@hcengineering/server-core'
+import { generateId, type Doc, type Domain, type FieldIndexConfig } from '@intabiafusion/core'
+import { PlatformError, unknownStatus } from '@intabiafusion/platform'
+import { type DomainHelperOperations } from '@intabiafusion/server-core'
 import { MongoClient, type Collection, type Db, type Document } from 'mongodb'
 
 const connections = new Map<string, MongoClientReferenceImpl>()

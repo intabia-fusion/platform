@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { getMetadata } from '@hcengineering/platform'
-  import { Button, navigate, Notification, NotificationToast } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import presentation, { getCurrentWorkspaceUrl } from '@hcengineering/presentation'
+  import { getMetadata } from '@intabiafusion/platform'
+  import { Button, navigate, Notification, NotificationToast } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import presentation, { getCurrentWorkspaceUrl } from '@intabiafusion/presentation'
   import { allowGuestSignUpStore } from '../utils'
 
   export let onRemove: () => void

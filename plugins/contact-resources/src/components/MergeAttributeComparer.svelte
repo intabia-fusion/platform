@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getAttribute, getAttributeEditor, getClient } from '@hcengineering/presentation'
+  import { Person } from '@intabiafusion/contact'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getAttribute, getAttributeEditor, getClient } from '@intabiafusion/presentation'
   import MergeComparer from './MergeComparer.svelte'
 
   export let value: Person

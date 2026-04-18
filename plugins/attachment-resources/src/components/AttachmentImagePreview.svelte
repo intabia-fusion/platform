@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Attachment } from '@hcengineering/attachment'
-  import type { BlobType, WithLookup } from '@hcengineering/core'
-  import { Image } from '@hcengineering/presentation'
+  import type { Attachment } from '@intabiafusion/attachment'
+  import type { BlobType, WithLookup } from '@intabiafusion/core'
+  import { Image } from '@intabiafusion/presentation'
 
   import BrokenImage from './icons/BrokenImage.svelte'
   import { AttachmentImageSize } from '../types'

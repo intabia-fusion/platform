@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import tags, { tagsId } from '@hcengineering/tags'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type FilterFunction } from '@hcengineering/view'
-import { type Doc, type Ref } from '@hcengineering/core'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import tags, { tagsId } from '@intabiafusion/tags'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type FilterFunction } from '@intabiafusion/view'
+import { type Doc, type Ref } from '@intabiafusion/core'
 
 export default mergeIds(tagsId, tags, {
   component: {

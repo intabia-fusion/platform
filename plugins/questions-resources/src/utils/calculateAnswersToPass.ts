@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Percentage, Question } from '@hcengineering/questions'
+import type { Percentage, Question } from '@intabiafusion/questions'
 import { isAssessment } from './isAssessment'
 
 /**

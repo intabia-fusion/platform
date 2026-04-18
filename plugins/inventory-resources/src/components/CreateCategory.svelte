@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AttachedData, AttachedDoc, Doc, Ref, generateId } from '@hcengineering/core'
-  import { OK, Status } from '@hcengineering/platform'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import type { Category } from '@hcengineering/inventory'
-  import { EditBox, Button, Status as StatusControl } from '@hcengineering/ui'
+  import core, { AttachedData, AttachedDoc, Doc, Ref, generateId } from '@intabiafusion/core'
+  import { OK, Status } from '@intabiafusion/platform'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import type { Category } from '@intabiafusion/inventory'
+  import { EditBox, Button, Status as StatusControl } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import inventory from '../plugin'
 

@@ -3,13 +3,13 @@
 -->
 
 <script lang="ts">
-  import { Class, Ref } from '@hcengineering/core'
-  import { Panel } from '@hcengineering/panel'
-  import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
-  import view, { type Action } from '@hcengineering/view'
-  import { ActionButton, showMenu } from '@hcengineering/view-resources'
-  import { type Training } from '@hcengineering/training'
+  import { Class, Ref } from '@intabiafusion/core'
+  import { Panel } from '@intabiafusion/panel'
+  import { ActionContext, createQuery } from '@intabiafusion/presentation'
+  import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@intabiafusion/ui'
+  import view, { type Action } from '@intabiafusion/view'
+  import { ActionButton, showMenu } from '@intabiafusion/view-resources'
+  import { type Training } from '@intabiafusion/training'
   import training from '../plugin'
   import { myTrainingsRoute } from '../routing/routes/myTrainingsRoute'
   import { trainingRoute, TrainingRouteTab } from '../routing/routes/trainingRoute'

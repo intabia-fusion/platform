@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@hcengineering/platform-rig",
+      "packageName": "@intabiafusion/platform-rig",
       "comment": "Ignore svelte preprocess warnings",
       "type": "patch"
     }
   ],
-  "packageName": "@hcengineering/platform-rig"
+  "packageName": "@intabiafusion/platform-rig"
 }

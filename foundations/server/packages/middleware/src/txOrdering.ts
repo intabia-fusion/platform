@@ -21,9 +21,9 @@ import {
   type SessionData,
   type Tx,
   type TxCUD
-} from '@hcengineering/core'
-import { BaseMiddleware } from '@hcengineering/server-core'
-import type { Middleware, MiddlewareCreator, TxMiddlewareResult } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { BaseMiddleware } from '@intabiafusion/server-core'
+import type { Middleware, MiddlewareCreator, TxMiddlewareResult } from '@intabiafusion/server-core'
 
 interface TxOrderEntry {
   txIds: string[] // All transaction IDs in this batch

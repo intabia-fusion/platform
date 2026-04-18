@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@hcengineering/core'
-import { objectsToArray, type StorageConfiguration } from '@hcengineering/server-core'
+import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@intabiafusion/core'
+import { objectsToArray, type StorageConfiguration } from '@intabiafusion/server-core'
 import { MinioService, processConfigFromEnv, type MinioConfig } from '..'
 
 describe('minio operations', () => {

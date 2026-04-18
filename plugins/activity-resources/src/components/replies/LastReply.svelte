@@ -12,8 +12,8 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Label, TimeSince } from '@hcengineering/ui'
-  import { Timestamp } from '@hcengineering/core'
+  import { Label, TimeSince } from '@intabiafusion/ui'
+  import { Timestamp } from '@intabiafusion/core'
 
   import activity from '../../plugin'
 

@@ -3,9 +3,9 @@
 -->
 
 <script lang="ts">
-  import type { TrainingRequest } from '@hcengineering/training'
-  import type { WithLookup } from '@hcengineering/core'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import type { TrainingRequest } from '@intabiafusion/training'
+  import type { WithLookup } from '@intabiafusion/core'
+  import { DocNavLink } from '@intabiafusion/view-resources'
 
   export let value: WithLookup<TrainingRequest>
   export let disabled: boolean = false

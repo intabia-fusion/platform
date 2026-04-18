@@ -22,10 +22,10 @@
     type ProjectDocument,
     ProjectDocumentTree,
     getDocumentName
-  } from '@hcengineering/controlled-documents'
-  import { type Doc, type Ref, type Space, WithLookup } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/controlled-documents'
+  import { type Doc, type Ref, type Space, WithLookup } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import {
     type Action,
     IconEdit,
@@ -34,9 +34,9 @@
     getPlatformColorForTextDef,
     navigate,
     themeStore
-  } from '@hcengineering/ui'
-  import { ActionGroup } from '@hcengineering/view'
-  import { TreeItem, TreeNode, getActions as getContributedActions } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { ActionGroup } from '@intabiafusion/view'
+  import { TreeItem, TreeNode, getActions as getContributedActions } from '@intabiafusion/view-resources'
 
   import { getDocumentIdFromFragment, getProjectDocumentLink } from '../../navigation'
   import {

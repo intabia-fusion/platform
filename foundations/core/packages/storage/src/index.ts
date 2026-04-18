@@ -19,8 +19,8 @@ import {
   type MeasureContext,
   type StorageIterator,
   type WorkspaceDataId
-} from '@hcengineering/core'
-import { PlatformError, unknownError } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
 import { type Readable } from 'stream'
 
 export type ListBlobResult = Omit<Blob, 'contentType' | 'version'> & { contentType?: string }

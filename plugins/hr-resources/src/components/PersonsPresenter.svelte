@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { EmployeePresenter } from '@hcengineering/contact-resources'
-  import { WithLookup } from '@hcengineering/core'
-  import { Staff } from '@hcengineering/hr'
-  import { closeTooltip } from '@hcengineering/ui'
-  import { showMenu } from '@hcengineering/view-resources'
+  import { Employee } from '@intabiafusion/contact'
+  import { EmployeePresenter } from '@intabiafusion/contact-resources'
+  import { WithLookup } from '@intabiafusion/core'
+  import { Staff } from '@intabiafusion/hr'
+  import { closeTooltip } from '@intabiafusion/ui'
+  import { showMenu } from '@intabiafusion/view-resources'
   import hr from '../plugin'
 
   import { flip } from 'svelte/animate'

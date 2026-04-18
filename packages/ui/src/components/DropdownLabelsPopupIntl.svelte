@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { IntlString, translate } from '@hcengineering/platform'
+  import { IntlString, translate } from '@intabiafusion/platform'
 
   import type { DropdownIntlItem } from '../types'
   import IconCheck from './icons/Check.svelte'

@@ -24,11 +24,11 @@
     RefTo,
     Space,
     mergeQueries
-  } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient, reduceCalls } from '@intabiafusion/presentation'
+  import { AnyComponent, AnySvelteComponent } from '@intabiafusion/ui'
+  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import { SelectionFocusProvider } from '../../selection'
   import { buildConfigLookup, isRefAttribute } from '../../utils'

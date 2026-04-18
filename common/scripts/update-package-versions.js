@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Script to update specific @hcengineering packages to a specified version
+ * Script to update specific @intabiafusion packages to a specified version
  * across all package.json files in the workspace.
  *
  * Usage: node update-package-versions.js <version>
@@ -39,7 +39,7 @@ const PACKAGES_TO_UPDATE = [
 ]
 
 // Convert to full package names
-const FULL_PACKAGE_NAMES = PACKAGES_TO_UPDATE.map((pkg) => `@hcengineering/${pkg}`)
+const FULL_PACKAGE_NAMES = PACKAGES_TO_UPDATE.map((pkg) => `@intabiafusion/${pkg}`)
 
 /**
  * Get the target version from command line arguments

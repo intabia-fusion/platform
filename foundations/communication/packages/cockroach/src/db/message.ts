@@ -23,8 +23,8 @@ import {
   MessageMeta,
   type SocialID,
   type ThreadMeta
-} from '@hcengineering/communication-types'
-import { Domain, ThreadMetaUpdate, ThreadMetaQuery } from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-types'
+import { Domain, ThreadMetaUpdate, ThreadMetaQuery } from '@intabiafusion/communication-sdk-types'
 
 import { BaseDb } from './base'
 import { DbModel, DbModelFilter, schemas } from '../schema'

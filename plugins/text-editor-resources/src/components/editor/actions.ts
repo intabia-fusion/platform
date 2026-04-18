@@ -1,8 +1,8 @@
-import { getResource } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
-import { showPopup } from '@hcengineering/ui'
-import emojiPlugin from '@hcengineering/emoji'
-import textEditor, { type RefAction } from '@hcengineering/text-editor'
+import { getResource } from '@intabiafusion/platform'
+import { getClient } from '@intabiafusion/presentation'
+import { showPopup } from '@intabiafusion/ui'
+import emojiPlugin from '@intabiafusion/emoji'
+import textEditor, { type RefAction } from '@intabiafusion/text-editor'
 
 import RiMention from '../icons/RIMention.svelte'
 

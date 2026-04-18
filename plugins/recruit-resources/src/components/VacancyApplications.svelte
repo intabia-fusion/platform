@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { recruitId, Vacancy } from '@hcengineering/recruit'
-  import { Button, Icon, IconAdd, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { NavLink, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
+  import type { Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { recruitId, Vacancy } from '@intabiafusion/recruit'
+  import { Button, Icon, IconAdd, Label, Loading, Scroller, showPopup } from '@intabiafusion/ui'
+  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { NavLink, Table, ViewletsSettingButton } from '@intabiafusion/view-resources'
   import recruit from '../plugin'
   import CreateApplication from './CreateApplication.svelte'
   import IconApplication from './icons/Application.svelte'

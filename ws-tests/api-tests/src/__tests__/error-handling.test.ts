@@ -21,7 +21,7 @@ import {
   type RestClient,
   type ServerConfig,
   type WorkspaceToken
-} from '@hcengineering/api-client'
+} from '@intabiafusion/api-client'
 import core, {
   generateId,
   generateUuid,
@@ -35,10 +35,10 @@ import core, {
   type TxCreateDoc,
   type TxOperations,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
-import { ensureEmployee } from '@hcengineering/contact'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { type AccountClient, getClient as getAccountClient } from '@intabiafusion/account-client'
+import { ensureEmployee } from '@intabiafusion/contact'
+import { generateToken } from '@intabiafusion/server-token'
 
 describe('error-handling', () => {
   const testCtx = new MeasureMetricsContext('test', {})

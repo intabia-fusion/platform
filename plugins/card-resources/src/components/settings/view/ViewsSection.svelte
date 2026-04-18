@@ -15,13 +15,13 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
 
-  import { MasterTag } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
-  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ButtonIcon, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
-  import view, { type Viewlet } from '@hcengineering/view'
+  import { MasterTag } from '@intabiafusion/card'
+  import { WithLookup } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import setting from '@intabiafusion/setting'
+  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
+  import { ButtonIcon, Icon, IconAdd, Label, showPopup } from '@intabiafusion/ui'
+  import view, { type Viewlet } from '@intabiafusion/view'
 
   import CreateView from './CreateView.svelte'
   import card from '../../../plugin'

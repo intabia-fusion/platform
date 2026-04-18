@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import love, { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
-  import { WithLookup } from '@hcengineering/core'
-  import { ObjectPresenterType } from '@hcengineering/view'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { tooltip, Icon } from '@hcengineering/ui'
+  import love, { MeetingMinutes, MeetingStatus } from '@intabiafusion/love'
+  import { WithLookup } from '@intabiafusion/core'
+  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { tooltip, Icon } from '@intabiafusion/ui'
   import { joinOrCreateMeetingByInvite } from '../meetings'
 
   export let value: WithLookup<MeetingMinutes>

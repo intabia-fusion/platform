@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   type AccountInfo,
   AccountRole,
@@ -34,9 +34,9 @@ import {
   type WorkspaceMemberInfo,
   type WorkspaceUuid,
   type IntegrationKind
-} from '@hcengineering/core'
-import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
-import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@intabiafusion/platform'
+import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@intabiafusion/server-token'
 
 import { isAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'

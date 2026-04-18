@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
-import { getEventPopupPositionElement, type PopupAlignment } from '@hcengineering/ui'
-import { canCopyLink } from '@hcengineering/view'
+import { type Resources } from '@intabiafusion/platform'
+import { getEventPopupPositionElement, type PopupAlignment } from '@intabiafusion/ui'
+import { canCopyLink } from '@intabiafusion/view'
 import { actionImpl } from './actionImpl'
 import ActionsPopup from './components/ActionsPopup.svelte'
 import ArrayEditor from './components/ArrayEditor.svelte'
@@ -224,7 +224,7 @@ export * from './viewletContextStore'
 export { getViewletSpecialActions } from './viewletUtils'
 export { copyMarkdown } from './actionImpl'
 export { default as SimpleNotification } from './components/SimpleNotification.svelte'
-export type { BuildMarkdownTableMetadata } from '@hcengineering/view'
+export type { BuildMarkdownTableMetadata } from '@intabiafusion/view'
 export {
   ArrayEditor,
   BooleanEditor,

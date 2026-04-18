@@ -15,10 +15,10 @@
 <script lang="ts">
   import Avatar from './Avatar.svelte'
 
-  import { getName, Person } from '@hcengineering/contact'
-  import { Asset } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { getName, Person } from '@intabiafusion/contact'
+  import { Asset } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { AnySvelteComponent, IconSize } from '@intabiafusion/ui'
 
   export let value: Person
   export let subtitle: string | undefined = undefined

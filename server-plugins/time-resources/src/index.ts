@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact, { Employee, Person } from '@hcengineering/contact'
+import contact, { Employee, Person } from '@intabiafusion/contact'
 
 import core, {
   AttachedData,
@@ -31,20 +31,20 @@ import core, {
   TxProcessor,
   TxUpdateDoc,
   toIdMap
-} from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
-import type { TriggerControl } from '@hcengineering/server-core'
-import serverTime, { OnToDo, ToDoFactory } from '@hcengineering/server-time'
-import task, { makeRank } from '@hcengineering/task'
-import time, { ProjectToDo, ToDo, ToDoPriority, TodoAutomationHelper, WorkSlot } from '@hcengineering/time'
-import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengineering/tracker'
+} from '@intabiafusion/core'
+import { getResource } from '@intabiafusion/platform'
+import type { TriggerControl } from '@intabiafusion/server-core'
+import serverTime, { OnToDo, ToDoFactory } from '@intabiafusion/server-time'
+import task, { makeRank } from '@intabiafusion/task'
+import time, { ProjectToDo, ToDo, ToDoPriority, TodoAutomationHelper, WorkSlot } from '@intabiafusion/time'
+import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@intabiafusion/tracker'
 import {
   CreateNotificationFunc,
   CreateNotificationResult,
   Receiver,
   TypeMatchClient
-} from '@hcengineering/server-notification'
-import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@hcengineering/text-core'
+} from '@intabiafusion/server-notification'
+import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@intabiafusion/text-core'
 
 /**
  * @public

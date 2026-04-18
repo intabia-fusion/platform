@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, AttributePermission } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import { AnyAttribute, AttributePermission } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
 
   export let value: AttributePermission
   export let inline: boolean = false

@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import notification from '@hcengineering/model-notification'
-import core from '@hcengineering/model-core'
-import contact from '@hcengineering/model-contact'
-import { type Builder } from '@hcengineering/model'
-import { type MessageNotificationType } from '@hcengineering/notification'
-import activity from '@hcengineering/activity'
-import love from '@hcengineering/model-love'
+import notification from '@intabiafusion/model-notification'
+import core from '@intabiafusion/model-core'
+import contact from '@intabiafusion/model-contact'
+import { type Builder } from '@intabiafusion/model'
+import { type MessageNotificationType } from '@intabiafusion/notification'
+import activity from '@intabiafusion/activity'
+import love from '@intabiafusion/model-love'
 
 import gmail from './plugin'
 

@@ -13,20 +13,20 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
-import { setMetadata } from '@hcengineering/platform'
-import serverClient from '@hcengineering/server-client'
-import { initStatisticsContext, StorageConfig } from '@hcengineering/server-core'
-import serverToken from '@hcengineering/server-token'
+import { Analytics } from '@intabiafusion/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
+import { newMetrics } from '@intabiafusion/core'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClient from '@intabiafusion/server-client'
+import { initStatisticsContext, StorageConfig } from '@intabiafusion/server-core'
+import serverToken from '@intabiafusion/server-token'
 import { join } from 'path'
 
 import config from './config'
 import { createDb } from './db/postgres'
 import { createServer, listen } from './server'
 import { UsageWorker } from './usage'
-import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import { storageConfigFromEnv } from '@intabiafusion/server-storage'
 
 const setupMetadata = (): void => {
   setMetadata(serverToken.metadata.Secret, config.Secret)

@@ -14,18 +14,18 @@
 // limitations under the License.
 //
 
-import { type BrandingMap, type MeasureContext, type Tx, type WorkspaceIds } from '@hcengineering/core'
-import { buildStorageFromConfig } from '@hcengineering/server-storage'
+import { type BrandingMap, type MeasureContext, type Tx, type WorkspaceIds } from '@intabiafusion/core'
+import { buildStorageFromConfig } from '@intabiafusion/server-storage'
 
-import { startSessionManager } from '@hcengineering/server'
+import { startSessionManager } from '@intabiafusion/server'
 import {
   type CommunicationCallbacks,
   type PlatformQueue,
   type SessionManager,
   type StorageConfiguration
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
-import { Api as CommunicationApi } from '@hcengineering/communication-server'
+import { Api as CommunicationApi } from '@intabiafusion/communication-server'
 import {
   createServerPipeline,
   isAdapterSecurity,
@@ -35,23 +35,23 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@hcengineering/server-pipeline'
+} from '@intabiafusion/server-pipeline'
 
 import {
   createMongoAdapter,
   createMongoDestroyAdapter,
   createMongoTxAdapter,
   shutdownMongo
-} from '@hcengineering/mongo'
+} from '@intabiafusion/mongo'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   shutdownPostgres
-} from '@hcengineering/postgres'
+} from '@intabiafusion/postgres'
 import { readFileSync } from 'node:fs'
 import { startHttpServer } from './server_http'
-import type { ServerApi } from '@hcengineering/communication-sdk-types'
+import type { ServerApi } from '@intabiafusion/communication-sdk-types'
 const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
 
 registerStringLoaders()

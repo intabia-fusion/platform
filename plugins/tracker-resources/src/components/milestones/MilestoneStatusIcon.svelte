@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Milestone } from '@hcengineering/tracker'
-  import { ButtonSize, Icon } from '@hcengineering/ui'
+  import { Milestone } from '@intabiafusion/tracker'
+  import { ButtonSize, Icon } from '@intabiafusion/ui'
   import { milestoneStatusAssets } from '../../utils'
   import tracker from '../../plugin'
 

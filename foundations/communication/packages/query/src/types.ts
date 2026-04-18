@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { EventResult, Event } from '@hcengineering/communication-sdk-types'
+import { EventResult, Event } from '@intabiafusion/communication-sdk-types'
 import {
   SortingOrder,
   type Window,
@@ -22,7 +22,7 @@ import {
   FindNotificationsParams,
   FindMessagesOptions,
   BlobID
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import { QueryResult } from './result'
 

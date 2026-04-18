@@ -19,9 +19,9 @@
     DisplayInboxNotification,
     MentionInboxNotification,
     ReactionInboxNotification
-  } from '@hcengineering/notification'
-  import { Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/notification'
+  import { Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
 
   import ActivityInboxNotificationPresenter from './ActivityInboxNotificationPresenter.svelte'
   import MentionInboxNotificationPresenter from './MentionInboxNotificationPresenter.svelte'

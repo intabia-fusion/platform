@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   AccountRole,
   MeasureContext,
@@ -21,18 +21,18 @@ import {
   type WorkspaceDataId,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import { getCPUInfo, getMemoryInfo } from '@hcengineering/server-core'
-import { decodeToken, decodeTokenVerbose, TokenError } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { getCPUInfo, getMemoryInfo } from '@intabiafusion/server-core'
+import { decodeToken, decodeTokenVerbose, TokenError } from '@intabiafusion/server-token'
 
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from 'express'
 import { type Server } from 'http'
 import morgan from 'morgan'
 
-import { getClient } from '@hcengineering/account-client'
-import { createStorageBackupStorage, type BackupInfo, type BackupStorage } from '@hcengineering/server-backup'
-import { createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import { getClient } from '@intabiafusion/account-client'
+import { createStorageBackupStorage, type BackupInfo, type BackupStorage } from '@intabiafusion/server-backup'
+import { createStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
 import { gunzipSync } from 'zlib'
 import { Config } from './config'
 import { ApiError } from './error'

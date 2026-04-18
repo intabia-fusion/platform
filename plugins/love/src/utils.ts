@@ -1,5 +1,5 @@
-import { Employee, Person } from '@hcengineering/contact'
-import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { Employee, Person } from '@intabiafusion/contact'
+import { Data, generateId, Ref, WorkspaceUuid } from '@intabiafusion/core'
 
 import love from './plugin'
 import { MeetingMinutes, Office, ParticipantInfo, Room, RoomAccess, RoomType } from './types'

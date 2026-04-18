@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
-  import { Drive, Folder } from '@hcengineering/drive'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, navigate, IconEdit } from '@hcengineering/ui'
-  import { TreeNode, TreeItem, getActions as getContributedActions } from '@hcengineering/view-resources'
-  import { getResource } from '@hcengineering/platform'
+  import { Doc, Ref, SortingOrder, Space } from '@intabiafusion/core'
+  import { Drive, Folder } from '@intabiafusion/drive'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Action, navigate, IconEdit } from '@intabiafusion/ui'
+  import { TreeNode, TreeItem, getActions as getContributedActions } from '@intabiafusion/view-resources'
+  import { getResource } from '@intabiafusion/platform'
 
   import drive from '../plugin'
   import { getDriveLink, getFolderIdFromFragment, getFolderLink } from '../navigation'

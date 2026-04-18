@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Data, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Card, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { Milestone, MilestoneStatus, Project } from '@hcengineering/tracker'
-  import ui, { DatePresenter, EditBox } from '@hcengineering/ui'
-  import { StyledTextArea } from '@hcengineering/text-editor-resources'
+  import { Data, Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Card, getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { Milestone, MilestoneStatus, Project } from '@intabiafusion/tracker'
+  import ui, { DatePresenter, EditBox } from '@intabiafusion/ui'
+  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import MilestoneStatusEditor from './MilestoneStatusEditor.svelte'

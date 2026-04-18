@@ -23,8 +23,8 @@ import core, {
   type Space,
   TxOperations,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import { type DbAdapter, wrapAdapterToClient } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { type DbAdapter, wrapAdapterToClient } from '@intabiafusion/server-core'
 import {
   createPostgresAdapter,
   createPostgresTxAdapter,

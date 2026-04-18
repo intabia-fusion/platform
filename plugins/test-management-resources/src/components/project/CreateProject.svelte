@@ -15,8 +15,8 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import { Asset } from '@hcengineering/platform'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { Asset } from '@intabiafusion/platform'
   import core, {
     Data,
     DocumentUpdate,
@@ -29,10 +29,10 @@
     WithLookup,
     notEmpty,
     AccountUuid
-  } from '@hcengineering/core'
-  import view from '@hcengineering/view'
-  import testManagement, { TestProject } from '@hcengineering/test-management'
-  import presentation, { Card, IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import view from '@intabiafusion/view'
+  import testManagement, { TestProject } from '@intabiafusion/test-management'
+  import presentation, { Card, IconWithEmoji, getClient, reduceCalls } from '@intabiafusion/presentation'
   import {
     Button,
     EditBox,
@@ -43,8 +43,8 @@
     getPlatformColorDef,
     getPlatformColorForTextDef,
     themeStore
-  } from '@hcengineering/ui'
-  import { IconPicker, SpaceTypeSelector } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { IconPicker, SpaceTypeSelector } from '@intabiafusion/view-resources'
 
   import testManagementRes from '../../plugin'
 

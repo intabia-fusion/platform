@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/measurements-otlp
+# Change Log - @intabiafusion/measurements-otlp
 
 This log was last generated on Mon, 27 Oct 2025 15:24:19 GMT and should not be manually modified.
 

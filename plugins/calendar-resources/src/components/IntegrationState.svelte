@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Calendar } from '@hcengineering/calendar'
-  import { getCurrentAccount } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import type { Integration } from '@hcengineering/account-client'
-  import { BaseIntegrationState, IntegrationStateRow } from '@hcengineering/setting-resources'
-  import { OK } from '@hcengineering/platform'
+  import { Calendar } from '@intabiafusion/calendar'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import type { Integration } from '@intabiafusion/account-client'
+  import { BaseIntegrationState, IntegrationStateRow } from '@intabiafusion/setting-resources'
+  import { OK } from '@intabiafusion/platform'
 
   import calendar from '../plugin'
 

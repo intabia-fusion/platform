@@ -1,1 +1,1 @@
-export * from '@hcengineering/front'
+export * from '@intabiafusion/front'

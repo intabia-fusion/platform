@@ -20,8 +20,8 @@ import {
   type IteratorParams,
   ObjectIteratorProvider,
   getDefaultIteratorState
-} from '@hcengineering/view-resources'
-import testManagement, { type TestResult } from '@hcengineering/test-management'
+} from '@intabiafusion/view-resources'
+import testManagement, { type TestResult } from '@intabiafusion/test-management'
 
 export const testIteratorStore = writable<IteratorState<TestResult>>(getDefaultIteratorState<TestResult>({}))
 

@@ -14,24 +14,24 @@
 // limitations under the License.
 //
 
-import { type Domain, DOMAIN_MODEL, IndexKind, type Ref, type Markup, AccountRole } from '@hcengineering/core'
-import { type Builder, Index, Model, Prop, TypeString, UX, TypeMarkup } from '@hcengineering/model'
-import core, { TDoc, TSpace } from '@hcengineering/model-core'
-import textEditor from '@hcengineering/model-text-editor'
-import tracker from '@hcengineering/model-tracker'
-import view, { createAction } from '@hcengineering/model-view'
-import { type IntlString, type Resource } from '@hcengineering/platform'
-import setting from '@hcengineering/setting'
+import { type Domain, DOMAIN_MODEL, IndexKind, type Ref, type Markup, AccountRole } from '@intabiafusion/core'
+import { type Builder, Index, Model, Prop, TypeString, UX, TypeMarkup } from '@intabiafusion/model'
+import core, { TDoc, TSpace } from '@intabiafusion/model-core'
+import textEditor from '@intabiafusion/model-text-editor'
+import tracker from '@intabiafusion/model-tracker'
+import view, { createAction } from '@intabiafusion/model-view'
+import { type IntlString, type Resource } from '@intabiafusion/platform'
+import setting from '@intabiafusion/setting'
 import type {
   MessageTemplate,
   TemplateCategory,
   TemplateField,
   TemplateFieldCategory,
   TemplateFieldFunc
-} from '@hcengineering/templates'
+} from '@intabiafusion/templates'
 import templates from './plugin'
 
-export { templatesId } from '@hcengineering/templates'
+export { templatesId } from '@intabiafusion/templates'
 export { templatesOperation } from './migration'
 
 export const DOMAIN_TEMPLATES = 'templates' as Domain

@@ -16,18 +16,18 @@
 -->
 
 <script lang="ts">
-  import { Class, Ref } from '@hcengineering/core'
-  import { Panel } from '@hcengineering/panel'
-  import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { showMenu } from '@hcengineering/view-resources'
+  import { Class, Ref } from '@intabiafusion/core'
+  import { Panel } from '@intabiafusion/panel'
+  import { ActionContext, createQuery } from '@intabiafusion/presentation'
+  import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { showMenu } from '@intabiafusion/view-resources'
   import {
     type Training,
     type TrainingAttempt,
     TrainingAttemptState,
     type TrainingRequest
-  } from '@hcengineering/training'
+  } from '@intabiafusion/training'
   import training from '../plugin'
   import { sentRequestRoute } from '../routing/routes/sentRequestsRoute'
   import { trainingAttemptRoute, TrainingAttemptRouteTab } from '../routing/routes/trainingAttemptRoute'

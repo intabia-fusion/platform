@@ -12,17 +12,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closePopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { closePopup, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
 
   import { outgoingInvitesStore, incomingInvitesStore, closeInvitesPopup } from '../../../invites'
   import InviteButton from './InviteButton.svelte'
   import OutgoingInvitePopup from '../invites/OutgoingInvitePopup.svelte'
   import IncomingInvitePopup from '../invites/IncomingInvitePopup.svelte'
-  import { getPersonsByPersonRefsCb } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { UserMeetingInvite } from '@hcengineering/love'
+  import { getPersonsByPersonRefsCb } from '@intabiafusion/contact-resources'
+  import { Person } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { UserMeetingInvite } from '@intabiafusion/love'
 
   const invitesCategory = 'meetingInvites'
 

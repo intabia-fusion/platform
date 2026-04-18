@@ -1,5 +1,5 @@
-import { type AccountClient } from '@hcengineering/account-client'
-import { Analytics } from '@hcengineering/analytics'
+import { type AccountClient } from '@intabiafusion/account-client'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   type Class,
   type Client,
@@ -23,9 +23,9 @@ import core, {
   type UnsetOptions,
   type WorkspaceIds,
   generateId
-} from '@hcengineering/core'
-import { makeRank } from '@hcengineering/rank'
-import { type StorageAdapter } from '@hcengineering/storage'
+} from '@intabiafusion/core'
+import { makeRank } from '@intabiafusion/rank'
+import { type StorageAdapter } from '@intabiafusion/storage'
 import { type ModelLogger } from './utils'
 
 /**

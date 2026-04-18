@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { PersonPreviewProvider, Avatar } from '@hcengineering/contact-resources'
-  import { formatName, Person } from '@hcengineering/contact'
-  import { Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
-  import { Label } from '@hcengineering/ui'
+  import { PersonPreviewProvider, Avatar } from '@intabiafusion/contact-resources'
+  import { formatName, Person } from '@intabiafusion/contact'
+  import { Message } from '@intabiafusion/communication-types'
+  import { Card } from '@intabiafusion/card'
+  import { Label } from '@intabiafusion/ui'
 
   import communication from '../../plugin'
   import MessageInput from '../input/MessageInput.svelte'

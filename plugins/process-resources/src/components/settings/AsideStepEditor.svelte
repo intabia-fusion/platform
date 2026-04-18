@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { Method, Process, Transition, type Step } from '@hcengineering/process'
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { ButtonIcon, IconDelete, Label, Modal } from '@hcengineering/ui'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { Method, Process, Transition, type Step } from '@intabiafusion/process'
+  import { clearSettingsStore } from '@intabiafusion/setting-resources'
+  import { ButtonIcon, IconDelete, Label, Modal } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import StepEditor from './StepEditor.svelte'
   import ContextFooter from './ContextFooter.svelte'

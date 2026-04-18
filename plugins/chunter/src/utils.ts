@@ -1,5 +1,5 @@
-import core, { type AccountUuid, type Ref, TxOperations } from '@hcengineering/core'
-import { withRetry } from '@hcengineering/retry'
+import core, { type AccountUuid, type Ref, TxOperations } from '@intabiafusion/core'
+import { withRetry } from '@intabiafusion/retry'
 
 import chunter, { DirectMessage } from '.'
 

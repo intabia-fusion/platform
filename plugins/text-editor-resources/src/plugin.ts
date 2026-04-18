@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { textEditorId } from '@hcengineering/text-editor'
-import { type IntlString, plugin } from '@hcengineering/platform'
+import { textEditorId } from '@intabiafusion/text-editor'
+import { type IntlString, plugin } from '@intabiafusion/platform'
 
 export default plugin(textEditorId, {
   string: {

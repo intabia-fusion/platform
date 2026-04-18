@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Ref } from '@hcengineering/core'
-import { type Person } from '@hcengineering/contact'
-import { type PresenceData } from '@hcengineering/presence'
+import { type Class, type Doc, type Ref } from '@intabiafusion/core'
+import { type Person } from '@intabiafusion/contact'
+import { type PresenceData } from '@intabiafusion/presence'
 
 export interface Room {
   objectId: Ref<Doc>

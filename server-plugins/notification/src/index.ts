@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-import { Employee, Person, PersonSpace } from '@hcengineering/contact'
-import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup, Data } from '@hcengineering/core'
-import { CommonInboxNotification, NotificationContent, NotificationType } from '@hcengineering/notification'
-import { Metadata, Plugin, Resource, plugin } from '@hcengineering/platform'
-import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
-import { ActivityMessage } from '@hcengineering/activity'
+import { Employee, Person, PersonSpace } from '@intabiafusion/contact'
+import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup, Data } from '@intabiafusion/core'
+import { CommonInboxNotification, NotificationContent, NotificationType } from '@intabiafusion/notification'
+import { Metadata, Plugin, Resource, plugin } from '@intabiafusion/platform'
+import type { TriggerControl, TriggerFunc } from '@intabiafusion/server-core'
+import { ActivityMessage } from '@intabiafusion/activity'
 
 export const serverNotificationId = 'server-notification' as Plugin
-export { DOMAIN_USER_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
+export { DOMAIN_USER_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_DOC_NOTIFY } from '@intabiafusion/notification'
 
 export interface Receiver {
   account: AccountUuid

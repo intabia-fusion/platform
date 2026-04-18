@@ -2,8 +2,8 @@
  * A set of tests against a real PostgreSQL database, for both CorockachDB and pure.
  */
 
-import { generateUuid, SocialIdType, type AccountUuid, type PersonId } from '@hcengineering/core'
-import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
+import { generateUuid, SocialIdType, type AccountUuid, type PersonId } from '@intabiafusion/core'
+import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@intabiafusion/postgres'
 import { PostgresAccountDB } from '../collections/postgres/postgres'
 import { type SocialId } from '../types'
 import { createAccount, getDbFlavor, normalizeValue } from '../utils'

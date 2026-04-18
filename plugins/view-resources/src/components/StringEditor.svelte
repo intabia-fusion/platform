@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import type { ButtonSize, ButtonKind, EditStyle } from '@hcengineering/ui'
-  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
+  import type { IntlString } from '@intabiafusion/platform'
+  import type { ButtonSize, ButtonKind, EditStyle } from '@intabiafusion/ui'
+  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@intabiafusion/ui'
   import EditBoxPopup from './EditBoxPopup.svelte'
 
   export let label: IntlString

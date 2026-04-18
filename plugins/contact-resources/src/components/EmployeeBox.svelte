@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
-  import type { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import presentation from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
+  import contact, { Employee, Person } from '@intabiafusion/contact'
+  import type { Class, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import presentation from '@intabiafusion/presentation'
+  import { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@intabiafusion/ui'
   import UserBox from './UserBox.svelte'
   import IconPerson from './icons/Person.svelte'
 

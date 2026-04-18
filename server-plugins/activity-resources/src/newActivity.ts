@@ -7,19 +7,19 @@ import core, {
   type TxCreateDoc,
   type TxCUD,
   TxProcessor
-} from '@hcengineering/core'
-import { type Card } from '@hcengineering/card'
-import { type TriggerControl } from '@hcengineering/server-core'
-import activity from '@hcengineering/activity'
-import { MessageEventType, type CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/core'
+import { type Card } from '@intabiafusion/card'
+import { type TriggerControl } from '@intabiafusion/server-core'
+import activity from '@intabiafusion/activity'
+import { MessageEventType, type CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
 import {
   type ActivityAttributeUpdate,
   type ActivityMessageExtra,
   type ActivityUpdate,
   ActivityUpdateType,
   MessageType
-} from '@hcengineering/communication-types'
-import { translate } from '@hcengineering/platform'
+} from '@intabiafusion/communication-types'
+import { translate } from '@intabiafusion/platform'
 
 import { getNewActivityUpdates } from './utils'
 

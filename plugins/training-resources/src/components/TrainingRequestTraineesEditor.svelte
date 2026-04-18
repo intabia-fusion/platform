@@ -16,11 +16,11 @@
 -->
 
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { UserBoxList } from '@hcengineering/contact-resources'
+  import { Employee } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { UserBoxList } from '@intabiafusion/contact-resources'
   import training from '../plugin'
 
   export let value: Ref<Employee>[]

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref } from '@hcengineering/core'
-  import { IssueTemplate, Project } from '@hcengineering/tracker'
+  import { DocumentQuery, Ref } from '@intabiafusion/core'
+  import { IssueTemplate, Project } from '@intabiafusion/tracker'
   import tracker from '../../plugin'
   import IssueTemplatesView from './IssueTemplatesView.svelte'
 

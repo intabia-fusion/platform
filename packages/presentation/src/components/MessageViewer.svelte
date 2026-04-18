@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { isEmptyMarkup, markupToJSON } from '@hcengineering/text'
+  import { isEmptyMarkup, markupToJSON } from '@intabiafusion/text'
   import Node from './markup/Node.svelte'
-  import { loadParseEmojisFunction, ParsedTextWithEmojis, getParseEmojisFunction } from '@hcengineering/emoji'
+  import { loadParseEmojisFunction, ParsedTextWithEmojis, getParseEmojisFunction } from '@intabiafusion/emoji'
   import { onMount } from 'svelte'
 
   export let message: string

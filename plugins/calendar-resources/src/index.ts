@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type ReccuringInstance } from '@hcengineering/calendar'
-import { type Doc, type TxOperations } from '@hcengineering/core'
-import { type Resources } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
-import { closePopup, showPopup } from '@hcengineering/ui'
+import { type ReccuringInstance } from '@intabiafusion/calendar'
+import { type Doc, type TxOperations } from '@intabiafusion/core'
+import { type Resources } from '@intabiafusion/platform'
+import { getClient } from '@intabiafusion/presentation'
+import { closePopup, showPopup } from '@intabiafusion/ui'
 import CalendarView from './components/CalendarView.svelte'
 import CreateEvent from './components/CreateEvent.svelte'
 import DateTimePresenter from './components/DateTimePresenter.svelte'
@@ -46,10 +46,10 @@ import ScheduleNavSection from './components/ScheduleNavSection.svelte'
 import CalendarSettings from './components/CalendarSettings.svelte'
 import IntegrationState from './components/IntegrationState.svelte'
 import calendar from './plugin'
-import contact from '@hcengineering/contact'
-import { deleteObjects } from '@hcengineering/view-resources'
+import contact from '@intabiafusion/contact'
+import { deleteObjects } from '@intabiafusion/view-resources'
 import { eventTitleProvider, configureCalDavAccess } from './utils'
-import { type Integration } from '@hcengineering/account-client'
+import { type Integration } from '@intabiafusion/account-client'
 import { disconnect, disconnectAll } from './api'
 
 export {

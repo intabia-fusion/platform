@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Blob, Class, Doc, Markup, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { EmptyMarkup, isEmptyMarkup, mergeKitOptions } from '@hcengineering/text'
-  import textEditor, { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import { Blob, Class, Doc, Markup, Ref } from '@intabiafusion/core'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import { EmptyMarkup, isEmptyMarkup, mergeKitOptions } from '@intabiafusion/text'
+  import textEditor, { RefAction, TextEditorHandler } from '@intabiafusion/text-editor'
   import {
     AnySvelteComponent,
     Button,
@@ -26,12 +26,12 @@
     handler,
     IconClose,
     registerFocus
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { FocusPosition } from '@tiptap/core'
   import { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher } from 'svelte'
 
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
   import TextEditor from './TextEditor.svelte'
   import { defaultRefActions, getModelRefActions } from './editor/actions'
   import Send from './icons/Send.svelte'

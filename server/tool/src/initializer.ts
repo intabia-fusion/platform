@@ -1,4 +1,4 @@
-import { saveCollabJson } from '@hcengineering/collaboration'
+import { saveCollabJson } from '@intabiafusion/collaboration'
 import core, {
   type AttachedDoc,
   type Class,
@@ -17,13 +17,13 @@ import core, {
   type PersonInfo,
   type WorkspaceIds,
   buildSocialIdString
-} from '@hcengineering/core'
-import { type ModelLogger } from '@hcengineering/model'
-import { makeRank } from '@hcengineering/rank'
-import { HulyFormatImporter, StorageFileUploader } from '@hcengineering/importer'
-import type { StorageAdapter } from '@hcengineering/server-core'
-import { jsonToMarkup } from '@hcengineering/text'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+} from '@intabiafusion/core'
+import { type ModelLogger } from '@intabiafusion/model'
+import { makeRank } from '@intabiafusion/rank'
+import { HulyFormatImporter, StorageFileUploader } from '@intabiafusion/importer'
+import type { StorageAdapter } from '@intabiafusion/server-core'
+import { jsonToMarkup } from '@intabiafusion/text'
+import { markdownToMarkup } from '@intabiafusion/text-markdown'
 import { v4 as uuid } from 'uuid'
 import path from 'path'
 

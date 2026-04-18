@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-import tracker, { type Project } from '@hcengineering/tracker'
+import tracker, { type Project } from '@intabiafusion/tracker'
 import type { BenchConfig } from '../config'
 import {
   type ConnectionPool,

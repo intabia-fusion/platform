@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import cardPlugin, { Card, MasterTag, Tag } from '@hcengineering/card'
+import cardPlugin, { Card, MasterTag, Tag } from '@intabiafusion/card'
 import core, {
   Association,
   checkMixinKey,
@@ -35,7 +35,7 @@ import core, {
   TxProcessor,
   Type,
   TypeNumber
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import process, {
   ApproveRequest,
   Execution,
@@ -46,9 +46,9 @@ import process, {
   processError,
   ProcessToDo,
   UserResult
-} from '@hcengineering/process'
-import { ExecuteResult, ProcessControl, SuccessExecutionContext } from '@hcengineering/server-process'
-import time, { ToDoPriority } from '@hcengineering/time'
+} from '@intabiafusion/process'
+import { ExecuteResult, ProcessControl, SuccessExecutionContext } from '@intabiafusion/server-process'
+import time, { ToDoPriority } from '@intabiafusion/time'
 
 function checkResult (execution: Execution, results: Record<string, any> | undefined): boolean {
   if (results === undefined) return true

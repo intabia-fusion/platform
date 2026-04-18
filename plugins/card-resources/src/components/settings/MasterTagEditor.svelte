@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { getClient } from '@hcengineering/presentation'
+  import { MasterTag } from '@intabiafusion/card'
+  import { getClient } from '@intabiafusion/presentation'
   import {
     ButtonIcon,
     Component,
@@ -24,7 +24,7 @@
     Separator,
     defineSeparators,
     secondNavSeparators
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import card from '../../plugin'
 
   export let masterTag: MasterTag

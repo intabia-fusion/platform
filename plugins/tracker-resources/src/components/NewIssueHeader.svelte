@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { AccountRole, Ref, Space } from '@hcengineering/core'
-  import { MultipleDraftController, createQuery, getClient, isDisabled } from '@hcengineering/presentation'
-  import { TrackerEvents, trackerId } from '@hcengineering/tracker'
-  import { HeaderButton, showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { AccountRole, Ref, Space } from '@intabiafusion/core'
+  import { MultipleDraftController, createQuery, getClient, isDisabled } from '@intabiafusion/presentation'
+  import { TrackerEvents, trackerId } from '@intabiafusion/tracker'
+  import { HeaderButton, showPopup } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   import { onDestroy } from 'svelte'
   import tracker from '../plugin'

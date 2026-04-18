@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import contact, { type Person } from '@hcengineering/contact'
-import { SocialIdType, buildSocialIdString, type Ref, type Timestamp, type TxOperations } from '@hcengineering/core'
-import { MarkupNodeType, traverseNode, type MarkupNode } from '@hcengineering/text'
-import tracker from '@hcengineering/tracker'
+import contact, { type Person } from '@intabiafusion/contact'
+import { SocialIdType, buildSocialIdString, type Ref, type Timestamp, type TxOperations } from '@intabiafusion/core'
+import { MarkupNodeType, traverseNode, type MarkupNode } from '@intabiafusion/text'
+import tracker from '@intabiafusion/tracker'
 import csv from 'csvtojson'
 import { download } from '../importer/dowloader'
 import {

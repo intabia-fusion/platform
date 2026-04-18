@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getResourceP } from '@hcengineering/platform'
+  import { getResourceP } from '@intabiafusion/platform'
   import { deepEqual } from 'fast-equals'
   import { SvelteComponent } from 'svelte'
   import type { AnyComponent, AnySvelteComponent } from '../types'
@@ -21,7 +21,7 @@
   import Loading from './Loading.svelte'
   import AppLoading from './AppLoading.svelte'
   import ErrorBoundary from './internal/ErrorBoundary'
-  import { clone } from '@hcengineering/core'
+  import { clone } from '@intabiafusion/core'
 
   // Reference to rendered component instance
   export let innerRef: SvelteComponent | undefined = undefined

@@ -13,20 +13,20 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import contact from '@hcengineering/contact'
-import core from '@hcengineering/core'
-import recruit from '@hcengineering/model-recruit'
-import notification, { type NotificationType } from '@hcengineering/notification'
-import serverCore from '@hcengineering/server-core'
-import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
-import serverRecruit from '@hcengineering/server-recruit'
-import serverView from '@hcengineering/server-view'
-import serverContact from '@hcengineering/server-contact'
-import serverActivity from '@hcengineering/server-activity'
+import contact from '@intabiafusion/contact'
+import core from '@intabiafusion/core'
+import recruit from '@intabiafusion/model-recruit'
+import notification, { type NotificationType } from '@intabiafusion/notification'
+import serverCore from '@intabiafusion/server-core'
+import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
+import serverRecruit from '@intabiafusion/server-recruit'
+import serverView from '@intabiafusion/server-view'
+import serverContact from '@intabiafusion/server-contact'
+import serverActivity from '@intabiafusion/server-activity'
 
-export { serverRecruitId } from '@hcengineering/server-recruit'
+export { serverRecruitId } from '@intabiafusion/server-recruit'
 
 export function createModel (builder: Builder): void {
   builder.mixin(recruit.class.Applicant, core.class.Class, serverActivity.mixin.UrlPresenter, {

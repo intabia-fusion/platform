@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { AccountUuid, Person, PersonId, SocialId, SocialIdType, buildSocialIdString } from '@hcengineering/core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
-import { IntegrationError } from '@hcengineering/setting'
+import { AccountUuid, Person, PersonId, SocialId, SocialIdType, buildSocialIdString } from '@intabiafusion/core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
+import { IntegrationError } from '@intabiafusion/setting'
 
 import { serviceToken } from './utils'
 

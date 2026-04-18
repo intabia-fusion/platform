@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Department } from '@hcengineering/hr'
+  import { Department } from '@intabiafusion/hr'
 
   export let value: Department
 </script>

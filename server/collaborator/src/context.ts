@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Blob, Ref, generateId, type WorkspaceIds } from '@hcengineering/core'
-import { decodeToken } from '@hcengineering/server-token'
+import { Blob, Ref, generateId, type WorkspaceIds } from '@intabiafusion/core'
+import { decodeToken } from '@intabiafusion/server-token'
 import { onAuthenticatePayload } from '@hocuspocus/server'
 import { ClientFactory, simpleClientFactory } from './platform'
 

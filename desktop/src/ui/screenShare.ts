@@ -14,9 +14,9 @@
 //
 
 import log from 'electron-log'
-import love from '@hcengineering/love'
-import { setCustomCreateScreenTracks } from '@hcengineering/love-resources'
-import { showPopup } from '@hcengineering/ui'
+import love from '@intabiafusion/love'
+import { setCustomCreateScreenTracks } from '@intabiafusion/love-resources'
+import { showPopup } from '@intabiafusion/ui'
 import { Track, LocalTrack, LocalAudioTrack, LocalVideoTrack, ParticipantEvent, TrackInvalidError, ScreenShareCaptureOptions, DeviceUnsupportedError, ScreenSharePresets } from 'livekit-client'
 import { ipcMainExposed } from './typesUtils'
 

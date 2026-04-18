@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
-  import { Class, DocumentQuery, Ref, TypedSpace } from '@hcengineering/core'
-  import { ActionContext } from '@hcengineering/presentation'
-  import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
-  import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
-  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import documents, { DocumentCategory } from '@intabiafusion/controlled-documents'
+  import { Class, DocumentQuery, Ref, TypedSpace } from '@intabiafusion/core'
+  import { ActionContext } from '@intabiafusion/presentation'
+  import { Button, IconAdd, Loading, showPopup } from '@intabiafusion/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  import { TableBrowser, ViewletPanelHeader } from '@intabiafusion/view-resources'
+  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
 
   import document from '../plugin'
   import CreateDocumentCategory from './CreateDocumentCategory.svelte'

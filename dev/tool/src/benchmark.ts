@@ -35,21 +35,21 @@ import core, {
   platformNow,
   platformNowDiff,
   type AccountUuid
-} from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
-import { connect } from '@hcengineering/server-tool'
+} from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
+import { connect } from '@intabiafusion/server-tool'
 
-import client from '@hcengineering/client'
-import { setMetadata } from '@hcengineering/platform'
-import serverClientPlugin, { getTransactorEndpoint } from '@hcengineering/server-client'
+import client from '@intabiafusion/client'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClientPlugin, { getTransactorEndpoint } from '@intabiafusion/server-client'
 import os from 'os'
 import { Worker, isMainThread, parentPort } from 'worker_threads'
 import { CSVWriter } from './csv'
 
-import { AvatarType, getPersonBySocialKey } from '@hcengineering/contact'
-import contact from '@hcengineering/model-contact'
-import recruit from '@hcengineering/model-recruit'
-import { type Vacancy } from '@hcengineering/recruit'
+import { AvatarType, getPersonBySocialKey } from '@intabiafusion/contact'
+import contact from '@intabiafusion/model-contact'
+import recruit from '@intabiafusion/model-recruit'
+import { type Vacancy } from '@intabiafusion/recruit'
 import { WebSocket } from 'ws'
 
 interface StartMessage {

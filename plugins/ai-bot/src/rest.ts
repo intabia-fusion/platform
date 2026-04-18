@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Class, Doc, Markup, PersonId, Ref, Space, Timestamp } from '@hcengineering/core'
-import { MeetingMinutes, RoomLanguage } from '@hcengineering/love'
-import { Contact, Person } from '@hcengineering/contact'
-import { ChatMessage } from '@hcengineering/chunter'
+import { Class, Doc, Markup, PersonId, Ref, Space, Timestamp } from '@intabiafusion/core'
+import { MeetingMinutes, RoomLanguage } from '@intabiafusion/love'
+import { Contact, Person } from '@intabiafusion/contact'
+import { ChatMessage } from '@intabiafusion/chunter'
 
 export interface AIEventRequest {
   message: string

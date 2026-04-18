@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { Card, CardEvents } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { Card, CardEvents } from '@intabiafusion/card'
+  import { Ref } from '@intabiafusion/core'
   import { onMount } from 'svelte'
 
   import EditCardNew from './EditCardNew.svelte'

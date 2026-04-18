@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Permission } from '@hcengineering/core'
-  import { Label } from '@hcengineering/ui'
+  import { Permission } from '@intabiafusion/core'
+  import { Label } from '@intabiafusion/ui'
 
   export let value: Permission
   export let inline: boolean = false

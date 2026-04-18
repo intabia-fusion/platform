@@ -29,7 +29,7 @@
 </script>
 
 <script lang="ts">
-  import { IconSize } from '@hcengineering/ui'
+  import { IconSize } from '@intabiafusion/ui'
 
   export let items: ProgressItem[]
   export let size: IconSize = 'small'

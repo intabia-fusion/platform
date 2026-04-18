@@ -20,7 +20,7 @@ import {
   type MarkupNode,
   MarkupMarkType,
   MarkupNodeType
-} from '@hcengineering/text-core'
+} from '@intabiafusion/text-core'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface HtmlSerializerOptions {}

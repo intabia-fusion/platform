@@ -1,10 +1,10 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 //
-import { type Doc } from '@hcengineering/core'
-import { type Resources } from '@hcengineering/platform'
-import { showPopup } from '@hcengineering/ui'
-import { getPrintBaseURL } from '@hcengineering/print'
+import { type Doc } from '@intabiafusion/core'
+import { type Resources } from '@intabiafusion/platform'
+import { showPopup } from '@intabiafusion/ui'
+import { getPrintBaseURL } from '@intabiafusion/print'
 
 import PrintToPDF from './components/PrintToPDF.svelte'
 import PrintBulkToPDF from './components/PrintBulkToPDF.svelte'

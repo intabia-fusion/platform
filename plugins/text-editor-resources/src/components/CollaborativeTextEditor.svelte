@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
   import {
     AccountRole,
     type Blob,
@@ -27,8 +27,8 @@
     hasAccountRole,
     makeDocCollabId,
     type Ref
-  } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
   import {
     DrawingCmd,
     getAttribute,
@@ -37,8 +37,8 @@
     getImageSize,
     imageSizeToRatio,
     KeyedAttribute
-  } from '@hcengineering/presentation'
-  import { markupToJSON } from '@hcengineering/text'
+  } from '@intabiafusion/presentation'
+  import { markupToJSON } from '@intabiafusion/text'
   import {
     AnySvelteComponent,
     Button,
@@ -50,8 +50,8 @@
     PopupAlignment,
     themeStore,
     ThrottledCaller
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { Editor, FocusPosition, mergeAttributes } from '@tiptap/core'
   import { isChangeOrigin } from '@tiptap/extension-collaboration'
   import { createEventDispatcher, getContext, onDestroy, onMount } from 'svelte'
@@ -63,7 +63,7 @@
     RefAction,
     TextEditorCommandHandler,
     TextEditorHandler
-  } from '@hcengineering/text-editor'
+  } from '@intabiafusion/text-editor'
   import { EditorKitOptions, getEditorKit } from '../../src/kits/editor-kit'
   import { deleteAttachment } from '../command/deleteAttachment'
   import { textEditorCommandHandler } from '../commands'

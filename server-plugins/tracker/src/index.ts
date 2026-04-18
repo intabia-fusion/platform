@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { Doc } from '@hcengineering/core'
-import type { Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { TriggerFunc } from '@hcengineering/server-core'
-import { NotificationContentProvider } from '@hcengineering/server-notification'
-import { type Presenter } from '@hcengineering/server-activity'
+import { Doc } from '@intabiafusion/core'
+import type { Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { TriggerFunc } from '@intabiafusion/server-core'
+import { NotificationContentProvider } from '@intabiafusion/server-notification'
+import { type Presenter } from '@intabiafusion/server-activity'
 
 /**
  * @public

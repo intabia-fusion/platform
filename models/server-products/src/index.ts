@@ -3,12 +3,12 @@
 //
 //
 
-import type { Plugin } from '@hcengineering/platform'
-import products from '@hcengineering/products'
+import type { Plugin } from '@intabiafusion/platform'
+import products from '@intabiafusion/products'
 
-import core from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import serverCore from '@hcengineering/server-core'
+import core from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import serverCore from '@intabiafusion/server-core'
 
 export const serverProductsId = 'server-products' as Plugin
 

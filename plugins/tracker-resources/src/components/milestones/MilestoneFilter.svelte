@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, FindResult, Ref, SortingOrder } from '@hcengineering/core'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { Project, Milestone, MilestoneStatus } from '@hcengineering/tracker'
+  import { DocumentQuery, FindResult, Ref, SortingOrder } from '@intabiafusion/core'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { Project, Milestone, MilestoneStatus } from '@intabiafusion/tracker'
   import ui, {
     IconCheck,
     Icon,
@@ -25,9 +25,9 @@
     resizeObserver,
     EditWithIcon,
     IconSearch
-  } from '@hcengineering/ui'
-  import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
-  import view, { Filter } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@intabiafusion/view-resources'
+  import view, { Filter } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'

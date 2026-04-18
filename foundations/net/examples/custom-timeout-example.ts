@@ -11,7 +11,7 @@
  * // cd examples && rushx run:timeout
  */
 
-import { createNetworkClient } from '@hcengineering/network-client'
+import { createNetworkClient } from '@intabiafusion/network-client'
 
 async function main() {
   console.log('=== Custom Timeout Example ===\n')

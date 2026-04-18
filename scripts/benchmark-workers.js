@@ -356,7 +356,7 @@ Examples:
   node scripts/benchmark-workers.js --clean-validate --workers 4,8
 
   # Test specific package
-  node scripts/benchmark-workers.js --to @hcengineering/core --workers 1,2,4
+  node scripts/benchmark-workers.js --to @intabiafusion/core --workers 1,2,4
 
   # Multiple runs for averaging
   node scripts/benchmark-workers.js --runs 3 --workers 4,8

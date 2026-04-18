@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
+  import contact, { Employee, Person } from '@intabiafusion/contact'
   import documents, {
     ControlledDocument,
     ControlledDocumentState,
     DocumentApprovalRequest,
     DocumentReviewRequest,
     DocumentState
-  } from '@hcengineering/controlled-documents'
-  import core, { AccountUuid, DocumentUpdate, notEmpty, PersonUuid, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Scroller } from '@hcengineering/ui'
+  } from '@intabiafusion/controlled-documents'
+  import core, { AccountUuid, DocumentUpdate, notEmpty, PersonUuid, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Scroller } from '@intabiafusion/ui'
 
   import DocTeam from './DocTeam.svelte'
   import { updateExternalApproversAccess } from '../../utils'

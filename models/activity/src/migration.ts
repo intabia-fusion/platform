@@ -20,8 +20,8 @@ import {
   type DocUpdateMessage,
   type DocUpdateMessageHistory,
   type Reaction
-} from '@hcengineering/activity'
-import contact, { type Person } from '@hcengineering/contact'
+} from '@intabiafusion/activity'
+import contact, { type Person } from '@intabiafusion/contact'
 import core, {
   type AccountUuid,
   type Class,
@@ -36,7 +36,7 @@ import core, {
   type Ref,
   SortingOrder,
   type Space
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type MigrateOperation,
   type MigrateUpdate,
@@ -45,13 +45,13 @@ import {
   type MigrationIterator,
   type MigrationUpgradeClient,
   tryMigrate
-} from '@hcengineering/model'
-import { htmlToMarkup } from '@hcengineering/text'
+} from '@intabiafusion/model'
+import { htmlToMarkup } from '@intabiafusion/text'
 import {
   getAccountUuidByOldAccount,
   getSocialIdFromOldAccount,
   getSocialKeyByOldAccount
-} from '@hcengineering/model-core'
+} from '@intabiafusion/model-core'
 import notification, {
   type ActivityInboxNotification,
   type DocNotifyContext,
@@ -59,7 +59,7 @@ import notification, {
   DOMAIN_NOTIFICATION,
   type MentionInboxNotification,
   type ReactionInboxNotification
-} from '@hcengineering/notification'
+} from '@intabiafusion/notification'
 
 import { activityId, DOMAIN_ACTIVITY, DOMAIN_REACTION, DOMAIN_USER_MENTION } from './index'
 import activity from './plugin'

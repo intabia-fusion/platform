@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/platform-rig",
-  "version": "0.7.20",
+  "name": "@intabiafusion/platform-rig",
+  "version": "1.0.0",
   "scripts": {
     "build": "echo 'Not required'",
     "format": "echo 'Not required'"
@@ -30,7 +30,6 @@
     "svelte-eslint-parser": "^0.33.1",
     "eslint-plugin-svelte": "^2.35.1"
   },
-
   "bin": {
     "format": "./bin/format.js",
     "compile": "./bin/compile.js",

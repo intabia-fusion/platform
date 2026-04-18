@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import testManagement, { testManagementId } from '@hcengineering/test-management'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import testManagement, { testManagementId } from '@intabiafusion/test-management'
 
 export default mergeIds(testManagementId, testManagement, {
   string: {

@@ -23,8 +23,8 @@ import {
   type CollaborativeDoc,
   type Doc,
   type AccountUuid
-} from '@hcengineering/core'
-import { type Document, type DocumentSnapshot, type Teamspace } from '@hcengineering/document'
+} from '@intabiafusion/core'
+import { type Document, type DocumentSnapshot, type Teamspace } from '@intabiafusion/document'
 import {
   migrateSpaceRanks,
   tryMigrate,
@@ -33,15 +33,15 @@ import {
   type MigrationClient,
   type MigrationDocumentQuery,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import core, { DOMAIN_SPACE, getAccountUuidBySocialKey, getSocialKeyByOldAccount } from '@hcengineering/model-core'
-import { DOMAIN_NOTIFICATION } from '@hcengineering/notification'
-import { type Asset } from '@hcengineering/platform'
-import { makeRank } from '@hcengineering/rank'
+} from '@intabiafusion/model'
+import { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
+import core, { DOMAIN_SPACE, getAccountUuidBySocialKey, getSocialKeyByOldAccount } from '@intabiafusion/model-core'
+import { DOMAIN_NOTIFICATION } from '@intabiafusion/notification'
+import { type Asset } from '@intabiafusion/platform'
+import { makeRank } from '@intabiafusion/rank'
 
-import { loadCollabYdoc, saveCollabYdoc, yDocCopyXmlField } from '@hcengineering/collaboration'
-import attachment, { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import { loadCollabYdoc, saveCollabYdoc, yDocCopyXmlField } from '@intabiafusion/collaboration'
+import attachment, { DOMAIN_ATTACHMENT } from '@intabiafusion/model-attachment'
 import document, { documentId, DOMAIN_DOCUMENT } from './index'
 
 async function migrateDocumentIcons (client: MigrationClient): Promise<void> {

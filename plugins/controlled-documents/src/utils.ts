@@ -27,17 +27,17 @@ import {
   Timestamp,
   toIdMap,
   TxOperations
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { LexoDecimal, LexoNumeralSystem36, LexoRank } from 'lexorank'
 import LexoRankBucket from 'lexorank/lib/lexoRank/lexoRankBucket'
 
 import documents from './plugin'
 
-import attachment, { Attachment } from '@hcengineering/attachment'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import { Employee, getCurrentEmployee, Person } from '@hcengineering/contact'
-import { makeRank } from '@hcengineering/rank'
-import tags, { TagReference } from '@hcengineering/tags'
+import attachment, { Attachment } from '@intabiafusion/attachment'
+import chunter, { ChatMessage } from '@intabiafusion/chunter'
+import { Employee, getCurrentEmployee, Person } from '@intabiafusion/contact'
+import { makeRank } from '@intabiafusion/rank'
+import tags, { TagReference } from '@intabiafusion/tags'
 import {
   ChangeControl,
   ControlledDocument,

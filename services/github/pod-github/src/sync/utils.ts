@@ -1,4 +1,4 @@
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   AttachedDoc,
   Class,
@@ -12,16 +12,16 @@ import core, {
   Status,
   Timestamp,
   TxOperations
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
   GithubIssueStateReason,
   GithubProject
-} from '@hcengineering/github'
-import { PlatformError, unknownStatus } from '@hcengineering/platform'
-import task from '@hcengineering/task'
-import { IssueStatus } from '@hcengineering/tracker'
+} from '@intabiafusion/github'
+import { PlatformError, unknownStatus } from '@intabiafusion/platform'
+import task from '@intabiafusion/task'
+import { IssueStatus } from '@intabiafusion/tracker'
 import { deepEqual } from 'fast-equals'
 import { Octokit } from 'octokit'
 import { ContainerFocus, githubExternalSyncVersion } from '../types'

@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, languageStore, tooltip } from '@hcengineering/ui'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { getClient } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
-  import { getDocLinkTitle, getDocTitle, ObjectIcon } from '@hcengineering/view-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import contact from '@hcengineering/contact'
+  import { Label, languageStore, tooltip } from '@intabiafusion/ui'
+  import { DocNotifyContext } from '@intabiafusion/notification'
+  import activity, { ActivityMessage } from '@intabiafusion/activity'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Doc } from '@intabiafusion/core'
+  import { getDocLinkTitle, getDocTitle, ObjectIcon } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import contact from '@intabiafusion/contact'
 
   import ActivityMessagePreview from './ActivityMessagePreview.svelte'
 

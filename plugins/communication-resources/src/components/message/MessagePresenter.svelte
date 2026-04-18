@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { employeeByPersonIdStore, getPersonByPersonId } from '@hcengineering/contact-resources'
-  import { Card } from '@hcengineering/card'
-  import { getEventPositionElement, showPopup, Action, Menu } from '@hcengineering/ui'
-  import type { SocialID } from '@hcengineering/communication-types'
-  import { Message, MessageType } from '@hcengineering/communication-types'
-  import { getResource } from '@hcengineering/platform'
-  import { MessageAction } from '@hcengineering/communication'
-  import { Ref } from '@hcengineering/core'
+  import { Person } from '@intabiafusion/contact'
+  import { employeeByPersonIdStore, getPersonByPersonId } from '@intabiafusion/contact-resources'
+  import { Card } from '@intabiafusion/card'
+  import { getEventPositionElement, showPopup, Action, Menu } from '@intabiafusion/ui'
+  import type { SocialID } from '@intabiafusion/communication-types'
+  import { Message, MessageType } from '@intabiafusion/communication-types'
+  import { getResource } from '@intabiafusion/platform'
+  import { MessageAction } from '@intabiafusion/communication'
+  import { Ref } from '@intabiafusion/core'
 
   import MessageActionsPanel from './MessageActionsPanel.svelte'
   import MessageBody from './MessageBody.svelte'

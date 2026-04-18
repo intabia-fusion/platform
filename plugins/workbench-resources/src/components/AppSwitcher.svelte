@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-  import type { Application } from '@hcengineering/workbench'
-  import { createQuery } from '@hcengineering/presentation'
-  import workbench from '@hcengineering/workbench'
+  import core, { AccountRole, getCurrentAccount, type Ref } from '@intabiafusion/core'
+  import type { Application } from '@intabiafusion/workbench'
+  import { createQuery } from '@intabiafusion/presentation'
+  import workbench from '@intabiafusion/workbench'
   import { hideApplication, isAllowedToRole, showApplication } from '../utils'
-  import { Loading, IconCheck, Label, Icon } from '@hcengineering/ui'
-  import { getMetadata } from '@hcengineering/platform'
+  import { Loading, IconCheck, Label, Icon } from '@intabiafusion/ui'
+  import { getMetadata } from '@intabiafusion/platform'
   // import Drag from './icons/Drag.svelte'
 
   export let apps: Application[] = []

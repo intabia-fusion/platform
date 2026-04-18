@@ -1,5 +1,5 @@
-import { createQuery } from '@hcengineering/presentation'
-import notification, { type NotificationAppearancePreference } from '@hcengineering/notification'
+import { createQuery } from '@intabiafusion/presentation'
+import notification, { type NotificationAppearancePreference } from '@intabiafusion/notification'
 import { writable } from 'svelte/store'
 
 const query = createQuery(true)

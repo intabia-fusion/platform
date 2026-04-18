@@ -18,13 +18,13 @@ import documents, {
   type EditorMode,
   type ControlledDocument,
   type DocumentReviewRequest
-} from '@hcengineering/controlled-documents'
-import { generateId, type Ref } from '@hcengineering/core'
-import { getCurrentEmployee } from '@hcengineering/contact'
-import { RequestStatus } from '@hcengineering/request'
-import { getClient } from '@hcengineering/presentation'
-import { type ActionContext } from '@hcengineering/text-editor'
-import { getNodeElement, selectNode } from '@hcengineering/text-editor-resources'
+} from '@intabiafusion/controlled-documents'
+import { generateId, type Ref } from '@intabiafusion/core'
+import { getCurrentEmployee } from '@intabiafusion/contact'
+import { RequestStatus } from '@intabiafusion/request'
+import { getClient } from '@intabiafusion/presentation'
+import { type ActionContext } from '@intabiafusion/text-editor'
+import { getNodeElement, selectNode } from '@intabiafusion/text-editor-resources'
 
 import { showAddCommentPopupFx } from './stores/editors/document'
 import { $editorMode } from './stores/editors/document/editor'

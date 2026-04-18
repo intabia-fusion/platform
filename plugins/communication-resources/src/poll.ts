@@ -19,11 +19,11 @@ import {
   type MarkupBlobRef,
   type Ref,
   type Timestamp
-} from '@hcengineering/core'
-import { type Poll, type PollAnswer } from '@hcengineering/communication'
-import { getClient, getCommunicationClient } from '@hcengineering/presentation'
-import { type Card } from '@hcengineering/card'
-import { type AppletAttachment, type MessageID } from '@hcengineering/communication-types'
+} from '@intabiafusion/core'
+import { type Poll, type PollAnswer } from '@intabiafusion/communication'
+import { getClient, getCommunicationClient } from '@intabiafusion/presentation'
+import { type Card } from '@intabiafusion/card'
+import { type AppletAttachment, type MessageID } from '@intabiafusion/communication-types'
 
 import communication from './plugin'
 

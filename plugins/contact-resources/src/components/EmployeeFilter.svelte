@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import core, { Doc, FindResult, getObjectValue, Ref, SortingOrder, Space } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import contact, { Employee } from '@intabiafusion/contact'
+  import core, { Doc, FindResult, getObjectValue, Ref, SortingOrder, Space } from '@intabiafusion/core'
+  import { translate } from '@intabiafusion/platform'
+  import presentation, { getClient } from '@intabiafusion/presentation'
   import ui, {
     addNotification,
     deviceOptionsStore,
@@ -27,10 +27,10 @@
     Loading,
     resizeObserver,
     themeStore
-  } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
-  import { FILTER_DEBOUNCE_MS, FilterRemovedNotification, sortFilterValues } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view-resources/src/plugin'
+  } from '@intabiafusion/ui'
+  import { Filter } from '@intabiafusion/view'
+  import { FILTER_DEBOUNCE_MS, FilterRemovedNotification, sortFilterValues } from '@intabiafusion/view-resources'
+  import view from '@intabiafusion/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
   import EmployeePresenter from './EmployeePresenter.svelte'
 

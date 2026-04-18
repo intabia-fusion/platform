@@ -3,14 +3,14 @@
 -->
 
 <script lang="ts">
-  import { Icon, Label, navigate } from '@hcengineering/ui'
-  import { Table } from '@hcengineering/view-resources'
-  import { type Training } from '@hcengineering/training'
-  import { Attachments, AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
-  import { AttributeBarEditor, getClient } from '@hcengineering/presentation'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import core from '@hcengineering/core'
-  import documents from '@hcengineering/controlled-documents'
+  import { Icon, Label, navigate } from '@intabiafusion/ui'
+  import { Table } from '@intabiafusion/view-resources'
+  import { type Training } from '@intabiafusion/training'
+  import { Attachments, AttachmentStyleBoxEditor } from '@intabiafusion/attachment-resources'
+  import { AttributeBarEditor, getClient } from '@intabiafusion/presentation'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import core from '@intabiafusion/core'
+  import documents from '@intabiafusion/controlled-documents'
   import { trainingRoute, TrainingRouteTab } from '../routing/routes/trainingRoute'
   import { canViewTrainingOverview } from '../utils'
   import DocumentPresenter from './DocumentPresenter.svelte'

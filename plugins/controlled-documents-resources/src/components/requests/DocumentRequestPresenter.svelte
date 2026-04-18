@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Button, Label, ProgressCircle, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { Request, RequestStatus } from '@hcengineering/request'
-  import { IntlString } from '@hcengineering/platform'
-  import { RequestStatusPresenter, RequestDetailPopup } from '@hcengineering/request-resources'
+  import { Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Button, Label, ProgressCircle, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
+  import { Request, RequestStatus } from '@intabiafusion/request'
+  import { IntlString } from '@intabiafusion/platform'
+  import { RequestStatusPresenter, RequestDetailPopup } from '@intabiafusion/request-resources'
 
   export let value: Request
   export let label: IntlString

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type MeasureContext, type Ref, type Space, type TxOperations } from '@hcengineering/core'
+import { type Class, type Doc, type MeasureContext, type Ref, type Space, type TxOperations } from '@intabiafusion/core'
 import { type ExportState } from './types'
 
 /**

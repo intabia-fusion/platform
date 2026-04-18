@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
-  import { Label, Icon } from '@hcengineering/ui'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
-  import textEditor, { CollaborationUser } from '@hcengineering/text-editor'
+  import { Doc } from '@intabiafusion/core'
+  import { IntlString, Asset } from '@intabiafusion/platform'
+  import { KeyedAttribute } from '@intabiafusion/presentation'
+  import { Label, Icon } from '@intabiafusion/ui'
+  import type { AnySvelteComponent } from '@intabiafusion/ui'
+  import textEditor, { CollaborationUser } from '@intabiafusion/text-editor'
 
   import CollaborativeAttributeBox from './CollaborativeAttributeBox.svelte'
   import IconDescription from './icons/Description.svelte'

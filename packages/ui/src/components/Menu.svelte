@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
-  import { generateId, Ref, Doc } from '@hcengineering/core'
+  import { generateId, Ref, Doc } from '@intabiafusion/core'
   import ui from '../plugin'
   import { closePopup, showPopup } from '../popups'
   import { Action } from '../types'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Blob, CollaborativeDoc, Markup, MarkupBlobRef, Ref, WorkspaceUuid, concatLink } from '@hcengineering/core'
+import { Blob, CollaborativeDoc, Markup, MarkupBlobRef, Ref, WorkspaceUuid, concatLink } from '@intabiafusion/core'
 import { encodeDocumentId } from './utils'
 
 /** @public */

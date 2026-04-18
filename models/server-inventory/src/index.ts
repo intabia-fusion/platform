@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import core from '@hcengineering/core'
-import inventory from '@hcengineering/inventory'
-import serverInventory from '@hcengineering/server-inventory'
-import serverActivity from '@hcengineering/server-activity'
+import core from '@intabiafusion/core'
+import inventory from '@intabiafusion/inventory'
+import serverInventory from '@intabiafusion/server-inventory'
+import serverActivity from '@intabiafusion/server-activity'
 
-export { serverInventoryId } from '@hcengineering/server-inventory'
+export { serverInventoryId } from '@intabiafusion/server-inventory'
 
 export function createModel (builder: Builder): void {
   builder.mixin(inventory.class.Product, core.class.Class, serverActivity.mixin.UrlPresenter, {

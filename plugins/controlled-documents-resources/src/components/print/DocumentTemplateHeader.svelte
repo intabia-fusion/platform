@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@hcengineering/core'
-  import { createQuery, getPreviewThumbnail } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
+  import { type Blob, type Ref } from '@intabiafusion/core'
+  import { createQuery, getPreviewThumbnail } from '@intabiafusion/presentation'
+  import setting from '@intabiafusion/setting'
 
   export let workspace: string
   export let title: string

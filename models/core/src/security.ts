@@ -35,7 +35,7 @@ import {
   type Tx,
   type TxAccessLevel,
   type TypedSpace
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   ArrOf,
   Collection,
@@ -50,8 +50,8 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@hcengineering/model'
-import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
+} from '@intabiafusion/model'
+import { getEmbeddedLabel, type Asset, type IntlString } from '@intabiafusion/platform'
 import core from './component'
 import { TAttachedDoc, TClass, TDoc } from './core'
 // S P A C E

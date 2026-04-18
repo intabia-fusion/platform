@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { Class, Doc, Ref } from '@intabiafusion/core'
+  import { AnySvelteComponent } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'

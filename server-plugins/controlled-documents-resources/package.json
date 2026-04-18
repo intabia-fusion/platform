@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/server-controlled-documents-resources",
-  "version": "0.7.0",
+  "name": "@intabiafusion/server-controlled-documents-resources",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -21,7 +21,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -38,22 +38,22 @@
     "@types/node": "^22.18.1"
   },
   "dependencies": {
-    "@hcengineering/activity": "workspace:^0.7.0",
-    "@hcengineering/chunter": "workspace:^0.7.0",
-    "@hcengineering/server-notification": "workspace:^0.7.0",
-    "@hcengineering/server-activity": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/controlled-documents": "workspace:^0.7.0",
-    "@hcengineering/server-contact": "workspace:^0.7.0",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/request": "workspace:^0.7.0",
-    "@hcengineering/server-chunter-resources": "workspace:^0.7.0",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/training": "workspace:^0.7.0",
-    "@hcengineering/workbench": "workspace:^0.7.0",
+    "@intabiafusion/activity": "workspace:^1.0.0",
+    "@intabiafusion/chunter": "workspace:^1.0.0",
+    "@intabiafusion/server-notification": "workspace:^1.0.0",
+    "@intabiafusion/server-activity": "workspace:^1.0.0",
+    "@intabiafusion/contact": "workspace:^1.0.0",
+    "@intabiafusion/controlled-documents": "workspace:^1.0.0",
+    "@intabiafusion/server-contact": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/notification": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/request": "workspace:^1.0.0",
+    "@intabiafusion/server-chunter-resources": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/training": "workspace:^1.0.0",
+    "@intabiafusion/workbench": "workspace:^1.0.0",
     "slugify": "^1.6.6"
   }
 }

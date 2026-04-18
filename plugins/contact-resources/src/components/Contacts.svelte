@@ -14,20 +14,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
-  import { ActionContext } from '@hcengineering/presentation'
-  import { Button, Label, Loading, SearchEdit, showPopup } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import { Doc, DocumentQuery } from '@intabiafusion/core'
+  import { ActionContext } from '@intabiafusion/presentation'
+  import { Button, Label, Loading, SearchEdit, showPopup } from '@intabiafusion/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
   import {
     FilterBar,
     FilterButton,
     TableBrowser,
     ViewletSelector,
     ViewletSettingButton
-  } from '@hcengineering/view-resources'
+  } from '@intabiafusion/view-resources'
   import contact from '../plugin'
   import CreateContact from './CreateContact.svelte'
-  // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  // import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
 
   let search = ''
   let searchQuery: DocumentQuery<Doc> = {}

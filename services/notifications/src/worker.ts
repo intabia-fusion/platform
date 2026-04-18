@@ -25,13 +25,13 @@ import core, {
   TxCUD,
   TxProcessor,
   WorkspaceUuid
-} from '@hcengineering/core'
-import activity from '@hcengineering/activity'
-import { generateToken } from '@hcengineering/server-token'
-import { createRestClient } from '@hcengineering/api-client'
-import { StorageAdapter } from '@hcengineering/storage'
-import notification, { TxNotificationType } from '@hcengineering/notification'
-import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+} from '@intabiafusion/core'
+import activity from '@intabiafusion/activity'
+import { generateToken } from '@intabiafusion/server-token'
+import { createRestClient } from '@intabiafusion/api-client'
+import { StorageAdapter } from '@intabiafusion/storage'
+import notification, { TxNotificationType } from '@intabiafusion/notification'
+import { buildStorageFromConfig, storageConfigFrom } from '@intabiafusion/server-storage'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'

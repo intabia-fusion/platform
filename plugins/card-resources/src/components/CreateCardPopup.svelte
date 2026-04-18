@@ -12,22 +12,22 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import card, { Card, CardSpace, MasterTag } from '@hcengineering/card'
-  import presentation, { getClient, getCommunicationClient, SpaceSelector } from '@hcengineering/presentation'
+  import card, { Card, CardSpace, MasterTag } from '@intabiafusion/card'
+  import presentation, { getClient, getCommunicationClient, SpaceSelector } from '@intabiafusion/presentation'
   import { createEventDispatcher } from 'svelte'
-  import core, { Data, generateId, Ref, Markup, notEmpty } from '@hcengineering/core'
-  import { getResource, translate, getEmbeddedLabel } from '@hcengineering/platform'
-  import { Label, Modal, ModernEditbox, languageStore, showPopup, Component } from '@hcengineering/ui'
-  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { SelectUsersPopup, employeeByIdStore, permissionsStore } from '@hcengineering/contact-resources'
-  import view from '@hcengineering/view'
+  import core, { Data, generateId, Ref, Markup, notEmpty } from '@intabiafusion/core'
+  import { getResource, translate, getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Label, Modal, ModernEditbox, languageStore, showPopup, Component } from '@intabiafusion/ui'
+  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import { Employee, getCurrentEmployee } from '@intabiafusion/contact'
+  import { SelectUsersPopup, employeeByIdStore, permissionsStore } from '@intabiafusion/contact-resources'
+  import view from '@intabiafusion/view'
 
   import { createCard } from '../utils'
   import CardCollaborators from './CardCollaborators.svelte'
   import { TypeSelector } from '../index'
-  import { canCreateObject } from '@hcengineering/view-resources'
+  import { canCreateObject } from '@intabiafusion/view-resources'
 
   export let title: string = ''
   export let type: Ref<MasterTag> = card.types.Document

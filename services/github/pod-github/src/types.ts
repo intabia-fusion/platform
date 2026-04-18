@@ -1,4 +1,4 @@
-import { Person } from '@hcengineering/contact'
+import { Person } from '@intabiafusion/contact'
 import {
   Branding,
   Class,
@@ -14,17 +14,17 @@ import {
   WorkspaceUuid,
   type Blob,
   type MeasureContext
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   DocSyncInfo,
   GithubIntegration,
   GithubIntegrationRepository,
   GithubProject,
   GithubUserInfo
-} from '@hcengineering/github'
-import { LiveQuery } from '@hcengineering/query'
-import { ProjectType, TaskType } from '@hcengineering/task'
-import { MarkupNode } from '@hcengineering/text'
+} from '@intabiafusion/github'
+import { LiveQuery } from '@intabiafusion/query'
+import { ProjectType, TaskType } from '@intabiafusion/task'
+import { MarkupNode } from '@intabiafusion/text'
 import { User } from '@octokit/webhooks-types'
 import { Octokit } from 'octokit'
 

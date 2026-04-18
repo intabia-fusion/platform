@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getMetadata } from '@hcengineering/platform'
+  import { Asset, getMetadata } from '@intabiafusion/platform'
   import { AnySvelteComponent, IconSize } from '../types'
   import { ComponentType } from 'svelte'
 

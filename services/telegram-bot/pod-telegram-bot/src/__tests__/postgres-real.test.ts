@@ -19,7 +19,7 @@
 
 import { randomUUID } from 'node:crypto'
 import postgres from 'postgres'
-import { type AccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { type AccountUuid, type WorkspaceUuid } from '@intabiafusion/core'
 import { PostgresDB } from '../db'
 import { type ChannelRecord, type MessageRecord, type OtpRecord, type ReplyRecord } from '../types'
 

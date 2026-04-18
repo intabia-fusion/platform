@@ -1,12 +1,12 @@
 import { Kafka, Producer } from 'kafkajs'
-import { parseQueueConfig } from '@hcengineering/kafka'
-import { MeasureContext } from '@hcengineering/core'
+import { parseQueueConfig } from '@intabiafusion/kafka'
+import { MeasureContext } from '@intabiafusion/core'
 import { initQueue, closeQueue, getProducer, KafkaQueueRegistry } from '../queue'
 import { BaseConfig } from '../types'
 
 // Mock dependencies
 jest.mock('kafkajs')
-jest.mock('@hcengineering/kafka')
+jest.mock('@intabiafusion/kafka')
 
 /* eslint-disable @typescript-eslint/unbound-method */
 describe('Kafka Queue Management', () => {

@@ -16,12 +16,12 @@
 -->
 
 <script lang="ts">
-  import presentation, { NavLink } from '@hcengineering/presentation'
-  import { locationToUrl } from '@hcengineering/ui'
-  import { Document } from '@hcengineering/controlled-documents'
+  import presentation, { NavLink } from '@intabiafusion/presentation'
+  import { locationToUrl } from '@intabiafusion/ui'
+  import { Document } from '@intabiafusion/controlled-documents'
   import { documentRoute } from '../routing/routes/documentRoute'
-  import { getMetadata } from '@hcengineering/platform'
-  import { concatLink } from '@hcengineering/core'
+  import { getMetadata } from '@intabiafusion/platform'
+  import { concatLink } from '@intabiafusion/core'
 
   export let value: Document
 

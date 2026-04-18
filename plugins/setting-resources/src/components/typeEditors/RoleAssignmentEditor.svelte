@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import { type AccountUuid, TypedSpace, notEmpty } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { type AccountUuid, TypedSpace, notEmpty } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
 
   export let object: TypedSpace | undefined
   export let label: IntlString

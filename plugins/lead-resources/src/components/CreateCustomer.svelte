@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AvatarType, Channel, combineName, Contact, findContacts, type Organization } from '@hcengineering/contact'
-  import { ChannelsDropdown, EditableAvatar, PersonPresenter } from '@hcengineering/contact-resources'
-  import contact from '@hcengineering/contact-resources/src/plugin'
+  import { AvatarType, Channel, combineName, Contact, findContacts, type Organization } from '@intabiafusion/contact'
+  import { ChannelsDropdown, EditableAvatar, PersonPresenter } from '@intabiafusion/contact-resources'
+  import contact from '@intabiafusion/contact-resources/src/plugin'
   import {
     AttachedData,
     Class,
@@ -26,11 +26,11 @@
     WithLookup,
     generateId,
     makeCollabId
-  } from '@hcengineering/core'
-  import { Customer, LeadEvents } from '@hcengineering/lead'
-  import { Card, createMarkup, getClient, InlineAttributeBar } from '@hcengineering/presentation'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
+  } from '@intabiafusion/core'
+  import { Customer, LeadEvents } from '@intabiafusion/lead'
+  import { Card, createMarkup, getClient, InlineAttributeBar } from '@intabiafusion/presentation'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
   import {
     Button,
     createFocusManager,
@@ -41,9 +41,9 @@
     Label,
     SelectPopup,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
   import lead from '../plugin'
 
   let firstName = ''

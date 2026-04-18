@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Plugin, Asset, IntlString } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { type AnyComponent, type ComponentExtensionId } from '@hcengineering/ui'
+import type { Plugin, Asset, IntlString } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { type AnyComponent, type ComponentExtensionId } from '@intabiafusion/ui'
 
 /** @public */
 export const mediaId = 'media' as Plugin

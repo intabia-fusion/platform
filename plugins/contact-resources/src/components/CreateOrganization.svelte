@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { Channel, ContactEvents, Organization, findContacts } from '@hcengineering/contact'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter, AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import { Channel, ContactEvents, Organization, findContacts } from '@intabiafusion/contact'
   import core, {
     AttachedData,
     fillDefaults,
@@ -24,17 +24,17 @@
     Ref,
     TxOperations,
     WithLookup
-  } from '@hcengineering/core'
-  import { Card, createMarkup, getClient, InlineAttributeBar } from '@hcengineering/presentation'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, IconInfo, Label } from '@hcengineering/ui'
+  } from '@intabiafusion/core'
+  import { Card, createMarkup, getClient, InlineAttributeBar } from '@intabiafusion/presentation'
+  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, IconInfo, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import contact from '../plugin'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
   import Company from './icons/Company.svelte'
   import OrganizationPresenter from './OrganizationPresenter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let onCreate: ((orgId: Ref<Organization>, client: TxOperations) => Promise<void>) | undefined = undefined
 

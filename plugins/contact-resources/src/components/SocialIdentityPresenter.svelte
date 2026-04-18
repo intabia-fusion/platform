@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { Icon, Label, tooltip } from '@hcengineering/ui'
-  import contact, { SocialIdentity, SocialIdentityProvider, getCurrentEmployee } from '@hcengineering/contact'
-  import { getClient } from '@hcengineering/presentation'
-  import { SocialIdType } from '@hcengineering/core'
+  import { Icon, Label, tooltip } from '@intabiafusion/ui'
+  import contact, { SocialIdentity, SocialIdentityProvider, getCurrentEmployee } from '@intabiafusion/contact'
+  import { getClient } from '@intabiafusion/presentation'
+  import { SocialIdType } from '@intabiafusion/core'
 
   export let value: SocialIdentity
   export let socialIdProvider: SocialIdentityProvider | undefined = undefined

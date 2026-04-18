@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
-  import { ShowMore } from '@hcengineering/ui'
+  import { Card } from '@intabiafusion/card'
+  import { WithLookup } from '@intabiafusion/core'
+  import { ShowMore } from '@intabiafusion/ui'
 
   import ContentEditor from './ContentEditor.svelte'
 

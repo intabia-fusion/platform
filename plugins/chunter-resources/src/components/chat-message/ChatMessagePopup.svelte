@@ -15,13 +15,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, Ref, SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import activity from '@hcengineering/activity'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import { closeTooltip, Label, Lazy, Spinner, resizeObserver, MiniToggle } from '@hcengineering/ui'
-  import { ObjectPresenter, DocNavLink } from '@hcengineering/view-resources'
-  import { canGroupMessages, getActivityNewestFirst, setActivityNewestFirst } from '@hcengineering/activity-resources'
+  import { Doc, Ref, SortingOrder } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import activity from '@intabiafusion/activity'
+  import chunter, { ChatMessage } from '@intabiafusion/chunter'
+  import { closeTooltip, Label, Lazy, Spinner, resizeObserver, MiniToggle } from '@intabiafusion/ui'
+  import { ObjectPresenter, DocNavLink } from '@intabiafusion/view-resources'
+  import { canGroupMessages, getActivityNewestFirst, setActivityNewestFirst } from '@intabiafusion/activity-resources'
 
   import ChatMessageInput from './ChatMessageInput.svelte'
   import ChatMessagePresenter from './ChatMessagePresenter.svelte'

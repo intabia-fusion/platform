@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, FindResult, Ref, SortingOrder } from '@hcengineering/core'
-  import { Asset, getResource, IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { DocWithRank, makeRank } from '@hcengineering/task'
-  import { IconSize } from '@hcengineering/ui'
+  import { Class, Doc, DocumentQuery, FindOptions, FindResult, Ref, SortingOrder } from '@intabiafusion/core'
+  import { Asset, getResource, IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { DocWithRank, makeRank } from '@intabiafusion/task'
+  import { IconSize } from '@intabiafusion/ui'
   import { SvelteComponent } from 'svelte'
   import { getListItemPresenter, getObjectPresenter } from '../../utils'
   import SortableList from './SortableList.svelte'

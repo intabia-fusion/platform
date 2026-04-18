@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { DOMAIN_MODEL_TX, TxOperations, type Ref, type Status } from '@hcengineering/core'
-import { leadId, type Lead } from '@hcengineering/lead'
+import { DOMAIN_MODEL_TX, TxOperations, type Ref, type Status } from '@intabiafusion/core'
+import { leadId, type Lead } from '@intabiafusion/lead'
 import {
   tryMigrate,
   tryUpgrade,
@@ -22,11 +22,11 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   type ModelLogger
-} from '@hcengineering/model'
-import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import core, { DOMAIN_SPACE } from '@intabiafusion/model-core'
 
-import { DOMAIN_CONTACT } from '@hcengineering/model-contact'
-import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
+import { DOMAIN_CONTACT } from '@intabiafusion/model-contact'
+import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@intabiafusion/model-task'
 
 import lead from './plugin'
 import { defaultLeadStatuses } from './spaceType'

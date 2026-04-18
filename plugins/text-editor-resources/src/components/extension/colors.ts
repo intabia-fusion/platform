@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { getEventPositionElement, showPopup } from '@hcengineering/ui'
+import { getEventPositionElement, showPopup } from '@intabiafusion/ui'
 import { type Editor } from '@tiptap/core'
 import ColorPicker from './popups/ColorPicker.svelte'
-import { type ActionContext } from '@hcengineering/text-editor'
+import { type ActionContext } from '@intabiafusion/text-editor'
 
 export interface BackgroundColorOptions {
   types: string[]

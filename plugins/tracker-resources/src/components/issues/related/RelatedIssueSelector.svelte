@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, WithLookup, type Status } from '@hcengineering/core'
-  import task from '@hcengineering/task'
-  import { Project, type Issue } from '@hcengineering/tracker'
-  import { Button, ButtonKind, ButtonSize, ProgressCircle } from '@hcengineering/ui'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { Doc, Ref, WithLookup, type Status } from '@intabiafusion/core'
+  import task from '@intabiafusion/task'
+  import { Project, type Issue } from '@intabiafusion/tracker'
+  import { Button, ButtonKind, ButtonSize, ProgressCircle } from '@intabiafusion/ui'
+  import { statusStore } from '@intabiafusion/view-resources'
   import { listIssueStatusOrder, relatedIssues, type IssueRef } from '../../../utils'
   import RelatedIssuePopup from './RelatedIssuePopup.svelte'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { PersonId } from '@hcengineering/core'
-import { KeyValueClient } from '@hcengineering/kvs-client'
+import { PersonId } from '@intabiafusion/core'
+import { KeyValueClient } from '@intabiafusion/kvs-client'
 
 import { SyncStateManager } from '../message/syncState'
 import { IntegrationVersion } from '../types'

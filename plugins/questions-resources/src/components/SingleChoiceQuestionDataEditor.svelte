@@ -12,7 +12,7 @@
     type SingleChoiceAssessmentData,
     type SingleChoiceQuestion,
     type SingleChoiceQuestionData
-  } from '@hcengineering/questions'
+  } from '@intabiafusion/questions'
   import { moveItem } from '../utils'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList, { type OptionsListDropEvent } from './OptionsList.svelte'

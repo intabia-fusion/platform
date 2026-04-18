@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
-import aiBot, { aiBotId } from '@hcengineering/ai-bot'
+import { mergeIds } from '@intabiafusion/platform'
+import aiBot, { aiBotId } from '@intabiafusion/ai-bot'
 
 export default mergeIds(aiBotId, aiBot, {})

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { pushRootBarComponent } from '@hcengineering/ui'
+  import { pushRootBarComponent } from '@intabiafusion/ui'
   import { onMount } from 'svelte'
 
   import uploader from '../plugin'

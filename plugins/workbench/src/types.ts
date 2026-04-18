@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@hcengineering/core'
-import { type DocNotifyContext, InboxNotification, NotificationAppearancePreference } from '@hcengineering/notification'
-import type { Asset, IntlString, Resource } from '@hcengineering/platform'
-import type { Preference } from '@hcengineering/preference'
-import { AnyComponent, type AnySvelteComponent, Location, ResolvedLocation } from '@hcengineering/ui'
+import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@intabiafusion/core'
+import { type DocNotifyContext, InboxNotification, NotificationAppearancePreference } from '@intabiafusion/notification'
+import type { Asset, IntlString, Resource } from '@intabiafusion/platform'
+import type { Preference } from '@intabiafusion/preference'
+import { AnyComponent, type AnySvelteComponent, Location, ResolvedLocation } from '@intabiafusion/ui'
 
 /** @public */
 export interface LocationData {

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { TreeNode } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  import type { Class, Doc, Ref, Space } from '@intabiafusion/core'
+  import { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { IntlString } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { TreeNode } from '@intabiafusion/view-resources'
+  import { SpacesNavModel } from '@intabiafusion/workbench'
   import StarredNavItem from './StarredNavItem.svelte'
 
   export let label: IntlString

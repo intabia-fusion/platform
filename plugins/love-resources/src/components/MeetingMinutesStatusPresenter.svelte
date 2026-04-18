@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
-  import { StateType, StateTag } from '@hcengineering/ui'
+  import { MeetingMinutes, MeetingStatus } from '@intabiafusion/love'
+  import { StateType, StateTag } from '@intabiafusion/ui'
 
   import love from '../plugin'
 

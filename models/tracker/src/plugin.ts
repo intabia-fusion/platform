@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Doc, type DocManager, type Ref, type StatusCategory } from '@hcengineering/core'
-import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
-import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
-import { type ProjectType } from '@hcengineering/task'
-import { trackerId } from '@hcengineering/tracker'
-import tracker from '@hcengineering/tracker-resources/src/plugin'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
-import { type Application } from '@hcengineering/workbench'
-import { type DocUpdateMessage } from '@hcengineering/activity'
+import { type Doc, type DocManager, type Ref, type StatusCategory } from '@intabiafusion/core'
+import { type MessageNotificationType, type NotificationGroup } from '@intabiafusion/notification'
+import { mergeIds, type IntlString, type Resource } from '@intabiafusion/platform'
+import { type ProjectType } from '@intabiafusion/task'
+import { trackerId } from '@intabiafusion/tracker'
+import tracker from '@intabiafusion/tracker-resources/src/plugin'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ViewAction, type Viewlet, type ViewletViewAction } from '@intabiafusion/view'
+import { type Application } from '@intabiafusion/workbench'
+import { type DocUpdateMessage } from '@intabiafusion/activity'
 
 export default mergeIds(trackerId, tracker, {
   string: {

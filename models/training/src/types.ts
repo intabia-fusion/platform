@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import type { Attachment } from '@hcengineering/attachment'
-import attachments from '@hcengineering/model-attachment'
-import questions, { TypePercentage } from '@hcengineering/model-questions'
-import type { Answer, Percentage, Question } from '@hcengineering/questions'
+import type { Attachment } from '@intabiafusion/attachment'
+import attachments from '@intabiafusion/model-attachment'
+import questions, { TypePercentage } from '@intabiafusion/model-questions'
+import type { Answer, Percentage, Question } from '@intabiafusion/questions'
 import {
   type Training,
   type TrainingAttempt,
   TrainingAttemptState,
   type TrainingRequest,
   TrainingState
-} from '@hcengineering/training'
-import contact, { type Employee } from '@hcengineering/contact'
+} from '@intabiafusion/training'
+import contact, { type Employee } from '@intabiafusion/contact'
 import core, {
   type Class,
   type CollectionSize,
@@ -38,7 +38,7 @@ import core, {
   RolesAssignment,
   Role,
   type AccountUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   ArrOf,
   Collection,
@@ -53,10 +53,10 @@ import {
   TypeString,
   TypeTimestamp,
   UX
-} from '@hcengineering/model'
-import { TAttachedDoc, TDoc, TType, TTypedSpace } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import { TAttachedDoc, TDoc, TType, TTypedSpace } from '@intabiafusion/model-core'
 import training from './plugin'
-import { getEmbeddedLabel } from '@hcengineering/platform'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
 
 export const DOMAIN_TRAINING = 'training' as Domain
 

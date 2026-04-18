@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import attachment, { type Attachment } from '@hcengineering/attachment'
-import drive, { FileVersion } from '@hcengineering/drive'
+import attachment, { type Attachment } from '@intabiafusion/attachment'
+import drive, { FileVersion } from '@intabiafusion/drive'
 import core, {
   BlobMetadata,
   Class,
@@ -40,14 +40,14 @@ import core, {
   TxResult,
   WithLookup,
   WorkspaceUuid
-} from '@hcengineering/core'
-import { type RestClient, createRestClient } from '@hcengineering/api-client'
-import { getTransactorEndpoint } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
-import { AttachmentPatchEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/core'
+import { type RestClient, createRestClient } from '@intabiafusion/api-client'
+import { getTransactorEndpoint } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
+import { AttachmentPatchEvent, MessageEventType } from '@intabiafusion/communication-sdk-types'
 
 import { BlobSourceType, type VideoTranscodeResult } from './types'
-import { AttachmentID } from '@hcengineering/communication-types'
+import { AttachmentID } from '@intabiafusion/communication-types'
 
 async function getClient (workspace: WorkspaceUuid, token: string): Promise<Client> {
   const endpoint = await getTransactorEndpoint(token)

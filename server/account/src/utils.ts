@@ -33,15 +33,15 @@ import {
   type WorkspaceMode,
   type WorkspaceUuid,
   hashWorkspace
-} from '@hcengineering/core'
-import { getMongoClient } from '@hcengineering/mongo' // TODO: get rid of this import later
-import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
-import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
+} from '@intabiafusion/core'
+import { getMongoClient } from '@intabiafusion/mongo' // TODO: get rid of this import later
+import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@intabiafusion/platform'
+import { getDBClient, setDBExtraOptions } from '@intabiafusion/postgres'
 import { pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
-import { Analytics } from '@hcengineering/analytics'
-import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } from '@hcengineering/server-token'
+import { Analytics } from '@intabiafusion/analytics'
+import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } from '@intabiafusion/server-token'
 import { MongoAccountDB } from './collections/mongo'
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'

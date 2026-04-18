@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Association, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, parseContext, Process, Step } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { Card } from '@intabiafusion/card'
+  import { Association, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { MethodParams, parseContext, Process, Step } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import { getContext } from '../../utils'
   import ContextValuePresenter from '../attributeEditors/ContextValuePresenter.svelte'

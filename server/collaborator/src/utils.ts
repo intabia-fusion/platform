@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { type WorkspaceIds } from '@hcengineering/core'
+import { getClient as getAccountClient } from '@intabiafusion/account-client'
+import { type WorkspaceIds } from '@intabiafusion/core'
 
 import config from './config'
 

@@ -14,7 +14,7 @@
 //
 
 import type { Account, AccountRole, AccountUuid, Doc, Domain, PersonId, Ref } from './classes'
-import { type MeasureContext } from '@hcengineering/measurements'
+import { type MeasureContext } from '@intabiafusion/measurements'
 import { type DocumentQuery, type FindOptions } from './storage'
 import type { DocumentUpdate, Tx } from './tx'
 import { PermissionsGrant, type WorkspaceIds } from './utils'

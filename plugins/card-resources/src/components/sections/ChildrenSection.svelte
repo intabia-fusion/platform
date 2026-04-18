@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
+  import { Card } from '@intabiafusion/card'
   import { onMount, createEventDispatcher } from 'svelte'
 
   import Childs from '../Childs.svelte'

@@ -1,4 +1,4 @@
-import { MeasureMetricsContext } from '@hcengineering/measurements'
+import { MeasureMetricsContext } from '@intabiafusion/measurements'
 
 describe('context tests', () => {
   it('check withLog proper catch', async () => {

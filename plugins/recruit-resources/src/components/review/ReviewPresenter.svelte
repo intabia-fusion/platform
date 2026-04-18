@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import type { Review } from '@hcengineering/recruit'
-  import recruit from '@hcengineering/recruit'
-  import { Icon } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import type { Review } from '@intabiafusion/recruit'
+  import recruit from '@intabiafusion/recruit'
+  import { Icon } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
 
   export let value: Review
   export let inline: boolean = false

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { MeasureContext, TxOperations } from '@hcengineering/core'
-import { type KeyValueClient } from '@hcengineering/kvs-client'
-import { AccountClient } from '@hcengineering/account-client'
-import { type MailRecipient } from '@hcengineering/mail-common'
+import { MeasureContext, TxOperations } from '@intabiafusion/core'
+import { type KeyValueClient } from '@intabiafusion/kvs-client'
+import { AccountClient } from '@intabiafusion/account-client'
+import { type MailRecipient } from '@intabiafusion/mail-common'
 
 import config from '../config'
 import { AttachmentHandler } from './attachments'

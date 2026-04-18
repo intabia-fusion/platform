@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentCategory } from '@hcengineering/controlled-documents'
+  import { DocumentCategory } from '@intabiafusion/controlled-documents'
 
-  import { Ref, WithLookup } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Icon, tooltip } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { Ref, WithLookup } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Icon, tooltip } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
 
   import documents from '../../../plugin'
 

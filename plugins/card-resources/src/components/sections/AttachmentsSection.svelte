@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Attachments } from '@hcengineering/attachment-resources'
+  import { Card } from '@intabiafusion/card'
+  import { Attachments } from '@intabiafusion/attachment-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 
   export let readonly: boolean = false

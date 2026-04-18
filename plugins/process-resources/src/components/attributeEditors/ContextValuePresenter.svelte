@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Context, Process, SelectedContext } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { Context, Process, SelectedContext } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import AttrContextPresenter from './AttrContextPresenter.svelte'
   import NestedContextPresenter from './NestedContextPresenter.svelte'

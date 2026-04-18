@@ -2,16 +2,16 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { type Data, type Ref, type Space, type TxOperations } from '@hcengineering/core'
-import { type Resources } from '@hcengineering/platform'
+import { type Data, type Ref, type Space, type TxOperations } from '@intabiafusion/core'
+import { type Resources } from '@intabiafusion/platform'
 import {
   getClient,
   type DocCreateFunction,
   type DocCreatePhase,
   type DocCreateAnalyticsPropsFunction
-} from '@hcengineering/presentation'
-import tracker, { type Issue } from '@hcengineering/tracker'
-import { type GithubIntegrationRepository } from '@hcengineering/github'
+} from '@intabiafusion/presentation'
+import tracker, { type Issue } from '@intabiafusion/tracker'
+import { type GithubIntegrationRepository } from '@intabiafusion/github'
 import AuthenticationCheck from './components/AuthenticationCheck.svelte'
 import GithubIssueHeader from './components/GithubIssueHeader.svelte'
 import Configure from './components/Configure.svelte'

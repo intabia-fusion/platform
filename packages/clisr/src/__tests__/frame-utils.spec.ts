@@ -17,11 +17,11 @@
 // Tests for frame-utils.ts - sendFrame, sendHelloFrame, handleFrame
 // and additional disconnect/reconnect scenarios for client and server
 
-import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
-import { RPCHandler, type Request, type Response } from '@hcengineering/rpc'
+import { MeasureMetricsContext, type MeasureContext } from '@intabiafusion/measurements'
+import { RPCHandler, type Request, type Response } from '@intabiafusion/rpc'
 import { sendFrame, sendHelloFrame, handleFrame } from '../frame-utils'
 import { FRAME_MSGPACK, FRAME_MSGPACK_SNAPPY, FRAME_PING, FRAME_PONG, FRAME_HELLO, FRAME_HELLO_RESP } from '../types'
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 
 function createFakeCtx (): MeasureContext {
   return new MeasureMetricsContext('frame-utils-test', {})

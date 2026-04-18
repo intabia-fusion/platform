@@ -15,7 +15,7 @@
 
 import { Node, mergeAttributes } from '@tiptap/core'
 import { getDataAttribute } from './utils'
-import { Class, Doc, Ref } from '@hcengineering/core'
+import { Class, Doc, Ref } from '@intabiafusion/core'
 import { Attrs } from '@tiptap/pm/model'
 
 export interface ReferenceNodeProps {

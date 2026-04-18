@@ -21,15 +21,15 @@ import {
   type Doc,
   type Ref,
   type BlobMetadata
-} from '@hcengineering/core'
-import { Mixin, Model, Prop, TypeRef, TypeString, type Builder } from '@hcengineering/model'
-import core, { TClass, TDoc } from '@hcengineering/model-core'
-import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { Mixin, Model, Prop, TypeRef, TypeString, type Builder } from '@intabiafusion/model'
+import core, { TClass, TDoc } from '@intabiafusion/model-core'
+import { type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
 // Import types to prevent .svelte components to being exposed to type typescript.
 import {
   type PresentationMiddlewareCreator,
   type PresentationMiddlewareFactory
-} from '@hcengineering/presentation/src/pipeline'
+} from '@intabiafusion/presentation/src/pipeline'
 import {
   type ComponentPointExtension,
   type CreateExtensionKind,
@@ -44,11 +44,11 @@ import {
   type ObjectSearchContext,
   type ObjectSearchFactory,
   type InstantTransactions
-} from '@hcengineering/presentation/src/types'
-import { type AnyComponent, type ComponentExtensionId } from '@hcengineering/ui/src/types'
+} from '@intabiafusion/presentation/src/types'
+import { type AnyComponent, type ComponentExtensionId } from '@intabiafusion/ui/src/types'
 import presentation from './plugin'
 
-export { presentationId } from '@hcengineering/presentation/src/plugin'
+export { presentationId } from '@intabiafusion/presentation/src/plugin'
 export { default } from './plugin'
 export type {
   CreateExtensionKind,

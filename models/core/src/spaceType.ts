@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { ArrOf, Prop, TypeString, type Builder } from '@hcengineering/model'
-import { type Asset } from '@hcengineering/platform'
-import { getRoleAttributeLabel } from '@hcengineering/core'
+import { ArrOf, Prop, TypeString, type Builder } from '@intabiafusion/model'
+import { type Asset } from '@intabiafusion/platform'
+import { getRoleAttributeLabel } from '@intabiafusion/core'
 
 import { TSpacesTypeData, TTxAccessLevel } from './security'
 import core from './component'

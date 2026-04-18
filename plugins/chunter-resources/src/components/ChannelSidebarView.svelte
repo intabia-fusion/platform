@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery } from '@hcengineering/presentation'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { Widget } from '@hcengineering/workbench'
-  import { ActivityMessage } from '@hcengineering/activity'
-  import { ChatWidgetTab } from '@hcengineering/chunter'
-  import { Presence } from '@hcengineering/presence-resources'
-  import { updateTabData } from '@hcengineering/workbench-resources'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { DocNotifyContext } from '@intabiafusion/notification'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { Widget } from '@intabiafusion/workbench'
+  import { ActivityMessage } from '@intabiafusion/activity'
+  import { ChatWidgetTab } from '@intabiafusion/chunter'
+  import { Presence } from '@intabiafusion/presence-resources'
+  import { updateTabData } from '@intabiafusion/workbench-resources'
 
   import Channel from './Channel.svelte'
   import { closeThreadInSidebarChannel } from '../navigation'

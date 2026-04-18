@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import presentation, { Card, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import { Ref } from '@intabiafusion/core'
+  import presentation, { Card, getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { MessageTemplate, TemplateCategory } from '@intabiafusion/templates'
   import { createEventDispatcher } from 'svelte'
   import templates from '../plugin'
 

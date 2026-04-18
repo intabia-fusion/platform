@@ -1,10 +1,10 @@
-import aiBot from '@hcengineering/ai-bot'
-import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
-import { Analytics } from '@hcengineering/analytics'
-import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
-import chunter from '@hcengineering/chunter'
-import contact, { getName } from '@hcengineering/contact'
-import workbench from '@hcengineering/workbench'
+import aiBot from '@intabiafusion/ai-bot'
+import { connectMeeting, disconnectMeeting } from '@intabiafusion/ai-bot-resources'
+import { Analytics } from '@intabiafusion/analytics'
+import calendar, { type Event, type Schedule } from '@intabiafusion/calendar'
+import chunter from '@intabiafusion/chunter'
+import contact, { getName } from '@intabiafusion/contact'
+import workbench from '@intabiafusion/workbench'
 import core, {
   type Client,
   concatLink,
@@ -18,7 +18,7 @@ import core, {
   type TxOperations,
   type WithLookup,
   reduceCalls
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   isOffice,
   LoveEvents,
@@ -33,20 +33,20 @@ import {
   type Room,
   type RoomMetadata,
   type UserMeetingInvite
-} from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@hcengineering/platform'
+} from '@intabiafusion/love'
+import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@intabiafusion/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
   getClient,
   type ObjectSearchResult
-} from '@hcengineering/presentation'
-import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
-import { getCurrentLanguage } from '@hcengineering/theme'
-import view from '@hcengineering/view'
-import { getObjectLinkFragment } from '@hcengineering/view-resources'
-import { type Widget, type WidgetTab } from '@hcengineering/workbench'
-import { openWidget, openWidgetTab, sidebarStore, updateWidgetState } from '@hcengineering/workbench-resources'
+} from '@intabiafusion/presentation'
+import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@intabiafusion/ui'
+import { getCurrentLanguage } from '@intabiafusion/theme'
+import view from '@intabiafusion/view'
+import { getObjectLinkFragment } from '@intabiafusion/view-resources'
+import { type Widget, type WidgetTab } from '@intabiafusion/workbench'
+import { openWidget, openWidgetTab, sidebarStore, updateWidgetState } from '@intabiafusion/workbench-resources'
 import { isKrispNoiseFilterSupported, KrispNoiseFilter } from '@livekit/krisp-noise-filter'
 import { BackgroundBlur, type BackgroundOptions, type ProcessorWrapper } from '@livekit/track-processors'
 import {
@@ -60,7 +60,7 @@ import {
 } from 'livekit-client'
 import { derived, get, writable } from 'svelte/store'
 
-import { getPersonByPersonRef } from '@hcengineering/contact-resources'
+import { getPersonByPersonRef } from '@intabiafusion/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
 import love from './plugin'

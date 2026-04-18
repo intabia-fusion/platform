@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import { getFocusManager } from '../focus'
   import { showPopup } from '../popups'

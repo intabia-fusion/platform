@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import activity, { DocUpdateMessage } from '@hcengineering/activity'
-  import { employeeRefByAccountUuidStore, PersonRefPresenter } from '@hcengineering/contact-resources'
-  import { Collaborator } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { Icon, Label } from '@hcengineering/ui'
+  import activity, { DocUpdateMessage } from '@intabiafusion/activity'
+  import { employeeRefByAccountUuidStore, PersonRefPresenter } from '@intabiafusion/contact-resources'
+  import { Collaborator } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { Icon, Label } from '@intabiafusion/ui'
 
   export let message: DocUpdateMessage
   export let value: Collaborator | undefined

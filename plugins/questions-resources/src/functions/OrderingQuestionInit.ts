@@ -6,10 +6,10 @@ import {
   type QuestionInitFunction,
   type QuestionInitFunctionResult,
   type OrderingQuestion
-} from '@hcengineering/questions'
-import { type Hierarchy } from '@hcengineering/core'
-import { translate } from '@hcengineering/platform'
-import type { ThemeOptions } from '@hcengineering/theme'
+} from '@intabiafusion/questions'
+import { type Hierarchy } from '@intabiafusion/core'
+import { translate } from '@intabiafusion/platform'
+import type { ThemeOptions } from '@intabiafusion/theme'
 import questions from '../plugin'
 
 export const OrderingQuestionInit: QuestionInitFunction<OrderingQuestion> = async (

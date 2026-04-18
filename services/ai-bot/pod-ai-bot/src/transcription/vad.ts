@@ -1,6 +1,6 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import {
   WAV_HEADER_SIZE,
   parseWavHeader as parseWavHeaderDsp,
@@ -8,7 +8,7 @@ import {
   calculateRms,
   calculatePeak,
   getWavDuration
-} from '@hcengineering/audio-dsp'
+} from '@intabiafusion/audio-dsp'
 import { VadResult } from './types'
 
 /** Default RMS threshold for voice activity detection */

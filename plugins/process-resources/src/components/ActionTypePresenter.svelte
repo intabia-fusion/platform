@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
+  import { Label } from '@intabiafusion/ui'
   import plugin from '../plugin'
 
   export let value: 'approve' | 'review' | undefined

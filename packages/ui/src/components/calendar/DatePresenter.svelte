@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString, Asset } from '@hcengineering/platform'
+  import type { IntlString, Asset } from '@intabiafusion/platform'
   import { createEventDispatcher, ComponentType, afterUpdate } from 'svelte'
 
-  import { DateRangeMode } from '@hcengineering/core'
+  import { DateRangeMode } from '@intabiafusion/core'
   import ui from '../../plugin'
   import { showPopup } from '../../popups'
   import { ButtonKind, ButtonSize, AnySvelteComponent } from '../../types'

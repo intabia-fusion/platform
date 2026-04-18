@@ -213,7 +213,7 @@
      * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
      * to retrieve the latest activity for the remote main branch.
      */
-    "url": "https://github.com/hcengineering/huly.core",
+    "url": "https://github.com/intabia-fusion/huly.core",
     /**
      * The default branch name. This tells "rush change" which remote branch to compare against.
      * The default value is "main"
@@ -331,137 +331,137 @@
    */
   "projects": [
     {
-      "packageName": "@hcengineering/scripts",
+      "packageName": "@intabiafusion/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/account-client",
+      "packageName": "@intabiafusion/account-client",
       "projectFolder": "packages/account-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/analytics",
+      "packageName": "@intabiafusion/analytics",
       "projectFolder": "packages/analytics",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/analytics-service",
+      "packageName": "@intabiafusion/analytics-service",
       "projectFolder": "packages/analytics-service",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/api-client",
+      "packageName": "@intabiafusion/api-client",
       "projectFolder": "packages/api-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/collaborator-client",
+      "packageName": "@intabiafusion/collaborator-client",
       "projectFolder": "packages/collaborator-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/core",
+      "packageName": "@intabiafusion/core",
       "projectFolder": "packages/core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/model",
+      "packageName": "@intabiafusion/model",
       "projectFolder": "packages/model",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/platform",
+      "packageName": "@intabiafusion/platform",
       "projectFolder": "packages/platform",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/query",
+      "packageName": "@intabiafusion/query",
       "projectFolder": "packages/query",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/rank",
+      "packageName": "@intabiafusion/rank",
       "projectFolder": "packages/rank",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/retry",
+      "packageName": "@intabiafusion/retry",
       "projectFolder": "packages/retry",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/storage",
+      "packageName": "@intabiafusion/storage",
       "projectFolder": "packages/storage",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text",
+      "packageName": "@intabiafusion/text",
       "projectFolder": "packages/text",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-core",
+      "packageName": "@intabiafusion/text-core",
       "projectFolder": "packages/text-core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-html",
+      "packageName": "@intabiafusion/text-html",
       "projectFolder": "packages/text-html",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-markdown",
+      "packageName": "@intabiafusion/text-markdown",
       "projectFolder": "packages/text-markdown",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-ydoc",
+      "packageName": "@intabiafusion/text-ydoc",
       "projectFolder": "packages/text-ydoc",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/client",
+      "packageName": "@intabiafusion/client",
       "projectFolder": "packages/client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/client-resources",
+      "packageName": "@intabiafusion/client-resources",
       "projectFolder": "packages/client-resources",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/rpc",
+      "packageName": "@intabiafusion/rpc",
       "projectFolder": "packages/rpc",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/server-token",
+      "packageName": "@intabiafusion/server-token",
       "projectFolder": "packages/token",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/hulylake-client",
+      "packageName": "@intabiafusion/hulylake-client",
       "projectFolder": "packages/hulylake-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/storage-client",
+      "packageName": "@intabiafusion/storage-client",
       "projectFolder": "packages/storage-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/measurements",
+      "packageName": "@intabiafusion/measurements",
       "projectFolder": "packages/measurements",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/measurements-otlp",
+      "packageName": "@intabiafusion/measurements-otlp",
       "projectFolder": "packages/measurements-otlp",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/postgres-base",
+      "packageName": "@intabiafusion/postgres-base",
       "projectFolder": "packages/postgres-base",
       "shouldPublish": true
     }

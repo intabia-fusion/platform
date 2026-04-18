@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   toFindResult,
   withContext,
@@ -36,7 +36,7 @@ import {
   type Timestamp,
   type Tx,
   type TxResult
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { emptyBroadcastResult } from './base'
 import { type Middleware, type MiddlewareCreator, type Pipeline, type PipelineContext } from './types'
 

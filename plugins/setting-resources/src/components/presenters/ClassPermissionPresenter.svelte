@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, ClassPermission, Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import { Class, ClassPermission, Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
 
   export let value: ClassPermission
   export let inline: boolean = false

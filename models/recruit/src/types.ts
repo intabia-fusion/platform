@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Employee, Organization } from '@hcengineering/contact'
+import type { Employee, Organization } from '@intabiafusion/contact'
 import {
   IndexKind,
   type Collection,
@@ -26,7 +26,7 @@ import {
   type Status,
   type Timestamp,
   type AccountUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   Collection as TypeCollection,
   Hidden,
@@ -42,15 +42,15 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@hcengineering/model'
-import attachment from '@hcengineering/model-attachment'
-import calendar, { TEvent } from '@hcengineering/model-calendar'
-import chunter from '@hcengineering/model-chunter'
-import contact, { TOrganization, TPerson } from '@hcengineering/model-contact'
-import core, { TAttachedDoc } from '@hcengineering/model-core'
-import tags from '@hcengineering/model-tags'
-import task, { DOMAIN_TASK, TProject, TTask } from '@hcengineering/model-task'
-import { getEmbeddedLabel } from '@hcengineering/platform'
+} from '@intabiafusion/model'
+import attachment from '@intabiafusion/model-attachment'
+import calendar, { TEvent } from '@intabiafusion/model-calendar'
+import chunter from '@intabiafusion/model-chunter'
+import contact, { TOrganization, TPerson } from '@intabiafusion/model-contact'
+import core, { TAttachedDoc } from '@intabiafusion/model-core'
+import tags from '@intabiafusion/model-tags'
+import task, { DOMAIN_TASK, TProject, TTask } from '@intabiafusion/model-task'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
 import type {
   Applicant,
   ApplicantMatch,
@@ -59,8 +59,8 @@ import type {
   Review,
   Vacancy,
   VacancyList
-} from '@hcengineering/recruit'
-import survey, { type Poll } from '@hcengineering/survey'
+} from '@intabiafusion/recruit'
+import survey, { type Poll } from '@intabiafusion/survey'
 import recruit from './plugin'
 
 @Model(recruit.class.Vacancy, task.class.Project)

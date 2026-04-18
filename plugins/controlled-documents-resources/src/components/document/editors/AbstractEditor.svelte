@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
-  import { getClient } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Document } from '@intabiafusion/controlled-documents'
+  import { getClient } from '@intabiafusion/presentation'
+  import { EditBox } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   import plugin from '../../../plugin'
 

@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Person } from '@hcengineering/contact'
-  import core, { Account, generateId, Ref } from '@hcengineering/core'
-  import { OK, Status } from '@hcengineering/platform'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import type { Opinion, Review } from '@hcengineering/recruit'
-  import { Project } from '@hcengineering/task'
-  import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { EditBox, Status as StatusControl } from '@hcengineering/ui'
+  import type { Person } from '@intabiafusion/contact'
+  import core, { Account, generateId, Ref } from '@intabiafusion/core'
+  import { OK, Status } from '@intabiafusion/platform'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import type { Opinion, Review } from '@intabiafusion/recruit'
+  import { Project } from '@intabiafusion/task'
+  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
+  import { EditBox, Status as StatusControl } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../../plugin'
 

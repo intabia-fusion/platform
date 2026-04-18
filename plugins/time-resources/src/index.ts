@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Resources } from '@hcengineering/platform'
+import type { Resources } from '@intabiafusion/platform'
 import Me from './components/Me.svelte'
 import Team from './components/team/Team.svelte'
 import IssuePresenter from './components/presenters/IssuePresenter.svelte'

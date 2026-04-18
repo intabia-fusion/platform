@@ -33,14 +33,14 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc,
   type TxWorkspaceEvent
-} from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
 // Helper types to require update in validation after Tx types are changed
 type ExplicitUndefined<T> = { [P in keyof Required<T>]: Exclude<T[P], undefined> | Extract<T[P], undefined> }

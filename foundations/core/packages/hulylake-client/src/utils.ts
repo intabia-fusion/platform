@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { RetryOptions, withRetry } from '@hcengineering/retry'
+import { RetryOptions, withRetry } from '@intabiafusion/retry'
 import { HulylakeError, NetworkError } from './error'
 
 async function innerFetchSafe (url: string | URL, init?: RequestInit): Promise<Response> {

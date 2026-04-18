@@ -12,7 +12,7 @@ import {
   formatName,
   type PersonSpace,
   type Employee
-} from '@hcengineering/contact'
+} from '@intabiafusion/contact'
 import {
   AccountRole,
   type AccountUuid,
@@ -33,7 +33,7 @@ import {
   type Space,
   toIdMap,
   type TxCUD
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   createDefaultSpace,
   type MigrateOperation,
@@ -44,12 +44,12 @@ import {
   type ModelLogger,
   tryMigrate,
   tryUpgrade
-} from '@hcengineering/model'
-import { makeRank } from '@hcengineering/rank'
-import activity, { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import core, { getAccountsFromTxes, getSocialIdBySocialKey, getSocialKeyByOldEmail } from '@hcengineering/model-core'
-import { DOMAIN_VIEW } from '@hcengineering/model-view'
-import card, { type Card, DOMAIN_CARD } from '@hcengineering/card'
+} from '@intabiafusion/model'
+import { makeRank } from '@intabiafusion/rank'
+import activity, { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
+import core, { getAccountsFromTxes, getSocialIdBySocialKey, getSocialKeyByOldEmail } from '@intabiafusion/model-core'
+import { DOMAIN_VIEW } from '@intabiafusion/model-view'
+import card, { type Card, DOMAIN_CARD } from '@intabiafusion/card'
 
 import contact, { contactId, DOMAIN_CHANNEL, DOMAIN_CONTACT } from './index'
 

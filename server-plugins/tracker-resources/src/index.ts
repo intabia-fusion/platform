@@ -25,9 +25,9 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc,
   WithLookup
-} from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
 import tracker, {
   Component,
   Issue,
@@ -36,9 +36,9 @@ import tracker, {
   reduceChildInfoTree,
   trackerId,
   type Project
-} from '@hcengineering/tracker'
-import { workbenchId } from '@hcengineering/workbench'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+} from '@intabiafusion/tracker'
+import { workbenchId } from '@intabiafusion/workbench'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 async function updateSubIssues (
   updateTx: TxUpdateDoc<Issue>,

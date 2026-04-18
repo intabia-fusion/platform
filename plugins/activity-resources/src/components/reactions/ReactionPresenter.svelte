@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Reaction } from '@hcengineering/activity'
-  import { Ref, Space } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Reaction } from '@intabiafusion/activity'
+  import { Ref, Space } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
 
   import activity from '../../plugin'
 

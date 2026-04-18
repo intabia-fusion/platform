@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import contact, { contactId } from '@hcengineering/contact'
+import { addStringsLoader, loadMetadata } from '@intabiafusion/platform'
+import contact, { contactId } from '@intabiafusion/contact'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(contact.icon, {

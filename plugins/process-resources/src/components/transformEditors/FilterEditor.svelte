@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute } from '@hcengineering/core'
-  import presentation, { Card, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Process, ProcessFunction } from '@hcengineering/process'
-  import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import core, { AnyAttribute } from '@intabiafusion/core'
+  import presentation, { Card, getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
+  import { Process, ProcessFunction } from '@intabiafusion/process'
+  import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { getCriteriaEditor } from '../../utils'
   import CriteriasEditor from '../criterias/CriteriasEditor.svelte'

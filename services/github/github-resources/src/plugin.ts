@@ -2,12 +2,12 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
 
-import github, { githubId } from '@hcengineering/github'
-import { type Ref } from '@hcengineering/core'
-import { type Handler, type IntegrationType } from '@hcengineering/setting'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+import github, { githubId } from '@intabiafusion/github'
+import { type Ref } from '@intabiafusion/core'
+import { type Handler, type IntegrationType } from '@intabiafusion/setting'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 
 export default mergeIds(githubId, github, {
   string: {

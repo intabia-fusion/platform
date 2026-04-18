@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { generateToken } from '@hcengineering/server-token'
-import { systemAccountUuid } from '@hcengineering/core'
+import { generateToken } from '@intabiafusion/server-token'
+import { systemAccountUuid } from '@intabiafusion/core'
 import { ApiEndpoint } from '../API/Api'
 import { generateTestData, PlatformURI } from '../utils'
 import { LoginPage } from '../model/login-page'

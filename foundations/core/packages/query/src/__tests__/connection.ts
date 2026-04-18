@@ -44,7 +44,7 @@ import core, {
   type DomainResult,
   type OperationDomain,
   type TxHandler
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { genMinModel } from './minmodel'
 
 export async function connect (handler: (tx: Tx) => void): Promise<

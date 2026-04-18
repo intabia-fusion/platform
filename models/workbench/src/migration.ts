@@ -17,11 +17,11 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   tryMigrate
-} from '@hcengineering/model'
-import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
-import workbench, { type WorkbenchTab } from '@hcengineering/workbench'
-import core, { type AccountUuid, DOMAIN_TX } from '@hcengineering/core'
-import { getAccountUuidBySocialKey, getSocialKeyByOldAccount } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
+import workbench, { type WorkbenchTab } from '@intabiafusion/workbench'
+import core, { type AccountUuid, DOMAIN_TX } from '@intabiafusion/core'
+import { getAccountUuidBySocialKey, getSocialKeyByOldAccount } from '@intabiafusion/model-core'
 
 import { workbenchId } from '.'
 

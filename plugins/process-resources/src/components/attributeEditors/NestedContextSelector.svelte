@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
-  import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
+  import { AnyAttribute } from '@intabiafusion/core'
+  import { Label, resizeObserver, Scroller } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { SelectedContext, NestedContext } from '@hcengineering/process'
+  import { SelectedContext, NestedContext } from '@intabiafusion/process'
   import { getValueReduceFunc } from '../../utils'
 
   export let context: NestedContext

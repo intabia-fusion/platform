@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import task from '@hcengineering/task'
-  import { Issue } from '@hcengineering/tracker'
-  import { ButtonKind, ButtonSize, DueDatePresenter } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import task from '@intabiafusion/task'
+  import { Issue } from '@intabiafusion/tracker'
+  import { ButtonKind, ButtonSize, DueDatePresenter } from '@intabiafusion/ui'
 
   export let value: WithLookup<Issue>
   export let kind: ButtonKind = 'link'

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 import emojiPlugin from './plugin'
-import { Model, Prop, ReadOnly, TypeRef, TypeString } from '@hcengineering/model'
-import core, { TDoc } from '@hcengineering/model-core'
-import type { Ref, Blob, Domain } from '@hcengineering/core'
-import { type CustomEmoji } from '@hcengineering/emoji'
+import { Model, Prop, ReadOnly, TypeRef, TypeString } from '@intabiafusion/model'
+import core, { TDoc } from '@intabiafusion/model-core'
+import type { Ref, Blob, Domain } from '@intabiafusion/core'
+import { type CustomEmoji } from '@intabiafusion/emoji'
 
 export const DOMAIN_EMOJI = 'emoji' as Domain
 

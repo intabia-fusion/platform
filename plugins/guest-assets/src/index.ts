@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import guest, { guestId } from '@hcengineering/guest'
+import { addStringsLoader, loadMetadata } from '@intabiafusion/platform'
+import guest, { guestId } from '@intabiafusion/guest'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(guest.icon, {

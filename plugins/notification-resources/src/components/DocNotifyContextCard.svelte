@@ -23,20 +23,20 @@
     Loading,
     showPopup,
     Spinner
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import notification, {
     ActivityNotificationViewlet,
     DisplayInboxNotification,
     DocNotifyContext,
     InboxNotification
-  } from '@hcengineering/notification'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { getDocTitle, getDocIdentifier, Menu, getDocLabel } from '@hcengineering/view-resources'
+  } from '@intabiafusion/notification'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { getDocTitle, getDocIdentifier, Menu, getDocLabel } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
-  import { AccountRole, Class, Doc, getCurrentAccount, Ref, WithLookup } from '@hcengineering/core'
-  import chunter from '@hcengineering/chunter'
-  import { getPersonRefsByPersonIds } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
+  import { AccountRole, Class, Doc, getCurrentAccount, Ref, WithLookup } from '@intabiafusion/core'
+  import chunter from '@intabiafusion/chunter'
+  import { getPersonRefsByPersonIds } from '@intabiafusion/contact-resources'
+  import { Person } from '@intabiafusion/contact'
 
   import InboxNotificationPresenter from './inbox/InboxNotificationPresenter.svelte'
   import NotifyContextIcon from './NotifyContextIcon.svelte'

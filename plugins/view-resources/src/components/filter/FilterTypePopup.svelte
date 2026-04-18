@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, ArrOf, Class, ClassifierKind, Doc, Ref, RefTo, Space, Type } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label, Scroller, Submenu, closePopup, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
-  import { ClassFilters, Filter, KeyFilter, KeyFilterPreset, ViewOptions } from '@hcengineering/view'
-  import { getResource } from '@hcengineering/platform'
+  import core, { AnyAttribute, ArrOf, Class, ClassifierKind, Doc, Ref, RefTo, Space, Type } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label, Scroller, Submenu, closePopup, closeTooltip, resizeObserver, showPopup } from '@intabiafusion/ui'
+  import { ClassFilters, Filter, KeyFilter, KeyFilterPreset, ViewOptions } from '@intabiafusion/view'
+  import { getResource } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import { FilterQuery, buildFilterKey } from '../../filter'
   import view from '../../plugin'

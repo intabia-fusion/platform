@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangeMode, type MixinUpdate, Timestamp } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { DateRangeMode, type MixinUpdate, Timestamp } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
   import {
     DatePresenter,
     DropdownLabels,
@@ -23,9 +23,9 @@
     RadioButton,
     Scroller,
     Toggle
-  } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import { UserBoxItems } from '@hcengineering/contact-resources'
+  } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { UserBoxItems } from '@intabiafusion/contact-resources'
   import {
     type Document,
     ControlledDocumentState,
@@ -34,12 +34,12 @@
     type DocumentTraining,
     periodicReviewIntervals,
     ControlledDocument
-  } from '@hcengineering/controlled-documents'
+  } from '@intabiafusion/controlled-documents'
   import {
     NullablePositiveNumberEditor,
     TrainingRefEditor,
     TrainingRequestRolesEditor
-  } from '@hcengineering/training-resources'
+  } from '@intabiafusion/training-resources'
   import { createDocumentTraining, getDocumentTrainingClass, updateDocumentTraining } from '../../docutils'
 
   import documentsRes from '../../plugin'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
-  import { type Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
-  import { Table, openDocFromRef } from '@hcengineering/view-resources'
+  import { Product } from '@intabiafusion/products'
+  import { type Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@intabiafusion/ui'
+  import { Table, openDocFromRef } from '@intabiafusion/view-resources'
 
   import products from '../../plugin'
   import CreateProductVersion from './CreateProductVersion.svelte'

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes } from '@hcengineering/love'
-  import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view'
-  import { ActionIcon } from '@hcengineering/ui'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { Doc } from '@hcengineering/core'
+  import { MeetingMinutes } from '@intabiafusion/love'
+  import { ObjectPresenter, openDoc } from '@intabiafusion/view-resources'
+  import view from '@intabiafusion/view'
+  import { ActionIcon } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import type { Doc } from '@intabiafusion/core'
 
   export let object: MeetingMinutes
 

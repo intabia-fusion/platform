@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ColorDefinition, getPlatformColors, themeStore } from '@hcengineering/ui'
+  import { ColorDefinition, getPlatformColors, themeStore } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import PopupDialog from './PopupDialog.svelte'

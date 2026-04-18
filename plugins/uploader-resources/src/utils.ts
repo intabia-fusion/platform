@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type FileUploadOptions, type FileUploadPopupOptions, toFileWithPath } from '@hcengineering/uploader'
-import { type Ref, type Blob, RateLimiter } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import presentation, { generateFileId, getFileMetadata, getFileStorage } from '@hcengineering/presentation'
+import { type FileUploadOptions, type FileUploadPopupOptions, toFileWithPath } from '@intabiafusion/uploader'
+import { type Ref, type Blob, RateLimiter } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation, { generateFileId, getFileMetadata, getFileStorage } from '@intabiafusion/presentation'
 import { type FileUpload, type FileUploadInfo, type Upload, trackUpload, untrackUpload } from './store'
 
 const DEFAULT_MAX_PARALLEL_UPLOADS = 10

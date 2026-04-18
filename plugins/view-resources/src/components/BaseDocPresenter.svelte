@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize, languageStore } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
+  import { IconSize, languageStore } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Doc } from '@intabiafusion/core'
   import ObjectIcon from './ObjectIcon.svelte'
 
   import { getDocLinkTitle } from '../utils'

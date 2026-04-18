@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { getClient as getAccountClient } from '@hcengineering/account-client'
-  import contact, { SocialIdentityRef } from '@hcengineering/contact'
-  import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
-  import login from '@hcengineering/login'
+  import { getClient as getAccountClient } from '@intabiafusion/account-client'
+  import contact, { SocialIdentityRef } from '@intabiafusion/contact'
+  import { getCurrentAccount, SocialIdType } from '@intabiafusion/core'
+  import login from '@intabiafusion/login'
   import {
     ERROR,
     getMetadata,
@@ -28,9 +28,9 @@
     Severity,
     Status,
     translate
-  } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { EditBox, ModernDialog, StylishEdit, Status as StatusControl } from '@hcengineering/ui'
+  } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { EditBox, ModernDialog, StylishEdit, Status as StatusControl } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import plugin from '../plugin'

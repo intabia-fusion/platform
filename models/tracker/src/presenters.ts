@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import view, { classPresenter } from '@hcengineering/model-view'
-import notification from '@hcengineering/notification'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import view, { classPresenter } from '@intabiafusion/model-view'
+import notification from '@intabiafusion/notification'
 import tracker from './plugin'
 
 /**

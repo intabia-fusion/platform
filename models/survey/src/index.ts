@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import { AccountRole } from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import chunter from '@hcengineering/model-chunter'
-import view, { createAction, type Viewlet } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import { surveyId } from '@hcengineering/survey'
+import activity from '@intabiafusion/activity'
+import { AccountRole } from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import chunter from '@intabiafusion/model-chunter'
+import view, { createAction, type Viewlet } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import { surveyId } from '@intabiafusion/survey'
 import { TPoll, TSurvey } from './types'
 import survey from './plugin'
 
-export { surveyId } from '@hcengineering/survey'
+export { surveyId } from '@intabiafusion/survey'
 export { surveyOperation } from './migration'
 export default survey
 export * from './types'

@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/text-html
+# Change Log - @intabiafusion/text-html
 
 This log was last generated on Mon, 27 Oct 2025 16:46:51 GMT and should not be manually modified.
 

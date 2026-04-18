@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Loading, Scroller, formatDuration, formatNumberCompact, themeStore } from '@hcengineering/ui'
-  import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
-  import billingPlugin from '@hcengineering/billing'
-  import type { DatalakeStatsByType } from '@hcengineering/billing-client'
-  import love from '@hcengineering/love'
-  import view from '@hcengineering/view'
+  import { Loading, Scroller, formatDuration, formatNumberCompact, themeStore } from '@intabiafusion/ui'
+  import { getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
+  import billingPlugin from '@intabiafusion/billing'
+  import type { DatalakeStatsByType } from '@intabiafusion/billing-client'
+  import love from '@intabiafusion/love'
+  import view from '@intabiafusion/view'
   import filesize from 'filesize'
   import StatsCard from './StatsCard.svelte'
-  import drivePlugin from '@hcengineering/drive'
+  import drivePlugin from '@intabiafusion/drive'
   import Category from './Category.svelte'
   import ChartCard from './ChartCard.svelte'
   import StorageBreakdown from './StorageBreakdown.svelte'

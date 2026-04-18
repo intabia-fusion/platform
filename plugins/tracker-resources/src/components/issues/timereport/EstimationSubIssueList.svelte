@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { AssigneeBox } from '@hcengineering/contact-resources'
-  import { Issue } from '@hcengineering/tracker'
-  import { ListView, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { FixedColumn, ListSelectionProvider, showMenu } from '@hcengineering/view-resources'
+  import contact from '@intabiafusion/contact'
+  import { AssigneeBox } from '@intabiafusion/contact-resources'
+  import { Issue } from '@intabiafusion/tracker'
+  import { ListView, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { FixedColumn, ListSelectionProvider, showMenu } from '@intabiafusion/view-resources'
   import tracker from '../../../plugin'
   import EstimationEditor from './EstimationEditor.svelte'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient } from '@intabiafusion/presentation'
 
   export let issues: Issue[]
 

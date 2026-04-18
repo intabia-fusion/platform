@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import type { Account, MeasureContext } from '@hcengineering/core'
+import type { Account, MeasureContext } from '@intabiafusion/core'
 import type {
   EventResult,
   Event,
   SessionData, EventType
-} from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-sdk-types'
 import type {
   CardID,
   Collaborator,
@@ -32,7 +32,7 @@ import type {
   NotificationContext,
   Peer,
   WorkspaceUuid
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import { LowLevelClient } from './client'
 

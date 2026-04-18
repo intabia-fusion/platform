@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { htmlToJSON, type MarkupNode } from '@hcengineering/text'
-import { markupToMarkdown } from '@hcengineering/text-markdown'
+import { htmlToJSON, type MarkupNode } from '@intabiafusion/text'
+import { markupToMarkdown } from '@intabiafusion/text-markdown'
 import { mkdir, readdir, readFile, writeFile } from 'fs/promises'
 import * as yaml from 'js-yaml'
 import { basename, dirname, extname, join, relative } from 'path'

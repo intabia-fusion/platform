@@ -12,13 +12,13 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Label, ListView, Loading, Scroller } from '@hcengineering/ui'
-  import { Doc, Ref } from '@hcengineering/core'
+  import { Label, ListView, Loading, Scroller } from '@intabiafusion/ui'
+  import { Doc, Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
-  import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
-  import { getClient } from '@hcengineering/presentation'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import view from '@hcengineering/view'
+  import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@intabiafusion/notification'
+  import { getClient } from '@intabiafusion/presentation'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import view from '@intabiafusion/view'
 
   import inbox from '../plugin'
   import { NavigationItem } from '../type'

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Vacancy } from '@hcengineering/recruit'
-  import { TimeSince } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { Vacancy } from '@intabiafusion/recruit'
+  import { TimeSince } from '@intabiafusion/ui'
 
   export let value: Vacancy
   export let applications: Map<Ref<Vacancy>, { count: number, modifiedOn: number }> | undefined

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MigrateOperation, type MigrationClient, type MigrationUpgradeClient } from '@hcengineering/model'
+import { type MigrateOperation, type MigrationClient, type MigrationUpgradeClient } from '@intabiafusion/model'
 
 export const printOperation: MigrateOperation = {
   async migrate (client: MigrationClient): Promise<void> {},

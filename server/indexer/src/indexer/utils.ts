@@ -24,13 +24,13 @@ import core, {
   type Ref,
   type Space,
   type VersionableDoc
-} from '@hcengineering/core'
-import { type IndexedDoc } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { type IndexedDoc } from '@intabiafusion/server-core'
 import { type FullTextPipeline } from './types'
-import { type Message } from '@hcengineering/communication-types'
-import cardPlugin, { type Card } from '@hcengineering/card'
+import { type Message } from '@intabiafusion/communication-types'
+import cardPlugin, { type Card } from '@intabiafusion/card'
 
-export { docKey, isFullTextAttribute } from '@hcengineering/core'
+export { docKey, isFullTextAttribute } from '@intabiafusion/core'
 
 /**
  * @public

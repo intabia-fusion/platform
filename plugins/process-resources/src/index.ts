@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import ApproveRequestPresenter from './components/ApproveRequestPresenter.svelte'
 import ExecutionContextSelector from './components/attributeEditors/ExecutionContextSelector.svelte'
 import FunctionSelector from './components/attributeEditors/FunctionSelector.svelte'

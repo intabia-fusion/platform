@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { type BlobMetadata, type Blob, type Ref } from '@hcengineering/core'
-import { getMetadata, getResource } from '@hcengineering/platform'
-import { type PopupAlignment } from '@hcengineering/ui'
+import { Analytics } from '@intabiafusion/analytics'
+import { type BlobMetadata, type Blob, type Ref } from '@intabiafusion/core'
+import { getMetadata, getResource } from '@intabiafusion/platform'
+import { type PopupAlignment } from '@intabiafusion/ui'
 import { writable } from 'svelte/store'
 
 import plugin from './plugin'

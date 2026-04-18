@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttributesBar, getClient } from '@hcengineering/presentation'
-  import { ProjectType } from '@hcengineering/task'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import tracker from '@hcengineering/tracker'
-  import { Button, Component, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
-  import { getFiltredKeys } from '@hcengineering/view-resources'
+  import { AttributesBar, getClient } from '@intabiafusion/presentation'
+  import { ProjectType } from '@intabiafusion/task'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import tracker from '@intabiafusion/tracker'
+  import { Button, Component, Icon, IconAdd, Label, showPopup } from '@intabiafusion/ui'
+  import { getFiltredKeys } from '@intabiafusion/view-resources'
   import recruit from '../plugin'
 
   export let type: ProjectType

@@ -13,7 +13,7 @@
 - **Storage**: server-storage, minio, s3, datalake, hulylake
 - **Infrastructure**: kafka, collaboration
 
-Standard structure: `src/` → `lib/` (compiled), `tsconfig.json`, `jest.config.js`, `package.json` with `@hcengineering/` scope
+Standard structure: `src/` → `lib/` (compiled), `tsconfig.json`, `jest.config.js`, `package.json` with `@intabiafusion/` scope
 
 ## Essential Commands
 
@@ -48,8 +48,8 @@ npm run test:coverage            # With coverage
 ## Coding Standards
 
 - TypeScript strict mode, Prettier formatting
-- Imports: `@hcengineering/` namespace, named imports, grouped (external/internal/types)
-- Errors: `PlatformError` from `@hcengineering/platform`, `unknownError` wrapper
+- Imports: `@intabiafusion/` namespace, named imports, grouped (external/internal/types)
+- Errors: `PlatformError` from `@intabiafusion/platform`, `unknownError` wrapper
 - Async: `async/await`, `MeasureContext` for cancellation, cleanup in finally blocks
 - Security: No secrets in code, validate inputs, prepared statements, rate limiting
 

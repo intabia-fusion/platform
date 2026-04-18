@@ -1,7 +1,7 @@
 //
 // Copyright © 2023-2024 Hardcore Engineering Inc.
 //
-import { type Employee } from '@hcengineering/contact'
+import { type Employee } from '@intabiafusion/contact'
 import core, {
   DocumentQuery,
   Ref,
@@ -14,10 +14,10 @@ import core, {
   type RolesAssignment,
   type Timestamp,
   concatLink
-} from '@hcengineering/core'
-import { MessageNotificationType, NotificationType } from '@hcengineering/notification'
-import { getEmployees, getSocialIds } from '@hcengineering/server-contact'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { MessageNotificationType, NotificationType } from '@intabiafusion/notification'
+import { getEmployees, getSocialIds } from '@intabiafusion/server-contact'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
 
 import documents, {
   ControlledDocument,
@@ -29,15 +29,15 @@ import documents, {
   getEffectiveDocUpdates,
   type DocumentRequest,
   type DocumentTraining
-} from '@hcengineering/controlled-documents'
-import { RequestStatus } from '@hcengineering/request'
-import training, { TrainingState, type TrainingRequest } from '@hcengineering/training'
-import { getMetadata } from '@hcengineering/platform'
-import { workbenchId } from '@hcengineering/workbench'
+} from '@intabiafusion/controlled-documents'
+import { RequestStatus } from '@intabiafusion/request'
+import training, { TrainingState, type TrainingRequest } from '@intabiafusion/training'
+import { getMetadata } from '@intabiafusion/platform'
+import { workbenchId } from '@intabiafusion/workbench'
 import slugify from 'slugify'
-import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
-import { DocUpdateMessage } from '@hcengineering/activity'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@intabiafusion/server-notification'
+import { DocUpdateMessage } from '@intabiafusion/activity'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 async function getDocs (
   control: TriggerControl,

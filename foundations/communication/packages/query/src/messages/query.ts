@@ -21,7 +21,7 @@ import {
   type MessagesGroup,
   MessagesGroupsDoc,
   SortingOrder
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 import {
   CardEventType,
   type CreateMessageEvent,
@@ -34,10 +34,10 @@ import {
   PatchEvent,
   RemoveCardEvent,
   TranslateMessageEvent
-} from '@hcengineering/communication-sdk-types'
-import { MessageProcessor } from '@hcengineering/communication-shared'
+} from '@intabiafusion/communication-sdk-types'
+import { MessageProcessor } from '@intabiafusion/communication-shared'
 import { v4 as uuid } from 'uuid'
-import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
 
 import { QueryResult } from '../result'
 import {

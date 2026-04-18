@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State, Step, Transition } from '@hcengineering/process'
-  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Process, State, Step, Transition } from '@intabiafusion/process'
+  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
   import {
     Button,
     ButtonIcon,
@@ -30,8 +30,8 @@
     navigate,
     Scroller,
     showPopup
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view-resources/src/plugin'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { initState } from '../../utils'
@@ -41,7 +41,7 @@
   import Navigator from './Navigator.svelte'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import TriggerPresenter from './TriggerPresenter.svelte'
-  import { SortableList } from '@hcengineering/view-resources'
+  import { SortableList } from '@intabiafusion/view-resources'
 
   export let _id: Ref<Transition>
   export let visibleSecondNav: boolean = true

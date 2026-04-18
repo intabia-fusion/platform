@@ -13,6 +13,6 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 
 export default async (): Promise<Resources> => ({})

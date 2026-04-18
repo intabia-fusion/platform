@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Ref, type Space, toIdMap } from '@hcengineering/core'
+import { type Class, type Doc, type Ref, type Space, toIdMap } from '@intabiafusion/core'
 import drive, {
   type Drive,
   type FileVersion,
@@ -23,24 +23,24 @@ import drive, {
   createFile,
   createFolder,
   DriveEvents
-} from '@hcengineering/drive'
-import { type Asset, setPlatformStatus, unknownError } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
-import { type AnySvelteComponent, showPopup } from '@hcengineering/ui'
+} from '@intabiafusion/drive'
+import { type Asset, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+import { getClient } from '@intabiafusion/presentation'
+import { type AnySvelteComponent, showPopup } from '@intabiafusion/ui'
 import {
   type FileUploadCallback,
   type FileUploadOptions,
   getDataTransferFiles,
   showFilesUploadPopup,
   uploadFiles
-} from '@hcengineering/uploader'
-import { openDoc } from '@hcengineering/view-resources'
+} from '@intabiafusion/uploader'
+import { openDoc } from '@intabiafusion/view-resources'
 
 import CreateDrive from './components/CreateDrive.svelte'
 import CreateFolder from './components/CreateFolder.svelte'
 import RenamePopup from './components/RenamePopup.svelte'
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import FileTypeAudio from './components/icons/FileTypeAudio.svelte'
 import FileTypeImage from './components/icons/FileTypeImage.svelte'
 import FileTypePdf from './components/icons/FileTypePdf.svelte'

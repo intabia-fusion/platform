@@ -213,7 +213,7 @@
      * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
      * to retrieve the latest activity for the remote main branch.
      */
-    "url": "https://github.com/hcengineering/huly.net",
+    "url": "https://github.com/intabia-fusion/huly.net",
     /**
      * The default branch name. This tells "rush change" which remote branch to compare against.
      * The default value is "main"
@@ -331,47 +331,47 @@
    */
   "projects": [
     {
-      "packageName": "@hcengineering/network-core",
+      "packageName": "@intabiafusion/network-core",
       "projectFolder": "packages/core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/network-backrpc",
+      "packageName": "@intabiafusion/network-backrpc",
       "projectFolder": "packages/backrpc",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/network-client",
+      "packageName": "@intabiafusion/network-client",
       "projectFolder": "packages/client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/network-server",
+      "packageName": "@intabiafusion/network-server",
       "projectFolder": "packages/server",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/network-pod",
+      "packageName": "@intabiafusion/network-pod",
       "projectFolder": "pods/network-pod",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/network-tool",
+      "packageName": "@intabiafusion/network-tool",
       "projectFolder": "pods/network-tool",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/scripts",
+      "packageName": "@intabiafusion/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/network-tests",
+      "packageName": "@intabiafusion/network-tests",
       "projectFolder": "tests",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/network-examples",
+      "packageName": "@intabiafusion/network-examples",
       "projectFolder": "examples",
       "shouldPublish": false
     }

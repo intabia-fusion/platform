@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
-import { StorageAdapter } from '@hcengineering/server-core'
+import { type MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
+import { StorageAdapter } from '@intabiafusion/server-core'
 
 import { createWriteStream } from 'fs'
 import { pipeline } from 'stream/promises'

@@ -1,4 +1,4 @@
-import type { DBClient } from '@hcengineering/postgres-base'
+import type { DBClient } from '@intabiafusion/postgres-base'
 
 export interface TypedQuery {
   query: string

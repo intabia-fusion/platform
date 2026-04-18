@@ -23,14 +23,14 @@
     ModernButton,
     Scroller,
     showPopup
-  } from '@hcengineering/ui'
-  import setting from '@hcengineering/setting'
+  } from '@intabiafusion/ui'
+  import setting from '@intabiafusion/setting'
   import MailboxEditorModal from './MailboxEditorModal.svelte'
   import { getAccountClient } from '../utils'
   import { onMount } from 'svelte'
-  import { MailboxInfo, MailboxOptions } from '@hcengineering/account-client'
+  import { MailboxInfo, MailboxOptions } from '@intabiafusion/account-client'
   import MailboxItem from './MailboxItem.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   let boxesLoading = true
   let optionsLoading = true

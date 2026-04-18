@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MediaInfo, updateSelectedCamId } from '@hcengineering/media'
-  import { Label } from '@hcengineering/ui'
+  import { MediaInfo, updateSelectedCamId } from '@intabiafusion/media'
+  import { Label } from '@intabiafusion/ui'
 
   import media from '../plugin'
   import { camAccess, state, sessions } from '../stores'

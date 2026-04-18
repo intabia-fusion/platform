@@ -16,9 +16,9 @@ import communication, {
   type MessageAction,
   type MessageActionFunction,
   type MessageActionVisibilityTester
-} from '@hcengineering/communication'
-import { languageStore, showPopup } from '@hcengineering/ui'
-import emojiPlugin from '@hcengineering/emoji'
+} from '@intabiafusion/communication'
+import { languageStore, showPopup } from '@intabiafusion/ui'
+import emojiPlugin from '@intabiafusion/emoji'
 import {
   type AppletParams,
   type AttachmentID,
@@ -29,9 +29,9 @@ import {
   type Message,
   type MessageID,
   MessageType
-} from '@hcengineering/communication-types'
-import cardPlugin, { type Card, type MasterTag } from '@hcengineering/card'
-import { addRefreshListener, deleteFile, getClient, getCommunicationClient } from '@hcengineering/presentation'
+} from '@intabiafusion/communication-types'
+import cardPlugin, { type Card, type MasterTag } from '@intabiafusion/card'
+import { addRefreshListener, deleteFile, getClient, getCommunicationClient } from '@intabiafusion/presentation'
 import {
   AccountRole,
   fillDefaults,
@@ -40,18 +40,18 @@ import {
   hasAccountRole,
   type MarkupBlobRef,
   type Ref
-} from '@hcengineering/core'
-import { getMetadata, getResource } from '@hcengineering/platform'
-import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
-import { getEmployeeBySocialId } from '@hcengineering/contact'
-import chat from '@hcengineering/chat'
-import { markupToText } from '@hcengineering/text'
+} from '@intabiafusion/core'
+import { getMetadata, getResource } from '@intabiafusion/platform'
+import { employeeByPersonIdStore } from '@intabiafusion/contact-resources'
+import { getEmployeeBySocialId } from '@intabiafusion/contact'
+import chat from '@intabiafusion/chat'
+import { markupToText } from '@intabiafusion/text'
 import { get } from 'svelte/store'
-import { translate as aiTranslate } from '@hcengineering/ai-bot-resources'
-import aiBot from '@hcengineering/ai-bot'
+import { translate as aiTranslate } from '@intabiafusion/ai-bot-resources'
+import aiBot from '@intabiafusion/ai-bot'
 import CreateCardFromMessagePopup from './components/CreateCardFromMessagePopup.svelte'
-import { Analytics } from '@hcengineering/analytics'
-import { isAppletAttachment, isBlobAttachment, isLinkPreviewAttachment } from '@hcengineering/communication-shared'
+import { Analytics } from '@intabiafusion/analytics'
+import { isAppletAttachment, isBlobAttachment, isLinkPreviewAttachment } from '@intabiafusion/communication-shared'
 
 import { isCardAllowedForCommunications, loadLinkPreviewParams, showForbidden, toggleReaction, toMarkup } from './utils'
 import {

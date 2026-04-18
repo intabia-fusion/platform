@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Ref } from '@hcengineering/core'
-import type { TestCase, TestPlan } from '@hcengineering/test-management'
+import type { Ref } from '@intabiafusion/core'
+import type { TestCase, TestPlan } from '@intabiafusion/test-management'
 import { writable } from 'svelte/store'
 
 export const selectedTestCases = writable<TestCase[] | undefined>(undefined)

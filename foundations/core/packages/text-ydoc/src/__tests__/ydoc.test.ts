@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Markup, generateId } from '@hcengineering/core'
-import { type MarkupNode, jsonToMarkup, jsonToPmNode, markupToJSON } from '@hcengineering/text'
+import { type Markup, generateId } from '@intabiafusion/core'
+import { type MarkupNode, jsonToMarkup, jsonToPmNode, markupToJSON } from '@intabiafusion/text'
 import { prosemirrorToYXmlFragment, yDocToProsemirrorJSON } from 'y-prosemirror'
 import { deepEqual } from 'fast-equals'
 import { Doc as YDoc } from 'yjs'

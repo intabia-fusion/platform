@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { type Ref, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { type DropdownTextItem, ButtonKind, ButtonSize, DropdownLabels } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import core, { type Ref, type SpaceType, type SpaceTypeDescriptor } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { type DropdownTextItem, ButtonKind, ButtonSize, DropdownLabels } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   export let descriptors: Ref<SpaceTypeDescriptor>[]
   export let type: Ref<SpaceType> | undefined = undefined

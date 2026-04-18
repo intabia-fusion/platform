@@ -13,65 +13,65 @@
 // limitations under the License.
 //
 
-import { prepareTools as prepareToolsRaw } from '@hcengineering/server-tool'
+import { prepareTools as prepareToolsRaw } from '@intabiafusion/server-tool'
 
-import { type Data, type Tx, type Version } from '@hcengineering/core'
-import { type MigrateOperation } from '@hcengineering/model'
-import builder, { getModelVersion, migrateOperations } from '@hcengineering/model-all'
+import { type Data, type Tx, type Version } from '@intabiafusion/core'
+import { type MigrateOperation } from '@intabiafusion/model'
+import builder, { getModelVersion, migrateOperations } from '@intabiafusion/model-all'
 import { devTool } from '.'
 
-import { addLocation } from '@hcengineering/platform'
-import { serverActivityId } from '@hcengineering/server-activity'
-import { serverAiBotId } from '@hcengineering/server-ai-bot'
-import { serverAttachmentId } from '@hcengineering/server-attachment'
-import { serverCalendarId } from '@hcengineering/server-calendar'
-import { serverCardId } from '@hcengineering/server-card'
-import { serverChunterId } from '@hcengineering/server-chunter'
-import { serverCollaborationId } from '@hcengineering/server-collaboration'
-import { serverContactId } from '@hcengineering/server-contact'
-import { serverDocumentId } from '@hcengineering/server-document'
-import { serverDriveId } from '@hcengineering/server-drive'
-import { serverGmailId } from '@hcengineering/server-gmail'
-import { serverGuestId } from '@hcengineering/server-guest'
-import { serverHrId } from '@hcengineering/server-hr'
-import { serverInventoryId } from '@hcengineering/server-inventory'
-import { serverLeadId } from '@hcengineering/server-lead'
-import { serverNotificationId } from '@hcengineering/server-notification'
-import { serverRecruitId } from '@hcengineering/server-recruit'
-import { serverRequestId } from '@hcengineering/server-request'
-import { serverSettingId } from '@hcengineering/server-setting'
-import { serverTagsId } from '@hcengineering/server-tags'
-import { serverTaskId } from '@hcengineering/server-task'
-import { serverTelegramId } from '@hcengineering/server-telegram'
-import { serverTimeId } from '@hcengineering/server-time'
-import { serverTrackerId } from '@hcengineering/server-tracker'
-import { serverViewId } from '@hcengineering/server-view'
+import { addLocation } from '@intabiafusion/platform'
+import { serverActivityId } from '@intabiafusion/server-activity'
+import { serverAiBotId } from '@intabiafusion/server-ai-bot'
+import { serverAttachmentId } from '@intabiafusion/server-attachment'
+import { serverCalendarId } from '@intabiafusion/server-calendar'
+import { serverCardId } from '@intabiafusion/server-card'
+import { serverChunterId } from '@intabiafusion/server-chunter'
+import { serverCollaborationId } from '@intabiafusion/server-collaboration'
+import { serverContactId } from '@intabiafusion/server-contact'
+import { serverDocumentId } from '@intabiafusion/server-document'
+import { serverDriveId } from '@intabiafusion/server-drive'
+import { serverGmailId } from '@intabiafusion/server-gmail'
+import { serverGuestId } from '@intabiafusion/server-guest'
+import { serverHrId } from '@intabiafusion/server-hr'
+import { serverInventoryId } from '@intabiafusion/server-inventory'
+import { serverLeadId } from '@intabiafusion/server-lead'
+import { serverNotificationId } from '@intabiafusion/server-notification'
+import { serverRecruitId } from '@intabiafusion/server-recruit'
+import { serverRequestId } from '@intabiafusion/server-request'
+import { serverSettingId } from '@intabiafusion/server-setting'
+import { serverTagsId } from '@intabiafusion/server-tags'
+import { serverTaskId } from '@intabiafusion/server-task'
+import { serverTelegramId } from '@intabiafusion/server-telegram'
+import { serverTimeId } from '@intabiafusion/server-time'
+import { serverTrackerId } from '@intabiafusion/server-tracker'
+import { serverViewId } from '@intabiafusion/server-view'
 
-addLocation(serverActivityId, () => import('@hcengineering/server-activity-resources'))
-addLocation(serverAttachmentId, () => import('@hcengineering/server-attachment-resources'))
-addLocation(serverCollaborationId, () => import('@hcengineering/server-collaboration-resources'))
-addLocation(serverContactId, () => import('@hcengineering/server-contact-resources'))
-addLocation(serverNotificationId, () => import('@hcengineering/server-notification-resources'))
-addLocation(serverChunterId, () => import('@hcengineering/server-chunter-resources'))
-addLocation(serverInventoryId, () => import('@hcengineering/server-inventory-resources'))
-addLocation(serverLeadId, () => import('@hcengineering/server-lead-resources'))
-addLocation(serverRecruitId, () => import('@hcengineering/server-recruit-resources'))
-addLocation(serverSettingId, () => import('@hcengineering/server-setting-resources'))
-addLocation(serverTaskId, () => import('@hcengineering/server-task-resources'))
-addLocation(serverTrackerId, () => import('@hcengineering/server-tracker-resources'))
-addLocation(serverTagsId, () => import('@hcengineering/server-tags-resources'))
-addLocation(serverCardId, () => import('@hcengineering/server-card-resources'))
-addLocation(serverCalendarId, () => import('@hcengineering/server-calendar-resources'))
-addLocation(serverGmailId, () => import('@hcengineering/server-gmail-resources'))
-addLocation(serverTelegramId, () => import('@hcengineering/server-telegram-resources'))
-addLocation(serverHrId, () => import('@hcengineering/server-hr-resources'))
-addLocation(serverRequestId, () => import('@hcengineering/server-request-resources'))
-addLocation(serverViewId, () => import('@hcengineering/server-view-resources'))
-addLocation(serverDocumentId, () => import('@hcengineering/server-document-resources'))
-addLocation(serverTimeId, () => import('@hcengineering/server-time-resources'))
-addLocation(serverGuestId, () => import('@hcengineering/server-guest-resources'))
-addLocation(serverDriveId, () => import('@hcengineering/server-drive-resources'))
-addLocation(serverAiBotId, () => import('@hcengineering/server-ai-bot-resources'))
+addLocation(serverActivityId, () => import('@intabiafusion/server-activity-resources'))
+addLocation(serverAttachmentId, () => import('@intabiafusion/server-attachment-resources'))
+addLocation(serverCollaborationId, () => import('@intabiafusion/server-collaboration-resources'))
+addLocation(serverContactId, () => import('@intabiafusion/server-contact-resources'))
+addLocation(serverNotificationId, () => import('@intabiafusion/server-notification-resources'))
+addLocation(serverChunterId, () => import('@intabiafusion/server-chunter-resources'))
+addLocation(serverInventoryId, () => import('@intabiafusion/server-inventory-resources'))
+addLocation(serverLeadId, () => import('@intabiafusion/server-lead-resources'))
+addLocation(serverRecruitId, () => import('@intabiafusion/server-recruit-resources'))
+addLocation(serverSettingId, () => import('@intabiafusion/server-setting-resources'))
+addLocation(serverTaskId, () => import('@intabiafusion/server-task-resources'))
+addLocation(serverTrackerId, () => import('@intabiafusion/server-tracker-resources'))
+addLocation(serverTagsId, () => import('@intabiafusion/server-tags-resources'))
+addLocation(serverCardId, () => import('@intabiafusion/server-card-resources'))
+addLocation(serverCalendarId, () => import('@intabiafusion/server-calendar-resources'))
+addLocation(serverGmailId, () => import('@intabiafusion/server-gmail-resources'))
+addLocation(serverTelegramId, () => import('@intabiafusion/server-telegram-resources'))
+addLocation(serverHrId, () => import('@intabiafusion/server-hr-resources'))
+addLocation(serverRequestId, () => import('@intabiafusion/server-request-resources'))
+addLocation(serverViewId, () => import('@intabiafusion/server-view-resources'))
+addLocation(serverDocumentId, () => import('@intabiafusion/server-document-resources'))
+addLocation(serverTimeId, () => import('@intabiafusion/server-time-resources'))
+addLocation(serverGuestId, () => import('@intabiafusion/server-guest-resources'))
+addLocation(serverDriveId, () => import('@intabiafusion/server-drive-resources'))
+addLocation(serverAiBotId, () => import('@intabiafusion/server-ai-bot-resources'))
 
 function prepareTools (): {
   dbUrl: string

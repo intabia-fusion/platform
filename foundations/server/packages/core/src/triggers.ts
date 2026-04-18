@@ -30,10 +30,10 @@ import core, {
   type Tx,
   type TxCreateDoc,
   type WithLookup
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
-import { Analytics } from '@hcengineering/analytics'
-import { getResource, type Resource } from '@hcengineering/platform'
+import { Analytics } from '@intabiafusion/analytics'
+import { getResource, type Resource } from '@intabiafusion/platform'
 import type { Trigger, TriggerControl, TriggerFunc } from './types'
 
 import serverCore from './plugin'

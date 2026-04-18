@@ -22,13 +22,13 @@ import {
   type Status,
   type SpaceTypeDescriptor,
   type SpaceType
-} from '@hcengineering/core'
-import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import type { Asset, IntlString, Plugin, Resource } from '@intabiafusion/platform'
 
-import { plugin } from '@hcengineering/platform'
-import { type AnyComponent, type Location, type ResolvedLocation } from '@hcengineering/ui/src/types'
+import { plugin } from '@intabiafusion/platform'
+import { type AnyComponent, type Location, type ResolvedLocation } from '@intabiafusion/ui/src/types'
 
-import { Action, ActionCategory, ViewAction, Viewlet } from '@hcengineering/view'
+import { Action, ActionCategory, ViewAction, Viewlet } from '@intabiafusion/view'
 import {
   TestSuite,
   TestCase,

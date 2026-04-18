@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import attachmentP, { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
-  import contact, { Channel, Contact, getName as getContactName } from '@hcengineering/contact'
-  import core, { generateId, getCurrentAccount, Markup, Ref, toIdMap } from '@hcengineering/core'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
-  import templates, { TemplateDataProvider } from '@hcengineering/templates'
-  import { StyledTextEditor } from '@hcengineering/text-editor-resources'
-  import { EmptyMarkup, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
-  import { markupToHtml } from '@hcengineering/text-html'
+  import { Analytics } from '@intabiafusion/analytics'
+  import attachmentP, { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter } from '@intabiafusion/attachment-resources'
+  import contact, { Channel, Contact, getName as getContactName } from '@intabiafusion/contact'
+  import core, { generateId, getCurrentAccount, Markup, Ref, toIdMap } from '@intabiafusion/core'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { Integration } from '@intabiafusion/setting'
+  import templates, { TemplateDataProvider } from '@intabiafusion/templates'
+  import { StyledTextEditor } from '@intabiafusion/text-editor-resources'
+  import { EmptyMarkup, isEmptyMarkup, markupToJSON } from '@intabiafusion/text'
+  import { markupToHtml } from '@intabiafusion/text-html'
   import {
     Button,
     EditBox,
@@ -35,8 +35,8 @@
     Panel,
     Scroller,
     showPopup
-  } from '@hcengineering/ui'
-  import { GmailEvents } from '@hcengineering/gmail'
+  } from '@intabiafusion/ui'
+  import { GmailEvents } from '@intabiafusion/gmail'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import plugin from '../plugin'
   import Connect from './Connect.svelte'

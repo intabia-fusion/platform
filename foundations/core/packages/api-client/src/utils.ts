@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type WorkspaceLoginInfo, getClient as getAccountClient } from '@hcengineering/account-client'
-import { WorkspaceUuid } from '@hcengineering/core'
+import { type WorkspaceLoginInfo, getClient as getAccountClient } from '@intabiafusion/account-client'
+import { WorkspaceUuid } from '@intabiafusion/core'
 import { AuthOptions } from './types'
 import { loadServerConfig, ServerConfig } from './config'
 

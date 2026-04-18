@@ -13,31 +13,31 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import notification, { MessageNotificationType } from '@hcengineering/notification'
-import { type Asset, type IntlString } from '@hcengineering/platform'
-import type { BuildModelKey, KeyFilterPreset, Viewlet, ViewletDescriptor } from '@hcengineering/view'
-import questions from '@hcengineering/model-questions'
-import contact from '@hcengineering/contact'
-import tracker from '@hcengineering/model-tracker'
-import attachment from '@hcengineering/model-attachment'
-import print from '@hcengineering/model-print'
-import setting, { getRoleAttributeProps } from '@hcengineering/setting'
+import activity from '@intabiafusion/activity'
+import notification, { MessageNotificationType } from '@intabiafusion/notification'
+import { type Asset, type IntlString } from '@intabiafusion/platform'
+import type { BuildModelKey, KeyFilterPreset, Viewlet, ViewletDescriptor } from '@intabiafusion/view'
+import questions from '@intabiafusion/model-questions'
+import contact from '@intabiafusion/contact'
+import tracker from '@intabiafusion/model-tracker'
+import attachment from '@intabiafusion/model-attachment'
+import print from '@intabiafusion/model-print'
+import setting, { getRoleAttributeProps } from '@intabiafusion/setting'
 import {
   type Training,
   type TrainingAttempt,
   trainingId,
   type TrainingRequest,
   TrainingSpecialIds
-} from '@hcengineering/training'
+} from '@intabiafusion/training'
 
-import { AccountRole, type Data, type FindOptions, type Permission, type Ref } from '@hcengineering/core'
-import { Prop, type Builder } from '@hcengineering/model'
+import { AccountRole, type Data, type FindOptions, type Permission, type Ref } from '@intabiafusion/core'
+import { Prop, type Builder } from '@intabiafusion/model'
 
-import contacts from '@hcengineering/model-contact'
-import core, { defineCollaborators } from '@hcengineering/model-core'
-import view, { classPresenter, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
+import contacts from '@intabiafusion/model-contact'
+import core, { defineCollaborators } from '@intabiafusion/model-core'
+import view, { classPresenter, createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
 import training from './plugin'
 import {
   TTraining,
@@ -49,7 +49,7 @@ import {
 } from './types'
 import { roles } from './roles'
 export { trainingOperation } from './migration'
-export { trainingId } from '@hcengineering/training/src/index'
+export { trainingId } from '@intabiafusion/training/src/index'
 export { default } from './plugin'
 
 export function createModel (builder: Builder): void {

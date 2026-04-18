@@ -31,8 +31,8 @@ import {
   WorkspaceMode,
   type WorkspaceUserOperation,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import type {
   AccountAggregatedInfo,
   Integration,

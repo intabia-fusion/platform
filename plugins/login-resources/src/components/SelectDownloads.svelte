@@ -23,12 +23,12 @@
   // - Intended to be used at `login/downloads` (rendered from `LoginApp`)
 
   import { onMount } from 'svelte'
-  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
-  import type { IntlString } from '@hcengineering/platform'
-  import login from '@hcengineering/login'
+  import { getEmbeddedLabel, getMetadata } from '@intabiafusion/platform'
+  import type { IntlString } from '@intabiafusion/platform'
+  import login from '@intabiafusion/login'
   import { goTo } from '../utils'
-  import { Scroller, Spinner, IconBack, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { themeStore, AccentColor } from '@hcengineering/theme'
+  import { Scroller, Spinner, IconBack, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { themeStore, AccentColor } from '@intabiafusion/theme'
   import FormButton from './internal/FormButton.svelte'
   import Label from './internal/Label.svelte'
   import PlatformIcon from './internal/PlatformIcon.svelte'

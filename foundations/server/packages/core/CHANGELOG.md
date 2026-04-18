@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/server-core
+# Change Log - @intabiafusion/server-core
 
 This log was last generated on Wed, 26 Nov 2025 16:04:43 GMT and should not be manually modified.
 

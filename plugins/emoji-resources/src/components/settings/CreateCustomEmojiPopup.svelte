@@ -1,12 +1,12 @@
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { Button, EditBox, Label, Modal, showPopup } from '@hcengineering/ui'
+  import core from '@intabiafusion/core'
+  import { Button, EditBox, Label, Modal, showPopup } from '@intabiafusion/ui'
 
   import { getEmojiByShortCode } from '../../utils'
-  import emojiPlugin, { shortcodeRegex } from '@hcengineering/emoji'
+  import emojiPlugin, { shortcodeRegex } from '@intabiafusion/emoji'
   import { createEventDispatcher } from 'svelte'
-  import { getClient, MessageBox, uploadFile } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
+  import { getClient, MessageBox, uploadFile } from '@intabiafusion/presentation'
+  import { IntlString } from '@intabiafusion/platform'
 
   const client = getClient()
   const dispatch = createEventDispatcher()

@@ -17,9 +17,9 @@ import {
   SortingOrder,
   systemAccountUuid,
   WorkspaceUuid
-} from '@hcengineering/core'
-import { getWorkspaceClient, type HulylakeWorkspaceClient, type JsonPatch } from '@hcengineering/hulylake-client'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { getWorkspaceClient, type HulylakeWorkspaceClient, type JsonPatch } from '@intabiafusion/hulylake-client'
+import { generateToken } from '@intabiafusion/server-token'
 import {
   Attachment,
   AttachmentID,
@@ -39,7 +39,7 @@ import {
   MessagesGroupsDoc,
   Thread
   , ComparisonOperator
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 import { v4 as uuid } from 'uuid'
 
 import { Metadata } from './types'

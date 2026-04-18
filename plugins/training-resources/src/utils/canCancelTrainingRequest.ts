@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { TrainingRequest } from '@hcengineering/training'
+import type { TrainingRequest } from '@intabiafusion/training'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export function canCancelTrainingRequest (object: TrainingRequest): boolean {

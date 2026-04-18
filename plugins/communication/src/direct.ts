@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Card } from '@hcengineering/card'
-import { Ref } from '@hcengineering/core'
-import { Person } from '@hcengineering/contact'
+import { Card } from '@intabiafusion/card'
+import { Ref } from '@intabiafusion/core'
+import { Person } from '@intabiafusion/contact'
 
 export interface Direct extends Card {
   // TODO: Do we neet it? Can we just reuse collaborators?

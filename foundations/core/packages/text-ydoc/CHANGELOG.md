@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/text-ydoc
+# Change Log - @intabiafusion/text-ydoc
 
 This log was last generated on Mon, 27 Oct 2025 17:09:21 GMT and should not be manually modified.
 

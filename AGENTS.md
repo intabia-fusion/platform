@@ -65,11 +65,11 @@ After modifying packages, validate ONLY the affected package(s) — never run a 
 ```bash
 # Strictest: lint supersets validate (compile + typecheck + eslint).
 # Use this as the default check after edits.
-rush fast-build:lint --to @hcengineering/<pkg>
+rush fast-build:lint --to @intabiafusion/<pkg>
 
 # Lighter: compile + typecheck only, no eslint. Use when you only need
 # to confirm types compile and do not care about lint rules yet.
-rush fast-build:validate --to @hcengineering/<pkg>
+rush fast-build:validate --to @intabiafusion/<pkg>
 ```
 
 `fast-build:lint` is a strict superset of `fast-build:validate` — it runs the same compile/typecheck plus eslint. Prefer `:lint` for the final check; `:validate` is only useful for a faster intermediate pass.
@@ -97,7 +97,7 @@ Service changes (`services/`, `pods/`) require Docker rebuild:
 
 ```bash
 # Build Docker image
-rush fast-build:docker-build --to @hcengineering/pod-ai-bot
+rush fast-build:docker-build --to @intabiafusion/pod-ai-bot
 
 # Restart container
 docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate

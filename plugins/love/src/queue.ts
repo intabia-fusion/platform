@@ -1,5 +1,5 @@
-import { Person } from '@hcengineering/contact'
-import type { Ref } from '@hcengineering/core'
+import { Person } from '@intabiafusion/contact'
+import type { Ref } from '@intabiafusion/core'
 import { MeetingMinutes, RoomMetadata } from './types'
 
 export enum QueueMeetingEvent {

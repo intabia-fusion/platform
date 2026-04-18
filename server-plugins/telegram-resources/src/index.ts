@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import contact, { Channel } from '@hcengineering/contact'
+import activity, { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
+import chunter, { ChatMessage } from '@intabiafusion/chunter'
+import contact, { Channel } from '@intabiafusion/contact'
 import core, {
   PersonId,
   Class,
@@ -29,28 +29,28 @@ import core, {
   TxProcessor,
   TxCUD,
   TxUpdateDoc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import notification, {
   InboxNotification,
   MentionInboxNotification,
   NotificationProviderSetting,
   NotificationType
-} from '@hcengineering/notification'
-import { getAccountBySocialId } from '@hcengineering/server-contact'
-import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
+} from '@intabiafusion/notification'
+import { getAccountBySocialId } from '@intabiafusion/server-contact'
+import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@intabiafusion/server-core'
 import {
   getNotificationInboxLink,
   getTranslatedNotificationContent,
   getNotificationMessages
-} from '@hcengineering/server-notification-resources'
+} from '@intabiafusion/server-notification-resources'
 import {
   type TelegramNotificationQueueMessage,
   TelegramQueueMessageType,
   TelegramQueueMessage
-} from '@hcengineering/server-telegram'
-import telegram, { TelegramMessage } from '@hcengineering/telegram'
-import { jsonToHTML, markupToJSON } from '@hcengineering/text'
-import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
+} from '@intabiafusion/server-telegram'
+import telegram, { TelegramMessage } from '@intabiafusion/telegram'
+import { jsonToHTML, markupToJSON } from '@intabiafusion/text'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@intabiafusion/server-notification'
 
 /**
  * @public

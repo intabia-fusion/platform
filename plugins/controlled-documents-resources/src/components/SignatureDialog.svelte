@@ -16,8 +16,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import login from '@hcengineering/login'
-  import { getClient as getAccountClient } from '@hcengineering/account-client'
+  import login from '@intabiafusion/login'
+  import { getClient as getAccountClient } from '@intabiafusion/account-client'
   import {
     ERROR,
     IntlString,
@@ -27,11 +27,11 @@
     Status,
     getMetadata,
     translate
-  } from '@hcengineering/platform'
-  import { EditBox, StylishEdit, ModernDialog } from '@hcengineering/ui'
-  import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import contact, { SocialIdentityRef } from '@hcengineering/contact'
+  } from '@intabiafusion/platform'
+  import { EditBox, StylishEdit, ModernDialog } from '@intabiafusion/ui'
+  import { getCurrentAccount, SocialIdType } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import contact, { SocialIdentityRef } from '@intabiafusion/contact'
 
   import documents from '../plugin'
   import StatusControl from './requests/StatusControl.svelte'

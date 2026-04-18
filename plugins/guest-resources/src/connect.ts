@@ -1,6 +1,6 @@
-import { Analytics } from '@hcengineering/analytics'
-import client from '@hcengineering/client'
-import { setCurrentEmployee, type Employee } from '@hcengineering/contact'
+import { Analytics } from '@intabiafusion/analytics'
+import client from '@intabiafusion/client'
+import { setCurrentEmployee, type Employee } from '@intabiafusion/contact'
 import core, {
   ClientConnectEvent,
   concatLink,
@@ -11,9 +11,9 @@ import core, {
   type PersonId,
   type Ref,
   type Version
-} from '@hcengineering/core'
-import login, { type WorkspaceLoginInfo } from '@hcengineering/login'
-import { getMetadata, getResource, setMetadata } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import login, { type WorkspaceLoginInfo } from '@intabiafusion/login'
+import { getMetadata, getResource, setMetadata } from '@intabiafusion/platform'
 import presentation, {
   loadServerConfig,
   refreshClient,
@@ -21,9 +21,9 @@ import presentation, {
   setCommunicationClient,
   setPresentationCookie,
   upgradeDownloadProgress
-} from '@hcengineering/presentation'
-import { desktopPlatform, getCurrentLocation } from '@hcengineering/ui'
-import { logOut } from '@hcengineering/workbench'
+} from '@intabiafusion/presentation'
+import { desktopPlatform, getCurrentLocation } from '@intabiafusion/ui'
+import { logOut } from '@intabiafusion/workbench'
 import { get, writable } from 'svelte/store'
 
 export const versionError = writable<string | undefined>(undefined)

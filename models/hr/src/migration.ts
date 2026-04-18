@@ -21,8 +21,8 @@ import {
   type Doc,
   DOMAIN_MODEL_TX,
   type TxCUD
-} from '@hcengineering/core'
-import { type Department } from '@hcengineering/hr'
+} from '@intabiafusion/core'
+import { type Department } from '@intabiafusion/hr'
 import {
   migrateSpace,
   tryMigrate,
@@ -30,8 +30,8 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import core, { DOMAIN_SPACE, getAccountsFromTxes } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import core, { DOMAIN_SPACE, getAccountsFromTxes } from '@intabiafusion/model-core'
 
 import hr, { DOMAIN_HR, hrId } from './index'
 

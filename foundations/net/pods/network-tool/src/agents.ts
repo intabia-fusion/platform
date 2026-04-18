@@ -1,4 +1,4 @@
-import { createNetworkClient } from '@hcengineering/network-client'
+import { createNetworkClient } from '@intabiafusion/network-client'
 import { program } from 'commander'
 
 export function registerAgentOperations (): void {

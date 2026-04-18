@@ -15,7 +15,7 @@
 
 import { getWorkspaceIds } from '../utils'
 
-jest.mock('@hcengineering/account-client', () => ({
+jest.mock('@intabiafusion/account-client', () => ({
   getClient: jest.fn()
 }))
 
@@ -26,7 +26,7 @@ jest.mock('../config', () => ({
 describe('utils', () => {
   describe('getWorkspaceIds', () => {
     const mockGetWorkspaceInfo = jest.fn()
-    const mockGetClient = jest.requireMock('@hcengineering/account-client').getClient
+    const mockGetClient = jest.requireMock('@intabiafusion/account-client').getClient
 
     beforeEach(() => {
       jest.clearAllMocks()

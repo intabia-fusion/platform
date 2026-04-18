@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
-  import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import { MasterTag } from '@intabiafusion/card'
+  import { Ref } from '@intabiafusion/core'
+  import { IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
+  import { clearSettingsStore } from '@intabiafusion/setting-resources'
   import {
     Icon,
     IconOpenedArrow,
@@ -25,10 +25,10 @@
     getCurrentResolvedLocation,
     navigate,
     resolvedLocationStore
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
   import card from '../../plugin'
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
 
   export let categoryName: string
 

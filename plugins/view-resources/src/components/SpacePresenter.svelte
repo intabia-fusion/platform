@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Space } from '@hcengineering/core'
+  import type { Space } from '@intabiafusion/core'
 
   export let value: Space
   export let accent = false

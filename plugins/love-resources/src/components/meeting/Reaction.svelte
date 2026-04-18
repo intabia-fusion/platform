@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { getBlobRef } from '@hcengineering/presentation'
-  import { getEmojiByShortCode } from '@hcengineering/emoji-resources'
-  import { isCustomEmoji } from '@hcengineering/emoji'
+  import { getBlobRef } from '@intabiafusion/presentation'
+  import { getEmojiByShortCode } from '@intabiafusion/emoji-resources'
+  import { isCustomEmoji } from '@intabiafusion/emoji'
 
   export let emoji: string = ''
   export let width: number = 0

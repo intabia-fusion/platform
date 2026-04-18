@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import pulse, { pulseId } from '@hcengineering/pulse'
-import { mergeIds } from '@hcengineering/platform'
+import pulse, { pulseId } from '@intabiafusion/pulse'
+import { mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(pulseId, pulse, {})

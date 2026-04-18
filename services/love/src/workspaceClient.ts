@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import activity, { ActivityInfoMessage } from '@hcengineering/activity'
-import { RestClient } from '@hcengineering/api-client'
-import attachment, { Attachment } from '@hcengineering/attachment'
-import contact, { Person } from '@hcengineering/contact'
+import activity, { ActivityInfoMessage } from '@intabiafusion/activity'
+import { RestClient } from '@intabiafusion/api-client'
+import attachment, { Attachment } from '@intabiafusion/attachment'
+import contact, { Person } from '@intabiafusion/contact'
 import core, {
   Data,
   MeasureContext,
@@ -29,8 +29,8 @@ import core, {
   type WorkspaceUuid,
   DocumentUpdate,
   SocialIdType
-} from '@hcengineering/core'
-import drive, { createFile } from '@hcengineering/drive'
+} from '@intabiafusion/core'
+import drive, { createFile } from '@intabiafusion/drive'
 import love, {
   MeetingMinutes,
   MeetingStatus,
@@ -42,9 +42,9 @@ import love, {
   Room,
   TranscriptionState,
   getFreeRoomPlace
-} from '@hcengineering/love'
-import { Asset, IntlString } from '@hcengineering/platform'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/love'
+import { Asset, IntlString } from '@intabiafusion/platform'
+import { generateToken } from '@intabiafusion/server-token'
 import { getClient } from './client'
 import { RecordingPreset } from './preset'
 

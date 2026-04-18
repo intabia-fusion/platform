@@ -5,7 +5,7 @@ import {
   type ReccuringEvent,
   type ReccuringInstance,
   generateEventId
-} from '@hcengineering/calendar'
+} from '@intabiafusion/calendar'
 import {
   type Client,
   type Doc,
@@ -15,15 +15,15 @@ import {
   type Timestamp,
   getCurrentAccount,
   toIdMap
-} from '@hcengineering/core'
-import presentation, { createQuery, getClient, onClient } from '@hcengineering/presentation'
-import { closePopup, DAY, showPopup } from '@hcengineering/ui'
+} from '@intabiafusion/core'
+import presentation, { createQuery, getClient, onClient } from '@intabiafusion/presentation'
+import { closePopup, DAY, showPopup } from '@intabiafusion/ui'
 import { writable } from 'svelte/store'
 import UpdateRecInstancePopup from './components/UpdateRecInstancePopup.svelte'
 import calendar from './plugin'
-import { getMetadata } from '@hcengineering/platform'
-import login from '@hcengineering/login'
-import { getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
+import { getMetadata } from '@intabiafusion/platform'
+import login from '@intabiafusion/login'
+import { getClient as getAccountClientRaw, type AccountClient } from '@intabiafusion/account-client'
 import CalDavAccess from './components/CalDavAccess.svelte'
 
 export function saveUTC (date: Timestamp): Timestamp {

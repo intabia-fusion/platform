@@ -23,9 +23,9 @@
     getAvatarProvider,
     getAvatarProviderId,
     Person
-  } from '@hcengineering/contact'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { getBlobURL, getClient, reduceCalls, sizeToWidth } from '@hcengineering/presentation'
+  } from '@intabiafusion/contact'
+  import { Asset, getResource } from '@intabiafusion/platform'
+  import { getBlobURL, getClient, reduceCalls, sizeToWidth } from '@intabiafusion/presentation'
   import {
     AnySvelteComponent,
     ColorDefinition,
@@ -35,9 +35,9 @@
     IconSize,
     themeStore,
     tooltip
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { onMount } from 'svelte'
-  import { AccountUuid, type Data, PersonUuid, Ref, type WithLookup } from '@hcengineering/core'
+  import { AccountUuid, type Data, PersonUuid, Ref, type WithLookup } from '@intabiafusion/core'
 
   import { loadUsersStatus, statusByUserStore } from '../utils'
   import AvatarInstance from './AvatarInstance.svelte'

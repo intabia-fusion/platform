@@ -1,4 +1,4 @@
-import { createNetworkClient } from '@hcengineering/network-client'
+import { createNetworkClient } from '@intabiafusion/network-client'
 import {
   containerOnAgentEndpointRef,
   containerUuid,
@@ -9,7 +9,7 @@ import {
   type ContainerReference,
   type ContainerUuid,
   type GetOptions
-} from '@hcengineering/network-core'
+} from '@intabiafusion/network-core'
 import { program } from 'commander'
 import { addShutdownHandler, tickManager } from './utils'
 

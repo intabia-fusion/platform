@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getCurrentLocation, Loading, TimeLeft } from '@hcengineering/ui'
+  import { getCurrentLocation, Loading, TimeLeft } from '@intabiafusion/ui'
   import Label from './internal/Label.svelte'
-  import { logIn } from '@hcengineering/workbench'
-  import { trackOAuthCompletion } from '@hcengineering/analytics-providers'
-  import { type LoginInfoRequest, type LoginInfoByToken } from '@hcengineering/account-client'
-  import platform, { OK, PlatformError, Status, unknownError } from '@hcengineering/platform'
+  import { logIn } from '@intabiafusion/workbench'
+  import { trackOAuthCompletion } from '@intabiafusion/analytics-providers'
+  import { type LoginInfoRequest, type LoginInfoByToken } from '@intabiafusion/account-client'
+  import platform, { OK, PlatformError, Status, unknownError } from '@intabiafusion/platform'
 
   import type { Field } from '../types'
   import {

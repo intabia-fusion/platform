@@ -3,11 +3,11 @@
 -->
 
 <script lang="ts">
-  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import { type TrainingAttempt, TrainingAttemptState } from '@hcengineering/training'
-  import { DocumentQuery } from '@hcengineering/core'
-  import { type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
-  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
+  import { type TrainingAttempt, TrainingAttemptState } from '@intabiafusion/training'
+  import { DocumentQuery } from '@intabiafusion/core'
+  import { type IModeSelector, navigate, rawLocation } from '@intabiafusion/ui'
+  import { SpecialView } from '@intabiafusion/workbench-resources'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
   import { traineesResultsRoute, TraineesResultsRouteTab } from '../routing/routes/traineesResultsRoute'

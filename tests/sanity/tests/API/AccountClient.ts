@@ -1,7 +1,7 @@
-import { getClient as getClientRaw, type AccountClient } from '@hcengineering/account-client'
+import { getClient as getClientRaw, type AccountClient } from '@intabiafusion/account-client'
 import { LocalUrl, PlatformAdmin } from '../utils'
-import { systemAccountUuid } from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
+import { systemAccountUuid } from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
 
 let adminAccountClient: AccountClient
 

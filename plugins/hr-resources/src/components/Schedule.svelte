@@ -14,13 +14,13 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { CalendarMode } from '@hcengineering/calendar-resources'
-  import calendar from '@hcengineering/calendar-resources/src/plugin'
-  import { DocumentQuery, Ref } from '@hcengineering/core'
-  import { Department, Staff } from '@hcengineering/hr'
-  import { createQuery } from '@hcengineering/presentation'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import type { TabItem, DropdownIntlItem } from '@hcengineering/ui'
+  import { CalendarMode } from '@intabiafusion/calendar-resources'
+  import calendar from '@intabiafusion/calendar-resources/src/plugin'
+  import { DocumentQuery, Ref } from '@intabiafusion/core'
+  import { Department, Staff } from '@intabiafusion/hr'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import type { TabItem, DropdownIntlItem } from '@intabiafusion/ui'
   import {
     ModernButton,
     ButtonIcon,
@@ -36,10 +36,10 @@
     deviceOptionsStore as deviceInfo,
     tableToCSV,
     showPopup
-  } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
-  import { getCurrentEmployee } from '@hcengineering/contact'
+  } from '@intabiafusion/ui'
+  import view, { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
 
   import hr from '../plugin'
 

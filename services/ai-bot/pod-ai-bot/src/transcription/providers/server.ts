@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import { TranscriptionOptions, TranscriptionProvider, TranscriptionResult } from '../types'
 import { ClisrServer } from '@intabiafusion/clisr'
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { AccountClient } from '@hcengineering/account-client'
-import { calendarIntegrationKind } from '@hcengineering/calendar'
-import { MeasureContext, TxOperations } from '@hcengineering/core'
+import { AccountClient } from '@intabiafusion/account-client'
+import { calendarIntegrationKind } from '@intabiafusion/calendar'
+import { MeasureContext, TxOperations } from '@intabiafusion/core'
 import { getClient } from './client'
 import { IncomingSyncManager } from './sync'
 import { GoogleEmail, Token } from './types'

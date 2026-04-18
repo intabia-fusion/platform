@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxUpdateDoc } from '@hcengineering/core'
-import { TriggerControl } from '@hcengineering/server-core'
-import task, { Task } from '@hcengineering/task'
+import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxUpdateDoc } from '@intabiafusion/core'
+import { TriggerControl } from '@intabiafusion/server-core'
+import task, { Task } from '@intabiafusion/task'
 
 /**
  * @public

@@ -16,17 +16,17 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Request, Response } from 'express'
-import { MeasureContext } from '@hcengineering/core'
-import { createMessages } from '@hcengineering/mail-common'
-import { createRestTxOperations } from '@hcengineering/api-client'
+import { MeasureContext } from '@intabiafusion/core'
+import { createMessages } from '@intabiafusion/mail-common'
+import { createRestTxOperations } from '@intabiafusion/api-client'
 
 import { handleMtaHook } from '../handlerMta'
 import * as client from '../client'
 import { type MtaMessage } from '../types'
 
 // Mock only the functions that need to be mocked for testing
-jest.mock('@hcengineering/mail-common', () => {
-  const actualMailCommon = jest.requireActual('@hcengineering/mail-common')
+jest.mock('@intabiafusion/mail-common', () => {
+  const actualMailCommon = jest.requireActual('@intabiafusion/mail-common')
   return {
     ...actualMailCommon,
     createMessages: jest.fn(),
@@ -62,7 +62,7 @@ const mockLoginInfo = {
   token: 'test-token'
 }
 
-jest.mock('@hcengineering/account-client', () => ({
+jest.mock('@intabiafusion/account-client', () => ({
   getClient: jest.fn().mockImplementation(() => ({
     selectWorkspace: jest.fn().mockResolvedValue(mockLoginInfo),
     getLoginInfoByToken: jest.fn().mockResolvedValue(mockLoginInfo),
@@ -90,7 +90,7 @@ const mockTxOperations = {
   update: jest.fn().mockResolvedValue({})
 }
 
-jest.mock('@hcengineering/api-client', () => ({
+jest.mock('@intabiafusion/api-client', () => ({
   createRestTxOperations: jest.fn().mockImplementation(() => mockTxOperations)
 }))
 

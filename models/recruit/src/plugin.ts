@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Ref, Status } from '@hcengineering/core'
-import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
-import type { IntlString, Status as OperationStatus, Resource } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import { recruitId } from '@hcengineering/recruit'
-import recruit from '@hcengineering/recruit-resources/src/plugin'
-import { type ProjectType, type TaskTypeDescriptor } from '@hcengineering/task'
-import type { AnyComponent, Location } from '@hcengineering/ui/src/types'
+import type { Client, Doc, Ref, Status } from '@intabiafusion/core'
+import { type MessageNotificationType, type NotificationGroup } from '@intabiafusion/notification'
+import type { IntlString, Status as OperationStatus, Resource } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import { recruitId } from '@intabiafusion/recruit'
+import recruit from '@intabiafusion/recruit-resources/src/plugin'
+import { type ProjectType, type TaskTypeDescriptor } from '@intabiafusion/task'
+import type { AnyComponent, Location } from '@intabiafusion/ui/src/types'
 import type {
   Action,
   ActionCategory,
@@ -29,7 +29,7 @@ import type {
   ViewQueryAction,
   Viewlet,
   ViewletViewAction
-} from '@hcengineering/view'
+} from '@intabiafusion/view'
 
 export default mergeIds(recruitId, recruit, {
   action: {

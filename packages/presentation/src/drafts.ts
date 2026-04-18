@@ -1,4 +1,4 @@
-import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
+import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@intabiafusion/ui'
 import { deepEqual } from 'fast-equals'
 import { type Unsubscriber, writable } from 'svelte/store'
 import presentation from './plugin'

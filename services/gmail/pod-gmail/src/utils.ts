@@ -22,13 +22,13 @@ import {
   Space,
   systemAccountUuid,
   WorkspaceUuid
-} from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
 import { deepEqual } from 'fast-equals'
-import { type KeyValueClient, getClient as getKeyValueClient } from '@hcengineering/kvs-client'
+import { type KeyValueClient, getClient as getKeyValueClient } from '@intabiafusion/kvs-client'
 import { type Token, type User } from './types'
 import config from './config'
-import { Integration } from '@hcengineering/account-client'
+import { Integration } from '@intabiafusion/account-client'
 
 export class DeferredPromise<T = any> {
   public readonly promise: Promise<T>

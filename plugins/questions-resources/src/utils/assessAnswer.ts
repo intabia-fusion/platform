@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Answer, Assessment, Percentage, Question } from '@hcengineering/questions'
-import { getResource } from '@hcengineering/platform'
+import type { Answer, Assessment, Percentage, Question } from '@intabiafusion/questions'
+import { getResource } from '@intabiafusion/platform'
 import { getQuestionMixin } from './getQuestionMixin'
 import { isAssessment } from './isAssessment'
 

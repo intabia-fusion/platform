@@ -4,9 +4,9 @@ import core, {
   type Blob,
   type MeasureContext,
   type WorkspaceDataId
-} from '@hcengineering/core'
-import { getDataId } from '@hcengineering/server-core'
-import type { BlobStorageIterator, BucketInfo, StorageAdapter, UploadedObjectInfo } from '@hcengineering/storage'
+} from '@intabiafusion/core'
+import { getDataId } from '@intabiafusion/server-core'
+import type { BlobStorageIterator, BucketInfo, StorageAdapter, UploadedObjectInfo } from '@intabiafusion/storage'
 import { Readable } from 'stream'
 
 export class MemStorageAdapter implements StorageAdapter {

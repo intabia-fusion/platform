@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid, WorkspaceUuid, type Client } from '@hcengineering/core'
-import { generateToken, type Token } from '@hcengineering/server-token'
+import { systemAccountUuid, WorkspaceUuid, type Client } from '@intabiafusion/core'
+import { generateToken, type Token } from '@intabiafusion/server-token'
 
-import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { createClient, getTransactorEndpoint } from '@intabiafusion/server-client'
 
 export class SignController {
   private readonly clients: Map<string, Client> = new Map<string, Client>()

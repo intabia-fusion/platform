@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
+import type { Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
 
-export { DOMAIN_PREFERENCE } from '@hcengineering/preference'
+export { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
 
 /**
  * @public

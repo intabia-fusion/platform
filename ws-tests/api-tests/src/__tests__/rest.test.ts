@@ -20,7 +20,7 @@ import {
   loadServerConfig,
   type RestClient,
   type WorkspaceToken
-} from '@hcengineering/api-client'
+} from '@intabiafusion/api-client'
 import core, {
   buildSocialIdString,
   generateId,
@@ -35,11 +35,11 @@ import core, {
   type Space,
   type TxCreateDoc,
   type TxOperations
-} from '@hcengineering/core'
-import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
-import chunter from '@hcengineering/chunter'
-import contact, { ensureEmployee, type SocialIdentityRef, type Person } from '@hcengineering/contact'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { type AccountClient, getClient as getAccountClient } from '@intabiafusion/account-client'
+import chunter from '@intabiafusion/chunter'
+import contact, { ensureEmployee, type SocialIdentityRef, type Person } from '@intabiafusion/contact'
+import { generateToken } from '@intabiafusion/server-token'
 
 describe('rest-api-server', () => {
   const testCtx = new MeasureMetricsContext('test', {})

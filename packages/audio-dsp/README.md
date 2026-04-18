@@ -1,4 +1,4 @@
-# @hcengineering/audio-dsp
+# @intabiafusion/audio-dsp
 
 Audio Digital Signal Processing library for Huly platform.
 
@@ -13,7 +13,7 @@ Audio Digital Signal Processing library for Huly platform.
 ## Installation
 
 ```bash
-rush add -p @hcengineering/audio-dsp
+rush add -p @intabiafusion/audio-dsp
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ rush add -p @hcengineering/audio-dsp
 ### WAV File Operations
 
 ```typescript
-import { parseWavHeader, createWavFile, extractWavSamples } from '@hcengineering/audio-dsp'
+import { parseWavHeader, createWavFile, extractWavSamples } from '@intabiafusion/audio-dsp'
 
 // Parse WAV header
 const header = parseWavHeader(wavData)
@@ -37,7 +37,7 @@ const wavFile = createWavFile(samples, 16000, 1)
 ### Noise Reduction
 
 ```typescript
-import { reduceNoise, NoiseReducer } from '@hcengineering/audio-dsp'
+import { reduceNoise, NoiseReducer } from '@intabiafusion/audio-dsp'
 
 // Simple usage
 const denoisedSamples = reduceNoise(samples, sampleRate, {
@@ -64,7 +64,7 @@ console.log(`Average reduction: ${result.stats.averageReductionDb} dB`)
 ### Voice Activity Detection
 
 ```typescript
-import { detectVoiceActivity, analyzeAudio, isFrameSpeech } from '@hcengineering/audio-dsp'
+import { detectVoiceActivity, analyzeAudio, isFrameSpeech } from '@intabiafusion/audio-dsp'
 
 // Simple VAD
 const vadResult = detectVoiceActivity(samples, 0.02, 0.1)
@@ -85,7 +85,7 @@ const hasSpeech = isFrameSpeech(analysis, 0.02, 0.1)
 ### FFT Operations
 
 ```typescript
-import { fft, ifft, stft, istft, createHannWindow } from '@hcengineering/audio-dsp'
+import { fft, ifft, stft, istft, createHannWindow } from '@intabiafusion/audio-dsp'
 
 // Forward FFT
 const { real, imag } = fft(samples)
@@ -104,7 +104,7 @@ const output = istft(frames, 512, 256, window)
 ### Audio Normalization
 
 ```typescript
-import { normalizeAudio, getAudioStats, applyGain } from '@hcengineering/audio-dsp'
+import { normalizeAudio, getAudioStats, applyGain } from '@intabiafusion/audio-dsp'
 
 // Get audio statistics
 const stats = getAudioStats(samples)

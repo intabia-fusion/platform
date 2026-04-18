@@ -1,4 +1,4 @@
-import { type Token, decodeToken } from '@hcengineering/server-token'
+import { type Token, decodeToken } from '@intabiafusion/server-token'
 import { type IncomingHttpHeaders } from 'http'
 
 const extractCookieTokens = (cookie?: string): string[] => {

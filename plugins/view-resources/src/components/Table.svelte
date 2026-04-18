@@ -28,9 +28,9 @@
     TypedSpace,
     getObjectValue,
     mergeQueries
-  } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { createQuery, getClient, reduceCalls, updateAttribute } from '@intabiafusion/presentation'
   import ui, {
     Button,
     CheckBox,
@@ -41,8 +41,8 @@
     lazyObserver,
     mouseAttractor,
     resizeObserver
-  } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onMount } from 'svelte'
   import { showMenu } from '../actions'
@@ -51,9 +51,9 @@
   import IconUpDown from './icons/UpDown.svelte'
   import { getResultOptions, getResultQuery } from '../viewOptions'
   import { canEditSpace } from '../visibilityTester'
-  import contact, { PermissionsStore } from '@hcengineering/contact'
+  import contact, { PermissionsStore } from '@intabiafusion/contact'
   import { Readable } from 'svelte/store'
-  import { getResource } from '@hcengineering/platform'
+  import { getResource } from '@intabiafusion/platform'
   import { canChangeAttribute } from '../permissions'
 
   export let _class: Ref<Class<Doc>>

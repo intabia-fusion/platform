@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'
+  import contact, { Employee } from '@intabiafusion/contact'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { IntlString, translateCB } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { Button, eventToHTMLElement, showPopup, themeStore } from '@intabiafusion/ui'
   import UsersPopup from './UsersPopup.svelte'
 
   export let value: Doc

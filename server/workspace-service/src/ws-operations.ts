@@ -1,4 +1,4 @@
-import { type AccountClient } from '@hcengineering/account-client'
+import { type AccountClient } from '@intabiafusion/account-client'
 import core, {
   Hierarchy,
   ModelDb,
@@ -14,9 +14,9 @@ import core, {
   type Version,
   type WorkspaceIds,
   type WorkspaceInfoWithStatus
-} from '@hcengineering/core'
-import { consoleModelLogger, type MigrateMode, type MigrateOperation, type ModelLogger } from '@hcengineering/model'
-import { getTransactorEndpoint } from '@hcengineering/server-client'
+} from '@intabiafusion/core'
+import { consoleModelLogger, type MigrateMode, type MigrateOperation, type ModelLogger } from '@intabiafusion/model'
+import { getTransactorEndpoint } from '@intabiafusion/server-client'
 import {
   SessionDataImpl,
   wrapPipeline,
@@ -24,11 +24,11 @@ import {
   type PlatformQueueProducer,
   type QueueWorkspaceMessage,
   type StorageAdapter
-} from '@hcengineering/server-core'
-import { getServerPipeline, getTxAdapterFactory } from '@hcengineering/server-pipeline'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
-import { generateToken } from '@hcengineering/server-token'
-import { initializeWorkspace, initModel, prepareTools, updateModel, upgradeModel } from '@hcengineering/server-tool'
+} from '@intabiafusion/server-core'
+import { getServerPipeline, getTxAdapterFactory } from '@intabiafusion/server-pipeline'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import { generateToken } from '@intabiafusion/server-token'
+import { initializeWorkspace, initModel, prepareTools, updateModel, upgradeModel } from '@intabiafusion/server-tool'
 
 /**
  * @public

@@ -23,9 +23,9 @@ import {
   type WorkspaceUuid,
   type AccountUuid,
   systemAccountUuid
-} from '@hcengineering/core'
-import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
-import { decodeToken, decodeTokenVerbose } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import platform, { PlatformError, Status, Severity, getMetadata } from '@intabiafusion/platform'
+import { decodeToken, decodeTokenVerbose } from '@intabiafusion/server-token'
 
 import * as utils from '../utils'
 import { type AccountDB, type SocialId } from '../types'
@@ -54,8 +54,8 @@ import {
 import { accountPlugin } from '../plugin'
 
 // Mock platform
-jest.mock('@hcengineering/platform', () => {
-  const actual = jest.requireActual('@hcengineering/platform')
+jest.mock('@intabiafusion/platform', () => {
+  const actual = jest.requireActual('@intabiafusion/platform')
   return {
     ...actual,
     ...actual.default,
@@ -65,7 +65,7 @@ jest.mock('@hcengineering/platform', () => {
 })
 
 // Mock server-token
-jest.mock('@hcengineering/server-token', () => ({
+jest.mock('@intabiafusion/server-token', () => ({
   decodeTokenVerbose: jest.fn(),
   decodeToken: jest.fn(),
   generateToken: jest.fn().mockImplementation((account, workspace, extra, _, options) => {

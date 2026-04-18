@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccessLevel, Calendar, Event, generateEventId, getAllEvents } from '@hcengineering/calendar'
-  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { AccessLevel, Calendar, Event, generateEventId, getAllEvents } from '@intabiafusion/calendar'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
   import {
     Class,
     Doc,
@@ -24,9 +24,9 @@
     SortingOrder,
     Timestamp,
     getCurrentAccount
-  } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     MonthCalendar,
@@ -36,7 +36,7 @@
     showPopup,
     AnySvelteComponent,
     deviceOptionsStore as deviceInfo
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
 
   import { CalendarMode, DayCalendar, calendarByIdStore, hidePrivateEvents } from '../index'
   import calendar from '../plugin'

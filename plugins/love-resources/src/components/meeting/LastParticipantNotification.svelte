@@ -12,10 +12,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, Notification, NotificationToast } from '@hcengineering/ui'
+  import { Button, Notification, NotificationToast } from '@intabiafusion/ui'
   import love from '../../plugin'
   import { onMount } from 'svelte'
-  import { playSound } from '@hcengineering/presentation'
+  import { playSound } from '@intabiafusion/presentation'
 
   export let onRemove: () => void
   export let notification: Notification

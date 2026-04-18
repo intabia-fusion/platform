@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { getMetadata } from '@hcengineering/platform'
-import contact from '@hcengineering/contact'
-import { type Person } from '@hcengineering/core'
-import { avatarWhiteColors, avatarDarkColors, type ColorDefinition } from '@hcengineering/ui'
-import { type UserProfile, getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
-import login from '@hcengineering/login'
-import presentation from '@hcengineering/presentation'
+import { getMetadata } from '@intabiafusion/platform'
+import contact from '@intabiafusion/contact'
+import { type Person } from '@intabiafusion/core'
+import { avatarWhiteColors, avatarDarkColors, type ColorDefinition } from '@intabiafusion/ui'
+import { type UserProfile, getClient as getAccountClientRaw, type AccountClient } from '@intabiafusion/account-client'
+import login from '@intabiafusion/login'
+import presentation from '@intabiafusion/presentation'
 
 export function getDisplayName (person: Person): string {
   return getMetadata(contact.metadata.LastNameFirst) === true

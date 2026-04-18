@@ -24,12 +24,12 @@
     Ref,
     Space,
     toIdMap
-  } from '@hcengineering/core'
-  import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@hcengineering/ui'
+  } from '@intabiafusion/core'
+  import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { slide } from 'svelte/transition'
   import { CardDragEvent, DocWithRank, Item } from '../types'
-  import { createQuery } from '@hcengineering/presentation'
+  import { createQuery } from '@intabiafusion/presentation'
 
   export let stateObjects: Item[]
   export let isDragging: boolean

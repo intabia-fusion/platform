@@ -19,17 +19,17 @@
     showPopup,
     type FilterCategory,
     type ActiveFilter
-  } from '@hcengineering/ui'
-  import { getCurrentWorkspaceUuid, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { isWorkspaceIntegration } from '@hcengineering/integration-client'
-  import type { Integration } from '@hcengineering/account-client'
-  import contact from '@hcengineering/contact'
-  import card from '@hcengineering/card'
+  } from '@intabiafusion/ui'
+  import { getCurrentWorkspaceUuid, getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { isWorkspaceIntegration } from '@intabiafusion/integration-client'
+  import type { Integration } from '@intabiafusion/account-client'
+  import contact from '@intabiafusion/contact'
+  import card from '@intabiafusion/card'
 
   import TelegramIcon from './icons/TelegramColor.svelte'
   import telegram from '../plugin'
   import { type TelegramChannelConfig, getIntegrationClient, listChannels, restart } from '../api'
-  import core, { getCurrentAccount, Space } from '@hcengineering/core'
+  import core, { getCurrentAccount, Space } from '@intabiafusion/core'
 
   export let readonly: boolean = false
 

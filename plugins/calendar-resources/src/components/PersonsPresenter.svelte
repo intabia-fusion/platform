@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getName, Person } from '@hcengineering/contact'
-  import { Avatar } from '@hcengineering/contact-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { tooltip } from '@hcengineering/ui'
-  import { openDoc } from '@hcengineering/view-resources'
+  import { getName, Person } from '@intabiafusion/contact'
+  import { Avatar } from '@intabiafusion/contact-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { tooltip } from '@intabiafusion/ui'
+  import { openDoc } from '@intabiafusion/view-resources'
   import calendar from '../plugin'
 
   export let value: Person | Person[]

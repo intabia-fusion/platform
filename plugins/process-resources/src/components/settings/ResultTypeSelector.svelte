@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Type } from '@hcengineering/core'
-  import { Process } from '@hcengineering/process'
-  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import { Type } from '@intabiafusion/core'
+  import { Process } from '@intabiafusion/process'
+  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import ResultFieldTypeEditor from './ResultFieldTypeEditor.svelte'
   import ResultTypeEditor from './ResultTypeEditor.svelte'

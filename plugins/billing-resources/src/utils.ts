@@ -14,26 +14,26 @@
 //
 import { get } from 'svelte/store'
 
-import login from '@hcengineering/login'
-import { getMetadata } from '@hcengineering/platform'
-import presentation, { getClient } from '@hcengineering/presentation'
-import billing from '@hcengineering/billing'
+import login from '@intabiafusion/login'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation, { getClient } from '@intabiafusion/presentation'
+import billing from '@intabiafusion/billing'
 import {
   getClient as getAccountClientRaw,
   type AccountClient,
   type SubscriptionData
-} from '@hcengineering/account-client'
-import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
-import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
+} from '@intabiafusion/account-client'
+import { getClient as getBillingClientRaw, type BillingClient } from '@intabiafusion/billing-client'
+import { getClient as getPaymentClientRaw, type PaymentClient } from '@intabiafusion/payment-client'
 import {
   type UsageStatus,
   type WorkspaceInfoWithStatus,
   AccountRole,
   getCurrentAccount,
   hasAccountRole
-} from '@hcengineering/core'
-import { showPopup } from '@hcengineering/ui'
-import { type Tier } from '@hcengineering/billing'
+} from '@intabiafusion/core'
+import { showPopup } from '@intabiafusion/ui'
+import { type Tier } from '@intabiafusion/billing'
 
 import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'

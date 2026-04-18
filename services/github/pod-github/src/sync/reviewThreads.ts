@@ -10,15 +10,15 @@ import core, {
   Ref,
   TxOperations,
   withContext
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
   GithubProject,
   GithubReviewThread
-} from '@hcengineering/github'
-import { LiveQuery } from '@hcengineering/query'
-import { EmptyMarkup } from '@hcengineering/text'
+} from '@intabiafusion/github'
+import { LiveQuery } from '@intabiafusion/query'
+import { EmptyMarkup } from '@intabiafusion/text'
 import {
   ContainerFocus,
   DocSyncManager,
@@ -45,7 +45,7 @@ import {
   syncDerivedDocuments
 } from './utils'
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import { PullRequestReviewThreadEvent } from '@octokit/webhooks-types'
 import config from '../config'
 import { githubConfiguration } from './configuration'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person as Contact } from '@hcengineering/contact'
-  import type { Class, Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { IconSize } from '@hcengineering/ui'
+  import { Person as Contact } from '@intabiafusion/contact'
+  import type { Class, Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { IconSize } from '@intabiafusion/ui'
   import Avatar from './Avatar.svelte'
   import EmptyAvatar from './icons/EmptyAvatar.svelte'
 

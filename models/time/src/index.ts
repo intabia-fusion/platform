@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import calendarPlugin, { type Visibility } from '@hcengineering/calendar'
-import contactPlugin, { type Employee } from '@hcengineering/contact'
+import activity from '@intabiafusion/activity'
+import calendarPlugin, { type Visibility } from '@intabiafusion/calendar'
+import contactPlugin, { type Employee } from '@intabiafusion/contact'
 import {
   DOMAIN_MODEL,
   DateRangeMode,
@@ -27,8 +27,8 @@ import {
   type Space,
   type Timestamp,
   type Type
-} from '@hcengineering/core'
-import lead from '@hcengineering/lead'
+} from '@intabiafusion/core'
+import lead from '@intabiafusion/lead'
 import {
   Collection,
   Hidden,
@@ -43,16 +43,16 @@ import {
   type Builder,
   TypeMarkup,
   TypeRank
-} from '@hcengineering/model'
-import { TEvent } from '@hcengineering/model-calendar'
-import core, { defineCollaborators, TAttachedDoc, TClass, TDoc, TType } from '@hcengineering/model-core'
-import document from '@hcengineering/model-document'
-import tracker from '@hcengineering/model-tracker'
-import view, { createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import notification, { type NotificationGroup, type TxNotificationType } from '@hcengineering/notification'
-import recruit from '@hcengineering/recruit'
-import tags from '@hcengineering/tags'
+} from '@intabiafusion/model'
+import { TEvent } from '@intabiafusion/model-calendar'
+import core, { defineCollaborators, TAttachedDoc, TClass, TDoc, TType } from '@intabiafusion/model-core'
+import document from '@intabiafusion/model-document'
+import tracker from '@intabiafusion/model-tracker'
+import view, { createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import notification, { type NotificationGroup, type TxNotificationType } from '@intabiafusion/notification'
+import recruit from '@intabiafusion/recruit'
+import tags from '@intabiafusion/tags'
 import {
   timeId,
   type ItemPresenter,
@@ -62,15 +62,15 @@ import {
   type TodoAutomationHelper,
   type TodoDoneTester,
   type WorkSlot
-} from '@hcengineering/time'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+} from '@intabiafusion/time'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 
-import type { Resource } from '@hcengineering/platform'
-import type { Rank } from '@hcengineering/task'
-import task from '@hcengineering/task'
+import type { Resource } from '@intabiafusion/platform'
+import type { Rank } from '@intabiafusion/task'
+import task from '@intabiafusion/task'
 import time from './plugin'
 
-export { timeId } from '@hcengineering/time'
+export { timeId } from '@intabiafusion/time'
 export { default } from './plugin'
 
 export const DOMAIN_TIME = 'time' as Domain

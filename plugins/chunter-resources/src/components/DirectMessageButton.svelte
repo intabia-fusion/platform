@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton, getCurrentLocation } from '@hcengineering/ui'
-  import view, { decodeObjectURI } from '@hcengineering/view'
-  import { Employee } from '@hcengineering/contact'
-  import { Asset } from '@hcengineering/platform'
-  import { createDirect } from '@hcengineering/chunter'
-  import { getClient } from '@hcengineering/presentation'
-  import { getCurrentAccount } from '@hcengineering/core'
+  import { ModernButton, getCurrentLocation } from '@intabiafusion/ui'
+  import view, { decodeObjectURI } from '@intabiafusion/view'
+  import { Employee } from '@intabiafusion/contact'
+  import { Asset } from '@intabiafusion/platform'
+  import { createDirect } from '@intabiafusion/chunter'
+  import { getClient } from '@intabiafusion/presentation'
+  import { getCurrentAccount } from '@intabiafusion/core'
 
   import chunter from '../plugin'
   import { openChannelInSidebar } from '../navigation'

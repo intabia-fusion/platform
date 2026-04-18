@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { Card, CardEvents } from '@hcengineering/card'
-  import core, { Class, Data, Doc, fillDefaults, MarkupBlobRef, Ref } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import { ButtonIcon, getCurrentLocation, IconAdd, navigate } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { Card, CardEvents } from '@intabiafusion/card'
+  import core, { Class, Data, Doc, fillDefaults, MarkupBlobRef, Ref } from '@intabiafusion/core'
+  import { translate } from '@intabiafusion/platform'
+  import { ButtonIcon, getCurrentLocation, IconAdd, navigate } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
   import card from '../plugin'
 
   export let _class: Ref<Class<Doc>> | undefined

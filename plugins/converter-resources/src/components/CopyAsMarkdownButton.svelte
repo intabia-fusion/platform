@@ -6,16 +6,16 @@
 // a copy of the License at https://www.eclipse.org/legal/epl-2.0
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { ButtonMenu, IconCopy, IconMoreH, type DropdownIntlItem } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { viewletContextStore } from '@hcengineering/view-resources'
+  import type { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { ButtonMenu, IconCopy, IconMoreH, type DropdownIntlItem } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { viewletContextStore } from '@intabiafusion/view-resources'
   import { copyAsMarkdownTableFromResource, copyRelationshipTableAsMarkdown } from '../markdown/copyActions'
 
   export let _class: Ref<Class<Doc>>
   export let query: DocumentQuery<Doc> = {}
-  export let config: Array<string | import('@hcengineering/view').BuildModelKey> = []
+  export let config: Array<string | import('@intabiafusion/view').BuildModelKey> = []
 
   // TODO: Register actions separately and make common extension for viewlet actions
   const COPY_ALL_ACTION_ID = 'copy-all'

@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { Scroller } from '@hcengineering/ui'
-  import { MasterTag, Card, CardSpace } from '@hcengineering/card'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Scroller } from '@intabiafusion/ui'
+  import { MasterTag, Card, CardSpace } from '@intabiafusion/card'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { SavedView } from '@hcengineering/workbench-resources'
-  import { getCurrentAccount, SortingOrder, Ref } from '@hcengineering/core'
+  import { SavedView } from '@intabiafusion/workbench-resources'
+  import { getCurrentAccount, SortingOrder, Ref } from '@intabiafusion/core'
 
   import { type NavigatorConfig } from '../../types'
   import NavigatorSpace from './NavigatorSpace.svelte'

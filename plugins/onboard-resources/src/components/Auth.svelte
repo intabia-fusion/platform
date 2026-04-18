@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/login'
-  import { getLoginInfoFromQuery, navigateToWorkspace } from '@hcengineering/login-resources'
-  import { Loading } from '@hcengineering/ui'
-  import { logIn } from '@hcengineering/workbench'
+  import { LoginInfo, WorkspaceLoginInfo } from '@intabiafusion/login'
+  import { getLoginInfoFromQuery, navigateToWorkspace } from '@intabiafusion/login-resources'
+  import { Loading } from '@intabiafusion/ui'
+  import { logIn } from '@intabiafusion/workbench'
   import { onMount } from 'svelte'
   import { afterConfirm, goToLogin } from '../utils'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
 import { type Request, type Response } from 'express'
 import { cacheControl } from '../const'
 import { Datalake } from '../datalake'

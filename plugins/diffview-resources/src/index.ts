@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 
 import DiffView from './components/DiffView.svelte'
 import Highlight from './components/Highlight.svelte'

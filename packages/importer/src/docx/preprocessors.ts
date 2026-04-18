@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import documents from '@hcengineering/controlled-documents'
-import { type AttrValue, type MarkupNode, MarkupNodeType } from '@hcengineering/text'
+import documents from '@intabiafusion/controlled-documents'
+import { type AttrValue, type MarkupNode, MarkupNodeType } from '@intabiafusion/text'
 import { dirname, join, relative } from 'path'
 import { type DocumentPreprocessorSpec, type DocumentState } from './docx'
 

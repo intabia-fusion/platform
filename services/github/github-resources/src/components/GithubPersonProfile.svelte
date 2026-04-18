@@ -1,9 +1,9 @@
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { NavLink } from '@hcengineering/presentation'
-  import tracker from '@hcengineering/tracker'
-  import { Icon } from '@hcengineering/ui'
-  import { GithubAuthentication } from '@hcengineering/github'
+  import contact from '@intabiafusion/contact'
+  import { NavLink } from '@intabiafusion/presentation'
+  import tracker from '@intabiafusion/tracker'
+  import { Icon } from '@intabiafusion/ui'
+  import { GithubAuthentication } from '@intabiafusion/github'
   import github from '../plugin'
 
   export let auth: GithubAuthentication

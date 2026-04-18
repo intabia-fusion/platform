@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref } from '@hcengineering/core'
-  import type { Asset, IntlString } from '@hcengineering/platform'
-  import type { Action, AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import type { Doc, Ref } from '@intabiafusion/core'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
+  import type { Action, AnySvelteComponent, IconSize } from '@intabiafusion/ui'
   import {
     ActionIcon,
     IconMoreH,
@@ -26,8 +26,8 @@
     NavItem,
     NavGroup,
     ButtonIcon
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   export let _id: Ref<Doc> | string | undefined = undefined
   export let icon: Asset | AnySvelteComponent | undefined = undefined

@@ -15,9 +15,9 @@
 <script lang="ts">
   // Local NavLink used in login-resources so we can provide login-scoped tokens
   // (e.g. `--login-navlink-color`) without changing the global presentation component.
-  import { getMetadata } from '@hcengineering/platform'
-  import uiPlugin, { closePopup, closeTooltip, navigate, parseLocation } from '@hcengineering/ui'
-  import presentation from '@hcengineering/presentation'
+  import { getMetadata } from '@intabiafusion/platform'
+  import uiPlugin, { closePopup, closeTooltip, navigate, parseLocation } from '@intabiafusion/ui'
+  import presentation from '@intabiafusion/presentation'
 
   export let href: string | undefined
   export let title: string | undefined = undefined

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import core, { Enum } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
   import {
     Breadcrumb,
     ButtonIcon,
@@ -29,8 +29,8 @@
     defineSeparators,
     twoPanelsSeparators,
     showPopup
-  } from '@hcengineering/ui'
-  import { showMenu } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { showMenu } from '@intabiafusion/view-resources'
   import setting from '../plugin'
   import EnumValues from './EnumValues.svelte'
 

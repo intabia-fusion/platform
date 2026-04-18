@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Blob, type BlobMetadata, type Ref } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import presentation, { getImageSize, getPreviewMetadata } from '@hcengineering/presentation'
+import { type Blob, type BlobMetadata, type Ref } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation, { getImageSize, getPreviewMetadata } from '@intabiafusion/presentation'
 
 export async function blobPreviewMetadata (blob: Ref<Blob>): Promise<BlobMetadata | undefined> {
   const workspace = getMetadata(presentation.metadata.WorkspaceUuid) ?? ''

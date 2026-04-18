@@ -15,12 +15,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
-  import view, { Viewlet } from '@hcengineering/view'
+  import { ButtonIcon, showPopup, closeTooltip } from '@intabiafusion/ui'
+  import view, { Viewlet } from '@intabiafusion/view'
 
   import ViewOptionsButton from './ViewOptionsButton.svelte'
   import ViewletSetting from './ViewSetting.svelte'
-  import { Data } from '@hcengineering/core'
+  import { Data } from '@intabiafusion/core'
 
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
   export let viewlet: Data<Viewlet> | undefined = undefined

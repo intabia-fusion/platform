@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { MasterTag } from '@hcengineering/card'
-  import core, { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
-  import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import { Icon, Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import cardPlugin, { MasterTag } from '@intabiafusion/card'
+  import core, { Class, ClassifierKind, Doc, Ref } from '@intabiafusion/core'
+  import { IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Icon, Label } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
 
   export let classes: Ref<Class<Doc>>[] = []

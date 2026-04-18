@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
-import task from '@hcengineering/task'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import { type Ref, type Status } from '@hcengineering/core'
+import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
+import task from '@intabiafusion/task'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import { type Ref, type Status } from '@intabiafusion/core'
 
 import { TDefaultFunnelTypeData, TLeadTypeData } from './types'
 import plugin from './plugin'

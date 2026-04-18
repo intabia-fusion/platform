@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import { generateId } from '@hcengineering/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { generateId } from '@intabiafusion/core'
   import { Label } from '..'
 
   export let id: string = generateId()

@@ -1,22 +1,22 @@
 <script lang="ts">
   import { getContext, onDestroy } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { makeDocCollabId, type Doc } from '@hcengineering/core'
-  import { CollaborationIds } from '@hcengineering/text-editor'
+  import { getClient } from '@intabiafusion/presentation'
+  import { makeDocCollabId, type Doc } from '@intabiafusion/core'
+  import { CollaborationIds } from '@intabiafusion/text-editor'
   import {
     CollaborationDiffViewer,
     Provider,
     StringDiffViewer,
     createTiptapCollaborationData
-  } from '@hcengineering/text-editor-resources'
-  import { Dropdown, Label, ListItem, Loading, Scroller, themeStore } from '@hcengineering/ui'
+  } from '@intabiafusion/text-editor-resources'
+  import { Dropdown, Label, ListItem, Loading, Scroller, themeStore } from '@intabiafusion/ui'
   import documents, {
     ControlledDocument,
     ControlledDocumentSnapshot,
     ControlledDocumentState,
     Document,
     DocumentState
-  } from '@hcengineering/controlled-documents'
+  } from '@intabiafusion/controlled-documents'
   import plugin from '../../plugin'
   import {
     $controlledDocument as controlledDocument,

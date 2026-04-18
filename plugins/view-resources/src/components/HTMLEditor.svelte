@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import { Doc } from '@intabiafusion/core'
 
-  import { getAttribute, getClient, KeyedAttribute, updateAttribute } from '@hcengineering/presentation'
-  import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
+  import { getAttribute, getClient, KeyedAttribute, updateAttribute } from '@intabiafusion/presentation'
+  import { FullDescriptionBox } from '@intabiafusion/text-editor-resources'
 
   // TODO Rename this component to MarkupEditor
   export let object: Doc

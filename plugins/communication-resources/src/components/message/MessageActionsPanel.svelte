@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { ButtonIcon, IconMoreV, showPopup, Action, getEventPositionElement, Menu } from '@hcengineering/ui'
-  import { MessageAction } from '@hcengineering/communication'
-  import { getResource } from '@hcengineering/platform'
-  import { Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
-  import view from '@hcengineering/view'
+  import { ButtonIcon, IconMoreV, showPopup, Action, getEventPositionElement, Menu } from '@intabiafusion/ui'
+  import { MessageAction } from '@intabiafusion/communication'
+  import { getResource } from '@intabiafusion/platform'
+  import { Message } from '@intabiafusion/communication-types'
+  import { Card } from '@intabiafusion/card'
+  import view from '@intabiafusion/view'
 
   export let message: Message
   export let card: Card

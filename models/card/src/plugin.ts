@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import type { ViewletViewAction, Action, ActionCategory, ViewAction } from '@hcengineering/view'
-import { type Card, cardId } from '@hcengineering/card'
-import card from '@hcengineering/card-resources/src/plugin'
-import type { Client, Doc, Ref } from '@hcengineering/core'
-import {} from '@hcengineering/core'
-import { mergeIds, type Resource } from '@hcengineering/platform'
-import { type TagCategory } from '@hcengineering/tags'
-import { type Location, type ResolvedLocation } from '@hcengineering/ui/src/types'
-import { type LocationData } from '@hcengineering/workbench'
-import { type NotificationGroup } from '@hcengineering/notification'
+import type { ViewletViewAction, Action, ActionCategory, ViewAction } from '@intabiafusion/view'
+import { type Card, cardId } from '@intabiafusion/card'
+import card from '@intabiafusion/card-resources/src/plugin'
+import type { Client, Doc, Ref } from '@intabiafusion/core'
+import {} from '@intabiafusion/core'
+import { mergeIds, type Resource } from '@intabiafusion/platform'
+import { type TagCategory } from '@intabiafusion/tags'
+import { type Location, type ResolvedLocation } from '@intabiafusion/ui/src/types'
+import { type LocationData } from '@intabiafusion/workbench'
+import { type NotificationGroup } from '@intabiafusion/notification'
 
 export default mergeIds(cardId, card, {
   app: {

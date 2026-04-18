@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
   import {
     getPlatformColorDef,
     themeStore,
@@ -21,7 +21,7 @@
     Label,
     IconClose,
     ButtonIcon
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let labelIntl: IntlString | undefined = undefined

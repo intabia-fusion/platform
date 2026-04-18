@@ -6,9 +6,9 @@ import {
   type QuestionInitFunction,
   type QuestionInitFunctionResult,
   type MultipleChoiceAssessment
-} from '@hcengineering/questions'
-import { type Hierarchy } from '@hcengineering/core'
-import type { ThemeOptions } from '@hcengineering/theme'
+} from '@intabiafusion/questions'
+import { type Hierarchy } from '@intabiafusion/core'
+import type { ThemeOptions } from '@intabiafusion/theme'
 import { MultipleChoiceQuestionInit } from './MultipleChoiceQuestionInit'
 
 export const MultipleChoiceAssessmentInit: QuestionInitFunction<MultipleChoiceAssessment> = async (

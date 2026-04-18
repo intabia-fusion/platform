@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Request } from '@hcengineering/request'
-  import { Label } from '@hcengineering/ui'
-  import { DocNavLink, ObjectPresenter } from '@hcengineering/view-resources'
+  import { Doc } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Request } from '@intabiafusion/request'
+  import { Label } from '@intabiafusion/ui'
+  import { DocNavLink, ObjectPresenter } from '@intabiafusion/view-resources'
   import requests from '../plugin'
   import RequestLabel from './RequestLabel.svelte'
 

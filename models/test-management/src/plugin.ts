@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { testManagementId } from '@hcengineering/test-management'
-import testManganement from '@hcengineering/test-management-resources/src/plugin'
-import type { Ref } from '@hcengineering/core'
-import { mergeIds } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { ActionCategory } from '@hcengineering/view'
+import { testManagementId } from '@intabiafusion/test-management'
+import testManganement from '@intabiafusion/test-management-resources/src/plugin'
+import type { Ref } from '@intabiafusion/core'
+import { mergeIds } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import type { ActionCategory } from '@intabiafusion/view'
 
 export default mergeIds(testManagementId, testManganement, {
   category: {

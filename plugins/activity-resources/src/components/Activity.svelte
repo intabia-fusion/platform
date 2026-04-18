@@ -19,12 +19,12 @@
     ActivityMessagesFilter,
     ActivityReference,
     WithReferences
-  } from '@hcengineering/activity'
-  import { Class, Doc, getCurrentAccount, Ref, SortingOrder } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Grid, Lazy, location, Section, Spinner } from '@hcengineering/ui'
+  } from '@intabiafusion/activity'
+  import { Class, Doc, getCurrentAccount, Ref, SortingOrder } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Grid, Lazy, location, Section, Spinner } from '@intabiafusion/ui'
   import { onDestroy, onMount } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import { editingMessageStore, messageInFocus } from '../activity'
   import { filterMessages, sortActivityMessages } from '../activityMessagesUtils'

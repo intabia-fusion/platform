@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Ref } from '@hcengineering/core'
-import { EmptyMarkup, MarkupNodeType, jsonToMarkup } from '@hcengineering/text-core'
+import { type Class, type Doc, type Ref } from '@intabiafusion/core'
+import { EmptyMarkup, MarkupNodeType, jsonToMarkup } from '@intabiafusion/text-core'
 
 import { getReferencesData } from '../references'
 

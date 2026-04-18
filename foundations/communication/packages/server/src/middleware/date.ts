@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { EventResult, type Event, type SessionData } from '@hcengineering/communication-sdk-types'
-import { systemAccountUuid } from '@hcengineering/core'
+import { EventResult, type Event, type SessionData } from '@intabiafusion/communication-sdk-types'
+import { systemAccountUuid } from '@intabiafusion/core'
 
 import type { Middleware, MiddlewareContext, Enriched } from '../types'
 import { BaseMiddleware } from './base'

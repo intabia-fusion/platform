@@ -21,17 +21,17 @@ import core, {
   PersonId,
   SocialIdType,
   MeasureContext
-} from '@hcengineering/core'
-import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import chat from '@hcengineering/chat'
+} from '@intabiafusion/core'
+import { CreateMessageEvent, MessageEventType } from '@intabiafusion/communication-sdk-types'
+import chat from '@intabiafusion/chat'
 
-import { MessageType } from '@hcengineering/communication-types'
-import { Card } from '@hcengineering/card'
-import mail from '@hcengineering/mail'
+import { MessageType } from '@intabiafusion/communication-types'
+import { Card } from '@intabiafusion/card'
+import mail from '@intabiafusion/mail'
 
 import { normalizeEmail } from './utils'
 import { COMMUNICATION_DOMAIN, MailRecipients } from './types'
-import { AccountClient } from '@hcengineering/account-client'
+import { AccountClient } from '@intabiafusion/account-client'
 
 export function toMessageEvent (tx: Tx): CreateMessageEvent | undefined {
   if (tx._class !== core.class.TxDomainEvent) {

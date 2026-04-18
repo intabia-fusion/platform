@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { formatName, getCurrentEmployee } from '@hcengineering/contact'
-  import { myEmployeeStore } from '@hcengineering/contact-resources'
-  import core, { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import rating, { type PersonRating } from '@hcengineering/rating'
-  import login, { loginId } from '@hcengineering/login'
+  import contact, { formatName, getCurrentEmployee } from '@intabiafusion/contact'
+  import { myEmployeeStore } from '@intabiafusion/contact-resources'
+  import core, { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import rating, { type PersonRating } from '@intabiafusion/rating'
+  import login, { loginId } from '@intabiafusion/login'
   import presentation, {
     createQuery,
     getCurrentWorkspaceUrl,
     hasResource,
     isDisabled,
     IconDownload
-  } from '@hcengineering/presentation'
-  import setting, { settingId, SettingsCategory } from '@hcengineering/setting'
+  } from '@intabiafusion/presentation'
+  import setting, { settingId, SettingsCategory } from '@intabiafusion/setting'
   import {
     Action,
     closePopup,
@@ -36,15 +36,15 @@
     Menu,
     navigate,
     showPopup
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import workbench from '../plugin'
   import { logOut } from '../utils'
   import HelpAndSupport from './HelpAndSupport.svelte'
 
-  import { Analytics } from '@hcengineering/analytics'
-  import { allowGuestSignUpStore } from '@hcengineering/view-resources'
-  import { getMetadata } from '@hcengineering/platform'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { allowGuestSignUpStore } from '@intabiafusion/view-resources'
+  import { getMetadata } from '@intabiafusion/platform'
 
   let items: SettingsCategory[] = []
 

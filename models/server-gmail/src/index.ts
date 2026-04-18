@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import contact from '@hcengineering/contact'
-import core, { type Class, type Doc } from '@hcengineering/core'
-import gmail from '@hcengineering/gmail'
-import notification, { type NotificationType } from '@hcengineering/notification'
-import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
-import serverGmail from '@hcengineering/server-gmail'
-import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
-export { serverGmailId } from '@hcengineering/server-gmail'
+import contact from '@intabiafusion/contact'
+import core, { type Class, type Doc } from '@intabiafusion/core'
+import gmail from '@intabiafusion/gmail'
+import notification, { type NotificationType } from '@intabiafusion/notification'
+import serverCore, { type ObjectDDParticipant } from '@intabiafusion/server-core'
+import serverGmail from '@intabiafusion/server-gmail'
+import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
+export { serverGmailId } from '@intabiafusion/server-gmail'
 
 export function createModel (builder: Builder): void {
   builder.mixin<Class<Doc>, ObjectDDParticipant>(

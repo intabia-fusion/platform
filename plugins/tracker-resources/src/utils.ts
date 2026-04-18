@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { type Person } from '@hcengineering/contact'
+import { Analytics } from '@intabiafusion/analytics'
+import { type Person } from '@intabiafusion/contact'
 import core, {
   SortingOrder,
   toIdMap,
@@ -34,16 +34,16 @@ import core, {
   type TxOperations,
   type TxResult,
   type TxUpdateDoc
-} from '@hcengineering/core'
-import { type IntlString } from '@hcengineering/platform'
-import { createQuery, getClient, onClient } from '@hcengineering/presentation'
-import task, { getStatusIndex, makeRank, type TaskType, type ProjectType } from '@hcengineering/task'
+} from '@intabiafusion/core'
+import { type IntlString } from '@intabiafusion/platform'
+import { createQuery, getClient, onClient } from '@intabiafusion/presentation'
+import task, { getStatusIndex, makeRank, type TaskType, type ProjectType } from '@intabiafusion/task'
 import {
   selectedTaskTypeStore,
   activeProjects as taskActiveProjects,
   taskTypeStore,
   typesOfJoinedProjectsStore
-} from '@hcengineering/task-resources'
+} from '@intabiafusion/task-resources'
 import {
   IssuePriority,
   MilestoneStatus,
@@ -53,10 +53,10 @@ import {
   type IssueStatus,
   type Milestone,
   type Project
-} from '@hcengineering/tracker'
-import { areDatesEqual, isWeekend, PaletteColorIndexes } from '@hcengineering/ui'
-import { type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
-import { CategoryQuery, ListSelectionProvider, statusStore, type SelectDirection } from '@hcengineering/view-resources'
+} from '@intabiafusion/tracker'
+import { areDatesEqual, isWeekend, PaletteColorIndexes } from '@intabiafusion/ui'
+import { type KeyFilter, type ViewletDescriptor } from '@intabiafusion/view'
+import { CategoryQuery, ListSelectionProvider, statusStore, type SelectDirection } from '@intabiafusion/view-resources'
 import { derived, get, writable } from 'svelte/store'
 import tracker from './plugin'
 import { defaultMilestoneStatuses, defaultPriorities } from './types'

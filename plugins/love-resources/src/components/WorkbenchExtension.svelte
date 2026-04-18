@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isSafari, pushRootBarComponent } from '@hcengineering/ui'
+  import { isSafari, pushRootBarComponent } from '@intabiafusion/ui'
   import {
     Participant,
     RemoteParticipant,

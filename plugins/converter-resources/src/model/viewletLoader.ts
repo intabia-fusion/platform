@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Client, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
-import type { BuildModelKey, Viewlet } from '@hcengineering/view'
-import viewPlugin from '@hcengineering/view'
+import core, { type Class, type Client, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
+import type { BuildModelKey, Viewlet } from '@intabiafusion/view'
+import viewPlugin from '@intabiafusion/view'
 
 /**
  * Loads the actual viewlet configuration, including user preferences

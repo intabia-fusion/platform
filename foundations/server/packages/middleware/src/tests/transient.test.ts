@@ -24,8 +24,8 @@ import core, {
   type Ref,
   type Space,
   type Tx
-} from '@hcengineering/core'
-import type { DbAdapter, PipelineContext } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import type { DbAdapter, PipelineContext } from '@intabiafusion/server-core'
 import { TransientMiddleware } from '../transient'
 
 interface TransientDoc extends Doc {

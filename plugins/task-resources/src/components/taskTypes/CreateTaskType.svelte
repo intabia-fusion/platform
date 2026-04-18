@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@hcengineering/core'
-  import { Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import presentation, { getClient, hasResource } from '@hcengineering/presentation'
+  import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@intabiafusion/core'
+  import { Resource, getEmbeddedLabel, getResource } from '@intabiafusion/platform'
+  import presentation, { getClient, hasResource } from '@intabiafusion/presentation'
   import {
     ProjectType,
     ProjectTypeDescriptor,
@@ -24,11 +24,11 @@
     TaskTypeDescriptor,
     createState,
     findStatusAttr
-  } from '@hcengineering/task'
-  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu } from '@hcengineering/ui'
+  } from '@intabiafusion/task'
+  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu } from '@intabiafusion/ui'
   import task from '../../plugin'
   import TaskTypeKindEditor from './TaskTypeKindEditor.svelte'
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import { clearSettingsStore } from '@intabiafusion/setting-resources'
 
   const client = getClient()
   export let type: ProjectType

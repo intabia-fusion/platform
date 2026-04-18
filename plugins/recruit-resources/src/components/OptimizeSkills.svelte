@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, platformNow, platformNowDiff, Ref, toIdMap } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import tags, { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
-  import { Button, CheckBox, EditBox, Expandable, Lazy, ListView, Loading } from '@hcengineering/ui'
-  import { FILTER_DEBOUNCE_MS } from '@hcengineering/view-resources'
+  import { Class, Doc, platformNow, platformNowDiff, Ref, toIdMap } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import tags, { TagCategory, TagElement, TagReference } from '@intabiafusion/tags'
+  import { Button, CheckBox, EditBox, Expandable, Lazy, ListView, Loading } from '@intabiafusion/ui'
+  import { FILTER_DEBOUNCE_MS } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../plugin'
 

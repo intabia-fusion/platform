@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { Class, Doc, DOMAIN_SEQUENCE, Sequence, TxOperations, type Ref, type TypedSpace } from '@hcengineering/core'
+import { Class, Doc, DOMAIN_SEQUENCE, Sequence, TxOperations, type Ref, type TypedSpace } from '@intabiafusion/core'
 import {
   tryMigrate,
   tryUpgrade,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import training, { trainingId } from '@hcengineering/training'
+} from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import training, { trainingId } from '@intabiafusion/training'
 import { DOMAIN_TRAINING } from './types'
 
 export const trainingOperation: MigrateOperation = {

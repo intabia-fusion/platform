@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type AnalyticProvider, Analytics } from '@hcengineering/analytics'
+import { type AnalyticProvider, Analytics } from '@intabiafusion/analytics'
 import { AnalyticsCollectorProvider } from './analyticsCollector'
 import { type AnalyticsConfig } from './types'
 

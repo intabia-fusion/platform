@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { UsersPopup } from '@hcengineering/contact-resources'
-  import { Ref, WithLookup } from '@hcengineering/core'
-  import { Department, Staff } from '@hcengineering/hr'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Scroller, Section, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import contact from '@intabiafusion/contact'
+  import { UsersPopup } from '@intabiafusion/contact-resources'
+  import { Ref, WithLookup } from '@intabiafusion/core'
+  import { Department, Staff } from '@intabiafusion/hr'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Button, IconAdd, Label, Scroller, Section, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { Table, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
   import hr from '../plugin'
   import { addMember } from '../utils'
 

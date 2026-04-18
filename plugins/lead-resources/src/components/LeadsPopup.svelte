@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Customer } from '@hcengineering/lead'
-  import { Table } from '@hcengineering/view-resources'
+  import type { Customer } from '@intabiafusion/lead'
+  import { Table } from '@intabiafusion/view-resources'
   import leads from '../plugin'
 
   export let value: Customer

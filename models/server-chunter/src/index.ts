@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import core, { type Class, type Doc } from '@hcengineering/core'
-import chunter from '@hcengineering/chunter'
-import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
-import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
-import serverChunter from '@hcengineering/server-chunter'
-import notification, { type NotificationType } from '@hcengineering/notification'
-import serverActivity from '@hcengineering/server-activity'
-import contact from '@hcengineering/contact'
+import core, { type Class, type Doc } from '@intabiafusion/core'
+import chunter from '@intabiafusion/chunter'
+import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
+import serverCore, { type ObjectDDParticipant } from '@intabiafusion/server-core'
+import serverChunter from '@intabiafusion/server-chunter'
+import notification, { type NotificationType } from '@intabiafusion/notification'
+import serverActivity from '@intabiafusion/server-activity'
+import contact from '@intabiafusion/contact'
 
-export { serverChunterId } from '@hcengineering/server-chunter'
+export { serverChunterId } from '@intabiafusion/server-chunter'
 
 export function createModel (builder: Builder): void {
   builder.mixin(chunter.class.ChunterSpace, core.class.Class, serverActivity.mixin.UrlPresenter, {

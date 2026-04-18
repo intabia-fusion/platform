@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, Label } from '@hcengineering/ui'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import { Icon, Label } from '@intabiafusion/ui'
+  import { Asset, IntlString } from '@intabiafusion/platform'
 
   export let icon: Asset
   export let header: IntlString

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { DocumentQuery } from '@hcengineering/core'
+  import { Document } from '@intabiafusion/controlled-documents'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { DocumentQuery } from '@intabiafusion/core'
   import DocumentsContainer from './DocumentsContainer.svelte'
 
   import documents from '../plugin'
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
 
   export let query: DocumentQuery<Document> = {}

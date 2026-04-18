@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import activity, { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import { Label } from '@intabiafusion/ui'
+  import { AttributeModel } from '@intabiafusion/view'
+  import activity, { DocAttributeUpdates, DocUpdateMessageViewlet } from '@intabiafusion/activity'
 
   import ChangeAttributesTemplate from './ChangeAttributesTemplate.svelte'
 

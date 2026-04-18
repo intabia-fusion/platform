@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AvatarType, Channel, combineName, ContactEvents, findPerson, Person } from '@hcengineering/contact'
-  import { AttachedData, Data, generateId } from '@hcengineering/core'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import { AvatarType, Channel, combineName, ContactEvents, findPerson, Person } from '@intabiafusion/contact'
+  import { AttachedData, Data, generateId } from '@intabiafusion/core'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
   import EditableAvatar from './EditableAvatar.svelte'
   import PersonPresenter from './PersonPresenter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   let avatarEditor: EditableAvatar
 

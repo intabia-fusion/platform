@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Api as CommunicationApi } from '@hcengineering/communication-server'
+import { Api as CommunicationApi } from '@intabiafusion/communication-server'
 import core, {
   type Class,
   type Doc,
@@ -15,8 +15,8 @@ import core, {
   type TxWorkspaceEvent,
   WorkspaceEvent,
   type WorkspaceIds
-} from '@hcengineering/core'
-import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+} from '@intabiafusion/core'
+import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -24,8 +24,8 @@ import {
   DomainFindMiddleware,
   LowLevelMiddleware,
   ModelMiddleware
-} from '@hcengineering/middleware'
-import { PlatformError, unknownError } from '@hcengineering/platform'
+} from '@intabiafusion/middleware'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
 import {
   type ConsumerControl,
   type ContentTextAdapter,
@@ -36,10 +36,10 @@ import {
   type Pipeline,
   type PipelineContext,
   type StorageAdapter
-} from '@hcengineering/server-core'
-import { FullTextIndexPipeline } from '@hcengineering/server-indexer'
-import { getConfig } from '@hcengineering/server-pipeline'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/server-core'
+import { FullTextIndexPipeline } from '@intabiafusion/server-indexer'
+import { getConfig } from '@intabiafusion/server-pipeline'
+import { generateToken } from '@intabiafusion/server-token'
 
 import { fulltextModelFilter } from './utils'
 

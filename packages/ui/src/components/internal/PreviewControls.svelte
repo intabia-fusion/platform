@@ -2,7 +2,7 @@
   // AccentPreview
   // Small preview box shown on the left side of the screen when hovering an accent.
   // Shows several controls (buttons, checkboxes, list) to help choose an accent.
-  import { Asset, getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+  import { Asset, getEmbeddedLabel, type IntlString } from '@intabiafusion/platform'
   import {
     Button,
     ButtonMenu,

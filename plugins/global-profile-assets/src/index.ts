@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import globalProfile, { globalProfileId } from '@hcengineering/global-profile'
+import { addStringsLoader, loadMetadata } from '@intabiafusion/platform'
+import globalProfile, { globalProfileId } from '@intabiafusion/global-profile'
 
 addStringsLoader(globalProfileId, async (lang: string) => await import(`../lang/${lang}.json`))
 

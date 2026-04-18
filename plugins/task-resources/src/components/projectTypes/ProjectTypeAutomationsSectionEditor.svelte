@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ComponentExtensions } from '@hcengineering/presentation'
-  import { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
+  import { ComponentExtensions } from '@intabiafusion/presentation'
+  import { ProjectType, ProjectTypeDescriptor } from '@intabiafusion/task'
   import task from '../../plugin'
 
   export let type: ProjectType | undefined

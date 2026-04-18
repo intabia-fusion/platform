@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person } from '@hcengineering/contact'
-  import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@hcengineering/ui'
-  import { employeeByIdStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
-  import { notEmpty, Ref } from '@hcengineering/core'
+  import { Employee, Person } from '@intabiafusion/contact'
+  import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@intabiafusion/ui'
+  import { employeeByIdStore, IconAddMember, UserDetails } from '@intabiafusion/contact-resources'
+  import { notEmpty, Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
 
   import card from '../plugin'

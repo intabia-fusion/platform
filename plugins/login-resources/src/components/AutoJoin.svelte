@@ -14,15 +14,15 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
-  import { logIn } from '@hcengineering/workbench'
-  import { setMetadata, translate } from '@hcengineering/platform'
-  import { Loading, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { logIn } from '@intabiafusion/workbench'
+  import { setMetadata, translate } from '@intabiafusion/platform'
+  import { Loading, getCurrentLocation, navigate } from '@intabiafusion/ui'
   import Label from './internal/Label.svelte'
-  import { type LoginInfo } from '@hcengineering/account-client'
-  import { loginId } from '@hcengineering/login'
-  import { themeStore } from '@hcengineering/theme'
-  import presentation from '@hcengineering/presentation'
+  import { type LoginInfo } from '@intabiafusion/account-client'
+  import { loginId } from '@intabiafusion/login'
+  import { themeStore } from '@intabiafusion/theme'
+  import presentation from '@intabiafusion/presentation'
 
   import { checkAutoJoin, isWorkspaceLoginInfo, navigateToWorkspace } from '../utils'
   import login from '../plugin'

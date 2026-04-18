@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Account, Doc } from '@hcengineering/core'
-import { Resource } from '@hcengineering/platform'
+import { Account, Doc } from '@intabiafusion/core'
+import { Resource } from '@intabiafusion/platform'
 
 /**
  * @public

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
-import login from '@hcengineering/login'
-import { type GmailSyncState, gmailIntegrationKind } from '@hcengineering/gmail'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
+import login from '@intabiafusion/login'
+import { type GmailSyncState, gmailIntegrationKind } from '@intabiafusion/gmail'
 import {
   getIntegrationClient as getIntegrationClientRaw,
   type IntegrationClient,
   request as httpRequest
-} from '@hcengineering/integration-client'
+} from '@intabiafusion/integration-client'
 
 import gmail from './plugin'
 

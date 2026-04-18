@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { humanReadableFileSize } from '@hcengineering/ui'
+  import { humanReadableFileSize } from '@intabiafusion/ui'
 
   export let value: number | undefined
   export let accent: boolean = false

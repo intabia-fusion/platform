@@ -11,21 +11,21 @@ import {
   type Ref,
   type WorkspaceIds,
   type Class
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type MigrateUpdate,
   type MigrationClient,
   type MigrationIterator,
   type ModelLogger
-} from '@hcengineering/model'
+} from '@intabiafusion/model'
 import {
   type Pipeline,
   type StorageAdapter,
   workspaceEvents,
   type PlatformQueueProducer,
   type QueueWorkspaceMessage
-} from '@hcengineering/server-core'
-import { type AccountClient } from '@hcengineering/account-client'
+} from '@intabiafusion/server-core'
+import { type AccountClient } from '@intabiafusion/account-client'
 
 /**
  * Upgrade client implementation.

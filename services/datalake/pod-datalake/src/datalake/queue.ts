@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { TxFactory, type Blob, type Ref, type Tx } from '@hcengineering/core'
+import core, { TxFactory, type Blob, type Ref, type Tx } from '@intabiafusion/core'
 
 const factory = new TxFactory(core.account.System)
 

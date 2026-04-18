@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { AccountUuid, PersonUuid } from '@hcengineering/core'
-  import { Avatar, employeeByAccountStore } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
+  import { AccountUuid, PersonUuid } from '@intabiafusion/core'
+  import { Avatar, employeeByAccountStore } from '@intabiafusion/contact-resources'
+  import { Person } from '@intabiafusion/contact'
 
   export let persons: Record<PersonUuid, number> = {}
 

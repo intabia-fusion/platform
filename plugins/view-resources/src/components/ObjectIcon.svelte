@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import view from '@hcengineering/view'
-  import { AnySvelteComponent, Component, Icon, IconSize } from '@hcengineering/ui'
-  import type { Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import view from '@intabiafusion/view'
+  import { AnySvelteComponent, Component, Icon, IconSize } from '@intabiafusion/ui'
+  import type { Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
 
   import { classIcon } from '../utils'
-  import { Asset } from '@hcengineering/platform'
+  import { Asset } from '@intabiafusion/platform'
 
   export let value: Doc
   export let size: IconSize = 'small'

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import card from '@hcengineering/card'
+import card from '@intabiafusion/card'
 import contact, {
   Channel,
   Contact,
@@ -28,7 +28,7 @@ import contact, {
   Person,
   PersonSpace,
   type UserProfile
-} from '@hcengineering/contact'
+} from '@intabiafusion/contact'
 import core, {
   AccountRole,
   AccountUuid,
@@ -51,15 +51,15 @@ import core, {
   TypedSpace,
   TxFactory,
   PermissionsGrant
-} from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import { makeRank } from '@hcengineering/rank'
-import { getAccountBySocialId, getCurrentPerson } from '@hcengineering/server-contact'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { workbenchId } from '@hcengineering/workbench'
+} from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import { makeRank } from '@intabiafusion/rank'
+import { getAccountBySocialId, getCurrentPerson } from '@intabiafusion/server-contact'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
+import { workbenchId } from '@intabiafusion/workbench'
 
 import { ManageCollaboratorsTrigger } from './collaborators'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []

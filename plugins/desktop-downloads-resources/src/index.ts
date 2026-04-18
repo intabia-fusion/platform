@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 
 import FileDownloadExt from './components/FileDownloadExt.svelte'
 import WorkbenchExtension from './components/WorkbenchExtension.svelte'

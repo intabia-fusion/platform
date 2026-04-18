@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import { Button, DropdownIntlItem, EditBox, IconDelete, Label, Modal, showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import core, { Association } from '@intabiafusion/core'
+  import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
+  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
+  import { Button, DropdownIntlItem, EditBox, IconDelete, Label, Modal, showPopup } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
 

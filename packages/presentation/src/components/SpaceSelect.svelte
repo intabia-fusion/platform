@@ -15,8 +15,8 @@
 <script lang="ts">
   import { ComponentType, createEventDispatcher } from 'svelte'
 
-  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@intabiafusion/core'
+  import { Asset, IntlString } from '@intabiafusion/platform'
   import {
     AnyComponent,
     AnySvelteComponent,
@@ -34,8 +34,8 @@
     getPlatformColorForTextDef,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import view, { IconProps } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view, { IconProps } from '@intabiafusion/view'
 
   import { ObjectCreate } from '../types'
   import { getClient, reduceCalls } from '../utils'

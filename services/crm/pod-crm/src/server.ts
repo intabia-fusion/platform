@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import cors from 'cors'
 import express, { type Express, type Request, type Response } from 'express'
 import rateLimit from 'express-rate-limit'

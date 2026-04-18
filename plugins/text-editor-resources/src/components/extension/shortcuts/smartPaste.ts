@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MarkupMarkType, MarkupNodeType, type MarkupNode } from '@hcengineering/text'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { MarkupMarkType, MarkupNodeType, type MarkupNode } from '@intabiafusion/text'
+import { markdownToMarkup } from '@intabiafusion/text-markdown'
 import { Extension } from '@tiptap/core'
 import { Node, type Schema } from '@tiptap/pm/model'
 import { Plugin } from '@tiptap/pm/state'

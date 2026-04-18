@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Metadata, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
+import type { Metadata, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
 
 /**
  * @public

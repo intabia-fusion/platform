@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Markup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import presentation, { MessageViewer, getFileUrl, getImageSize, imageSizeToRatio } from '@hcengineering/presentation'
-  import { EmptyMarkup, mergeKitOptions } from '@hcengineering/text'
-  import textEditor, { RefAction } from '@hcengineering/text-editor'
+  import { Markup } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import presentation, { MessageViewer, getFileUrl, getImageSize, imageSizeToRatio } from '@intabiafusion/presentation'
+  import { EmptyMarkup, mergeKitOptions } from '@intabiafusion/text'
+  import textEditor, { RefAction } from '@intabiafusion/text-editor'
   import {
     ActionIcon,
     ButtonSize,
@@ -17,7 +17,7 @@
     getPopupPositionElement,
     registerFocus,
     resizeObserver
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import StyledTextEditor from './StyledTextEditor.svelte'

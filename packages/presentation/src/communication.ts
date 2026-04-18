@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { closeLiveQueries, initLiveQueries, refreshLiveQueries } from '@hcengineering/communication-client-query'
+import { closeLiveQueries, initLiveQueries, refreshLiveQueries } from '@intabiafusion/communication-client-query'
 import {
   type AddAttachmentsOperation,
   type AddCollaboratorsEvent,
@@ -35,7 +35,7 @@ import {
   type UpdateNotificationEvent,
   type NotificationQuery,
   type UpdatePatchEvent
-} from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-sdk-types'
 import {
   type AccountUuid,
   type CardID,
@@ -65,7 +65,7 @@ import {
   type MessageMeta,
   type FindMessagesGroupParams,
   type MessagesGroup
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 import core, {
   generateId,
   getCurrentAccount,
@@ -75,16 +75,16 @@ import core, {
   type Tx,
   type TxDomainEvent,
   AccountRole
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { onDestroy } from 'svelte'
-import { addNotification, NotificationSeverity, languageStore } from '@hcengineering/ui'
-import { getMetadata, translate } from '@hcengineering/platform'
-import view from '@hcengineering/view'
+import { addNotification, NotificationSeverity, languageStore } from '@intabiafusion/ui'
+import { getMetadata, translate } from '@intabiafusion/platform'
+import view from '@intabiafusion/view'
 import { get } from 'svelte/store'
-import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
+import { getWorkspaceClient as getHulylakeClient } from '@intabiafusion/hulylake-client'
 import { v4 as uuid } from 'uuid'
-import communication from '@hcengineering/communication'
-import { withTotal } from '@hcengineering/communication-shared'
+import communication from '@intabiafusion/communication'
+import { withTotal } from '@intabiafusion/communication-shared'
 
 import { getCurrentWorkspaceUuid } from './file'
 import { addTxListener, removeTxListener, type TxListener } from './utils'
@@ -98,7 +98,7 @@ export {
   createNotificationsQuery,
   initLiveQueries,
   type MessageQueryParams
-} from '@hcengineering/communication-client-query'
+} from '@intabiafusion/communication-client-query'
 
 let client: CommunicationClient
 

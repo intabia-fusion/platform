@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
-  import { DropdownIntlItem } from '@hcengineering/ui/src/types'
+  import core from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label, resizeObserver, Scroller } from '@intabiafusion/ui'
+  import { DropdownIntlItem } from '@intabiafusion/ui/src/types'
   import { createEventDispatcher } from 'svelte'
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
 
   const dispatch = createEventDispatcher()
 

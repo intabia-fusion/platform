@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
-  import { floorFractionDigits, themeStore, tooltip } from '@hcengineering/ui'
+  import { getEmbeddedLabel, translate } from '@intabiafusion/platform'
+  import { floorFractionDigits, themeStore, tooltip } from '@intabiafusion/ui'
   import tracker from '../../../plugin'
   import { getContext } from 'svelte'
   import { useShowDaysStore } from '../../../utils'

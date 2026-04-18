@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref } from '@hcengineering/core'
-  import { Label, Scroller, PlainTextEditor } from '@hcengineering/ui'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import documents, { type DocumentSpace, type ChangeControl, DocumentState } from '@hcengineering/controlled-documents'
+  import { type Ref } from '@intabiafusion/core'
+  import { Label, Scroller, PlainTextEditor } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import documents, { type DocumentSpace, type ChangeControl, DocumentState } from '@intabiafusion/controlled-documents'
 
   import documentsRes from '../../plugin'
   import { $controlledDocument as controlledDocument, $isEditable as isEditable } from '../../stores/editors/document'

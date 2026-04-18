@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
-  import { ChatMessage } from '@hcengineering/chunter'
+  import { ActivityMessagePresenter } from '@intabiafusion/activity-resources'
+  import { ChatMessage } from '@intabiafusion/chunter'
 
   export let value: ChatMessage
 </script>

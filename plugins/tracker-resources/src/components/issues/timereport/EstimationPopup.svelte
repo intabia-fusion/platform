@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
+  import presentation, { Card, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Issue, Project, reduceChildInfoTree } from '@intabiafusion/tracker'
   import {
     Button,
     EditStyle,
@@ -24,8 +24,8 @@
     IconAdd,
     Label,
     showPopup
-  } from '@hcengineering/ui'
-  import { EditBoxPopup } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { EditBoxPopup } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
   import IssuePresenter from '../IssuePresenter.svelte'

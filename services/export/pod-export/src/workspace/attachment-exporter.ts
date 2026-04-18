@@ -25,9 +25,9 @@ import {
   type Ref,
   type TxOperations,
   type WorkspaceIds
-} from '@hcengineering/core'
-import core from '@hcengineering/model-core'
-import { type StorageAdapter } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import core from '@intabiafusion/model-core'
+import { type StorageAdapter } from '@intabiafusion/server-core'
 import { Buffer } from 'buffer'
 
 /**

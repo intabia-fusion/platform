@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type Doc, type TxCUD, type TxUpdateDoc } from '@hcengineering/core'
+import core, { type Doc, type TxCUD, type TxUpdateDoc } from '@intabiafusion/core'
 
 // TODO: Move to Platform, near the type definition
 export function isTxUpdateDoc<T extends Doc> (tx: TxCUD<T>): tx is TxUpdateDoc<T> {

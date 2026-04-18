@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core, { TxOperations } from '@hcengineering/core'
+import core, { TxOperations } from '@intabiafusion/core'
 import {
   tryUpgrade,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
+} from '@intabiafusion/model'
 import templates from './plugin'
-import { templatesId } from '@hcengineering/templates'
+import { templatesId } from '@intabiafusion/templates'
 
 export const templatesOperation: MigrateOperation = {
   async migrate (client: MigrationClient): Promise<void> {},

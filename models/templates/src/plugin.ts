@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@hcengineering/core'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { type SettingsCategory } from '@hcengineering/setting'
-import { templatesId } from '@hcengineering/templates'
-import templates from '@hcengineering/templates-resources/src/plugin'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { type SettingsCategory } from '@intabiafusion/setting'
+import { templatesId } from '@intabiafusion/templates'
+import templates from '@intabiafusion/templates-resources/src/plugin'
 
-import { type RefInputAction, type RefInputActionItem } from '@hcengineering/model-text-editor'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ActionCategory } from '@hcengineering/view'
+import { type RefInputAction, type RefInputActionItem } from '@intabiafusion/model-text-editor'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ActionCategory } from '@intabiafusion/view'
 
 export default mergeIds(templatesId, templates, {
   ids: {

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { BlobMetadata, SortingOrder, type Blob, type Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { BlobMetadata, SortingOrder, type Blob, type Ref } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
   import {
     Button,
     Modal,
@@ -27,7 +27,7 @@
     IconMaximize,
     IconMinimize,
     IconClose
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import ActionContext from './ActionContext.svelte'

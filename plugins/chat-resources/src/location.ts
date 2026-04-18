@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import cardPlugin, { type Card, type MasterTag } from '@hcengineering/card'
-import type { Class, Doc, Ref } from '@hcengineering/core'
-import { navigate, getCurrentResolvedLocation, type Location, type ResolvedLocation } from '@hcengineering/ui'
-import { chatId } from '@hcengineering/chat'
-import { getClient } from '@hcengineering/presentation'
-import { type LocationData } from '@hcengineering/workbench'
-import { encodeObjectURI, decodeObjectURI } from '@hcengineering/view'
-import { accessDeniedStore } from '@hcengineering/view-resources'
+import cardPlugin, { type Card, type MasterTag } from '@intabiafusion/card'
+import type { Class, Doc, Ref } from '@intabiafusion/core'
+import { navigate, getCurrentResolvedLocation, type Location, type ResolvedLocation } from '@intabiafusion/ui'
+import { chatId } from '@intabiafusion/chat'
+import { getClient } from '@intabiafusion/presentation'
+import { type LocationData } from '@intabiafusion/workbench'
+import { encodeObjectURI, decodeObjectURI } from '@intabiafusion/view'
+import { accessDeniedStore } from '@intabiafusion/view-resources'
 
 export function isFavoritesLocation (loc: Location): boolean {
   return loc.path[2] === chatId && loc.path[3] === 'favorites'

@@ -1,4 +1,4 @@
-import type { Metrics, PersonId } from '@hcengineering/core'
+import type { Metrics, PersonId } from '@intabiafusion/core'
 
 // Copy from server/core/stats.ts for UI usage.
 export interface MemoryStatistics {

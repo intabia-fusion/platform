@@ -1,7 +1,7 @@
 <script lang="ts">
-  import calendar, { Event } from '@hcengineering/calendar'
-  import { DateRangeMode } from '@hcengineering/core'
-  import { Icon, DatePresenter, IconArrowRight } from '@hcengineering/ui'
+  import calendar, { Event } from '@intabiafusion/calendar'
+  import { DateRangeMode } from '@intabiafusion/core'
+  import { Icon, DatePresenter, IconArrowRight } from '@intabiafusion/ui'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
 
   export let item: Event

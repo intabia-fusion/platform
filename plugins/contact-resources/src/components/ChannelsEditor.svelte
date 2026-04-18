@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { AttachedData, Class, Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize, closeTooltip, showPopup } from '@hcengineering/ui'
+  import type { AttachedData, Class, Doc, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { ButtonKind, ButtonSize, closeTooltip, showPopup } from '@intabiafusion/ui'
 
-  import { Channel, ChannelProvider } from '@hcengineering/contact'
-  import { restrictionStore } from '@hcengineering/view-resources'
+  import { Channel, ChannelProvider } from '@intabiafusion/contact'
+  import { restrictionStore } from '@intabiafusion/view-resources'
   import contact from '../plugin'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
 

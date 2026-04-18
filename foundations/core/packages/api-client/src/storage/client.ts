@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { concatLink, WorkspaceUuid, Blob, Ref } from '@hcengineering/core'
+import core, { concatLink, WorkspaceUuid, Blob, Ref } from '@intabiafusion/core'
 import { Readable } from 'stream'
 import { StorageClient } from './types'
 import { loadServerConfig, ServerConfig } from '../config'

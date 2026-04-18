@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { PersonId, Ref, WorkspaceUuid, MeasureContext, TxOperations, Doc } from '@hcengineering/core'
-import { PersonSpace } from '@hcengineering/contact'
-import chat from '@hcengineering/chat'
-import mail from '@hcengineering/mail'
+import { PersonId, Ref, WorkspaceUuid, MeasureContext, TxOperations, Doc } from '@intabiafusion/core'
+import { PersonSpace } from '@intabiafusion/contact'
+import chat from '@intabiafusion/chat'
+import mail from '@intabiafusion/mail'
 import { ChannelCache, ChannelCacheFactory } from '../channel'
 
 /* eslint-disable @typescript-eslint/unbound-method */

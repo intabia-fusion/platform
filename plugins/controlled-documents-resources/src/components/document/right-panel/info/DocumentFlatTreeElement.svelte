@@ -19,9 +19,9 @@
     getDocumentName,
     isFolder,
     type Project
-  } from '@hcengineering/controlled-documents'
-  import { type Ref } from '@hcengineering/core'
-  import { Icon, navigate } from '@hcengineering/ui'
+  } from '@intabiafusion/controlled-documents'
+  import { type Ref } from '@intabiafusion/core'
+  import { Icon, navigate } from '@intabiafusion/ui'
 
   import { getProjectDocumentLink } from '../../../../navigation'
 

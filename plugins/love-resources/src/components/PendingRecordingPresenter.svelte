@@ -12,11 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PendingRecording } from '@hcengineering/love'
-  import { WithLookup } from '@hcengineering/core'
-  import { ObjectPresenterType } from '@hcengineering/view'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { tooltip, Icon, Label, humanReadableFileSize } from '@hcengineering/ui'
+  import { PendingRecording } from '@intabiafusion/love'
+  import { WithLookup } from '@intabiafusion/core'
+  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { tooltip, Icon, Label, humanReadableFileSize } from '@intabiafusion/ui'
   import love from '../plugin'
 
   export let value: WithLookup<PendingRecording>

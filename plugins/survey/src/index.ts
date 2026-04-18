@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Class, Doc, Ref, Space } from '@hcengineering/core'
-import { plugin, IntlString, type Asset, type Plugin } from '@hcengineering/platform'
-import { Viewlet } from '@hcengineering/view'
-import { AnyComponent } from '@hcengineering/ui'
+import { Class, Doc, Ref, Space } from '@intabiafusion/core'
+import { plugin, IntlString, type Asset, type Plugin } from '@intabiafusion/platform'
+import { Viewlet } from '@intabiafusion/view'
+import { AnyComponent } from '@intabiafusion/ui'
 import { Poll, Survey } from './types'
 
 export * from './types'

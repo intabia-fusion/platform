@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, WithLookup } from '@hcengineering/core'
-  import { ProjectType, TaskType } from '@hcengineering/task'
-  import { StatePresenter } from '@hcengineering/task-resources'
-  import { IssueStatus, Project } from '@hcengineering/tracker'
-  import { IconSize } from '@hcengineering/ui'
+  import { Ref, WithLookup } from '@intabiafusion/core'
+  import { ProjectType, TaskType } from '@intabiafusion/task'
+  import { StatePresenter } from '@intabiafusion/task-resources'
+  import { IssueStatus, Project } from '@intabiafusion/tracker'
+  import { IconSize } from '@intabiafusion/ui'
   import { activeProjects } from '../../utils'
 
   export let value: WithLookup<IssueStatus> | undefined

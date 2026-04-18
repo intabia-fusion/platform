@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import login from '@hcengineering/login'
-  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { InviteSettings } from '@hcengineering/setting'
-  import { Breadcrumb, Button, EditBox, Header, MiniToggle } from '@hcengineering/ui'
+  import core from '@intabiafusion/core'
+  import login from '@intabiafusion/login'
+  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { InviteSettings } from '@intabiafusion/setting'
+  import { Breadcrumb, Button, EditBox, Header, MiniToggle } from '@intabiafusion/ui'
 
   const client = getClient()
   let expTime: number = 48

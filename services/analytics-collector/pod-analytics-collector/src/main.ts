@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { setMetadata } from '@hcengineering/platform'
-import serverClient from '@hcengineering/server-client'
-import serverToken from '@hcengineering/server-token'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClient from '@intabiafusion/server-client'
+import serverToken from '@intabiafusion/server-token'
 
-import { Analytics } from '@hcengineering/analytics'
-import { SplitLogger, configureAnalytics, createOpenTelemetryMetricsContext } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
+import { Analytics } from '@intabiafusion/analytics'
+import { SplitLogger, configureAnalytics, createOpenTelemetryMetricsContext } from '@intabiafusion/analytics-service'
+import { newMetrics } from '@intabiafusion/core'
 import { join } from 'path'
 
-import { initStatisticsContext } from '@hcengineering/server-core'
+import { initStatisticsContext } from '@intabiafusion/server-core'
 import config from './config'
 import { createServer, listen } from './server'
 import { setGeoipLogContext } from './geoip'

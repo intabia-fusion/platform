@@ -23,9 +23,9 @@ import {
   DocumentQuery,
   FindOptions,
   FindResult
-} from '@hcengineering/core'
-import drive, { type FileVersion, type Folder } from '@hcengineering/drive'
-import type { TriggerControl } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import drive, { type FileVersion, type Folder } from '@intabiafusion/drive'
+import type { TriggerControl } from '@intabiafusion/server-core'
 
 /** @public */
 export async function OnFileVersionDelete (

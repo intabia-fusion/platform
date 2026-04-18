@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, toIdMap } from '@hcengineering/core'
-  import { isOffice, ParticipantInfo, Room, MeetingMinutes } from '@hcengineering/love'
-  import { getMetadata } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip } from '@hcengineering/ui'
-  import type { Location } from '@hcengineering/ui'
+  import { IdMap, Ref, toIdMap } from '@intabiafusion/core'
+  import { isOffice, ParticipantInfo, Room, MeetingMinutes } from '@intabiafusion/love'
+  import { getMetadata } from '@intabiafusion/platform'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip } from '@intabiafusion/ui'
+  import type { Location } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
-  import workbench from '@hcengineering/workbench'
-  import { closeWidget, sidebarStore } from '@hcengineering/workbench-resources'
+  import workbench from '@intabiafusion/workbench'
+  import { closeWidget, sidebarStore } from '@intabiafusion/workbench-resources'
 
   import love from '../../plugin'
   import { currentRoom, infos, myInfo, myConnectingSessionId, rooms, meetings } from '../../stores'

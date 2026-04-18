@@ -2,10 +2,10 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { setMetadata } from '@hcengineering/platform'
-import serverToken from '@hcengineering/server-token'
+import { setMetadata } from '@intabiafusion/platform'
+import serverToken from '@intabiafusion/server-token'
 
-import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import { storageConfigFromEnv } from '@intabiafusion/server-storage'
 import config from './config'
 import { createServer, listen } from './server'
 

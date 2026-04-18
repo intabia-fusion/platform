@@ -22,7 +22,7 @@ The theme system now supports 10 accent colors:
 ### Setting Accent Color
 
 ```typescript
-import { getCurrentAccentColor, AccentColor } from '@hcengineering/theme'
+import { getCurrentAccentColor, AccentColor } from '@intabiafusion/theme'
 
 // Get current accent color
 const currentAccent = getCurrentAccentColor() // returns 'accent-blue', 'accent-purple', etc.
@@ -37,7 +37,7 @@ setAccent(AccentColor.Purple)
 ```svelte
 <script lang="ts">
   import { getContext } from 'svelte'
-  import { AccentColor } from '@hcengineering/theme'
+  import { AccentColor } from '@intabiafusion/theme'
 
   const { currentAccent, setAccent } = getContext('accent')
 </script>
@@ -103,7 +103,7 @@ Theme-aware composite classes:
 - Helper: You can build the composite class programmatically using the helper exported by the theme package:
 
 ```typescript
-import { getCompositeAccentClass } from '@hcengineering/theme'
+import { getCompositeAccentClass } from '@intabiafusion/theme'
 
 const cls = getCompositeAccentClass('theme-light', 'accent-huly') // 'accent-light-huly'
 ```
@@ -113,8 +113,8 @@ const cls = getCompositeAccentClass('theme-light', 'accent-huly') // 'accent-lig
 ## Available Types
 
 ```typescript
-import type { AccentColorType } from '@hcengineering/theme'
-import { AccentColor } from '@hcengineering/theme'
+import type { AccentColorType } from '@intabiafusion/theme'
+import { AccentColor } from '@intabiafusion/theme'
 
 // Usage
 const myAccent: AccentColorType = AccentColor.Red

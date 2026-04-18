@@ -187,14 +187,14 @@ Examples:
   compile-all . --parallel 4 --verbose
   compile-all /path/to/repo -p -v --validate
   compile-all . --validate --force
-  compile-all . --bundle --to @hcengineering/pod-server
-  compile-all . --docker-build --to @hcengineering/pod-server
+  compile-all . --bundle --to @intabiafusion/pod-server
+  compile-all . --docker-build --to @intabiafusion/pod-server
   compile-all . --list
-  compile-all . --to @hcengineering/core
+  compile-all . --to @intabiafusion/core
   compile-all . --format
-  compile-all . --format --to @hcengineering/core
+  compile-all . --format --to @intabiafusion/core
   compile-all . --lint
-  compile-all . --lint --to @hcengineering/core
+  compile-all . --lint --to @intabiafusion/core
 `)
 }
 

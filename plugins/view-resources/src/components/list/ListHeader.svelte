@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AggregateValue, Doc, PrimitiveType, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { AggregateValue, Doc, PrimitiveType, Ref, Space } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
   import {
     AnyComponent,
     AnySvelteComponent,
@@ -31,10 +31,10 @@
     eventToHTMLElement,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import { AttributeModel, ViewOptions } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { AttributeModel, ViewOptions } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import view from '../../plugin'
   import { SelectionFocusProvider, selectionLimit } from '../../selection'

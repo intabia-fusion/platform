@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
   import { ProcessContextView } from '../../types'
 
   export let context: ProcessContextView

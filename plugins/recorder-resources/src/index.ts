@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-import { translate, type Resources } from '@hcengineering/platform'
-import { getCurrentLanguage } from '@hcengineering/theme'
-import { type FileUploadOptions } from '@hcengineering/uploader'
-import { addNotification, NotificationSeverity } from '@hcengineering/ui'
-import view from '@hcengineering/view'
+import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+import { translate, type Resources } from '@intabiafusion/platform'
+import { getCurrentLanguage } from '@intabiafusion/theme'
+import { type FileUploadOptions } from '@intabiafusion/uploader'
+import { addNotification, NotificationSeverity } from '@intabiafusion/ui'
+import view from '@intabiafusion/view'
 
 import { record } from './recording'
 import RecorderExt from './components/RecorderExt.svelte'

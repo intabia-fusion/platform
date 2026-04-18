@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import questions, { type Answer, type Question } from '@hcengineering/questions'
-import { type Doc, SortingOrder } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
+import questions, { type Answer, type Question } from '@intabiafusion/questions'
+import { type Doc, SortingOrder } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
 
 export async function findAnswers<Parent extends Doc, Collection extends Extract<keyof Parent, string> | string> (
   from: Parent,

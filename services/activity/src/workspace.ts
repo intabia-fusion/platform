@@ -31,12 +31,12 @@ import core, {
   type WithLookup,
   type WorkspaceInfoWithStatus,
   type Branding
-} from '@hcengineering/core'
-import { type RestClient } from '@hcengineering/api-client'
-import { type StorageAdapter } from '@hcengineering/storage'
-import { PlatformError, unknownError } from '@hcengineering/platform'
-import { createPipeline, type MiddlewareCreator, type Pipeline, type PipelineContext } from '@hcengineering/server-core'
-import { getConfig } from '@hcengineering/server-pipeline'
+} from '@intabiafusion/core'
+import { type RestClient } from '@intabiafusion/api-client'
+import { type StorageAdapter } from '@intabiafusion/storage'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
+import { createPipeline, type MiddlewareCreator, type Pipeline, type PipelineContext } from '@intabiafusion/server-core'
+import { getConfig } from '@intabiafusion/server-pipeline'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -45,8 +45,8 @@ import {
   DomainTxMiddleware,
   LowLevelMiddleware,
   ModelMiddleware
-} from '@hcengineering/middleware'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+} from '@intabiafusion/middleware'
+import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
 
 import config from './config'
 import WsCache, { CACHE_TTL_MS } from './cache'

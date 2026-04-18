@@ -18,9 +18,9 @@ import {
   loadServerConfig,
   type ServerConfig,
   type WorkspaceToken
-} from '@hcengineering/api-client'
-import { getClient as getAccountClient, type AccountClient } from '@hcengineering/account-client'
-import type { WorkspaceUuid, WorkspaceMode } from '@hcengineering/core'
+} from '@intabiafusion/api-client'
+import { getClient as getAccountClient, type AccountClient } from '@intabiafusion/account-client'
+import type { WorkspaceUuid, WorkspaceMode } from '@intabiafusion/core'
 
 import type { BenchConfig } from './config'
 

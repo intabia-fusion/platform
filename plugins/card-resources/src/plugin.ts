@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import card, { type Card, cardId } from '@hcengineering/card'
-import { type Permission, type Doc, type Ref } from '@hcengineering/core'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/presentation'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { ViewletDescriptor, Viewlet } from '@hcengineering/view'
-import type { ValueFormatter } from '@hcengineering/converter'
+import card, { type Card, cardId } from '@intabiafusion/card'
+import { type Permission, type Doc, type Ref } from '@intabiafusion/core'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/presentation'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import type { ViewletDescriptor, Viewlet } from '@intabiafusion/view'
+import type { ValueFormatter } from '@intabiafusion/converter'
 
 export default mergeIds(cardId, card, {
   component: {

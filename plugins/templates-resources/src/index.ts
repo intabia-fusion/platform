@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import Templates from './components/Templates.svelte'
-import { type TextEditorHandler } from '@hcengineering/text-editor'
-import { showPopup } from '@hcengineering/ui'
+import { type TextEditorHandler } from '@intabiafusion/text-editor'
+import { showPopup } from '@intabiafusion/ui'
 import EditorTemplatePopup from './components/EditorTemplatePopup.svelte'
 import CreateTemplateCategory from './components/CreateTemplateCategory.svelte'
 import TemplatePopup from './components/TemplatePopup.svelte'

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { AccountClient } from '@hcengineering/account-client'
-import { groupByArray, MeasureContext, PersonId, WorkspaceUuid } from '@hcengineering/core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { gmailIntegrationKind } from '@hcengineering/gmail'
+import type { AccountClient } from '@intabiafusion/account-client'
+import { groupByArray, MeasureContext, PersonId, WorkspaceUuid } from '@intabiafusion/core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { gmailIntegrationKind } from '@intabiafusion/gmail'
 import { SecretType, Token } from './types'
 
 export class TokenStorage {

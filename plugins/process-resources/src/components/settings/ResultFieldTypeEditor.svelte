@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import core, { AnyAttribute, Class, Ref, Type } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
-  import { DropdownLabelsIntl, Label, tooltip } from '@hcengineering/ui'
+  import { MasterTag } from '@intabiafusion/card'
+  import core, { AnyAttribute, Class, Ref, Type } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Process } from '@intabiafusion/process'
+  import { DropdownLabelsIntl, Label, tooltip } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

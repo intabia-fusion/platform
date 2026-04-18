@@ -22,8 +22,8 @@ import core, {
   type Doc,
   type Space,
   type TypedSpace
-} from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
+} from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
 import { get } from 'svelte/store'
 import { spaceSpace } from './utils'
 

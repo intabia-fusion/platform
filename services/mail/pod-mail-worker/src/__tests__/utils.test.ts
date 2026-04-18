@@ -14,7 +14,7 @@
 //
 
 import { parseContent, getHeader, removeContentTypeHeader } from '../utils'
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import { MtaMessage } from '../types'
 import { readEml } from 'eml-parse-js'
 

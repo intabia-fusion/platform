@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
-  import presentation, { Card, getAttributeEditor, getClient } from '@hcengineering/presentation'
-  import { SelectedContext } from '@hcengineering/process'
-  import { AnySvelteComponent, CheckBox, Label } from '@hcengineering/ui'
+  import { AnyAttribute, Class, Doc, Ref } from '@intabiafusion/core'
+  import presentation, { Card, getAttributeEditor, getClient } from '@intabiafusion/presentation'
+  import { SelectedContext } from '@intabiafusion/process'
+  import { AnySvelteComponent, CheckBox, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

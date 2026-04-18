@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@hcengineering/core'
-import { type MessageNotificationType } from '@hcengineering/notification'
-import { type Resource, mergeIds } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type ActionCategory, type ViewAction } from '@hcengineering/view'
-import { loveId } from '@hcengineering/love'
-import love from '@hcengineering/love-resources/src/plugin'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
-import { type SocialIdentityProvider } from '@hcengineering/contact'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { type MessageNotificationType } from '@intabiafusion/notification'
+import { type Resource, mergeIds } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type ActionCategory, type ViewAction } from '@intabiafusion/view'
+import { loveId } from '@intabiafusion/love'
+import love from '@intabiafusion/love-resources/src/plugin'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/model-presentation'
+import { type SocialIdentityProvider } from '@intabiafusion/contact'
 
 export default mergeIds(loveId, love, {
   component: {

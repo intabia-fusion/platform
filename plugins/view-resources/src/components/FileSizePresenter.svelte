@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonSize, humanReadableFileSize } from '@hcengineering/ui'
+  import { Button, ButtonSize, humanReadableFileSize } from '@intabiafusion/ui'
 
   export let value: number | undefined
   export let kind: 'no-border' | 'link' | 'list' = 'no-border'

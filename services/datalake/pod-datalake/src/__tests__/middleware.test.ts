@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { PersonUuid, WorkspaceUuid } from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
-import { extractToken, readToken } from '@hcengineering/server-client'
+import type { PersonUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
+import { extractToken, readToken } from '@intabiafusion/server-client'
 import { withAuthorization, withWorkspace, RequestWithAuth } from '../middleware'
 import { Response, NextFunction } from 'express'
 

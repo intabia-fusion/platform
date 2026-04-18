@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/api-client
+# Change Log - @intabiafusion/api-client
 
 This log was last generated on Mon, 27 Oct 2025 17:09:21 GMT and should not be manually modified.
 

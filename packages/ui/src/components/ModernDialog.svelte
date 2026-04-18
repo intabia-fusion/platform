@@ -15,7 +15,7 @@
 <script lang="ts">
   // Note: migrated from QMS. Should be unified with the platform solutions eventually.
   import { createEventDispatcher } from 'svelte'
-  import type { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@intabiafusion/platform'
   import { AnySvelteComponent, ButtonKind } from '../types'
   import Button from './Button.svelte'
   import Label from './Label.svelte'

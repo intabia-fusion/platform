@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MarkupNode, markupToJSON } from '@hcengineering/text'
-  import { Markup } from '@hcengineering/core'
+  import { MarkupNode, markupToJSON } from '@intabiafusion/text'
+  import { Markup } from '@intabiafusion/core'
   import LiteNode from './markup/lite/LiteNode.svelte'
-  import { loadParseEmojisFunction, ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import { loadParseEmojisFunction, ParsedTextWithEmojis } from '@intabiafusion/emoji'
   import { onMount } from 'svelte'
 
   export let message: Markup | MarkupNode

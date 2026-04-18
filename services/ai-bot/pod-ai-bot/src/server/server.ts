@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { Token } from '@hcengineering/server-token'
+import { Token } from '@intabiafusion/server-token'
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Request, type Response, raw } from 'express'
 import { type Server } from 'http'
@@ -24,9 +24,9 @@ import {
   AIEventRequest,
   PostTranscriptRequest,
   SummarizeMessagesRequest
-} from '@hcengineering/ai-bot'
-import { extractToken } from '@hcengineering/server-client'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
+} from '@intabiafusion/ai-bot'
+import { extractToken } from '@intabiafusion/server-client'
+import { MeasureContext, systemAccountUuid } from '@intabiafusion/core'
 
 import { ApiError } from './error'
 import { AIControl } from '../controller'

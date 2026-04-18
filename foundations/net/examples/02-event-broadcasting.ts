@@ -12,16 +12,16 @@
  * // cd examples && rushx run:events
  */
 
-import { AgentImpl, TickManagerImpl, NetworkImpl, createProxyHandler } from '@hcengineering/network-core'
-import { NetworkServer } from '@hcengineering/network-server'
-import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
+import { AgentImpl, TickManagerImpl, NetworkImpl, createProxyHandler } from '@intabiafusion/network-core'
+import { NetworkServer } from '@intabiafusion/network-server'
+import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
 import type { 
   Container, 
   ContainerUuid, 
   ClientUuid,
   ContainerKind,
   GetOptions
-} from '@hcengineering/network-core'
+} from '@intabiafusion/network-core'
 
 interface ChatMessage {
   username: string

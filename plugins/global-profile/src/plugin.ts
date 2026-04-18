@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Asset, type IntlString, plugin, type Plugin } from '@hcengineering/platform'
+import { type Asset, type IntlString, plugin, type Plugin } from '@intabiafusion/platform'
 
 export const globalProfileId = 'global-profile' as Plugin
 export const globalProfileRoute = 'user'

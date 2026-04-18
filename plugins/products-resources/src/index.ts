@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import products, { type Product } from '@hcengineering/products'
-import type { Class, Client, DocumentQuery, Ref, RelatedDocument, WithLookup } from '@hcengineering/core'
-import { type Resources } from '@hcengineering/platform'
-import { type ObjectSearchResult } from '@hcengineering/presentation'
+import products, { type Product } from '@intabiafusion/products'
+import type { Class, Client, DocumentQuery, Ref, RelatedDocument, WithLookup } from '@intabiafusion/core'
+import { type Resources } from '@intabiafusion/platform'
+import { type ObjectSearchResult } from '@intabiafusion/presentation'
 
 import CreateProduct from './components/product/CreateProduct.svelte'
 import EditProduct from './components/product/EditProduct.svelte'

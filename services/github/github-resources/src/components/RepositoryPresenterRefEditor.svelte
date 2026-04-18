@@ -4,8 +4,8 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import { Ref } from '@intabiafusion/core'
+  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
   import {
     Button,
     ButtonKind,
@@ -17,9 +17,9 @@
     SelectPopupValueType,
     eventToHTMLElement,
     showPopup
-  } from '@hcengineering/ui'
-  import { HyperlinkEditor } from '@hcengineering/view-resources'
-  import { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+  } from '@intabiafusion/ui'
+  import { HyperlinkEditor } from '@intabiafusion/view-resources'
+  import { GithubIntegrationRepository, GithubProject } from '@intabiafusion/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

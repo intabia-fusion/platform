@@ -1,8 +1,8 @@
-import { type Builder } from '@hcengineering/model'
-import type { AttachedDoc, Class, Collection, Data, Doc, Ref } from '@hcengineering/core'
-import type { MessageNotificationType, NotificationGroup, TxNotificationType } from '@hcengineering/notification'
-import core from '@hcengineering/model-core'
-import activity from '@hcengineering/activity'
+import { type Builder } from '@intabiafusion/model'
+import type { AttachedDoc, Class, Collection, Data, Doc, Ref } from '@intabiafusion/core'
+import type { MessageNotificationType, NotificationGroup, TxNotificationType } from '@intabiafusion/notification'
+import core from '@intabiafusion/model-core'
+import activity from '@intabiafusion/activity'
 
 import notification from './plugin'
 

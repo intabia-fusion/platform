@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TimeReportDayType } from '@hcengineering/tracker'
-  import { DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { TimeReportDayType } from '@intabiafusion/tracker'
+  import { DropdownIntlItem, DropdownLabelsIntl } from '@intabiafusion/ui'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
   import tracker from '../../../plugin'
   import TimeReportDayIcon from './TimeReportDayIcon.svelte'
 

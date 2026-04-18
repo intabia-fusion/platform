@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
-import { SortingOrder } from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import task from '@hcengineering/model-task'
-import view, { showColorsViewOption, showDaysViewOption } from '@hcengineering/model-view'
-import tags from '@hcengineering/tags'
-import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@hcengineering/view'
+import contact from '@intabiafusion/contact'
+import { SortingOrder } from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import task from '@intabiafusion/model-task'
+import view, { showColorsViewOption, showDaysViewOption } from '@intabiafusion/model-view'
+import tags from '@intabiafusion/tags'
+import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@intabiafusion/view'
 import tracker from './plugin'
 
 export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({

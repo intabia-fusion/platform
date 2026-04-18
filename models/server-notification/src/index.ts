@@ -14,21 +14,21 @@
 // limitations under the License.
 //
 
-import { type Builder, Mixin } from '@hcengineering/model'
+import { type Builder, Mixin } from '@intabiafusion/model'
 
-import contact from '@hcengineering/contact'
-import core from '@hcengineering/core'
-import { TNotificationType } from '@hcengineering/model-notification'
-import notification from '@hcengineering/notification'
-import serverCore from '@hcengineering/server-core'
+import contact from '@intabiafusion/contact'
+import core from '@intabiafusion/core'
+import { TNotificationType } from '@intabiafusion/model-notification'
+import notification from '@intabiafusion/notification'
+import serverCore from '@intabiafusion/server-core'
 import serverNotification, {
   type CreateNotificationResource,
   type NotificationContentProviderResource,
   type TypeMatch,
   type TypeMatchFuncResource
-} from '@hcengineering/server-notification'
+} from '@intabiafusion/server-notification'
 
-export { serverNotificationId } from '@hcengineering/server-notification'
+export { serverNotificationId } from '@intabiafusion/server-notification'
 
 @Mixin(serverNotification.mixin.TypeMatch, notification.class.NotificationType)
 export class TTypeMatch extends TNotificationType implements TypeMatch {

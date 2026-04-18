@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import { GithubPullRequestState } from '@hcengineering/github'
+  import { Label } from '@intabiafusion/ui'
+  import { GithubPullRequestState } from '@intabiafusion/github'
   import github from '../../plugin'
 
   export let value: GithubPullRequestState

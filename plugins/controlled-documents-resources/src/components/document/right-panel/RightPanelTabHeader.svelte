@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Button, IconClose } from '@hcengineering/ui'
+  import { Button, IconClose } from '@intabiafusion/ui'
   import { rightPanelTabChanged } from '../../../stores/editors/document'
 </script>
 

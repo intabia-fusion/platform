@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IssueStatus, Project } from '@hcengineering/tracker'
+  import { IssueStatus, Project } from '@intabiafusion/tracker'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
-  import { createQuery } from '@hcengineering/presentation'
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { createQuery } from '@intabiafusion/presentation'
+  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@intabiafusion/core'
+  import { statusStore } from '@intabiafusion/view-resources'
 
   export let value: Ref<IssueStatus>[]
   export let space: Ref<Project> | undefined

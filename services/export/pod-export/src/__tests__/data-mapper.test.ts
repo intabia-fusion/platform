@@ -23,7 +23,7 @@ import {
   type Hierarchy,
   generateId,
   platformNow
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { DataMapper } from '../workspace/data-mapper'
 import { type ExportState } from '../workspace/types'
 

@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { CheckBox, Label, MiniToggle, resizeObserver } from '@hcengineering/ui'
-  import { ActivityMessagesFilter } from '@hcengineering/activity'
-  import { Ref } from '@hcengineering/core'
+  import { CheckBox, Label, MiniToggle, resizeObserver } from '@intabiafusion/ui'
+  import { ActivityMessagesFilter } from '@intabiafusion/activity'
+  import { Ref } from '@intabiafusion/core'
 
   import activity from '../plugin'
   import { activityDirectionStore } from '../stores'

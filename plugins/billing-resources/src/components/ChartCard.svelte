@@ -1,7 +1,7 @@
 <script lang="ts">
   import LineChart from './Chart/LineChart.svelte'
-  import { Label } from '@hcengineering/ui'
-  import type { IntlString } from '@hcengineering/platform'
+  import { Label } from '@intabiafusion/ui'
+  import type { IntlString } from '@intabiafusion/platform'
 
   interface DataSeries {
     label: IntlString

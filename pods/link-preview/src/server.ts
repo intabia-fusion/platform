@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, metricsAggregate } from '@hcengineering/core'
-import { getCPUInfo, getMemoryInfo } from '@hcengineering/server-core'
-import { decodeToken, TokenError } from '@hcengineering/server-token'
+import { Analytics } from '@intabiafusion/analytics'
+import { MeasureContext, metricsAggregate } from '@intabiafusion/core'
+import { getCPUInfo, getMemoryInfo } from '@intabiafusion/server-core'
+import { decodeToken, TokenError } from '@intabiafusion/server-token'
 
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Response } from 'express'

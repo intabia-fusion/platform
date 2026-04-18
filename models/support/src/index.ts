@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import core, { DOMAIN_MODEL, type Domain, IndexKind } from '@hcengineering/core'
-import { type Builder, Index, Model } from '@hcengineering/model'
-import preference, { TPreference } from '@hcengineering/model-preference'
+import core, { DOMAIN_MODEL, type Domain, IndexKind } from '@intabiafusion/core'
+import { type Builder, Index, Model } from '@intabiafusion/model'
+import preference, { TPreference } from '@intabiafusion/model-preference'
 import support, {
   type SupportConversation,
   type SupportSystem,
   type SupportWidgetFactory
-} from '@hcengineering/support'
+} from '@intabiafusion/support'
 
-import { TDoc } from '@hcengineering/model-core'
-import { type Resource } from '@hcengineering/platform'
+import { TDoc } from '@intabiafusion/model-core'
+import { type Resource } from '@intabiafusion/platform'
 
-export { supportId } from '@hcengineering/support'
+export { supportId } from '@intabiafusion/support'
 export { support as default }
 
 export const DOMAIN_SUPPORT = 'support' as Domain

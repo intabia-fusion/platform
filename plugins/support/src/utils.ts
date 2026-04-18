@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { PersonId, Ref, Space, TxOperations } from '@hcengineering/core'
+import { PersonId, Ref, Space, TxOperations } from '@intabiafusion/core'
 
 import support from '.'
 

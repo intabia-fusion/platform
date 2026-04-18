@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { Ref, Space, matchQuery, Doc } from '@hcengineering/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Ref, Space, matchQuery, Doc } from '@intabiafusion/core'
   import notification, {
     ActivityInboxNotification,
     ActivityNotificationViewlet,
     DisplayActivityInboxNotification,
     NotificationType
-  } from '@hcengineering/notification'
-  import { ActivityMessagePreview, BasePreview, sortActivityMessages } from '@hcengineering/activity-resources'
-  import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-  import { Action, Component } from '@hcengineering/ui'
-  import { getActions } from '@hcengineering/view-resources'
-  import { getResource } from '@hcengineering/platform'
-  import { Analytics } from '@hcengineering/analytics'
+  } from '@intabiafusion/notification'
+  import { ActivityMessagePreview, BasePreview, sortActivityMessages } from '@intabiafusion/activity-resources'
+  import activity, { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
+  import { Action, Component } from '@intabiafusion/ui'
+  import { getActions } from '@intabiafusion/view-resources'
+  import { getResource } from '@intabiafusion/platform'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let object: Doc | undefined
   export let value: DisplayActivityInboxNotification

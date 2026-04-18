@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Label, Toggle } from '@hcengineering/ui'
+  import { Label, Toggle } from '@intabiafusion/ui'
   import love from '../plugin'
   import { isShareWithSound, liveKitClient } from '../utils'
   import { ScreenSharingState, screenSharingState } from '../liveKitClient'

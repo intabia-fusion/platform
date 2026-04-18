@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ActivityMessage } from '@hcengineering/activity'
+  import { ActivityMessage } from '@intabiafusion/activity'
 
   import ActivityMessagePresenter from './ActivityMessagePresenter.svelte'
 

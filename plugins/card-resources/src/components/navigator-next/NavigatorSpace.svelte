@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { TreeNode } from '@hcengineering/view-resources'
-  import cardPlugin, { MasterTag, CardSpace, Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { TreeNode } from '@intabiafusion/view-resources'
+  import cardPlugin, { MasterTag, CardSpace, Card } from '@intabiafusion/card'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
 
   import NavigatorVariant from './NavigatorVariant.svelte'
   import type { NavigatorConfig } from '../../types'

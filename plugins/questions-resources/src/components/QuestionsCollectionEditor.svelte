@@ -3,7 +3,7 @@
 -->
 
 <script lang="ts">
-  import type { Question } from '@hcengineering/questions'
+  import type { Question } from '@intabiafusion/questions'
   import questions from '../plugin'
   import {
     Button,
@@ -13,9 +13,9 @@
     Label,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Class, type Doc, Ref, SortingOrder } from '@hcengineering/core'
+  } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Class, type Doc, Ref, SortingOrder } from '@intabiafusion/core'
   import { createQuestion, getQuestionClasses, initQuestion } from '../utils'
   import QuestionsItemEditor from './QuestionsItemEditor.svelte'
 

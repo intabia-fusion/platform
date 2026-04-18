@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
-import { setMetadata } from '@hcengineering/platform'
-import { initStatisticsContext } from '@hcengineering/server-core'
-import serverToken from '@hcengineering/server-token'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
+import { newMetrics } from '@intabiafusion/core'
+import { setMetadata } from '@intabiafusion/platform'
+import { initStatisticsContext } from '@intabiafusion/server-core'
+import serverToken from '@intabiafusion/server-token'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import express from 'express'

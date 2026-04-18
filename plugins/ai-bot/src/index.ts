@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { buildSocialIdString, SocialIdType } from '@hcengineering/core'
-import type { Metadata, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
+import { buildSocialIdString, SocialIdType } from '@intabiafusion/core'
+import type { Metadata, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
 
 export * from './rest'
 

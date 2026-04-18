@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { TagCategory, TagElement } from '@hcengineering/tags'
-  import { ModernButton, getPlatformColorForTextDef, showPopup, themeStore, ScrollerBar } from '@hcengineering/ui'
+  import { Class, Doc, Ref, SortingOrder } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { TagCategory, TagElement } from '@intabiafusion/tags'
+  import { ModernButton, getPlatformColorForTextDef, showPopup, themeStore, ScrollerBar } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { getTagStyle, TagElementInfo } from '../utils'

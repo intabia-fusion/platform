@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import platform, { loadPluginStrings, setMetadata } from '@hcengineering/platform'
+  import { Analytics } from '@intabiafusion/analytics'
+  import platform, { loadPluginStrings, setMetadata } from '@intabiafusion/platform'
   import { onMount, setContext } from 'svelte'
   import { writable } from 'svelte/store'
   import { ThemeVariant, type AccentColorType } from './variants'

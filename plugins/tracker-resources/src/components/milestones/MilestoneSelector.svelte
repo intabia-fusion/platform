@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref, SortingOrder } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel, translateCB } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Milestone } from '@hcengineering/tracker'
-  import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult } from '@hcengineering/ui'
+  import { DocumentQuery, Ref, SortingOrder } from '@intabiafusion/core'
+  import { IntlString, getEmbeddedLabel, translateCB } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Milestone } from '@intabiafusion/tracker'
+  import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult } from '@intabiafusion/ui'
   import {
     Button,
     ButtonShape,
@@ -27,7 +27,7 @@
     eventToHTMLElement,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
   import NewMilestone from './NewMilestone.svelte'

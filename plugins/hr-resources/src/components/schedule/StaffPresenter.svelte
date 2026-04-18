@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getName } from '@hcengineering/contact'
-  import { Avatar } from '@hcengineering/contact-resources'
-  import hr, { Department, Staff } from '@hcengineering/hr'
-  import { getClient } from '@hcengineering/presentation'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { getName } from '@intabiafusion/contact'
+  import { Avatar } from '@intabiafusion/contact-resources'
+  import hr, { Department, Staff } from '@intabiafusion/hr'
+  import { getClient } from '@intabiafusion/presentation'
+  import { DocNavLink } from '@intabiafusion/view-resources'
 
   export let value: Staff
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
-  import { State } from '@hcengineering/process'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
+  import { State } from '@intabiafusion/process'
   import plugin from '../plugin'
 
   export let value: Ref<State>

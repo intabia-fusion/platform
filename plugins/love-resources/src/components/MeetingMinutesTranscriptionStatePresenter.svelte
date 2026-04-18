@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes, TranscriptionState } from '@hcengineering/love'
-  import { StateType, StateTag } from '@hcengineering/ui'
+  import { MeetingMinutes, TranscriptionState } from '@intabiafusion/love'
+  import { StateType, StateTag } from '@intabiafusion/ui'
 
   import love from '../plugin'
 

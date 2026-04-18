@@ -20,8 +20,8 @@ import {
   type WorkspaceUuid,
   type SocialKey,
   type AccountUuid
-} from '@hcengineering/core'
-import { type AccountDB, createAccount } from '@hcengineering/account'
+} from '@intabiafusion/core'
+import { type AccountDB, createAccount } from '@intabiafusion/account'
 import { getMongoAccountDB } from './utils'
 import { type Account as OldAccount, type Workspace as OldWorkspace } from './types'
 import { type MongoAccountDB } from './collections/mongo'

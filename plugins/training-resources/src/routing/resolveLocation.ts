@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { trainingId } from '@hcengineering/training'
-import { type Location, type ResolvedLocation } from '@hcengineering/ui'
+import { trainingId } from '@intabiafusion/training'
+import { type Location, type ResolvedLocation } from '@intabiafusion/ui'
 import { trainingAttemptRoute } from './routes/trainingAttemptRoute'
 import { trainingRequestRoute } from './routes/trainingRequestRoute'
 import { trainingRoute } from './routes/trainingRoute'

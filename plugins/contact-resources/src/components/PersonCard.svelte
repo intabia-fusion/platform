@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@hcengineering/attachment'
-  import contact, { Channel, Contact, getName } from '@hcengineering/contact'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import attachment from '@intabiafusion/attachment'
+  import contact, { Channel, Contact, getName } from '@intabiafusion/contact'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import Avatar from './Avatar.svelte'
-  import { Component, Label } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { Component, Label } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import ChannelsEditor from './ChannelsEditor.svelte'
 
   export let object: Contact

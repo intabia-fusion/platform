@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Action, IconEdit } from '@hcengineering/ui'
-  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { Action, IconEdit } from '@intabiafusion/ui'
+  import { getResource } from '@intabiafusion/platform'
 
   import { TreeItem, getActions as getContributedActions } from '../../index'
 

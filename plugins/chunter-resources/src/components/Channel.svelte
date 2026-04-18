@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, getCurrentAccount, Ref } from '@hcengineering/core'
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
-  import activity, { ActivityMessage, WithReferences } from '@hcengineering/activity'
-  import { getClient, isSpace } from '@hcengineering/presentation'
-  import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
-  import { location as locationStore } from '@hcengineering/ui'
+  import { Doc, getCurrentAccount, Ref } from '@intabiafusion/core'
+  import notification, { DocNotifyContext } from '@intabiafusion/notification'
+  import activity, { ActivityMessage, WithReferences } from '@intabiafusion/activity'
+  import { getClient, isSpace } from '@intabiafusion/presentation'
+  import { getMessageFromLoc, messageInFocus } from '@intabiafusion/activity-resources'
+  import { location as locationStore } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
 
   import chunter from '../plugin'

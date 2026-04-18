@@ -154,7 +154,7 @@ Examples:
   watch_all .
   watch_all . --validate
   watch_all . --lint
-  watch_all . --to @hcengineering/core --verbose
+  watch_all . --to @intabiafusion/core --verbose
 `)
 }
 
@@ -540,7 +540,7 @@ async function main() {
         return
       }
 
-      const changeList = [...changedPackages].map(p => p.replace(/@hcengineering\//g, '')).join(', ')
+      const changeList = [...changedPackages].map(p => p.replace(/@intabiafusion\//g, '')).join(', ')
       console.log(`\n--- Change detected in: ${info(changeList)} ---`)
       console.log(`Rebuilding ${orderedPackages.length} package(s)...`)
 
@@ -608,7 +608,7 @@ async function main() {
           }
 
           if (pkgsToValidate.size > 0) {
-            const validateList = [...pkgsToValidate].map(p => p.replace(/@hcengineering\//g, '')).join(', ')
+            const validateList = [...pkgsToValidate].map(p => p.replace(/@intabiafusion\//g, '')).join(', ')
             console.log(`Validating ${info(pkgsToValidate.size + ' package(s)')}: ${info(validateList)}`)
 
             const validateResult = await runValidation(validationPool, graph, [...pkgsToValidate], packageHashes, options.force)
@@ -624,7 +624,7 @@ async function main() {
               if (options.doLint) {
                 const pkgsToLint = [...pkgsToValidate].filter(name => graph.get(name)?.phaseFormat)
                 if (pkgsToLint.length > 0) {
-                  const lintList = pkgsToLint.map(p => p.replace(/@hcengineering\//g, '')).join(', ')
+                  const lintList = pkgsToLint.map(p => p.replace(/@intabiafusion\//g, '')).join(', ')
                   console.log(`Linting ${info(pkgsToLint.length + ' package(s)')}: ${info(lintList)}`)
                   try {
                     const lintResult = await runLintPhase(graph, pkgsToLint, validationWorkers, { force: options.force, packageHashes })

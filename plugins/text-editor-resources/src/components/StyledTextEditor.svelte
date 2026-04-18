@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, Markup, type Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import textEditor, { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
-  import { Button, type ButtonSize, Scroller } from '@hcengineering/ui'
+  import { type Blob, Markup, type Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import textEditor, { RefAction, TextEditorHandler } from '@intabiafusion/text-editor'
+  import { Button, type ButtonSize, Scroller } from '@intabiafusion/ui'
   import { type Editor, mergeAttributes } from '@tiptap/core'
   import { createEventDispatcher } from 'svelte'
   import { EditorKitOptions } from '../kits/editor-kit'

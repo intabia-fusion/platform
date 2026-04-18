@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, languageStore, tooltip } from '@hcengineering/ui'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { getClient } from '@hcengineering/presentation'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getDocLinkTitle, getDocTitle, ObjectIcon } from '@hcengineering/view-resources'
-  import { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
-  import contact from '@hcengineering/contact'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Label, languageStore, tooltip } from '@intabiafusion/ui'
+  import { DocNotifyContext } from '@intabiafusion/notification'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getDocLinkTitle, getDocTitle, ObjectIcon } from '@intabiafusion/view-resources'
+  import { ChatMessage, ThreadMessage } from '@intabiafusion/chunter'
+  import contact from '@intabiafusion/contact'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
 
   import chunter from '../../plugin'
   import ChatMessagePreview from '../chat-message/ChatMessagePreview.svelte'

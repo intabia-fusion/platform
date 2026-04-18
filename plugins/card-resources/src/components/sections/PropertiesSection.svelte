@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Doc, Mixin } from '@hcengineering/core'
-  import { getDocMixins } from '@hcengineering/view-resources'
+  import { Card } from '@intabiafusion/card'
+  import { Doc, Mixin } from '@intabiafusion/core'
+  import { getDocMixins } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import CardAttributeEditor from '../CardAttributeEditor.svelte'

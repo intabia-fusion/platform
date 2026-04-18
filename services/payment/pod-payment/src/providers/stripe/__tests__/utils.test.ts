@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import type { MeasureContext } from '@hcengineering/core'
+import type { MeasureContext } from '@intabiafusion/core'
 
 import { createSubscriptionEventFromInvoiceEvent, transformStripeSubscriptionToData } from '../utils'
 

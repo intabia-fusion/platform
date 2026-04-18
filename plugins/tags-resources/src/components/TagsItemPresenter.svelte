@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TagReference } from '@hcengineering/tags'
+  import { TagReference } from '@intabiafusion/tags'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagItem from './TagItem.svelte'
 

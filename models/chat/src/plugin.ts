@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { chatId } from '@hcengineering/chat'
-import chat from '@hcengineering/chat-resources/src/plugin'
-import { type Ref } from '@hcengineering/core'
-import { type Application } from '@hcengineering/model-workbench'
-import { mergeIds, type Resource } from '@hcengineering/platform'
-import type { Location, ResolvedLocation } from '@hcengineering/ui'
-import type { LocationData } from '@hcengineering/workbench'
-import { type NotificationGroup } from '@hcengineering/notification'
+import { chatId } from '@intabiafusion/chat'
+import chat from '@intabiafusion/chat-resources/src/plugin'
+import { type Ref } from '@intabiafusion/core'
+import { type Application } from '@intabiafusion/model-workbench'
+import { mergeIds, type Resource } from '@intabiafusion/platform'
+import type { Location, ResolvedLocation } from '@intabiafusion/ui'
+import type { LocationData } from '@intabiafusion/workbench'
+import { type NotificationGroup } from '@intabiafusion/notification'
 
 export default mergeIds(chatId, chat, {
   app: {

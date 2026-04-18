@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId, Ref } from '@hcengineering/core'
-  import presentation, { createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
-  import { TaskKindSelector } from '@hcengineering/task-resources'
-  import { StyledTextArea } from '@hcengineering/text-editor-resources'
+  import { generateId, Ref } from '@intabiafusion/core'
+  import presentation, { createQuery, getClient, KeyedAttribute } from '@intabiafusion/presentation'
+  import tags, { TagElement, TagReference } from '@intabiafusion/tags'
+  import { TaskKindSelector } from '@intabiafusion/task-resources'
+  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
   import {
     Component as ComponentType,
     IssuePriority,
     IssueTemplateChild,
     Milestone,
     Project
-  } from '@hcengineering/tracker'
-  import { Button, Component, EditBox } from '@hcengineering/ui'
+  } from '@intabiafusion/tracker'
+  import { Button, Component, EditBox } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'

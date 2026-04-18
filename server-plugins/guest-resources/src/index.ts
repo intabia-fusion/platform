@@ -25,12 +25,12 @@ import core, {
   WorkspaceIds,
   concatLink,
   generateId
-} from '@hcengineering/core'
-import guest, { PublicLink, guestAccount, guestId } from '@hcengineering/guest'
-import { getMetadata } from '@hcengineering/platform'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
-import view from '@hcengineering/view'
+} from '@intabiafusion/core'
+import guest, { PublicLink, guestAccount, guestId } from '@intabiafusion/guest'
+import { getMetadata } from '@intabiafusion/platform'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
+import { generateToken } from '@intabiafusion/server-token'
+import view from '@intabiafusion/view'
 
 /**
  * @public

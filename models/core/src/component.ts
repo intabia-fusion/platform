@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import core, { coreId } from '@hcengineering/core'
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
+import core, { coreId } from '@intabiafusion/core'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(coreId, core, {
   string: {

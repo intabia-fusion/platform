@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { HTMLViewer } from '@hcengineering/presentation'
-  import { getPlatformColor, Label as LabelComponent, themeStore } from '@hcengineering/ui'
+  import { HTMLViewer } from '@intabiafusion/presentation'
+  import { getPlatformColor, Label as LabelComponent, themeStore } from '@intabiafusion/ui'
   import view from '../../plugin'
 
   export let href: string

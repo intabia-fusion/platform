@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { formatName, getPersonByPersonId } from '@hcengineering/contact'
-import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
+import { formatName, getPersonByPersonId } from '@intabiafusion/contact'
+import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@intabiafusion/core'
 import notification, {
   notificationId,
   ActivityInboxNotification,
@@ -23,18 +23,18 @@ import notification, {
   InboxNotification,
   getNotificationMessageId,
   getNotificationThreadId
-} from '@hcengineering/notification'
-import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
-import { createNotificationsQuery, getClient } from '@hcengineering/presentation'
-import { location } from '@hcengineering/ui'
-import workbench, { workbenchId } from '@hcengineering/workbench'
-import desktopPreferences, { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
-import { activePreferences } from '@hcengineering/desktop-preferences-resources'
-import { getDisplayInboxData, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-import { inboxId } from '@hcengineering/inbox'
-import communication from '@hcengineering/communication'
-import activity from '@hcengineering/activity'
-import chunter, { ThreadMessage } from '@hcengineering/chunter'
+} from '@intabiafusion/notification'
+import { addEventListener, getMetadata, IntlString, translate } from '@intabiafusion/platform'
+import { createNotificationsQuery, getClient } from '@intabiafusion/presentation'
+import { location } from '@intabiafusion/ui'
+import workbench, { workbenchId } from '@intabiafusion/workbench'
+import desktopPreferences, { defaultNotificationPreference } from '@intabiafusion/desktop-preferences'
+import { activePreferences } from '@intabiafusion/desktop-preferences-resources'
+import { getDisplayInboxData, InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+import { inboxId } from '@intabiafusion/inbox'
+import communication from '@intabiafusion/communication'
+import activity from '@intabiafusion/activity'
+import chunter, { ThreadMessage } from '@intabiafusion/chunter'
 
 import { ipcMainExposed } from './typesUtils'
 

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { Card, CardEvents, MasterTag } from '@hcengineering/card'
-  import { AnyAttribute, fillDefaults, Ref } from '@hcengineering/core'
-  import { Card as CardModal, getClient } from '@hcengineering/presentation'
-  import ui, { Label } from '@hcengineering/ui'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { Card, CardEvents, MasterTag } from '@intabiafusion/card'
+  import { AnyAttribute, fillDefaults, Ref } from '@intabiafusion/core'
+  import { Card as CardModal, getClient } from '@intabiafusion/presentation'
+  import ui, { Label } from '@intabiafusion/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'

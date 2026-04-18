@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DAY, HOUR, MINUTE, TimeShiftPresenter, IconCheck } from '@hcengineering/ui'
+  import { DAY, HOUR, MINUTE, TimeShiftPresenter, IconCheck } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let value: number

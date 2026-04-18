@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 import core, {
   concatLink,
   Doc,
@@ -24,12 +24,12 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc
-} from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import recruit, { Applicant, recruitId, Vacancy } from '@hcengineering/recruit'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { workbenchId } from '@hcengineering/workbench'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+} from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import recruit, { Applicant, recruitId, Vacancy } from '@intabiafusion/recruit'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
+import { workbenchId } from '@intabiafusion/workbench'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 function getSequenceId (doc: Vacancy | Applicant, hierarchy: Hierarchy): string {
   let clazz = hierarchy.getClass(doc._class)

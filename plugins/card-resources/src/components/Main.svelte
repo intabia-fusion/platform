@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, IconWithEmoji } from '@hcengineering/presentation'
-  import { location } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { MasterTag } from '@intabiafusion/card'
+  import { Class, Doc, Ref, Space } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery, IconWithEmoji } from '@intabiafusion/presentation'
+  import { location } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { SpecialView } from '@intabiafusion/workbench-resources'
   import { onDestroy } from 'svelte'
   import card from '../plugin'
 

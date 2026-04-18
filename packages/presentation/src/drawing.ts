@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type ThemeVariantType } from '@hcengineering/theme'
+import { type ThemeVariantType } from '@intabiafusion/theme'
 import {
   type CanvasPoint,
   easeInOutCubic,

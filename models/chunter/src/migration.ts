@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
+import { chunterId, type DirectMessage, type ThreadMessage } from '@intabiafusion/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -24,7 +24,7 @@ import core, {
   DOMAIN_TX,
   DOMAIN_SPACE,
   type AccountUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   tryMigrate,
   tryUpgrade,
@@ -33,18 +33,18 @@ import {
   type MigrationUpgradeClient,
   type MigrationDocumentQuery,
   type MigrateUpdate
-} from '@hcengineering/model'
-import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
-import { getAllAccounts } from '@hcengineering/contact'
-import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
-import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
+} from '@intabiafusion/model'
+import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@intabiafusion/model-activity'
+import { getAllAccounts } from '@intabiafusion/contact'
+import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@intabiafusion/model-notification'
+import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@intabiafusion/activity'
 
 import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
 import chunter from './plugin'
 import { createHash } from 'crypto'
-import { type Attachment } from '@hcengineering/attachment'
-import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
-import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
+import { type Attachment } from '@intabiafusion/attachment'
+import { DOMAIN_ATTACHMENT } from '@intabiafusion/model-attachment'
+import { type DocNotifyContext, type InboxNotification } from '@intabiafusion/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { Button, Icon, Label, IconMoreV, Scroller } from '@hcengineering/ui'
+  import { Person } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { Button, Icon, Label, IconMoreV, Scroller } from '@intabiafusion/ui'
   import calendar from '../plugin'
   import AddParticipant from './AddParticipant.svelte'
   import EventParticipantItem from './EventParticipantItem.svelte'

@@ -21,8 +21,8 @@ import {
   jsonToMarkup,
   traverseAllMarks,
   traverseNode
-} from '@hcengineering/text'
-import { MarkdownState } from '@hcengineering/text-markdown'
+} from '@intabiafusion/text'
+import { MarkdownState } from '@intabiafusion/text-markdown'
 import { markdownToMarkup, markupToMarkdown, parseMessageMarkdown, serializeMessage } from '..'
 
 describe('server', () => {

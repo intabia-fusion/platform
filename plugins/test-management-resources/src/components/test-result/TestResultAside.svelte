@@ -15,14 +15,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
 
-  import activity from '@hcengineering/activity'
-  import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { Doc, Mixin, WithLookup } from '@hcengineering/core'
-  import testManagement, { TestResult } from '@hcengineering/test-management'
-  import { DocAttributeBar, getDocMixins } from '@hcengineering/view-resources'
+  import activity from '@intabiafusion/activity'
+  import { AttachmentStyleBoxCollabEditor } from '@intabiafusion/attachment-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Doc, Mixin, WithLookup } from '@intabiafusion/core'
+  import testManagement, { TestResult } from '@intabiafusion/test-management'
+  import { DocAttributeBar, getDocMixins } from '@intabiafusion/view-resources'
 
-  import { Component, Label } from '@hcengineering/ui'
+  import { Component, Label } from '@intabiafusion/ui'
   import RightHeader from './RightHeader.svelte'
 
   export let object: WithLookup<TestResult> | undefined

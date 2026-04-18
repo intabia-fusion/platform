@@ -12,19 +12,19 @@
 // limitations under the License.
 //
 
-import { concatLink, type Ref, type Space, type PersonId } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+import { concatLink, type Ref, type Space, type PersonId } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
 import telegram from './plugin'
-import presentation, { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
-import login from '@hcengineering/login'
-import { telegramIntegrationKind } from '@hcengineering/telegram'
+import presentation, { getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
+import login from '@intabiafusion/login'
+import { telegramIntegrationKind } from '@intabiafusion/telegram'
 import {
   getIntegrationClient as getIntegrationClientRaw,
   type IntegrationClient,
   request as httpRequest
-} from '@hcengineering/integration-client'
-import { withRetry } from '@hcengineering/retry'
-import type { Integration } from '@hcengineering/account-client'
+} from '@intabiafusion/integration-client'
+import { withRetry } from '@intabiafusion/retry'
+import type { Integration } from '@intabiafusion/account-client'
 
 export type IntegrationState =
   | { status: 'authorized' | 'wantcode' | 'wantpassword', number: string, socialId?: PersonId }

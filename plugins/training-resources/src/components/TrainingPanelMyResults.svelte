@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import type { Training } from '@hcengineering/training'
-  import { navigate } from '@hcengineering/ui'
+  import type { Training } from '@intabiafusion/training'
+  import { navigate } from '@intabiafusion/ui'
   import training from '../plugin'
   import { trainingRoute, TrainingRouteTab } from '../routing/routes/trainingRoute'
   import { canViewTrainingMyResults, getCurrentEmployeeRef } from '../utils'

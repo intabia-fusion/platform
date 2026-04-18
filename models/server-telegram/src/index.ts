@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import contact from '@hcengineering/contact'
-import core, { type Class, type Doc } from '@hcengineering/core'
-import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
-import serverTelegram from '@hcengineering/server-telegram'
-import telegram from '@hcengineering/telegram'
-import notification from '@hcengineering/notification'
-import serverNotification from '@hcengineering/server-notification'
-import serverTemplates from '@hcengineering/server-templates'
-import templates from '@hcengineering/templates'
+import contact from '@intabiafusion/contact'
+import core, { type Class, type Doc } from '@intabiafusion/core'
+import serverCore, { type ObjectDDParticipant } from '@intabiafusion/server-core'
+import serverTelegram from '@intabiafusion/server-telegram'
+import telegram from '@intabiafusion/telegram'
+import notification from '@intabiafusion/notification'
+import serverNotification from '@intabiafusion/server-notification'
+import serverTemplates from '@intabiafusion/server-templates'
+import templates from '@intabiafusion/templates'
 
-export { serverTelegramId } from '@hcengineering/server-telegram'
+export { serverTelegramId } from '@intabiafusion/server-telegram'
 
 export function createModel (builder: Builder): void {
   builder.mixin<Class<Doc>, ObjectDDParticipant>(

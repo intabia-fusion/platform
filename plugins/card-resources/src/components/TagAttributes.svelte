@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, Tag } from '@hcengineering/card'
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import setting, { settingId } from '@hcengineering/setting'
+  import { Card, Tag } from '@intabiafusion/card'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import setting, { settingId } from '@intabiafusion/setting'
   import {
     Button,
     Chevron,
@@ -29,7 +29,7 @@
     showPopup,
     themeStore,
     tooltip
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import CardAttributes from './CardAttributes.svelte'
 
   export let value: Card

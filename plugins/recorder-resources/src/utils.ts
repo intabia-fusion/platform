@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type IntlString, translate } from '@hcengineering/platform'
+import { type IntlString, translate } from '@intabiafusion/platform'
 import { DefaultVideoRes } from './const'
 import { type CameraPosition, type CameraSize } from './types'
 

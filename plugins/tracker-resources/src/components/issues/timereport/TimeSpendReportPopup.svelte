@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { AttachedData, Class, DocumentUpdate, Ref, Space } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { UserBox } from '@hcengineering/contact-resources'
-  import { Issue, TimeReportDayType, TimeSpendReport, TrackerEvents } from '@hcengineering/tracker'
-  import { Button, DatePresenter, EditBox, Label } from '@hcengineering/ui'
+  import contact, { Employee, getCurrentEmployee } from '@intabiafusion/contact'
+  import { AttachedData, Class, DocumentUpdate, Ref, Space } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import presentation, { Card, getClient } from '@intabiafusion/presentation'
+  import { UserBox } from '@intabiafusion/contact-resources'
+  import { Issue, TimeReportDayType, TimeSpendReport, TrackerEvents } from '@intabiafusion/tracker'
+  import { Button, DatePresenter, EditBox, Label } from '@intabiafusion/ui'
   import tracker from '../../../plugin'
   import { getTimeReportDate, getTimeReportDayType } from '../../../utils'
   import TitlePresenter from '../TitlePresenter.svelte'
   import TimeReportDayDropdown from './TimeReportDayDropdown.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let issue: Issue | undefined = undefined
   export let issueId: Ref<Issue> | undefined = issue?._id

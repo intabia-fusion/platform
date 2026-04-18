@@ -3,7 +3,7 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import core, { createClient, Ref, SortingOrder, TxOperations } from '@hcengineering/core'
+import core, { createClient, Ref, SortingOrder, TxOperations } from '@intabiafusion/core'
 import { LiveQuery } from '..'
 import { connect } from './connection'
 import { test } from './minmodel'

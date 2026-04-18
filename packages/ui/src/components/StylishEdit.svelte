@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@intabiafusion/platform'
   import Label from './Label.svelte'
 
   export let label: IntlString | undefined = undefined

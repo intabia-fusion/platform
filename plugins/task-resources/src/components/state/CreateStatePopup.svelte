@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Attribute, Class, Ref, Status, StatusCategory } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectType, TaskType, calculateStatuses, createState } from '@hcengineering/task'
+  import core, { Attribute, Class, Ref, Status, StatusCategory } from '@intabiafusion/core'
+  import { Asset, getEmbeddedLabel } from '@intabiafusion/platform'
+  import presentation, { IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
+  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
+  import { ProjectType, TaskType, calculateStatuses, createState } from '@intabiafusion/task'
   import {
     Component,
     ButtonIcon,
@@ -34,10 +34,10 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import { ColorsPopup, statusStore } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view-resources/src/plugin'
-  import emojiPlugin from '@hcengineering/emoji'
+  } from '@intabiafusion/ui'
+  import { ColorsPopup, statusStore } from '@intabiafusion/view-resources'
+  import view from '@intabiafusion/view-resources/src/plugin'
+  import emojiPlugin from '@intabiafusion/emoji'
   import { taskTypeStore, typeStore } from '../..'
   import task from '../../plugin'
   import ApproveStatusRenamePopup from './ApproveStatusRenamePopup.svelte'

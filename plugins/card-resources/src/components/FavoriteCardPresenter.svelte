@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, FavoriteCard } from '@hcengineering/card'
-  import { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
-  import { Ref, WithLookup } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Card, FavoriteCard } from '@intabiafusion/card'
+  import { Asset } from '@intabiafusion/platform'
+  import { AnySvelteComponent } from '@intabiafusion/ui'
+  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { Ref, WithLookup } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
 
   import card from '../plugin'
   import CardPresenter from './CardPresenter.svelte'

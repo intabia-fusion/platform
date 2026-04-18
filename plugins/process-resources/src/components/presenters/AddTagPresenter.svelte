@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tag } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, Step } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { Tag } from '@intabiafusion/card'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { MethodParams, Step } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import plugin from '../../plugin'
 
   export let step: Step<Tag>

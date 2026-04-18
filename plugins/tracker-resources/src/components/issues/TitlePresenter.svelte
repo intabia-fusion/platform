@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import type { Issue } from '@hcengineering/tracker'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { WithLookup } from '@intabiafusion/core'
+  import type { Issue } from '@intabiafusion/tracker'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import tracker from '../../plugin'
   import ParentNamesPresenter from './ParentNamesPresenter.svelte'
 

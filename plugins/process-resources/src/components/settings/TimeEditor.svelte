@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import core, { AnyAttribute } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Analytics } from '@intabiafusion/analytics'
+  import core, { AnyAttribute } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Process } from '@intabiafusion/process'
+  import { AnySvelteComponent } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { getContext, getMockAttribute } from '../../utils'

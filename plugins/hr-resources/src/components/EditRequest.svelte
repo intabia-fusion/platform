@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { Request } from '@hcengineering/hr'
-  import { getClient } from '@hcengineering/presentation'
-  import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { createFocusManager, FocusHandler } from '@hcengineering/ui'
+  import core from '@intabiafusion/core'
+  import { Request } from '@intabiafusion/hr'
+  import { getClient } from '@intabiafusion/presentation'
+  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
+  import { createFocusManager, FocusHandler } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   export let object: Request

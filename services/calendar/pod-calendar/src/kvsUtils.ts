@@ -1,6 +1,6 @@
-import { WorkspaceUuid } from '@hcengineering/core'
-import { KeyValueClient, getClient as getKeyValueClient } from '@hcengineering/kvs-client'
-import { calendarIntegrationKind } from '@hcengineering/calendar'
+import { WorkspaceUuid } from '@intabiafusion/core'
+import { KeyValueClient, getClient as getKeyValueClient } from '@intabiafusion/kvs-client'
+import { calendarIntegrationKind } from '@intabiafusion/calendar'
 
 import config from './config'
 import { GoogleEmail, User } from './types'

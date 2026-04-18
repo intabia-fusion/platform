@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { createRestTxOperations } from '@hcengineering/api-client'
-import { systemAccountUuid, TxOperations, WorkspaceUuid } from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
+import { getClient as getAccountClient } from '@intabiafusion/account-client'
+import { createRestTxOperations } from '@intabiafusion/api-client'
+import { systemAccountUuid, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
 import config from './config'
 
 export const SERVICE_NAME = 'process-service'

@@ -21,10 +21,10 @@ import {
   SocialIdType,
   WorkspaceUuid,
   buildSocialIdString
-} from '@hcengineering/core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
-import { Integration } from '@hcengineering/account-client'
+} from '@intabiafusion/core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
+import { Integration } from '@intabiafusion/account-client'
 
 import { serviceToken } from './utils'
 import { IntegrationInfo } from './types'

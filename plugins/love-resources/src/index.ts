@@ -1,6 +1,6 @@
-import { getMetadata, type Resources } from '@hcengineering/platform'
-import aiBot from '@hcengineering/ai-bot'
-import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+import { getMetadata, type Resources } from '@intabiafusion/platform'
+import aiBot from '@intabiafusion/ai-bot'
+import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
 
 import ControlExt from './components/meeting/ControlExt.svelte'
 import InvitesExt from './components/meeting/invites/InvitesExt.svelte'
@@ -45,7 +45,7 @@ import {
   queryMeetingMinutes,
   getUserMeetingInviteTitle
 } from './utils'
-import { toggleMicState, toggleCamState } from '@hcengineering/media-resources'
+import { toggleMicState, toggleCamState } from '@intabiafusion/media-resources'
 
 function canShowRoomSettings (): boolean | undefined {
   if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {

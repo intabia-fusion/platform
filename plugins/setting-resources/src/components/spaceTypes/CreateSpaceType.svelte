@@ -15,12 +15,12 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { Class, Ref, SpaceTypeDescriptor, generateId, SpaceType, Data } from '@hcengineering/core'
-  import { Card, getClient, hasResource } from '@hcengineering/presentation'
-  import { AnySvelteComponent, EditBox } from '@hcengineering/ui'
-  import { Resource, getResource } from '@hcengineering/platform'
-  import { ObjectBox } from '@hcengineering/view-resources'
-  import setting, { SpaceTypeCreator, createSpaceType } from '@hcengineering/setting'
+  import core, { Class, Ref, SpaceTypeDescriptor, generateId, SpaceType, Data } from '@intabiafusion/core'
+  import { Card, getClient, hasResource } from '@intabiafusion/presentation'
+  import { AnySvelteComponent, EditBox } from '@intabiafusion/ui'
+  import { Resource, getResource } from '@intabiafusion/platform'
+  import { ObjectBox } from '@intabiafusion/view-resources'
+  import setting, { SpaceTypeCreator, createSpaceType } from '@intabiafusion/setting'
 
   import settingRes from '../../plugin'
 

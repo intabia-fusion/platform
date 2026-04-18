@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { Class, Data, Doc, Ref, Space } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd } from '@hcengineering/ui'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { Class, Data, Doc, Ref, Space } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Button, IconAdd } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { createAttachments } from '../utils'
   import attachment from '../plugin'

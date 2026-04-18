@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { Blob, Ref } from '@hcengineering/core'
+import type { Blob, Ref } from '@intabiafusion/core'
 import { Node, mergeAttributes } from '@tiptap/core'
 import { getDataAttribute } from './utils'
 

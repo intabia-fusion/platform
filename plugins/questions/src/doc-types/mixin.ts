@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { type AttachedData, type Class, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
-import type { Resource } from '@hcengineering/platform'
-import type { ThemeOptions } from '@hcengineering/theme'
+import { type AttachedData, type Class, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
+import type { Resource } from '@intabiafusion/platform'
+import type { ThemeOptions } from '@intabiafusion/theme'
 import type { ComponentType, SvelteComponent } from 'svelte'
 import type { Answer, AnswerDataOf, Assessment, AssessmentDataOf, Percentage, Question, QuestionDataOf } from './base'
 

@@ -1,7 +1,7 @@
-import { AccountUuid, MarkupBlobRef, Ref } from '@hcengineering/core'
-import document, { Document, getFirstRank, Teamspace } from '@hcengineering/document'
-import { makeRank } from '@hcengineering/rank'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { AccountUuid, MarkupBlobRef, Ref } from '@intabiafusion/core'
+import document, { Document, getFirstRank, Teamspace } from '@intabiafusion/document'
+import { makeRank } from '@intabiafusion/rank'
+import { markdownToMarkup } from '@intabiafusion/text-markdown'
 import {
   BaseFunctionsArgs,
   RunnableFunctionWithoutParse,

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
   import calendar from '../plugin'
   import { SetPosRules } from '../types'
 

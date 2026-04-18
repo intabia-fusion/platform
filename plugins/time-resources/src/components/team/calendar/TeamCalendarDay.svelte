@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event, getAllEvents } from '@hcengineering/calendar'
-  import { calendarByIdStore } from '@hcengineering/calendar-resources'
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { IdMap, Ref } from '@hcengineering/core'
-  import { Project } from '@hcengineering/task'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import { Event, getAllEvents } from '@intabiafusion/calendar'
+  import { calendarByIdStore } from '@intabiafusion/calendar-resources'
+  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
+  import { IdMap, Ref } from '@intabiafusion/core'
+  import { Project } from '@intabiafusion/task'
+  import { ToDo, WorkSlot } from '@intabiafusion/time'
   import WithTeamData from '../WithTeamData.svelte'
   import { groupTeamData, toSlots } from '../utils'
   import EventElement from './EventElement.svelte'
   import PersonCalendar from './PersonCalendar.svelte'
-  import { employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import { employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
 
   export let space: Ref<Project>
   export let currentDate: Date

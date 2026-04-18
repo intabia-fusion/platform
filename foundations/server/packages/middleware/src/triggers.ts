@@ -35,8 +35,8 @@ import core, {
   addOperation,
   toFindResult,
   withContext
-} from '@hcengineering/core'
-import { PlatformError, getResource, unknownError } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError, getResource, unknownError } from '@intabiafusion/platform'
 import serverCore, {
   type Middleware,
   type ObjectDDParticipant,
@@ -50,7 +50,7 @@ import serverCore, {
   SessionDataImpl,
   type SessionFindAll,
   Triggers
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 import { filterBroadcastOnly } from './utils'
 
 /**

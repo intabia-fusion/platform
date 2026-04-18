@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount } from '@hcengineering/core'
-  import contact from '@hcengineering/contact'
-  import { DocUpdateMessage } from '@hcengineering/activity'
-  import notification from '@hcengineering/notification'
-  import { BaseMessagePreview } from '@hcengineering/activity-resources'
-  import { Action, Icon, Label } from '@hcengineering/ui'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import contact from '@intabiafusion/contact'
+  import { DocUpdateMessage } from '@intabiafusion/activity'
+  import notification from '@intabiafusion/notification'
+  import { BaseMessagePreview } from '@intabiafusion/activity-resources'
+  import { Action, Icon, Label } from '@intabiafusion/ui'
 
   export let message: DocUpdateMessage
   export let actions: Action[] = []

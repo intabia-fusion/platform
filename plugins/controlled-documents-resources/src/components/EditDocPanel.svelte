@@ -19,13 +19,13 @@
     DocumentRequest,
     DocumentState,
     Project
-  } from '@hcengineering/controlled-documents'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { Panel } from '@hcengineering/panel'
-  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Collaboration } from '@hcengineering/text-editor-resources'
+  } from '@intabiafusion/controlled-documents'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { Panel } from '@intabiafusion/panel'
+  import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Collaboration } from '@intabiafusion/text-editor-resources'
   import {
     Button,
     Chevron,
@@ -37,8 +37,8 @@
     showPopup,
     Tab,
     Tabs
-  } from '@hcengineering/ui'
-  import { showMenu } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { showMenu } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import { createDocumentSnapshotAndEdit, createNewDraftForControlledDoc, getDocReference } from '../docutils'

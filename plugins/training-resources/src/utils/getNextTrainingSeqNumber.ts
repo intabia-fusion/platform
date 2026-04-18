@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { getClient } from '@hcengineering/presentation'
-import core, { type Sequence } from '@hcengineering/core'
+import { getClient } from '@intabiafusion/presentation'
+import core, { type Sequence } from '@intabiafusion/core'
 import training from '../plugin'
 
 export async function getNextTrainingSeqNumber (): Promise<number> {

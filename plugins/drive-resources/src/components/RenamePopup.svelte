@@ -16,10 +16,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import core from '@hcengineering/core'
-  import { Card } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import core from '@intabiafusion/core'
+  import { Card } from '@intabiafusion/presentation'
+  import { EditBox } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   import drive from '../plugin'
 

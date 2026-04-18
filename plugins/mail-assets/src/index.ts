@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@hcengineering/platform'
-import mail from '@hcengineering/mail'
+import { loadMetadata } from '@intabiafusion/platform'
+import mail from '@intabiafusion/mail'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(mail.icon, {

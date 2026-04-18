@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@hcengineering/core'
-  import { generateId } from '@hcengineering/core'
-  import { ActionContext } from '@hcengineering/presentation'
-  import { FadeOptions, Scroller, tableSP } from '@hcengineering/ui'
-  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@intabiafusion/core'
+  import { generateId } from '@intabiafusion/core'
+  import { ActionContext } from '@intabiafusion/presentation'
+  import { FadeOptions, Scroller, tableSP } from '@intabiafusion/ui'
+  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@intabiafusion/view'
   import { onDestroy, onMount } from 'svelte'
   import { focusStore, ListSelectionProvider, SelectDirection } from '../selection'
   import { LoadingProps } from '../utils'

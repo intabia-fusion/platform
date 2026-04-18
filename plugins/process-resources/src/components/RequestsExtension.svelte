@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import core, { Doc, FindOptions, SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { ApproveRequest } from '@hcengineering/process'
-  import { Label, registerFocus, resizeObserver, Section } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import { Card } from '@intabiafusion/card'
+  import core, { Doc, FindOptions, SortingOrder } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { ApproveRequest } from '@intabiafusion/process'
+  import { Label, registerFocus, resizeObserver, Section } from '@intabiafusion/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
   import {
     List,
     ListSelectionProvider,
     noCategory,
     SelectDirection,
     ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../plugin'
 

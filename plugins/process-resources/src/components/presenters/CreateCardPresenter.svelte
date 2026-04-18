@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card, MasterTag } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { MethodParams, parseContext, Process, Step } from '@hcengineering/process'
-  import { Icon, Label, tooltip } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import card, { Card, MasterTag } from '@intabiafusion/card'
+  import core, { Ref } from '@intabiafusion/core'
+  import { getClient, IconWithEmoji } from '@intabiafusion/presentation'
+  import { MethodParams, parseContext, Process, Step } from '@intabiafusion/process'
+  import { Icon, Label, tooltip } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import plugin from '../../plugin'
   import { getContext } from '../../utils'
   import ContextValuePresenter from '../attributeEditors/ContextValuePresenter.svelte'

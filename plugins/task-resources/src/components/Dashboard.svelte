@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, DocumentQuery, IdMap, Ref, Status, Timestamp } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import type { Project, Task } from '@hcengineering/task'
-  import task, { getStates } from '@hcengineering/task'
-  import { BarDashboard, DashboardItem } from '@hcengineering/ui'
-  import { statusStore } from '@hcengineering/view-resources'
+  import core, { Class, DocumentQuery, IdMap, Ref, Status, Timestamp } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import type { Project, Task } from '@intabiafusion/task'
+  import task, { getStates } from '@intabiafusion/task'
+  import { BarDashboard, DashboardItem } from '@intabiafusion/ui'
+  import { statusStore } from '@intabiafusion/view-resources'
   import CreateFilter from './CreateFilter.svelte'
   import { typeStore } from '..'
 

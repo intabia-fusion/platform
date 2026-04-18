@@ -1,7 +1,7 @@
-import { Event, Schedule } from '@hcengineering/calendar'
-import { Person } from '@hcengineering/contact'
-import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
-import { Preference } from '@hcengineering/preference'
+import { Event, Schedule } from '@intabiafusion/calendar'
+import { Person } from '@intabiafusion/contact'
+import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Timestamp, WorkspaceUuid } from '@intabiafusion/core'
+import { Preference } from '@intabiafusion/preference'
 
 export enum RoomAccess {
   Open,

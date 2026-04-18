@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import core, { type IdMap, type Status, toIdMap } from '@hcengineering/core'
-import { createQuery, onClient } from '@hcengineering/presentation'
+import core, { type IdMap, type Status, toIdMap } from '@intabiafusion/core'
+import { createQuery, onClient } from '@intabiafusion/presentation'
 import { writable } from 'svelte/store'
 
 interface Store {

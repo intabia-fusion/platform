@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Ref, WithLookup } from '@hcengineering/core'
-  import { Floor, Room } from '@hcengineering/love'
-  import { Component, DropdownLabels, Header, IconEdit, ModernButton } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { ViewletSelector } from '@hcengineering/view-resources'
+  import { AccountRole, getCurrentAccount, hasAccountRole, Ref, WithLookup } from '@intabiafusion/core'
+  import { Floor, Room } from '@intabiafusion/love'
+  import { Component, DropdownLabels, Header, IconEdit, ModernButton } from '@intabiafusion/ui'
+  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { ViewletSelector } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import lovePlg from '../plugin'

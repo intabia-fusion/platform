@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { AnalyticEvent, AnalyticEventType } from '@hcengineering/analytics-collector'
-import { recordOTELMetric, reportOTEL, reportOTELError } from '@hcengineering/analytics-service'
-import type { MeasureContext } from '@hcengineering/core'
-import { extractToken } from '@hcengineering/server-client'
-import { Token } from '@hcengineering/server-token'
+import { AnalyticEvent, AnalyticEventType } from '@intabiafusion/analytics-collector'
+import { recordOTELMetric, reportOTEL, reportOTELError } from '@intabiafusion/analytics-service'
+import type { MeasureContext } from '@intabiafusion/core'
+import { extractToken } from '@intabiafusion/server-client'
+import { Token } from '@intabiafusion/server-token'
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'

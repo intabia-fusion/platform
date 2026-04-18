@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import documents, { type ControlledDocument, DocumentState } from '@hcengineering/controlled-documents'
-import { type DocumentQuery, type Ref, type Status, type TxOperations } from '@hcengineering/core'
-import document from '@hcengineering/document'
-import tracker, { IssuePriority, type IssueStatus } from '@hcengineering/tracker'
+import documents, { type ControlledDocument, DocumentState } from '@intabiafusion/controlled-documents'
+import { type DocumentQuery, type Ref, type Status, type TxOperations } from '@intabiafusion/core'
+import document from '@intabiafusion/document'
+import tracker, { IssuePriority, type IssueStatus } from '@intabiafusion/tracker'
 import {
   type ImportControlledDocument,
   type ImportControlledDocumentTemplate,

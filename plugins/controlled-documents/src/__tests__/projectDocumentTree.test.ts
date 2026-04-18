@@ -1,4 +1,4 @@
-import { type Ref } from '@hcengineering/core'
+import { type Ref } from '@intabiafusion/core'
 import documents from '../index'
 import { type DocumentBundle, emptyBundle, ProjectDocumentTree } from '../utils'
 

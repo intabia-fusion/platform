@@ -5,7 +5,7 @@ import {
   type SocialId,
   type SocialIdType,
   type MeasureContext
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
 import { GmailClient } from '../gmail'
 import { ProjectCredentials, ProjectCredentialsData, Token, User } from '../types'
@@ -32,7 +32,7 @@ const mockedGmailUsers = {
 }
 
 // Mock all imports before they're used
-jest.mock('@hcengineering/core', () => {
+jest.mock('@intabiafusion/core', () => {
   return {
     AccountUuid: String,
     PersonId: String,
@@ -71,7 +71,7 @@ jest.mock('@hcengineering/core', () => {
   }
 })
 
-jest.mock('@hcengineering/mail-common', () => ({
+jest.mock('@intabiafusion/mail-common', () => ({
   createMessages: jest.fn().mockResolvedValue(undefined),
   getChannel: jest.fn().mockResolvedValue({ _id: 'test-channel-id' }),
   isSyncedMessage: jest.fn().mockReturnValue(false),
@@ -99,7 +99,7 @@ jest.mock('../message/attachments')
 jest.mock('../message/v2/send', () => ({
   makeHTMLBodyV2: jest.fn().mockResolvedValue('encoded-html-body')
 }))
-jest.mock('@hcengineering/server-core', () => ({
+jest.mock('@intabiafusion/server-core', () => ({
   withContext: jest.fn().mockImplementation((name: string) => {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
       return descriptor
@@ -132,7 +132,7 @@ jest.mock('../utils', () => ({
 }))
 
 // Mock gmail module
-jest.mock('@hcengineering/gmail', () => ({
+jest.mock('@intabiafusion/gmail', () => ({
   integrationType: {
     Gmail: 'gmail'
   },
@@ -142,14 +142,14 @@ jest.mock('@hcengineering/gmail', () => ({
 }))
 
 // Mock setting module
-jest.mock('@hcengineering/setting', () => ({
+jest.mock('@intabiafusion/setting', () => ({
   class: {
     Integration: 'class.Integration'
   }
 }))
 
 // Mock chat module
-jest.mock('@hcengineering/chat', () => ({
+jest.mock('@intabiafusion/chat', () => ({
   masterTag: {
     Thread: 'chat.class.Thread'
   }
@@ -161,7 +161,7 @@ jest.mock('../config', () => ({
   OutgoingSyncStartDate: new Date('2020-01-01')
 }))
 
-jest.mock('@hcengineering/account-client', () => ({
+jest.mock('@intabiafusion/account-client', () => ({
   getClient: jest.fn().mockImplementation(() => ({
     getLoginInfoByToken: jest.fn().mockResolvedValue({
       endpoint: 'wss://test-endpoint.com',

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { CircleButton, closeTooltip, Label } from '@hcengineering/ui'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
+  import { copyTextToClipboard } from '@intabiafusion/presentation'
+  import { CircleButton, closeTooltip, Label } from '@intabiafusion/ui'
   import IconCopy from './icons/Copy.svelte'
 
   interface Item {

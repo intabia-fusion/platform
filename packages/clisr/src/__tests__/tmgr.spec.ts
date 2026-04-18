@@ -5,7 +5,7 @@
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../client'
-import { MeasureMetricsContext } from '@hcengineering/measurements'
+import { MeasureMetricsContext } from '@intabiafusion/measurements'
 
 jest.setTimeout(20000)
 

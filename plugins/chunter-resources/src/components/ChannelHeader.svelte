@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getDocTitle } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { Channel } from '@hcengineering/chunter'
-  import { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
-  import contact from '@hcengineering/contact'
-  import view from '@hcengineering/view'
-  import { languageStore } from '@hcengineering/ui'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getDocTitle } from '@intabiafusion/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Channel } from '@intabiafusion/chunter'
+  import { ActivityMessagesFilter, WithReferences } from '@intabiafusion/activity'
+  import contact from '@intabiafusion/contact'
+  import view from '@intabiafusion/view'
+  import { languageStore } from '@intabiafusion/ui'
 
   import Header from './Header.svelte'
   import chunter from '../plugin'

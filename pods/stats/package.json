@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/pod-stats",
-  "version": "0.7.0",
+  "name": "@intabiafusion/pod-stats",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@hcengineering/node-package",
+  "template": "@intabiafusion/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "start": "ts-node src/__start.ts",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "cross-env": "~7.0.3",
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -50,16 +50,16 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
     "koa": "^2.15.4",
     "koa-router": "^12.0.1",
     "koa-body": "^7.0.1",
     "@koa/cors": "^5.0.0",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/rpc": "workspace:^0.7.17",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/analytics-service": "workspace:^0.7.17"
+    "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/rpc": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/analytics-service": "workspace:^1.0.0"
   }
 }

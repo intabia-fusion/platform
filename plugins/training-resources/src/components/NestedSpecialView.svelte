@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { Class, type Doc, type DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { Component, SearchEdit } from '@hcengineering/ui'
-  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
-  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { Class, type Doc, type DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import { Component, SearchEdit } from '@intabiafusion/ui'
+  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
 
   // TODO: Move to Platform?
 

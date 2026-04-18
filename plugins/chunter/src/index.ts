@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
-import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
-import type { Asset, Plugin, Resource } from '@hcengineering/platform'
-import { IntlString, plugin } from '@hcengineering/platform'
-import { AnyComponent } from '@hcengineering/ui'
-import { Action } from '@hcengineering/view'
-import { ChannelProvider as SocialChannelProvider, PersonSpace } from '@hcengineering/contact'
-import { Widget, WidgetTab } from '@hcengineering/workbench'
+import { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
+import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@intabiafusion/core'
+import { MessageNotificationType, type DocNotifyContext } from '@intabiafusion/notification'
+import type { Asset, Plugin, Resource } from '@intabiafusion/platform'
+import { IntlString, plugin } from '@intabiafusion/platform'
+import { AnyComponent } from '@intabiafusion/ui'
+import { Action } from '@intabiafusion/view'
+import { ChannelProvider as SocialChannelProvider, PersonSpace } from '@intabiafusion/contact'
+import { Widget, WidgetTab } from '@intabiafusion/workbench'
 
 /**
  * @public

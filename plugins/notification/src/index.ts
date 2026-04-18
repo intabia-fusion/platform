@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ActivityMessage, Reaction } from '@hcengineering/activity'
+import { ActivityMessage, Reaction } from '@intabiafusion/activity'
 import {
   PersonId,
   Class,
@@ -33,14 +33,14 @@ import {
   Type,
   AnyAttribute,
   AttachedDoc
-} from '@hcengineering/core'
-import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { Preference } from '@hcengineering/preference'
-import { IntegrationType } from '@hcengineering/setting'
-import { AnyComponent, Location, ResolvedLocation } from '@hcengineering/ui'
-import { Action } from '@hcengineering/view'
-import { PersonSpace } from '@hcengineering/contact'
+} from '@intabiafusion/core'
+import type { Asset, IntlString, Metadata, Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { Preference } from '@intabiafusion/preference'
+import { IntegrationType } from '@intabiafusion/setting'
+import { AnyComponent, Location, ResolvedLocation } from '@intabiafusion/ui'
+import { Action } from '@intabiafusion/view'
+import { PersonSpace } from '@intabiafusion/contact'
 
 import { Readable, Writable } from './types'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@hcengineering/core'
-import type { EventResult, Event, SessionData } from '@hcengineering/communication-sdk-types'
+import { MeasureContext } from '@intabiafusion/core'
+import type { EventResult, Event, SessionData } from '@intabiafusion/communication-sdk-types'
 import type {
   CardID,
   Collaborator,
@@ -27,7 +27,7 @@ import type {
   Notification,
   NotificationContext, Peer,
   WorkspaceUuid
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import type {
   CommunicationCallbacks,

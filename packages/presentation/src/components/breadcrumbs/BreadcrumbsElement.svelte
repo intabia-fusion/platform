@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { resizeObserver } from '@hcengineering/ui'
+  import { resizeObserver } from '@intabiafusion/ui'
   export let label: string | undefined = undefined
   export let title: string | undefined = undefined
   export let position: 'start' | 'middle' | 'end' | undefined = undefined

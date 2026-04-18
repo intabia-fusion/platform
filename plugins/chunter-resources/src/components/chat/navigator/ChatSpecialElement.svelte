@@ -14,15 +14,15 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { SpecialNavModel } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { Ref } from '@hcengineering/core'
-  import { SavedAttachments } from '@hcengineering/attachment'
-  import { SavedMessage } from '@hcengineering/activity'
-  import { savedMessagesStore } from '@hcengineering/activity-resources'
-  import { savedAttachmentsStore } from '@hcengineering/attachment-resources'
+  import { SpecialNavModel } from '@intabiafusion/workbench'
+  import { getResource } from '@intabiafusion/platform'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  import { Ref } from '@intabiafusion/core'
+  import { SavedAttachments } from '@intabiafusion/attachment'
+  import { SavedMessage } from '@intabiafusion/activity'
+  import { savedMessagesStore } from '@intabiafusion/activity-resources'
+  import { savedAttachmentsStore } from '@intabiafusion/attachment-resources'
 
   import NavItem from './NavItem.svelte'
 

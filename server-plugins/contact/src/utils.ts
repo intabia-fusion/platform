@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { TriggerControl } from '@hcengineering/server-core'
-import contact, { Employee, type Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
+import { TriggerControl } from '@intabiafusion/server-core'
+import contact, { Employee, type Person, PersonSpace, SocialIdentityRef } from '@intabiafusion/contact'
 import core, {
   AccountUuid,
   Class,
@@ -27,7 +27,7 @@ import core, {
   Space,
   toIdMap,
   TxCreateDoc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
 export async function getCurrentPerson (control: TriggerControl): Promise<Person | undefined> {
   const { type, value } = parseSocialIdString(control.txFactory.account)

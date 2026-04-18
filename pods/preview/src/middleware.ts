@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
-import { extractToken } from '@hcengineering/server-client'
-import { Token } from '@hcengineering/server-token'
+import { Analytics } from '@intabiafusion/analytics'
+import { MeasureContext, systemAccountUuid } from '@intabiafusion/core'
+import { extractToken } from '@intabiafusion/server-client'
+import { Token } from '@intabiafusion/server-token'
 import { type Response, type Request, type NextFunction, type RequestHandler, type ErrorRequestHandler } from 'express'
 import { HttpError } from './error'
 

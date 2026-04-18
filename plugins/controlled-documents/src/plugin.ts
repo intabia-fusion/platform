@@ -9,11 +9,11 @@ import {
   type Permission,
   Role,
   Sequence
-} from '@hcengineering/core'
-import type { Asset, Plugin, Resource } from '@hcengineering/platform'
-import { IntlString, plugin } from '@hcengineering/platform'
-import type { AnyComponent, ResolvedLocation, Location } from '@hcengineering/ui/src/types'
-import { Action, Viewlet } from '@hcengineering/view'
+} from '@intabiafusion/core'
+import type { Asset, Plugin, Resource } from '@intabiafusion/platform'
+import { IntlString, plugin } from '@intabiafusion/platform'
+import type { AnyComponent, ResolvedLocation, Location } from '@intabiafusion/ui/src/types'
+import { Action, Viewlet } from '@intabiafusion/view'
 
 import type {
   ChangeControl,
@@ -41,8 +41,8 @@ import type {
   ProjectDocument,
   ControlledDocumentSnapshot
 } from './types'
-import type { MessageNotificationType } from '@hcengineering/notification'
-import { DocUpdateMessage } from '@hcengineering/activity'
+import type { MessageNotificationType } from '@intabiafusion/notification'
+import { DocUpdateMessage } from '@intabiafusion/activity'
 
 /**
  * @public
@@ -136,7 +136,7 @@ export const documentsPlugin = plugin(documentsId, {
   function: {
     CanChangeDocumentOwner: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanDeleteDocumentCategory: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
-    FormatDocumentMarkdownValue: '' as Resource<import('@hcengineering/converter').ValueFormatter>
+    FormatDocumentMarkdownValue: '' as Resource<import('@intabiafusion/converter').ValueFormatter>
   },
   icon: {
     Approvals: '' as Asset,

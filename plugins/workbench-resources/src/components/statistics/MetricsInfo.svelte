@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Metrics, type MetricsData } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, Expandable, showPopup } from '@hcengineering/ui'
-  import { FixedColumn } from '@hcengineering/view-resources'
+  import { Metrics, type MetricsData } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Button, Expandable, showPopup } from '@intabiafusion/ui'
+  import { FixedColumn } from '@intabiafusion/view-resources'
   import Params from './Params.svelte'
 
   export let metrics: Metrics

@@ -14,16 +14,16 @@
 -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import type { Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@intabiafusion/account-client'
   import {
     IntegrationClient,
     IntegrationUpdatedData,
     onIntegrationEvent,
     isDisabled,
     isUnauthorizedError
-  } from '@hcengineering/integration-client'
-  import { BaseIntegrationState, IntegrationStateRow } from '@hcengineering/setting-resources'
-  import { OK, ERROR, Status } from '@hcengineering/platform'
+  } from '@intabiafusion/integration-client'
+  import { BaseIntegrationState, IntegrationStateRow } from '@intabiafusion/setting-resources'
+  import { OK, ERROR, Status } from '@intabiafusion/platform'
 
   import telegram from '../plugin'
   import { type TelegramChannelConfig, type TelegramChannelData, getIntegrationClient, listChannels } from '../api'

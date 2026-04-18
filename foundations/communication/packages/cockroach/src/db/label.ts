@@ -20,8 +20,8 @@ import {
   type FindLabelsParams,
   type LabelID,
   type Label
-} from '@hcengineering/communication-types'
-import { Domain, LabelQuery, LabelUpdate } from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-types'
+import { Domain, LabelQuery, LabelUpdate } from '@intabiafusion/communication-sdk-types'
 
 import { BaseDb } from './base'
 import { toLabel } from './mapping'

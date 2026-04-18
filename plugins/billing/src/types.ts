@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Doc } from '@hcengineering/core'
-import { IntlString } from '@hcengineering/platform'
+import { Doc } from '@intabiafusion/core'
+import { IntlString } from '@intabiafusion/platform'
 
 /** @public */
 export interface Tier extends Doc {

@@ -30,7 +30,7 @@ import {
   ParticipantMinutesUsage
 } from '../types'
 import postgres, { type Row, Sql } from 'postgres'
-import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
 import { LoggedDB } from './logged'
 import { RetryDB } from './retry'
 import { DBFlavor, getMigrations } from './migrations'

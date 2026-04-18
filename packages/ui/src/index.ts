@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { addLocation } from '@hcengineering/platform'
+import { addLocation } from '@intabiafusion/platform'
 import { type SvelteComponent } from 'svelte'
 import { readable, writable } from 'svelte/store'
 import Root from './components/internal/Root.svelte'
@@ -57,7 +57,7 @@ export {
   getCurrentAccentColor,
   accentColorOptions,
   type AccentColorOption
-} from '@hcengineering/theme'
+} from '@intabiafusion/theme'
 // export { applicationShortcutKey } from './utils'
 export { getCurrentLocation, locationToUrl, navigate, location, setLocationStorageKey } from './location'
 

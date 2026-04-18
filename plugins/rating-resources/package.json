@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/rating-resources",
-  "version": "0.7.0",
+  "name": "@intabiafusion/rating-resources",
+  "version": "1.0.0",
   "main": "src/index.ts",
   "author": "Anticrm Platform Contributors",
   "license": "EPL-2.0",
@@ -16,7 +16,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "svelte-loader": "^3.2.0",
     "sass": "^1.80.0",
     "svelte-preprocess": "^5.1.4",
@@ -38,18 +38,18 @@
     "svelte-eslint-parser": "^0.33.1"
   },
   "dependencies": {
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/platform": "workspace:^0.7.19",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
     "svelte": "^4.2.20",
-    "@hcengineering/rating": "workspace:^0.7.0",
-    "@hcengineering/ui": "workspace:^0.7.0",
-    "@hcengineering/presentation": "workspace:^0.7.0",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/emoji": "workspace:^0.7.0",
-    "@hcengineering/emoji-resources": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/contact-resources": "workspace:^0.7.0",
-    "@hcengineering/view-resources": "workspace:^0.7.0"
+    "@intabiafusion/rating": "workspace:^1.0.0",
+    "@intabiafusion/ui": "workspace:^1.0.0",
+    "@intabiafusion/presentation": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/view": "workspace:^1.0.0",
+    "@intabiafusion/emoji": "workspace:^1.0.0",
+    "@intabiafusion/emoji-resources": "workspace:^1.0.0",
+    "@intabiafusion/contact": "workspace:^1.0.0",
+    "@intabiafusion/contact-resources": "workspace:^1.0.0",
+    "@intabiafusion/view-resources": "workspace:^1.0.0"
   }
 }

@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { Doc } from '@hcengineering/core'
-import type { NotificationType } from '@hcengineering/notification'
-import type { TrainingRequest } from '@hcengineering/training'
-import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
-import training from '@hcengineering/training'
-import { DocUpdateMessage } from '@hcengineering/activity'
+import { Doc } from '@intabiafusion/core'
+import type { NotificationType } from '@intabiafusion/notification'
+import type { TrainingRequest } from '@intabiafusion/training'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@intabiafusion/server-notification'
+import training from '@intabiafusion/training'
+import { DocUpdateMessage } from '@intabiafusion/activity'
 
 export const TrainingRequestNotificationTypeMatch: TypeMatchFunc = async (
   _client: TypeMatchClient,

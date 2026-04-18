@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher, onMount } from 'svelte'
   import { registerFocus } from '../focus'
   import type { AnySvelteComponent, ButtonSize } from '../types'

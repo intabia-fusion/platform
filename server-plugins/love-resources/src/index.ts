@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact, { Employee, formatName, Person, PersonSpace } from '@hcengineering/contact'
+import contact, { Employee, formatName, Person, PersonSpace } from '@intabiafusion/contact'
 import core, {
   Class,
   combineAttributes,
@@ -31,7 +31,7 @@ import core, {
   TxMixin,
   TxProcessor,
   TxUpdateDoc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import love, {
   isOffice,
   loveId,
@@ -42,16 +42,16 @@ import love, {
   RoomAccess,
   RoomInfo,
   UserMeetingInvite
-} from '@hcengineering/love'
-import { getMetadata } from '@hcengineering/platform'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import view from '@hcengineering/view'
-import { workbenchId } from '@hcengineering/workbench'
-import { getSocialStrings } from '@hcengineering/server-contact'
-import notification, { CommonInboxNotification } from '@hcengineering/notification'
+} from '@intabiafusion/love'
+import { getMetadata } from '@intabiafusion/platform'
+import serverCore, { TriggerControl } from '@intabiafusion/server-core'
+import view from '@intabiafusion/view'
+import { workbenchId } from '@intabiafusion/workbench'
+import { getSocialStrings } from '@intabiafusion/server-contact'
+import notification, { CommonInboxNotification } from '@intabiafusion/notification'
 
 import { getInviteAllowedProviders } from './utils'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []

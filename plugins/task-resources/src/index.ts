@@ -24,9 +24,9 @@ import {
   type Ref,
   type Status,
   type TxOperations
-} from '@hcengineering/core'
-import { type IntlString, type Resources } from '@hcengineering/platform'
-import { createQuery, onClient } from '@hcengineering/presentation'
+} from '@intabiafusion/core'
+import { type IntlString, type Resources } from '@intabiafusion/platform'
+import { createQuery, onClient } from '@intabiafusion/presentation'
 import task, {
   getStatusIndex,
   makeRank,
@@ -35,10 +35,10 @@ import task, {
   type Rank,
   type Task,
   type TaskType
-} from '@hcengineering/task'
-import { getCurrentLocation, navigate, showPopup } from '@hcengineering/ui'
-import { type ViewletDescriptor } from '@hcengineering/view'
-import { CategoryQuery, statusStore } from '@hcengineering/view-resources'
+} from '@intabiafusion/task'
+import { getCurrentLocation, navigate, showPopup } from '@intabiafusion/ui'
+import { type ViewletDescriptor } from '@intabiafusion/view'
+import { CategoryQuery, statusStore } from '@intabiafusion/view-resources'
 import { get, writable } from 'svelte/store'
 
 import AssignedTasks from './components/AssignedTasks.svelte'

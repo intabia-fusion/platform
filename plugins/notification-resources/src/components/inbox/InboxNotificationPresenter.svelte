@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { Doc, type Ref, type Space } from '@hcengineering/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Doc, type Ref, type Space } from '@intabiafusion/core'
   import notification, {
     ActivityNotificationViewlet,
     CommonInboxNotification,
@@ -22,7 +22,7 @@
     DisplayInboxNotification,
     MentionInboxNotification,
     ReactionInboxNotification
-  } from '@hcengineering/notification'
+  } from '@intabiafusion/notification'
   import ActivityInboxNotificationPresenter from './ActivityInboxNotificationPresenter.svelte'
   import MentionInboxNotificationPresenter from './MentionInboxNotificationPresenter.svelte'
   import ReactionInboxNotificationPresenter from './ReactionInboxNotificationPresenter.svelte'

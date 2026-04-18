@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Milestone } from '@hcengineering/tracker'
+  import { Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Milestone } from '@intabiafusion/tracker'
   import {
     ButtonKind,
     DatePresenter,
@@ -23,7 +23,7 @@
     getPlatformAvatarColorDef,
     getPlatformAvatarColorForTextDef,
     themeStore
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import tracker from '../../plugin'
   import MilestoneSelector from './MilestoneSelector.svelte'

@@ -13,7 +13,7 @@
 //
 
 import type { Node } from '@tiptap/pm/model'
-import type { TableMetadata } from '@hcengineering/view'
+import type { TableMetadata } from '@intabiafusion/view'
 
 /**
  * Extract table metadata from a ProseMirror table node

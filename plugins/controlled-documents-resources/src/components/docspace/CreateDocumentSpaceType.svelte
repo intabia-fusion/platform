@@ -15,10 +15,10 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Data, SpaceTypeDescriptor, generateId } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import documents, { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@hcengineering/controlled-documents'
-  import { createSpaceType } from '@hcengineering/setting'
+  import { Data, SpaceTypeDescriptor, generateId } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import documents, { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@intabiafusion/controlled-documents'
+  import { createSpaceType } from '@intabiafusion/setting'
 
   const client = getClient()
 

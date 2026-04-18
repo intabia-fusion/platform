@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import { type LoginInfo } from '@hcengineering/account-client'
-  import { logIn } from '@hcengineering/workbench'
-  import { signupStore } from '@hcengineering/analytics-providers'
+  import { type IntlString, OK, Severity, Status } from '@intabiafusion/platform'
+  import { type LoginInfo } from '@intabiafusion/account-client'
+  import { logIn } from '@intabiafusion/workbench'
+  import { signupStore } from '@intabiafusion/analytics-providers'
 
   import Label from './internal/Label.svelte'
   import login from '../plugin'

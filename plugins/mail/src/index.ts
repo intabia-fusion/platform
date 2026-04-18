@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Ref } from '@hcengineering/core'
-import { Asset, IntlString, type Plugin, plugin } from '@hcengineering/platform'
-import type { Tag } from '@hcengineering/card'
+import type { Ref } from '@intabiafusion/core'
+import { Asset, IntlString, type Plugin, plugin } from '@intabiafusion/platform'
+import type { Tag } from '@intabiafusion/card'
 
 /**
  * @public

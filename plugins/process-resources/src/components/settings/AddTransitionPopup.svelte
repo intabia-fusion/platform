@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Ref, SortingOrder } from '@hcengineering/core'
-  import { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State, Transition, Trigger } from '@hcengineering/process'
-  import { Component, Dropdown, DropdownIntlItem, DropdownLabelsIntl, Label, ListItem } from '@hcengineering/ui'
+  import core, { Ref, SortingOrder } from '@intabiafusion/core'
+  import { Card, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Process, State, Transition, Trigger } from '@intabiafusion/process'
+  import { Component, Dropdown, DropdownIntlItem, DropdownLabelsIntl, Label, ListItem } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
-  import { makeRank } from '@hcengineering/rank'
+  import { makeRank } from '@intabiafusion/rank'
 
   export let process: Process
 

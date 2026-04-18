@@ -2,16 +2,16 @@ import {
   type AccountClient,
   type WorkspaceLoginInfo,
   getClient as getAccountClientRaw
-} from '@hcengineering/account-client'
-import client from '@hcengineering/client'
-import { type Doc, AccountRole } from '@hcengineering/core'
-import login from '@hcengineering/login'
-import { getMetadata, getResource, setMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
-import { getCurrentLocation, navigate } from '@hcengineering/ui'
-import view from '@hcengineering/view'
-import { getObjectLinkFragment } from '@hcengineering/view-resources'
-import { workbenchId } from '@hcengineering/workbench'
+} from '@intabiafusion/account-client'
+import client from '@intabiafusion/client'
+import { type Doc, AccountRole } from '@intabiafusion/core'
+import login from '@intabiafusion/login'
+import { getMetadata, getResource, setMetadata } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
+import { getCurrentLocation, navigate } from '@intabiafusion/ui'
+import view from '@intabiafusion/view'
+import { getObjectLinkFragment } from '@intabiafusion/view-resources'
+import { workbenchId } from '@intabiafusion/workbench'
 
 function getAccountClient (token: string | undefined | null): AccountClient {
   const accountsUrl = getMetadata(login.metadata.AccountsUrl)

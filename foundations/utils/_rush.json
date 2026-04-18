@@ -331,18 +331,18 @@
    */
   "projects": [
     {
-      "packageName": "@hcengineering/scripts",
+      "packageName": "@intabiafusion/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/platform-rig",
+      "packageName": "@intabiafusion/platform-rig",
       "projectFolder": "packages/platform-rig",
       "reviewCategory": "tools",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/ui-test",
+      "packageName": "@intabiafusion/ui-test",
       "projectFolder": "packages/ui-test",
       "shouldPublish": false
     }

@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import type { MeasureContext, Tx } from '@hcengineering/core'
+import type { MeasureContext, Tx } from '@intabiafusion/core'
 import {
   createMongoAdapter,
   createMongoDestroyAdapter,
   createMongoTxAdapter,
   shutdownMongo
-} from '@hcengineering/mongo'
-import { setMetadata } from '@hcengineering/platform'
+} from '@intabiafusion/mongo'
+import { setMetadata } from '@intabiafusion/platform'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   shutdownPostgres
-} from '@hcengineering/postgres'
-import serverClientPlugin from '@hcengineering/server-client'
-import { type PlatformQueue } from '@hcengineering/server-core'
+} from '@intabiafusion/postgres'
+import serverClientPlugin from '@intabiafusion/server-client'
+import { type PlatformQueue } from '@intabiafusion/server-core'
 import {
   registerAdapterFactory,
   registerDestroyFactory,
@@ -22,8 +22,8 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@hcengineering/server-pipeline'
-import serverToken from '@hcengineering/server-token'
+} from '@intabiafusion/server-pipeline'
+import serverToken from '@intabiafusion/server-token'
 
 import { WorkspaceManager } from './manager'
 

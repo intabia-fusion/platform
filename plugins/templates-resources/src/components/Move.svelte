@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import presentation, { Card, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import { Ref } from '@intabiafusion/core'
+  import presentation, { Card, getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { MessageTemplate, TemplateCategory } from '@intabiafusion/templates'
   import templates from '../plugin'
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
 
   export let value: MessageTemplate

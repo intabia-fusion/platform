@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Status, WithLookup } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent, Icon } from '@hcengineering/ui'
+  import { Status, WithLookup } from '@intabiafusion/core'
+  import { Asset } from '@intabiafusion/platform'
+  import { AnySvelteComponent, Icon } from '@intabiafusion/ui'
 
   export let icon: Asset | AnySvelteComponent | undefined = undefined
 

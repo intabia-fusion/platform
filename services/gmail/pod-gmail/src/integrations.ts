@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { Integration, type AccountClient } from '@hcengineering/account-client'
-import { AccountUuid, MeasureContext, PersonId, TxOperations, WorkspaceUuid } from '@hcengineering/core'
-import gmail, { gmailIntegrationKind } from '@hcengineering/gmail'
-import { getAccountClient } from '@hcengineering/server-client'
-import setting from '@hcengineering/setting'
-import { IntegrationClient, IntegrationClientImpl } from '@hcengineering/integration-client'
+import { Integration, type AccountClient } from '@intabiafusion/account-client'
+import { AccountUuid, MeasureContext, PersonId, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
+import gmail, { gmailIntegrationKind } from '@intabiafusion/gmail'
+import { getAccountClient } from '@intabiafusion/server-client'
+import setting from '@intabiafusion/setting'
+import { IntegrationClient, IntegrationClientImpl } from '@intabiafusion/integration-client'
 
 import { serviceToken } from './utils'
 import { getAccountSocialIds } from './accounts'

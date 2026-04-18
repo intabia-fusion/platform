@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { panelstore } from '@hcengineering/ui'
-  import { Widget, WidgetPreference } from '@hcengineering/workbench'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { panelstore } from '@intabiafusion/ui'
+  import { Widget, WidgetPreference } from '@intabiafusion/workbench'
 
   import workbench from '../../plugin'
   import { sidebarStore, SidebarVariant } from '../../sidebar'
   import SidebarExpanded from './SidebarExpanded.svelte'
   import SidebarMini from './SidebarMini.svelte'
   import { isAllowedToRole } from '../../utils'
-  import { getCurrentAccount } from '@hcengineering/core'
+  import { getCurrentAccount } from '@intabiafusion/core'
 
   const account = getCurrentAccount()
   const client = getClient()

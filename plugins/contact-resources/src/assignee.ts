@@ -1,6 +1,6 @@
-import { type Person } from '@hcengineering/contact'
-import { type Ref } from '@hcengineering/core'
-import { type IntlString } from '@hcengineering/platform'
+import { type Person } from '@intabiafusion/contact'
+import { type Ref } from '@intabiafusion/core'
+import { type IntlString } from '@intabiafusion/platform'
 
 /**
  * @public

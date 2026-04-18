@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
-  import { type File } from '@hcengineering/drive'
-  import { DocsNavigator } from '@hcengineering/view-resources'
+  import { type Doc } from '@intabiafusion/core'
+  import { type File } from '@intabiafusion/drive'
+  import { DocsNavigator } from '@intabiafusion/view-resources'
 
   import FilePresenter from './FilePresenter.svelte'
   import { resolveParents } from '../utils'

@@ -14,8 +14,8 @@
 //
 
 import { Request, Response } from 'express'
-import { type MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import { type PlatformQueueProducer } from '@hcengineering/server-core'
+import { type MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import { type PlatformQueueProducer } from '@intabiafusion/server-core'
 import { AccountNotification } from '../types'
 
 // Mock config completely to avoid environment variable issues

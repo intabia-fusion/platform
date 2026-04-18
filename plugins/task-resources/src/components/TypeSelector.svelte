@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Project, ProjectType } from '@hcengineering/task'
-  import { DropdownLabels, resolvedLocationStore } from '@hcengineering/ui'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Project, ProjectType } from '@intabiafusion/task'
+  import { DropdownLabels, resolvedLocationStore } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
   import { activeProjects, selectedTypeStore, selectedTaskTypeStore, taskTypeStore, typeStore } from '..'
   import TaskKindSelector from './taskTypes/TaskKindSelector.svelte'

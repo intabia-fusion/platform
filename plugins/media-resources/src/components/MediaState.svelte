@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ComponentExtensions } from '@hcengineering/presentation'
+  import { ComponentExtensions } from '@intabiafusion/presentation'
   import media from '../plugin'
   import { state, sessions } from '../stores'
 

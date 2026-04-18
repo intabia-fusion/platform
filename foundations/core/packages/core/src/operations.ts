@@ -1,4 +1,4 @@
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import { deepEqual } from 'fast-equals'
 import {
   type DocumentUpdate,

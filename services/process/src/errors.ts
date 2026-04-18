@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { ExecutionError } from '@hcengineering/process'
-import { ExecuteResult } from '@hcengineering/server-process'
+import { ExecutionError } from '@intabiafusion/process'
+import { ExecuteResult } from '@intabiafusion/server-process'
 
 export function isError (value: ExecuteResult | any): value is ExecutionError {
   return (value as ExecutionError)?.error !== undefined

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref, Space } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import { translate } from '@hcengineering/platform'
-  import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
-  import { showPopup, Button, themeStore } from '@hcengineering/ui'
+  import { Class, Ref, Space } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { translate } from '@intabiafusion/platform'
+  import type { ButtonKind, ButtonSize, TooltipAlignment } from '@intabiafusion/ui'
+  import { showPopup, Button, themeStore } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { SpacesMultiPopup } from '..'
 

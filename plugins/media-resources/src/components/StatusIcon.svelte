@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent, Icon, IconSize } from '@hcengineering/ui'
+  import type { Asset } from '@intabiafusion/platform'
+  import { AnySvelteComponent, Icon, IconSize } from '@intabiafusion/ui'
   import { ComponentType } from 'svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType

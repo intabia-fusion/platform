@@ -16,8 +16,8 @@ import { type SendMailOptions, type Transporter } from 'nodemailer'
 import { LRUCache } from 'lru-cache'
 import { createHash } from 'node:crypto'
 
-import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext } from '@hcengineering/core'
+import { Analytics } from '@intabiafusion/analytics'
+import { MeasureContext } from '@intabiafusion/core'
 
 import config from './config'
 import { getDefaultTransport, getSmtpTransport } from './transport'

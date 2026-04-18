@@ -1,6 +1,6 @@
-import { Analytics } from '@hcengineering/analytics'
-import type { MeasureContext, WorkspaceIds } from '@hcengineering/core'
-import type { StorageAdapter } from '@hcengineering/server-core'
+import { Analytics } from '@intabiafusion/analytics'
+import type { MeasureContext, WorkspaceIds } from '@intabiafusion/core'
+import type { StorageAdapter } from '@intabiafusion/server-core'
 import type { Readable } from 'stream'
 
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'

@@ -2,8 +2,8 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import type { Question } from '@hcengineering/questions'
-import { getClient } from '@hcengineering/presentation'
+import type { Question } from '@intabiafusion/questions'
+import { getClient } from '@intabiafusion/presentation'
 import { canUpdateQuestion } from '../utils'
 import { eachItemActionWithAvailability } from './ActionWithAvailability'
 

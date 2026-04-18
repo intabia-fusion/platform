@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Blob } from '@hcengineering/core'
-  import { IconSize, fromCodePoint } from '@hcengineering/ui'
+  import { Ref, Blob } from '@intabiafusion/core'
+  import { IconSize, fromCodePoint } from '@intabiafusion/ui'
   import { getBlobRef } from '../preview'
 
   export let icon: number | number[] | Ref<Blob>

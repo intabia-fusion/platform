@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { type Editor } from '@tiptap/core'
-import { type TextEditorCommand, type TextEditorCommandHandler } from '@hcengineering/text-editor'
+import { type TextEditorCommand, type TextEditorCommandHandler } from '@intabiafusion/text-editor'
 
 export function textEditorCommandHandler (editor: Editor | undefined): TextEditorCommandHandler | undefined {
   return editor !== undefined ? new TextEditorCommandHandlerImpl(editor) : undefined

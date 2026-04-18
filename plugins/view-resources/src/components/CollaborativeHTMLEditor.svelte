@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { Doc } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
-  import { CollaborativeAttributeSectionBox } from '@hcengineering/text-editor-resources'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import contact from '@intabiafusion/contact'
+  import { Doc } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { KeyedAttribute } from '@intabiafusion/presentation'
+  import { CollaborativeAttributeSectionBox } from '@intabiafusion/text-editor-resources'
+  import { AnySvelteComponent } from '@intabiafusion/ui'
   import { getCollaborationUser } from '../utils'
 
   export let object: Doc

@@ -15,15 +15,15 @@
 //
 -->
 <script lang="ts">
-  import { Card, Tag } from '@hcengineering/card'
-  import { Class, Doc, Mixin, Permission, Ref, TypedSpace } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { CircleButton, eventToHTMLElement, IconAdd, IconDownOutline, SelectPopup, showPopup } from '@hcengineering/ui'
+  import { Card, Tag } from '@intabiafusion/card'
+  import { Class, Doc, Mixin, Permission, Ref, TypedSpace } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { CircleButton, eventToHTMLElement, IconAdd, IconDownOutline, SelectPopup, showPopup } from '@intabiafusion/ui'
 
   import MasterTagSelector from './MasterTagSelector.svelte'
   import CardTagColored from './CardTagColored.svelte'
-  import { PermissionsStore } from '@hcengineering/contact'
-  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import { PermissionsStore } from '@intabiafusion/contact'
+  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
   import card from '../plugin'
 
   export let doc: Card

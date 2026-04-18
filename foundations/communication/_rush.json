@@ -10,7 +10,7 @@
   "projectFolderMaxDepth": 2,
   "gitPolicy": {},
   "repository": {
-    "url": "https://github.com/hcengineering/communication",
+    "url": "https://github.com/intabia-fusion/foundation",
     "defaultBranch": "main",
     "defaultRemote": "origin"
   },
@@ -25,47 +25,47 @@
   "variants": [],
   "projects": [
     {
-      "packageName": "@hcengineering/scripts",
+      "packageName": "@intabiafusion/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/communication-types",
+      "packageName": "@intabiafusion/communication-types",
       "projectFolder": "packages/types",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-sdk-types",
+      "packageName": "@intabiafusion/communication-sdk-types",
       "projectFolder": "packages/sdk-types",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-shared",
+      "packageName": "@intabiafusion/communication-shared",
       "projectFolder": "packages/shared",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-rest-client",
+      "packageName": "@intabiafusion/communication-rest-client",
       "projectFolder": "packages/rest-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-cockroach",
+      "packageName": "@intabiafusion/communication-cockroach",
       "projectFolder": "packages/cockroach",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-server",
+      "packageName": "@intabiafusion/communication-server",
       "projectFolder": "packages/server",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-query",
+      "packageName": "@intabiafusion/communication-query",
       "projectFolder": "packages/query",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-client-query",
+      "packageName": "@intabiafusion/communication-client-query",
       "projectFolder": "packages/client-query",
       "shouldPublish": true
     }

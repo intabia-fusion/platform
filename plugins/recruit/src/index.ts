@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import type { Attribute, Class, Doc, Mixin, Permission, Ref, Status } from '@hcengineering/core'
-import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
-import { AnyComponent, Location, ResolvedLocation } from '@hcengineering/ui'
+import type { Attribute, Class, Doc, Mixin, Permission, Ref, Status } from '@intabiafusion/core'
+import type { Asset, IntlString, Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import type { ProjectTypeDescriptor, TaskType } from '@intabiafusion/task'
+import { AnyComponent, Location, ResolvedLocation } from '@intabiafusion/ui'
 import type { Applicant, ApplicantMatch, Candidate, Opinion, Review, Vacancy, VacancyList } from './types'
-import { Action } from '@hcengineering/view'
+import { Action } from '@intabiafusion/view'
 
 export * from './types'
 export * from './analytics'

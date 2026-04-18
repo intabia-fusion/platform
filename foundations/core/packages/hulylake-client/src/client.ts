@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { WorkspaceUuid } from '@hcengineering/core'
-import { RetryOptions } from '@hcengineering/retry'
+import { WorkspaceUuid } from '@intabiafusion/core'
+import { RetryOptions } from '@intabiafusion/retry'
 
 import { fetchSafe, unwrapContentLength, unwrapEtag, unwrapLastModified } from './utils'
 import {

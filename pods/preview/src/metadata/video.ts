@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/core'
+import { type MeasureContext } from '@intabiafusion/core'
 import { spawn } from 'child_process'
 import { getImageMetadata } from './image'
 import { TemporaryDir } from '../tempdir'

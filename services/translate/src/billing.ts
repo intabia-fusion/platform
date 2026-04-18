@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { AiTokensData, getClient as getBillingClient } from '@hcengineering/billing-client'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
+import { AiTokensData, getClient as getBillingClient } from '@intabiafusion/billing-client'
+import { MeasureContext, systemAccountUuid } from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
 
 import config from './config'
 

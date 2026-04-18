@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mergeIds } from '@hcengineering/platform'
-import achievement, { achievementId } from '@hcengineering/achievement'
-import { type AnyComponent } from '@hcengineering/ui'
+import { mergeIds } from '@intabiafusion/platform'
+import achievement, { achievementId } from '@intabiafusion/achievement'
+import { type AnyComponent } from '@intabiafusion/ui'
 
 export default mergeIds(achievementId, achievement, {
   component: {

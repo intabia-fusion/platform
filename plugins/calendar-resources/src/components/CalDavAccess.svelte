@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { Integration } from '@hcengineering/account-client'
+  import { Integration } from '@intabiafusion/account-client'
   import presentation, {
     copyTextToClipboard,
     getCurrentWorkspaceUrl,
     getCurrentWorkspaceUuid
-  } from '@hcengineering/presentation'
-  import { Label, Modal, CheckBox, Spinner, Button, IconCopy, EditBox } from '@hcengineering/ui'
-  import calendar, { caldavIntegrationKind } from '@hcengineering/calendar'
+  } from '@intabiafusion/presentation'
+  import { Label, Modal, CheckBox, Spinner, Button, IconCopy, EditBox } from '@intabiafusion/ui'
+  import calendar, { caldavIntegrationKind } from '@intabiafusion/calendar'
   import { createEventDispatcher, onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
-  import { getMetadata } from '@hcengineering/platform'
-  import { getCurrentAccount, pickPrimarySocialId, SocialId, SocialIdType } from '@hcengineering/core'
+  import { getMetadata } from '@intabiafusion/platform'
+  import { getCurrentAccount, pickPrimarySocialId, SocialId, SocialIdType } from '@intabiafusion/core'
   import { getAccountClient } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   const workspaceUuid = getCurrentWorkspaceUuid()
 

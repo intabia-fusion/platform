@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import { createQuery, getClient, getCommunicationClient } from '@hcengineering/presentation'
-  import cardPlugin, { Card } from '@hcengineering/card'
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
-  import { AttachmentPreview, LinkPreview } from '@hcengineering/attachment-resources'
-  import { AttachmentID, Emoji, Message, MessageType } from '@hcengineering/communication-types'
-  import { getResource } from '@hcengineering/platform'
-  import { isAppletAttachment, isBlobAttachment, isLinkPreviewAttachment } from '@hcengineering/communication-shared'
-  import { Component } from '@hcengineering/ui'
+  import { createQuery, getClient, getCommunicationClient } from '@intabiafusion/presentation'
+  import cardPlugin, { Card } from '@intabiafusion/card'
+  import { getCurrentAccount, Ref } from '@intabiafusion/core'
+  import { AttachmentPreview, LinkPreview } from '@intabiafusion/attachment-resources'
+  import { AttachmentID, Emoji, Message, MessageType } from '@intabiafusion/communication-types'
+  import { getResource } from '@intabiafusion/platform'
+  import { isAppletAttachment, isBlobAttachment, isLinkPreviewAttachment } from '@intabiafusion/communication-shared'
+  import { Component } from '@intabiafusion/ui'
 
   import ReactionsList from '../ReactionsList.svelte'
   import MessageThread from '../thread/Thread.svelte'

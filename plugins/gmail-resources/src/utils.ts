@@ -1,11 +1,11 @@
 import { get } from 'svelte/store'
-import { getName as getContactName } from '@hcengineering/contact'
-import contact, { type Channel, type Contact } from '@hcengineering/contact'
-import { employeeBySocialKeyStore, getPersonByPersonId } from '@hcengineering/contact-resources'
-import { buildSocialIdString, type PersonId, SocialIdType, type Client, type Doc, type Ref } from '@hcengineering/core'
-import { type Message, type SharedMessage } from '@hcengineering/gmail'
-import { getClient } from '@hcengineering/presentation'
-import type { Integration } from '@hcengineering/account-client'
+import { getName as getContactName } from '@intabiafusion/contact'
+import contact, { type Channel, type Contact } from '@intabiafusion/contact'
+import { employeeBySocialKeyStore, getPersonByPersonId } from '@intabiafusion/contact-resources'
+import { buildSocialIdString, type PersonId, SocialIdType, type Client, type Doc, type Ref } from '@intabiafusion/core'
+import { type Message, type SharedMessage } from '@intabiafusion/gmail'
+import { getClient } from '@intabiafusion/presentation'
+import type { Integration } from '@intabiafusion/account-client'
 
 import gmail from './plugin'
 

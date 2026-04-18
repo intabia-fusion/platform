@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Person } from '@hcengineering/contact'
-import type { AttachedDoc, Class, Doc, Mixin, Ref, Timestamp, Tx } from '@hcengineering/core'
-import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { AnyComponent } from '@hcengineering/ui'
-import { ChatMessage } from '@hcengineering/chunter'
+import { type Person } from '@intabiafusion/contact'
+import type { AttachedDoc, Class, Doc, Mixin, Ref, Timestamp, Tx } from '@intabiafusion/core'
+import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { AnyComponent } from '@intabiafusion/ui'
+import { ChatMessage } from '@intabiafusion/chunter'
 
 /**
  * @public

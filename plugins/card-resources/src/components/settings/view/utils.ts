@@ -1,5 +1,5 @@
-import { type Data } from '@hcengineering/core'
-import { type Viewlet } from '@hcengineering/view'
+import { type Data } from '@intabiafusion/core'
+import { type Viewlet } from '@intabiafusion/view'
 
 export function updateViewletConfig (viewlet: Data<Viewlet> | Viewlet, items: any[]): void {
   const enabledAttibutes = items.filter((it) => it.type === 'attribute' && it.enabled).map((it) => it.value)

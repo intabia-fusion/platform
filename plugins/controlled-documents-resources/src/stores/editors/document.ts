@@ -1,7 +1,7 @@
 import { attach, sample } from 'effector'
-import { type Ref } from '@hcengineering/core'
-import { type ChatMessage } from '@hcengineering/chunter'
-import { type EditorMode, DocumentState } from '@hcengineering/controlled-documents'
+import { type Ref } from '@intabiafusion/core'
+import { type ChatMessage } from '@intabiafusion/chunter'
+import { type EditorMode, DocumentState } from '@intabiafusion/controlled-documents'
 import { isDocumentCommentAttachedTo } from '../../utils'
 import {
   RightPanelTab,

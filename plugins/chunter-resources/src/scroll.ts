@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getDay, type Timestamp } from '@hcengineering/core'
+import { getDay, type Timestamp } from '@intabiafusion/core'
 import { get } from 'svelte/store'
-import { sortActivityMessages } from '@hcengineering/activity-resources'
-import { type ActivityMessage } from '@hcengineering/activity'
-import { type ReadState } from '@hcengineering/notification'
+import { sortActivityMessages } from '@intabiafusion/activity-resources'
+import { type ActivityMessage } from '@intabiafusion/activity'
+import { type ReadState } from '@intabiafusion/notification'
 
 import { getClosestDate, readChannelMessages } from './utils'
 import { type ChannelDataProvider } from './channelDataProvider'

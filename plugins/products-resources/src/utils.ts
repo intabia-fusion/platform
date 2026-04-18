@@ -19,11 +19,11 @@ import core, {
   type Space,
   checkPermission,
   getCurrentAccount
-} from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
-import { type KeyFilter } from '@hcengineering/view'
-import documents from '@hcengineering/controlled-documents'
-import products, { ProductVersionState, type Product, type ProductVersion } from '@hcengineering/products'
+} from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
+import { type KeyFilter } from '@intabiafusion/view'
+import documents from '@intabiafusion/controlled-documents'
+import products, { ProductVersionState, type Product, type ProductVersion } from '@intabiafusion/products'
 
 export function getProductVersionVersion (doc: ProductVersion): string {
   const codename = doc.codename ?? ''

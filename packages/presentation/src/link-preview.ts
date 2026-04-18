@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata } from '@intabiafusion/platform'
 import plugin from './plugin'
 
 export function isLinkPreviewEnabled (): boolean {

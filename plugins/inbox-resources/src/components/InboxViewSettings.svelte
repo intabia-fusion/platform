@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { createFocusManager, FocusHandler, Label, ListView, ModernToggle, resizeObserver } from '@hcengineering/ui'
+  import { createFocusManager, FocusHandler, Label, ListView, ModernToggle, resizeObserver } from '@intabiafusion/ui'
 
   import inbox from '../plugin'
 

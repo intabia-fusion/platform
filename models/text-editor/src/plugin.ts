@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-import { mergeIds, type Resource } from '@hcengineering/platform'
+import { mergeIds, type Resource } from '@intabiafusion/platform'
 import textEditor, {
   type TextActionActiveFunction,
   type TextActionFunction,
   type TextActionVisibleFunction,
   textEditorId
-} from '@hcengineering/text-editor'
+} from '@intabiafusion/text-editor'
 
 export default mergeIds(textEditorId, textEditor, {
   function: {

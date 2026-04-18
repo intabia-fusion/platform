@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Ref } from '@hcengineering/core'
-import { type Resource, mergeIds } from '@hcengineering/platform'
-import survey, { surveyId } from '@hcengineering/survey'
-import type { Location, ResolvedLocation } from '@hcengineering/ui/src/types'
-import type { Action, ActionCategory, ViewAction } from '@hcengineering/view'
+import type { Client, Doc, Ref } from '@intabiafusion/core'
+import { type Resource, mergeIds } from '@intabiafusion/platform'
+import survey, { surveyId } from '@intabiafusion/survey'
+import type { Location, ResolvedLocation } from '@intabiafusion/ui/src/types'
+import type { Action, ActionCategory, ViewAction } from '@intabiafusion/view'
 
 export default mergeIds(surveyId, survey, {
   resolver: {

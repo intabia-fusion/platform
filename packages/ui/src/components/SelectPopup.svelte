@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import { deviceOptionsStore, resizeObserver } from '..'
   import { createFocusManager } from '../focus'
@@ -26,8 +26,8 @@
   import Spinner from './Spinner.svelte'
   import IconCheck from './icons/Check.svelte'
   import IconSearch from './icons/Search.svelte'
-  import { translate } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import { translate } from '@intabiafusion/platform'
+  import { themeStore } from '@intabiafusion/theme'
 
   export let placeholder: IntlString | undefined = undefined
   export let placeholderParam: any | undefined = undefined

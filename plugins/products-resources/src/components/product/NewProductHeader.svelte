@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconAdd, showPopup } from '@hcengineering/ui'
+  import { Button, IconAdd, showPopup } from '@intabiafusion/ui'
   import products from '../../plugin'
   import CreateProduct from './CreateProduct.svelte'
-  import { openDocFromRef } from '@hcengineering/view-resources'
+  import { openDocFromRef } from '@intabiafusion/view-resources'
 
   async function newProduct (): Promise<void> {
     showPopup(CreateProduct, {}, 'top', async (id) => {

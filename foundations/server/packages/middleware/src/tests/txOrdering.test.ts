@@ -32,8 +32,8 @@ import core, {
   type Space,
   type Tx,
   TxFactory
-} from '@hcengineering/core'
-import type { PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import type { PipelineContext, TxMiddlewareResult } from '@intabiafusion/server-core'
 import { TxOrderingMiddleware } from '../txOrdering'
 
 interface TestDoc extends Doc {

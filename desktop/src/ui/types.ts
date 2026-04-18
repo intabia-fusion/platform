@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { DownloadItem } from '@hcengineering/desktop-downloads'
-import { ScreenSource } from '@hcengineering/love'
-import { Plugin } from '@hcengineering/platform'
-import { Ref, Class, Doc } from '@hcengineering/core'
+import { DownloadItem } from '@intabiafusion/desktop-downloads'
+import { ScreenSource } from '@intabiafusion/love'
+import { Plugin } from '@intabiafusion/platform'
+import { Ref, Class, Doc } from '@intabiafusion/core'
 import { IpcRendererEvent } from 'electron'
-import { ActivityMessage } from '@hcengineering/activity'
+import { ActivityMessage } from '@intabiafusion/activity'
 
 export interface Config {
   ACCOUNTS_URL: string

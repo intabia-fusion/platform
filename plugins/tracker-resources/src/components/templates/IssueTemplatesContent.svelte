@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { IssueTemplate } from '@hcengineering/tracker'
-  import { Component } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import core, { DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { IssueTemplate } from '@intabiafusion/tracker'
+  import { Component } from '@intabiafusion/ui'
+  import view, { ViewOptions, Viewlet, ViewletPreference } from '@intabiafusion/view'
   import tracker from '../../plugin'
   import CreateIssueTemplate from './CreateIssueTemplate.svelte'
 

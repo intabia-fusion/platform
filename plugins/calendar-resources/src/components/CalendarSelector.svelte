@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { AccessLevel, Calendar, getPrimaryCalendar, PrimaryCalendar } from '@hcengineering/calendar'
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Dropdown, Icon } from '@hcengineering/ui'
+  import { AccessLevel, Calendar, getPrimaryCalendar, PrimaryCalendar } from '@intabiafusion/calendar'
+  import { getCurrentAccount, Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Dropdown, Icon } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import { translateCB } from '@intabiafusion/platform'
+  import { themeStore } from '@intabiafusion/theme'
 
   export let value: Ref<Calendar> | undefined
   export let disabled: boolean = false

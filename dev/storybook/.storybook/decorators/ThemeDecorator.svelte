@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Theme } from '@hcengineering/theme'
+  import { Theme } from '@intabiafusion/theme'
 </script>
 
 <Theme>

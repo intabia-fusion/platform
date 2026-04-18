@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, ChunterSpace } from '@hcengineering/chunter'
-  import { getCurrentAccount } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Button, EditBox } from '@hcengineering/ui'
+  import { Channel, ChunterSpace } from '@intabiafusion/chunter'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Button, EditBox } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import chunter from '../plugin'
   import EditChannelDescriptionAttachments from './EditChannelDescriptionAttachments.svelte'

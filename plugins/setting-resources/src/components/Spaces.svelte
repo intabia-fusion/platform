@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Header, Breadcrumb } from '@hcengineering/ui'
-  import core, { AccountUuid, Ref, Role, RolesAssignment, SpaceType, TypedSpace, WithLookup } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AccountArrayEditor } from '@hcengineering/contact-resources'
+  import { Header, Breadcrumb } from '@intabiafusion/ui'
+  import core, { AccountUuid, Ref, Role, RolesAssignment, SpaceType, TypedSpace, WithLookup } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { AccountArrayEditor } from '@intabiafusion/contact-resources'
 
   import setting from '../plugin'
 

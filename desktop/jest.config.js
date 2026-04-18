@@ -14,7 +14,7 @@ module.exports = {
       preset: 'ts-jest',
       testMatch: ['<rootDir>/src/__test__/ui/**/*.test.ts'],
       moduleNameMapper: {
-        '^@hcengineering/platform-rig/profiles/ui/svelte$': `${SVELTE_MOCKS_PATH}/svelte-runtime.ts`,
+        '^@intabiafusion/platform-rig/profiles/ui/svelte$': `${SVELTE_MOCKS_PATH}/svelte-runtime.ts`,
         '^svelte/store$': `${SVELTE_MOCKS_PATH}/svelte-store.ts`,
         '^svelte/transition$': `${SVELTE_MOCKS_PATH}/svelte-transition.ts`,
         '^svelte/animate$': `${SVELTE_MOCKS_PATH}/svelte-animate.ts`,

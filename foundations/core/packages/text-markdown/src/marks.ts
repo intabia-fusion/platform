@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MarkupMark, MarkupMarkType } from '@hcengineering/text-core'
+import { MarkupMark, MarkupMarkType } from '@intabiafusion/text-core'
 import { deepEqual } from 'fast-equals'
 
 export function markAttrs (mark: MarkupMark): Record<string, string> {

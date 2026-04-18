@@ -24,9 +24,9 @@ import {
   generateId,
   makeCollabJsonId,
   makeCollabYdocId
-} from '@hcengineering/core'
-import { type StorageAdapter } from '@hcengineering/server-core'
-import { yDocToMarkup } from '@hcengineering/text-ydoc'
+} from '@intabiafusion/core'
+import { type StorageAdapter } from '@intabiafusion/server-core'
+import { yDocToMarkup } from '@intabiafusion/text-ydoc'
 import { Doc as YDoc } from 'yjs'
 
 import { yDocFromBuffer, yDocToBuffer } from './ydoc'

@@ -30,16 +30,16 @@ import core, {
   DOMAIN_MODEL,
   DOMAIN_TX,
   withContext
-} from '@hcengineering/core'
-import { PlatformError, unknownError } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
 import type {
   Middleware,
   MiddlewareCreator,
   PipelineContext,
   TxAdapter,
   TxMiddlewareResult
-} from '@hcengineering/server-core'
-import { BaseMiddleware } from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
+import { BaseMiddleware } from '@intabiafusion/server-core'
 import crypto from 'node:crypto'
 
 const isAccountTx = (it: TxCUD<Doc>): boolean =>

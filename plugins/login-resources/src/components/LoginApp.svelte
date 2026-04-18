@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata, setMetadata } from '@hcengineering/platform'
-  import presentation from '@hcengineering/presentation'
+  import { getMetadata, setMetadata } from '@intabiafusion/platform'
+  import presentation from '@intabiafusion/presentation'
   import {
     Location,
     deviceOptionsStore as deviceInfo,
@@ -24,7 +24,7 @@
     location,
     setMetadataLocalStorage,
     desktopPlatform
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { onDestroy, onMount } from 'svelte'
   import Auth from './Auth.svelte'
   import Confirmation from './Confirmation.svelte'

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type Reaction } from '@hcengineering/activity'
-import { type PersonSpace } from '@hcengineering/contact'
+import activity, { type ActivityMessage, type Reaction } from '@intabiafusion/activity'
+import { type PersonSpace } from '@intabiafusion/contact'
 import {
   AccountRole,
   DOMAIN_MODEL,
@@ -34,7 +34,7 @@ import {
   type TxCUD,
   type AnyAttribute,
   type Tx
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   Index,
   Mixin,
@@ -47,11 +47,11 @@ import {
   TypeMarkup,
   TypeRef,
   type Builder
-} from '@hcengineering/model'
-import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
-import preference, { TPreference } from '@hcengineering/model-preference'
-import view from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
+} from '@intabiafusion/model'
+import core, { TAttachedDoc, TClass, TDoc } from '@intabiafusion/model-core'
+import preference, { TPreference } from '@intabiafusion/model-preference'
+import view from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
 import {
   DOMAIN_DOC_NOTIFY,
   DOMAIN_NOTIFICATION,
@@ -85,10 +85,10 @@ import {
   type ReadState,
   ReadPosition,
   type NotificationAppearancePreference
-} from '@hcengineering/notification'
-import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
-import setting from '@hcengineering/setting'
-import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
+} from '@intabiafusion/notification'
+import { type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
+import setting from '@intabiafusion/setting'
+import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
 
 import notification from './plugin'
 import { defineNotifications } from './notifications'
@@ -100,7 +100,7 @@ export {
   DOMAIN_USER_NOTIFY,
   DOMAIN_READ_STATE,
   notificationId
-} from '@hcengineering/notification'
+} from '@intabiafusion/notification'
 export { notificationOperation } from './migration'
 export { notification as default }
 export { generateClassNotificationTypes } from './notifications'

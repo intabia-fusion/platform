@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Markup } from '@hcengineering/core'
+import { Markup } from '@intabiafusion/core'
 
 import { deepEqual } from 'fast-equals'
 import hashIt from 'hash-it'

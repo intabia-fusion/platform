@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { getClient, createQuery, MessageBox } from '@hcengineering/presentation'
-  import notification, { type PushSubscription, type PushSubscriptionSetting } from '@hcengineering/notification'
-  import core, { getCurrentAccount } from '@hcengineering/core'
-  import ModernToggle from '@hcengineering/ui/src/components/ModernToggle.svelte'
-  import { Button, Label, showPopup, getCurrentLocation, tooltip, desktopPlatform } from '@hcengineering/ui'
+  import { getClient, createQuery, MessageBox } from '@intabiafusion/presentation'
+  import notification, { type PushSubscription, type PushSubscriptionSetting } from '@intabiafusion/notification'
+  import core, { getCurrentAccount } from '@intabiafusion/core'
+  import ModernToggle from '@intabiafusion/ui/src/components/ModernToggle.svelte'
+  import { Button, Label, showPopup, getCurrentLocation, tooltip, desktopPlatform } from '@intabiafusion/ui'
   import { subscribePush, parseUserAgent } from '../../utils'
   import { onMount } from 'svelte'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata } from '@intabiafusion/platform'
 
   let subscriptions: PushSubscription[] = []
   let settings: PushSubscriptionSetting[] = []

@@ -22,14 +22,14 @@ import {
   type TxCUD,
   TxProcessor,
   type SessionData
-} from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import {
   BaseMiddleware,
   type Middleware,
   type TxMiddlewareResult,
   type PipelineContext
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
 export const configurationAccountEmail = '#configurator@hc.engineering'
 /**

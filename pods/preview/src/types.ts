@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
 
 export interface PreviewFile {
   filePath: string

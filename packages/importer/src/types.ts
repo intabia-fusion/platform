@@ -7,7 +7,7 @@ import {
   type Space,
   type Blob as PlatformBlob,
   type DocumentUpdate
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 export type Props<T extends Doc> = Data<T> & Partial<Doc> & { space: Ref<Space> }
 
 export interface UnifiedDoc<T extends Doc> {

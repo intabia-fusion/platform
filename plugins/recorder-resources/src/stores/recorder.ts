@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type FileUploadCallback, type FileUploadTarget } from '@hcengineering/uploader'
+import { type FileUploadCallback, type FileUploadTarget } from '@intabiafusion/uploader'
 
 import { type Readable, get, writable } from 'svelte/store'
 
@@ -21,7 +21,7 @@ import { type ScreenRecorder, createScreenRecorder } from '../screen-recorder'
 import { composer } from '../stores/composer'
 import { camStream, manager, screenStream } from '../stores/manager'
 import type { RecordingResult } from '../types'
-import { deleteFile } from '@hcengineering/presentation'
+import { deleteFile } from '@intabiafusion/presentation'
 
 export type RecorderState = 'idle' | 'ready' | 'recording' | 'paused' | 'stopping' | 'stopped'
 

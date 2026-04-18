@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@hcengineering/core'
+  import { AttachedData } from '@intabiafusion/core'
 
-  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import { Issue, reduceChildInfoTree } from '@intabiafusion/tracker'
   import EstimationProgressCircle from './EstimationProgressCircle.svelte'
   import TimePresenter from './TimePresenter.svelte'
 

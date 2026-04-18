@@ -13,12 +13,12 @@ import core, {
   type TxCUD,
   type WorkspaceUuid,
   type IntegrationKind
-} from '@hcengineering/core'
-import { getAccountsFromTxes, getSocialKeyByOldEmail } from '@hcengineering/model-core'
-import { getAccountClient } from '@hcengineering/server-client'
-import { createDummyStorageAdapter, wrapPipeline, type PipelineFactory } from '@hcengineering/server-core'
-import { createBackupPipeline, createEmptyBroadcastOps } from '@hcengineering/server-pipeline'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { getAccountsFromTxes, getSocialKeyByOldEmail } from '@intabiafusion/model-core'
+import { getAccountClient } from '@intabiafusion/server-client'
+import { createDummyStorageAdapter, wrapPipeline, type PipelineFactory } from '@intabiafusion/server-core'
+import { createBackupPipeline, createEmptyBroadcastOps } from '@intabiafusion/server-pipeline'
+import { generateToken } from '@intabiafusion/server-token'
 import type { Db } from 'mongodb'
 
 /**

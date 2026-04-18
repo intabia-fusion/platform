@@ -21,8 +21,8 @@ import {
   type Ref,
   type Space,
   type WorkspaceIds
-} from '@hcengineering/core'
-import { type Pipeline } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { type Pipeline } from '@intabiafusion/server-core'
 
 export type PipelineFactory = (ctx: MeasureContext, workspace: WorkspaceIds) => Promise<Pipeline>
 

@@ -23,7 +23,7 @@ import {
   MessagesDoc,
   type NotificationContext,
   SortingOrder
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 import {
   CardEventType,
   CreateMessageEvent,
@@ -40,13 +40,13 @@ import {
   RemoveNotificationsEvent,
   UpdateNotificationContextEvent,
   UpdateNotificationEvent
-} from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-sdk-types'
 import {
   MessageProcessor,
   NotificationContextProcessor,
   NotificationProcessor
-} from '@hcengineering/communication-shared'
-import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+} from '@intabiafusion/communication-shared'
+import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
 
 import { defaultQueryParams, NotificationContextQueryOptions, type PagedQuery, type QueryId } from '../types'
 import { QueryResult } from '../result'

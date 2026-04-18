@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { ButtonBase, DatePopup, showPopup } from '@hcengineering/ui'
+  import ui, { ButtonBase, DatePopup, showPopup } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
 

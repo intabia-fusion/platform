@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { AccountClient, IntegrationSecret } from '@hcengineering/account-client'
-import calendar, { calendarIntegrationKind } from '@hcengineering/calendar'
-import contact, { getPrimarySocialId } from '@hcengineering/contact'
+import { AccountClient, IntegrationSecret } from '@intabiafusion/account-client'
+import calendar, { calendarIntegrationKind } from '@intabiafusion/calendar'
+import contact, { getPrimarySocialId } from '@intabiafusion/contact'
 import core, {
   AccountUuid,
   MeasureContext,
@@ -23,9 +23,9 @@ import core, {
   SocialIdType,
   TxOperations,
   WorkspaceUuid
-} from '@hcengineering/core'
-import type { IntegrationClient } from '@hcengineering/integration-client'
-import setting from '@hcengineering/setting'
+} from '@intabiafusion/core'
+import type { IntegrationClient } from '@intabiafusion/integration-client'
+import setting from '@intabiafusion/setting'
 import { Credentials, OAuth2Client } from 'google-auth-library'
 import { calendar_v3, google } from 'googleapis'
 

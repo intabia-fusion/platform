@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Attachment } from '@hcengineering/attachment'
-  import type { BlobType, WithLookup } from '@hcengineering/core'
-  import { AudioPlayer as BaseAudioPlayer } from '@hcengineering/view-resources'
+  import type { Attachment } from '@intabiafusion/attachment'
+  import type { BlobType, WithLookup } from '@intabiafusion/core'
+  import { AudioPlayer as BaseAudioPlayer } from '@intabiafusion/view-resources'
 
   export let value: WithLookup<Attachment> | BlobType
   export let fullSize = false

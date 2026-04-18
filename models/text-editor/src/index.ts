@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { DOMAIN_MODEL } from '@hcengineering/core'
-import { Model, type Builder } from '@hcengineering/model'
-import core, { TDoc } from '@hcengineering/model-core'
-import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import { DOMAIN_MODEL } from '@intabiafusion/core'
+import { Model, type Builder } from '@intabiafusion/model'
+import core, { TDoc } from '@intabiafusion/model-core'
+import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
 import {
   type ActiveDescriptor,
   type ExtensionCreator,
@@ -28,12 +28,12 @@ import {
   type TextEditorAction,
   type TextEditorExtensionFactory,
   type TogglerDescriptor
-} from '@hcengineering/text-editor'
-import view from '@hcengineering/view'
+} from '@intabiafusion/text-editor'
+import view from '@intabiafusion/view'
 import textEditor from './plugin'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { EditorKitOptions } from '@hcengineering/text-editor-resources/src/kits/editor-kit'
-export { textEditorId } from '@hcengineering/text-editor'
+import type { EditorKitOptions } from '@intabiafusion/text-editor-resources/src/kits/editor-kit'
+export { textEditorId } from '@intabiafusion/text-editor'
 export { textEditorOperation } from './migration'
 export { default } from './plugin'
 export type { RefInputAction, RefInputActionItem }

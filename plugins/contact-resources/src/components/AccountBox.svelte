@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { notEmpty, PersonId, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize, IconSize } from '@hcengineering/ui'
+  import { Employee } from '@intabiafusion/contact'
+  import { notEmpty, PersonId, Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { ButtonKind, ButtonSize, IconSize } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import contact from '../plugin'
   import { employeeByPersonIdStore, primarySocialIdByEmployeeRefStore } from '../utils'
   import UserBox from './UserBox.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let label: IntlString = contact.string.Employee
   export let value: PersonId | null | undefined

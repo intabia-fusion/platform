@@ -14,9 +14,9 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import drive, { Folder } from '@hcengineering/drive'
-  import { Icon } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import drive, { Folder } from '@intabiafusion/drive'
+  import { Icon } from '@intabiafusion/ui'
 
   export let value: WithLookup<Folder>
 </script>

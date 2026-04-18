@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@hcengineering/card'
-  import { getClient } from '@hcengineering/presentation'
+  import { Card, MasterTag } from '@intabiafusion/card'
+  import { getClient } from '@intabiafusion/presentation'
 
   import CardTagColored from './CardTagColored.svelte'
 

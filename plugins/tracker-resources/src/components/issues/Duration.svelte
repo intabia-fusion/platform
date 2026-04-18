@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { translateCB } from '@hcengineering/platform'
-  import ui, { DAY, HOUR, MINUTE, MONTH, YEAR, themeStore } from '@hcengineering/ui'
+  import { translateCB } from '@intabiafusion/platform'
+  import ui, { DAY, HOUR, MINUTE, MONTH, YEAR, themeStore } from '@intabiafusion/ui'
 
   export let value: number
 

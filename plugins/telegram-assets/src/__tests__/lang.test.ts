@@ -1,4 +1,4 @@
-import { makeLocalesTest } from '@hcengineering/platform'
+import { makeLocalesTest } from '@intabiafusion/platform'
 
 it(
   'Locales are equal',

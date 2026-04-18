@@ -22,14 +22,14 @@
     ModernPopup,
     eventToHTMLElement,
     showPopup
-  } from '@hcengineering/ui'
-  import setting from '@hcengineering/setting'
-  import { MailboxInfo } from '@hcengineering/account-client'
-  import { getClient, MessageBox } from '@hcengineering/presentation'
+  } from '@intabiafusion/ui'
+  import setting from '@intabiafusion/setting'
+  import { MailboxInfo } from '@intabiafusion/account-client'
+  import { getClient, MessageBox } from '@intabiafusion/presentation'
   import { getAccountClient } from '../utils'
-  import contact, { getCurrentEmployee } from '@hcengineering/contact'
-  import { buildSocialIdString, SocialIdType } from '@hcengineering/core'
-  import { Analytics } from '@hcengineering/analytics'
+  import contact, { getCurrentEmployee } from '@intabiafusion/contact'
+  import { buildSocialIdString, SocialIdType } from '@intabiafusion/core'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let mailbox: MailboxInfo
   export let mailboxIdx: number

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { type IntlString, getMetadata } from '@hcengineering/platform'
+  import platform, { type IntlString, getMetadata } from '@intabiafusion/platform'
   import { getContext } from 'svelte'
   import { type Readable } from 'svelte/store'
 
@@ -33,7 +33,7 @@
     eventToHTMLElement
   } from '../..'
   import EmojiStyle from './icons/EmojiStyle.svelte'
-  import { isForceAccentColor } from '@hcengineering/theme'
+  import { isForceAccentColor } from '@intabiafusion/theme'
 
   const { currentFontSize, setFontSize } = getContext<{
     currentFontSize: Readable<string>

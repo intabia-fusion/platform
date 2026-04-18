@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import card, { type Card, type MasterTag, type Tag } from '@hcengineering/card'
+import card, { type Card, type MasterTag, type Tag } from '@intabiafusion/card'
 import core, {
   AccountRole,
   type Class,
@@ -24,7 +24,7 @@ import core, {
   SortingOrder,
   type Space,
   type Tx
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type Builder,
   Hidden,
@@ -37,13 +37,13 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@hcengineering/model'
-import { TDoc } from '@hcengineering/model-core'
-import presentation from '@hcengineering/model-presentation'
-import { TToDo } from '@hcengineering/model-time'
-import view, { createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+} from '@intabiafusion/model'
+import { TDoc } from '@intabiafusion/model-core'
+import presentation from '@intabiafusion/model-presentation'
+import { TToDo } from '@intabiafusion/model-time'
+import view, { createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import { type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
 import {
   type ApproveRequest,
   type CheckFunc,
@@ -69,10 +69,10 @@ import {
   type Trigger,
   type UpdateCriteriaComponent,
   processId
-} from '@hcengineering/process'
-import time from '@hcengineering/time'
-import { type AnyComponent } from '@hcengineering/ui'
-import { type AttributeCategory } from '@hcengineering/view'
+} from '@intabiafusion/process'
+import time from '@intabiafusion/time'
+import { type AnyComponent } from '@intabiafusion/ui'
+import { type AttributeCategory } from '@intabiafusion/view'
 import { defineMethods } from './actions'
 import { defineFunctions } from './functions'
 import { definePermissions } from './permission'
@@ -859,6 +859,6 @@ export function createModel (builder: Builder): void {
   })
 }
 
-export { processId } from '@hcengineering/process'
+export { processId } from '@intabiafusion/process'
 
 export default process

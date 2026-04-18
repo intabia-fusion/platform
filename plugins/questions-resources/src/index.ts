@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import { questionDeleteAction } from './actions/questionDeleteAction'
 import { questionDuplicateAction } from './actions/questionDuplicateAction'
 import { questionMoveDownAction } from './actions/questionMoveDownAction'

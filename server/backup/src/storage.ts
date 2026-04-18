@@ -1,5 +1,5 @@
-import { MeasureContext, type WorkspaceIds } from '@hcengineering/core'
-import { StorageAdapter } from '@hcengineering/server-core'
+import { MeasureContext, type WorkspaceIds } from '@intabiafusion/core'
+import { StorageAdapter } from '@intabiafusion/server-core'
 import { createReadStream, createWriteStream, existsSync, statSync } from 'fs'
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'

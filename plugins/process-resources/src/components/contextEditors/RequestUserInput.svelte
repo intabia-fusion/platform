@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
-  import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { ExecutionContext, Process, SelectedUserRequest, Transition } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { Ref, Space } from '@intabiafusion/core'
+  import presentation, { Card, getClient } from '@intabiafusion/presentation'
+  import { ExecutionContext, Process, SelectedUserRequest, Transition } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import TransitionPresenter from '../settings/TransitionPresenter.svelte'

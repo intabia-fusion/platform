@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { RelationSetting } from '@hcengineering/setting-resources'
-  import contact from '@hcengineering/contact'
+  import { getClient } from '@intabiafusion/presentation'
+  import { RelationSetting } from '@intabiafusion/setting-resources'
+  import contact from '@intabiafusion/contact'
   import card from '../../plugin'
-  import { Analytics } from '@hcengineering/analytics'
-  import { CardEvents, MasterTag } from '@hcengineering/card'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { CardEvents, MasterTag } from '@intabiafusion/card'
 
   const client = getClient()
   const hierarchy = client.getHierarchy()

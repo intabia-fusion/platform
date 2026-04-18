@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { StateTag, StateType } from '@hcengineering/ui'
-  import type { TrainingRequest } from '@hcengineering/training'
+  import { StateTag, StateType } from '@intabiafusion/ui'
+  import type { TrainingRequest } from '@intabiafusion/training'
 
   import training from '../plugin'
 

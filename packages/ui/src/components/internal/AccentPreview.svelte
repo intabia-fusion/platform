@@ -16,7 +16,7 @@
   // AccentPreview
   // Small preview box shown on the left side of the screen when hovering an accent.
   // Shows several controls (buttons, checkboxes, list) to help choose an accent.
-  import { themeStore } from '@hcengineering/theme'
+  import { themeStore } from '@intabiafusion/theme'
   import { createEventDispatcher } from 'svelte'
   import PreviewControls from './PreviewControls.svelte'
 

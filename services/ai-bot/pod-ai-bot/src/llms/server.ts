@@ -18,8 +18,8 @@
  * Distributes LLM requests to connected external clients via Clisr.
  */
 
-import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import type { PersonMessage } from '@hcengineering/ai-bot'
+import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import type { PersonMessage } from '@intabiafusion/ai-bot'
 import type { HistoryRecord } from '../types'
 import type {
   LLMProvider,

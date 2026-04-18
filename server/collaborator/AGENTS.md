@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `@hcengineering/collaborator` package is a Hocuspocus-based real-time collaboration server using Yjs for document synchronization. It provides WebSocket-based collaborative editing with persistence to platform storage.
+The `@intabiafusion/collaborator` package is a Hocuspocus-based real-time collaboration server using Yjs for document synchronization. It provides WebSocket-based collaborative editing with persistence to platform storage.
 
 ## Architecture
 
@@ -66,11 +66,11 @@ Tests for complex components with mocked external services:
 
 ```typescript
 // External services
-- @hcengineering/account-client (getAccountClient)
-- @hcengineering/server-client (createClient, getTransactorEndpoint)
-- @hcengineering/server-token (decodeToken, generateToken)
-- @hcengineering/collaboration (saveCollabJson, loadCollabJson, etc.)
-- @hcengineering/text-ydoc (markupToYDoc, yDocToMarkup)
+- @intabiafusion/account-client (getAccountClient)
+- @intabiafusion/server-client (createClient, getTransactorEndpoint)
+- @intabiafusion/server-token (decodeToken, generateToken)
+- @intabiafusion/collaboration (saveCollabJson, loadCollabJson, etc.)
+- @intabiafusion/text-ydoc (markupToYDoc, yDocToMarkup)
 
 // Hocuspocus
 - @hocuspocus/server (Hocuspocus, Extension)

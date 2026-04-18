@@ -26,15 +26,15 @@ import {
   type SessionData,
   type Tx,
   type TxCUD
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import type {
   BroadcastOps,
   Middleware,
   MiddlewareCreator,
   PipelineContext,
   TxMiddlewareResult
-} from '@hcengineering/server-core'
-import { BaseMiddleware, createBroadcastEvent } from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
+import { BaseMiddleware, createBroadcastEvent } from '@intabiafusion/server-core'
 
 /**
  * @public

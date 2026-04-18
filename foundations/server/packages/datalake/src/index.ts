@@ -20,8 +20,8 @@ import core, {
   type WorkspaceIds,
   systemAccountUuid,
   withContext
-} from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
 import {
   type BlobStorageIterator,
   type BucketInfo,
@@ -30,8 +30,8 @@ import {
   type StorageConfig,
   type StorageConfiguration,
   type UploadedObjectInfo
-} from '@hcengineering/server-core'
-import serverToken, { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/server-core'
+import serverToken, { generateToken } from '@intabiafusion/server-token'
 import { type Readable } from 'stream'
 import { type UploadObjectParams, DatalakeClient, type WorkspaceStats, type WorkspaceStatsByType } from './client'
 import { NotFoundError } from './error'

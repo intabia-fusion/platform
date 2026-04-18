@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { Card } from '@hcengineering/presentation'
-  import { ProcessFunction } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
-  import { NumberEditor } from '@hcengineering/view-resources'
+  import presentation, { Card } from '@intabiafusion/presentation'
+  import { ProcessFunction } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
+  import { NumberEditor } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
 

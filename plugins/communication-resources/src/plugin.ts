@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
 import communication, {
   communicationId,
   type MessageAction,
@@ -19,10 +19,10 @@ import communication, {
   type MessageActionVisibilityTesterResource,
   type AppletCreateFnResource,
   type AppletGetTitleFnResource
-} from '@hcengineering/communication'
-import { type AnyComponent } from '@hcengineering/ui'
-import { type Ref } from '@hcengineering/core'
-import { type CanCreateCardResource } from '@hcengineering/card'
+} from '@intabiafusion/communication'
+import { type AnyComponent } from '@intabiafusion/ui'
+import { type Ref } from '@intabiafusion/core'
+import { type CanCreateCardResource } from '@intabiafusion/card'
 
 export default mergeIds(communicationId, communication, {
   component: {

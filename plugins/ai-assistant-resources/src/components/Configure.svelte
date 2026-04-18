@@ -16,15 +16,15 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
-  import presentation, { Card, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
-  import { Label, Loading } from '@hcengineering/ui'
-  import { type Integration } from '@hcengineering/account-client'
-  import { isWorkspaceIntegration } from '@hcengineering/integration-client'
-  import { Analytics } from '@hcengineering/analytics'
+  import presentation, { Card, getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
+  import { Label, Loading } from '@intabiafusion/ui'
+  import { type Integration } from '@intabiafusion/account-client'
+  import { isWorkspaceIntegration } from '@intabiafusion/integration-client'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import { getIntegrationClient, getAccountClient } from '../utils'
   import aiAssistant from '../plugin'
-  import { buildSocialIdString, getCurrentAccount, SocialIdType, type PersonId } from '@hcengineering/core'
+  import { buildSocialIdString, getCurrentAccount, SocialIdType, type PersonId } from '@intabiafusion/core'
   import HulyAssistant from './icons/HulyAssistant.svelte'
 
   export let integration: Integration | undefined = undefined

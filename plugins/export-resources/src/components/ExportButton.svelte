@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Button, showPopup } from '@hcengineering/ui'
-  import { getMetadata } from '@hcengineering/platform'
-  import presentation, { MessageBox } from '@hcengineering/presentation'
-  import { type TransformConfig } from '@hcengineering/export'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { Button, showPopup } from '@intabiafusion/ui'
+  import { getMetadata } from '@intabiafusion/platform'
+  import presentation, { MessageBox } from '@intabiafusion/presentation'
+  import { type TransformConfig } from '@intabiafusion/export'
   import plugin from '../plugin'
 
   export let _class: Ref<Class<Doc>>

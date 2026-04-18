@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type PopupResult, showPopup } from '@hcengineering/ui'
+import { type PopupResult, showPopup } from '@intabiafusion/ui'
 import { derived, get, writable } from 'svelte/store'
 
 import { composer } from './stores/composer'

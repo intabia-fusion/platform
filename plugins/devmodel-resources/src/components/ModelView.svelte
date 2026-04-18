@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, TxCUD } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { ScrollBox, tooltip } from '@hcengineering/ui'
+  import core, { Doc, TxCUD } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { ScrollBox, tooltip } from '@intabiafusion/ui'
   import { toIntl } from '..'
   import ContentPopup from './ContentPopup.svelte'
 

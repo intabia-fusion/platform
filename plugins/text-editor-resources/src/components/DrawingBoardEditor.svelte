@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { type Person } from '@hcengineering/contact'
+  import contact, { type Person } from '@intabiafusion/contact'
   import {
     DrawingBoardToolbar,
     DrawingCmd,
@@ -26,10 +26,10 @@
     ThemeAwareColor,
     ColorsList,
     ColorMetaNameOrHex
-  } from '@hcengineering/presentation'
-  import presence from '@hcengineering/presence'
-  import { getResource } from '@hcengineering/platform'
-  import { Loading, Component, themeStore } from '@hcengineering/ui'
+  } from '@intabiafusion/presentation'
+  import presence from '@intabiafusion/presence'
+  import { getResource } from '@intabiafusion/platform'
+  import { Loading, Component, themeStore } from '@intabiafusion/ui'
   import { onMount, onDestroy } from 'svelte'
   import { Array as YArray, Map as YMap, Doc as YDoc } from 'yjs'
 

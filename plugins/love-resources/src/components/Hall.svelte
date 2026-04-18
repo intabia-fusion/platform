@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { Floor as FloorType, Office, Room, isOffice } from '@hcengineering/love'
-  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Contact, Person } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { Floor as FloorType, Office, Room, isOffice } from '@intabiafusion/love'
+  import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
   import { onDestroy } from 'svelte'
   import { activeFloor, floors, rooms, selectedFloor } from '../stores'
   import Floor from './Floor.svelte'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { Icon, Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { TableBrowser } from '@hcengineering/view-resources'
-  import { NavigatorModel } from '@hcengineering/workbench'
+  import core, { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
+  import { Icon, Label } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { TableBrowser } from '@intabiafusion/view-resources'
+  import { NavigatorModel } from '@intabiafusion/workbench'
 
   import workbench from '../plugin'
   import { getSpecialSpaceClass } from '../utils'

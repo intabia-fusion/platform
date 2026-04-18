@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Ref } from '@hcengineering/core'
-  import { ButtonIcon, getCurrentLocation, IconAdd, location, Menu, navigate, showPopup } from '@hcengineering/ui'
+  import { AccountRole, getCurrentAccount, hasAccountRole, Ref } from '@intabiafusion/core'
+  import { ButtonIcon, getCurrentLocation, IconAdd, location, Menu, navigate, showPopup } from '@intabiafusion/ui'
 
-  import { MasterTag } from '@hcengineering/card'
+  import { MasterTag } from '@intabiafusion/card'
   import card from '../../plugin'
   import CreateSpace from './CreateSpace.svelte'
   import CreateCardPopup from '../CreateCardPopup.svelte'

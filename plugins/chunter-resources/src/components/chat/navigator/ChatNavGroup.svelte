@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, LiveQuery } from '@hcengineering/presentation'
-  import { Chat } from '@hcengineering/chunter'
+  import core, { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient, LiveQuery } from '@intabiafusion/presentation'
+  import { Chat } from '@intabiafusion/chunter'
 
   import chunter from '../../../plugin'
   import { ChatNavGroupModel } from '../types'

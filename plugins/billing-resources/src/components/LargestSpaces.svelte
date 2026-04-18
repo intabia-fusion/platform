@@ -12,15 +12,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { type Ref, type Space, getCurrentAccount } from '@hcengineering/core'
-  import { getCurrentWorkspaceUuid, getClient, createQuery } from '@hcengineering/presentation'
-  import { Button, Expandable, Loading, Scroller } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import core, { type Ref, type Space, getCurrentAccount } from '@intabiafusion/core'
+  import { getCurrentWorkspaceUuid, getClient, createQuery } from '@intabiafusion/presentation'
+  import { Button, Expandable, Loading, Scroller } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import filesize from 'filesize'
   import { getBillingClient } from '../utils'
-  import type { LargestSpaceInfo } from '@hcengineering/billing-client'
+  import type { LargestSpaceInfo } from '@intabiafusion/billing-client'
   import LargestFiles from './LargestFiles.svelte'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
 
   interface SpaceSizeInfo {
     space: Space

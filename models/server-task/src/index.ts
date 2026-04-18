@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import core from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import task from '@hcengineering/task'
-import serverCore from '@hcengineering/server-core'
-import serverTask from '@hcengineering/server-task'
+import core from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import task from '@intabiafusion/task'
+import serverCore from '@intabiafusion/server-core'
+import serverTask from '@intabiafusion/server-task'
 
-export { serverTaskId } from '@hcengineering/server-task'
+export { serverTaskId } from '@intabiafusion/server-task'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

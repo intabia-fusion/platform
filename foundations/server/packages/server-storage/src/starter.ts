@@ -1,8 +1,8 @@
-import { CONFIG_KIND as DATALAKE_CONFIG_KIND, DatalakeService, type DatalakeConfig } from '@hcengineering/datalake'
-import { CONFIG_KIND as HULYLAKE_CONFIG_KIND, HulylakeService, type HulylakeConfig } from '@hcengineering/hulylake'
-import { CONFIG_KIND as MINIO_CONFIG_KIND, MinioConfig, MinioService, addMinioFallback } from '@hcengineering/minio'
-import { CONFIG_KIND as S3_CONFIG_KIND, S3Service, type S3Config } from '@hcengineering/s3'
-import { StorageAdapter, StorageConfiguration, type StorageConfig } from '@hcengineering/server-core'
+import { CONFIG_KIND as DATALAKE_CONFIG_KIND, DatalakeService, type DatalakeConfig } from '@intabiafusion/datalake'
+import { CONFIG_KIND as HULYLAKE_CONFIG_KIND, HulylakeService, type HulylakeConfig } from '@intabiafusion/hulylake'
+import { CONFIG_KIND as MINIO_CONFIG_KIND, MinioConfig, MinioService, addMinioFallback } from '@intabiafusion/minio'
+import { CONFIG_KIND as S3_CONFIG_KIND, S3Service, type S3Config } from '@intabiafusion/s3'
+import { StorageAdapter, StorageConfiguration, type StorageConfig } from '@intabiafusion/server-core'
 import { FallbackStorageAdapter, buildStorage } from './fallback'
 import { ReadonlyStorageAdapter } from './readonly'
 

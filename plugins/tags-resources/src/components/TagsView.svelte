@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
-  import { TagCategory, TagElement } from '@hcengineering/tags'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
+  import { Asset, IntlString, translateCB } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { TagCategory, TagElement } from '@intabiafusion/tags'
   import {
     AnySvelteComponent,
     Breadcrumb,
@@ -26,12 +26,12 @@
     SearchInput,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import { TableBrowser } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { TableBrowser } from '@intabiafusion/view-resources'
   import tags from '../plugin'
   import CategoryBar from './CategoryBar.svelte'
   import CreateTagElement from './CreateTagElement.svelte'
-  // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  // import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
   import { TagElementInfo } from '../utils'
 
   export let title: IntlString = tags.string.Tags

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
-  import { DocReferencePresenter } from '@hcengineering/view-resources'
+  import { Issue } from '@intabiafusion/tracker'
+  import { DocReferencePresenter } from '@intabiafusion/view-resources'
 
   export let value: Issue
 </script>

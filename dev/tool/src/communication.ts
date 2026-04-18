@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Workspace } from '@hcengineering/account'
-import { type JsonPatch, type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import { type Workspace } from '@intabiafusion/account'
+import { type JsonPatch, type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
 import type postgres from 'postgres'
 import {
   type AccountUuid,
@@ -37,7 +37,7 @@ import {
   type WithLookup,
   RateLimiter,
   type Doc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type AttachmentDoc,
   type AttachmentID,
@@ -53,26 +53,26 @@ import {
   type ThreadDoc,
   type CardPeer,
   type Peer
-} from '@hcengineering/communication-types'
-import { type AccountClient } from '@hcengineering/account-client'
+} from '@intabiafusion/communication-types'
+import { type AccountClient } from '@intabiafusion/account-client'
 import chunter, {
   type Channel,
   type ChunterSpace,
   type ThreadMessage,
   type DirectMessage
-} from '@hcengineering/chunter'
-import cardPlugin, { type Card, type CardSpace, DOMAIN_CARD } from '@hcengineering/card'
-import { makeRank } from '@hcengineering/rank'
-import chat from '@hcengineering/chat'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import { DOMAIN_CONTACT } from '@hcengineering/model-contact'
-import { markupToMarkdown } from '@hcengineering/text-markdown'
-import { markupToJSON, markupToText } from '@hcengineering/text'
-import activity, { type ActivityMessage } from '@hcengineering/activity'
-import communication, { type Direct } from '@hcengineering/communication'
-import { type Employee, formatName, type Person, type PersonSpace } from '@hcengineering/contact'
-import { withRetry, DEFAULT_RETRY_OPTIONS } from '@hcengineering/retry'
-import attachment from '@hcengineering/attachment'
+} from '@intabiafusion/chunter'
+import cardPlugin, { type Card, type CardSpace, DOMAIN_CARD } from '@intabiafusion/card'
+import { makeRank } from '@intabiafusion/rank'
+import chat from '@intabiafusion/chat'
+import { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
+import { DOMAIN_CONTACT } from '@intabiafusion/model-contact'
+import { markupToMarkdown } from '@intabiafusion/text-markdown'
+import { markupToJSON, markupToText } from '@intabiafusion/text'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
+import communication, { type Direct } from '@intabiafusion/communication'
+import { type Employee, formatName, type Person, type PersonSpace } from '@intabiafusion/contact'
+import { withRetry, DEFAULT_RETRY_OPTIONS } from '@intabiafusion/retry'
+import attachment from '@intabiafusion/attachment'
 
 const MAX_MESSAGES_BATCH = 200
 const MAX_MESSAGES_SIZE = 95 * 1024

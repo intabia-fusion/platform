@@ -23,10 +23,10 @@ import {
   type SearchQuery,
   type Tx,
   toFindResult
-} from '@hcengineering/core'
-import { LiveQuery as LQ } from '@hcengineering/query'
-import { BaseMiddleware } from '@hcengineering/server-core'
-import type { Middleware, PipelineContext, ServerFindOptions, TxMiddlewareResult } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { LiveQuery as LQ } from '@intabiafusion/query'
+import { BaseMiddleware } from '@intabiafusion/server-core'
+import type { Middleware, PipelineContext, ServerFindOptions, TxMiddlewareResult } from '@intabiafusion/server-core'
 
 /**
  * @public

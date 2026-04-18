@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, Menu } from '@hcengineering/ui'
-  import { ActionGroup, Action as ViewAction, ViewContextType } from '@hcengineering/view'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { Asset } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, Menu } from '@intabiafusion/ui'
+  import { ActionGroup, Action as ViewAction, ViewContextType } from '@intabiafusion/view'
   import { getActions, invokeAction } from '../actions'
 
   export let object: Doc | Doc[]

@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Plugin, Resource, plugin } from '@hcengineering/platform'
-import type { TriggerFunc } from '@hcengineering/server-core'
-import { Mixin, Ref } from '@hcengineering/core'
+import { Plugin, Resource, plugin } from '@intabiafusion/platform'
+import type { TriggerFunc } from '@intabiafusion/server-core'
+import { Mixin, Ref } from '@intabiafusion/core'
 
 import { IdentifierPresenter, TitlePresenter, UrlPresenter } from './types'
 

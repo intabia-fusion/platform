@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Component, Icon, Label, showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import contact from '@hcengineering/contact'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { Component, Icon, Label, showPopup } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import contact from '@intabiafusion/contact'
 
   import { createQuery, getClient } from '../../utils'
   import MessageBox from '../MessageBox.svelte'

@@ -1,5 +1,5 @@
-import { type Doc, type Rank } from '@hcengineering/core'
-import { type Asset } from '@hcengineering/platform'
+import { type Doc, type Rank } from '@intabiafusion/core'
+import { type Asset } from '@intabiafusion/platform'
 
 /**
  * @public

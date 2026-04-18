@@ -24,13 +24,13 @@ import core, {
   type TxCreateDoc,
   type TxUpdateDoc,
   type Ref
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   BaseMiddleware,
   type Middleware,
   type TxMiddlewareResult,
   type PipelineContext
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
 /**
  * @public

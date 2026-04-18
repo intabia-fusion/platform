@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget } from '@hcengineering/workbench'
-  import { Label, Component } from '@hcengineering/ui'
+  import { Widget } from '@intabiafusion/workbench'
+  import { Label, Component } from '@intabiafusion/ui'
 
   import AppItem from '../../AppItem.svelte'
 

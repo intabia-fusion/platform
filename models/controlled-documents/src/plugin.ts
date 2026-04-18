@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import { documentsId } from '@hcengineering/controlled-documents'
-import documents from '@hcengineering/controlled-documents-resources/src/plugin'
-import type { Client, Doc, Ref } from '@hcengineering/core'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
-import { mergeIds, type Resource } from '@hcengineering/platform'
-import { type TagCategory } from '@hcengineering/tags'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type ActionCategory, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
-import { type NotificationGroup, type MessageNotificationType } from '@hcengineering/notification'
-import { type TextActionVisibleFunction, type TextActionFunction } from '@hcengineering/text-editor'
-import { type DocUpdateMessage } from '@hcengineering/activity'
+import { documentsId } from '@intabiafusion/controlled-documents'
+import documents from '@intabiafusion/controlled-documents-resources/src/plugin'
+import type { Client, Doc, Ref } from '@intabiafusion/core'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/model-presentation'
+import { mergeIds, type Resource } from '@intabiafusion/platform'
+import { type TagCategory } from '@intabiafusion/tags'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type ActionCategory, type ViewAction, type Viewlet, type ViewletViewAction } from '@intabiafusion/view'
+import { type NotificationGroup, type MessageNotificationType } from '@intabiafusion/notification'
+import { type TextActionVisibleFunction, type TextActionFunction } from '@intabiafusion/text-editor'
+import { type DocUpdateMessage } from '@intabiafusion/activity'
 
 export default mergeIds(documentsId, documents, {
   component: {

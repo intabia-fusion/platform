@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { telegramId } from '@hcengineering/telegram'
-import { addStringsLoader, platformId } from '@hcengineering/platform'
-import { coreId } from '@hcengineering/core'
-import coreEng from '@hcengineering/core/lang/en.json'
-import platformEng from '@hcengineering/platform/lang/en.json'
-import telegramEng from '@hcengineering/telegram-assets/lang/en.json'
+import { telegramId } from '@intabiafusion/telegram'
+import { addStringsLoader, platformId } from '@intabiafusion/platform'
+import { coreId } from '@intabiafusion/core'
+import coreEng from '@intabiafusion/core/lang/en.json'
+import platformEng from '@intabiafusion/platform/lang/en.json'
+import telegramEng from '@intabiafusion/telegram-assets/lang/en.json'
 
 export function registerLoaders (): void {
   addStringsLoader(coreId, async (lang: string) => coreEng)

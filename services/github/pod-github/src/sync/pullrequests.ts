@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Analytics } from '@hcengineering/analytics'
-import contact, { Employee, Person } from '@hcengineering/contact'
+import { Analytics } from '@intabiafusion/analytics'
+import contact, { Employee, Person } from '@intabiafusion/contact'
 import core, {
   AttachedData,
   Doc,
@@ -20,7 +20,7 @@ import core, {
   makeDocCollabId,
   withContext,
   type MeasureContext
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
@@ -31,10 +31,10 @@ import github, {
   GithubPullRequestState,
   GithubTodo,
   LastReviewState
-} from '@hcengineering/github'
-import task, { TaskType, calcRank, makeRank } from '@hcengineering/task'
-import time, { ToDo, ToDoPriority } from '@hcengineering/time'
-import tracker, { Issue, IssuePriority, IssueStatus, Project } from '@hcengineering/tracker'
+} from '@intabiafusion/github'
+import task, { TaskType, calcRank, makeRank } from '@intabiafusion/task'
+import time, { ToDo, ToDoPriority } from '@intabiafusion/time'
+import tracker, { Issue, IssuePriority, IssueStatus, Project } from '@intabiafusion/tracker'
 import { ProjectsV2ItemEvent, PullRequestEvent } from '@octokit/webhooks-types'
 import { Octokit } from 'octokit'
 import config from '../config'

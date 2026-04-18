@@ -14,8 +14,8 @@
     type OrderingQuestion,
     type OrderingQuestionAnswer,
     type OrderingQuestionData
-  } from '@hcengineering/questions'
-  import { Loading } from '@hcengineering/ui'
+  } from '@intabiafusion/questions'
+  import { Loading } from '@intabiafusion/ui'
   import { moveItem } from '../utils'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList, { type OptionsListDropEvent } from './OptionsList.svelte'

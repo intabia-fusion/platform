@@ -15,9 +15,9 @@
 import { type GaxiosResponse } from 'gaxios'
 import { gmail_v1 } from 'googleapis'
 
-import { type MeasureContext, PersonId, WorkspaceUuid } from '@hcengineering/core'
-import { type KeyValueClient } from '@hcengineering/kvs-client'
-import { SyncMutex, type SyncOptions } from '@hcengineering/mail-common'
+import { type MeasureContext, PersonId, WorkspaceUuid } from '@intabiafusion/core'
+import { type KeyValueClient } from '@intabiafusion/kvs-client'
+import { SyncMutex, type SyncOptions } from '@intabiafusion/mail-common'
 
 import { RateLimiter } from '../rateLimiter'
 import { IMessageManager } from './types'

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, resizeObserver, deviceOptionsStore, EditWithIcon, IconSearch } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import { Button, resizeObserver, deviceOptionsStore, EditWithIcon, IconSearch } from '@intabiafusion/ui'
+  import { Filter } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../../plugin'
 

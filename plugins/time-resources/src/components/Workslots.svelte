@@ -23,9 +23,9 @@
     Scroller,
     formatDuration,
     Label
-  } from '@hcengineering/ui'
-  import { EventTimeEditor } from '@hcengineering/calendar-resources'
-  import { WorkSlot } from '@hcengineering/time'
+  } from '@intabiafusion/ui'
+  import { EventTimeEditor } from '@intabiafusion/calendar-resources'
+  import { WorkSlot } from '@intabiafusion/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
   import { calculateEventsDuration } from '../utils'

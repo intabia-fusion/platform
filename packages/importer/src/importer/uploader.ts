@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type CollaborativeDoc, type Blob as PlatformBlob, type Markup, type Ref } from '@hcengineering/core'
+import { type CollaborativeDoc, type Blob as PlatformBlob, type Markup, type Ref } from '@intabiafusion/core'
 
 export interface SuccessUploadResult {
   success: true

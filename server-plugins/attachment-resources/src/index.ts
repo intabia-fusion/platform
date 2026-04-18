@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import attachment, { type Attachment } from '@hcengineering/attachment'
-import type { Tx, TxRemoveDoc } from '@hcengineering/core'
-import type { TriggerControl } from '@hcengineering/server-core'
+import attachment, { type Attachment } from '@intabiafusion/attachment'
+import type { Tx, TxRemoveDoc } from '@intabiafusion/core'
+import type { TriggerControl } from '@intabiafusion/server-core'
 
 /**
  * @public

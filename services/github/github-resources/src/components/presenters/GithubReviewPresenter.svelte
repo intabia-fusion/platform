@@ -3,17 +3,17 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { GithubPullRequestReviewState, GithubReview } from '@hcengineering/github'
+  import { WithLookup } from '@intabiafusion/core'
+  import { GithubPullRequestReviewState, GithubReview } from '@intabiafusion/github'
 
-  import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
-  import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { IntlString } from '@hcengineering/platform'
-  import { MessageViewer } from '@hcengineering/presentation'
-  import { isEmptyMarkup } from '@hcengineering/text'
-  import { PaletteColorIndexes, getPlatformColor, themeStore } from '@hcengineering/ui'
+  import { ActivityMessageHeader, ActivityMessageTemplate } from '@intabiafusion/activity-resources'
+  import { getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { IntlString } from '@intabiafusion/platform'
+  import { MessageViewer } from '@intabiafusion/presentation'
+  import { isEmptyMarkup } from '@intabiafusion/text'
+  import { PaletteColorIndexes, getPlatformColor, themeStore } from '@intabiafusion/ui'
   import github from '../../plugin'
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
 
   export let value: WithLookup<GithubReview>
   export let showNotify: boolean = false

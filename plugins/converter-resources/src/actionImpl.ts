@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Doc } from '@hcengineering/core'
-import type { CopyAsMarkdownTableProps } from '@hcengineering/converter'
+import type { Doc } from '@intabiafusion/core'
+import type { CopyAsMarkdownTableProps } from '@intabiafusion/converter'
 import { copyAsMarkdownTable } from './markdown'
 
 export async function copyAsMarkdownTableAction (

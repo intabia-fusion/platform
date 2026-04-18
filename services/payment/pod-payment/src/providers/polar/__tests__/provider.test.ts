@@ -1,5 +1,5 @@
-import type { MeasureContext } from '@hcengineering/core'
-import { AccountClient, SubscriptionType } from '@hcengineering/account-client'
+import type { MeasureContext } from '@intabiafusion/core'
+import { AccountClient, SubscriptionType } from '@intabiafusion/account-client'
 import { PolarProvider } from '../provider'
 import { getPlanKey } from '../../../utils'
 

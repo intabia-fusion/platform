@@ -22,8 +22,8 @@ import {
   TypeString,
   UX,
   type Builder
-} from '@hcengineering/model'
-import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import core, { TAttachedDoc, TDoc } from '@intabiafusion/model-core'
 import github from './plugin'
 
 import {
@@ -40,9 +40,9 @@ import {
   type PersonId,
   type Ref,
   type Timestamp
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
-import { type Person } from '@hcengineering/contact'
+import { type Person } from '@intabiafusion/contact'
 import {
   type DocSyncInfo,
   type GithubAuthentication,
@@ -69,28 +69,28 @@ import {
   type MinimizeReason,
   type PullRequestMergeable,
   githubIntegrationKind
-} from '@hcengineering/github'
-import contact, { TPerson } from '@hcengineering/model-contact'
-import presentation from '@hcengineering/model-presentation'
-import tracker, { TComponent, TIssue, TProject, issuesOptions } from '@hcengineering/model-tracker'
-import view, { classPresenter } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import { getEmbeddedLabel } from '@hcengineering/platform'
-import setting from '@hcengineering/setting'
-import tags from '@hcengineering/tags'
-import task from '@hcengineering/task'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
-import { type ActivityMessageControl } from '@hcengineering/activity'
-import activity, { TActivityMessage } from '@hcengineering/model-activity'
-import attachment, { TAttachment } from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
-import { TPreference } from '@hcengineering/model-preference'
-import { TToDo } from '@hcengineering/model-time'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
-import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
-import time from '@hcengineering/time'
+} from '@intabiafusion/github'
+import contact, { TPerson } from '@intabiafusion/model-contact'
+import presentation from '@intabiafusion/model-presentation'
+import tracker, { TComponent, TIssue, TProject, issuesOptions } from '@intabiafusion/model-tracker'
+import view, { classPresenter } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
+import setting from '@intabiafusion/setting'
+import tags from '@intabiafusion/tags'
+import task from '@intabiafusion/task'
+import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
+import { type ActivityMessageControl } from '@intabiafusion/activity'
+import activity, { TActivityMessage } from '@intabiafusion/model-activity'
+import attachment, { TAttachment } from '@intabiafusion/model-attachment'
+import chunter from '@intabiafusion/model-chunter'
+import { TPreference } from '@intabiafusion/model-preference'
+import { TToDo } from '@intabiafusion/model-time'
+import notification, { type MessageNotificationType } from '@intabiafusion/notification'
+import { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
+import time from '@intabiafusion/time'
 
-export { githubId } from '@hcengineering/github'
+export { githubId } from '@intabiafusion/github'
 export { githubOperation, githubOperationPreTime } from './migration'
 export { default } from './plugin'
 export const DOMAIN_GITHUB = 'github' as Domain

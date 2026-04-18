@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { faker } from '@faker-js/faker'
-import { Integration, IntegrationSecret } from '@hcengineering/account'
-import { buildSocialIdString, IntegrationKind, SocialIdType } from '@hcengineering/core'
+import { Integration, IntegrationSecret } from '@intabiafusion/account'
+import { buildSocialIdString, IntegrationKind, SocialIdType } from '@intabiafusion/core'
 
 import { PlatformUser } from './utils'
 import { getServiceAccountClient } from './API/AccountClient'

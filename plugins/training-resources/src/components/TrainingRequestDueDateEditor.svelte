@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { DateRangeMode, type Timestamp } from '@hcengineering/core'
-  import { DatePresenter, getDaysDifference, getDueDateIconModifier } from '@hcengineering/ui'
+  import { DateRangeMode, type Timestamp } from '@intabiafusion/core'
+  import { DatePresenter, getDaysDifference, getDueDateIconModifier } from '@intabiafusion/ui'
   import type { ComponentProps } from 'svelte'
 
   type $$Props = ComponentProps<DatePresenter> & {

@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { UNAUTHORIZED } from '@hcengineering/platform'
-import { RPCHandler, type Response } from '@hcengineering/rpc'
-import { generateToken } from '@hcengineering/server-token'
+import { UNAUTHORIZED } from '@intabiafusion/platform'
+import { RPCHandler, type Response } from '@intabiafusion/rpc'
+import { generateToken } from '@intabiafusion/server-token'
 import WebSocket from 'ws'
 
 import {
@@ -39,9 +39,9 @@ import {
   type Tx,
   type TxResult,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import { startSessionManager, type SessionManagerOptions } from '@hcengineering/server'
-import { createDummyQueue, createDummyStorageAdapter } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { startSessionManager, type SessionManagerOptions } from '@intabiafusion/server'
+import { createDummyQueue, createDummyStorageAdapter } from '@intabiafusion/server-core'
 import { startHttpServer } from '../server_http'
 import { genMinModel } from './minmodel'
 

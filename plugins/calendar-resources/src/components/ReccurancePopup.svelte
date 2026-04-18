@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { RecurringRule, getWeekday } from '@hcengineering/calendar'
-  import { Timestamp } from '@hcengineering/core'
+  import { RecurringRule, getWeekday } from '@intabiafusion/calendar'
+  import { Timestamp } from '@intabiafusion/core'
   import ui, {
     Button,
     CheckBox,
@@ -26,7 +26,7 @@
     NumberInput,
     RadioButton,
     Row
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
   import { SetPosRules } from '../types'

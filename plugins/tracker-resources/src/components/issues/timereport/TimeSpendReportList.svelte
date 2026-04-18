@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { DocumentQuery, IdMap, PersonId, Ref, toIdMap } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { DocumentQuery, IdMap, PersonId, Ref, toIdMap } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Issue, TimeSpendReport } from '@intabiafusion/tracker'
   import tracker from '../../../plugin'
   import PersonCalendar from './PersonCalendar.svelte'
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
   import {
     Button,
     ButtonIcon,
@@ -32,13 +32,13 @@
     daysInMonth,
     deviceOptionsStore as deviceInfo,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
   import EstimationPopup from './EstimationPopup.svelte'
   import PersonReportsPopup from './PersonReportsPopup.svelte'
-  import { getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
+  import { getPersonRefsByPersonIdsCb } from '@intabiafusion/contact-resources'
   import IssueStatusPresenter from '../IssueStatusPresenter.svelte'
 
   export let query: DocumentQuery<Issue> = {}

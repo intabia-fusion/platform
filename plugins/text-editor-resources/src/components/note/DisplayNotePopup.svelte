@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import textEditor from '@hcengineering/text-editor'
-  import { Card } from '@hcengineering/presentation'
+  import textEditor from '@intabiafusion/text-editor'
+  import { Card } from '@intabiafusion/presentation'
 
   export let text: string
 </script>

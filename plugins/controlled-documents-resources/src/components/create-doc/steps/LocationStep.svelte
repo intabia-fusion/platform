@@ -14,16 +14,16 @@
 -->
 
 <script lang="ts">
-  import { TypedSpace, type Doc, type Ref, type Space } from '@hcengineering/core'
+  import { TypedSpace, type Doc, type Ref, type Space } from '@intabiafusion/core'
   import documents, {
     type DocumentSpace,
     type DocumentSpaceType,
     type Project,
     type ProjectDocument
-  } from '@hcengineering/controlled-documents'
-  import { SpaceSelector, getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
-  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  } from '@intabiafusion/controlled-documents'
+  import { SpaceSelector, getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
+  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
 
   import { $locationStep as locationStep, locationStepUpdated } from '../../../stores/wizards/create-document'
   import DocumentParentSelector from '../../hierarchy/DocumentParentSelector.svelte'

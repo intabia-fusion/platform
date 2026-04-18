@@ -1,4 +1,4 @@
-import type { Resources } from '@hcengineering/platform'
+import type { Resources } from '@intabiafusion/platform'
 import EmojiPopup from './components/EmojiPopup.svelte'
 import SettingsEmojiTable from './components/settings/SettingsEmojiTable.svelte'
 import WorkbenchExtension from './components/WorkbenchExtension.svelte'

@@ -14,14 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
-  import { SharedMessage } from '@hcengineering/gmail'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import attachment, { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter } from '@intabiafusion/attachment-resources'
+  import { SharedMessage } from '@intabiafusion/gmail'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
   import gmail from '../plugin'
   import FullMessageContent from './FullMessageContent.svelte'
-  import core from '@hcengineering/core'
+  import core from '@intabiafusion/core'
 
   export let message: SharedMessage
 

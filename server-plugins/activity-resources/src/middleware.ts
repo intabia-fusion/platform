@@ -6,9 +6,9 @@ import core, {
   type Ref,
   type SessionData,
   type TxRemoveDoc
-} from '@hcengineering/core'
-import { BaseMiddleware, type Middleware, type PipelineContext } from '@hcengineering/server-core'
-import activity from '@hcengineering/activity'
+} from '@intabiafusion/core'
+import { BaseMiddleware, type Middleware, type PipelineContext } from '@intabiafusion/server-core'
+import activity from '@intabiafusion/activity'
 
 export class ActivityMiddleware extends BaseMiddleware implements Middleware {
   static async create (ctx: MeasureContext, pipelineContext: PipelineContext, next?: Middleware): Promise<Middleware> {

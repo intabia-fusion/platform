@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery } from '@hcengineering/presentation'
-  import type { Applicant, Candidate, Vacancy } from '@hcengineering/recruit'
-  import { Scroller } from '@hcengineering/ui'
+  import { createQuery } from '@intabiafusion/presentation'
+  import type { Applicant, Candidate, Vacancy } from '@intabiafusion/recruit'
+  import { Scroller } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import CandidateCard from './CandidateCard.svelte'
   import VacancyCard from './VacancyCard.svelte'

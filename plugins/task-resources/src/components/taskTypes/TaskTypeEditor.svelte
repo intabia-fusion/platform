@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
+  import { Ref, SortingOrder, Status } from '@intabiafusion/core'
+  import { Asset, getEmbeddedLabel, getResource } from '@intabiafusion/platform'
+  import { AttributeEditor, MessageBox, createQuery, getClient } from '@intabiafusion/presentation'
+  import { ClassAttributes, settingsStore } from '@intabiafusion/setting-resources'
+  import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@intabiafusion/task'
   import {
     ButtonIcon,
     Icon,
@@ -31,8 +31,8 @@
     getCurrentLocation,
     navigate,
     showPopup
-  } from '@hcengineering/ui'
-  import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { IconPicker, deleteObjects, statusStore } from '@intabiafusion/view-resources'
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'

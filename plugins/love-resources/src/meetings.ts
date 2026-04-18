@@ -1,4 +1,4 @@
-import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
+import core, { AccountRole, getCurrentAccount, type Ref } from '@intabiafusion/core'
 import love, {
   getFreeRoomPlace,
   MeetingStatus,
@@ -9,8 +9,8 @@ import love, {
   isOffice,
   RoomAccess,
   type MeetingMinutes
-} from '@hcengineering/love'
-import presentation, { getClient } from '@hcengineering/presentation'
+} from '@intabiafusion/love'
+import presentation, { getClient } from '@intabiafusion/presentation'
 import {
   closeMeetingMinutes,
   getLiveKitEndpoint,
@@ -22,9 +22,9 @@ import {
 } from './utils'
 import { get } from 'svelte/store'
 import { infos, myInfo, myOffice, rooms, myConnectingSessionId, meetings } from './stores'
-import { getCurrentEmployee, type Person } from '@hcengineering/contact'
-import { getPersonByPersonRef } from '@hcengineering/contact-resources'
-import { getMetadata } from '@hcengineering/platform'
+import { getCurrentEmployee, type Person } from '@intabiafusion/contact'
+import { getPersonByPersonRef } from '@intabiafusion/contact-resources'
+import { getMetadata } from '@intabiafusion/platform'
 import { sendInvites, unsubscribeFromIncomingInvites } from './invites'
 import { lkIsConnecting } from './liveKitClient'
 

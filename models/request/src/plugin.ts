@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@hcengineering/core'
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import { requestId } from '@hcengineering/request'
-import request from '@hcengineering/request-resources/src/plugin'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
+import { type Ref } from '@intabiafusion/core'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import { requestId } from '@intabiafusion/request'
+import request from '@intabiafusion/request-resources/src/plugin'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import type { NotificationGroup, TxNotificationType } from '@intabiafusion/notification'
 
 export default mergeIds(requestId, request, {
   component: {

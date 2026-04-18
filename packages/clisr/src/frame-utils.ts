@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/measurements'
-import { type Response, type Request, RPCHandler } from '@hcengineering/rpc'
-import { Analytics } from '@hcengineering/analytics'
+import { type MeasureContext } from '@intabiafusion/measurements'
+import { type Response, type Request, RPCHandler } from '@intabiafusion/rpc'
+import { Analytics } from '@intabiafusion/analytics'
 import { FRAME_MSGPACK, FRAME_MSGPACK_SNAPPY, FRAME_PING, FRAME_PONG, FRAME_HELLO, FRAME_HELLO_RESP } from './types'
 
 // Shared RPC handler for serialization/deserialization

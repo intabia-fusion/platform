@@ -18,14 +18,14 @@
     ActivityMessagePreviewType,
     DocUpdateMessage,
     DocUpdateMessageViewlet
-  } from '@hcengineering/activity'
-  import { Action, Component, Icon } from '@hcengineering/ui'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
-  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
-  import { AttributeModel } from '@hcengineering/view'
+  } from '@intabiafusion/activity'
+  import { Action, Component, Icon } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { IntlString } from '@intabiafusion/platform'
+  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@intabiafusion/core'
+  import { AttributeModel } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
-  import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
+  import { buildRemovedDoc, checkIsObjectRemoved } from '@intabiafusion/view-resources'
 
   import { getAttributeModel, getCollectionAttribute } from '../../activityMessagesUtils'
   import BaseMessagePreview from '../activity-message/BaseMessagePreview.svelte'

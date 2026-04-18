@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import activity, { activityId } from '@hcengineering/activity'
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
+import activity, { activityId } from '@intabiafusion/activity'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(activityId, activity, {
   string: {

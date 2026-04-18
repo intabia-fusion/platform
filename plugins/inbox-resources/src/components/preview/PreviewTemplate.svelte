@@ -12,10 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { IntlString } from '@hcengineering/platform'
-  import { PreviewTemplate } from '@hcengineering/communication-resources'
-  import { SocialID } from '@hcengineering/communication-types'
+  import { Person } from '@intabiafusion/contact'
+  import { IntlString } from '@intabiafusion/platform'
+  import { PreviewTemplate } from '@intabiafusion/communication-resources'
+  import { SocialID } from '@intabiafusion/communication-types'
 
   import { isViewSettingEnabled, hideUserNamesSettingId, viewSettingsStore } from '../../settings'
 

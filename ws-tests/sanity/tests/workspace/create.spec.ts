@@ -12,7 +12,7 @@ import {
   SignUpPage,
   TrackerNavigationMenuPage,
   UserProfilePage
-} from '@hcengineering/tests-sanity'
+} from '@intabiafusion/tests-sanity'
 import { expect, test } from '@playwright/test'
 
 test.describe('Workspace tests', () => {

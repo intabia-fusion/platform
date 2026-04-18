@@ -23,8 +23,8 @@ import type {
   WorkspaceDataId,
   WorkspaceMode,
   WorkspaceUuid
-} from '@hcengineering/core'
-import type { Person } from '@hcengineering/contact'
+} from '@intabiafusion/core'
+import type { Person } from '@intabiafusion/contact'
 import { type FindCursor } from 'mongodb'
 
 export type ObjectId = any

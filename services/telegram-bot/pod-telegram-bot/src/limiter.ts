@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Timestamp } from '@hcengineering/core'
+import { Timestamp } from '@intabiafusion/core'
 
 export class Limiter {
   // Bot should not send more than 30 messages per second, but we will limit it to 25 just to be safe

@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { ObjectPopup } from '@hcengineering/presentation'
+  import { ObjectPopup } from '@intabiafusion/presentation'
   import survey from '../plugin'
 </script>
 

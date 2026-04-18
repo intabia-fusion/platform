@@ -1,10 +1,10 @@
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { CreateRelation } from '@hcengineering/setting-resources'
+  import contact from '@intabiafusion/contact'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { CreateRelation } from '@intabiafusion/setting-resources'
   import card from '../../plugin'
-  import { MasterTag } from '@hcengineering/card'
+  import { MasterTag } from '@intabiafusion/card'
 
   export let aClass: Ref<Class<Doc>> | undefined = undefined
 

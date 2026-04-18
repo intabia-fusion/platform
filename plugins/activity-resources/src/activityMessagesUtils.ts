@@ -23,24 +23,24 @@ import core, {
   type Mixin,
   type Ref,
   SortingOrder
-} from '@hcengineering/core'
-import view, { type AttributeModel } from '@hcengineering/view'
-import { getClient, getFiltredKeys } from '@hcengineering/presentation'
+} from '@intabiafusion/core'
+import view, { type AttributeModel } from '@intabiafusion/view'
+import { getClient, getFiltredKeys } from '@intabiafusion/presentation'
 import {
   buildRemovedDoc,
   getAttributePresenter,
   getDocLinkTitle,
   hasAttributePresenter
-} from '@hcengineering/view-resources'
-import { type Person } from '@hcengineering/contact'
-import { getResource, type IntlString } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui'
+} from '@intabiafusion/view-resources'
+import { type Person } from '@intabiafusion/contact'
+import { getResource, type IntlString } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui'
 import activity, {
   type ActivityMessage,
   type ActivityMessagesFilter,
   type DocAttributeUpdates,
   type DocUpdateMessage
-} from '@hcengineering/activity'
+} from '@intabiafusion/activity'
 
 import { ActivityDirection } from './types'
 

@@ -22,8 +22,8 @@
   import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import { liveKitClient, lk } from '../../utils'
-  import { Ref } from '@hcengineering/core'
-  import { Room as TypeRoom } from '@hcengineering/love'
+  import { Ref } from '@intabiafusion/core'
+  import { Room as TypeRoom } from '@intabiafusion/love'
 
   export let room: Ref<TypeRoom> | undefined = undefined
 

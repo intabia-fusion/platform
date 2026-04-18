@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { EmployeeBox } from '@hcengineering/contact-resources'
-  import core, { Ref } from '@hcengineering/core'
-  import { Department, HrEvents } from '@hcengineering/hr'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import { Button, EditBox, FocusHandler, createFocusManager } from '@hcengineering/ui'
+  import { Employee } from '@intabiafusion/contact'
+  import { EmployeeBox } from '@intabiafusion/contact-resources'
+  import core, { Ref } from '@intabiafusion/core'
+  import { Department, HrEvents } from '@intabiafusion/hr'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import { Button, EditBox, FocusHandler, createFocusManager } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../plugin'
   import DepartmentEditor from './DepartmentEditor.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let parent: Ref<Department> = hr.ids.Head
 

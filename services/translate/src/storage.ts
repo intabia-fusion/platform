@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
-import { type HulylakeWorkspaceClient, type JsonPatch, getWorkspaceClient } from '@hcengineering/hulylake-client'
-import { generateToken } from '@hcengineering/server-token'
+import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { type HulylakeWorkspaceClient, type JsonPatch, getWorkspaceClient } from '@intabiafusion/hulylake-client'
+import { generateToken } from '@intabiafusion/server-token'
 import {
   BlobID,
   CardID,
@@ -22,7 +22,7 @@ import {
   MessageID,
   TranslatesMessageDoc,
   TranslatedMessagesDoc
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import config from './config'
 

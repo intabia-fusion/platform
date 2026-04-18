@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import devmodel, { devModelId } from '@hcengineering/devmodel'
-import { mergeIds } from '@hcengineering/platform'
-import { type Ref } from '@hcengineering/core'
-import { type Application } from '@hcengineering/workbench'
+import devmodel, { devModelId } from '@intabiafusion/devmodel'
+import { mergeIds } from '@intabiafusion/platform'
+import { type Ref } from '@intabiafusion/core'
+import { type Application } from '@intabiafusion/workbench'
 
 export default mergeIds(devModelId, devmodel, {
   ids: {

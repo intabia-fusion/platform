@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { ConnectMeetingRequest } from '@hcengineering/ai-bot'
+import { ConnectMeetingRequest } from '@intabiafusion/ai-bot'
 
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import contact, { Person } from '@hcengineering/contact'
+import chunter, { ChatMessage } from '@intabiafusion/chunter'
+import contact, { Person } from '@intabiafusion/contact'
 import core, {
   concatLink,
   generateId,
@@ -28,7 +28,7 @@ import core, {
   WorkspaceUuid,
   pickPrimarySocialId,
   AccountUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import love, {
   getFreeRoomPlace,
   MeetingMinutes,
@@ -36,11 +36,11 @@ import love, {
   Room,
   RoomLanguage,
   TranscriptionState
-} from '@hcengineering/love'
-import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
+} from '@intabiafusion/love'
+import { jsonToMarkup, MarkupNodeType } from '@intabiafusion/text'
 
 import config from '../config'
-import { RestClient } from '@hcengineering/api-client'
+import { RestClient } from '@intabiafusion/api-client'
 
 export class LoveController {
   private readonly connectedMeetings = new Set<Ref<MeetingMinutes>>()

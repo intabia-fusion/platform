@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { RelationsEditor } from '@hcengineering/view-resources'
+  import { Card } from '@intabiafusion/card'
+  import { RelationsEditor } from '@intabiafusion/view-resources'
 
   export let readonly: boolean = false
   export let doc: Card

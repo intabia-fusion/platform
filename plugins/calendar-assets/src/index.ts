@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import calendar from '@hcengineering/calendar'
-import { loadMetadata } from '@hcengineering/platform'
+import calendar from '@intabiafusion/calendar'
+import { loadMetadata } from '@intabiafusion/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(calendar.icon, {

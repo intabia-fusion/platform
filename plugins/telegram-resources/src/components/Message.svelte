@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { AttachmentGroup } from '@hcengineering/attachment-resources'
-  import { formatName } from '@hcengineering/contact'
-  import { WithLookup } from '@hcengineering/core'
-  import { HTMLViewer } from '@hcengineering/presentation'
-  import type { SharedTelegramMessage } from '@hcengineering/telegram'
-  import { CheckBox, getPlatformColorForText, themeStore } from '@hcengineering/ui'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentGroup } from '@intabiafusion/attachment-resources'
+  import { formatName } from '@intabiafusion/contact'
+  import { WithLookup } from '@intabiafusion/core'
+  import { HTMLViewer } from '@intabiafusion/presentation'
+  import type { SharedTelegramMessage } from '@intabiafusion/telegram'
+  import { CheckBox, getPlatformColorForText, themeStore } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let message: WithLookup<SharedTelegramMessage>

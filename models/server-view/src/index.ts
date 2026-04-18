@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import core, { type Doc } from '@hcengineering/core'
-import { type Builder, Mixin } from '@hcengineering/model'
-import { TClass } from '@hcengineering/model-core'
-import { type Resource } from '@hcengineering/platform'
-import serverCore, { type TriggerControl } from '@hcengineering/server-core'
-import serverView, { type ServerLinkIdProvider } from '@hcengineering/server-view'
+import core, { type Doc } from '@intabiafusion/core'
+import { type Builder, Mixin } from '@intabiafusion/model'
+import { TClass } from '@intabiafusion/model-core'
+import { type Resource } from '@intabiafusion/platform'
+import serverCore, { type TriggerControl } from '@intabiafusion/server-core'
+import serverView, { type ServerLinkIdProvider } from '@intabiafusion/server-view'
 
-export { serverViewId } from '@hcengineering/server-view'
+export { serverViewId } from '@intabiafusion/server-view'
 
 @Mixin(serverView.mixin.ServerLinkIdProvider, core.class.Class)
 export class TServerLinkIdProvider extends TClass implements ServerLinkIdProvider {

@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import MasterTags from './components/MasterTags.svelte'
 import CreateTag from './components/CreateTag.svelte'
 import CardPresenter from './components/CardPresenter.svelte'

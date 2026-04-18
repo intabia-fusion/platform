@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type MeasureContext, type WorkspaceUuid, readOnlyGuestAccountUuid } from '@hcengineering/core'
+import { type MeasureContext, type WorkspaceUuid, readOnlyGuestAccountUuid } from '@intabiafusion/core'
 import {
   type Event,
   MessageEventType,
   NotificationEventType,
   type CreateNotificationContextResult
-} from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-sdk-types'
 import {
   type AccountUuid,
   type BlobID,
@@ -31,18 +31,18 @@ import {
   NotificationType,
   type ReactionNotificationContent,
   type SocialID
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import { notify } from '../../notification/notification'
 import { type TriggerCtx, type Enriched } from '../../types'
 import { getNameBySocialID } from '../../triggers/utils'
 
 // Mock dependencies
-jest.mock('@hcengineering/text-markdown', () => ({
+jest.mock('@intabiafusion/text-markdown', () => ({
   markdownToMarkup: jest.fn((md) => ({ type: 'doc', content: [{ type: 'text', text: md }] }))
 }))
 
-jest.mock('@hcengineering/text-core', () => ({
+jest.mock('@intabiafusion/text-core', () => ({
   jsonToMarkup: jest.fn((json) => json),
   markupToText: jest.fn((markup) => {
     if (typeof markup === 'string') return markup

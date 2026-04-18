@@ -20,9 +20,9 @@
     SelectPopupValueType,
     eventToHTMLElement,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { ToDoPriority } from '@hcengineering/time'
+  import { ToDoPriority } from '@intabiafusion/time'
   import { defaultToDoPriorities, todoPriorities } from '../utils'
   import Priority from './icons/Priority.svelte'
   import time from '../plugin'

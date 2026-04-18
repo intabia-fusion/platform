@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { MeasureContext, PersonId, Ref, Space, TxOperations, WorkspaceUuid, generateId } from '@hcengineering/core'
-import { type Card } from '@hcengineering/card'
-import chat from '@hcengineering/chat'
-import mail from '@hcengineering/mail'
+import { MeasureContext, PersonId, Ref, Space, TxOperations, WorkspaceUuid, generateId } from '@intabiafusion/core'
+import { type Card } from '@intabiafusion/card'
+import chat from '@intabiafusion/chat'
+import mail from '@intabiafusion/mail'
 import { SyncMutex } from './mutex'
 import { MessageTimeShift, normalizeEmail } from './utils'
 

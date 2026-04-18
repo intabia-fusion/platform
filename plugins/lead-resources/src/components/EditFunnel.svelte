@@ -14,16 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachments } from '@hcengineering/attachment-resources'
-  import type { Ref } from '@hcengineering/core'
-  import core from '@hcengineering/core'
-  import { Panel } from '@hcengineering/panel'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { MembersBox } from '@hcengineering/contact-resources'
-  import type { Funnel } from '@hcengineering/lead'
-  import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
-  import { EditBox, Grid } from '@hcengineering/ui'
-  import { ClassAttributeBar } from '@hcengineering/view-resources'
+  import { Attachments } from '@intabiafusion/attachment-resources'
+  import type { Ref } from '@intabiafusion/core'
+  import core from '@intabiafusion/core'
+  import { Panel } from '@intabiafusion/panel'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { MembersBox } from '@intabiafusion/contact-resources'
+  import type { Funnel } from '@intabiafusion/lead'
+  import { FullDescriptionBox } from '@intabiafusion/text-editor-resources'
+  import { EditBox, Grid } from '@intabiafusion/ui'
+  import { ClassAttributeBar } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import lead from '../plugin'
 

@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/api-client",
-  "version": "0.7.18",
+  "name": "@intabiafusion/api-client",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "exports": {
     ".": {
@@ -19,7 +19,7 @@
     "tsconfig.json"
   ],
   "author": "Anticrm Platform Contributors",
-  "template": "@hcengineering/api-package",
+  "template": "@intabiafusion/api-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -32,7 +32,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -52,17 +52,17 @@
     "eslint-plugin-svelte": "^2.35.1"
   },
   "dependencies": {
-    "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/client-resources": "workspace:^0.7.18",
-    "@hcengineering/collaborator-client": "workspace:^0.7.17",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/text": "workspace:^0.7.18",
-    "@hcengineering/text-markdown": "workspace:^0.7.20",
+    "@intabiafusion/account-client": "workspace:^1.0.0",
+    "@intabiafusion/client": "workspace:^1.0.0",
+    "@intabiafusion/client-resources": "workspace:^1.0.0",
+    "@intabiafusion/collaborator-client": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/text": "workspace:^1.0.0",
+    "@intabiafusion/text-markdown": "workspace:^1.0.0",
     "snappyjs": "^0.7.0"
   },
-  "repository": "https://github.com/hcengineering/huly.core",
+  "repository": "https://github.com/intabia-fusion/foundation",
   "publishConfig": {
     "access": "public"
   },

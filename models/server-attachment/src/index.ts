@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type Builder } from '@intabiafusion/model'
 
-import attachment from '@hcengineering/attachment'
-import core from '@hcengineering/core'
-import serverAttachment from '@hcengineering/server-attachment'
-import serverCore from '@hcengineering/server-core'
+import attachment from '@intabiafusion/attachment'
+import core from '@intabiafusion/core'
+import serverAttachment from '@intabiafusion/server-attachment'
+import serverCore from '@intabiafusion/server-core'
 
-export { serverAttachmentId } from '@hcengineering/server-attachment'
+export { serverAttachmentId } from '@intabiafusion/server-attachment'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

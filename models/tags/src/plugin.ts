@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Ref } from '@hcengineering/core'
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import { type TagCategory, tagsId } from '@hcengineering/tags'
-import tags from '@hcengineering/tags-resources/src/plugin'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type ViewAction } from '@hcengineering/model-view'
+import { type Ref } from '@intabiafusion/core'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import { type TagCategory, tagsId } from '@intabiafusion/tags'
+import tags from '@intabiafusion/tags-resources/src/plugin'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import { type ViewAction } from '@intabiafusion/model-view'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import view from '@hcengineering/view'
+import view from '@intabiafusion/view'
 
 export default mergeIds(tagsId, tags, {
   // Without it, CLI version is failed with some svelte dependency exception.

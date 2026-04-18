@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { IntlString, Plugin, Resource, Asset } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { Class, Ref } from '@hcengineering/core'
+import type { IntlString, Plugin, Resource, Asset } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import type { Class, Ref } from '@intabiafusion/core'
 import type { UploadFilesFn, UploadFilesPopupFn, UploadHandlerDefinition, UploadHandler } from './types'
 
 /** @public */

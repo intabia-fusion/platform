@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import { deviceOptionsStore, resizeObserver, themeStore } from '..'
   import { getPlatformColorDef } from '../colors'

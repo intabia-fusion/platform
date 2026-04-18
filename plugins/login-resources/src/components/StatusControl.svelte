@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Status } from '@hcengineering/platform'
-  import { Severity } from '@hcengineering/platform'
-  import { IconInfo, Label } from '@hcengineering/ui'
+  import type { Status } from '@intabiafusion/platform'
+  import { Severity } from '@intabiafusion/platform'
+  import { IconInfo, Label } from '@intabiafusion/ui'
 
-  // import { Status as StatusControl } from '@hcengineering/ui'
+  // import { Status as StatusControl } from '@intabiafusion/ui'
 
   export let status: Status
   export let overflow: boolean = true

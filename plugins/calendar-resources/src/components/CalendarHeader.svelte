@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
 
   import { CalendarMode } from '../index'
   import CalendarNavigation from './CalendarNavigation.svelte'

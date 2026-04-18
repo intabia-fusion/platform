@@ -1,10 +1,10 @@
 <script lang="ts">
-  import calendar, { AccessLevel, Calendar, Event, generateEventId, getAllEvents } from '@hcengineering/calendar'
-  import { DayCalendar, calendarByIdStore, hidePrivateEvents } from '@hcengineering/calendar-resources'
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { Ref, SortingOrder, Timestamp, getCurrentAccount } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
+  import calendar, { AccessLevel, Calendar, Event, generateEventId, getAllEvents } from '@intabiafusion/calendar'
+  import { DayCalendar, calendarByIdStore, hidePrivateEvents } from '@intabiafusion/calendar-resources'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { Ref, SortingOrder, Timestamp, getCurrentAccount } from '@intabiafusion/core'
+  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     ButtonBase,
@@ -19,8 +19,8 @@
     getFormattedDate,
     resizeObserver,
     deviceOptionsStore as deviceInfo
-  } from '@hcengineering/ui'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  } from '@intabiafusion/ui'
+  import { ToDo, WorkSlot } from '@intabiafusion/time'
   import time from '../plugin'
   import IconSun from './icons/Sun.svelte'
 

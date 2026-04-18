@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/pod-backup",
-  "version": "0.7.0",
+  "name": "@intabiafusion/pod-backup",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@hcengineering/node-package",
+  "template": "@intabiafusion/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "start": "ts-node src/index.ts",
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "cross-env": "~7.0.3",
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -47,21 +47,21 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
     "@types/jest": "^29.5.5",
-    "@hcengineering/model-all": "workspace:^0.7.0"
+    "@intabiafusion/model-all": "workspace:^1.0.0"
   },
   "dependencies": {
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-pipeline": "workspace:^0.7.0",
-    "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/client-resources": "workspace:^0.7.18",
-    "@hcengineering/core": "workspace:^0.7.24",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/server-pipeline": "workspace:^1.0.0",
+    "@intabiafusion/client": "workspace:^1.0.0",
+    "@intabiafusion/client-resources": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
     "dotenv": "^16.4.5",
-    "@hcengineering/backup-service": "workspace:^0.7.0",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/analytics-service": "workspace:^0.7.17",
-    "@hcengineering/mongo": "workspace:^0.7.17",
-    "@hcengineering/postgres": "workspace:^0.7.22"
+    "@intabiafusion/backup-service": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/analytics-service": "workspace:^1.0.0",
+    "@intabiafusion/mongo": "workspace:^1.0.0",
+    "@intabiafusion/postgres": "workspace:^1.0.0"
   }
 }

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, IconAdd, showPopup } from '@hcengineering/ui'
+  import { ButtonIcon, IconAdd, showPopup } from '@intabiafusion/ui'
   import CreateSpaceType from './CreateSpaceType.svelte'
-  import { isOwnerOrMaintainer } from '@hcengineering/core'
+  import { isOwnerOrMaintainer } from '@intabiafusion/core'
 
   function handleAdd (): void {
     showPopup(CreateSpaceType, {}, 'top')

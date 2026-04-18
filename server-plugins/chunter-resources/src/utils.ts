@@ -1,8 +1,8 @@
-import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
-import { NotificationType } from '@hcengineering/notification'
-import { Doc } from '@hcengineering/core'
-import { DocUpdateMessage } from '@hcengineering/activity'
-import { Channel } from '@hcengineering/chunter'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@intabiafusion/server-notification'
+import { NotificationType } from '@intabiafusion/notification'
+import { Doc } from '@intabiafusion/core'
+import { DocUpdateMessage } from '@intabiafusion/activity'
+import { Channel } from '@intabiafusion/chunter'
 
 export const JoinChannelTypeMatch: TypeMatchFunc = (
   _client: TypeMatchClient,

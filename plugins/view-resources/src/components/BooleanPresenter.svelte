@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BooleanIcon, Label } from '@hcengineering/ui'
+  import { BooleanIcon, Label } from '@intabiafusion/ui'
   import { getBooleanLabel } from '../utils'
 
   export let value: boolean | null | undefined

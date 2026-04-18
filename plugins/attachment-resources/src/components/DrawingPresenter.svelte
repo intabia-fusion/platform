@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { type Drawing } from '@hcengineering/attachment'
-  import { DateRangeMode } from '@hcengineering/core'
-  import { DatePresenter, IconScribble } from '@hcengineering/ui'
-  import { PersonIdPresenter } from '@hcengineering/view-resources'
+  import { type Drawing } from '@intabiafusion/attachment'
+  import { DateRangeMode } from '@intabiafusion/core'
+  import { DatePresenter, IconScribble } from '@intabiafusion/ui'
+  import { PersonIdPresenter } from '@intabiafusion/view-resources'
 
   export let value: Drawing
 </script>

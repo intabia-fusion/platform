@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import { translateCB } from '@hcengineering/platform'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { Button, IconArrowRight, IconBlueCheck, IconClose, IconCopy, Label, themeStore } from '@hcengineering/ui'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { translateCB } from '@intabiafusion/platform'
+  import { copyTextToClipboard } from '@intabiafusion/presentation'
+  import { Button, IconArrowRight, IconBlueCheck, IconClose, IconCopy, Label, themeStore } from '@intabiafusion/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import view from '../plugin'
 

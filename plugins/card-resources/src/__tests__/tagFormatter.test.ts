@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import type { AttributeModel } from '@hcengineering/view'
-import cardPlugin, { type Card } from '@hcengineering/card'
-import { ClassifierKind, type Class, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
+import type { AttributeModel } from '@intabiafusion/view'
+import cardPlugin, { type Card } from '@intabiafusion/card'
+import { ClassifierKind, type Class, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
 import { isTagsColumn, formatCardTagsForMarkdown, formatTagValue } from '../tagFormatter'
 
-jest.mock('@hcengineering/platform', () => {
-  const actual = jest.requireActual('@hcengineering/platform')
+jest.mock('@intabiafusion/platform', () => {
+  const actual = jest.requireActual('@intabiafusion/platform')
   return {
     ...actual,
     translate: jest.fn(async (str: unknown) => String(str))

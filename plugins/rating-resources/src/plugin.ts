@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mergeIds } from '@hcengineering/platform'
-import rating, { ratingId } from '@hcengineering/rating'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { mergeIds } from '@intabiafusion/platform'
+import rating, { ratingId } from '@intabiafusion/rating'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 export default mergeIds(ratingId, rating, {
   component: {
     RatingEditor: '' as AnyComponent

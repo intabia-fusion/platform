@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { assessAnswers, findAnswers, findQuestions } from '@hcengineering/questions-resources'
+import { assessAnswers, findAnswers, findQuestions } from '@intabiafusion/questions-resources'
 import {
   type Training,
   type TrainingAttempt,
   TrainingAttemptState,
   type TrainingRequest
-} from '@hcengineering/training'
-import { getClient } from '@hcengineering/presentation'
+} from '@intabiafusion/training'
+import { getClient } from '@intabiafusion/presentation'
 import { canUpdateTrainingAttempt } from './canUpdateTrainingAttempt'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 

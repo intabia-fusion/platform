@@ -2,14 +2,14 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import view, { createAction } from '@hcengineering/model-view'
-import presentation from '@hcengineering/model-presentation'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import view, { createAction } from '@intabiafusion/model-view'
+import presentation from '@intabiafusion/model-presentation'
 
 import print from './plugin'
 
-export { printId } from '@hcengineering/print'
+export { printId } from '@intabiafusion/print'
 export * from './migration'
 export default print
 

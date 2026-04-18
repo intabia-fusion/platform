@@ -205,7 +205,7 @@
      * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
      * to retrieve the latest activity for the remote master branch.
      */
-    "url": "https://github.com/hcengineering/anticrm",
+    "url": "https://github.com/intabia-fusion/foundation",
 
     /**
      * The default branch name. This tells "rush change" which remote branch to compare against.
@@ -332,13 +332,13 @@
     //
 
     {
-      "packageName": "@hcengineering/platform-rig",
+      "packageName": "@intabiafusion/platform-rig",
       "projectFolder": "foundations/utils/packages/platform-rig",
       "reviewCategory": "tools",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/ui-test",
+      "packageName": "@intabiafusion/ui-test",
       "projectFolder": "foundations/utils/packages/ui-test",
       "shouldPublish": false
     },
@@ -346,1733 +346,1733 @@
     /// CORE Modules
 
     {
-      "packageName": "@hcengineering/account-client",
+      "packageName": "@intabiafusion/account-client",
       "projectFolder": "foundations/core/packages/account-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/analytics",
+      "packageName": "@intabiafusion/analytics",
       "projectFolder": "foundations/core/packages/analytics",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/analytics-service",
+      "packageName": "@intabiafusion/analytics-service",
       "projectFolder": "foundations/core/packages/analytics-service",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/api-client",
+      "packageName": "@intabiafusion/api-client",
       "projectFolder": "foundations/core/packages/api-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/collaborator-client",
+      "packageName": "@intabiafusion/collaborator-client",
       "projectFolder": "foundations/core/packages/collaborator-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/core",
+      "packageName": "@intabiafusion/core",
       "projectFolder": "foundations/core/packages/core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/model",
+      "packageName": "@intabiafusion/model",
       "projectFolder": "foundations/core/packages/model",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/platform",
+      "packageName": "@intabiafusion/platform",
       "projectFolder": "foundations/core/packages/platform",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/query",
+      "packageName": "@intabiafusion/query",
       "projectFolder": "foundations/core/packages/query",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/rank",
+      "packageName": "@intabiafusion/rank",
       "projectFolder": "foundations/core/packages/rank",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/retry",
+      "packageName": "@intabiafusion/retry",
       "projectFolder": "foundations/core/packages/retry",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/storage",
+      "packageName": "@intabiafusion/storage",
       "projectFolder": "foundations/core/packages/storage",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text",
+      "packageName": "@intabiafusion/text",
       "projectFolder": "foundations/core/packages/text",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-core",
+      "packageName": "@intabiafusion/text-core",
       "projectFolder": "foundations/core/packages/text-core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-html",
+      "packageName": "@intabiafusion/text-html",
       "projectFolder": "foundations/core/packages/text-html",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-markdown",
+      "packageName": "@intabiafusion/text-markdown",
       "projectFolder": "foundations/core/packages/text-markdown",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/text-ydoc",
+      "packageName": "@intabiafusion/text-ydoc",
       "projectFolder": "foundations/core/packages/text-ydoc",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/client",
+      "packageName": "@intabiafusion/client",
       "projectFolder": "foundations/core/packages/client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/client-resources",
+      "packageName": "@intabiafusion/client-resources",
       "projectFolder": "foundations/core/packages/client-resources",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/rpc",
+      "packageName": "@intabiafusion/rpc",
       "projectFolder": "foundations/core/packages/rpc",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/server-token",
+      "packageName": "@intabiafusion/server-token",
       "projectFolder": "foundations/core/packages/token",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/hulylake-client",
+      "packageName": "@intabiafusion/hulylake-client",
       "projectFolder": "foundations/core/packages/hulylake-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/storage-client",
+      "packageName": "@intabiafusion/storage-client",
       "projectFolder": "foundations/core/packages/storage-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/measurements",
+      "packageName": "@intabiafusion/measurements",
       "projectFolder": "foundations/core/packages/measurements",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/measurements-otlp",
+      "packageName": "@intabiafusion/measurements-otlp",
       "projectFolder": "foundations/core/packages/measurements-otlp",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/postgres-base",
+      "packageName": "@intabiafusion/postgres-base",
       "projectFolder": "foundations/core/packages/postgres-base",
       "shouldPublish": true
     },
     // Communication
     {
-      "packageName": "@hcengineering/communication-types",
+      "packageName": "@intabiafusion/communication-types",
       "projectFolder": "foundations/communication/packages/types",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-sdk-types",
+      "packageName": "@intabiafusion/communication-sdk-types",
       "projectFolder": "foundations/communication/packages/sdk-types",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-shared",
+      "packageName": "@intabiafusion/communication-shared",
       "projectFolder": "foundations/communication/packages/shared",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-rest-client",
+      "packageName": "@intabiafusion/communication-rest-client",
       "projectFolder": "foundations/communication/packages/rest-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-cockroach",
+      "packageName": "@intabiafusion/communication-cockroach",
       "projectFolder": "foundations/communication/packages/cockroach",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-server",
+      "packageName": "@intabiafusion/communication-server",
       "projectFolder": "foundations/communication/packages/server",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-query",
+      "packageName": "@intabiafusion/communication-query",
       "projectFolder": "foundations/communication/packages/query",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/communication-client-query",
+      "packageName": "@intabiafusion/communication-client-query",
       "projectFolder": "foundations/communication/packages/client-query",
       "shouldPublish": true
     },
     /// Server
 
     {
-      "packageName": "@hcengineering/server-client",
+      "packageName": "@intabiafusion/server-client",
       "projectFolder": "foundations/server/packages/client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/collaboration",
+      "packageName": "@intabiafusion/collaboration",
       "projectFolder": "foundations/server/packages/collaboration",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/server-core",
+      "packageName": "@intabiafusion/server-core",
       "projectFolder": "foundations/server/packages/core",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/datalake",
+      "packageName": "@intabiafusion/datalake",
       "projectFolder": "foundations/server/packages/datalake",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/hulylake",
+      "packageName": "@intabiafusion/hulylake",
       "projectFolder": "foundations/server/packages/hulylake",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/elastic",
+      "packageName": "@intabiafusion/elastic",
       "projectFolder": "foundations/server/packages/elastic",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/kafka",
+      "packageName": "@intabiafusion/kafka",
       "projectFolder": "foundations/server/packages/kafka",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/middleware",
+      "packageName": "@intabiafusion/middleware",
       "projectFolder": "foundations/server/packages/middleware",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/minio",
+      "packageName": "@intabiafusion/minio",
       "projectFolder": "foundations/server/packages/minio",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/mongo",
+      "packageName": "@intabiafusion/mongo",
       "projectFolder": "foundations/server/packages/mongo",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/postgres",
+      "packageName": "@intabiafusion/postgres",
       "projectFolder": "foundations/server/packages/postgres",
       "shouldPublish": true
     },
-    { "packageName": "@hcengineering/s3", "projectFolder": "foundations/server/packages/s3", "shouldPublish": true },
+    { "packageName": "@intabiafusion/s3", "projectFolder": "foundations/server/packages/s3", "shouldPublish": true },
     {
-      "packageName": "@hcengineering/server",
+      "packageName": "@intabiafusion/server",
       "projectFolder": "foundations/server/packages/server",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/server-storage",
+      "packageName": "@intabiafusion/server-storage",
       "projectFolder": "foundations/server/packages/server-storage",
       "shouldPublish": true
     },
 
     /// Platform modules
     {
-      "packageName": "@hcengineering/analytics-providers",
+      "packageName": "@intabiafusion/analytics-providers",
       "projectFolder": "packages/analytics-providers",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/highlight",
+      "packageName": "@intabiafusion/highlight",
       "projectFolder": "packages/highlight",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/api-tests",
+      "packageName": "@intabiafusion/api-tests",
       "projectFolder": "ws-tests/api-tests",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/benchmarks",
+      "packageName": "@intabiafusion/benchmarks",
       "projectFolder": "dev/benchmarks",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/importer",
+      "packageName": "@intabiafusion/importer",
       "projectFolder": "packages/importer",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/audio-dsp",
+      "packageName": "@intabiafusion/audio-dsp",
       "projectFolder": "packages/audio-dsp",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/hls",
+      "packageName": "@intabiafusion/hls",
       "projectFolder": "packages/hls",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/theme",
+      "packageName": "@intabiafusion/theme",
       "projectFolder": "packages/theme",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/ui",
+      "packageName": "@intabiafusion/ui",
       "projectFolder": "packages/ui",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/uploader",
+      "packageName": "@intabiafusion/uploader",
       "projectFolder": "plugins/uploader",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/uploader-assets",
+      "packageName": "@intabiafusion/uploader-assets",
       "projectFolder": "plugins/uploader-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/uploader-resources",
+      "packageName": "@intabiafusion/uploader-resources",
       "projectFolder": "plugins/uploader-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-uploader",
+      "packageName": "@intabiafusion/model-uploader",
       "projectFolder": "models/uploader",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/media",
+      "packageName": "@intabiafusion/media",
       "projectFolder": "plugins/media",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/media-resources",
+      "packageName": "@intabiafusion/media-resources",
       "projectFolder": "plugins/media-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/media-assets",
+      "packageName": "@intabiafusion/media-assets",
       "projectFolder": "plugins/media-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-media",
+      "packageName": "@intabiafusion/model-media",
       "projectFolder": "models/media",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/recorder",
+      "packageName": "@intabiafusion/recorder",
       "projectFolder": "plugins/recorder",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/recorder-resources",
+      "packageName": "@intabiafusion/recorder-resources",
       "projectFolder": "plugins/recorder-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/recorder-assets",
+      "packageName": "@intabiafusion/recorder-assets",
       "projectFolder": "plugins/recorder-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-recorder",
+      "packageName": "@intabiafusion/model-recorder",
       "projectFolder": "models/recorder",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/presence",
+      "packageName": "@intabiafusion/presence",
       "projectFolder": "plugins/presence",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/presence-resources",
+      "packageName": "@intabiafusion/presence-resources",
       "projectFolder": "plugins/presence-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-presence",
+      "packageName": "@intabiafusion/model-presence",
       "projectFolder": "models/presence",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/billing-client",
+      "packageName": "@intabiafusion/billing-client",
       "projectFolder": "packages/billing-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/payment-client",
+      "packageName": "@intabiafusion/payment-client",
       "projectFolder": "packages/payment-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/prod",
+      "packageName": "@intabiafusion/prod",
       "projectFolder": "dev/prod",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-indexer",
+      "packageName": "@intabiafusion/server-indexer",
       "projectFolder": "server/indexer",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-pipeline",
+      "packageName": "@intabiafusion/server-pipeline",
       "projectFolder": "server/server-pipeline",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/login",
+      "packageName": "@intabiafusion/login",
       "projectFolder": "plugins/login",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/login-assets",
+      "packageName": "@intabiafusion/login-assets",
       "projectFolder": "plugins/login-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/login-resources",
+      "packageName": "@intabiafusion/login-resources",
       "projectFolder": "plugins/login-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/onboard",
+      "packageName": "@intabiafusion/onboard",
       "projectFolder": "plugins/onboard",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/onboard-assets",
+      "packageName": "@intabiafusion/onboard-assets",
       "projectFolder": "plugins/onboard-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/onboard-resources",
+      "packageName": "@intabiafusion/onboard-resources",
       "projectFolder": "plugins/onboard-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/workbench",
+      "packageName": "@intabiafusion/workbench",
       "projectFolder": "plugins/workbench",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/workbench-assets",
+      "packageName": "@intabiafusion/workbench-assets",
       "projectFolder": "plugins/workbench-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/workbench-resources",
+      "packageName": "@intabiafusion/workbench-resources",
       "projectFolder": "plugins/workbench-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/presentation",
+      "packageName": "@intabiafusion/presentation",
       "projectFolder": "packages/presentation",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-presentation",
+      "packageName": "@intabiafusion/model-presentation",
       "projectFolder": "models/presentation",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/view",
+      "packageName": "@intabiafusion/view",
       "projectFolder": "plugins/view",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/view-assets",
+      "packageName": "@intabiafusion/view-assets",
       "projectFolder": "plugins/view-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/view-resources",
+      "packageName": "@intabiafusion/view-resources",
       "projectFolder": "plugins/view-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-core",
+      "packageName": "@intabiafusion/model-core",
       "projectFolder": "models/core",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-all",
+      "packageName": "@intabiafusion/model-all",
       "projectFolder": "models/all",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-view",
+      "packageName": "@intabiafusion/model-view",
       "projectFolder": "models/view",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/contact",
+      "packageName": "@intabiafusion/contact",
       "projectFolder": "plugins/contact",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/contact-assets",
+      "packageName": "@intabiafusion/contact-assets",
       "projectFolder": "plugins/contact-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/contact-resources",
+      "packageName": "@intabiafusion/contact-resources",
       "projectFolder": "plugins/contact-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/task",
+      "packageName": "@intabiafusion/task",
       "projectFolder": "plugins/task",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/task-assets",
+      "packageName": "@intabiafusion/task-assets",
       "projectFolder": "plugins/task-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/task-resources",
+      "packageName": "@intabiafusion/task-resources",
       "projectFolder": "plugins/task-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-workbench",
+      "packageName": "@intabiafusion/model-workbench",
       "projectFolder": "models/workbench",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-task",
+      "packageName": "@intabiafusion/model-task",
       "projectFolder": "models/task",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-contact",
+      "packageName": "@intabiafusion/model-contact",
       "projectFolder": "models/contact",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/text-editor",
+      "packageName": "@intabiafusion/text-editor",
       "projectFolder": "plugins/text-editor",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/text-editor-assets",
+      "packageName": "@intabiafusion/text-editor-assets",
       "projectFolder": "plugins/text-editor-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/text-editor-resources",
+      "packageName": "@intabiafusion/text-editor-resources",
       "projectFolder": "plugins/text-editor-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chunter",
+      "packageName": "@intabiafusion/chunter",
       "projectFolder": "plugins/chunter",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/chunter-assets",
+      "packageName": "@intabiafusion/chunter-assets",
       "projectFolder": "plugins/chunter-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chunter-resources",
+      "packageName": "@intabiafusion/chunter-resources",
       "projectFolder": "plugins/chunter-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-chunter",
+      "packageName": "@intabiafusion/model-chunter",
       "projectFolder": "models/chunter",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/recruit",
+      "packageName": "@intabiafusion/recruit",
       "projectFolder": "plugins/recruit",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/recruit-assets",
+      "packageName": "@intabiafusion/recruit-assets",
       "projectFolder": "plugins/recruit-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/recruit-resources",
+      "packageName": "@intabiafusion/recruit-resources",
       "projectFolder": "plugins/recruit-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-recruit",
+      "packageName": "@intabiafusion/model-recruit",
       "projectFolder": "models/recruit",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/image-cropper",
+      "packageName": "@intabiafusion/image-cropper",
       "projectFolder": "plugins/image-cropper",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/image-cropper-resources",
+      "packageName": "@intabiafusion/image-cropper-resources",
       "projectFolder": "plugins/image-cropper-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-core",
+      "packageName": "@intabiafusion/model-server-core",
       "projectFolder": "models/server-core",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-attachment",
+      "packageName": "@intabiafusion/server-attachment",
       "projectFolder": "server-plugins/attachment",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-attachment",
+      "packageName": "@intabiafusion/model-server-attachment",
       "projectFolder": "models/server-attachment",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-attachment-resources",
+      "packageName": "@intabiafusion/server-attachment-resources",
       "projectFolder": "server-plugins/attachment-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-collaboration",
+      "packageName": "@intabiafusion/server-collaboration",
       "projectFolder": "server-plugins/collaboration",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-collaboration",
+      "packageName": "@intabiafusion/model-server-collaboration",
       "projectFolder": "models/server-collaboration",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-collaboration-resources",
+      "packageName": "@intabiafusion/server-collaboration-resources",
       "projectFolder": "server-plugins/collaboration-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-contact",
+      "packageName": "@intabiafusion/server-contact",
       "projectFolder": "server-plugins/contact",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-contact",
+      "packageName": "@intabiafusion/model-server-contact",
       "projectFolder": "models/server-contact",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-contact-resources",
+      "packageName": "@intabiafusion/server-contact-resources",
       "projectFolder": "server-plugins/contact-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-front",
+      "packageName": "@intabiafusion/pod-front",
       "projectFolder": "pods/front",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-stats",
+      "packageName": "@intabiafusion/pod-stats",
       "projectFolder": "pods/stats",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-server",
+      "packageName": "@intabiafusion/pod-server",
       "projectFolder": "pods/server",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-external",
+      "packageName": "@intabiafusion/pod-external",
       "projectFolder": "pods/external",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/front",
+      "packageName": "@intabiafusion/front",
       "projectFolder": "server/front",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/account",
+      "packageName": "@intabiafusion/account",
       "projectFolder": "server/account",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/account-service",
+      "packageName": "@intabiafusion/account-service",
       "projectFolder": "server/account-service",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/workspace-service",
+      "packageName": "@intabiafusion/workspace-service",
       "projectFolder": "server/workspace-service",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/collaborator",
+      "packageName": "@intabiafusion/collaborator",
       "projectFolder": "server/collaborator",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tool",
+      "packageName": "@intabiafusion/tool",
       "projectFolder": "dev/tool",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/import-tool",
+      "packageName": "@intabiafusion/import-tool",
       "projectFolder": "dev/import-tool",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-account",
+      "packageName": "@intabiafusion/pod-account",
       "projectFolder": "pods/account",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-workspace",
+      "packageName": "@intabiafusion/pod-workspace",
       "projectFolder": "pods/workspace",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-collaborator",
+      "packageName": "@intabiafusion/pod-collaborator",
       "projectFolder": "pods/collaborator",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/panel",
+      "packageName": "@intabiafusion/panel",
       "projectFolder": "packages/panel",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/activity",
+      "packageName": "@intabiafusion/activity",
       "projectFolder": "plugins/activity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/activity-assets",
+      "packageName": "@intabiafusion/activity-assets",
       "projectFolder": "plugins/activity-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/activity-resources",
+      "packageName": "@intabiafusion/activity-resources",
       "projectFolder": "plugins/activity-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-activity",
+      "packageName": "@intabiafusion/model-activity",
       "projectFolder": "models/activity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/setting",
+      "packageName": "@intabiafusion/setting",
       "projectFolder": "plugins/setting",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/setting-assets",
+      "packageName": "@intabiafusion/setting-assets",
       "projectFolder": "plugins/setting-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/setting-resources",
+      "packageName": "@intabiafusion/setting-resources",
       "projectFolder": "plugins/setting-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-setting",
+      "packageName": "@intabiafusion/model-setting",
       "projectFolder": "models/setting",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/telegram",
+      "packageName": "@intabiafusion/telegram",
       "projectFolder": "plugins/telegram",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/telegram-assets",
+      "packageName": "@intabiafusion/telegram-assets",
       "projectFolder": "plugins/telegram-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/telegram-resources",
+      "packageName": "@intabiafusion/telegram-resources",
       "projectFolder": "plugins/telegram-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-telegram",
+      "packageName": "@intabiafusion/model-telegram",
       "projectFolder": "models/telegram",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/devmodel-resources",
+      "packageName": "@intabiafusion/devmodel-resources",
       "projectFolder": "plugins/devmodel-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/devmodel",
+      "packageName": "@intabiafusion/devmodel",
       "projectFolder": "plugins/devmodel",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/attachment",
+      "packageName": "@intabiafusion/attachment",
       "projectFolder": "plugins/attachment",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/attachment-assets",
+      "packageName": "@intabiafusion/attachment-assets",
       "projectFolder": "plugins/attachment-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/attachment-resources",
+      "packageName": "@intabiafusion/attachment-resources",
       "projectFolder": "plugins/attachment-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-attachment",
+      "packageName": "@intabiafusion/model-attachment",
       "projectFolder": "models/attachment",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/lead",
+      "packageName": "@intabiafusion/lead",
       "projectFolder": "plugins/lead",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/lead-assets",
+      "packageName": "@intabiafusion/lead-assets",
       "projectFolder": "plugins/lead-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/lead-resources",
+      "packageName": "@intabiafusion/lead-resources",
       "projectFolder": "plugins/lead-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-lead",
+      "packageName": "@intabiafusion/model-lead",
       "projectFolder": "models/lead",
       "shouldPublish": false
     },
     // {
-    //   "packageName": "@hcengineering/storybook",
+    //   "packageName": "@intabiafusion/storybook",
     //   "projectFolder": "dev/storybook",
     //   "shouldPublish": false
     // },
     {
-      "packageName": "@hcengineering/model-gmail",
+      "packageName": "@intabiafusion/model-gmail",
       "projectFolder": "models/gmail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/gmail",
+      "packageName": "@intabiafusion/gmail",
       "projectFolder": "plugins/gmail",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/gmail-assets",
+      "packageName": "@intabiafusion/gmail-assets",
       "projectFolder": "plugins/gmail-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/gmail-resources",
+      "packageName": "@intabiafusion/gmail-resources",
       "projectFolder": "plugins/gmail-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/global-profile",
+      "packageName": "@intabiafusion/global-profile",
       "projectFolder": "plugins/global-profile",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/global-profile-assets",
+      "packageName": "@intabiafusion/global-profile-assets",
       "projectFolder": "plugins/global-profile-assets",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/global-profile-resources",
+      "packageName": "@intabiafusion/global-profile-resources",
       "projectFolder": "plugins/global-profile-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-inventory",
+      "packageName": "@intabiafusion/model-inventory",
       "projectFolder": "models/inventory",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/inventory",
+      "packageName": "@intabiafusion/inventory",
       "projectFolder": "plugins/inventory",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/inventory-assets",
+      "packageName": "@intabiafusion/inventory-assets",
       "projectFolder": "plugins/inventory-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/inventory-resources",
+      "packageName": "@intabiafusion/inventory-resources",
       "projectFolder": "plugins/inventory-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/templates",
+      "packageName": "@intabiafusion/templates",
       "projectFolder": "plugins/templates",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/templates-assets",
+      "packageName": "@intabiafusion/templates-assets",
       "projectFolder": "plugins/templates-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/templates-resources",
+      "packageName": "@intabiafusion/templates-resources",
       "projectFolder": "plugins/templates-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-templates",
+      "packageName": "@intabiafusion/model-templates",
       "projectFolder": "models/templates",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-templates",
+      "packageName": "@intabiafusion/server-templates",
       "projectFolder": "server-plugins/templates",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-templates",
+      "packageName": "@intabiafusion/model-server-templates",
       "projectFolder": "models/server-templates",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-text-editor",
+      "packageName": "@intabiafusion/model-text-editor",
       "projectFolder": "models/text-editor",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-tool",
+      "packageName": "@intabiafusion/server-tool",
       "projectFolder": "server/tool",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tests-sanity",
+      "packageName": "@intabiafusion/tests-sanity",
       "projectFolder": "tests/sanity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tests-ws-sanity",
+      "packageName": "@intabiafusion/tests-ws-sanity",
       "projectFolder": "ws-tests/sanity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/rekoni",
+      "packageName": "@intabiafusion/rekoni",
       "projectFolder": "packages/rekoni",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-notification",
+      "packageName": "@intabiafusion/model-notification",
       "projectFolder": "models/notification",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/notification",
+      "packageName": "@intabiafusion/notification",
       "projectFolder": "plugins/notification",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/notification-assets",
+      "packageName": "@intabiafusion/notification-assets",
       "projectFolder": "plugins/notification-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/notification-resources",
+      "packageName": "@intabiafusion/notification-resources",
       "projectFolder": "plugins/notification-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-notification",
+      "packageName": "@intabiafusion/server-notification",
       "projectFolder": "server-plugins/notification",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-notification",
+      "packageName": "@intabiafusion/model-server-notification",
       "projectFolder": "models/server-notification",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-notification-resources",
+      "packageName": "@intabiafusion/server-notification-resources",
       "projectFolder": "server-plugins/notification-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tags",
+      "packageName": "@intabiafusion/tags",
       "projectFolder": "plugins/tags",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/tags-assets",
+      "packageName": "@intabiafusion/tags-assets",
       "projectFolder": "plugins/tags-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tags-resources",
+      "packageName": "@intabiafusion/tags-resources",
       "projectFolder": "plugins/tags-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-tags",
+      "packageName": "@intabiafusion/model-tags",
       "projectFolder": "models/tags",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-chunter",
+      "packageName": "@intabiafusion/server-chunter",
       "projectFolder": "server-plugins/chunter",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-chunter",
+      "packageName": "@intabiafusion/model-server-chunter",
       "projectFolder": "models/server-chunter",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-chunter-resources",
+      "packageName": "@intabiafusion/server-chunter-resources",
       "projectFolder": "server-plugins/chunter-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-inventory",
+      "packageName": "@intabiafusion/server-inventory",
       "projectFolder": "server-plugins/inventory",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-inventory",
+      "packageName": "@intabiafusion/model-server-inventory",
       "projectFolder": "models/server-inventory",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-inventory-resources",
+      "packageName": "@intabiafusion/server-inventory-resources",
       "projectFolder": "server-plugins/inventory-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-lead",
+      "packageName": "@intabiafusion/server-lead",
       "projectFolder": "server-plugins/lead",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-lead",
+      "packageName": "@intabiafusion/model-server-lead",
       "projectFolder": "models/server-lead",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-lead-resources",
+      "packageName": "@intabiafusion/server-lead-resources",
       "projectFolder": "server-plugins/lead-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-recruit",
+      "packageName": "@intabiafusion/server-recruit",
       "projectFolder": "server-plugins/recruit",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-recruit",
+      "packageName": "@intabiafusion/model-server-recruit",
       "projectFolder": "models/server-recruit",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-recruit-resources",
+      "packageName": "@intabiafusion/server-recruit-resources",
       "projectFolder": "server-plugins/recruit-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-task",
+      "packageName": "@intabiafusion/server-task",
       "projectFolder": "server-plugins/task",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-task",
+      "packageName": "@intabiafusion/model-server-task",
       "projectFolder": "models/server-task",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-tracker",
+      "packageName": "@intabiafusion/server-tracker",
       "projectFolder": "server-plugins/tracker",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-tracker",
+      "packageName": "@intabiafusion/model-server-tracker",
       "projectFolder": "models/server-tracker",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-tracker-resources",
+      "packageName": "@intabiafusion/server-tracker-resources",
       "projectFolder": "server-plugins/tracker-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-task-resources",
+      "packageName": "@intabiafusion/server-task-resources",
       "projectFolder": "server-plugins/task-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-setting",
+      "packageName": "@intabiafusion/server-setting",
       "projectFolder": "server-plugins/setting",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-setting",
+      "packageName": "@intabiafusion/model-server-setting",
       "projectFolder": "models/server-setting",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-setting-resources",
+      "packageName": "@intabiafusion/server-setting-resources",
       "projectFolder": "server-plugins/setting-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/calendar",
+      "packageName": "@intabiafusion/calendar",
       "projectFolder": "plugins/calendar",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/calendar-assets",
+      "packageName": "@intabiafusion/calendar-assets",
       "projectFolder": "plugins/calendar-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/calendar-resources",
+      "packageName": "@intabiafusion/calendar-resources",
       "projectFolder": "plugins/calendar-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-calendar",
+      "packageName": "@intabiafusion/model-calendar",
       "projectFolder": "models/calendar",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-tags",
+      "packageName": "@intabiafusion/server-tags",
       "projectFolder": "server-plugins/tags",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-tags",
+      "packageName": "@intabiafusion/model-server-tags",
       "projectFolder": "models/server-tags",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-tags-resources",
+      "packageName": "@intabiafusion/server-tags-resources",
       "projectFolder": "server-plugins/tags-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-calendar",
+      "packageName": "@intabiafusion/server-calendar",
       "projectFolder": "server-plugins/calendar",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-calendar",
+      "packageName": "@intabiafusion/model-server-calendar",
       "projectFolder": "models/server-calendar",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-calendar-resources",
+      "packageName": "@intabiafusion/server-calendar-resources",
       "projectFolder": "server-plugins/calendar-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-gmail",
+      "packageName": "@intabiafusion/server-gmail",
       "projectFolder": "server-plugins/gmail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-gmail",
+      "packageName": "@intabiafusion/model-server-gmail",
       "projectFolder": "models/server-gmail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-gmail-resources",
+      "packageName": "@intabiafusion/server-gmail-resources",
       "projectFolder": "server-plugins/gmail-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-telegram",
+      "packageName": "@intabiafusion/server-telegram",
       "projectFolder": "server-plugins/telegram",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-telegram",
+      "packageName": "@intabiafusion/model-server-telegram",
       "projectFolder": "models/server-telegram",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-telegram-resources",
+      "packageName": "@intabiafusion/server-telegram-resources",
       "projectFolder": "server-plugins/telegram-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tracker",
+      "packageName": "@intabiafusion/tracker",
       "projectFolder": "plugins/tracker",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/tracker-assets",
+      "packageName": "@intabiafusion/tracker-assets",
       "projectFolder": "plugins/tracker-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/tracker-resources",
+      "packageName": "@intabiafusion/tracker-resources",
       "projectFolder": "plugins/tracker-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-tracker",
+      "packageName": "@intabiafusion/model-tracker",
       "projectFolder": "models/tracker",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/kanban",
+      "packageName": "@intabiafusion/kanban",
       "projectFolder": "packages/kanban",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/preference",
+      "packageName": "@intabiafusion/preference",
       "projectFolder": "plugins/preference",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/preference-assets",
+      "packageName": "@intabiafusion/preference-assets",
       "projectFolder": "plugins/preference-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-preference",
+      "packageName": "@intabiafusion/model-preference",
       "projectFolder": "models/preference",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-preference",
+      "packageName": "@intabiafusion/server-preference",
       "projectFolder": "server-plugins/preference",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-backup",
+      "packageName": "@intabiafusion/server-backup",
       "projectFolder": "server/backup",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/backup-service",
+      "packageName": "@intabiafusion/backup-service",
       "projectFolder": "server/backup-service",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-backup",
+      "packageName": "@intabiafusion/pod-backup",
       "projectFolder": "pods/backup",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-fulltext",
+      "packageName": "@intabiafusion/pod-fulltext",
       "projectFolder": "pods/fulltext",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-media",
+      "packageName": "@intabiafusion/pod-media",
       "projectFolder": "pods/media",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-preview",
+      "packageName": "@intabiafusion/pod-preview",
       "projectFolder": "pods/preview",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-link-preview",
+      "packageName": "@intabiafusion/pod-link-preview",
       "projectFolder": "pods/link-preview",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/hr",
+      "packageName": "@intabiafusion/hr",
       "projectFolder": "plugins/hr",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/hr-assets",
+      "packageName": "@intabiafusion/hr-assets",
       "projectFolder": "plugins/hr-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/hr-resources",
+      "packageName": "@intabiafusion/hr-resources",
       "projectFolder": "plugins/hr-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-hr",
+      "packageName": "@intabiafusion/model-hr",
       "projectFolder": "models/hr",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-hr",
+      "packageName": "@intabiafusion/server-hr",
       "projectFolder": "server-plugins/hr",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-hr",
+      "packageName": "@intabiafusion/model-server-hr",
       "projectFolder": "models/server-hr",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-hr-resources",
+      "packageName": "@intabiafusion/server-hr-resources",
       "projectFolder": "server-plugins/hr-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/request",
+      "packageName": "@intabiafusion/request",
       "projectFolder": "plugins/request",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/request-assets",
+      "packageName": "@intabiafusion/request-assets",
       "projectFolder": "plugins/request-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/request-resources",
+      "packageName": "@intabiafusion/request-resources",
       "projectFolder": "plugins/request-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-request",
+      "packageName": "@intabiafusion/model-request",
       "projectFolder": "models/request",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-request",
+      "packageName": "@intabiafusion/server-request",
       "projectFolder": "server-plugins/request",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-request",
+      "packageName": "@intabiafusion/model-server-request",
       "projectFolder": "models/server-request",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-request-resources",
+      "packageName": "@intabiafusion/server-request-resources",
       "projectFolder": "server-plugins/request-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-view",
+      "packageName": "@intabiafusion/server-view",
       "projectFolder": "server-plugins/view",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-view",
+      "packageName": "@intabiafusion/model-server-view",
       "projectFolder": "models/server-view",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-view-resources",
+      "packageName": "@intabiafusion/server-view-resources",
       "projectFolder": "server-plugins/view-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-activity",
+      "packageName": "@intabiafusion/server-activity",
       "projectFolder": "server-plugins/activity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-activity",
+      "packageName": "@intabiafusion/model-server-activity",
       "projectFolder": "models/server-activity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-activity-resources",
+      "packageName": "@intabiafusion/server-activity-resources",
       "projectFolder": "server-plugins/activity-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-support",
+      "packageName": "@intabiafusion/model-support",
       "projectFolder": "models/support",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/support",
+      "packageName": "@intabiafusion/support",
       "projectFolder": "plugins/support",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/support-assets",
+      "packageName": "@intabiafusion/support-assets",
       "projectFolder": "plugins/support-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/support-resources",
+      "packageName": "@intabiafusion/support-resources",
       "projectFolder": "plugins/support-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/guest",
+      "packageName": "@intabiafusion/guest",
       "projectFolder": "plugins/guest",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/guest-assets",
+      "packageName": "@intabiafusion/guest-assets",
       "projectFolder": "plugins/guest-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/guest-resources",
+      "packageName": "@intabiafusion/guest-resources",
       "projectFolder": "plugins/guest-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-guest",
+      "packageName": "@intabiafusion/model-guest",
       "projectFolder": "models/guest",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-guest",
+      "packageName": "@intabiafusion/server-guest",
       "projectFolder": "server-plugins/guest",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-guest",
+      "packageName": "@intabiafusion/model-server-guest",
       "projectFolder": "models/server-guest",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-guest-resources",
+      "packageName": "@intabiafusion/server-guest-resources",
       "projectFolder": "server-plugins/guest-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/auth-providers",
+      "packageName": "@intabiafusion/auth-providers",
       "projectFolder": "pods/authProviders",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/time",
+      "packageName": "@intabiafusion/time",
       "projectFolder": "plugins/time",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/time-assets",
+      "packageName": "@intabiafusion/time-assets",
       "projectFolder": "plugins/time-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/time-resources",
+      "packageName": "@intabiafusion/time-resources",
       "projectFolder": "plugins/time-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-time",
+      "packageName": "@intabiafusion/model-time",
       "projectFolder": "models/time",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-time",
+      "packageName": "@intabiafusion/server-time",
       "projectFolder": "server-plugins/time",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-time-resources",
+      "packageName": "@intabiafusion/server-time-resources",
       "projectFolder": "server-plugins/time-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-time",
+      "packageName": "@intabiafusion/model-server-time",
       "projectFolder": "models/server-time",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/document",
+      "packageName": "@intabiafusion/document",
       "projectFolder": "plugins/document",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/document-assets",
+      "packageName": "@intabiafusion/document-assets",
       "projectFolder": "plugins/document-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/document-resources",
+      "packageName": "@intabiafusion/document-resources",
       "projectFolder": "plugins/document-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-document",
+      "packageName": "@intabiafusion/model-document",
       "projectFolder": "models/document",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-document",
+      "packageName": "@intabiafusion/server-document",
       "projectFolder": "server-plugins/document",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-document-resources",
+      "packageName": "@intabiafusion/server-document-resources",
       "projectFolder": "server-plugins/document-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-document",
+      "packageName": "@intabiafusion/model-server-document",
       "projectFolder": "models/server-document",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/love",
+      "packageName": "@intabiafusion/love",
       "projectFolder": "plugins/love",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/love-assets",
+      "packageName": "@intabiafusion/love-assets",
       "projectFolder": "plugins/love-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/love-resources",
+      "packageName": "@intabiafusion/love-resources",
       "projectFolder": "plugins/love-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-love",
+      "packageName": "@intabiafusion/model-love",
       "projectFolder": "models/love",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-love",
+      "packageName": "@intabiafusion/server-love",
       "projectFolder": "server-plugins/love",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-love-resources",
+      "packageName": "@intabiafusion/server-love-resources",
       "projectFolder": "server-plugins/love-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-love",
+      "packageName": "@intabiafusion/model-server-love",
       "projectFolder": "models/server-love",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/drive",
+      "packageName": "@intabiafusion/drive",
       "projectFolder": "plugins/drive",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/drive-assets",
+      "packageName": "@intabiafusion/drive-assets",
       "projectFolder": "plugins/drive-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/drive-resources",
+      "packageName": "@intabiafusion/drive-resources",
       "projectFolder": "plugins/drive-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-drive",
+      "packageName": "@intabiafusion/model-drive",
       "projectFolder": "models/drive",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-drive",
+      "packageName": "@intabiafusion/server-drive",
       "projectFolder": "server-plugins/drive",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-drive",
+      "packageName": "@intabiafusion/model-server-drive",
       "projectFolder": "models/server-drive",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-drive-resources",
+      "packageName": "@intabiafusion/server-drive-resources",
       "projectFolder": "server-plugins/drive-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/controlled-documents",
+      "packageName": "@intabiafusion/controlled-documents",
       "projectFolder": "plugins/controlled-documents",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/controlled-documents-assets",
+      "packageName": "@intabiafusion/controlled-documents-assets",
       "projectFolder": "plugins/controlled-documents-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/controlled-documents-resources",
+      "packageName": "@intabiafusion/controlled-documents-resources",
       "projectFolder": "plugins/controlled-documents-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/converter",
+      "packageName": "@intabiafusion/converter",
       "projectFolder": "plugins/converter",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/converter-resources",
+      "packageName": "@intabiafusion/converter-resources",
       "projectFolder": "plugins/converter-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-converter",
+      "packageName": "@intabiafusion/model-converter",
       "projectFolder": "models/converter",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-controlled-documents",
+      "packageName": "@intabiafusion/model-controlled-documents",
       "projectFolder": "models/controlled-documents",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-controlled-documents",
+      "packageName": "@intabiafusion/server-controlled-documents",
       "projectFolder": "server-plugins/controlled-documents",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-controlled-documents-resources",
+      "packageName": "@intabiafusion/server-controlled-documents-resources",
       "projectFolder": "server-plugins/controlled-documents-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-controlled-documents",
+      "packageName": "@intabiafusion/model-server-controlled-documents",
       "projectFolder": "models/server-controlled-documents",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/print",
+      "packageName": "@intabiafusion/print",
       "projectFolder": "plugins/print",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/print-assets",
+      "packageName": "@intabiafusion/print-assets",
       "projectFolder": "plugins/print-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/print-resources",
+      "packageName": "@intabiafusion/print-resources",
       "projectFolder": "plugins/print-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-print",
+      "packageName": "@intabiafusion/model-print",
       "projectFolder": "models/print",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-export",
+      "packageName": "@intabiafusion/model-export",
       "projectFolder": "models/export",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/export",
+      "packageName": "@intabiafusion/export",
       "projectFolder": "plugins/export",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/export-assets",
+      "packageName": "@intabiafusion/export-assets",
       "projectFolder": "plugins/export-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/export-resources",
+      "packageName": "@intabiafusion/export-resources",
       "projectFolder": "plugins/export-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/sign",
+      "packageName": "@intabiafusion/sign",
       "projectFolder": "plugins/sign",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/products",
+      "packageName": "@intabiafusion/products",
       "projectFolder": "plugins/products",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/products-assets",
+      "packageName": "@intabiafusion/products-assets",
       "projectFolder": "plugins/products-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/products-resources",
+      "packageName": "@intabiafusion/products-resources",
       "projectFolder": "plugins/products-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-products",
+      "packageName": "@intabiafusion/model-products",
       "projectFolder": "models/products",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-products",
+      "packageName": "@intabiafusion/model-server-products",
       "projectFolder": "models/server-products",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/questions",
+      "packageName": "@intabiafusion/questions",
       "projectFolder": "plugins/questions",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/questions-assets",
+      "packageName": "@intabiafusion/questions-assets",
       "projectFolder": "plugins/questions-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/questions-resources",
+      "packageName": "@intabiafusion/questions-resources",
       "projectFolder": "plugins/questions-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-questions",
+      "packageName": "@intabiafusion/model-questions",
       "projectFolder": "models/questions",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/training",
+      "packageName": "@intabiafusion/training",
       "projectFolder": "plugins/training",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/training-assets",
+      "packageName": "@intabiafusion/training-assets",
       "projectFolder": "plugins/training-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/training-resources",
+      "packageName": "@intabiafusion/training-resources",
       "projectFolder": "plugins/training-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-training",
+      "packageName": "@intabiafusion/server-training",
       "projectFolder": "server-plugins/training",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-training-resources",
+      "packageName": "@intabiafusion/server-training-resources",
       "projectFolder": "server-plugins/training-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-training",
+      "packageName": "@intabiafusion/model-training",
       "projectFolder": "models/training",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-training",
+      "packageName": "@intabiafusion/model-server-training",
       "projectFolder": "models/server-training",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop",
+      "packageName": "@intabiafusion/desktop",
       "projectFolder": "desktop",
       "shouldPublish": false
     },
@@ -2082,622 +2082,622 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/diffview",
+      "packageName": "@intabiafusion/diffview",
       "projectFolder": "plugins/diffview",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/diffview-assets",
+      "packageName": "@intabiafusion/diffview-assets",
       "projectFolder": "plugins/diffview-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/diffview-resources",
+      "packageName": "@intabiafusion/diffview-resources",
       "projectFolder": "plugins/diffview-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/github",
+      "packageName": "@intabiafusion/github",
       "projectFolder": "services/github/github",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/github-assets",
+      "packageName": "@intabiafusion/github-assets",
       "projectFolder": "services/github/github-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/github-resources",
+      "packageName": "@intabiafusion/github-resources",
       "projectFolder": "services/github/github-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-github",
+      "packageName": "@intabiafusion/model-github",
       "projectFolder": "services/github/model-github",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-github",
+      "packageName": "@intabiafusion/pod-github",
       "projectFolder": "services/github/pod-github",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-github",
+      "packageName": "@intabiafusion/server-github",
       "projectFolder": "services/github/server-github",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-github-resources",
+      "packageName": "@intabiafusion/server-github-resources",
       "projectFolder": "services/github/server-github-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-github-model",
+      "packageName": "@intabiafusion/server-github-model",
       "projectFolder": "services/github/server-github-model",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-preferences",
+      "packageName": "@intabiafusion/desktop-preferences",
       "projectFolder": "plugins/desktop-preferences",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-preferences-assets",
+      "packageName": "@intabiafusion/desktop-preferences-assets",
       "projectFolder": "plugins/desktop-preferences-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-preferences-resources",
+      "packageName": "@intabiafusion/desktop-preferences-resources",
       "projectFolder": "plugins/desktop-preferences-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-desktop-preferences",
+      "packageName": "@intabiafusion/model-desktop-preferences",
       "projectFolder": "models/desktop-preferences",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-downloads",
+      "packageName": "@intabiafusion/desktop-downloads",
       "projectFolder": "plugins/desktop-downloads",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pulse",
+      "packageName": "@intabiafusion/pulse",
       "projectFolder": "plugins/pulse",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-pulse",
+      "packageName": "@intabiafusion/model-pulse",
       "projectFolder": "models/pulse",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-downloads-assets",
+      "packageName": "@intabiafusion/desktop-downloads-assets",
       "projectFolder": "plugins/desktop-downloads-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/desktop-downloads-resources",
+      "packageName": "@intabiafusion/desktop-downloads-resources",
       "projectFolder": "plugins/desktop-downloads-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-desktop-downloads",
+      "packageName": "@intabiafusion/model-desktop-downloads",
       "projectFolder": "models/desktop-downloads",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-notification",
+      "packageName": "@intabiafusion/pod-notification",
       "projectFolder": "services/notification/pod-notification",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-telegram",
+      "packageName": "@intabiafusion/pod-telegram",
       "projectFolder": "services/telegram/pod-telegram",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-gmail",
+      "packageName": "@intabiafusion/pod-gmail",
       "projectFolder": "services/gmail/pod-gmail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-calendar",
+      "packageName": "@intabiafusion/pod-calendar",
       "projectFolder": "services/calendar/pod-calendar",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-calendar-mailer",
+      "packageName": "@intabiafusion/pod-calendar-mailer",
       "projectFolder": "services/calendar/pod-calendar-mailer",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-datalake",
+      "packageName": "@intabiafusion/pod-datalake",
       "projectFolder": "services/datalake/pod-datalake",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-billing",
+      "packageName": "@intabiafusion/pod-billing",
       "projectFolder": "services/billing/pod-billing",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-payment",
+      "packageName": "@intabiafusion/pod-payment",
       "projectFolder": "services/payment/pod-payment",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-love",
+      "packageName": "@intabiafusion/pod-love",
       "projectFolder": "services/love",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-print",
+      "packageName": "@intabiafusion/pod-print",
       "projectFolder": "services/print/pod-print",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-export",
+      "packageName": "@intabiafusion/pod-export",
       "projectFolder": "services/export/pod-export",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-sign",
+      "packageName": "@intabiafusion/pod-sign",
       "projectFolder": "services/sign/pod-sign",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/rekoni-service",
+      "packageName": "@intabiafusion/rekoni-service",
       "projectFolder": "services/rekoni",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-analytics-collector",
+      "packageName": "@intabiafusion/pod-analytics-collector",
       "projectFolder": "services/analytics-collector/pod-analytics-collector",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/analytics-collector",
+      "packageName": "@intabiafusion/analytics-collector",
       "projectFolder": "plugins/analytics-collector",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/analytics-collector-assets",
+      "packageName": "@intabiafusion/analytics-collector-assets",
       "projectFolder": "plugins/analytics-collector-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/analytics-collector-resources",
+      "packageName": "@intabiafusion/analytics-collector-resources",
       "projectFolder": "plugins/analytics-collector-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-ai-bot",
+      "packageName": "@intabiafusion/pod-ai-bot",
       "projectFolder": "services/ai-bot/pod-ai-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/love-agent",
+      "packageName": "@intabiafusion/love-agent",
       "projectFolder": "services/ai-bot/love-agent",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/ai-bot",
+      "packageName": "@intabiafusion/ai-bot",
       "projectFolder": "plugins/ai-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/ai-bot-resources",
+      "packageName": "@intabiafusion/ai-bot-resources",
       "projectFolder": "plugins/ai-bot-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-ai-bot",
+      "packageName": "@intabiafusion/model-ai-bot",
       "projectFolder": "models/ai-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-ai-bot",
+      "packageName": "@intabiafusion/model-server-ai-bot",
       "projectFolder": "models/server-ai-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-ai-bot",
+      "packageName": "@intabiafusion/server-ai-bot",
       "projectFolder": "server-plugins/ai-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-ai-bot-resources",
+      "packageName": "@intabiafusion/server-ai-bot-resources",
       "projectFolder": "server-plugins/ai-bot-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-telegram-bot",
+      "packageName": "@intabiafusion/pod-telegram-bot",
       "projectFolder": "services/telegram-bot/pod-telegram-bot",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/openai",
+      "packageName": "@intabiafusion/openai",
       "projectFolder": "plugins/openai",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/scripts",
+      "packageName": "@intabiafusion/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-test-management",
+      "packageName": "@intabiafusion/model-test-management",
       "projectFolder": "models/test-management",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/test-management",
+      "packageName": "@intabiafusion/test-management",
       "projectFolder": "plugins/test-management",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/test-management-resources",
+      "packageName": "@intabiafusion/test-management-resources",
       "projectFolder": "plugins/test-management-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/test-management-assets",
+      "packageName": "@intabiafusion/test-management-assets",
       "projectFolder": "plugins/test-management-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/survey",
+      "packageName": "@intabiafusion/survey",
       "projectFolder": "plugins/survey",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-survey",
+      "packageName": "@intabiafusion/model-survey",
       "projectFolder": "models/survey",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/survey-assets",
+      "packageName": "@intabiafusion/survey-assets",
       "projectFolder": "plugins/survey-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/survey-resources",
+      "packageName": "@intabiafusion/survey-resources",
       "projectFolder": "plugins/survey-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/card",
+      "packageName": "@intabiafusion/card",
       "projectFolder": "plugins/card",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-card",
+      "packageName": "@intabiafusion/model-card",
       "projectFolder": "models/card",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/card-assets",
+      "packageName": "@intabiafusion/card-assets",
       "projectFolder": "plugins/card-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/card-resources",
+      "packageName": "@intabiafusion/card-resources",
       "projectFolder": "plugins/card-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-card",
+      "packageName": "@intabiafusion/server-card",
       "projectFolder": "server-plugins/card",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-card-resources",
+      "packageName": "@intabiafusion/server-card-resources",
       "projectFolder": "server-plugins/card-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-card",
+      "packageName": "@intabiafusion/model-server-card",
       "projectFolder": "models/server-card",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/mail",
+      "packageName": "@intabiafusion/mail",
       "projectFolder": "plugins/mail",
       "shouldPublish": true
     },
     {
-      "packageName": "@hcengineering/model-mail",
+      "packageName": "@intabiafusion/model-mail",
       "projectFolder": "models/mail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/mail-assets",
+      "packageName": "@intabiafusion/mail-assets",
       "projectFolder": "plugins/mail-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-mail",
+      "packageName": "@intabiafusion/pod-mail",
       "projectFolder": "services/mail/pod-mail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chat",
+      "packageName": "@intabiafusion/chat",
       "projectFolder": "plugins/chat",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chat-assets",
+      "packageName": "@intabiafusion/chat-assets",
       "projectFolder": "plugins/chat-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/chat-resources",
+      "packageName": "@intabiafusion/chat-resources",
       "projectFolder": "plugins/chat-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-chat",
+      "packageName": "@intabiafusion/model-chat",
       "projectFolder": "models/chat",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/process",
+      "packageName": "@intabiafusion/process",
       "projectFolder": "plugins/process",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/process-assets",
+      "packageName": "@intabiafusion/process-assets",
       "projectFolder": "plugins/process-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/process-resources",
+      "packageName": "@intabiafusion/process-resources",
       "projectFolder": "plugins/process-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-process",
+      "packageName": "@intabiafusion/model-process",
       "projectFolder": "models/process",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-process",
+      "packageName": "@intabiafusion/server-process",
       "projectFolder": "server-plugins/process",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-server-process",
+      "packageName": "@intabiafusion/model-server-process",
       "projectFolder": "models/server-process",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-process-resources",
+      "packageName": "@intabiafusion/server-process-resources",
       "projectFolder": "server-plugins/process-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/inbox",
+      "packageName": "@intabiafusion/inbox",
       "projectFolder": "plugins/inbox",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/inbox-assets",
+      "packageName": "@intabiafusion/inbox-assets",
       "projectFolder": "plugins/inbox-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/inbox-resources",
+      "packageName": "@intabiafusion/inbox-resources",
       "projectFolder": "plugins/inbox-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-inbox",
+      "packageName": "@intabiafusion/model-inbox",
       "projectFolder": "models/inbox",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-mail-worker",
+      "packageName": "@intabiafusion/pod-mail-worker",
       "projectFolder": "services/mail/pod-mail-worker",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/achievement",
+      "packageName": "@intabiafusion/achievement",
       "projectFolder": "plugins/achievement",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/achievement-assets",
+      "packageName": "@intabiafusion/achievement-assets",
       "projectFolder": "plugins/achievement-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/achievement-resources",
+      "packageName": "@intabiafusion/achievement-resources",
       "projectFolder": "plugins/achievement-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-achievement",
+      "packageName": "@intabiafusion/model-achievement",
       "projectFolder": "models/achievement",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/kvs-client",
+      "packageName": "@intabiafusion/kvs-client",
       "projectFolder": "packages/kvs-client",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/communication",
+      "packageName": "@intabiafusion/communication",
       "projectFolder": "plugins/communication",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/communication-assets",
+      "packageName": "@intabiafusion/communication-assets",
       "projectFolder": "plugins/communication-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/communication-resources",
+      "packageName": "@intabiafusion/communication-resources",
       "projectFolder": "plugins/communication-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-communication",
+      "packageName": "@intabiafusion/model-communication",
       "projectFolder": "models/communication",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/mail-common",
+      "packageName": "@intabiafusion/mail-common",
       "projectFolder": "services/mail/mail-common",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/emoji",
+      "packageName": "@intabiafusion/emoji",
       "projectFolder": "plugins/emoji",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/emoji-assets",
+      "packageName": "@intabiafusion/emoji-assets",
       "projectFolder": "plugins/emoji-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/emoji-resources",
+      "packageName": "@intabiafusion/emoji-resources",
       "projectFolder": "plugins/emoji-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-emoji",
+      "packageName": "@intabiafusion/model-emoji",
       "projectFolder": "models/emoji",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/backup-api-pod",
+      "packageName": "@intabiafusion/backup-api-pod",
       "projectFolder": "services/backup/backup-api-pod",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/billing",
+      "packageName": "@intabiafusion/billing",
       "projectFolder": "plugins/billing",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/billing-assets",
+      "packageName": "@intabiafusion/billing-assets",
       "projectFolder": "plugins/billing-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/billing-resources",
+      "packageName": "@intabiafusion/billing-resources",
       "projectFolder": "plugins/billing-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-billing",
+      "packageName": "@intabiafusion/model-billing",
       "projectFolder": "models/billing",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-process",
+      "packageName": "@intabiafusion/pod-process",
       "projectFolder": "services/process",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/integration-client",
+      "packageName": "@intabiafusion/integration-client",
       "projectFolder": "packages/integration-client",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-huly-mail",
+      "packageName": "@intabiafusion/model-huly-mail",
       "projectFolder": "models/huly-mail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/huly-mail",
+      "packageName": "@intabiafusion/huly-mail",
       "projectFolder": "plugins/huly-mail",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/huly-mail-assets",
+      "packageName": "@intabiafusion/huly-mail-assets",
       "projectFolder": "plugins/huly-mail-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/huly-mail-resources",
+      "packageName": "@intabiafusion/huly-mail-resources",
       "projectFolder": "plugins/huly-mail-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-ai-assistant",
+      "packageName": "@intabiafusion/model-ai-assistant",
       "projectFolder": "models/ai-assistant",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/ai-assistant",
+      "packageName": "@intabiafusion/ai-assistant",
       "projectFolder": "plugins/ai-assistant",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/ai-assistant-assets",
+      "packageName": "@intabiafusion/ai-assistant-assets",
       "projectFolder": "plugins/ai-assistant-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/ai-assistant-resources",
+      "packageName": "@intabiafusion/ai-assistant-resources",
       "projectFolder": "plugins/ai-assistant-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-worker",
+      "packageName": "@intabiafusion/pod-worker",
       "projectFolder": "services/worker",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-translate",
+      "packageName": "@intabiafusion/pod-translate",
       "projectFolder": "services/translate",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-activity",
+      "packageName": "@intabiafusion/pod-activity",
       "projectFolder": "services/activity",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-crm",
+      "packageName": "@intabiafusion/pod-crm",
       "projectFolder": "services/crm/pod-crm",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/rating",
+      "packageName": "@intabiafusion/rating",
       "projectFolder": "plugins/rating",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/rating-assets",
+      "packageName": "@intabiafusion/rating-assets",
       "projectFolder": "plugins/rating-assets",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/rating-resources",
+      "packageName": "@intabiafusion/rating-resources",
       "projectFolder": "plugins/rating-resources",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/server-rating",
+      "packageName": "@intabiafusion/server-rating",
       "projectFolder": "server-plugins/rating",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/model-rating",
+      "packageName": "@intabiafusion/model-rating",
       "projectFolder": "models/rating",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-rating",
+      "packageName": "@intabiafusion/pod-rating",
       "projectFolder": "services/rating",
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-stream",
+      "packageName": "@intabiafusion/pod-stream",
       "projectFolder": "foundations/stream",
       "shouldPublish": false
     },
@@ -2707,13 +2707,13 @@
       "shouldPublish": false
     },
     {
-      "packageName": "@hcengineering/pod-notifications",
+      "packageName": "@intabiafusion/pod-notifications",
       "projectFolder": "services/notifications",
       "shouldPublish": false
     }
     // ,
     // {
-    //   "packageName": "@hcengineering/pod-hulylake",
+    //   "packageName": "@intabiafusion/pod-hulylake",
     //   "projectFolder": "foundations/hulylake",
     //   "shouldPublish": false
     // }

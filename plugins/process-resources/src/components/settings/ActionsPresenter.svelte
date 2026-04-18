@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { Step } from '@hcengineering/process'
+  import { Doc } from '@intabiafusion/core'
+  import { Step } from '@intabiafusion/process'
 
   export let value: Step<Doc>[]
 </script>

@@ -7,7 +7,7 @@ import {
   getAudioStats as getAudioStatsDsp,
   normalizeAudio as normalizeAudioDsp,
   createWavFileFromFloat
-} from '@hcengineering/audio-dsp'
+} from '@intabiafusion/audio-dsp'
 
 /** Target RMS level for normalization */
 const TARGET_RMS = 0.2

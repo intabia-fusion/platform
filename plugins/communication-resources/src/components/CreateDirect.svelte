@@ -13,10 +13,10 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { Data, notEmpty, Ref } from '@hcengineering/core'
-  import { Employee, formatName, getCurrentEmployee, getCurrentEmployeeSpace } from '@hcengineering/contact'
-  import { Direct } from '@hcengineering/communication'
-  import { employeeByIdStore } from '@hcengineering/contact-resources'
+  import { Data, notEmpty, Ref } from '@intabiafusion/core'
+  import { Employee, formatName, getCurrentEmployee, getCurrentEmployeeSpace } from '@intabiafusion/contact'
+  import { Direct } from '@intabiafusion/communication'
+  import { employeeByIdStore } from '@intabiafusion/contact-resources'
 
   export let collaborators: Ref<Employee>[] = []
   export let data: Partial<Data<Direct>>

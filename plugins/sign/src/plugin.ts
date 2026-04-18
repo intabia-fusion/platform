@@ -2,7 +2,7 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { type Plugin, plugin, Metadata } from '@hcengineering/platform'
+import { type Plugin, plugin, Metadata } from '@intabiafusion/platform'
 
 export const signId = 'sign' as Plugin
 

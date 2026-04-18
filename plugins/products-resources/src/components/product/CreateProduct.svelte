@@ -19,11 +19,11 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
-  import { type DocumentSpaceType } from '@hcengineering/controlled-documents'
-  import { type Product, ProductVersionState } from '@hcengineering/products'
-  import { type Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import { type DocumentSpaceType } from '@intabiafusion/controlled-documents'
+  import { type Product, ProductVersionState } from '@intabiafusion/products'
+  import { type Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter, AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
   import core, {
     AccountUuid,
     Data,
@@ -36,9 +36,9 @@
     generateId,
     getCurrentAccount,
     notEmpty
-  } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Card, MessageBox, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Card, MessageBox, IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
   import {
     Button,
     DropdownLabelsIntl,
@@ -49,9 +49,9 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { IconPicker, SpaceTypeSelector } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { IconPicker, SpaceTypeSelector } from '@intabiafusion/view-resources'
 
   import products from '../../plugin'
 

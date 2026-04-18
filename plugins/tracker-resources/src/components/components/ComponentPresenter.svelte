@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { translateCB } from '@hcengineering/platform'
-  import { Component } from '@hcengineering/tracker'
-  import { Icon, themeStore } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import { WithLookup } from '@intabiafusion/core'
+  import { translateCB } from '@intabiafusion/platform'
+  import { Component } from '@intabiafusion/tracker'
+  import { Icon, themeStore } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
   import tracker from '../../plugin'
 
   export let value: WithLookup<Component> | undefined

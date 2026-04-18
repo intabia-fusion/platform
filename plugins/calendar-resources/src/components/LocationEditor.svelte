@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, EditBox, Icon, IconArrowRight, parseURL, desktopPlatform } from '@hcengineering/ui'
+  import { Button, EditBox, Icon, IconArrowRight, parseURL, desktopPlatform } from '@intabiafusion/ui'
   import calendar from '../plugin'
 
   export let value: string | undefined

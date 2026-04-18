@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Avatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { BrowserNotification } from '@hcengineering/notification'
-  import { Button, navigate, Notification as PlatformNotification, NotificationToast } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import chunter, { ThreadMessage } from '@hcengineering/chunter'
-  import { getResource } from '@hcengineering/platform'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { getClient, playSound } from '@hcengineering/presentation'
+  import { Avatar, getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { BrowserNotification } from '@intabiafusion/notification'
+  import { Button, navigate, Notification as PlatformNotification, NotificationToast } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import chunter, { ThreadMessage } from '@intabiafusion/chunter'
+  import { getResource } from '@intabiafusion/platform'
+  import activity, { ActivityMessage } from '@intabiafusion/activity'
+  import { getClient, playSound } from '@intabiafusion/presentation'
   import { pushAvailable, subscribePush } from '../utils'
   import plugin from '../plugin'
   import { onMount } from 'svelte'
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
 
   export let notification: PlatformNotification
   export let onRemove: () => void

@@ -18,14 +18,14 @@
     ActivityMessageViewType,
     DocUpdateMessage,
     DocUpdateMessageViewlet
-  } from '@hcengineering/activity'
-  import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, Component, ShowMore } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
+  } from '@intabiafusion/activity'
+  import { getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Action, Component, ShowMore } from '@intabiafusion/ui'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { buildRemovedDoc, checkIsObjectRemoved } from '@intabiafusion/view-resources'
 
   import ActivityMessageTemplate from '../activity-message/ActivityMessageTemplate.svelte'
   import DocUpdateMessageAttributes from './DocUpdateMessageAttributes.svelte'
@@ -34,7 +34,7 @@
 
   import { getAttributeModel, getCollectionAttribute } from '../../activityMessagesUtils'
   import { getIsTextType } from '../../utils'
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
 
   export let value: DocUpdateMessage
   export let doc: Doc | undefined = undefined

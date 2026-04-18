@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentRefInput } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { AttachedData, getCurrentAccount, Markup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Request, RequestStatus } from '@hcengineering/request'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { type RefAction } from '@hcengineering/text-editor'
-  import { Button } from '@hcengineering/ui'
+  import { AttachmentRefInput } from '@intabiafusion/attachment-resources'
+  import chunter, { ChatMessage } from '@intabiafusion/chunter'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { AttachedData, getCurrentAccount, Markup } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Request, RequestStatus } from '@intabiafusion/request'
+  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  import { type RefAction } from '@intabiafusion/text-editor'
+  import { Button } from '@intabiafusion/ui'
 
   import request from '../plugin'
   import Comments from './icons/Comments.svelte'

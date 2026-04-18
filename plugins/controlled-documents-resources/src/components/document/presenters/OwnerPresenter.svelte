@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import documents, { Document } from '@hcengineering/controlled-documents'
-  import { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { PersonPresenter, checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import documents, { Document } from '@intabiafusion/controlled-documents'
+  import { Employee, getCurrentEmployee } from '@intabiafusion/contact'
+  import { PersonPresenter, checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { eventToHTMLElement, showPopup } from '@intabiafusion/ui'
 
   import document from '../../../plugin'
   import ChangeOwnerPopup from '../popups/ChangeOwnerPopup.svelte'

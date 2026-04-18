@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import contact, { Employee, Person } from '@hcengineering/contact'
-import core, { Doc, matchQuery, Ref, Timestamp } from '@hcengineering/core'
-import { Execution, parseContext } from '@hcengineering/process'
-import { ProcessControl } from '@hcengineering/server-process'
+import contact, { Employee, Person } from '@intabiafusion/contact'
+import core, { Doc, matchQuery, Ref, Timestamp } from '@intabiafusion/core'
+import { Execution, parseContext } from '@intabiafusion/process'
+import { ProcessControl } from '@intabiafusion/server-process'
 import { getContextValue } from './utils'
-import cardPlugin from '@hcengineering/card'
+import cardPlugin from '@intabiafusion/card'
 
 // #region ArrayReduce
 

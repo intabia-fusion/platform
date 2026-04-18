@@ -13,21 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
-  import { Widget } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
-  import { ChatWidgetTab } from '@hcengineering/chunter'
-  import { InboxNotification } from '@hcengineering/notification'
+  import { Action, Menu, ModernTab, showPopup } from '@intabiafusion/ui'
+  import { Widget } from '@intabiafusion/workbench'
+  import { getResource } from '@intabiafusion/platform'
+  import { ChatWidgetTab } from '@intabiafusion/chunter'
+  import { InboxNotification } from '@intabiafusion/notification'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
     isActivityNotification,
     isMentionNotification,
     NotifyMarker
-  } from '@hcengineering/notification-resources'
+  } from '@intabiafusion/notification-resources'
   import chunter from '../plugin'
   import { onDestroy } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient } from '@intabiafusion/presentation'
 
   export let tab: ChatWidgetTab
   export let widget: Widget

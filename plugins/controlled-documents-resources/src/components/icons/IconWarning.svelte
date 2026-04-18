@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { FlamingoColor } from '@hcengineering/ui'
+  import { FlamingoColor } from '@intabiafusion/ui'
 
   export let size: 'small' | 'medium' | 'large'
   const fill: string = FlamingoColor

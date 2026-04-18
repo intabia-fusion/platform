@@ -14,17 +14,17 @@
 // limitations under the License.
 //
 
-import contact, { contactId } from '@hcengineering/contact'
-import { type Client, type Doc } from '@hcengineering/core'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { type LabelAndProps, type Location } from '@hcengineering/ui/src/types'
+import contact, { contactId } from '@intabiafusion/contact'
+import { type Client, type Doc } from '@intabiafusion/core'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { type LabelAndProps, type Location } from '@intabiafusion/ui/src/types'
 import {
   type CreateAggregationManagerFunc,
   type GrouppingManagerResource,
   type FilterFunction,
   type SortFunc,
   type ViewActionAvailabilityFunction
-} from '@hcengineering/view'
+} from '@intabiafusion/view'
 
 export default mergeIds(contactId, contact, {
   string: {

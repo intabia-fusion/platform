@@ -2,7 +2,7 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import { trainingChangeOwnerAction } from './actions/trainingChangeOwnerAction'
 import { trainingDraftAction } from './actions/trainingDraftAction'
 import { trainingDeleteAction } from './actions/trainingDeleteAction'

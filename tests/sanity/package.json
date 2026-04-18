@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/tests-sanity",
-  "version": "0.7.0",
+  "name": "@intabiafusion/tests-sanity",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@hcengineering/default-package",
+  "template": "@intabiafusion/default-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -29,7 +29,7 @@
     "allure:generate": "allure generate allure-results -o allure-report --clean"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/jest": "^29.5.5",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -49,10 +49,10 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "cross-env": "~7.0.3",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/client-resources": "workspace:^0.7.18",
-    "@hcengineering/account": "workspace:^0.7.0",
-    "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/server-token": "workspace:^0.7.17"
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/client-resources": "workspace:^1.0.0",
+    "@intabiafusion/account": "workspace:^1.0.0",
+    "@intabiafusion/account-client": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0"
   }
 }

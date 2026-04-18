@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { Ref, SortingOrder } from '@hcengineering/core'
-  import { Process, State } from '@hcengineering/process'
-  import { Dropdown, DropdownLabels } from '@hcengineering/ui'
+  import { Ref, SortingOrder } from '@intabiafusion/core'
+  import { Process, State } from '@intabiafusion/process'
+  import { Dropdown, DropdownLabels } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { buildResult, Modes, parseValue } from '../../query'
   import ModeSelector from './ModeSelector.svelte'
-  import { ObjectBox } from '@hcengineering/view-resources'
-  import { createQuery } from '@hcengineering/presentation'
+  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { createQuery } from '@intabiafusion/presentation'
 
   export let readonly: boolean
   export let target: Ref<Process> | undefined

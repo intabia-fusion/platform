@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, eventToHTMLElement, IconFilter, showPopup } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
-  import activity, { ActivityMessagesFilter } from '@hcengineering/activity'
-  import view from '@hcengineering/view-resources/src/plugin'
-  import { getClient } from '@hcengineering/presentation'
-  import { ActivityMessagesFilterPopup } from '@hcengineering/activity-resources'
+  import { Button, eventToHTMLElement, IconFilter, showPopup } from '@intabiafusion/ui'
+  import { Ref } from '@intabiafusion/core'
+  import activity, { ActivityMessagesFilter } from '@intabiafusion/activity'
+  import view from '@intabiafusion/view-resources/src/plugin'
+  import { getClient } from '@intabiafusion/presentation'
+  import { ActivityMessagesFilterPopup } from '@intabiafusion/activity-resources'
 
   export let selectedFilters: Ref<ActivityMessagesFilter>[] = []
 

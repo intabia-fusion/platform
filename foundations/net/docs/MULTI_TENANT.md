@@ -107,7 +107,7 @@ const workspace = await client.get('workspace' as ContainerKind, {
 ```typescript
 // Agent factory with tenant-aware containers
 // Note: For production code, use serveAgent() on the client
-import { createNetworkClient } from '@hcengineering/network-client'
+import { createNetworkClient } from '@intabiafusion/network-client'
 
 const client = createNetworkClient('localhost:3737')
 await client.waitConnection(5000)
@@ -553,8 +553,8 @@ export class MeteredContainer implements Container {
 ```typescript
 // See examples/03-multi-tenant.ts for complete working example
 
-import { AgentImpl } from '@hcengineering/network-core'
-import type { GetOptions, ContainerUuid } from '@hcengineering/network-core'
+import { AgentImpl } from '@intabiafusion/network-core'
+import type { GetOptions, ContainerUuid } from '@intabiafusion/network-core'
 
 // Define tenant workspace container
 class SaaSTenantContainer implements Container {

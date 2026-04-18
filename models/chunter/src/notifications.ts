@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import notification from '@hcengineering/model-notification'
-import core, { defineCollaborators } from '@hcengineering/model-core'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
-import { type MessageNotificationType } from '@hcengineering/notification'
-import { type ChatMessage, type ThreadMessage } from '@hcengineering/chunter'
+import { type Builder } from '@intabiafusion/model'
+import notification from '@intabiafusion/model-notification'
+import core, { defineCollaborators } from '@intabiafusion/model-core'
+import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
+import { type MessageNotificationType } from '@intabiafusion/notification'
+import { type ChatMessage, type ThreadMessage } from '@intabiafusion/chunter'
 
 import chunter from './plugin'
 

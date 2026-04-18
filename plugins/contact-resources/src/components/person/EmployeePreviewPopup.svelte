@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person } from '@hcengineering/contact'
-  import { AccountUuid, Class, Doc, Ref } from '@hcengineering/core'
-  import { ComponentExtensions, createQuery, getClient, hasResource } from '@hcengineering/presentation'
-  import { ButtonIcon, Component, navigate } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { getObjectLinkFragment } from '@hcengineering/view-resources'
+  import { Employee, Person } from '@intabiafusion/contact'
+  import { AccountUuid, Class, Doc, Ref } from '@intabiafusion/core'
+  import { ComponentExtensions, createQuery, getClient, hasResource } from '@intabiafusion/presentation'
+  import { ButtonIcon, Component, navigate } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { getObjectLinkFragment } from '@intabiafusion/view-resources'
 
-  import rating, { type PersonRating } from '@hcengineering/rating'
+  import rating, { type PersonRating } from '@intabiafusion/rating'
   import { EmployeePresenter, getPersonByPersonRefStore } from '../../index'
   import contact from '../../plugin'
   import { employeeByIdStore } from '../../utils'

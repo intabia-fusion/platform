@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Timestamp } from '@hcengineering/core'
-  import { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
-  import { Button, EditBox, Grid, Label, Loading, MiniToggle, ticker } from '@hcengineering/ui'
+  import { AccountRole, getCurrentAccount, hasAccountRole, Timestamp } from '@intabiafusion/core'
+  import { copyTextToClipboard, createQuery } from '@intabiafusion/presentation'
+  import setting from '@intabiafusion/setting'
+  import { Button, EditBox, Grid, Label, Loading, MiniToggle, ticker } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import login from '../plugin'

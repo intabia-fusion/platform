@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Markup } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import textEditor from '@hcengineering/text-editor'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Icon, Label } from '@hcengineering/ui'
+  import { Markup } from '@intabiafusion/core'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import textEditor from '@intabiafusion/text-editor'
+  import type { AnySvelteComponent } from '@intabiafusion/ui'
+  import { Icon, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import { EditorKitOptions } from '../kits/editor-kit'

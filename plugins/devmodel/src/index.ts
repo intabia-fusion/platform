@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Asset, Metadata, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { AnyComponent } from '@hcengineering/ui'
+import type { Asset, Metadata, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import type { AnyComponent } from '@intabiafusion/ui'
 
 /**
  * @public

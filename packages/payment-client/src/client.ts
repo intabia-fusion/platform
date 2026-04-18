@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { concatLink, type WorkspaceUuid } from '@hcengineering/core'
+import { concatLink, type WorkspaceUuid } from '@intabiafusion/core'
 import { CheckoutResponse, SubscribeRequest, CheckoutStatus, SubscriptionData } from './types'
 import { PaymentError, NetworkError } from './error'
 

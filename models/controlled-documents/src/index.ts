@@ -13,35 +13,35 @@
 // limitations under the License.
 //
 
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
-import contact from '@hcengineering/contact'
+import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
+import contact from '@intabiafusion/contact'
 import documentsPlugin, {
   documentsId,
   DocumentState,
   type Document,
   type DocumentSpace,
   type DocumentTemplate
-} from '@hcengineering/controlled-documents'
-import exportPlugin from '@hcengineering/export'
-import { type Builder } from '@hcengineering/model'
-import chunter from '@hcengineering/model-chunter'
-import core, { defineCollaborators } from '@hcengineering/model-core'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
-import presentation from '@hcengineering/model-presentation'
-import print from '@hcengineering/model-print'
-import request from '@hcengineering/model-request'
-import tracker from '@hcengineering/model-tracker'
-import view, { classPresenter, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import converter from '@hcengineering/converter'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
-import contacts from '@hcengineering/model-contact'
-import setting from '@hcengineering/setting'
-import tags from '@hcengineering/tags'
-import textEditor from '@hcengineering/text-editor'
+} from '@intabiafusion/controlled-documents'
+import exportPlugin from '@intabiafusion/export'
+import { type Builder } from '@intabiafusion/model'
+import chunter from '@intabiafusion/model-chunter'
+import core, { defineCollaborators } from '@intabiafusion/model-core'
+import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
+import presentation from '@intabiafusion/model-presentation'
+import print from '@intabiafusion/model-print'
+import request from '@intabiafusion/model-request'
+import tracker from '@intabiafusion/model-tracker'
+import view, { classPresenter, createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import converter from '@intabiafusion/converter'
+import notification, { type MessageNotificationType } from '@intabiafusion/notification'
+import contacts from '@intabiafusion/model-contact'
+import setting from '@intabiafusion/setting'
+import tags from '@intabiafusion/tags'
+import textEditor from '@intabiafusion/text-editor'
 
-import { AccountRole, type Class, type Doc, type Lookup, type Ref } from '@hcengineering/core'
-import { type Action } from '@hcengineering/view'
+import { AccountRole, type Class, type Doc, type Lookup, type Ref } from '@intabiafusion/core'
+import { type Action } from '@intabiafusion/view'
 import { definePermissions } from './permissions'
 import documents from './plugin'
 import { defineSpaceType } from './spaceType'
@@ -72,7 +72,7 @@ import {
   TTypeDocumentState
 } from './types'
 
-export { documentsId } from '@hcengineering/controlled-documents/src/index'
+export { documentsId } from '@intabiafusion/controlled-documents/src/index'
 export * from './types'
 
 function defineRelationMetadata (builder: Builder): void {

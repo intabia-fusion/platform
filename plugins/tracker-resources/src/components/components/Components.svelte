@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Component } from '@hcengineering/tracker'
+  import { DocumentQuery } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Component } from '@intabiafusion/tracker'
   import tracker from '../../plugin'
   import { ComponentsFilterMode } from '../../utils'
   import ComponentBrowser from './ComponentBrowser.svelte'

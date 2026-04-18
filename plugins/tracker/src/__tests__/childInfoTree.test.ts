@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-import { type Ref } from '@hcengineering/core'
+import { type Ref } from '@intabiafusion/core'
 import { type Issue, type IssueChildInfo, reduceChildInfoTree } from '..'
 
 function makeChildInfo (childId: string, estimation: number, reportedTime: number, parentId?: string): IssueChildInfo {

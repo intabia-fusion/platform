@@ -23,10 +23,10 @@
     Menu,
     showPopup,
     NavItem
-  } from '@hcengineering/ui'
-  import { NotifyMarker } from '@hcengineering/notification-resources'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import notification from '@hcengineering/notification'
+  } from '@intabiafusion/ui'
+  import { NotifyMarker } from '@intabiafusion/notification-resources'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import notification from '@intabiafusion/notification'
 
   export let _id: string
   export let icon: Asset | AnySvelteComponent | undefined

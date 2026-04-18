@@ -1,5 +1,5 @@
-import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@hcengineering/core'
-import type { StorageConfiguration } from '@hcengineering/server-core'
+import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@intabiafusion/core'
+import type { StorageConfiguration } from '@intabiafusion/server-core'
 import { S3Service, processConfigFromEnv, type S3Config } from '.'
 
 const MB = 1024 * 1024

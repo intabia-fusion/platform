@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { concatLink } from '@hcengineering/core'
-import { getMetadata, PlatformError, unknownError } from '@hcengineering/platform'
+import { concatLink } from '@intabiafusion/core'
+import { getMetadata, PlatformError, unknownError } from '@intabiafusion/platform'
 import plugin from './plugin'
 import { ReconiDocument } from './types'
 

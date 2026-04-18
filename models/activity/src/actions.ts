@@ -1,5 +1,5 @@
-import type { Builder } from '@hcengineering/model'
-import view, { createAction } from '@hcengineering/model-view'
+import type { Builder } from '@intabiafusion/model'
+import view, { createAction } from '@intabiafusion/model-view'
 
 import activity from './plugin'
 

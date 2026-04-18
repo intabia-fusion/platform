@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card } from '@hcengineering/card'
-  import chat from '@hcengineering/chat'
-  import communication, { GuestCommunicationSettings } from '@hcengineering/communication'
-  import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
-  import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
+  import card, { Card } from '@intabiafusion/card'
+  import chat from '@intabiafusion/chat'
+  import communication, { GuestCommunicationSettings } from '@intabiafusion/communication'
+  import contact, { AvatarType, ensureEmployeeForPerson } from '@intabiafusion/contact'
+  import { EditableAvatar, getAccountClient } from '@intabiafusion/contact-resources'
   import core, {
     type Account,
     AccountRole,
@@ -28,11 +28,11 @@
     readOnlyGuestAccountUuid,
     Ref,
     WorkspaceAccountPermission
-  } from '@hcengineering/core'
-  import { loginId } from '@hcengineering/login'
-  import { translateCB } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
-  import { WorkspaceSetting } from '@hcengineering/setting'
+  } from '@intabiafusion/core'
+  import { loginId } from '@intabiafusion/login'
+  import { translateCB } from '@intabiafusion/platform'
+  import { createQuery, getClient, MessageBox, uiContext } from '@intabiafusion/presentation'
+  import { WorkspaceSetting } from '@intabiafusion/setting'
   import {
     Breadcrumb,
     Button,
@@ -55,7 +55,7 @@
     showPopup,
     themeStore,
     Toggle
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import settingsRes from '../plugin'
   import ApiTokenPopup from './ApiTokenPopup.svelte'
   import WorkspacePermissionEditor from './WorkspacePermissionEditor.svelte'

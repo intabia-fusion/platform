@@ -17,12 +17,12 @@ import documents, {
   type Document,
   type Project,
   type ProjectDocument
-} from '@hcengineering/controlled-documents'
-import { type Doc, type Ref } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
-import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@hcengineering/ui'
-import view, { type ObjectPanel } from '@hcengineering/view'
-import { accessDeniedStore } from '@hcengineering/view-resources'
+} from '@intabiafusion/controlled-documents'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
+import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@intabiafusion/ui'
+import view, { type ObjectPanel } from '@intabiafusion/view'
+import { accessDeniedStore } from '@intabiafusion/view-resources'
 import slugify from 'slugify'
 
 export function getPanelFragment<T extends Doc> (object: Pick<T, '_class' | '_id'>): string {

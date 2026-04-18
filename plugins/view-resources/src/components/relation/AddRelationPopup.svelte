@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Class, Data, Doc, Ref, Relation, SortingOrder } from '@hcengineering/core'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import { Dropdown, ListItem } from '@hcengineering/ui'
+  import core, { Association, Class, Data, Doc, Ref, Relation, SortingOrder } from '@intabiafusion/core'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import { Dropdown, ListItem } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import ObjectBox from '../ObjectBox.svelte'
 

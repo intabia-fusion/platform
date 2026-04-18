@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ratingPlugin, { DocReaction, ReactionKind } from '@hcengineering/rating'
-  import { Icon } from '@hcengineering/ui'
+  import ratingPlugin, { DocReaction, ReactionKind } from '@intabiafusion/rating'
+  import { Icon } from '@intabiafusion/ui'
   import ReactionPresenter from './ReactionPresenter.svelte'
 
   export let value: DocReaction | null = null

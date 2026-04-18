@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { Room, isOffice, type ParticipantInfo } from '@hcengineering/love'
+  import { EditBox, ModernButton } from '@intabiafusion/ui'
+  import { Room, isOffice, type ParticipantInfo } from '@intabiafusion/love'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { getMetadata, IntlString } from '@hcengineering/platform'
-  import presentation from '@hcengineering/presentation'
+  import { getMetadata, IntlString } from '@intabiafusion/platform'
+  import presentation from '@intabiafusion/presentation'
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
@@ -26,7 +26,7 @@
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
   import RoomPreview from './RoomPreview.svelte'
-  import { Ref } from '@hcengineering/core'
+  import { Ref } from '@intabiafusion/core'
 
   export let object: Room
 

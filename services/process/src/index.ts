@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
-import { getPlatformQueue } from '@hcengineering/kafka'
-import { setMetadata } from '@hcengineering/platform'
-import { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
-import { ProcessMessage } from '@hcengineering/server-process'
-import serverToken from '@hcengineering/server-token'
+import { Analytics } from '@intabiafusion/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
+import { newMetrics } from '@intabiafusion/core'
+import { getPlatformQueue } from '@intabiafusion/kafka'
+import { setMetadata } from '@intabiafusion/platform'
+import { initStatisticsContext, QueueTopic } from '@intabiafusion/server-core'
+import { ProcessMessage } from '@intabiafusion/server-process'
+import serverToken from '@intabiafusion/server-token'
 import { join } from 'path'
 import config from './config'
 import { prepare } from './init'

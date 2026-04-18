@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getAttributeEditor, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getAttributeEditor, getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
+  import { Process } from '@intabiafusion/process'
+  import { AnySvelteComponent } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext } from '../../utils'
   import ProcessAttribute from '../ProcessAttribute.svelte'

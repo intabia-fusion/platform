@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
+  import { Attachment } from '@intabiafusion/attachment'
   import {
     type Blob,
     BlobMetadata,
@@ -26,8 +26,8 @@
     Space,
     toIdMap,
     TxOperations
-  } from '@hcengineering/core'
-  import { IntlString, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  } from '@intabiafusion/core'
+  import { IntlString, setPlatformStatus, unknownError } from '@intabiafusion/platform'
   import {
     createQuery,
     deleteFile,
@@ -36,12 +36,12 @@
     FileOrBlob,
     getClient,
     uploadFile
-  } from '@hcengineering/presentation'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import textEditor, { type RefAction } from '@hcengineering/text-editor'
-  import { AttachIcon, EditorKitOptions, StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { ButtonSize } from '@hcengineering/ui'
-  import { type FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
+  } from '@intabiafusion/presentation'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import textEditor, { type RefAction } from '@intabiafusion/text-editor'
+  import { AttachIcon, EditorKitOptions, StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import { ButtonSize } from '@intabiafusion/ui'
+  import { type FileUploadCallbackParams, uploadFiles } from '@intabiafusion/uploader'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import attachment from '../plugin'

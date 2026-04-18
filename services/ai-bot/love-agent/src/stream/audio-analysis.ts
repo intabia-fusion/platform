@@ -17,7 +17,7 @@
  * Provides spectral analysis, RMS calculation, and speech detection
  */
 
-import { stft, magnitude, createHannWindow } from '@hcengineering/audio-dsp'
+import { stft, magnitude, createHannWindow } from '@intabiafusion/audio-dsp'
 
 import {
   type AudioAnalysis,

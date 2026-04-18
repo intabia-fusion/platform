@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Avatar, getPersonByPersonRef, PersonPresenter } from '@hcengineering/contact-resources'
-  import { ParticipantInfo } from '@hcengineering/love'
+  import { Person } from '@intabiafusion/contact'
+  import { Avatar, getPersonByPersonRef, PersonPresenter } from '@intabiafusion/contact-resources'
+  import { ParticipantInfo } from '@intabiafusion/love'
 
-  import { Ref } from '@hcengineering/core'
+  import { Ref } from '@intabiafusion/core'
 
   export let info: ParticipantInfo[]
 

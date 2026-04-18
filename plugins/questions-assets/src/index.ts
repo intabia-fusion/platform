@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { loadMetadata } from '@hcengineering/platform'
-import questions from '@hcengineering/questions'
+import { loadMetadata } from '@intabiafusion/platform'
+import questions from '@intabiafusion/questions'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(questions.icon, {

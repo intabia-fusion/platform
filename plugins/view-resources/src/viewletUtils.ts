@@ -5,8 +5,8 @@
 // you may not use this file except in compliance with the License.
 //
 
-import type { Client, Ref } from '@hcengineering/core'
-import view, { type Viewlet, type ViewletViewAction } from '@hcengineering/view'
+import type { Client, Ref } from '@intabiafusion/core'
+import view, { type Viewlet, type ViewletViewAction } from '@intabiafusion/view'
 
 /** Shape used by the header UI; both viewlet- and descriptor-scoped actions provide this. */
 export interface ResolvedViewletSpecialAction {

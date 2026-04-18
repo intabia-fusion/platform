@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/analytics
+# Change Log - @intabiafusion/analytics
 
 This log was last generated on Fri, 31 Oct 2025 20:11:13 GMT and should not be manually modified.
 

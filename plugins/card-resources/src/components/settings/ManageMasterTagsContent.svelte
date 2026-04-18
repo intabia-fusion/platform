@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { MasterTag } from '@hcengineering/card'
-  import core, { Doc, Ref } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { MasterTag } from '@intabiafusion/card'
+  import core, { Doc, Ref } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     AnySvelteComponent,
@@ -30,7 +30,7 @@
     navigate,
     resizeObserver,
     resolvedLocationStore
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { onDestroy, onMount } from 'svelte'
   import card from '../../plugin'
   import MasterTagEditor from './MasterTagEditor.svelte'

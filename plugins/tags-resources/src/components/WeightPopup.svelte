@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { resizeObserver, Icon, IconCheck, Label } from '@hcengineering/ui'
+  import { resizeObserver, Icon, IconCheck, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { tagLevel } from '../utils'

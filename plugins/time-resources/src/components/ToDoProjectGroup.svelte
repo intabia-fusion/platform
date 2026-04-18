@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import type { Project } from '@hcengineering/tracker'
-  import type { ToDo } from '@hcengineering/time'
+  import type { IntlString } from '@intabiafusion/platform'
+  import type { Project } from '@intabiafusion/tracker'
+  import type { ToDo } from '@intabiafusion/time'
   import type { ToDosMode } from '..'
-  import { AccordionItem, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
-  import { IconWithEmoji, getClient } from '@hcengineering/presentation'
-  import { makeRank } from '@hcengineering/task'
-  import tracker from '@hcengineering/tracker'
-  import view from '@hcengineering/view'
+  import { AccordionItem, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@intabiafusion/ui'
+  import { IconWithEmoji, getClient } from '@intabiafusion/presentation'
+  import { makeRank } from '@intabiafusion/task'
+  import tracker from '@intabiafusion/tracker'
+  import view from '@intabiafusion/view'
   import ToDoDraggable from './ToDoDraggable.svelte'
   import ToDoElement from './ToDoElement.svelte'
   import time from '../plugin'

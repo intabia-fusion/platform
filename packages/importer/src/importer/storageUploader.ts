@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { saveCollabJson } from '@hcengineering/collaboration'
+import { saveCollabJson } from '@intabiafusion/collaboration'
 import {
   type CollaborativeDoc,
   type Markup,
@@ -20,8 +20,8 @@ import {
   type Blob as PlatformBlob,
   type Ref,
   type WorkspaceIds
-} from '@hcengineering/core'
-import type { StorageAdapter } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import type { StorageAdapter } from '@intabiafusion/server-core'
 import { type FileUploader, type UploadResult } from './uploader'
 
 export class StorageFileUploader implements FileUploader {

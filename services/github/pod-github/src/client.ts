@@ -3,12 +3,12 @@
 //
 //
 
-import client, { ClientSocket } from '@hcengineering/client'
-import clientResources from '@hcengineering/client-resources'
-import { Client, ClientConnectEvent, systemAccountUuid, WorkspaceUuid, type MeasureContext } from '@hcengineering/core'
-import { setMetadata } from '@hcengineering/platform'
-import { getTransactorEndpoint } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
+import client, { ClientSocket } from '@intabiafusion/client'
+import clientResources from '@intabiafusion/client-resources'
+import { Client, ClientConnectEvent, systemAccountUuid, WorkspaceUuid, type MeasureContext } from '@intabiafusion/core'
+import { setMetadata } from '@intabiafusion/platform'
+import { getTransactorEndpoint } from '@intabiafusion/server-client'
+import { generateToken } from '@intabiafusion/server-token'
 import WebSocket from 'ws'
 import config from './config'
 

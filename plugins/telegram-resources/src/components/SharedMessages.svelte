@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SharedTelegramMessages } from '@hcengineering/telegram'
+  import { SharedTelegramMessages } from '@intabiafusion/telegram'
   import Messages from './Messages.svelte'
 
   export let value: SharedTelegramMessages | undefined

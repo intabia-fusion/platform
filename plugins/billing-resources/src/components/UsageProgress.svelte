@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
-  import { Label, PaletteColorIndexes, Progress, humanReadableFileSize, humanReadableNumbers } from '@hcengineering/ui'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Label, PaletteColorIndexes, Progress, humanReadableFileSize, humanReadableNumbers } from '@intabiafusion/ui'
   import plugin from '../plugin'
 
   export let label: IntlString

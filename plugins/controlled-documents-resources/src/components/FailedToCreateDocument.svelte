@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { Notification, NotificationToast, Label } from '@hcengineering/ui'
+  import { Notification, NotificationToast, Label } from '@intabiafusion/ui'
 
   import documents from '../plugin'
 

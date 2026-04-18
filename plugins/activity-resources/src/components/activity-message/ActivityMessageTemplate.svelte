@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@hcengineering/activity'
-  import { Person } from '@hcengineering/contact'
-  import { Avatar, SystemAvatar } from '@hcengineering/contact-resources'
-  import core, { Ref, type SocialId } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { Asset } from '@hcengineering/platform'
-  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { Action, Icon, Label } from '@hcengineering/ui'
-  import { Action as ViewAction } from '@hcengineering/view'
-  import { getActions, restrictionStore, showMenu } from '@hcengineering/view-resources'
+  import activity, { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@intabiafusion/activity'
+  import { Person } from '@intabiafusion/contact'
+  import { Avatar, SystemAvatar } from '@intabiafusion/contact-resources'
+  import core, { Ref, type SocialId } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { Asset } from '@intabiafusion/platform'
+  import { ComponentExtensions, getClient } from '@intabiafusion/presentation'
+  import { Action, Icon, Label } from '@intabiafusion/ui'
+  import { Action as ViewAction } from '@intabiafusion/view'
+  import { getActions, restrictionStore, showMenu } from '@intabiafusion/view-resources'
 
   import { clearMessageInLocation, savedMessagesStore } from '../../activity'
   import { MessageInlineAction } from '../../types'

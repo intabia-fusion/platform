@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { timeouts, type TickManager } from '@hcengineering/network-core'
+import { timeouts, type TickManager } from '@intabiafusion/network-core'
 import * as zmq from 'zeromq'
 import { backrpcOperations, type ClientId } from './types'
 import { context } from './context'

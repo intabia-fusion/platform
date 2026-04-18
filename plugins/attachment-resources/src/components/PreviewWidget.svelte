@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import workbench, { Widget, WidgetTab } from '@hcengineering/workbench'
-  import { FilePreview, DownloadFileButton, FilePreviewPopup, FileTypeIcon } from '@hcengineering/presentation'
-  import { Breadcrumbs, Button, closeTooltip, Header, showPopup } from '@hcengineering/ui'
-  import { getResource } from '@hcengineering/platform'
-  import view from '@hcengineering/view'
+  import workbench, { Widget, WidgetTab } from '@intabiafusion/workbench'
+  import { FilePreview, DownloadFileButton, FilePreviewPopup, FileTypeIcon } from '@intabiafusion/presentation'
+  import { Breadcrumbs, Button, closeTooltip, Header, showPopup } from '@intabiafusion/ui'
+  import { getResource } from '@intabiafusion/platform'
+  import view from '@intabiafusion/view'
 
   import attachment from '../plugin'
 

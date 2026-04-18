@@ -1,9 +1,9 @@
-import type { WorkSlot, ToDo } from '@hcengineering/time'
-import type { IntlString } from '@hcengineering/platform'
-import type { Person } from '@hcengineering/contact'
-import type { Event } from '@hcengineering/calendar'
-import type { Ref } from '@hcengineering/core'
-import { ToDoPriority } from '@hcengineering/time'
+import type { WorkSlot, ToDo } from '@intabiafusion/time'
+import type { IntlString } from '@intabiafusion/platform'
+import type { Person } from '@intabiafusion/contact'
+import type { Event } from '@intabiafusion/calendar'
+import type { Ref } from '@intabiafusion/core'
+import { ToDoPriority } from '@intabiafusion/time'
 import time from './plugin'
 
 /**

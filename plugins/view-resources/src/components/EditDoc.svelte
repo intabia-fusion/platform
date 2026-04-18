@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Hierarchy, Mixin, Ref } from '@hcengineering/core'
-  import notification from '@hcengineering/notification'
-  import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
+  import { Class, Doc, Hierarchy, Mixin, Ref } from '@intabiafusion/core'
+  import notification from '@intabiafusion/notification'
+  import { Panel } from '@intabiafusion/panel'
+  import { getResource } from '@intabiafusion/platform'
   import {
     ActionContext,
     AttributesBar,
@@ -27,9 +27,9 @@
     getClient,
     hasResource,
     reduceCalls
-  } from '@hcengineering/presentation'
-  import { AnyComponent, Button, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
-  import view, { AttributeCategory } from '@hcengineering/view'
+  } from '@intabiafusion/presentation'
+  import { AnyComponent, Button, Component, IconMixin, IconMoreH, languageStore } from '@intabiafusion/ui'
+  import view, { AttributeCategory } from '@intabiafusion/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import { DocNavLink, ParentsNavigator, getDocAttrsInfo, getDocLabel, getDocMixins, showMenu, parseLinkId } from '..'

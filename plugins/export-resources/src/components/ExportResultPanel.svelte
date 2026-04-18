@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { type Class, type Doc, type Ref } from '@hcengineering/core'
-  import exportPlugin, { type ExportResultRecord } from '@hcengineering/export'
-  import notification from '@hcengineering/notification'
-  import { Panel } from '@hcengineering/panel'
-  import { getResource } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, Label } from '@hcengineering/ui'
-  import { DocNavLink, ObjectPresenter, showMenu } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view'
+  import core, { type Class, type Doc, type Ref } from '@intabiafusion/core'
+  import exportPlugin, { type ExportResultRecord } from '@intabiafusion/export'
+  import notification from '@intabiafusion/notification'
+  import { Panel } from '@intabiafusion/panel'
+  import { getResource } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Button, IconMoreH, Label } from '@intabiafusion/ui'
+  import { DocNavLink, ObjectPresenter, showMenu } from '@intabiafusion/view-resources'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   export let _id: Ref<ExportResultRecord>

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { createStore } from 'effector'
-import { type Ref } from '@hcengineering/core'
-import { type DocumentSpace, type Project, type ProjectDocument } from '@hcengineering/controlled-documents'
+import { type Ref } from '@intabiafusion/core'
+import { type DocumentSpace, type Project, type ProjectDocument } from '@intabiafusion/controlled-documents'
 
 import {
   currentStepUpdated,

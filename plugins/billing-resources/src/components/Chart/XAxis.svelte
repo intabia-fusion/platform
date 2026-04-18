@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getUserTimezone } from '@hcengineering/ui'
+  import { getUserTimezone } from '@intabiafusion/ui'
   import value from '*.svelte'
 
   export let width: number

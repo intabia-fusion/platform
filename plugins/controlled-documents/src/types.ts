@@ -1,9 +1,9 @@
 //
 // Copyright © 2022-2023 Hardcore Engineering Inc.
 //
-import { Attachment } from '@hcengineering/attachment'
-import { ChatMessage } from '@hcengineering/chunter'
-import { Employee } from '@hcengineering/contact'
+import { Attachment } from '@intabiafusion/attachment'
+import { ChatMessage } from '@intabiafusion/chunter'
+import { Employee } from '@intabiafusion/contact'
 import {
   type AttachedDoc,
   type Class,
@@ -18,10 +18,10 @@ import {
   SpaceType,
   SpaceTypeDescriptor,
   Rank
-} from '@hcengineering/core'
-import { type TagReference } from '@hcengineering/tags'
-import { Request } from '@hcengineering/request'
-import type { Training, TrainingRequest } from '@hcengineering/training'
+} from '@intabiafusion/core'
+import { type TagReference } from '@intabiafusion/tags'
+import { Request } from '@intabiafusion/request'
+import type { Training, TrainingRequest } from '@intabiafusion/training'
 
 /**
  * @public

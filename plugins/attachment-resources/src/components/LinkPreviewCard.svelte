@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import presentation from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import { LinkPreviewData } from '../types'

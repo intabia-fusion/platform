@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { AccountArrayEditor } from '@hcengineering/contact-resources'
-  import core, { AccountUuid, reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
-  import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+  import contact from '@intabiafusion/contact'
+  import { AccountArrayEditor } from '@intabiafusion/contact-resources'
+  import core, { AccountUuid, reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@intabiafusion/core'
+  import { createQuery, getClient, MessageBox } from '@intabiafusion/presentation'
   import {
     ButtonIcon,
     IconDelete,
@@ -27,8 +27,8 @@
     showPopup,
     TextArea,
     Toggle
-  } from '@hcengineering/ui'
-  import { deleteObjects } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { deleteObjects } from '@intabiafusion/view-resources'
 
   import settingRes from '../../../plugin'
 

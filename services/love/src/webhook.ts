@@ -1,14 +1,14 @@
-import { MeasureContext, Ref, WorkspaceIds, type WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, Ref, WorkspaceIds, type WorkspaceUuid } from '@intabiafusion/core'
 import love, {
   MeetingMinutes,
   queueEvents,
   QueueMeetingMessage,
   RecordingState,
   type ParsedRoomName
-} from '@hcengineering/love'
+} from '@intabiafusion/love'
 
-import { Person } from '@hcengineering/contact'
-import { PlatformQueueProducer, StorageConfig } from '@hcengineering/server-core'
+import { Person } from '@intabiafusion/contact'
+import { PlatformQueueProducer, StorageConfig } from '@intabiafusion/server-core'
 import {
   EgressClient,
   ParticipantInfo as LKParticipantInfo,
@@ -20,7 +20,7 @@ import config from './config'
 import { getRecordingPreset } from './preset'
 import { saveFile } from './storage'
 import { WorkspaceClient } from './workspaceClient'
-import platform, { PlatformError } from '@hcengineering/platform'
+import platform, { PlatformError } from '@intabiafusion/platform'
 import { parseParticipantMetadata } from './utils'
 
 export class WebhookProcessor {

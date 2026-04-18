@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@hcengineering/core'
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import setting, { settingId } from '@hcengineering/setting'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type Widget } from '@hcengineering/workbench'
+import { type Ref } from '@intabiafusion/core'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import setting, { settingId } from '@intabiafusion/setting'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Widget } from '@intabiafusion/workbench'
 
 export default mergeIds(settingId, setting, {
   ids: {

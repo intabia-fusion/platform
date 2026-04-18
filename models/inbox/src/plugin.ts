@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { inboxId } from '@hcengineering/inbox'
-import inbox from '@hcengineering/inbox-resources/src/plugin'
-import { type Ref } from '@hcengineering/core'
-import { type Application } from '@hcengineering/model-workbench'
-import { mergeIds } from '@hcengineering/platform'
+import { inboxId } from '@intabiafusion/inbox'
+import inbox from '@intabiafusion/inbox-resources/src/plugin'
+import { type Ref } from '@intabiafusion/core'
+import { type Application } from '@intabiafusion/model-workbench'
+import { mergeIds } from '@intabiafusion/platform'
 
 export default mergeIds(inboxId, inbox, {
   app: {

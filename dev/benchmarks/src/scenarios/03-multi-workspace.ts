@@ -18,16 +18,16 @@ import core, {
   pickPrimarySocialId,
   TxOperations,
   type Ref
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   createRestClient,
   createRestTxOperations,
   loadServerConfig,
   type RestClient
-} from '@hcengineering/api-client'
-import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { ensureEmployee } from '@hcengineering/contact'
-import tracker, { type Issue, type Project } from '@hcengineering/tracker'
+} from '@intabiafusion/api-client'
+import { getClient as getAccountClient } from '@intabiafusion/account-client'
+import { ensureEmployee } from '@intabiafusion/contact'
+import tracker, { type Issue, type Project } from '@intabiafusion/tracker'
 
 import type { BenchConfig } from '../config'
 import {

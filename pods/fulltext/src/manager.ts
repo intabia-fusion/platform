@@ -10,9 +10,9 @@ import type {
   Version,
   WorkspaceInfoWithStatus,
   WorkspaceUuid
-} from '@hcengineering/core'
-import core, { Hierarchy, systemAccountUuid, TxProcessor, versionToString } from '@hcengineering/core'
-import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
+} from '@intabiafusion/core'
+import core, { Hierarchy, systemAccountUuid, TxProcessor, versionToString } from '@intabiafusion/core'
+import { getAccountClient, getTransactorEndpoint } from '@intabiafusion/server-client'
 import {
   createContentAdapter,
   QueueTopic,
@@ -30,11 +30,11 @@ import {
   type QueueWorkspaceMessage,
   type QueueWorkspaceReindexMessage,
   type StorageAdapter
-} from '@hcengineering/server-core'
-import { type QueueSourced, type FulltextDBConfiguration } from '@hcengineering/server-indexer'
-import { generateToken } from '@hcengineering/server-token'
-import { type Event } from '@hcengineering/communication-sdk-types'
-import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
+} from '@intabiafusion/server-core'
+import { type QueueSourced, type FulltextDBConfiguration } from '@intabiafusion/server-indexer'
+import { generateToken } from '@intabiafusion/server-token'
+import { type Event } from '@intabiafusion/communication-sdk-types'
+import { getWorkspaceClient as getHulylakeClient } from '@intabiafusion/hulylake-client'
 
 import { WorkspaceIndexer } from './workspace'
 

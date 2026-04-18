@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, ChannelProvider } from '@hcengineering/contact'
-  import { Icon, IconSize } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import { classIcon } from '@hcengineering/view-resources'
+  import { Channel, ChannelProvider } from '@intabiafusion/contact'
+  import { Icon, IconSize } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { classIcon } from '@intabiafusion/view-resources'
 
   import contact from '../plugin'
 

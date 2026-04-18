@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
-  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
+  import { Event } from '@intabiafusion/calendar'
+  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import { IntlString, Asset } from '@intabiafusion/platform'
   import {
     AnyComponent,
     Button,
@@ -26,11 +26,11 @@
     showPopup,
     Header,
     Breadcrumb
-  } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { ViewletSelector, getViewOptions, viewOptionStore } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { ViewletSelector, getViewOptions, viewOptionStore } from '@intabiafusion/view-resources'
   import calendar from '../plugin'
-  // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  // import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
 
   export let _class: Ref<Class<Event>> = calendar.class.Event
   export let space: Ref<Space> | undefined = undefined

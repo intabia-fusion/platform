@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Question } from '@hcengineering/questions'
-import { type QuerySelector, SortingOrder } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
+import type { Question } from '@intabiafusion/questions'
+import { type QuerySelector, SortingOrder } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
 import questions from '../plugin'
 
 export async function findNextQuestion (object: Question<unknown>): Promise<Question<unknown> | undefined> {

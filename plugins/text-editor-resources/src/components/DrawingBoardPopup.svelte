@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DrawingCmd } from '@hcengineering/presentation'
-  import textEditor from '@hcengineering/text-editor'
-  import { Dialog } from '@hcengineering/ui'
+  import { DrawingCmd } from '@intabiafusion/presentation'
+  import textEditor from '@intabiafusion/text-editor'
+  import { Dialog } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { Array as YArray, Map as YMap, Doc as YDoc } from 'yjs'
   import DrawingBoardEditor from './DrawingBoardEditor.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Attribute, BlobMetadata, Class, Mixin, Ref } from '@hcengineering/core'
+import type { Attribute, BlobMetadata, Class, Mixin, Ref } from '@intabiafusion/core'
 
 import type { AccountUuid, BlobID, CardID, CardType, ID, Markdown, SocialID, PersonUuid } from './core'
 

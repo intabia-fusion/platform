@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import activity, { ActivityMessage, ActivityReference } from '@hcengineering/activity'
-  import { ActivityMessagePresenter, sortActivityMessages } from '@hcengineering/activity-resources'
-  import { ActionIcon, IconClose, Loading } from '@hcengineering/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import activity, { ActivityMessage, ActivityReference } from '@intabiafusion/activity'
+  import { ActivityMessagePresenter, sortActivityMessages } from '@intabiafusion/activity-resources'
+  import { ActionIcon, IconClose, Loading } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { ThreadMessage } from '@hcengineering/chunter'
-  import { Class, Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
+  import { ThreadMessage } from '@intabiafusion/chunter'
+  import { Class, Doc, Ref, SortingOrder, Space } from '@intabiafusion/core'
 
   import chunter from '../plugin'
 

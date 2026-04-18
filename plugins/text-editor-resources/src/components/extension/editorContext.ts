@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Ref, type Space } from '@hcengineering/core'
+import { type Class, type Doc, type Ref, type Space } from '@intabiafusion/core'
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 

@@ -26,7 +26,7 @@ import core, {
   TxCreateDoc,
   TxOperations,
   WithLookup
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { LiveQuery } from '..'
 import { connect } from './connection'
 import { AttachedComment, genMinModel, ParticipantsHolder, test } from './minmodel'

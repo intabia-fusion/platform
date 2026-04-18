@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hcengineering/contact'
-import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
-import { createQuery, getClient, playSound } from '@hcengineering/presentation'
-import { type PopupResult } from '@hcengineering/ui'
+import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@intabiafusion/contact'
+import { AccountRole, getCurrentAccount, type Ref } from '@intabiafusion/core'
+import love, { type MeetingMinutes, type UserMeetingInvite } from '@intabiafusion/love'
+import { createQuery, getClient, playSound } from '@intabiafusion/presentation'
+import { type PopupResult } from '@intabiafusion/ui'
 import { derived, get, writable, type Writable } from 'svelte/store'
 import { createMeeting, joinOrCreateMeetingByInvite } from './meetings'
 import { currentMeetingMinutes } from './stores'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
 import {
   DOMAIN_MODEL_TX,
   DOMAIN_SEQUENCE,
@@ -30,7 +30,7 @@ import {
   type Status,
   type TxCreateDoc,
   type TxUpdateDoc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   createOrUpdate,
   migrateSpace,
@@ -41,10 +41,10 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   type ModelLogger
-} from '@hcengineering/model'
-import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
-import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
-import tags from '@hcengineering/model-tags'
+} from '@intabiafusion/model'
+import { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
+import core, { DOMAIN_SPACE } from '@intabiafusion/model-core'
+import tags from '@intabiafusion/model-tags'
 import {
   taskId,
   type Project,
@@ -53,7 +53,7 @@ import {
   type ProjectTypeDescriptor,
   type Task,
   type TaskType
-} from '@hcengineering/task'
+} from '@intabiafusion/task'
 
 import { DOMAIN_TASK } from '.'
 import task from './plugin'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@hcengineering/contact'
-  import { Data } from '@hcengineering/core'
-  import { translateCB, IntlString } from '@hcengineering/platform'
-  import { copyTextToClipboard, isDisabled } from '@hcengineering/presentation'
+  import { Channel } from '@intabiafusion/contact'
+  import { Data } from '@intabiafusion/core'
+  import { translateCB, IntlString } from '@intabiafusion/platform'
+  import { copyTextToClipboard, isDisabled } from '@intabiafusion/presentation'
   import {
     Button,
     FocusHandler,
@@ -30,9 +30,9 @@
     registerFocus,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { ContextMenu } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { ContextMenu } from '@intabiafusion/view-resources'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
   import IconCopy from './icons/Copy.svelte'

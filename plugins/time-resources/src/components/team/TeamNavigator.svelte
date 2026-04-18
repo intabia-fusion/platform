@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, getCurrentAccount } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import task, { Project } from '@hcengineering/task'
-  import { Separator, Scroller, NavItem, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { ObjectPresenter, TreeNode } from '@hcengineering/view-resources'
-  import { NavFooter, NavHeader } from '@hcengineering/workbench-resources'
+  import { Ref, getCurrentAccount } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import task, { Project } from '@intabiafusion/task'
+  import { Separator, Scroller, NavItem, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { ObjectPresenter, TreeNode } from '@intabiafusion/view-resources'
+  import { NavFooter, NavHeader } from '@intabiafusion/workbench-resources'
   import time from '../../plugin'
 
   export let selected: Ref<Project> | undefined = (localStorage.getItem('team_last_mode') as Ref<Project>) ?? undefined

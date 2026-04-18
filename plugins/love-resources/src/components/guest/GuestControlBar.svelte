@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton, Popup, TooltipInstance } from '@hcengineering/ui'
+  import { ModernButton, Popup, TooltipInstance } from '@intabiafusion/ui'
 
   import love from '../../plugin'
   import { myInfo, myOffice } from '../../stores'

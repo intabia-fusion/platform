@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
+import type { IntlString, Metadata, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
 import { type AnyComponent } from './types'
 
 /**

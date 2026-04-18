@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Contact } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
   import contact from '../plugin'
   import ContactPresenter from './ContactPresenter.svelte'
 

@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/storage-client
+# Change Log - @intabiafusion/storage-client
 
 This log was last generated on Mon, 27 Oct 2025 13:27:12 GMT and should not be manually modified.
 

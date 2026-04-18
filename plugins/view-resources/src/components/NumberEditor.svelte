@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
+  import type { IntlString } from '@intabiafusion/platform'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@intabiafusion/ui'
   import EditBoxPopup from './EditBoxPopup.svelte'
-  import { AnyAttribute, TypeNumber } from '@hcengineering/core'
+  import { AnyAttribute, TypeNumber } from '@intabiafusion/core'
 
   export let label: IntlString
   export let value: number | undefined

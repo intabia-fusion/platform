@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup, mergeQueries } from '@hcengineering/core'
-  import { Asset, getResource, IntlString, Resource } from '@hcengineering/platform'
-  import { getClient, ComponentExtensions } from '@hcengineering/presentation'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup, mergeQueries } from '@intabiafusion/core'
+  import { Asset, getResource, IntlString, Resource } from '@intabiafusion/platform'
+  import { getClient, ComponentExtensions } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     AnySvelteComponent,
@@ -29,8 +29,8 @@
     ModeSelector,
     SearchInput,
     showPopup
-  } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions, BuildModelKey } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view, { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions, BuildModelKey } from '@intabiafusion/view'
   import {
     FilterBar,
     FilterButton,
@@ -39,8 +39,8 @@
     getViewletSpecialActions,
     ViewletSelector,
     ViewletSettingButton
-  } from '@hcengineering/view-resources'
-  import workbench, { type ParentsNavigationModel } from '@hcengineering/workbench'
+  } from '@intabiafusion/view-resources'
+  import workbench, { type ParentsNavigationModel } from '@intabiafusion/workbench'
   import ComponentNavigator from './ComponentNavigator.svelte'
   import { deepEqual } from 'fast-equals'
   import { ComponentType } from 'svelte'

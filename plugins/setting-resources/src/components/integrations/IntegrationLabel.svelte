@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Integration } from '@hcengineering/account-client'
-  import { IntlString } from '@hcengineering/platform'
-  import setting from '@hcengineering/setting'
-  import { Label } from '@hcengineering/ui'
-  import { isDisabled } from '@hcengineering/integration-client'
+  import { type Integration } from '@intabiafusion/account-client'
+  import { IntlString } from '@intabiafusion/platform'
+  import setting from '@intabiafusion/setting'
+  import { Label } from '@intabiafusion/ui'
+  import { isDisabled } from '@intabiafusion/integration-client'
 
   export let integration: Integration | undefined
 

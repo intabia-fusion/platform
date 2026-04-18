@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { MethodParams, Process } from '@hcengineering/process'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { MethodParams, Process } from '@intabiafusion/process'
   import { createEventDispatcher } from 'svelte'
   import ProcessAttributeEditor from './ProcessAttributeEditor.svelte'
 

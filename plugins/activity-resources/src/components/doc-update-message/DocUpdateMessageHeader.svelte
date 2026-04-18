@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { Label, languageStore } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
-  import { AttributeModel } from '@hcengineering/view'
-  import activity, { DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import { Person } from '@hcengineering/contact'
+  import { Doc } from '@intabiafusion/core'
+  import { Label, languageStore } from '@intabiafusion/ui'
+  import { IntlString } from '@intabiafusion/platform'
+  import { AttributeModel } from '@intabiafusion/view'
+  import activity, { DocUpdateMessage, DocUpdateMessageViewlet } from '@intabiafusion/activity'
+  import { Person } from '@intabiafusion/contact'
 
   import { LinkData, getLinkData } from '../../activityMessagesUtils'
   import ActivityDocLink from '../ActivityDocLink.svelte'

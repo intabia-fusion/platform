@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import { DOMAIN_TX, type Domain, type MeasureContext } from '@hcengineering/core'
+import { Analytics } from '@intabiafusion/analytics'
+import { DOMAIN_TX, type Domain, type MeasureContext } from '@intabiafusion/core'
 import { type DbAdapter, type DomainHelper } from './adapter'
 import type { DbConfiguration } from './configuration'
 import { DummyDbAdapter } from './mem'

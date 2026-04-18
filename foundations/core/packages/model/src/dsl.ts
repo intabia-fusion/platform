@@ -56,8 +56,8 @@ import core, {
   type TypeIdentifier as TypeIdentifierType,
   type TypeNumber as TypeNumberType,
   generateId
-} from '@hcengineering/core'
-import type { Asset, IntlString } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import type { Asset, IntlString } from '@intabiafusion/platform'
 import toposort from 'toposort'
 
 const targets = new Map<any, Map<string, IndexKind>>()

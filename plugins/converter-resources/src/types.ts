@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Doc, Class, Ref, Hierarchy, DocumentQuery } from '@hcengineering/core'
-import type { AttributeModel, BuildModelKey, Viewlet } from '@hcengineering/view'
-import type { Resource } from '@hcengineering/platform'
+import type { Doc, Class, Ref, Hierarchy, DocumentQuery } from '@intabiafusion/core'
+import type { AttributeModel, BuildModelKey, Viewlet } from '@intabiafusion/view'
+import type { Resource } from '@intabiafusion/platform'
 
 import { escapeMarkdownLinkText, escapeMarkdownLinkUrl } from './markdown/escape'
 

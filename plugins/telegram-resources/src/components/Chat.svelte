@@ -15,18 +15,18 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import attachment from '@hcengineering/attachment'
-  import { AttachmentRefInput } from '@hcengineering/attachment-resources'
-  import contact, { Channel, Contact, Person, getName as getContactName } from '@hcengineering/contact'
-  import { Avatar } from '@hcengineering/contact-resources'
-  import core, { Ref, SortingOrder, generateId, getCurrentAccount } from '@hcengineering/core'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
-  import type { NewTelegramMessage, SharedTelegramMessage, TelegramMessage } from '@hcengineering/telegram'
-  import templates, { TemplateDataProvider } from '@hcengineering/templates'
-  import { jsonToHTML, markupToJSON } from '@hcengineering/text'
+  import attachment from '@intabiafusion/attachment'
+  import { AttachmentRefInput } from '@intabiafusion/attachment-resources'
+  import contact, { Channel, Contact, Person, getName as getContactName } from '@intabiafusion/contact'
+  import { Avatar } from '@intabiafusion/contact-resources'
+  import core, { Ref, SortingOrder, generateId, getCurrentAccount } from '@intabiafusion/core'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { getEmbeddedLabel, getResource } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { Integration } from '@intabiafusion/setting'
+  import type { NewTelegramMessage, SharedTelegramMessage, TelegramMessage } from '@intabiafusion/telegram'
+  import templates, { TemplateDataProvider } from '@intabiafusion/templates'
+  import { jsonToHTML, markupToJSON } from '@intabiafusion/text'
   import {
     Button,
     Icon,
@@ -37,7 +37,7 @@
     eventToHTMLElement,
     showPopup,
     tooltip
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import telegram from '../plugin'
   import Connect from './Connect.svelte'

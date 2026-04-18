@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import view from '@hcengineering/view'
-  import { IconAdd, NavGroup, Action, NavItem, ButtonIcon, showPopup, languageStore } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
+  import view from '@intabiafusion/view'
+  import { IconAdd, NavGroup, Action, NavItem, ButtonIcon, showPopup, languageStore } from '@intabiafusion/ui'
+  import { Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
-  import { CardSpace, MasterTag } from '@hcengineering/card'
-  import presentation, { IconWithEmoji, getClient } from '@hcengineering/presentation'
-  import { translate, getEmbeddedLabel } from '@hcengineering/platform'
+  import { CardSpace, MasterTag } from '@intabiafusion/card'
+  import presentation, { IconWithEmoji, getClient } from '@intabiafusion/presentation'
+  import { translate, getEmbeddedLabel } from '@intabiafusion/platform'
 
   import type { NavigatorConfig } from '../../types'
   import cardPlugin from '../../plugin'

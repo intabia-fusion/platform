@@ -24,11 +24,11 @@
     type DocumentSpaceType,
     type Project,
     type ProjectDocument
-  } from '@hcengineering/controlled-documents'
-  import { TypedSpace, type Doc, type Ref, type Space } from '@hcengineering/core'
-  import presentation, { getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { Button, Label } from '@hcengineering/ui'
-  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  } from '@intabiafusion/controlled-documents'
+  import { TypedSpace, type Doc, type Ref, type Space } from '@intabiafusion/core'
+  import presentation, { getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { Button, Label } from '@intabiafusion/ui'
+  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
   import { createEventDispatcher } from 'svelte'
 
   import documentsRes from '../../../plugin'

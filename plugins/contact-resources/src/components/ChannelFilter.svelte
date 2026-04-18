@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ChannelProvider } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { IconCheck, Icon, Label, resizeObserver } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
-  import { FILTER_DEBOUNCE_MS, FilterQuery, sortFilterValues } from '@hcengineering/view-resources'
+  import { ChannelProvider } from '@intabiafusion/contact'
+  import { Ref } from '@intabiafusion/core'
+  import { IconCheck, Icon, Label, resizeObserver } from '@intabiafusion/ui'
+  import { Filter } from '@intabiafusion/view'
+  import { FILTER_DEBOUNCE_MS, FilterQuery, sortFilterValues } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { channelProviders } from '../utils'
   import contact from '../plugin'

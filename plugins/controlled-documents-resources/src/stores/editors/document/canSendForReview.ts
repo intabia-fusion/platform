@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { DocumentState } from '@hcengineering/controlled-documents'
+import { DocumentState } from '@intabiafusion/controlled-documents'
 import { combine } from 'effector'
 import { $documentState, $isDocumentOwner, $isLatestVersion } from './editor'
 

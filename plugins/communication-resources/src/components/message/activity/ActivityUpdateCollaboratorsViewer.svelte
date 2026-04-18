@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityCollaboratorsUpdate } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
-  import { getClient } from '@hcengineering/presentation'
-  import contact, { Person } from '@hcengineering/contact'
-  import { Icon, Label } from '@hcengineering/ui'
+  import { ActivityCollaboratorsUpdate } from '@intabiafusion/communication-types'
+  import { Card } from '@intabiafusion/card'
+  import { getClient } from '@intabiafusion/presentation'
+  import contact, { Person } from '@intabiafusion/contact'
+  import { Icon, Label } from '@intabiafusion/ui'
 
   import communication from '../../../plugin'
   import CollaboratorPresenter from '../../CollaboratorPresenter.svelte'

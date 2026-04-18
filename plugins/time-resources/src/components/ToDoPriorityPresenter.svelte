@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ToDoPriority } from '@hcengineering/time'
-  import { Label } from '@hcengineering/ui'
+  import { ToDoPriority } from '@intabiafusion/time'
+  import { Label } from '@intabiafusion/ui'
   import { getToDoPriorityColor, todoPriorities } from '../utils'
   import Priority from './icons/Priority.svelte'
 

@@ -30,11 +30,11 @@ import core, {
   TxCUD,
   TxUpdateDoc,
   isMixinTx
-} from '@hcengineering/core'
-import type { TriggerControl } from '@hcengineering/server-core'
-import { MeasureContext } from '@hcengineering/measurements'
-import contact from '@hcengineering/contact'
-import { getAccountBySocialId, getAddCollaboratorsTxes, getEmployeesBySocialIds } from '@hcengineering/server-contact'
+} from '@intabiafusion/core'
+import type { TriggerControl } from '@intabiafusion/server-core'
+import { MeasureContext } from '@intabiafusion/measurements'
+import contact from '@intabiafusion/contact'
+import { getAccountBySocialId, getAddCollaboratorsTxes, getEmployeesBySocialIds } from '@intabiafusion/server-contact'
 
 async function getValueCollaborators (
   ctx: MeasureContext,

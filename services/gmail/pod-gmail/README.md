@@ -91,11 +91,11 @@ The service integrates with:
 ## Dependencies
 
 ### Core Dependencies
-- @hcengineering/core
-- @hcengineering/server-core
-- @hcengineering/server-client
-- @hcengineering/server-token
-- @hcengineering/gmail
+- @intabiafusion/core
+- @intabiafusion/server-core
+- @intabiafusion/server-client
+- @intabiafusion/server-token
+- @intabiafusion/gmail
 
 ### External Dependencies
 - googleapis

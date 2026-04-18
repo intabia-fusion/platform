@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
-  import { WithLookup } from '@hcengineering/core'
-  import { tooltip } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Document } from '@intabiafusion/controlled-documents'
+  import { WithLookup } from '@intabiafusion/core'
+  import { tooltip } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
 
   export let value: WithLookup<Document>
   export let inline = false

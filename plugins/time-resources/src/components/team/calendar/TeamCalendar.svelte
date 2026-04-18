@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { Event, getAllEvents } from '@hcengineering/calendar'
-  import { calendarByIdStore } from '@hcengineering/calendar-resources'
-  import contact, { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { employeeRefByAccountUuidStore, getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
+  import calendar, { Event, getAllEvents } from '@intabiafusion/calendar'
+  import { calendarByIdStore } from '@intabiafusion/calendar-resources'
+  import contact, { getCurrentEmployee, Person } from '@intabiafusion/contact'
+  import { employeeRefByAccountUuidStore, getPersonRefsByPersonIdsCb } from '@intabiafusion/contact-resources'
   import core, {
     Doc,
     IdMap,
@@ -28,13 +28,13 @@
     TxCUD,
     TxUpdateDoc,
     unique
-  } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/task'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
-  import { Icon, tooltip } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/core'
+  import { Asset } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Project } from '@intabiafusion/task'
+  import { ToDo, WorkSlot } from '@intabiafusion/time'
+  import { Icon, tooltip } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import time from '../../../plugin'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import WithTeamData from '../WithTeamData.svelte'

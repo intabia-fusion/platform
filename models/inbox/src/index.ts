@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import workbench from '@hcengineering/model-workbench'
-import { inboxId } from '@hcengineering/inbox'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import workbench from '@intabiafusion/model-workbench'
+import { inboxId } from '@intabiafusion/inbox'
 
 import inbox from './plugin'
 
-export { inboxId } from '@hcengineering/inbox'
+export { inboxId } from '@intabiafusion/inbox'
 export { inboxOperation } from './migration'
 export default inbox
 

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card from '@hcengineering/card'
-  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { ObjectBox } from '@hcengineering/view-resources'
-  import { Loading } from '@hcengineering/ui'
+  import card from '@intabiafusion/card'
+  import core, { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { Loading } from '@intabiafusion/ui'
 
   export let parentTag: Ref<Class<Doc>>
   export let childTag: Ref<Class<Doc>>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Document } from '@hcengineering/controlled-documents'
-  import { Label } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import { Document } from '@intabiafusion/controlled-documents'
+  import { Label } from '@intabiafusion/ui'
   import document from '../../../plugin'
 
   export let value: WithLookup<Document> | undefined

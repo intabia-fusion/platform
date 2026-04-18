@@ -19,8 +19,8 @@ import {
   type MigrationUpgradeClient,
   tryMigrate,
   tryUpgrade
-} from '@hcengineering/model'
-import { ratingId } from '@hcengineering/rating'
+} from '@intabiafusion/model'
+import { ratingId } from '@intabiafusion/rating'
 
 export const ratingOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {

@@ -3,9 +3,9 @@
 -->
 
 <script lang="ts">
-  import type { Training } from '@hcengineering/training'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import type { Training } from '@intabiafusion/training'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@intabiafusion/ui'
 
   export let value: Training
 

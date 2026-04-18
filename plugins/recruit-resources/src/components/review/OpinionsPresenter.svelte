@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Review } from '@hcengineering/recruit'
-  import { Icon, tooltip } from '@hcengineering/ui'
+  import type { Review } from '@intabiafusion/recruit'
+  import { Icon, tooltip } from '@intabiafusion/ui'
   import OpinionsPopup from './OpinionsPopup.svelte'
   import recruit from '../../plugin'
 

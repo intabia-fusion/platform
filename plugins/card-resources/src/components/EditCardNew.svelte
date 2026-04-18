@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import { Card } from '@intabiafusion/card'
+  import { Ref, WithLookup } from '@intabiafusion/core'
   import {
     Button,
     Component,
@@ -30,17 +30,17 @@
     Panel,
     IPanelState,
     deviceOptionsStore as deviceInfo
-  } from '@hcengineering/ui'
-  import presence from '@hcengineering/presence'
+  } from '@intabiafusion/ui'
+  import presence from '@intabiafusion/presence'
   import {
     createQuery,
     createNotificationContextsQuery,
     getClient,
     ComponentExtensions
-  } from '@hcengineering/presentation'
-  import { canChangeDoc, showMenu } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view'
-  import { NotificationContext } from '@hcengineering/communication-types'
+  } from '@intabiafusion/presentation'
+  import { canChangeDoc, showMenu } from '@intabiafusion/view-resources'
+  import view from '@intabiafusion/view'
+  import { NotificationContext } from '@intabiafusion/communication-types'
 
   import card from '../plugin'
   import CardIcon from './CardIcon.svelte'
@@ -49,7 +49,7 @@
   import ParentNamesPresenter from './ParentNamesPresenter.svelte'
   import { openCardInSidebar } from '../utils'
   import { afterUpdate } from 'svelte'
-  import { permissionsStore } from '@hcengineering/contact-resources'
+  import { permissionsStore } from '@intabiafusion/contact-resources'
   import CardVersionSelector from './CardVersionSelector.svelte'
 
   export let _id: Ref<Card>

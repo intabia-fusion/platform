@@ -27,12 +27,12 @@ import core, {
   type AnyAttribute,
   type Rank,
   type RefTo
-} from '@hcengineering/core'
-import { PlatformError, getEmbeddedLabel, unknownStatus } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError, getEmbeddedLabel, unknownStatus } from '@intabiafusion/platform'
 import task, { Project, ProjectStatus, ProjectType, Task, TaskType } from '.'
-import { makeRank } from '@hcengineering/rank'
+import { makeRank } from '@intabiafusion/rank'
 
-export { genRanks, makeRank } from '@hcengineering/rank'
+export { genRanks, makeRank } from '@intabiafusion/rank'
 
 /**
  * @deprecated Prefer {@link makeRank}

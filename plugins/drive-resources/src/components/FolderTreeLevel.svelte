@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Folder } from '@hcengineering/drive'
-  import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
-  import { getActions as getContributedActions, TreeItem } from '@hcengineering/view-resources'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { Folder } from '@intabiafusion/drive'
+  import { getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, IconEdit } from '@intabiafusion/ui'
+  import { getActions as getContributedActions, TreeItem } from '@intabiafusion/view-resources'
 
   export let folders: Ref<Folder>[]
   export let folderById: Map<Ref<Folder>, Folder>

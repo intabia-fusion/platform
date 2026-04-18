@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte'
-  import { IconInfo } from '@hcengineering/ui'
+  import { IconInfo } from '@intabiafusion/ui'
 
   export let length: number = 6
   export let value: string = ''

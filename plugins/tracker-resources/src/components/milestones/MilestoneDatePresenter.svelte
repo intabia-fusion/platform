@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import { Timestamp } from '@intabiafusion/core'
 
-  import { getClient } from '@hcengineering/presentation'
-  import { Milestone } from '@hcengineering/tracker'
-  import { DatePresenter, ButtonSize } from '@hcengineering/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Milestone } from '@intabiafusion/tracker'
+  import { DatePresenter, ButtonSize } from '@intabiafusion/ui'
 
   export let value: Milestone
   export let field = 'targetDate'

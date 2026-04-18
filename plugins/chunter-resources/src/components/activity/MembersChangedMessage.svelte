@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import { DocAttributeUpdates, DocUpdateMessage } from '@hcengineering/activity'
-  import { Employee, Person } from '@hcengineering/contact'
-  import { AccountUuid, notEmpty, PersonId } from '@hcengineering/core'
-  import { PersonPresenter, employeeByAccountStore, employeeByPersonIdStore } from '@hcengineering/contact-resources'
-  import { ChunterSpace } from '@hcengineering/chunter'
-  import { Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { DocAttributeUpdates, DocUpdateMessage } from '@intabiafusion/activity'
+  import { Employee, Person } from '@intabiafusion/contact'
+  import { AccountUuid, notEmpty, PersonId } from '@intabiafusion/core'
+  import { PersonPresenter, employeeByAccountStore, employeeByPersonIdStore } from '@intabiafusion/contact-resources'
+  import { ChunterSpace } from '@intabiafusion/chunter'
+  import { Label } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   import chunter from '../../plugin'
   import ChannelIcon from '../ChannelIcon.svelte'

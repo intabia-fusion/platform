@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, ArrOf, Class, Doc, Ref, Type } from '@hcengineering/core'
-  import { ArrOf as createArrOf } from '@hcengineering/model'
-  import { getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component, DropdownLabelsIntl, Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import core, { AnyAttribute, ArrOf, Class, Doc, Ref, Type } from '@intabiafusion/core'
+  import { ArrOf as createArrOf } from '@intabiafusion/model'
+  import { getClient } from '@intabiafusion/presentation'
+  import { AnyComponent, Component, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
 
   export let type: ArrOf<Doc> | undefined
   export let editable: boolean = true

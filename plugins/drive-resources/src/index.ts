@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { permissionsStore } from '@hcengineering/contact-resources'
-import type { Class, Client, Doc, DocumentQuery, Ref, RelatedDocument, WithLookup } from '@hcengineering/core'
-import drive, { type Drive, type File, type FileVersion, type Folder } from '@hcengineering/drive'
-import { type Resources } from '@hcengineering/platform'
-import { type ObjectSearchResult, getFileUrl } from '@hcengineering/presentation'
-import { showPopup, type Location } from '@hcengineering/ui'
-import { canChangeDoc, canCreateObject, canDeleteObject, canRemoveDoc } from '@hcengineering/view-resources'
+import { permissionsStore } from '@intabiafusion/contact-resources'
+import type { Class, Client, Doc, DocumentQuery, Ref, RelatedDocument, WithLookup } from '@intabiafusion/core'
+import drive, { type Drive, type File, type FileVersion, type Folder } from '@intabiafusion/drive'
+import { type Resources } from '@intabiafusion/platform'
+import { type ObjectSearchResult, getFileUrl } from '@intabiafusion/presentation'
+import { showPopup, type Location } from '@intabiafusion/ui'
+import { canChangeDoc, canCreateObject, canDeleteObject, canRemoveDoc } from '@intabiafusion/view-resources'
 import { get } from 'svelte/store'
 
 import CreateDrive from './components/CreateDrive.svelte'

@@ -16,7 +16,7 @@
 import { IPCMainExposed, MenuBarAction } from './types'
 import { isMenuBarAction } from './typesUtils'
 import { TitleBarMenuState } from './titleBarMenuState'
-import { type ThemeVariantType } from '@hcengineering/theme'
+import { type ThemeVariantType } from '@intabiafusion/theme'
 
 const ToggleMinimizeToTrayAction: MenuBarAction = 'toggle-minimize-to-tray'
 const ToggleAutoLaunchAction: MenuBarAction = 'toggle-auto-launch'

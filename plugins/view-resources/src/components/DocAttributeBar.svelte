@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Mixin } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
+  import { Doc, Mixin } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import setting from '@intabiafusion/setting'
 
   import ClassAttributeBar from './ClassAttributeBar.svelte'
 

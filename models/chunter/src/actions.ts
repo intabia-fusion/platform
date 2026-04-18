@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import view, { createAction } from '@hcengineering/model-view'
-import activity from '@hcengineering/activity'
-import core from '@hcengineering/model-core'
+import { type Builder } from '@intabiafusion/model'
+import view, { createAction } from '@intabiafusion/model-view'
+import activity from '@intabiafusion/activity'
+import core from '@intabiafusion/model-core'
 
 import chunter from './plugin'
 

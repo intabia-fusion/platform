@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person, formatName } from '@hcengineering/contact'
-  import { employeeByIdStore } from '@hcengineering/contact-resources'
+  import { Employee, Person, formatName } from '@intabiafusion/contact'
+  import { employeeByIdStore } from '@intabiafusion/contact-resources'
   import documents, {
     ControlledDocument,
     DocumentRequest,
     DocumentValidationState,
     emptyBundle
-  } from '@hcengineering/controlled-documents'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Label, Scroller } from '@hcengineering/ui'
+  } from '@intabiafusion/controlled-documents'
+  import { Ref } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Label, Scroller } from '@intabiafusion/ui'
 
   import documentsRes from '../../plugin'
   import {

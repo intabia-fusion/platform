@@ -1,6 +1,6 @@
-import activity, { type ActivityMessage } from '@hcengineering/activity'
-import cardPlugin, { type Card, type Tag } from '@hcengineering/card'
-import { type ActivityUpdate, ActivityUpdateType } from '@hcengineering/communication-types'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
+import cardPlugin, { type Card, type Tag } from '@intabiafusion/card'
+import { type ActivityUpdate, ActivityUpdateType } from '@intabiafusion/communication-types'
 import core, {
   type AnyAttribute,
   type ArrOf,
@@ -15,17 +15,17 @@ import core, {
   type TxMixin,
   type TxUpdateDoc,
   type Type
-} from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { getResource } from '@intabiafusion/platform'
 import {
   type IdentifierPresenter,
   type PresenterControl,
   type TitlePresenter,
   type UrlPresenter
-} from '@hcengineering/server-activity'
-import { type TriggerControl } from '@hcengineering/server-core'
-import serverActivity from '@hcengineering/server-activity'
-import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
+} from '@intabiafusion/server-activity'
+import { type TriggerControl } from '@intabiafusion/server-core'
+import serverActivity from '@intabiafusion/server-activity'
+import { isEmptyMarkup, markupToText } from '@intabiafusion/text-core'
 
 function getAvailableAttributesKeys (tx: TxCUD<Doc>, hierarchy: Hierarchy): string[] {
   if (hierarchy.isDerived(tx._class, core.class.TxUpdateDoc)) {

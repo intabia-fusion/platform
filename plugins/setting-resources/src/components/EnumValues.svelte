@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Enum } from '@hcengineering/core'
-  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
+  import { Enum } from '@intabiafusion/core'
+  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
   import {
     ModernEditbox,
     IconAdd,
@@ -28,8 +28,8 @@
     IconMoreV2,
     ModernPopup,
     eventToHTMLElement
-  } from '@hcengineering/ui'
-  import type { DropdownIntlItem } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
+  import type { DropdownIntlItem } from '@intabiafusion/ui'
   import setting from '../plugin'
   import EnumValuesList from './EnumValuesList.svelte'
   import IconCrossedArrows from './icons/CrossedArrows.svelte'

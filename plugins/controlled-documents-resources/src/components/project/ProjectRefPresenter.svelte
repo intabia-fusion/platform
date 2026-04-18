@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/controlled-documents'
+  import { Class, Ref } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Project } from '@intabiafusion/controlled-documents'
 
   import documents from '../../plugin'
   import ProjectPresenter from './ProjectPresenter.svelte'

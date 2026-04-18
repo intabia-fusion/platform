@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
   import {
     getObjectValue,
     type Class,
@@ -21,10 +21,10 @@
     type DocumentQuery,
     type FindOptions,
     type Ref
-  } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/ui'
+  } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@intabiafusion/presentation'
+  import { Component } from '@intabiafusion/ui'
   import { findAttributePresenter } from '../utils'
   import ObjectPresenter from './ObjectPresenter.svelte'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   docKey,
   hashWorkspace,
@@ -35,10 +35,10 @@ import core, {
   type SearchQuery,
   type SearchResult,
   type SessionData
-} from '@hcengineering/core'
-import type { IndexedDoc, Middleware, MiddlewareCreator, PipelineContext } from '@hcengineering/server-core'
-import { BaseMiddleware } from '@hcengineering/server-core'
-import contact from '@hcengineering/contact'
+} from '@intabiafusion/core'
+import type { IndexedDoc, Middleware, MiddlewareCreator, PipelineContext } from '@intabiafusion/server-core'
+import { BaseMiddleware } from '@intabiafusion/server-core'
+import contact from '@intabiafusion/contact'
 
 /**
  * @public

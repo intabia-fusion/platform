@@ -26,9 +26,9 @@ import core, {
   TxMixin,
   TxProcessor,
   TxUpdateDoc
-} from '@hcengineering/core'
-import { type TriggerControl } from '@hcengineering/server-core'
-import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
+} from '@intabiafusion/core'
+import { type TriggerControl } from '@intabiafusion/server-core'
+import { getAddCollaboratorsTxes } from '@intabiafusion/server-contact'
 
 import {
   getCollaboratorsCached,

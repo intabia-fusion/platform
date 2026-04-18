@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import drive, { driveId } from '@hcengineering/drive'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import drive, { driveId } from '@intabiafusion/drive'
 
 export default mergeIds(driveId, drive, {
   string: {

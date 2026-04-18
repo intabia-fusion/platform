@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
   import { deepEqual } from 'fast-equals'
   import { ComponentType, createEventDispatcher } from 'svelte'
   import { closePopup, showPopup, type LabelAndProps, closeTooltip } from '..'

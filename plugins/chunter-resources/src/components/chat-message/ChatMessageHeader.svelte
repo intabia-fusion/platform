@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
+  import { Label } from '@intabiafusion/ui'
+  import { IntlString } from '@intabiafusion/platform'
   export let label: IntlString | undefined
 </script>
 

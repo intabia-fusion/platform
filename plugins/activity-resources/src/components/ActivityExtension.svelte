@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityExtension, ActivityExtensionKind } from '@hcengineering/activity'
-  import { Component } from '@hcengineering/ui'
+  import { ActivityExtension, ActivityExtensionKind } from '@intabiafusion/activity'
+  import { Component } from '@intabiafusion/ui'
 
   export let kind: ActivityExtensionKind
   export let extensions: ActivityExtension[] = []

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { AnySvelteComponent, Icon, Label, PaletteColorIndexes, getPlatformColor, themeStore } from '@hcengineering/ui'
-  import { GithubReviewDecisionState } from '@hcengineering/github'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import { AnySvelteComponent, Icon, Label, PaletteColorIndexes, getPlatformColor, themeStore } from '@intabiafusion/ui'
+  import { GithubReviewDecisionState } from '@intabiafusion/github'
   import { ComponentType } from 'svelte'
   import github from '../../plugin'
 

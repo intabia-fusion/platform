@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@hcengineering/ui'
-  import { getPersonByPersonRefStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
-  import { notEmpty, Ref } from '@hcengineering/core'
+  import { Person } from '@intabiafusion/contact'
+  import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@intabiafusion/ui'
+  import { getPersonByPersonRefStore, IconAddMember, UserDetails } from '@intabiafusion/contact-resources'
+  import { notEmpty, Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../plugin'

@@ -3,12 +3,12 @@
 //
 //
 
-import { Ref } from '@hcengineering/core'
-import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { TriggerFunc } from '@hcengineering/server-core'
-import { TodoDoneTester } from '@hcengineering/time'
-import { GithubProject } from '@hcengineering/github'
+import { Ref } from '@intabiafusion/core'
+import type { Metadata, Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { TriggerFunc } from '@intabiafusion/server-core'
+import { TodoDoneTester } from '@intabiafusion/time'
+import { GithubProject } from '@intabiafusion/github'
 
 /**
  * @public

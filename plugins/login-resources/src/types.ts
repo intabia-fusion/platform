@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type IntlString } from '@hcengineering/platform'
+import { type IntlString } from '@intabiafusion/platform'
 
 export interface Field {
   id?: string

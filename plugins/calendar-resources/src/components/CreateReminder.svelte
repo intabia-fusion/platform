@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccessLevel, Calendar, generateEventId } from '@hcengineering/calendar'
-  import { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { UserBoxList } from '@hcengineering/contact-resources'
-  import { Class, DateRangeMode, Doc, Ref, getCurrentAccount } from '@hcengineering/core'
-  import { Card, getClient } from '@hcengineering/presentation'
-  import ui, { DateRangePresenter, EditBox } from '@hcengineering/ui'
+  import { AccessLevel, Calendar, generateEventId } from '@intabiafusion/calendar'
+  import { Employee, getCurrentEmployee } from '@intabiafusion/contact'
+  import { UserBoxList } from '@intabiafusion/contact-resources'
+  import { Class, DateRangeMode, Doc, Ref, getCurrentAccount } from '@intabiafusion/core'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import ui, { DateRangePresenter, EditBox } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
 

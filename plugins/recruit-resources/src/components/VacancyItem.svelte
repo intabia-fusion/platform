@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Vacancy } from '@hcengineering/recruit'
-  import { Icon } from '@hcengineering/ui'
+  import type { Vacancy } from '@intabiafusion/recruit'
+  import { Icon } from '@intabiafusion/ui'
   import recruit from '../plugin'
 
   export let value: Vacancy

@@ -1,11 +1,11 @@
-import { getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
+import { getClient as getAccountClientRaw, type AccountClient } from '@intabiafusion/account-client'
 import contact, {
   AvatarType,
   combineName,
   type Person,
   type SocialIdentity,
   type SocialIdentityRef
-} from '@hcengineering/contact'
+} from '@intabiafusion/contact'
 import core, {
   buildSocialIdString,
   generateId,
@@ -34,16 +34,16 @@ import core, {
   type MixinUpdate,
   type SocialIdType,
   AccountRole
-} from '@hcengineering/core'
-import { rpcJSONReplacer, type RateLimitInfo } from '@hcengineering/rpc'
+} from '@intabiafusion/core'
+import { rpcJSONReplacer, type RateLimitInfo } from '@intabiafusion/rpc'
 import {
   wrapPipeline,
   type ClientSessionCtx,
   type ConnectionSocket,
   type Session,
   type SessionManager
-} from '@hcengineering/server-core'
-import { decodeToken } from '@hcengineering/server-token'
+} from '@intabiafusion/server-core'
+import { decodeToken } from '@intabiafusion/server-token'
 
 import { createHash } from 'crypto'
 import { type Express, type Response as ExpressResponse, type Request } from 'express'
@@ -53,7 +53,7 @@ import { promisify } from 'util'
 import { gzip } from 'zlib'
 import { retrieveJson } from './utils'
 
-import { unknownError } from '@hcengineering/platform'
+import { unknownError } from '@intabiafusion/platform'
 
 export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
 interface RPCClientInfo {
@@ -745,7 +745,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
     })
   })
 
-  // To use in non-js (rust) clients that can't link to @hcengineering/core
+  // To use in non-js (rust) clients that can't link to @intabiafusion/core
   app.get('/api/v1/generate-id/:workspaceId', (req, res) => {
     void withSession(req, res, 'generateId', async (ctx, session, rateLimit) => {
       const result = { id: generateId() }

@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import cardPlugin from '@hcengineering/card'
-import core, { type Doc } from '@hcengineering/core'
-import { Mixin, type Builder } from '@hcengineering/model'
-import { TMethod, TProcessFunction, TTrigger } from '@hcengineering/model-process'
-import type { Resource } from '@hcengineering/platform'
-import process, { ExecutionStatus } from '@hcengineering/process'
-import serverCore from '@hcengineering/server-core'
+import cardPlugin from '@intabiafusion/card'
+import core, { type Doc } from '@intabiafusion/core'
+import { Mixin, type Builder } from '@intabiafusion/model'
+import { TMethod, TProcessFunction, TTrigger } from '@intabiafusion/model-process'
+import type { Resource } from '@intabiafusion/platform'
+import process, { ExecutionStatus } from '@intabiafusion/process'
+import serverCore from '@intabiafusion/server-core'
 import serverProcess, {
   type RollbackFunc,
   type ExecuteFunc,
@@ -26,9 +26,9 @@ import serverProcess, {
   type TransformFunc,
   type TriggerImpl,
   type CheckFunc
-} from '@hcengineering/server-process'
+} from '@intabiafusion/server-process'
 
-export { serverProcessId } from '@hcengineering/server-process'
+export { serverProcessId } from '@intabiafusion/server-process'
 
 @Mixin(serverProcess.mixin.MethodImpl, process.class.Method)
 export class TMethodImpl extends TMethod implements MethodImpl<Doc> {

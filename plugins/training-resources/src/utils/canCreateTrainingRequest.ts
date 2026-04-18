@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-import { type Training, TrainingState } from '@hcengineering/training'
+import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
+import { type Training, TrainingState } from '@intabiafusion/training'
 import { get } from 'svelte/store'
 import training from '../plugin'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Data, Ref, Timestamp } from '@hcengineering/core'
-  import { Department, PublicHoliday, timeToTzDate } from '@hcengineering/hr'
-  import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { Button, DateRangePresenter, EditBox, Label } from '@hcengineering/ui'
+  import core, { Data, Ref, Timestamp } from '@intabiafusion/core'
+  import { Department, PublicHoliday, timeToTzDate } from '@intabiafusion/hr'
+  import presentation, { Card, getClient } from '@intabiafusion/presentation'
+  import { Button, DateRangePresenter, EditBox, Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../../plugin'
   import DepartmentEditor from '../DepartmentEditor.svelte'

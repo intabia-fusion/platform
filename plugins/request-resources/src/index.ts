@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import EditRequest from './components/EditRequest.svelte'
 import RequestPresenter from './components/RequestPresenter.svelte'
 import RequestView from './components/RequestView.svelte'

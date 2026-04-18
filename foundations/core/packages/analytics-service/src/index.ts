@@ -2,10 +2,10 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { AnalyticProvider, Analytics } from '@hcengineering/analytics'
-import { initOpenTelemetrySDK, reportOTELError } from '@hcengineering/measurements-otlp'
+import { AnalyticProvider, Analytics } from '@intabiafusion/analytics'
+import { initOpenTelemetrySDK, reportOTELError } from '@intabiafusion/measurements-otlp'
 
-export * from '@hcengineering/measurements-otlp'
+export * from '@intabiafusion/measurements-otlp'
 export * from './logging'
 
 class OTELAnalyticsProvider implements AnalyticProvider {

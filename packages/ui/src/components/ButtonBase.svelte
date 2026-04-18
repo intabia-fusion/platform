@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
   import { AnySvelteComponent, ButtonBaseKind, ButtonBaseSize, ButtonBaseType, IconSize, LabelAndProps } from '../types'
   import { tooltip as tp } from '../tooltips'
   import { registerFocus } from '../focus'
@@ -21,7 +21,7 @@
   import Spinner from './Spinner.svelte'
   import Icon from './Icon.svelte'
   import Label from './Label.svelte'
-  import { themeStore, AccentColor } from '@hcengineering/theme'
+  import { themeStore, AccentColor } from '@intabiafusion/theme'
 
   export let title: string | undefined = undefined
   export let label: IntlString | undefined = undefined

@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import core from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
+import core from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
 import card from '.'
 
 export function definePermissions (builder: Builder): void {

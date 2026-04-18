@@ -16,13 +16,13 @@
 import { MarkupTransformer } from '../../transformers/markup'
 import { Doc } from 'yjs'
 
-jest.mock('@hcengineering/text-ydoc', () => ({
+jest.mock('@intabiafusion/text-ydoc', () => ({
   markupToYDoc: jest.fn(),
   yDocToMarkup: jest.fn()
 }))
 
-const mockMarkupToYDoc = jest.requireMock('@hcengineering/text-ydoc').markupToYDoc
-const mockYDocToMarkup = jest.requireMock('@hcengineering/text-ydoc').yDocToMarkup
+const mockMarkupToYDoc = jest.requireMock('@intabiafusion/text-ydoc').markupToYDoc
+const mockYDocToMarkup = jest.requireMock('@intabiafusion/text-ydoc').yDocToMarkup
 
 describe('MarkupTransformer', () => {
   let transformer: MarkupTransformer

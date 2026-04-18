@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { Timestamp } from '@hcengineering/core'
+  import { Timestamp } from '@intabiafusion/core'
 
   import { Label } from '..'
   import ui from '../plugin'

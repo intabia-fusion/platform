@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core, { Domain, Tx, TxDomainEvent } from '@hcengineering/core'
+import core, { Domain, Tx, TxDomainEvent } from '@intabiafusion/core'
 import {
   CreateMessageEvent,
   MessageEventType,
   RemovePatchEvent,
   UpdatePatchEvent
-} from '@hcengineering/communication-sdk-types'
-import { BlobID, CardID, Markdown, Message, MessageID, MessageType } from '@hcengineering/communication-types'
-import { MessageProcessor } from '@hcengineering/communication-shared'
+} from '@intabiafusion/communication-sdk-types'
+import { BlobID, CardID, Markdown, Message, MessageID, MessageType } from '@intabiafusion/communication-types'
+import { MessageProcessor } from '@intabiafusion/communication-shared'
 
 const COMMUNICATION_DOMAIN = 'communication' as Domain
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { recruitId, Vacancy } from '@hcengineering/recruit'
-  import { closeTooltip, getCurrentResolvedLocation, Icon, navigate, tooltip } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { recruitId, Vacancy } from '@intabiafusion/recruit'
+  import { closeTooltip, getCurrentResolvedLocation, Icon, navigate, tooltip } from '@intabiafusion/ui'
   import recruit from '../plugin'
   import VacancyApplicationsPopup from './VacancyApplicationsPopup.svelte'
 

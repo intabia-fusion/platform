@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type IntlString } from '@hcengineering/platform'
+import { type IntlString } from '@intabiafusion/platform'
 import InviteLink from './components/InviteLink.svelte'
 import LoginApp from './components/LoginApp.svelte'
 import LoginOtpForm from './components/LoginOtpForm.svelte'
@@ -32,7 +32,7 @@ import {
   resendInvite
 } from './utils'
 
-import { type Pages, pages } from '@hcengineering/login'
+import { type Pages, pages } from '@intabiafusion/login'
 export { pages, type Pages }
 export { default as LoginAppBase } from './components/LoginAppBase.svelte'
 export { default as AuthLikeForm } from './components/AuthLikeForm.svelte'

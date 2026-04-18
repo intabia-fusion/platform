@@ -14,12 +14,12 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Ref } from '@hcengineering/core'
-import { inventoryId } from '@hcengineering/inventory'
-import inventory from '@hcengineering/inventory-resources/src/plugin'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ActionCategory, type ViewAction, type Viewlet } from '@hcengineering/view'
+import type { Client, Doc, Ref } from '@intabiafusion/core'
+import { inventoryId } from '@intabiafusion/inventory'
+import inventory from '@intabiafusion/inventory-resources/src/plugin'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ActionCategory, type ViewAction, type Viewlet } from '@intabiafusion/view'
 export default mergeIds(inventoryId, inventory, {
   action: {
     CreateSubcategory: '' as Ref<Action>

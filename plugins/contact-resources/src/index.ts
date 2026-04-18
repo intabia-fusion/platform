@@ -22,7 +22,7 @@ import {
   type Contact,
   type Person,
   contactId
-} from '@hcengineering/contact'
+} from '@intabiafusion/contact'
 import {
   AccountRole,
   SocialIdType,
@@ -34,10 +34,10 @@ import {
   type Ref,
   type RelatedDocument,
   type WithLookup
-} from '@hcengineering/core'
-import login from '@hcengineering/login'
-import { getResource, type IntlString, type Resources } from '@hcengineering/platform'
-import { MessageBox, getBlobRef, getClient, type ObjectSearchResult, isDisabled } from '@hcengineering/presentation'
+} from '@intabiafusion/core'
+import login from '@intabiafusion/login'
+import { getResource, type IntlString, type Resources } from '@intabiafusion/platform'
+import { MessageBox, getBlobRef, getClient, type ObjectSearchResult, isDisabled } from '@intabiafusion/presentation'
 import {
   getPlatformAvatarColorByName,
   getPlatformAvatarColorForTextDef,
@@ -50,8 +50,8 @@ import {
   type AnySvelteComponent,
   type ColorDefinition,
   type TooltipAlignment
-} from '@hcengineering/ui'
-import { AggregationManager } from '@hcengineering/view-resources'
+} from '@intabiafusion/ui'
+import { AggregationManager } from '@intabiafusion/view-resources'
 import PersonIdArrayEditor from './components/PersonIdArrayEditor.svelte'
 import AccountArrayEditor from './components/AccountArrayEditor.svelte'
 import AccountBox from './components/AccountBox.svelte'

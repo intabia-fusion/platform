@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IntlString, OK, PlatformError, Status, unknownError } from '@hcengineering/platform'
+  import { IntlString, OK, PlatformError, Status, unknownError } from '@intabiafusion/platform'
 
   import type { Field } from '../types'
   import Form from './Form.svelte'

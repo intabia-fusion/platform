@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { getClient, isWorkspaceLoginInfo } from '@hcengineering/account-client'
-import client, { ClientSocket } from '@hcengineering/client'
+import { getClient, isWorkspaceLoginInfo } from '@intabiafusion/account-client'
+import client, { ClientSocket } from '@intabiafusion/client'
 import core, {
   AccountRole,
   AccountUuid,
@@ -36,9 +36,9 @@ import core, {
   TxOperations,
   WorkspaceIds,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import drive, { createFile, Drive } from '@hcengineering/drive'
-import exportPlugin, { type TransformConfig, type RelationDefinition } from '@hcengineering/export'
+} from '@intabiafusion/core'
+import drive, { createFile, Drive } from '@intabiafusion/drive'
+import exportPlugin, { type TransformConfig, type RelationDefinition } from '@intabiafusion/export'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -47,11 +47,11 @@ import {
   DomainTxMiddleware,
   LowLevelMiddleware,
   ModelMiddleware
-} from '@hcengineering/middleware'
-import notification from '@hcengineering/notification'
-import contact from '@hcengineering/contact'
-import { setMetadata } from '@hcengineering/platform'
-import { createClient, getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
+} from '@intabiafusion/middleware'
+import notification from '@intabiafusion/notification'
+import contact from '@intabiafusion/contact'
+import { setMetadata } from '@intabiafusion/platform'
+import { createClient, getAccountClient, getTransactorEndpoint } from '@intabiafusion/server-client'
 import {
   createDummyStorageAdapter,
   createPipeline,
@@ -60,10 +60,10 @@ import {
   type PipelineContext,
   StorageAdapter,
   StorageConfiguration
-} from '@hcengineering/server-core'
-import { getConfig } from '@hcengineering/server-pipeline'
-import { buildStorageFromConfig } from '@hcengineering/server-storage'
-import { Token, decodeToken, generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/server-core'
+import { getConfig } from '@intabiafusion/server-pipeline'
+import { buildStorageFromConfig } from '@intabiafusion/server-storage'
+import { Token, decodeToken, generateToken } from '@intabiafusion/server-token'
 import archiver from 'archiver'
 import { sendExportCompletionNotification } from './notifications'
 import cors from 'cors'

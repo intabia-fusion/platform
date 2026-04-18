@@ -1,6 +1,6 @@
 <script lang="ts">
-  import documents, { ControlledDocumentState } from '@hcengineering/controlled-documents'
-  import { Label, Button, showPopup } from '@hcengineering/ui'
+  import documents, { ControlledDocumentState } from '@intabiafusion/controlled-documents'
+  import { Label, Button, showPopup } from '@intabiafusion/ui'
 
   import TeamPopup from '../../TeamPopup.svelte'
   import {

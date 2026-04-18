@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MarkupMark, MarkupNode, MarkupNodeType } from '@hcengineering/text-core'
-import { markupToHtml } from '@hcengineering/text-html'
+import { MarkupMark, MarkupNode, MarkupNodeType } from '@intabiafusion/text-core'
+import { markupToHtml } from '@intabiafusion/text-html'
 
 import { isInSet, markEq } from './marks'
 import { nodeContent, nodeAttrs } from './node'

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, closePopup, Menu, showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { Asset, getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, closePopup, Menu, showPopup } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import contact from '../plugin'
 
   const client = getClient()

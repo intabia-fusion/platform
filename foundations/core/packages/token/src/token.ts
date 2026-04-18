@@ -1,5 +1,5 @@
-import { AccountRole, AccountUuid, MeasureContext, PersonUuid, WorkspaceUuid } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+import { AccountRole, AccountUuid, MeasureContext, PersonUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
 import { decode, encode } from 'jwt-simple'
 import { validate } from 'uuid'
 import serverPlugin from './plugin'

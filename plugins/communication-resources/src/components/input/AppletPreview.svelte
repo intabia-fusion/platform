@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Component, showPopup } from '@hcengineering/ui'
-  import { Applet } from '@hcengineering/communication'
+  import { Component, showPopup } from '@intabiafusion/ui'
+  import { Applet } from '@intabiafusion/communication'
   import { createEventDispatcher } from 'svelte'
 
   import { AppletDraft } from '../../types'

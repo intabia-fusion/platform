@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/collaborator-client
+# Change Log - @intabiafusion/collaborator-client
 
 This log was last generated on Mon, 27 Oct 2025 13:27:12 GMT and should not be manually modified.
 

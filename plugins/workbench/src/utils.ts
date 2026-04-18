@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getResource } from '@hcengineering/platform'
+import { getResource } from '@intabiafusion/platform'
 import { workbenchPlugin as plugin } from './plugin'
 
 /** @public */

@@ -3,7 +3,7 @@
 -->
 
 <script lang="ts">
-  import { EditBox } from '@hcengineering/ui'
+  import { EditBox } from '@intabiafusion/ui'
 
   export let value: string
   export let readonly = false

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { DocNotifyContext } from '@intabiafusion/notification'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { ActivityMessage } from '@intabiafusion/activity'
 
   import Channel from './Channel.svelte'
   import { ThreadView } from '../index'

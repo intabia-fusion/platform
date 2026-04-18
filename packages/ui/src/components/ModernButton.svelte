@@ -4,7 +4,7 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
 
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
   import { AnySvelteComponent, ButtonBaseSize, IconSize, LabelAndProps } from '../types'
   import { ComponentType } from 'svelte'
   import ButtonBase from './ButtonBase.svelte'

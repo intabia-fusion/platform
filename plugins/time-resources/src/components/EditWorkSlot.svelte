@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
+  import { Event } from '@intabiafusion/calendar'
   import {
     CalendarSelector,
     EventReminders,
     EventTimeEditor,
     VisibilityEditor,
     isReadOnly
-  } from '@hcengineering/calendar-resources'
-  import calendar from '@hcengineering/calendar-resources/src/plugin'
-  import { DocumentUpdate } from '@hcengineering/core'
-  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { Button, EditBox, Icon, IconClose, createFocusManager, FocusHandler } from '@hcengineering/ui'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  } from '@intabiafusion/calendar-resources'
+  import calendar from '@intabiafusion/calendar-resources/src/plugin'
+  import { DocumentUpdate } from '@intabiafusion/core'
+  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import { Button, EditBox, Icon, IconClose, createFocusManager, FocusHandler } from '@intabiafusion/ui'
+  import { ToDo, WorkSlot } from '@intabiafusion/time'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import TaskSelector from './TaskSelector.svelte'

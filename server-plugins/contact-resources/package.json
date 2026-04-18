@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/server-contact-resources",
-  "version": "0.7.0",
+  "name": "@intabiafusion/server-contact-resources",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -22,7 +22,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -37,18 +37,18 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@hcengineering/measurements": "workspace:^0.7.18",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/card": "workspace:^0.7.0",
-    "@hcengineering/rank": "workspace:^0.7.17",
-    "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/login": "workspace:^0.7.0",
-    "@hcengineering/workbench": "workspace:^0.7.0",
-    "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/server-contact": "workspace:^0.7.0",
-    "@hcengineering/server-activity": "workspace:^0.7.0"
+    "@intabiafusion/measurements": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/contact": "workspace:^1.0.0",
+    "@intabiafusion/card": "workspace:^1.0.0",
+    "@intabiafusion/rank": "workspace:^1.0.0",
+    "@intabiafusion/view": "workspace:^1.0.0",
+    "@intabiafusion/login": "workspace:^1.0.0",
+    "@intabiafusion/workbench": "workspace:^1.0.0",
+    "@intabiafusion/notification": "workspace:^1.0.0",
+    "@intabiafusion/server-contact": "workspace:^1.0.0",
+    "@intabiafusion/server-activity": "workspace:^1.0.0"
   }
 }

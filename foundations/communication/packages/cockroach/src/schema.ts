@@ -27,8 +27,8 @@ import {
   NotificationContent,
   NotificationType,
   PeerKind, PeerExtra
-} from '@hcengineering/communication-types'
-import { Domain } from '@hcengineering/communication-sdk-types'
+} from '@intabiafusion/communication-types'
+import { Domain } from '@intabiafusion/communication-sdk-types'
 
 export const schemas = {
   [Domain.MessageIndex]: {

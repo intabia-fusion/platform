@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import contact, { Employee } from '@hcengineering/contact'
-  import { AccountUuid, Ref, notEmpty, getCurrentAccount } from '@hcengineering/core'
-  import { employeeByIdStore, SelectUsersPopup } from '@hcengineering/contact-resources'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { Modal, showPopup } from '@hcengineering/ui'
-  import { createDirect } from '@hcengineering/chunter'
+  import contact, { Employee } from '@intabiafusion/contact'
+  import { AccountUuid, Ref, notEmpty, getCurrentAccount } from '@intabiafusion/core'
+  import { employeeByIdStore, SelectUsersPopup } from '@intabiafusion/contact-resources'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { Modal, showPopup } from '@intabiafusion/ui'
+  import { createDirect } from '@intabiafusion/chunter'
 
   import chunter from '../../../plugin'
   import { buildDmName } from '../../../utils'

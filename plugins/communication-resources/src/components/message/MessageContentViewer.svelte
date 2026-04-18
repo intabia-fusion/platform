@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { MessageViewer as MarkupMessageViewer } from '@hcengineering/presentation'
-  import { Markdown, Message } from '@hcengineering/communication-types'
-  import { Card } from '@hcengineering/card'
-  import { Person } from '@hcengineering/contact'
-  import { Markup } from '@hcengineering/core'
-  import { ShowMore } from '@hcengineering/ui'
+  import { MessageViewer as MarkupMessageViewer } from '@intabiafusion/presentation'
+  import { Markdown, Message } from '@intabiafusion/communication-types'
+  import { Card } from '@intabiafusion/card'
+  import { Person } from '@intabiafusion/contact'
+  import { Markup } from '@intabiafusion/core'
+  import { ShowMore } from '@intabiafusion/ui'
 
   import ActivityMessageViewer from './ActivityMessageViewer.svelte'
   import { toMarkup } from '../../utils'

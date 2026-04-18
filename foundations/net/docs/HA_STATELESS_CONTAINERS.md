@@ -112,8 +112,8 @@ The network's `register()` method now:
 ### Basic HA Setup
 
 ```typescript
-import { AgentImpl, containerUuid, TickManagerImpl } from '@hcengineering/network-core'
-import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
+import { AgentImpl, containerUuid, TickManagerImpl } from '@intabiafusion/network-core'
+import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
 
 // Shared service UUID across all HA instances
 const SHARED_SERVICE_UUID = 'my-ha-service-001' as ContainerUuid

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
   import core, {
     Data,
     DocumentUpdate,
@@ -27,10 +27,10 @@
     WithLookup,
     notEmpty,
     AccountUuid
-  } from '@hcengineering/core'
-  import document, { Teamspace, DocumentEvents } from '@hcengineering/document'
-  import { Asset } from '@hcengineering/platform'
-  import presentation, { IconWithEmoji, Card, getClient, reduceCalls } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import document, { Teamspace, DocumentEvents } from '@intabiafusion/document'
+  import { Asset } from '@intabiafusion/platform'
+  import presentation, { IconWithEmoji, Card, getClient, reduceCalls } from '@intabiafusion/presentation'
   import {
     Button,
     EditBox,
@@ -41,11 +41,11 @@
     getPlatformColorForTextDef,
     showPopup,
     themeStore
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { IconPicker, SpaceTypeSelector } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { IconPicker, SpaceTypeSelector } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import documentRes from '../../plugin'
 

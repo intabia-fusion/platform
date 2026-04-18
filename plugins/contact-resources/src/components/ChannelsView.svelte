@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Channel, ChannelProvider } from '@hcengineering/contact'
-  import { AttachedData, Doc, Ref, toIdMap } from '@hcengineering/core'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { Asset, IntlString, getResource } from '@hcengineering/platform'
-  import type { AnyComponent } from '@hcengineering/ui'
-  import { Button } from '@hcengineering/ui'
+  import type { Channel, ChannelProvider } from '@intabiafusion/contact'
+  import { AttachedData, Doc, Ref, toIdMap } from '@intabiafusion/core'
+  import notification, { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  import { Asset, IntlString, getResource } from '@intabiafusion/platform'
+  import type { AnyComponent } from '@intabiafusion/ui'
+  import { Button } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { readable, Readable, Writable, writable } from 'svelte/store'
 

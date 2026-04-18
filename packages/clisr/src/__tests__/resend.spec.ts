@@ -17,8 +17,8 @@
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../client'
-import { MeasureMetricsContext } from '@hcengineering/measurements'
-import { RPCHandler } from '@hcengineering/rpc'
+import { MeasureMetricsContext } from '@intabiafusion/measurements'
+import { RPCHandler } from '@intabiafusion/rpc'
 import type { ClientSocketFactory } from '../types'
 import { FRAME_MSGPACK } from '../types'
 

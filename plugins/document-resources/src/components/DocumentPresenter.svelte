@@ -15,11 +15,11 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
-  import { tooltip } from '@hcengineering/ui'
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import { WithLookup } from '@intabiafusion/core'
+  import { Document } from '@intabiafusion/document'
+  import { tooltip } from '@intabiafusion/ui'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { ObjectPresenterType } from '@intabiafusion/view'
 
   import document from '../plugin'
   import DocumentIcon from './DocumentIcon.svelte'

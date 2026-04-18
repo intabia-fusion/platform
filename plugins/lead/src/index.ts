@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import type { Contact } from '@hcengineering/contact'
+import type { Contact } from '@intabiafusion/contact'
 import type {
   Attribute,
   Class,
@@ -25,11 +25,11 @@ import type {
   Status,
   Timestamp,
   Permission
-} from '@hcengineering/core'
-import { Mixin } from '@hcengineering/core'
-import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { Project, ProjectType, ProjectTypeDescriptor, Task, TaskType } from '@hcengineering/task'
+} from '@intabiafusion/core'
+import { Mixin } from '@intabiafusion/core'
+import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import type { Project, ProjectType, ProjectTypeDescriptor, Task, TaskType } from '@intabiafusion/task'
 
 /**
  * @public

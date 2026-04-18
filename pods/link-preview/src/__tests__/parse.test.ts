@@ -1,4 +1,4 @@
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 import { Config } from '../config'
 import { parseLinkPreviewDetails, LinkPreviewError } from '../parse'
 

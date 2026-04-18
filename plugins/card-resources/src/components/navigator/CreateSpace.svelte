@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, { AccountUuid, Data, Ref, RolesAssignment, getCurrentAccount, notEmpty } from '@hcengineering/core'
-  import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { EditBox, Label, Toggle } from '@hcengineering/ui'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import core, { AccountUuid, Data, Ref, RolesAssignment, getCurrentAccount, notEmpty } from '@intabiafusion/core'
+  import presentation, { Card, getClient } from '@intabiafusion/presentation'
+  import { EditBox, Label, Toggle } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import { CardSpace, MasterTag, Role } from '@hcengineering/card'
+  import { CardSpace, MasterTag, Role } from '@intabiafusion/card'
   import card from '../../plugin'
   import TypesSelector from './TypesSelector.svelte'
-  import view from '@hcengineering/view'
+  import view from '@intabiafusion/view'
   import { deepEqual } from 'fast-equals'
 
   export let space: CardSpace | undefined = undefined

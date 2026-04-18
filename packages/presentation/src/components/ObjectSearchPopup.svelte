@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, RelatedDocument, DocumentQuery } from '@hcengineering/core'
+  import { Ref, RelatedDocument, DocumentQuery } from '@intabiafusion/core'
 
-  import { getResource, IntlString } from '@hcengineering/platform'
+  import { getResource, IntlString } from '@intabiafusion/platform'
   import ui, {
     createFocusManager,
     deviceOptionsStore,
@@ -28,7 +28,7 @@
     Icon,
     tooltip,
     EditWithIcon
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation from '../plugin'
   import { ObjectSearchCategory, ObjectSearchResult } from '../types'

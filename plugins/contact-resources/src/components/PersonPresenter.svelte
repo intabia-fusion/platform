@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getName, Person } from '@hcengineering/contact'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import type { LabelAndProps, IconSize } from '@hcengineering/ui'
+  import { getName, Person } from '@intabiafusion/contact'
+  import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
+  import type { LabelAndProps, IconSize } from '@intabiafusion/ui'
   import { getPersonByPersonRefStore, getPersonTooltip, PersonLabelTooltip } from '..'
   import PersonContent from './PersonContent.svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
-  import ui from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Ref } from '@intabiafusion/core'
+  import ui from '@intabiafusion/ui'
+  import { ObjectPresenterType } from '@intabiafusion/view'
 
   export let value: Ref<Person> | Person | null | undefined
   export let inline = false

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Button, showPopup } from '@hcengineering/ui'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Button, showPopup } from '@intabiafusion/ui'
   import calendar from '../plugin'
   import CreateReminder from './CreateReminder.svelte'
   import DocRemindersPopup from './DocRemindersPopup.svelte'

@@ -1,9 +1,9 @@
 {
-  "name": "@hcengineering/platform",
+  "name": "@intabiafusion/platform",
   "entries": [
     {
       "version": "0.7.19",
-      "tag": "@hcengineering/platform_v0.7.19",
+      "tag": "@intabiafusion/platform_v0.7.19",
       "date": "Wed, 26 Nov 2025 15:28:11 GMT",
       "comments": {
         "patch": [
@@ -15,7 +15,7 @@
     },
     {
       "version": "0.7.18",
-      "tag": "@hcengineering/platform_v0.7.18",
+      "tag": "@intabiafusion/platform_v0.7.18",
       "date": "Fri, 31 Oct 2025 20:11:13 GMT",
       "comments": {
         "patch": [
@@ -27,7 +27,7 @@
     },
     {
       "version": "0.7.5",
-      "tag": "@hcengineering/platform_v0.7.5",
+      "tag": "@intabiafusion/platform_v0.7.5",
       "date": "Tue, 14 Oct 2025 04:58:17 GMT",
       "comments": {
         "patch": [
@@ -39,7 +39,7 @@
     },
     {
       "version": "0.7.4",
-      "tag": "@hcengineering/platform_v0.7.4",
+      "tag": "@intabiafusion/platform_v0.7.4",
       "date": "Sat, 11 Oct 2025 18:20:33 GMT",
       "comments": {
         "patch": [
@@ -51,7 +51,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/platform_v0.6.5",
+      "tag": "@intabiafusion/platform_v0.6.5",
       "date": "Sun, 08 Aug 2021 11:34:23 GMT",
       "comments": {
         "patch": [
@@ -63,7 +63,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/platform_v0.6.4",
+      "tag": "@intabiafusion/platform_v0.6.4",
       "date": "Sun, 08 Aug 2021 10:14:57 GMT",
       "comments": {
         "patch": [
@@ -75,7 +75,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/platform_v0.6.3",
+      "tag": "@intabiafusion/platform_v0.6.3",
       "date": "Wed, 04 Aug 2021 21:18:44 GMT",
       "comments": {
         "patch": [
@@ -87,7 +87,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/platform_v0.6.2",
+      "tag": "@intabiafusion/platform_v0.6.2",
       "date": "Wed, 04 Aug 2021 20:48:46 GMT",
       "comments": {
         "patch": [
@@ -99,7 +99,7 @@
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/platform_v0.6.1",
+      "tag": "@intabiafusion/platform_v0.6.1",
       "date": "Wed, 04 Aug 2021 17:38:30 GMT",
       "comments": {
         "patch": [

@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import { DocumentQuery, SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Label, Scroller, SearchEdit } from '@hcengineering/ui'
-  import { FilterBar } from '@hcengineering/view-resources'
-  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
-  import attachment from '@hcengineering/attachment'
-  import activity from '@hcengineering/activity'
+  import chunter, { ChatMessage } from '@intabiafusion/chunter'
+  import { DocumentQuery, SortingOrder } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Label, Scroller, SearchEdit } from '@intabiafusion/ui'
+  import { FilterBar } from '@intabiafusion/view-resources'
+  import { ActivityMessagePresenter } from '@intabiafusion/activity-resources'
+  import attachment from '@intabiafusion/attachment'
+  import activity from '@intabiafusion/activity'
 
   import plugin from '../../../plugin'
   import { openMessageFromSpecial } from '../../../navigation'

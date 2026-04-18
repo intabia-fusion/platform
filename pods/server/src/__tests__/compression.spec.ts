@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises'
 import { compress } from 'snappy'
-import { RPCHandler } from '@hcengineering/rpc'
+import { RPCHandler } from '@intabiafusion/rpc'
 
 describe('compression-tests', () => {
   it('check-snappy', async () => {

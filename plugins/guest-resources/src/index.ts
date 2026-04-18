@@ -1,5 +1,5 @@
-import { type Resources } from '@hcengineering/platform'
-import { type DefSeparators } from '@hcengineering/ui'
+import { type Resources } from '@intabiafusion/platform'
+import { type DefSeparators } from '@intabiafusion/ui'
 import CreatePublicLink from './components/CreatePublicLink.svelte'
 import GuestApp from './components/GuestApp.svelte'
 

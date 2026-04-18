@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Calendar } from '@hcengineering/calendar'
-  import { getCurrentAccount } from '@hcengineering/core'
-  import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Grid, Label, Toggle, tooltip } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Calendar } from '@intabiafusion/calendar'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import presentation, { Card, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Grid, Label, Toggle, tooltip } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import type { Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@intabiafusion/account-client'
   import calendar from '../plugin'
 
   export let integration: Integration

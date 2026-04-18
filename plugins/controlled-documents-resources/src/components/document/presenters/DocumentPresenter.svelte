@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Document } from '@hcengineering/controlled-documents'
-  import { WithLookup } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { tooltip } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { Document } from '@intabiafusion/controlled-documents'
+  import { WithLookup } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { tooltip } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
 
   import DocumentIcon from '../../icons/DocumentIcon.svelte'
   import documents from '../../../plugin'

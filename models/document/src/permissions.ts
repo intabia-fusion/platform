@@ -1,6 +1,6 @@
-import type { Builder } from '@hcengineering/model'
-import core from '@hcengineering/core'
-import document from '@hcengineering/document'
+import type { Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/core'
+import document from '@intabiafusion/document'
 
 export function definePermissions (builder: Builder): void {
   builder.createDoc(

@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { taskTypeStore } from '@hcengineering/task-resources'
-  import { Issue } from '@hcengineering/tracker'
-  import { IconSize } from '@hcengineering/ui'
-  import { getTaskTypeStates } from '@hcengineering/task'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { taskTypeStore } from '@intabiafusion/task-resources'
+  import { Issue } from '@intabiafusion/tracker'
+  import { IconSize } from '@intabiafusion/ui'
+  import { getTaskTypeStates } from '@intabiafusion/task'
+  import { statusStore } from '@intabiafusion/view-resources'
 
   import IssueStatusIcon from './IssueStatusIcon.svelte'
 

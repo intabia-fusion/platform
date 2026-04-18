@@ -277,7 +277,7 @@ docker run -p 4006:4006 \
 ### Build
 
 ```bash
-rush build --to @hcengineering/pod-export
+rush build --to @intabiafusion/pod-export
 ```
 
 ### Run Locally

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { FilePreviewPopup, getFileUrl } from '@hcengineering/presentation'
-import { FileNode, type FileOptions as FileNodeOptions } from '@hcengineering/text'
-import { humanReadableFileSize, showPopup } from '@hcengineering/ui'
+import { FilePreviewPopup, getFileUrl } from '@intabiafusion/presentation'
+import { FileNode, type FileOptions as FileNodeOptions } from '@intabiafusion/text'
+import { humanReadableFileSize, showPopup } from '@intabiafusion/ui'
 import { nodeInputRule } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { type FileAttachFunction } from './types'

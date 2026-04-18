@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation from '@hcengineering/presentation'
-  import { Icon, IconEdit, IconClose, tooltip, Button, IconCircles } from '@hcengineering/ui'
+  import presentation from '@intabiafusion/presentation'
+  import { Icon, IconEdit, IconClose, tooltip, Button, IconCircles } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let style = ''

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { MasterTag } from '@hcengineering/card'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { IconWithEmoji, getClient } from '@hcengineering/presentation'
-  import { Icon, Label } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import card, { MasterTag } from '@intabiafusion/card'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { IconWithEmoji, getClient } from '@intabiafusion/presentation'
+  import { Icon, Label } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
 
   export let _class: Ref<Class<Doc>>
 

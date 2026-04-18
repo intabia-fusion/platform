@@ -1,1 +1,1 @@
-import '@hcengineering/model-all/src/show'
+import '@intabiafusion/model-all/src/show'

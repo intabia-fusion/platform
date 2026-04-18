@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, FileDownload } from '@hcengineering/attachment-resources'
-  import { ChunterSpace } from '@hcengineering/chunter'
-  import { Doc, SortingOrder, getCurrentAccount, type WithLookup } from '@hcengineering/core'
-  import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
-  import { Icon, IconMoreV, Label, Menu, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
+  import attachment, { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter, FileDownload } from '@intabiafusion/attachment-resources'
+  import { ChunterSpace } from '@intabiafusion/chunter'
+  import { Doc, SortingOrder, getCurrentAccount, type WithLookup } from '@intabiafusion/core'
+  import { createQuery, getClient, getFileUrl } from '@intabiafusion/presentation'
+  import { Icon, IconMoreV, Label, Menu, getCurrentResolvedLocation, navigate, showPopup } from '@intabiafusion/ui'
 
   export let channel: ChunterSpace | undefined
   const client = getClient()

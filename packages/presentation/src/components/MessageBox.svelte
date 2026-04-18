@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { translate, type IntlString } from '@hcengineering/platform'
+  import { translate, type IntlString } from '@intabiafusion/platform'
   import {
     Button,
     FocusHandler,
@@ -22,7 +22,7 @@
     AnySvelteComponent,
     Component,
     type AnyComponent
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { HTMLViewer } from '..'
 

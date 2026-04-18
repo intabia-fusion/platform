@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
-  import { DateRangeMode, Doc } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { DatePresenter, DateTimeRangePresenter, Label, showPopup, DateRangePresenter } from '@hcengineering/ui'
-  import view, { ObjectEditor } from '@hcengineering/view'
+  import { Event } from '@intabiafusion/calendar'
+  import { DateRangeMode, Doc } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { DatePresenter, DateTimeRangePresenter, Label, showPopup, DateRangePresenter } from '@intabiafusion/ui'
+  import view, { ObjectEditor } from '@intabiafusion/view'
   import calendar from '../plugin'
 
   export let value: Event

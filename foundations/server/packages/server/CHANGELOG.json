@@ -1,9 +1,9 @@
 {
-  "name": "@hcengineering/server",
+  "name": "@intabiafusion/server",
   "entries": [
     {
       "version": "0.7.18",
-      "tag": "@hcengineering/server_v0.7.18",
+      "tag": "@intabiafusion/server_v0.7.18",
       "date": "Wed, 26 Nov 2025 16:04:43 GMT",
       "comments": {
         "patch": [
@@ -13,14 +13,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.17` to `0.7.18`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.17` to `0.7.18`"
           }
         ]
       }
     },
     {
       "version": "0.7.17",
-      "tag": "@hcengineering/server_v0.7.17",
+      "tag": "@intabiafusion/server_v0.7.17",
       "date": "Thu, 06 Nov 2025 10:21:28 GMT",
       "comments": {
         "patch": [
@@ -30,14 +30,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.16` to `0.7.17`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.16` to `0.7.17`"
           }
         ]
       }
     },
     {
       "version": "0.7.16",
-      "tag": "@hcengineering/server_v0.7.16",
+      "tag": "@intabiafusion/server_v0.7.16",
       "date": "Wed, 29 Oct 2025 06:31:49 GMT",
       "comments": {
         "none": [
@@ -54,7 +54,7 @@
     },
     {
       "version": "0.7.15",
-      "tag": "@hcengineering/server_v0.7.15",
+      "tag": "@intabiafusion/server_v0.7.15",
       "date": "Mon, 27 Oct 2025 16:26:11 GMT",
       "comments": {
         "patch": [
@@ -64,14 +64,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `^0.7.14` to `0.7.15`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `^0.7.14` to `0.7.15`"
           }
         ]
       }
     },
     {
       "version": "0.7.10",
-      "tag": "@hcengineering/server_v0.7.10",
+      "tag": "@intabiafusion/server_v0.7.10",
       "date": "Mon, 27 Oct 2025 04:47:16 GMT",
       "comments": {
         "patch": [
@@ -83,7 +83,7 @@
     },
     {
       "version": "0.7.9",
-      "tag": "@hcengineering/server_v0.7.9",
+      "tag": "@intabiafusion/server_v0.7.9",
       "date": "Tue, 21 Oct 2025 19:29:19 GMT",
       "comments": {
         "patch": [
@@ -93,14 +93,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.7` to `0.7.8`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.7` to `0.7.8`"
           }
         ]
       }
     },
     {
       "version": "0.7.8",
-      "tag": "@hcengineering/server_v0.7.8",
+      "tag": "@intabiafusion/server_v0.7.8",
       "date": "Fri, 17 Oct 2025 05:15:22 GMT",
       "comments": {
         "patch": [
@@ -110,26 +110,26 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.6` to `0.7.7`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.6` to `0.7.7`"
           }
         ]
       }
     },
     {
       "version": "0.7.7",
-      "tag": "@hcengineering/server_v0.7.7",
+      "tag": "@intabiafusion/server_v0.7.7",
       "date": "Wed, 15 Oct 2025 18:58:52 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.5` to `0.7.6`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.5` to `0.7.6`"
           }
         ]
       }
     },
     {
       "version": "0.7.6",
-      "tag": "@hcengineering/server_v0.7.6",
+      "tag": "@intabiafusion/server_v0.7.6",
       "date": "Tue, 14 Oct 2025 14:07:25 GMT",
       "comments": {
         "patch": [
@@ -141,19 +141,19 @@
     },
     {
       "version": "0.7.5",
-      "tag": "@hcengineering/server_v0.7.5",
+      "tag": "@intabiafusion/server_v0.7.5",
       "date": "Tue, 14 Oct 2025 10:31:32 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.4` to `0.7.5`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.4` to `0.7.5`"
           }
         ]
       }
     },
     {
       "version": "0.7.4",
-      "tag": "@hcengineering/server_v0.7.4",
+      "tag": "@intabiafusion/server_v0.7.4",
       "date": "Tue, 14 Oct 2025 05:23:10 GMT",
       "comments": {
         "patch": [
@@ -163,14 +163,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.3` to `0.7.4`"
           }
         ]
       }
     },
     {
       "version": "0.7.3",
-      "tag": "@hcengineering/server_v0.7.3",
+      "tag": "@intabiafusion/server_v0.7.3",
       "date": "Mon, 13 Oct 2025 12:15:35 GMT",
       "comments": {
         "patch": [
@@ -180,14 +180,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.2` to `0.7.3`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.2` to `0.7.3`"
           }
         ]
       }
     },
     {
       "version": "0.7.2",
-      "tag": "@hcengineering/server_v0.7.2",
+      "tag": "@intabiafusion/server_v0.7.2",
       "date": "Sat, 11 Oct 2025 18:26:50 GMT",
       "comments": {
         "patch": [
@@ -197,14 +197,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.1` to `0.7.2`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.1` to `0.7.2`"
           }
         ]
       }
     },
     {
       "version": "0.7.1",
-      "tag": "@hcengineering/server_v0.7.1",
+      "tag": "@intabiafusion/server_v0.7.1",
       "date": "Fri, 10 Oct 2025 14:32:03 GMT",
       "comments": {
         "none": [
@@ -219,14 +219,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/server-core\" from `0.7.0` to `0.7.1`"
+            "comment": "Updating dependency \"@intabiafusion/server-core\" from `0.7.0` to `0.7.1`"
           }
         ]
       }
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/server_v0.6.2",
+      "tag": "@intabiafusion/server_v0.6.2",
       "date": "Fri, 20 Aug 2021 16:21:03 GMT",
       "comments": {
         "patch": [
@@ -236,22 +236,22 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/core\" from `~0.6.10` to `~0.6.11`"
+            "comment": "Updating dependency \"@intabiafusion/core\" from `~0.6.10` to `~0.6.11`"
           },
           {
-            "comment": "Updating dependency \"@hcengineering/mongo\" from `~0.6.0` to `~0.6.1`"
+            "comment": "Updating dependency \"@intabiafusion/mongo\" from `~0.6.0` to `~0.6.1`"
           }
         ]
       }
     },
     {
       "version": "0.7.0",
-      "tag": "@hcengineering/server_v0.6.0",
+      "tag": "@intabiafusion/server_v0.6.0",
       "date": "Sun, 08 Aug 2021 10:14:57 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/platform\" from `~0.6.3` to `~0.6.4`"
+            "comment": "Updating dependency \"@intabiafusion/platform\" from `~0.6.3` to `~0.6.4`"
           }
         ]
       }

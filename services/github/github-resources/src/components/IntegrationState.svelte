@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedDoc, WithLookup } from '@hcengineering/core'
-  import { GithubIntegration, GithubIntegrationRepository } from '@hcengineering/github'
-  import { getClient } from '@hcengineering/presentation'
-  import type { Integration } from '@hcengineering/account-client'
-  import { BaseIntegrationState } from '@hcengineering/setting-resources'
-  import { OK, ERROR, Status } from '@hcengineering/platform'
+  import { AttachedDoc, WithLookup } from '@intabiafusion/core'
+  import { GithubIntegration, GithubIntegrationRepository } from '@intabiafusion/github'
+  import { getClient } from '@intabiafusion/presentation'
+  import type { Integration } from '@intabiafusion/account-client'
+  import { BaseIntegrationState } from '@intabiafusion/setting-resources'
+  import { OK, ERROR, Status } from '@intabiafusion/platform'
 
   import github from '../plugin'
   import RepositoryPresenterRef from './RepositoryPresenterRef.svelte'

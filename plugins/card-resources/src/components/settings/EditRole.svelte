@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
+  import contact from '@intabiafusion/contact'
   import core, {
     AnyAttribute,
     AttributePermission,
@@ -23,8 +23,8 @@
     notEmpty,
     Permission,
     Ref
-  } from '@hcengineering/core'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { AttributeEditor, MessageBox, createQuery, getClient } from '@intabiafusion/presentation'
   import {
     ButtonIcon,
     Icon,
@@ -37,15 +37,15 @@
     getCurrentResolvedLocation,
     navigate,
     showPopup
-  } from '@hcengineering/ui'
-  import { ObjectBoxPopup } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { ObjectBoxPopup } from '@intabiafusion/view-resources'
 
-  import { MasterTag, Role } from '@hcengineering/card'
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import settingRes from '@hcengineering/setting-resources/src/plugin'
+  import { MasterTag, Role } from '@intabiafusion/card'
+  import { clearSettingsStore } from '@intabiafusion/setting-resources'
+  import settingRes from '@intabiafusion/setting-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
   import cardPlugin from '../../plugin'
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
 
   export let _id: Ref<Role>
   export let readonly: boolean = false

@@ -1,4 +1,4 @@
-import { location } from '@hcengineering/ui'
+import { location } from '@intabiafusion/ui'
 
 let key = ''
 

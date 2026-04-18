@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, SortingOrder, StatusCategory, WithLookup, toIdMap } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import task, { getStates } from '@hcengineering/task'
-  import { typeStore } from '@hcengineering/task-resources'
-  import { Issue, Project } from '@hcengineering/tracker'
-  import { Button, ButtonKind, ButtonSize, ProgressCircle, SelectPopup, showPanel } from '@hcengineering/ui'
-  import { statusStore } from '@hcengineering/view-resources'
+  import core, { IdMap, Ref, SortingOrder, StatusCategory, WithLookup, toIdMap } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import task, { getStates } from '@intabiafusion/task'
+  import { typeStore } from '@intabiafusion/task-resources'
+  import { Issue, Project } from '@intabiafusion/tracker'
+  import { Button, ButtonKind, ButtonSize, ProgressCircle, SelectPopup, showPanel } from '@intabiafusion/ui'
+  import { statusStore } from '@intabiafusion/view-resources'
   import tracker from '../../../plugin'
   import { listIssueStatusOrder } from '../../../utils'
   import IssueStatusIcon from '../IssueStatusIcon.svelte'

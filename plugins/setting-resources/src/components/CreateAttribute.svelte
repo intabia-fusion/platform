@@ -23,9 +23,9 @@
     PropertyType,
     Ref,
     Type
-  } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { Asset, getEmbeddedLabel } from '@intabiafusion/platform'
+  import presentation, { getClient } from '@intabiafusion/presentation'
   import {
     AnyComponent,
     ButtonIcon,
@@ -38,10 +38,10 @@
     ModernEditbox,
     showPopup,
     Toggle
-  } from '@hcengineering/ui'
-  import { DropdownIntlItem } from '@hcengineering/ui/src/types'
-  import view from '@hcengineering/view'
-  import { IconPicker } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { DropdownIntlItem } from '@intabiafusion/ui/src/types'
+  import view from '@intabiafusion/view'
+  import { IconPicker } from '@intabiafusion/view-resources'
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
   import { debug } from 'console'

@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import documents, { DocumentCategory, DocumentTemplate } from '@hcengineering/controlled-documents'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import documents, { DocumentCategory, DocumentTemplate } from '@intabiafusion/controlled-documents'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import { createEventDispatcher } from 'svelte'
 
-  import { Ref } from '@hcengineering/core'
-  import { DropdownLabelsPopup } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { DropdownLabelsPopup } from '@intabiafusion/ui'
 
   export let object: DocumentTemplate
 

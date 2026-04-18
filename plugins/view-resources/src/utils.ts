@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   AccountRole,
   ClassifierKind,
@@ -57,10 +57,10 @@ import core, {
   type TypeAny,
   type TypedSpace,
   type WithLookup
-} from '@hcengineering/core'
-import { type Restrictions } from '@hcengineering/guest'
-import type { Asset, IntlString } from '@hcengineering/platform'
-import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { type Restrictions } from '@intabiafusion/guest'
+import type { Asset, IntlString } from '@intabiafusion/platform'
+import { getEmbeddedLabel, getMetadata, getResource, translate } from '@intabiafusion/platform'
 import presentation, {
   createQuery,
   getAttributePresenterClass,
@@ -70,8 +70,8 @@ import presentation, {
   hasResource,
   isAdminUser,
   type KeyedAttribute
-} from '@hcengineering/presentation'
-import { type CollaborationUser } from '@hcengineering/text-editor'
+} from '@intabiafusion/presentation'
+import { type CollaborationUser } from '@intabiafusion/text-editor'
 import {
   ErrorPresenter,
   getColorNumberByText,
@@ -84,7 +84,7 @@ import {
   type AnyComponent,
   type AnySvelteComponent,
   type Location
-} from '@hcengineering/ui'
+} from '@intabiafusion/ui'
 import view, {
   AttributeCategoryOrder,
   type AttributeCategory,
@@ -97,14 +97,14 @@ import view, {
   type LinkIdProvider,
   type Viewlet,
   type ViewletDescriptor
-} from '@hcengineering/view'
-import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@hcengineering/contact'
+} from '@intabiafusion/view'
+import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@intabiafusion/contact'
 import { get, writable } from 'svelte/store'
 
 import plugin from './plugin'
 import { noCategory } from './viewOptions'
 
-export { getFiltredKeys, isCollectionAttr } from '@hcengineering/presentation'
+export { getFiltredKeys, isCollectionAttr } from '@intabiafusion/presentation'
 
 /**
  * Define some properties to be used to show component until data is properly loaded.

@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage } from '@hcengineering/activity'
-import { type Channel, type ChatMessage } from '@hcengineering/chunter'
-import { type Resources } from '@hcengineering/platform'
-import { MessageBox, getClient } from '@hcengineering/presentation'
-import { getLocation, navigate, showPopup } from '@hcengineering/ui'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
+import { type Channel, type ChatMessage } from '@intabiafusion/chunter'
+import { type Resources } from '@intabiafusion/platform'
+import { MessageBox, getClient } from '@intabiafusion/presentation'
+import { getLocation, navigate, showPopup } from '@intabiafusion/ui'
 import { get, writable } from 'svelte/store'
-import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
+import { type DocNotifyContext, type NotificationAppearancePreference } from '@intabiafusion/notification'
 import {
   getNotificationsCount,
   InboxNotificationsClientImpl,
   isActivityNotification,
   isMentionNotification
-} from '@hcengineering/notification-resources'
+} from '@intabiafusion/notification-resources'
 
 import chunter from './plugin'
 

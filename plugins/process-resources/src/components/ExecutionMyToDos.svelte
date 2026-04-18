@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { ApproveRequest, Execution, ExecutionStatus, ProcessToDo } from '@hcengineering/process'
-  import { Button } from '@hcengineering/ui'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { ApproveRequest, Execution, ExecutionStatus, ProcessToDo } from '@intabiafusion/process'
+  import { Button } from '@intabiafusion/ui'
   import plugin from '../plugin'
   import ApproveRequestButtons from './ApproveRequestButtons.svelte'
 

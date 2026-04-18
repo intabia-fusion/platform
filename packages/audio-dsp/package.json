@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/audio-dsp",
-  "version": "0.7.0",
+  "name": "@intabiafusion/audio-dsp",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "types": "types/index.d.ts",
   "exports": {
@@ -29,7 +29,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/jest": "^29.5.5",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -46,7 +46,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {},
-  "repository": "https://github.com/hcengineering/platform",
+  "repository": "https://github.com/intabia-fusion/foundation",
   "publishConfig": {
     "access": "public"
   }

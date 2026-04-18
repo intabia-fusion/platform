@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { RelatedContext, SelectedContext } from '@hcengineering/process'
-  import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
+  import { AnyAttribute } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { RelatedContext, SelectedContext } from '@intabiafusion/process'
+  import { Label, resizeObserver, Scroller } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { getRelationReduceFunc, getValueReduceFunc } from '../../utils'
 

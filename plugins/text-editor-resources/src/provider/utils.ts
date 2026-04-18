@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Blob, type CollaborativeDoc, type Ref, generateId } from '@hcengineering/core'
-import { encodeDocumentId } from '@hcengineering/collaborator-client'
-import { OK, Severity, Status, getMetadata, setPlatformStatus } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import { type Blob, type CollaborativeDoc, type Ref, generateId } from '@intabiafusion/core'
+import { encodeDocumentId } from '@intabiafusion/collaborator-client'
+import { OK, Severity, Status, getMetadata, setPlatformStatus } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
 import { Doc as Ydoc } from 'yjs'
 
 import plugin from '../plugin'

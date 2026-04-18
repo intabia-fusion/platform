@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Attachment } from '@hcengineering/attachment'
-import { type Person } from '@hcengineering/contact'
-import { type Class, type Doc, type Ref, type Space } from '@hcengineering/core'
-import { MarkupMarkType, type MarkupNode, MarkupNodeType, traverseNode, traverseNodeMarks } from '@hcengineering/text'
+import { type Attachment } from '@intabiafusion/attachment'
+import { type Person } from '@intabiafusion/contact'
+import { type Class, type Doc, type Ref, type Space } from '@intabiafusion/core'
+import { MarkupMarkType, type MarkupNode, MarkupNodeType, traverseNode, traverseNodeMarks } from '@intabiafusion/text'
 import * as fs from 'fs'
 import { contentType } from 'mime-types'
 import * as path from 'path'

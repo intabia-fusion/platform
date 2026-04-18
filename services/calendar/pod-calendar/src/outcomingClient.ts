@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import { AccountClient } from '@hcengineering/account-client'
+import { AccountClient } from '@intabiafusion/account-client'
 import calendar, {
   Event,
   ExternalCalendar,
   ReccuringEvent,
   ReccuringInstance,
   calendarIntegrationKind
-} from '@hcengineering/calendar'
-import contact, { Contact } from '@hcengineering/contact'
-import core, { MeasureContext, Ref, SocialIdType, TxOperations, WorkspaceUuid } from '@hcengineering/core'
-import { areEqualMarkups, htmlToMarkup, isEmptyMarkup, jsonToHTML, markupToJSON } from '@hcengineering/text'
+} from '@intabiafusion/calendar'
+import contact, { Contact } from '@intabiafusion/contact'
+import core, { MeasureContext, Ref, SocialIdType, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
+import { areEqualMarkups, htmlToMarkup, isEmptyMarkup, jsonToHTML, markupToJSON } from '@intabiafusion/text'
 import { deepEqual } from 'fast-equals'
 import { OAuth2Client } from 'google-auth-library'
 import { calendar_v3 } from 'googleapis'

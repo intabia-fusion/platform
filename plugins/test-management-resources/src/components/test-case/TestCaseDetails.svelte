@@ -15,10 +15,10 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
 
-  import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { type Class, type Ref } from '@hcengineering/core'
-  import { TestCase } from '@hcengineering/test-management'
+  import { AttachmentStyleBoxCollabEditor } from '@intabiafusion/attachment-resources'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { type Class, type Ref } from '@intabiafusion/core'
+  import { TestCase } from '@intabiafusion/test-management'
 
   import testManagement from '../../plugin'
 

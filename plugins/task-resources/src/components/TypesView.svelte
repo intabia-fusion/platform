@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, mergeQueries, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Project, ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
-  import { AnyComponent, Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
-  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import { Class, Doc, DocumentQuery, mergeQueries, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Project, ProjectType, ProjectTypeDescriptor } from '@intabiafusion/task'
+  import { AnyComponent, Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@intabiafusion/ui'
+  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@intabiafusion/view'
   import {
     FilterBar,
     FilterButton,
     getResultOptions,
     ViewletSelector,
     ViewletSettingButton
-  } from '@hcengineering/view-resources'
+  } from '@intabiafusion/view-resources'
   import { selectedTaskTypeStore, selectedTypeStore, taskTypeStore } from '..'
   import task from '../plugin'
   import TypeSelector from './TypeSelector.svelte'

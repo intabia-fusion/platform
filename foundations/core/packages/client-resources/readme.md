@@ -5,8 +5,8 @@ Package allow to create a client to interact with running platform.
 ## Usage
 
 ```ts
-  import clientResources from '@hcengineering/client-resources'
-  import core, { Client } from '@hcengineering/core'
+  import clientResources from '@intabiafusion/client-resources'
+  import core, { Client } from '@intabiafusion/core'
 
   // ...
 

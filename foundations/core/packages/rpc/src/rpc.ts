@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Account } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import type { Account } from '@intabiafusion/core'
+import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import { Packr } from 'msgpackr'
 
 /**

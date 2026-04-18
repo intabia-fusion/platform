@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/core'
+import { type MeasureContext } from '@intabiafusion/core'
 
 import { existsSync, mkdirSync } from 'fs'
 import { rm, rename, mkdir, stat } from 'fs/promises'

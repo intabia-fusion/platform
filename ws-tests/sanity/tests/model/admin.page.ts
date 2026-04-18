@@ -1,4 +1,4 @@
-import { PlatformURI } from '@hcengineering/tests-sanity'
+import { PlatformURI } from '@intabiafusion/tests-sanity'
 import { type Page } from '@playwright/test'
 
 export class AdminPage {

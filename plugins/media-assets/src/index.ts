@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import media from '@hcengineering/media'
-import { loadMetadata } from '@hcengineering/platform'
+import media from '@intabiafusion/media'
+import { loadMetadata } from '@intabiafusion/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 

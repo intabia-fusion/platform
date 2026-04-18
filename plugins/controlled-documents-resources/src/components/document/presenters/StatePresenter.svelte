@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { themeStore } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { themeStore } from '@intabiafusion/ui'
   import {
     ControlledDocument,
     ControlledDocumentState,
     Document,
     DocumentState,
     isControlledDocument
-  } from '@hcengineering/controlled-documents'
+  } from '@intabiafusion/controlled-documents'
 
   import DocumentStatusTag from '../common/DocumentStatusTag.svelte'
   import {

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Request, RequestStatus } from '@hcengineering/request'
-  import { Button, ButtonSize, Label, ProgressCircle, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { Request, RequestStatus } from '@intabiafusion/request'
+  import { Button, ButtonSize, Label, ProgressCircle, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import request from '../plugin'
   import RequestDetailPopup from './RequestDetailPopup.svelte'
   import RequestStatusPresenter from './RequestStatusPresenter.svelte'

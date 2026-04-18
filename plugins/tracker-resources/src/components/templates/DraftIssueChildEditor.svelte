@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import core, { Doc, generateId, type PersonId, Ref } from '@hcengineering/core'
-  import presentation, { DraftController, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
-  import { TaskType } from '@hcengineering/task'
-  import { TaskKindSelector } from '@hcengineering/task-resources'
+  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import core, { Doc, generateId, type PersonId, Ref } from '@intabiafusion/core'
+  import presentation, { DraftController, getClient, KeyedAttribute } from '@intabiafusion/presentation'
+  import tags, { TagElement, TagReference } from '@intabiafusion/tags'
+  import { TaskType } from '@intabiafusion/task'
+  import { TaskKindSelector } from '@intabiafusion/task-resources'
   import {
     Component as ComponentType,
     Issue,
@@ -26,8 +26,8 @@
     IssuePriority,
     Milestone,
     Project
-  } from '@hcengineering/tracker'
-  import { Button, Component, EditBox } from '@hcengineering/ui'
+  } from '@intabiafusion/tracker'
+  import { Button, Component, EditBox } from '@intabiafusion/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import tracker from '../../plugin'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'

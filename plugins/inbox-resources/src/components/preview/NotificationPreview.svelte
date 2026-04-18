@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Message, SocialID } from '@hcengineering/communication-types'
-  import { ExtendedMessagePreview } from '@hcengineering/communication-resources'
+  import { Card } from '@intabiafusion/card'
+  import { Message, SocialID } from '@intabiafusion/communication-types'
+  import { ExtendedMessagePreview } from '@intabiafusion/communication-resources'
   import { isViewSettingEnabled, hideUserNamesSettingId, viewSettingsStore } from '../../settings'
 
   export let card: Card

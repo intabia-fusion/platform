@@ -43,13 +43,13 @@ import core, {
   type Tx,
   TxFactory,
   type TxUpdateDoc
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 import { TxOrderingMiddleware } from '../txOrdering'
 
 /**

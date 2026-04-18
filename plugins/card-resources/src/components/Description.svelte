@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@hcengineering/attachment'
-  import { Card } from '@hcengineering/card'
-  import { Blob, BlobMetadata, Ref } from '@hcengineering/core'
-  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Heading } from '@hcengineering/text-editor'
-  import { TableOfContents } from '@hcengineering/text-editor-resources'
+  import attachment from '@intabiafusion/attachment'
+  import { Card } from '@intabiafusion/card'
+  import { Blob, BlobMetadata, Ref } from '@intabiafusion/core'
+  import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Heading } from '@intabiafusion/text-editor'
+  import { TableOfContents } from '@intabiafusion/text-editor-resources'
   import { createEventDispatcher } from 'svelte'
 
   import ContentEditor from './ContentEditor.svelte'

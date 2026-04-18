@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata, translate } from '@hcengineering/platform'
-  import { Button, Html, IconClose, Label, themeStore } from '@hcengineering/ui'
+  import { getMetadata, translate } from '@intabiafusion/platform'
+  import { Button, Html, IconClose, Label, themeStore } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { concatLink } from '@hcengineering/core'
-  import presentation from '@hcengineering/presentation'
-  import { calendarId } from '@hcengineering/calendar'
+  import { concatLink } from '@intabiafusion/core'
+  import presentation from '@intabiafusion/presentation'
+  import { calendarId } from '@intabiafusion/calendar'
 
   const dispatch = createEventDispatcher()
 

@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Process } from '@hcengineering/process'
+  import { Process } from '@intabiafusion/process'
   import ToDoParamsEditor from './ToDoParamsEditor.svelte'
 
   export let readonly: boolean

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import core from '@hcengineering/core'
-import documents from '@hcengineering/controlled-documents'
+import core from '@intabiafusion/core'
+import documents from '@intabiafusion/controlled-documents'
 import products from './plugin'
 
 export const roles = [

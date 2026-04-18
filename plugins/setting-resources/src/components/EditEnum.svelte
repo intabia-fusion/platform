@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum } from '@hcengineering/core'
-  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
+  import core, { Enum } from '@intabiafusion/core'
+  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
   import {
     IconAdd,
     IconAttachment,
@@ -28,14 +28,14 @@
     IconMoreV2,
     eventToHTMLElement,
     ModernPopup
-  } from '@hcengineering/ui'
-  import type { DropdownIntlItem } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
+  import type { DropdownIntlItem } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'
   import EnumValuesList from './EnumValuesList.svelte'
   import IconBulletList from './icons/BulletList.svelte'
   import Report from './icons/Report.svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
 
   export let value: Enum | undefined
   export let name: string = value?.name ?? ''

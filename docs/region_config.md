@@ -154,7 +154,7 @@ This is the cleanest approach: the account service returns the correct collabora
 
 **Packages:** `services/process`, `services/github/pod-github`, `foundations/core/packages/api-client`
 
-1. Add shared utility to `@hcengineering/collaborator-client`:
+1. Add shared utility to `@intabiafusion/collaborator-client`:
    ```typescript
    export function selectCollaboratorUrl(urls: string, workspaceId: string): string
    ```

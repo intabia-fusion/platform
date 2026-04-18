@@ -12,13 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Avatar } from '@hcengineering/contact-resources'
-  import { ModernButton, TimeLeft, ticker1 } from '@hcengineering/ui'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { UserMeetingInvite } from '@hcengineering/love'
+  import { Person } from '@intabiafusion/contact'
+  import { Avatar } from '@intabiafusion/contact-resources'
+  import { ModernButton, TimeLeft, ticker1 } from '@intabiafusion/ui'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { UserMeetingInvite } from '@intabiafusion/love'
   import love from '../../../plugin'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient } from '@intabiafusion/presentation'
 
   export let person: Person
   export let invite: UserMeetingInvite

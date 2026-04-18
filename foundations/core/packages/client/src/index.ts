@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Client, ClientConnectEvent, MeasureContext, TxPersistenceStore } from '@hcengineering/core'
-import { type Metadata, type Plugin, plugin, type Resource, type StatusCode } from '@hcengineering/platform'
+import type { Client, ClientConnectEvent, MeasureContext, TxPersistenceStore } from '@intabiafusion/core'
+import { type Metadata, type Plugin, plugin, type Resource, type StatusCode } from '@intabiafusion/platform'
 
 /**
  * @public

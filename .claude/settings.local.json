@@ -25,7 +25,9 @@
       "Bash(echo \"exit=$?\")",
       "Bash(grep:*)",
       "Bash(git show:*)",
-      "Bash(docker image inspect:*)"
+      "Bash(docker image inspect:*)",
+      "mcp__chrome-devtools-brave__navigate_page",
+      "mcp__chrome-devtools-brave__list_console_messages"
     ]
   },
   "outputStyle": "default"

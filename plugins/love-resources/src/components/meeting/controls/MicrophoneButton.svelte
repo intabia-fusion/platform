@@ -1,9 +1,9 @@
 <script lang="ts">
   import love from '../../../plugin'
-  import { state, toggleMicState } from '@hcengineering/media-resources'
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { getClient } from '@hcengineering/presentation'
+  import { state, toggleMicState } from '@intabiafusion/media-resources'
+  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { getClient } from '@intabiafusion/presentation'
   import MicSettingPopup from '../MicSettingPopup.svelte'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'

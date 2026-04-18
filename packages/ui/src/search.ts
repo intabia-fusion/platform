@@ -14,9 +14,9 @@
 //
 import { get } from 'svelte/store'
 
-import type { IntlString } from '@hcengineering/platform'
-import { translate } from '@hcengineering/platform'
-import { themeStore } from '@hcengineering/theme'
+import type { IntlString } from '@intabiafusion/platform'
+import { translate } from '@intabiafusion/platform'
+import { themeStore } from '@intabiafusion/theme'
 
 import type { DropdownIntlItem } from './types'
 

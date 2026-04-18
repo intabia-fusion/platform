@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Icon, Label, Loading, Scroller } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { TableBrowser, ViewletsSettingButton } from '@hcengineering/view-resources'
+  import { Doc, DocumentQuery } from '@intabiafusion/core'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Icon, Label, Loading, Scroller } from '@intabiafusion/ui'
+  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import { TableBrowser, ViewletsSettingButton } from '@intabiafusion/view-resources'
 
   import testManagement from '../../plugin'
 

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Class, Doc, Ref } from '@hcengineering/core'
-  import { Label } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
-  import { Analytics } from '@hcengineering/analytics'
+  import core, { Association, Class, Doc, Ref } from '@intabiafusion/core'
+  import { Label } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let value: Association
 

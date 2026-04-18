@@ -40,9 +40,9 @@ import {
   UXObject,
   AccountUuid,
   Blob
-} from '@hcengineering/core'
-import { Asset, IntlString, Resource, Status } from '@hcengineering/platform'
-import { Preference } from '@hcengineering/preference'
+} from '@intabiafusion/core'
+import { Asset, IntlString, Resource, Status } from '@intabiafusion/platform'
+import { Preference } from '@intabiafusion/preference'
 import {
   AnyComponent,
   AnySvelteComponent,
@@ -50,7 +50,7 @@ import {
   Location,
   Location as PlatformLocation,
   type LabelAndProps
-} from '@hcengineering/ui'
+} from '@intabiafusion/ui'
 
 /**
  * @public

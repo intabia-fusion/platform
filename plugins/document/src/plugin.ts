@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Mixin, Permission, Ref, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
-import { MessageNotificationType, NotificationGroup } from '@hcengineering/notification'
-import type { Asset, Plugin, Resource } from '@hcengineering/platform'
-import { IntlString, plugin } from '@hcengineering/platform'
-import type { AnyComponent, Location, ResolvedLocation } from '@hcengineering/ui/src/types'
-import { Action } from '@hcengineering/view'
+import type { Class, Doc, Mixin, Permission, Ref, SpaceType, SpaceTypeDescriptor } from '@intabiafusion/core'
+import { MessageNotificationType, NotificationGroup } from '@intabiafusion/notification'
+import type { Asset, Plugin, Resource } from '@intabiafusion/platform'
+import { IntlString, plugin } from '@intabiafusion/platform'
+import type { AnyComponent, Location, ResolvedLocation } from '@intabiafusion/ui/src/types'
+import { Action } from '@intabiafusion/view'
 import { Document, DocumentSnapshot, Teamspace } from './types'
 
 /**

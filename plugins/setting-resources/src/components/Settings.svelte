@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import login, { loginId } from '@hcengineering/login'
-  import { getClient, createQuery, isDisabled } from '@hcengineering/presentation'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import login, { loginId } from '@intabiafusion/login'
+  import { getClient, createQuery, isDisabled } from '@intabiafusion/presentation'
   import settingPlg from '../plugin'
-  import setting, { SettingsCategory, SettingsEvents } from '@hcengineering/setting'
+  import setting, { SettingsCategory, SettingsEvents } from '@intabiafusion/setting'
   import {
     Component,
     Label,
@@ -34,7 +34,7 @@
     type AnyComponent,
     deviceOptionsStore as deviceInfo,
     deviceWidths
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import {
     closeWidget,
     NavFooter,
@@ -42,11 +42,11 @@
     minimizeSidebar,
     sidebarStore,
     logOut
-  } from '@hcengineering/workbench-resources'
-  import workbench from '@hcengineering/workbench'
+  } from '@intabiafusion/workbench-resources'
+  import workbench from '@intabiafusion/workbench'
   import { ComponentType, onDestroy, onMount } from 'svelte'
   import { clearSettingsStore, settingsStore, type SettingsStore } from '../store'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let workbenchWidth: number = 0
 

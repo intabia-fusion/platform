@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { Event } from '@hcengineering/calendar'
-import { Data, MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import { Event } from '@intabiafusion/calendar'
+import { Data, MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
 import { createNotification, MeetingNotificationType } from './notification'
 import { type EventCUDMessage } from './types'
 import { isMeeting } from './utils'

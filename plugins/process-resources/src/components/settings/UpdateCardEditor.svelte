@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@hcengineering/card'
-  import core, { AnyAttribute, Class, Ref } from '@hcengineering/core'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
-  import { Button, eventToHTMLElement, SelectPopup, showPopup } from '@hcengineering/ui'
+  import { Card, MasterTag } from '@intabiafusion/card'
+  import core, { AnyAttribute, Class, Ref } from '@intabiafusion/core'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { Process, Step } from '@intabiafusion/process'
+  import { Button, eventToHTMLElement, SelectPopup, showPopup } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import ParamsEditor from './ParamsEditor.svelte'
 

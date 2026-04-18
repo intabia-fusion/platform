@@ -19,23 +19,23 @@ import { type SendMailOptions } from 'nodemailer'
 import Mail from 'nodemailer/lib/mailer'
 import { join } from 'path'
 
-import { Analytics } from '@hcengineering/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { MeasureContext, newMetrics, WorkspaceUuid } from '@hcengineering/core'
+import { Analytics } from '@intabiafusion/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
+import { MeasureContext, newMetrics, WorkspaceUuid } from '@intabiafusion/core'
 import {
   ConsumerHandle,
   initStatisticsContext,
   PlatformQueue,
   PlatformQueueProducer,
   QueueTopic
-} from '@hcengineering/server-core'
-import { readToken } from '@hcengineering/server-client'
+} from '@intabiafusion/server-core'
+import { readToken } from '@intabiafusion/server-client'
 
 import config from './config'
 import { MailClient } from './mail'
 import { createServer } from './server'
 import { AccountNotification, EmailNotification, Endpoint } from './types'
-import { getPlatformQueue } from '@hcengineering/kafka'
+import { getPlatformQueue } from '@intabiafusion/kafka'
 import { ClisrClient, ClisrServer, createCallbackClient } from '@intabiafusion/clisr'
 
 /**

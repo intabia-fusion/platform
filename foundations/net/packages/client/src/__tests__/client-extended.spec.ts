@@ -7,7 +7,7 @@ import {
   type NetworkAgent,
   type ContainerRecord,
   type ContainerKind
-} from '@hcengineering/network-core'
+} from '@intabiafusion/network-core'
 import { NetworkClientImpl } from '../client'
 
 // Mock BackRPCClient
@@ -15,7 +15,7 @@ const mockWaitConnection = jest.fn().mockResolvedValue(undefined)
 const mockRequest = jest.fn()
 const mockClose = jest.fn()
 
-jest.mock('@hcengineering/network-backrpc', () => {
+jest.mock('@intabiafusion/network-backrpc', () => {
   return {
     BackRPCClient: jest.fn().mockImplementation(() => ({
       waitConnection: mockWaitConnection,

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
   import {
     Breadcrumbs,
     location as locationStore,
@@ -22,12 +22,12 @@
     BreadcrumbItem,
     Loading,
     languageStore
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
-  import contact from '@hcengineering/contact'
-  import attachment from '@hcengineering/attachment'
+  import activity, { ActivityMessage } from '@intabiafusion/activity'
+  import { getMessageFromLoc, messageInFocus } from '@intabiafusion/activity-resources'
+  import contact from '@intabiafusion/contact'
+  import attachment from '@intabiafusion/attachment'
 
   import chunter from '../../plugin'
   import { getObjectIcon, getChannelName } from '../../utils'

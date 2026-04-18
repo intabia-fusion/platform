@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import type { Class, Client, Doc, Hierarchy, Ref, PersonId } from '@hcengineering/core'
-import { getCurrentLanguage } from '@hcengineering/theme'
+import type { Class, Client, Doc, Hierarchy, Ref, PersonId } from '@intabiafusion/core'
+import { getCurrentLanguage } from '@intabiafusion/theme'
 import type {
   AttributeModel,
   BuildMarkdownTableMetadata,
   TableMetadata,
   Viewlet,
   BuildModelKey
-} from '@hcengineering/view'
-import viewPlugin from '@hcengineering/view'
-import { buildConfigLookup, buildModel, getAttributeValue } from '@hcengineering/view-resources'
+} from '@intabiafusion/view'
+import viewPlugin from '@intabiafusion/view'
+import { buildConfigLookup, buildModel, getAttributeValue } from '@intabiafusion/view-resources'
 import type { CopyAsMarkdownTableProps, CopyRelationshipTableAsMarkdownProps } from '../types'
 import { formatValue } from '../formatter'
 import { generateHeaders, loadViewletConfig, buildTableModel } from '../model'

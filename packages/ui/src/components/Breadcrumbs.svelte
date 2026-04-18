@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import { BreadcrumbItem } from '../types'
   import Breadcrumb from './Breadcrumb.svelte'

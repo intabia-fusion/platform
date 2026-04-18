@@ -7,7 +7,7 @@ import {
   type Space,
   type TxOperations,
   type IdMap
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { deepEqual } from 'fast-equals'
 
 function toUndef (value: any): any {

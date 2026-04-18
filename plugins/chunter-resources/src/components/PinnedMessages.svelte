@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { eventToHTMLElement, Label, ModernButton, showPopup, Icon, ButtonIcon } from '@hcengineering/ui'
+  import { eventToHTMLElement, Label, ModernButton, showPopup, Icon, ButtonIcon } from '@intabiafusion/ui'
   import PinnedMessagesPopup from './PinnedMessagesPopup.svelte'
-  import { createQuery } from '@hcengineering/presentation'
-  import activity from '@hcengineering/activity'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import view from '@hcengineering/view'
+  import { createQuery } from '@intabiafusion/presentation'
+  import activity from '@intabiafusion/activity'
+  import { Class, Doc, Ref, Space } from '@intabiafusion/core'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../plugin'

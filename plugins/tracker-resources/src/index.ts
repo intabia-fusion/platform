@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   type Attribute,
   type Class,
@@ -27,10 +27,10 @@ import {
   type Space,
   toIdMap,
   type TxOperations
-} from '@hcengineering/core'
-import { type Resources, type Status, translate } from '@hcengineering/platform'
-import { getClient, MessageBox, type ObjectSearchResult } from '@hcengineering/presentation'
-import { type Component, type Issue, type Milestone, type Project } from '@hcengineering/tracker'
+} from '@intabiafusion/core'
+import { type Resources, type Status, translate } from '@intabiafusion/platform'
+import { getClient, MessageBox, type ObjectSearchResult } from '@intabiafusion/presentation'
+import { type Component, type Issue, type Milestone, type Project } from '@intabiafusion/tracker'
 import {
   closePanel,
   getCurrentLocation,
@@ -38,7 +38,7 @@ import {
   navigate,
   showPopup,
   themeStore
-} from '@hcengineering/ui'
+} from '@intabiafusion/ui'
 import ComponentEditor from './components/components/ComponentEditor.svelte'
 import ComponentFilterValuePresenter from './components/components/ComponentFilterValuePresenter.svelte'
 import ComponentPresenter from './components/components/ComponentPresenter.svelte'
@@ -134,7 +134,7 @@ import {
   deleteObject,
   deleteObjects,
   setFilters
-} from '@hcengineering/view-resources'
+} from '@intabiafusion/view-resources'
 import MoveAndDeleteMilestonePopup from './components/milestones/MoveAndDeleteMilestonePopup.svelte'
 import EditIssueTemplate from './components/templates/EditIssueTemplate.svelte'
 import TemplateEstimationEditor from './components/templates/EstimationEditor.svelte'
@@ -170,14 +170,14 @@ import ProjectPresenter from './components/projects/ProjectPresenter.svelte'
 import ProjectSpacePresenter from './components/projects/ProjectSpacePresenter.svelte'
 
 import { get } from 'svelte/store'
-import { settingId } from '@hcengineering/setting'
-import type { TaskType } from '@hcengineering/task'
-import { getAllStates } from '@hcengineering/task-resources'
-import view, { type Filter } from '@hcengineering/view'
+import { settingId } from '@intabiafusion/setting'
+import type { TaskType } from '@intabiafusion/task'
+import { getAllStates } from '@intabiafusion/task-resources'
+import view, { type Filter } from '@intabiafusion/view'
 import EstimationValueEditor from './components/issues/timereport/EstimationValueEditor.svelte'
 import TimePresenter from './components/issues/timereport/TimePresenter.svelte'
-import { getTargetObjectFromUrl } from '@hcengineering/text-editor-resources'
-import contact from '@hcengineering/contact'
+import { getTargetObjectFromUrl } from '@intabiafusion/text-editor-resources'
+import contact from '@intabiafusion/contact'
 
 export { default as AssigneeEditor } from './components/issues/AssigneeEditor.svelte'
 export { default as SubIssueList } from './components/issues/edit/SubIssueList.svelte'

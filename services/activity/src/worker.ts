@@ -24,14 +24,14 @@ import core, {
   TxProcessor,
   type WorkspaceUuid,
   type Branding
-} from '@hcengineering/core'
-import { loadBrandingMap } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
-import { createRestClient } from '@hcengineering/api-client'
-import { type StorageAdapter } from '@hcengineering/storage'
-import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
-import activity from '@hcengineering/activity'
-import notification from '@hcengineering/notification'
+} from '@intabiafusion/core'
+import { loadBrandingMap } from '@intabiafusion/server-core'
+import { generateToken } from '@intabiafusion/server-token'
+import { createRestClient } from '@intabiafusion/api-client'
+import { type StorageAdapter } from '@intabiafusion/storage'
+import { buildStorageFromConfig, storageConfigFrom } from '@intabiafusion/server-storage'
+import activity from '@intabiafusion/activity'
+import notification from '@intabiafusion/notification'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo } from './utils'

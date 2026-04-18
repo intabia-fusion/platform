@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconComponent } from '@hcengineering/ui'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
-  import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
+  import { Icon, IconComponent } from '@intabiafusion/ui'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { ActivityAttributeUpdate } from '@intabiafusion/communication-types'
 
   import { getAttributeValues } from '../../../activity'
 

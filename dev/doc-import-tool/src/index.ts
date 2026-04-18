@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Employee } from '@hcengineering/contact'
-import documents, { type DocumentSpace } from '@hcengineering/controlled-documents'
+import { type Employee } from '@intabiafusion/contact'
+import documents, { type DocumentSpace } from '@intabiafusion/controlled-documents'
 import {
   MeasureMetricsContext,
   type Ref,
   systemAccountUuid,
   type WorkspaceUuid,
   type WorkspaceDataId
-} from '@hcengineering/core'
-import { setMetadata } from '@hcengineering/platform'
-import serverClientPlugin from '@hcengineering/server-client'
-import { type StorageAdapter } from '@hcengineering/server-core'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
-import serverToken, { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/core'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClientPlugin from '@intabiafusion/server-client'
+import { type StorageAdapter } from '@intabiafusion/server-core'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import serverToken, { generateToken } from '@intabiafusion/server-token'
 import { program } from 'commander'
 
 import { importDoc } from './commands'

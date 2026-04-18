@@ -4,7 +4,7 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
 
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { IntlString, translateCB } from '@intabiafusion/platform'
   import { createEventDispatcher, onMount } from 'svelte'
   import { themeStore } from '..'
   import { registerFocus } from '../focus'

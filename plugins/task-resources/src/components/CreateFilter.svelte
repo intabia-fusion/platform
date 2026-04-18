@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import { Timestamp } from '@intabiafusion/core'
   import task from '../plugin'
-  import { eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
-  import { TimestampPresenter } from '@hcengineering/view-resources'
+  import { eventToHTMLElement, Label, showPopup } from '@intabiafusion/ui'
+  import { TimestampPresenter } from '@intabiafusion/view-resources'
   import CreateFilterPopup from './CreateFilterPopup.svelte'
 
   export let value: Timestamp | undefined

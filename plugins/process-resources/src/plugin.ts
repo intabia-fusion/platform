@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Permission, type Ref } from '@hcengineering/core'
-import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
-import { type PresentationMiddlewareCreator } from '@hcengineering/presentation'
-import process, { processId } from '@hcengineering/process'
-import { type AnyComponent } from '@hcengineering/ui'
-import { type ViewQueryAction, type Viewlet } from '@hcengineering/view'
+import { type Permission, type Ref } from '@intabiafusion/core'
+import { mergeIds, type IntlString, type Resource } from '@intabiafusion/platform'
+import { type PresentationMiddlewareCreator } from '@intabiafusion/presentation'
+import process, { processId } from '@intabiafusion/process'
+import { type AnyComponent } from '@intabiafusion/ui'
+import { type ViewQueryAction, type Viewlet } from '@intabiafusion/view'
 
 export default mergeIds(processId, process, {
   viewlet: {

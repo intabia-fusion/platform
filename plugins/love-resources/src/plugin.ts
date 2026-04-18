@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@hcengineering/core'
-import love, { loveId } from '@hcengineering/love'
-import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
-import { type DocCreateFunction } from '@hcengineering/presentation/src/types'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type ViewActionAvailabilityFunction } from '@hcengineering/view'
+import { type Client, type Doc, type Ref } from '@intabiafusion/core'
+import love, { loveId } from '@intabiafusion/love'
+import { mergeIds, type IntlString, type Resource } from '@intabiafusion/platform'
+import { type DocCreateFunction } from '@intabiafusion/presentation/src/types'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type ViewActionAvailabilityFunction } from '@intabiafusion/view'
 
 export default mergeIds(loveId, love, {
   component: {

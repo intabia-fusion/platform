@@ -7,17 +7,17 @@ import {
   type Ref,
   type Space,
   type TxOperations
-} from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
-import { type Task } from '@hcengineering/task'
+} from '@intabiafusion/core'
+import { getResource } from '@intabiafusion/platform'
+import { type Task } from '@intabiafusion/task'
 import {
   type CategoryOption,
   type ViewOptionModel,
   type ViewOptions,
   type ViewQueryOption,
   type Viewlet
-} from '@hcengineering/view'
-import { getCategories, getCategorySpaces, concatCategories } from '@hcengineering/view-resources'
+} from '@intabiafusion/view'
+import { getCategories, getCategorySpaces, concatCategories } from '@intabiafusion/view-resources'
 
 /**
  * @public

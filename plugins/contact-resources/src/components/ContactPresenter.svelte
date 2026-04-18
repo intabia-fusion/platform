@@ -14,14 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, Employee, Organization } from '@hcengineering/contact'
-  import { getClient } from '@hcengineering/presentation'
+  import { Contact, Employee, Organization } from '@intabiafusion/contact'
+  import { getClient } from '@intabiafusion/presentation'
   import contact from '../plugin'
   import EmployeePresenter from './EmployeePresenter.svelte'
 
   import OrganizationPresenter from './OrganizationPresenter.svelte'
   import PersonPresenter from './PersonPresenter.svelte'
-  import { IconSize } from '@hcengineering/ui'
+  import { IconSize } from '@intabiafusion/ui'
 
   export let value: Contact
   export let inline: boolean = false

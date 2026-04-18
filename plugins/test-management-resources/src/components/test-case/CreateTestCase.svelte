@@ -14,14 +14,14 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { TestCase, TestProject, TestSuite, TestCaseStatus } from '@hcengineering/test-management'
-  import core, { fillDefaults, generateId, makeCollabId, Ref, TxOperations, Data } from '@hcengineering/core'
-  import { ObjectBox } from '@hcengineering/view-resources'
-  import { Card, SpaceSelector, createMarkup, getClient } from '@hcengineering/presentation'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, getLocation } from '@hcengineering/ui'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentPresenter, AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import { TestCase, TestProject, TestSuite, TestCaseStatus } from '@intabiafusion/test-management'
+  import core, { fillDefaults, generateId, makeCollabId, Ref, TxOperations, Data } from '@intabiafusion/core'
+  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { Card, SpaceSelector, createMarkup, getClient } from '@intabiafusion/presentation'
+  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, getLocation } from '@intabiafusion/ui'
 
   import StatusEditor from './StatusEditor.svelte'
   import ProjectPresenter from '../project/ProjectPresenter.svelte'

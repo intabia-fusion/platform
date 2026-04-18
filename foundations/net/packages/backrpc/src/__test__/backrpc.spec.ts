@@ -1,4 +1,4 @@
-import { TickManagerImpl, FakeTickManager } from '@hcengineering/network-core'
+import { TickManagerImpl, FakeTickManager } from '@intabiafusion/network-core'
 import { BackRPCServer } from '../server'
 import { BackRPCClient } from '../client'
 import type { ClientId } from '../types'

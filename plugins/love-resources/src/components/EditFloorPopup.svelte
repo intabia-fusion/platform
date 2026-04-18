@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Card, getClient } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
+  import { Card, getClient } from '@intabiafusion/presentation'
+  import { EditBox } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import core, { Ref } from '@hcengineering/core'
-  import { Floor } from '@hcengineering/love'
+  import core, { Ref } from '@intabiafusion/core'
+  import { Floor } from '@intabiafusion/love'
 
   export let id: Ref<Floor> | undefined = undefined
 

@@ -12,16 +12,16 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { LiteMessageViewer } from '@hcengineering/presentation'
-  import { Card } from '@hcengineering/card'
-  import { type WithLookup } from '@hcengineering/core'
-  import { Message, SocialID } from '@hcengineering/communication-types'
-  import { Person } from '@hcengineering/contact'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import { employeeByPersonIdStore, getPersonByPersonId } from '@hcengineering/contact-resources'
-  import { markdownToMarkup } from '@hcengineering/text-markdown'
-  import { jsonToMarkup, markupToText } from '@hcengineering/text'
-  import { tooltip } from '@hcengineering/ui'
+  import { LiteMessageViewer } from '@intabiafusion/presentation'
+  import { Card } from '@intabiafusion/card'
+  import { type WithLookup } from '@intabiafusion/core'
+  import { Message, SocialID } from '@intabiafusion/communication-types'
+  import { Person } from '@intabiafusion/contact'
+  import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
+  import { employeeByPersonIdStore, getPersonByPersonId } from '@intabiafusion/contact-resources'
+  import { markdownToMarkup } from '@intabiafusion/text-markdown'
+  import { jsonToMarkup, markupToText } from '@intabiafusion/text'
+  import { tooltip } from '@intabiafusion/ui'
 
   import { isActivityMessage } from '../activity'
   import ActivityMessageViewer from './message/ActivityMessageViewer.svelte'

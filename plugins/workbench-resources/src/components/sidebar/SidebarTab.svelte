@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
-  import { Widget, WidgetTab } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
+  import { Action, Menu, ModernTab, showPopup } from '@intabiafusion/ui'
+  import { Widget, WidgetTab } from '@intabiafusion/workbench'
+  import { getResource } from '@intabiafusion/platform'
 
   export let tab: WidgetTab
   export let widget: Widget

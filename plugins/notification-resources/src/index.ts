@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 
 import Inbox from './components/inbox/Inbox.svelte'
 import NotificationSettings from './components/settings/NotificationSettings.svelte'

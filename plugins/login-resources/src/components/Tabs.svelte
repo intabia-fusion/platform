@@ -13,7 +13,7 @@
 -->
 
 <script lang="ts">
-  import { getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { getCurrentLocation, navigate } from '@intabiafusion/ui'
   import Label from './internal/Label.svelte'
 
   import login from '../plugin'

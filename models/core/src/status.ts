@@ -23,9 +23,9 @@ import {
   type Doc,
   type Class,
   type Rank
-} from '@hcengineering/core'
-import { Model, Prop, TypeRef, TypeString, UX } from '@hcengineering/model'
-import { type Asset, type IntlString } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { Model, Prop, TypeRef, TypeString, UX } from '@intabiafusion/model'
+import { type Asset, type IntlString } from '@intabiafusion/platform'
 import core from './component'
 import { TDoc } from './core'
 

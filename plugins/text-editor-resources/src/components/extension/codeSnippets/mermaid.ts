@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { codeBlockOptions } from '@hcengineering/text'
-import { getCurrentTheme, isThemeDark, themeStore } from '@hcengineering/theme'
-import { showPopup } from '@hcengineering/ui'
+import { codeBlockOptions } from '@intabiafusion/text'
+import { getCurrentTheme, isThemeDark, themeStore } from '@intabiafusion/theme'
+import { showPopup } from '@intabiafusion/ui'
 import { mergeAttributes } from '@tiptap/core'
 import { CodeBlockLowlight, type CodeBlockLowlightOptions } from '@tiptap/extension-code-block-lowlight'
 import { type Node as ProseMirrorNode } from '@tiptap/pm/model'

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import type { TaskType } from '@hcengineering/task'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import type { TaskType } from '@intabiafusion/task'
   import { taskTypeStore, typeStore, selectedTypeStore } from '../../'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
 

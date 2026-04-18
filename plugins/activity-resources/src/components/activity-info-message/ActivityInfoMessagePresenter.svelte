@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityInfoMessage } from '@hcengineering/activity'
-  import { Avatar, SystemAvatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { translateCB } from '@hcengineering/platform'
-  import { HTMLViewer } from '@hcengineering/presentation'
-  import { Action, themeStore } from '@hcengineering/ui'
+  import { ActivityInfoMessage } from '@intabiafusion/activity'
+  import { Avatar, SystemAvatar, getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { translateCB } from '@intabiafusion/platform'
+  import { HTMLViewer } from '@intabiafusion/presentation'
+  import { Action, themeStore } from '@intabiafusion/ui'
 
   import ActivityMessageHeader from '../activity-message/ActivityMessageHeader.svelte'
   import ActivityMessageTemplate from '../activity-message/ActivityMessageTemplate.svelte'
-  import { Person } from '@hcengineering/contact'
+  import { Person } from '@intabiafusion/contact'
 
   export let value: ActivityInfoMessage
   export let showNotify: boolean = false

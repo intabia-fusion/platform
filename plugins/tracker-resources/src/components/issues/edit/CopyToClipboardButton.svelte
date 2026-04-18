@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { Button } from '@hcengineering/ui'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import { copyTextToClipboard } from '@intabiafusion/presentation'
+  import { Button } from '@intabiafusion/ui'
 
   export let icon: Asset
   export let title: IntlString

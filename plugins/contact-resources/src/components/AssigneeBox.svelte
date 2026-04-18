@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Employee, Person, getName } from '@hcengineering/contact'
-  import { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { getClient, reduceCalls } from '@hcengineering/presentation'
+  import contact, { Contact, Employee, Person, getName } from '@intabiafusion/contact'
+  import { Class, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
+  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import presentation, { getClient, reduceCalls } from '@intabiafusion/presentation'
   import {
     ActionIcon,
     Button,
@@ -30,9 +30,9 @@
     getFocusManager,
     showPopup,
     tooltip
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { openDoc } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { openDoc } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { PersonLabelTooltip, getPersonByPersonRefStore } from '..'
   import { AssigneeCategory } from '../assignee'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
 import {
   QueueTopic,
   type ConsumerControl,
@@ -21,7 +21,7 @@ import {
   type ConsumerMessage,
   type PlatformQueue,
   type PlatformQueueProducer
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 import { Kafka, Partitioners, type Consumer, type Producer, CompressionTypes, type Admin } from 'kafkajs'
 import type * as tls from 'tls'
 

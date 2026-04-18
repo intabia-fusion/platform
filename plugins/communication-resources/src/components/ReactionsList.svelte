@@ -13,10 +13,10 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { showPopup } from '@hcengineering/ui'
-  import { getCurrentAccount } from '@hcengineering/core'
-  import { Emoji, EmojiData } from '@hcengineering/communication-types'
-  import emojiPlugin from '@hcengineering/emoji'
+  import { showPopup } from '@intabiafusion/ui'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import { Emoji, EmojiData } from '@intabiafusion/communication-types'
+  import emojiPlugin from '@intabiafusion/emoji'
 
   import ReactionPresenter from './ReactionPresenter.svelte'
 

@@ -12,12 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { AccountUuid, notEmpty, PersonUuid } from '@hcengineering/core'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { Employee } from '@hcengineering/contact'
-  import { employeeByAccountStore } from '@hcengineering/contact-resources'
-  import { EmojiPresenter, getEmojiByUnicode } from '@hcengineering/emoji-resources'
-  import { isCustomEmoji } from '@hcengineering/emoji'
+  import { AccountUuid, notEmpty, PersonUuid } from '@intabiafusion/core'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
+  import { Employee } from '@intabiafusion/contact'
+  import { employeeByAccountStore } from '@intabiafusion/contact-resources'
+  import { EmojiPresenter, getEmojiByUnicode } from '@intabiafusion/emoji-resources'
+  import { isCustomEmoji } from '@intabiafusion/emoji'
 
   export let persons: PersonUuid[] = []
   export let emoji: string

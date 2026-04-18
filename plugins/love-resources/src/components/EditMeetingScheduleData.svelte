@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Schedule } from '@hcengineering/calendar'
+  import { Schedule } from '@intabiafusion/calendar'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
-  import { Room } from '@hcengineering/love'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Ref } from '@intabiafusion/core'
+  import { Room } from '@intabiafusion/love'
 
   export let value: Schedule
 

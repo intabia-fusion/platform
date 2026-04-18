@@ -1,4 +1,4 @@
-import { EmojiNode, type EmojiNodeOptions } from '@hcengineering/text'
+import { EmojiNode, type EmojiNodeOptions } from '@intabiafusion/text'
 import {
   emoticonRegex,
   emoticonGlobalRegex,
@@ -8,8 +8,8 @@ import {
   emojiGlobalRegex,
   type ExtendedEmoji,
   isCustomEmoji
-} from '@hcengineering/emoji'
-import emojiPlugin from '@hcengineering/emoji'
+} from '@intabiafusion/emoji'
+import emojiPlugin from '@intabiafusion/emoji'
 import { type ResolvedPos } from '@tiptap/pm/model'
 import {
   type ExtendedRegExpMatchArray,
@@ -20,8 +20,8 @@ import {
   PasteRule
 } from '@tiptap/core'
 import { type EditorState } from '@tiptap/pm/state'
-import { getBlobRef } from '@hcengineering/presentation'
-import { getResource } from '@hcengineering/platform'
+import { getBlobRef } from '@intabiafusion/presentation'
+import { getResource } from '@intabiafusion/platform'
 
 const invalidMarks = ['link']
 

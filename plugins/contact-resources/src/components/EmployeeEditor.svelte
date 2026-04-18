@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, RefTo, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Employee } from '@intabiafusion/contact'
+  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, RefTo, Space } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
   import { employeeRefByAccountUuidStore } from '..'
   import contact from '../plugin'
   import EmployeeBox from './EmployeeBox.svelte'

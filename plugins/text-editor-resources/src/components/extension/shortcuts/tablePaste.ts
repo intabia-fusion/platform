@@ -12,11 +12,11 @@
 // limitations under the License.
 //
 
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { markdownToMarkup } from '@intabiafusion/text-markdown'
 import { Extension } from '@tiptap/core'
 import { Fragment, Node } from '@tiptap/pm/model'
 import { Plugin } from '@tiptap/pm/state'
-import type { TableMetadata } from '@hcengineering/view'
+import type { TableMetadata } from '@intabiafusion/view'
 
 export const TableMetadataPasteExtension = Extension.create({
   name: 'tableMetadataPaste',

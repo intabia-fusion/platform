@@ -13,21 +13,21 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
 
-import presentation from '@hcengineering/model-presentation'
-import workbench from '@hcengineering/model-workbench'
-import setting from '@hcengineering/setting'
-import view from '@hcengineering/view'
-import print from '@hcengineering/model-print'
-import tracker from '@hcengineering/model-tracker'
+import presentation from '@intabiafusion/model-presentation'
+import workbench from '@intabiafusion/model-workbench'
+import setting from '@intabiafusion/setting'
+import view from '@intabiafusion/view'
+import print from '@intabiafusion/model-print'
+import tracker from '@intabiafusion/model-tracker'
 
 import { DOMAIN_EMOJI, TCustomEmoji } from './models'
 import emojiPlugin from './plugin'
-import { AccountRole } from '@hcengineering/core'
+import { AccountRole } from '@intabiafusion/core'
 
-export { emojiId } from '@hcengineering/emoji'
+export { emojiId } from '@intabiafusion/emoji'
 export { emojiPlugin as default }
 
 export function createModel (builder: Builder): void {

@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { type Doc, type Ref, notEmpty } from '@hcengineering/core'
-  import { type Person, formatName, getCurrentEmployee } from '@hcengineering/contact'
-  import { Avatar, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconSize, tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@hcengineering/ui'
+  import { type Doc, type Ref, notEmpty } from '@intabiafusion/core'
+  import { type Person, formatName, getCurrentEmployee } from '@intabiafusion/contact'
+  import { Avatar, getPersonsByPersonRefs } from '@intabiafusion/contact-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { IconSize, tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@intabiafusion/ui'
 
   import PresenceList from './PresenceList.svelte'
   import { presence } from '../presence'

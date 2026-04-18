@@ -8,18 +8,18 @@
 
   import GithubPersonProfile from './GithubPersonProfile.svelte'
 
-  import { Analytics } from '@hcengineering/analytics'
-  import { WithLookup, getCurrentAccount } from '@hcengineering/core'
-  import { GithubAuthentication, GithubIntegration } from '@hcengineering/github'
-  import { getEmbeddedLabel, getMetadata, translate } from '@hcengineering/platform'
-  import presentation, { Card, HTMLViewer, NavLink, createQuery, getClient } from '@hcengineering/presentation'
-  import { Integration } from '@hcengineering/setting'
-  import tracker, { Project } from '@hcengineering/tracker'
-  import ui, { Button, Label, Loading, TabItem, TabList, location, ticker } from '@hcengineering/ui'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { WithLookup, getCurrentAccount } from '@intabiafusion/core'
+  import { GithubAuthentication, GithubIntegration } from '@intabiafusion/github'
+  import { getEmbeddedLabel, getMetadata, translate } from '@intabiafusion/platform'
+  import presentation, { Card, HTMLViewer, NavLink, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Integration } from '@intabiafusion/setting'
+  import tracker, { Project } from '@intabiafusion/tracker'
+  import ui, { Button, Label, Loading, TabItem, TabList, location, ticker } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import github from '../plugin'
   import { onAuthorize } from './utils'
-  import { clientId } from '@hcengineering/client'
+  import { clientId } from '@intabiafusion/client'
 
   export let integration: Integration
 

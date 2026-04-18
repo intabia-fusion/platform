@@ -9,8 +9,8 @@ import {
   type Ref,
   type Space,
   type Tx
-} from '@hcengineering/core'
-import { type IntlString, plugin, type Plugin } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { type IntlString, plugin, type Plugin } from '@intabiafusion/platform'
 import { createClass } from './minmodel'
 
 export interface TaskComment extends AttachedDoc {

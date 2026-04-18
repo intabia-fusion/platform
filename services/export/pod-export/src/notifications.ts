@@ -12,7 +12,7 @@
 // limitations under the License.
 //
 
-import { getClient } from '@hcengineering/account-client'
+import { getClient } from '@intabiafusion/account-client'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -26,11 +26,11 @@ import core, {
   type TxOperations,
   WorkspaceIds,
   WorkspaceUuid
-} from '@hcengineering/core'
-import exportPlugin from '@hcengineering/export'
-import { generateToken } from '@hcengineering/server-token'
-import notification, { NotificationProvider, NotificationType, TxNotificationType } from '@hcengineering/notification'
-import contact from '@hcengineering/contact'
+} from '@intabiafusion/core'
+import exportPlugin from '@intabiafusion/export'
+import { generateToken } from '@intabiafusion/server-token'
+import notification, { NotificationProvider, NotificationType, TxNotificationType } from '@intabiafusion/notification'
+import contact from '@intabiafusion/contact'
 
 import envConfig from './config'
 

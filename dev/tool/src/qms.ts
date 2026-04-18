@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type WorkspaceUuid, type MeasureContext, type Ref } from '@hcengineering/core'
-import documents, { type DocumentMeta, type ProjectMeta } from '@hcengineering/controlled-documents'
-import { DOMAIN_DOCUMENTS } from '@hcengineering/model-controlled-documents'
+import { type WorkspaceUuid, type MeasureContext, type Ref } from '@intabiafusion/core'
+import documents, { type DocumentMeta, type ProjectMeta } from '@intabiafusion/controlled-documents'
+import { DOMAIN_DOCUMENTS } from '@intabiafusion/model-controlled-documents'
 import { type Db } from 'mongodb'
-import { makeRank } from '@hcengineering/task'
+import { makeRank } from '@intabiafusion/task'
 
 export async function addControlledDocumentRank (
   ctx: MeasureContext,

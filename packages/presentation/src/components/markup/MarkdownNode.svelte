@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MarkupNode } from '@hcengineering/text'
-  import { Html } from '@hcengineering/ui'
+  import { MarkupNode } from '@intabiafusion/text'
+  import { Html } from '@intabiafusion/ui'
 
   export let node: MarkupNode
   export let preview = false

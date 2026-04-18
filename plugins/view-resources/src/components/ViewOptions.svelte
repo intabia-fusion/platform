@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { DropdownIntlItem, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
-  import { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel } from '@hcengineering/view'
+  import { getClient } from '@intabiafusion/presentation'
+  import { DropdownIntlItem, DropdownLabelsIntl, Label, Toggle } from '@intabiafusion/ui'
+  import { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, getKeyLabel } from '../utils'
   import { isDropdownType, isToggleType, noCategory } from '../viewOptions'
-  import { SortingOrder } from '@hcengineering/core'
+  import { SortingOrder } from '@intabiafusion/core'
 
   export let viewlet: Viewlet
   export let config: ViewOptionsModel

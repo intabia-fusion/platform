@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc } from '@hcengineering/core'
-  import { Button, ButtonKind, ButtonSize, IconThread } from '@hcengineering/ui'
+  import type { Doc } from '@intabiafusion/core'
+  import { Button, ButtonKind, ButtonSize, IconThread } from '@intabiafusion/ui'
 
   import ChatMessagePopup from './ChatMessagePopup.svelte'
-  import { restrictionStore } from '@hcengineering/view-resources'
+  import { restrictionStore } from '@intabiafusion/view-resources'
 
   export let value: number | undefined
   export let object: Doc

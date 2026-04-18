@@ -15,15 +15,15 @@
 // limitations under the License.
 //
 
-import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics, PersonId } from '@hcengineering/core'
-import { closeQueue, initQueue } from '@hcengineering/mail-common'
-import { setMetadata } from '@hcengineering/platform'
-import serverClient, { getAccountClient } from '@hcengineering/server-client'
-import { initStatisticsContext, type StorageConfiguration } from '@hcengineering/server-core'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
-import serverToken, { decodeToken } from '@hcengineering/server-token'
+import { isWorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
+import { newMetrics, PersonId } from '@intabiafusion/core'
+import { closeQueue, initQueue } from '@intabiafusion/mail-common'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClient, { getAccountClient } from '@intabiafusion/server-client'
+import { initStatisticsContext, type StorageConfiguration } from '@intabiafusion/server-core'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import serverToken, { decodeToken } from '@intabiafusion/server-token'
 import { type IncomingHttpHeaders } from 'http'
 import { join } from 'path'
 

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, chunterId } from '@hcengineering/chunter'
-  import { getClient } from '@hcengineering/presentation'
-  import { Icon, tooltip } from '@hcengineering/ui'
-  import { NavLink } from '@hcengineering/view-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import { Channel, chunterId } from '@intabiafusion/chunter'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Icon, tooltip } from '@intabiafusion/ui'
+  import { NavLink } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { ObjectPresenterType } from '@intabiafusion/view'
 
   export let value: Channel
   export let inline: boolean = false

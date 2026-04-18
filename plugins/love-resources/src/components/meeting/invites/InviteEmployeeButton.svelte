@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonBaseSize, IconSize, ModernButton, showPopup } from '@hcengineering/ui'
-  import { Employee } from '@hcengineering/contact'
+  import { ButtonBaseSize, IconSize, ModernButton, showPopup } from '@intabiafusion/ui'
+  import { Employee } from '@intabiafusion/contact'
   import love from '../../../plugin'
-  import { SelectUsersPopup } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import { SelectUsersPopup } from '@intabiafusion/contact-resources'
+  import { Ref } from '@intabiafusion/core'
   import { createEventDispatcher } from 'svelte'
   import { sendInvites } from '../../../invites'
   import { currentMeetingMinutes, infos } from '../../../stores'

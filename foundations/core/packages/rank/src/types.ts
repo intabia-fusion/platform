@@ -13,4 +13,4 @@
 // limitations under the License.
 //
 
-export { type Rank } from '@hcengineering/core'
+export { type Rank } from '@intabiafusion/core'

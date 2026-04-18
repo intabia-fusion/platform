@@ -15,7 +15,7 @@
 
 import type { Request, Response } from 'express'
 import Stripe from 'stripe'
-import { type MeasureContext } from '@hcengineering/core'
+import { type MeasureContext } from '@intabiafusion/core'
 
 import { getAccountClient } from '../../utils'
 import { createSubscriptionEventFromInvoiceEvent, transformStripeSubscriptionToData } from './utils'

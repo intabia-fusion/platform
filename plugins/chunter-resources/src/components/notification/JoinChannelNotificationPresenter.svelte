@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
-  import { BaseMessagePreview } from '@hcengineering/activity-resources'
+  import { ActivityMessagePreviewType, DocUpdateMessage } from '@intabiafusion/activity'
+  import { BaseMessagePreview } from '@intabiafusion/activity-resources'
 
   import chunter from '../../plugin'
 

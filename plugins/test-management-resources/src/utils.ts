@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
-import type { DocumentQuery, Ref } from '@hcengineering/core'
-import { showPopup, showPanel } from '@hcengineering/ui'
+import { Analytics } from '@intabiafusion/analytics'
+import type { DocumentQuery, Ref } from '@intabiafusion/core'
+import { showPopup, showPanel } from '@intabiafusion/ui'
 import testManagement, {
   type TestProject,
   type TestCase,
   type TestSuite,
   type TestResult,
   type TestPlan
-} from '@hcengineering/test-management'
+} from '@intabiafusion/test-management'
 
 import CreateTestSuiteComponent from './components/test-suite/CreateTestSuite.svelte'
 import EditTestSuiteComponent from './components/test-suite/EditTestSuite.svelte'

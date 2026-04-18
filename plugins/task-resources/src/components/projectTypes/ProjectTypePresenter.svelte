@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import task, { type ProjectType } from '@hcengineering/task'
-  import { Icon } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import task, { type ProjectType } from '@intabiafusion/task'
+  import { Icon } from '@intabiafusion/ui'
   import { typeStore } from '../..'
 
   export let value: ProjectType | Ref<ProjectType> | undefined

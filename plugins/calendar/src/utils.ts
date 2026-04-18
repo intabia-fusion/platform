@@ -1,4 +1,4 @@
-import { AccountUuid, Ref, Timestamp, generateId } from '@hcengineering/core'
+import { AccountUuid, Ref, Timestamp, generateId } from '@intabiafusion/core'
 import calendar, {
   Calendar,
   PrimaryCalendar,

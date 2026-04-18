@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery } from '@hcengineering/core'
-  import { TableBrowser } from '@hcengineering/view-resources'
-  import emojiPlugin, { CustomEmoji } from '@hcengineering/emoji'
-  import { showPopup, Breadcrumb, Button, Header, IconAdd } from '@hcengineering/ui'
+  import { DocumentQuery } from '@intabiafusion/core'
+  import { TableBrowser } from '@intabiafusion/view-resources'
+  import emojiPlugin, { CustomEmoji } from '@intabiafusion/emoji'
+  import { showPopup, Breadcrumb, Button, Header, IconAdd } from '@intabiafusion/ui'
   import CustomEmojiPresenter from './CustomEmojiPresenter.svelte'
   import CreateCustomEmojiPopup from './CreateCustomEmojiPopup.svelte'
 

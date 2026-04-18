@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { CardID, LabelID, CardType, AccountUuid } from '@hcengineering/communication-types'
+import type { CardID, LabelID, CardType, AccountUuid } from '@intabiafusion/communication-types'
 import type { BaseEvent } from './common'
 
 export enum LabelEventType {

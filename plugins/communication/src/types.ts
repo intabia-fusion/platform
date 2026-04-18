@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AppletAttachment, AppletParams, AppletType, Message, MessageID } from '@hcengineering/communication-types'
-import { AttachedDoc, Configuration, Doc, Ref, AccountUuid } from '@hcengineering/core'
-import { Asset, IntlString, Resource } from '@hcengineering/platform'
-import { Card, MasterTag } from '@hcengineering/card'
-import { AnyComponent } from '@hcengineering/ui'
-import { PersonSpace } from '@hcengineering/contact'
+import { AppletAttachment, AppletParams, AppletType, Message, MessageID } from '@intabiafusion/communication-types'
+import { AttachedDoc, Configuration, Doc, Ref, AccountUuid } from '@intabiafusion/core'
+import { Asset, IntlString, Resource } from '@intabiafusion/platform'
+import { Card, MasterTag } from '@intabiafusion/card'
+import { AnyComponent } from '@intabiafusion/ui'
+import { PersonSpace } from '@intabiafusion/contact'
 
 export * from './poll'
 export * from './direct'

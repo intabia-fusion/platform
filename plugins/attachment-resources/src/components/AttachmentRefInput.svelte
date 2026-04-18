@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment, AttachmentMetadata } from '@hcengineering/attachment'
+  import { Attachment, AttachmentMetadata } from '@intabiafusion/attachment'
   import {
     Blob as PlatformBlob,
     BlobMetadata,
@@ -27,8 +27,8 @@
     Space,
     generateId,
     toIdMap
-  } from '@hcengineering/core'
-  import { Asset, IntlString, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  } from '@intabiafusion/core'
+  import { Asset, IntlString, getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
   import {
     DraftController,
     canDisplayLinkPreview,
@@ -41,16 +41,16 @@
     uploadFile,
     LinkPreviewAttachmentMetadata,
     generateFileId
-  } from '@hcengineering/presentation'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import textEditor, { type RefAction } from '@hcengineering/text-editor'
-  import { AttachIcon, ReferenceInput } from '@hcengineering/text-editor-resources'
-  import { Loading, type AnySvelteComponent } from '@hcengineering/ui'
+  } from '@intabiafusion/presentation'
+  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  import textEditor, { type RefAction } from '@intabiafusion/text-editor'
+  import { AttachIcon, ReferenceInput } from '@intabiafusion/text-editor-resources'
+  import { Loading, type AnySvelteComponent } from '@intabiafusion/ui'
   import {
     type FileUploadCallbackParams,
     type UploadHandlerDefinition,
     getUploadHandlers
-  } from '@hcengineering/uploader'
+  } from '@intabiafusion/uploader'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import attachment from '../plugin'
   import AttachmentPresenter from './AttachmentPresenter.svelte'

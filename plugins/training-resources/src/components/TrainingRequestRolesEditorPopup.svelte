@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import core, { type DocumentQuery, type FindOptions, type Ref, type Role, SortingOrder } from '@hcengineering/core'
-  import presentation, { ObjectPopup } from '@hcengineering/presentation'
+  import core, { type DocumentQuery, type FindOptions, type Ref, type Role, SortingOrder } from '@intabiafusion/core'
+  import presentation, { ObjectPopup } from '@intabiafusion/presentation'
   import training from '../plugin'
 
   export let selected: Array<Ref<Role>>

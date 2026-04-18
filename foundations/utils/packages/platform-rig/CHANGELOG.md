@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/platform-rig
+# Change Log - @intabiafusion/platform-rig
 
 This log was last generated on Tue, 14 Oct 2025 03:02:36 GMT and should not be manually modified.
 

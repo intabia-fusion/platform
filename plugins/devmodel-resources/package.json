@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/devmodel-resources",
-  "version": "0.7.0",
+  "name": "@intabiafusion/devmodel-resources",
+  "version": "1.0.0",
   "main": "src/index.ts",
   "author": "Anticrm Platform Contributors",
   "license": "EPL-2.0",
@@ -18,7 +18,7 @@
     "svelte-loader": "^3.2.0",
     "sass": "^1.80.0",
     "svelte-preprocess": "^5.1.4",
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint-config-standard-with-typescript": "^40.0.0",
@@ -37,20 +37,20 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/ui": "workspace:^0.7.0",
-    "@hcengineering/presentation": "workspace:^0.7.0",
-    "@hcengineering/activity": "workspace:^0.7.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/ui": "workspace:^1.0.0",
+    "@intabiafusion/presentation": "workspace:^1.0.0",
+    "@intabiafusion/activity": "workspace:^1.0.0",
     "svelte": "^4.2.20",
-    "@hcengineering/chunter": "workspace:^0.7.0",
-    "@hcengineering/text-editor-resources": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/view-resources": "workspace:^0.7.0",
-    "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/devmodel": "workspace:^0.7.0",
-    "@hcengineering/model": "workspace:^0.7.17",
-    "@hcengineering/workbench": "workspace:^0.7.0"
+    "@intabiafusion/chunter": "workspace:^1.0.0",
+    "@intabiafusion/text-editor-resources": "workspace:^1.0.0",
+    "@intabiafusion/contact": "workspace:^1.0.0",
+    "@intabiafusion/view": "workspace:^1.0.0",
+    "@intabiafusion/view-resources": "workspace:^1.0.0",
+    "@intabiafusion/client": "workspace:^1.0.0",
+    "@intabiafusion/devmodel": "workspace:^1.0.0",
+    "@intabiafusion/model": "workspace:^1.0.0",
+    "@intabiafusion/workbench": "workspace:^1.0.0"
   }
 }

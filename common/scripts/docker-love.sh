@@ -1,6 +1,6 @@
 rush docker:build -p 20 \
---to @hcengineering/love \
---to @hcengineering/ai-bot \
---to @hcengineering/pod-ai-bot \
---to @hcengineering/pod-love \
---to @hcengineering/love-agent || true
+--to @intabiafusion/love \
+--to @intabiafusion/ai-bot \
+--to @intabiafusion/pod-ai-bot \
+--to @intabiafusion/pod-love \
+--to @intabiafusion/love-agent || true

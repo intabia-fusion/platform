@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { NotificationProvider } from '@hcengineering/notification'
-  import { AnySvelteComponent, Icon, Label, ModernToggle } from '@hcengineering/ui'
-  import { getResource } from '@hcengineering/platform'
+  import { NotificationProvider } from '@intabiafusion/notification'
+  import { AnySvelteComponent, Icon, Label, ModernToggle } from '@intabiafusion/ui'
+  import { getResource } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
 
   import { providersSettings } from '../../utils'

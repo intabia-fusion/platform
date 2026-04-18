@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
-import { type Doc, type Ref } from '@hcengineering/core'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { settingId } from '@hcengineering/setting'
-import setting from '@hcengineering/setting-resources/src/plugin'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
-import { type TemplateFieldFunc } from '@hcengineering/templates'
-import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
+import type { DocUpdateMessageViewlet } from '@intabiafusion/activity'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { settingId } from '@intabiafusion/setting'
+import setting from '@intabiafusion/setting-resources/src/plugin'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { type Action, type ActionCategory, type ViewAction } from '@intabiafusion/view'
+import { type TemplateFieldFunc } from '@intabiafusion/templates'
+import { type MessageNotificationType, type NotificationGroup } from '@intabiafusion/notification'
 
 export default mergeIds(settingId, setting, {
   ids: {

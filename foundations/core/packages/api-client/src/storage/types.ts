@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Blob } from '@hcengineering/core'
+import { Blob } from '@intabiafusion/core'
 import { Readable } from 'stream'
 
 export interface StorageClient {

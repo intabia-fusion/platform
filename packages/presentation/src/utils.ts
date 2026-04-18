@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import core, {
   type Account,
   AccountRole,
@@ -60,11 +60,11 @@ import core, {
   type TypeAny,
   type WithLookup,
   type WorkspaceUuid
-} from '@hcengineering/core'
-import { getMetadata, getResource } from '@hcengineering/platform'
-import { LiveQuery as LQ } from '@hcengineering/query'
-import { type AnyComponent, type AnySvelteComponent, getRawCurrentLocation, workspaceId } from '@hcengineering/ui'
-import view, { type AttributeCategory, type AttributeEditor } from '@hcengineering/view'
+} from '@intabiafusion/core'
+import { getMetadata, getResource } from '@intabiafusion/platform'
+import { LiveQuery as LQ } from '@intabiafusion/query'
+import { type AnyComponent, type AnySvelteComponent, getRawCurrentLocation, workspaceId } from '@intabiafusion/ui'
+import view, { type AttributeCategory, type AttributeEditor } from '@intabiafusion/view'
 import { deepEqual } from 'fast-equals'
 import { onDestroy } from 'svelte'
 import { get, writable } from 'svelte/store'
@@ -73,7 +73,7 @@ import { type KeyedAttribute } from '..'
 import { OptimizeQueryMiddleware, type PresentationPipeline, PresentationPipelineImpl } from './pipeline'
 import plugin, { type ClientHook } from './plugin'
 
-export { reduceCalls } from '@hcengineering/core'
+export { reduceCalls } from '@intabiafusion/core'
 
 let liveQuery: LQ
 let rawLiveQuery: LQ

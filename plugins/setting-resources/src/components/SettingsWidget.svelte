@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WidgetState } from '@hcengineering/workbench-resources'
-  import { type AnyComponent, Component } from '@hcengineering/ui'
+  import { WidgetState } from '@intabiafusion/workbench-resources'
+  import { type AnyComponent, Component } from '@intabiafusion/ui'
   import { ComponentType } from 'svelte'
 
   export let widgetState: WidgetState | undefined

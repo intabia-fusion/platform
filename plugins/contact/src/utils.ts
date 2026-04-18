@@ -35,9 +35,9 @@ import {
   toIdMap,
   TxFactory,
   DocumentUpdate
-} from '@hcengineering/core'
-import platform, { getMetadata, PlatformError } from '@hcengineering/platform'
-import { ColorDefinition } from '@hcengineering/ui'
+} from '@intabiafusion/core'
+import platform, { getMetadata, PlatformError } from '@intabiafusion/platform'
+import { ColorDefinition } from '@intabiafusion/ui'
 import contact, {
   AvatarProvider,
   AvatarType,

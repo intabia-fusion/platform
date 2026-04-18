@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
-  import ui, { ModernButton } from '@hcengineering/ui'
-  import { GithubProject } from '@hcengineering/github'
+  import { Ref, Space } from '@intabiafusion/core'
+  import ui, { ModernButton } from '@intabiafusion/ui'
+  import { GithubProject } from '@intabiafusion/github'
   import github from '../plugin'
   import { githubAuth, githubProjects, onAuthorize } from './utils'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata } from '@intabiafusion/platform'
 
   export let space: Ref<Space>
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

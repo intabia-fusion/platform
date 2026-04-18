@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Card, MasterTag, ParentInfo } from '@hcengineering/card'
-import type { Ref } from '@hcengineering/core'
+import type { Card, MasterTag, ParentInfo } from '@intabiafusion/card'
+import type { Ref } from '@intabiafusion/core'
 
 // Import after mocking
 import { performParentInfoMigration } from '../migration'
@@ -27,7 +27,7 @@ jest.mock('../plugin', () => ({
 }))
 
 // Mock card plugin
-jest.mock('@hcengineering/card', () => ({
+jest.mock('@intabiafusion/card', () => ({
   class: {
     Card: 'card:class:Card'
   },

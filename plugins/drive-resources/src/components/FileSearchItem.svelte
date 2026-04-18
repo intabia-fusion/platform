@@ -14,9 +14,9 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { File } from '@hcengineering/drive'
-  import { Icon } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import { File } from '@intabiafusion/drive'
+  import { Icon } from '@intabiafusion/ui'
 
   import { getFileTypeIcon } from '../utils'
 

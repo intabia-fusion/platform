@@ -1,21 +1,21 @@
 {
-  "name": "@hcengineering/rpc",
+  "name": "@intabiafusion/rpc",
   "entries": [
     {
       "version": "0.7.17",
-      "tag": "@hcengineering/rpc_v0.7.17",
+      "tag": "@intabiafusion/rpc_v0.7.17",
       "date": "Mon, 27 Oct 2025 13:27:12 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.17` to `0.7.18`"
+            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.17` to `0.7.18`"
           }
         ]
       }
     },
     {
       "version": "0.7.5",
-      "tag": "@hcengineering/rpc_v0.7.5",
+      "tag": "@intabiafusion/rpc_v0.7.5",
       "date": "Tue, 14 Oct 2025 04:58:17 GMT",
       "comments": {
         "patch": [
@@ -25,17 +25,17 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.6` to `0.7.7`"
+            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.6` to `0.7.7`"
           },
           {
-            "comment": "Updating dependency \"@hcengineering/platform\" from `^0.7.4` to `0.7.5`"
+            "comment": "Updating dependency \"@intabiafusion/platform\" from `^0.7.4` to `0.7.5`"
           }
         ]
       }
     },
     {
       "version": "0.7.4",
-      "tag": "@hcengineering/rpc_v0.7.4",
+      "tag": "@intabiafusion/rpc_v0.7.4",
       "date": "Sat, 11 Oct 2025 18:20:33 GMT",
       "comments": {
         "patch": [
@@ -45,22 +45,22 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.5` to `0.7.6`"
+            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.5` to `0.7.6`"
           },
           {
-            "comment": "Updating dependency \"@hcengineering/platform\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@intabiafusion/platform\" from `^0.7.3` to `0.7.4`"
           }
         ]
       }
     },
     {
       "version": "0.7.3",
-      "tag": "@hcengineering/rpc_v0.7.3",
+      "tag": "@intabiafusion/rpc_v0.7.3",
       "date": "Wed, 08 Oct 2025 03:40:53 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.3` to `0.7.4`"
           }
         ]
       }

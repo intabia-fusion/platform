@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button } from '@hcengineering/ui'
+  import { Button } from '@intabiafusion/ui'
 
   export let disabled: boolean
   export let selected: number[]

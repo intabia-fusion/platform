@@ -48,8 +48,8 @@ import {
   Mixin,
   MixinData,
   MixinUpdate
-} from '@hcengineering/core'
-import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { PlatformError, type Status, unknownError } from '@intabiafusion/platform'
 
 import { AuthOptions } from '../types'
 import { getWorkspaceToken } from '../utils'

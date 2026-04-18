@@ -1,4 +1,4 @@
-import { DOMAIN_COLLABORATOR, DOMAIN_MODEL_TX, DOMAIN_RELATION, DOMAIN_SPACE, DOMAIN_TX } from '@hcengineering/core'
+import { DOMAIN_COLLABORATOR, DOMAIN_MODEL_TX, DOMAIN_RELATION, DOMAIN_SPACE, DOMAIN_TX } from '@intabiafusion/core'
 
 export type DataType = 'bigint' | 'bool' | 'text' | 'text[]'
 

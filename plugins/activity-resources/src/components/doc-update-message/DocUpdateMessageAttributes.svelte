@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import { getClient } from '@hcengineering/presentation'
-  import { DocAttributeUpdates, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import { Doc, Ref, Space } from '@hcengineering/core'
+  import { Component } from '@intabiafusion/ui'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { getClient } from '@intabiafusion/presentation'
+  import { DocAttributeUpdates, DocUpdateMessage, DocUpdateMessageViewlet } from '@intabiafusion/activity'
+  import { Doc, Ref, Space } from '@intabiafusion/core'
 
   import activity from '../../plugin'
 

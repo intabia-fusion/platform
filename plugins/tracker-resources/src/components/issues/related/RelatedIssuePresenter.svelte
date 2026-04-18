@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { Issue } from '@intabiafusion/tracker'
+  import { statusStore } from '@intabiafusion/view-resources'
 
   import IssueStatusIcon from '../IssueStatusIcon.svelte'
 

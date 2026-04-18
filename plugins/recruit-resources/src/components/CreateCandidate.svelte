@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import attachment, { AttachmentsEvents } from '@hcengineering/attachment'
+  import { Analytics } from '@intabiafusion/analytics'
+  import attachment, { AttachmentsEvents } from '@intabiafusion/attachment'
   import contact, {
     AvatarType,
     Channel,
@@ -22,8 +22,8 @@
     combineName,
     findContacts,
     Person
-  } from '@hcengineering/contact'
-  import { ChannelsDropdown, EditableAvatar, PersonPresenter } from '@hcengineering/contact-resources'
+  } from '@intabiafusion/contact'
+  import { ChannelsDropdown, EditableAvatar, PersonPresenter } from '@intabiafusion/contact-resources'
   import core, {
     Account,
     AttachedData,
@@ -38,8 +38,8 @@
     WithLookup,
     type Blob,
     type PersonId
-  } from '@hcengineering/core'
-  import { getMetadata, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  } from '@intabiafusion/core'
+  import { getMetadata, getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
   import presentation, {
     Card,
     createQuery,
@@ -51,10 +51,10 @@
     KeyedAttribute,
     MessageBox,
     MultipleDraftController
-  } from '@hcengineering/presentation'
-  import { Candidate, CandidateDraft, RecruitEvents } from '@hcengineering/recruit'
-  import { recognizeDocument } from '@hcengineering/rekoni'
-  import tags, { findTagCategory, TagElement, TagReference } from '@hcengineering/tags'
+  } from '@intabiafusion/presentation'
+  import { Candidate, CandidateDraft, RecruitEvents } from '@intabiafusion/recruit'
+  import { recognizeDocument } from '@intabiafusion/rekoni'
+  import tags, { findTagCategory, TagElement, TagReference } from '@intabiafusion/tags'
   import {
     Button,
     Component,
@@ -70,7 +70,7 @@
     showPopup,
     Spinner,
     ActionIcon
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import recruit from '../plugin'
   import { getCandidateIdentifier } from '../utils'

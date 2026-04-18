@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { NavItem } from '@hcengineering/ui'
-  import { showMenu } from '@hcengineering/view-resources'
+  import core, { Class, ClassifierKind, Doc, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { NavItem } from '@intabiafusion/ui'
+  import { showMenu } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import settings from '../plugin'
 

@@ -15,7 +15,7 @@
 
 import { updateContent } from '../../../rpc/methods/updateContent'
 import { Doc as YDoc } from 'yjs'
-import { MeasureContext } from '@hcengineering/core'
+import { MeasureContext } from '@intabiafusion/core'
 
 jest.mock('yjs', () => {
   const actual = jest.requireActual('yjs')

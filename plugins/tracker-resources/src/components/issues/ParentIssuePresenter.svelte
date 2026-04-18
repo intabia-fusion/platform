@@ -4,12 +4,12 @@
 
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Issue } from '@hcengineering/tracker'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Ref } from '@intabiafusion/core'
+  import { Issue } from '@intabiafusion/tracker'
+  import { createQuery } from '@intabiafusion/presentation'
   import IssuePresenter from './IssuePresenter.svelte'
-  import { translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/ui'
+  import { translateCB } from '@intabiafusion/platform'
+  import { themeStore } from '@intabiafusion/ui'
   import tracker from '../../plugin'
 
   export let value: Ref<Issue> | undefined

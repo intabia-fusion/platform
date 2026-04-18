@@ -11,7 +11,7 @@ import {
   type ContainerUuid,
   type ContainerEndpointRef,
   type AgentEndpointRef
-} from '@hcengineering/network-core'
+} from '@intabiafusion/network-core'
 import { v4 as uuidv4 } from 'uuid'
 import { NetworkAgentServer } from './agent'
 import { NetworkClientImpl } from './client'

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type AccountUuid, type WorkspaceUuid } from '@hcengineering/core'
-import type { SubscriptionData } from '@hcengineering/account-client'
-import { SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
+import { type AccountUuid, type WorkspaceUuid } from '@intabiafusion/core'
+import type { SubscriptionData } from '@intabiafusion/account-client'
+import { SubscriptionStatus, SubscriptionType } from '@intabiafusion/account-client'
 
 /**
  * Map Polar subscription status to our SubscriptionStatus

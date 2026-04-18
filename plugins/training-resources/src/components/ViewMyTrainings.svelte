@@ -2,10 +2,10 @@
   Copyright @ 2024 Hardcore Engineering Inc.
 -->
 <script lang="ts">
-  import { DocumentQuery } from '@hcengineering/core'
-  import { type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
-  import { SpecialView } from '@hcengineering/workbench-resources'
-  import { type Training, TrainingState } from '@hcengineering/training'
+  import { DocumentQuery } from '@intabiafusion/core'
+  import { type IModeSelector, navigate, rawLocation } from '@intabiafusion/ui'
+  import { SpecialView } from '@intabiafusion/workbench-resources'
+  import { type Training, TrainingState } from '@intabiafusion/training'
   import { type ComponentProps } from 'svelte'
   import training from '../plugin'
   import { myTrainingsRoute, MyTrainingsRouteTab } from '../routing/routes/myTrainingsRoute'

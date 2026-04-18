@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
-import core from '@hcengineering/core'
-import { type Builder } from '@hcengineering/model'
-import serverCore from '@hcengineering/server-core'
-import love from '@hcengineering/love'
-import serverLove from '@hcengineering/server-love'
-import serverActivity from '@hcengineering/server-activity'
+import contact from '@intabiafusion/contact'
+import core from '@intabiafusion/core'
+import { type Builder } from '@intabiafusion/model'
+import serverCore from '@intabiafusion/server-core'
+import love from '@intabiafusion/love'
+import serverLove from '@intabiafusion/server-love'
+import serverActivity from '@intabiafusion/server-activity'
 
-export { serverLoveId } from '@hcengineering/server-love'
+export { serverLoveId } from '@intabiafusion/server-love'
 
 export function createModel (builder: Builder): void {
   builder.mixin(love.class.MeetingMinutes, core.class.Class, serverActivity.mixin.UrlPresenter, {

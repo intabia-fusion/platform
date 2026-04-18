@@ -8,7 +8,7 @@ import {
   TrainingAttemptState,
   type TrainingRequest,
   TrainingState
-} from '@hcengineering/training'
+} from '@intabiafusion/training'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export function canCreateTrainingAttempt (

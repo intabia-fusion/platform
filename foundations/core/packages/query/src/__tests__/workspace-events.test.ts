@@ -11,7 +11,7 @@ import core, {
   TxOperations,
   TxWorkspaceEvent,
   WorkspaceEvent
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { LiveQuery } from '..'
 import { connect } from './connection'
 import { test } from './minmodel'

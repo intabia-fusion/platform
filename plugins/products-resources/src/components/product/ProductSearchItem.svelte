@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
-  import { WithLookup } from '@hcengineering/core'
+  import { Product } from '@intabiafusion/products'
+  import { WithLookup } from '@intabiafusion/core'
   import products from '../../plugin'
   import DocIcon from '../DocIcon.svelte'
 

@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import type { ActivityMessage, ActivityMessagesFilter } from '@hcengineering/activity'
-import { attachmentId } from '@hcengineering/attachment'
-import attachment from '@hcengineering/attachment-resources/src/plugin'
-import type { Ref, Doc } from '@hcengineering/core'
-import type { IntlString, Resource } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { ActionCategory } from '@hcengineering/view'
+import type { ActivityMessage, ActivityMessagesFilter } from '@intabiafusion/activity'
+import { attachmentId } from '@intabiafusion/attachment'
+import attachment from '@intabiafusion/attachment-resources/src/plugin'
+import type { Ref, Doc } from '@intabiafusion/core'
+import type { IntlString, Resource } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import type { ActionCategory } from '@intabiafusion/view'
 
 export default mergeIds(attachmentId, attachment, {
   component: {

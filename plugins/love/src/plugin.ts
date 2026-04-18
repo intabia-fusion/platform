@@ -1,10 +1,10 @@
-import { Class, Mixin, Ref } from '@hcengineering/core'
-import { Drive } from '@hcengineering/drive'
-import { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
-import { Asset, IntlString, Metadata as ServiceEndpoint, Plugin, plugin } from '@hcengineering/platform'
-import { AnyComponent } from '@hcengineering/ui/src/types'
-import { Action, Viewlet, ViewletDescriptor } from '@hcengineering/view'
-import { Widget } from '@hcengineering/workbench'
+import { Class, Mixin, Ref } from '@intabiafusion/core'
+import { Drive } from '@intabiafusion/drive'
+import { NotificationGroup, TxNotificationType } from '@intabiafusion/notification'
+import { Asset, IntlString, Metadata as ServiceEndpoint, Plugin, plugin } from '@intabiafusion/platform'
+import { AnyComponent } from '@intabiafusion/ui/src/types'
+import { Action, Viewlet, ViewletDescriptor } from '@intabiafusion/view'
+import { Widget } from '@intabiafusion/workbench'
 import {
   DevicesPreference,
   Floor,

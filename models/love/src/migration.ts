@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
-import { TxOperations, type Ref, type Space } from '@hcengineering/core'
-import drive from '@hcengineering/drive'
+import contact from '@intabiafusion/contact'
+import { TxOperations, type Ref, type Space } from '@intabiafusion/core'
+import drive from '@intabiafusion/drive'
 import {
   MeetingStatus,
   RoomAccess,
@@ -24,7 +24,7 @@ import {
   isOffice,
   loveId,
   type Floor
-} from '@hcengineering/love'
+} from '@intabiafusion/love'
 import {
   createDefaultSpace,
   migrateSpace,
@@ -33,8 +33,8 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import core from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
 import { DOMAIN_LOVE, DOMAIN_MEETING_MINUTES } from '.'
 import love from './plugin'
 

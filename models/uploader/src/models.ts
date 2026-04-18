@@ -14,11 +14,11 @@
 //
 
 import uploader from './plugin'
-import type { UploadHandlerDefinition, UploadHandler } from '@hcengineering/uploader'
-import { DOMAIN_MODEL } from '@hcengineering/core'
-import { Model } from '@hcengineering/model'
-import { type IntlString, type Asset, type Resource } from '@hcengineering/platform'
-import core, { TDoc } from '@hcengineering/model-core'
+import type { UploadHandlerDefinition, UploadHandler } from '@intabiafusion/uploader'
+import { DOMAIN_MODEL } from '@intabiafusion/core'
+import { Model } from '@intabiafusion/model'
+import { type IntlString, type Asset, type Resource } from '@intabiafusion/platform'
+import core, { TDoc } from '@intabiafusion/model-core'
 
 @Model(uploader.class.UploadHandlerDefinition, core.class.Doc, DOMAIN_MODEL)
 export class TUploadHandler extends TDoc implements UploadHandlerDefinition {

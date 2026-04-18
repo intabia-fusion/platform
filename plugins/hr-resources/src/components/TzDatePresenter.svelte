@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TzDate } from '@hcengineering/hr'
-  import { DateRangePresenter } from '@hcengineering/ui'
+  import { TzDate } from '@intabiafusion/hr'
+  import { DateRangePresenter } from '@intabiafusion/ui'
 
   export let value: TzDate | null | undefined
   export let noShift: boolean = false

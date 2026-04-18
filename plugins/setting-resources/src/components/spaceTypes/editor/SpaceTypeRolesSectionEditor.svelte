@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Role, SortingOrder, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
-  import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
-  import { createQuery } from '@hcengineering/presentation'
+  import core, { Role, SortingOrder, SpaceType, SpaceTypeDescriptor } from '@intabiafusion/core'
+  import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@intabiafusion/ui'
+  import { createQuery } from '@intabiafusion/presentation'
 
   import MembersIcon from '../../icons/Members.svelte'
   import PersonIcon from '../../icons/Person.svelte'

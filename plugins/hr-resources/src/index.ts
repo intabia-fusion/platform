@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import CreateDepartment from './components/CreateDepartment.svelte'
 import DepartmentEditor from './components/DepartmentEditor.svelte'
 import DepartmentStaff from './components/DepartmentStaff.svelte'
@@ -25,8 +25,8 @@ import TzDatePresenter from './components/TzDatePresenter.svelte'
 import TzDateEditor from './components/TzDateEditor.svelte'
 import DepartmentPresenter from './components/DepartmentPresenter.svelte'
 import RequestPresenter from './components/RequestPresenter.svelte'
-import { showPopup } from '@hcengineering/ui'
-import { type Request } from '@hcengineering/hr'
+import { showPopup } from '@intabiafusion/ui'
+import { type Request } from '@intabiafusion/hr'
 import EditRequestType from './components/EditRequestType.svelte'
 import DepartmentRefPresenter from './components/DepartmentRefPresenter.svelte'
 

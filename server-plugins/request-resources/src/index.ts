@@ -22,21 +22,21 @@ import core, {
   TxUpdateDoc,
   Ref,
   combineAttributes
-} from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
-import { translate } from '@hcengineering/platform'
-import request, { Request, RequestStatus } from '@hcengineering/request'
-import type { TriggerControl } from '@hcengineering/server-core'
+} from '@intabiafusion/core'
+import { NotificationType } from '@intabiafusion/notification'
+import { translate } from '@intabiafusion/platform'
+import request, { Request, RequestStatus } from '@intabiafusion/request'
+import type { TriggerControl } from '@intabiafusion/server-core'
 import {
   CreateNotificationFunc,
   CreateNotificationResult,
   Receiver,
   TypeMatchClient,
   TypeMatchFunc
-} from '@hcengineering/server-notification'
-import { Employee } from '@hcengineering/contact'
-import { getDocTitle } from '@hcengineering/server-activity-resources'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+} from '@intabiafusion/server-notification'
+import { Employee } from '@intabiafusion/contact'
+import { getDocTitle } from '@intabiafusion/server-activity-resources'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
 
 /**
  * @public

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, WithLookup } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import { isCreateAllowed } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/tracker'
-  import { Button, IconAdd, Breadcrumbs, SearchInput, showPopup, Header } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
-  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { DocumentQuery, WithLookup } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { isCreateAllowed } from '@intabiafusion/presentation'
+  import { Component } from '@intabiafusion/tracker'
+  import { Button, IconAdd, Breadcrumbs, SearchInput, showPopup, Header } from '@intabiafusion/ui'
+  import { ViewOptions, Viewlet } from '@intabiafusion/view'
+  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
   import tracker from '../../plugin'
   import { ComponentsFilterMode, activeProjects, componentsTitleMap } from '../../utils'
   import ComponentsContent from './ComponentsContent.svelte'

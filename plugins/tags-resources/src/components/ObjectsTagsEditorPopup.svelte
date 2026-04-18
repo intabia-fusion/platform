@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import tags, { TagElement, TagReference } from '@intabiafusion/tags'
   import TagsPopup from './TagsPopup.svelte'
 
   export let value: Doc | Doc[]

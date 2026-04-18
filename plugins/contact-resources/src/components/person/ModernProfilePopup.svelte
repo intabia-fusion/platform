@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@hcengineering/platform'
-  import contact from '@hcengineering/contact'
-  import { getCurrentTheme, isThemeDark } from '@hcengineering/theme'
+  import { getMetadata } from '@intabiafusion/platform'
+  import contact from '@intabiafusion/contact'
+  import { getCurrentTheme, isThemeDark } from '@intabiafusion/theme'
 
   export let disabled: boolean = false
   const backgroundImage = isThemeDark(getCurrentTheme())

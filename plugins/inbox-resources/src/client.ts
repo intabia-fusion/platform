@@ -11,17 +11,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type InboxNotificationsClient } from '@hcengineering/notification'
+import { type InboxNotificationsClient } from '@intabiafusion/notification'
 import { writable, derived, get } from 'svelte/store'
 import {
   createNotificationContextsQuery,
   getCommunicationClient,
   onCommunicationClient
-} from '@hcengineering/presentation'
-import { notEmpty, SortingOrder } from '@hcengineering/core'
-import cardPlugin from '@hcengineering/card'
-import { type NotificationContext, type Window } from '@hcengineering/communication-types'
-import { getDisplayInboxData, removeContextNotifications } from '@hcengineering/notification-resources'
+} from '@intabiafusion/presentation'
+import { notEmpty, SortingOrder } from '@intabiafusion/core'
+import cardPlugin from '@intabiafusion/card'
+import { type NotificationContext, type Window } from '@intabiafusion/communication-types'
+import { getDisplayInboxData, removeContextNotifications } from '@intabiafusion/notification-resources'
 
 import { type NavigationItem } from './type'
 

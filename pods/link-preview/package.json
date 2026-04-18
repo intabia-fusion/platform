@@ -1,6 +1,6 @@
 {
-  "name": "@hcengineering/pod-link-preview",
-  "version": "0.7.0",
+  "name": "@intabiafusion/pod-link-preview",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -22,7 +22,7 @@
     "docker:staging": "../../common/scripts/docker_tag.sh intabiafusion/link-preview staging",
     "docker:abuild": "docker build -t intabiafusion/link-preview . --platform=linux/arm64 && ../../common/scripts/docker_tag_push.sh intabiafusion/link-preview",
     "docker:push": "../../common/scripts/docker_tag.sh intabiafusion/link-preview",
-    "run-bundle": "rushx bundle --to @hcengineering/pod-link-preview && cross-env NODE_ENV=production node --inspect bundle/bundle.js",
+    "run-bundle": "rushx bundle --to @intabiafusion/pod-link-preview && cross-env NODE_ENV=production node --inspect bundle/bundle.js",
     "run-local": "ts-node src/index.ts",
     "format": "format src",
     "_phase:build": "compile transpile src",
@@ -31,7 +31,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/jest": "^29.5.5",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -54,13 +54,13 @@
     "@types/morgan": "~1.9.9"
   },
   "dependencies": {
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/analytics-service": "workspace:^0.7.17",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/server-client": "workspace:^0.7.17",
-    "@hcengineering/server-token": "workspace:^0.7.17",
+    "@intabiafusion/core": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/analytics-service": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/server-client": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "cors": "^2.8.5",

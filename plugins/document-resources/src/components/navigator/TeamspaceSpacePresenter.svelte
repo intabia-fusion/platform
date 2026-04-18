@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import { Ref, SortingOrder, Space, generateId } from '@hcengineering/core'
-  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
-  import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { Ref, SortingOrder, Space, generateId } from '@intabiafusion/core'
+  import { Document, DocumentEvents, Teamspace } from '@intabiafusion/document'
+  import { IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
   import {
     IconEdit,
     getPlatformColorDef,
@@ -25,11 +25,11 @@
     Action,
     IconAdd,
     closeTooltip
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { TreeNode, openDoc, getActions as getContributedActions } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { TreeNode, openDoc, getActions as getContributedActions } from '@intabiafusion/view-resources'
+  import { SpacesNavModel } from '@intabiafusion/workbench'
+  import { getResource } from '@intabiafusion/platform'
 
   import document from '../../plugin'
   import {

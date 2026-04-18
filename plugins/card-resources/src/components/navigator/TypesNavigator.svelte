@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { FavoriteType, MasterTag } from '@hcengineering/card'
-  import core, { Class, Doc, getCurrentAccount, Ref, Space } from '@hcengineering/core'
-  import preference from '@hcengineering/preference'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, getCurrentLocation, location as locationStore, navigate } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { setFilters, TreeNode } from '@hcengineering/view-resources'
-  import { GroupsNavModel } from '@hcengineering/workbench'
+  import { FavoriteType, MasterTag } from '@intabiafusion/card'
+  import core, { Class, Doc, getCurrentAccount, Ref, Space } from '@intabiafusion/core'
+  import preference from '@intabiafusion/preference'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Action, getCurrentLocation, location as locationStore, navigate } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { setFilters, TreeNode } from '@intabiafusion/view-resources'
+  import { GroupsNavModel } from '@intabiafusion/workbench'
   import card from '../../plugin'
   import TagHierarchy from './TagHierarchy.svelte'
 

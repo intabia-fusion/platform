@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Component } from '@hcengineering/tracker'
-  import { getClient } from '@hcengineering/presentation'
-  import { UsersPopup } from '@hcengineering/contact-resources'
-  import { AttributeModel } from '@hcengineering/view'
-  import { eventToHTMLElement, IconSize, showPopup } from '@hcengineering/ui'
-  import { getObjectPresenter } from '@hcengineering/view-resources'
-  import { IntlString } from '@hcengineering/platform'
+  import contact, { Employee } from '@intabiafusion/contact'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { Component } from '@intabiafusion/tracker'
+  import { getClient } from '@intabiafusion/presentation'
+  import { UsersPopup } from '@intabiafusion/contact-resources'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { eventToHTMLElement, IconSize, showPopup } from '@intabiafusion/ui'
+  import { getObjectPresenter } from '@intabiafusion/view-resources'
+  import { IntlString } from '@intabiafusion/platform'
   import tracker from '../../plugin'
   import LeadPopup from './LeadPopup.svelte'
 

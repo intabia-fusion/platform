@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Integration } from '@hcengineering/account-client'
-  import { BaseIntegrationState } from '@hcengineering/setting-resources'
-  import { CardPresenter } from '@hcengineering/card-resources'
-  import { OK } from '@hcengineering/platform'
+  import type { Integration } from '@intabiafusion/account-client'
+  import { BaseIntegrationState } from '@intabiafusion/setting-resources'
+  import { CardPresenter } from '@intabiafusion/card-resources'
+  import { OK } from '@intabiafusion/platform'
 
   export let integration: Integration
 </script>

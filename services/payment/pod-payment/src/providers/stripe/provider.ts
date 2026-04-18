@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
 import type { Express, Request, Response } from 'express'
 import type Stripe from 'stripe'
 
@@ -22,7 +22,7 @@ import {
   SubscriptionType,
   type Subscription,
   type SubscriptionData
-} from '@hcengineering/account-client'
+} from '@intabiafusion/account-client'
 import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
 import { StripeClient } from './client'
 import { handleStripeWebhook } from './webhook'

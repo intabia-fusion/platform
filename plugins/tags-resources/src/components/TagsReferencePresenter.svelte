@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { TagReference } from '@hcengineering/tags'
+  import type { TagReference } from '@intabiafusion/tags'
   import plugin from '../plugin'
-  import { getPlatformColorDef, themeStore, Label } from '@hcengineering/ui'
+  import { getPlatformColorDef, themeStore, Label } from '@intabiafusion/ui'
 
   export let items: TagReference[]
   export let kind: 'list' | 'link' | 'todo' = 'list'

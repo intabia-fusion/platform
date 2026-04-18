@@ -1,5 +1,5 @@
-import type { Tx } from '@hcengineering/core'
-import type { QueueTopic } from '@hcengineering/server-core'
+import type { Tx } from '@intabiafusion/core'
+import type { QueueTopic } from '@intabiafusion/server-core'
 
 export enum QueueRatingEvent {
   Reindex = 'reindex',

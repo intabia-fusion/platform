@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { Attachment } from '@hcengineering/communication-types'
-  import { Loading } from '@hcengineering/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Attachment } from '@intabiafusion/communication-types'
+  import { Loading } from '@intabiafusion/ui'
 
   import { AppletDraft, BlobDraft, LinkPreviewDraft } from '../../types'
   import communication from '../../plugin'

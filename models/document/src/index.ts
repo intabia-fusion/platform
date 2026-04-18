@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import type { CollectionSize, Domain, MarkupBlobRef, Rank, Ref, Role, RolesAssignment } from '@hcengineering/core'
-import { AccountRole, AccountUuid, IndexKind } from '@hcengineering/core'
-import { type Document, type DocumentSnapshot, type Teamspace, documentId } from '@hcengineering/document'
+import activity from '@intabiafusion/activity'
+import type { CollectionSize, Domain, MarkupBlobRef, Rank, Ref, Role, RolesAssignment } from '@intabiafusion/core'
+import { AccountRole, AccountUuid, IndexKind } from '@intabiafusion/core'
+import { type Document, type DocumentSnapshot, type Teamspace, documentId } from '@intabiafusion/document'
 import {
   type Builder,
   Collection,
@@ -33,24 +33,24 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@hcengineering/model'
-import attachment from '@hcengineering/model-attachment'
-import chunter from '@hcengineering/model-chunter'
-import core, { defineCollaborators, TDoc, TTypedSpace } from '@hcengineering/model-core'
-import { createPublicLinkAction } from '@hcengineering/model-guest'
-import { generateClassNotificationTypes } from '@hcengineering/model-notification'
-import presentation from '@hcengineering/model-presentation'
-import tracker from '@hcengineering/model-tracker'
-import view, { actionTemplates, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
-import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
-import tags from '@hcengineering/tags'
-import time, { type ToDo, type Todoable } from '@hcengineering/time'
+} from '@intabiafusion/model'
+import attachment from '@intabiafusion/model-attachment'
+import chunter from '@intabiafusion/model-chunter'
+import core, { defineCollaborators, TDoc, TTypedSpace } from '@intabiafusion/model-core'
+import { createPublicLinkAction } from '@intabiafusion/model-guest'
+import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
+import presentation from '@intabiafusion/model-presentation'
+import tracker from '@intabiafusion/model-tracker'
+import view, { actionTemplates, createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import notification, { type MessageNotificationType } from '@intabiafusion/notification'
+import { type Asset, getEmbeddedLabel } from '@intabiafusion/platform'
+import tags from '@intabiafusion/tags'
+import time, { type ToDo, type Todoable } from '@intabiafusion/time'
 import { definePermissions } from './permissions'
 import document from './plugin'
 
-export { documentId } from '@hcengineering/document'
+export { documentId } from '@intabiafusion/document'
 
 export { documentOperation } from './migration'
 export { document as default }

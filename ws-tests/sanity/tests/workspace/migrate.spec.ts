@@ -8,7 +8,7 @@ import {
   NewIssue,
   SelectWorkspacePage,
   TrackerNavigationMenuPage
-} from '@hcengineering/tests-sanity'
+} from '@intabiafusion/tests-sanity'
 import { test } from '@playwright/test'
 import { AdminPage } from '../model/admin.page'
 

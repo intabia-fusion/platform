@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Process, Transition } from '@hcengineering/process'
-  import { Button, getCurrentLocation, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import { Doc, Ref } from '@intabiafusion/core'
+  import { Process, Transition } from '@intabiafusion/process'
+  import { Button, getCurrentLocation, IconAdd, Label, navigate, showPopup } from '@intabiafusion/ui'
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import TriggerPresenter from './TriggerPresenter.svelte'
-  import { SortableDocList } from '@hcengineering/view-resources'
+  import { SortableDocList } from '@intabiafusion/view-resources'
 
   export let process: Process
   export let readonly: boolean

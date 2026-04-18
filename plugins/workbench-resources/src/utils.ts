@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { getClient as getAccountClient } from '@intabiafusion/account-client'
 import type {
   Account,
   AccountRole,
@@ -25,11 +25,11 @@ import type {
   Space,
   TxOperations,
   WorkspaceInfoWithStatus
-} from '@hcengineering/core'
-import core, { hasAccountRole } from '@hcengineering/core'
-import login from '@hcengineering/login'
-import { getMetadata, getResource, setMetadata } from '@hcengineering/platform'
-import presentation, { closeClient, getClient, setPresentationCookie } from '@hcengineering/presentation'
+} from '@intabiafusion/core'
+import core, { hasAccountRole } from '@intabiafusion/core'
+import login from '@intabiafusion/login'
+import { getMetadata, getResource, setMetadata } from '@intabiafusion/platform'
+import presentation, { closeClient, getClient, setPresentationCookie } from '@intabiafusion/presentation'
 import {
   closePanel,
   getCurrentLocation,
@@ -37,9 +37,9 @@ import {
   location,
   navigate,
   setMetadataLocalStorage
-} from '@hcengineering/ui'
-import view from '@hcengineering/view'
-import workbench, { type Application, type NavigatorModel } from '@hcengineering/workbench'
+} from '@intabiafusion/ui'
+import view from '@intabiafusion/view'
+import workbench, { type Application, type NavigatorModel } from '@intabiafusion/workbench'
 import { derived, writable } from 'svelte/store'
 
 export const workspaceCreating = writable<number | undefined>(undefined)

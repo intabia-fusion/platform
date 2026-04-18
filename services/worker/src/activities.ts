@@ -1,5 +1,5 @@
-import { MeasureMetricsContext, type WorkspaceUuid } from '@hcengineering/core'
-import { getPlatformQueue } from '@hcengineering/kafka'
+import { MeasureMetricsContext, type WorkspaceUuid } from '@intabiafusion/core'
+import { getPlatformQueue } from '@intabiafusion/kafka'
 import config from './config'
 
 export async function SendTimeEvent (

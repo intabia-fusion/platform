@@ -1,4 +1,4 @@
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 import core, {
   type Blob,
   type Class,
@@ -10,8 +10,8 @@ import core, {
   type TxResult,
   getCurrentAccount,
   makeDocCollabId
-} from '@hcengineering/core'
-import { type Asset, type IntlString, type Resource, getResource } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { type Asset, type IntlString, type Resource, getResource } from '@intabiafusion/platform'
 import {
   type ContextStore,
   MessageBox,
@@ -21,9 +21,9 @@ import {
   getMarkup,
   hasResource,
   updateAttribute
-} from '@hcengineering/presentation'
-import { markupToJSON } from '@hcengineering/text'
-import { markupToMarkdown } from '@hcengineering/text-markdown'
+} from '@intabiafusion/presentation'
+import { markupToJSON } from '@intabiafusion/text'
+import { markupToMarkdown } from '@intabiafusion/text-markdown'
 import {
   type AnyComponent,
   type AnySvelteComponent,
@@ -35,7 +35,7 @@ import {
   navigate,
   showPanel,
   showPopup
-} from '@hcengineering/ui'
+} from '@intabiafusion/ui'
 import { get } from 'svelte/store'
 import MoveView from './components/Move.svelte'
 import view from './plugin'
@@ -49,8 +49,8 @@ import {
   selectionStore
 } from './selection'
 import { deleteObjects, getObjectId, getObjectLinkFragment, restrictionStore } from './utils'
-import workbenchPlugin from '@hcengineering/workbench'
-import converter from '@hcengineering/converter'
+import workbenchPlugin from '@intabiafusion/workbench'
+import converter from '@intabiafusion/converter'
 import { viewletContextStore } from './viewletContextStore'
 
 /**

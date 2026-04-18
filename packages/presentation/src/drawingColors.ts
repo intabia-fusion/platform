@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { ThemeVariant, type ThemeVariantType } from '@hcengineering/theme'
-import { getPlatformColorByName } from '@hcengineering/ui'
+import { ThemeVariant, type ThemeVariantType } from '@intabiafusion/theme'
+import { getPlatformColorByName } from '@intabiafusion/ui'
 import { type ColorMetaName, type ColorMetaNameOrHex } from './drawingUtils'
 
 export class ThemeAwareColor {

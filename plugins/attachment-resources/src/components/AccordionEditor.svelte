@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import textEditorPlugin from '@hcengineering/text-editor'
-  import { TextEditor } from '@hcengineering/text-editor-resources'
-  import { Button, IconDownOutline, Label, tooltip } from '@hcengineering/ui'
+  import { Class, Doc, Ref, Space } from '@intabiafusion/core'
+  import textEditorPlugin from '@intabiafusion/text-editor'
+  import { TextEditor } from '@intabiafusion/text-editor-resources'
+  import { Button, IconDownOutline, Label, tooltip } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   import type { AccordionItem } from '..'

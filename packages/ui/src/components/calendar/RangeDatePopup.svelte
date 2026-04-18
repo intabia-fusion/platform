@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
   import { createEventDispatcher } from 'svelte'
   import ui from '../../plugin'
   import ActionIcon from '../ActionIcon.svelte'

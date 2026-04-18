@@ -14,7 +14,7 @@
 //
 
 import { IncomingHttpHeaders } from 'http'
-import { decodeToken, Token } from '@hcengineering/server-token'
+import { decodeToken, Token } from '@intabiafusion/server-token'
 
 import { ApiError } from './error'
 

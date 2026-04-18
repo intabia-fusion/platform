@@ -1,4 +1,4 @@
-import { getResource } from '@hcengineering/platform'
+import { getResource } from '@intabiafusion/platform'
 import { type ComponentType } from 'svelte'
 import { derived, get } from 'svelte/store'
 import type {
@@ -12,7 +12,7 @@ import type {
   VerticalAlignment
 } from './types'
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import { modalStore } from './modals'
 
 export interface CompAndProps {

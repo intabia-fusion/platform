@@ -7,7 +7,7 @@ import {
   type MemDb,
   type Ref,
   type SortingQuery
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
 export class ResultArray {
   private docs: Map<Ref<Doc>, WithLookup<Doc>>

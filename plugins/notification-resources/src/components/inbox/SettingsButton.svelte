@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { eventToHTMLElement, showPopup, ButtonIcon, IconSettings } from '@hcengineering/ui'
+  import { eventToHTMLElement, showPopup, ButtonIcon, IconSettings } from '@intabiafusion/ui'
 
   import SettingsPopup from './SettingsPopup.svelte'
   import { SettingItem } from '../../types'

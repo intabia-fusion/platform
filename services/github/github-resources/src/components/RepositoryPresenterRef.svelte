@@ -4,11 +4,11 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { HyperlinkEditor } from '@hcengineering/view-resources'
-  import github, { GithubIntegrationRepository } from '@hcengineering/github'
+  import { Ref } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { HyperlinkEditor } from '@intabiafusion/view-resources'
+  import github, { GithubIntegrationRepository } from '@intabiafusion/github'
   import { integrationRepositories } from './utils'
 
   export let value: Ref<GithubIntegrationRepository>

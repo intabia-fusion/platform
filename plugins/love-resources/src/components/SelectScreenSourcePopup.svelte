@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Card } from '@hcengineering/presentation'
-  import { Button } from '@hcengineering/ui'
-  import { ScreenSource } from '@hcengineering/love'
+  import { Card } from '@intabiafusion/presentation'
+  import { Button } from '@intabiafusion/ui'
+  import { ScreenSource } from '@intabiafusion/love'
 
   import love from '../plugin'
 

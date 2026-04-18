@@ -25,11 +25,11 @@ import {
   WorkspaceInfoWithStatus,
   WorkspaceUuid,
   type PersonId
-} from '@hcengineering/core'
-import { toMessageEvent, normalizeEmail } from '@hcengineering/mail-common'
-import { ConsumerHandle, PlatformQueue, QueueTopic, type StorageAdapter } from '@hcengineering/server-core'
-import { getPlatformQueue } from '@hcengineering/kafka'
-import { getAccountClient } from '@hcengineering/server-client'
+} from '@intabiafusion/core'
+import { toMessageEvent, normalizeEmail } from '@intabiafusion/mail-common'
+import { ConsumerHandle, PlatformQueue, QueueTopic, type StorageAdapter } from '@intabiafusion/server-core'
+import { getPlatformQueue } from '@intabiafusion/kafka'
+import { getAccountClient } from '@intabiafusion/server-client'
 
 import { decode64 } from './base64'
 import config from './config'
@@ -48,8 +48,8 @@ import { WorkspaceClient } from './workspaceClient'
 import { getIntegrationClient } from './integrations'
 
 import { AuthProvider } from './gmail/auth'
-import { AccountClient } from '@hcengineering/account-client'
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+import { AccountClient } from '@intabiafusion/account-client'
+import { CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
 
 export class GmailController {
   private readonly workspaces: Map<string, WorkspaceClient> = new Map<string, WorkspaceClient>()

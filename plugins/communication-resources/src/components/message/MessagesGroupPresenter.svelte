@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { ActivityUpdateType, Message } from '@hcengineering/communication-types'
-  import { getCurrentAccount, isOtherHour, Timestamp } from '@hcengineering/core'
+  import { Card } from '@intabiafusion/card'
+  import { ActivityUpdateType, Message } from '@intabiafusion/communication-types'
+  import { getCurrentAccount, isOtherHour, Timestamp } from '@intabiafusion/core'
 
   import { isActivityMessage } from '../../activity'
   import DateSeparator from '../DateSeparator.svelte'

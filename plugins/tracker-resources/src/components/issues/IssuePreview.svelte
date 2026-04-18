@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@hcengineering/attachment'
-  import { AttachmentDocList } from '@hcengineering/attachment-resources'
-  import { ChatMessagePopup } from '@hcengineering/chunter-resources'
-  import { Ref } from '@hcengineering/core'
-  import { IconForward, createQuery, getClient } from '@hcengineering/presentation'
-  import { CollaborativeTextEditor } from '@hcengineering/text-editor-resources'
-  import { Issue } from '@hcengineering/tracker'
-  import { Label, Scroller, resizeObserver } from '@hcengineering/ui'
-  import { getCollaborationUser } from '@hcengineering/view-resources'
+  import attachment from '@intabiafusion/attachment'
+  import { AttachmentDocList } from '@intabiafusion/attachment-resources'
+  import { ChatMessagePopup } from '@intabiafusion/chunter-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { IconForward, createQuery, getClient } from '@intabiafusion/presentation'
+  import { CollaborativeTextEditor } from '@intabiafusion/text-editor-resources'
+  import { Issue } from '@intabiafusion/tracker'
+  import { Label, Scroller, resizeObserver } from '@intabiafusion/ui'
+  import { getCollaborationUser } from '@intabiafusion/view-resources'
 
   import tracker from '../../plugin'
   import AssigneeEditor from './AssigneeEditor.svelte'

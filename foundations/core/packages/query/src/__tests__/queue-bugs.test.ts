@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { createClient, SortingOrder, Space, Tx, TxOperations } from '@hcengineering/core'
+import core, { createClient, SortingOrder, Space, Tx, TxOperations } from '@intabiafusion/core'
 import { LiveQuery } from '..'
 import { connect } from './connection'
 

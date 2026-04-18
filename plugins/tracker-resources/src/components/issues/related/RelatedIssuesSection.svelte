@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { pluginConfigurationStore } from '@hcengineering/presentation'
-  import tracker, { Issue, trackerId } from '@hcengineering/tracker'
-  import { Icon, Label } from '@hcengineering/ui'
+  import { Doc, DocumentQuery } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { pluginConfigurationStore } from '@intabiafusion/presentation'
+  import tracker, { Issue, trackerId } from '@intabiafusion/tracker'
+  import { Icon, Label } from '@intabiafusion/ui'
   import QueryIssuesList from '../edit/QueryIssuesList.svelte'
 
   export let object: Doc

@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { newMetrics, type Tx } from '@hcengineering/core'
-import { setMetadata } from '@hcengineering/platform'
-import serverClient from '@hcengineering/server-client'
-import serverToken from '@hcengineering/server-token'
-import { storageConfigFromEnv } from '@hcengineering/server-storage'
-import builder, { getModelVersion } from '@hcengineering/model-all'
-import { initStatisticsContext } from '@hcengineering/server-core'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { newMetrics, type Tx } from '@intabiafusion/core'
+import { setMetadata } from '@intabiafusion/platform'
+import serverClient from '@intabiafusion/server-client'
+import serverToken from '@intabiafusion/server-token'
+import { storageConfigFromEnv } from '@intabiafusion/server-storage'
+import builder, { getModelVersion } from '@intabiafusion/model-all'
+import { initStatisticsContext } from '@intabiafusion/server-core'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
 import { join } from 'path'
 import {
   registerAdapterFactory,
@@ -29,8 +29,8 @@ import {
   registerStringLoaders,
   registerDestroyFactory,
   setAdapterSecurity
-} from '@hcengineering/server-pipeline'
-import { createPostgresAdapter, createPostgresTxAdapter, createPostgreeDestroyAdapter } from '@hcengineering/postgres'
+} from '@intabiafusion/server-pipeline'
+import { createPostgresAdapter, createPostgresTxAdapter, createPostgreeDestroyAdapter } from '@intabiafusion/postgres'
 
 import config from './config'
 import { createServer, listen } from './server'

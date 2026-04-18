@@ -7,7 +7,7 @@ A TypeScript client library for interacting with the Huly Platform API.
 In order to be able to install required packages, you will need to obtain GitHub access token. You can create a token by following the instructions [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token).
 
 ```bash
-npm install @hcengineering/api-client
+npm install @intabiafusion/api-client
 ```
 
 ## WebSocket Client vs REST Client
@@ -17,7 +17,7 @@ The api client package provides two main client variants: a WebSocket client and
 ### WebSocket Client
 
 ```ts
-import { connect } from '@hcengineering/api-client'
+import { connect } from '@intabiafusion/api-client'
 
 // Connect to Huly
 const client = await connect('https://platform.intabia.ru', {
@@ -36,7 +36,7 @@ await client.close()
 ### REST Client
 
 ```ts
-import { connectRest } from '@hcengineering/api-client'
+import { connectRest } from '@intabiafusion/api-client'
 
 // Connect to Huly
 const client = await connectRest('https://platform.intabia.ru', {
@@ -69,7 +69,7 @@ Parameters:
 ### Using Email and Password
 
 ```ts
-import { connect } from '@hcengineering/api-client'
+import { connect } from '@intabiafusion/api-client'
 
 const client = await connect('https://platform.intabia.ru', {
   email: 'johndoe@example.com',
@@ -85,7 +85,7 @@ await client.close()
 ### Using Token
 
 ```ts
-import { connect } from '@hcengineering/api-client'
+import { connect } from '@intabiafusion/api-client'
 
 const client = await connect('https://platform.intabia.ru', {
   token: '...',
@@ -123,7 +123,7 @@ Parameters:
 Example:
 
 ```ts
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 
 ...
 
@@ -153,8 +153,8 @@ Parameters:
 Example:
 
 ```ts
-import { SortingOrder } from '@hcengineering/core'
-import contact from '@hcengineering/contact'
+import { SortingOrder } from '@intabiafusion/core'
+import contact from '@intabiafusion/contact'
 
 ..
 
@@ -190,7 +190,7 @@ Parameters:
 Example:
 
 ```ts
-import contact, { AvatarType } from '@hcengineering/contact'
+import contact, { AvatarType } from '@intabiafusion/contact'
 
 ..
 
@@ -219,7 +219,7 @@ Parameters:
 Example:
 
 ```ts
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 
 ..
 
@@ -246,7 +246,7 @@ Parameters:
 Example:
 
 ```ts
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 
 ..
 
@@ -276,7 +276,7 @@ Parameters:
 Example:
 
 ```ts
-import contact, { AvatarType } from '@hcengineering/contact'
+import contact, { AvatarType } from '@intabiafusion/contact'
 
 ..
 
@@ -320,7 +320,7 @@ Parameters:
 Example:
 
 ```ts
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 
 ..
 
@@ -353,7 +353,7 @@ Parameters:
 Example:
 
 ```ts
-import contact from '@hcengineering/contact'
+import contact from '@intabiafusion/contact'
 
 ..
 
@@ -384,7 +384,7 @@ Parameters:
 - `attributes`: Attributes of the mixin
 
 ```ts
-import contact, { AvatarType } from '@hcengineering/contact'
+import contact, { AvatarType } from '@intabiafusion/contact'
 
 ..
 
@@ -423,7 +423,7 @@ Parameters:
 - `attributes`: Attributes of the mixin to update
 
 ```ts
-import contact, { AvatarType } from '@hcengineering/contact'
+import contact, { AvatarType } from '@intabiafusion/contact'
 
 ..
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
-  import { translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import type { Asset, IntlString } from '@intabiafusion/platform'
+  import { translateCB } from '@intabiafusion/platform'
+  import { themeStore } from '@intabiafusion/theme'
   import { ComponentType, createEventDispatcher } from 'svelte'
 
   import plugin from '../plugin'

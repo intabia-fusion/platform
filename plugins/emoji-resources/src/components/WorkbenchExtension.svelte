@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { themeStore } from '@hcengineering/theme'
+  import { themeStore } from '@intabiafusion/theme'
   import { updateCustomEmojis, updateUnicodeEmojis } from '../utils'
-  import emojiPlugin from '@hcengineering/emoji'
-  import { createQuery } from '@hcengineering/presentation'
+  import emojiPlugin from '@intabiafusion/emoji'
+  import { createQuery } from '@intabiafusion/presentation'
   let parentElement: HTMLDivElement
 
   const customEmojisQuery = createQuery()

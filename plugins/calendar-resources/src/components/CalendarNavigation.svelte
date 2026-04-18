@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
-  import { Button, DropdownLabelsIntl, IconBack, IconForward } from '@hcengineering/ui'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Button, DropdownLabelsIntl, IconBack, IconForward } from '@intabiafusion/ui'
 
   import { CalendarMode } from '../index'
   import calendar from '../plugin'

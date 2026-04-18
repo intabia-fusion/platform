@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import plugin, { recorderId } from '@hcengineering/recorder'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import plugin, { recorderId } from '@intabiafusion/recorder'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 
 export default mergeIds(recorderId, plugin, {
   component: {

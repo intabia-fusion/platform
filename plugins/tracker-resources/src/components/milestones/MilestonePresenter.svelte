@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Milestone } from '@hcengineering/tracker'
+  import { WithLookup } from '@intabiafusion/core'
+  import { Milestone } from '@intabiafusion/tracker'
   import {
     Icon,
     getPlatformAvatarColorDef,
     getPlatformAvatarColorForTextDef,
     themeStore,
     tooltip
-  } from '@hcengineering/ui'
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import tracker from '../../plugin'

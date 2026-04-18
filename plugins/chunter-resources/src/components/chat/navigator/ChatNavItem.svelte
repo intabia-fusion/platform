@@ -13,23 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { translate } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
-  import { getObjectLinkId, canLeaveSpace } from '@hcengineering/view-resources'
+  import notification, { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  import { translate } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@intabiafusion/ui'
+  import { getObjectLinkId, canLeaveSpace } from '@intabiafusion/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
     isActivityNotification,
     isMentionNotification,
     MutePopup
-  } from '@hcengineering/notification-resources'
+  } from '@intabiafusion/notification-resources'
   import { createEventDispatcher } from 'svelte'
-  import view from '@hcengineering/view'
-  import { Doc, getCurrentAccount, Ref, Space } from '@hcengineering/core'
-  import { Chat } from '@hcengineering/chunter'
-  import workbench from '@hcengineering/workbench'
+  import view from '@intabiafusion/view'
+  import { Doc, getCurrentAccount, Ref, Space } from '@intabiafusion/core'
+  import { Chat } from '@intabiafusion/chunter'
+  import workbench from '@intabiafusion/workbench'
 
   import NavItem from './NavItem.svelte'
   import { ChatNavItemModel } from '../types'

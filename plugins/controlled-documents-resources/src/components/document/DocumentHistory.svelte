@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref } from '@hcengineering/core'
-  import { Label, Scroller } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
-  import documents, { type ChangeControl } from '@hcengineering/controlled-documents'
-  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { type Ref } from '@intabiafusion/core'
+  import { Label, Scroller } from '@intabiafusion/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import documents, { type ChangeControl } from '@intabiafusion/controlled-documents'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
 
   import documentsRes from '../../plugin'
   import {

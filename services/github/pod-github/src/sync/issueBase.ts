@@ -7,10 +7,10 @@
   * Add since to synchronization
 */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import activity from '@hcengineering/activity'
-import { Analytics } from '@hcengineering/analytics'
-import { CollaboratorClient } from '@hcengineering/collaborator-client'
-import contact, { Person } from '@hcengineering/contact'
+import activity from '@intabiafusion/activity'
+import { Analytics } from '@intabiafusion/analytics'
+import { CollaboratorClient } from '@intabiafusion/collaborator-client'
+import contact, { Person } from '@intabiafusion/contact'
 import core, {
   AttachedDoc,
   Class,
@@ -24,15 +24,15 @@ import core, {
   TxOperations,
   makeDocCollabId,
   withContext
-} from '@hcengineering/core'
-import github, { DocSyncInfo, GithubIntegrationRepository, GithubIssue, GithubProject } from '@hcengineering/github'
-import { IntlString } from '@hcengineering/platform'
-import { LiveQuery } from '@hcengineering/query'
-import { getPublicLink } from '@hcengineering/server-guest-resources'
-import task, { type Task } from '@hcengineering/task'
-import { MarkupNode, MarkupNodeType, areEqualMarkups, markupToJSON, traverseNode } from '@hcengineering/text'
-import time, { type ToDo } from '@hcengineering/time'
-import tracker, { Issue } from '@hcengineering/tracker'
+} from '@intabiafusion/core'
+import github, { DocSyncInfo, GithubIntegrationRepository, GithubIssue, GithubProject } from '@intabiafusion/github'
+import { IntlString } from '@intabiafusion/platform'
+import { LiveQuery } from '@intabiafusion/query'
+import { getPublicLink } from '@intabiafusion/server-guest-resources'
+import task, { type Task } from '@intabiafusion/task'
+import { MarkupNode, MarkupNodeType, areEqualMarkups, markupToJSON, traverseNode } from '@intabiafusion/text'
+import time, { type ToDo } from '@intabiafusion/time'
+import tracker, { Issue } from '@intabiafusion/tracker'
 import { deepEqual } from 'fast-equals'
 import { Octokit } from 'octokit'
 import { ContainerFocus, IntegrationManager, githubExternalSyncVersion, githubSyncVersion } from '../types'

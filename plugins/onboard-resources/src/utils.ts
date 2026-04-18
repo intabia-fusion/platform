@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { type LoginInfo } from '@hcengineering/login'
+import { type LoginInfo } from '@intabiafusion/login'
 import {
   getWorkspaces,
   navigateToWorkspace,
   selectWorkspace,
   type Pages as LoginPages
-} from '@hcengineering/login-resources'
-import { getMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
-import { type Location, getCurrentLocation, locationToUrl, navigate } from '@hcengineering/ui'
+} from '@intabiafusion/login-resources'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
+import { type Location, getCurrentLocation, locationToUrl, navigate } from '@intabiafusion/ui'
 
 import { type Pages } from './index'
 

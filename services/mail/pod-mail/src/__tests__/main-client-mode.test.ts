@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/core'
+import { type MeasureContext } from '@intabiafusion/core'
 import { Request, Response } from 'express'
 
 // Mock config completely to avoid environment variable issues

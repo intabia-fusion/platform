@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import contact from '@hcengineering/contact-resources/src/plugin'
-  import { AccountArrayEditor } from '@hcengineering/contact-resources'
+  import contact from '@intabiafusion/contact-resources/src/plugin'
+  import { AccountArrayEditor } from '@intabiafusion/contact-resources'
   import core, {
     type AccountUuid,
     type Ref,
@@ -26,9 +26,9 @@
     type SpaceType,
     type TypedSpace,
     type WithLookup
-  } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Breadcrumb, Header, Loading } from '@hcengineering/ui'
+  } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Breadcrumb, Header, Loading } from '@intabiafusion/ui'
 
   import training from '../plugin'
 

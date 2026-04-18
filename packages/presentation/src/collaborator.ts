@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type CollaboratorClient, getClient as getCollaborator } from '@hcengineering/collaborator-client'
-import { type Blob, type CollaborativeDoc, type Markup, type Ref } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+import { type CollaboratorClient, getClient as getCollaborator } from '@intabiafusion/collaborator-client'
+import { type Blob, type CollaborativeDoc, type Markup, type Ref } from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
 
 import presentation from './plugin'
 

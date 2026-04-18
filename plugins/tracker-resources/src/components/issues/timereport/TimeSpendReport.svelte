@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
-  import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { WithLookup } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Issue, Project, TimeSpendReport } from '@intabiafusion/tracker'
+  import { eventToHTMLElement, showPopup } from '@intabiafusion/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
 

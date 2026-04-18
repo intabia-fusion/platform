@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import type { Doc, PropertyType } from './classes'
 import type { Position, PullArray, QueryUpdate } from './tx'
 

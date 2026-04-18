@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { SpaceTypeDescriptor, generateId } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { ProjectTypeDescriptor, createProjectType } from '@hcengineering/task'
-  import { ToggleWithLabel } from '@hcengineering/ui'
+  import { SpaceTypeDescriptor, generateId } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { ProjectTypeDescriptor, createProjectType } from '@intabiafusion/task'
+  import { ToggleWithLabel } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'
 

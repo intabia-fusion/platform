@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ThreadMessage } from '@hcengineering/chunter'
-  import { Action, Label, languageStore } from '@hcengineering/ui'
-  import { getDocLinkTitle } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import activity from '@hcengineering/activity'
-  import { AttachmentImageSize } from '@hcengineering/attachment-resources'
+  import { ThreadMessage } from '@intabiafusion/chunter'
+  import { Action, Label, languageStore } from '@intabiafusion/ui'
+  import { getDocLinkTitle } from '@intabiafusion/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import activity from '@intabiafusion/activity'
+  import { AttachmentImageSize } from '@intabiafusion/attachment-resources'
 
   import chunter from '../../plugin'
   import ChatMessagePresenter from '../chat-message/ChatMessagePresenter.svelte'

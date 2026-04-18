@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Process, Step } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import process from '../../plugin'
-  import { Ref } from '@hcengineering/core'
+  import { Ref } from '@intabiafusion/core'
 
   export let step: Step<Process>
 

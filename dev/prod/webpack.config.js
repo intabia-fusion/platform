@@ -206,7 +206,7 @@ module.exports = [
   {
     mode: dev ? 'development' : mode,
     entry: {
-      serviceWorker: '@hcengineering/notification/src/serviceWorker.ts'
+      serviceWorker: '@intabiafusion/notification/src/serviceWorker.ts'
     },
     module: {
       rules: [
@@ -246,7 +246,7 @@ module.exports = [
         }
       : undefined,
     entry: {
-      bundle: ['@hcengineering/theme/styles/global.scss',
+      bundle: ['@intabiafusion/theme/styles/global.scss',
         ...(dev ? ['./src/main-dev.ts'] : ['./src/main.ts'])
       ]
     },
@@ -261,7 +261,7 @@ module.exports = [
       symlinks: true,
       alias: {
         svelte: path.resolve('node_modules', 'svelte/src/runtime'),
-        '@hcengineering/platform-rig/profiles/ui/svelte': path.resolve('node_modules', 'svelte/src/runtime')
+        '@intabiafusion/platform-rig/profiles/ui/svelte': path.resolve('node_modules', 'svelte/src/runtime')
       },
       fallback: {
         crypto: false

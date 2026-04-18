@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type Metadata, type Plugin, plugin } from '@hcengineering/platform'
+import { type Metadata, type Plugin, plugin } from '@intabiafusion/platform'
 
-import type { Class, Mixin, Ref } from '@hcengineering/core'
+import type { Class, Mixin, Ref } from '@intabiafusion/core'
 import type { ObjectDDParticipant, SearchPresenter, Trigger } from './types'
 
 /**

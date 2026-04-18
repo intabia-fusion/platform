@@ -26,14 +26,14 @@ import core, {
   type SessionData,
   type Tx,
   type TxCUD
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   BaseMiddleware,
   type DbAdapter,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@hcengineering/server-core'
+} from '@intabiafusion/server-core'
 
 /**
  * @public

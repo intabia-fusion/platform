@@ -12,11 +12,11 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Message } from '@hcengineering/communication-types'
-  import { Icon, Label, tooltip } from '@hcengineering/ui'
-  import communication from '@hcengineering/communication'
-  import { isAppletAttachment, isBlobAttachment } from '@hcengineering/communication-shared'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Message } from '@intabiafusion/communication-types'
+  import { Icon, Label, tooltip } from '@intabiafusion/ui'
+  import communication from '@intabiafusion/communication'
+  import { isAppletAttachment, isBlobAttachment } from '@intabiafusion/communication-shared'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
 
   import AttachmentsTooltip from './AttachmentsTooltip.svelte'
   import AttachmentName from './AttachmentName.svelte'

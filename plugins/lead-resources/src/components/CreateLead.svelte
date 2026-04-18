@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact } from '@hcengineering/contact'
-  import { UserBox } from '@hcengineering/contact-resources'
+  import contact, { Contact } from '@intabiafusion/contact'
+  import { UserBox } from '@intabiafusion/contact-resources'
   import core, {
     AccountRole,
     AttachedData,
@@ -25,17 +25,17 @@
     hasAccountRole,
     Ref,
     Status as TaskStatus
-  } from '@hcengineering/core'
-  import { Customer, Funnel, Lead, LeadEvents } from '@hcengineering/lead'
-  import { OK, Status } from '@hcengineering/platform'
-  import { Card, createQuery, getClient, InlineAttributeBar, SpaceSelector } from '@hcengineering/presentation'
-  import task, { getStates, TaskType } from '@hcengineering/task'
-  import { TaskKindSelector, typeStore } from '@hcengineering/task-resources'
-  import { Button, createFocusManager, EditBox, FocusHandler, Label, Status as StatusControl } from '@hcengineering/ui'
-  import { statusStore } from '@hcengineering/view-resources'
+  } from '@intabiafusion/core'
+  import { Customer, Funnel, Lead, LeadEvents } from '@intabiafusion/lead'
+  import { OK, Status } from '@intabiafusion/platform'
+  import { Card, createQuery, getClient, InlineAttributeBar, SpaceSelector } from '@intabiafusion/presentation'
+  import task, { getStates, TaskType } from '@intabiafusion/task'
+  import { TaskKindSelector, typeStore } from '@intabiafusion/task-resources'
+  import { Button, createFocusManager, EditBox, FocusHandler, Label, Status as StatusControl } from '@intabiafusion/ui'
+  import { statusStore } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import lead from '../plugin'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let space: Ref<Funnel>
   export let customer: Ref<Contact> | null = null

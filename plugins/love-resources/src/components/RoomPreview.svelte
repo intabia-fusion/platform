@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@hcengineering/contact-resources'
-  import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice, Office } from '@hcengineering/love'
-  import { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
+  import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@intabiafusion/contact-resources'
+  import { ParticipantInfo, Room, RoomAccess, RoomType, MeetingStatus, isOffice, Office } from '@intabiafusion/love'
+  import { Icon, Label, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { openDoc } from '@hcengineering/view-resources'
+  import { getClient } from '@intabiafusion/presentation'
+  import { openDoc } from '@intabiafusion/view-resources'
 
   import love from '../plugin'
   import { myInfo, myOffice, selectedRoomPlace, currentRoom, currentMeetingMinutes, infos } from '../stores'
   import { getRoomLabel } from '../utils'
-  import { IntlString } from '@hcengineering/platform'
+  import { IntlString } from '@intabiafusion/platform'
   import { lkSessionConnected } from '../liveKitClient'
-  import { AccountUuid, clone, Ref } from '@hcengineering/core'
+  import { AccountUuid, clone, Ref } from '@intabiafusion/core'
   // import RoomLanguage from './RoomLanguage.svelte'
   import PersonActionPopup from './PersonActionPopup.svelte'
 

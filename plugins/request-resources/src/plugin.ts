@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { IntlString } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import request, { requestId } from '@hcengineering/request'
+import type { IntlString } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import request, { requestId } from '@intabiafusion/request'
 
 export default mergeIds(requestId, request, {
   string: {

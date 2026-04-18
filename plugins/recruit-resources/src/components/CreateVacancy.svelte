@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import contact, { Organization } from '@hcengineering/contact'
-  import { AccountArrayEditor, UserBox } from '@hcengineering/contact-resources'
+  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import contact, { Organization } from '@intabiafusion/contact'
+  import { AccountArrayEditor, UserBox } from '@intabiafusion/contact-resources'
   import core, {
     AttachedData,
     Data,
@@ -28,8 +28,8 @@
     getCurrentAccount,
     makeCollabId,
     AccountUuid
-  } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  } from '@intabiafusion/core'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
   import {
     Card,
     InlineAttributeBar,
@@ -37,12 +37,12 @@
     createMarkup,
     createQuery,
     getClient
-  } from '@hcengineering/presentation'
-  import { RecruitEvents, Vacancy, Vacancy as VacancyClass } from '@hcengineering/recruit'
-  import tags from '@hcengineering/tags'
-  import task, { ProjectType } from '@hcengineering/task'
-  import { selectedTypeStore, typeStore } from '@hcengineering/task-resources'
-  import tracker, { Issue, IssueStatus, IssueTemplate, IssueTemplateData, Project } from '@hcengineering/tracker'
+  } from '@intabiafusion/presentation'
+  import { RecruitEvents, Vacancy, Vacancy as VacancyClass } from '@intabiafusion/recruit'
+  import tags from '@intabiafusion/tags'
+  import task, { ProjectType } from '@intabiafusion/task'
+  import { selectedTypeStore, typeStore } from '@intabiafusion/task-resources'
+  import tracker, { Issue, IssueStatus, IssueTemplate, IssueTemplateData, Project } from '@intabiafusion/tracker'
   import {
     Button,
     Component,
@@ -51,14 +51,14 @@
     IconAttachment,
     createFocusManager,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../plugin'
   import Company from './icons/Company.svelte'
   import VacancyIcon from './icons/Vacancy.svelte'
-  import { Analytics } from '@hcengineering/analytics'
+  import { Analytics } from '@intabiafusion/analytics'
   import { getSequenceId } from '../utils'
-  import { isEmptyMarkup } from '@hcengineering/text'
+  import { isEmptyMarkup } from '@intabiafusion/text'
 
   const dispatch = createEventDispatcher()
 

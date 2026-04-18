@@ -15,23 +15,23 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
 
-  import { Analytics } from '@hcengineering/analytics'
-  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { ActionContext, getClient } from '@hcengineering/presentation'
-  import core, { Data, Ref, generateId, getCurrentAccount } from '@hcengineering/core'
+  import { Analytics } from '@intabiafusion/analytics'
+  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
+  import { ActionContext, getClient } from '@intabiafusion/presentation'
+  import core, { Data, Ref, generateId, getCurrentAccount } from '@intabiafusion/core'
   import testManagement, {
     TestProject,
     TestPlan,
     TestCase,
     TestPlanItem,
     TestManagementEvents
-  } from '@hcengineering/test-management'
-  import { Panel } from '@hcengineering/panel'
-  import { ModernButton, EditBox, Label } from '@hcengineering/ui'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import { IntlString } from '@hcengineering/platform'
-  import { Attachment } from '@hcengineering/attachment'
-  import { Employee } from '@hcengineering/contact'
+  } from '@intabiafusion/test-management'
+  import { Panel } from '@intabiafusion/panel'
+  import { ModernButton, EditBox, Label } from '@intabiafusion/ui'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import { IntlString } from '@intabiafusion/platform'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { Employee } from '@intabiafusion/contact'
 
   import NewTestPlanAside from './NewTestPlanAside.svelte'
   import TestCaseSelector from '../test-case/TestCaseSelector.svelte'

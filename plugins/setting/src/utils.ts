@@ -25,8 +25,8 @@ import core, {
   TxOperations,
   TypeAny as TypeAnyType,
   getRoleAttributeLabel
-} from '@hcengineering/core'
-import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
 
 import setting from './index'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Doc, Class, Ref, Hierarchy } from '@hcengineering/core'
+import type { Doc, Class, Ref, Hierarchy } from '@intabiafusion/core'
 import type { ValueFormatter } from '../types'
 
 /**

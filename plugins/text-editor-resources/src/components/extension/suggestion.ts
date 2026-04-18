@@ -3,7 +3,7 @@ import { type EditorState, Plugin, PluginKey, type Transaction } from '@tiptap/p
 import { ReplaceStep } from '@tiptap/pm/transform'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 import { type ResolvedPos } from '@tiptap/pm/model'
-import { type Class, type Doc, type Ref } from '@hcengineering/core'
+import { type Class, type Doc, type Ref } from '@intabiafusion/core'
 
 export interface Trigger {
   char: string

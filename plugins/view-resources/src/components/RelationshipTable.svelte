@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@hcengineering/contact'
+  import contact, { PermissionsStore } from '@intabiafusion/contact'
   import core, {
     AnyAttribute,
     AssociationQuery,
@@ -29,9 +29,9 @@
     WithLookup,
     getObjectValue,
     mergeQueries
-  } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
+  } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
+  import { createQuery, getClient, reduceCalls, updateAttribute } from '@intabiafusion/presentation'
   import ui, {
     Button,
     Label,
@@ -40,8 +40,8 @@
     lazyObserver,
     resizeObserver,
     showPopup
-  } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import { Readable } from 'svelte/store'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import { Asset, IntlString } from '@intabiafusion/platform'
   import {
     AnySvelteComponent,
     Button,

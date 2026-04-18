@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import core, { DocumentQuery, getCurrentAccount, QuerySelector, Ref } from '@hcengineering/core'
-  import { type Asset, type IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
-  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { Card } from '@intabiafusion/card'
+  import core, { DocumentQuery, getCurrentAccount, QuerySelector, Ref } from '@intabiafusion/core'
+  import { type Asset, type IntlString } from '@intabiafusion/platform'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { IModeSelector, resolvedLocationStore } from '@intabiafusion/ui'
+  import { SpecialView } from '@intabiafusion/workbench-resources'
   import { createEventDispatcher } from 'svelte'
 
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import time, { ToDo } from '@hcengineering/time'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import time, { ToDo } from '@intabiafusion/time'
   import card from '../../plugin'
 
   export let config: [string, IntlString, object][] = []

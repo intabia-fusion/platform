@@ -15,9 +15,9 @@
 
 <script lang="ts">
   import LinkPreviewPresenter from './LinkPreviewPresenter.svelte'
-  import { type WithLookup } from '@hcengineering/core'
-  import { type Attachment } from '@hcengineering/attachment'
-  import { Scroller } from '@hcengineering/ui'
+  import { type WithLookup } from '@intabiafusion/core'
+  import { type Attachment } from '@intabiafusion/attachment'
+  import { Scroller } from '@intabiafusion/ui'
   export let attachments: WithLookup<Attachment>[] = []
   export let isOwn = false
 </script>

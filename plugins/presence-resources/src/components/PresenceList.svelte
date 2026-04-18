@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person, formatName } from '@hcengineering/contact'
-  import { Avatar } from '@hcengineering/contact-resources'
-  import { IconSize, Scroller } from '@hcengineering/ui'
+  import { Person, formatName } from '@intabiafusion/contact'
+  import { Avatar } from '@intabiafusion/contact-resources'
+  import { IconSize, Scroller } from '@intabiafusion/ui'
   import { followee, toggleFollowee } from '../store'
 
   export let persons: Person[]

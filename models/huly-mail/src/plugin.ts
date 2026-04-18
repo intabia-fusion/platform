@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
-import { hulyMailId } from '@hcengineering/huly-mail'
-import hulyMail from '@hcengineering/huly-mail-resources/src/plugin'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import { hulyMailId } from '@intabiafusion/huly-mail'
+import hulyMail from '@intabiafusion/huly-mail-resources/src/plugin'
 
 export default mergeIds(hulyMailId, hulyMail, {
   string: {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { AccountDB, joinWithProvider, LoginInfo, loginOrSignUpWithProvider } from '@hcengineering/account'
-import { BrandingMap, concatLink, getBranding, MeasureContext, SocialKey } from '@hcengineering/core'
+import { AccountDB, joinWithProvider, LoginInfo, loginOrSignUpWithProvider } from '@intabiafusion/account'
+import { BrandingMap, concatLink, getBranding, MeasureContext, SocialKey } from '@intabiafusion/core'
 import { IncomingHttpHeaders } from 'http'
 import qs from 'querystringify'
 

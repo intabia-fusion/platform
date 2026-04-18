@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Integration, IntegrationKey, IntegrationSecret } from '@hcengineering/account-client'
-import { IntegrationKind, PersonId, WorkspaceUuid } from '@hcengineering/core'
+import { Integration, IntegrationKey, IntegrationSecret } from '@intabiafusion/account-client'
+import { IntegrationKind, PersonId, WorkspaceUuid } from '@intabiafusion/core'
 
 export type IntegrationStatus = 'active' | 'inactive' | 'connecting' | 'disconnecting' | 'error' | 'unknown'
 

@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Contact, Employee } from '@hcengineering/contact'
+import { Contact, Employee } from '@intabiafusion/contact'
 import type {
   AttachedDoc,
   Class,
@@ -24,13 +24,13 @@ import type {
   Ref,
   SystemSpace,
   Timestamp
-} from '@hcengineering/core'
-import { NotificationType } from '@hcengineering/notification'
-import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { Preference } from '@hcengineering/preference'
-import { Handler, IntegrationType } from '@hcengineering/setting'
-import { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
+} from '@intabiafusion/core'
+import { NotificationType } from '@intabiafusion/notification'
+import type { Asset, IntlString, Metadata, Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { Preference } from '@intabiafusion/preference'
+import { Handler, IntegrationType } from '@intabiafusion/setting'
+import { AnyComponent, ComponentExtensionId } from '@intabiafusion/ui'
 
 /**
  * @public

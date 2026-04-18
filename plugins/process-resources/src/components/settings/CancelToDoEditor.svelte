@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Process, ProcessToDo, Step } from '@hcengineering/process'
-  import { Label } from '@hcengineering/ui'
+  import { Ref } from '@intabiafusion/core'
+  import { Process, ProcessToDo, Step } from '@intabiafusion/process'
+  import { Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ToDoContextSelector from '../contextEditors/ToDoContextSelector.svelte'

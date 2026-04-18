@@ -24,7 +24,7 @@ import core, {
   type SessionData,
   type Tx,
   type TxCUD
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 
 export function isOwner (account: Account, ctx: MeasureContext<SessionData>): boolean {
   return account.role === AccountRole.Owner || isSystem(account, ctx)

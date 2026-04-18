@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@hcengineering/communication-rest-client",
+      "packageName": "@intabiafusion/communication-rest-client",
       "comment": "update deps",
       "type": "patch"
     }
   ],
-  "packageName": "@hcengineering/communication-rest-client"
+  "packageName": "@intabiafusion/communication-rest-client"
 }

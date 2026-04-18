@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getName, Person } from '@hcengineering/contact'
-  import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { Doc, TxCUD } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Request } from '@hcengineering/request'
-  import { Label, TimeSince } from '@hcengineering/ui'
-  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { getName, Person } from '@intabiafusion/contact'
+  import { getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { Doc, TxCUD } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Request } from '@intabiafusion/request'
+  import { Label, TimeSince } from '@intabiafusion/ui'
+  import { ObjectPresenter } from '@intabiafusion/view-resources'
   import request from '../plugin'
   import RequestActions from './RequestActions.svelte'
   import RequestPresenter from './RequestPresenter.svelte'

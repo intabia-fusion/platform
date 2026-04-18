@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MailboxOptions } from '@hcengineering/account-client'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import { Dropdown, ListItem, Modal, ModernEditbox, Spinner, themeStore } from '@hcengineering/ui'
-  import setting from '@hcengineering/setting'
+  import { MailboxOptions } from '@intabiafusion/account-client'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { Dropdown, ListItem, Modal, ModernEditbox, Spinner, themeStore } from '@intabiafusion/ui'
+  import setting from '@intabiafusion/setting'
   import { createEventDispatcher } from 'svelte'
   import { getAccountClient } from '../utils'
-  import { IntlString, translateCB } from '@hcengineering/platform'
-  import contact, { getCurrentEmployee, SocialIdentityRef } from '@hcengineering/contact'
-  import { buildSocialIdString, SocialIdType } from '@hcengineering/core'
-  import { Analytics } from '@hcengineering/analytics'
+  import { IntlString, translateCB } from '@intabiafusion/platform'
+  import contact, { getCurrentEmployee, SocialIdentityRef } from '@intabiafusion/contact'
+  import { buildSocialIdString, SocialIdType } from '@intabiafusion/core'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let mailboxOptions: MailboxOptions
 

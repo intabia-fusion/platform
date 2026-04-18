@@ -15,12 +15,12 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import { Channel, Contact } from '@hcengineering/contact'
-  import { Ref, SortingOrder } from '@hcengineering/core'
-  import { Message, SharedMessage } from '@hcengineering/gmail'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import plugin, { Button, Icon, IconShare, Label, Scroller } from '@hcengineering/ui'
+  import { Channel, Contact } from '@intabiafusion/contact'
+  import { Ref, SortingOrder } from '@intabiafusion/core'
+  import { Message, SharedMessage } from '@intabiafusion/gmail'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import plugin, { Button, Icon, IconShare, Label, Scroller } from '@intabiafusion/ui'
 
   import gmail from '../plugin'
   import { convertMessages } from '../utils'

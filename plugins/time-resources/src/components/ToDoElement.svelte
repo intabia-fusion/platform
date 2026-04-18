@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder, WithLookup } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags from '@hcengineering/tags'
-  import { Component, IconMoreV2, Spinner, showPanel, Icon } from '@hcengineering/ui'
-  import { showMenu } from '@hcengineering/view-resources'
-  import time, { ToDo, ToDoPriority, WorkSlot } from '@hcengineering/time'
+  import { SortingOrder, WithLookup } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import tags from '@intabiafusion/tags'
+  import { Component, IconMoreV2, Spinner, showPanel, Icon } from '@intabiafusion/ui'
+  import { showMenu } from '@intabiafusion/view-resources'
+  import time, { ToDo, ToDoPriority, WorkSlot } from '@intabiafusion/time'
   import plugin from '../plugin'
   import ToDoDuration from './ToDoDuration.svelte'
   import WorkItemPresenter from './WorkItemPresenter.svelte'

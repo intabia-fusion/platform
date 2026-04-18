@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type AnalyticProvider } from '@hcengineering/analytics'
-import { AnalyticEventType } from '@hcengineering/analytics-collector'
-import { getMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import { type AnalyticProvider } from '@intabiafusion/analytics'
+import { AnalyticEventType } from '@intabiafusion/analytics-collector'
+import { getMetadata } from '@intabiafusion/platform'
+import presentation from '@intabiafusion/presentation'
 import { type QueuedEvent } from './types'
 import { collectEventMetadata, triggerUrlChange } from './utils'
 

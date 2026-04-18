@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MarkupNode } from '@hcengineering/text'
+  import { MarkupNode } from '@intabiafusion/text'
 
   import NodeMarks from './NodeMarks.svelte'
   import NodeContent from './NodeContent.svelte'
-  import { ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import { ParsedTextWithEmojis } from '@intabiafusion/emoji'
 
   export let node: MarkupNode
   export let singleTextNode = false

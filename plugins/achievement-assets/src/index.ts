@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import achievement, { achievementId } from '@hcengineering/achievement'
+import { addStringsLoader, loadMetadata } from '@intabiafusion/platform'
+import achievement, { achievementId } from '@intabiafusion/achievement'
 
 const EarliestAdopter = require('../assets/EarliestAdopter.png') as string // eslint-disable-line
 const Epic = require('../assets/Epic.png') as string // eslint-disable-line

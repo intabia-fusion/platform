@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Panel } from '@hcengineering/panel'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Survey } from '@hcengineering/survey'
+  import { Ref } from '@intabiafusion/core'
+  import { Panel } from '@intabiafusion/panel'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Survey } from '@intabiafusion/survey'
   import {
     Breadcrumb,
     Button,
@@ -28,9 +28,9 @@
     Label,
     ThrottledCaller,
     tooltip
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { showMenu } from '@hcengineering/view-resources'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { showMenu } from '@intabiafusion/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import survey from '../plugin'
   import { makePollData } from '../utils'

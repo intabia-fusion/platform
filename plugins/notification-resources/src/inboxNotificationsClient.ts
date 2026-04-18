@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { type ActivityMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
 import core, {
   type Account,
   AccountRole,
@@ -30,15 +30,15 @@ import core, {
   TxProcessor,
   type TxUpdateDoc,
   type WithLookup
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import notification, {
   type ActivityInboxNotification,
   type DocNotifyContext,
   type InboxNotification,
   type InboxNotificationsClient,
   type ReadState
-} from '@hcengineering/notification'
-import { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
+} from '@intabiafusion/notification'
+import { addTxListener, createQuery, getClient, onClient } from '@intabiafusion/presentation'
 import { derived, get, writable } from 'svelte/store'
 
 /**

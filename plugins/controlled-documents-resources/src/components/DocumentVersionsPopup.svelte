@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { ControlledDocument, DocumentState } from '@hcengineering/controlled-documents'
-  import { navigate, Scroller } from '@hcengineering/ui'
+  import { ControlledDocument, DocumentState } from '@intabiafusion/controlled-documents'
+  import { navigate, Scroller } from '@intabiafusion/ui'
 
   import { getDocumentLink } from '../navigation'
   import {

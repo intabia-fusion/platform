@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { type Blob, type Ref } from '@hcengineering/core'
-  import drive, { createFile } from '@hcengineering/drive'
-  import { getMediaDevices } from '@hcengineering/media'
-  import { micAccess, camAccess } from '@hcengineering/media-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { FilePreview, getClient, MessageBox, SpaceSelector } from '@hcengineering/presentation'
+  import core, { type Blob, type Ref } from '@intabiafusion/core'
+  import drive, { createFile } from '@intabiafusion/drive'
+  import { getMediaDevices } from '@intabiafusion/media'
+  import { micAccess, camAccess } from '@intabiafusion/media-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { FilePreview, getClient, MessageBox, SpaceSelector } from '@intabiafusion/presentation'
   import {
     EditBox,
     IconUpOutline,
@@ -31,8 +31,8 @@
     eventToHTMLElement,
     resizeObserver,
     showPopup
-  } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
 
   import plugin from '../plugin'
@@ -73,7 +73,7 @@
   import IconStop from './icons/Stop.svelte'
   import ShareSettingsPopup from './ShareSettingsPopup.svelte'
   import SettingsPopup from './SettingsPopup.svelte'
-  import { openDocFromRef } from '@hcengineering/view-resources'
+  import { openDocFromRef } from '@intabiafusion/view-resources'
 
   const dispatch = createEventDispatcher()
 

@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-import { type PersonId, type Ref, type Space } from '@hcengineering/core'
-import { type IntlString } from '@hcengineering/platform'
-import { createQuery, getClient } from '@hcengineering/presentation'
-import pulse, { type TypingIndicator } from '@hcengineering/pulse'
+import { type PersonId, type Ref, type Space } from '@intabiafusion/core'
+import { type IntlString } from '@intabiafusion/platform'
+import { createQuery, getClient } from '@intabiafusion/presentation'
+import pulse, { type TypingIndicator } from '@intabiafusion/pulse'
 
 export interface TypingInfo {
   socialId: PersonId

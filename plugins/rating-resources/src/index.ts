@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Resources } from '@hcengineering/platform'
+import { type Resources } from '@intabiafusion/platform'
 import RatingEditor from './components/RatingEditor.svelte'
 import RatingRing from './components/RatingRing.svelte'
 import RatingWidget from './components/RatingWidget.svelte'

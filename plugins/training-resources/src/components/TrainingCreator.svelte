@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { EditBox } from '@hcengineering/ui'
-  import { Card } from '@hcengineering/presentation'
+  import { EditBox } from '@intabiafusion/ui'
+  import { Card } from '@intabiafusion/presentation'
   import training from '../plugin'
 
   import { canCreateTraining, createTraining, type CreateTrainingData } from '../utils'

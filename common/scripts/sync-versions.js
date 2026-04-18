@@ -1,6 +1,6 @@
 const fs = require('fs')
 const execSync = require('child_process').execSync
-const repo = '@hcengineering'
+const repo = '@intabiafusion'
 
 const packages = {}
 const pathes = {}

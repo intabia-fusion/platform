@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref } from '@hcengineering/core'
-import {} from '@hcengineering/core'
-import { documentId } from '@hcengineering/document'
-import document from '@hcengineering/document-resources/src/plugin'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
-import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
-import { type TagCategory } from '@hcengineering/tags'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
-import type { Action, ActionCategory, ViewAction, Viewlet } from '@hcengineering/view'
+import type { Doc, Ref } from '@intabiafusion/core'
+import {} from '@intabiafusion/core'
+import { documentId } from '@intabiafusion/document'
+import document from '@intabiafusion/document-resources/src/plugin'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/model-presentation'
+import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
+import { type TagCategory } from '@intabiafusion/tags'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import type { Action, ActionCategory, ViewAction, Viewlet } from '@intabiafusion/view'
 
 export default mergeIds(documentId, document, {
   component: {

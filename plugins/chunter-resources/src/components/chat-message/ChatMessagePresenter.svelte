@@ -13,26 +13,26 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
+  import activity, { ActivityMessage, ActivityMessageViewType } from '@intabiafusion/activity'
   import {
     ActivityDocLink,
     ActivityMessageTemplate,
     MessageInlineAction,
     editingMessageStore
-  } from '@hcengineering/activity-resources'
-  import { Attachment } from '@hcengineering/attachment'
-  import { AttachmentDocList, AttachmentImageSize } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import contact, { Employee, getCurrentEmployee, Person, SocialIdentity } from '@hcengineering/contact'
-  import { CombineAvatars, getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
-  import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
-  import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, languageStore, ShowMore } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { getDocLinkTitle } from '@hcengineering/view-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  } from '@intabiafusion/activity-resources'
+  import { Attachment } from '@intabiafusion/attachment'
+  import { AttachmentDocList, AttachmentImageSize } from '@intabiafusion/attachment-resources'
+  import chunter, { ChatMessage } from '@intabiafusion/chunter'
+  import contact, { Employee, getCurrentEmployee, Person, SocialIdentity } from '@intabiafusion/contact'
+  import { CombineAvatars, getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@intabiafusion/contact-resources'
+  import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@intabiafusion/core'
+  import { getClient, MessageViewer, pendingCreatedDocs } from '@intabiafusion/presentation'
+  import { EmptyMarkup } from '@intabiafusion/text'
+  import { Action, Button, IconEdit, languageStore, ShowMore } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { getDocLinkTitle } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
 
   import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
   import ChatMessageHeader from './ChatMessageHeader.svelte'

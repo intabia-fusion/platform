@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
-  import { IconWithEmoji } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Icon, IconFolder, IconSize, getPlatformColorDef, themeStore } from '@hcengineering/ui'
-  import view, { IconProps } from '@hcengineering/view'
+  import { Asset } from '@intabiafusion/platform'
+  import { IconWithEmoji } from '@intabiafusion/presentation'
+  import { AnySvelteComponent, Icon, IconFolder, IconSize, getPlatformColorDef, themeStore } from '@intabiafusion/ui'
+  import view, { IconProps } from '@intabiafusion/view'
 
   import { ComponentType } from 'svelte'
 

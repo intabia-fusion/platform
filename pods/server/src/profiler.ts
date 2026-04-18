@@ -1,4 +1,4 @@
-import { PlatformError, unknownError } from '@hcengineering/platform'
+import { PlatformError, unknownError } from '@intabiafusion/platform'
 import * as inspector from 'node:inspector'
 
 let session: inspector.Session | undefined

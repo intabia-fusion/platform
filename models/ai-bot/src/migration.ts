@@ -18,8 +18,8 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import { aiBotId } from '@hcengineering/ai-bot'
+} from '@intabiafusion/model'
+import { aiBotId } from '@intabiafusion/ai-bot'
 
 export const aiBotOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {

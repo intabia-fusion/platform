@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountBox } from '@hcengineering/contact-resources'
-  import { notEmpty, type PersonId } from '@hcengineering/core'
-  import { Integration } from '@hcengineering/setting'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { AccountBox } from '@intabiafusion/contact-resources'
+  import { notEmpty, type PersonId } from '@intabiafusion/core'
+  import { Integration } from '@intabiafusion/setting'
+  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
 
   export let integrations: Integration[]
   export let selected: Integration | undefined

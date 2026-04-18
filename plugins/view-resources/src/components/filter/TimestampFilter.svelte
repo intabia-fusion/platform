@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closeTooltip, resizeObserver } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import { closeTooltip, resizeObserver } from '@intabiafusion/ui'
+  import { Filter } from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../../plugin'
   import TimestampPresenter from '../TimestampPresenter.svelte'

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import calendar, { AccessLevel, Calendar, Event, getPrimaryCalendar } from '@hcengineering/calendar'
-import contactPlugin, { Employee, Person } from '@hcengineering/contact'
+import calendar, { AccessLevel, Calendar, Event, getPrimaryCalendar } from '@intabiafusion/calendar'
+import contactPlugin, { Employee, Person } from '@intabiafusion/contact'
 import core, {
   AccountUuid,
   Class,
@@ -36,14 +36,14 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc
-} from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
-import serverCalendar from '@hcengineering/server-calendar'
-import { getAccountBySocialId, getPerson, getSocialIds, getSocialStrings } from '@hcengineering/server-contact'
-import { QueueTopic, TriggerControl } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
-import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
+} from '@intabiafusion/core'
+import { getMetadata } from '@intabiafusion/platform'
+import serverCalendar from '@intabiafusion/server-calendar'
+import { getAccountBySocialId, getPerson, getSocialIds, getSocialStrings } from '@intabiafusion/server-contact'
+import { QueueTopic, TriggerControl } from '@intabiafusion/server-core'
+import { generateToken } from '@intabiafusion/server-token'
+import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@intabiafusion/server-activity-resources'
 
 /**
  * @public

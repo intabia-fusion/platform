@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
-  import { Icon, tooltip } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import { Product } from '@intabiafusion/products'
+  import { Icon, tooltip } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import products from '../../plugin'
   import ProductVersionsPopup from './ProductVersionsPopup.svelte'
 

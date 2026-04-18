@@ -22,7 +22,7 @@ import core, {
   type Ref,
   type Space,
   type Status
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   createOrUpdate,
   migrateSpace,
@@ -32,13 +32,13 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   type ModelLogger
-} from '@hcengineering/model'
-import tags, { type TagCategory } from '@hcengineering/model-tags'
-import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
-import { recruitId, type Applicant } from '@hcengineering/recruit'
+} from '@intabiafusion/model'
+import tags, { type TagCategory } from '@intabiafusion/model-tags'
+import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@intabiafusion/model-task'
+import { recruitId, type Applicant } from '@intabiafusion/recruit'
 
-import { DOMAIN_CALENDAR } from '@hcengineering/model-calendar'
-import { DOMAIN_SPACE } from '@hcengineering/model-core'
+import { DOMAIN_CALENDAR } from '@intabiafusion/model-calendar'
+import { DOMAIN_SPACE } from '@intabiafusion/model-core'
 import recruit from './plugin'
 import { defaultApplicantStatuses } from './spaceType'
 

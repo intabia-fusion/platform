@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { ItemPresenter, ToDo } from '@hcengineering/time'
-  import type { Class, Doc } from '@hcengineering/core'
-  import type { ObjectPanel } from '@hcengineering/view'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Component, showPanel } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import type { ItemPresenter, ToDo } from '@intabiafusion/time'
+  import type { Class, Doc } from '@intabiafusion/core'
+  import type { ObjectPanel } from '@intabiafusion/view'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Component, showPanel } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import time from '../plugin'
-  import { DocReferencePresenter, getObjectLinkId } from '@hcengineering/view-resources'
+  import { DocReferencePresenter, getObjectLinkId } from '@intabiafusion/view-resources'
 
   export let todo: ToDo
   export let kind: 'default' | 'todo-line' = 'default'

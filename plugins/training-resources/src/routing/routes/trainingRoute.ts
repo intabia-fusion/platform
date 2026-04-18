@@ -2,10 +2,10 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { isEnum, isId } from '@hcengineering/core'
-import { type Training, trainingId } from '@hcengineering/training'
-import { getClient } from '@hcengineering/presentation'
-import { getCurrentLocation, type Location, type ResolvedLocation } from '@hcengineering/ui'
+import { isEnum, isId } from '@intabiafusion/core'
+import { type Training, trainingId } from '@intabiafusion/training'
+import { getClient } from '@intabiafusion/presentation'
+import { getCurrentLocation, type Location, type ResolvedLocation } from '@intabiafusion/ui'
 import training from '../../plugin'
 import { getCurrentEmployeeRef } from '../../utils'
 import { getPanelFragment } from '../utils/getPanelFragment'

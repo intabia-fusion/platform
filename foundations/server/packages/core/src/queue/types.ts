@@ -1,4 +1,4 @@
-import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
 
 export enum QueueTopic {
   // Topic with partitions to split workspace transactions into

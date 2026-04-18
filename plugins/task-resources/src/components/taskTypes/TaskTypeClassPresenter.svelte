@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Class } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Task } from '@hcengineering/task'
+  import { Class } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Task } from '@intabiafusion/task'
   import task from '../../plugin'
   import { typeStore } from '../..'
 

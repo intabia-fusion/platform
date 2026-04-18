@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+import type { Class, Doc, Ref, WithLookup } from '@intabiafusion/core'
 import {
   navigate,
   type Location,
@@ -21,21 +21,21 @@ import {
   getLocation,
   locationStorageKeyId,
   getCurrentLocation
-} from '@hcengineering/ui'
-import { inboxId } from '@hcengineering/inbox'
-import { type MessageID, type Notification } from '@hcengineering/communication-types'
-import { decodeObjectURI, encodeObjectURI } from '@hcengineering/view'
-import activity, { type ActivityMessage } from '@hcengineering/activity'
+} from '@intabiafusion/ui'
+import { inboxId } from '@intabiafusion/inbox'
+import { type MessageID, type Notification } from '@intabiafusion/communication-types'
+import { decodeObjectURI, encodeObjectURI } from '@intabiafusion/view'
+import activity, { type ActivityMessage } from '@intabiafusion/activity'
 import {
   type ActivityInboxNotification,
   type DocNotifyContext,
   type InboxNotification
-} from '@hcengineering/notification'
-import { getResource } from '@hcengineering/platform'
-import chunter, { type ThreadMessage } from '@hcengineering/chunter'
-import { isActivityMessageClass, messageInFocus } from '@hcengineering/activity-resources'
-import { getClient } from '@hcengineering/presentation'
-import { isMentionNotification, isReactionNotification } from '@hcengineering/notification-resources'
+} from '@intabiafusion/notification'
+import { getResource } from '@intabiafusion/platform'
+import chunter, { type ThreadMessage } from '@intabiafusion/chunter'
+import { isActivityMessageClass, messageInFocus } from '@intabiafusion/activity-resources'
+import { getClient } from '@intabiafusion/presentation'
+import { isMentionNotification, isReactionNotification } from '@intabiafusion/notification-resources'
 import { type NavigationItem } from './type'
 
 // Url: /inbox/{_class}&{_id}/{thread}?message={messageId}

@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { FocusHandler, Label, createFocusManager, tooltip } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { FocusHandler, Label, createFocusManager, tooltip } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
-  import textEditor, { Heading } from '@hcengineering/text-editor'
+  import textEditor, { Heading } from '@intabiafusion/text-editor'
 
   export let items: Heading[] = []
   export let selected: Heading | undefined = undefined

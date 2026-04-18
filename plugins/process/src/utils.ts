@@ -1,7 +1,7 @@
-import { Tx, TxUpdateDoc } from '@hcengineering/core/types/tx'
+import { Tx, TxUpdateDoc } from '@intabiafusion/core/types/tx'
 import { SelectedContext } from './types'
-import core from '@hcengineering/core'
-import { Card } from '@hcengineering/card'
+import core from '@intabiafusion/core'
+import { Card } from '@intabiafusion/card'
 import { parseDSLContext } from './dslContext'
 
 export function parseContext (value: any): SelectedContext | undefined {

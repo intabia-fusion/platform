@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getMetadata, IntlString, translate } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import setting, { settingId } from '@hcengineering/setting'
-  import support from '@hcengineering/support'
-  import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
+  import { Asset, getMetadata, IntlString, translate } from '@intabiafusion/platform'
+  import presentation, { getClient } from '@intabiafusion/presentation'
+  import setting, { settingId } from '@intabiafusion/setting'
+  import support from '@intabiafusion/support'
+  import { getCurrentEmployeeName } from '@intabiafusion/contact-resources'
   import {
     AnySvelteComponent,
     Icon,
@@ -31,11 +31,11 @@
     getCurrentResolvedLocation,
     navigate,
     topSP
-  } from '@hcengineering/ui'
-  import { themeStore } from '@hcengineering/theme'
-  import view, { Action, ActionCategory } from '@hcengineering/view'
-  import { WorkbenchEvents } from '@hcengineering/workbench'
-  import { Analytics } from '@hcengineering/analytics'
+  } from '@intabiafusion/ui'
+  import { themeStore } from '@intabiafusion/theme'
+  import view, { Action, ActionCategory } from '@intabiafusion/view'
+  import { WorkbenchEvents } from '@intabiafusion/workbench'
+  import { Analytics } from '@intabiafusion/analytics'
 
   import workbench from '../plugin'
   import RightArrowIcon from './icons/Collapsed.svelte'

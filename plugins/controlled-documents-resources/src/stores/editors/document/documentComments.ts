@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { createEffect, createStore, forward } from 'effector'
-import { type Attachment } from '@hcengineering/attachment'
-import { type Ref, generateId } from '@hcengineering/core'
-import { getClient } from '@hcengineering/presentation'
-import { type CompAndProps, type PopupAlignment, popupstore, showPopup } from '@hcengineering/ui'
-import { type Document, type DocumentComment } from '@hcengineering/controlled-documents'
+import { type Attachment } from '@intabiafusion/attachment'
+import { type Ref, generateId } from '@intabiafusion/core'
+import { getClient } from '@intabiafusion/presentation'
+import { type CompAndProps, type PopupAlignment, popupstore, showPopup } from '@intabiafusion/ui'
+import { type Document, type DocumentComment } from '@intabiafusion/controlled-documents'
 import { isDocumentCommentAttachedTo } from '../../../utils'
 import {
   type DocumentCommentsFilter,

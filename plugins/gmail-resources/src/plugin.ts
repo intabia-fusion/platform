@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type IntlString, mergeIds } from '@intabiafusion/platform'
 
-import gmail, { gmailId } from '@hcengineering/gmail'
+import gmail, { gmailId } from '@intabiafusion/gmail'
 
 export default mergeIds(gmailId, gmail, {
   string: {

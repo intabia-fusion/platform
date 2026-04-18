@@ -24,7 +24,7 @@
     WithLookup,
     isOwnerOrMaintainer,
     toIdMap
-  } from '@hcengineering/core'
+  } from '@intabiafusion/core'
   import {
     Location,
     resolvedLocationStore,
@@ -35,11 +35,11 @@
     navigate,
     getCurrentResolvedLocation,
     deviceOptionsStore as deviceInfo
-  } from '@hcengineering/ui'
-  import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { SpaceTypeEditor } from '@hcengineering/setting'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import view from '@hcengineering/view'
+  } from '@intabiafusion/ui'
+  import { IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
+  import setting, { SpaceTypeEditor } from '@intabiafusion/setting'
+  import { Asset, getResource } from '@intabiafusion/platform'
+  import view from '@intabiafusion/view'
 
   import SpaceTypeEditorComponent from './editor/SpaceTypeEditor.svelte'
   import { clearSettingsStore } from '../../store'

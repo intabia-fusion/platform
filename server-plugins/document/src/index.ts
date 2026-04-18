@@ -3,11 +3,11 @@
 //
 //
 
-import { Doc } from '@hcengineering/core'
-import type { Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import { ObjectDDParticipantFunc } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-activity'
+import { Doc } from '@intabiafusion/core'
+import type { Plugin, Resource } from '@intabiafusion/platform'
+import { plugin } from '@intabiafusion/platform'
+import { ObjectDDParticipantFunc } from '@intabiafusion/server-core'
+import { Presenter } from '@intabiafusion/server-activity'
 
 /**
  * @public

@@ -1,4 +1,4 @@
-# Change Log - @hcengineering/postgres
+# Change Log - @intabiafusion/postgres
 
 This log was last generated on Tue, 02 Dec 2025 04:08:02 GMT and should not be manually modified.
 

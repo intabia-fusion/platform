@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, WithLookup } from '@hcengineering/core'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { Doc, Ref, WithLookup } from '@intabiafusion/core'
+  import activity, { ActivityMessage } from '@intabiafusion/activity'
   import notification, {
     ActivityInboxNotification,
     DocNotifyContext,
     InboxNotification,
     InboxNotificationsClient
-  } from '@hcengineering/notification'
-  import { getResource } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  } from '@intabiafusion/notification'
+  import { getResource } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
 
   import RepliedPersons from './RepliedPersons.svelte'
   import LastReply from './LastReply.svelte'

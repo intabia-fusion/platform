@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import task from '@hcengineering/model-task'
-import view, { actionTemplates, createAction } from '@hcengineering/model-view'
-import workbench, { createNavigateAction } from '@hcengineering/model-workbench'
-import { type IntlString } from '@hcengineering/platform'
-import { TrackerEvents, trackerId } from '@hcengineering/tracker'
-import { type KeyBinding } from '@hcengineering/view'
+import contact from '@intabiafusion/contact'
+import { type Builder } from '@intabiafusion/model'
+import core from '@intabiafusion/model-core'
+import task from '@intabiafusion/model-task'
+import view, { actionTemplates, createAction } from '@intabiafusion/model-view'
+import workbench, { createNavigateAction } from '@intabiafusion/model-workbench'
+import { type IntlString } from '@intabiafusion/platform'
+import { TrackerEvents, trackerId } from '@intabiafusion/tracker'
+import { type KeyBinding } from '@intabiafusion/view'
 import tracker from './plugin'
 
-import tags from '@hcengineering/tags'
-import { defaultPriorities, issuePriorities } from '@hcengineering/tracker-resources/src/types'
+import tags from '@intabiafusion/tags'
+import { defaultPriorities, issuePriorities } from '@intabiafusion/tracker-resources/src/types'
 
 function createGotoSpecialAction (
   builder: Builder,

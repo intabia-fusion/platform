@@ -3,9 +3,9 @@
 -->
 
 <script lang="ts">
-  import type { TrainingAttempt } from '@hcengineering/training'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Label, Loading } from '@hcengineering/ui'
+  import type { TrainingAttempt } from '@intabiafusion/training'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Label, Loading } from '@intabiafusion/ui'
   import training from '../plugin'
   import TrainingRequestMaxAttemptsPresenter from './TrainingRequestMaxAttemptsPresenter.svelte'
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { MeasureContext, PersonId, WorkspaceUuid } from '@hcengineering/core'
+import { MeasureContext, PersonId, WorkspaceUuid } from '@intabiafusion/core'
 import { SyncManager } from '../message/sync'
 import { MessageManagerV2 } from '../message/v2/message'
 import { RateLimiter } from '../rateLimiter'

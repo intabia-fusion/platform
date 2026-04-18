@@ -4,10 +4,10 @@ import {
   type Blob,
   type MeasureContext,
   type StorageIterator
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import { type Readable } from 'stream'
 
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata } from '@intabiafusion/platform'
 import {
   type BlobStorageIterator,
   type BucketInfo,
@@ -16,10 +16,10 @@ import {
   type StorageAdapter,
   type StorageAdapterEx,
   type UploadedObjectInfo
-} from '@hcengineering/storage'
+} from '@intabiafusion/storage'
 
-import { Analytics } from '@hcengineering/analytics'
-import serverCore, { getDataId, type StorageConfig, type StorageConfiguration } from '@hcengineering/server-core'
+import { Analytics } from '@intabiafusion/analytics'
+import serverCore, { getDataId, type StorageConfig, type StorageConfiguration } from '@intabiafusion/server-core'
 
 class NoSuchKeyError extends Error {
   code: string

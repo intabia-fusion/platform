@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Rank, Ref, toRank } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { AttributesBar, KeyedAttribute, createQuery, getAttribute, getClient } from '@hcengineering/presentation'
-  import setting, { settingId } from '@hcengineering/setting'
-  import { Button, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import core, { Class, Doc, Rank, Ref, toRank } from '@intabiafusion/core'
+  import { IntlString } from '@intabiafusion/platform'
+  import { AttributesBar, KeyedAttribute, createQuery, getAttribute, getClient } from '@intabiafusion/presentation'
+  import setting, { settingId } from '@intabiafusion/setting'
+  import { Button, Label, getCurrentResolvedLocation, navigate } from '@intabiafusion/ui'
   import { getFiltredKeys, isCollectionAttr, restrictionStore } from '../utils'
 
   export let object: Doc | Record<string, any>

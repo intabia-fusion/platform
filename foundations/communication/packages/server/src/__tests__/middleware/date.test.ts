@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
-import { Event, MessageEventType, SessionData } from '@hcengineering/communication-sdk-types'
+import { MeasureContext, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { Event, MessageEventType, SessionData } from '@intabiafusion/communication-sdk-types'
 import {
   AccountUuid,
   CardID,
@@ -21,7 +21,7 @@ import {
   MessageID,
   MessageType,
   SocialID
-} from '@hcengineering/communication-types'
+} from '@intabiafusion/communication-types'
 
 import { DateMiddleware } from '../../middleware/date'
 import { Enriched, Middleware, MiddlewareContext } from '../../types'

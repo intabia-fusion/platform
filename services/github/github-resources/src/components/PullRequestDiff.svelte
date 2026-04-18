@@ -3,12 +3,12 @@
 //
 -->
 <script lang="ts">
-  import { PersonAccount } from '@hcengineering/contact'
-  import { getCurrentAccount } from '@hcengineering/core'
-  import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
-  import { Button, Chevron, Component, ExpandCollapse, Label } from '@hcengineering/ui'
-  import diffview from '@hcengineering/diffview'
-  import { GithubPatch, GithubPullRequest, GithubPullRequestReview } from '@hcengineering/github'
+  import { PersonAccount } from '@intabiafusion/contact'
+  import { getCurrentAccount } from '@intabiafusion/core'
+  import { createQuery, getClient, getFileUrl } from '@intabiafusion/presentation'
+  import { Button, Chevron, Component, ExpandCollapse, Label } from '@intabiafusion/ui'
+  import diffview from '@intabiafusion/diffview'
+  import { GithubPatch, GithubPullRequest, GithubPullRequestReview } from '@intabiafusion/github'
 
   import github from '../plugin'
 

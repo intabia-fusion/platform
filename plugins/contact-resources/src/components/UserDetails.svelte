@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { IconSize } from '@hcengineering/ui'
-  import { Person, getName } from '@hcengineering/contact'
+  import { getClient } from '@intabiafusion/presentation'
+  import { IconSize } from '@intabiafusion/ui'
+  import { Person, getName } from '@intabiafusion/contact'
 
   import Avatar from './Avatar.svelte'
 

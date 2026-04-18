@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type IntlString, Severity, Status } from '@hcengineering/platform'
-  import { signupStore } from '@hcengineering/analytics-providers'
+  import { type IntlString, Severity, Status } from '@intabiafusion/platform'
+  import { signupStore } from '@intabiafusion/analytics-providers'
   import { onMount } from 'svelte'
 
   import { type BottomAction, doLoginAsGuest, doLoginNavigate, getAccountClient, LoginMethods } from '../index'
@@ -23,7 +23,7 @@
   import LoginOtpForm from './LoginOtpForm.svelte'
   import BottomActionComponent from './BottomAction.svelte'
   import login from '../plugin'
-  import { LoginInfo } from '@hcengineering/account-client'
+  import { LoginInfo } from '@intabiafusion/account-client'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false

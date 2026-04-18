@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity from '@hcengineering/activity'
-  import { ActivityCollaborativeChange } from '@hcengineering/communication-types'
-  import ui, { Label } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import { MarkupDiffPresenter } from '@hcengineering/view-resources'
+  import activity from '@intabiafusion/activity'
+  import { ActivityCollaborativeChange } from '@intabiafusion/communication-types'
+  import ui, { Label } from '@intabiafusion/ui'
+  import { AttributeModel } from '@intabiafusion/view'
+  import { MarkupDiffPresenter } from '@intabiafusion/view-resources'
 
   export let model: AttributeModel | undefined = undefined
   export let update: ActivityCollaborativeChange

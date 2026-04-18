@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { RangeDatePopup, SelectPopup, SimpleDatePopup, showPopup } from '@hcengineering/ui'
-  import { Filter, FilterMode } from '@hcengineering/view'
+  import core from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { RangeDatePopup, SelectPopup, SimpleDatePopup, showPopup } from '@intabiafusion/ui'
+  import { Filter, FilterMode } from '@intabiafusion/view'
   import { createEventDispatcher, onMount } from 'svelte'
   import view from '../../plugin'
 

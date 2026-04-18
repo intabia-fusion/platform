@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ProgressCircle, showPopup, tooltip } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { ProgressCircle, showPopup, tooltip } from '@intabiafusion/ui'
 
   import { type Upload } from '../store'
 

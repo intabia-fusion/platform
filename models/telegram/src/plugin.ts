@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@hcengineering/core'
-import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
-import { telegramId } from '@hcengineering/telegram'
-import telegram from '@hcengineering/telegram-resources/src/plugin'
-import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
-import { type TemplateFieldFunc } from '@hcengineering/templates'
-import { type NotificationGroup } from '@hcengineering/notification'
+import { type Ref } from '@intabiafusion/core'
+import { type IntlString, type Resource, mergeIds } from '@intabiafusion/platform'
+import { telegramId } from '@intabiafusion/telegram'
+import telegram from '@intabiafusion/telegram-resources/src/plugin'
+import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import type { DocUpdateMessageViewlet } from '@intabiafusion/activity'
+import { type TemplateFieldFunc } from '@intabiafusion/templates'
+import { type NotificationGroup } from '@intabiafusion/notification'
 
 export default mergeIds(telegramId, telegram, {
   string: {

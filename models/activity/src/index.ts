@@ -35,8 +35,8 @@ import {
   type ReplyProvider,
   type SavedMessage,
   type UserMentionInfo
-} from '@hcengineering/activity'
-import contact, { type Person } from '@hcengineering/contact'
+} from '@intabiafusion/activity'
+import contact, { type Person } from '@intabiafusion/contact'
 import core, {
   DOMAIN_MODEL,
   IndexKind,
@@ -52,7 +52,7 @@ import core, {
   type Tx,
   type TxCUD,
   AccountRole
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   ArrOf,
   Collection,
@@ -69,19 +69,19 @@ import {
   TypePersonId,
   UX,
   type Builder
-} from '@hcengineering/model'
-import { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
-import preference, { TPreference } from '@hcengineering/model-preference'
-import presentation from '@hcengineering/model-presentation'
-import view from '@hcengineering/model-view'
-import type { Asset, IntlString, Resource } from '@hcengineering/platform'
-import { type AnyComponent } from '@hcengineering/ui/src/types'
+} from '@intabiafusion/model'
+import { TAttachedDoc, TClass, TDoc } from '@intabiafusion/model-core'
+import preference, { TPreference } from '@intabiafusion/model-preference'
+import presentation from '@intabiafusion/model-presentation'
+import view from '@intabiafusion/model-view'
+import type { Asset, IntlString, Resource } from '@intabiafusion/platform'
+import { type AnyComponent } from '@intabiafusion/ui/src/types'
 
 import { buildActions } from './actions'
 import { buildNotifications } from './notification'
 import activity from './plugin'
 
-export { activityId } from '@hcengineering/activity'
+export { activityId } from '@intabiafusion/activity'
 export { activityOperation, migrateMessagesSpace } from './migration'
 
 export const DOMAIN_ACTIVITY = 'activity' as Domain

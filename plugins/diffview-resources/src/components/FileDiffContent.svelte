@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Html, Loading, themeStore } from '@hcengineering/ui'
-  import { DiffFile, DiffLine, DiffLineType, DiffViewMode } from '@hcengineering/diffview'
+  import { Html, Loading, themeStore } from '@intabiafusion/ui'
+  import { DiffFile, DiffLine, DiffLineType, DiffViewMode } from '@intabiafusion/diffview'
 
   import { DiffLineRenderResult, RenderOptions, renderHunk } from '../render'
 

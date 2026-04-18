@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, type Employee } from '@hcengineering/contact'
-  import { UserBoxItems, getPermittedPersons, permissionsStore } from '@hcengineering/contact-resources'
-  import documents, { type ControlledDocument } from '@hcengineering/controlled-documents'
-  import { TypedSpace, type Data, type Ref } from '@hcengineering/core'
-  import { Label } from '@hcengineering/ui'
+  import { getCurrentEmployee, type Employee } from '@intabiafusion/contact'
+  import { UserBoxItems, getPermittedPersons, permissionsStore } from '@intabiafusion/contact-resources'
+  import documents, { type ControlledDocument } from '@intabiafusion/controlled-documents'
+  import { TypedSpace, type Data, type Ref } from '@intabiafusion/core'
+  import { Label } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let controlledDoc: Data<ControlledDocument>

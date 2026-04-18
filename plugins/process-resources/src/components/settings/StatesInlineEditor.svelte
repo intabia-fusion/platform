@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Process, State } from '@hcengineering/process'
-  import { makeRank } from '@hcengineering/rank'
-  import { Button, IconAdd, Label } from '@hcengineering/ui'
-  import { SortableDocList } from '@hcengineering/view-resources'
+  import core, { Doc } from '@intabiafusion/core'
+  import { translate } from '@intabiafusion/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Process, State } from '@intabiafusion/process'
+  import { makeRank } from '@intabiafusion/rank'
+  import { Button, IconAdd, Label } from '@intabiafusion/ui'
+  import { SortableDocList } from '@intabiafusion/view-resources'
   import plugin from '../../plugin'
   import StateInlineEditor from './StateInlineEditor.svelte'
 

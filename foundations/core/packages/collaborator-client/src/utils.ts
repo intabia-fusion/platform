@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Class, CollaborativeDoc, Doc, Ref } from '@hcengineering/core'
+import { Class, CollaborativeDoc, Doc, Ref } from '@intabiafusion/core'
 
 // Re-export from core for backward compatibility
-export { hashWorkspace, selectUrl } from '@hcengineering/core'
+export { hashWorkspace, selectUrl } from '@intabiafusion/core'
 
 /** @public */
 export function encodeDocumentId (workspaceId: string, documentId: CollaborativeDoc): string {

@@ -15,10 +15,10 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import core, { Ref, SpaceType, WithLookup } from '@hcengineering/core'
-  import { Location, getCurrentResolvedLocation, navigate, resolvedLocationStore } from '@hcengineering/ui'
-  import { createQuery, hasResource } from '@hcengineering/presentation'
-  import { Resource } from '@hcengineering/platform'
+  import core, { Ref, SpaceType, WithLookup } from '@intabiafusion/core'
+  import { Location, getCurrentResolvedLocation, navigate, resolvedLocationStore } from '@intabiafusion/ui'
+  import { createQuery, hasResource } from '@intabiafusion/presentation'
+  import { Resource } from '@intabiafusion/platform'
 
   import { clearSettingsStore } from '../../store'
   import SpaceTypes from './SpaceTypes.svelte'

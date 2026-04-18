@@ -14,8 +14,8 @@
 //
 
 import { BotCommand } from 'telegraf/typings/core/types/typegram'
-import { translate } from '@hcengineering/platform'
-import telegram from '@hcengineering/telegram'
+import { translate } from '@intabiafusion/platform'
+import telegram from '@intabiafusion/telegram'
 import { Context, Telegraf } from 'telegraf'
 
 import config from '../config'
@@ -27,7 +27,7 @@ import {
   removeIntegrationsByTg,
   getAnyIntegrationByTelegramId
 } from '../account'
-import { WorkspaceUuid } from '@hcengineering/core'
+import { WorkspaceUuid } from '@intabiafusion/core'
 
 export enum Command {
   Start = 'start',

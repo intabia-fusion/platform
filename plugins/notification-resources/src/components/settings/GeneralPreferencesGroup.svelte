@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import notification, { NotificationProvider } from '@hcengineering/notification'
-  import core, { Ref } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@intabiafusion/presentation'
+  import notification, { NotificationProvider } from '@intabiafusion/notification'
+  import core, { Ref } from '@intabiafusion/core'
+  import { getResource } from '@intabiafusion/platform'
 
   import { providersSettings } from '../../utils'
   import ProviderPreferences from './ProviderPreferences.svelte'

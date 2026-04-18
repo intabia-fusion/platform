@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
-  import { Button, IconClose } from '@hcengineering/ui'
+  import { Issue } from '@intabiafusion/tracker'
+  import { Button, IconClose } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import PriorityRefPresenter from './PriorityRefPresenter.svelte'

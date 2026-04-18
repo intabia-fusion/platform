@@ -1,8 +1,8 @@
 <script lang="ts">
-  import calendarPlugin from '@hcengineering/calendar'
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { PersonPresenter } from '@hcengineering/contact-resources'
-  import { Chevron, Label } from '@hcengineering/ui'
+  import calendarPlugin from '@intabiafusion/calendar'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { PersonPresenter } from '@intabiafusion/contact-resources'
+  import { Chevron, Label } from '@intabiafusion/ui'
   import { EventPersonMapping } from '../../../types'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import { isVisibleMe } from '../utils'

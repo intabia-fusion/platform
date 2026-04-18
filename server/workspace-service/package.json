@@ -1,11 +1,11 @@
 {
-  "name": "@hcengineering/workspace-service",
-  "version": "0.7.0",
+  "name": "@intabiafusion/workspace-service",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Hardcore Engineering Inc.",
-  "template": "@hcengineering/node-package",
+  "template": "@intabiafusion/node-package",
   "scripts": {
     "start": "ts-node src/__start.ts",
     "build": "compile",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "cross-env": "~7.0.3",
-    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@intabiafusion/platform-rig": "workspace:^1.0.0",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -41,24 +41,24 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@hcengineering/model": "workspace:^0.7.17",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
+    "@intabiafusion/model": "workspace:^1.0.0",
+    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@intabiafusion/core": "workspace:^1.0.0",
     "koa": "^2.15.4",
     "koa-router": "^12.0.1",
     "koa-bodyparser": "^4.4.1",
     "@koa/cors": "^5.0.0",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-tool": "workspace:^0.7.0",
-    "@hcengineering/server-storage": "workspace:^0.7.17",
-    "@hcengineering/server-pipeline": "workspace:^0.7.0",
-    "@hcengineering/server-client": "workspace:^0.7.17",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/server-notification": "workspace:^0.7.0",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/server-backup": "workspace:^0.7.0",
-    "@hcengineering/postgres": "workspace:^0.7.22",
-    "@hcengineering/mongo": "workspace:^0.7.17"
+    "@intabiafusion/server-core": "workspace:^1.0.0",
+    "@intabiafusion/server-tool": "workspace:^1.0.0",
+    "@intabiafusion/server-storage": "workspace:^1.0.0",
+    "@intabiafusion/server-pipeline": "workspace:^1.0.0",
+    "@intabiafusion/server-client": "workspace:^1.0.0",
+    "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/server-notification": "workspace:^1.0.0",
+    "@intabiafusion/analytics": "workspace:^1.0.0",
+    "@intabiafusion/account-client": "workspace:^1.0.0",
+    "@intabiafusion/server-backup": "workspace:^1.0.0",
+    "@intabiafusion/postgres": "workspace:^1.0.0",
+    "@intabiafusion/mongo": "workspace:^1.0.0"
   }
 }

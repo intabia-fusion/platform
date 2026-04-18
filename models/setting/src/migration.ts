@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type AccountUuid, type Ref, type Space } from '@hcengineering/core'
+import core, { type AccountUuid, type Ref, type Space } from '@intabiafusion/core'
 import {
   migrateSpace,
   type MigrateUpdate,
@@ -22,9 +22,9 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@hcengineering/model'
-import setting, { DOMAIN_SETTING, type Integration, settingId } from '@hcengineering/setting'
-import { getSocialKeyByOldAccount, getUniqueAccountsFromOldAccounts } from '@hcengineering/model-core'
+} from '@intabiafusion/model'
+import setting, { DOMAIN_SETTING, type Integration, settingId } from '@intabiafusion/setting'
+import { getSocialKeyByOldAccount, getUniqueAccountsFromOldAccounts } from '@intabiafusion/model-core'
 
 /**
  * Migrates old accounts to new accounts

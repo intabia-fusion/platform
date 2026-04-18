@@ -22,13 +22,13 @@
     ButtonIcon,
     showPopup,
     DateTimePresenter
-  } from '@hcengineering/ui'
-  import { Applet } from '@hcengineering/communication'
-  import presentation from '@hcengineering/presentation'
+  } from '@intabiafusion/ui'
+  import { Applet } from '@intabiafusion/communication'
+  import presentation from '@intabiafusion/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
-  import { generateId } from '@hcengineering/core'
-  import emoji from '@hcengineering/emoji'
+  import { IntlString } from '@intabiafusion/platform'
+  import { generateId } from '@intabiafusion/core'
+  import emoji from '@intabiafusion/emoji'
 
   import communication from '../../plugin'
 

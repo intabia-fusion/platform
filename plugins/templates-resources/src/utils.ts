@@ -1,13 +1,13 @@
-import { type Class, type Doc, generateId, type Ref } from '@hcengineering/core'
-import { getResource } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
+import { type Class, type Doc, generateId, type Ref } from '@intabiafusion/core'
+import { getResource } from '@intabiafusion/platform'
+import { getClient } from '@intabiafusion/presentation'
 import templates, {
   templateFieldRegexp,
   type TemplateData,
   type TemplateDataProvider,
   type TemplateField,
   type TemplateFieldCategory
-} from '@hcengineering/templates'
+} from '@intabiafusion/templates'
 
 const templateData = new Map<Ref<TemplateFieldCategory>, TemplateData[]>()
 

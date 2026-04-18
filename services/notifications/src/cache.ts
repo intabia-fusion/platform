@@ -34,15 +34,15 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc,
   UserStatus
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import notification, {
   DocNotifyContext,
   type NotificationProviderSetting,
   type NotificationTypeSetting,
   ReadState
-} from '@hcengineering/notification'
-import contact, { Employee, Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
-import { Receiver, Sender } from '@hcengineering/server-notification'
+} from '@intabiafusion/notification'
+import contact, { Employee, Person, PersonSpace, SocialIdentityRef } from '@intabiafusion/contact'
+import { Receiver, Sender } from '@intabiafusion/server-notification'
 
 import { Client, EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
 

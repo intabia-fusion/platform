@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, IconClose, Notification } from '@hcengineering/ui'
+  import { Button, IconClose, Notification } from '@intabiafusion/ui'
   import { fade } from 'svelte/transition'
 
   export let onRemove: () => void

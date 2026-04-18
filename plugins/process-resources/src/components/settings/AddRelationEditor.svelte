@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Association, Ref, Relation } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
-  import { Label, tooltip } from '@hcengineering/ui'
+  import core, { AnyAttribute, Association, Ref, Relation } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Process, Step } from '@intabiafusion/process'
+  import { Label, tooltip } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext, getMockAttribute } from '../../utils'
   import ProcessAttribute from '../ProcessAttribute.svelte'

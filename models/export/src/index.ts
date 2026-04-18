@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Domain, Ref } from '@hcengineering/core'
-import type { ExportResultRecord } from '@hcengineering/export'
-import { type Builder, Model, Prop, ArrOf, TypeRef, TypeString, TypeNumber, UX } from '@hcengineering/model'
-import core, { TDoc } from '@hcengineering/model-core'
-import presentation from '@hcengineering/model-presentation'
-import workbench from '@hcengineering/workbench'
-import view from '@hcengineering/model-view'
-import notification, { type TxNotificationType } from '@hcengineering/notification'
-import exportPlugin from '@hcengineering/export'
+import type { Class, Doc, Domain, Ref } from '@intabiafusion/core'
+import type { ExportResultRecord } from '@intabiafusion/export'
+import { type Builder, Model, Prop, ArrOf, TypeRef, TypeString, TypeNumber, UX } from '@intabiafusion/model'
+import core, { TDoc } from '@intabiafusion/model-core'
+import presentation from '@intabiafusion/model-presentation'
+import workbench from '@intabiafusion/workbench'
+import view from '@intabiafusion/model-view'
+import notification, { type TxNotificationType } from '@intabiafusion/notification'
+import exportPlugin from '@intabiafusion/export'
 
 import exportModelPlugin from './plugin'
 
-export { exportId } from '@hcengineering/export'
+export { exportId } from '@intabiafusion/export'
 export * from './migration'
 export default exportModelPlugin
 

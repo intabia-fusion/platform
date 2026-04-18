@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { DatePresenter, Label, tooltip } from '@hcengineering/ui'
-  import { Employee } from '@hcengineering/contact'
-  import { EmployeeBox } from '@hcengineering/contact-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { DatePresenter, Label, tooltip } from '@intabiafusion/ui'
+  import { Employee } from '@intabiafusion/contact'
+  import { EmployeeBox } from '@intabiafusion/contact-resources'
 
-  import testManagement from '@hcengineering/test-management'
+  import testManagement from '@intabiafusion/test-management'
 
   export let defaultAssignee: Ref<Employee> | undefined = undefined
   export let dueDate: number | undefined = undefined

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TagElement } from '@hcengineering/tags'
-  import { getPlatformColorDef, themeStore } from '@hcengineering/ui'
+  import { TagElement } from '@intabiafusion/tags'
+  import { getPlatformColorDef, themeStore } from '@intabiafusion/ui'
 
   export let element: TagElement
 

@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SpaceSelect, getClient, Card } from '@hcengineering/presentation'
-  import { Label, Status as StatusControl, themeStore } from '@hcengineering/ui'
+  import { SpaceSelect, getClient, Card } from '@intabiafusion/presentation'
+  import { Label, Status as StatusControl, themeStore } from '@intabiafusion/ui'
 
-  import core, { Class, Client, Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
-  import { OK, Resource, Severity, Status, getResource, translate } from '@hcengineering/platform'
-  import task, { Project, Task, makeRank } from '@hcengineering/task'
+  import core, { Class, Client, Doc, Ref, SortingOrder, Space } from '@intabiafusion/core'
+  import { OK, Resource, Severity, Status, getResource, translate } from '@intabiafusion/platform'
+  import task, { Project, Task, makeRank } from '@intabiafusion/task'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { moveToSpace } from '../utils'

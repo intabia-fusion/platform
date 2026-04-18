@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DirectMessage } from '@hcengineering/chunter'
-  import contact, { Person } from '@hcengineering/contact'
-  import { Avatar, CombineAvatars } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Icon, IconSize } from '@hcengineering/ui'
-  import { classIcon } from '@hcengineering/view-resources'
+  import { DirectMessage } from '@intabiafusion/chunter'
+  import contact, { Person } from '@intabiafusion/contact'
+  import { Avatar, CombineAvatars } from '@intabiafusion/contact-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Icon, IconSize } from '@intabiafusion/ui'
+  import { classIcon } from '@intabiafusion/view-resources'
 
   import chunter from '../plugin'
   import { getDmPersons } from '../utils'

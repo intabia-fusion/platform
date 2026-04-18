@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MarkupNode } from '@hcengineering/text-core'
+import { MarkupNode } from '@intabiafusion/text-core'
 import { htmlToMarkup, markupToHtml } from '..'
 
 const tests: Array<{ name: string, markup: object, html: string }> = [

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { getMetadata } from '@hcengineering/platform'
-  import presentation, { type ServiceStatistics } from '@hcengineering/presentation'
-  import { ticker } from '@hcengineering/ui'
+  import { getMetadata } from '@intabiafusion/platform'
+  import presentation, { type ServiceStatistics } from '@intabiafusion/presentation'
+  import { ticker } from '@intabiafusion/ui'
   import MetricsInfo from './statistics/MetricsInfo.svelte'
 
   export let serviceName: string

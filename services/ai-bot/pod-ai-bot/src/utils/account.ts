@@ -20,11 +20,11 @@ import {
   AccountRole,
   type Person as GlobalPerson,
   type AccountUuid
-} from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
-import { getAccountClient, withRetry } from '@hcengineering/server-client'
-import { aiBotAccountEmail, aiBotEmailSocialKey } from '@hcengineering/ai-bot'
-import { MeasureContext, PersonUuid, systemAccountUuid } from '@hcengineering/core'
+} from '@intabiafusion/core'
+import { generateToken } from '@intabiafusion/server-token'
+import { getAccountClient, withRetry } from '@intabiafusion/server-client'
+import { aiBotAccountEmail, aiBotEmailSocialKey } from '@intabiafusion/ai-bot'
+import { MeasureContext, PersonUuid, systemAccountUuid } from '@intabiafusion/core'
 
 import config from '../config'
 import { wait } from './common'

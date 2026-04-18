@@ -24,13 +24,13 @@
     DocumentState,
     copyProjectDocuments,
     deleteProjectDrafts
-  } from '@hcengineering/controlled-documents'
-  import { Product, ProductVersion, ProductVersionState } from '@hcengineering/products'
-  import { Data, Ref, SortingOrder, generateId } from '@hcengineering/core'
-  import { Card, MessageBox, SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
-  import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { DropdownLabelsIntl, EditBox, FocusHandler, createFocusManager, showPopup } from '@hcengineering/ui'
-  import { ObjectBox } from '@hcengineering/view-resources'
+  } from '@intabiafusion/controlled-documents'
+  import { Product, ProductVersion, ProductVersionState } from '@intabiafusion/products'
+  import { Data, Ref, SortingOrder, generateId } from '@intabiafusion/core'
+  import { Card, MessageBox, SpaceSelector, createQuery, getClient } from '@intabiafusion/presentation'
+  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import { DropdownLabelsIntl, EditBox, FocusHandler, createFocusManager, showPopup } from '@intabiafusion/ui'
+  import { ObjectBox } from '@intabiafusion/view-resources'
 
   import products from '../../plugin'
 

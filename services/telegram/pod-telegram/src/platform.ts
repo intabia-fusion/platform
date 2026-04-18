@@ -2,8 +2,8 @@ import type { Collection } from 'mongodb'
 import { getDB } from './storage'
 import { LastMsgRecord, TgUser, User, UserRecord, WorkspaceChannel } from './types'
 import { WorkspaceWorker } from './workspace'
-import { StorageAdapter } from '@hcengineering/server-core'
-import { MeasureContext } from '@hcengineering/core'
+import { StorageAdapter } from '@intabiafusion/server-core'
+import { MeasureContext } from '@intabiafusion/core'
 
 export class PlatformWorker {
   private constructor (

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { LoginInfo, RegionInfo } from '@hcengineering/login'
-  import { createWorkspace, getAccountDisplayName, getRegionInfo, setLoginInfo } from '@hcengineering/login-resources'
-  import { Status, Severity, OK, getEmbeddedLabel } from '@hcengineering/platform'
+  import { LoginInfo, RegionInfo } from '@intabiafusion/login'
+  import { createWorkspace, getAccountDisplayName, getRegionInfo, setLoginInfo } from '@intabiafusion/login-resources'
+  import { Status, Severity, OK, getEmbeddedLabel } from '@intabiafusion/platform'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { ButtonMenu } from '@hcengineering/ui'
+  import { ButtonMenu } from '@intabiafusion/ui'
 
   import Form from './Form.svelte'
   import onboard from '../plugin'

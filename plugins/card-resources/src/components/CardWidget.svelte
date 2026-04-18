@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closeWidget } from '@hcengineering/workbench-resources'
-  import { Widget, WidgetTab } from '@hcengineering/workbench'
-  import { createQuery, createNotificationContextsQuery, getClient } from '@hcengineering/presentation'
-  import { NotificationContext } from '@hcengineering/communication-types'
+  import { closeWidget } from '@intabiafusion/workbench-resources'
+  import { Widget, WidgetTab } from '@intabiafusion/workbench'
+  import { createQuery, createNotificationContextsQuery, getClient } from '@intabiafusion/presentation'
+  import { NotificationContext } from '@intabiafusion/communication-types'
   import { createEventDispatcher } from 'svelte'
-  import { Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
-  import { Button, EditBox, Header, IconClose, IconMoreH } from '@hcengineering/ui'
+  import { Card } from '@intabiafusion/card'
+  import { Ref } from '@intabiafusion/core'
+  import { Button, EditBox, Header, IconClose, IconMoreH } from '@intabiafusion/ui'
 
   import card from '../plugin'
   import EditCardNewContent from './EditCardNewContent.svelte'
-  import { showMenu } from '@hcengineering/view-resources'
+  import { showMenu } from '@intabiafusion/view-resources'
   import TagsEditor from './TagsEditor.svelte'
   import ParentNamesPresenter from './ParentNamesPresenter.svelte'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Attachment } from '@hcengineering/attachment'
-  import { BlobType } from '@hcengineering/core'
+  import type { Attachment } from '@intabiafusion/attachment'
+  import { BlobType } from '@intabiafusion/core'
 
   export let value: Attachment | BlobType | undefined
 </script>

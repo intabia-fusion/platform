@@ -28,18 +28,18 @@ import {
   type Domain,
   type Ref,
   type Space
-} from '@hcengineering/core'
-import { type Builder, Mixin, Model, Prop, TypeRecord, TypeRef, TypeString, UX } from '@hcengineering/model'
-import core, { TClass, TDoc } from '@hcengineering/model-core'
-import preference, { TPreference } from '@hcengineering/model-preference'
-import presentation from '@hcengineering/model-presentation'
-import { type Asset, getEmbeddedLabel, type IntlString, type Resource, type Status } from '@hcengineering/platform'
+} from '@intabiafusion/core'
+import { type Builder, Mixin, Model, Prop, TypeRecord, TypeRef, TypeString, UX } from '@intabiafusion/model'
+import core, { TClass, TDoc } from '@intabiafusion/model-core'
+import preference, { TPreference } from '@intabiafusion/model-preference'
+import presentation from '@intabiafusion/model-presentation'
+import { type Asset, getEmbeddedLabel, type IntlString, type Resource, type Status } from '@intabiafusion/platform'
 import {
   type AnyComponent,
   type ComponentExtensionId,
   type LabelAndProps,
   type Location
-} from '@hcengineering/ui/src/types'
+} from '@intabiafusion/ui/src/types'
 import {
   type TypeEditor,
   type Action,
@@ -107,12 +107,12 @@ import {
   type ViewletDescriptor,
   type ViewletPreference,
   type ViewletViewAction
-} from '@hcengineering/view'
+} from '@intabiafusion/view'
 
 import view from './plugin'
 import { classPresenter, createAction } from './utils'
 
-export { viewId } from '@hcengineering/view'
+export { viewId } from '@intabiafusion/view'
 export { viewOperation } from './migration'
 export type { ViewAction, Viewlet }
 

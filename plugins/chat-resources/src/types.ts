@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MessageID, type CardID } from '@hcengineering/communication-types'
+import { type MessageID, type CardID } from '@intabiafusion/communication-types'
 
 export interface ChatWidgetData {
   id: string

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import { type BackupClient, type DocChunk } from './backup'
 import {
   type Class,
@@ -26,7 +26,7 @@ import {
 } from './classes'
 import core from './component'
 import { Hierarchy } from './hierarchy'
-import { type MeasureContext, MeasureMetricsContext } from '@hcengineering/measurements'
+import { type MeasureContext, MeasureMetricsContext } from '@intabiafusion/measurements'
 import { ModelDb } from './memdb'
 import type {
   DocumentQuery,

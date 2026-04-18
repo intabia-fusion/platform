@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import { Process, SelectedExecutionContext } from '@hcengineering/process'
-  import ui, { Label } from '@hcengineering/ui'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Process, SelectedExecutionContext } from '@intabiafusion/process'
+  import ui, { Label } from '@intabiafusion/ui'
   import ProcessContextPresenter from '../contextEditors/ProcessContextPresenter.svelte'
 
   export let contextValue: SelectedExecutionContext

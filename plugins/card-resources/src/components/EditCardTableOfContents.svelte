@@ -14,17 +14,17 @@
 -->
 
 <script lang="ts">
-  import card, { Card, CardSection, CardViewDefaults } from '@hcengineering/card'
-  import communication from '@hcengineering/communication'
-  import { NotificationContext } from '@hcengineering/communication-types'
-  import { Ref } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
-  import { Heading } from '@hcengineering/text-editor'
-  import { TableOfContents } from '@hcengineering/text-editor-resources'
-  import { Component, Loading, ModernButton, Scroller } from '@hcengineering/ui'
+  import card, { Card, CardSection, CardViewDefaults } from '@intabiafusion/card'
+  import communication from '@intabiafusion/communication'
+  import { NotificationContext } from '@intabiafusion/communication-types'
+  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@intabiafusion/presentation'
+  import { Heading } from '@intabiafusion/text-editor'
+  import { TableOfContents } from '@intabiafusion/text-editor-resources'
+  import { Component, Loading, ModernButton, Scroller } from '@intabiafusion/ui'
   import { SvelteComponent, tick } from 'svelte'
 
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata } from '@intabiafusion/platform'
   import { getCardSections, getCardToc } from '../card'
   import { CardSectionAction } from '../types'
 

@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getResource, translateCB } from '@hcengineering/platform'
-  import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { AnyComponent, Icon, LabelAndProps, themeStore, tooltip } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { Class, Doc, Ref } from '@intabiafusion/core'
+  import { getResource, translateCB } from '@intabiafusion/platform'
+  import { createQuery, getClient, IconWithEmoji } from '@intabiafusion/presentation'
+  import { AnyComponent, Icon, LabelAndProps, themeStore, tooltip } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import activity, { ActivityMessage } from '@intabiafusion/activity'
 
-  import { getReferenceLabel } from '@hcengineering/text-editor-resources/src/components/extension/reference'
+  import { getReferenceLabel } from '@intabiafusion/text-editor-resources/src/components/extension/reference'
   import { classIcon } from '../utils'
   import DocNavLink from './DocNavLink.svelte'
-  import contact from '@hcengineering/contact'
+  import contact from '@intabiafusion/contact'
 
   export let _id: Ref<Doc> | undefined = undefined
   export let _class: Ref<Class<Doc>> | undefined = undefined

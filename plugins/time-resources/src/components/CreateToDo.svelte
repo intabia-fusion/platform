@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { ActionIcon, IconAdd, showPopup, ModernEditbox, Spinner } from '@hcengineering/ui'
-  import { SortingOrder } from '@hcengineering/core'
-  import { getCurrentEmployee } from '@hcengineering/contact'
-  import { TimeEvents, ToDoPriority } from '@hcengineering/time'
-  import { getClient } from '@hcengineering/presentation'
+  import { ActionIcon, IconAdd, showPopup, ModernEditbox, Spinner } from '@intabiafusion/ui'
+  import { SortingOrder } from '@intabiafusion/core'
+  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { TimeEvents, ToDoPriority } from '@intabiafusion/time'
+  import { getClient } from '@intabiafusion/presentation'
   import CreateToDoPopup from './CreateToDoPopup.svelte'
   import time from '../plugin'
-  import { makeRank } from '@hcengineering/task'
-  import { Analytics } from '@hcengineering/analytics'
+  import { makeRank } from '@intabiafusion/task'
+  import { Analytics } from '@intabiafusion/analytics'
 
   export let fullSize: boolean = false
   export let value: string = ''

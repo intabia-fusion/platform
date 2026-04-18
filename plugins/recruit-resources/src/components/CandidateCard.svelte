@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@hcengineering/attachment'
-  import contact, { Channel, getName, Person } from '@hcengineering/contact'
-  import { ChannelsEditor, Avatar } from '@hcengineering/contact-resources'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Component, Label } from '@hcengineering/ui'
-  import { DocNavLink } from '@hcengineering/view-resources'
+  import attachment from '@intabiafusion/attachment'
+  import contact, { Channel, getName, Person } from '@intabiafusion/contact'
+  import { ChannelsEditor, Avatar } from '@intabiafusion/contact-resources'
+  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Component, Label } from '@intabiafusion/ui'
+  import { DocNavLink } from '@intabiafusion/view-resources'
   import recruit from '../plugin'
-  import chunter from '@hcengineering/chunter'
+  import chunter from '@intabiafusion/chunter'
 
   export let candidate: Person | undefined
   export let disabled: boolean = false

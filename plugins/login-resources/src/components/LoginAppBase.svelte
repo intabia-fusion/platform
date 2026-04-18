@@ -15,9 +15,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
-  import { Popup, Scroller, deviceOptionsStore as deviceInfo, Button } from '@hcengineering/ui'
-  import workbench from '@hcengineering/workbench'
+  import platform, { getMetadata, IntlString } from '@intabiafusion/platform'
+  import { Popup, Scroller, deviceOptionsStore as deviceInfo, Button } from '@intabiafusion/ui'
+  import workbench from '@intabiafusion/workbench'
   import { onMount } from 'svelte'
   import login from '../plugin'
 
@@ -34,8 +34,8 @@
 
   import { loginTheme, setLoginTheme, type LoginThemeName } from '../theme'
   import Label from './internal/Label.svelte'
-  import { NavLink } from '@hcengineering/presentation'
-  import setting from '@hcengineering/setting'
+  import { NavLink } from '@intabiafusion/presentation'
+  import setting from '@intabiafusion/setting'
 
   onMount(() => {
     // Initialize login theme from platform metadata if provided

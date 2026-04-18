@@ -1,11 +1,11 @@
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import { groupByArray, systemAccountUuid } from '@hcengineering/core'
-  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
-  import presentation, { isAdminUser, type OverviewStatistics } from '@hcengineering/presentation'
-  import { Button, CheckBox, ticker, Expandable } from '@hcengineering/ui'
-  import { FixedColumn, ObjectPresenter } from '@hcengineering/view-resources'
-  import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
+  import contact from '@intabiafusion/contact'
+  import { groupByArray, systemAccountUuid } from '@intabiafusion/core'
+  import { getEmbeddedLabel, getMetadata } from '@intabiafusion/platform'
+  import presentation, { isAdminUser, type OverviewStatistics } from '@intabiafusion/presentation'
+  import { Button, CheckBox, ticker, Expandable } from '@intabiafusion/ui'
+  import { FixedColumn, ObjectPresenter } from '@intabiafusion/view-resources'
+  import { employeeByPersonIdStore } from '@intabiafusion/contact-resources'
   import { workspacesStore } from '../utils'
 
   const token: string = getMetadata(presentation.metadata.Token) ?? ''

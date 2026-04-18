@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Department } from '@hcengineering/hr'
-  import { Scroller, Separator, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { TreeNode } from '@hcengineering/view-resources'
-  import { NavFooter, NavHeader } from '@hcengineering/workbench-resources'
+  import { Ref } from '@intabiafusion/core'
+  import { Department } from '@intabiafusion/hr'
+  import { Scroller, Separator, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { TreeNode } from '@intabiafusion/view-resources'
+  import { NavFooter, NavHeader } from '@intabiafusion/workbench-resources'
 
   import hr from '../../plugin'
 

@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Timestamp } from '@hcengineering/core'
-  import { PublicLink, createPublicLink } from '@hcengineering/guest'
+  import { Doc, Timestamp } from '@intabiafusion/core'
+  import { PublicLink, createPublicLink } from '@intabiafusion/guest'
   import presentaion, {
     Card,
     MessageBox,
     copyTextToClipboard,
     createQuery,
     getClient
-  } from '@hcengineering/presentation'
-  import { Button, Loading, showPopup, ticker } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { getObjectLinkFragment } from '@hcengineering/view-resources'
+  } from '@intabiafusion/presentation'
+  import { Button, Loading, showPopup, ticker } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
+  import { getObjectLinkFragment } from '@intabiafusion/view-resources'
   import { createEventDispatcher } from 'svelte'
   import guest from '../plugin'
 

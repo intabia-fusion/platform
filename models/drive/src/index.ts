@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import chunter from '@hcengineering/chunter'
+import activity from '@intabiafusion/activity'
+import chunter from '@intabiafusion/chunter'
 import core, {
   type Blob,
   type Class,
@@ -28,7 +28,7 @@ import core, {
   IndexKind,
   SortingOrder,
   type AccountUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import {
   type Drive,
   type File,
@@ -37,7 +37,7 @@ import {
   type Resource,
   TypeFileVersion,
   driveId
-} from '@hcengineering/drive'
+} from '@intabiafusion/drive'
 import {
   type Builder,
   Collection,
@@ -53,19 +53,19 @@ import {
   TypeString,
   TypeTimestamp,
   UX
-} from '@hcengineering/model'
-import { TAttachedDoc, TDoc, TType, TTypedSpace } from '@hcengineering/model-core'
-import presentation from '@hcengineering/model-presentation'
-import print from '@hcengineering/model-print'
-import tracker from '@hcengineering/model-tracker'
-import view, { type Viewlet, actionTemplates, classPresenter, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import { getEmbeddedLabel } from '@hcengineering/platform'
+} from '@intabiafusion/model'
+import { TAttachedDoc, TDoc, TType, TTypedSpace } from '@intabiafusion/model-core'
+import presentation from '@intabiafusion/model-presentation'
+import print from '@intabiafusion/model-print'
+import tracker from '@intabiafusion/model-tracker'
+import view, { type Viewlet, actionTemplates, classPresenter, createAction } from '@intabiafusion/model-view'
+import workbench from '@intabiafusion/model-workbench'
+import { getEmbeddedLabel } from '@intabiafusion/platform'
 
 import drive from './plugin'
 import { definePermissions } from './permissions'
 
-export { driveId } from '@hcengineering/drive'
+export { driveId } from '@intabiafusion/drive'
 export { driveOperation } from './migration'
 export { drive as default }
 

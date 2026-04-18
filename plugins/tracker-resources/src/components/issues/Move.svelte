@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Card, SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
-  import { Component, Issue, Milestone, Project } from '@hcengineering/tracker'
-  import ui, { Button, IconForward, Label, Spinner, Toggle, tooltip } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import { Ref } from '@intabiafusion/core'
+  import { Card, SpaceSelector, createQuery, getClient } from '@intabiafusion/presentation'
+  import { Component, Issue, Milestone, Project } from '@intabiafusion/tracker'
+  import ui, { Button, IconForward, Label, Spinner, Toggle, tooltip } from '@intabiafusion/ui'
+  import view from '@intabiafusion/view'
   import { createEventDispatcher } from 'svelte'
   import { componentStore } from '../../component'
   import tracker from '../../plugin'

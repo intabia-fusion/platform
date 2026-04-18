@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import type { ActivityMessage, ActivityMessagesFilter } from '@hcengineering/activity'
-import { chunterId, type Channel } from '@hcengineering/chunter'
-import chunter from '@hcengineering/chunter-resources/src/plugin'
-import { type Doc, type Ref } from '@hcengineering/core'
-import { type NotificationGroup } from '@hcengineering/notification'
-import type { IntlString, Resource } from '@hcengineering/platform'
-import { mergeIds } from '@hcengineering/platform'
-import type { AnyComponent, Location } from '@hcengineering/ui/src/types'
-import type { Action, ActionCategory, ViewAction, Viewlet, ViewletDescriptor } from '@hcengineering/view'
-import { type WidgetTab, type LocationData } from '@hcengineering/workbench'
+import type { ActivityMessage, ActivityMessagesFilter } from '@intabiafusion/activity'
+import { chunterId, type Channel } from '@intabiafusion/chunter'
+import chunter from '@intabiafusion/chunter-resources/src/plugin'
+import { type Doc, type Ref } from '@intabiafusion/core'
+import { type NotificationGroup } from '@intabiafusion/notification'
+import type { IntlString, Resource } from '@intabiafusion/platform'
+import { mergeIds } from '@intabiafusion/platform'
+import type { AnyComponent, Location } from '@intabiafusion/ui/src/types'
+import type { Action, ActionCategory, ViewAction, Viewlet, ViewletDescriptor } from '@intabiafusion/view'
+import { type WidgetTab, type LocationData } from '@intabiafusion/workbench'
 
 export default mergeIds(chunterId, chunter, {
   component: {

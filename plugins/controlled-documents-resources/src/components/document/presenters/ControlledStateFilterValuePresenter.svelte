@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ControlledDocumentState } from '@hcengineering/controlled-documents'
+  import { ControlledDocumentState } from '@intabiafusion/controlled-documents'
   import { controlledDocumentStatesOrder } from '../../../utils'
   import StatePresenter from './StatePresenter.svelte'
 

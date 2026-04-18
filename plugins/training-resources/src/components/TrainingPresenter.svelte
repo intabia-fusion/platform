@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import type { Training } from '@hcengineering/training'
+  import type { Training } from '@intabiafusion/training'
   import TrainingCodePresenter from './TrainingCodePresenter.svelte'
   import TrainingRevisionPresenter from './TrainingRevisionPresenter.svelte'
   import TrainingStatePresenter from './TrainingStatePresenter.svelte'

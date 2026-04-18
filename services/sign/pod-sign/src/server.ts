@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-import { AccountClient, getClient as getAccountClientRaw, isWorkspaceLoginInfo } from '@hcengineering/account-client'
-import { generateId, newMetrics, type WorkspaceIds } from '@hcengineering/core'
-import { initStatisticsContext, StorageConfiguration } from '@hcengineering/server-core'
-import { buildStorageFromConfig } from '@hcengineering/server-storage'
+import { AccountClient, getClient as getAccountClientRaw, isWorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { generateId, newMetrics, type WorkspaceIds } from '@intabiafusion/core'
+import { initStatisticsContext, StorageConfiguration } from '@intabiafusion/server-core'
+import { buildStorageFromConfig } from '@intabiafusion/server-storage'
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'
 
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
 import { join } from 'path'
 import { extractBranding, type Branding, type BrandingMap } from './branding'
 import config from './config'

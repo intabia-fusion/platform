@@ -32,7 +32,7 @@ import {
   type WorkspaceUuid,
   type WorkspaceInfo,
   type IntegrationKind
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import type { EndpointInfo } from './utils'
 
 /* ========= D A T A B A S E  E N T I T I E S ========= */

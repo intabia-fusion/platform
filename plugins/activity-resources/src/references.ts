@@ -6,11 +6,11 @@ import core, {
   type RelatedDocument,
   type Space,
   type TxOperations
-} from '@hcengineering/core'
-import activity, { type ActivityReference } from '@hcengineering/activity'
-import { type IntlString, translate } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
-import contact from '@hcengineering/contact'
+} from '@intabiafusion/core'
+import activity, { type ActivityReference } from '@intabiafusion/activity'
+import { type IntlString, translate } from '@intabiafusion/platform'
+import { getClient } from '@intabiafusion/presentation'
+import contact from '@intabiafusion/contact'
 
 async function updateReferencesList (
   client: TxOperations,

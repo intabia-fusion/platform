@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import activity from '@hcengineering/activity'
-import core, { type Doc, type Ref, type Tx, type TxCUD } from '@hcengineering/core'
-import type { TriggerControl } from '@hcengineering/server-core'
-import { type Card } from '@hcengineering/card'
+import activity from '@intabiafusion/activity'
+import core, { type Doc, type Ref, type Tx, type TxCUD } from '@intabiafusion/core'
+import type { TriggerControl } from '@intabiafusion/server-core'
+import { type Card } from '@intabiafusion/card'
 
 import { ReferenceTrigger } from './references'
 import { generateActivity } from './newActivity'

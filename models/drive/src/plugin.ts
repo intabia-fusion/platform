@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Ref } from '@hcengineering/core'
-import {} from '@hcengineering/core'
-import { driveId } from '@hcengineering/drive'
-import drive from '@hcengineering/drive-resources/src/plugin'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
-import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
-import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
+import type { Client, Doc, Ref } from '@intabiafusion/core'
+import {} from '@intabiafusion/core'
+import { driveId } from '@intabiafusion/drive'
+import drive from '@intabiafusion/drive-resources/src/plugin'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/model-presentation'
+import { type IntlString, type Resource, mergeIds } from '@intabiafusion/platform'
+import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
 import {
   type Action,
   type ActionCategory,
@@ -27,7 +27,7 @@ import {
   type ViewActionAvailabilityFunction,
   type Viewlet,
   type ViewletDescriptor
-} from '@hcengineering/view'
+} from '@intabiafusion/view'
 
 export default mergeIds(driveId, drive, {
   component: {

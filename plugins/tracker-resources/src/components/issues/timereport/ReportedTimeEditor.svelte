@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
-  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
-  import { ActionIcon, IconAdd, Label, eventToHTMLElement, floorFractionDigits, showPopup } from '@hcengineering/ui'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { Issue, Project, reduceChildInfoTree } from '@intabiafusion/tracker'
+  import { ActionIcon, IconAdd, Label, eventToHTMLElement, floorFractionDigits, showPopup } from '@intabiafusion/ui'
   import { activeProjects } from '../../../utils'
   import ReportsPopup from './ReportsPopup.svelte'
   import TimePresenter from './TimePresenter.svelte'

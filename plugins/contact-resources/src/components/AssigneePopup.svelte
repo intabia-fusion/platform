@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import presentation, { createQuery } from '@hcengineering/presentation'
+  import { Contact, getCurrentEmployee, Person } from '@intabiafusion/contact'
+  import { DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
+  import { Asset, IntlString } from '@intabiafusion/platform'
+  import presentation, { createQuery } from '@intabiafusion/presentation'
   import {
     AnySvelteComponent,
     EditWithIcon,
@@ -31,7 +31,7 @@
     deviceOptionsStore,
     resizeObserver,
     tooltip
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { AssigneeCategory } from '../assignee'
   import contact from '../plugin'

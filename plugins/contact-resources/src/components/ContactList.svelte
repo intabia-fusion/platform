@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact } from '@hcengineering/contact'
-  import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
-  import { Button, ButtonKind, ButtonSize, Label, showPopup, TooltipAlignment } from '@hcengineering/ui'
+  import { Contact } from '@intabiafusion/contact'
+  import type { Class, DocumentQuery, Ref } from '@intabiafusion/core'
+  import type { IntlString } from '@intabiafusion/platform'
+  import { createQuery } from '@intabiafusion/presentation'
+  import { Button, ButtonKind, ButtonSize, Label, showPopup, TooltipAlignment } from '@intabiafusion/ui'
   import { createEventDispatcher } from 'svelte'
   import { ContactPresenter } from '..'
   import contact from '../plugin'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Request } from '@hcengineering/request'
+  import { Request } from '@intabiafusion/request'
   import RequestDetail from './RequestDetail.svelte'
 
   export let value: Request

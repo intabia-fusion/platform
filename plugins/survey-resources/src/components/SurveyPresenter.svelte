@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
-  import { Icon, Label } from '@hcengineering/ui'
-  import survey, { Survey, Poll } from '@hcengineering/survey'
+  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { Icon, Label } from '@intabiafusion/ui'
+  import survey, { Survey, Poll } from '@intabiafusion/survey'
   import { hasText } from '../utils'
 
   export let value: Survey | Poll | undefined | null

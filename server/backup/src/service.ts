@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@hcengineering/analytics'
+import { Analytics } from '@intabiafusion/analytics'
 import {
   groupByArray,
   isActiveMode,
@@ -27,16 +27,16 @@ import {
   type MeasureContext,
   type WorkspaceIds,
   type WorkspaceInfoWithStatus
-} from '@hcengineering/core'
-import { getAccountDB } from '@hcengineering/account'
-import { getAccountClient } from '@hcengineering/server-client'
+} from '@intabiafusion/core'
+import { getAccountDB } from '@intabiafusion/account'
+import { getAccountClient } from '@intabiafusion/server-client'
 import {
   type DbConfiguration,
   type Pipeline,
   type PipelineFactory,
   type StorageAdapter
-} from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
+} from '@intabiafusion/server-core'
+import { generateToken } from '@intabiafusion/server-token'
 import { clearInterval } from 'node:timers'
 import { createStorageBackupStorage } from './storage'
 import { backup } from './backup'

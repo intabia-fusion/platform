@@ -12,8 +12,8 @@ import core, {
   type Tx,
   type TxCUD,
   TxProcessor
-} from '@hcengineering/core'
-import { DOMAIN_PERSON_RATING, DOMAIN_RATING_REACTION, type PersonRating } from '@hcengineering/rating'
+} from '@intabiafusion/core'
+import { DOMAIN_PERSON_RATING, DOMAIN_RATING_REACTION, type PersonRating } from '@intabiafusion/rating'
 
 export function fulltextModelFilter (h: Hierarchy, model: Tx[]): Tx[] {
   const allowedClasess: Ref<Class<Doc>>[] = [

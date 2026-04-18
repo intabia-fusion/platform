@@ -23,7 +23,7 @@ import {
   buildSocialIdString,
   type SocialKey,
   type PersonUuid
-} from '@hcengineering/core'
+} from '@intabiafusion/core'
 import type {
   Collection,
   CreateIndexesOptions,

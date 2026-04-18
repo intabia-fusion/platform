@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { Breadcrumbs, BreadcrumbsModel, getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
+  import { Doc } from '@intabiafusion/core'
+  import { Breadcrumbs, BreadcrumbsModel, getClient } from '@intabiafusion/presentation'
+  import { AttributeModel } from '@intabiafusion/view'
   import { getObjectPresenter, restrictionStore } from '../utils'
 
   export let elements: readonly Doc[]

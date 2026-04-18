@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-import type { AnySvelteComponent } from '@hcengineering/ui/src/types'
+import type { AnySvelteComponent } from '@intabiafusion/ui/src/types'
 import { writable, derived, type Readable } from 'svelte/store'
 import GradiantBack from './components/GradiantBack.svelte'
 import LoginIcon from './components/icons/LoginIcon.svelte'

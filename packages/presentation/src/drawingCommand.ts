@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { generateId } from '@hcengineering/core'
+import { generateId } from '@intabiafusion/core'
 import { type ColorMetaNameOrHex, type CanvasPoint } from './drawingUtils'
 
 export type CommandUid = string & { readonly __brand: 'CommandUid' }

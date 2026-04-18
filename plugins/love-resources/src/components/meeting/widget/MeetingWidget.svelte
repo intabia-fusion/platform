@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closeWidget, minimizeSidebar, WidgetState } from '@hcengineering/workbench-resources'
-  import { Room } from '@hcengineering/love'
-  import { Loading } from '@hcengineering/ui'
+  import { closeWidget, minimizeSidebar, WidgetState } from '@intabiafusion/workbench-resources'
+  import { Room } from '@intabiafusion/love'
+  import { Loading } from '@intabiafusion/ui'
 
   import love from '../../../plugin'
   import VideoTab from './VideoTab.svelte'

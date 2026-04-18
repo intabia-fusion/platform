@@ -24,7 +24,7 @@
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
     showPopup
-  } from '@hcengineering/ui'
+  } from '@intabiafusion/ui'
 
   export let popup: boolean = false
 

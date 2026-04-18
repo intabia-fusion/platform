@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Ref } from '@hcengineering/core'
-import { PushSubscription, type PushData } from '@hcengineering/notification'
+import type { Ref } from '@intabiafusion/core'
+import { PushSubscription, type PushData } from '@intabiafusion/notification'
 import type { Request, Response } from 'express'
 import webpush, { WebPushError } from 'web-push'
 import config from './config'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import chunter from '@hcengineering/chunter'
-  import { Ref } from '@hcengineering/core'
-  import { Button, Label, showPopup } from '@hcengineering/ui'
-  import documents, { type DocumentComment } from '@hcengineering/controlled-documents'
+  import chunter from '@intabiafusion/chunter'
+  import { Ref } from '@intabiafusion/core'
+  import { Button, Label, showPopup } from '@intabiafusion/ui'
+  import documents, { type DocumentComment } from '@intabiafusion/controlled-documents'
   import { onDestroy } from 'svelte'
   import {
     $documentCommentHighlightedLocation as highlightedLocation,
