@@ -179,6 +179,17 @@ export const loveOperation: MigrateOperation = {
         func: async (client) => {
           await client.reindex(DOMAIN_MEETING_MINUTES, [love.class.MeetingMinutes])
         }
+      },
+      {
+        state: 'office-rooms-to-video-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          await client.update(
+            DOMAIN_LOVE,
+            { _class: love.class.Office, type: RoomType.Audio },
+            { type: RoomType.Video }
+          )
+        }
       }
     ])
   },
