@@ -166,9 +166,18 @@ function publishPackage(packagePath, packageName) {
         const alreadyPublished =
           output.includes('cannot publish over') ||
           (output.includes('E403') && output.includes('previously published'))
+        const authError =
+          output.includes('ENEEDAUTH') ||
+          output.includes('E401') ||
+          output.includes('need auth') ||
+          output.includes('Unauthorized')
         if (alreadyPublished) {
           console.log(`⊘ Already published: ${packageName}`)
           return true
+        }
+        if (authError) {
+          console.error(`✗ Auth error publishing ${packageName} — aborting.`)
+          process.exit(2)
         }
         if (rateLimited) {
           console.log(`rate-limited, backoff ${backoff}ms then retry (attempt ${attempt})`)
