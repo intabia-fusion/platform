@@ -56,14 +56,48 @@ function shouldPublish (name) {
   return json !== undefined && json.repository !== undefined
 }
 
+function sleep (ms) {
+  execSync(`sleep ${Math.max(0.1, ms / 1000)}`)
+}
+
+function isAlreadyPublished (name, version) {
+  try {
+    const out = execSync(`npm view ${name}@${version} version`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
+    return out.trim() === version
+  } catch {
+    return false
+  }
+}
+
 function publish (name) {
   const package = packages[name]
-  try {
-    console.log('publishing', name)
-    // Use pnpm so workspace:^x protocol is rewritten to plain semver on publish.
-    execSync('pnpm publish --no-git-checks --access public', { encoding: 'utf-8', cwd: package.path, stdio: 'inherit' })
-  } catch (err) {
-    console.log('publish failed:', name, err.message)
+  const version = jsons[name] && jsons[name].version
+  if (version && isAlreadyPublished(name, version)) {
+    console.log('skip (already published):', name + '@' + version)
+    return
+  }
+  const maxAttempts = 5
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`publishing ${name} (attempt ${attempt}/${maxAttempts})`)
+      execSync('pnpm publish --no-git-checks --access public', { encoding: 'utf-8', cwd: package.path, stdio: 'inherit' })
+      return
+    } catch (err) {
+      const msg = String(err.message || '')
+      const rateLimited = msg.includes('E429') || msg.includes('rate limit')
+      const alreadyPublished = msg.includes('cannot publish over') || msg.includes('E403') && msg.includes('previously published')
+      if (alreadyPublished) {
+        console.log('skip (already published):', name)
+        return
+      }
+      if (!rateLimited || attempt === maxAttempts) {
+        console.log('publish failed:', name, msg.split('\n')[0])
+        return
+      }
+      const backoff = 5000 * attempt
+      console.log(`rate-limited, backoff ${backoff}ms then retry`)
+      sleep(backoff)
+    }
   }
 }
 
@@ -143,11 +177,15 @@ function main () {
     }
   }
   if (doPublish) {
-    for (const packageName of packageNames) {
-      if (shouldPublish(packageName)) {
-        publish(packageName)
-      }
+    const toPublish = packageNames.filter(shouldPublish)
+    let i = 0
+    for (const packageName of toPublish) {
+      i++
+      console.log(`\n===== [${i}/${toPublish.length}] ${packageName} =====`)
+      publish(packageName)
+      if (i < toPublish.length) sleep(1500) // throttle to avoid E429
     }
+    console.log(`\nDone. Attempted ${toPublish.length} packages.`)
   }
 
   console.log('... done')
