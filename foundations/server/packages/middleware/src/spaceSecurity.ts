@@ -18,18 +18,14 @@ import core, {
   type AccountUuid,
   type AttachedDoc,
   type Class,
-  clone,
   type Collaborator,
   type Doc,
   type DocumentQuery,
-  type Domain,
-  DOMAIN_MODEL,
   type FindResult,
   generateId,
   getClassCollaborators,
   type LookupData,
   type MeasureContext,
-  type ObjQueryType,
   type Position,
   type PullArray,
   type Ref,
@@ -40,7 +36,6 @@ import core, {
   shouldShowArchived,
   type Space,
   systemAccountUuid,
-  toFindResult,
   type Tx,
   type TxCreateDoc,
   type TxCUD,
@@ -59,17 +54,20 @@ import {
 } from '@hcengineering/server-core'
 import { isOwner, isSystem } from './utils'
 
-type SpaceWithMembers = Pick<Space, '_id' | 'members' | 'private' | '_class' | 'archived'>
+interface SpaceInfo {
+  _id: Ref<Space>
+  _class: Ref<Class<Space>>
+  members: Set<AccountUuid>
+  owners: Set<AccountUuid>
+  private: boolean
+  archived: boolean
+}
 
 /**
  * @public
  */
 export class SpaceSecurityMiddleware extends BaseMiddleware implements Middleware {
-  private allowedSpaces: Record<AccountUuid, Ref<Space>[]> = {}
-  private readonly spacesMap = new Map<Ref<Space>, SpaceWithMembers>()
-  private readonly privateSpaces = new Set<Ref<Space>>()
-  private readonly _domainSpaces = new Map<string, Set<Ref<Space>> | Promise<Set<Ref<Space>>>>()
-  private readonly publicSpaces = new Set<Ref<Space>>()
+  private readonly spacesMap = new Map<Ref<Space>, SpaceInfo>()
   private readonly systemSpaces = new Set<Ref<Space>>()
 
   wasInit: Promise<void> | boolean = false
@@ -83,43 +81,27 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     core.space.Tx
   ])
 
-  private constructor (
-    private readonly skipFindCheck: boolean,
-    context: PipelineContext,
-    next?: Middleware
-  ) {
+  private constructor (context: PipelineContext, next?: Middleware) {
     super(context, next)
   }
 
   static async create (
-    skipFindCheck: boolean,
     ctx: MeasureContext,
     context: PipelineContext,
     next: Middleware | undefined
   ): Promise<SpaceSecurityMiddleware> {
-    return new SpaceSecurityMiddleware(skipFindCheck, context, next)
+    return new SpaceSecurityMiddleware(context, next)
   }
 
-  private resyncDomains (): void {
-    this.wasInit = false
-  }
-
-  private addMemberSpace (member: AccountUuid, space: Ref<Space>): void {
-    const arr = this.allowedSpaces[member] ?? []
-    arr.push(space)
-    this.allowedSpaces[member] = arr
-  }
-
-  private addSpace (space: SpaceWithMembers): void {
-    this.spacesMap.set(space._id, space)
-    if (space.private) {
-      this.privateSpaces.add(space._id)
-    } else {
-      this.publicSpaces.add(space._id)
-    }
-    for (const member of space.members) {
-      this.addMemberSpace(member, space._id)
-    }
+  private addSpace (space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived'>): void {
+    this.spacesMap.set(space._id, {
+      _id: space._id,
+      _class: space._class,
+      members: new Set(space.members),
+      owners: new Set(space.owners ?? []),
+      private: space.private,
+      archived: space.archived ?? false
+    })
   }
 
   async init (ctx: MeasureContext): Promise<void> {
@@ -130,7 +112,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       this.wasInit = (async () => {
         await ctx.with('init-space-security', {}, async (ctx) => {
           ctx.contextData = undefined
-          const spaces: SpaceWithMembers[] =
+          const spaces =
             (await this.next?.findAll(
               ctx,
               core.class.Space,
@@ -141,12 +123,12 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
                   private: 1,
                   _class: 1,
                   _id: 1,
-                  members: 1
+                  members: 1,
+                  owners: 1
                 }
               }
             )) ?? []
           this.spacesMap.clear()
-          this.publicSpaces.clear()
           this.systemSpaces.clear()
           for (const space of spaces) {
             if (space._class === core.class.SystemSpace) {
@@ -164,27 +146,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
   }
 
-  private removeMemberSpace (member: AccountUuid, space: Ref<Space>): void {
-    const arr = this.allowedSpaces[member]
-    if (arr !== undefined) {
-      const index = arr.findIndex((p) => p === space)
-      if (index !== -1) {
-        arr.splice(index, 1)
-        this.allowedSpaces[member] = arr
-      }
-    }
-  }
-
   private removeSpace (_id: Ref<Space>): void {
-    const space = this.spacesMap.get(_id)
-    if (space !== undefined) {
-      for (const member of space.members) {
-        this.removeMemberSpace(member, space._id)
-      }
-    }
     this.spacesMap.delete(_id)
-    this.privateSpaces.delete(_id)
-    this.publicSpaces.delete(_id)
   }
 
   private async handeCollaborator (ctx: MeasureContext<SessionData>, tx: TxCUD<Collaborator>): Promise<void> {
@@ -231,55 +194,52 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
   private pushMembersHandle (
     ctx: MeasureContext,
     addedMembers: AccountUuid | Position<AccountUuid>,
-    space: Ref<Space>
+    space: SpaceInfo
   ): void {
     if (typeof addedMembers === 'object') {
       for (const member of addedMembers.$each) {
-        this.addMemberSpace(member, space)
+        space.members.add(member)
       }
-      this.brodcastEvent(ctx, addedMembers.$each, space)
+      this.brodcastEvent(ctx, addedMembers.$each, space._id)
     } else {
-      this.addMemberSpace(addedMembers, space)
-      this.brodcastEvent(ctx, [addedMembers], space)
+      space.members.add(addedMembers)
+      this.brodcastEvent(ctx, [addedMembers], space._id)
     }
   }
 
   private pullMembersHandle (
     ctx: MeasureContext,
     removedMembers: Partial<AccountUuid> | PullArray<AccountUuid>,
-    space: Ref<Space>
+    space: SpaceInfo
   ): void {
     if (typeof removedMembers === 'object') {
       const { $in } = removedMembers as PullArray<AccountUuid>
       if ($in !== undefined) {
         for (const member of $in) {
-          this.removeMemberSpace(member, space)
+          space.members.delete(member)
         }
-        this.brodcastEvent(ctx, $in, space)
+        this.brodcastEvent(ctx, $in, space._id)
       }
     } else {
-      this.removeMemberSpace(removedMembers, space)
-      this.brodcastEvent(ctx, [removedMembers], space)
+      space.members.delete(removedMembers)
+      this.brodcastEvent(ctx, [removedMembers], space._id)
     }
   }
 
-  private syncMembers (ctx: MeasureContext, members: AccountUuid[], space: SpaceWithMembers): void {
-    const oldMembers = new Set(space.members)
+  private syncMembers (ctx: MeasureContext, members: AccountUuid[], space: SpaceInfo): void {
     const newMembers = new Set(members)
     const changed: AccountUuid[] = []
-    for (const old of oldMembers) {
+    for (const old of space.members) {
       if (!newMembers.has(old)) {
-        this.removeMemberSpace(old, space._id)
         changed.push(old)
       }
     }
     for (const newMem of newMembers) {
-      if (!oldMembers.has(newMem)) {
-        this.addMemberSpace(newMem, space._id)
+      if (!space.members.has(newMem)) {
         changed.push(newMem)
       }
     }
-    // TODO: consider checking if updated social strings actually change assigned accounts
+    space.members = newMembers
     if (changed.length > 0) {
       this.brodcastEvent(ctx, changed, space._id)
     }
@@ -299,7 +259,6 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
     ctx.contextData.broadcast.txes.push(tx)
     ctx.contextData.broadcast.targets['security' + tx._id] = async (it) => {
-      // TODO: I'm not sure it is called
       if (it._id === tx._id) {
         return {
           target: targets
@@ -308,17 +267,50 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
   }
 
-  private broadcastNonMembers (ctx: MeasureContext<SessionData>, space: SpaceWithMembers): void {
-    const members = space?.members ?? []
-
-    this.brodcastEvent(ctx, members, space._id)
+  private broadcastNonMembers (ctx: MeasureContext<SessionData>, space: SpaceInfo): void {
+    this.brodcastEvent(ctx, Array.from(space.members), space._id)
   }
 
-  private broadcastAll (ctx: MeasureContext<SessionData>, space: SpaceWithMembers): void {
+  private broadcastAll (ctx: MeasureContext<SessionData>, space: SpaceInfo): void {
     const { socialStringsToUsers } = ctx.contextData
     const accounts = Array.from(new Set(Array.from(socialStringsToUsers.values()).map((v) => v.accountUuid)))
 
     this.brodcastEvent(ctx, accounts, space._id)
+  }
+
+  private pushOwnersHandle (
+    ctx: MeasureContext,
+    addedOwners: AccountUuid | Position<AccountUuid>,
+    space: SpaceInfo
+  ): void {
+    if (typeof addedOwners === 'object') {
+      for (const owner of addedOwners.$each) {
+        space.owners.add(owner)
+      }
+    } else {
+      space.owners.add(addedOwners)
+    }
+  }
+
+  private pullOwnersHandle (
+    ctx: MeasureContext,
+    removedOwners: Partial<AccountUuid> | PullArray<AccountUuid>,
+    space: SpaceInfo
+  ): void {
+    if (typeof removedOwners === 'object') {
+      const { $in } = removedOwners as PullArray<AccountUuid>
+      if ($in !== undefined) {
+        for (const owner of $in) {
+          space.owners.delete(owner)
+        }
+      }
+    } else {
+      space.owners.delete(removedOwners)
+    }
+  }
+
+  private syncOwners (ctx: MeasureContext, owners: AccountUuid[], space: SpaceInfo): void {
+    space.owners = new Set(owners)
   }
 
   private async handleUpdate (ctx: MeasureContext, tx: TxCUD<Space>): Promise<void> {
@@ -330,32 +322,34 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const space = this.spacesMap.get(updateDoc.objectId)
     if (space !== undefined) {
       if (updateDoc.operations.private !== undefined) {
-        if (updateDoc.operations.private) {
-          this.privateSpaces.add(updateDoc.objectId)
-          this.publicSpaces.delete(updateDoc.objectId)
-          this.broadcastNonMembers(ctx, space)
-        } else if (!updateDoc.operations.private) {
-          this.privateSpaces.delete(updateDoc.objectId)
-          this.publicSpaces.add(updateDoc.objectId)
-          this.broadcastNonMembers(ctx, space)
-        }
+        space.private = updateDoc.operations.private
+        this.broadcastAll(ctx, space)
       }
 
       if (updateDoc.operations.members !== undefined) {
         this.syncMembers(ctx, updateDoc.operations.members, space)
       }
       if (updateDoc.operations.$push?.members !== undefined) {
-        this.pushMembersHandle(ctx, updateDoc.operations.$push.members, space._id)
+        this.pushMembersHandle(ctx, updateDoc.operations.$push.members, space)
       }
 
       if (updateDoc.operations.$pull?.members !== undefined) {
-        this.pullMembersHandle(ctx, updateDoc.operations.$pull.members, space._id)
+        this.pullMembersHandle(ctx, updateDoc.operations.$pull.members, space)
       }
       if (updateDoc.operations.archived !== undefined) {
+        space.archived = updateDoc.operations.archived
         this.broadcastAll(ctx, space)
       }
-      const updatedSpace = TxProcessor.updateDoc2Doc(space as any, updateDoc)
-      this.spacesMap.set(updateDoc.objectId, updatedSpace)
+      // Handle owners updates
+      if (updateDoc.operations.owners !== undefined) {
+        this.syncOwners(ctx, updateDoc.operations.owners, space)
+      }
+      if (updateDoc.operations.$push?.owners !== undefined) {
+        this.pushOwnersHandle(ctx, updateDoc.operations.$push.owners, space)
+      }
+      if (updateDoc.operations.$pull?.owners !== undefined) {
+        this.pullOwnersHandle(ctx, updateDoc.operations.$pull.owners, space)
+      }
     }
   }
 
@@ -385,22 +379,90 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     return res
   }
 
-  private async processTxSpaceDomain (sctx: MeasureContext, actualTx: TxCUD<Doc>): Promise<void> {
-    if (actualTx._class === core.class.TxCreateDoc) {
-      const ctx = actualTx as TxCreateDoc<Doc>
-      const doc = TxProcessor.createDoc2Doc(ctx)
-      const domain = this.context.hierarchy.getDomain(ctx.objectClass)
-      const key = this.getKey(domain)
-      const space = (doc as any)[key]
-      if (space === undefined) return
-      ;(await this.getDomainSpaces(sctx, domain)).add(space)
-    } else if (actualTx._class === core.class.TxUpdateDoc) {
-      const updTx = actualTx as TxUpdateDoc<Doc>
-      const domain = this.context.hierarchy.getDomain(updTx.objectClass)
-      const key = this.getKey(domain)
-      const space = (updTx.operations as any)[key]
-      if (space !== undefined) {
-        ;(await this.getDomainSpaces(sctx, domain)).add(space)
+  private async checkSpacePermissions (ctx: MeasureContext<SessionData>, tx: TxCUD<Space>): Promise<void> {
+    // Skip permission checks for system account and owner role
+    const account = ctx.contextData.account
+    if (account.uuid === systemAccountUuid || account.role === AccountRole.Owner) {
+      return
+    }
+
+    await this.init(ctx)
+
+    // Handle create - check if private is set to true without being owner
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<Space>
+      const attrs = createTx.attributes
+
+      // Check if creating private space without being owner
+      if (attrs.private) {
+        const owners = attrs.owners ?? []
+        const members = attrs.members ?? []
+        // Allow if creator is in owners list, or if no owners and creator is a member (e.g. DM)
+        if (owners.length > 0 && !owners.includes(account.uuid)) {
+          throw new Error('Only owners can create private spaces')
+        }
+        if (owners.length === 0 && !members.includes(account.uuid)) {
+          throw new Error('Cannot create private space without being a member or owner')
+        }
+      }
+      return
+    }
+
+    const space = this.spacesMap.get(tx.objectId)
+    if (space === undefined) return
+
+    // For public spaces without owners, skip permission checks (no privacy to protect)
+    // For private spaces without owners (e.g. Direct Messages), allow members to perform
+    // regular operations (including $push/$pull members) but restrict sensitive changes
+    // (private/owners/delete) to admins only
+    if (space.owners.size === 0) {
+      if (!space.private) return
+
+      if (tx._class === core.class.TxUpdateDoc) {
+        const updateTx = tx as TxUpdateDoc<Space>
+        const ops = updateTx.operations
+        const hasSensitiveUpdate =
+          ops.private !== undefined ||
+          ops.owners !== undefined ||
+          ops.$push?.owners !== undefined ||
+          ops.$pull?.owners !== undefined
+        if (hasSensitiveUpdate && account.role !== AccountRole.Admin) {
+          throw new Error('Only admins can change private/owners on spaces without owners')
+        }
+        // Allow regular updates (e.g. $push/$pull members, name, description, etc.) for space members
+        return
+      }
+
+      if (tx._class === core.class.TxRemoveDoc && account.role !== AccountRole.Admin) {
+        throw new Error('Only admins can delete private spaces without owners')
+      }
+      return
+    }
+
+    const isOwner = space.owners.has(account.uuid)
+
+    // Only owners can change private status
+    if (tx._class === core.class.TxUpdateDoc) {
+      const updateTx = tx as TxUpdateDoc<Space>
+      const ops = updateTx.operations
+
+      if (ops.private !== undefined && !isOwner) {
+        throw new Error('Only owners can change space privacy')
+      }
+
+      // Only owners can change owners
+      const hasOwnersUpdate =
+        ops.owners !== undefined || ops.$push?.owners !== undefined || ops.$pull?.owners !== undefined
+
+      if (hasOwnersUpdate && !isOwner) {
+        throw new Error('Only owners can change space owners')
+      }
+    }
+
+    // Only owners can delete private spaces
+    if (tx._class === core.class.TxRemoveDoc) {
+      if (space.private && !isOwner) {
+        throw new Error('Only owners can delete private spaces')
       }
     }
   }
@@ -411,15 +473,10 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       const cudTx = tx as TxCUD<Doc>
       const isSpace = h.isDerived(cudTx.objectClass, core.class.Space)
       if (isSpace) {
+        await this.checkSpacePermissions(ctx, cudTx as TxCUD<Space>)
         await this.handleTx(ctx, cudTx as TxCUD<Space>)
       } else {
         await this.handeCollaborator(ctx, cudTx as TxCUD<Collaborator>)
-      }
-      await this.processTxSpaceDomain(ctx, tx as TxCUD<Doc>)
-    } else if (tx._class === core.class.TxWorkspaceEvent) {
-      const event = tx as TxWorkspaceEvent
-      if (event.event === WorkspaceEvent.BulkUpdate) {
-        this.resyncDomains()
       }
     }
   }
@@ -441,18 +498,6 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     for (const txd of ctx.contextData.broadcast.txes) {
       if (!processed.has(txd._id)) {
         await this.processTx(ctx, txd)
-      }
-    }
-    for (const tx of ctx.contextData.broadcast.txes) {
-      if (TxProcessor.isExtendsCUD(tx._class)) {
-        // TODO: Do we need security check here?
-        const cudTx = tx as TxCUD<Doc>
-        await this.processTxSpaceDomain(ctx, cudTx)
-      } else if (tx._class === core.class.TxWorkspaceEvent) {
-        const event = tx as TxWorkspaceEvent
-        if (event.event === WorkspaceEvent.BulkUpdate) {
-          this.resyncDomains()
-        }
       }
     }
 
@@ -516,7 +561,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         }
       }
 
-      const spaceTargets = space.members.length === 0 ? [] : this.getTargets(space?.members)
+      const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
       const target = [...collabTargets, ...spaceTargets]
 
       return target.length === 0 ? undefined : { target }
@@ -525,92 +570,24 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     await this.next?.handleBroadcast(ctx)
   }
 
-  private getAllAllowedSpaces (
-    account: Account,
-    isData: boolean,
-    showArchived: boolean,
-    forSearch: boolean = false
-  ): Ref<Space>[] {
-    const userSpaces = this.allowedSpaces[account.uuid] ?? []
-    let res = [...Array.from(userSpaces), account.uuid as unknown as Ref<Space>, ...this.mainSpaces]
-    if (!forSearch || ![AccountRole.Guest, AccountRole.ReadOnlyGuest].includes(account.role)) {
-      res = [...res, ...this.systemSpaces]
-    }
-    const ignorePublicSpaces = isData || account.role === AccountRole.ReadOnlyGuest
-    const unfilteredRes = ignorePublicSpaces ? res : [...res, ...this.publicSpaces]
-    if (showArchived) {
-      return unfilteredRes
-    }
-    return unfilteredRes.filter((p) => this.spacesMap.get(p)?.archived !== true)
-  }
+  private getAllAllowedSpaces (account: Account, showArchived: boolean, forSearch: boolean = false): Ref<Space>[] {
+    const includeSystem = !forSearch || ![AccountRole.Guest, AccountRole.ReadOnlyGuest].includes(account.role)
+    const includePublic = account.role !== AccountRole.ReadOnlyGuest
 
-  async getDomainSpaces (ctx: MeasureContext, domain: Domain): Promise<Set<Ref<Space>>> {
-    let domainSpaces = this._domainSpaces.get(domain)
-    if (domainSpaces === undefined) {
-      const p = (
-        this.next?.groupBy<Ref<Space>, Doc>(ctx, domain, this.getKey(domain)) ?? Promise.resolve(new Map())
-      ).then((r) => new Set<Ref<Space>>(r.keys()))
-      this._domainSpaces.set(domain, p)
-      domainSpaces = await p
-      this._domainSpaces.set(domain, domainSpaces)
-    }
-    return domainSpaces instanceof Promise ? await domainSpaces : domainSpaces
-  }
+    const result: Ref<Space>[] = [account.uuid as unknown as Ref<Space>, ...this.mainSpaces]
 
-  private async filterByDomain (
-    ctx: MeasureContext,
-    domain: Domain,
-    spaces: Ref<Space>[]
-  ): Promise<{ result: Set<Ref<Space>>, allDomainSpaces: boolean, domainSpaces: Set<Ref<Space>> }> {
-    const domainSpaces = await this.getDomainSpaces(ctx, domain)
-    const result = new Set(spaces.filter((p) => domainSpaces.has(p)))
-    return {
-      result,
-      allDomainSpaces: result.size === domainSpaces.size,
-      domainSpaces
+    if (includeSystem) {
+      result.push(...this.systemSpaces)
     }
-  }
 
-  private async mergeQuery<T extends Doc>(
-    ctx: MeasureContext,
-    account: Account,
-    query: ObjQueryType<T['space']>,
-    domain: Domain,
-    isSpace: boolean,
-    showArchived: boolean
-  ): Promise<ObjQueryType<T['space']> | undefined> {
-    const spaces = await this.filterByDomain(ctx, domain, this.getAllAllowedSpaces(account, !isSpace, showArchived))
-    if (query == null) {
-      if (spaces.allDomainSpaces) {
-        return undefined
-      }
-      return { $in: Array.from(spaces.result) }
-    }
-    if (typeof query === 'string') {
-      if (!spaces.result.has(query)) {
-        return { $in: [] }
-      }
-    } else if (query.$in != null) {
-      query.$in = query.$in.filter((p) => spaces.result.has(p))
-      if (query.$in.length === spaces.domainSpaces.size) {
-        // all domain spaces
-        delete query.$in
-      }
-    } else {
-      if (spaces.allDomainSpaces) {
-        delete query.$in
-      } else {
-        query.$in = Array.from(spaces.result)
+    for (const space of this.spacesMap.values()) {
+      if (!showArchived && space.archived) continue
+      if (space.members.has(account.uuid) || (includePublic && !space.private)) {
+        result.push(space._id)
       }
     }
-    if (Object.keys(query).length === 0) {
-      return undefined
-    }
-    return query
-  }
 
-  private getKey (domain: string): string {
-    return domain === 'tx' ? 'objectSpace' : domain === 'space' ? '_id' : 'space'
+    return result
   }
 
   override async findAll<T extends Doc>(
@@ -621,75 +598,13 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
   ): Promise<FindResult<T>> {
     await this.init(ctx)
 
-    const domain = this.context.hierarchy.getDomain(_class)
-    const newQuery = clone(query)
+    // Security filtering is handled at the database (PostgreSQL) level via addSecurity().
+    // This middleware only needs to filter lookup results client-side.
+    const findResult = await this.provideFindAll(ctx, _class, query, options)
     const account = ctx.contextData.account
-    const isSpace = this.context.hierarchy.isDerived(_class, core.class.Space)
-    const field = this.getKey(domain)
-    const showArchived: boolean = shouldShowArchived(newQuery, options)
-
-    let clientFilterSpaces: Set<Ref<Space>> | undefined
-
-    if (!isSystem(account, ctx) && account.role !== AccountRole.DocGuest && domain !== DOMAIN_MODEL) {
-      if (!isOwner(account, ctx) || !isSpace) {
-        if (newQuery[field] !== undefined) {
-          const res = await this.mergeQuery(ctx, account, newQuery[field], domain, isSpace, showArchived)
-          if (res === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete newQuery[field]
-          } else {
-            newQuery[field] = res
-            if (typeof res === 'object') {
-              if (Array.isArray(res.$in) && res.$in.length === 1 && Object.keys(res).length === 1) {
-                newQuery[field] = res.$in[0]
-              }
-            }
-          }
-        } else {
-          const spaces = await this.filterByDomain(
-            ctx,
-            domain,
-            this.getAllAllowedSpaces(account, !isSpace, showArchived)
-          )
-          if (spaces.allDomainSpaces) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete newQuery[field]
-          } else if (spaces.result.size === 1) {
-            newQuery[field] = Array.from(spaces.result)[0]
-            if (options !== undefined) {
-              options.allowedSpaces = Array.from(spaces.result)
-            } else {
-              options = { allowedSpaces: Array.from(spaces.result) }
-            }
-          } else {
-            // Check if spaces are greater than 85% of all domain spaces. In this case, return all and filter on the client.
-            if (spaces.result.size / spaces.domainSpaces.size > 0.85 && options?.limit === undefined) {
-              clientFilterSpaces = spaces.result
-              delete newQuery.space
-            } else {
-              newQuery[field] = { $in: Array.from(spaces.result) }
-              if (options !== undefined) {
-                options.allowedSpaces = Array.from(spaces.result)
-              } else {
-                options = { allowedSpaces: Array.from(spaces.result) }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    let findResult = await this.provideFindAll(ctx, _class, !this.skipFindCheck ? newQuery : query, options)
-    if (clientFilterSpaces !== undefined) {
-      const cfs = clientFilterSpaces
-      findResult = toFindResult(
-        findResult.filter((it) => cfs.has((it as any)[field])),
-        findResult.total,
-        findResult.lookupMap
-      )
-    }
     if (account.role !== AccountRole.DocGuest) {
       if (options?.lookup !== undefined) {
+        const showArchived: boolean = shouldShowArchived(query, options)
         for (const object of findResult) {
           if (object.$lookup !== undefined) {
             this.filterLookup(ctx, object.$lookup, showArchived)
@@ -709,28 +624,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const newQuery = { ...query }
     const account = ctx.contextData.account
     if (!isSystem(account, ctx)) {
-      const allSpaces = this.getAllAllowedSpaces(account, true, false, true)
-      if (query.classes !== undefined) {
-        const res = new Set<Ref<Space>>()
-        const passedDomains = new Set<string>()
-        for (const _class of query.classes) {
-          const domain = this.context.hierarchy.getDomain(_class)
-          if (passedDomains.has(domain)) {
-            continue
-          }
-          passedDomains.add(domain)
-          const spaces = await this.filterByDomain(ctx, domain, allSpaces)
-          for (const space of spaces.result) {
-            res.add(space)
-          }
-        }
-        newQuery.spaces = [...res]
-      } else {
-        newQuery.spaces = allSpaces
-      }
+      newQuery.spaces = this.getAllAllowedSpaces(account, false, true)
     }
-    const result = await this.provideSearchFulltext(ctx, newQuery, options)
-    return result
+    return await this.provideSearchFulltext(ctx, newQuery, options)
   }
 
   filterLookup<T extends Doc>(ctx: MeasureContext, lookup: LookupData<T>, showArchived: boolean): void {
@@ -739,7 +635,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (isSystem(account, ctx)) return
     const owner = isOwner(account, ctx)
     const h = this.context.hierarchy
-    const allowedSpaces = new Set(this.getAllAllowedSpaces(account, true, showArchived))
+    const allowedSpaces = new Set(this.getAllAllowedSpaces(account, showArchived))
     for (const key in lookup) {
       const val = lookup[key]
       if (Array.isArray(val)) {

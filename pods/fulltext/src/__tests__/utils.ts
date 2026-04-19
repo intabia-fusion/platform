@@ -35,8 +35,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import serverToken, { generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
@@ -120,7 +119,6 @@ export function prepare (): void {
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   registerServerPlugins()
   registerStringLoaders()

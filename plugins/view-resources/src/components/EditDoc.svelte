@@ -260,6 +260,10 @@
     withoutInput={!activityOptions.showInput || readonly}
   >
     <svelte:fragment slot="title">
+      <ComponentExtensions
+        extension={view.extensions.EditDocPreTitleExtension}
+        props={{ _id, _class, value: object, readonly }}
+      />
       {#if !embedded}<ParentsNavigator element={object} />{/if}
       {#if embedded && object}
         <DocNavLink noUnderline {object}>

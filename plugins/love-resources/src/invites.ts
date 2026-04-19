@@ -14,7 +14,8 @@
 //
 
 import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hcengineering/contact'
-import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
+import { getPersonByPersonRef } from '@hcengineering/contact-resources'
+import { AccountRole, getCurrentAccount, type AccountUuid, type Ref } from '@hcengineering/core'
 import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
 import { createQuery, getClient, playSound } from '@hcengineering/presentation'
 import { type PopupResult } from '@hcengineering/ui'
@@ -101,6 +102,26 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
   const expiresAt = Date.now() + inviteRequestSecondsToLive * 1000
 
   const client = getClient()
+
+  // Add invited persons to MeetingMinutes members (for private Space access)
+  if (meetingId !== undefined) {
+    const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+    if (meetingDoc !== undefined) {
+      const newMembers: AccountUuid[] = []
+      for (const personRef of validPersons) {
+        const person = await getPersonByPersonRef(personRef)
+        if (person?.personUuid != null && !meetingDoc.members.includes(person.personUuid as AccountUuid)) {
+          newMembers.push(person.personUuid as AccountUuid)
+        }
+      }
+      if (newMembers.length > 0) {
+        await client.update(meetingDoc, {
+          $push: { members: { $each: newMembers, $position: 0 } }
+        })
+      }
+    }
+  }
+
   for (const person of validPersons) {
     // Use per-person apply with notMatch to prevent duplicate pending invites
     const apply = client.apply('create-invite:' + currentPerson + ':' + person)
@@ -205,6 +226,14 @@ export async function responseToInviteRequest (invite: UserMeetingInvite, accept
           const meeting = await createMeeting(myOffice)
 
           if (meeting !== undefined) {
+            // Add invite sender to meeting members (for private Space access)
+            const senderPerson = await getPersonByPersonRef(invite.from)
+            if (senderPerson?.personUuid != null && !meeting.members.includes(senderPerson.personUuid as AccountUuid)) {
+              await client.update(meeting, {
+                $push: { members: senderPerson.personUuid as AccountUuid }
+              })
+            }
+
             // Update invite-response with meeting reference
             await client.update(invite, {
               status: 'accepted',

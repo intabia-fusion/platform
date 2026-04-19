@@ -95,11 +95,13 @@
     "Finished": "Finito",
     "Pending": "In attesa",
     "StartWithRecording": "Inizia con la registrazione",
+    "StartPrivate": "Inizia privata",
     "RecordingState": "Stato della registrazione",
     "RecordingNotStarted": "Non iniziata",
     "RecordingRecording": "Registrazione",
     "RecordingFinished": "Finito",
     "Recording": "Registrazione",
+    "Summary": "Riepilogo",
     "StoppingRecord": "Interruzione registrazione...",
     "Language": "Lingua",
     "Kick": "Espellere",
@@ -126,6 +128,11 @@
     "ShowParticipants": "Mostra partecipanti",
     "HideParticipants": "Nascondi partecipanti",
     "Scheduled": "Programmato",
-    "WaitForHost": "Attendere che l'organizzatore avvii la riunione."
+    "WaitForHost": "Attendere che l'organizzatore avvii la riunione.",
+    "CloseRoom": "Chiudi stanza",
+    "OpenRoom": "Apri stanza",
+    "Private": "Privato",
+    "Busy": "Occupato",
+    "Organizators": "Organizzatori"
   }
 }

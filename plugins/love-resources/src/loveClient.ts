@@ -52,7 +52,7 @@ export class LoveClient {
           },
           body: JSON.stringify({
             meetingId: mm._id,
-            title: mm.title
+            title: mm.name
           })
         })
       } else {
@@ -64,7 +64,7 @@ export class LoveClient {
           },
           body: JSON.stringify({
             meetingId: mm._id,
-            title: mm.title
+            title: mm.name
           })
         })
       }
@@ -99,7 +99,7 @@ export class LoveClient {
     let x: number | undefined
     let y: number | undefined
 
-    if (meetingMinutes.attachedTo === place?._id && place != null) {
+    if (meetingMinutes.roomId === place?._id && place != null) {
       x = place.x
       y = place.y
     }

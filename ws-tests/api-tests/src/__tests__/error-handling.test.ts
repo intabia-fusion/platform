@@ -42,7 +42,7 @@ import { generateToken } from '@hcengineering/server-token'
 
 describe('error-handling', () => {
   const testCtx = new MeasureMetricsContext('test', {})
-  const wsName = 'api-tests'
+  const wsName = 'api-tests-fail'
   let config: ServerConfig
   let apiWorkspace: WorkspaceToken
   let accountClient: AccountClient
@@ -53,7 +53,7 @@ describe('error-handling', () => {
     apiWorkspace = await getWorkspaceToken(
       'http://localhost:8083',
       {
-        email: 'user1',
+        email: 'user3',
         password: '1234',
         workspace: wsName
       },

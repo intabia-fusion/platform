@@ -10,12 +10,6 @@ import type {
   SearchQuery,
   Tx
 } from '@hcengineering/core'
-import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  shutdownMongo
-} from '@hcengineering/mongo'
 import { setMetadata } from '@hcengineering/platform'
 import {
   createPostgreeDestroyAdapter,
@@ -31,8 +25,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import serverToken, { decodeToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
@@ -74,9 +67,6 @@ process.on('exit', () => {
   shutdownPostgres().catch((err) => {
     console.error(err)
   })
-  shutdownMongo().catch((err) => {
-    console.error(err)
-  })
 })
 
 export async function startIndexer (
@@ -102,14 +92,9 @@ export async function startIndexer (
   setMetadata(serverCore.metadata.ElasticIndexName, opt.elasticIndexName)
   setMetadata(serverClientPlugin.metadata.Endpoint, opt.accountsUrl)
 
-  registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-  registerAdapterFactory('mongodb', createMongoAdapter)
-  registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   registerServerPlugins()
   registerStringLoaders()

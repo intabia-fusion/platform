@@ -13,13 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import love, { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+  import love, { MeetingMinutes } from '@hcengineering/love'
   import { WithLookup } from '@hcengineering/core'
   import { ObjectPresenterType } from '@hcengineering/view'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import { tooltip, Icon } from '@hcengineering/ui'
-  import { joinOrCreateMeetingByInvite } from '../meetings'
 
   export let value: WithLookup<MeetingMinutes>
   export let inline: boolean = false
@@ -35,20 +34,20 @@
     <ObjectMention object={value} {disabled} />
   {:else if type === 'link'}
     <DocNavLink object={value} {disabled} {accent} {noUnderline}>
-      <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.title) }}>
+      <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
         {#if shouldShowAvatar}
           <div class="icon">
             <Icon icon={love.icon.MeetingMinutes} size={'medium'} />
           </div>
         {/if}
         <div class="label nowrap flex flex-gap-2" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
-          <span>{value.title}</span>
+          <span>{value.name}</span>
         </div>
       </div>
     </DocNavLink>
   {:else if type === 'text'}
-    <span class="overflow-label" use:tooltip={{ label: getEmbeddedLabel(value.title) }}>
-      {value.title}
+    <span class="overflow-label" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
+      {value.name}
     </span>
   {/if}
 {/if}

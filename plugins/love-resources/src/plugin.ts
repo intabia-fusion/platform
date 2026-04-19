@@ -51,6 +51,7 @@ export default mergeIds(loveId, love, {
     CreateMeetingSchedule: '' as Resource<DocCreateFunction>,
     CanShowRoomSettings: '' as Resource<ViewActionAvailabilityFunction>,
     CanCopyGuestLink: '' as Resource<ViewActionAvailabilityFunction>,
+    CanToggleRoomPrivacy: '' as Resource<ViewActionAvailabilityFunction>,
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
   },
@@ -126,6 +127,7 @@ export default mergeIds(loveId, love, {
     StayInRoom: '' as IntlString,
     From: '' as IntlString,
     To: '' as IntlString,
-    ExpiresAt: '' as IntlString
+    ExpiresAt: '' as IntlString,
+    Organizators: '' as IntlString
   }
 })

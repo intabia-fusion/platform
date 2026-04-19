@@ -95,11 +95,13 @@
     "Finished": "Bitti",
     "Pending": "Beklemede",
     "StartWithRecording": "Kayıtla başla",
+    "StartPrivate": "Özel başlat",
     "RecordingState": "Kayıt durumu",
     "RecordingNotStarted": "Başlanmadı",
     "RecordingRecording": "Kayıt",
     "RecordingFinished": "Bitti",
     "Recording": "Kayıt",
+    "Summary": "Özet",
     "StoppingRecord": "Kayıt durduruluyor...",
     "Language": "Dil",
     "Kick": "Çıkar",
@@ -126,6 +128,11 @@
     "ShowParticipants": "Katılımcıları göster",
     "HideParticipants": "Katılımcıları gizle",
     "Scheduled": "Planlanmış",
-    "WaitForHost": "Lütfen toplantıyı başlatması için ev sahibini bekleyin."
+    "WaitForHost": "Lütfen toplantıyı başlatması için ev sahibini bekleyin.",
+    "CloseRoom": "Odayı kapat",
+    "OpenRoom": "Odayı aç",
+    "Private": "Özel",
+    "Busy": "Meşgul",
+    "Organizators": "Organizatörler"
   }
 }

@@ -57,11 +57,13 @@
     // Get workspace settings for Video rooms
     let defaultTranscription = false
     let defaultRecording = false
+    let defaultPrivate = false
     if (val.type === RoomType.Video && val._class !== love.class.Office) {
       const officeSettings = await client.findAll<OfficeSettings>(setting.class.OfficeSettings, {})
       if (officeSettings !== undefined && officeSettings.length > 0) {
         defaultTranscription = officeSettings[0].defaultStartWithTranscription ?? false
         defaultRecording = officeSettings[0].defaultStartWithRecording ?? false
+        defaultPrivate = officeSettings[0].defaultStartPrivate ?? false
       }
     }
     const data: Data<Room> = {
@@ -76,6 +78,7 @@
       language: 'en',
       startWithTranscription: defaultTranscription,
       startWithRecording: defaultRecording,
+      startPrivate: val._class === love.class.Office ? true : defaultPrivate,
       description: null
     }
     if (val._class === love.class.Office) {

@@ -27,6 +27,7 @@ import {
   type PersonId,
   type PersonUuid,
   type SocialId as SocialIdBase,
+  type SocialIdType,
   type UsageStatus,
   type WorkspaceDataId,
   type WorkspaceUuid,
@@ -370,6 +371,12 @@ export interface AccountDB {
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
   generatePersonUuid: () => Promise<PersonUuid>
+  ensurePerson: (
+    socialType: SocialIdType,
+    socialValue: string,
+    firstName: string,
+    lastName: string
+  ) => Promise<{ uuid: PersonUuid, socialId: PersonId }>
 }
 
 export interface DbCollection<T> {

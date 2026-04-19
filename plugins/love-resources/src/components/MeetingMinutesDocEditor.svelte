@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes } from '@hcengineering/love'
+  import love, { MeetingMinutes } from '@hcengineering/love'
   import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
   import { ActionIcon } from '@hcengineering/ui'
@@ -27,9 +27,14 @@
 
   let doc: Doc | undefined
 
-  $: docQuery.query(object.attachedToClass, { _id: object.attachedTo }, (r) => {
-    doc = r.shift()
-  })
+  $: if (object.roomId != null) {
+    docQuery.query(love.class.Room, { _id: object.roomId }, (r) => {
+      doc = r.shift()
+    })
+  } else {
+    docQuery.unsubscribe()
+    doc = undefined
+  }
 </script>
 
 {#if doc}

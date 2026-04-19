@@ -3,9 +3,10 @@ import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resourc
 import { Analytics } from '@hcengineering/analytics'
 import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import contact, { getName } from '@hcengineering/contact'
+import contact, { getName, getPersonsByPersonIds, getPersonsByPersonRefs, type Person } from '@hcengineering/contact'
 import workbench from '@hcengineering/workbench'
 import core, {
+  type AccountUuid,
   type Client,
   concatLink,
   type Data,
@@ -17,7 +18,8 @@ import core, {
   type Space,
   type TxOperations,
   type WithLookup,
-  reduceCalls
+  reduceCalls,
+  generateId
 } from '@hcengineering/core'
 import {
   isOffice,
@@ -25,7 +27,6 @@ import {
   loveId,
   MeetingStatus,
   RecordingState,
-  RoomAccess,
   TranscriptionState,
   type MeetingEventLink,
   type MeetingMinutes,
@@ -393,24 +394,65 @@ export async function createMeeting (
     if (event === undefined) return
     const events = await client.findAll(calendar.class.Event, { eventId: event.eventId })
 
-    const meetingId = await client.addCollection(
+    const room = await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
+    const isPrivate = room?.startPrivate ?? false
+    const roomLanguage = room?.language ?? 'en'
+    const roomStartWithRecording = room?.startWithRecording ?? false
+    const roomStartWithTranscription = room?.startWithTranscription ?? false
+
+    // Collect members from event creator and participants
+    const members = new Set<AccountUuid>()
+
+    // Add event creator (modifiedBy is PersonId/SocialId)
+    const creatorPersonIds = [event.modifiedBy]
+    if (event.createdBy !== undefined && event.createdBy !== event.modifiedBy) {
+      creatorPersonIds.push(event.createdBy)
+    }
+    const creatorPersons = await getPersonsByPersonIds(client, creatorPersonIds)
+    let creatorAccountUuid: AccountUuid | undefined
+    for (const person of creatorPersons.values()) {
+      if (person?.personUuid !== undefined) {
+        members.add(person.personUuid as unknown as AccountUuid)
+        creatorAccountUuid = person.personUuid as unknown as AccountUuid
+      }
+    }
+
+    // Add participants
+    if (event.participants !== undefined && event.participants.length > 0) {
+      const participantPersons = await getPersonsByPersonRefs(client, event.participants as Array<Ref<Person>>)
+      for (const person of participantPersons.values()) {
+        if (person?.personUuid !== undefined) {
+          members.add(person.personUuid as unknown as AccountUuid)
+        }
+      }
+    }
+
+    const membersArray = Array.from(members)
+
+    // Create MeetingMinutes as a Space - it must use its own _id as space
+    const meetingId = generateId<MeetingMinutes>()
+    await client.createDoc(
       love.class.MeetingMinutes,
-      space._id,
-      store.room,
-      love.class.Room,
-      'meetings',
+      meetingId as unknown as Ref<Space>,
       {
+        name: event.title,
+        description: '',
+        private: isPrivate,
+        archived: false,
+        members: membersArray,
+        owners: creatorAccountUuid !== undefined ? [creatorAccountUuid] : [],
+        descriptionRef: null,
+        summary: null,
+        roomId: store.room as Ref<Room>,
         status: MeetingStatus.Scheduled,
-        access: RoomAccess.Open,
-        language: 'en',
-        description: null,
+        language: roomLanguage,
         recordingState: RecordingState.NotStarted,
         transcriptionState: TranscriptionState.NotStarted,
-        title: event.title,
-        startWithRecording: false,
-        startWithTranscription: false,
+        startWithRecording: roomStartWithRecording,
+        startWithTranscription: roomStartWithTranscription,
         meetingScheduledDate: event.date
-      }
+      },
+      meetingId
     )
 
     const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
@@ -509,6 +551,15 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
   if (link !== '') {
     await copyTextToClipboard(link)
   }
+}
+
+export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {
+  if (mm === undefined) return
+
+  const client = getClient()
+  await client.update(mm, {
+    private: !mm.private
+  })
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
@@ -615,7 +666,7 @@ export async function getMeetingMinutesTitle (
 ): Promise<string> {
   const meeting = doc ?? (await client.findOne(love.class.MeetingMinutes, { _id: ref }))
 
-  return meeting?.title ?? ''
+  return meeting?.name ?? ''
 }
 
 export async function getUserMeetingInviteTitle (
@@ -637,7 +688,7 @@ export async function queryMeetingMinutes (
   search: string,
   filter?: { in?: RelatedDocument[], nin?: RelatedDocument[] }
 ): Promise<ObjectSearchResult[]> {
-  const q: DocumentQuery<MeetingMinutes> = { title: { $like: `%${search}%` } }
+  const q: DocumentQuery<MeetingMinutes> = { name: { $like: `%${search}%` } }
   if (filter?.in !== undefined || filter?.nin !== undefined) {
     q._id = {}
     if (filter.in !== undefined) {
@@ -652,7 +703,7 @@ export async function queryMeetingMinutes (
 
 const toMeetingMinutesObjectSearchResult = (e: WithLookup<MeetingMinutes>): ObjectSearchResult => ({
   doc: e,
-  title: e.title,
+  title: e.name,
   icon: love.icon.MeetingMinutes,
   component: MeetingMinutesSearchItem
 })

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { Label, ModernToggle } from '@hcengineering/ui'
+  import { Label, ModernToggle } from '@hcengineering/ui'
   import love, { Room } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import RoomLanguageSelector from './RoomLanguageSelector.svelte'
+  // import RoomLanguageSelector from './RoomLanguageSelector.svelte'
 
   export let room: Room
 
@@ -28,6 +28,10 @@
 
   async function toggleRecording (): Promise<void> {
     await client.diffUpdate(room, { startWithRecording: !room.startWithRecording })
+  }
+
+  async function togglePrivate (): Promise<void> {
+    await client.diffUpdate(room, { startPrivate: !room.startPrivate })
   }
 </script>
 
@@ -49,5 +53,11 @@
       <Label label={love.string.StartWithRecording} />
     </div>
     <ModernToggle size="small" checked={room.startWithRecording} on:change={toggleRecording} />
+  </div>
+  <div class="antiGrid-row">
+    <div class="antiGrid-row__header">
+      <Label label={love.string.StartPrivate} />
+    </div>
+    <ModernToggle size="small" checked={room.startPrivate} on:change={togglePrivate} />
   </div>
 </div>

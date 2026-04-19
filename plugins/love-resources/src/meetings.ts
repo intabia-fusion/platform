@@ -1,4 +1,4 @@
-import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
+import { AccountRole, generateId, getCurrentAccount, type Ref, type Space, type AccountUuid } from '@hcengineering/core'
 import love, {
   getFreeRoomPlace,
   MeetingStatus,
@@ -49,13 +49,20 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
   meeting =
     meeting ??
     (await client.findOne(love.class.MeetingMinutes, {
-      attachedTo: room._id,
+      roomId: room._id,
       status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
     }))
 
   if (meeting !== undefined) {
     await joinMeeting(meeting)
     return meeting
+  }
+
+  // Check if there are participants in the room but no accessible meeting
+  // This means a private meeting is in progress and we don't have access
+  const roomParticipants = get(infos).filter((p) => p.room === room._id)
+  if (roomParticipants.length > 0) {
+    return
   }
 
   // Create MeetingMinutes document before connecting to LiveKit (atomic apply -> Pending)
@@ -106,8 +113,9 @@ export async function leaveMeeting (): Promise<void> {
 }
 
 export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
-  const room = getRoomById(meeting.attachedTo as Ref<Room>)
-  if (meeting.access === RoomAccess.DND) return
+  if (meeting.roomId == null) return
+  const room = getRoomById(meeting.roomId)
+  if (meeting.private && !meeting.members.includes(getCurrentAccount().uuid)) return
 
   const isGuest = getCurrentAccount().role === AccountRole.Guest
 
@@ -115,7 +123,7 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
   const isOwnOffice = room !== undefined && isOffice(room) && room.person === getCurrentEmployee()
 
   const officePerson = room != null ? (isOffice(room) ? room.person : undefined) : undefined
-  if ((isGuest || (meeting.access === RoomAccess.Knock && !isOwnOffice)) && officePerson != null && !isOwnOffice) {
+  if (isGuest && officePerson != null && !isOwnOffice) {
     await sendInvites([officePerson], meeting._id)
     return
   }
@@ -180,8 +188,8 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
 
   currentMeeting = mm._id
 
-  if (mm.attachedToClass === love.class.Room) {
-    room = room ?? (await getClient().findOne<Room>(mm.attachedToClass, { _id: mm.attachedTo as Ref<Room> }))
+  if (mm.roomId !== undefined) {
+    room = room ?? (await getClient().findOne<Room>(love.class.Room, { _id: mm.roomId }))
     currentMeetingRoom = room?._id
   }
 
@@ -223,7 +231,7 @@ async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void
   if (mm === undefined || currentPerson == null) return
 
   if (myParticipation?.meeting === mm._id) return
-  if (mm.attachedTo === undefined) return
+  if (mm.roomId === undefined) return
 
   const roomParticipants = get(infos).filter((p) => p.meeting === mm._id)
   let place: { x: number, y: number } | undefined
@@ -254,37 +262,47 @@ async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
   while (true) {
     // First, check if there is an Active or Pending meeting already
     const meeting = await client.findOne(love.class.MeetingMinutes, {
-      attachedTo: room._id,
+      roomId: room._id,
       status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
     })
     if (meeting !== undefined) {
       return meeting
     }
 
+    const me = getCurrentEmployee()
+    const currentPerson = await getPersonByPersonRef(me)
+    const myAccount = currentPerson?.personUuid
+
     // Use apply() to atomically create MeetingMinutes with Pending status
     const ops = client.apply(`create_meeting_${room._id}`)
     // Ensure no MeetingMinutes for this room exists at the time of commit
     ops.notMatch(love.class.MeetingMinutes, {
-      attachedTo: room._id,
+      roomId: room._id,
       status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
     })
-    const newMeetingId = await ops.addCollection(
+    const title = await getNewMeetingTitle(room)
+    const newMeetingId = generateId<MeetingMinutes>()
+    await ops.createDoc(
       love.class.MeetingMinutes,
-      core.space.Workspace,
-      room._id,
-      love.class.Room,
-      'meetings',
+      newMeetingId as unknown as Ref<Space>,
       {
-        description: null,
+        name: title,
+        description: '',
+        private: room.startPrivate ?? false,
+        archived: false,
+        members: myAccount !== undefined ? [myAccount as unknown as AccountUuid] : [],
+        owners: myAccount !== undefined ? [myAccount as unknown as AccountUuid] : [],
+        descriptionRef: null,
+        summary: null,
+        roomId: room._id,
         status: MeetingStatus.Pending,
         transcriptionState: TranscriptionState.NotStarted,
         recordingState: RecordingState.NotStarted,
-        title: await getNewMeetingTitle(room),
         language: room.language,
-        access: room.access,
         startWithRecording: room.startWithRecording ?? false,
         startWithTranscription: room.startWithTranscription ?? false
-      }
+      },
+      newMeetingId
     )
     try {
       await ops.commit()
@@ -293,9 +311,9 @@ async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
         return meeting
       }
     } catch (err: any) {
-      // Concurrent creation happened — pick the existing one with Active/Pending status (if available)
+      // Concurrent creation happened — pick the existing one (if available)
       const existing = await client.findOne(love.class.MeetingMinutes, {
-        attachedTo: room._id,
+        roomId: room._id,
         status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
       })
       if (existing !== undefined) return existing

@@ -188,6 +188,7 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
     userStatusMap: new Map(),
     cache: new Map(),
     contextCache: new Map(),
+    withScope: async <T>(_scope: string, fn: () => Promise<T>) => await fn(),
     txes: [],
     apply: jest.fn().mockResolvedValue({}),
     queryFind: jest.fn().mockResolvedValue([]),

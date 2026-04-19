@@ -13,8 +13,10 @@
 // limitations under the License.
 //
 
+import calendar, { Event } from '@hcengineering/calendar'
 import contact, { Employee, formatName, Person, PersonSpace } from '@hcengineering/contact'
 import core, {
+  AccountUuid,
   Class,
   combineAttributes,
   concatLink,
@@ -38,7 +40,6 @@ import love, {
   MeetingMinutes,
   MeetingStatus,
   ParticipantInfo,
-  Room,
   RoomAccess,
   RoomInfo,
   UserMeetingInvite
@@ -152,8 +153,8 @@ async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl):
   let targetRoom = info.room
   if (info.meeting !== undefined) {
     const meeting = (await control.findAll(control.ctx, love.class.MeetingMinutes, { _id: info.meeting }))[0]
-    if (meeting?.attachedTo !== undefined) {
-      targetRoom = meeting.attachedTo as Ref<Room>
+    if (meeting?.roomId !== undefined) {
+      targetRoom = meeting.roomId
     }
   }
 
@@ -178,7 +179,7 @@ async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl):
   if (info.account != null) {
     const meetingMinutes = (
       await control.findAll(control.ctx, love.class.MeetingMinutes, {
-        attachedTo: info.room,
+        roomId: info.room,
         status: MeetingStatus.Active
       })
     )[0]
@@ -248,7 +249,8 @@ export async function OnParticipantInfo (txes: Tx[], control: TriggerControl): P
     }
     if (actualTx._class === core.class.TxUpdateDoc) {
       const newRoom = (actualTx as TxUpdateDoc<ParticipantInfo>).operations.room
-      if (newRoom === undefined) {
+      const newMeeting = (actualTx as TxUpdateDoc<ParticipantInfo>).operations.meeting
+      if (newRoom === undefined && newMeeting === undefined) {
         continue
       }
       const info = (
@@ -334,6 +336,25 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
 
       // Skip self-invites
       if (invite.from === invite.to) continue
+
+      // Check if meeting is private - only owners can invite
+      if (invite.meeting !== undefined) {
+        const meeting = await control
+          .findAll(control.ctx, love.class.MeetingMinutes, { _id: invite.meeting }, { limit: 1 })
+          .then((r) => r[0])
+        if (meeting?.private) {
+          // Get sender's account
+          const senderEmployee = await control
+            .findAll(control.ctx, contact.class.Person, { _id: invite.from }, { limit: 1 })
+            .then((r) => r[0])
+          const senderAccount = senderEmployee?.personUuid as AccountUuid | undefined
+          // Only owners can invite to private meetings
+          if (senderAccount === undefined || meeting.owners === undefined || !meeting.owners.includes(senderAccount)) {
+            // Skip this invite - sender is not an owner
+            continue
+          }
+        }
+      }
 
       // Find recipient's personal space (PersonSpace)
       const recipientSpace = await getPersonSpace(control, invite.to)
@@ -529,6 +550,37 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           )
         }
 
+        // If accepted, add recipient to meeting members
+        if (newStatus === 'accepted' && newMeeting !== undefined) {
+          const meeting = await control.findAll(
+            control.ctx,
+            love.class.MeetingMinutes,
+            { _id: newMeeting },
+            { limit: 1 }
+          )
+          if (meeting.length > 0) {
+            // Find recipient's employee to get their account
+            const recipientEmployee = await control.findAll(
+              control.ctx,
+              contact.mixin.Employee,
+              { _id: sourceDoc.to as Ref<Employee> },
+              { limit: 1 }
+            )
+            if (recipientEmployee.length > 0 && recipientEmployee[0].personUuid !== undefined) {
+              const recipientAccount = recipientEmployee[0].personUuid
+              const meetingDoc = meeting[0]
+              // Add recipient to members if not already present
+              if (!meetingDoc.members.includes(recipientAccount)) {
+                result.push(
+                  control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
+                    $push: { members: recipientAccount }
+                  })
+                )
+              }
+            }
+          }
+        }
+
         for (const request of inviteRequests) {
           const upd: DocumentUpdate<UserMeetingInvite> = {}
           // Sync status if changed
@@ -552,6 +604,82 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
   return result
 }
 
+/**
+ * Trigger to update MeetingMinutes when Event is updated
+ * - Updates meetingScheduledDate when Event date changes
+ * - Updates members when Event participants change
+ */
+export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+
+  for (const tx of txes) {
+    if (tx._class !== core.class.TxUpdateDoc) continue
+
+    const cudTx = tx as TxCUD<Event>
+    if (cudTx.objectClass !== calendar.class.Event) continue
+
+    // Get the event
+    const event = (await control.findAll(control.ctx, calendar.class.Event, { _id: cudTx.objectId }, { limit: 1 }))[0]
+    if (event === undefined) continue
+
+    // Check if event has MeetingEventLink mixin
+    const hasMeetingMixin = control.hierarchy.hasMixin(event, love.mixin.MeetingEventLink)
+    if (!hasMeetingMixin) continue
+
+    const meetingLink = control.hierarchy.as(event, love.mixin.MeetingEventLink)
+    if (meetingLink.meetingId === undefined) continue
+
+    // Get the meeting
+    const meeting = await control.findAll(
+      control.ctx,
+      love.class.MeetingMinutes,
+      { _id: meetingLink.meetingId },
+      { limit: 1 }
+    )
+    if (meeting.length === 0) continue
+    const meetingDoc = meeting[0]
+
+    // Only update if meeting is in Scheduled status
+    if (meetingDoc.status !== MeetingStatus.Scheduled) continue
+
+    const updateTx = tx as TxUpdateDoc<Event>
+    const ops = updateTx.operations
+    const meetingUpdate: DocumentUpdate<MeetingMinutes> = {}
+
+    // Update meetingScheduledDate if Event date changed
+    if (ops.date !== undefined) {
+      meetingUpdate.meetingScheduledDate = ops.date
+    }
+
+    // Update members if Event participants changed
+    if (ops.participants !== undefined) {
+      const newMembers: AccountUuid[] = []
+
+      for (const participantRef of ops.participants) {
+        const person = (
+          await control.findAll(control.ctx, contact.class.Person, { _id: participantRef as Ref<Person> }, { limit: 1 })
+        )[0]
+        if (person?.personUuid !== undefined && !meetingDoc.members.includes(person.personUuid as AccountUuid)) {
+          newMembers.push(person.personUuid as AccountUuid)
+        }
+      }
+
+      if (newMembers.length > 0) {
+        meetingUpdate.$push = { members: { $each: newMembers, $position: 0 } }
+      }
+    }
+
+    // Apply update if there are changes
+    if (Object.keys(meetingUpdate).length > 0) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, meetingUpdate)
+      )
+    }
+  }
+
+  return result
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
@@ -562,6 +690,7 @@ export default async () => ({
     OnUserStatus,
     OnParticipantInfo,
     OnRoomInfo,
-    OnUserMeetingInvite
+    OnUserMeetingInvite,
+    OnEventUpdate
   }
 })

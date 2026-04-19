@@ -27,8 +27,7 @@ import {
   registerTxAdapterFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerDestroyFactory,
-  setAdapterSecurity
+  registerDestroyFactory
 } from '@hcengineering/server-pipeline'
 import { createPostgresAdapter, createPostgresTxAdapter, createPostgreeDestroyAdapter } from '@hcengineering/postgres'
 
@@ -38,7 +37,6 @@ import { createServer, listen } from './server'
 registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
 registerAdapterFactory('postgresql', createPostgresAdapter, true)
 registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-setAdapterSecurity('postgresql', true)
 
 registerServerPlugins()
 registerStringLoaders()

@@ -143,8 +143,21 @@ export async function OnEmployeeCreate (_txes: Tx[], control: TriggerControl): P
     const account = person?.personUuid as AccountUuid
     if (account === undefined) continue
 
-    const txes = await createPersonSpace(account, mixinTx.objectId, control)
-    result.push(...txes)
+    // Serialize concurrent PersonSpace creation for the same account within this process.
+    // control.apply bypasses ApplyTxMiddleware, so TxApplyIf cannot be used here to guard
+    // the find-or-create sequence atomically.
+    await control.withScope(`person-space-${account}`, async () => {
+      const existing = (
+        await control.findAll(control.ctx, contact.class.PersonSpace, { person: mixinTx.objectId }, { limit: 1 })
+      )[0]
+      if (existing !== undefined) return
+      const txes = await createPersonSpace(account, mixinTx.objectId, control)
+      if (txes.length > 0) {
+        // needResult=true so apply awaits the actual write, keeping the scope held
+        // until the PersonSpace is persisted. Otherwise apply is fire-and-forget.
+        await control.apply(control.ctx, txes, true)
+      }
+    })
 
     const emp = control.hierarchy.as(person, contact.mixin.Employee)
     if (emp.role === 'GUEST') {
@@ -295,7 +308,8 @@ async function createPersonSpace (
       archived: false,
       person,
       account,
-      members: [account]
+      members: [account],
+      owners: [account]
     })
   ]
 }

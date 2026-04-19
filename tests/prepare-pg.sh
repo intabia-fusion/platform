@@ -90,6 +90,7 @@ fi
 
 # Create workspace record in accounts
 ./tool-pg.sh create-workspace sanity-ws email:user1
+./tool-pg.sh create-workspace meetings-ws email:user1
 
 ./restore-pg.sh
 rm -rf ./sanity/.auth

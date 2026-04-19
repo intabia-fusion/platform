@@ -47,7 +47,7 @@
       _class: lovePlg.class.MeetingMinutes,
       config: preference?.config ?? viewlet.config,
       options: viewlet.options,
-      query: { attachedTo: { $in: rooms.map((p) => p._id) } },
+      query: { roomId: { $in: rooms.map((p) => p._id) }, archived: false },
       viewlet,
       viewOptions,
       viewOptionsConfig: viewlet.viewOptions?.other,

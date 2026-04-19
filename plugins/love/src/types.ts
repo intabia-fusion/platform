@@ -1,6 +1,6 @@
 import { Event, Schedule } from '@hcengineering/calendar'
 import { Person } from '@hcengineering/contact'
-import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Space, Timestamp, WorkspaceUuid } from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
 
 export enum RoomAccess {
@@ -114,9 +114,9 @@ export interface Room extends Doc {
   language: RoomLanguage
   startWithTranscription: boolean
   startWithRecording: boolean
+  startPrivate: boolean
   description: MarkupBlobRef | null
   attachments?: number
-  meetings?: number
   messages?: number
 }
 
@@ -179,10 +179,12 @@ export const recordingStateLabel = {
   [RecordingState.Finished]: 'Finished'
 }
 
-// Meeting minutes
-export interface MeetingMinutes extends AttachedDoc {
-  title: string
-  description: MarkupBlobRef | null
+// Meeting minutes - now extends Space for access control
+export interface MeetingMinutes extends Space {
+  // Rich description (MarkupBlobRef) - should sync with Space description
+  descriptionRef: MarkupBlobRef | null
+
+  summary: MarkupBlobRef | null
 
   status: MeetingStatus
   transcriptionState: TranscriptionState
@@ -197,7 +199,9 @@ export interface MeetingMinutes extends AttachedDoc {
   /** Number of active recordings (PendingRecording collection) */
   recordings?: number
 
-  access: RoomAccess
+  /** Reference to the room where meeting takes place (optional, for navigation) */
+  roomId?: Ref<Room>
+
   language: RoomLanguage
 
   // If defined, should start with recording

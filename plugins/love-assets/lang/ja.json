@@ -95,11 +95,13 @@
     "Finished": "終了",
     "Pending": "保留中",
     "StartWithRecording": "録画を開始する",
+    "StartPrivate": "プライベートで開始",
     "RecordingState": "録画状態",
     "RecordingNotStarted": "なし",
     "RecordingRecording": "録画",
     "RecordingFinished": "終了",
     "Recording": "録画",
+    "Summary": "要約",
     "StoppingRecord": "録画を停止しています...",
     "Language": "言語",
     "Kick": "キック",
@@ -126,6 +128,11 @@
     "ShowParticipants": "参加者を表示",
     "HideParticipants": "参加者を非表示",
     "Scheduled": "予定",
-    "WaitForHost": "主催者がミーティングを開始するまでお待ちください。"
+    "WaitForHost": "主催者がミーティングを開始するまでお待ちください。",
+    "CloseRoom": "ルームを閉じる",
+    "OpenRoom": "ルームを開く",
+    "Private": "プライベート",
+    "Busy": "忙しい",
+    "Organizators": "主催者"
   }
 }

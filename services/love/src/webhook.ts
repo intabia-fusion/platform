@@ -131,10 +131,10 @@ export class WebhookProcessor {
     this.ctx.info('[Webhook] Found meetingDoc', {
       meetingId,
       meetingDocFound: meetingDoc !== undefined,
-      attachedTo: meetingDoc?.attachedTo,
+      roomId: meetingDoc?.roomId,
       identity: participant.identity
     })
-    const attachedRoom = meetingDoc?.attachedTo
+    const attachedRoom = meetingDoc?.roomId
     if (attachedRoom === undefined) {
       this.ctx.info('[Webhook] Skipping participant event: MeetingMinutes missing attached room', {
         workspace,
