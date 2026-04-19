@@ -42,16 +42,7 @@ jobs:
             echo "::error::NPM_TOKEN secret is not set. Add it in repository Settings > Secrets and variables > Actions."
             exit 1
           fi
-          rm -f "$HOME/.npmrc" .npmrc
-          npm config set registry https://registry.npmjs.org/
-          npm config set //registry.npmjs.org/:_authToken "${NPM_TOKEN}"
-          echo "--- auth check ---"
-          npm whoami --registry=https://registry.npmjs.org/ || { echo "::error::npm auth failed"; exit 1; }
-          cleanup() {
-            npm config delete //registry.npmjs.org/:_authToken || true
-            rm -f "$HOME/.npmrc" .npmrc
-          }
-          trap cleanup EXIT
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
           REF="${{ github.event.inputs.ref }}"
           VERSION="${REF#refs/tags/v}"
           VERSION="${VERSION#v}"
