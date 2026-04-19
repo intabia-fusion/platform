@@ -1,7 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const https = require('https')
-const http = require('http')
 const execSync = require('child_process').execSync
 const repo = '@intabiafusion'
 
@@ -63,54 +61,42 @@ function sleep (ms) {
 }
 
 function isAlreadyPublished (name, version) {
-  // HTTPS HEAD/GET against registry — no rate limit impact like `npm view`.
-  return new Promise((resolve) => {
-    const registryUrl = process.env.NPM_REGISTRY || 'https://registry.npmjs.org'
-    const url = `${registryUrl}/${encodeURIComponent(name)}/${version}`
-    const client = url.startsWith('https:') ? https : http
-    const req = client.get(url, (res) => {
-      resolve(res.statusCode === 200)
-      res.resume()
-    })
-    req.on('error', () => resolve(false))
-    req.setTimeout(5000, () => { req.destroy(); resolve(false) })
-  })
+  try {
+    const out = execSync(`npm view ${name}@${version} version`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
+    return out.trim() === version
+  } catch {
+    return false
+  }
 }
 
-async function publish (name) {
+function publish (name) {
   const package = packages[name]
   const version = jsons[name] && jsons[name].version
-  if (version && await isAlreadyPublished(name, version)) {
+  if (version && isAlreadyPublished(name, version)) {
     console.log('skip (already published):', name + '@' + version)
     return
   }
-  let attempt = 0
-  let backoff = 10000
-  while (true) {
-    attempt++
+  const maxAttempts = 5
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      console.log(`publishing ${name} (attempt ${attempt})`)
-      execSync('pnpm publish --no-git-checks --access public 2>&1', { encoding: 'utf-8', cwd: package.path })
-      console.log('published:', name)
+      console.log(`publishing ${name} (attempt ${attempt}/${maxAttempts})`)
+      execSync('pnpm publish --no-git-checks --access public', { encoding: 'utf-8', cwd: package.path, stdio: 'inherit' })
       return
     } catch (err) {
-      const output = String((err.stdout || '') + (err.stderr || '') + (err.message || ''))
-      process.stdout.write(output)
-      const rateLimited = output.includes('E429') || output.includes('rate limit')
-      const alreadyPublished = output.includes('cannot publish over') || (output.includes('E403') && output.includes('previously published'))
+      const msg = String(err.message || '')
+      const rateLimited = msg.includes('E429') || msg.includes('rate limit')
+      const alreadyPublished = msg.includes('cannot publish over') || msg.includes('E403') && msg.includes('previously published')
       if (alreadyPublished) {
         console.log('skip (already published):', name)
         return
       }
-      if (rateLimited) {
-        console.log(`rate-limited, backoff ${backoff}ms then retry (attempt ${attempt})`)
-        sleep(backoff)
-        backoff = Math.min(backoff * 2, 300000) // cap at 5min
-        continue
+      if (!rateLimited || attempt === maxAttempts) {
+        console.log('publish failed:', name, msg.split('\n')[0])
+        return
       }
-      // Non-retryable error — give up on this pkg.
-      console.log('publish failed (non-retryable):', name)
-      return
+      const backoff = 5000 * attempt
+      console.log(`rate-limited, backoff ${backoff}ms then retry`)
+      sleep(backoff)
     }
   }
 }
@@ -125,7 +111,7 @@ function fix (name) {
   }
 }
 
-async function main () {
+function main () {
   const args = process.argv
 
   const doFix = args.includes('--fix')
@@ -191,32 +177,13 @@ async function main () {
     }
   }
   if (doPublish) {
-    const fromArg = args.find((a) => a.startsWith('--from='))
-    let toPublish
-    if (fromArg) {
-      const roots = fromArg.slice('--from='.length).split(',').map((s) => s.trim()).filter(Boolean)
-      const needed = new Set()
-      const visit = (n) => {
-        if (needed.has(n)) return
-        const j = jsons[n]
-        if (!j) return
-        needed.add(n)
-        for (const f of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
-          for (const d of Object.keys(j[f] || {})) if (d.startsWith(repo + '/')) visit(d)
-        }
-      }
-      for (const r of roots) visit(r)
-      toPublish = [...needed].filter(shouldPublish)
-      console.log(`--from filter: ${roots.length} roots -> ${needed.size} transitive -> ${toPublish.length} publishable`)
-    } else {
-      toPublish = packageNames.filter(shouldPublish)
-    }
+    const toPublish = packageNames.filter(shouldPublish)
     let i = 0
     for (const packageName of toPublish) {
       i++
       console.log(`\n===== [${i}/${toPublish.length}] ${packageName} =====`)
-      await publish(packageName)
-      if (i < toPublish.length) sleep(3000) // throttle to avoid E429
+      publish(packageName)
+      if (i < toPublish.length) sleep(1500) // throttle to avoid E429
     }
     console.log(`\nDone. Attempted ${toPublish.length} packages.`)
   }
@@ -224,4 +191,4 @@ async function main () {
   console.log('... done')
 }
 
-main().catch((err) => { console.error(err); process.exit(1) })
+main ()
