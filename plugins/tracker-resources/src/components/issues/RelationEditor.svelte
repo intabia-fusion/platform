@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { Issue } from '@intabiafusion/tracker'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Issue } from '@hcengineering/tracker'
   import RelationEditorPart from './RelationEditorPart.svelte'
 
   export let value: Issue

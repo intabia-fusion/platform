@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, DocumentQuery, Hierarchy, Ref } from '@intabiafusion/core'
-import type { Resource } from '@intabiafusion/platform'
-import type { AttributeModel, BuildModelKey, Viewlet } from '@intabiafusion/view'
+import type { Class, Doc, DocumentQuery, Hierarchy, Ref } from '@hcengineering/core'
+import type { Resource } from '@hcengineering/platform'
+import type { AttributeModel, BuildModelKey, Viewlet } from '@hcengineering/view'
 
 /**
  * Value formatter function for custom field extraction during markdown/export

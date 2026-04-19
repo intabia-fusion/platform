@@ -49,14 +49,14 @@ import core, {
   type TxUpdateDoc,
   type TxWorkspaceEvent,
   WorkspaceEvent
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type ServerFindOptions,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { isOwner, isSystem } from './utils'
 
 type SpaceWithMembers = Pick<Space, '_id' | 'members' | 'private' | '_class' | 'archived'>

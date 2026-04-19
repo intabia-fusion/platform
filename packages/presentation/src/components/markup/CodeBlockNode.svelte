@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import diffview from '@intabiafusion/diffview'
-  import { MarkupNode } from '@intabiafusion/text'
-  import { Component } from '@intabiafusion/ui'
+  import diffview from '@hcengineering/diffview'
+  import { MarkupNode } from '@hcengineering/text'
+  import { Component } from '@hcengineering/ui'
   import type { SvelteComponent } from 'svelte'
 
   export let node: MarkupNode

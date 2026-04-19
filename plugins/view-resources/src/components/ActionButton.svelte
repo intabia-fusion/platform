@@ -15,10 +15,10 @@
 
 <script lang="ts">
   import { ComponentProps } from 'svelte'
-  import { Button } from '@intabiafusion/ui'
-  import { Doc, Ref } from '@intabiafusion/core'
-  import { Action, ViewContextType } from '@intabiafusion/view'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Button } from '@hcengineering/ui'
+  import { Doc, Ref } from '@hcengineering/core'
+  import { Action, ViewContextType } from '@hcengineering/view'
+  import { getClient } from '@hcengineering/presentation'
   import { filterAvailableActions, invokeAction } from '../actions'
   import view from '../plugin'
 

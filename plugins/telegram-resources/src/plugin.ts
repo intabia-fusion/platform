@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
 
-import telegram, { telegramId } from '@intabiafusion/telegram'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import telegram, { telegramId } from '@hcengineering/telegram'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 export default mergeIds(telegramId, telegram, {
   string: {

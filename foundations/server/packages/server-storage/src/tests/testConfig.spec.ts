@@ -1,6 +1,6 @@
-import type { MinioConfig } from '@intabiafusion/minio'
-import type { S3Config } from '@intabiafusion/s3'
-import type { StorageConfiguration } from '@intabiafusion/server-core'
+import type { MinioConfig } from '@hcengineering/minio'
+import type { S3Config } from '@hcengineering/s3'
+import type { StorageConfiguration } from '@hcengineering/server-core'
 import { parseStorageEnv } from '../starter'
 
 describe('config-parse', () => {

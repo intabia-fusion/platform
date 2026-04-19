@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { AnySvelteComponent, Icon, IconCheck, IconChevronRight, Label, tooltip } from '@intabiafusion/ui'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { AnySvelteComponent, Icon, IconCheck, IconChevronRight, Label, tooltip } from '@hcengineering/ui'
   import { ComponentType, createEventDispatcher } from 'svelte'
 
   const dispatch = createEventDispatcher()

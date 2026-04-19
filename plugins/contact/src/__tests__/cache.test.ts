@@ -1,4 +1,4 @@
-import core, { PersonId, Ref, SocialIdType, TxCreateDoc, TxUpdateDoc } from '@intabiafusion/core'
+import core, { PersonId, Ref, SocialIdType, TxCreateDoc, TxUpdateDoc } from '@hcengineering/core'
 
 import contact, { AvatarType, Person, SocialIdentity, SocialIdentityRef } from '..'
 import ContactCache, { Change } from '../cache'

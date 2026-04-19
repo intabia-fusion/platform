@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { Doc, FindOptions, SortingOrder } from '@intabiafusion/core'
-  import { ObjectPopup, getClient } from '@intabiafusion/presentation'
+  import { Card } from '@hcengineering/card'
+  import { Doc, FindOptions, SortingOrder } from '@hcengineering/core'
+  import { ObjectPopup, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
 

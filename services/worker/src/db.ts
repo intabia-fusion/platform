@@ -14,7 +14,7 @@
 //
 
 import postgres from 'postgres'
-import { WorkspaceUuid } from '@intabiafusion/core'
+import { WorkspaceUuid } from '@hcengineering/core'
 
 export interface DelayedEventRecord {
   id: string

@@ -15,11 +15,11 @@
 //
 -->
 <script lang="ts">
-  import { Folder } from '@intabiafusion/drive'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
-  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { Folder } from '@hcengineering/drive'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import { ObjectPresenterType } from '@hcengineering/view'
 
   import FolderIcon from './icons/Folder.svelte'
 

@@ -27,10 +27,10 @@ async function profileWithOptions(clearCacheAfterEach, label) {
   
   // Test packages
   const testPackages = [
-    { name: '@intabiafusion/core', path: '/Users/haiodo/Develop/private/foundation/foundations/core/packages/core' },
-    { name: '@intabiafusion/love', path: '/Users/haiodo/Develop/private/foundation/plugins/love' },
-    { name: '@intabiafusion/love-resources', path: '/Users/haiodo/Develop/private/foundation/plugins/love-resources' },
-    { name: '@intabiafusion/pod-server', path: '/Users/haiodo/Develop/private/foundation/pods/server' }
+    { name: '@hcengineering/core', path: '/Users/haiodo/Develop/private/foundation/foundations/core/packages/core' },
+    { name: '@hcengineering/love', path: '/Users/haiodo/Develop/private/foundation/plugins/love' },
+    { name: '@hcengineering/love-resources', path: '/Users/haiodo/Develop/private/foundation/plugins/love-resources' },
+    { name: '@hcengineering/pod-server', path: '/Users/haiodo/Develop/private/foundation/pods/server' }
   ]
   
   let totalDuration = 0

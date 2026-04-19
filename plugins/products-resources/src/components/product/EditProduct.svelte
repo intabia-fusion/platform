@@ -16,17 +16,17 @@
 -->
 
 <script lang="ts">
-  import { AttachmentStyleBoxEditor } from '@intabiafusion/attachment-resources'
-  import core, { type Class, type Doc, type Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import notification from '@intabiafusion/notification'
-  import { Panel } from '@intabiafusion/panel'
-  import { getResource } from '@intabiafusion/platform'
-  import { ActionContext, MessageViewer, IconWithEmoji, createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, EditBox, IconMixin, IconMoreH, getPlatformColorDef, showPopup, themeStore } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { DocAttributeBar, IconPicker, getDocMixins, showMenu } from '@intabiafusion/view-resources'
-  import type { Product } from '@intabiafusion/products'
+  import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
+  import core, { type Class, type Doc, type Ref, getCurrentAccount } from '@hcengineering/core'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import notification from '@hcengineering/notification'
+  import { Panel } from '@hcengineering/panel'
+  import { getResource } from '@hcengineering/platform'
+  import { ActionContext, MessageViewer, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, EditBox, IconMixin, IconMoreH, getPlatformColorDef, showPopup, themeStore } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { DocAttributeBar, IconPicker, getDocMixins, showMenu } from '@hcengineering/view-resources'
+  import type { Product } from '@hcengineering/products'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import products from '../../plugin'

@@ -40,9 +40,9 @@ import core, {
   TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
-import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@intabiafusion/activity'
-import { RestClient } from '@intabiafusion/api-client'
+} from '@hcengineering/core'
+import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
+import { RestClient } from '@hcengineering/api-client'
 import notification, {
   DocNotifyContext,
   InboxNotification,
@@ -53,20 +53,20 @@ import notification, {
   ReadPosition,
   ReadState,
   TxNotificationType
-} from '@intabiafusion/notification'
-import contact, { Employee } from '@intabiafusion/contact'
+} from '@hcengineering/notification'
+import contact, { Employee } from '@hcengineering/contact'
 import serverNotification, {
   getSenderName,
   normalizeTextMessage,
   Receiver,
   TypeMatch
-} from '@intabiafusion/server-notification'
-import { StorageAdapter } from '@intabiafusion/storage'
-import { getResource, IntlString, PlatformError, unknownError } from '@intabiafusion/platform'
-import { markupToText } from '@intabiafusion/text-core'
+} from '@hcengineering/server-notification'
+import { StorageAdapter } from '@hcengineering/storage'
+import { getResource, IntlString, PlatformError, unknownError } from '@hcengineering/platform'
+import { markupToText } from '@hcengineering/text-core'
 import config from './config'
-import { createPipeline, MiddlewareCreator, Pipeline, PipelineContext } from '@intabiafusion/server-core'
-import { getConfig } from '@intabiafusion/server-pipeline'
+import { createPipeline, MiddlewareCreator, Pipeline, PipelineContext } from '@hcengineering/server-core'
+import { getConfig } from '@hcengineering/server-pipeline'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -75,7 +75,7 @@ import {
   DomainTxMiddleware,
   LowLevelMiddleware,
   ModelMiddleware
-} from '@intabiafusion/middleware'
+} from '@hcengineering/middleware'
 
 import WsCache from './cache'
 import { Client, NotifyResult } from './types'

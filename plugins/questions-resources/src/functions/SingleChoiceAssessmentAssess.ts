@@ -6,7 +6,7 @@ import type {
   AnswerDataAssessFunction,
   SingleChoiceAssessment,
   SingleChoiceAssessmentAnswer
-} from '@intabiafusion/questions'
+} from '@hcengineering/questions'
 
 /** @public */
 export const SingleChoiceAssessmentAssess: AnswerDataAssessFunction<

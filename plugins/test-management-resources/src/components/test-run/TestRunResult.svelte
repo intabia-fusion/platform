@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BreadcrumbsElement } from '@intabiafusion/presentation'
-  import { ScrollerBar } from '@intabiafusion/ui'
+  import { BreadcrumbsElement } from '@hcengineering/presentation'
+  import { ScrollerBar } from '@hcengineering/ui'
 
   import { type TestRunStats } from '../../testRunUtils'
 

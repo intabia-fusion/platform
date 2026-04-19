@@ -14,7 +14,7 @@
 //
 
 import { Readable } from 'stream'
-import { isWorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
 import {
   AIEventRequest,
   ConnectMeetingRequest,
@@ -26,7 +26,7 @@ import {
   SummarizeMessagesResponse,
   TranslateRequest,
   TranslateResponse
-} from '@intabiafusion/ai-bot'
+} from '@hcengineering/ai-bot'
 import core, {
   AccountUuid,
   MeasureContext,
@@ -37,22 +37,22 @@ import core, {
   toIdMap,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import love, { parseRoomName, Room } from '@intabiafusion/love'
-import contact, { Person, Contact, SocialIdentityRef } from '@intabiafusion/contact'
-import chunter, { ChatMessage } from '@intabiafusion/chunter'
-import { getAccountClient, getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@intabiafusion/text'
+} from '@hcengineering/core'
+import love, { parseRoomName, Room } from '@hcengineering/love'
+import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
+import chunter, { ChatMessage } from '@hcengineering/chunter'
+import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
 import { createLLMFromConfig, type LLMProvider } from './llms'
 import { ClisrServer } from '@intabiafusion/clisr'
 
-import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@intabiafusion/server-core'
-import { buildStorageFromConfig, storageConfigFrom } from '@intabiafusion/server-storage'
+import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
+import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import config from './config'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
-import { markdownToMarkup, markupToMarkdown } from '@intabiafusion/text-markdown'
+import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { tryAssignToWorkspace } from './utils/account'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'

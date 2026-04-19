@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttributeModel } from '@intabiafusion/view'
-  import { ActivityAttributeUpdate } from '@intabiafusion/communication-types'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Class, Ref } from '@intabiafusion/core'
-  import { Card } from '@intabiafusion/card'
-  import { Component } from '@intabiafusion/ui'
+  import { AttributeModel } from '@hcengineering/view'
+  import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
+  import { getClient } from '@hcengineering/presentation'
+  import { Class, Ref } from '@hcengineering/core'
+  import { Card } from '@hcengineering/card'
+  import { Component } from '@hcengineering/ui'
 
   import ActivitySetAttributesViewer from './ActivitySetAttributeViewer.svelte'
   import ActivityAddAttributeViewer from './ActivityAddAttributeViewer.svelte'

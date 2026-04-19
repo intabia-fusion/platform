@@ -14,16 +14,16 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import serverCore from '@intabiafusion/server-core'
-import core from '@intabiafusion/core'
-import serverActivity from '@intabiafusion/server-activity'
-import serverSetting from '@intabiafusion/server-setting'
-import setting from '@intabiafusion/setting'
-import serverTemplates from '@intabiafusion/server-templates'
-import templates from '@intabiafusion/templates'
+import { type Builder } from '@hcengineering/model'
+import serverCore from '@hcengineering/server-core'
+import core from '@hcengineering/core'
+import serverActivity from '@hcengineering/server-activity'
+import serverSetting from '@hcengineering/server-setting'
+import setting from '@hcengineering/setting'
+import serverTemplates from '@hcengineering/server-templates'
+import templates from '@hcengineering/templates'
 
-export { serverSettingId } from '@intabiafusion/server-setting'
+export { serverSettingId } from '@hcengineering/server-setting'
 
 export function createModel (builder: Builder): void {
   builder.mixin(setting.class.Integration, core.class.Class, serverActivity.mixin.TitlePresenter, {

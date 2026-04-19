@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import type { TestRun } from '@intabiafusion/test-management'
-  import { Scroller } from '@intabiafusion/ui'
-  import { DocAttributeBar } from '@intabiafusion/view-resources'
+  import { WithLookup } from '@hcengineering/core'
+  import type { TestRun } from '@hcengineering/test-management'
+  import { Scroller } from '@hcengineering/ui'
+  import { DocAttributeBar } from '@hcengineering/view-resources'
 
   import TestRunStats from './TestRunStats.svelte'
 

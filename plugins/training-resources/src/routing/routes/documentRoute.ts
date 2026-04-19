@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { getCurrentLocation, type Location } from '@intabiafusion/ui'
-import documents, { documentsId, type Document } from '@intabiafusion/controlled-documents'
+import { getCurrentLocation, type Location } from '@hcengineering/ui'
+import documents, { documentsId, type Document } from '@hcengineering/controlled-documents'
 import { getPanelFragment } from '../utils/getPanelFragment'
 import type { Route, RouteParams } from '../utils/Route'
 

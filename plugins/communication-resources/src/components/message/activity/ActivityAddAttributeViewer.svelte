@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttributeModel } from '@intabiafusion/view'
-  import { ActivityAttributeUpdate } from '@intabiafusion/communication-types'
-  import { IconEdit, Label } from '@intabiafusion/ui'
+  import { AttributeModel } from '@hcengineering/view'
+  import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
+  import { IconEdit, Label } from '@hcengineering/ui'
 
   import ActivityAttributeValue from './ActivityAttributeValue.svelte'
   import communication from '../../../plugin'

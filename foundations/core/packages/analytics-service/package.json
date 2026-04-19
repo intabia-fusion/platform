@@ -1,6 +1,6 @@
 {
-  "name": "@intabiafusion/analytics-service",
-  "version": "1.0.0",
+  "name": "@hcengineering/analytics-service",
+  "version": "0.7.17",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -24,7 +24,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -40,14 +40,14 @@
     "eslint-plugin-svelte": "^2.35.1"
   },
   "dependencies": {
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/analytics": "workspace:^1.0.0",
-    "@intabiafusion/measurements-otlp": "workspace:^1.0.0",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/measurements-otlp": "workspace:^0.7.17",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/huly.core",
   "publishConfig": {
     "access": "public"
   },

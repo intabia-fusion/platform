@@ -19,7 +19,7 @@ import type {
   EventResult,
   UpdatePatchOptions,
   Event
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import type {
   FindNotificationsParams,
   FindNotificationContextParams,
@@ -39,7 +39,7 @@ import type {
   AttachmentID,
   MessagesGroup,
   FindMessagesGroupParams
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 export interface RestClient {
   findMessagesMeta: (params: FindMessagesMetaParams) => Promise<MessageMeta[]>

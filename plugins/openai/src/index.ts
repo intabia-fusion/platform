@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 
 export const openaiId = 'openai' as Plugin
 

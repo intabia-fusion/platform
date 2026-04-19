@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernDialog } from '@intabiafusion/ui'
+  import { ModernDialog } from '@hcengineering/ui'
   import billing from '../plugin'
   import Subscriptions from './Subscriptions.svelte'
 

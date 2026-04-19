@@ -21,17 +21,17 @@
     RecurringRule,
     Visibility,
     generateEventId
-  } from '@intabiafusion/calendar'
-  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import core, { Class, Doc, Markup, Ref, Space, generateId, getCurrentAccount } from '@intabiafusion/core'
+  } from '@hcengineering/calendar'
+  import { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import core, { Class, Doc, Markup, Ref, Space, generateId, getCurrentAccount } from '@hcengineering/core'
   import presentation, {
     createQuery,
     DocCreateExtComponent,
     DocCreateExtensionManager,
     getClient
-  } from '@intabiafusion/presentation'
-  import { EmptyMarkup } from '@intabiafusion/text'
-  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  } from '@hcengineering/presentation'
+  import { EmptyMarkup } from '@hcengineering/text'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import {
     Button,
     EditBox,
@@ -42,7 +42,7 @@
     getUserTimezone,
     showPopup,
     Scroller
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
   import { saveUTC } from '../utils'

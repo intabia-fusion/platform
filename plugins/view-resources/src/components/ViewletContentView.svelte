@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, Component, Loading } from '@intabiafusion/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import core, { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { AnySvelteComponent, Component, Loading } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
 
   export let viewlet: WithLookup<Viewlet>
   export let _class: Ref<Class<Doc>>

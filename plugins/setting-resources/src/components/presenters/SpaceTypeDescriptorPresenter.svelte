@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SpaceTypeDescriptor } from '@intabiafusion/core'
-  import { Label } from '@intabiafusion/ui'
+  import { SpaceTypeDescriptor } from '@hcengineering/core'
+  import { Label } from '@hcengineering/ui'
 
   export let value: SpaceTypeDescriptor
   export let inline: boolean = false

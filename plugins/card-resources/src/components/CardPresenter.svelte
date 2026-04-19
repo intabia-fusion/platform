@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { Asset, getEmbeddedLabel } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, tooltip } from '@intabiafusion/ui'
-  import { ObjectPresenterType } from '@intabiafusion/view'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { Card, MasterTag } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnySvelteComponent, tooltip } from '@hcengineering/ui'
+  import { ObjectPresenterType } from '@hcengineering/view'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import card from '../plugin'
   import { getCardIds, getCardVersion } from '../cardUtils'

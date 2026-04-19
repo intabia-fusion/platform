@@ -34,15 +34,15 @@ import {
   type Blob,
   type WorkspaceIds,
   generateId
-} from '@intabiafusion/core'
-import { PlatformError, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { PlatformError, unknownError } from '@hcengineering/platform'
 import {
   type DbAdapter,
   type DbAdapterHandler,
   type RawFindIterator,
   type StorageAdapter,
   type StorageAdapterEx
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 class StorageBlobAdapter implements DbAdapter {
   constructor (

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@intabiafusion/card'
-  import { Class, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@intabiafusion/ui'
+  import { Card, MasterTag } from '@hcengineering/card'
+  import { Class, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
   import CardPresenter from './CardPresenter.svelte'

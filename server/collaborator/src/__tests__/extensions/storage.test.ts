@@ -15,7 +15,7 @@
 
 import { StorageExtension } from '../../extensions/storage'
 import { Doc as YDoc } from 'yjs'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 
 describe('StorageExtension', () => {
   const mockCtx: MeasureContext = {

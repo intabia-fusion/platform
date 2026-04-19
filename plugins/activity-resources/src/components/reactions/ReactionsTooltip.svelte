@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { PersonId } from '@intabiafusion/core'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import { getPersonRefByPersonIdStore } from '@intabiafusion/contact-resources'
-  import { EmojiPresenter, getEmojiByUnicode } from '@intabiafusion/emoji-resources'
-  import { isCustomEmoji } from '@intabiafusion/emoji'
-  import contact from '@intabiafusion/contact'
+  import { PersonId } from '@hcengineering/core'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { getPersonRefByPersonIdStore } from '@hcengineering/contact-resources'
+  import { EmojiPresenter, getEmojiByUnicode } from '@hcengineering/emoji-resources'
+  import { isCustomEmoji } from '@hcengineering/emoji'
+  import contact from '@hcengineering/contact'
 
   export let socialIds: PersonId[] = []
   export let emoji: string

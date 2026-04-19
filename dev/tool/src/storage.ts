@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Attachment } from '@intabiafusion/attachment'
+import { type Attachment } from '@hcengineering/attachment'
 import {
   type Blob,
   type MeasureContext,
@@ -22,17 +22,17 @@ import {
   RateLimiter,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { type DatalakeClient } from '@intabiafusion/datalake'
-import { type UploadObjectParams } from '@intabiafusion/datalake/types/client'
-import { DOMAIN_ATTACHMENT } from '@intabiafusion/model-attachment'
-import { type S3Config, type S3Service } from '@intabiafusion/s3'
+} from '@hcengineering/core'
+import { type DatalakeClient } from '@hcengineering/datalake'
+import { type UploadObjectParams } from '@hcengineering/datalake/types/client'
+import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import { type S3Config, type S3Service } from '@hcengineering/s3'
 import {
   type ListBlobResult,
   type StorageAdapter,
   type StorageAdapterEx,
   type UploadedObjectInfo
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { type Db } from 'mongodb'
 import { PassThrough, type Readable } from 'stream'
 

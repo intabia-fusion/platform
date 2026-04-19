@@ -15,10 +15,10 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import type { Blob, Doc, Ref } from '@intabiafusion/core'
-  import presentation, { Card, getClient, PDFViewer } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { Button, Label, Loading, Scroller } from '@intabiafusion/ui'
+  import type { Blob, Doc, Ref } from '@hcengineering/core'
+  import presentation, { Card, getClient, PDFViewer } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { Button, Label, Loading, Scroller } from '@hcengineering/ui'
 
   import print from '../plugin'
   import { type PdfResult, printAll, downloadPdf, downloadAllPdfs } from '../printUtils'

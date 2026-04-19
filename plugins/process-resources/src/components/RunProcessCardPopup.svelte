@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { CardSelector } from '@intabiafusion/card-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { Card as CardPopup, getClient } from '@intabiafusion/presentation'
-  import { Process } from '@intabiafusion/process'
-  import { Dropdown, ListItem } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/card'
+  import { CardSelector } from '@hcengineering/card-resources'
+  import { Ref } from '@hcengineering/core'
+  import { Card as CardPopup, getClient } from '@hcengineering/presentation'
+  import { Process } from '@hcengineering/process'
+  import { Dropdown, ListItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../plugin'
   import { createExecution } from '../utils'

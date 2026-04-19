@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { getCurrentAccount, groupByArray, SortingOrder, type Class, type Doc, type Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import rating, { ReactionKind, type DocReaction } from '@intabiafusion/rating'
-  import { NavGroup, Label, ScrollBox } from '@intabiafusion/ui'
+  import { getCurrentAccount, groupByArray, SortingOrder, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import rating, { ReactionKind, type DocReaction } from '@hcengineering/rating'
+  import { NavGroup, Label, ScrollBox } from '@hcengineering/ui'
   import NavigatorRating from './NavigatorRating.svelte'
 
   const current = getCurrentAccount()

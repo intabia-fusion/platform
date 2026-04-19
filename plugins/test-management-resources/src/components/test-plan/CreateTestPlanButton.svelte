@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconAdd } from '@intabiafusion/ui'
+  import { Button, IconAdd } from '@hcengineering/ui'
 
   import testManagement from '../../plugin'
   import { showCreateTestPlanPanel } from '../../utils'

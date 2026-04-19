@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Markup } from '@intabiafusion/core'
-  import { EmptyMarkup, MarkupNode, MarkupNodeType, markupToJSON } from '@intabiafusion/text'
-  import { MarkupDiffViewer } from '@intabiafusion/text-editor-resources'
-  import { ShowMore } from '@intabiafusion/ui'
+  import { AnyAttribute, Markup } from '@hcengineering/core'
+  import { EmptyMarkup, MarkupNode, MarkupNodeType, markupToJSON } from '@hcengineering/text'
+  import { MarkupDiffViewer } from '@hcengineering/text-editor-resources'
+  import { ShowMore } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
 
   export let value: Markup | undefined

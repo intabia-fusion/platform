@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal, ModernButton } from '@intabiafusion/ui'
-  import presentation from '@intabiafusion/presentation'
-  import { getEmbeddedLabel, getMetadata, IntlString } from '@intabiafusion/platform'
-  import { concatLink, getCurrentAccount } from '@intabiafusion/core'
+  import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal, ModernButton } from '@hcengineering/ui'
+  import presentation from '@hcengineering/presentation'
+  import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
+  import { concatLink, getCurrentAccount } from '@hcengineering/core'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import telegram from '../plugin'

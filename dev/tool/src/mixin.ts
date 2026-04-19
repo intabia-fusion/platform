@@ -26,9 +26,9 @@ import core, {
   type Ref,
   SortingOrder,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@intabiafusion/mongo'
-import { connect } from '@intabiafusion/server-tool'
+} from '@hcengineering/core'
+import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
+import { connect } from '@hcengineering/server-tool'
 
 interface PropertyInfo {
   name: string

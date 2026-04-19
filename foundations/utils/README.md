@@ -31,7 +31,7 @@ packages/
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/intabia-fusion/huly.utils.git
+   git clone https://github.com/hcengineering/huly.utils.git
    cd huly.utils
    ```
 
@@ -59,19 +59,19 @@ rush test
 
 ## Packages
 
-### `@intabiafusion/platform-rig`
+### `@hcengineering/platform-rig`
 
 A set of utilities for managing platform configurations and profiles.
 
-### `@intabiafusion/measurements`
+### `@hcengineering/measurements`
 
 Utilities for handling various measurement-related tasks.
 
-### `@intabiafusion/measurements-otlp`
+### `@hcengineering/measurements-otlp`
 
 OpenTelemetry-based utilities for measurements and telemetry.
 
-### `@intabiafusion/postgres-base`
+### `@hcengineering/postgres-base`
 
 Base utilities for working with PostgreSQL databases.
 

@@ -20,9 +20,9 @@ import {
   type Blob,
   type Doc,
   type PersonId
-} from '@intabiafusion/core'
-import { Asset, IntlString, plugin, Plugin } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+} from '@hcengineering/core'
+import { Asset, IntlString, plugin, Plugin } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 // [date, created, updated, deleted, messages, todos, hours]
 export type DateCUD = [/* date */ number, /* created */ number, /* updated */ number, /* deleted */ number]

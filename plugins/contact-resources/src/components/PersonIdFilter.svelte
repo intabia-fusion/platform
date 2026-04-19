@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person, SocialIdentity } from '@intabiafusion/contact'
-  import core, { FindResult, getObjectValue, includesAny, PersonId, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import presentation, { getClient } from '@intabiafusion/presentation'
+  import contact, { Person, SocialIdentity } from '@hcengineering/contact'
+  import core, { FindResult, getObjectValue, includesAny, PersonId, Ref, Space, WithLookup } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
     deviceOptionsStore,
     EditWithIcon,
@@ -24,9 +24,9 @@
     IconSearch,
     Loading,
     resizeObserver
-  } from '@intabiafusion/ui'
-  import view, { Filter } from '@intabiafusion/view'
-  import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view, { Filter } from '@hcengineering/view'
+  import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import PersonPresenter from './PersonPresenter.svelte'

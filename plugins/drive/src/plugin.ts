@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Mixin, Ref, SpaceType, SpaceTypeDescriptor, Type, Permission } from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin, Resource as PlatformResource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { Location, ResolvedLocation } from '@intabiafusion/ui/src/types'
+import type { Class, Doc, Mixin, Ref, SpaceType, SpaceTypeDescriptor, Type, Permission } from '@hcengineering/core'
+import type { Asset, IntlString, Plugin, Resource as PlatformResource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { Location, ResolvedLocation } from '@hcengineering/ui/src/types'
 import { Drive, File, FileVersion, Folder, Resource } from './types'
 
 export * from './types'

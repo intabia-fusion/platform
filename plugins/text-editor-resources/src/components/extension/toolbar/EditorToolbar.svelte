@@ -15,13 +15,13 @@
 //
 -->
 <script lang="ts">
-  import { getResource } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import textEditor, { ActionContext, TextEditorAction } from '@intabiafusion/text-editor'
+  import { getResource } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import textEditor, { ActionContext, TextEditorAction } from '@hcengineering/text-editor'
   import { NodeViewProps } from '../../node-view'
   import TextActionButton from '../../TextActionButton.svelte'
   import { type ToolbarCursor } from './toolbar'
-  import { Component } from '@intabiafusion/ui'
+  import { Component } from '@hcengineering/ui'
 
   export let editor: NodeViewProps['editor']
   export let cursor: ToolbarCursor<any> | null = null

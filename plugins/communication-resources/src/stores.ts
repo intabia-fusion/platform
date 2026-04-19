@@ -12,7 +12,7 @@
 // limitations under the License.
 
 import { get, writable, derived } from 'svelte/store'
-import { createLabelsQuery, createQuery, onClient, onCommunicationClient } from '@intabiafusion/presentation'
+import { createLabelsQuery, createQuery, onClient, onCommunicationClient } from '@hcengineering/presentation'
 import {
   MessageType,
   type CardID,
@@ -20,12 +20,12 @@ import {
   type LabelID,
   type Message,
   type MessageID
-} from '@intabiafusion/communication-types'
-import core, { getCurrentAccount, type Markup, type Ref } from '@intabiafusion/core'
-import { languageStore } from '@intabiafusion/ui'
-import cardPlugin, { type Card } from '@intabiafusion/card'
-import communication from '@intabiafusion/communication'
-import { translationStore } from '@intabiafusion/contact-resources'
+} from '@hcengineering/communication-types'
+import core, { getCurrentAccount, type Markup, type Ref } from '@hcengineering/core'
+import { languageStore } from '@hcengineering/ui'
+import cardPlugin, { type Card } from '@hcengineering/card'
+import communication from '@hcengineering/communication'
+import { translationStore } from '@hcengineering/contact-resources'
 
 import { toMarkup } from './utils'
 

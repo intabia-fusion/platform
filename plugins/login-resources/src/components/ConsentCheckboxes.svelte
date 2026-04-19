@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getMetadata, translate } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/ui'
+  import { getMetadata, translate } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/ui'
   import login from '../plugin'
 
   export let agreedPersonalData: boolean = false

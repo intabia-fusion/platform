@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import chunter from '@intabiafusion/chunter'
-import contact, { type Employee, type Person, getCurrentEmployee } from '@intabiafusion/contact'
+import chunter from '@hcengineering/chunter'
+import contact, { type Employee, type Person, getCurrentEmployee } from '@hcengineering/contact'
 import documents, {
   type ControlledDocument,
   type Document,
@@ -38,7 +38,7 @@ import documents, {
   getDocumentName,
   getFirstRank,
   transferDocuments
-} from '@intabiafusion/controlled-documents'
+} from '@hcengineering/controlled-documents'
 import core, {
   type Class,
   type Client,
@@ -58,19 +58,19 @@ import core, {
   checkPermission,
   getCurrentAccount,
   notEmpty
-} from '@intabiafusion/core'
-import { type IntlString, translate } from '@intabiafusion/platform'
-import { createQuery, getClient, MessageBox } from '@intabiafusion/presentation'
-import request, { type Request, RequestStatus } from '@intabiafusion/request'
-import { isEmptyMarkup } from '@intabiafusion/text'
-import { type Location, getUserTimezone, showPopup } from '@intabiafusion/ui'
-import { type KeyFilter } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { type IntlString, translate } from '@hcengineering/platform'
+import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+import request, { type Request, RequestStatus } from '@hcengineering/request'
+import { isEmptyMarkup } from '@hcengineering/text'
+import { type Location, getUserTimezone, showPopup } from '@hcengineering/ui'
+import { type KeyFilter } from '@hcengineering/view'
 
-import { makeRank } from '@intabiafusion/rank'
+import { makeRank } from '@hcengineering/rank'
 import { getProjectDocumentLink } from './navigation'
 import documentsResources from './plugin'
 import { wizardOpened } from './stores/wizards/create-document'
-import { getPersonRefByPersonId, getPersonRefsByPersonIds } from '@intabiafusion/contact-resources'
+import { getPersonRefByPersonId, getPersonRefsByPersonIds } from '@hcengineering/contact-resources'
 
 export type TranslatedDocumentStates = Readonly<Record<DocumentState, string>>
 

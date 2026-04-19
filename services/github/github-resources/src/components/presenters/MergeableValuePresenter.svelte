@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
-  import { PullRequestMergeable } from '@intabiafusion/github'
+  import { Label } from '@hcengineering/ui'
+  import { PullRequestMergeable } from '@hcengineering/github'
   import github from '../../plugin'
 
   export let value: PullRequestMergeable

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AvatarType, Channel, combineName, ContactEvents, Person, SocialIdentityRef } from '@intabiafusion/contact'
+  import { AvatarType, Channel, combineName, ContactEvents, Person, SocialIdentityRef } from '@hcengineering/contact'
   import {
     AccountRole,
     AttachedData,
@@ -22,16 +22,16 @@
     generateId,
     Ref,
     SocialIdType
-  } from '@intabiafusion/core'
-  import login from '@intabiafusion/login'
-  import { getResource } from '@intabiafusion/platform'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import login from '@hcengineering/login'
+  import { getResource } from '@hcengineering/platform'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown, employeeBySocialKeyStore } from '..'
   import contact from '../plugin'
   import { getAccountClient } from '../utils'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let canSave: boolean = true
   export let onCreate: ((id: Ref<Person>) => Promise<void>) | undefined = undefined

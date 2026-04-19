@@ -17,9 +17,9 @@ import testManagement, {
   type TestProject,
   type TestRun,
   type TestPlan
-} from '@intabiafusion/test-management'
-import { type Doc, type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
+} from '@hcengineering/test-management'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 import {
   getCurrentResolvedLocation,
   getLocation,
@@ -27,10 +27,10 @@ import {
   type Location,
   type ResolvedLocation,
   navigate
-} from '@intabiafusion/ui'
-import view, { type ObjectPanel } from '@intabiafusion/view'
-import { accessDeniedStore } from '@intabiafusion/view-resources'
-import { getCurrentEmployee } from '@intabiafusion/contact'
+} from '@hcengineering/ui'
+import view, { type ObjectPanel } from '@hcengineering/view'
+import { accessDeniedStore } from '@hcengineering/view-resources'
+import { getCurrentEmployee } from '@hcengineering/contact'
 
 const PARENT_KEY = 'attachedTo'
 

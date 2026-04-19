@@ -2,10 +2,10 @@
   Copyright @ 2024 Hardcore Engineering Inc.
 -->
 <script lang="ts">
-  import { type TrainingAttempt, TrainingAttemptState, type TrainingRequest } from '@intabiafusion/training'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Loading, StateTag, StateType } from '@intabiafusion/ui'
+  import { type TrainingAttempt, TrainingAttemptState, type TrainingRequest } from '@hcengineering/training'
+  import type { IntlString } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Loading, StateTag, StateType } from '@hcengineering/ui'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
   import { queryLatestOwnAttempt } from '../utils'

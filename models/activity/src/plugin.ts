@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { activityId, type ActivityMessage, type ActivityMessagesFilter } from '@intabiafusion/activity'
-import activity from '@intabiafusion/activity-resources/src/plugin'
-import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
-import { type Doc, type Ref } from '@intabiafusion/core'
-import type { Location } from '@intabiafusion/ui/src/types'
+import { activityId, type ActivityMessage, type ActivityMessagesFilter } from '@hcengineering/activity'
+import activity from '@hcengineering/activity-resources/src/plugin'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
+import { type Doc, type Ref } from '@hcengineering/core'
+import type { Location } from '@hcengineering/ui/src/types'
 import {
   type Action,
   type ActionCategory,
   type ViewAction,
   type ViewActionAvailabilityFunction
-} from '@intabiafusion/view'
+} from '@hcengineering/view'
 
 export default mergeIds(activityId, activity, {
   string: {

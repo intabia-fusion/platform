@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Training } from '@intabiafusion/training'
+import type { Training } from '@hcengineering/training'
 import { canViewTraining } from './canViewTraining'
 
 export function canViewTrainingMyResults (training: Training): boolean {

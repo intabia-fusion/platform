@@ -15,15 +15,15 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
 
-  import type { Integration } from '@intabiafusion/account-client'
-  import { IntegrationEventData, onIntegrationEvent } from '@intabiafusion/integration-client'
-  import { type GmailSyncState } from '@intabiafusion/gmail'
-  import { BaseIntegrationState, IntegrationStateRow } from '@intabiafusion/setting-resources'
+  import type { Integration } from '@hcengineering/account-client'
+  import { IntegrationEventData, onIntegrationEvent } from '@hcengineering/integration-client'
+  import { type GmailSyncState } from '@hcengineering/gmail'
+  import { BaseIntegrationState, IntegrationStateRow } from '@hcengineering/setting-resources'
 
   import gmail from '../plugin'
   import { getState } from '../api'
-  import platform, { IntlString, OK, ERROR, Status, Severity } from '@intabiafusion/platform'
-  import { Analytics } from '@intabiafusion/analytics'
+  import platform, { IntlString, OK, ERROR, Status, Severity } from '@hcengineering/platform'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let integration: Integration
 

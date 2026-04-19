@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Class, ClassifierKind, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
-import { translate, type IntlString } from '@intabiafusion/platform'
-import cardPlugin, { type Card } from '@intabiafusion/card'
-import { type AttributeModel } from '@intabiafusion/view'
+import { type Class, ClassifierKind, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
+import { translate, type IntlString } from '@hcengineering/platform'
+import cardPlugin, { type Card } from '@hcengineering/card'
+import { type AttributeModel } from '@hcengineering/view'
 
 function isIntlString (value: unknown): value is IntlString {
   return typeof value === 'string' || (typeof value === 'object' && value !== null)

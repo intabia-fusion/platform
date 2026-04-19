@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/presentation'
-  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/presentation'
+  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../../plugin'
 

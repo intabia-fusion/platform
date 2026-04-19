@@ -2,11 +2,11 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Answer, Assessment, Percentage, Question, QuestionOption, Rank } from '@intabiafusion/questions'
-import contact, { type Employee } from '@intabiafusion/contact'
-import { type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@intabiafusion/core'
-import { Hidden, Index, Model, Prop, TypeRef, TypeString, TypeTimestamp, UX } from '@intabiafusion/model'
-import core, { TAttachedDoc, TType } from '@intabiafusion/model-core'
+import type { Answer, Assessment, Percentage, Question, QuestionOption, Rank } from '@hcengineering/questions'
+import contact, { type Employee } from '@hcengineering/contact'
+import { type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@hcengineering/core'
+import { Hidden, Index, Model, Prop, TypeRef, TypeString, TypeTimestamp, UX } from '@hcengineering/model'
+import core, { TAttachedDoc, TType } from '@hcengineering/model-core'
 import questions from '../plugin'
 
 export const DOMAIN_QUESTIONS = 'questions' as Domain

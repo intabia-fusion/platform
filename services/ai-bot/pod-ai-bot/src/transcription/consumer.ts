@@ -1,8 +1,8 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
-import { MeasureContext, withContext, WorkspaceUuid, type WorkspaceIds } from '@intabiafusion/core'
-import { parseRoomName } from '@intabiafusion/love'
-import { ConsumerControl, StorageAdapter } from '@intabiafusion/server-core'
+import { MeasureContext, withContext, WorkspaceUuid, type WorkspaceIds } from '@hcengineering/core'
+import { parseRoomName } from '@hcengineering/love'
+import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 
 import { TranscriptionQueueTask, TranscriptionProvider, TranscriptionConfig, AudioFormat } from './types'
 import { pushTranscriptDuration } from '../billing'

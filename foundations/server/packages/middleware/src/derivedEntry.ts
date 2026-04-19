@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/core'
-import type { Middleware, PipelineContext } from '@intabiafusion/server-core'
-import { BaseMiddleware } from '@intabiafusion/server-core'
+import { type MeasureContext } from '@hcengineering/core'
+import type { Middleware, PipelineContext } from '@hcengineering/server-core'
+import { BaseMiddleware } from '@hcengineering/server-core'
 
 /**
  * Will support apply tx

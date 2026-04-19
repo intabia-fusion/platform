@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import { Polar } from '@polar-sh/sdk'
 import type { Subscription } from '@polar-sh/sdk/models/components/subscription'
 import type { Checkout } from '@polar-sh/sdk/models/components/checkout'

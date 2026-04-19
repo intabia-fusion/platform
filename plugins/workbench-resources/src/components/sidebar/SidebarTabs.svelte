@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget, WidgetTab } from '@intabiafusion/workbench'
+  import { Widget, WidgetTab } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
-  import presentation from '@intabiafusion/presentation'
-  import { Action, Component } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import presentation from '@hcengineering/presentation'
+  import { Action, Component } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   import SidebarTab from './SidebarTab.svelte'
   import { closeWidgetTab, pinWidgetTab, unpinWidgetTab } from '../../sidebar'

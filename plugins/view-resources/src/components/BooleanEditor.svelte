@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, showPopup, eventToHTMLElement } from '@intabiafusion/ui'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { Button, showPopup, eventToHTMLElement } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import BooleanPresenter from './BooleanPresenter.svelte'
   import BooleanEditorPopup from './BooleanEditorPopup.svelte'
 

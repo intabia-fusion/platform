@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { TreeNode } from '@intabiafusion/view-resources'
-  import { SpacesNavModel } from '@intabiafusion/workbench'
+  import { Ref, Space } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { TreeNode } from '@hcengineering/view-resources'
+  import { SpacesNavModel } from '@hcengineering/workbench'
   import TagHierarchy from './TagHierarchy.svelte'
 
-  import { CardSpace, MasterTag } from '@intabiafusion/card'
+  import { CardSpace, MasterTag } from '@hcengineering/card'
   import card from '../../plugin'
   import { onDestroy } from 'svelte'
-  import { Action, location } from '@intabiafusion/ui'
+  import { Action, location } from '@hcengineering/ui'
 
   export let space: CardSpace
   export let model: SpacesNavModel

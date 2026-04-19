@@ -25,14 +25,14 @@
     Lookup,
     mergeQueries,
     Ref
-  } from '@intabiafusion/core'
-  import { DocWithRank, Item, Kanban as KanbanUI } from '@intabiafusion/kanban'
-  import { getResource } from '@intabiafusion/platform'
-  import { ActionContext, createQuery, getClient } from '@intabiafusion/presentation'
-  import tags from '@intabiafusion/tags'
-  import { Project, Task, TaskOrdering } from '@intabiafusion/task'
-  import { ColorDefinition, defaultBackground, Label, themeStore } from '@intabiafusion/ui'
-  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
+  } from '@hcengineering/core'
+  import { DocWithRank, Item, Kanban as KanbanUI } from '@hcengineering/kanban'
+  import { getResource } from '@hcengineering/platform'
+  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import tags from '@hcengineering/tags'
+  import { Project, Task, TaskOrdering } from '@hcengineering/task'
+  import { ColorDefinition, defaultBackground, Label, themeStore } from '@hcengineering/ui'
+  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import {
     focusStore,
     getCategoryQueryNoLookup,
@@ -47,7 +47,7 @@
     SelectDirection,
     setGroupByValues,
     showMenu
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import { onMount } from 'svelte'
   import task from '../../plugin'
   import { getTaskKanbanResultQuery, updateTaskKanbanCategories } from '../../utils'

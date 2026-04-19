@@ -14,7 +14,7 @@
 //
 
 /* eslint-env jest */
-import { htmlToJSON, jsonToHTML } from '@intabiafusion/text'
+import { htmlToJSON, jsonToHTML } from '@hcengineering/text'
 import { parseMessageMarkdown, serializeMessage } from '..'
 import { defaultExtensions } from '../extensions'
 

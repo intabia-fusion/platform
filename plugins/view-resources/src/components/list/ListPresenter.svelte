@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@intabiafusion/contact'
-  import core, { AnyAttribute, Doc, Ref, TypedSpace } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import { AttributeModel } from '@intabiafusion/view'
+  import contact, { PermissionsStore } from '@hcengineering/contact'
+  import core, { AnyAttribute, Doc, Ref, TypedSpace } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import { AttributeModel } from '@hcengineering/view'
   import { createEventDispatcher, onMount } from 'svelte'
   import { Readable } from 'svelte/store'
   import { canChangeAttribute, FixedColumn, restrictionStore } from '../..'

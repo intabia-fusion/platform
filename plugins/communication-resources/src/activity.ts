@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Card } from '@intabiafusion/card'
+import { type Card } from '@hcengineering/card'
 import {
   type ActivityAttributeUpdate,
   type ActivityMessage,
@@ -20,10 +20,10 @@ import {
   ActivityUpdateType,
   type Message,
   MessageType
-} from '@intabiafusion/communication-types'
-import core, { type Class, type Client, type Doc, type Mixin, type Ref } from '@intabiafusion/core'
-import view, { type AttributeModel } from '@intabiafusion/view'
-import { buildRemovedDoc, getAttributePresenter } from '@intabiafusion/view-resources'
+} from '@hcengineering/communication-types'
+import core, { type Class, type Client, type Doc, type Mixin, type Ref } from '@hcengineering/core'
+import view, { type AttributeModel } from '@hcengineering/view'
+import { buildRemovedDoc, getAttributePresenter } from '@hcengineering/view-resources'
 
 const valueTypes: ReadonlyArray<Ref<Class<Doc>>> = [
   core.class.TypeString,

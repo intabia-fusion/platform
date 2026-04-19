@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type AnyAttribute, type Doc, type Domain } from '@intabiafusion/core'
+import core, { type AnyAttribute, type Doc, type Domain } from '@hcengineering/core'
 import {
   tryMigrate,
   type MigrateOperation,
@@ -22,8 +22,8 @@ import {
   type MigrationDocumentQuery,
   type MigrationIterator,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
-import { htmlToMarkup, jsonToPmNode, jsonToText } from '@intabiafusion/text'
+} from '@hcengineering/model'
+import { htmlToMarkup, jsonToPmNode, jsonToText } from '@hcengineering/text'
 
 async function migrateMarkup (client: MigrationClient): Promise<void> {
   const hierarchy = client.hierarchy

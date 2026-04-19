@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import type {
   Class,
   Doc,
@@ -9,23 +9,23 @@ import type {
   SearchOptions,
   SearchQuery,
   Tx
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   createMongoAdapter,
   createMongoDestroyAdapter,
   createMongoTxAdapter,
   shutdownMongo
-} from '@intabiafusion/mongo'
-import { setMetadata } from '@intabiafusion/platform'
+} from '@hcengineering/mongo'
+import { setMetadata } from '@hcengineering/platform'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   shutdownPostgres
-} from '@intabiafusion/postgres'
-import serverClientPlugin from '@intabiafusion/server-client'
-import serverCore, { workspaceEvents, type PlatformQueue, type StorageAdapter } from '@intabiafusion/server-core'
-import { searchFulltext, type FulltextDBConfiguration } from '@intabiafusion/server-indexer'
+} from '@hcengineering/postgres'
+import serverClientPlugin from '@hcengineering/server-client'
+import serverCore, { workspaceEvents, type PlatformQueue, type StorageAdapter } from '@hcengineering/server-core'
+import { searchFulltext, type FulltextDBConfiguration } from '@hcengineering/server-indexer'
 import {
   registerAdapterFactory,
   registerDestroyFactory,
@@ -33,8 +33,8 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@intabiafusion/server-pipeline'
-import serverToken, { decodeToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-pipeline'
+import serverToken, { decodeToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'

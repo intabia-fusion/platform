@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Issue, IssueDraft, IssuePriority, IssueTemplateData, TrackerEvents } from '@intabiafusion/tracker'
-  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { AttachedData } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Issue, IssueDraft, IssuePriority, IssueTemplateData, TrackerEvents } from '@hcengineering/tracker'
+  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   import PriorityInlineEditor from './PriorityInlineEditor.svelte'
 

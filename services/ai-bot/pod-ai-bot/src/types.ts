@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Class, Doc, Ref, PersonUuid } from '@intabiafusion/core'
+import { Class, Doc, Ref, PersonUuid } from '@hcengineering/core'
 
 export interface HistoryRecord {
   workspace: string

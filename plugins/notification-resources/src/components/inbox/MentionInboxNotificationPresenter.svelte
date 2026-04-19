@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreview } from '@intabiafusion/activity-resources'
-  import { MentionInboxNotification } from '@intabiafusion/notification'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
-  import { Doc, Ref, Space } from '@intabiafusion/core'
+  import { ActivityMessagePreview } from '@hcengineering/activity-resources'
+  import { MentionInboxNotification } from '@hcengineering/notification'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { Doc, Ref, Space } from '@hcengineering/core'
 
   import CommonInboxNotificationPresenter from './CommonInboxNotificationPresenter.svelte'
 

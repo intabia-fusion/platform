@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getCurrentLocation, location, navigate } from '@intabiafusion/ui'
+import { getCurrentLocation, location, navigate } from '@hcengineering/ui'
 import { onDestroy } from 'svelte'
 
 interface Message {

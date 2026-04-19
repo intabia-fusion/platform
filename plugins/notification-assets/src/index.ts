@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import notification from '@intabiafusion/notification'
-import { loadMetadata } from '@intabiafusion/platform'
+import notification from '@hcengineering/notification'
+import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(notification.icon, {

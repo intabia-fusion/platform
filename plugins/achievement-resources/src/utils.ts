@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import achievement from '@intabiafusion/achievement'
-import { type IntlString, type Asset } from '@intabiafusion/platform'
+import achievement from '@hcengineering/achievement'
+import { type IntlString, type Asset } from '@hcengineering/platform'
 
 interface PersonAchievement {
   icon: Asset

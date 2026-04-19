@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { Process } from '@intabiafusion/process'
-  import { ToggleWithLabel } from '@intabiafusion/ui'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { Process } from '@hcengineering/process'
+  import { ToggleWithLabel } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
 

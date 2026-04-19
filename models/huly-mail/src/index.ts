@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { hulyMailIntegrationKind } from '@intabiafusion/huly-mail'
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import setting from '@intabiafusion/setting'
+import { hulyMailIntegrationKind } from '@hcengineering/huly-mail'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import setting from '@hcengineering/setting'
 
 import hulyMail from './plugin'
 
-export { hulyMailId } from '@intabiafusion/huly-mail'
+export { hulyMailId } from '@hcengineering/huly-mail'
 export { default } from './plugin'
 
 export function createModel (builder: Builder): void {

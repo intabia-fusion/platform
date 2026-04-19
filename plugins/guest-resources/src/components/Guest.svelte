@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import core, { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { getMetadata, getResource } from '@intabiafusion/platform'
-  import presentation, { ActionContext, decodeTokenPayload, getClient } from '@intabiafusion/presentation'
+  import { Analytics } from '@hcengineering/analytics'
+  import core, { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { getMetadata, getResource } from '@hcengineering/platform'
+  import presentation, { ActionContext, decodeTokenPayload, getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
     Component,
@@ -34,11 +34,11 @@
     getCurrentLocation,
     setResolvedLocation,
     showPanel
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { ListSelectionProvider, parseLinkId, restrictionStore, updateFocus } from '@intabiafusion/view-resources'
-  import workbench, { Application, NavigatorModel, SpecialNavModel, ViewConfiguration } from '@intabiafusion/workbench'
-  import { SpaceView, buildNavModel } from '@intabiafusion/workbench-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { ListSelectionProvider, parseLinkId, restrictionStore, updateFocus } from '@hcengineering/view-resources'
+  import workbench, { Application, NavigatorModel, SpecialNavModel, ViewConfiguration } from '@hcengineering/workbench'
+  import { SpaceView, buildNavModel } from '@hcengineering/workbench-resources'
   import { workbenchGuestSeparators } from '..'
   import guest from '../plugin'
   import { checkAccess } from '../utils'

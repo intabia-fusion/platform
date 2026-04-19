@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { DOMAIN_MODEL_TX, DOMAIN_TX, withContext, type MeasureContext } from '@intabiafusion/core'
+import { DOMAIN_MODEL_TX, DOMAIN_TX, withContext, type MeasureContext } from '@hcengineering/core'
 import type {
   DbAdapter,
   DbConfiguration,
@@ -21,8 +21,8 @@ import type {
   MiddlewareCreator,
   PipelineContext,
   TxAdapter
-} from '@intabiafusion/server-core'
-import { BaseMiddleware, createServiceAdaptersManager, DbAdapterManagerImpl } from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
+import { BaseMiddleware, createServiceAdaptersManager, DbAdapterManagerImpl } from '@hcengineering/server-core'
 
 /**
  * @public

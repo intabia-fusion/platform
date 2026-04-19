@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { concatLink, generateId, OperationDomain, TxDomainEvent } from '@intabiafusion/core'
+import core, { concatLink, generateId, OperationDomain, TxDomainEvent } from '@hcengineering/core'
 import {
   type EventResult,
   type Event,
@@ -21,7 +21,7 @@ import {
   type CreateMessageOptions,
   UpdatePatchOptions,
   MessageEventType
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   type FindNotificationContextParams,
   type NotificationContext,
@@ -40,8 +40,8 @@ import {
   FindMessagesMetaParams,
   FindMessagesGroupParams,
   MessagesGroup
-} from '@intabiafusion/communication-types'
-import { retry } from '@intabiafusion/communication-shared'
+} from '@hcengineering/communication-types'
+import { retry } from '@hcengineering/communication-shared'
 
 import { extractJson } from './utils'
 import type { RestClient } from './types'

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, IconClose, IconMoreH, TimeShiftPresenter } from '@intabiafusion/ui'
+  import { Button, IconClose, IconMoreH, TimeShiftPresenter } from '@hcengineering/ui'
 
   export let reminder: number
   export let disabled: boolean = false

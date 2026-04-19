@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Asset, type IntlString } from '@intabiafusion/platform'
+import { type Asset, type IntlString } from '@hcengineering/platform'
 import { type Attribute, type Doc, type Domain, type Ref } from './classes'
 
 /**

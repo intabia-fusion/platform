@@ -8,14 +8,14 @@ import {
   Space,
   Class,
   PersonId
-} from '@intabiafusion/core'
-import { StorageAdapter } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { StorageAdapter } from '@hcengineering/server-core'
 import { gmail_v1 } from 'googleapis'
 import { AttachmentHandler } from '../message/attachments'
-import type { Attachment as AttachedFile } from '@intabiafusion/mail-common'
-import attachment, { Attachment } from '@intabiafusion/attachment'
+import type { Attachment as AttachedFile } from '@hcengineering/mail-common'
+import attachment, { Attachment } from '@hcengineering/attachment'
 import { decode64, encode64 } from '../base64'
-import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 jest.mock('../config')
 

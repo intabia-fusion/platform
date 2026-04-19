@@ -14,14 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { UserBox } from '@intabiafusion/contact-resources'
-  import type { Lead } from '@intabiafusion/lead'
-  import { EditBox, Grid } from '@intabiafusion/ui'
-  import contact from '@intabiafusion/contact'
+  import { getClient } from '@hcengineering/presentation'
+  import { UserBox } from '@hcengineering/contact-resources'
+  import type { Lead } from '@hcengineering/lead'
+  import { EditBox, Grid } from '@hcengineering/ui'
+  import contact from '@hcengineering/contact'
   import { createEventDispatcher, onMount } from 'svelte'
   import lead from '../plugin'
-  import { restrictionStore } from '@intabiafusion/view-resources'
+  import { restrictionStore } from '@hcengineering/view-resources'
 
   export let object: Lead
   export let readonly: boolean = false

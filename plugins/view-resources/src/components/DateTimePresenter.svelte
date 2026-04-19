@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangeMode } from '@intabiafusion/core'
+  import { DateRangeMode } from '@hcengineering/core'
 
   import DatePresenter from './DatePresenter.svelte'
 

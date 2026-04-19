@@ -21,7 +21,7 @@ import {
   type RestClient,
   type ServerConfig,
   type WorkspaceToken
-} from '@intabiafusion/api-client'
+} from '@hcengineering/api-client'
 import core, {
   generateId,
   MeasureMetricsContext,
@@ -30,11 +30,11 @@ import core, {
   type Ref,
   type SocialId,
   type Space
-} from '@intabiafusion/core'
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import contact, { ensureEmployee } from '@intabiafusion/contact'
-import tracker, { type Issue, IssuePriority, type Project } from '@intabiafusion/tracker'
-import { makeRank } from '@intabiafusion/rank'
+} from '@hcengineering/core'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import contact, { ensureEmployee } from '@hcengineering/contact'
+import tracker, { type Issue, IssuePriority, type Project } from '@hcengineering/tracker'
+import { makeRank } from '@hcengineering/rank'
 
 import type { BenchConfig } from './config'
 

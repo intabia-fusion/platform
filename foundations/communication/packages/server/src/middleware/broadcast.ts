@@ -22,7 +22,7 @@ import {
   NotificationEventType,
   PeerEventType,
   type SessionData
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import type {
   AccountUuid,
   CardID,
@@ -32,7 +32,7 @@ import type {
   Label,
   Notification,
   NotificationContext
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 import type { CommunicationCallbacks, Enriched, Middleware, MiddlewareContext, Subscription } from '../types'
 import { BaseMiddleware } from './base'

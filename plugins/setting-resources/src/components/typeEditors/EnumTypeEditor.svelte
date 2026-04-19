@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum, EnumOf, IndexKind, Ref } from '@intabiafusion/core'
-  import { TypeEnum } from '@intabiafusion/model'
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { Button, Label, showPopup } from '@intabiafusion/ui'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
-  import { EnumEditor } from '@intabiafusion/view-resources'
+  import core, { Enum, EnumOf, IndexKind, Ref } from '@hcengineering/core'
+  import { TypeEnum } from '@hcengineering/model'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { Button, Label, showPopup } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { EnumEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
   import EnumSelect from './EnumSelect.svelte'

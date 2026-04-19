@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget, WidgetPreference, WidgetTab } from '@intabiafusion/workbench'
-  import { Ref } from '@intabiafusion/core'
+  import { Widget, WidgetPreference, WidgetTab } from '@hcengineering/workbench'
+  import { Ref } from '@hcengineering/core'
   import {
     Component,
     resizeObserver,
@@ -25,7 +25,7 @@
     getCurrentLocation,
     Separator,
     deviceOptionsStore as deviceInfo
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
 
   import { closeWidgetTab, sidebarStore, SidebarVariant, WidgetState, openWidgetTab, closeWidget } from '../../sidebar'

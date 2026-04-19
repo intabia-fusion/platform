@@ -1,4 +1,4 @@
-import { NetworkAgentServer, NetworkClientImpl } from '@intabiafusion/network-client'
+import { NetworkAgentServer, NetworkClientImpl } from '@hcengineering/network-client'
 import {
   AgentImpl,
   composeCID,
@@ -14,7 +14,7 @@ import {
   type ContainerKind,
   type NetworkClient,
   type TickManager
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 import { NetworkServer } from '../server'
 import { DummySessionContainer } from './dummySession'
 import { DummyWorkspaceContainer } from './dummyWorkspace'

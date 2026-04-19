@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { AccountRole, Person, type WorkspaceUuid, WorkspaceInfoWithStatus } from '@intabiafusion/core'
-import type { Asset, IntlString, Metadata, Plugin, Resource, Status } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui'
-import type { LoginInfo, WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { AccountRole, Person, type WorkspaceUuid, WorkspaceInfoWithStatus } from '@hcengineering/core'
+import type { Asset, IntlString, Metadata, Plugin, Resource, Status } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
+import type { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
 
-export type { LoginInfo, WorkspaceLoginInfo, OtpInfo, RegionInfo } from '@intabiafusion/account-client'
+export type { LoginInfo, WorkspaceLoginInfo, OtpInfo, RegionInfo } from '@hcengineering/account-client'
 
 /**
  * @public

@@ -24,14 +24,14 @@ import {
   type ControlledDocumentSnapshot,
   type Project,
   type ProjectDocument
-} from '@intabiafusion/controlled-documents'
-import chunter from '@intabiafusion/chunter'
-import { type Ref } from '@intabiafusion/core'
-import { getCurrentEmployee } from '@intabiafusion/contact'
-import { type Training } from '@intabiafusion/training'
-import { type IntlString } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
-import { type ButtonItem } from '@intabiafusion/ui'
+} from '@hcengineering/controlled-documents'
+import chunter from '@hcengineering/chunter'
+import { type Ref } from '@hcengineering/core'
+import { getCurrentEmployee } from '@hcengineering/contact'
+import { type Training } from '@hcengineering/training'
+import { type IntlString } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
+import { type ButtonItem } from '@hcengineering/ui'
 import { getDocumentTraining } from '../../../docutils'
 import plugin from '../../../plugin'
 import {

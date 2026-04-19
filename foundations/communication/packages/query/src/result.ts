@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { ID } from '@intabiafusion/communication-types'
+import type { ID } from '@hcengineering/communication-types'
 
 export class QueryResult<T> {
   private objectById: Map<ID, T>

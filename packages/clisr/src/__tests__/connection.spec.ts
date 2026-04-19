@@ -11,7 +11,7 @@ import {
   FRAME_OP_STATUS,
   FRAME_OP_STATUS_RESP
 } from '../types'
-import { MeasureMetricsContext, type MeasureContext } from '@intabiafusion/measurements'
+import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 
 describe('ClisrClient.handleMsg behavior', () => {
   function createFakeCtx (): MeasureContext {

@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import core from '@intabiafusion/core'
-import { type Builder } from '@intabiafusion/model'
-import tracker from '@intabiafusion/model-tracker'
-import notification, { type NotificationType } from '@intabiafusion/notification'
-import serverCore from '@intabiafusion/server-core'
-import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
-import serverTracker from '@intabiafusion/server-tracker'
-import serverView from '@intabiafusion/server-view'
-import serverActivity from '@intabiafusion/server-activity'
+import core from '@hcengineering/core'
+import { type Builder } from '@hcengineering/model'
+import tracker from '@hcengineering/model-tracker'
+import notification, { type NotificationType } from '@hcengineering/notification'
+import serverCore from '@hcengineering/server-core'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
+import serverTracker from '@hcengineering/server-tracker'
+import serverView from '@hcengineering/server-view'
+import serverActivity from '@hcengineering/server-activity'
 
-export { serverTrackerId } from '@intabiafusion/server-tracker'
+export { serverTrackerId } from '@hcengineering/server-tracker'
 
 export function createModel (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, serverActivity.mixin.IdentifierPresenter, {

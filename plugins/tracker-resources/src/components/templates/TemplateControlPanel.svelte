@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId, Ref, WithLookup } from '@intabiafusion/core'
-  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@intabiafusion/presentation'
-  import tags, { TagElement, TagReference } from '@intabiafusion/tags'
-  import task, { Project } from '@intabiafusion/task'
-  import { TaskKindSelector } from '@intabiafusion/task-resources'
-  import type { IssueTemplate } from '@intabiafusion/tracker'
-  import { Component, Label } from '@intabiafusion/ui'
-  import { getFiltredKeys, isCollectionAttr } from '@intabiafusion/view-resources'
+  import { generateId, Ref, WithLookup } from '@hcengineering/core'
+  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import tags, { TagElement, TagReference } from '@hcengineering/tags'
+  import task, { Project } from '@hcengineering/task'
+  import { TaskKindSelector } from '@hcengineering/task-resources'
+  import type { IssueTemplate } from '@hcengineering/tracker'
+  import { Component, Label } from '@hcengineering/ui'
+  import { getFiltredKeys, isCollectionAttr } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'

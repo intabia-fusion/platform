@@ -1,9 +1,9 @@
-import notification, { type TxNotificationType } from '@intabiafusion/notification'
-import core from '@intabiafusion/core'
-import { type Builder } from '@intabiafusion/model'
+import notification, { type TxNotificationType } from '@hcengineering/notification'
+import core from '@hcengineering/core'
+import { type Builder } from '@hcengineering/model'
 
 import activity from './plugin'
-import { defineCollaborators } from '@intabiafusion/model-core'
+import { defineCollaborators } from '@hcengineering/model-core'
 
 export function buildNotifications (builder: Builder): void {
   builder.createDoc<TxNotificationType>(

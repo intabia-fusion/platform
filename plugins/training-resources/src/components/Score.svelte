@@ -3,7 +3,7 @@
 -->
 
 <script lang="ts">
-  import type { Percentage } from '@intabiafusion/questions'
+  import type { Percentage } from '@hcengineering/questions'
 
   export let count: number
   export let total: number

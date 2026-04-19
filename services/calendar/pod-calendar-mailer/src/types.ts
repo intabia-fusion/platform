@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Event } from '@intabiafusion/calendar'
-import { Data, PersonId } from '@intabiafusion/core'
-import { MeetingEventLink } from '@intabiafusion/love'
+import { Event } from '@hcengineering/calendar'
+import { Data, PersonId } from '@hcengineering/core'
+import { MeetingEventLink } from '@hcengineering/love'
 
 export interface EventCUDMessage {
   action: 'create' | 'update' | 'delete' | 'mixin'

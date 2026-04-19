@@ -29,8 +29,8 @@ import {
   DOMAIN_TX,
   type IndexingConfiguration,
   type Ref
-} from '@intabiafusion/core'
-import { type Builder, Collection } from '@intabiafusion/model'
+} from '@hcengineering/core'
+import { type Builder, Collection } from '@hcengineering/model'
 import { TBenchmarkDoc } from './benchmark'
 import core from './component'
 import {
@@ -102,7 +102,7 @@ import { TDomainStatusPlaceholder, TStatus, TStatusCategory } from './status'
 import { TUserStatus } from './transient'
 import { TTx, TTxApplyIf, TTxCreateDoc, TTxCUD, TTxMixin, TTxRemoveDoc, TTxUpdateDoc, TTxWorkspaceEvent } from './tx'
 
-export { coreId, DOMAIN_SPACE } from '@intabiafusion/core'
+export { coreId, DOMAIN_SPACE } from '@hcengineering/core'
 export * from './core'
 export {
   coreOperation,

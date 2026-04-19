@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Room, RoomLanguage } from '@intabiafusion/love'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Room, RoomLanguage } from '@hcengineering/love'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import RoomLanguageComponent from './RoomLanguage.svelte'
   import {
@@ -11,7 +11,7 @@
     DropdownLabelsPopupIntl,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { languagesDisplayData } from '../types'
   import LanguageIcon from './LanguageIcon.svelte'
 

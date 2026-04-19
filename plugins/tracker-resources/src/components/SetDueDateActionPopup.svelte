@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Issue, IssueDraft } from '@intabiafusion/tracker'
-  import { DatePopup } from '@intabiafusion/ui'
+  import { AttachedData } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Issue, IssueDraft } from '@hcengineering/tracker'
+  import { DatePopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let value: Issue | AttachedData<Issue> | Issue[] | IssueDraft

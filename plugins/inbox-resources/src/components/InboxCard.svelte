@@ -13,12 +13,12 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { createNotificationsQuery, createQuery } from '@intabiafusion/presentation'
-  import { CheckBox, Loading, Spinner } from '@intabiafusion/ui'
-  import { AccountRole, Doc, getCurrentAccount } from '@intabiafusion/core'
-  import notification, { ActivityNotificationViewlet, InboxNotification } from '@intabiafusion/notification'
-  import { Card } from '@intabiafusion/card'
-  import { Notification, NotificationType } from '@intabiafusion/communication-types'
+  import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
+  import { CheckBox, Loading, Spinner } from '@hcengineering/ui'
+  import { AccountRole, Doc, getCurrentAccount } from '@hcengineering/core'
+  import notification, { ActivityNotificationViewlet, InboxNotification } from '@hcengineering/notification'
+  import { Card } from '@hcengineering/card'
+  import { Notification, NotificationType } from '@hcengineering/communication-types'
 
   import InboxCardIcon from './InboxCardIcon.svelte'
   import InboxCardTitle from './InboxCardTitle.svelte'
@@ -26,7 +26,7 @@
   import LegacyNotifications from './legacy/LegacyNotifications.svelte'
   import { NavigationItem } from '../type'
   import { NavigationClient } from '../client'
-  import { isReactionNotification } from '@intabiafusion/notification-resources'
+  import { isReactionNotification } from '@hcengineering/notification-resources'
 
   export let navClient: NavigationClient
   export let navItem: NavigationItem

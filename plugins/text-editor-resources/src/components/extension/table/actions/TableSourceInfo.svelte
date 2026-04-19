@@ -14,11 +14,11 @@
 //
 -->
 <script lang="ts">
-  import core from '@intabiafusion/core'
-  import { IconWithEmoji, getClient } from '@intabiafusion/presentation'
-  import ui, { Icon, Label } from '@intabiafusion/ui'
-  import view, { type TableMetadata } from '@intabiafusion/view'
-  import textEditor from '@intabiafusion/text-editor'
+  import core from '@hcengineering/core'
+  import { IconWithEmoji, getClient } from '@hcengineering/presentation'
+  import ui, { Icon, Label } from '@hcengineering/ui'
+  import view, { type TableMetadata } from '@hcengineering/view'
+  import textEditor from '@hcengineering/text-editor'
 
   export let metadata: TableMetadata
 

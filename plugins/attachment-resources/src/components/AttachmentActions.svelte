@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Attachment } from '@intabiafusion/attachment'
-  import type { BlobType, WithLookup } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import presentation, { canPreviewFile, getFileUrl, previewTypes } from '@intabiafusion/presentation'
-  import { IconMoreH, Menu, Action as UIAction, showPopup, tooltip } from '@intabiafusion/ui'
-  import view, { Action } from '@intabiafusion/view'
-  import workbench from '@intabiafusion/workbench'
+  import { type Attachment } from '@hcengineering/attachment'
+  import type { BlobType, WithLookup } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import presentation, { canPreviewFile, getFileUrl, previewTypes } from '@hcengineering/presentation'
+  import { IconMoreH, Menu, Action as UIAction, showPopup, tooltip } from '@hcengineering/ui'
+  import view, { Action } from '@hcengineering/view'
+  import workbench from '@hcengineering/workbench'
 
   import AttachmentAction from './AttachmentAction.svelte'
   import FileDownload from './icons/FileDownload.svelte'

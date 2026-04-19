@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-import { setMetadata } from '@intabiafusion/platform'
-import serverToken from '@intabiafusion/server-token'
+import { setMetadata } from '@hcengineering/platform'
+import serverToken from '@hcengineering/server-token'
 
-import type { MeasureContext } from '@intabiafusion/core'
-import serverClient from '@intabiafusion/server-client'
-import type { StorageConfiguration } from '@intabiafusion/server-core'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import type { MeasureContext } from '@hcengineering/core'
+import serverClient from '@hcengineering/server-client'
+import type { StorageConfiguration } from '@hcengineering/server-core'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import config from './config'
 import { start } from './server'
 

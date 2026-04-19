@@ -26,21 +26,21 @@ import accountPlugin, {
   updateWorkspaceInfo,
   type AccountDB,
   type Workspace
-} from '@intabiafusion/account'
+} from '@hcengineering/account'
 import {
   getMongoAccountDB,
   type Account as OldAccount,
   type Workspace as OldWorkspace
-} from '@intabiafusion/account-service'
-import { getWorkspaceClient as getHulylakeClient } from '@intabiafusion/hulylake-client'
-import { setMetadata } from '@intabiafusion/platform'
+} from '@hcengineering/account-service'
+import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
+import { setMetadata } from '@hcengineering/platform'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   getDBClient,
   shutdownPostgres
-} from '@intabiafusion/postgres'
+} from '@hcengineering/postgres'
 import {
   backup,
   backupDownload,
@@ -50,8 +50,8 @@ import {
   createFileBackupStorage,
   createStorageBackupStorage,
   restore
-} from '@intabiafusion/server-backup'
-import serverClientPlugin, { getAccountClient, getTransactorEndpoint } from '@intabiafusion/server-client'
+} from '@hcengineering/server-backup'
+import serverClientPlugin, { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import {
   createBackupPipeline,
   createEmptyBroadcastOps,
@@ -61,17 +61,17 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@intabiafusion/server-pipeline'
-import serverToken, { decodeToken, generateToken } from '@intabiafusion/server-token'
-import { createWorkspace, upgradeWorkspace } from '@intabiafusion/workspace-service'
+} from '@hcengineering/server-pipeline'
+import serverToken, { decodeToken, generateToken } from '@hcengineering/server-token'
+import { createWorkspace, upgradeWorkspace } from '@hcengineering/workspace-service'
 
 import { faker } from '@faker-js/faker'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { program, type Command } from 'commander'
 import { updateField } from './workspace'
 
-import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@intabiafusion/pod-rating'
+import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@hcengineering/pod-rating'
 
 import {
   AccountRole,
@@ -92,24 +92,24 @@ import {
   type Version,
   type WorkspaceDataId,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { consoleModelLogger, type MigrateOperation } from '@intabiafusion/model'
+} from '@hcengineering/core'
+import { consoleModelLogger, type MigrateOperation } from '@hcengineering/model'
 import {
   createMongoAdapter,
   createMongoDestroyAdapter,
   createMongoTxAdapter,
   getMongoClient,
   shutdownMongo
-} from '@intabiafusion/mongo'
+} from '@hcengineering/mongo'
 
-import { getModelVersion } from '@intabiafusion/model-all'
+import { getModelVersion } from '@hcengineering/model-all'
 import {
   QueueTopic,
   workspaceEvents,
   type Pipeline,
   type QueueWorkspaceMessage,
   type StorageAdapter
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { getAccountDBUrl, getKvsUrl, getMongoDBUrl } from './__start'
 // import { fillGithubUsers, fixAccountEmails, renameAccount } from './account'
 import { changeConfiguration } from './configuration'
@@ -129,9 +129,9 @@ import { performGithubAccountMigrations } from './github'
 import { performGmailAccountMigrations } from './gmail'
 import { getToolToken, getWorkspace, getWorkspaceTransactorEndpoint } from './utils'
 
-import { createRestClient } from '@intabiafusion/api-client'
-import { type CardID } from '@intabiafusion/communication-types'
-import { sendTransactorEvent } from '@intabiafusion/server-tool'
+import { createRestClient } from '@hcengineering/api-client'
+import { type CardID } from '@hcengineering/communication-types'
+import { sendTransactorEvent } from '@hcengineering/server-tool'
 import { existsSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname } from 'path'

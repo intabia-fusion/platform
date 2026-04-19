@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
   import {
     Process,
     ProcessToDo,
@@ -21,8 +21,8 @@
     SelectedExecutionContext,
     Step,
     parseContext
-  } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'
 

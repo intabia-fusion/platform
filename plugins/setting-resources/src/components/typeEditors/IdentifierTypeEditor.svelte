@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Attribute, CustomSequence, IndexKind, Ref, Type, TypeIdentifier as TypeId } from '@intabiafusion/core'
-  import { TypeIdentifier } from '@intabiafusion/model'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { EditBox, Label, Toggle } from '@intabiafusion/ui'
+  import core, { Attribute, CustomSequence, IndexKind, Ref, Type, TypeIdentifier as TypeId } from '@hcengineering/core'
+  import { TypeIdentifier } from '@hcengineering/model'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { EditBox, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
 

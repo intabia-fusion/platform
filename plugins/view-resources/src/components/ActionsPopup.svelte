@@ -21,8 +21,8 @@
     TxWorkspaceEvent,
     WithLookup,
     WorkspaceEvent
-  } from '@intabiafusion/core'
-  import { getResource, translate, translateCB } from '@intabiafusion/platform'
+  } from '@hcengineering/core'
+  import { getResource, translate, translateCB } from '@hcengineering/platform'
   import {
     ActionContext,
     SearchResult,
@@ -34,7 +34,7 @@
     searchFor,
     type ObjectSearchCategory,
     type SearchItem
-  } from '@intabiafusion/presentation'
+  } from '@hcengineering/presentation'
   import ui, {
     Button,
     Component,
@@ -48,8 +48,8 @@
     formatKey,
     resizeObserver,
     themeStore
-  } from '@intabiafusion/ui'
-  import { Action, ActionCategory, ViewContext } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Action, ActionCategory, ViewContext } from '@hcengineering/view'
   import { createEventDispatcher, onMount, tick } from 'svelte'
   import { filterActions, getSelection } from '../actions'
   import view from '../plugin'
@@ -57,7 +57,7 @@
   import { openDoc } from '../utils'
   import ObjectPresenter from './ObjectPresenter.svelte'
 
-  import { contextStore } from '@intabiafusion/presentation'
+  import { contextStore } from '@hcengineering/presentation'
   import ChevronDown from './icons/ChevronDown.svelte'
   import ChevronUp from './icons/ChevronUp.svelte'
 

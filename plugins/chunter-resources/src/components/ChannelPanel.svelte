@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ChunterSpace } from '@intabiafusion/chunter'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  import { Class, Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ChunterSpace } from '@hcengineering/chunter'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 
   import ChannelView from './ChannelView.svelte'
 

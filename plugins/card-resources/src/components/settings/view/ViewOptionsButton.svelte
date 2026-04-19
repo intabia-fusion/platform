@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { ButtonIcon, showPopup, closeTooltip, IconOptions } from '@intabiafusion/ui'
-  import view, { OrderOption, ViewOptionsModel, Viewlet } from '@intabiafusion/view'
-  import { ViewOptions as ViewOptionsEditor } from '@intabiafusion/view-resources'
-  import core, { Class, Data, Ref, SortingOrder, Type } from '@intabiafusion/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ButtonIcon, showPopup, closeTooltip, IconOptions } from '@hcengineering/ui'
+  import view, { OrderOption, ViewOptionsModel, Viewlet } from '@hcengineering/view'
+  import { ViewOptions as ViewOptionsEditor } from '@hcengineering/view-resources'
+  import core, { Class, Data, Ref, SortingOrder, Type } from '@hcengineering/core'
 
   export let viewlet: Data<Viewlet> | undefined = undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

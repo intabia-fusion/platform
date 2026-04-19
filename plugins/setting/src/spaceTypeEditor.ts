@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, SpaceType, SpaceTypeDescriptor } from '@intabiafusion/core'
-import type { IntlString } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui'
+import type { Class, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+import type { IntlString } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 /**
  * @public

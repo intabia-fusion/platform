@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@intabiafusion/core'
-  import { Project } from '@intabiafusion/tracker'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { Ref, Status } from '@hcengineering/core'
+  import { Project } from '@hcengineering/tracker'
+  import { statusStore } from '@hcengineering/view-resources'
   import StatusPresenter from './StatusPresenter.svelte'
-  import { selectedTaskTypeStore } from '@intabiafusion/task-resources'
+  import { selectedTaskTypeStore } from '@hcengineering/task-resources'
 
   export let value: Ref<Status> | undefined
   export let space: Ref<Project>

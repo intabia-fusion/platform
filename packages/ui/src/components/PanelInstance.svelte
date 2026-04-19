@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getResourceC } from '@intabiafusion/platform'
+  import { getResourceC } from '@hcengineering/platform'
   import { afterUpdate, onMount } from 'svelte'
 
   import { deviceOptionsStore as deviceInfo, resizeObserver } from '..'

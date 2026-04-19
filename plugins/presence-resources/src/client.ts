@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type Ref, concatLink } from '@intabiafusion/core'
-import { getCurrentEmployee, type Person } from '@intabiafusion/contact'
-import { getMetadata } from '@intabiafusion/platform'
-import presence from '@intabiafusion/presence'
-import presentation from '@intabiafusion/presentation'
+import { type Ref, concatLink } from '@hcengineering/core'
+import { getCurrentEmployee, type Person } from '@hcengineering/contact'
+import { getMetadata } from '@hcengineering/platform'
+import presence from '@hcengineering/presence'
+import presentation from '@hcengineering/presentation'
 import { type Unsubscriber, get } from 'svelte/store'
 
 import { myPresence, myData, isAnybodyInMyRoom, onPersonUpdate, onPersonLeave, onPersonData } from './store'

@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import client, {
   type ClientFactoryOptions,
   ClientSocket,
   ClientSocketReadyState,
   pingConst,
   pongConst
-} from '@intabiafusion/client'
+} from '@hcengineering/client'
 import core, {
   Account,
   Class,
@@ -54,9 +54,9 @@ import core, {
   TxHandler,
   TxResult,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import platform, { getMetadata, PlatformError, Severity, Status } from '@intabiafusion/platform'
-import { HelloRequest, HelloResponse, type RateLimitInfo, ReqId, type Response, RPCHandler } from '@intabiafusion/rpc'
+} from '@hcengineering/core'
+import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
+import { HelloRequest, HelloResponse, type RateLimitInfo, ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
 import { uncompress } from 'snappyjs'
 
 const SECOND = 1000

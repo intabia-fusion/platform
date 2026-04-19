@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import '@intabiafusion/platform-rig/profiles/ui/svelte'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
 export * from './types'
 
 export { default as Kanban } from './components/Kanban.svelte'

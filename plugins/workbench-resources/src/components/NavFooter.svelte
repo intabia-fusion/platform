@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import setting from '@intabiafusion/setting'
-  import { Icon, Label, showPopup } from '@intabiafusion/ui'
+  import setting from '@hcengineering/setting'
+  import { Icon, Label, showPopup } from '@hcengineering/ui'
   import workbench from '../plugin'
   import HelpAndSupport from './HelpAndSupport.svelte'
 

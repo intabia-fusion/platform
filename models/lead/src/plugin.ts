@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref, Status } from '@intabiafusion/core'
-import { leadId } from '@intabiafusion/lead'
-import lead from '@intabiafusion/lead-resources/src/plugin'
-import { type MessageNotificationType, type NotificationGroup } from '@intabiafusion/notification'
-import type { IntlString } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import { type TaskTypeDescriptor } from '@intabiafusion/task'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
-import { type Action, type ActionCategory, type Viewlet } from '@intabiafusion/view'
+import type { Doc, Ref, Status } from '@hcengineering/core'
+import { leadId } from '@hcengineering/lead'
+import lead from '@hcengineering/lead-resources/src/plugin'
+import { type MessageNotificationType, type NotificationGroup } from '@hcengineering/notification'
+import type { IntlString } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import { type TaskTypeDescriptor } from '@hcengineering/task'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
+import { type Action, type ActionCategory, type Viewlet } from '@hcengineering/view'
 
 export default mergeIds(leadId, lead, {
   string: {

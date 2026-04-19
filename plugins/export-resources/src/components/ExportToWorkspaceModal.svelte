@@ -23,12 +23,12 @@
     type Ref,
     type Space,
     type Class
-  } from '@intabiafusion/core'
-  import { Card, getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
-  import { DropdownLabels, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
-  import { getResource } from '@intabiafusion/platform'
-  import login from '@intabiafusion/login'
-  import { shouldSkipDocument, isEffectiveDocument } from '@intabiafusion/export'
+  } from '@hcengineering/core'
+  import { Card, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import { DropdownLabels, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import { getResource } from '@hcengineering/platform'
+  import login from '@hcengineering/login'
+  import { shouldSkipDocument, isEffectiveDocument } from '@hcengineering/export'
 
   import { createEventDispatcher } from 'svelte'
 

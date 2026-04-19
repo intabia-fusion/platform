@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import activity from '@intabiafusion/activity'
-import { type Channel } from '@intabiafusion/contact'
-import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@intabiafusion/core'
+import activity from '@hcengineering/activity'
+import { type Channel } from '@hcengineering/contact'
+import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@hcengineering/core'
 import {
   ArrOf,
   type Builder,
@@ -28,25 +28,25 @@ import {
   TypeString,
   TypeTimestamp,
   UX
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import contact from '@intabiafusion/model-contact'
-import core, { TAttachedDoc } from '@intabiafusion/model-core'
-import setting from '@intabiafusion/setting'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import contact from '@hcengineering/model-contact'
+import core, { TAttachedDoc } from '@hcengineering/model-core'
+import setting from '@hcengineering/setting'
 import {
   type NewTelegramMessage,
   type SharedTelegramMessage,
   type SharedTelegramMessages,
   type TelegramMessage,
   telegramIntegrationKind
-} from '@intabiafusion/telegram'
-import templates from '@intabiafusion/templates'
-import view from '@intabiafusion/view'
+} from '@hcengineering/telegram'
+import templates from '@hcengineering/templates'
+import view from '@hcengineering/view'
 
 import telegram from './plugin'
 import { defineNotifications } from './notification'
 
-export { telegramId } from '@intabiafusion/telegram'
+export { telegramId } from '@hcengineering/telegram'
 export { telegramOperation } from './migration'
 export { default } from './plugin'
 

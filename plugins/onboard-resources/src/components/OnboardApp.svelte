@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import login from '@intabiafusion/login'
-  import { getAccount } from '@intabiafusion/login-resources'
-  import { getMetadata, setMetadata } from '@intabiafusion/platform'
-  import presentation from '@intabiafusion/presentation'
+  import login from '@hcengineering/login'
+  import { getAccount } from '@hcengineering/login-resources'
+  import { getMetadata, setMetadata } from '@hcengineering/platform'
+  import presentation from '@hcengineering/presentation'
   import {
     Location,
     Popup,
@@ -27,8 +27,8 @@
     location,
     setMetadataLocalStorage,
     themeStore
-  } from '@intabiafusion/ui'
-  import workbench from '@intabiafusion/workbench'
+  } from '@hcengineering/ui'
+  import workbench from '@hcengineering/workbench'
   import { onDestroy, onMount } from 'svelte'
 
   import Auth from './Auth.svelte'

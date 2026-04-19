@@ -4,11 +4,11 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
   import { createEventDispatcher } from 'svelte'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { tooltip, capitalizeFirstLetter, type LabelAndProps } from '@intabiafusion/ui'
-  import { isCustomEmoji, type ExtendedEmoji } from '@intabiafusion/emoji'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { tooltip, capitalizeFirstLetter, type LabelAndProps } from '@hcengineering/ui'
+  import { isCustomEmoji, type ExtendedEmoji } from '@hcengineering/emoji'
   import { getEmojiSkins } from '../utils'
-  import { getBlobRef } from '@intabiafusion/presentation'
+  import { getBlobRef } from '@hcengineering/presentation'
 
   export let emoji: ExtendedEmoji
   export let selected: boolean = false

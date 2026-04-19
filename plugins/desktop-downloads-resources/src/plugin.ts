@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import desktopDownloads, { desktopDownloadsId } from '@intabiafusion/desktop-downloads'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import desktopDownloads, { desktopDownloadsId } from '@hcengineering/desktop-downloads'
 
 export default mergeIds(desktopDownloadsId, desktopDownloads, {
   component: {

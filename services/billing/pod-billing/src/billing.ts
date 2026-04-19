@@ -14,8 +14,8 @@
 //
 
 import type { Request, Response } from 'express'
-import { MeasureContext, Ref, Space, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
-import attachment from '@intabiafusion/attachment'
+import { MeasureContext, Ref, Space, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import attachment from '@hcengineering/attachment'
 import {
   LiveKitSessionData,
   BillingDB,
@@ -25,9 +25,9 @@ import {
   AiTranscriptData,
   AiTokensData
 } from './types'
-import { generateToken } from '@intabiafusion/server-token'
-import { StorageConfig } from '@intabiafusion/server-core'
-import { createDatalakeClient, DatalakeConfig, WorkspaceStats, WorkspaceStatsByType } from '@intabiafusion/datalake'
+import { generateToken } from '@hcengineering/server-token'
+import { StorageConfig } from '@hcengineering/server-core'
+import { createDatalakeClient, DatalakeConfig, WorkspaceStats, WorkspaceStatsByType } from '@hcengineering/datalake'
 import { validate as uuidValidate } from 'uuid'
 import { getClient } from './client'
 

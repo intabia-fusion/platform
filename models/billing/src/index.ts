@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { Model, UX, type Builder } from '@intabiafusion/model'
-import core, { TDoc } from '@intabiafusion/model-core'
-import { type IntlString } from '@intabiafusion/platform'
-import setting from '@intabiafusion/setting'
-import billing, { type Tier } from '@intabiafusion/billing'
-import { AccountRole, DOMAIN_MODEL } from '@intabiafusion/core'
-import presentation from '@intabiafusion/model-presentation'
-import workbench from '@intabiafusion/workbench'
+import { Model, UX, type Builder } from '@hcengineering/model'
+import core, { TDoc } from '@hcengineering/model-core'
+import { type IntlString } from '@hcengineering/platform'
+import setting from '@hcengineering/setting'
+import billing, { type Tier } from '@hcengineering/billing'
+import { AccountRole, DOMAIN_MODEL } from '@hcengineering/core'
+import presentation from '@hcengineering/model-presentation'
+import workbench from '@hcengineering/workbench'
 
-export { billingId } from '@intabiafusion/billing'
+export { billingId } from '@hcengineering/billing'
 export { billing as default }
 
 @Model(billing.class.Tier, core.class.Doc, DOMAIN_MODEL)

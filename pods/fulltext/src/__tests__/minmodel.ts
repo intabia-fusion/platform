@@ -32,11 +32,11 @@ import core, {
   type Tx,
   type TxCreateDoc,
   TxFactory
-} from '@intabiafusion/core'
-import type { IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import type { IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 
-import buildModel from '@intabiafusion/model-all'
+import buildModel from '@hcengineering/model-all'
 
 const txFactory = new TxFactory(core.account.System)
 

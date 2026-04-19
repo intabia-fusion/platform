@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { SortingOrder, toIdMap, type IdMap, type Ref, type StatusCategory } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import tracker, { type Issue, type Project } from '@intabiafusion/tracker'
+  import core, { SortingOrder, toIdMap, type IdMap, type Ref, type StatusCategory } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import tracker, { type Issue, type Project } from '@hcengineering/tracker'
   import {
     createFocusManager,
     deviceOptionsStore,
@@ -31,8 +31,8 @@
     showPanel,
     Spinner,
     type SelectPopupValueType
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { subIssueListProvider, type IssueRef } from '../../../utils'
   import RelatedIssuePresenter from './RelatedIssuePresenter.svelte'

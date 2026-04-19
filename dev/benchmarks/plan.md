@@ -150,7 +150,7 @@ Simultaneous access to multiple workspaces — tests transactor isolation and re
 
 ### 4. WebSocket Throughput (`04-ws-throughput.ts`)
 
-Same as REST but over persistent WebSocket connections using `connect()` from `@intabiafusion/api-client`.
+Same as REST but over persistent WebSocket connections using `connect()` from `@hcengineering/api-client`.
 
 **Parameters:**
 - `--clients` 1, 5, 10, 20, 50, 100

@@ -15,12 +15,12 @@
 
 <script lang="ts">
   import { createEventDispatcher, afterUpdate, onDestroy } from 'svelte'
-  import calendar, { AccessLevel, Calendar, generateEventId, getPrimaryCalendar } from '@intabiafusion/calendar'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { TagElement } from '@intabiafusion/tags'
-  import { Separator, defineSeparators, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import calendar, { AccessLevel, Calendar, generateEventId, getPrimaryCalendar } from '@hcengineering/calendar'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { Ref, getCurrentAccount } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { TagElement } from '@hcengineering/tags'
+  import { Separator, defineSeparators, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { ToDosMode } from '..'
   import PlanningCalendar from './PlanningCalendar.svelte'
   import ToDosNavigator from './ToDosNavigator.svelte'
@@ -28,8 +28,8 @@
   import { findPrimaryCalendar, timeSeparators } from '../utils'
   import { dragging } from '../dragging'
   import time from '../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { TimeEvents } from '@intabiafusion/time'
+  import { Analytics } from '@hcengineering/analytics'
+  import { TimeEvents } from '@hcengineering/time'
 
   const dispatch = createEventDispatcher()
 

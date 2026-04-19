@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { showPopup, StatusBarButton } from '@intabiafusion/ui'
+  import { showPopup, StatusBarButton } from '@hcengineering/ui'
   import FileDownloadStatusPopup from './FileDownloadStatusPopup.svelte'
   import IconDownloadProgress from './icons/DownloadProgress.svelte'
   import { downloads, progress } from '../store'

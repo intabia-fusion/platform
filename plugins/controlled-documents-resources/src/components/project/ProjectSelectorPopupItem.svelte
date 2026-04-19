@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Project } from '@intabiafusion/controlled-documents'
+  import { Project } from '@hcengineering/controlled-documents'
 
   export let project: Project
   export let onClick: () => void

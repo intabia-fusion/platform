@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, getCurrentAccount } from '@intabiafusion/core'
-  import { Scroller, Label } from '@intabiafusion/ui'
-  import { SpecialNavModel } from '@intabiafusion/workbench'
-  import { NavLink } from '@intabiafusion/view-resources'
-  import { TreeSeparator } from '@intabiafusion/workbench-resources'
-  import { Chat } from '@intabiafusion/chunter'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { Doc, getCurrentAccount } from '@hcengineering/core'
+  import { Scroller, Label } from '@hcengineering/ui'
+  import { SpecialNavModel } from '@hcengineering/workbench'
+  import { NavLink } from '@hcengineering/view-resources'
+  import { TreeSeparator } from '@hcengineering/workbench-resources'
+  import { Chat } from '@hcengineering/chunter'
+  import { createQuery } from '@hcengineering/presentation'
 
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'

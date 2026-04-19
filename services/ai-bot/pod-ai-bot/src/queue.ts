@@ -15,8 +15,8 @@
 //
 import cors from 'cors'
 import express from 'express'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient, { withRetry } from '@intabiafusion/server-client'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient, { withRetry } from '@hcengineering/server-client'
 import {
   ConsumerControl,
   ConsumerHandle,
@@ -26,14 +26,14 @@ import {
   QueueTopic,
   QueueWorkspaceEvent,
   QueueWorkspaceMessage
-} from '@intabiafusion/server-core'
-import serverToken, { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import { AIEventRequest } from '@intabiafusion/ai-bot'
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { newMetrics, type SocialId, type WorkspaceUuid } from '@intabiafusion/core'
-import { getPlatformQueue } from '@intabiafusion/kafka'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { AIEventRequest } from '@hcengineering/ai-bot'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { newMetrics, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import { updateDeepgramBilling } from './billing'
 import config from './config'
@@ -45,7 +45,7 @@ import { createTranscriptionsSupport } from './transcriptions'
 import { TranscriptionTask } from './types'
 import { getAccountUuid } from './utils/account'
 import { ClisrServer } from '@intabiafusion/clisr'
-import { QueueMeetingEvent, QueueMeetingMessage } from '@intabiafusion/love'
+import { QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
 
 export const startQueue = async (): Promise<void> => {
   setMetadata(serverToken.metadata.Secret, config.ServerSecret)

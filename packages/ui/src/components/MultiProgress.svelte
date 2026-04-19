@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { themeStore } from '@intabiafusion/theme'
+  import { themeStore } from '@hcengineering/theme'
   import { getPlatformColor } from '../colors'
   export let values: Progress[]
   export let min: number = 0

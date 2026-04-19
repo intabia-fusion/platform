@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import activity, { ActivityMessage, Reaction } from '@intabiafusion/activity'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { showPopup } from '@intabiafusion/ui'
-  import { SortingOrder } from '@intabiafusion/core'
-  import emojiPlugin from '@intabiafusion/emoji'
+  import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { showPopup } from '@hcengineering/ui'
+  import { SortingOrder } from '@hcengineering/core'
+  import emojiPlugin from '@hcengineering/emoji'
 
   import { updateDocReactions } from '../../utils'
 

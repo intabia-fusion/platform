@@ -10,8 +10,8 @@ import {
   mergeSpecifiedPersons,
   mergeSpecifiedAccounts,
   createAccount
-} from '@intabiafusion/account'
-import { getFirstName, getLastName } from '@intabiafusion/contact'
+} from '@hcengineering/account'
+import { getFirstName, getLastName } from '@hcengineering/contact'
 import {
   systemAccountUuid,
   type BackupClient,
@@ -31,8 +31,8 @@ import {
   generateUuid,
   type WorkspaceMode,
   type Tx
-} from '@intabiafusion/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@intabiafusion/mongo'
+} from '@hcengineering/core'
+import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
 import {
   convertDoc,
   createTables,
@@ -41,31 +41,31 @@ import {
   retryTxn,
   translateDomain,
   setDBExtraOptions
-} from '@intabiafusion/postgres'
-import { type DBDoc } from '@intabiafusion/postgres/types/utils'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { connect, sendTransactorEvent } from '@intabiafusion/server-tool'
+} from '@hcengineering/postgres'
+import { type DBDoc } from '@hcengineering/postgres/types/utils'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { connect, sendTransactorEvent } from '@hcengineering/server-tool'
 import {
   type MongoAccountDB as v6MongoAccountDB,
   type Account as OldAccount,
   type Workspace as OldWorkspace
-} from '@intabiafusion/account-service'
+} from '@hcengineering/account-service'
 import { type MongoClient } from 'mongodb'
 import type postgres from 'postgres'
 import { type Row } from 'postgres'
 import { getToolToken } from './utils'
-import { type BackupStorage, createFileBackupStorage, restore } from '@intabiafusion/server-backup'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
-import { getPlatformQueue } from '@intabiafusion/kafka'
+import { type BackupStorage, createFileBackupStorage, restore } from '@hcengineering/server-backup'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import { getPlatformQueue } from '@hcengineering/kafka'
 import {
   type Pipeline,
   QueueTopic,
   type QueueWorkspaceMessage,
   type StorageAdapter,
   workspaceEvents
-} from '@intabiafusion/server-core'
-import { createBackupPipeline, createEmptyBroadcastOps } from '@intabiafusion/server-pipeline'
+} from '@hcengineering/server-core'
+import { createBackupPipeline, createEmptyBroadcastOps } from '@hcengineering/server-pipeline'
 
 export async function moveFromMongoToPG (
   accountDb: AccountDB,

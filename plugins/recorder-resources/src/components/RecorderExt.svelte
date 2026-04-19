@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import { Icon, tooltip } from '@intabiafusion/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import { Icon, tooltip } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
 
   import IconRec from './icons/Rec.svelte'

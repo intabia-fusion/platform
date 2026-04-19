@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 import { isTextStylingEnabled, openBackgroundColorOptions, openTextColorOptions } from './components/extension/colors'
 import { downloadImage, expandImage, moreImageActions, openImage } from './components/extension/imageExt'
 import { createInlineComment, shouldShowCreateInlineCommentAction } from './components/extension/inlineComment'
@@ -44,7 +44,7 @@ export { SmartPasteExtension as TransformPastedContentExtension } from './compon
 export { getReferenceFromUrl, getReferenceLabel, getTargetObjectFromUrl } from './components/extension/reference'
 export { TodoItemExtension, TodoListExtension } from './components/extension/todo/todo'
 
-export * from '@intabiafusion/presentation/src/types'
+export * from '@hcengineering/presentation/src/types'
 export { default as Collaboration } from './components/Collaboration.svelte'
 export { default as CollaborationDiffViewer } from './components/CollaborationDiffViewer.svelte'
 export { default as CollaborativeAttributeBox } from './components/CollaborativeAttributeBox.svelte'

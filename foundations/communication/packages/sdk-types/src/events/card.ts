@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { CardID, CardType, SocialID } from '@intabiafusion/communication-types'
+import type { CardID, CardType, SocialID } from '@hcengineering/communication-types'
 
 import type { BaseEvent } from './common'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type DownloadItem } from '@intabiafusion/desktop-downloads'
+import { type DownloadItem } from '@hcengineering/desktop-downloads'
 import { updateDownloadItem } from './store'
 
 export async function handleDownloadItem (item: DownloadItem): Promise<void> {

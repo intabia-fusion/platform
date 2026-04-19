@@ -34,9 +34,9 @@
     defineSeparators,
     twoPanelsSeparators,
     resizeObserver
-  } from '@intabiafusion/ui'
-  import { Doc, DocumentQuery, Ref, Space, mergeQueries } from '@intabiafusion/core'
-  import { IntlString, Asset } from '@intabiafusion/platform'
+  } from '@hcengineering/ui'
+  import { Doc, DocumentQuery, Ref, Space, mergeQueries } from '@hcengineering/core'
+  import { IntlString, Asset } from '@hcengineering/platform'
 
   export let space: Ref<Space> | undefined = undefined
   export let navigationComponent: AnyComponent

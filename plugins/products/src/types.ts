@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Document, ExternalSpace, Project } from '@intabiafusion/controlled-documents'
-import { Attachment } from '@intabiafusion/attachment'
-import { type CollectionSize, type Ref, Markup } from '@intabiafusion/core'
-import { IconProps } from '@intabiafusion/view'
+import { type Document, ExternalSpace, Project } from '@hcengineering/controlled-documents'
+import { Attachment } from '@hcengineering/attachment'
+import { type CollectionSize, type Ref, Markup } from '@hcengineering/core'
+import { IconProps } from '@hcengineering/view'
 
 /** @public */
 export enum ProductVersionState {

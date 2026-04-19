@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconSearch, StatusBarButton, showPopup } from '@intabiafusion/ui'
+  import { IconSearch, StatusBarButton, showPopup } from '@hcengineering/ui'
   import ActionsPopup from './ActionsPopup.svelte'
 
   function openPopup (): void {

@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Assessment, Question, QuestionDataOf } from '@intabiafusion/questions'
-import type { Class, Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
+import type { Assessment, Question, QuestionDataOf } from '@hcengineering/questions'
+import type { Class, Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 import questions from '../plugin'
 
 export function isAssessmentClassRef<Q extends Question<any>, A extends Assessment<QuestionDataOf<Q>, any>> (

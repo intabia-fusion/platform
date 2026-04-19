@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
-  import { IdMap, Ref, Timestamp } from '@intabiafusion/core'
-  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
-  import { ToDo, WorkSlot } from '@intabiafusion/time'
-  import { Label, Scroller, areDatesEqual, ticker } from '@intabiafusion/ui'
+  import { Event } from '@hcengineering/calendar'
+  import { IdMap, Ref, Timestamp } from '@hcengineering/core'
+  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import { Label, Scroller, areDatesEqual, ticker } from '@hcengineering/ui'
   import time from '../../../plugin'
   import PlanGroup from './PlanGroup.svelte'
 

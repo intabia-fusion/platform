@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/communication-sdk-types
+# Change Log - @hcengineering/communication-sdk-types
 
 This log was last generated on Mon, 27 Oct 2025 16:28:25 GMT and should not be manually modified.
 

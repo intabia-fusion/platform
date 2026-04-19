@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Builder, Mixin } from '@intabiafusion/model'
-import core, { TClass } from '@intabiafusion/model-core'
-import converter, { type MarkdownValueFormatter, type ValueFormatter } from '@intabiafusion/converter'
-import type { Resource } from '@intabiafusion/platform'
+import { type Builder, Mixin } from '@hcengineering/model'
+import core, { TClass } from '@hcengineering/model-core'
+import converter, { type MarkdownValueFormatter, type ValueFormatter } from '@hcengineering/converter'
+import type { Resource } from '@hcengineering/platform'
 
-export { converterId } from '@intabiafusion/converter'
+export { converterId } from '@hcengineering/converter'
 
 @Mixin(converter.mixin.MarkdownValueFormatter, core.class.Class)
 export class TMarkdownValueFormatter extends TClass implements MarkdownValueFormatter {

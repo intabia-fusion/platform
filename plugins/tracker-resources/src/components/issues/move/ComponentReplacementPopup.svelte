@@ -15,10 +15,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { Component } from '@intabiafusion/tracker'
+  import { Component } from '@hcengineering/tracker'
   import tracker from '../../../plugin'
-  import { Ref } from '@intabiafusion/core'
-  import { Icon, IconCheck, Label, Scroller } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Icon, IconCheck, Label, Scroller } from '@hcengineering/ui'
   import ComponentPresenter from '../../components/ComponentPresenter.svelte'
 
   export let components: Component[] | undefined

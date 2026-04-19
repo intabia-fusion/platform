@@ -25,18 +25,18 @@
   import { lkSessionConnected } from '../../liveKitClient'
   import { isFullScreen, liveKitClient } from '../../utils'
   import { onDestroy, onMount } from 'svelte'
-  import ui, { location, navigate, Location, Button, ticker, formatDuration, themeStore } from '@intabiafusion/ui'
-  import { getMetadata, getResource, IntlString } from '@intabiafusion/platform'
-  import login from '@intabiafusion/login'
+  import ui, { location, navigate, Location, Button, ticker, formatDuration, themeStore } from '@hcengineering/ui'
+  import { getMetadata, getResource, IntlString } from '@hcengineering/platform'
+  import login from '@hcengineering/login'
 
   import love from '../../plugin'
-  import { MeetingMinutes, MeetingStatus } from '@intabiafusion/love'
-  import { workbenchId } from '@intabiafusion/workbench'
+  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+  import { workbenchId } from '@hcengineering/workbench'
   import GuestControlBar from './GuestControlBar.svelte'
-  import { Ref, Timestamp, WorkspaceUuid } from '@intabiafusion/core'
+  import { Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
 
-  import { LoginAppBase, loginTheme, Label } from '@intabiafusion/login-resources'
-  import loginResources from '@intabiafusion/login-resources/src/plugin'
+  import { LoginAppBase, loginTheme, Label } from '@hcengineering/login-resources'
+  import loginResources from '@hcengineering/login-resources/src/plugin'
 
   import { type Room as LKRoom, RoomEvent, type RemoteParticipant } from 'livekit-client'
 

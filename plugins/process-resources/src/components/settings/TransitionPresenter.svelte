@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Transition } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Transition } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
 
   export let transition: Transition

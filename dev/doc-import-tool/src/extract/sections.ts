@@ -1,5 +1,5 @@
 import { type Document } from 'domhandler'
-import { type Markup } from '@intabiafusion/core'
+import { type Markup } from '@hcengineering/core'
 
 import { type GenericNodeSpec, NodeType, type SectionSpec, SectionType, type TocSectionSpec } from './types'
 import { type AnyContainer, createNodeExtractor } from './nodes'

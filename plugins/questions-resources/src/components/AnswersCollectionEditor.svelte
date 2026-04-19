@@ -2,10 +2,10 @@
   Copyright @ 2024 Hardcore Engineering Inc.
 -->
 <script lang="ts">
-  import type { Answer, AnswerDataOf, Question } from '@intabiafusion/questions'
-  import { type Class, type Doc, type Ref, SortingOrder } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Label } from '@intabiafusion/ui'
+  import type { Answer, AnswerDataOf, Question } from '@hcengineering/questions'
+  import { type Class, type Doc, type Ref, SortingOrder } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
   import questions from '../plugin'
   import { createAnswer } from '../utils'
   import AnswersItemEditor from './AnswersItemEditor.svelte'

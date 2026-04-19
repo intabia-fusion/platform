@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import core, { AccountUuid, Ref, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
-import contact, { Employee, Person } from '@intabiafusion/contact'
-import chunter, { DirectMessage } from '@intabiafusion/chunter'
-import { aiBotEmailSocialKey } from '@intabiafusion/ai-bot'
-import { createRestClient, RestClient } from '@intabiafusion/api-client'
+import core, { AccountUuid, Ref, TxOperations, WorkspaceUuid } from '@hcengineering/core'
+import contact, { Employee, Person } from '@hcengineering/contact'
+import chunter, { DirectMessage } from '@hcengineering/chunter'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
+import { createRestClient, RestClient } from '@hcengineering/api-client'
 
 export function connectPlatform (token: string, workspaceId: WorkspaceUuid, endpoint: string): RestClient {
   return createRestClient(endpoint, workspaceId, token)

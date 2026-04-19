@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import testManagement, { type TestRun, type TestCase, TestRunStatus } from '@intabiafusion/test-management'
+import { type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import testManagement, { type TestRun, type TestCase, TestRunStatus } from '@hcengineering/test-management'
 
 export async function getTestCases (objectId: Ref<TestRun>): Promise<TestCase[]> {
   if (objectId === undefined) {

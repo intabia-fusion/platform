@@ -12,16 +12,16 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import cardPlugin, { Card } from '@intabiafusion/card'
-  import { CardID, Label as CardLabel, Message, MessageType } from '@intabiafusion/communication-types'
-  import { SortingOrder, WithLookup } from '@intabiafusion/core'
-  import { createMessagesQuery } from '@intabiafusion/presentation'
+  import cardPlugin, { Card } from '@hcengineering/card'
+  import { CardID, Label as CardLabel, Message, MessageType } from '@hcengineering/communication-types'
+  import { SortingOrder, WithLookup } from '@hcengineering/core'
+  import { createMessagesQuery } from '@hcengineering/presentation'
 
-  import chat from '@intabiafusion/chat'
-  import { ExtendedMessagePreview, labelsStore } from '@intabiafusion/communication-resources'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, showMenu } from '@intabiafusion/view-resources'
+  import chat from '@hcengineering/chat'
+  import { ExtendedMessagePreview, labelsStore } from '@hcengineering/communication-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@hcengineering/ui'
+  import { DocNavLink, showMenu } from '@hcengineering/view-resources'
 
   import CardPathPresenter from './CardPathPresenter.svelte'
   import CardTagsColored from './CardTagsColored.svelte'

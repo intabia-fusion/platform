@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { grammars } from '@intabiafusion/highlight'
-import { backtickInputRegex, codeBlockOptions, tildeInputRegex } from '@intabiafusion/text'
-import { DropdownLabelsPopup, getEventPositionElement, showPopup } from '@intabiafusion/ui'
+import { grammars } from '@hcengineering/highlight'
+import { backtickInputRegex, codeBlockOptions, tildeInputRegex } from '@hcengineering/text'
+import { DropdownLabelsPopup, getEventPositionElement, showPopup } from '@hcengineering/ui'
 import { isActive, textblockTypeInputRule } from '@tiptap/core'
 import { type CodeBlockLowlightOptions, CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { type Node as ProseMirrorNode } from '@tiptap/pm/model'

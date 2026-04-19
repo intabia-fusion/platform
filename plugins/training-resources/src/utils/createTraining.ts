@@ -2,10 +2,10 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { type Training, trainingPrefix, TrainingState } from '@intabiafusion/training'
-import { type Doc, type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import { navigate } from '@intabiafusion/ui'
+import { type Training, trainingPrefix, TrainingState } from '@hcengineering/training'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import { navigate } from '@hcengineering/ui'
 import training from '../plugin'
 import { trainingRoute } from '../routing/routes/trainingRoute'
 import { canCreateTraining } from './canCreateTraining'

@@ -24,8 +24,8 @@
     eventToHTMLElement,
     getUserTimezone,
     showPopup
-  } from '@intabiafusion/ui'
-  import { FixedColumn } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import DateLocalePresenter from './DateLocalePresenter.svelte'
 

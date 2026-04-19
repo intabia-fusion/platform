@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { TaskTypeKind } from '@intabiafusion/task'
-  import { Label, ButtonMenu } from '@intabiafusion/ui'
+  import { TaskTypeKind } from '@hcengineering/task'
+  import { Label, ButtonMenu } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import IconLayers from '../icons/Layers.svelte'
   import IconLayerTop from '../icons/LayerTop.svelte'

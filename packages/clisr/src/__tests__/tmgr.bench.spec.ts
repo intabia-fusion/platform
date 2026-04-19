@@ -1,7 +1,7 @@
 /* eslint-env jest */
 // Benchmark: 1 TMGR server, 5 clients, 1ms executor, measure ops/sec and memory.
 
-import { MeasureMetricsContext } from '@intabiafusion/measurements'
+import { MeasureMetricsContext } from '@hcengineering/measurements'
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../client'
 

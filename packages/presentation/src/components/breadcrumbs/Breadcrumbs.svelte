@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component, SelectPopup, showPopup } from '@intabiafusion/ui'
-  import type { MouseTargetEvent } from '@intabiafusion/ui'
+  import { Component, SelectPopup, showPopup } from '@hcengineering/ui'
+  import type { MouseTargetEvent } from '@hcengineering/ui'
   import { NavLink } from '../..'
   import { BreadcrumbsModel } from './types'
   import { hasComponent } from './utils'

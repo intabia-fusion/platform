@@ -14,9 +14,9 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import love, { type MeetingMinutes } from '@intabiafusion/love'
-  import { Icon } from '@intabiafusion/ui'
+  import { WithLookup } from '@hcengineering/core'
+  import love, { type MeetingMinutes } from '@hcengineering/love'
+  import { Icon } from '@hcengineering/ui'
 
   export let value: WithLookup<MeetingMinutes>
 </script>

@@ -10,7 +10,7 @@
   "projectFolderMaxDepth": 2,
   "gitPolicy": {},
   "repository": {
-    "url": "https://github.com/intabia-fusion/foundation",
+    "url": "https://github.com/hcengineering/communication",
     "defaultBranch": "main",
     "defaultRemote": "origin"
   },
@@ -25,47 +25,47 @@
   "variants": [],
   "projects": [
     {
-      "packageName": "@intabiafusion/scripts",
+      "packageName": "@hcengineering/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
     {
-      "packageName": "@intabiafusion/communication-types",
+      "packageName": "@hcengineering/communication-types",
       "projectFolder": "packages/types",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-sdk-types",
+      "packageName": "@hcengineering/communication-sdk-types",
       "projectFolder": "packages/sdk-types",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-shared",
+      "packageName": "@hcengineering/communication-shared",
       "projectFolder": "packages/shared",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-rest-client",
+      "packageName": "@hcengineering/communication-rest-client",
       "projectFolder": "packages/rest-client",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-cockroach",
+      "packageName": "@hcengineering/communication-cockroach",
       "projectFolder": "packages/cockroach",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-server",
+      "packageName": "@hcengineering/communication-server",
       "projectFolder": "packages/server",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-query",
+      "packageName": "@hcengineering/communication-query",
       "projectFolder": "packages/query",
       "shouldPublish": true
     },
     {
-      "packageName": "@intabiafusion/communication-client-query",
+      "packageName": "@hcengineering/communication-client-query",
       "projectFolder": "packages/client-query",
       "shouldPublish": true
     }

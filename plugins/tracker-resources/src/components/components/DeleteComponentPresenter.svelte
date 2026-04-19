@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import view from '@intabiafusion/view'
-  import { Button, ButtonSize, ButtonKind, LabelAndProps, showPopup } from '@intabiafusion/ui'
-  import { getClient, MessageBox } from '@intabiafusion/presentation'
-  import type { Component } from '@intabiafusion/tracker'
+  import view from '@hcengineering/view'
+  import { Button, ButtonSize, ButtonKind, LabelAndProps, showPopup } from '@hcengineering/ui'
+  import { getClient, MessageBox } from '@hcengineering/presentation'
+  import type { Component } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
 

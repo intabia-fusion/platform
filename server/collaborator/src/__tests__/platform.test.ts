@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid } from '@intabiafusion/core'
+import { systemAccountUuid } from '@hcengineering/core'
 // Mock config before importing platform
 import { simpleClientFactory, Controller, WorkspaceClient } from '../platform'
 
@@ -21,22 +21,22 @@ jest.mock('../config', () => ({
   AccountsUrl: 'http://test-accounts:3000'
 }))
 
-jest.mock('@intabiafusion/server-client', () => ({
+jest.mock('@hcengineering/server-client', () => ({
   createClient: jest.fn(),
   getTransactorEndpoint: jest.fn()
 }))
 
-jest.mock('@intabiafusion/account-client', () => ({
+jest.mock('@hcengineering/account-client', () => ({
   getClient: jest.fn()
 }))
 
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn()
 }))
 
-const mockGetTransactorEndpoint = jest.requireMock('@intabiafusion/server-client').getTransactorEndpoint
-const mockCreateClient = jest.requireMock('@intabiafusion/server-client').createClient
-const mockGenerateToken = jest.requireMock('@intabiafusion/server-token').generateToken
+const mockGetTransactorEndpoint = jest.requireMock('@hcengineering/server-client').getTransactorEndpoint
+const mockCreateClient = jest.requireMock('@hcengineering/server-client').createClient
+const mockGenerateToken = jest.requireMock('@hcengineering/server-token').generateToken
 
 describe('platform', () => {
   beforeEach(() => {

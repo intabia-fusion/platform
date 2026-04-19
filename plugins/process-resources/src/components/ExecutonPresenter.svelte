@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Execution } from '@intabiafusion/process'
+  import { WithLookup } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Execution } from '@hcengineering/process'
   import ErrorPresenter from './ErrorPresenter.svelte'
   import { continueExecution } from '../utils'
-  import { showPopup } from '@intabiafusion/ui'
+  import { showPopup } from '@hcengineering/ui'
   import ExecutionDetails from './ExecutionDetails.svelte'
 
   export let value: WithLookup<Execution>

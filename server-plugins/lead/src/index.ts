@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { Presenter } from '@intabiafusion/server-activity'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public

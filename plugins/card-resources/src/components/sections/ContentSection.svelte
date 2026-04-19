@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { Heading } from '@intabiafusion/text-editor'
+  import { Card } from '@hcengineering/card'
+  import { Heading } from '@hcengineering/text-editor'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import Content from '../Content.svelte'
   import { CardSectionAction } from '../../types'
-  import { permissionsStore } from '@intabiafusion/contact-resources'
-  import { canChangeDoc } from '@intabiafusion/view-resources'
-  import { getClient } from '@intabiafusion/presentation'
+  import { permissionsStore } from '@hcengineering/contact-resources'
+  import { canChangeDoc } from '@hcengineering/view-resources'
+  import { getClient } from '@hcengineering/presentation'
 
   export let readonly: boolean = false
   export let doc: Card

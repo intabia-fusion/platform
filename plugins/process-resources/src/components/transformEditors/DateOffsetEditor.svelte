@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/presentation'
+  import { Card } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
-  import ui, { DropdownIntlItem, DropdownLabelsIntl, NumberInput } from '@intabiafusion/ui'
+  import ui, { DropdownIntlItem, DropdownLabelsIntl, NumberInput } from '@hcengineering/ui'
 
   export let props: Record<string, any>
 

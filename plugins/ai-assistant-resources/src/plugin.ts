@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
 
-import aiAssistant, { aiAssistantId } from '@intabiafusion/ai-assistant'
+import aiAssistant, { aiAssistantId } from '@hcengineering/ai-assistant'
 
 export default mergeIds(aiAssistantId, aiAssistant, {
   string: {

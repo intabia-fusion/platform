@@ -12,8 +12,8 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { ActivityNotificationViewlet, DisplayInboxNotification } from '@intabiafusion/notification'
+  import { Doc } from '@hcengineering/core'
+  import { ActivityNotificationViewlet, DisplayInboxNotification } from '@hcengineering/notification'
   import { createEventDispatcher } from 'svelte'
 
   import NotificationTemplate from '../NotificationTemplate.svelte'

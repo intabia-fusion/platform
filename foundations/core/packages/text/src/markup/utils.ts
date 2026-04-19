@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { Markup } from '@intabiafusion/core'
+import { Markup } from '@hcengineering/core'
 import { Editor, Extensions, getSchema } from '@tiptap/core'
 import { generateHTML, generateJSON } from '@tiptap/html'
 import { Node as ProseMirrorNode, Schema } from '@tiptap/pm/model'
 
-import { MarkupNode, jsonToMarkup } from '@intabiafusion/text-core'
+import { MarkupNode, jsonToMarkup } from '@hcengineering/text-core'
 import { defaultExtensions } from '../extensions'
 
 /** @public */

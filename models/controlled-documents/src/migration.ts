@@ -2,7 +2,7 @@
 // Copyright @ 2022-2023 Hardcore Engineering Inc.
 //
 
-import attachment, { type Attachment } from '@intabiafusion/attachment'
+import attachment, { type Attachment } from '@hcengineering/attachment'
 import {
   loadCollabYdoc,
   saveCollabYdoc,
@@ -10,7 +10,7 @@ import {
   YXmlElement,
   yXmlElementClone,
   YXmlText
-} from '@intabiafusion/collaboration'
+} from '@hcengineering/collaboration'
 import {
   type ChangeControl,
   type ControlledDocument,
@@ -23,7 +23,7 @@ import {
   documentsId,
   DocumentState,
   type ProjectMeta
-} from '@intabiafusion/controlled-documents'
+} from '@hcengineering/controlled-documents'
 import {
   type Class,
   type Data,
@@ -36,7 +36,7 @@ import {
   SortingOrder,
   toIdMap,
   TxOperations
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   createDefaultSpace,
   createOrUpdate,
@@ -47,16 +47,16 @@ import {
   type MigrationUpgradeClient,
   tryMigrate,
   tryUpgrade
-} from '@intabiafusion/model'
-import { DOMAIN_ATTACHMENT } from '@intabiafusion/model-attachment'
-import core from '@intabiafusion/model-core'
-import tags from '@intabiafusion/tags'
+} from '@hcengineering/model'
+import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import core from '@hcengineering/model-core'
+import tags from '@hcengineering/tags'
 
-import { compareDocumentVersions } from '@intabiafusion/controlled-documents/src'
-import { makeRank } from '@intabiafusion/rank'
+import { compareDocumentVersions } from '@hcengineering/controlled-documents/src'
+import { makeRank } from '@hcengineering/rank'
 import documents, { DOMAIN_DOCUMENTS } from './index'
-import { DOMAIN_REQUEST } from '@intabiafusion/model-request'
-import { RequestStatus } from '@intabiafusion/request'
+import { DOMAIN_REQUEST } from '@hcengineering/model-request'
+import { RequestStatus } from '@hcengineering/request'
 
 async function createTemplatesSpace (tx: TxOperations): Promise<void> {
   const existingSpace = await tx.findOne(documents.class.DocumentSpace, {

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import desktopPreferences from '@intabiafusion/desktop-preferences'
+import { loadMetadata } from '@hcengineering/platform'
+import desktopPreferences from '@hcengineering/desktop-preferences'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(desktopPreferences.icon, {

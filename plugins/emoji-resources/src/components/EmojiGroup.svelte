@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import plugin, { Label, Lazy } from '@intabiafusion/ui'
+  import plugin, { Label, Lazy } from '@hcengineering/ui'
   import EmojiGroupPalette from './EmojiGroupPalette.svelte'
-  import { EmojiWithGroup } from '@intabiafusion/emoji'
+  import { EmojiWithGroup } from '@hcengineering/emoji'
   import { EmojiCategory } from '../types'
   import { resultEmojis } from '../store'
-  import { Ref, Blob } from '@intabiafusion/core'
+  import { Ref, Blob } from '@hcengineering/core'
 
   export let group: EmojiCategory
   export let lazy: boolean = true

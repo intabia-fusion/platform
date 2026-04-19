@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { ChannelItem } from '@intabiafusion/contact'
-import { AttachedDoc, Class, Doc, IntegrationKind, Ref, Timestamp } from '@intabiafusion/core'
-import { MessageNotificationType, NotificationProvider } from '@intabiafusion/notification'
-import type { Asset, IntlString, Metadata, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { Handler, IntegrationType } from '@intabiafusion/setting'
-import { TemplateField } from '@intabiafusion/templates'
-import type { AnyComponent } from '@intabiafusion/ui'
+import { ChannelItem } from '@hcengineering/contact'
+import { AttachedDoc, Class, Doc, IntegrationKind, Ref, Timestamp } from '@hcengineering/core'
+import { MessageNotificationType, NotificationProvider } from '@hcengineering/notification'
+import type { Asset, IntlString, Metadata, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { Handler, IntegrationType } from '@hcengineering/setting'
+import { TemplateField } from '@hcengineering/templates'
+import type { AnyComponent } from '@hcengineering/ui'
 
 /**
  * @public

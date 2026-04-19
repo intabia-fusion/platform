@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import activity from '@intabiafusion/activity'
-import communication from '@intabiafusion/communication'
+import activity from '@hcengineering/activity'
+import communication from '@hcengineering/communication'
 import {
   type CanCreateCardResource,
   type Card,
@@ -32,8 +32,8 @@ import {
   type PermissionObjectClass,
   type Role,
   type Tag
-} from '@intabiafusion/card'
-import chunter from '@intabiafusion/chunter'
+} from '@hcengineering/card'
+import chunter from '@hcengineering/chunter'
 import core, {
   AccountRole,
   type Blobs,
@@ -49,7 +49,7 @@ import core, {
   type Rank,
   type Ref,
   SortingOrder
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ArrOf,
   type Builder,
@@ -66,28 +66,28 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import { TRole as TBaseRole, TClass, TDoc, TMixin, TTypedSpace, defineCollaborators } from '@intabiafusion/model-core'
-import { createPublicLinkAction } from '@intabiafusion/model-guest'
-import preference, { TPreference } from '@intabiafusion/model-preference'
-import presentation from '@intabiafusion/model-presentation'
-import setting from '@intabiafusion/model-setting'
-import view, { type Viewlet } from '@intabiafusion/model-view'
-import workbench, { WidgetType } from '@intabiafusion/model-workbench'
-import converter from '@intabiafusion/converter'
-import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@intabiafusion/platform'
-import time, { type ToDo } from '@intabiafusion/time'
-import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import { type BuildModelKey } from '@intabiafusion/view'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import { TRole as TBaseRole, TClass, TDoc, TMixin, TTypedSpace, defineCollaborators } from '@hcengineering/model-core'
+import { createPublicLinkAction } from '@hcengineering/model-guest'
+import preference, { TPreference } from '@hcengineering/model-preference'
+import presentation from '@hcengineering/model-presentation'
+import setting from '@hcengineering/model-setting'
+import view, { type Viewlet } from '@hcengineering/model-view'
+import workbench, { WidgetType } from '@hcengineering/model-workbench'
+import converter from '@hcengineering/converter'
+import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@hcengineering/platform'
+import time, { type ToDo } from '@hcengineering/time'
+import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type BuildModelKey } from '@hcengineering/view'
 import { createActions } from './actions'
 import { definePermissions } from './permissions'
 import card from './plugin'
-import notification, { type NotificationGroup } from '@intabiafusion/notification'
-import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 
-export { cardId } from '@intabiafusion/card'
+export { cardId } from '@hcengineering/card'
 
 @Model(card.class.MasterTag, core.class.Class)
 export class TMasterTag extends TClass implements MasterTag {

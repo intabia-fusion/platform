@@ -12,9 +12,9 @@ import {
   type NetworkAgent,
   type NetworkWithClients,
   type TickManager
-} from '@intabiafusion/network-core'
-import { BackRPCServer, type BackRPCResponseSend, type BackRPCServerHandler } from '@intabiafusion/network-backrpc'
-import { opNames } from '@intabiafusion/network-client'
+} from '@hcengineering/network-core'
+import { BackRPCServer, type BackRPCResponseSend, type BackRPCServerHandler } from '@hcengineering/network-backrpc'
+import { opNames } from '@hcengineering/network-client'
 
 class AgentCallbackHandler implements NetworkAgent {
   constructor (

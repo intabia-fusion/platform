@@ -12,7 +12,7 @@ import {
   WorkspaceInfo,
   AccountInfo,
   IntegrationKind
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 export interface LoginInfo {
   account: AccountUuid

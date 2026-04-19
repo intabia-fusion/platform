@@ -19,7 +19,7 @@ import {
   DocumentState,
   type Project,
   type ProjectDocument
-} from '@intabiafusion/controlled-documents'
+} from '@hcengineering/controlled-documents'
 import {
   checkPermission,
   type Class,
@@ -29,11 +29,11 @@ import {
   type Ref,
   type RelatedDocument,
   type WithLookup
-} from '@intabiafusion/core'
-import { type Resources } from '@intabiafusion/platform'
-import { getClient, MessageBox, type ObjectSearchResult } from '@intabiafusion/presentation'
-import { showPopup } from '@intabiafusion/ui'
-import { getCurrentEmployee } from '@intabiafusion/contact'
+} from '@hcengineering/core'
+import { type Resources } from '@hcengineering/platform'
+import { getClient, MessageBox, type ObjectSearchResult } from '@hcengineering/presentation'
+import { showPopup } from '@hcengineering/ui'
+import { getCurrentEmployee } from '@hcengineering/contact'
 
 import CreateDocument from './components/CreateDocument.svelte'
 import DeleteCategoryPopup from './components/category/popups/DeleteCategoryPopup.svelte'
@@ -81,7 +81,7 @@ import ProjectPresenter from './components/project/ProjectPresenter.svelte'
 import ProjectRefPresenter from './components/project/ProjectRefPresenter.svelte'
 import Projects from './components/project/Projects.svelte'
 
-import { getPrintBaseURL } from '@intabiafusion/print'
+import { getPrintBaseURL } from '@hcengineering/print'
 import CreateFolder from './components/create-doc/CreateFolder.svelte'
 import TransferDocumentPopup from './components/document/popups/TransferDocumentPopup.svelte'
 import { resolveLocation } from './navigation'

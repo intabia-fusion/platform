@@ -16,12 +16,12 @@
 -->
 
 <script lang="ts">
-  import { CollaborationUser } from '@intabiafusion/text-editor'
-  import { IconSize } from '@intabiafusion/ui'
+  import { CollaborationUser } from '@hcengineering/text-editor'
+  import { IconSize } from '@hcengineering/ui'
 
   import { getPersonByPersonIdCb } from '../utils'
   import Avatar from './Avatar.svelte'
-  import { Person } from '@intabiafusion/contact'
+  import { Person } from '@hcengineering/contact'
 
   export let user: CollaborationUser
   export let lastUpdate: number

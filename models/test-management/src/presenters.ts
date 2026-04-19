@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import view from '@intabiafusion/model-view'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import view from '@hcengineering/model-view'
 import testManagement from './plugin'
 
 /**

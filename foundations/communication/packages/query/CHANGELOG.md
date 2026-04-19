@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/communication-query
+# Change Log - @hcengineering/communication-query
 
 This log was last generated on Mon, 27 Oct 2025 16:28:25 GMT and should not be manually modified.
 

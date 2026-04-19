@@ -18,7 +18,7 @@ A comprehensive TypeScript utility for handling transient failures with exponent
 Wrap any async operation with the `withRetry` function:
 
 ```typescript
-import { withRetry } from '@intabiafusion/retry'
+import { withRetry } from '@hcengineering/retry'
 
 async function fetchData() {
   const data = await withRetry(
@@ -37,7 +37,7 @@ async function fetchData() {
 For class methods, you can use the `@Retryable` decorator for clean, declarative retry logic:
 
 ```typescript
-import { Retryable } from '@intabiafusion/retry'
+import { Retryable } from '@hcengineering/retry'
 
 class UserService {
   @Retryable({ maxRetries: 5 })
@@ -56,7 +56,7 @@ Exponential Backoff
 Increases the delay exponentially between retries, which is ideal for backing off from overloaded services:
 
 ```typescript
-import { withRetry, DelayStrategyFactory } from '@intabiafusion/retry'
+import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 
 await withRetry(
   async () => await api.getData(),
@@ -75,7 +75,7 @@ await withRetry(
 Fixed Delay
 Uses the same delay for all retry attempts, useful when retrying after a fixed cooldown period:
 ```typescript
-import { withRetry, DelayStrategyFactory } from '@intabiafusion/retry'
+import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 
 await withRetry(
   async () => await api.getData(),
@@ -91,7 +91,7 @@ await withRetry(
 Fibonacci Delay
 Uses the Fibonacci sequence to calculate delays, providing a more moderate growth rate than exponential backoff:
 ```typescript
-import { withRetry, DelayStrategyFactory } from '@intabiafusion/retry'
+import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 
 await withRetry(
   async () => await api.getData(),

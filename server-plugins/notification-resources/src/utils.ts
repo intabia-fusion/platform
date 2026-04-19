@@ -26,7 +26,7 @@ import core, {
   Ref,
   Space,
   Tx
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
   InboxNotification,
@@ -36,22 +36,22 @@ import notification, {
   notificationId,
   NotificationTemplate,
   NotificationType
-} from '@intabiafusion/notification'
-import serverCore, { TriggerControl } from '@intabiafusion/server-core'
+} from '@hcengineering/notification'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import {
   NOTIFICATION_BODY_SIZE,
   PUSH_NOTIFICATION_TITLE_SIZE,
   Receiver,
   TypeMatchClient,
   TypeMatchFunc
-} from '@intabiafusion/server-notification'
-import activity, { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
-import { getMetadata, getResource, IntlString, translate } from '@intabiafusion/platform'
-import { workbenchId } from '@intabiafusion/workbench'
-import { encodeObjectURI } from '@intabiafusion/view'
-import serverView from '@intabiafusion/server-view'
-import { getDocIdentifier, getDocTitle, getDocUrl } from '@intabiafusion/server-activity-resources'
-import { markupToText } from '@intabiafusion/text-core'
+} from '@hcengineering/server-notification'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
+import { workbenchId } from '@hcengineering/workbench'
+import { encodeObjectURI } from '@hcengineering/view'
+import serverView from '@hcengineering/server-view'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
+import { markupToText } from '@hcengineering/text-core'
 
 import { TemplateContent } from './types'
 

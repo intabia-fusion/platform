@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { AnyAttribute } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { MethodParams, Process, Step } from '@intabiafusion/process'
-  import { Icon, IconError, Label, tooltip } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/card'
+  import { AnyAttribute } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { MethodParams, Process, Step } from '@hcengineering/process'
+  import { Icon, IconError, Label, tooltip } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import UpdateAttributePresenter from './UpdateAttributePresenter.svelte'
 

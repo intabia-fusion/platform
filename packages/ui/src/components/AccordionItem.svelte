@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import type { ComponentType } from 'svelte'
   import type { AnySvelteComponent } from '../types'
   import { getTreeCollapsed, setTreeCollapsed } from '../location'

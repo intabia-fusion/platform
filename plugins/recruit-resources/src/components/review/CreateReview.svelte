@@ -13,23 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { Calendar } from '@intabiafusion/calendar'
-  import type { Organization, Person } from '@intabiafusion/contact'
-  import contact, { getCurrentEmployee } from '@intabiafusion/contact'
-  import core, { Class, Client, DateRangeMode, Doc, generateId, Markup, PersonId, Ref } from '@intabiafusion/core'
-  import { getResource, OK, Resource, Severity, Status } from '@intabiafusion/platform'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { UserBox, UserBoxList } from '@intabiafusion/contact-resources'
-  import { Applicant, Candidate, RecruitEvents, Review } from '@intabiafusion/recruit'
-  import { EmptyMarkup } from '@intabiafusion/text'
-  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
-  import { DateRangePresenter, EditBox, Status as StatusControl } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { ObjectSearchBox } from '@intabiafusion/view-resources'
+  import calendar, { Calendar } from '@hcengineering/calendar'
+  import type { Organization, Person } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
+  import core, { Class, Client, DateRangeMode, Doc, generateId, Markup, PersonId, Ref } from '@hcengineering/core'
+  import { getResource, OK, Resource, Severity, Status } from '@hcengineering/platform'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { UserBox, UserBoxList } from '@hcengineering/contact-resources'
+  import { Applicant, Candidate, RecruitEvents, Review } from '@hcengineering/recruit'
+  import { EmptyMarkup } from '@hcengineering/text'
+  import { StyledTextArea } from '@hcengineering/text-editor-resources'
+  import { DateRangePresenter, EditBox, Status as StatusControl } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { ObjectSearchBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../../plugin'
   import IconCompany from '../icons/Company.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   // export let space: Ref<Project>
   export let candidate: Ref<Person>

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { getPlatformColor, themeStore } from '@intabiafusion/ui'
+  import { Doc } from '@hcengineering/core'
+  import { getPlatformColor, themeStore } from '@hcengineering/ui'
   import { InboxNotificationsClientImpl } from '../inboxNotificationsClient'
 
   export let value: Doc

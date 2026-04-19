@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@intabiafusion/platform'
-import support, { supportId } from '@intabiafusion/support'
+import { mergeIds } from '@hcengineering/platform'
+import support, { supportId } from '@hcengineering/support'
 
 export default mergeIds(supportId, support, {})

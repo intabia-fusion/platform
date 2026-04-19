@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import type { WithLookup, IdMap, Ref, Space } from '@intabiafusion/core'
-  import type { ToDo, WorkSlot } from '@intabiafusion/time'
-  import type { IntlString } from '@intabiafusion/platform'
-  import type { Project } from '@intabiafusion/tracker'
+  import type { WithLookup, IdMap, Ref, Space } from '@hcengineering/core'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Project } from '@hcengineering/tracker'
   import type { ToDosMode } from '..'
-  import { AccordionItem } from '@intabiafusion/ui'
-  import { getClient } from '@intabiafusion/presentation'
-  import { makeRank } from '@intabiafusion/task'
+  import { AccordionItem } from '@hcengineering/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import { makeRank } from '@hcengineering/task'
   import ToDoProjectGroup from './ToDoProjectGroup.svelte'
   import ToDoDraggable from './ToDoDraggable.svelte'
   import ToDoElement from './ToDoElement.svelte'

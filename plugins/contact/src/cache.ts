@@ -24,7 +24,7 @@ import core, {
   TxProcessor,
   TxUpdateDoc,
   WithLookup
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 import contact, { Person, SocialIdentity, SocialIdentityRef } from '.'
 

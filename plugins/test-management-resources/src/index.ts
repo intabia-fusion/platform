@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 import TestManagementSpaceHeader from './components/TestManagementSpaceHeader.svelte'
 import CreateProject from './components/project/CreateProject.svelte'
 import ProjectSpacePresenter from './components/project/ProjectSpacePresenter.svelte'

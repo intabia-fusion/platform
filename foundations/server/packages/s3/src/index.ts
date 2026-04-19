@@ -27,8 +27,8 @@ import core, {
   type Ref,
   type WorkspaceDataId,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
 import serverCore, {
   NoSuchKeyError,
   getDataId,
@@ -38,10 +38,10 @@ import serverCore, {
   type StorageConfig,
   type StorageConfiguration,
   type UploadedObjectInfo
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { Readable } from 'stream'
 
-import { removeAllObjects, type BucketInfo } from '@intabiafusion/storage'
+import { removeAllObjects, type BucketInfo } from '@hcengineering/storage'
 import type { ReadableStream } from 'stream/web'
 
 export interface S3Config extends StorageConfig {

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { AttachedDoc, Class, DocumentQuery, getCurrentAccount, Ref } from '@intabiafusion/core'
-  import { Lead } from '@intabiafusion/lead'
-  import { IntlString, Asset } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import task from '@intabiafusion/task'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { AttachedDoc, Class, DocumentQuery, getCurrentAccount, Ref } from '@hcengineering/core'
+  import { Lead } from '@hcengineering/lead'
+  import { IntlString, Asset } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import task from '@hcengineering/task'
   import {
     IModeSelector,
     Breadcrumb,
@@ -27,15 +27,15 @@
     resolvedLocationStore,
     SearchInput,
     Header
-  } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,
     TableBrowser,
     ViewletSelector,
     ViewletSettingButton
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import lead from '../plugin'
 

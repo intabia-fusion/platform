@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { loginId } from '@intabiafusion/login'
-import { loveId } from '@intabiafusion/love'
-import { timeId } from '@intabiafusion/time'
+import { loginId } from '@hcengineering/login'
+import { loveId } from '@hcengineering/love'
+import { timeId } from '@hcengineering/time'
 
-import { getEmbeddedLabel, getMetadata, getResource, translate } from '@intabiafusion/platform'
-import presentation, { MessageBox, setDownloadProgress, getClient } from '@intabiafusion/presentation'
-import setting, { settingId } from '@intabiafusion/setting'
+import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
+import presentation, { MessageBox, setDownloadProgress, getClient } from '@hcengineering/presentation'
+import setting, { settingId } from '@hcengineering/setting'
 import {
   closePanel,
   closePopup,
@@ -30,20 +30,20 @@ import {
   pushRootBarProgressComponent,
   removeRootBarComponent,
   showPopup
-} from '@intabiafusion/ui'
-import { handleDownloadItem } from '@intabiafusion/desktop-downloads'
-import notification, { notificationId } from '@intabiafusion/notification'
-import { inboxId } from '@intabiafusion/inbox'
-import workbench, { workbenchId, logOut } from '@intabiafusion/workbench'
-import view, { Action, encodeObjectURI } from '@intabiafusion/view'
-import { resolveLocation } from '@intabiafusion/notification-resources'
-import { themeStore, ThemeVariant } from '@intabiafusion/theme'
-import type { Application } from '@intabiafusion/workbench'
-import { isAllowedToRole } from '@intabiafusion/workbench-resources'
-import card from '@intabiafusion/card'
-import communication from '@intabiafusion/communication'
+} from '@hcengineering/ui'
+import { handleDownloadItem } from '@hcengineering/desktop-downloads'
+import notification, { notificationId } from '@hcengineering/notification'
+import { inboxId } from '@hcengineering/inbox'
+import workbench, { workbenchId, logOut } from '@hcengineering/workbench'
+import view, { Action, encodeObjectURI } from '@hcengineering/view'
+import { resolveLocation } from '@hcengineering/notification-resources'
+import { themeStore, ThemeVariant } from '@hcengineering/theme'
+import type { Application } from '@hcengineering/workbench'
+import { isAllowedToRole } from '@hcengineering/workbench-resources'
+import card from '@hcengineering/card'
+import communication from '@hcengineering/communication'
 
-import { isOwnerOrMaintainer, getCurrentAccount, Ref } from '@intabiafusion/core'
+import { isOwnerOrMaintainer, getCurrentAccount, Ref } from '@hcengineering/core'
 import { configurePlatform } from './platform'
 import { setupTitleBarMenu } from './titleBarMenu'
 import { defineScreenShare, defineGetDisplayMedia } from './screenShare'

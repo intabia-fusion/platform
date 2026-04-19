@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { Tag as MasterTag } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process } from '@intabiafusion/process'
-  import { Button, eventToHTMLElement, Label, SelectPopup, SelectPopupValueType, showPopup } from '@intabiafusion/ui'
+  import cardPlugin, { Tag as MasterTag } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process } from '@hcengineering/process'
+  import { Button, eventToHTMLElement, Label, SelectPopup, SelectPopupValueType, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let process: Process

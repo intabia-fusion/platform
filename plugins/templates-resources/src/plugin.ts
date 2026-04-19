@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import templates, { templatesId } from '@intabiafusion/templates'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import templates, { templatesId } from '@hcengineering/templates'
 
 export default mergeIds(templatesId, templates, {
   string: {

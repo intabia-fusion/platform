@@ -34,8 +34,8 @@ import {
   type TxUpdateDoc,
   type TxWorkspaceEvent,
   type WorkspaceEvent
-} from '@intabiafusion/core'
-import { Hidden, Index, Model, Prop, TypeRef } from '@intabiafusion/model'
+} from '@hcengineering/core'
+import { Hidden, Index, Model, Prop, TypeRef } from '@hcengineering/model'
 import core from './component'
 import { TDoc } from './core'
 

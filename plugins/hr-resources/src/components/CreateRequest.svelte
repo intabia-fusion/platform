@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
-  import calendar from '@intabiafusion/calendar'
-  import { Employee } from '@intabiafusion/contact'
-  import { EmployeeBox } from '@intabiafusion/contact-resources'
-  import core, { DocumentQuery, generateId, Markup, Ref } from '@intabiafusion/core'
-  import { Request, RequestType, Staff, timeToTzDate } from '@intabiafusion/hr'
-  import { translate } from '@intabiafusion/platform'
-  import { Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import { EmptyMarkup } from '@intabiafusion/text'
+  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import calendar from '@hcengineering/calendar'
+  import { Employee } from '@hcengineering/contact'
+  import { EmployeeBox } from '@hcengineering/contact-resources'
+  import core, { DocumentQuery, generateId, Markup, Ref } from '@hcengineering/core'
+  import { Request, RequestType, Staff, timeToTzDate } from '@hcengineering/hr'
+  import { translate } from '@hcengineering/platform'
+  import { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { EmptyMarkup } from '@hcengineering/text'
   import ui, {
     Button,
     DateRangePresenter,
@@ -29,7 +29,7 @@
     IconAttachment,
     Label,
     themeStore
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../plugin'
   import { getRequests } from '../utils'

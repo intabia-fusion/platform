@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const execSync = require('child_process').execSync
-const repo = '@intabiafusion'
+const repo = '@hcengineering'
 
 const packages = {}
 const pathes = {}
@@ -60,10 +60,9 @@ function publish (name) {
   const package = packages[name]
   try {
     console.log('publishing', name)
-    // Use pnpm so workspace:^x protocol is rewritten to plain semver on publish.
-    execSync('pnpm publish --no-git-checks --access public', { encoding: 'utf-8', cwd: package.path, stdio: 'inherit' })
+    execSync('npm publish', { encoding: 'utf-8', cwd: package.path })
   } catch (err) {
-    console.log('publish failed:', name, err.message)
+    console.log(err)
   }
 }
 
@@ -82,11 +81,10 @@ function main () {
 
   const doFix = args.includes('--fix')
   const doPublish = args.includes('--publish')
-  const doDry = args.includes('--dry') || args.includes('--dry-run')
 
-  const version = args.reverse().find((a) => !a.startsWith('--') && !a.endsWith('bump.js') && !a.endsWith('node'))
+  const version = args.reverse().shift()
   if (version === undefined || version === '') {
-    console.log('usage: node bump.js [--dry] [--fix] [--publish] <version>')
+    console.log('usage: node bump.js [--publish] <version>')
     return
   }
   if( !/^(\d+\.)?(\d+\.)?(\*|\d+)$/.test(version)) {
@@ -118,22 +116,12 @@ function main () {
     bumpPackage(packageName, version)
   }
 
-  let writeCount = 0
   for (const packageName of packageNames) {
     const package = packages[packageName]
     if (jsons[packageName] === undefined) continue
     const file = path.join(package.path, 'package.json')
     const res = JSON.stringify(jsons[packageName], undefined, 2)
-    if (doDry) {
-      writeCount++
-    } else {
-      fs.writeFileSync(file, res + '\n')
-    }
-  }
-  if (doDry) {
-    console.log('dry-run: would write', writeCount, 'package.json files. Publishable:',
-      packageNames.filter(shouldPublish).length)
-    return
+    fs.writeFileSync(file, res + '\n')
   }
   if (doFix) {
     for (const packageName of packageNames) {

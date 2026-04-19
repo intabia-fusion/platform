@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import { Project } from '@intabiafusion/tracker'
-  import { IconWithEmoji } from '@intabiafusion/presentation'
-  import { getPlatformColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { NavLink, TreeNode } from '@intabiafusion/view-resources'
-  import { SpacesNavModel, SpecialNavModel } from '@intabiafusion/workbench'
-  import { SpecialElement } from '@intabiafusion/workbench-resources'
+  import { Ref, Space } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import { Project } from '@hcengineering/tracker'
+  import { IconWithEmoji } from '@hcengineering/presentation'
+  import { getPlatformColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { NavLink, TreeNode } from '@hcengineering/view-resources'
+  import { SpacesNavModel, SpecialNavModel } from '@hcengineering/workbench'
+  import { SpecialElement } from '@hcengineering/workbench-resources'
 
   export let space: Project
   export let model: SpacesNavModel

@@ -29,7 +29,7 @@ import {
   nodeDoc,
   nodeParagraph,
   nodeText
-} from '@intabiafusion/text-core'
+} from '@hcengineering/text-core'
 import { Editor, getSchema } from '@tiptap/core'
 import { ServerKit } from '../../kits/server-kit'
 import { getMarkup, htmlToJSON, htmlToMarkup, jsonToHTML, jsonToPmNode, jsonToText, pmNodeToJSON } from '../utils'

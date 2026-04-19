@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import rating from '@intabiafusion/rating'
-import { loadMetadata } from '@intabiafusion/platform'
+import rating from '@hcengineering/rating'
+import { loadMetadata } from '@hcengineering/platform'
 
 const ratingIcon = require('../assets/icon.svg') as string // eslint-disable-line
 loadMetadata(rating.icon, {

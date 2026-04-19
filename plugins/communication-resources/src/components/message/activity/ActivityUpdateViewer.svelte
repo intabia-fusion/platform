@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttributeModel } from '@intabiafusion/view'
-  import { ActivityUpdate, ActivityUpdateType, Markdown } from '@intabiafusion/communication-types'
+  import { AttributeModel } from '@hcengineering/view'
+  import { ActivityUpdate, ActivityUpdateType, Markdown } from '@hcengineering/communication-types'
 
   import ActivityUpdateTagViewer from './ActivityUpdateTagViewer.svelte'
   import ActivityUpdateAttributeViewer from './ActivityUpdateAttributeViewer.svelte'
   import ActivityUpdateCollaboratorsViewer from './ActivityUpdateCollaboratorsViewer.svelte'
-  import { Person } from '@intabiafusion/contact'
-  import { Card } from '@intabiafusion/card'
+  import { Person } from '@hcengineering/contact'
+  import { Card } from '@hcengineering/card'
   import ActivityUpdateTypeViewer from './ActivityUpdateTypeViewer.svelte'
   import ActivityUpdateProcessViewer from './ActivityUpdateProcessViewer.svelte'
   import ActivityCollaborativeContentViewer from './ActivityCollaborativeContentViewer.svelte'

@@ -51,7 +51,7 @@ function isEslintDependency(depName) {
 function findPlatformRigPath() {
   // Try to find platform-rig in node_modules
   const cwd = process.cwd()
-  const possiblePaths = [path.join(cwd, 'common', 'scripts', 'node_modules', '@intabiafusion', 'platform-rig')]
+  const possiblePaths = [path.join(cwd, 'common', 'scripts', 'node_modules', '@hcengineering', 'platform-rig')]
 
   for (const platformRigPath of possiblePaths) {
     const packageJsonPath = path.join(platformRigPath, 'package.json')
@@ -101,7 +101,7 @@ function updatePackageJson(packagePath, eslintDeps) {
   const packageJson = JSON.parse(content)
 
   // Skip if this is the platform-rig package itself
-  if (packageJson.name === '@intabiafusion/platform-rig') {
+  if (packageJson.name === '@hcengineering/platform-rig') {
     return { updated: false, changes: [] }
   }
 
@@ -150,7 +150,7 @@ function main() {
     const platformRigPath = findPlatformRigPath()
     if (!platformRigPath) {
       console.log('⚠️  platform-rig package not found in node_modules. Skipping sync.')
-      console.log('   Make sure @intabiafusion/platform-rig is installed as a dependency.')
+      console.log('   Make sure @hcengineering/platform-rig is installed as a dependency.')
       return
     }
 
@@ -186,7 +186,7 @@ function main() {
         console.log(`✅ Updated ${project.name}`)
         result.changes.forEach((change) => console.log(change))
         console.log()
-      } else if (result.changes.length === 0 && project.name !== '@intabiafusion/platform-rig') {
+      } else if (result.changes.length === 0 && project.name !== '@hcengineering/platform-rig') {
         skippedCount++
       }
     }

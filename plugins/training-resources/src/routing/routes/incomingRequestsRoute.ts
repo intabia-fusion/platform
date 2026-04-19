@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { trainingId, TrainingSpecialIds } from '@intabiafusion/training'
-import { getCurrentLocation, type Location } from '@intabiafusion/ui'
+import { trainingId, TrainingSpecialIds } from '@hcengineering/training'
+import { getCurrentLocation, type Location } from '@hcengineering/ui'
 import type { Route, RouteParams } from '../utils/Route'
 
 export interface IncomingRequestsRouteParams extends RouteParams {}

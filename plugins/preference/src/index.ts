@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Domain, Ref, Space } from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { Class, Doc, Domain, Ref, Space } from '@hcengineering/core'
+import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 
 /**
  * @public

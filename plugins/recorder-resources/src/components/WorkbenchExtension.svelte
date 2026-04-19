@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import { pushRootBarComponent } from '@intabiafusion/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import { pushRootBarComponent } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   import recorder from '../plugin'
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
 
   const readonly = !hasAccountRole(getCurrentAccount(), AccountRole.Guest)
 

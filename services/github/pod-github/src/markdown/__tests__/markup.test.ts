@@ -14,9 +14,9 @@
 //
 
 /* eslint-env jest */
-import { setMetadata } from '@intabiafusion/platform'
-import serverCore from '@intabiafusion/server-core'
-import { jsonToHTML, htmlToJSON } from '@intabiafusion/text'
+import { setMetadata } from '@hcengineering/platform'
+import serverCore from '@hcengineering/server-core'
+import { jsonToHTML, htmlToJSON } from '@hcengineering/text'
 import { markupToMarkdown, markdownToMarkup, parseMessageMarkdown, serializeMessage } from '..'
 import { appendGuestLinkToModel, stripGuestLink } from '../../sync/guest'
 import { GithubKit } from '../extensions'

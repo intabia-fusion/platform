@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import { Plugin, Resource, plugin } from '@intabiafusion/platform'
-import { ObjectDDParticipantFunc, TriggerFunc } from '@intabiafusion/server-core'
-import { TypeMatchFuncResource } from '@intabiafusion/server-notification'
-import { TemplateFieldServerFunc } from '@intabiafusion/server-templates'
+import { Plugin, Resource, plugin } from '@hcengineering/platform'
+import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
+import { TypeMatchFuncResource } from '@hcengineering/server-notification'
+import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
 export * from './types'
 /**

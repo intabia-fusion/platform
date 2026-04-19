@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { aiAssistantIntegrationKind } from '@intabiafusion/ai-assistant'
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import setting from '@intabiafusion/setting'
+import { aiAssistantIntegrationKind } from '@hcengineering/ai-assistant'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import setting from '@hcengineering/setting'
 
 import aiAssistant from './plugin'
 
-export { aiAssistantId } from '@intabiafusion/ai-assistant'
+export { aiAssistantId } from '@hcengineering/ai-assistant'
 export { default } from './plugin'
 
 export function createModel (builder: Builder): void {

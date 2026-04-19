@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/communication-sdk-types",
+      "packageName": "@hcengineering/communication-sdk-types",
       "comment": "update deps",
       "type": "patch"
     }
   ],
-  "packageName": "@intabiafusion/communication-sdk-types"
+  "packageName": "@hcengineering/communication-sdk-types"
 }

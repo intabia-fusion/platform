@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import type { IssueTemplate } from '@intabiafusion/tracker'
-  import { Icon, showPanel, tooltip } from '@intabiafusion/ui'
+  import { WithLookup } from '@hcengineering/core'
+  import type { IssueTemplate } from '@hcengineering/tracker'
+  import { Icon, showPanel, tooltip } from '@hcengineering/ui'
   import tracker from '../../plugin'
 
   export let value: WithLookup<IssueTemplate>

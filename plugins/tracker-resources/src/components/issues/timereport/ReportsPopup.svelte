@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { FindOptions } from '@intabiafusion/core'
-  import presentation, { Card } from '@intabiafusion/presentation'
-  import { Issue, Project, TimeSpendReport } from '@intabiafusion/tracker'
-  import { Button, eventToHTMLElement, IconAdd, Scroller, showPopup, tableSP } from '@intabiafusion/ui'
-  import { TableBrowser } from '@intabiafusion/view-resources'
+  import contact from '@hcengineering/contact'
+  import { FindOptions } from '@hcengineering/core'
+  import presentation, { Card } from '@hcengineering/presentation'
+  import { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
+  import { Button, eventToHTMLElement, IconAdd, Scroller, showPopup, tableSP } from '@hcengineering/ui'
+  import { TableBrowser } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import IssuePresenter from '../IssuePresenter.svelte'
   import ParentNamesPresenter from '../ParentNamesPresenter.svelte'

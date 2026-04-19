@@ -1,4 +1,4 @@
-import { type Metadata, plugin, type Plugin } from '@intabiafusion/platform'
+import { type Metadata, plugin, type Plugin } from '@hcengineering/platform'
 
 /**
  * @public

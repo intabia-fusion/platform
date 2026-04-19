@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TestRun } from '@intabiafusion/test-management'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { TestRun } from '@hcengineering/test-management'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   export let value: TestRun | undefined
   export let inline: boolean = false

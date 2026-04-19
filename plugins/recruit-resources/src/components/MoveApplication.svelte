@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { ExpandRightDouble } from '@intabiafusion/contact-resources'
-  import { FindOptions, Status as TaskStatus } from '@intabiafusion/core'
-  import { OK, Severity, Status } from '@intabiafusion/platform'
-  import presentation, { Card, SpaceSelect, createQuery, getClient } from '@intabiafusion/presentation'
-  import type { Applicant, Vacancy } from '@intabiafusion/recruit'
-  import { getStates } from '@intabiafusion/task'
-  import { typeStore } from '@intabiafusion/task-resources'
+  import contact from '@hcengineering/contact'
+  import { ExpandRightDouble } from '@hcengineering/contact-resources'
+  import { FindOptions, Status as TaskStatus } from '@hcengineering/core'
+  import { OK, Severity, Status } from '@hcengineering/platform'
+  import presentation, { Card, SpaceSelect, createQuery, getClient } from '@hcengineering/presentation'
+  import type { Applicant, Vacancy } from '@hcengineering/recruit'
+  import { getStates } from '@hcengineering/task'
+  import { typeStore } from '@hcengineering/task-resources'
   import ui, {
     Button,
     ColorPopup,
@@ -35,9 +35,9 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
-  import { moveToSpace } from '@intabiafusion/view-resources/src/utils'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
+  import { moveToSpace } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../plugin'
   import ApplicationPresenter from './ApplicationPresenter.svelte'

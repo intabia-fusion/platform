@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { Card, getAttrEditor, getClient } from '@intabiafusion/presentation'
-  import { ContextId, ExecutionContext, UserResult } from '@intabiafusion/process'
-  import { Component, tooltip } from '@intabiafusion/ui'
+  import presentation, { Card, getAttrEditor, getClient } from '@hcengineering/presentation'
+  import { ContextId, ExecutionContext, UserResult } from '@hcengineering/process'
+  import { Component, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

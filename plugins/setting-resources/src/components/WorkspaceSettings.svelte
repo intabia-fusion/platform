@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { createQuery, isAdminUser, isDisabled } from '@intabiafusion/presentation'
-  import setting, { SettingsCategory } from '@intabiafusion/setting'
+  import { getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { createQuery, isAdminUser, isDisabled } from '@hcengineering/presentation'
+  import setting, { SettingsCategory } from '@hcengineering/setting'
   import {
     Component,
     Location,
@@ -24,7 +24,7 @@
     navigate,
     resolvedLocationStore,
     deviceOptionsStore as deviceInfo
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
   import { clearSettingsStore } from '../store'
 

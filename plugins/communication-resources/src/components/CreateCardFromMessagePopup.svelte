@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag } from '@intabiafusion/card'
-  import { Class, ClassifierKind, Doc, Ref } from '@intabiafusion/core'
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { DropdownIntlItem, Label, Modal, ModernEditbox, NestedDropdown } from '@intabiafusion/ui'
+  import cardPlugin, { Card, MasterTag } from '@hcengineering/card'
+  import { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { DropdownIntlItem, Label, Modal, ModernEditbox, NestedDropdown } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Message } from '@intabiafusion/communication-types'
-  import { markupToText } from '@intabiafusion/text'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Message } from '@hcengineering/communication-types'
+  import { markupToText } from '@hcengineering/text'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import { toMarkup } from '../utils'
   import { attachCardToMessage } from '../actions'

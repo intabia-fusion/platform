@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { DropdownLabels, EditBox, Label, RadioGroup } from '@intabiafusion/ui'
-  import core, { type AttachedData, type Data } from '@intabiafusion/core'
-  import { translate } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { DropdownLabels, EditBox, Label, RadioGroup } from '@hcengineering/ui'
+  import core, { type AttachedData, type Data } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     type Document,
     type ChangeControl,
@@ -26,7 +26,7 @@
     type DocumentTemplate,
     getDocumentId,
     TEMPLATE_PREFIX
-  } from '@intabiafusion/controlled-documents'
+  } from '@hcengineering/controlled-documents'
 
   import IconWarning from '../../icons/IconWarning.svelte'
   import { $infoStep as infoStep, infoStepUpdated } from '../../../stores/wizards/create-document'

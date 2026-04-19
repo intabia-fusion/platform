@@ -1,7 +1,7 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 //
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import puppeteer, { Page, Viewport } from 'puppeteer'
 
 import config from './config'

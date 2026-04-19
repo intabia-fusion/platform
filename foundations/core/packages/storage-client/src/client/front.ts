@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { concatLink } from '@intabiafusion/core'
+import { concatLink } from '@hcengineering/core'
 import { FileStorage, FileStorageUploadOptions } from '../types'
 import { uploadXhr } from '../upload'
 

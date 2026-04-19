@@ -7,10 +7,10 @@ import {
   type Ref,
   SortingOrder,
   type Space
-} from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import { type LiveQuery, createQuery, getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
-import { locationToUrl, getCurrentResolvedLocation } from '@intabiafusion/ui'
+} from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import { type LiveQuery, createQuery, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
+import { locationToUrl, getCurrentResolvedLocation } from '@hcengineering/ui'
 import {
   type ViewOptionsOption,
   type ViewQueryOption,
@@ -22,7 +22,7 @@ import {
   type Viewlet,
   type ViewletDescriptor,
   type ViewOptionsModel
-} from '@intabiafusion/view'
+} from '@hcengineering/view'
 import { get, writable } from 'svelte/store'
 import view from './plugin'
 import { groupByCategory } from './utils'

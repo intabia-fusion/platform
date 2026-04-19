@@ -3,11 +3,11 @@
 -->
 
 <script lang="ts">
-  import type { Employee } from '@intabiafusion/contact'
-  import { type Ref, SortingOrder } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Button, Loading, ProgressCircle, showPopup } from '@intabiafusion/ui'
-  import { type TrainingAttempt, type TrainingRequest } from '@intabiafusion/training'
+  import type { Employee } from '@hcengineering/contact'
+  import { type Ref, SortingOrder } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Button, Loading, ProgressCircle, showPopup } from '@hcengineering/ui'
+  import { type TrainingAttempt, type TrainingRequest } from '@hcengineering/training'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
   import { type CompletionMap, CompletionMapValueState, getCompletionMap } from '../utils'

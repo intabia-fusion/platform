@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 import type { Arr, AttachedDoc, Class, Data, Doc, Interface, Mixin, Obj, Ref, Space } from '../classes'
 import { ClassifierKind, DOMAIN_MODEL, DOMAIN_RELATION } from '../classes'
 import core from '../component'

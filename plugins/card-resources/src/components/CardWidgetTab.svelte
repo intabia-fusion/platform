@@ -12,14 +12,14 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Action, Menu, ModernTab, showPopup } from '@intabiafusion/ui'
-  import { Widget, WidgetTab } from '@intabiafusion/workbench'
-  import { createNotificationsQuery, createQuery, getClient, IconWithEmoji } from '@intabiafusion/presentation'
-  import { Card, MasterTag } from '@intabiafusion/card'
-  import { Ref, SortingOrder } from '@intabiafusion/core'
-  import { closeWidgetTab } from '@intabiafusion/workbench-resources'
-  import view from '@intabiafusion/view'
-  import { NotificationType } from '@intabiafusion/communication-types'
+  import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
+  import { Widget, WidgetTab } from '@hcengineering/workbench'
+  import { createNotificationsQuery, createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { Card, MasterTag } from '@hcengineering/card'
+  import { Ref, SortingOrder } from '@hcengineering/core'
+  import { closeWidgetTab } from '@hcengineering/workbench-resources'
+  import view from '@hcengineering/view'
+  import { NotificationType } from '@hcengineering/communication-types'
 
   import cardPlugin from '../plugin'
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Document } from '@intabiafusion/document'
-  import { Ref } from '@intabiafusion/core'
-  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { Document } from '@hcengineering/document'
+  import { Ref } from '@hcengineering/core'
+  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { ObjectBox } from '@hcengineering/view-resources'
 
   import document from '../plugin'
 

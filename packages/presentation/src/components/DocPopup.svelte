@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { getObjectValue, VersionableDoc, type Class, type Doc, type Ref } from '@intabiafusion/core'
-  import { getResource, type IntlString } from '@intabiafusion/platform'
+  import core, { getObjectValue, VersionableDoc, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { getResource, type IntlString } from '@hcengineering/platform'
   import {
     AnySvelteComponent,
     Button,
@@ -32,13 +32,13 @@
     resizeObserver,
     showPopup,
     tooltip
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import presentation, { DocPopup } from '..'
   import { ObjectCreate } from '../types'
   import { getClient } from '../utils'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
   import ObjectPopup from './ObjectPopup.svelte'
 
   export let _class: Ref<Class<Doc>>

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { SelectPopup } from '@intabiafusion/ui'
-  import view, { Filter, FilterMode } from '@intabiafusion/view'
-  import { FilterQuery } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { SelectPopup } from '@hcengineering/ui'
+  import view, { Filter, FilterMode } from '@hcengineering/view'
+  import { FilterQuery } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../plugin'
 

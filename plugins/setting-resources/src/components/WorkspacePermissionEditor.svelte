@@ -12,11 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountArrayEditor, getAccountClient } from '@intabiafusion/contact-resources'
-  import { AccountUuid } from '@intabiafusion/core'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Label, Loading } from '@intabiafusion/ui'
+  import { AccountArrayEditor, getAccountClient } from '@hcengineering/contact-resources'
+  import { AccountUuid } from '@hcengineering/core'
+  import { Analytics } from '@hcengineering/analytics'
+  import { IntlString } from '@hcengineering/platform'
+  import { Label, Loading } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   import settingsRes from '../plugin'

@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PersonId, getCurrentAccount } from '@intabiafusion/core'
-  import { getName } from '@intabiafusion/contact'
-  import { getPersonsByPersonIds } from '@intabiafusion/contact-resources'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label } from '@intabiafusion/ui'
-  import { type TypingInfo, typing } from '@intabiafusion/presence-resources'
-  import { CardID } from '@intabiafusion/communication-types'
+  import { type PersonId, getCurrentAccount } from '@hcengineering/core'
+  import { getName } from '@hcengineering/contact'
+  import { getPersonsByPersonIds } from '@hcengineering/contact-resources'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
+  import { type TypingInfo, typing } from '@hcengineering/presence-resources'
+  import { CardID } from '@hcengineering/communication-types'
 
   import communication from '../plugin'
 

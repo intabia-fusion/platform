@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { KeyedAttribute } from '@intabiafusion/presentation'
-  import textEditor, { CollaborationUser, RefAction } from '@intabiafusion/text-editor'
-  import { AnySvelteComponent, registerFocus } from '@intabiafusion/ui'
+  import { Doc } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { KeyedAttribute } from '@hcengineering/presentation'
+  import textEditor, { CollaborationUser, RefAction } from '@hcengineering/text-editor'
+  import { AnySvelteComponent, registerFocus } from '@hcengineering/ui'
 
   import CollaborativeTextEditor from './CollaborativeTextEditor.svelte'
   import { type FileAttachFunction } from './extension/types'

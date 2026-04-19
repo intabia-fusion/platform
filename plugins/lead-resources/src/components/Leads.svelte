@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref } from '@intabiafusion/core'
-  import type { Customer } from '@intabiafusion/lead'
-  import { Button, IconAdd, Label, showPopup, resizeObserver, Scroller } from '@intabiafusion/ui'
-  import { Table } from '@intabiafusion/view-resources'
+  import type { Ref } from '@hcengineering/core'
+  import type { Customer } from '@hcengineering/lead'
+  import { Button, IconAdd, Label, showPopup, resizeObserver, Scroller } from '@hcengineering/ui'
+  import { Table } from '@hcengineering/view-resources'
   import lead from '../plugin'
   import CreateLead from './CreateLead.svelte'
 

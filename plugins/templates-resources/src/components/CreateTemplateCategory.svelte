@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { getCurrentAccount } from '@intabiafusion/core'
-  import presentation, { getClient, SpaceCreateCard } from '@intabiafusion/presentation'
-  import { EditBox, Grid, ToggleWithLabel } from '@intabiafusion/ui'
+  import core, { getCurrentAccount } from '@hcengineering/core'
+  import presentation, { getClient, SpaceCreateCard } from '@hcengineering/presentation'
+  import { EditBox, Grid, ToggleWithLabel } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import templates from '../plugin'
 

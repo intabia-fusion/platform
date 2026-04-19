@@ -28,13 +28,13 @@ import {
   type SessionData,
   type Timestamp,
   type Tx
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type ServerFindOptions
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 interface Query {
   key: string

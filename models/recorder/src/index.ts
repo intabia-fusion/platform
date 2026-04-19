@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import presentation from '@intabiafusion/model-presentation'
-import uploader from '@intabiafusion/uploader'
-import workbench from '@intabiafusion/workbench'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
+import uploader from '@hcengineering/uploader'
+import workbench from '@hcengineering/workbench'
 
 import recorder from './plugin'
 
-export { recorderId } from '@intabiafusion/recorder'
+export { recorderId } from '@hcengineering/recorder'
 export { recorder as default }
 export * from './migration'
 

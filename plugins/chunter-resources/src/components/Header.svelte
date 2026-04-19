@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getResource, IntlString } from '@intabiafusion/platform'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import {
     AnySvelteComponent,
     Breadcrumbs,
@@ -25,15 +25,15 @@
     HeaderAdaptive,
     IconSettings,
     IconToDetails
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import view from '@intabiafusion/view'
-  import { openDoc } from '@intabiafusion/view-resources'
-  import { getClient, IconWithEmoji } from '@intabiafusion/presentation'
-  import { Doc, Ref } from '@intabiafusion/core'
-  import { ActivityMessagesFilter } from '@intabiafusion/activity'
-  import workbench from '@intabiafusion/workbench'
-  import { PresenceAvatars } from '@intabiafusion/presence-resources'
+  import view from '@hcengineering/view'
+  import { openDoc } from '@hcengineering/view-resources'
+  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { Doc, Ref } from '@hcengineering/core'
+  import { ActivityMessagesFilter } from '@hcengineering/activity'
+  import workbench from '@hcengineering/workbench'
+  import { PresenceAvatars } from '@hcengineering/presence-resources'
 
   import { userSearch } from '../index'
   import chunter from '../plugin'

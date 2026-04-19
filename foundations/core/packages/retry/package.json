@@ -1,11 +1,11 @@
 {
-  "name": "@intabiafusion/retry",
-  "version": "1.0.0",
+  "name": "@hcengineering/retry",
+  "version": "0.7.17",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Copyright © Hardcore Engineering Inc.",
-  "template": "@intabiafusion/node-package",
+  "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -18,7 +18,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -50,7 +50,7 @@
       "import": "./lib/index.js"
     }
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/huly.core",
   "publishConfig": {
     "access": "public"
   }

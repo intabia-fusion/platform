@@ -14,10 +14,10 @@
 // limitations under the License.
 */
 
-import type { IntlString } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
+import type { IntlString } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
 
-import notification, { notificationId } from '@intabiafusion/notification'
+import notification, { notificationId } from '@hcengineering/notification'
 
 export default mergeIds(notificationId, notification, {
   string: {

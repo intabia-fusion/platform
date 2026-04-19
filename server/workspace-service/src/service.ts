@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
 import {
   DOMAIN_BLOB,
   getBranding,
@@ -29,40 +29,40 @@ import {
   type WorkspaceInfoWithStatus,
   type WorkspaceUpdateEvent,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { type MigrateOperation, type ModelLogger } from '@intabiafusion/model'
+} from '@hcengineering/core'
+import { type MigrateOperation, type ModelLogger } from '@hcengineering/model'
 import {
   getTransactorEndpoint,
   withRetryConnUntilSuccess,
   withRetryConnUntilTimeout
-} from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { FileModelLogger, prepareTools } from '@intabiafusion/server-tool'
+} from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { FileModelLogger, prepareTools } from '@hcengineering/server-tool'
 import { randomUUID } from 'crypto'
 import path from 'path'
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import {
   createMongoAdapter,
   createMongoDestroyAdapter,
   createMongoTxAdapter,
   shutdownMongo
-} from '@intabiafusion/mongo'
+} from '@hcengineering/mongo'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   setDBExtraOptions,
   shutdownPostgres
-} from '@intabiafusion/postgres'
-import { doBackupWorkspace, doRestoreWorkspace } from '@intabiafusion/server-backup'
+} from '@hcengineering/postgres'
+import { doBackupWorkspace, doRestoreWorkspace } from '@hcengineering/server-backup'
 import {
   workspaceEvents,
   type PipelineFactory,
   type PlatformQueueProducer,
   type QueueWorkspaceMessage,
   type StorageAdapter
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import {
   createBackupPipeline,
   getConfig,
@@ -73,8 +73,8 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@intabiafusion/server-pipeline'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+} from '@hcengineering/server-pipeline'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { createWorkspace, upgradeWorkspace } from './ws-operations'
 
 export interface WorkspaceOptions {

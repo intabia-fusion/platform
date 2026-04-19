@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type ClientSocketFactory } from '@intabiafusion/client'
+import { type ClientSocketFactory } from '@hcengineering/client'
 import {
   CollaborativeDoc,
   type Account,
@@ -35,7 +35,7 @@ import {
   type Space,
   type TxResult,
   type WithLookup
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { type MarkupContent, type MarkupOperations } from './markup'
 
 type WithPropertyType<T, X, Y> = {

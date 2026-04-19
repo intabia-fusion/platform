@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, WithLookup } from '@intabiafusion/core'
-  import presentation, { ActionContext, createQuery } from '@intabiafusion/presentation'
-  import { Execution } from '@intabiafusion/process'
-  import { Modal, registerFocus } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  import { Doc, WithLookup } from '@hcengineering/core'
+  import presentation, { ActionContext, createQuery } from '@hcengineering/presentation'
+  import { Execution } from '@hcengineering/process'
+  import { Modal, registerFocus } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     List,
     ListSelectionProvider,
     noCategory,
     SelectDirection,
     ViewletsSettingButton
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import NextTriggers from './NextTriggers.svelte'
   import process from '../plugin'

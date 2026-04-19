@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { AccountClient, Integration } from '@intabiafusion/account-client'
-import { calendarIntegrationKind } from '@intabiafusion/calendar'
+import { AccountClient, Integration } from '@hcengineering/account-client'
+import { calendarIntegrationKind } from '@hcengineering/calendar'
 
 export async function getIntegrations (client: AccountClient): Promise<Integration[]> {
   return (await client.listIntegrations({ kind: calendarIntegrationKind })) ?? []

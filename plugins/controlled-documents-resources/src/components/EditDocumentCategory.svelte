@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { AttachmentStyleBoxEditor } from '@intabiafusion/attachment-resources'
-  import { MessageViewer, getClient } from '@intabiafusion/presentation'
-  import { EditBox, Grid } from '@intabiafusion/ui'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import documents, { DocumentCategory } from '@intabiafusion/controlled-documents'
+  import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
+  import { MessageViewer, getClient } from '@hcengineering/presentation'
+  import { EditBox, Grid } from '@hcengineering/ui'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
 
   import document from '../plugin'
 

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessageControl } from '@intabiafusion/activity'
-import { type Role, type Card } from '@intabiafusion/card'
+import activity, { type ActivityMessageControl } from '@hcengineering/activity'
+import { type Role, type Card } from '@hcengineering/card'
 import {
   AvatarType,
   type UserRole,
@@ -36,7 +36,7 @@ import {
   type SocialIdentityProvider,
   type Translation,
   type RecentlyUsedPersonsPreference
-} from '@intabiafusion/contact'
+} from '@hcengineering/contact'
 import {
   AccountRole,
   DOMAIN_MODEL,
@@ -53,8 +53,8 @@ import {
   type PersonUuid,
   type Ref,
   type Timestamp
-} from '@intabiafusion/core'
-import card, { createSystemType } from '@intabiafusion/model-card'
+} from '@hcengineering/core'
+import card, { createSystemType } from '@hcengineering/model-card'
 import {
   Collection as CollectionType,
   Hidden,
@@ -74,26 +74,26 @@ import {
   TypeTimestamp,
   UX,
   type Builder
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import chunter from '@intabiafusion/model-chunter'
-import core, { defineCollaborators, TAttachedDoc, TDoc, TSpace } from '@intabiafusion/model-core'
-import { createPublicLinkAction } from '@intabiafusion/model-guest'
-import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
-import presentation from '@intabiafusion/model-presentation'
-import view, { createAction, createAttributePresenter, type Viewlet } from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import notification, { type NotificationGroup } from '@intabiafusion/notification'
-import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
-import setting from '@intabiafusion/setting'
-import templates from '@intabiafusion/templates'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import { type Action } from '@intabiafusion/view'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import chunter from '@hcengineering/model-chunter'
+import core, { defineCollaborators, TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
+import { createPublicLinkAction } from '@hcengineering/model-guest'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
+import presentation from '@hcengineering/model-presentation'
+import view, { createAction, createAttributePresenter, type Viewlet } from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
+import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import setting from '@hcengineering/setting'
+import templates from '@hcengineering/templates'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type Action } from '@hcengineering/view'
 import contact from './plugin'
-import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
-import preference, { TPreference } from '@intabiafusion/model-preference'
+import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import preference, { TPreference } from '@hcengineering/model-preference'
 
-export { contactId } from '@intabiafusion/contact'
+export { contactId } from '@hcengineering/contact'
 export { contactOperation } from './migration'
 export { contact as default }
 

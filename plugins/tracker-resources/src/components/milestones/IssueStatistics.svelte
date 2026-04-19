@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Issue, reduceChildInfoTree } from '@intabiafusion/tracker'
-  import { floorFractionDigits, Label, tooltip } from '@intabiafusion/ui'
-  import { FixedColumn } from '@intabiafusion/view-resources'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import { floorFractionDigits, Label, tooltip } from '@hcengineering/ui'
+  import { FixedColumn } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import EstimationProgressCircle from '../issues/timereport/EstimationProgressCircle.svelte'
   import TimePresenter from '../issues/timereport/TimePresenter.svelte'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   export let docs: Issue[] | undefined = undefined
   export let itemsProj: Issue[] | undefined = undefined
   export let capacity: number | undefined = undefined

@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TaskType } from '@intabiafusion/task'
-  import { IconWithEmoji } from '@intabiafusion/presentation'
+  import { TaskType } from '@hcengineering/task'
+  import { IconWithEmoji } from '@hcengineering/presentation'
   import {
     ColorDefinition,
     Icon,
@@ -23,8 +23,8 @@
     getColorNumberByText,
     getPlatformColorDef,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher, onMount } from 'svelte'
 
   export let value: TaskType | undefined

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { BlobMetadata, Blob, Ref } from '@intabiafusion/core'
-  import { Button, closePopup, closeTooltip, IconToDetails } from '@intabiafusion/ui'
-  import workbench from '@intabiafusion/workbench'
+  import type { BlobMetadata, Blob, Ref } from '@hcengineering/core'
+  import { Button, closePopup, closeTooltip, IconToDetails } from '@hcengineering/ui'
+  import workbench from '@hcengineering/workbench'
 
   import { openFilePreviewInSidebar } from '../utils'
 

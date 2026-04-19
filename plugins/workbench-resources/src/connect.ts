@@ -1,7 +1,7 @@
-import { getClient as getAccountClient, type WorkspaceLoginInfo } from '@intabiafusion/account-client'
-import { Analytics } from '@intabiafusion/analytics'
-import client from '@intabiafusion/client'
-import contact, { ensureEmployee, setCurrentEmployee, setCurrentEmployeeSpace } from '@intabiafusion/contact'
+import { getClient as getAccountClient, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { Analytics } from '@hcengineering/analytics'
+import client from '@hcengineering/client'
+import contact, { ensureEmployee, setCurrentEmployee, setCurrentEmployeeSpace } from '@hcengineering/contact'
 import core, {
   type Account,
   AccountRole,
@@ -19,8 +19,8 @@ import core, {
   versionToString,
   SocialIdType,
   type WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
-import login, { loginId, type Pages } from '@intabiafusion/login'
+} from '@hcengineering/core'
+import login, { loginId, type Pages } from '@hcengineering/login'
 import platform, {
   broadcastEvent,
   getMetadata,
@@ -34,7 +34,7 @@ import platform, {
   Status,
   type StatusCode,
   translateCB
-} from '@intabiafusion/platform'
+} from '@hcengineering/platform'
 import presentation, {
   loadServerConfig,
   purgeClient,
@@ -46,7 +46,7 @@ import presentation, {
   setPresentationCookie,
   uiContext,
   upgradeDownloadProgress
-} from '@intabiafusion/presentation'
+} from '@hcengineering/presentation'
 import {
   desktopPlatform,
   getCurrentLocation,
@@ -54,13 +54,13 @@ import {
   navigate,
   setMetadataLocalStorage,
   themeStore
-} from '@intabiafusion/ui'
+} from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 
 import plugin from './plugin'
 import { logOut, workspaceCreating } from './utils'
-import { WorkbenchEvents } from '@intabiafusion/workbench'
-import { allowGuestSignUpStore } from '@intabiafusion/view-resources'
+import { WorkbenchEvents } from '@hcengineering/workbench'
+import { allowGuestSignUpStore } from '@hcengineering/view-resources'
 
 export const error = writable<string | undefined>(undefined)
 export const errorActions = writable<ErrorAction[]>([])

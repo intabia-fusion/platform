@@ -19,8 +19,8 @@ import {
   NotificationQueryParams,
   MessageQueryOptions,
   QueryOptions
-} from '@intabiafusion/communication-query'
-import type { PagedQueryCallback, QueryCallback } from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-query'
+import type { PagedQueryCallback, QueryCallback } from '@hcengineering/communication-sdk-types'
 import {
   type FindLabelsParams,
   type FindNotificationContextParams,
@@ -30,7 +30,7 @@ import {
   type Notification,
   FindCollaboratorsParams,
   Collaborator
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import { deepEqual } from 'fast-equals'
 import { getLiveQueries, getOnDestroy } from './init'
 

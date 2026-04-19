@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Attachment } from '@intabiafusion/attachment'
-import { Employee } from '@intabiafusion/contact'
+import { Attachment } from '@hcengineering/attachment'
+import { Employee } from '@hcengineering/contact'
 import {
   Doc,
   type CollectionSize,
@@ -24,8 +24,8 @@ import {
   MarkupBlobRef,
   AttachedDoc,
   Timestamp
-} from '@intabiafusion/core'
-import { IconProps } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { IconProps } from '@hcengineering/view'
 
 /** @public */
 export enum TestCaseType {

@@ -19,8 +19,8 @@
     ProjectDocumentTree,
     type HierarchyDocument,
     type Project
-  } from '@intabiafusion/controlled-documents'
-  import { type Ref } from '@intabiafusion/core'
+  } from '@hcengineering/controlled-documents'
+  import { type Ref } from '@hcengineering/core'
 
   import { createDocumentHierarchyQuery } from '../../../../utils'
   import DocumentFlatTreeElement from './DocumentFlatTreeElement.svelte'

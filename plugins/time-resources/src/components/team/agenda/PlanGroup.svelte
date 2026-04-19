@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
-  import { calendarByIdStore } from '@intabiafusion/calendar-resources'
-  import { IdMap } from '@intabiafusion/core'
-  import { ToDo, WorkSlot } from '@intabiafusion/time'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { Event } from '@hcengineering/calendar'
+  import { calendarByIdStore } from '@hcengineering/calendar-resources'
+  import { IdMap } from '@hcengineering/core'
+  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import { groupTeamData } from '../utils'
   import PlanPerson from './PlanPerson.svelte'
 

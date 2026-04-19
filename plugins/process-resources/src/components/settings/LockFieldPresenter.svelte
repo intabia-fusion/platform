@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label } from '@intabiafusion/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
-  import { Process } from '@intabiafusion/process'
+  import { Process } from '@hcengineering/process'
 
   export let process: Process
   export let params: Record<string, any>

@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Doc, type Hierarchy, type Ref, type Space, getObjectValue } from '@intabiafusion/core'
-import { translate, type IntlString } from '@intabiafusion/platform'
-import documentsPlugin from '@intabiafusion/controlled-documents'
-import { type AttributeModel } from '@intabiafusion/view'
-import { getClient } from '@intabiafusion/presentation'
-import { isIntlString } from '@intabiafusion/converter-resources'
+import core, { type Class, type Doc, type Hierarchy, type Ref, type Space, getObjectValue } from '@hcengineering/core'
+import { translate, type IntlString } from '@hcengineering/platform'
+import documentsPlugin from '@hcengineering/controlled-documents'
+import { type AttributeModel } from '@hcengineering/view'
+import { getClient } from '@hcengineering/presentation'
+import { isIntlString } from '@hcengineering/converter-resources'
 
 /**
  * Format version number from major and minor

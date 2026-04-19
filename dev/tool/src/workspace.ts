@@ -23,9 +23,9 @@ import core, {
   type Ref,
   type Tx,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@intabiafusion/mongo'
-import { connect } from '@intabiafusion/server-tool'
+} from '@hcengineering/core'
+import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
+import { connect } from '@hcengineering/server-tool'
 import { generateModelDiff, printDiff } from './mdiff'
 
 export async function diffWorkspace (mongoUrl: string, dbName: string, rawTxes: Tx[]): Promise<void> {

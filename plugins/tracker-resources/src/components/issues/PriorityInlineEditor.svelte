@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IssuePriority } from '@intabiafusion/tracker'
+  import { IssuePriority } from '@hcengineering/tracker'
   import {
     Button,
     ButtonKind,
@@ -23,7 +23,7 @@
     SelectPopup,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import { defaultPriorities, issuePriorities } from '../../utils'

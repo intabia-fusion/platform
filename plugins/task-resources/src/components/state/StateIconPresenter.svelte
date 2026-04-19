@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory } from '@intabiafusion/core'
-  import { getClient, reduceCalls } from '@intabiafusion/presentation'
-  import task, { Project, ProjectType } from '@intabiafusion/task'
+  import core, { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import task, { Project, ProjectType } from '@hcengineering/task'
   import {
     ColorDefinition,
     defaultBackground,
     getColorNumberByText,
     getPlatformColorDef,
     themeStore
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import { typeStore } from '../..'
 

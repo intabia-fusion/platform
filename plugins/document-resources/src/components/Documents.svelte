@@ -15,12 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@intabiafusion/core'
-  import { Document } from '@intabiafusion/document'
-  import { ActionContext } from '@intabiafusion/presentation'
-  import { Label, Loading, SearchEdit } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { FilterButton, TableBrowser, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import { Doc, DocumentQuery } from '@hcengineering/core'
+  import { Document } from '@hcengineering/document'
+  import { ActionContext } from '@hcengineering/presentation'
+  import { Label, Loading, SearchEdit } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { FilterButton, TableBrowser, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import document from '../plugin'
 
   export let query: DocumentQuery<Document> = {}

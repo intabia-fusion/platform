@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { RecurringRule } from '@intabiafusion/calendar'
-  import { Label, themeStore } from '@intabiafusion/ui'
+  import { RecurringRule } from '@hcengineering/calendar'
+  import { Label, themeStore } from '@hcengineering/ui'
   import calendar from '../plugin'
-  import { IntlString, translate } from '@intabiafusion/platform'
+  import { IntlString, translate } from '@hcengineering/platform'
   import DateLocalePresenter from './DateLocalePresenter.svelte'
 
   export let rules: RecurringRule[] = []

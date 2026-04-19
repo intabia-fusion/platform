@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import { type Drive } from '@intabiafusion/drive'
-  import { getResource } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { HeaderButton, HeaderButtonAction } from '@intabiafusion/ui'
-  import { getUploadHandlers } from '@intabiafusion/uploader'
+  import { AccountRole, Ref, getCurrentAccount } from '@hcengineering/core'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import { type Drive } from '@hcengineering/drive'
+  import { getResource } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { HeaderButton, HeaderButtonAction } from '@hcengineering/ui'
+  import { getUploadHandlers } from '@hcengineering/uploader'
   import drive from '../plugin'
   import { getFolderIdFromFragment } from '../navigation'
   import { showCreateDrivePopup, showCreateFolderPopup, getUploadOptionsByFragment } from '../utils'
   import { onMount } from 'svelte'
-  import { canCreateObject } from '@intabiafusion/view-resources'
+  import { canCreateObject } from '@hcengineering/view-resources'
 
   export let currentSpace: Ref<Drive> | undefined
   export let currentFragment: string | undefined

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@intabiafusion/core'
-  import presentation, { copyTextToClipboard } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { Button, Label, ticker } from '@intabiafusion/ui'
+  import { Timestamp } from '@hcengineering/core'
+  import presentation, { copyTextToClipboard } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { Button, Label, ticker } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import settings from '../plugin'

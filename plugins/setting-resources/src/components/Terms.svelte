@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import setting from '@intabiafusion/setting'
-  import { Icon, Label } from '@intabiafusion/ui'
+  import setting from '@hcengineering/setting'
+  import { Icon, Label } from '@hcengineering/ui'
 </script>
 
 <div class="antiComponent">

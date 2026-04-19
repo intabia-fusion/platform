@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { communicationId, type Poll } from '@intabiafusion/communication'
-import communication from '@intabiafusion/communication-resources/src/plugin'
-import { type Attribute, type Ref } from '@intabiafusion/core'
-import {} from '@intabiafusion/ui'
-import { mergeIds, type Resource } from '@intabiafusion/platform'
-import { type ViewAction } from '@intabiafusion/model-view'
-import { type Card } from '@intabiafusion/card'
-import { type NotificationGroup } from '@intabiafusion/notification'
+import { communicationId, type Poll } from '@hcengineering/communication'
+import communication from '@hcengineering/communication-resources/src/plugin'
+import { type Attribute, type Ref } from '@hcengineering/core'
+import {} from '@hcengineering/ui'
+import { mergeIds, type Resource } from '@hcengineering/platform'
+import { type ViewAction } from '@hcengineering/model-view'
+import { type Card } from '@hcengineering/card'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(communicationId, communication, {
   action: {

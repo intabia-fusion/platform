@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import type { WorkspaceDestroyAdapter } from '@intabiafusion/server-core'
+import type { WorkspaceDestroyAdapter } from '@hcengineering/server-core'
 import { getMongoClient, getWorkspaceMongoDB } from './utils'
 
 export * from './storage'

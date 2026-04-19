@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { getName, Person } from '@intabiafusion/contact'
-  import PersonPresenter from '@intabiafusion/contact-resources/src/components/PersonPresenter.svelte'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import type { Applicant } from '@intabiafusion/recruit'
+  import contact, { getName, Person } from '@hcengineering/contact'
+  import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Applicant } from '@hcengineering/recruit'
 
   export let value: Applicant
 

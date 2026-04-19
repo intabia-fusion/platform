@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { startCollaborator } from '@intabiafusion/collaborator'
-import { newMetrics } from '@intabiafusion/core'
-import { initStatisticsContext } from '@intabiafusion/server-core'
+import { Analytics } from '@hcengineering/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { startCollaborator } from '@hcengineering/collaborator'
+import { newMetrics } from '@hcengineering/core'
+import { initStatisticsContext } from '@hcengineering/server-core'
 import { join } from 'path'
 
 configureAnalytics('collaborator', process.env.VERSION ?? '0.7.0')

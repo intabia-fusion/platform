@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { BenchmarkDoc } from '@intabiafusion/core'
-import { DOMAIN_BENCHMARK } from '@intabiafusion/core'
-import { Model, UX } from '@intabiafusion/model'
-import { getEmbeddedLabel } from '@intabiafusion/platform'
+import type { BenchmarkDoc } from '@hcengineering/core'
+import { DOMAIN_BENCHMARK } from '@hcengineering/core'
+import { Model, UX } from '@hcengineering/model'
+import { getEmbeddedLabel } from '@hcengineering/platform'
 import core from './component'
 import { TDoc } from './core'
 

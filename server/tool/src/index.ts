@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type AccountClient } from '@intabiafusion/account-client'
+import { type AccountClient } from '@hcengineering/account-client'
 import core, {
   type Branding,
   type Client,
@@ -37,14 +37,14 @@ import core, {
   type WithLookup,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   consoleModelLogger,
   type MigrateMode,
   type MigrateOperation,
   type ModelLogger,
   tryMigrate
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 import {
   type DbAdapter,
   DomainIndexHelperImpl,
@@ -52,12 +52,12 @@ import {
   type PlatformQueueProducer,
   type QueueWorkspaceMessage,
   type StorageAdapter
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { type InitScript, WorkspaceInitializer } from './initializer'
 import toolPlugin from './plugin'
 import { MigrateClientImpl } from './upgrade'
 
-import { getMetadata, PlatformError, unknownError } from '@intabiafusion/platform'
+import { getMetadata, PlatformError, unknownError } from '@hcengineering/platform'
 import fs from 'fs'
 import * as yaml from 'js-yaml'
 import path from 'path'

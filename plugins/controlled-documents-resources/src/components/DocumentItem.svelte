@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { DocumentMeta } from '@intabiafusion/controlled-documents'
+  import { WithLookup } from '@hcengineering/core'
+  import { DocumentMeta } from '@hcengineering/controlled-documents'
 
   import DocumentIcon from './icons/DocumentIcon.svelte'
 

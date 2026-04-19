@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import type { Vacancy } from '@intabiafusion/recruit'
-  import { ActionIcon, Icon, IconEdit } from '@intabiafusion/ui'
-  import { openDoc } from '@intabiafusion/view-resources'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Vacancy } from '@hcengineering/recruit'
+  import { ActionIcon, Icon, IconEdit } from '@hcengineering/ui'
+  import { openDoc } from '@hcengineering/view-resources'
   import recruit from '../plugin'
 
   export let value: Vacancy

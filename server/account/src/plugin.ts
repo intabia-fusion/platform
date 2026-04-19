@@ -1,5 +1,5 @@
-import { type IntlString, type Metadata, plugin, type Plugin } from '@intabiafusion/platform'
-import { type PlatformQueueProducer } from '@intabiafusion/server-core'
+import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
+import { type PlatformQueueProducer } from '@hcengineering/server-core'
 
 /**
  * @public

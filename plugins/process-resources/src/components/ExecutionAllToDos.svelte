@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Execution, ProcessToDo } from '@intabiafusion/process'
-  import time from '@intabiafusion/time'
-  import { Component } from '@intabiafusion/ui'
+  import contact from '@hcengineering/contact'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Execution, ProcessToDo } from '@hcengineering/process'
+  import time from '@hcengineering/time'
+  import { Component } from '@hcengineering/ui'
   import plugin from '../plugin'
 
   export let value: Execution

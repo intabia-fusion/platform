@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { AccountUuid, Class, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { ChunterSpace } from '@intabiafusion/chunter'
-import { ActivityMessage } from '@intabiafusion/activity'
-import { Integration } from '@intabiafusion/account-client'
+import { AccountUuid, Class, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { ChunterSpace } from '@hcengineering/chunter'
+import { ActivityMessage } from '@hcengineering/activity'
+import { Integration } from '@hcengineering/account-client'
 
 export type ChannelId = string & { __channelId: true }
 

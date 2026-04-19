@@ -15,20 +15,20 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { AccountArrayEditor } from '@intabiafusion/contact-resources'
-  import { AccountUuid } from '@intabiafusion/core'
-  import presentation, { Card, getClient, getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
-  import setting, { Integration } from '@intabiafusion/setting'
-  import { Grid, Label, Toggle } from '@intabiafusion/ui'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { isWorkspaceIntegration } from '@intabiafusion/integration-client'
-  import { Integration as AccountIntegration } from '@intabiafusion/account-client'
+  import { AccountArrayEditor } from '@hcengineering/contact-resources'
+  import { AccountUuid } from '@hcengineering/core'
+  import presentation, { Card, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import setting, { Integration } from '@hcengineering/setting'
+  import { Grid, Label, Toggle } from '@hcengineering/ui'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { isWorkspaceIntegration } from '@hcengineering/integration-client'
+  import { Integration as AccountIntegration } from '@hcengineering/account-client'
 
   import ConfigureV2 from './ConfigureV2.svelte'
   import { getIntegrationClient } from '../api'
   import gmail from '../plugin'
   import { isNewGmailIntegration } from '../utils'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let integration: AccountIntegration
   let integrationSettings: Integration | undefined

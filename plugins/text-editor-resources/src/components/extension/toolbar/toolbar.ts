@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { notEmpty } from '@intabiafusion/core'
-import { type AnySvelteComponentWithProps, DebouncedCaller } from '@intabiafusion/ui'
+import { notEmpty } from '@hcengineering/core'
+import { type AnySvelteComponentWithProps, DebouncedCaller } from '@hcengineering/ui'
 import { type Editor, Extension, type Range } from '@tiptap/core'
 import { type Node } from '@tiptap/pm/model'
 import { type EditorState, Plugin, PluginKey, TextSelection, type Transaction } from '@tiptap/pm/state'
@@ -23,7 +23,7 @@ import { deepEqual } from 'fast-equals'
 import tippy, { type Placement, type Props as TippyProps } from 'tippy.js'
 import { SvelteRenderer } from '../../node-view'
 import EditorToolbar from './EditorToolbar.svelte'
-import { type ActionContext } from '@intabiafusion/text-editor'
+import { type ActionContext } from '@hcengineering/text-editor'
 
 export interface ToolbarCursor<T> {
   source: CursorSource

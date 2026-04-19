@@ -15,8 +15,8 @@
 
 import { isIntlString, extractObjectTitleOrName } from '../formatter/utils'
 
-jest.mock('@intabiafusion/platform', () => {
-  const actual = jest.requireActual('@intabiafusion/platform')
+jest.mock('@hcengineering/platform', () => {
+  const actual = jest.requireActual('@hcengineering/platform')
   return {
     ...actual,
     plugin: jest.fn((_id: string, def: unknown) => def),

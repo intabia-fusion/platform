@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { IntegrationKind, PersonId, WorkspaceUuid } from '@intabiafusion/core'
-import { Integration, IntegrationKey, type AccountClient } from '@intabiafusion/account-client'
+import { IntegrationKind, PersonId, WorkspaceUuid } from '@hcengineering/core'
+import { Integration, IntegrationKey, type AccountClient } from '@hcengineering/account-client'
 import { IntegrationClientImpl } from '../client'
 import { IntegrationClient } from '../types'
 

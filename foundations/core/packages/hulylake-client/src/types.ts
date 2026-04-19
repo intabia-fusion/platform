@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { RetryOptions } from '@intabiafusion/retry'
+import { RetryOptions } from '@hcengineering/retry'
 
 export interface HulylakeClient {
   head: (workspace: string, key: string, retryOptions?: RetryOptions) => Promise<HulyResponse<void>>

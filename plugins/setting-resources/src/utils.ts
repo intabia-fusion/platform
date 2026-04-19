@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getClient as getAccountClientRaw, type AccountClient } from '@intabiafusion/account-client'
-import contact, { getFirstName, getLastName } from '@intabiafusion/contact'
-import { employeeByPersonIdStore } from '@intabiafusion/contact-resources'
+import { getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
+import contact, { getFirstName, getLastName } from '@hcengineering/contact'
+import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
 import {
   type Class,
   type Doc,
@@ -9,17 +9,17 @@ import {
   type IntegrationKind,
   type PluginConfiguration,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   getIntegrationClient as getIntegrationClientRaw,
   type IntegrationClient
-} from '@intabiafusion/integration-client'
-import login from '@intabiafusion/login'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation, { getClient } from '@intabiafusion/presentation'
-import type { PersonRating } from '@intabiafusion/rating'
-import setting from '@intabiafusion/setting'
-import { type TemplateDataProvider } from '@intabiafusion/templates'
+} from '@hcengineering/integration-client'
+import login from '@hcengineering/login'
+import { getMetadata } from '@hcengineering/platform'
+import presentation, { getClient } from '@hcengineering/presentation'
+import type { PersonRating } from '@hcengineering/rating'
+import setting from '@hcengineering/setting'
+import { type TemplateDataProvider } from '@hcengineering/templates'
 import { get } from 'svelte/store'
 
 function isEditable (hierarchy: Hierarchy, p: Class<Doc>): boolean {

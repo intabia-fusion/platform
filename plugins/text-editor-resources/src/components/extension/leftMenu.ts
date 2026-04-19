@@ -16,8 +16,8 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { type EditorView } from '@tiptap/pm/view'
-import { type Asset, getMetadata } from '@intabiafusion/platform'
-import { SelectPopup, getEventPositionElement, showPopup } from '@intabiafusion/ui'
+import { type Asset, getMetadata } from '@hcengineering/platform'
+import { SelectPopup, getEventPositionElement, showPopup } from '@hcengineering/ui'
 
 export interface LeftMenuOptions {
   width: number

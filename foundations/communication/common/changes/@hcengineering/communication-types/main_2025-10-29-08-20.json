@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/communication-types",
+      "packageName": "@hcengineering/communication-types",
       "comment": "update deps",
       "type": "patch"
     }
   ],
-  "packageName": "@intabiafusion/communication-types"
+  "packageName": "@hcengineering/communication-types"
 }

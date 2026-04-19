@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { AnswerDataAssessFunction, OrderingAssessment, OrderingAssessmentAnswer } from '@intabiafusion/questions'
+import type { AnswerDataAssessFunction, OrderingAssessment, OrderingAssessmentAnswer } from '@hcengineering/questions'
 
 /** @public */
 export const OrderingAssessmentAssess: AnswerDataAssessFunction<OrderingAssessment, OrderingAssessmentAnswer> = async (

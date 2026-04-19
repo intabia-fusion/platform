@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type Client, type PersonUuid, systemAccountUuid, type Tx, type WorkspaceUuid } from '@intabiafusion/core'
-import { createClient } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
+import { type Client, type PersonUuid, systemAccountUuid, type Tx, type WorkspaceUuid } from '@hcengineering/core'
+import { createClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 
 /**
  * @public

@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Lead } from '@intabiafusion/lead'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
-  import lead from '@intabiafusion/lead'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { ObjectPresenterType } from '@intabiafusion/view'
+  import type { Lead } from '@hcengineering/lead'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import lead from '@hcengineering/lead'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { ObjectPresenterType } from '@hcengineering/view'
 
   export let value: Lead
   export let inline: boolean = false

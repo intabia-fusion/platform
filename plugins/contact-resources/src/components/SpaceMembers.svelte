@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@intabiafusion/contact'
+  import contact, { Employee, Person } from '@hcengineering/contact'
   import {
     AccountRole,
     DocumentQuery,
@@ -24,10 +24,10 @@
     hasAccountRole,
     notEmpty,
     AccountUuid
-  } from '@intabiafusion/core'
-  import { translateCB } from '@intabiafusion/platform'
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { ActionIcon, IconAdd, IconClose, Label, SearchEdit, showPopup, themeStore } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import { translateCB } from '@hcengineering/platform'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { ActionIcon, IconAdd, IconClose, Label, SearchEdit, showPopup, themeStore } from '@hcengineering/ui'
   import AddMembersPopup from './AddMembersPopup.svelte'
   import UserInfo from './UserInfo.svelte'
   import { employeeByIdStore, employeeRefByAccountUuidStore } from '../utils'

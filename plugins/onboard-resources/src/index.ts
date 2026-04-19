@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { IntlString, Resources } from '@intabiafusion/platform'
+import type { IntlString, Resources } from '@hcengineering/platform'
 import OnboardApp from './components/OnboardApp.svelte'
 
 export default async (): Promise<Resources> => ({

@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import card from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process, Step } from '@intabiafusion/process'
-  import { DropdownLabels, DropdownTextItem, Label } from '@intabiafusion/ui'
+  import card from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process, Step } from '@hcengineering/process'
+  import { DropdownLabels, DropdownTextItem, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

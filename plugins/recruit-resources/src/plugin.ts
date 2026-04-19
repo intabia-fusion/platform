@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@intabiafusion/core'
-import type { IntlString, Resource, StatusCode } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/presentation/src/types'
-import recruit, { recruitId } from '@intabiafusion/recruit'
-import { type TagCategory } from '@intabiafusion/tags'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import { type FilterFunction, type FilterMode, type Viewlet } from '@intabiafusion/view'
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import type { IntlString, Resource, StatusCode } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/presentation/src/types'
+import recruit, { recruitId } from '@hcengineering/recruit'
+import { type TagCategory } from '@hcengineering/tags'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type FilterFunction, type FilterMode, type Viewlet } from '@hcengineering/view'
 
 export default mergeIds(recruitId, recruit, {
   viewlet: {

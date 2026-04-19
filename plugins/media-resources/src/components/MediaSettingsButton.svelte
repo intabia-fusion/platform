@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconMoreH, StatusBarButton, showPopup } from '@intabiafusion/ui'
+  import { IconMoreH, StatusBarButton, showPopup } from '@hcengineering/ui'
 
   import { sessions } from '../stores'
 

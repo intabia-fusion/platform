@@ -15,23 +15,23 @@
 //
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import attachment, { Attachment } from '@intabiafusion/attachment'
-  import core, { Doc, Ref, WithLookup, generateId, type Blob } from '@intabiafusion/core'
-  import { Document, DocumentEvents, Teamspace } from '@intabiafusion/document'
-  import notification from '@intabiafusion/notification'
-  import { Panel } from '@intabiafusion/panel'
-  import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
+  import { Analytics } from '@hcengineering/analytics'
+  import attachment, { Attachment } from '@hcengineering/attachment'
+  import core, { Doc, Ref, WithLookup, generateId, type Blob } from '@hcengineering/core'
+  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
+  import notification from '@hcengineering/notification'
+  import { Panel } from '@hcengineering/panel'
+  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import {
     ComponentExtensions,
     IconWithEmoji,
     copyTextToClipboard,
     createQuery,
     getClient
-  } from '@intabiafusion/presentation'
-  import tags from '@intabiafusion/tags'
-  import { Heading } from '@intabiafusion/text-editor'
-  import { TableOfContents } from '@intabiafusion/text-editor-resources'
+  } from '@hcengineering/presentation'
+  import tags from '@hcengineering/tags'
+  import { Heading } from '@hcengineering/text-editor'
+  import { TableOfContents } from '@hcengineering/text-editor-resources'
   import TeamspacePresenter from './teamspace/TeamspacePresenter.svelte'
 
   import {
@@ -46,8 +46,8 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import {
     ClassAttributeBar,
     IconPicker,
@@ -55,7 +55,7 @@
     RelationsEditor,
     restrictionStore,
     showMenu
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import { unlockContent } from '..'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ClientSocket, ClientSocketReadyState, pongConst, pingConst } from '@intabiafusion/client'
+import { ClientSocket, ClientSocketReadyState, pongConst, pingConst } from '@hcengineering/client'
 import core, {
   type Tx,
   generateId,
@@ -21,7 +21,7 @@ import core, {
   type PersonUuid,
   TxCreateDoc,
   type Doc
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { connect } from '../connection'
 
 // Mock CloseEvent for Node.js environment (used in MockWebSocket)

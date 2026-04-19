@@ -15,8 +15,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { fade } from 'svelte/transition'
-  import { getResource, translate } from '@intabiafusion/platform'
-  import type { IntegrationType } from '@intabiafusion/setting'
+  import { getResource, translate } from '@hcengineering/platform'
+  import type { IntegrationType } from '@hcengineering/setting'
   import {
     AnyComponent,
     Button,
@@ -28,15 +28,15 @@
     showPopup,
     NotificationSeverity,
     themeStore
-  } from '@intabiafusion/ui'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { type Integration } from '@intabiafusion/account-client'
+  } from '@hcengineering/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { type Integration } from '@hcengineering/account-client'
   import {
     IntegrationClient,
     isDisabled,
     onIntegrationEvent,
     IntegrationUpdatedData
-  } from '@intabiafusion/integration-client'
+  } from '@hcengineering/integration-client'
   import IntegrationErrorNotification from './IntegrationErrorNotification.svelte'
   import { getIntegrationClient } from '../../utils'
 

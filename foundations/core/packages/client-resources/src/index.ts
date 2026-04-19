@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import clientPlugin from '@intabiafusion/client'
-import type { ClientFactoryOptions } from '@intabiafusion/client/src'
+import clientPlugin from '@hcengineering/client'
+import type { ClientFactoryOptions } from '@hcengineering/client/src'
 import core, {
   Client,
   LoadModelResponse,
@@ -38,8 +38,8 @@ import core, {
   type TxCUD,
   platformNow,
   ClientConnectEvent
-} from '@intabiafusion/core'
-import platform, { Severity, Status, getMetadata, getPlugins, setPlatformStatus } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import platform, { Severity, Status, getMetadata, getPlugins, setPlatformStatus } from '@hcengineering/platform'
 import { connect } from './connection'
 
 export { connect }

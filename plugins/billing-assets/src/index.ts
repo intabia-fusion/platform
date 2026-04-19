@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { loadMetadata } from '@intabiafusion/platform'
-import billingPlugin from '@intabiafusion/billing'
+import { loadMetadata } from '@hcengineering/platform'
+import billingPlugin from '@hcengineering/billing'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(billingPlugin.icon, {

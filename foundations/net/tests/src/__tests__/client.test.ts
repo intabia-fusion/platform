@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { createNetworkClient } from '@intabiafusion/network-client'
-import type { NetworkClient } from '@intabiafusion/network-core'
+import { createNetworkClient } from '@hcengineering/network-client'
+import type { NetworkClient } from '@hcengineering/network-core'
 
 jest.setTimeout(6000000)
 describe('network client tests', () => {

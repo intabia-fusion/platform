@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { Class, Doc, DocumentQuery, FindOptions, Mixin, Ref } from '@intabiafusion/core'
-import { Asset, IntlString, Plugin, Resource, plugin } from '@intabiafusion/platform'
-import { AnyComponent, PopupAlignment, PopupPosAlignment, type ComponentExtensionId } from '@intabiafusion/ui/src/types'
+import { Class, Doc, DocumentQuery, FindOptions, Mixin, Ref } from '@hcengineering/core'
+import { Asset, IntlString, Plugin, Resource, plugin } from '@hcengineering/platform'
+import { AnyComponent, PopupAlignment, PopupPosAlignment, type ComponentExtensionId } from '@hcengineering/ui/src/types'
 import {
   Action,
   ActionCategory,

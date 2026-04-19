@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, Reaction } from '@intabiafusion/activity'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { WithLookup } from '@intabiafusion/core'
+  import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
+  import { createQuery } from '@hcengineering/presentation'
+  import { WithLookup } from '@hcengineering/core'
 
   import { getSpace, updateDocReactions } from '../../utils'
   import Reactions from './Reactions.svelte'

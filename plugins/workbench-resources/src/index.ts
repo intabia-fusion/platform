@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { AccountRole, type Space, getCurrentAccount } from '@intabiafusion/core'
-import { type Resources } from '@intabiafusion/platform'
+import { AccountRole, type Space, getCurrentAccount } from '@hcengineering/core'
+import { type Resources } from '@hcengineering/platform'
 import ApplicationPresenter from './components/ApplicationPresenter.svelte'
 import Archive from './components/Archive.svelte'
 import SpacePanel from './components/navigator/SpacePanel.svelte'
@@ -25,7 +25,7 @@ import Workbench from './components/Workbench.svelte'
 import ServerManager from './components/ServerManager.svelte'
 import WorkbenchTabs from './components/WorkbenchTabs.svelte'
 import Themes from './components/Themes.svelte'
-import { isAdminUser } from '@intabiafusion/presentation'
+import { isAdminUser } from '@hcengineering/presentation'
 import { canCloseTab, closeCurrentTab, closeTab, OpenInNewTab, pinTab, unpinTab } from './workbench'
 import { closeWidget, closeWidgetTab, createWidgetTab, getSidebarObject } from './sidebar'
 

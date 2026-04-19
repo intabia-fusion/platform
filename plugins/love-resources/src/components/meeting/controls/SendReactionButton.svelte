@@ -1,6 +1,6 @@
 <script lang="ts">
-  import emojiPlugin from '@intabiafusion/emoji'
-  import { ModernButton, showPopup } from '@intabiafusion/ui'
+  import emojiPlugin from '@hcengineering/emoji'
+  import { ModernButton, showPopup } from '@hcengineering/ui'
   import { lk } from '../../../utils'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'

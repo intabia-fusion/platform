@@ -45,7 +45,7 @@ import {
   type Ref,
   type SocialIdType,
   type WithLookup
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 /**
  * A list of client operations to perform on.

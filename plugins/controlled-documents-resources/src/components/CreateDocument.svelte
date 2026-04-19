@@ -16,11 +16,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { AttachedData, Class, generateId, Mixin, Ref, SortingOrder } from '@intabiafusion/core'
-  import { Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import { createFocusManager, EditBox, FocusHandler } from '@intabiafusion/ui'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { AttachedData, Class, generateId, Mixin, Ref, SortingOrder } from '@hcengineering/core'
+  import { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { createFocusManager, EditBox, FocusHandler } from '@hcengineering/ui'
+  import { ObjectBox } from '@hcengineering/view-resources'
   import {
     type ControlledDocument,
     type DocumentTemplate,
@@ -28,7 +28,7 @@
     type ChangeControl,
     type DocumentSpace,
     DocumentState
-  } from '@intabiafusion/controlled-documents'
+  } from '@hcengineering/controlled-documents'
 
   import { createControlledDocFromTemplate } from '../docutils'
   import documents from '../plugin'

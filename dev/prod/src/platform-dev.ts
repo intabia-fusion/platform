@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { devModelId } from '@intabiafusion/devmodel'
-import { PresentationClientHook } from '@intabiafusion/devmodel-resources'
-import platform, { addLocation, setMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation/src/plugin'
+import { devModelId } from '@hcengineering/devmodel'
+import { PresentationClientHook } from '@hcengineering/devmodel-resources'
+import platform, { addLocation, setMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation/src/plugin'
 
 export function configurePlatformDevServer () {
   // Set devmodel to hook client to be able to present all activity
@@ -28,6 +28,6 @@ function enableDevModel () {
   setMetadata(platform.metadata.DevModel, true)
   addLocation(
     devModelId,
-    async () => await import(/* webpackChunkName: "devmodel" */ '@intabiafusion/devmodel-resources')
+    async () => await import(/* webpackChunkName: "devmodel" */ '@hcengineering/devmodel-resources')
   )
 }

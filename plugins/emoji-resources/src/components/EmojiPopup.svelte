@@ -14,7 +14,7 @@
     ButtonBase,
     closeTooltip,
     Icon
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { getEmojiByShortCode, getEmojiSkins, getUnicodeEmojiByShortCode } from '../utils'
   import {
     searchEmoji,
@@ -26,13 +26,13 @@
     getSkinTone,
     setSkinTone
   } from '../store'
-  import type { EmojiWithGroup } from '@intabiafusion/emoji'
+  import type { EmojiWithGroup } from '@hcengineering/emoji'
   import ActionsPopup from './ActionsPopup.svelte'
   import SkinTonePopup from './SkinTonePopup.svelte'
   import EmojiGroup from './EmojiGroup.svelte'
-  import emojiPlugin, { isCustomEmoji } from '@intabiafusion/emoji'
+  import emojiPlugin, { isCustomEmoji } from '@hcengineering/emoji'
   import { emojiCategories, EmojiCategory } from '../types'
-  import { Ref, Blob } from '@intabiafusion/core'
+  import { Ref, Blob } from '@hcengineering/core'
 
   export let embedded = false
   export let selected: string | Ref<Blob> | undefined

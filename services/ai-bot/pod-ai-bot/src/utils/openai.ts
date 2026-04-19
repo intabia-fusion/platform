@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { AccountUuid, MeasureContext, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { countTokens } from '@intabiafusion/openai'
+import { AccountUuid, MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { countTokens } from '@hcengineering/openai'
 import { Tiktoken } from 'js-tiktoken'
 import OpenAI from 'openai'
 
-import { PersonMessage } from '@intabiafusion/ai-bot'
-import contact, { Contact } from '@intabiafusion/contact'
+import { PersonMessage } from '@hcengineering/ai-bot'
+import contact, { Contact } from '@hcengineering/contact'
 import config from '../config'
 import { HistoryRecord } from '../types'
 import { WorkspaceClient } from '../workspace/workspaceClient'

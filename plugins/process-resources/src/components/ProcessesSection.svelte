@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@intabiafusion/card'
-  import core, { generateId, Ref } from '@intabiafusion/core'
-  import { translate } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Process, State } from '@intabiafusion/process'
-  import { ButtonIcon, getCurrentLocation, Icon, IconAdd, IconFile, IconOpen, Label, navigate } from '@intabiafusion/ui'
+  import { MasterTag } from '@hcengineering/card'
+  import core, { generateId, Ref } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Process, State } from '@hcengineering/process'
+  import { ButtonIcon, getCurrentLocation, Icon, IconAdd, IconFile, IconOpen, Label, navigate } from '@hcengineering/ui'
   import process from '../plugin'
-  import { makeRank } from '@intabiafusion/rank'
+  import { makeRank } from '@hcengineering/rank'
   import { importProcess } from '../exporter'
 
   export let masterTag: MasterTag

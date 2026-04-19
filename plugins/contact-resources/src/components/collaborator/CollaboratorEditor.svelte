@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AccountUuid, Collaborator, Doc } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import core, { AccountUuid, Collaborator, Doc } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
 
   import { AccountArrayEditor } from '../../index'
 

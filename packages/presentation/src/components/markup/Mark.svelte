@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import { MarkupMark, MarkupMarkType } from '@intabiafusion/text'
-  import uiPlugin, { navigate, parseLocation } from '@intabiafusion/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import { MarkupMark, MarkupMarkType } from '@hcengineering/text'
+  import uiPlugin, { navigate, parseLocation } from '@hcengineering/ui'
 
   import presentation from '../../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let mark: MarkupMark
 

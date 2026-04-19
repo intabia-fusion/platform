@@ -21,8 +21,8 @@ import {
   type MeasureContext,
   type Ref,
   type SessionData
-} from '@intabiafusion/core'
-import { BaseMiddleware, type Middleware, type PipelineContext } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { BaseMiddleware, type Middleware, type PipelineContext } from '@hcengineering/server-core'
 
 /**
  * @public

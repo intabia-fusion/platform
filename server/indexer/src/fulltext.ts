@@ -20,8 +20,8 @@ import {
   type SearchQuery,
   type SearchResult,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import type { FullTextAdapter } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import type { FullTextAdapter } from '@hcengineering/server-core'
 import { getScoringConfig, mapSearchResultDoc } from './mapper'
 
 export async function searchFulltext (

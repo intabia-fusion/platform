@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity, { type DocUpdateMessage } from '@intabiafusion/activity'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   DOMAIN_MODEL_TX,
   DOMAIN_STATUS,
@@ -23,7 +23,7 @@ import core, {
   TxOperations,
   generateId,
   toIdMap
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   type MigrateOperation,
   type MigrationClient,
@@ -32,12 +32,12 @@ import {
   createOrUpdate,
   tryMigrate,
   tryUpgrade
-} from '@intabiafusion/model'
-import { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
-import { DOMAIN_SPACE } from '@intabiafusion/model-core'
-import { DOMAIN_TASK, migrateDefaultStatusesBase } from '@intabiafusion/model-task'
-import tags from '@intabiafusion/tags'
-import task from '@intabiafusion/task'
+} from '@hcengineering/model'
+import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
+import { DOMAIN_SPACE } from '@hcengineering/model-core'
+import { DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
+import tags from '@hcengineering/tags'
+import task from '@hcengineering/task'
 import tracker, {
   type Issue,
   type IssueChildInfo,
@@ -45,7 +45,7 @@ import tracker, {
   type Project,
   TimeReportDayType,
   trackerId
-} from '@intabiafusion/tracker'
+} from '@hcengineering/tracker'
 
 import { classicIssueTaskStatuses } from '.'
 

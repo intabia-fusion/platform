@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type StatusCategory, type Client, type Doc, type Ref, type Space } from '@intabiafusion/core'
-import type { Asset, IntlString, Metadata, Resource } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import type { ObjectSearchCategory, ObjectSearchFactory } from '@intabiafusion/presentation/src/types'
-import { type ProjectType, type TaskType } from '@intabiafusion/task'
-import tracker, { trackerId, type IssueDraft, type Issue } from '@intabiafusion/tracker'
-import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
+import { type StatusCategory, type Client, type Doc, type Ref, type Space } from '@hcengineering/core'
+import type { Asset, IntlString, Metadata, Resource } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import type { ObjectSearchCategory, ObjectSearchFactory } from '@hcengineering/presentation/src/types'
+import { type ProjectType, type TaskType } from '@hcengineering/task'
+import tracker, { trackerId, type IssueDraft, type Issue } from '@hcengineering/tracker'
+import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 import {
   type CreateAggregationManagerFunc,
   type GetAllValuesFunc,
@@ -28,8 +28,8 @@ import {
   type ViewQueryAction,
   type Viewlet,
   type ViewletDescriptor
-} from '@intabiafusion/view'
-import type { ValueFormatter } from '@intabiafusion/converter'
+} from '@hcengineering/view'
+import type { ValueFormatter } from '@hcengineering/converter'
 
 export default mergeIds(trackerId, tracker, {
   viewlet: {

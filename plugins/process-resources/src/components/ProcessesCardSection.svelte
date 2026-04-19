@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
+  import { Card } from '@hcengineering/card'
 
   import ProcessesExtension from './ProcessesExtension.svelte'
 

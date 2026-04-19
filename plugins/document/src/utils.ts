@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type DocumentQuery, type Rank, type Ref, SortingOrder, Client } from '@intabiafusion/core'
+import { type DocumentQuery, type Rank, type Ref, SortingOrder, Client } from '@hcengineering/core'
 
 import document from './plugin'
 import { type Document, type Teamspace } from './types'

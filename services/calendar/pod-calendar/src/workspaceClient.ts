@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { AccountClient } from '@intabiafusion/account-client'
-import calendar, { ExternalCalendar } from '@intabiafusion/calendar'
-import contact, { getPersonRefsBySocialIds, Person } from '@intabiafusion/contact'
+import { AccountClient } from '@hcengineering/account-client'
+import calendar, { ExternalCalendar } from '@hcengineering/calendar'
+import contact, { getPersonRefsBySocialIds, Person } from '@hcengineering/contact'
 import core, {
   MeasureContext,
   RateLimiter,
@@ -23,7 +23,7 @@ import core, {
   TxOperations,
   WorkspaceUuid,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 import { CalendarClient } from './calendar'
 import { getClient } from './client'

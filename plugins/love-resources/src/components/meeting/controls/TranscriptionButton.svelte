@@ -12,13 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { isTranscription, isTranscriptionAllowed, startTranscription, stopTranscription } from '../../../utils'
   import { lkSessionConnected } from '../../../liveKitClient'
   import { currentMeetingMinutes } from '../../../stores'
   import love from '../../../plugin'
-  import view from '@intabiafusion/view'
-  import { ButtonBaseSize, ModernButton } from '@intabiafusion/ui'
+  import view from '@hcengineering/view'
+  import { ButtonBaseSize, ModernButton } from '@hcengineering/ui'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

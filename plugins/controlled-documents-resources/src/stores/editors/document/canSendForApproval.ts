@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { ControlledDocumentState, DocumentState } from '@intabiafusion/controlled-documents'
-import { TrainingState } from '@intabiafusion/training'
+import { ControlledDocumentState, DocumentState } from '@hcengineering/controlled-documents'
+import { TrainingState } from '@hcengineering/training'
 import { combine } from 'effector'
 import { $documentComments } from './documentComments'
 import {

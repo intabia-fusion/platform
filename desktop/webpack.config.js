@@ -28,7 +28,7 @@ module.exports = [
   {
     mode: dev ? 'development' : mode,
     entry: {
-      serviceWorker: '@intabiafusion/notification/src/serviceWorker.ts'
+      serviceWorker: '@hcengineering/notification/src/serviceWorker.ts'
     },
     module: {
       rules: [
@@ -125,8 +125,8 @@ module.exports = [
   // ------ UI Part --------------------------
   {
     entry: {
-      bundle: ['@intabiafusion/theme/styles/global.scss', ...['./src/ui/index.ts']],
-      'recorder-worker': '@intabiafusion/recorder-resources/src/recorder-worker.ts'
+      bundle: ['@hcengineering/theme/styles/global.scss', ...['./src/ui/index.ts']],
+      'recorder-worker': '@hcengineering/recorder-resources/src/recorder-worker.ts'
     },
     ignoreWarnings: [
       {
@@ -139,7 +139,7 @@ module.exports = [
       symlinks: true,
       alias: {
         svelte: path.resolve('node_modules', 'svelte/src/runtime'),
-        '@intabiafusion/platform-rig/profiles/ui/svelte': path.resolve('node_modules', 'svelte/src/runtime')
+        '@hcengineering/platform-rig/profiles/ui/svelte': path.resolve('node_modules', 'svelte/src/runtime')
       },
       fallback: {
         crypto: false,

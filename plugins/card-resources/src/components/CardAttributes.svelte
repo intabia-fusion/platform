@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { PermissionsStore } from '@intabiafusion/contact'
-  import { permissionsStore } from '@intabiafusion/contact-resources'
-  import core, { AnyAttribute, Class, Doc, Ref, toRank, TypedSpace } from '@intabiafusion/core'
+  import { Card } from '@hcengineering/card'
+  import { PermissionsStore } from '@hcengineering/contact'
+  import { permissionsStore } from '@hcengineering/contact-resources'
+  import core, { AnyAttribute, Class, Doc, Ref, toRank, TypedSpace } from '@hcengineering/core'
   import {
     AttributeBarEditor,
     createQuery,
     getClient,
     isCollectionAttr,
     KeyedAttribute
-  } from '@intabiafusion/presentation'
-  import { canChangeAttribute } from '@intabiafusion/view-resources'
+  } from '@hcengineering/presentation'
+  import { canChangeAttribute } from '@hcengineering/view-resources'
 
   export let object: Card
   export let _class: Ref<Class<Doc>>

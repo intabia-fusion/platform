@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
-  import { Class, Ref } from '@intabiafusion/core'
-  import presentation, { Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import { DateOrShift, Grid, TimeShiftPicker } from '@intabiafusion/ui'
+  import { Event } from '@hcengineering/calendar'
+  import { Class, Ref } from '@hcengineering/core'
+  import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { DateOrShift, Grid, TimeShiftPicker } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
 

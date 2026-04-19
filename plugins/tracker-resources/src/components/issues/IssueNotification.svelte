@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import presentation, { copyTextToClipboard, createQuery } from '@intabiafusion/presentation'
-  import { Issue, IssueStatus } from '@intabiafusion/tracker'
-  import { Button, Notification, navigate, parseLocation, NotificationToast } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { getMetadata } from '@hcengineering/platform'
+  import presentation, { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
+  import { Issue, IssueStatus } from '@hcengineering/tracker'
+  import { Button, Notification, navigate, parseLocation, NotificationToast } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { statusStore } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import IssuePresenter from './IssuePresenter.svelte'
   import IssueStatusIcon from './IssueStatusIcon.svelte'

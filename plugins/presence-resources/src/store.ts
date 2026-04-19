@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@intabiafusion/core'
-import { type Person } from '@intabiafusion/contact'
-import { getPersonByPersonRef } from '@intabiafusion/contact-resources'
+import { type Ref } from '@hcengineering/core'
+import { type Person } from '@hcengineering/contact'
+import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { writable, get } from 'svelte/store'
 
 import type { RoomPresence, MyDataItem } from './types'

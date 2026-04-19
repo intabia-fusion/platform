@@ -12,32 +12,32 @@ importers:
 
   ../../packages/client:
     dependencies:
-      '@intabiafusion/account-client':
+      '@hcengineering/account-client':
         specifier: ^0.7.20
         version: 0.7.20
-      '@intabiafusion/client':
+      '@hcengineering/client':
         specifier: ^0.7.18
         version: 0.7.18
-      '@intabiafusion/client-resources':
+      '@hcengineering/client-resources':
         specifier: ^0.7.18
         version: 0.7.18
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
       ws:
         specifier: ^8.18.2
         version: 8.18.3(utf-8-validate@6.0.5)
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -91,16 +91,16 @@ importers:
 
   ../../packages/collaboration:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/text':
+      '@hcengineering/text':
         specifier: ^0.7.18
         version: 0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)
-      '@intabiafusion/text-ydoc':
+      '@hcengineering/text-ydoc':
         specifier: ^0.7.18
         version: 0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)
       base64-js:
@@ -110,7 +110,7 @@ importers:
         specifier: ^13.6.27
         version: 13.6.27
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -158,25 +158,25 @@ importers:
 
   ../../packages/core:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/query':
+      '@hcengineering/query':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/rpc':
+      '@hcengineering/rpc':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/storage':
+      '@hcengineering/storage':
         specifier: ^0.7.17
         version: 0.7.17
       fast-equals:
@@ -186,7 +186,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -237,20 +237,20 @@ importers:
 
   ../../packages/datalake:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -304,20 +304,20 @@ importers:
       '@elastic/elasticsearch':
         specifier: ^7.17.14
         version: 7.17.14
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -365,23 +365,23 @@ importers:
 
   ../../packages/hulylake:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/hulylake-client':
+      '@hcengineering/hulylake-client':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -432,23 +432,23 @@ importers:
 
   ../../packages/kafka:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/storage':
+      '@hcengineering/storage':
         specifier: ^0.7.17
         version: 0.7.17
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -496,26 +496,26 @@ importers:
 
   ../../packages/middleware:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/query':
+      '@hcengineering/query':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -563,20 +563,20 @@ importers:
 
   ../../packages/minio:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
       minio:
         specifier: ^8.0.5
         version: 8.0.6
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -624,13 +624,13 @@ importers:
 
   ../../packages/mongo:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
       bson:
@@ -640,7 +640,7 @@ importers:
         specifier: ^6.16.0
         version: 6.20.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -688,23 +688,23 @@ importers:
 
   ../../packages/postgres:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/postgres-base':
+      '@hcengineering/postgres-base':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -761,23 +761,23 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.738.0
         version: 3.925.0
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/storage':
+      '@hcengineering/storage':
         specifier: ^0.7.17
         version: 0.7.17
       '@smithy/node-http-handler':
         specifier: ^4.0.2
         version: 4.4.4
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -825,32 +825,32 @@ importers:
 
   ../../packages/server:
     dependencies:
-      '@intabiafusion/account-client':
+      '@hcengineering/account-client':
         specifier: ^0.7.20
         version: 0.7.20
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/rpc':
+      '@hcengineering/rpc':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
       utf-8-validate:
         specifier: ^6.0.4
         version: 6.0.5
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -901,38 +901,38 @@ importers:
 
   ../../packages/server-storage:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.23
         version: 0.7.23
-      '@intabiafusion/datalake':
+      '@hcengineering/datalake':
         specifier: workspace:^0.7.17
         version: link:../datalake
-      '@intabiafusion/hulylake':
+      '@hcengineering/hulylake':
         specifier: workspace:^0.7.17
         version: link:../hulylake
-      '@intabiafusion/minio':
+      '@hcengineering/minio':
         specifier: workspace:^0.7.17
         version: link:../minio
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/s3':
+      '@hcengineering/s3':
         specifier: workspace:^0.7.17
         version: link:../s3
-      '@intabiafusion/server-core':
+      '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/storage':
+      '@hcengineering/storage':
         specifier: ^0.7.17
         version: 0.7.17
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@types/jest':
@@ -986,7 +986,7 @@ importers:
 
   ../scripts:
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
       '@typescript-eslint/eslint-plugin':
@@ -1563,59 +1563,59 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
-  '@intabiafusion/account-client@0.7.20':
+  '@hcengineering/account-client@0.7.20':
     resolution: {integrity: sha512-Qj5FzV5ywImEU/hHwI9rdKgpI2+Hh1+DZkogiu5S43mY3qprVqENoyp+iS9jJUvUQNzdpMtM3gFjFvyK03pZdQ==}
 
-  '@intabiafusion/analytics@0.7.17':
+  '@hcengineering/analytics@0.7.17':
     resolution: {integrity: sha512-AzB2DvmDctEJge8VeAHS3YyRYij/QQlARxa2OCNiY+Vv+2+OsQk0NZsw1yqZqsMkVJ40FTUrzOkI7UdM6RPO1Q==}
 
-  '@intabiafusion/client-resources@0.7.18':
+  '@hcengineering/client-resources@0.7.18':
     resolution: {integrity: sha512-nnskuWP6D5QN4Yjf/P/QLzJOi0kfntEos9R75nWrN0L08PvGfVASehgB/8J/Uwmm/LrdWcJVnw2+9bK11jGn4g==}
 
-  '@intabiafusion/client@0.7.18':
+  '@hcengineering/client@0.7.18':
     resolution: {integrity: sha512-r42fZwfz/bizU4INMG39elQOkAW8E+uRLDZHp3DnLEXgnl/B2mfu1Q0xWkey1pj2//myuMAOocyT8a83ms2J/A==}
 
-  '@intabiafusion/core@0.7.23':
+  '@hcengineering/core@0.7.23':
     resolution: {integrity: sha512-2FmzSMUreuQPBrhTjMI72SY2C4dtw5HwxJlOHuvm8A3hthwU5IS9Kmk1H/8y2ZfiC7x1a7gqeCnRsm02BjcZfw==}
 
-  '@intabiafusion/hulylake-client@0.7.17':
+  '@hcengineering/hulylake-client@0.7.17':
     resolution: {integrity: sha512-TPqdc5nd7xV73Y1B2EJ7GxpWazp9ACV1AqHlm6ebYwU1CzXQvbuJxF68itbHmPiNiCmmuiDruJmjnyLGwL18Kw==}
 
-  '@intabiafusion/measurements@0.7.18':
+  '@hcengineering/measurements@0.7.18':
     resolution: {integrity: sha512-4MxYthJhNWPfR389lN5cIFtrhzgmhi39Fx/dqIOOYF+6g0WWA6GtWXi+ORRM8l/AWKSastZqsWxMdBbT+0htdg==}
 
-  '@intabiafusion/platform-rig@0.7.19':
+  '@hcengineering/platform-rig@0.7.19':
     resolution: {integrity: sha512-3Fi5nU+nEPjzzcm3FIfEZU+ZgdkiSfL46ojbj42jdXnWMkxew2aZZVtfmIpPnMUP9AMZlj2/EA+yOcMzfY/VmA==}
     hasBin: true
 
-  '@intabiafusion/platform@0.7.19':
+  '@hcengineering/platform@0.7.19':
     resolution: {integrity: sha512-HdRJ81A1p/0P9qmHUsBeyWgIkkz00a9fNdxJWjftD0zG2g1UK0212cGy1nfY3PbCefaf3PW/RqHs/oEVInl4iA==}
 
-  '@intabiafusion/postgres-base@0.7.17':
+  '@hcengineering/postgres-base@0.7.17':
     resolution: {integrity: sha512-ex5Xtsce/wa4xdY6dDlKyWaFsNQlgHVVcD0R9BF7hOLDkTDbtkzpT+syYpCJSXCfT4MoA9x3xDcGAD5geDYhrg==}
 
-  '@intabiafusion/query@0.7.17':
+  '@hcengineering/query@0.7.17':
     resolution: {integrity: sha512-dOQbLwEHIp5D4J73I96LKeCIb5Am12jXAmrqpoMMmnA8u6UZylJVT8Vn9HwfPTUTVXmYnv9QxUNPKEn/MpaOAw==}
 
-  '@intabiafusion/retry@0.7.17':
+  '@hcengineering/retry@0.7.17':
     resolution: {integrity: sha512-JPIGoWP3RHTET0laQV4rqlNxjn3tT9O54XNxCxsxhTFF5xeC02XxmW/xV4Gh6QWE5/QCXY5DD3Sz3ild3Cr7Uw==}
 
-  '@intabiafusion/rpc@0.7.17':
+  '@hcengineering/rpc@0.7.17':
     resolution: {integrity: sha512-DEd8EMc+Zxgnnk7v9ELj8bk0GpwcKG8rgaMDd2ZXk/JUx9l99RJoJ9/5rlSUHGv8SRxTq8DYJR85nU3aasVd9Q==}
 
-  '@intabiafusion/server-token@0.7.17':
+  '@hcengineering/server-token@0.7.17':
     resolution: {integrity: sha512-MDoGzVOTScJXnx2jHL63szclhiqPOKEXk7bmUj6i/HLUQoU6UAl9TTq1Zx/TomyzFQUx8Vkuj0j0bJMUcmLXmQ==}
 
-  '@intabiafusion/storage@0.7.17':
+  '@hcengineering/storage@0.7.17':
     resolution: {integrity: sha512-1njEkieVWcJgZHvHBB7d656x1EgkwpFeYI9PGJPAiIMnONRfP4KsGLEgfT9Hb5QTM451RCjctbDF+ibBpsCBdQ==}
 
-  '@intabiafusion/text-core@0.7.18':
+  '@hcengineering/text-core@0.7.18':
     resolution: {integrity: sha512-UZ/ZMwVcf60WpnYYcsA7RqYE4JlHnAGVdmUDHX2SYzXXvDIK7deGWD9AKyK4yqI1mb19ccyCr5fGyGoLxx9k/g==}
 
-  '@intabiafusion/text-ydoc@0.7.18':
+  '@hcengineering/text-ydoc@0.7.18':
     resolution: {integrity: sha512-uww/VyEBGz8HTj9ESG8gIfti4kyWU2aRBGDm2dyljCPTUrgxY348IKP85ZmmxhW8jCGQ7kqTeoXw4xdlRWyCsA==}
 
-  '@intabiafusion/text@0.7.18':
+  '@hcengineering/text@0.7.18':
     resolution: {integrity: sha512-0se5IwEF/7LoHcFqqxtx7WUEc0sfzaytsQeqs15gRfjLx0vJ/XMc/ZAj1lkpeLKMPXRQ0mCwdzMjxVzo3W9XDQ==}
 
   '@humanwhocodes/config-array@0.13.0':
@@ -5435,44 +5435,44 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@intabiafusion/account-client@0.7.20':
+  '@hcengineering/account-client@0.7.20':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
 
-  '@intabiafusion/analytics@0.7.17':
+  '@hcengineering/analytics@0.7.17':
     dependencies:
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/platform': 0.7.19
 
-  '@intabiafusion/client-resources@0.7.18':
+  '@hcengineering/client-resources@0.7.18':
     dependencies:
-      '@intabiafusion/analytics': 0.7.17
-      '@intabiafusion/client': 0.7.18
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
-      '@intabiafusion/rpc': 0.7.17
+      '@hcengineering/analytics': 0.7.17
+      '@hcengineering/client': 0.7.18
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
+      '@hcengineering/rpc': 0.7.17
       snappyjs: 0.7.0
 
-  '@intabiafusion/client@0.7.18':
+  '@hcengineering/client@0.7.18':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
 
-  '@intabiafusion/core@0.7.23':
+  '@hcengineering/core@0.7.23':
     dependencies:
-      '@intabiafusion/analytics': 0.7.17
-      '@intabiafusion/measurements': 0.7.18
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/analytics': 0.7.17
+      '@hcengineering/measurements': 0.7.18
+      '@hcengineering/platform': 0.7.19
       fast-equals: 5.3.2
 
-  '@intabiafusion/hulylake-client@0.7.17':
+  '@hcengineering/hulylake-client@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/retry': 0.7.17
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/retry': 0.7.17
 
-  '@intabiafusion/measurements@0.7.18': {}
+  '@hcengineering/measurements@0.7.18': {}
 
-  '@intabiafusion/platform-rig@0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))':
+  '@hcengineering/platform-rig@0.7.19(@babel/core@7.28.5)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))':
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.9.3)
@@ -5505,53 +5505,53 @@ snapshots:
       - supports-color
       - ts-node
 
-  '@intabiafusion/platform@0.7.19':
+  '@hcengineering/platform@0.7.19':
     dependencies:
       intl-messageformat: 10.7.18
 
-  '@intabiafusion/postgres-base@0.7.17':
+  '@hcengineering/postgres-base@0.7.17':
     dependencies:
       postgres: 3.4.7
 
-  '@intabiafusion/query@0.7.17':
+  '@hcengineering/query@0.7.17':
     dependencies:
-      '@intabiafusion/analytics': 0.7.17
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/analytics': 0.7.17
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
       fast-equals: 5.3.2
 
-  '@intabiafusion/retry@0.7.17': {}
+  '@hcengineering/retry@0.7.17': {}
 
-  '@intabiafusion/rpc@0.7.17':
+  '@hcengineering/rpc@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
       msgpackr: 1.11.5
 
-  '@intabiafusion/server-token@0.7.17':
+  '@hcengineering/server-token@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
       jwt-simple: 0.5.6
       uuid: 8.3.2
 
-  '@intabiafusion/storage@0.7.17':
+  '@hcengineering/storage@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/platform': 0.7.19
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/platform': 0.7.19
       fast-equals: 5.3.2
 
-  '@intabiafusion/text-core@0.7.18':
+  '@hcengineering/text-core@0.7.18':
     dependencies:
-      '@intabiafusion/core': 0.7.23
+      '@hcengineering/core': 0.7.23
       fast-equals: 5.3.2
       hash-it: 6.0.0
 
-  '@intabiafusion/text-ydoc@0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)':
+  '@hcengineering/text-ydoc@0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/text': 0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)
-      '@intabiafusion/text-core': 0.7.18
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/text': 0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)
+      '@hcengineering/text-core': 0.7.18
       y-protocols: 1.0.6(yjs@13.6.27)
       yjs: 13.6.27
     transitivePeerDependencies:
@@ -5560,10 +5560,10 @@ snapshots:
       - prosemirror-state
       - prosemirror-view
 
-  '@intabiafusion/text@0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)':
+  '@hcengineering/text@0.7.18(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)':
     dependencies:
-      '@intabiafusion/core': 0.7.23
-      '@intabiafusion/text-core': 0.7.18
+      '@hcengineering/core': 0.7.23
+      '@hcengineering/text-core': 0.7.18
       '@tiptap/core': 2.27.1(@tiptap/pm@2.27.1)
       '@tiptap/extension-blockquote': 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
       '@tiptap/extension-bold': 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))

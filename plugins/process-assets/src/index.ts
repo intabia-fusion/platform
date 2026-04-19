@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import process from '@intabiafusion/process'
+import { loadMetadata } from '@hcengineering/platform'
+import process from '@hcengineering/process'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(process.icon, {

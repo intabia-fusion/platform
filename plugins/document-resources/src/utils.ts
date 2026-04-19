@@ -20,14 +20,14 @@ import {
   type Ref,
   SortingOrder,
   type TxOperations
-} from '@intabiafusion/core'
-import { type Document, type Teamspace, documentId, getFirstRank } from '@intabiafusion/document'
-import { getMetadata, translate } from '@intabiafusion/platform'
-import presentation, { getClient } from '@intabiafusion/presentation'
-import { makeRank } from '@intabiafusion/rank'
-import { type Location, type ResolvedLocation, getCurrentResolvedLocation, getPanelURI } from '@intabiafusion/ui'
-import { accessDeniedStore } from '@intabiafusion/view-resources'
-import { workbenchId } from '@intabiafusion/workbench'
+} from '@hcengineering/core'
+import { type Document, type Teamspace, documentId, getFirstRank } from '@hcengineering/document'
+import { getMetadata, translate } from '@hcengineering/platform'
+import presentation, { getClient } from '@hcengineering/presentation'
+import { makeRank } from '@hcengineering/rank'
+import { type Location, type ResolvedLocation, getCurrentResolvedLocation, getPanelURI } from '@hcengineering/ui'
+import { accessDeniedStore } from '@hcengineering/view-resources'
+import { workbenchId } from '@hcengineering/workbench'
 import slugify from 'slugify'
 
 import document from './plugin'

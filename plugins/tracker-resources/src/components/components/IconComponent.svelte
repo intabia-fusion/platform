@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button } from '@intabiafusion/ui'
+  import { Button } from '@hcengineering/ui'
   import tracker from '../../plugin'
 </script>
 

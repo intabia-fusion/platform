@@ -33,7 +33,7 @@ import {
   MessageMeta,
   FindMessagesGroupParams,
   MessagesGroup
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import {
   type AddCollaboratorsEvent,
   AttachmentPatchEvent,
@@ -64,14 +64,14 @@ import {
   type UpdateNotificationContextEvent,
   type UpdateNotificationEvent,
   UpdatePatchEvent
-} from '@intabiafusion/communication-sdk-types'
-import { MessageProcessor } from '@intabiafusion/communication-shared'
+} from '@hcengineering/communication-sdk-types'
+import { MessageProcessor } from '@hcengineering/communication-shared'
 import {
   AddAttachmentsOperation,
   RemoveAttachmentsOperation,
   SetAttachmentsOperation,
   UpdateAttachmentsOperation
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
 import { BaseMiddleware } from './base'

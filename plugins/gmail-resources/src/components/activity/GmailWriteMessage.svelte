@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Ref } from '@intabiafusion/core'
-  import { Message } from '@intabiafusion/gmail'
-  import { showPopup } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Ref } from '@hcengineering/core'
+  import { Message } from '@hcengineering/gmail'
+  import { showPopup } from '@hcengineering/ui'
 
   import gmail from '../../plugin'
   import Main from '../Main.svelte'

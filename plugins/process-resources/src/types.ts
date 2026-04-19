@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type DocumentQuery } from '@intabiafusion/core'
-import { type IntlString } from '@intabiafusion/platform'
-import { type ProcessContext, type Execution } from '@intabiafusion/process'
+import { type DocumentQuery } from '@hcengineering/core'
+import { type IntlString } from '@hcengineering/platform'
+import { type ProcessContext, type Execution } from '@hcengineering/process'
 
 export interface Special {
   _id: string

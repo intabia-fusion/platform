@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { AnyAttribute, Class, Doc, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import tags, { TagReference, TagsEvents } from '@intabiafusion/tags'
-  import { Icon, Label, getEventPopupPositionElement, showPopup } from '@intabiafusion/ui'
-  import { getObjectId } from '@intabiafusion/view-resources'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import tags, { TagReference, TagsEvents } from '@hcengineering/tags'
+  import { Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import { getObjectId } from '@hcengineering/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
 
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'

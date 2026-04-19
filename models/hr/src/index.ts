@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Contact, type Employee } from '@intabiafusion/contact'
+import { type Contact, type Employee } from '@hcengineering/contact'
 import {
   AccountRole,
   DOMAIN_MODEL,
@@ -24,7 +24,7 @@ import {
   type Markup,
   type Ref,
   type Type
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   hrId,
   type Department,
@@ -33,7 +33,7 @@ import {
   type RequestType,
   type Staff,
   type TzDate
-} from '@intabiafusion/hr'
+} from '@hcengineering/hr'
 import {
   ArrOf,
   Collection,
@@ -48,20 +48,20 @@ import {
   TypeString,
   UX,
   type Builder
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import calendar from '@intabiafusion/model-calendar'
-import chunter from '@intabiafusion/model-chunter'
-import contact, { TEmployee } from '@intabiafusion/model-contact'
-import core, { TAttachedDoc, TDoc, TType } from '@intabiafusion/model-core'
-import view, { classPresenter, createAction } from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import notification from '@intabiafusion/notification'
-import { type Asset, type IntlString } from '@intabiafusion/platform'
-import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import calendar from '@hcengineering/model-calendar'
+import chunter from '@hcengineering/model-chunter'
+import contact, { TEmployee } from '@hcengineering/model-contact'
+import core, { TAttachedDoc, TDoc, TType } from '@hcengineering/model-core'
+import view, { classPresenter, createAction } from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import notification from '@hcengineering/notification'
+import { type Asset, type IntlString } from '@hcengineering/platform'
+import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import hr from './plugin'
 
-export { hrId } from '@intabiafusion/hr'
+export { hrId } from '@hcengineering/hr'
 export { hrOperation } from './migration'
 export { default } from './plugin'
 

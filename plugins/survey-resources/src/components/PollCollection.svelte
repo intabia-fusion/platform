@@ -15,16 +15,16 @@
 //
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Survey } from '@intabiafusion/survey'
-  import { Button, IconAdd, Label, Section, navigate, showPopup, Scroller } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { Table, ViewletSelector, ViewletSettingButton, getObjectLinkFragment } from '@intabiafusion/view-resources'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Survey } from '@hcengineering/survey'
+  import { Button, IconAdd, Label, Section, navigate, showPopup, Scroller } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { Table, ViewletSelector, ViewletSettingButton, getObjectLinkFragment } from '@hcengineering/view-resources'
   import SurveyPopup from './SurveyPopup.svelte'
   import survey from '../plugin'
   import { makePollData } from '../utils'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>

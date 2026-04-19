@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { FindOptions, SortingOrder } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Applicant, Vacancy } from '@intabiafusion/recruit'
-  import { Button, Label, Loading } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { DocNavLink, ObjectPresenter, Table } from '@intabiafusion/view-resources'
+  import core, { FindOptions, SortingOrder } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Applicant, Vacancy } from '@hcengineering/recruit'
+  import { Button, Label, Loading } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { DocNavLink, ObjectPresenter, Table } from '@hcengineering/view-resources'
   import recruit from '../plugin'
 
   export let value: Vacancy

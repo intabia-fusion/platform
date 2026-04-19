@@ -4,9 +4,9 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { TitlePresenter } from '@intabiafusion/tracker-resources'
-  import { GithubPullRequest } from '@intabiafusion/github'
+  import { WithLookup } from '@hcengineering/core'
+  import { TitlePresenter } from '@hcengineering/tracker-resources'
+  import { GithubPullRequest } from '@hcengineering/github'
 
   export let value: WithLookup<GithubPullRequest>
   export let shouldUseMargin: boolean = false

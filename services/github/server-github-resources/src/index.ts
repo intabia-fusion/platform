@@ -2,7 +2,7 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import chunter from '@intabiafusion/chunter'
+import chunter from '@hcengineering/chunter'
 import core, {
   Doc,
   DocumentUpdate,
@@ -18,11 +18,11 @@ import core, {
   systemAccountUuid,
   type Class,
   type TxMixin
-} from '@intabiafusion/core'
-import github, { DocSyncInfo, GithubProject } from '@intabiafusion/github'
-import { TriggerControl } from '@intabiafusion/server-core'
-import time, { ToDo } from '@intabiafusion/time'
-import tracker from '@intabiafusion/tracker'
+} from '@hcengineering/core'
+import github, { DocSyncInfo, GithubProject } from '@hcengineering/github'
+import { TriggerControl } from '@hcengineering/server-core'
+import time, { ToDo } from '@hcengineering/time'
+import tracker from '@hcengineering/tracker'
 
 /**
  * @public

@@ -7,10 +7,10 @@ import {
   type TrainingAttempt,
   TrainingAttemptState,
   type TrainingRequest
-} from '@intabiafusion/training'
-import { type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import { navigate } from '@intabiafusion/ui'
+} from '@hcengineering/training'
+import { type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import { navigate } from '@hcengineering/ui'
 import training from '../plugin'
 import { trainingAttemptRoute } from '../routing/routes/trainingAttemptRoute'
 import { canCreateTrainingAttempt } from './canCreateTrainingAttempt'

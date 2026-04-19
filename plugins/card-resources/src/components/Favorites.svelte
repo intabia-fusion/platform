@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import card from '@intabiafusion/card'
-  import { SpecialView } from '@intabiafusion/workbench-resources'
-  import view from '@intabiafusion/view'
-  import preference from '@intabiafusion/preference'
+  import card from '@hcengineering/card'
+  import { SpecialView } from '@hcengineering/workbench-resources'
+  import view from '@hcengineering/view'
+  import preference from '@hcengineering/preference'
 
   export let application: string
 </script>

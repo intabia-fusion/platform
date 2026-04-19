@@ -72,8 +72,8 @@ commit_preprocessors = [
    { pattern = '^Clear ', replace = "fix: " },
    { pattern = '^Do not ', replace = "fix: " },
    # Link issue numbers
-   { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/intabia-fusion/foundation/issues/${2}))"},
-   { pattern = "Merge pull request #([0-9]+) from [^ ]+", replace = "PR [#${1}](https://github.com/intabia-fusion/foundation/pull/${1}):"},
+   { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/hcengineering/platform/issues/${2}))"},
+   { pattern = "Merge pull request #([0-9]+) from [^ ]+", replace = "PR [#${1}](https://github.com/hcengineering/platform/pull/${1}):"},
 ]
 # regex for parsing and grouping commits
 commit_parsers = [

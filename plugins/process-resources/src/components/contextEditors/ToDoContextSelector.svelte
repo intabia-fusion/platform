@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
   import {
     ContextId,
     createContext,
@@ -23,7 +23,7 @@
     ProcessToDo,
     SelectedContext,
     SelectedExecutionContext
-  } from '@intabiafusion/process'
+  } from '@hcengineering/process'
   import ui, {
     Button,
     ButtonKind,
@@ -33,12 +33,12 @@
     SelectPopup,
     SelectPopupValueType,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'
   import ProcessContextPresenter from './ProcessContextPresenter.svelte'
-  import { Class, Ref } from '@intabiafusion/core'
+  import { Class, Ref } from '@hcengineering/core'
 
   export let readonly: boolean
   export let process: Process

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { DocReferencePresenter } from '@intabiafusion/view-resources'
-  import view from '@intabiafusion/view'
-  import { Icon, Label } from '@intabiafusion/ui'
+  import type { Doc } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { DocReferencePresenter } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view'
+  import { Icon, Label } from '@hcengineering/ui'
 
   import activity from '../../plugin'
   import { isActivityMessage } from '../../activityMessagesUtils'

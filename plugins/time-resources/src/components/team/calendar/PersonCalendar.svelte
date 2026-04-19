@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@intabiafusion/contact'
-  import { PersonPresenter } from '@intabiafusion/contact-resources'
-  import { Ref } from '@intabiafusion/core'
+  import contact, { Person } from '@hcengineering/contact'
+  import { PersonPresenter } from '@hcengineering/contact-resources'
+  import { Ref } from '@hcengineering/core'
   import {
     Label,
     Scroller,
@@ -26,7 +26,7 @@
     getWeekDayName,
     isWeekend,
     resizeObserver
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
 
   export let headerHeightRem = 4.375
   const minColWidthRem = 2.5

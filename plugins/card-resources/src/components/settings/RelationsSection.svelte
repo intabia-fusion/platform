@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { CardEvents, MasterTag } from '@intabiafusion/card'
-  import core, { Association, Class, Doc, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
-  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
-  import { ButtonIcon, Icon, IconAdd, Label, showPopup } from '@intabiafusion/ui'
+  import { CardEvents, MasterTag } from '@hcengineering/card'
+  import core, { Association, Class, Doc, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
+  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
+  import { ButtonIcon, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import CreateRelation from './CreateRelation.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let masterTag: MasterTag
 

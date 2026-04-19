@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { type Person as GlobalPerson, type SocialId, type AccountDB, Account } from '@intabiafusion/account'
+import { Analytics } from '@hcengineering/analytics'
+import { type Person as GlobalPerson, type SocialId, type AccountDB, Account } from '@hcengineering/account'
 import core, {
   AccountRole,
   AccountUuid,
@@ -31,9 +31,9 @@ import core, {
   type LowLevelStorage,
   type TxCUD,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import { BlobClient } from '@intabiafusion/server-client'
-import { BackupClientOps, createDummyStorageAdapter, type Pipeline } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { BlobClient } from '@hcengineering/server-client'
+import { BackupClientOps, createDummyStorageAdapter, type Pipeline } from '@hcengineering/server-core'
 import { deepEqual } from 'fast-equals'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { extract } from 'tar-stream'

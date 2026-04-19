@@ -1,4 +1,4 @@
-import type { Class, Doc, DocumentQuery, FindOptions, FindResult, Ref } from '@intabiafusion/core'
+import type { Class, Doc, DocumentQuery, FindOptions, FindResult, Ref } from '@hcengineering/core'
 import type { ResultArray } from './results'
 
 export type Callback = (result: FindResult<Doc>) => void

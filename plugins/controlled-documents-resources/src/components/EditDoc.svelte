@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Class, type Ref, SortingOrder } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Loading } from '@intabiafusion/ui'
-  import documents, { type ControlledDocument, type Project } from '@intabiafusion/controlled-documents'
+  import { type Class, type Ref, SortingOrder } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Loading } from '@hcengineering/ui'
+  import documents, { type ControlledDocument, type Project } from '@hcengineering/controlled-documents'
 
   import EditDocPanel from './EditDocPanel.svelte'
 

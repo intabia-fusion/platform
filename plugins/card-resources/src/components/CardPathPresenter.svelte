@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card } from '@intabiafusion/card'
-  import { WithLookup } from '@intabiafusion/core'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import cardPlugin, { Card } from '@hcengineering/card'
+  import { WithLookup } from '@hcengineering/core'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import TagDivider from './TagDivider.svelte'
 
   import { openCardInSidebar } from '../utils'

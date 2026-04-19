@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import type { Issue } from '@intabiafusion/tracker'
-  import { FixedColumn, statusStore } from '@intabiafusion/view-resources'
+  import { WithLookup } from '@hcengineering/core'
+  import type { Issue } from '@hcengineering/tracker'
+  import { FixedColumn, statusStore } from '@hcengineering/view-resources'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
 
   export let value: WithLookup<Issue>

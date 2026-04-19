@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import cardPlugin, { cardId, DOMAIN_CARD, type Card, type Role } from '@intabiafusion/card'
+import cardPlugin, { cardId, DOMAIN_CARD, type Card, type Role } from '@hcengineering/card'
 import core, {
   DOMAIN_MODEL,
   TxOperations,
@@ -24,7 +24,7 @@ import core, {
   type Doc,
   type DocumentUpdate,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   createOrUpdate,
   tryMigrate,
@@ -33,9 +33,9 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
-import tags from '@intabiafusion/tags'
-import view, { type Viewlet } from '@intabiafusion/view'
+} from '@hcengineering/model'
+import tags from '@hcengineering/tags'
+import view, { type Viewlet } from '@hcengineering/view'
 import card from '.'
 
 export const cardOperation: MigrateOperation = {

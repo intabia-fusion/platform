@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget, WidgetPreference } from '@intabiafusion/workbench'
-  import { Ref } from '@intabiafusion/core'
+  import { Widget, WidgetPreference } from '@hcengineering/workbench'
+  import { Ref } from '@hcengineering/core'
 
   import WidgetsBar from './widgets/WidgetsBar.svelte'
 

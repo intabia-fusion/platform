@@ -16,16 +16,16 @@
 -->
 
 <script lang="ts">
-  import { AttachmentStyleBoxEditor } from '@intabiafusion/attachment-resources'
-  import core, { Class, Doc, Ref, WithLookup, getCurrentAccount } from '@intabiafusion/core'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import notification from '@intabiafusion/notification'
-  import { Panel } from '@intabiafusion/panel'
-  import { getResource } from '@intabiafusion/platform'
-  import { ActionContext, MessageViewer, createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, IconMixin, IconMoreH } from '@intabiafusion/ui'
-  import { DocAttributeBar, getDocMixins, showMenu } from '@intabiafusion/view-resources'
-  import type { ProductVersion } from '@intabiafusion/products'
+  import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
+  import core, { Class, Doc, Ref, WithLookup, getCurrentAccount } from '@hcengineering/core'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import notification from '@hcengineering/notification'
+  import { Panel } from '@hcengineering/panel'
+  import { getResource } from '@hcengineering/platform'
+  import { ActionContext, MessageViewer, createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, IconMixin, IconMoreH } from '@hcengineering/ui'
+  import { DocAttributeBar, getDocMixins, showMenu } from '@hcengineering/view-resources'
+  import type { ProductVersion } from '@hcengineering/products'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import products from '../../plugin'

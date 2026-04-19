@@ -21,10 +21,10 @@
     type Doc,
     type IdMap,
     type Ref
-  } from '@intabiafusion/core'
-  import { translateCB } from '@intabiafusion/platform'
-  import { createQuery, KeyedAttribute } from '@intabiafusion/presentation'
-  import { TagElement, TagReference } from '@intabiafusion/tags'
+  } from '@hcengineering/core'
+  import { translateCB } from '@hcengineering/platform'
+  import { createQuery, KeyedAttribute } from '@hcengineering/presentation'
+  import { TagElement, TagReference } from '@hcengineering/tags'
   import {
     Button,
     getEventPopupPositionElement,
@@ -34,7 +34,7 @@
     ShowMore,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import TagItem from './TagItem.svelte'

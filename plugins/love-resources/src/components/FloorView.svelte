@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Scroller } from '@intabiafusion/ui'
-  import { ParticipantInfo, Room } from '@intabiafusion/love'
+  import { Ref } from '@hcengineering/core'
+  import { Scroller } from '@hcengineering/ui'
+  import { ParticipantInfo, Room } from '@hcengineering/love'
   import { infos } from '../stores'
   import { calculateFloorSize } from '../utils'
   import FloorGrid from './FloorGrid.svelte'

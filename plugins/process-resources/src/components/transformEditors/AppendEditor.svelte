@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@intabiafusion/card'
-  import core, { AnyAttribute, Ref } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { Context, Process, ProcessFunction } from '@intabiafusion/process'
-  import { AnySvelteComponent } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { MasterTag, Tag } from '@hcengineering/card'
+  import core, { AnyAttribute, Ref } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { Context, Process, ProcessFunction } from '@hcengineering/process'
+  import { AnySvelteComponent } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ProcessAttribute from '../ProcessAttribute.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let func: ProcessFunction
   export let process: Process

@@ -21,11 +21,11 @@ import {
   RateLimiter,
   toIdMap,
   WorkspaceIds
-} from '@intabiafusion/core'
-import { Class, Doc, Ref, Space } from '@intabiafusion/core/types/classes'
-import { type TransformConfig } from '@intabiafusion/export'
-import core from '@intabiafusion/model-core'
-import { StorageAdapter } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { Class, Doc, Ref, Space } from '@hcengineering/core/types/classes'
+import { type TransformConfig } from '@hcengineering/export'
+import core from '@hcengineering/model-core'
+import { StorageAdapter } from '@hcengineering/server-core'
 import path from 'path'
 import { UnifiedConverter } from './converter'
 import { UnifiedCsvSerializer } from './csv/csv-serializer'

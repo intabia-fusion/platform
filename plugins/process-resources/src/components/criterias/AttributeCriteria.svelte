@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
-  import { Process } from '@intabiafusion/process'
-  import { Component, Label, tooltip } from '@intabiafusion/ui'
+  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
+  import { Process } from '@hcengineering/process'
+  import { Component, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getCriteriaEditor, getContext } from '../../utils'
 

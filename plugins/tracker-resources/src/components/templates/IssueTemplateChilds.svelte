@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Component, Issue, IssueTemplateChild, Project, Milestone } from '@intabiafusion/tracker'
-  import { Button, ExpandCollapse, IconAdd, Scroller, closeTooltip } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Component, Issue, IssueTemplateChild, Project, Milestone } from '@hcengineering/tracker'
+  import { Button, ExpandCollapse, IconAdd, Scroller, closeTooltip } from '@hcengineering/ui'
   import { afterUpdate, createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import Collapsed from '../icons/Collapsed.svelte'

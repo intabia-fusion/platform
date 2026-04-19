@@ -1,6 +1,6 @@
 <script lang="ts">
-  import lead from '@intabiafusion/lead'
-  import { Icon, IconSize } from '@intabiafusion/ui'
+  import lead from '@hcengineering/lead'
+  import { Icon, IconSize } from '@hcengineering/ui'
   export let size: IconSize = 'small'
 </script>
 

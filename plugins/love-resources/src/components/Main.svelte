@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import Hall from './Hall.svelte'
 

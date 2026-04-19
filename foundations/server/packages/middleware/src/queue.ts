@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type SessionData, type Tx } from '@intabiafusion/core'
+import { type MeasureContext, type SessionData, type Tx } from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
@@ -22,7 +22,7 @@ import {
   type PlatformQueue,
   type PlatformQueueProducer,
   QueueTopic
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 export class QueueMiddleware extends BaseMiddleware {
   txProducer: PlatformQueueProducer<Tx>

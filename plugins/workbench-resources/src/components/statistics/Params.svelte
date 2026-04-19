@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { OperationLog, OperationLogEntry } from '@intabiafusion/core'
-  import presentation from '@intabiafusion/presentation'
-  import { Button, FocusHandler, createFocusManager } from '@intabiafusion/ui'
+  import type { OperationLog, OperationLogEntry } from '@hcengineering/core'
+  import presentation from '@hcengineering/presentation'
+  import { Button, FocusHandler, createFocusManager } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let params: Record<string, any>

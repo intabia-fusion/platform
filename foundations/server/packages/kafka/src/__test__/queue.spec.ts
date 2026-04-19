@@ -1,4 +1,4 @@
-import { generateId, MeasureMetricsContext, type WorkspaceUuid } from '@intabiafusion/core'
+import { generateId, MeasureMetricsContext, type WorkspaceUuid } from '@hcengineering/core'
 import { createPlatformQueue, parseQueueConfig } from '..'
 
 jest.setTimeout(60000) // Reduced for faster tests

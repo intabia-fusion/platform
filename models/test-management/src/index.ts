@@ -13,20 +13,20 @@
 // limitations under the License.
 //
 
-import activity from '@intabiafusion/activity'
-import chunter from '@intabiafusion/chunter'
-import core from '@intabiafusion/model-core'
-import { SortingOrder, type FindOptions } from '@intabiafusion/core'
+import activity from '@hcengineering/activity'
+import chunter from '@hcengineering/chunter'
+import core from '@hcengineering/model-core'
+import { SortingOrder, type FindOptions } from '@hcengineering/core'
 
-import { type Builder } from '@intabiafusion/model'
-import view, { createAction } from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import print from '@intabiafusion/model-print'
-import tracker from '@intabiafusion/model-tracker'
-import { type ViewOptionsModel } from '@intabiafusion/view'
-import contact from '@intabiafusion/contact'
+import { type Builder } from '@hcengineering/model'
+import view, { createAction } from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import print from '@hcengineering/model-print'
+import tracker from '@hcengineering/model-tracker'
+import { type ViewOptionsModel } from '@hcengineering/view'
+import contact from '@hcengineering/contact'
 
-import { testManagementId, type TestPlanItem, type TestResult } from '@intabiafusion/test-management'
+import { testManagementId, type TestPlanItem, type TestResult } from '@hcengineering/test-management'
 
 import {
   DOMAIN_TEST_MANAGEMENT,
@@ -47,7 +47,7 @@ import {
 import testManagement from './plugin'
 import { definePresenters } from './presenters'
 
-export { testManagementId } from '@intabiafusion/test-management/src/index'
+export { testManagementId } from '@hcengineering/test-management/src/index'
 
 function defineApplication (builder: Builder): void {
   builder.createDoc(

@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { IconSize } from '@intabiafusion/ui'
+  import { IconSize } from '@hcengineering/ui'
   export let fill: string = 'currentColor'
 
   export let size: IconSize = 'small'

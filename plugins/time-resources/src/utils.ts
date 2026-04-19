@@ -1,10 +1,10 @@
-import { getCurrentAccount, type Client, type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import type { ToDo, WorkSlot } from '@intabiafusion/time'
-import time from '@intabiafusion/time'
-import type { DefSeparators } from '@intabiafusion/ui'
+import { getCurrentAccount, type Client, type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import type { ToDo, WorkSlot } from '@hcengineering/time'
+import time from '@hcengineering/time'
+import type { DefSeparators } from '@hcengineering/ui'
 
-import calendarPlugin, { AccessLevel, getPrimaryCalendar, type Calendar } from '@intabiafusion/calendar'
+import calendarPlugin, { AccessLevel, getPrimaryCalendar, type Calendar } from '@hcengineering/calendar'
 
 export * from './types'
 

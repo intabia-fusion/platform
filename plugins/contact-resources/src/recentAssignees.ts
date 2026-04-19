@@ -1,6 +1,6 @@
-import contact, { type Person, type RecentlyUsedPersonsPreference } from '@intabiafusion/contact'
-import core, { getCurrentAccount, type Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
+import contact, { type Person, type RecentlyUsedPersonsPreference } from '@hcengineering/contact'
+import core, { getCurrentAccount, type Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 
 export async function getRecentlyUsedAssignees (): Promise<Array<Ref<Person>>> {
   const me = getCurrentAccount()

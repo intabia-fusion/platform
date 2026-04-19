@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getUserTimezone } from '@intabiafusion/ui'
+  import { getUserTimezone } from '@hcengineering/ui'
 
   export let date: number
   export let timeZone: string = getUserTimezone()

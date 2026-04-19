@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Contact, Employee, getCurrentEmployee, getName, Person } from '@intabiafusion/contact'
-  import { AccountUuid, notEmpty, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Contact, Employee, getCurrentEmployee, getName, Person } from '@hcengineering/contact'
+  import { AccountUuid, notEmpty, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import contact from '../plugin'
   import { employeeByIdStore, employeeRefByAccountUuidStore } from '../utils'

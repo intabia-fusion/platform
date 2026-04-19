@@ -1,8 +1,8 @@
 // Mocks for modules used by client
-import type { ContainerConnection, TickManager } from '@intabiafusion/network-core'
+import type { ContainerConnection, TickManager } from '@hcengineering/network-core'
 import { NetworkClientImpl } from '../client'
 
-jest.mock('@intabiafusion/network-backrpc', () => ({
+jest.mock('@hcengineering/network-backrpc', () => ({
   BackRPCClient: jest.fn().mockImplementation(() => ({
     waitConnection: jest.fn().mockResolvedValue(undefined),
     request: jest.fn().mockResolvedValue(undefined),
@@ -10,7 +10,7 @@ jest.mock('@intabiafusion/network-backrpc', () => ({
   }))
 }))
 
-jest.mock('@intabiafusion/network-core', () => ({
+jest.mock('@hcengineering/network-core', () => ({
   parseEndpointRef: jest.fn((endpoint: string) => {
     if (endpoint === 'routed-endpoint') {
       return { uuid: 'container-1', kind: 'routed', host: 'h', port: 1234, agentId: 'agent-1' }

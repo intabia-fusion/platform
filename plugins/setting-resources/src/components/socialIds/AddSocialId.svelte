@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { SocialIdentityProvider } from '@intabiafusion/contact'
-  import { ModernDialog } from '@intabiafusion/ui'
-  import { getCurrentLanguage } from '@intabiafusion/theme'
-  import { IntlString, translate } from '@intabiafusion/platform'
+  import { SocialIdentityProvider } from '@hcengineering/contact'
+  import { ModernDialog } from '@hcengineering/ui'
+  import { getCurrentLanguage } from '@hcengineering/theme'
+  import { IntlString, translate } from '@hcengineering/platform'
 
   import setting from '../../plugin'
 

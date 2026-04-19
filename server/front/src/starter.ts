@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
-import { setMetadata } from '@intabiafusion/platform'
-import { StorageConfiguration } from '@intabiafusion/server-core'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken from '@intabiafusion/server-token'
+import { MeasureContext } from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import { StorageConfiguration } from '@hcengineering/server-core'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken from '@hcengineering/server-token'
 import { start } from '.'
 
 export function startFront (ctx: MeasureContext, extraConfig?: Record<string, string | undefined>): void {

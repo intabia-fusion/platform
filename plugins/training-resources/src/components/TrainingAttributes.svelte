@@ -3,10 +3,10 @@
 -->
 
 <script lang="ts">
-  import type { Training } from '@intabiafusion/training'
-  import type { Class } from '@intabiafusion/core'
-  import { AttributeBarEditor, getClient } from '@intabiafusion/presentation'
-  import { Button, Label } from '@intabiafusion/ui'
+  import type { Training } from '@hcengineering/training'
+  import type { Class } from '@hcengineering/core'
+  import { AttributeBarEditor, getClient } from '@hcengineering/presentation'
+  import { Button, Label } from '@hcengineering/ui'
   import training from '../plugin'
   import TrainingPassingScorePresenter from './TrainingPassingScorePresenter.svelte'
 

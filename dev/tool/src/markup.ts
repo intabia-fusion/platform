@@ -19,8 +19,8 @@ import {
   saveCollabYdoc,
   yDocCopyXmlField,
   yDocFromBuffer
-} from '@intabiafusion/collaboration'
-import documents from '@intabiafusion/controlled-documents'
+} from '@hcengineering/collaboration'
+import documents from '@hcengineering/controlled-documents'
 import core, {
   type AnyAttribute,
   type Blob,
@@ -47,17 +47,17 @@ import core, {
   makeCollabYdocId,
   makeDocCollabId,
   systemAccountUuid
-} from '@intabiafusion/core'
-import document, { type Document } from '@intabiafusion/document'
-import { DOMAIN_DOCUMENTS } from '@intabiafusion/model-controlled-documents'
-import { DOMAIN_DOCUMENT } from '@intabiafusion/model-document'
-import { getDBClient } from '@intabiafusion/postgres'
-import { withRetry } from '@intabiafusion/retry'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { type PipelineFactory, type StorageAdapter, createDummyStorageAdapter } from '@intabiafusion/server-core'
-import { createBackupPipeline, createEmptyBroadcastOps } from '@intabiafusion/server-pipeline'
-import { generateToken } from '@intabiafusion/server-token'
-import { isEmptyMarkup } from '@intabiafusion/text-core'
+} from '@hcengineering/core'
+import document, { type Document } from '@hcengineering/document'
+import { DOMAIN_DOCUMENTS } from '@hcengineering/model-controlled-documents'
+import { DOMAIN_DOCUMENT } from '@hcengineering/model-document'
+import { getDBClient } from '@hcengineering/postgres'
+import { withRetry } from '@hcengineering/retry'
+import { getAccountClient } from '@hcengineering/server-client'
+import { type PipelineFactory, type StorageAdapter, createDummyStorageAdapter } from '@hcengineering/server-core'
+import { createBackupPipeline, createEmptyBroadcastOps } from '@hcengineering/server-pipeline'
+import { generateToken } from '@hcengineering/server-token'
+import { isEmptyMarkup } from '@hcengineering/text-core'
 
 import { type Db } from 'mongodb'
 import { type Sql } from 'postgres'

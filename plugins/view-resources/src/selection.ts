@@ -1,5 +1,5 @@
-import { type Doc, type Ref } from '@intabiafusion/core'
-import { panelstore } from '@intabiafusion/ui'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { panelstore } from '@hcengineering/ui'
 import { onDestroy } from 'svelte'
 import { type Unsubscriber, type Writable, writable } from 'svelte/store'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
 import core from './component'
 

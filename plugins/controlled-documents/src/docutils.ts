@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Employee } from '@intabiafusion/contact'
-import core, { type AttachedData, type Class, type Ref, type TxOperations, Blob, Mixin } from '@intabiafusion/core'
+import { type Employee } from '@hcengineering/contact'
+import core, { type AttachedData, type Class, type Ref, type TxOperations, Blob, Mixin } from '@hcengineering/core'
 import {
   type ControlledDocument,
   type Document,
@@ -27,7 +27,7 @@ import {
   type ProjectDocument,
   DocumentState
 } from './types'
-import { makeRank } from '@intabiafusion/rank'
+import { makeRank } from '@hcengineering/rank'
 
 import documents from './plugin'
 import { getDocumentId, getFirstRank, TEMPLATE_PREFIX } from './utils'

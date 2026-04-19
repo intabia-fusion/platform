@@ -11,14 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
 import communication from './plugin'
 import { buildTypes } from './types'
 import { buildCardActions, buildMessageActions } from './actions'
 import { buildApplets } from './applets'
 
-export { communicationId } from '@intabiafusion/communication'
+export { communicationId } from '@hcengineering/communication'
 export * from './migration'
 
 export function createModel (builder: Builder): void {

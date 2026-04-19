@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { Product } from '@intabiafusion/products'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { Product } from '@hcengineering/products'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import products from '../../plugin'
 

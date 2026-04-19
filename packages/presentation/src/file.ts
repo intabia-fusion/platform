@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Blob as PlatformBlob, type Ref, type WorkspaceUuid } from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
-import { type FileStorage, createFileStorage as createStorageClient } from '@intabiafusion/storage-client'
+import { type Blob as PlatformBlob, type Ref, type WorkspaceUuid } from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import { type FileStorage, createFileStorage as createStorageClient } from '@hcengineering/storage-client'
 import { v4 as uuid } from 'uuid'
 
 import plugin from './plugin'

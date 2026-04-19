@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/core",
+      "packageName": "@hcengineering/core",
       "comment": "Add workspace permission enum",
       "type": "patch"
     }
   ],
-  "packageName": "@intabiafusion/core"
+  "packageName": "@hcengineering/core"
 }

@@ -2,7 +2,7 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { type Asset, type IntlString, type Plugin, plugin } from '@intabiafusion/platform'
+import { type Asset, type IntlString, type Plugin, plugin } from '@hcengineering/platform'
 import {
   Doc,
   Mixin,
@@ -14,7 +14,7 @@ import {
   type SpaceTypeDescriptor,
   type Type,
   type TypedSpace
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   type Training,
   type TrainingRequest,
@@ -22,7 +22,7 @@ import {
   type TrainingAttemptState,
   TrainingState
 } from './types'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
 
 /** @public */
 export const trainingId = 'training' as Plugin

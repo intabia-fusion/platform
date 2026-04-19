@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { AnyAttribute } from '@intabiafusion/core'
-  import { findAttributeEditorByAttribute, getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
-  import { Context, createContext, parseContext, Process, SelectedContext } from '@intabiafusion/process'
-  import { Button, Component, eventToHTMLElement, IconAdd, IconClose, showPopup } from '@intabiafusion/ui'
+  import { AnyAttribute } from '@hcengineering/core'
+  import { findAttributeEditorByAttribute, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
+  import { Context, createContext, parseContext, Process, SelectedContext } from '@hcengineering/process'
+  import { Button, Component, eventToHTMLElement, IconAdd, IconClose, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import ContextSelectorPopup from '../attributeEditors/ContextSelectorPopup.svelte'
   import ContextValue from '../attributeEditors/ContextValue.svelte'

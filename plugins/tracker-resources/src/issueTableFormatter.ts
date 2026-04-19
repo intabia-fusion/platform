@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Hierarchy, type Ref, type PersonId } from '@intabiafusion/core'
-import trackerPlugin, { type Component, type IssueStatus, type Milestone, type Project } from '@intabiafusion/tracker'
-import { type AttributeModel } from '@intabiafusion/view'
-import { getClient } from '@intabiafusion/presentation'
-import { getName, getPersonByPersonId } from '@intabiafusion/contact'
+import { type Class, type Doc, type Hierarchy, type Ref, type PersonId } from '@hcengineering/core'
+import trackerPlugin, { type Component, type IssueStatus, type Milestone, type Project } from '@hcengineering/tracker'
+import { type AttributeModel } from '@hcengineering/view'
+import { getClient } from '@hcengineering/presentation'
+import { getName, getPersonByPersonId } from '@hcengineering/contact'
 
 /**
  * Cache for IssueStatus ID -> name mappings to reduce database calls

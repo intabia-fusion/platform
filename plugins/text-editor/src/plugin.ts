@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { type Class, type Ref } from '@intabiafusion/core'
-import { type Asset, type IntlString, type Metadata, type Plugin, plugin } from '@intabiafusion/platform'
+import { type Class, type Ref } from '@hcengineering/core'
+import { type Asset, type IntlString, type Metadata, type Plugin, plugin } from '@hcengineering/platform'
 
 import { type TextEditorExtensionFactory, type RefInputActionItem, TextEditorAction, CollaboratorType } from './types'
 

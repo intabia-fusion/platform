@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import { main } from './main'
 
 void main().catch((err) => {

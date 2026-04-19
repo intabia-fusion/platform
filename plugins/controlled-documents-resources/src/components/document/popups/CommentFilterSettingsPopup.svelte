@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { DropdownIntlItem, DropdownLabelsIntl, Label, Toggle } from '@intabiafusion/ui'
-  import documents, { type DocumentComment } from '@intabiafusion/controlled-documents'
+  import { DropdownIntlItem, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
+  import documents, { type DocumentComment } from '@hcengineering/controlled-documents'
   import {
     $documentCommentsFilter as documentCommentsFilter,
     documentCommentsShowResolvedToggled,
     documentCommentsSortByChanged,
     documentCommentsSortingAttributes
   } from '../../../stores/editors/document'
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
 
   const hierarchy = getClient().getHierarchy()
   const sortingOptions: DropdownIntlItem[] = documentCommentsSortingAttributes.map((attr) => {

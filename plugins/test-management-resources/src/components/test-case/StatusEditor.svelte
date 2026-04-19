@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Data } from '@intabiafusion/core'
-  import { TestCase } from '@intabiafusion/test-management'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Data } from '@hcengineering/core'
+  import { TestCase } from '@hcengineering/test-management'
+  import { getClient } from '@hcengineering/presentation'
   import {
     Button,
     ButtonKind,
@@ -26,7 +26,7 @@
     eventToHTMLElement,
     showPopup,
     Label
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { defaultTestCaseStatuses, testCaseStatusAssets } from '../../types'
   import testManagement from '../../plugin'
 

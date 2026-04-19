@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Process, State, Transition, Trigger } from '@intabiafusion/process'
-  import { clearSettingsStore } from '@intabiafusion/setting-resources'
+  import { Ref } from '@hcengineering/core'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import { Process, State, Transition, Trigger } from '@hcengineering/process'
+  import { clearSettingsStore } from '@hcengineering/setting-resources'
   import {
     ButtonIcon,
     Component,
@@ -13,7 +13,7 @@
     Label,
     ListItem,
     Modal
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import TransitionPresenter from './TransitionPresenter.svelte'
 

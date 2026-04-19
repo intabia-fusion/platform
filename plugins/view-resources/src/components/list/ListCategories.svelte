@@ -24,10 +24,10 @@
     RateLimiter,
     Ref,
     Space
-  } from '@intabiafusion/core'
-  import { getResource, IntlString } from '@intabiafusion/platform'
-  import { getClient, reduceCalls } from '@intabiafusion/presentation'
-  import ui, { AnyComponent, AnySvelteComponent, Button, Label, Spinner } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import { getResource, IntlString } from '@hcengineering/platform'
+  import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import ui, { AnyComponent, AnySvelteComponent, Button, Label, Spinner } from '@hcengineering/ui'
   import {
     AttributeModel,
     BuildModelKey,
@@ -35,7 +35,7 @@
     Viewlet,
     ViewOptionModel,
     ViewOptions
-  } from '@intabiafusion/view'
+  } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy, SvelteComponentTyped } from 'svelte'
   import { SelectionFocusProvider, focusStore } from '../../selection'
   import {

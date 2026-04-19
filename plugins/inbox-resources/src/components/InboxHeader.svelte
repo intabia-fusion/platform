@@ -11,7 +11,7 @@
 <!-- See the License for the specific language governing permissions and -->
 <!-- limitations under the License. -->
 <script lang="ts">
-  import { SortingOrder } from '@intabiafusion/core'
+  import { SortingOrder } from '@hcengineering/core'
   import {
     IconDelete,
     IconSettings,
@@ -22,11 +22,11 @@
     IconMoreV,
     ButtonMenu,
     Loading
-  } from '@intabiafusion/ui'
-  import { getCommunicationClient } from '@intabiafusion/presentation'
-  import { Analytics } from '@intabiafusion/analytics'
-  import view from '@intabiafusion/view'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  } from '@hcengineering/ui'
+  import { getCommunicationClient } from '@hcengineering/presentation'
+  import { Analytics } from '@hcengineering/analytics'
+  import view from '@hcengineering/view'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 
   import inbox from '../plugin'
   import InboxViewSettings from './InboxViewSettings.svelte'

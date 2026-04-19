@@ -18,7 +18,7 @@ import { type Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { type EditorState, Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import slugify from 'slugify'
-import { type Heading } from '@intabiafusion/text-editor'
+import { type Heading } from '@hcengineering/text-editor'
 
 export interface ToCExtensionOptions {
   prefixId?: string

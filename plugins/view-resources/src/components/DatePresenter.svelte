@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangePresenter } from '@intabiafusion/ui'
-  import { DateRangeMode } from '@intabiafusion/core'
+  import { DateRangePresenter } from '@hcengineering/ui'
+  import { DateRangeMode } from '@hcengineering/core'
 
   export let value: number | null | undefined
   export let onChange: ((value: number | null) => void) | undefined = undefined

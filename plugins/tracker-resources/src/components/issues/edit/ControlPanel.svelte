@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EmployeeBox, getPersonRefByPersonIdCb } from '@intabiafusion/contact-resources'
-  import core, { Class, Doc, Mixin, Ref } from '@intabiafusion/core'
-  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@intabiafusion/presentation'
-  import { Person } from '@intabiafusion/contact'
-  import tags from '@intabiafusion/tags'
-  import type { Issue } from '@intabiafusion/tracker'
-  import { Component, Label } from '@intabiafusion/ui'
+  import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
+  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { Person } from '@hcengineering/contact'
+  import tags from '@hcengineering/tags'
+  import type { Issue } from '@hcengineering/tracker'
+  import { Component, Label } from '@hcengineering/ui'
   import {
     getDocMixins,
     getFiltredKeys,
     isCollectionAttr,
     ObjectBox,
     restrictionStore
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
   import ComponentEditor from '../../components/ComponentEditor.svelte'

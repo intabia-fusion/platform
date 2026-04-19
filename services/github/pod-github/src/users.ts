@@ -1,8 +1,8 @@
-import type { AccountClient, IntegrationSecret } from '@intabiafusion/account-client'
-import core, { systemAccountUuid, type MeasureContext, type PersonId, type WorkspaceUuid } from '@intabiafusion/core'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { githubUserIntegrationKind } from '@intabiafusion/github'
+import type { AccountClient, IntegrationSecret } from '@hcengineering/account-client'
+import core, { systemAccountUuid, type MeasureContext, type PersonId, type WorkspaceUuid } from '@hcengineering/core'
+import { getAccountClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { githubUserIntegrationKind } from '@hcengineering/github'
 import type { GithubUserRecord } from './types'
 
 export class UserManager {

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import {
     Icon,
     Label,

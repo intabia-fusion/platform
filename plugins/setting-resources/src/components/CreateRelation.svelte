@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin from '@intabiafusion/card'
-  import core, { Class, Doc, Ref } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { DropdownIntlItem, DropdownLabelsIntl, EditBox, Label, NestedDropdown } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import cardPlugin from '@hcengineering/card'
+  import core, { Class, Doc, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { DropdownIntlItem, DropdownLabelsIntl, EditBox, Label, NestedDropdown } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'
 

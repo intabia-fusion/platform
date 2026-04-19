@@ -16,9 +16,9 @@
  * // cd examples && rushx run:ha
  */
 
-import { AgentImpl, containerUuid as generateContainerUuid, TickManagerImpl, containerOnAgentEndpointRef, NetworkImpl } from '@intabiafusion/network-core'
-import { createNetworkClient, type StatelessContainersFactory, NetworkAgentServer } from '@intabiafusion/network-client'
-import { NetworkServer } from '@intabiafusion/network-server'
+import { AgentImpl, containerUuid as generateContainerUuid, TickManagerImpl, containerOnAgentEndpointRef, NetworkImpl } from '@hcengineering/network-core'
+import { createNetworkClient, type StatelessContainersFactory, NetworkAgentServer } from '@hcengineering/network-client'
+import { NetworkServer } from '@hcengineering/network-server'
 import type { 
   Container, 
   ContainerUuid, 
@@ -27,7 +27,7 @@ import type {
   AgentEndpointRef,
   ClientUuid,
   GetOptions
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 
 // Example stateless container implementation
 class HAServiceContainer implements Container {

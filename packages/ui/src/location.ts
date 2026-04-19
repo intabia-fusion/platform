@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { clone, type Ref, type Space } from '@intabiafusion/core'
-import { type Plugin } from '@intabiafusion/platform'
+import { Analytics } from '@hcengineering/analytics'
+import { clone, type Ref, type Space } from '@hcengineering/core'
+import { type Plugin } from '@hcengineering/platform'
 import { derived, get, writable } from 'svelte/store'
 
 import { closePopup } from './popups'

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { DocNavLink } from '@intabiafusion/view-resources'
-  import love, { MeetingMinutes, MeetingStatus, Room } from '@intabiafusion/love'
+  import { DocNavLink } from '@hcengineering/view-resources'
+  import love, { MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
   import { onMount } from 'svelte'
-  import { getClient } from '@intabiafusion/presentation'
-  import { SortingOrder } from '@intabiafusion/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { SortingOrder } from '@hcengineering/core'
 
   export let room: Room
 

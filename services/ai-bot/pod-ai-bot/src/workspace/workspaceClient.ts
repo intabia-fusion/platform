@@ -18,9 +18,9 @@ import {
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
   IdentityResponse
-} from '@intabiafusion/ai-bot'
-import attachment, { Attachment } from '@intabiafusion/attachment'
-import chunter, { ChatMessage, ThreadMessage } from '@intabiafusion/chunter'
+} from '@hcengineering/ai-bot'
+import attachment, { Attachment } from '@hcengineering/attachment'
+import chunter, { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
 import contact, {
   AvatarType,
   combineName,
@@ -29,7 +29,7 @@ import contact, {
   getLastName,
   Person,
   SocialIdentity
-} from '@intabiafusion/contact'
+} from '@hcengineering/contact'
 import {
   AccountRole,
   AccountUuid,
@@ -50,24 +50,24 @@ import {
   withContext,
   type Account,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import love, { type MeetingMinutes } from '@intabiafusion/love'
+} from '@hcengineering/core'
+import love, { type MeetingMinutes } from '@hcengineering/love'
 import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
 import { getTools } from '../utils/tools'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
-import { getAccountClient } from '@intabiafusion/server-client'
-import { ConsumerControl, StorageAdapter } from '@intabiafusion/server-core'
-import { jsonToMarkup, markupToText } from '@intabiafusion/text'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
-import tracker, { Issue } from '@intabiafusion/tracker'
+import { getAccountClient } from '@hcengineering/server-client'
+import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
+import { jsonToMarkup, markupToText } from '@hcengineering/text'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
+import tracker, { Issue } from '@hcengineering/tracker'
 import config from '../config'
 import { HistoryRecord } from '../types'
 import { getGlobalPerson } from '../utils/account'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
-import { RestClient } from '@intabiafusion/api-client'
+import { RestClient } from '@hcengineering/api-client'
 
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'

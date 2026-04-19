@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Mixin, Ref } from '@intabiafusion/core'
-import { type Plugin, type Resource, plugin } from '@intabiafusion/platform'
-import type { AnyComponent, ComponentExtensionId } from '@intabiafusion/ui'
-import type { ComponentPointExtension } from '@intabiafusion/presentation'
-import type { Action, BuildMarkdownTableMetadata, ViewAction } from '@intabiafusion/view'
+import type { Client, Doc, Mixin, Ref } from '@hcengineering/core'
+import { type Plugin, type Resource, plugin } from '@hcengineering/platform'
+import type { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
+import type { ComponentPointExtension } from '@hcengineering/presentation'
+import type { Action, BuildMarkdownTableMetadata, ViewAction } from '@hcengineering/view'
 import type {
   CopyAsMarkdownTableFunction,
   CopyRelationshipTableAsMarkdownFunction,

@@ -14,11 +14,11 @@
 //
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import presentation, { Card } from '@intabiafusion/presentation'
-  import textEditor from '@intabiafusion/text-editor'
-  import { Component, Loading } from '@intabiafusion/ui'
-  import type { BuildModelKey, TableMetadata, Viewlet } from '@intabiafusion/view'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import presentation, { Card } from '@hcengineering/presentation'
+  import textEditor from '@hcengineering/text-editor'
+  import { Component, Loading } from '@hcengineering/ui'
+  import type { BuildModelKey, TableMetadata, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
   import TableSourceInfo from './TableSourceInfo.svelte'

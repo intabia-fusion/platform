@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
-  import recruit, { Vacancy } from '@intabiafusion/recruit'
-  import { Table } from '@intabiafusion/view-resources'
+  import { Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import recruit, { Vacancy } from '@hcengineering/recruit'
+  import { Table } from '@hcengineering/view-resources'
 
   export let value: Ref<Vacancy>[]
   export let resultQuery: DocumentQuery<Doc>

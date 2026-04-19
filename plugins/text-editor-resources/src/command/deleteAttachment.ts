@@ -12,7 +12,7 @@
 // limitations under the License.
 
 import { findChildren, type RawCommands } from '@tiptap/core'
-import { FileNode, ImageNode } from '@intabiafusion/text'
+import { FileNode, ImageNode } from '@hcengineering/text'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {

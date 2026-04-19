@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import core, { type Hierarchy, toRank } from '@intabiafusion/core'
-import { type Card } from '@intabiafusion/card'
+import core, { type Hierarchy, toRank } from '@hcengineering/core'
+import { type Card } from '@hcengineering/card'
 
 /**
  * Get the IDs string for a card (attributes with showInPresenter, sorted by rank).

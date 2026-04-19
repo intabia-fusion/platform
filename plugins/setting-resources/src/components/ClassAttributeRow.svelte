@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, ArrOf, Doc, EnumOf, RefTo, Type } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, Icon, IconMoreV2, IconOpenedArrow, Label, tooltip } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import core, { AnyAttribute, ArrOf, Doc, EnumOf, RefTo, Type } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnySvelteComponent, Icon, IconMoreV2, IconOpenedArrow, Label, tooltip } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let attribute: AnyAttribute
   export let attributeType: IntlString | undefined = undefined

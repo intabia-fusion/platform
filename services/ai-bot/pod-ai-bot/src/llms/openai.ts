@@ -20,12 +20,12 @@
 import { encodingForModel, getEncoding, Tiktoken } from 'js-tiktoken'
 import OpenAI from 'openai'
 
-import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
-import type { PersonMessage } from '@intabiafusion/ai-bot'
-import contact from '@intabiafusion/contact'
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { PersonMessage } from '@hcengineering/ai-bot'
+import contact from '@hcengineering/contact'
 import type { HistoryRecord } from '../types'
 import config from '../config'
-import { countTokens } from '@intabiafusion/openai'
+import { countTokens } from '@hcengineering/openai'
 import { pushTokensData } from '../billing'
 import type {
   LLMProvider,

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { Card, createQuery } from '@intabiafusion/presentation'
-  import { findTagCategory, TagCategory } from '@intabiafusion/tags'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Card, createQuery } from '@hcengineering/presentation'
+  import { findTagCategory, TagCategory } from '@hcengineering/tags'
   import {
     Button,
     DropdownLabels,
@@ -27,8 +27,8 @@
     IconFolder,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import { ColorsPopup } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { ColorsPopup } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { createTagElement, getTagStyle } from '../utils'

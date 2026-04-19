@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Avatar, getPersonByPersonRefStore } from '@intabiafusion/contact-resources'
-  import { Button } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
+  import { Button } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
   import { currentRoom, currentMeetingMinutes, infos, myInfo, myOffice } from '../stores'

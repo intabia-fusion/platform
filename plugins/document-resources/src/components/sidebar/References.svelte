@@ -15,12 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Document } from '@intabiafusion/document'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Label, Lazy, Scroller } from '@intabiafusion/ui'
-  import activity, { ActivityReference } from '@intabiafusion/activity'
-  import { ActivityReferencePresenter } from '@intabiafusion/activity-resources'
+  import { Ref } from '@hcengineering/core'
+  import { Document } from '@hcengineering/document'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Label, Lazy, Scroller } from '@hcengineering/ui'
+  import activity, { ActivityReference } from '@hcengineering/activity'
+  import { ActivityReferencePresenter } from '@hcengineering/activity-resources'
 
   import document from '../../plugin'
 

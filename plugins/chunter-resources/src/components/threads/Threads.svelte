@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
-  import { ActivityMessagePresenter } from '@intabiafusion/activity-resources'
-  import attachment from '@intabiafusion/attachment'
-  import core, { Collaborator, getCurrentAccount, notEmpty, SortingOrder, WithLookup } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Lazy, Loading, Scroller } from '@intabiafusion/ui'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
+  import attachment from '@hcengineering/attachment'
+  import core, { Collaborator, getCurrentAccount, notEmpty, SortingOrder, WithLookup } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Lazy, Loading, Scroller } from '@hcengineering/ui'
 
   import { openMessageFromSpecial } from '../../navigation'
   import chunter from '../../plugin'

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@intabiafusion/card'
-  import { ClassPermission, Ref } from '@intabiafusion/core'
-  import { getClient, MessageBox } from '@intabiafusion/presentation'
-  import { ClassAttributes } from '@intabiafusion/setting-resources'
-  import setting from '@intabiafusion/setting-resources/src/plugin'
-  import { ButtonIcon, showPopup } from '@intabiafusion/ui'
+  import { MasterTag } from '@hcengineering/card'
+  import { ClassPermission, Ref } from '@hcengineering/core'
+  import { getClient, MessageBox } from '@hcengineering/presentation'
+  import { ClassAttributes } from '@hcengineering/setting-resources'
+  import setting from '@hcengineering/setting-resources/src/plugin'
+  import { ButtonIcon, showPopup } from '@hcengineering/ui'
   import card from '../../plugin'
   import { createTypePermissions } from '../../utils'
 

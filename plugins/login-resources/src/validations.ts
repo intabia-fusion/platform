@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getMetadata } from '@intabiafusion/platform'
+import { getMetadata } from '@hcengineering/platform'
 
 import login from './plugin'
 import type { Field } from './types'

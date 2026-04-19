@@ -14,15 +14,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
+  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
   import presentation, {
     getClient,
     ObjectCreate,
     ObjectSearchCategory,
     ObjectSearchPopup,
     ObjectSearchResult
-  } from '@intabiafusion/presentation'
+  } from '@hcengineering/presentation'
   import {
     ActionIcon,
     AnySvelteComponent,
@@ -36,8 +36,8 @@
     LabelAndProps,
     showPanel,
     showPopup
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ObjectPresenter from './ObjectPresenter.svelte'
 

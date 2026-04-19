@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangeMode } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
+  import { DateRangeMode } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import ui from '../../plugin'
   import DateRangePresenter from './DateRangePresenter.svelte'
 

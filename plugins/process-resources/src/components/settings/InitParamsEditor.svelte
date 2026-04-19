@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ExecutionContext, parseContext, Process, SelectedUserRequest, Transition } from '@intabiafusion/process'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ExecutionContext, parseContext, Process, SelectedUserRequest, Transition } from '@hcengineering/process'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ProcessAttributeEditor from './ProcessAttributeEditor.svelte'

@@ -15,13 +15,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { DocumentQuery, Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { TestCase, TestProject } from '@intabiafusion/test-management'
-  import { Button, Dialog, Label } from '@intabiafusion/ui'
-  import { ComponentNavigator } from '@intabiafusion/workbench-resources'
-  import view from '@intabiafusion/view'
-  import { selectionStore } from '@intabiafusion/view-resources'
+  import { DocumentQuery, Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { TestCase, TestProject } from '@hcengineering/test-management'
+  import { Button, Dialog, Label } from '@hcengineering/ui'
+  import { ComponentNavigator } from '@hcengineering/workbench-resources'
+  import view from '@hcengineering/view'
+  import { selectionStore } from '@hcengineering/view-resources'
 
   import TestCasesList from './TestCasesList.svelte'
   import testManagement from '../../plugin'

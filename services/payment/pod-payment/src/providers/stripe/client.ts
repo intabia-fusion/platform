@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import Stripe from 'stripe'
 import type { CheckoutResult, CreateCheckoutParams } from './types'
 

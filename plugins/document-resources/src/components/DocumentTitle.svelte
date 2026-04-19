@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { IntlString, translateCB } from '@intabiafusion/platform'
-  import { registerFocus, themeStore } from '@intabiafusion/ui'
+  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { registerFocus, themeStore } from '@hcengineering/ui'
   import { onMount } from 'svelte'
-  import { AccountRole, getCurrentAccount } from '@intabiafusion/core'
+  import { AccountRole, getCurrentAccount } from '@hcengineering/core'
 
   export let value: string | undefined = undefined
   export let placeholder: IntlString | undefined

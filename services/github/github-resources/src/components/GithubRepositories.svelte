@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { AttachedDoc, Ref, WithLookup } from '@intabiafusion/core'
-  import { GithubIntegration, GithubIntegrationRepository, GithubProject } from '@intabiafusion/github'
-  import { getMetadata } from '@intabiafusion/platform'
-  import presentation, { NavLink, getClient, isAdminUser, MessageBox } from '@intabiafusion/presentation'
-  import tracker, { Project } from '@intabiafusion/tracker'
+  import { AttachedDoc, Ref, WithLookup } from '@hcengineering/core'
+  import { GithubIntegration, GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+  import { getMetadata } from '@hcengineering/platform'
+  import presentation, { NavLink, getClient, isAdminUser, MessageBox } from '@hcengineering/presentation'
+  import tracker, { Project } from '@hcengineering/tracker'
   import ui, {
     Action,
     Button,
@@ -17,9 +17,9 @@
     TimeSince,
     getEventPositionElement,
     showPopup
-  } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import { Analytics } from '@intabiafusion/analytics'
+  } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
 
   import github from '../plugin'
   import ConnectProject from './ConnectProject.svelte'

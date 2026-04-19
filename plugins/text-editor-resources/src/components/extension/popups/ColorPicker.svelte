@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Card } from '@intabiafusion/presentation'
+  import { Card } from '@hcengineering/presentation'
 
   export let palette: Array<{ color: string, preview?: string }> = [{ color: 'transparent' }]
   export let letters: boolean = false

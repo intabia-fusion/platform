@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@intabiafusion/contact'
-  import { getPersonRefsByPersonIdsCb, PersonRefPresenter } from '@intabiafusion/contact-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery, MessageViewer } from '@intabiafusion/presentation'
-  import { Request, RequestDecisionComment } from '@intabiafusion/request'
-  import { BooleanIcon, Label, ShowMore } from '@intabiafusion/ui'
+  import contact, { Person } from '@hcengineering/contact'
+  import { getPersonRefsByPersonIdsCb, PersonRefPresenter } from '@hcengineering/contact-resources'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery, MessageViewer } from '@hcengineering/presentation'
+  import { Request, RequestDecisionComment } from '@hcengineering/request'
+  import { BooleanIcon, Label, ShowMore } from '@hcengineering/ui'
   import request from '../plugin'
 
   export let value: Request

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { Doc, Mixin } from '@intabiafusion/core'
-  import { Button, Grid, IconDownOutline, IconUpOutline, resizeObserver } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/card'
+  import { Doc, Mixin } from '@hcengineering/core'
+  import { Button, Grid, IconDownOutline, IconUpOutline, resizeObserver } from '@hcengineering/ui'
   import card from '../plugin'
   import MasterTagAttributes from './MasterTagAttributes.svelte'
   import TagAttributes from './TagAttributes.svelte'
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
 
   export let value: Card
   export let readonly: boolean = false

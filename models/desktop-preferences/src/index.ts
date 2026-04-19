@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { AccountRole } from '@intabiafusion/core'
-import { Model, type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import preference, { TPreference } from '@intabiafusion/model-preference'
-import notification from '@intabiafusion/notification'
+import { AccountRole } from '@hcengineering/core'
+import { Model, type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import preference, { TPreference } from '@hcengineering/model-preference'
+import notification from '@hcengineering/notification'
 
-import desktopPreferences, { type DesktopNotificationPreference } from '@intabiafusion/desktop-preferences'
+import desktopPreferences, { type DesktopNotificationPreference } from '@hcengineering/desktop-preferences'
 
-export { desktopPreferencesId } from '@intabiafusion/desktop-preferences'
+export { desktopPreferencesId } from '@hcengineering/desktop-preferences'
 
 @Model(desktopPreferences.class.DesktopNotificationPreference, preference.class.Preference)
 export class TDesktopNotificationPreference extends TPreference implements DesktopNotificationPreference {

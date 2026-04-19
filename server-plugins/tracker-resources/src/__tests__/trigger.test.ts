@@ -29,14 +29,14 @@ import core, {
   type PersonId,
   type Class,
   toFindResult
-} from '@intabiafusion/core'
-import type { TriggerControl } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import type { TriggerControl } from '@hcengineering/server-core'
 import tracker, {
   type Issue,
   type IssueParentInfo,
   type IssueChildInfo,
   type TimeSpendReport
-} from '@intabiafusion/tracker'
+} from '@hcengineering/tracker'
 import { OnIssueUpdate } from '../index'
 
 // -- Helpers --

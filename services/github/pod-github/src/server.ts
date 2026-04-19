@@ -8,12 +8,12 @@ import bp from 'body-parser'
 import cors from 'cors'
 import express from 'express'
 
-import { Analytics } from '@intabiafusion/analytics'
-import { PersonId, BrandingMap, MeasureContext } from '@intabiafusion/core'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient from '@intabiafusion/server-client'
-import serverCore from '@intabiafusion/server-core'
-import { decodeToken } from '@intabiafusion/server-token'
+import { Analytics } from '@hcengineering/analytics'
+import { PersonId, BrandingMap, MeasureContext } from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient from '@hcengineering/server-client'
+import serverCore from '@hcengineering/server-core'
+import { decodeToken } from '@hcengineering/server-token'
 
 /**
  * @public

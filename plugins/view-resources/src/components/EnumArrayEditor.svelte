@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { ArrOf, EnumOf } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ButtonKind, ButtonSize, DropdownLabels, DropdownTextItem } from '@intabiafusion/ui'
+  import core, { ArrOf, EnumOf } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ButtonKind, ButtonSize, DropdownLabels, DropdownTextItem } from '@hcengineering/ui'
 
   export let label: IntlString
   export let value: string[] = []

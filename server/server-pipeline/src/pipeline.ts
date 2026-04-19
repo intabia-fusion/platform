@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import card from '@intabiafusion/card'
+import card from '@hcengineering/card'
 import {
   DOMAIN_BENCHMARK,
   DOMAIN_BLOB,
@@ -16,7 +16,7 @@ import {
   type Ref,
   type Tx,
   type WorkspaceIds
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ApplyTxMiddleware,
   BroadcastMiddleware,
@@ -51,7 +51,7 @@ import {
   TxOrderingMiddleware,
   UserStatusMiddleware,
   TransientMiddleware
-} from '@intabiafusion/middleware'
+} from '@hcengineering/middleware'
 import {
   createBenchmarkAdapter,
   createInMemoryAdapter,
@@ -68,15 +68,15 @@ import {
   type PlatformQueue,
   type StorageAdapter,
   type WorkspaceDestroyAdapter
-} from '@intabiafusion/server-core'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import { generateToken } from '@hcengineering/server-token'
 import { createStorageDataAdapter } from './blobStorage'
 import { CommunicationMiddleware, type CommunicationApiFactory } from './communication'
 
-import { RatingMiddleware } from '@intabiafusion/server-rating'
-import { ChunterMiddleware } from '@intabiafusion/server-chunter'
-import { NotificationMiddleware } from '@intabiafusion/server-notification'
-import { ActivityMiddleware } from '@intabiafusion/server-activity-resources'
+import { RatingMiddleware } from '@hcengineering/server-rating'
+import { ChunterMiddleware } from '@hcengineering/server-chunter'
+import { NotificationMiddleware } from '@hcengineering/server-notification'
+import { ActivityMiddleware } from '@hcengineering/server-activity-resources'
 
 /**
  * @public

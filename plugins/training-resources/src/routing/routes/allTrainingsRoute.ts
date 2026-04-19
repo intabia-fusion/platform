@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { isEnum } from '@intabiafusion/core'
-import { trainingId, TrainingSpecialIds } from '@intabiafusion/training'
-import { getCurrentLocation, type Location } from '@intabiafusion/ui'
+import { isEnum } from '@hcengineering/core'
+import { trainingId, TrainingSpecialIds } from '@hcengineering/training'
+import { getCurrentLocation, type Location } from '@hcengineering/ui'
 import type { Route, RouteParams } from '../utils/Route'
 
 export enum AllTrainingsRouteTab {

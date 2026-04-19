@@ -6,5 +6,5 @@ export SERVER_SECRET=secret
 export ACCOUNTS_URL=http://localhost:3000
 export STORAGE_CONFIG="datalake|http://huly.local:4030"
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
-rush bundle --to @intabiafusion/pod-github
+rush bundle --to @hcengineering/pod-github
 node $@ bundle/bundle.js $@

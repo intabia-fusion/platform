@@ -1,12 +1,12 @@
 <script lang="ts">
-  import calendar from '@intabiafusion/calendar'
-  import { ScheduleNavSection } from '@intabiafusion/calendar-resources'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { Asset, getMetadata, getResource, IntlString } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { NavFooter } from '@intabiafusion/workbench-resources'
-  import tagsPlugin, { TagElement as TagElementType } from '@intabiafusion/tags'
+  import calendar from '@hcengineering/calendar'
+  import { ScheduleNavSection } from '@hcengineering/calendar-resources'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { Ref, getCurrentAccount } from '@hcengineering/core'
+  import { Asset, getMetadata, getResource, IntlString } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { NavFooter } from '@hcengineering/workbench-resources'
+  import tagsPlugin, { TagElement as TagElementType } from '@hcengineering/tags'
   import ui, {
     Label,
     Separator,
@@ -23,7 +23,7 @@
     IconMoreV,
     IconLink,
     Action
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { ToDosMode } from '..'
   import time from '../plugin'
 

@@ -40,5 +40,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Label-based container discovery
 - Orphaned container detection and cleanup
 
-[Unreleased]: https://github.com/intabia-fusion/huly.net/compare/v0.7.9...HEAD
-[0.7.9]: https://github.com/intabia-fusion/huly.net/releases/tag/v0.7.9
+[Unreleased]: https://github.com/hcengineering/huly.net/compare/v0.7.9...HEAD
+[0.7.9]: https://github.com/hcengineering/huly.net/releases/tag/v0.7.9

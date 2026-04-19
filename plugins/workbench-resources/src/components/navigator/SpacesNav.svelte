@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, Ref, Space, AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { IntlString, getResource } from '@intabiafusion/platform'
-  import preference from '@intabiafusion/preference'
-  import { getClient } from '@intabiafusion/presentation'
+  import core, { Doc, Ref, Space, AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { IntlString, getResource } from '@hcengineering/platform'
+  import preference from '@hcengineering/preference'
+  import { getClient } from '@hcengineering/presentation'
   import {
     Action,
     AnyComponent,
@@ -26,12 +26,12 @@
     getCurrentResolvedLocation,
     navigate,
     showPopup
-  } from '@intabiafusion/ui'
-  import { TreeNode } from '@intabiafusion/view-resources'
-  import { SpacesNavModel } from '@intabiafusion/workbench'
+  } from '@hcengineering/ui'
+  import { TreeNode } from '@hcengineering/view-resources'
+  import { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Event } from '@intabiafusion/calendar'
+  import type { Event } from '@hcengineering/calendar'
   import EventPresenter from './EventPresenter.svelte'
 
   export let value: Event[]

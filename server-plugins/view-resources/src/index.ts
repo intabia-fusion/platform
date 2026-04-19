@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import core, { AnyAttribute, Hierarchy, Tx, TxRemoveDoc } from '@intabiafusion/core'
-import type { TriggerControl } from '@intabiafusion/server-core'
-import view from '@intabiafusion/view'
+import core, { AnyAttribute, Hierarchy, Tx, TxRemoveDoc } from '@hcengineering/core'
+import type { TriggerControl } from '@hcengineering/server-core'
+import view from '@hcengineering/view'
 
 /**
  * @public

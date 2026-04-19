@@ -3,7 +3,7 @@ import {
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import core, {
   type Doc,
   Tx,
@@ -16,10 +16,10 @@ import core, {
   type SessionData,
   systemAccountUuid,
   TxFactory
-} from '@intabiafusion/core'
-import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
-import notification, { ReadState } from '@intabiafusion/notification'
-import chunter, { ThreadMessage } from '@intabiafusion/chunter'
+} from '@hcengineering/core'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import notification, { ReadState } from '@hcengineering/notification'
+import chunter, { ThreadMessage } from '@hcengineering/chunter'
 
 export class NotificationMiddleware extends BaseMiddleware {
   private readonly activeStates = new Map<Ref<ReadState>, ReadState>()

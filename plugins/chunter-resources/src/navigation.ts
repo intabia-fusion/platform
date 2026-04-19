@@ -6,24 +6,24 @@ import {
   type Location,
   navigate,
   languageStore
-} from '@intabiafusion/ui'
-import { type Ref, type Doc, type Class, generateId, concatLink } from '@intabiafusion/core'
-import activity, { type ActivityMessage } from '@intabiafusion/activity'
+} from '@hcengineering/ui'
+import { type Ref, type Doc, type Class, generateId, concatLink } from '@hcengineering/core'
+import activity, { type ActivityMessage } from '@hcengineering/activity'
 import {
   type Channel,
   type ChatWidgetTab,
   chunterId,
   type ChunterSpace,
   type ThreadMessage
-} from '@intabiafusion/chunter'
-import { notificationId } from '@intabiafusion/notification'
-import workbench, { type Widget, workbenchId, type LocationData } from '@intabiafusion/workbench'
-import { classIcon, getObjectLinkId, parseLinkId } from '@intabiafusion/view-resources'
-import presentation, { getClient } from '@intabiafusion/presentation'
-import view, { encodeObjectURI, decodeObjectURI } from '@intabiafusion/view'
-import { createWidgetTab, isElementFromSidebar, sidebarStore } from '@intabiafusion/workbench-resources'
-import { type Asset, getMetadata, type IntlString, translate } from '@intabiafusion/platform'
-import contact from '@intabiafusion/contact'
+} from '@hcengineering/chunter'
+import { notificationId } from '@hcengineering/notification'
+import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
+import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
+import presentation, { getClient } from '@hcengineering/presentation'
+import view, { encodeObjectURI, decodeObjectURI } from '@hcengineering/view'
+import { createWidgetTab, isElementFromSidebar, sidebarStore } from '@hcengineering/workbench-resources'
+import { type Asset, getMetadata, type IntlString, translate } from '@hcengineering/platform'
+import contact from '@hcengineering/contact'
 import { get } from 'svelte/store'
 
 import { chatSpecials } from './components/chat/utils'

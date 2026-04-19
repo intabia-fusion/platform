@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import view from '@intabiafusion/view'
-  import { ButtonMenu, IconMoreV } from '@intabiafusion/ui'
+  import view from '@hcengineering/view'
+  import { ButtonMenu, IconMoreV } from '@hcengineering/ui'
 
   import notification from '../../plugin'
   import { clearAll, readAll } from '../../utils'

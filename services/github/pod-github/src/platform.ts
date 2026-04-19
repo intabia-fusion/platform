@@ -3,8 +3,8 @@
 //
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import chunter from '@intabiafusion/chunter'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import chunter from '@hcengineering/chunter'
 import core, {
   BrandingMap,
   buildSocialIdString,
@@ -25,24 +25,24 @@ import core, {
   WorkspaceUuid,
   type PersonUuid,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import github, {
   GithubAuthentication,
   githubId,
   makeQuery,
   type GithubIntegration,
   githubIntegrationKind
-} from '@intabiafusion/github'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
-import { generateToken } from '@intabiafusion/server-token'
-import tracker from '@intabiafusion/tracker'
+} from '@hcengineering/github'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import { generateToken } from '@hcengineering/server-token'
+import tracker from '@hcengineering/tracker'
 import { Installation, type InstallationCreatedEvent, type InstallationUnsuspendEvent } from '@octokit/webhooks-types'
 import { App, Octokit } from 'octokit'
 
-import { Analytics } from '@intabiafusion/analytics'
-import { SplitLogger } from '@intabiafusion/analytics-service'
-import contact, { type Employee, type SocialIdentityRef } from '@intabiafusion/contact'
-import { type StorageAdapter } from '@intabiafusion/server-core'
+import { Analytics } from '@hcengineering/analytics'
+import { SplitLogger } from '@hcengineering/analytics-service'
+import contact, { type Employee, type SocialIdentityRef } from '@hcengineering/contact'
+import { type StorageAdapter } from '@hcengineering/server-core'
 import { join } from 'path'
 import { createPlatformClient } from './client'
 import config from './config'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid, concatLink } from '@intabiafusion/core'
+import { type MeasureContext, type WorkspaceUuid, concatLink } from '@hcengineering/core'
 import { Readable } from 'stream'
 
 import { DatalakeError, NetworkError, NotFoundError } from './error'

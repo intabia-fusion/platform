@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Answer, Question, QuestionMixin } from '@intabiafusion/questions'
-import type { Class, Ref } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
+import type { Answer, Question, QuestionMixin } from '@hcengineering/questions'
+import type { Class, Ref } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 import questions from '../plugin'
 
 export function getQuestionMixin<Q extends Question<any>> (

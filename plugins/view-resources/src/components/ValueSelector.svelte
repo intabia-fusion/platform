@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Mixin, Ref, generateId } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { ObjectPopup, getClient, updateAttribute } from '@intabiafusion/presentation'
-  import { Label, SelectPopup, resizeObserver } from '@intabiafusion/ui'
+  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Mixin, Ref, generateId } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { ObjectPopup, getClient, updateAttribute } from '@hcengineering/presentation'
+  import { Label, SelectPopup, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import ObjectPresenter from './ObjectPresenter.svelte'

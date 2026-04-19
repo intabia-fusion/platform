@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 import * as fs from 'fs'
 import * as maxmind from 'maxmind'
 import * as path from 'path'

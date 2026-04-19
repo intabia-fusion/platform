@@ -6,7 +6,7 @@ import {
   type MeasureMetricsContext,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BroadcastMiddleware,
   DBAdapterInitMiddleware,
@@ -19,7 +19,7 @@ import {
   QueryJoinMiddleware,
   QueueMiddleware,
   TxMiddleware
-} from '@intabiafusion/middleware'
+} from '@hcengineering/middleware'
 import {
   createDummyStorageAdapter,
   createPipeline,
@@ -27,7 +27,7 @@ import {
   type Pipeline,
   type PipelineContext,
   type PlatformQueue
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import {
   createEmptyBroadcastOps,
   getConfig,
@@ -37,24 +37,24 @@ import {
   registerStringLoaders,
   registerTxAdapterFactory,
   setAdapterSecurity
-} from '@intabiafusion/server-pipeline'
-import serverToken, { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-pipeline'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import { setMetadata } from '@intabiafusion/platform'
+import { setMetadata } from '@hcengineering/platform'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   setDBExtraOptions
-} from '@intabiafusion/postgres'
-import serverClientPlugin from '@intabiafusion/server-client'
-import serverCore from '@intabiafusion/server-core'
+} from '@hcengineering/postgres'
+import serverClientPlugin from '@hcengineering/server-client'
+import serverCore from '@hcengineering/server-core'
 
-import { createElasticAdapter } from '@intabiafusion/elastic'
-import type { FulltextDBConfiguration } from '@intabiafusion/server-indexer'
+import { createElasticAdapter } from '@hcengineering/elastic'
+import type { FulltextDBConfiguration } from '@hcengineering/server-indexer'
 import { genMinModel } from './minmodel'
 export const model = genMinModel()
 

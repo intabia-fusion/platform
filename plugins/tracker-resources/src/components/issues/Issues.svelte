@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref } from '@intabiafusion/core'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Issue, IssueStatus, Project } from '@intabiafusion/tracker'
-  import { IModeSelector, resolvedLocationStore } from '@intabiafusion/ui'
-  import view, { Viewlet } from '@intabiafusion/view'
+  import { DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Issue, IssueStatus, Project } from '@hcengineering/tracker'
+  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import view, { Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
-  import { TypeSelector, selectedTaskTypeStore, selectedTypeStore, taskTypeStore } from '@intabiafusion/task-resources'
+  import { TypeSelector, selectedTaskTypeStore, selectedTypeStore, taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '../../plugin'
   import IssuesView from './IssuesView.svelte'
 
-  import task from '@intabiafusion/task'
+  import task from '@hcengineering/task'
 
   export let currentSpace: Ref<Project> | undefined = undefined
   export let baseQuery: DocumentQuery<Issue> = {}

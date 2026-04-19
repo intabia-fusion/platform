@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityExtension as ActivityExtensionComponent } from '@intabiafusion/activity-resources'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import activity, { ActivityExtension } from '@intabiafusion/activity'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, Icon, Label, languageStore } from '@intabiafusion/ui'
-  import { Asset, getResource, IntlString } from '@intabiafusion/platform'
-  import view from '@intabiafusion/view'
+  import { ActivityExtension as ActivityExtensionComponent } from '@hcengineering/activity-resources'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import activity, { ActivityExtension } from '@hcengineering/activity'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnySvelteComponent, Icon, Label, languageStore } from '@hcengineering/ui'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import view from '@hcengineering/view'
 
   import { getChannelName, getObjectIcon } from '../utils'
   import chunter from '../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let object: Doc
   export let readonly = false

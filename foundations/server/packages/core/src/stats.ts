@@ -1,7 +1,7 @@
-import type { MeasureContext, Metrics } from '@intabiafusion/core'
-import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@intabiafusion/core'
-import { RPCHandler } from '@intabiafusion/rpc'
-import { generateToken } from '@intabiafusion/server-token'
+import type { MeasureContext, Metrics } from '@hcengineering/core'
+import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import { RPCHandler } from '@hcengineering/rpc'
+import { generateToken } from '@hcengineering/server-token'
 import os from 'os'
 
 export interface MemoryStatistics {

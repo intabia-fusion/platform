@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import serverCore from '@intabiafusion/server-core'
-import type { Presenter, PresenterControl } from '@intabiafusion/server-activity'
-import training, { trainingId, TrainingRequest } from '@intabiafusion/training'
-import { getMetadata } from '@intabiafusion/platform'
-import { workbenchId } from '@intabiafusion/workbench'
-import { concatLink } from '@intabiafusion/core'
+import serverCore from '@hcengineering/server-core'
+import type { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import training, { trainingId, TrainingRequest } from '@hcengineering/training'
+import { getMetadata } from '@hcengineering/platform'
+import { workbenchId } from '@hcengineering/workbench'
+import { concatLink } from '@hcengineering/core'
 
 export const TrainingRequestTitlePresenter: Presenter<TrainingRequest> = async (
   request: TrainingRequest,

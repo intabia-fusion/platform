@@ -13,21 +13,21 @@
  // limitations under the License.
  -->
 <script lang="ts">
-  import attachment, { Attachment } from '@intabiafusion/attachment'
-  import core, { AttachedData, Doc, makeCollabId, Ref } from '@intabiafusion/core'
-  import { DraftController, draftsStore, getClient, deleteFile, createMarkup } from '@intabiafusion/presentation'
-  import tags from '@intabiafusion/tags'
-  import { isEmptyMarkup } from '@intabiafusion/text'
-  import { Component, Issue, IssueDraft, IssueParentInfo, Milestone, Project } from '@intabiafusion/tracker'
-  import { Button, ExpandCollapse, Scroller } from '@intabiafusion/ui'
+  import attachment, { Attachment } from '@hcengineering/attachment'
+  import core, { AttachedData, Doc, makeCollabId, Ref } from '@hcengineering/core'
+  import { DraftController, draftsStore, getClient, deleteFile, createMarkup } from '@hcengineering/presentation'
+  import tags from '@hcengineering/tags'
+  import { isEmptyMarkup } from '@hcengineering/text'
+  import { Component, Issue, IssueDraft, IssueParentInfo, Milestone, Project } from '@hcengineering/tracker'
+  import { Button, ExpandCollapse, Scroller } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import tracker from '../plugin'
   import Collapsed from './icons/Collapsed.svelte'
   import Expanded from './icons/Expanded.svelte'
   import DraftIssueChildList from './templates/DraftIssueChildList.svelte'
-  import { taskTypeStore } from '@intabiafusion/task-resources'
-  import { getTaskTypeStates } from '@intabiafusion/task'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { taskTypeStore } from '@hcengineering/task-resources'
+  import { getTaskTypeStates } from '@hcengineering/task'
+  import { statusStore } from '@hcengineering/view-resources'
 
   export let projectId: Ref<Project>
   export let project: Project | undefined

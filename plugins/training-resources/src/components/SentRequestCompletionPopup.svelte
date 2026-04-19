@@ -3,12 +3,12 @@
 -->
 
 <script lang="ts">
-  import contact, { type Employee } from '@intabiafusion/contact'
-  import { UserInfo } from '@intabiafusion/contact-resources'
-  import { type Ref, SortingOrder } from '@intabiafusion/core'
-  import { createQuery, DocPopup } from '@intabiafusion/presentation'
-  import { StateTag, StateType } from '@intabiafusion/ui'
-  import type { TrainingRequest } from '@intabiafusion/training'
+  import contact, { type Employee } from '@hcengineering/contact'
+  import { UserInfo } from '@hcengineering/contact-resources'
+  import { type Ref, SortingOrder } from '@hcengineering/core'
+  import { createQuery, DocPopup } from '@hcengineering/presentation'
+  import { StateTag, StateType } from '@hcengineering/ui'
+  import type { TrainingRequest } from '@hcengineering/training'
   import {
     compareCompletionMapValueState,
     type CompletionMap,

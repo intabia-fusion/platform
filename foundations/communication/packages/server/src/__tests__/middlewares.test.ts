@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
-import { MessageEventType, SessionData } from '@intabiafusion/communication-sdk-types'
-import { AccountUuid, CardType, Markdown, SocialID } from '@intabiafusion/communication-types'
+import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import { MessageEventType, SessionData } from '@hcengineering/communication-sdk-types'
+import { AccountUuid, CardType, Markdown, SocialID } from '@hcengineering/communication-types'
 import { buildMiddlewares, Middlewares } from '../middlewares'
 import { Metadata, MiddlewareContext, MiddlewareCreateFn, CommunicationCallbacks } from '../types'
 import { LowLevelClient } from '../client'

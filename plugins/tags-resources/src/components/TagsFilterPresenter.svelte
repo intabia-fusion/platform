@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { TagElement } from '@intabiafusion/tags'
+  import { Ref } from '@hcengineering/core'
+  import { TagElement } from '@hcengineering/tags'
   import TagFilterPresenter from './TagFilterPresenter.svelte'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { createQuery } from '@hcengineering/presentation'
   import tags from '../plugin'
   import CollapsedTags from './CollapsedTags.svelte'
 

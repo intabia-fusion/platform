@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Asset, Plugin, Resource } from '@intabiafusion/platform'
+import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import {
   AttachedDoc,
   Class,
@@ -26,13 +26,13 @@ import {
   Space,
   Timestamp,
   Type
-} from '@intabiafusion/core'
-import { IntlString, plugin } from '@intabiafusion/platform'
-import { Event, Visibility } from '@intabiafusion/calendar'
-import { AnyComponent } from '@intabiafusion/ui'
-import { Employee } from '@intabiafusion/contact'
-import type { Rank } from '@intabiafusion/rank'
-import { TxNotificationType } from '@intabiafusion/notification'
+} from '@hcengineering/core'
+import { IntlString, plugin } from '@hcengineering/platform'
+import { Event, Visibility } from '@hcengineering/calendar'
+import { AnyComponent } from '@hcengineering/ui'
+import { Employee } from '@hcengineering/contact'
+import type { Rank } from '@hcengineering/rank'
+import { TxNotificationType } from '@hcengineering/notification'
 
 export * from './analytics'
 

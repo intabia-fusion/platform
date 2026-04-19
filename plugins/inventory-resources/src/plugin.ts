@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import inventory, { inventoryId } from '@intabiafusion/inventory'
-import { type IntlString, mergeIds, type StatusCode } from '@intabiafusion/platform'
+import inventory, { inventoryId } from '@hcengineering/inventory'
+import { type IntlString, mergeIds, type StatusCode } from '@hcengineering/platform'
 
 export default mergeIds(inventoryId, inventory, {
   status: {

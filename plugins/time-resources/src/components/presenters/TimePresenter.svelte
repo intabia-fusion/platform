@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { HOUR, Label, MINUTE } from '@intabiafusion/ui'
+  import { HOUR, Label, MINUTE } from '@hcengineering/ui'
   import time from '../../plugin'
 
   export let value: number

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Button, Grid, IconArrowRight, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import { Component, Issue, Project } from '@intabiafusion/tracker'
+  import { Ref } from '@hcengineering/core'
+  import { Button, Grid, IconArrowRight, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { Component, Issue, Project } from '@hcengineering/tracker'
 
   import { IssueToUpdate } from '../../../utils'
   import ComponentPresenter from '../../components/ComponentPresenter.svelte'

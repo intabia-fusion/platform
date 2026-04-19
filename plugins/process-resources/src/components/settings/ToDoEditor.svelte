@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { parseContext, Process, ProcessToDo, Step, UserResult } from '@intabiafusion/process'
+  import { parseContext, Process, ProcessToDo, Step, UserResult } from '@hcengineering/process'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ParamsEditor from './ParamsEditor.svelte'
-  import { Label, Toggle } from '@intabiafusion/ui'
+  import { Label, Toggle } from '@hcengineering/ui'
   import ResultsEditor from './ResultsEditor.svelte'
 
   export let process: Process

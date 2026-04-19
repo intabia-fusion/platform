@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { type Training, type TrainingAttempt, type TrainingRequest, TrainingState } from '@intabiafusion/training'
+import { type Training, type TrainingAttempt, type TrainingRequest, TrainingState } from '@hcengineering/training'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export function canUpdateTrainingAttempt (

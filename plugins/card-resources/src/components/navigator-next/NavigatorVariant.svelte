@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card, CardSpace, MasterTag } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
+  import { Card, CardSpace, MasterTag } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
 
   import type { NavigatorConfig } from '../../types'
   import NavigatorHierarchy from './NavigatorHierarchy.svelte'

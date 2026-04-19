@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import process, { ExecutionLogAction } from '@intabiafusion/process'
-  import { Icon } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import process, { ExecutionLogAction } from '@hcengineering/process'
+  import { Icon } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let value: ExecutionLogAction
 </script>

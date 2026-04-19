@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
-import login from '@intabiafusion/login'
-import { aiAssistantIntegrationKind } from '@intabiafusion/ai-assistant'
+import { getMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
+import login from '@hcengineering/login'
+import { aiAssistantIntegrationKind } from '@hcengineering/ai-assistant'
 import {
   getIntegrationClient as getIntegrationClientRaw,
   type IntegrationClient
-} from '@intabiafusion/integration-client'
-import { getClient as getAccountClientRaw, type AccountClient } from '@intabiafusion/account-client'
+} from '@hcengineering/integration-client'
+import { getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
 
 export async function getIntegrationClient (): Promise<IntegrationClient> {
   const accountsUrl = getMetadata(login.metadata.AccountsUrl)

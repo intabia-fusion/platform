@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { generateId } from '@intabiafusion/core'
-  import { AnsweredQuestion, QuestionKind } from '@intabiafusion/survey'
-  import { EditBox, Icon, Label, ModernCheckbox, ModernRadioButton, tooltip } from '@intabiafusion/ui'
+  import { generateId } from '@hcengineering/core'
+  import { AnsweredQuestion, QuestionKind } from '@hcengineering/survey'
+  import { EditBox, Icon, Label, ModernCheckbox, ModernRadioButton, tooltip } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import survey from '../plugin'

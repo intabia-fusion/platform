@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Room as TypeRoom } from '@intabiafusion/love'
-  import { Scroller } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Room as TypeRoom } from '@hcengineering/love'
+  import { Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'

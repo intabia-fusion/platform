@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient, KeyedAttribute } from '@intabiafusion/presentation'
-  import { TagElement, TagReference } from '@intabiafusion/tags'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { TagElement, TagReference } from '@hcengineering/tags'
   import tags from '../plugin'
   import TagsEditor from './TagsEditor.svelte'
 

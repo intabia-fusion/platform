@@ -1,6 +1,6 @@
-import { systemAccountUuid, type WorkspaceUuid } from '@intabiafusion/core'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
+import { systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 
 export function getToolToken (workspace?: WorkspaceUuid): string {
   return generateToken(systemAccountUuid, workspace, { service: 'tool', admin: 'true' })

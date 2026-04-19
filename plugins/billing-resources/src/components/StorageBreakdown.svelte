@@ -12,9 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, tooltip } from '@intabiafusion/ui'
-  import type { IntlString } from '@intabiafusion/platform'
-  import billingPlugin from '@intabiafusion/billing'
+  import { Label, tooltip } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import billingPlugin from '@hcengineering/billing'
   import filesize from 'filesize'
 
   interface TypeStats {

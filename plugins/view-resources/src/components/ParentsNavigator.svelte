@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedDoc, Doc, Ref, Class } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
+  import { AttachedDoc, Doc, Ref, Class } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import { isAttachedDoc } from '../utils'
   import DocsNavigator from './DocsNavigator.svelte'
 

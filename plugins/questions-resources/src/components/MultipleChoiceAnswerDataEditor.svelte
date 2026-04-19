@@ -13,8 +13,8 @@
     MultipleChoiceQuestion,
     MultipleChoiceQuestionAnswer,
     MultipleChoiceQuestionData
-  } from '@intabiafusion/questions'
-  import { CheckBox } from '@intabiafusion/ui'
+  } from '@hcengineering/questions'
+  import { CheckBox } from '@hcengineering/ui'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList from './OptionsList.svelte'
 

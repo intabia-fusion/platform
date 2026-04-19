@@ -1,4 +1,4 @@
-import { type Class, type Doc, type DocumentQuery, type Ref, type Space, matchQuery } from '@intabiafusion/core'
+import { type Class, type Doc, type DocumentQuery, type Ref, type Space, matchQuery } from '@hcengineering/core'
 import { getClient } from '.'
 import presentation from './plugin'
 

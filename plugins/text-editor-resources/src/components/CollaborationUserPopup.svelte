@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Component } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { CollaborationUser } from '@intabiafusion/text-editor'
+  import { Component } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { CollaborationUser } from '@hcengineering/text-editor'
 
   export let user: CollaborationUser
 </script>

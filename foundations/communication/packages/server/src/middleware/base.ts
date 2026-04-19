@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Event, EventResult, type SessionData } from '@intabiafusion/communication-sdk-types'
+import { type Event, EventResult, type SessionData } from '@hcengineering/communication-sdk-types'
 import type {
   FindNotificationContextParams,
   FindNotificationsParams,
@@ -30,7 +30,7 @@ import type {
   MessageMeta,
   FindMessagesGroupParams,
   MessagesGroup
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 import type { Enriched, Middleware, MiddlewareContext, Subscription } from '../types'
 

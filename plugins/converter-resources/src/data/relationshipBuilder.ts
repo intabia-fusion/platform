@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, Client, Doc, Hierarchy, Ref } from '@intabiafusion/core'
-import type { AttributeModel } from '@intabiafusion/view'
-import { buildConfigAssociation, buildConfigLookup } from '@intabiafusion/view-resources'
+import type { Class, Client, Doc, Hierarchy, Ref } from '@hcengineering/core'
+import type { AttributeModel } from '@hcengineering/view'
+import { buildConfigAssociation, buildConfigLookup } from '@hcengineering/view-resources'
 import type { RelationshipCellModel, RelationshipRowModel } from '../types'
 
 /**

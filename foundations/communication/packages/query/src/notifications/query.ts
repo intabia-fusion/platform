@@ -18,7 +18,7 @@ import {
   type Notification,
   SortingOrder,
   WithTotal
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import {
   CreateNotificationEvent,
   type Event,
@@ -28,9 +28,9 @@ import {
   RemoveNotificationContextEvent,
   RemoveNotificationsEvent,
   UpdateNotificationEvent
-} from '@intabiafusion/communication-sdk-types'
-import { NotificationProcessor } from '@intabiafusion/communication-shared'
-import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
+} from '@hcengineering/communication-sdk-types'
+import { NotificationProcessor } from '@hcengineering/communication-shared'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { defaultQueryParams, NotificationQueryParams, type PagedQuery, type QueryId, QueryOptions } from '../types'
 import { QueryResult } from '../result'

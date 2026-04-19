@@ -12,12 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import core, { Data } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Breadcrumb, Header, Label, Toggle } from '@intabiafusion/ui'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import view from '@intabiafusion/view'
-  import { getCurrentEmployee, Translation } from '@intabiafusion/contact'
+  import core, { Data } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import view from '@hcengineering/view'
+  import { getCurrentEmployee, Translation } from '@hcengineering/contact'
 
   import contact from '../plugin'
   import LanguageEditor from './LanguageEditor.svelte'

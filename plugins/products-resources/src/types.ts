@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { ProductVersionState } from '@intabiafusion/products'
-import { type IntlString } from '@intabiafusion/platform'
+import { ProductVersionState } from '@hcengineering/products'
+import { type IntlString } from '@hcengineering/platform'
 
 import products from './plugin'
 

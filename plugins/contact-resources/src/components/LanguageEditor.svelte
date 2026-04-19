@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import {
     Button,
     type ButtonKind,
@@ -9,7 +9,7 @@
     eventToHTMLElement,
     Label,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import LanguagePresenter from './LanguagePresenter.svelte'

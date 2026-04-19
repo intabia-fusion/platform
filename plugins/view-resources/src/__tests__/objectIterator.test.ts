@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { ObjectIterator, type StoreAdapter, type IteratorState, ObjectIteratorProvider } from '../objectIterator'
-import { type DocumentQuery, type Doc, type Ref, type Class } from '@intabiafusion/core'
+import { type DocumentQuery, type Doc, type Ref, type Class } from '@hcengineering/core'
 
 let mockObjects: Doc[] = []
 const findAll = jest.fn(() => mockObjects)
-jest.mock('@intabiafusion/presentation', () => ({
+jest.mock('@hcengineering/presentation', () => ({
   getClient: jest.fn(() => ({
     findAll
   }))

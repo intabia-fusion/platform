@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Doc, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { Asset, IntlString, translateCB } from '@intabiafusion/platform'
-  import { ComponentExtensions, getClient } from '@intabiafusion/presentation'
-  import { Issue, TrackerEvents } from '@intabiafusion/tracker'
-  import { IModeSelector, themeStore } from '@intabiafusion/ui'
-  import { ViewOptions, Viewlet } from '@intabiafusion/view'
+  import { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
+  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
+  import { Issue, TrackerEvents } from '@hcengineering/tracker'
+  import { IModeSelector, themeStore } from '@hcengineering/ui'
+  import { ViewOptions, Viewlet } from '@hcengineering/view'
   import {
     FilterBar,
     selectionStore,
     SpaceHeader,
     ViewletContentView,
     ViewletSettingButton
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
   import { useShowDaysStore } from '../../utils'

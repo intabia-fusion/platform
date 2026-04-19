@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import textEditor from '@intabiafusion/text-editor'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Card } from '@intabiafusion/presentation'
-  import { EditBox } from '@intabiafusion/ui'
+  import textEditor from '@hcengineering/text-editor'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Card } from '@hcengineering/presentation'
+  import { EditBox } from '@hcengineering/ui'
 
   export let link = ''
 

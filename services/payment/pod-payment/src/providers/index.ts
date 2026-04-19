@@ -14,8 +14,8 @@
 //
 
 import type { Express } from 'express'
-import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
-import { type SubscriptionType, type SubscriptionData } from '@intabiafusion/account-client'
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import { type SubscriptionType, type SubscriptionData } from '@hcengineering/account-client'
 
 /**
  * Payment subscription plan configuration

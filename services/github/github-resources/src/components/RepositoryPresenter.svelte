@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { GithubIntegrationRepository } from '@intabiafusion/github'
-  import { translateCB } from '@intabiafusion/platform'
-  import { Icon, themeStore } from '@intabiafusion/ui'
+  import { WithLookup } from '@hcengineering/core'
+  import { GithubIntegrationRepository } from '@hcengineering/github'
+  import { translateCB } from '@hcengineering/platform'
+  import { Icon, themeStore } from '@hcengineering/ui'
   import github from '../plugin'
 
   export let value: WithLookup<GithubIntegrationRepository> | undefined

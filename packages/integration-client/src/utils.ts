@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Integration } from '@intabiafusion/account-client'
-import platform, { PlatformError } from '@intabiafusion/platform'
+import { Integration } from '@hcengineering/account-client'
+import platform, { PlatformError } from '@hcengineering/platform'
 import { IntegrationEventData } from './types'
 
 export function isWorkspaceIntegration (integration: Integration): boolean {

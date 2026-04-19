@@ -1,11 +1,11 @@
 {
   "name": "@intabiafusion/clisr",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Intabia Fusion",
-  "template": "@intabiafusion/node-package",
+  "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -18,7 +18,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -42,10 +42,10 @@
   },
   "dependencies": {
     "ws": "^8.18.2",
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/measurements": "workspace:^1.0.0",
-    "@intabiafusion/analytics": "workspace:^1.0.0",
-    "@intabiafusion/rpc": "workspace:^1.0.0",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/measurements": "workspace:^0.7.18",
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/rpc": "workspace:^0.7.17",
     "utf-8-validate": "^6.0.4",
     "bufferutil": "^4.0.8",
     "msgpackr": "^1.11.2",
@@ -55,9 +55,9 @@
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "@intabiafusion/server-token": "workspace:^1.0.0"
+    "@hcengineering/server-token": "workspace:^0.7.17"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/intabiafusion/dqueue",
   "publishConfig": {
     "access": "public"
   },

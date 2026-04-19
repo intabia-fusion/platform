@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BasePreview } from '@intabiafusion/activity-resources'
-  import { Doc, Markup } from '@intabiafusion/core'
-  import { CommonInboxNotification } from '@intabiafusion/notification'
-  import { IntlString, translate, translateCB } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { themeStore } from '@intabiafusion/ui'
+  import { BasePreview } from '@hcengineering/activity-resources'
+  import { Doc, Markup } from '@hcengineering/core'
+  import { CommonInboxNotification } from '@hcengineering/notification'
+  import { IntlString, translate, translateCB } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { themeStore } from '@hcengineering/ui'
 
   export let value: CommonInboxNotification
 

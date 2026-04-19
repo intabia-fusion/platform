@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Space } from '@intabiafusion/core'
-import { inventoryId } from '@intabiafusion/inventory'
+import core, { type Ref, type Space } from '@hcengineering/core'
+import { inventoryId } from '@hcengineering/inventory'
 import {
   migrateSpace,
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 import { DOMAIN_INVENTORY } from '.'
 
 export const inventoryOperation: MigrateOperation = {

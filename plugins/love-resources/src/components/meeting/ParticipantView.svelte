@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { formatName, Person } from '@intabiafusion/contact'
-  import { Avatar, getPersonByPersonRefStore } from '@intabiafusion/contact-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { Loading } from '@intabiafusion/ui'
+  import { formatName, Person } from '@hcengineering/contact'
+  import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
+  import { Ref } from '@hcengineering/core'
+  import { Loading } from '@hcengineering/ui'
   import MicDisabled from '../icons/MicDisabled.svelte'
   import { onDestroy, onMount } from 'svelte'
   import {

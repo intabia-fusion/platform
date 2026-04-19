@@ -23,7 +23,7 @@ import {
   type Version,
   type Data,
   type AccountUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   MongoDbCollection,
   AccountMongoDbCollection,

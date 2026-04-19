@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { ButtonMenu, DropdownIntlItem, IconMoreV } from '@intabiafusion/ui'
-  import { Action } from '@intabiafusion/view'
-  import { getResource } from '@intabiafusion/platform'
+  import { ButtonMenu, DropdownIntlItem, IconMoreV } from '@hcengineering/ui'
+  import { Action } from '@hcengineering/view'
+  import { getResource } from '@hcengineering/platform'
   import { lkSessionConnected } from '../../../liveKitClient'
-  import { getActions } from '@intabiafusion/view-resources'
+  import { getActions } from '@hcengineering/view-resources'
   import love from '../../../plugin'
-  import { Room } from '@intabiafusion/love'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Room } from '@hcengineering/love'
+  import { getClient } from '@hcengineering/presentation'
 
   export let room: Room
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

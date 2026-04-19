@@ -21,11 +21,11 @@ import {
   PatchEvent,
   RemovePatchEvent,
   ThreadPatchEvent
-} from '@intabiafusion/communication-sdk-types'
-import { CardPeer, MessageType, Peer } from '@intabiafusion/communication-types'
-import { type AccountUuid, generateId } from '@intabiafusion/core'
-import { extractReferences } from '@intabiafusion/text-core'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
+} from '@hcengineering/communication-sdk-types'
+import { CardPeer, MessageType, Peer } from '@hcengineering/communication-types'
+import { type AccountUuid, generateId } from '@hcengineering/core'
+import { extractReferences } from '@hcengineering/text-core'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 import { generateMessageId } from '../messageId'

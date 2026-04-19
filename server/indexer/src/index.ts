@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { ContentTextAdapterConfiguration, FullTextAdapterFactory } from '@intabiafusion/server-core'
+import type { ContentTextAdapterConfiguration, FullTextAdapterFactory } from '@hcengineering/server-core'
 
 export * from './fulltext'
 export * from './indexer'

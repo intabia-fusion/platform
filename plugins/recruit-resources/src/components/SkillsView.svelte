@@ -1,13 +1,13 @@
 <script lang="ts">
-  import tags, { TagElement } from '@intabiafusion/tags'
-  import { Button, Component, getCurrentResolvedLocation, navigate, showPopup } from '@intabiafusion/ui'
+  import tags, { TagElement } from '@hcengineering/tags'
+  import { Button, Component, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import recruit from '../plugin'
-  import { buildFilterKey, setFilters } from '@intabiafusion/view-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Filter } from '@intabiafusion/view'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { buildFilterKey, setFilters } from '@hcengineering/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { Filter } from '@hcengineering/view'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import OptimizeSkills from './OptimizeSkills.svelte'
-  import { selectedTagElements } from '@intabiafusion/tags-resources'
+  import { selectedTagElements } from '@hcengineering/tags-resources'
 
   function setFilterTag (tag: TagElement) {
     const client = getClient()

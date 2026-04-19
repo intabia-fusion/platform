@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@intabiafusion/core'
+  import { AttachedData } from '@hcengineering/core'
 
-  import { getClient } from '@intabiafusion/presentation'
-  import { Issue, IssueDraft } from '@intabiafusion/tracker'
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import { EditBoxPopup, FixedColumn } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { Issue, IssueDraft } from '@hcengineering/tracker'
+  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { EditBoxPopup, FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
   import EstimationPopup from './EstimationPopup.svelte'

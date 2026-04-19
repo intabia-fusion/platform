@@ -17,9 +17,9 @@
 
 <script lang="ts" context="module">
   import type { ComponentProps } from 'svelte'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { StateTag, StateType } from '@intabiafusion/ui'
-  import { ProductVersionState } from '@intabiafusion/products'
+  import type { IntlString } from '@hcengineering/platform'
+  import { StateTag, StateType } from '@hcengineering/ui'
+  import { ProductVersionState } from '@hcengineering/products'
 
   import products from '../../plugin'
 

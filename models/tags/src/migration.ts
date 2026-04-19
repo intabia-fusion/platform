@@ -1,12 +1,12 @@
-import core, { type Ref, type Space } from '@intabiafusion/core'
+import core, { type Ref, type Space } from '@hcengineering/core'
 import {
   migrateSpace,
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
-import { tagsId } from '@intabiafusion/tags'
+} from '@hcengineering/model'
+import { tagsId } from '@hcengineering/tags'
 import { DOMAIN_TAGS } from '.'
 
 export const tagsOperation: MigrateOperation = {

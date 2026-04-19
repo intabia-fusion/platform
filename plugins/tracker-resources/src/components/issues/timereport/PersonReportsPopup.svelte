@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@intabiafusion/contact'
-  import { FindOptions, Ref, SortingOrder } from '@intabiafusion/core'
-  import presentation, { Card } from '@intabiafusion/presentation'
-  import { Issue, TimeSpendReport } from '@intabiafusion/tracker'
-  import { Button, IconAdd, Scroller, showPopup, tableSP } from '@intabiafusion/ui'
-  import { TableBrowser } from '@intabiafusion/view-resources'
+  import { Employee } from '@hcengineering/contact'
+  import { FindOptions, Ref, SortingOrder } from '@hcengineering/core'
+  import presentation, { Card } from '@hcengineering/presentation'
+  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { Button, IconAdd, Scroller, showPopup, tableSP } from '@hcengineering/ui'
+  import { TableBrowser } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import ParentNamesPresenter from '../ParentNamesPresenter.svelte'
-  import PersonPresenter from '@intabiafusion/contact-resources/src/components/PersonPresenter.svelte'
+  import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
   import SetParentIssueActionPopup from '../../SetParentIssueActionPopup.svelte'
 

@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ProjectType, TaskType } from '@intabiafusion/task'
+  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ProjectType, TaskType } from '@hcengineering/task'
   import {
     ColorDefinition,
     getColorNumberByText,
     getPlatformColorDef,
     resizeObserver,
     themeStore
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { typeStore } from '../..'
 

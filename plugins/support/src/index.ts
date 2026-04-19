@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { Class, Ref } from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin, Metadata } from '@intabiafusion/platform'
+import { Class, Ref } from '@hcengineering/core'
+import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
+import { plugin, Metadata } from '@hcengineering/platform'
 import { SupportClientFactory, SupportConversation, SupportSystem } from './types'
 
 export * from './types'
 export { deleteSupportConversation, updateSupportConversation } from './utils'
 
 export const supportLink = 'https://huly.link/slack'
-export const reportBugLink = 'https://github.com/intabia-fusion/foundation/issues/new'
+export const reportBugLink = 'https://github.com/hcengineering/platform/issues/new'
 export const privacyPolicyLink = 'https://v1.huly.io/legal/privacy/'
 export const defaultSupportEmail = 'platform@intabia.ru'
 

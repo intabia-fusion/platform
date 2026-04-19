@@ -12,15 +12,15 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Component, Label, tooltip } from '@intabiafusion/ui'
-  import notification from '@intabiafusion/notification'
-  import { getDocIdentifier, getDocTitle } from '@intabiafusion/view-resources'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Doc } from '@intabiafusion/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Component, Label, tooltip } from '@hcengineering/ui'
+  import notification from '@hcengineering/notification'
+  import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Doc } from '@hcengineering/core'
 
   import { NavigationItem } from '../type'
-  import cardPlugin, { Card } from '@intabiafusion/card'
+  import cardPlugin, { Card } from '@hcengineering/card'
 
   export let doc: Doc | undefined
   export let navItem: NavigationItem

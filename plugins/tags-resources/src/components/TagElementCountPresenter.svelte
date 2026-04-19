@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import { TagElement } from '@intabiafusion/tags'
-  import { AnySvelteComponent, Icon } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import { TagElement } from '@hcengineering/tags'
+  import { AnySvelteComponent, Icon } from '@hcengineering/ui'
   import tags from '../plugin'
 
   export let value: TagElement

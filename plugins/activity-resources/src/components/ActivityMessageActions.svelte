@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
-  import { Action, IconMoreV, showPopup } from '@intabiafusion/ui'
-  import { getActions, Menu } from '@intabiafusion/view-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import { getResource } from '@intabiafusion/platform'
-  import view, { Action as ViewAction } from '@intabiafusion/view'
-  import { Ref } from '@intabiafusion/core'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { Action, IconMoreV, showPopup } from '@hcengineering/ui'
+  import { getActions, Menu } from '@hcengineering/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { getResource } from '@hcengineering/platform'
+  import view, { Action as ViewAction } from '@hcengineering/view'
+  import { Ref } from '@hcengineering/core'
 
   import ActivityMessageAction from './ActivityMessageAction.svelte'
   import { savedMessagesStore } from '../activity'

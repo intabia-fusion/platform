@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Ref } from '@intabiafusion/core'
-import type { CardID, MessageID } from '@intabiafusion/communication-types'
+import type { Class, Doc, Ref } from '@hcengineering/core'
+import type { CardID, MessageID } from '@hcengineering/communication-types'
 
 export enum BlobSourceType {
   Doc = 'doc',

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity from '@intabiafusion/activity'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Attachment } from '@intabiafusion/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@intabiafusion/attachment-resources'
-  import { Employee } from '@intabiafusion/contact'
+  import activity from '@hcengineering/activity'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Attachment } from '@hcengineering/attachment'
+  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import { Employee } from '@hcengineering/contact'
   import core, {
     AccountRole,
     Class,
@@ -32,9 +32,9 @@
     Ref,
     SortingOrder,
     toIdMap
-  } from '@intabiafusion/core'
-  import { getResource, translate } from '@intabiafusion/platform'
-  import preference, { SpacePreference } from '@intabiafusion/preference'
+  } from '@hcengineering/core'
+  import { getResource, translate } from '@hcengineering/platform'
+  import preference, { SpacePreference } from '@hcengineering/preference'
   import {
     Card,
     createMarkup,
@@ -48,11 +48,11 @@
     MessageBox,
     MultipleDraftController,
     SpaceSelector
-  } from '@intabiafusion/presentation'
-  import tags, { type TagElement, TagReference } from '@intabiafusion/tags'
-  import { TaskType } from '@intabiafusion/task'
-  import { TaskKindSelector } from '@intabiafusion/task-resources'
-  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  } from '@hcengineering/presentation'
+  import tags, { type TagElement, TagReference } from '@hcengineering/tags'
+  import { TaskType } from '@hcengineering/task'
+  import { TaskKindSelector } from '@hcengineering/task-resources'
+  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import {
     Component as ComponentType,
     Issue,
@@ -65,7 +65,7 @@
     Project,
     ProjectTargetPreference,
     TrackerEvents
-  } from '@intabiafusion/tracker'
+  } from '@hcengineering/tracker'
   import {
     addNotification,
     Button,
@@ -78,9 +78,9 @@
     Label,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import { activeComponent, activeMilestone, generateIssueShortLink, updateIssueRelation } from '../issues'

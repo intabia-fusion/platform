@@ -12,8 +12,8 @@
     type MultipleChoiceAssessmentData,
     type MultipleChoiceQuestion,
     type MultipleChoiceQuestionData
-  } from '@intabiafusion/questions'
-  import { CheckBox } from '@intabiafusion/ui'
+  } from '@hcengineering/questions'
+  import { CheckBox } from '@hcengineering/ui'
   import { moveItem } from '../utils'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList, { type OptionsListDropEvent } from './OptionsList.svelte'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { createSpaceTypeRole } from '@intabiafusion/setting'
-  import { Modal, ModernEditbox } from '@intabiafusion/ui'
-  import { AttachedData, Role, SpaceType } from '@intabiafusion/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { createSpaceTypeRole } from '@hcengineering/setting'
+  import { Modal, ModernEditbox } from '@hcengineering/ui'
+  import { AttachedData, Role, SpaceType } from '@hcengineering/core'
 
   import settingRes from '../../../plugin'
   import { clearSettingsStore } from '../../../store'

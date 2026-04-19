@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import billing, { billingId } from '@intabiafusion/billing'
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
+import billing, { billingId } from '@hcengineering/billing'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(billingId, billing, {
   string: {

@@ -19,11 +19,11 @@ import {
   type SummarizeMessagesResponse,
   type TranslateRequest,
   type TranslateResponse
-} from '@intabiafusion/ai-bot'
-import { type Class, concatLink, type Doc, type Markup, type Ref } from '@intabiafusion/core'
-import { type MeetingMinutes, type RoomLanguage } from '@intabiafusion/love'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
+} from '@hcengineering/ai-bot'
+import { type Class, concatLink, type Doc, type Markup, type Ref } from '@hcengineering/core'
+import { type MeetingMinutes, type RoomLanguage } from '@hcengineering/love'
+import { getMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
 
 import aiBot from './plugin'
 

@@ -4,10 +4,10 @@
 //
 -->
 <script lang="ts">
-  import { Document } from '@intabiafusion/controlled-documents'
-  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { Component } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  import { Document } from '@hcengineering/controlled-documents'
+  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { Component } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   export let _class: Ref<Class<Document>>
   export let viewlet: WithLookup<Viewlet>

@@ -15,12 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { type FileVersion } from '@intabiafusion/drive'
-  import { FilePreviewPopup } from '@intabiafusion/presentation'
-  import { showPopup } from '@intabiafusion/ui'
-  import { ObjectPresenterType } from '@intabiafusion/view'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { WithLookup } from '@hcengineering/core'
+  import { type FileVersion } from '@hcengineering/drive'
+  import { FilePreviewPopup } from '@hcengineering/presentation'
+  import { showPopup } from '@hcengineering/ui'
+  import { ObjectPresenterType } from '@hcengineering/view'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import { formatFileVersion } from '../utils'
 

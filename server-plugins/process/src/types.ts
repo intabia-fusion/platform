@@ -1,7 +1,7 @@
-import { Card } from '@intabiafusion/card'
-import { CollaboratorClient } from '@intabiafusion/collaborator-client'
-import { Doc, MeasureContext, PersonId, Ref, Timestamp, Tx, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
-import { Execution, ExecutionError, MethodParams, Trigger, UserResult } from '@intabiafusion/process'
+import { Card } from '@hcengineering/card'
+import { CollaboratorClient } from '@hcengineering/collaborator-client'
+import { Doc, MeasureContext, PersonId, Ref, Timestamp, Tx, TxOperations, WorkspaceUuid } from '@hcengineering/core'
+import { Execution, ExecutionError, MethodParams, Trigger, UserResult } from '@hcengineering/process'
 
 export type ExecuteFunc = (
   params: MethodParams<Doc>,

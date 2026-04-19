@@ -25,13 +25,13 @@ import core, {
   TxFactory,
   type TypeIdentifier,
   type TxMixin
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 /**
  * @public

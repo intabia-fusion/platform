@@ -12,10 +12,10 @@ import core, {
   type Ref,
   type RefTo,
   type TypeIdentifier
-} from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
-import view from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
+import view from '@hcengineering/view'
 import card from './plugin'
 
 export async function importModule (json: string): Promise<void> {

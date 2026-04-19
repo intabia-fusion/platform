@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@intabiafusion/attachment'
-  import contact, { Channel, Organization } from '@intabiafusion/contact'
-  import { ChannelsEditor } from '@intabiafusion/contact-resources'
-  import { Ref, WithLookup } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Vacancy } from '@intabiafusion/recruit'
-  import { Component, Label } from '@intabiafusion/ui'
-  import { DocNavLink } from '@intabiafusion/view-resources'
+  import attachment from '@hcengineering/attachment'
+  import contact, { Channel, Organization } from '@hcengineering/contact'
+  import { ChannelsEditor } from '@hcengineering/contact-resources'
+  import { Ref, WithLookup } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Vacancy } from '@hcengineering/recruit'
+  import { Component, Label } from '@hcengineering/ui'
+  import { DocNavLink } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import VacancyIcon from './icons/Vacancy.svelte'
-  import chunter from '@intabiafusion/chunter'
+  import chunter from '@hcengineering/chunter'
 
   export let vacancy: WithLookup<Vacancy> | undefined
   export let disabled: boolean = false

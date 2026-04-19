@@ -14,7 +14,7 @@
 //
 
 import { estimateDocSize, OneSecondCountersImpl } from '../utils'
-import { platformNow } from '@intabiafusion/core'
+import { platformNow } from '@hcengineering/core'
 
 describe('OneSecondCountersImpl', () => {
   let counters: OneSecondCountersImpl

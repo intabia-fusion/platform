@@ -22,7 +22,7 @@ import {
   type WorkspaceUuid,
   type AccountUuid,
   type PersonUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 import { getMigrations } from './migrations'
 import type {

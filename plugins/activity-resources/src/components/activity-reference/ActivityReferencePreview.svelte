@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessagePreviewType, ActivityReference } from '@intabiafusion/activity'
+  import { ActivityMessagePreviewType, ActivityReference } from '@hcengineering/activity'
 
   import BaseMessagePreview from '../activity-message/BaseMessagePreview.svelte'
-  import { Action } from '@intabiafusion/ui'
+  import { Action } from '@hcengineering/ui'
 
   export let value: ActivityReference
   export let readonly = false

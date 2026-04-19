@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type Tx, WorkspaceUuid } from '@intabiafusion/core'
-import { PlatformQueueProducer } from '@intabiafusion/server-core'
+import { type MeasureContext, type Tx, WorkspaceUuid } from '@hcengineering/core'
+import { PlatformQueueProducer } from '@hcengineering/server-core'
 import { Readable } from 'stream'
 
 import { type Cache, type CacheEntry, createCache, streamToBuffer } from './cache'

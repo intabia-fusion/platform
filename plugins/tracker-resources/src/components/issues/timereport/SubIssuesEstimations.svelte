@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Issue, reduceChildInfoTree } from '@intabiafusion/tracker'
-  import { Expandable, Spinner } from '@intabiafusion/ui'
+  import { SortingOrder } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import { Expandable, Spinner } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import EstimationSubIssueList from './EstimationSubIssueList.svelte'
   import TimePresenter from './TimePresenter.svelte'

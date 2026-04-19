@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ExecutionLog } from '@intabiafusion/process'
-  import { Notification, NotificationToast } from '@intabiafusion/ui'
+  import { ExecutionLog } from '@hcengineering/process'
+  import { Notification, NotificationToast } from '@hcengineering/ui'
   import LogActionPresenter from './LogActionPresenter.svelte'
   import TransitionRefPresenter from './settings/TransitionRefPresenter.svelte'
-  import { CardPresenter } from '@intabiafusion/card-resources'
+  import { CardPresenter } from '@hcengineering/card-resources'
 
   export let notification: Notification
   export let onRemove: () => void

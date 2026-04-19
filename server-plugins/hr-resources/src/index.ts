@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import contact, { Employee, formatName, getName, Person } from '@intabiafusion/contact'
-import core, { Doc, Ref, SortingOrder, toIdMap, Tx, TxFactory, TxMixin, TxRemoveDoc } from '@intabiafusion/core'
-import hr, { Department, fromTzDate, PublicHoliday, Request, Staff, tzDateEqual } from '@intabiafusion/hr'
-import { translate } from '@intabiafusion/platform'
-import { TriggerControl } from '@intabiafusion/server-core'
-import { getEmployee } from '@intabiafusion/server-contact'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+import contact, { Employee, formatName, getName, Person } from '@hcengineering/contact'
+import core, { Doc, Ref, SortingOrder, toIdMap, Tx, TxFactory, TxMixin, TxRemoveDoc } from '@hcengineering/core'
+import hr, { Department, fromTzDate, PublicHoliday, Request, Staff, tzDateEqual } from '@hcengineering/hr'
+import { translate } from '@hcengineering/platform'
+import { TriggerControl } from '@hcengineering/server-core'
+import { getEmployee } from '@hcengineering/server-contact'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 async function getOldDepartment (
   currentTx: TxMixin<Employee, Staff>,

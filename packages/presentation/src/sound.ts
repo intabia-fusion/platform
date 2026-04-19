@@ -1,7 +1,7 @@
-import { type Class, type Doc, type Ref } from '@intabiafusion/core'
-import { type Asset, getMetadata, getResource } from '@intabiafusion/platform'
+import { type Class, type Doc, type Ref } from '@hcengineering/core'
+import { type Asset, getMetadata, getResource } from '@hcengineering/platform'
 import { getClient } from '.'
-import notification from '@intabiafusion/notification'
+import notification from '@hcengineering/notification'
 
 const sounds = new Map<Asset, AudioBuffer>()
 const context = new AudioContext()

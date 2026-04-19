@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Component } from '@intabiafusion/tracker'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Component } from '@hcengineering/tracker'
   import tracker from '../../plugin'
 
   export let value: Ref<Component>[]

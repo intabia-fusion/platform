@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PersonRating } from '@intabiafusion/rating'
+  import type { PersonRating } from '@hcengineering/rating'
 
   export let rating: PersonRating | undefined
 
@@ -165,8 +165,8 @@
     return `rgb(${color}, ${color}, ${color})`
   }
 
-  import ratingPlugin from '@intabiafusion/rating'
-  import { tooltip } from '@intabiafusion/ui'
+  import ratingPlugin from '@hcengineering/rating'
+  import { tooltip } from '@hcengineering/ui'
 
   // Formatter for localized month names (short form, e.g. 'Jan', 'Feb' or localized equivalent)
   const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'short' })

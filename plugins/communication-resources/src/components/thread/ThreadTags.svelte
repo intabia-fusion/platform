@@ -12,10 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag } from '@intabiafusion/card'
-  import { Component } from '@intabiafusion/ui'
-  import { CardType } from '@intabiafusion/communication-types'
-  import { getClient } from '@intabiafusion/presentation'
+  import cardPlugin, { Card, MasterTag } from '@hcengineering/card'
+  import { Component } from '@hcengineering/ui'
+  import { CardType } from '@hcengineering/communication-types'
+  import { getClient } from '@hcengineering/presentation'
 
   export let card: Card | undefined = undefined
   export let type: CardType

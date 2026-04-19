@@ -213,7 +213,7 @@
      * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
      * to retrieve the latest activity for the remote main branch.
      */
-    "url": "https://github.com/intabia-fusion/huly.server",
+    "url": "https://github.com/hcengineering/huly.server",
     /**
      * The default branch name. This tells "rush change" which remote branch to compare against.
      * The default value is "main"
@@ -331,25 +331,25 @@
    */
   "projects": [
     {
-      "packageName": "@intabiafusion/scripts",
+      "packageName": "@hcengineering/scripts",
       "projectFolder": "common/scripts",
       "shouldPublish": false
     },
-    { "packageName": "@intabiafusion/server-client", "projectFolder": "packages/client", "shouldPublish": true },
-    { "packageName": "@intabiafusion/collaboration", "projectFolder": "packages/collaboration", "shouldPublish": true },
-    { "packageName": "@intabiafusion/server-core", "projectFolder": "packages/core", "shouldPublish": true },
-    { "packageName": "@intabiafusion/datalake", "projectFolder": "packages/datalake", "shouldPublish": true },
-    { "packageName": "@intabiafusion/hulylake", "projectFolder": "packages/hulylake", "shouldPublish": true },
-    { "packageName": "@intabiafusion/elastic", "projectFolder": "packages/elastic", "shouldPublish": true },
-    { "packageName": "@intabiafusion/kafka", "projectFolder": "packages/kafka", "shouldPublish": true },
-    { "packageName": "@intabiafusion/middleware", "projectFolder": "packages/middleware", "shouldPublish": true },
-    { "packageName": "@intabiafusion/minio", "projectFolder": "packages/minio", "shouldPublish": true },
-    { "packageName": "@intabiafusion/mongo", "projectFolder": "packages/mongo", "shouldPublish": true },
-    { "packageName": "@intabiafusion/postgres", "projectFolder": "packages/postgres", "shouldPublish": true },
-    { "packageName": "@intabiafusion/s3", "projectFolder": "packages/s3", "shouldPublish": true },
-    { "packageName": "@intabiafusion/server", "projectFolder": "packages/server", "shouldPublish": true },
+    { "packageName": "@hcengineering/server-client", "projectFolder": "packages/client", "shouldPublish": true },
+    { "packageName": "@hcengineering/collaboration", "projectFolder": "packages/collaboration", "shouldPublish": true },
+    { "packageName": "@hcengineering/server-core", "projectFolder": "packages/core", "shouldPublish": true },
+    { "packageName": "@hcengineering/datalake", "projectFolder": "packages/datalake", "shouldPublish": true },
+    { "packageName": "@hcengineering/hulylake", "projectFolder": "packages/hulylake", "shouldPublish": true },
+    { "packageName": "@hcengineering/elastic", "projectFolder": "packages/elastic", "shouldPublish": true },
+    { "packageName": "@hcengineering/kafka", "projectFolder": "packages/kafka", "shouldPublish": true },
+    { "packageName": "@hcengineering/middleware", "projectFolder": "packages/middleware", "shouldPublish": true },
+    { "packageName": "@hcengineering/minio", "projectFolder": "packages/minio", "shouldPublish": true },
+    { "packageName": "@hcengineering/mongo", "projectFolder": "packages/mongo", "shouldPublish": true },
+    { "packageName": "@hcengineering/postgres", "projectFolder": "packages/postgres", "shouldPublish": true },
+    { "packageName": "@hcengineering/s3", "projectFolder": "packages/s3", "shouldPublish": true },
+    { "packageName": "@hcengineering/server", "projectFolder": "packages/server", "shouldPublish": true },
     {
-      "packageName": "@intabiafusion/server-storage",
+      "packageName": "@hcengineering/server-storage",
       "projectFolder": "packages/server-storage",
       "shouldPublish": true
     }

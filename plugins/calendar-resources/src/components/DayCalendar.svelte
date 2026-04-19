@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event, ReccuringInstance } from '@intabiafusion/calendar'
-  import { DocumentUpdate, Ref, Timestamp } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Event, ReccuringInstance } from '@hcengineering/calendar'
+  import { DocumentUpdate, Ref, Timestamp } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import ui, {
     ActionIcon,
     CalendarItem,
@@ -34,8 +34,8 @@
     isWeekend,
     resizeObserver,
     ticker
-  } from '@intabiafusion/ui'
-  import { showMenu } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import type {
     CalendarADGrid,

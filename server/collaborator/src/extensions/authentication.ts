@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { decodeDocumentId } from '@intabiafusion/collaborator-client'
-import { MeasureContext } from '@intabiafusion/core'
-import { decodeToken } from '@intabiafusion/server-token'
+import { decodeDocumentId } from '@hcengineering/collaborator-client'
+import { MeasureContext } from '@hcengineering/core'
+import { decodeToken } from '@hcengineering/server-token'
 import { Extension, onAuthenticatePayload } from '@hocuspocus/server'
-import { isReadOnlyOrGuest } from '@intabiafusion/account'
+import { isReadOnlyOrGuest } from '@hcengineering/account'
 
 import { Context, buildContext } from '../context'
 import { getWorkspaceIds } from '../utils'

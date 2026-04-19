@@ -14,10 +14,10 @@
 //
 import { Producer } from 'kafkajs'
 
-import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
-import { type Card } from '@intabiafusion/card'
-import { MessageID, MessageType } from '@intabiafusion/communication-types'
-import chat from '@intabiafusion/chat'
+import { WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { type Card } from '@hcengineering/card'
+import { MessageID, MessageType } from '@hcengineering/communication-types'
+import chat from '@hcengineering/chat'
 import core, {
   type Blob,
   type MeasureContext,
@@ -29,10 +29,10 @@ import core, {
   generateId,
   RateLimiter,
   Space
-} from '@intabiafusion/core'
-import { type KeyValueClient } from '@intabiafusion/kvs-client'
+} from '@hcengineering/core'
+import { type KeyValueClient } from '@hcengineering/kvs-client'
 
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import {
   AddCollaboratorsEvent,
   BlobPatchEvent,
@@ -40,8 +40,8 @@ import {
   MessageEventType,
   NotificationEventType,
   ThreadPatchEvent
-} from '@intabiafusion/communication-sdk-types'
-import { generateMessageId } from '@intabiafusion/communication-shared'
+} from '@hcengineering/communication-sdk-types'
+import { generateMessageId } from '@hcengineering/communication-shared'
 
 import { BaseConfig, SyncOptions, type Attachment } from './types'
 import { COMMUNICATION_DOMAIN, EmailMessage, MailRecipient, MessageData } from './types'

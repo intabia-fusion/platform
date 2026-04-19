@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express, Request, Response } from 'express'
 
 import {
@@ -21,7 +21,7 @@ import {
   SubscriptionType,
   type Subscription,
   type SubscriptionData
-} from '@intabiafusion/account-client'
+} from '@hcengineering/account-client'
 import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
 import { PolarClient } from './client'
 import { handlePolarWebhook } from './webhook'

@@ -15,7 +15,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import {
   type ClientSocket,
   ClientSocketReadyState,
@@ -41,8 +41,8 @@ import {
   decodeBinaryResponse,
   decodeBinaryRequest
 } from './types'
-import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@intabiafusion/rpc'
-import { type MeasureContext } from '@intabiafusion/measurements'
+import { type RateLimitInfo, type ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
+import { type MeasureContext } from '@hcengineering/measurements'
 import { randomUUID } from 'crypto'
 import { sendFrame as sharedSendFrame } from './frame-utils'
 

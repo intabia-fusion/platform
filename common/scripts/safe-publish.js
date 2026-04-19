@@ -76,7 +76,7 @@ function getPublishablePackages(includePattern) {
         return false
       }
 
-      return shouldPublish && project.name.startsWith('@intabiafusion')
+      return shouldPublish && project.name.startsWith('@hcengineering')
     })
   } catch (err) {
     console.error('Error getting package list:', err.message)

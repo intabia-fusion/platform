@@ -18,13 +18,13 @@ import core, {
   systemAccountUuid,
   type SessionData,
   type TxApplyIf
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
   type TxMiddlewareResult,
   type PipelineContext
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 /**
  * @public

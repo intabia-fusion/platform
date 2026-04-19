@@ -17,8 +17,8 @@ import {
   getClient as getAccountClient,
   type LoginInfoWithWorkspaces,
   type LoginInfoWorkspace
-} from '@intabiafusion/account-client'
-import { Analytics } from '@intabiafusion/analytics'
+} from '@hcengineering/account-client'
+import { Analytics } from '@hcengineering/analytics'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -50,8 +50,8 @@ import core, {
   type WorkspaceIds,
   type WorkspaceInfoWithStatus,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import platform, { Severity, Status, UNAUTHORIZED, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import platform, { Severity, Status, UNAUTHORIZED, unknownError } from '@hcengineering/platform'
 import {
   type HelloRequest,
   type HelloResponse,
@@ -59,7 +59,7 @@ import {
   type Request,
   type Response,
   SlidingWindowRateLimitter
-} from '@intabiafusion/rpc'
+} from '@hcengineering/rpc'
 import {
   type AddSessionResponse,
   type ClientSessionCtx,
@@ -84,8 +84,8 @@ import {
   type UserStatistics,
   workspaceEvents,
   type WorkspaceStatistics
-} from '@intabiafusion/server-core'
-import { generateToken, type Token } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import { generateToken, type Token } from '@hcengineering/server-token'
 import { ClientSession } from './client'
 import { sendResponse } from './utils'
 import { Workspace } from './workspace'

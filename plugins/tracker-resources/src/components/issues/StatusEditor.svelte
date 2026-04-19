@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData, Ref, WithLookup } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { getTaskTypeStates } from '@intabiafusion/task'
-  import { taskTypeStore } from '@intabiafusion/task-resources'
-  import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@intabiafusion/tracker'
+  import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { getTaskTypeStates } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
+  import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
   import {
     Button,
     ButtonKind,
@@ -27,9 +27,9 @@
     TooltipAlignment,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
-  import { Analytics } from '@intabiafusion/analytics'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
 
   import tracker from '../../plugin'

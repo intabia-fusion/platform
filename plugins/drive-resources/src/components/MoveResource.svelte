@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import type { Drive, Folder, Resource } from '@intabiafusion/drive'
-  import presentation, { Card, SpaceSelector } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { Ref } from '@hcengineering/core'
+  import type { Drive, Folder, Resource } from '@hcengineering/drive'
+  import presentation, { Card, SpaceSelector } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import drive from '../plugin'

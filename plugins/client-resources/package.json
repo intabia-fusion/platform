@@ -1,5 +1,5 @@
 {
-  "name": "@intabiafusion/client-resources",
+  "name": "@hcengineering/client-resources",
   "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
@@ -22,7 +22,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^0.7.19",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -38,16 +38,16 @@
     "@types/snappyjs": "^0.7.1"
   },
   "dependencies": {
-    "@intabiafusion/analytics": "workspace:^0.7.17",
-    "@intabiafusion/client": "workspace:^0.7.18",
-    "@intabiafusion/communication-sdk-types": "workspace:^0.7.12",
-    "@intabiafusion/communication-types": "workspace:^0.7.12",
-    "@intabiafusion/core": "workspace:^0.7.24",
-    "@intabiafusion/platform": "workspace:^0.7.19",
-    "@intabiafusion/rpc": "workspace:^0.7.17",
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/client": "workspace:^0.7.18",
+    "@hcengineering/communication-sdk-types": "workspace:^0.7.12",
+    "@hcengineering/communication-types": "workspace:^0.7.12",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/rpc": "workspace:^0.7.17",
     "snappyjs": "^0.7.0"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/platform",
   "publishConfig": {
     "access": "public"
   },

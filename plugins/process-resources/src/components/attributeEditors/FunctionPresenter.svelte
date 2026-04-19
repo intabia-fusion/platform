@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Context, Func, Process } from '@intabiafusion/process'
-  import { Component, Label } from '@intabiafusion/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import { Context, Func, Process } from '@hcengineering/process'
+  import { Component, Label } from '@hcengineering/ui'
 
   export let value: Func
   export let process: Process

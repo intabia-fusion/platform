@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Class, Ref } from '@intabiafusion/core'
-import type { Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { Class, Ref } from '@hcengineering/core'
+import type { Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 import type { DocumentPresence, TypingIndicator } from './types'
 
 /** @public */

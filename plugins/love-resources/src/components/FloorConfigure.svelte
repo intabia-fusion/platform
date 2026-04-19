@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact } from '@intabiafusion/contact'
-  import { DocumentUpdate, Ref } from '@intabiafusion/core'
-  import { Floor, GRID_WIDTH, Room, getFreeSpace } from '@intabiafusion/love'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Contact } from '@hcengineering/contact'
+  import { DocumentUpdate, Ref } from '@hcengineering/core'
+  import { Floor, GRID_WIDTH, Room, getFreeSpace } from '@hcengineering/love'
+  import { getClient } from '@hcengineering/presentation'
   import {
     ButtonIcon,
     DropdownLabels,
@@ -26,7 +26,7 @@
     Scroller,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import lovePlg from '../plugin'
   import { floors, lockedRoom, selectedFloor } from '../stores'

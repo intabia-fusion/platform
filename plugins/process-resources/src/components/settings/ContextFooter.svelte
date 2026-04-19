@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { Process, Step } from '@intabiafusion/process'
-  import { Label, Scroller } from '@intabiafusion/ui'
+  import { Doc } from '@hcengineering/core'
+  import { Process, Step } from '@hcengineering/process'
+  import { Label, Scroller } from '@hcengineering/ui'
   import processPlugin from '../../plugin'
   import ProcessContextPresenter from '../contextEditors/ProcessContextPresenter.svelte'
   import { ProcessContextView } from '../../types'

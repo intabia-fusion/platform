@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import type { Emoji } from 'emojibase'
-import type { Blob, Doc, Ref } from '@intabiafusion/core'
+import type { Blob, Doc, Ref } from '@hcengineering/core'
 
 export { default as Emoji } from 'emojibase'
 export type ExtendedEmoji = Emoji | CustomEmoji

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { AnySvelteComponent, Icon, Label } from '@intabiafusion/ui'
-  import { Asset, type IntlString } from '@intabiafusion/platform'
+  import { AnySvelteComponent, Icon, Label } from '@hcengineering/ui'
+  import { Asset, type IntlString } from '@hcengineering/platform'
   import { ComponentType } from 'svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType

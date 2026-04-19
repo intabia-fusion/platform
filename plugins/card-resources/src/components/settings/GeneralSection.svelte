@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@intabiafusion/card'
-  import core from '@intabiafusion/core'
-  import { TypeNumber } from '@intabiafusion/model'
-  import { getEmbeddedLabel, translateCB } from '@intabiafusion/platform'
-  import { getClient, IconDownload, IconWithEmoji, MessageBox } from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
+  import { MasterTag } from '@hcengineering/card'
+  import core from '@hcengineering/core'
+  import { TypeNumber } from '@hcengineering/model'
+  import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
+  import { getClient, IconDownload, IconWithEmoji, MessageBox } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
   import {
     ButtonIcon,
     type ColorDefinition,
@@ -31,9 +31,9 @@
     showPopup,
     themeStore,
     ToggleWithLabel
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { ColorsPopup, IconPicker } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { ColorsPopup, IconPicker } from '@hcengineering/view-resources'
   import { exportModule } from '../../exporter'
   import card from '../../plugin'
   import { deleteMasterTag } from '../../utils'

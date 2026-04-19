@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ChunterSpace } from '@intabiafusion/chunter'
-  import type { Class, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { SpaceMembers } from '@intabiafusion/contact-resources'
-  import { Label, Panel, Scroller } from '@intabiafusion/ui'
+  import { ChunterSpace } from '@hcengineering/chunter'
+  import type { Class, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { SpaceMembers } from '@hcengineering/contact-resources'
+  import { Label, Panel, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../plugin'

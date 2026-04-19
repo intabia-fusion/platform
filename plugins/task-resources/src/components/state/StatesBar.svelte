@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@intabiafusion/core'
-  import { BreadcrumbsElement, createQuery } from '@intabiafusion/presentation'
-  import task, { Project, ProjectType, getStates } from '@intabiafusion/task'
-  import { ScrollerBar, getColorNumberByText, getPlatformColor, themeStore } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import { BreadcrumbsElement, createQuery } from '@hcengineering/presentation'
+  import task, { Project, ProjectType, getStates } from '@hcengineering/task'
+  import { ScrollerBar, getColorNumberByText, getPlatformColor, themeStore } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { typeStore, type StatesBarPosition } from '../..'
 

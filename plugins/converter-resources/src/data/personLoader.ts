@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Hierarchy, PersonId } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import { getName, getPersonByPersonId } from '@intabiafusion/contact'
+import type { Hierarchy, PersonId } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import { getName, getPersonByPersonId } from '@hcengineering/contact'
 
 /**
  * Load person display name by PersonId with optional caching

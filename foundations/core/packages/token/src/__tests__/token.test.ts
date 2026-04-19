@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { setMetadata } from '@intabiafusion/platform'
-import type { PersonUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { setMetadata } from '@hcengineering/platform'
+import type { PersonUuid, WorkspaceUuid } from '@hcengineering/core'
 import { decodeToken, generateToken } from '../token'
 import plugin from '../plugin'
 

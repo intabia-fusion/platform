@@ -20,7 +20,7 @@ import {
   type MigrationUpgradeClient,
   tryMigrate,
   tryUpgrade
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 
 import survey, { surveyId } from './index'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, generateId, Ref } from '@intabiafusion/core'
-  import { ViewContext } from '@intabiafusion/view'
+  import { Doc, generateId, Ref } from '@hcengineering/core'
+  import { ViewContext } from '@hcengineering/view'
   import { onDestroy } from 'svelte'
   import { ContextStore, contextStore } from '../context'
 

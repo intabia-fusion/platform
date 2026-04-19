@@ -27,12 +27,12 @@
     TooltipInstance,
     getLocation as getPlatformLocation,
     Loading
-  } from '@intabiafusion/ui'
-  import { PersonWithProfile } from '@intabiafusion/account-client'
-  import { type AccountUuid, type PersonUuid } from '@intabiafusion/core'
-  import globalProfile from '@intabiafusion/global-profile'
-  import view from '@intabiafusion/view'
-  import { getMetadata } from '@intabiafusion/platform'
+  } from '@hcengineering/ui'
+  import { PersonWithProfile } from '@hcengineering/account-client'
+  import { type AccountUuid, type PersonUuid } from '@hcengineering/core'
+  import globalProfile from '@hcengineering/global-profile'
+  import view from '@hcengineering/view'
+  import { getMetadata } from '@hcengineering/platform'
 
   import { getAvatarText, getDisplayName, getLocation, getAccountClient, getAvatarColorForId } from '../utils'
   import EditProfilePopup from './EditGlobalProfilePopup.svelte'

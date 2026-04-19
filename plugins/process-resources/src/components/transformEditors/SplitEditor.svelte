@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { Card } from '@intabiafusion/presentation'
-  import { ProcessFunction } from '@intabiafusion/process'
-  import { StringEditor } from '@intabiafusion/view-resources'
+  import presentation, { Card } from '@hcengineering/presentation'
+  import { ProcessFunction } from '@hcengineering/process'
+  import { StringEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
-  import { Label } from '@intabiafusion/ui'
+  import { Label } from '@hcengineering/ui'
 
   export let func: ProcessFunction
   export let props: Record<string, any> = {}

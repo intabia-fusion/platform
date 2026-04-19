@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import attachment, { attachmentId } from '@intabiafusion/attachment'
-import type { IntlString } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import { type ViewAction } from '@intabiafusion/view'
+import attachment, { attachmentId } from '@hcengineering/attachment'
+import type { IntlString } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import { type ViewAction } from '@hcengineering/view'
 
 export default mergeIds(attachmentId, attachment, {
   string: {

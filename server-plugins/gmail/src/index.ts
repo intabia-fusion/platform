@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { ObjectDDParticipantFunc, TriggerFunc } from '@intabiafusion/server-core'
-import { TypeMatchFuncResource } from '@intabiafusion/server-notification'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
+import { TypeMatchFuncResource } from '@hcengineering/server-notification'
 
 /**
  * @public

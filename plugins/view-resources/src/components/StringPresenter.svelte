@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { LabelAndProps, LinkWrapper, tooltip } from '@intabiafusion/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { LabelAndProps, LinkWrapper, tooltip } from '@hcengineering/ui'
 
   export let value: string | string[] | undefined
   export let accent: boolean = false

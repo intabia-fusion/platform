@@ -1,7 +1,7 @@
-import contact, { getName } from '@intabiafusion/contact'
-import { Hierarchy, type Class, type Client, type Doc, type Ref } from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation, { getClient } from '@intabiafusion/presentation'
+import contact, { getName } from '@hcengineering/contact'
+import { Hierarchy, type Class, type Client, type Doc, type Ref } from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import presentation, { getClient } from '@hcengineering/presentation'
 import {
   recruitId,
   type Applicant,
@@ -9,13 +9,13 @@ import {
   type Review,
   type Vacancy,
   type VacancyList
-} from '@intabiafusion/recruit'
-import { type Poll } from '@intabiafusion/survey'
-import { generatePollLocation } from '@intabiafusion/survey-resources'
-import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@intabiafusion/ui'
-import view from '@intabiafusion/view'
-import { accessDeniedStore } from '@intabiafusion/view-resources'
-import { workbenchId } from '@intabiafusion/workbench'
+} from '@hcengineering/recruit'
+import { type Poll } from '@hcengineering/survey'
+import { generatePollLocation } from '@hcengineering/survey-resources'
+import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@hcengineering/ui'
+import view from '@hcengineering/view'
+import { accessDeniedStore } from '@hcengineering/view-resources'
+import { workbenchId } from '@hcengineering/workbench'
 import recruit from './plugin'
 
 type RecruitDocument = Vacancy | Applicant | Review

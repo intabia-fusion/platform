@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { focusActionWithAvailability } from '@intabiafusion/questions-resources'
-import type { Training } from '@intabiafusion/training'
-import { showPopup } from '@intabiafusion/ui'
+import { focusActionWithAvailability } from '@hcengineering/questions-resources'
+import type { Training } from '@hcengineering/training'
+import { showPopup } from '@hcengineering/ui'
 import TrainingRequestCreator from '../components/TrainingRequestCreator.svelte'
 import { canCreateTrainingRequest, type CreateTrainingRequestData } from '../utils'
 

@@ -4,9 +4,9 @@
 //
 -->
 <script lang="ts">
-  import documents, { DocumentComment } from '@intabiafusion/controlled-documents'
-  import { ThreadView } from '@intabiafusion/chunter-resources'
-  import { Button, IconCheckCircle, Label } from '@intabiafusion/ui'
+  import documents, { DocumentComment } from '@hcengineering/controlled-documents'
+  import { ThreadView } from '@hcengineering/chunter-resources'
+  import { Button, IconCheckCircle, Label } from '@hcengineering/ui'
   import {
     $canAddDocumentCommentsFeedback as canAddDocumentCommentsFeedback,
     resolveCommentFx

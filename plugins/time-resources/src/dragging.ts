@@ -1,5 +1,5 @@
-import type { IntlString } from '@intabiafusion/platform'
-import type { ToDo } from '@intabiafusion/time'
+import type { IntlString } from '@hcengineering/platform'
+import type { ToDo } from '@hcengineering/time'
 import { writable } from 'svelte/store'
 
 interface ToDoDragging {

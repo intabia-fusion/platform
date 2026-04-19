@@ -1,9 +1,9 @@
 {
-  "name": "@intabiafusion/platform-rig",
+  "name": "@hcengineering/platform-rig",
   "entries": [
     {
       "version": "0.7.19",
-      "tag": "@intabiafusion/platform-rig_v0.7.19",
+      "tag": "@hcengineering/platform-rig_v0.7.19",
       "date": "Tue, 14 Oct 2025 03:02:36 GMT",
       "comments": {
         "patch": [
@@ -18,7 +18,7 @@
     },
     {
       "version": "0.7.18",
-      "tag": "@intabiafusion/platform-rig_v0.7.18",
+      "tag": "@hcengineering/platform-rig_v0.7.18",
       "date": "Sun, 12 Oct 2025 15:50:41 GMT",
       "comments": {
         "patch": [
@@ -30,7 +30,7 @@
     },
     {
       "version": "0.7.17",
-      "tag": "@intabiafusion/platform-rig_v0.7.17",
+      "tag": "@hcengineering/platform-rig_v0.7.17",
       "date": "Sun, 12 Oct 2025 03:31:47 GMT",
       "comments": {
         "patch": [
@@ -42,7 +42,7 @@
     },
     {
       "version": "0.7.16",
-      "tag": "@intabiafusion/platform-rig_v0.7.16",
+      "tag": "@hcengineering/platform-rig_v0.7.16",
       "date": "Sun, 12 Oct 2025 02:49:17 GMT",
       "comments": {
         "patch": [
@@ -54,7 +54,7 @@
     },
     {
       "version": "0.7.15",
-      "tag": "@intabiafusion/platform-rig_v0.7.15",
+      "tag": "@hcengineering/platform-rig_v0.7.15",
       "date": "Sat, 11 Oct 2025 19:18:56 GMT",
       "comments": {
         "patch": [
@@ -66,7 +66,7 @@
     },
     {
       "version": "0.7.14",
-      "tag": "@intabiafusion/platform-rig_v0.7.14",
+      "tag": "@hcengineering/platform-rig_v0.7.14",
       "date": "Sat, 11 Oct 2025 18:10:18 GMT",
       "comments": {
         "patch": [
@@ -78,7 +78,7 @@
     },
     {
       "version": "0.7.13",
-      "tag": "@intabiafusion/platform-rig_v0.7.13",
+      "tag": "@hcengineering/platform-rig_v0.7.13",
       "date": "Sat, 11 Oct 2025 17:58:53 GMT",
       "comments": {
         "patch": [
@@ -90,7 +90,7 @@
     },
     {
       "version": "0.7.12",
-      "tag": "@intabiafusion/platform-rig_v0.7.12",
+      "tag": "@hcengineering/platform-rig_v0.7.12",
       "date": "Fri, 10 Oct 2025 14:20:06 GMT",
       "comments": {
         "patch": [
@@ -102,7 +102,7 @@
     },
     {
       "version": "0.7.11",
-      "tag": "@intabiafusion/platform-rig_v0.7.11",
+      "tag": "@hcengineering/platform-rig_v0.7.11",
       "date": "Fri, 10 Oct 2025 12:32:59 GMT",
       "comments": {
         "patch": [

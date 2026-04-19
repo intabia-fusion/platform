@@ -13,16 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { AccessLevel, Calendar, generateEventId } from '@intabiafusion/calendar'
-  import contact, { getCurrentEmployee } from '@intabiafusion/contact'
-  import { Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { closePopup, showPopup } from '@intabiafusion/ui'
-  import { deleteObjects } from '@intabiafusion/view-resources'
-  import { TimeEvents, ToDo, WorkSlot } from '@intabiafusion/time'
+  import calendar, { AccessLevel, Calendar, generateEventId } from '@hcengineering/calendar'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
+  import { Ref, getCurrentAccount } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { closePopup, showPopup } from '@hcengineering/ui'
+  import { deleteObjects } from '@hcengineering/view-resources'
+  import { TimeEvents, ToDo, WorkSlot } from '@hcengineering/time'
   import time from '../plugin'
   import Workslots from './Workslots.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
   import { findPrimaryCalendar } from '../utils'
 
   export let todo: ToDo

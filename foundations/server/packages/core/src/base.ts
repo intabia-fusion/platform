@@ -33,7 +33,7 @@ import {
   type SessionData,
   type Timestamp,
   type Tx
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import type { Middleware, PipelineContext, TxMiddlewareResult } from './types'
 
 export const emptyFindResult = Promise.resolve(toFindResult([]))

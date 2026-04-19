@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { translateCB } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/theme'
+  import { translateCB } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
   import { ticker } from '..'
   import ui from '../plugin'
   import { tooltip } from '../tooltips'

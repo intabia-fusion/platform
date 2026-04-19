@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { Doc } from '@intabiafusion/core'
+import type { Doc } from '@hcengineering/core'
 
 /**
  * Checks if a document should be skipped based on its state.

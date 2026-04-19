@@ -1,4 +1,4 @@
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 import docx4js from 'docx4js'
 import { type AnyNode } from 'domhandler'
 

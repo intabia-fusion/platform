@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { MeasureContext, newMetrics } from '@intabiafusion/core'
-import { closeQueue, initQueue } from '@intabiafusion/mail-common'
-import { setMetadata } from '@intabiafusion/platform'
-import { initStatisticsContext } from '@intabiafusion/server-core'
-import serverToken from '@intabiafusion/server-token'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { MeasureContext, newMetrics } from '@hcengineering/core'
+import { closeQueue, initQueue } from '@hcengineering/mail-common'
+import { setMetadata } from '@hcengineering/platform'
+import { initStatisticsContext } from '@hcengineering/server-core'
+import serverToken from '@hcengineering/server-token'
 import cors from 'cors'
 import express, { NextFunction, Request, Response } from 'express'
 import { join } from 'path'

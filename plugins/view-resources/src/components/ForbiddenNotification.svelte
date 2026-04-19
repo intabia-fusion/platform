@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Notification, NotificationToast } from '@intabiafusion/ui'
+  import { Notification, NotificationToast } from '@hcengineering/ui'
 
   export let onRemove: () => void
   export let notification: Notification

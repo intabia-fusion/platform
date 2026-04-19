@@ -3,10 +3,10 @@
 -->
 
 <script lang="ts">
-  import { navigate } from '@intabiafusion/ui'
-  import questions from '@intabiafusion/questions'
-  import { getQuestionClasses, QuestionsCollectionEditor } from '@intabiafusion/questions-resources'
-  import { type Training } from '@intabiafusion/training'
+  import { navigate } from '@hcengineering/ui'
+  import questions from '@hcengineering/questions'
+  import { getQuestionClasses, QuestionsCollectionEditor } from '@hcengineering/questions-resources'
+  import { type Training } from '@hcengineering/training'
   import { trainingRoute, TrainingRouteTab } from '../routing/routes/trainingRoute'
   import { canViewTrainingQuestions } from '../utils'
   import TrainingPassingScoreSlider from './TrainingPassingScoreSlider.svelte'

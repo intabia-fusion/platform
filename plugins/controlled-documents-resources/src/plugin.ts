@@ -17,11 +17,11 @@ import documents, {
   type DocumentState,
   type DocumentSpace,
   documentsId
-} from '@intabiafusion/controlled-documents'
-import { type Client, type Doc, type Ref, type Space } from '@intabiafusion/core'
-import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
-import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
-import type { KeyFilter, SortFunc, ViewActionAvailabilityFunction } from '@intabiafusion/view'
+} from '@hcengineering/controlled-documents'
+import { type Client, type Doc, type Ref, type Space } from '@hcengineering/core'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
+import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
+import type { KeyFilter, SortFunc, ViewActionAvailabilityFunction } from '@hcengineering/view'
 
 export default mergeIds(documentsId, documents, {
   component: {

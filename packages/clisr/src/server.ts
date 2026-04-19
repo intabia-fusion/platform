@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { type MeasureContext } from '@intabiafusion/measurements'
-import { type ReqId, RPCHandler, type Response, type Request } from '@intabiafusion/rpc'
+import { Analytics } from '@hcengineering/analytics'
+import { type MeasureContext } from '@hcengineering/measurements'
+import { type ReqId, RPCHandler, type Response, type Request } from '@hcengineering/rpc'
 
 import 'bufferutil'
 import cors from 'cors'
@@ -53,7 +53,7 @@ import {
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers'
 import { sendFrame as sharedSendFrame } from './frame-utils'
-import { unknownError } from '@intabiafusion/platform'
+import { unknownError } from '@hcengineering/platform'
 
 // Lazy-import snappy at runtime to avoid initializing native handles during test collection
 let _snappyCompress: ((input: any) => Promise<any>) | undefined

@@ -14,11 +14,11 @@
 //
 
 import { UAParser } from 'ua-parser-js'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
-import { desktopPlatform, getCurrentLocation } from '@intabiafusion/ui'
-import { generateId } from '@intabiafusion/core'
-import { Analytics } from '@intabiafusion/analytics'
+import { getMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
+import { desktopPlatform, getCurrentLocation } from '@hcengineering/ui'
+import { generateId } from '@hcengineering/core'
+import { Analytics } from '@hcengineering/analytics'
 
 let _isSignUp: boolean = false
 export const signupStore = {

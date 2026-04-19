@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Category } from '@intabiafusion/inventory'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { Category } from '@hcengineering/inventory'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   export let value: Category
   export let inline: boolean = false

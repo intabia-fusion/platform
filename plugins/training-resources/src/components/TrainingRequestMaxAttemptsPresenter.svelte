@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-  import type { TrainingRequest } from '@intabiafusion/training'
+  import type { TrainingRequest } from '@hcengineering/training'
   export let value: TrainingRequest['maxAttempts']
 </script>
 

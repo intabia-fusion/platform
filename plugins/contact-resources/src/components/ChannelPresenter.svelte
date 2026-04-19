@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@intabiafusion/contact'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { ButtonSize, CircleButton, tooltip } from '@intabiafusion/ui'
+  import { Channel } from '@hcengineering/contact'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { ButtonSize, CircleButton, tooltip } from '@hcengineering/ui'
   import { channelProviders } from '../utils'
 
   export let value: Channel

@@ -20,7 +20,7 @@ import {
   type Hierarchy,
   type ModelDb,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 /**
  * @public

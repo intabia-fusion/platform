@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@intabiafusion/core'
-  import { getFileUrl } from '@intabiafusion/presentation'
-  import { EmbeddedPDF } from '@intabiafusion/ui'
+  import { type Blob, type Ref } from '@hcengineering/core'
+  import { getFileUrl } from '@hcengineering/presentation'
+  import { EmbeddedPDF } from '@hcengineering/ui'
 
   export let value: Ref<Blob>
   export let name: string

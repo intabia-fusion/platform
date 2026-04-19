@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import {
   AttachmentPatchEvent,
   CreateMessageEvent,
@@ -21,7 +21,7 @@ import {
   NotificationEventType,
   PeerEventType, RemovePatchEvent,
   SessionData, UpdatePatchEvent
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   AccountUuid,
   CardID,
@@ -30,7 +30,7 @@ import {
   MessageID,
   MessageType,
   SocialID
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import { PeerMiddleware } from '../../middleware/peer'
 import { Enriched, Middleware, MiddlewareContext } from '../../types'
 import { LowLevelClient } from '../../client'

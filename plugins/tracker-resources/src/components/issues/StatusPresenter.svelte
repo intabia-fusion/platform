@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { ColorDefinition } from '@intabiafusion/ui'
-  import { IssueStatus, Project } from '@intabiafusion/tracker'
+  import { Ref } from '@hcengineering/core'
+  import { ColorDefinition } from '@hcengineering/ui'
+  import { IssueStatus, Project } from '@hcengineering/tracker'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
-  import { ProjectType, TaskType } from '@intabiafusion/task'
+  import { ProjectType, TaskType } from '@hcengineering/task'
 
   export let value: IssueStatus | undefined
   export let space: Ref<Project> | undefined = undefined

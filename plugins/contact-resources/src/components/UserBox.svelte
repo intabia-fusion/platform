@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, getName } from '@intabiafusion/contact'
-  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
-  import { Asset, IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
-  import presentation, { ObjectCreate, getClient } from '@intabiafusion/presentation'
+  import contact, { Contact, getName } from '@hcengineering/contact'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import { Asset, IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation, { ObjectCreate, getClient } from '@hcengineering/presentation'
   import {
     ActionIcon,
     AnySvelteComponent,
@@ -32,9 +32,9 @@
     getFocusManager,
     showPopup,
     tooltip
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { openDoc } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import UserInfo from './UserInfo.svelte'
   import UsersPopup from './UsersPopup.svelte'

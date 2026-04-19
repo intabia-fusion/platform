@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type AttachedData, type Data, type Ref, type TxOperations, generateId } from '@intabiafusion/core'
-import { type Location } from '@intabiafusion/ui'
+import { type AttachedData, type Data, type Ref, type TxOperations, generateId } from '@hcengineering/core'
+import { type Location } from '@hcengineering/ui'
 
 import drive, { driveId } from './plugin'
 import type { Drive, File, FileVersion, Folder } from './types'

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Member } from '@intabiafusion/contact'
-  import type { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { Table, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import { Member } from '@hcengineering/contact'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import contact from '../plugin'
   import UsersPopup from './UsersPopup.svelte'
   import IconMembersOutline from './icons/MembersOutline.svelte'

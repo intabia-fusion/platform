@@ -10,15 +10,15 @@ import core, {
   Ref,
   TxOperations,
   withContext
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
   GithubProject,
   GithubPullRequestReviewState,
   GithubReview
-} from '@intabiafusion/github'
-import { LiveQuery } from '@intabiafusion/query'
+} from '@hcengineering/github'
+import { LiveQuery } from '@hcengineering/query'
 import {
   ContainerFocus,
   DocSyncManager,
@@ -31,7 +31,7 @@ import {
 import { PullRequestExternalData, Review as ReviewExternalData, reviewDetails, toReviewState } from './githubTypes'
 import { collectUpdate, deleteObjects, ensureGraphQLOctokit, errorToObj, isGHWriteAllowed, syncChilds } from './utils'
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import { PullRequestReviewEvent, PullRequestReviewSubmittedEvent } from '@octokit/webhooks-types'
 import config from '../config'
 

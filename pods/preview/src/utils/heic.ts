@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 import { readFile } from 'fs/promises'
 import decodeHeic from 'heic-decode'
 import sharp from 'sharp'

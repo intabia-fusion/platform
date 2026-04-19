@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { ButtonIcon, closeTooltip, IconOptions, showPopup } from '@intabiafusion/ui'
-  import { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
+  import { getClient } from '@hcengineering/presentation'
+  import { ButtonIcon, closeTooltip, IconOptions, showPopup } from '@hcengineering/ui'
+  import { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { focusStore } from '../selection'
   import { setViewOptions } from '../viewOptions'
   import ViewOptionsEditor from './ViewOptions.svelte'
-  import core, { Class, Doc, Hierarchy, Ref, SortingOrder, Type } from '@intabiafusion/core'
+  import core, { Class, Doc, Hierarchy, Ref, SortingOrder, Type } from '@hcengineering/core'
 
   export let viewlet: Viewlet | undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

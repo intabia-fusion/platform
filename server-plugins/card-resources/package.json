@@ -1,6 +1,6 @@
 {
-  "name": "@intabiafusion/server-card-resources",
-  "version": "1.0.0",
+  "name": "@hcengineering/server-card-resources",
+  "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -22,7 +22,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -37,20 +37,20 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@intabiafusion/view": "workspace:^1.0.0",
-    "@intabiafusion/notification": "workspace:^1.0.0",
-    "@intabiafusion/server-notification-resources": "workspace:^1.0.0",
-    "@intabiafusion/server-activity": "workspace:^1.0.0",
-    "@intabiafusion/setting": "workspace:^1.0.0",
-    "@intabiafusion/card": "workspace:^1.0.0",
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/server-core": "workspace:^1.0.0",
-    "@intabiafusion/workbench": "workspace:^1.0.0",
-    "@intabiafusion/communication-types": "workspace:^1.0.0",
-    "@intabiafusion/communication-sdk-types": "workspace:^1.0.0",
-    "@intabiafusion/communication": "workspace:^1.0.0",
-    "@intabiafusion/server-contact": "workspace:^1.0.0",
-    "@intabiafusion/contact": "workspace:^1.0.0"
+    "@hcengineering/view": "workspace:^0.7.0",
+    "@hcengineering/notification": "workspace:^0.7.0",
+    "@hcengineering/server-notification-resources": "workspace:^0.7.0",
+    "@hcengineering/server-activity": "workspace:^0.7.0",
+    "@hcengineering/setting": "workspace:^0.7.0",
+    "@hcengineering/card": "workspace:^0.7.0",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/server-core": "workspace:^0.7.18",
+    "@hcengineering/workbench": "workspace:^0.7.0",
+    "@hcengineering/communication-types": "workspace:^0.7.12",
+    "@hcengineering/communication-sdk-types": "workspace:^0.7.12",
+    "@hcengineering/communication": "workspace:^0.7.0",
+    "@hcengineering/server-contact": "workspace:^0.7.0",
+    "@hcengineering/contact": "workspace:^0.7.0"
   }
 }

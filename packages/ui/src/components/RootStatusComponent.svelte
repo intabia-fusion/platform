@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'
   import { IconClose } from '..'
   import Button from './Button.svelte'

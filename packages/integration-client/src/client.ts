@@ -20,8 +20,8 @@ import {
   IntegrationKey,
   IntegrationSecret,
   type AccountClient
-} from '@intabiafusion/account-client'
-import { IntegrationKind, PersonId, WorkspaceUuid } from '@intabiafusion/core'
+} from '@hcengineering/account-client'
+import { IntegrationKind, PersonId, WorkspaceUuid } from '@hcengineering/core'
 import { v4 as uuid } from 'uuid'
 
 import { IntegrationClient, IntegrationEventData, IntegrationUpdatedData, IntegrationErrorData } from './types'

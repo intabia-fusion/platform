@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { MasterTag } from '@intabiafusion/card'
-  import { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { IconWithEmoji, getClient } from '@intabiafusion/presentation'
-  import { Action, ButtonIcon, NavItem, getCurrentLocation, navigate } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { MasterTag } from '@hcengineering/card'
+  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { IconWithEmoji, getClient } from '@hcengineering/presentation'
+  import { Action, ButtonIcon, NavItem, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import card from '../../plugin'
 
   export let space: Ref<Space> | undefined

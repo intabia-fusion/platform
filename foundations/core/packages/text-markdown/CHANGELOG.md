@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/text-markdown
+# Change Log - @hcengineering/text-markdown
 
 This log was last generated on Wed, 19 Nov 2025 07:37:47 GMT and should not be manually modified.
 

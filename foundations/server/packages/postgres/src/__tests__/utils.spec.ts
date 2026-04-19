@@ -1,4 +1,4 @@
-import { type DocumentUpdate, type Ref, type Space, type WorkspaceUuid } from '@intabiafusion/core'
+import { type DocumentUpdate, type Ref, type Space, type WorkspaceUuid } from '@hcengineering/core'
 import {
   convertArrayParams,
   convertDoc,

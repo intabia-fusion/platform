@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { DocumentUpdate, Ref } from '@intabiafusion/core'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { Opinion } from '@intabiafusion/recruit'
-  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
-  import { EditBox } from '@intabiafusion/ui'
+  import type { DocumentUpdate, Ref } from '@hcengineering/core'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { Opinion } from '@hcengineering/recruit'
+  import { StyledTextArea } from '@hcengineering/text-editor-resources'
+  import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../../plugin'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Attrs, MarkupNode } from '@intabiafusion/text-core'
+import { Attrs, MarkupNode } from '@hcengineering/text-core'
 
 export function nodeContent (node: MarkupNode): MarkupNode[] {
   return node?.content ?? []

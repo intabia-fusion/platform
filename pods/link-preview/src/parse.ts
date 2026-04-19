@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import * as cheerio from 'cheerio'
 import { imageSize } from 'image-size'
 import oembedProviders from 'oembed-providers'

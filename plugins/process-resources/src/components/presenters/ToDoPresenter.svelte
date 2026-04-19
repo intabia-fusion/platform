@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process, ProcessToDo, Step, parseContext } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  import core from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process, ProcessToDo, Step, parseContext } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import { getContext } from '../../utils'
   import ContextValuePresenter from '../attributeEditors/ContextValuePresenter.svelte'

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import attachment, { Attachment, AttachmentsEvents } from '@intabiafusion/attachment'
-  import contact from '@intabiafusion/contact'
-  import core, { BlobMetadata, Doc, PersonId, Ref, generateId, type Blob, type Space } from '@intabiafusion/core'
-  import { IntlString, getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
-  import { FileOrBlob, KeyedAttribute, createQuery, getClient, uploadFile } from '@intabiafusion/presentation'
-  import textEditor, { type RefAction, type TextEditorHandler } from '@intabiafusion/text-editor'
+  import { Analytics } from '@hcengineering/analytics'
+  import attachment, { Attachment, AttachmentsEvents } from '@hcengineering/attachment'
+  import contact from '@hcengineering/contact'
+  import core, { BlobMetadata, Doc, PersonId, Ref, generateId, type Blob, type Space } from '@hcengineering/core'
+  import { IntlString, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import { FileOrBlob, KeyedAttribute, createQuery, getClient, uploadFile } from '@hcengineering/presentation'
+  import textEditor, { type RefAction, type TextEditorHandler } from '@hcengineering/text-editor'
   import {
     AttachIcon,
     CollaborativeAttributeBox,
@@ -27,15 +27,15 @@
     addTableHandler,
     defaultRefActions,
     getModelRefActions
-  } from '@intabiafusion/text-editor-resources'
-  import { AnySvelteComponent, getEventPositionElement, getPopupPositionElement } from '@intabiafusion/ui'
+  } from '@hcengineering/text-editor-resources'
+  import { AnySvelteComponent, getEventPositionElement, getPopupPositionElement } from '@hcengineering/ui'
   import {
     getUploadHandlers,
     uploadFiles,
     UploadHandlerDefinition,
     type FileUploadCallbackParams
-  } from '@intabiafusion/uploader'
-  import { getCollaborationUser, getObjectId } from '@intabiafusion/view-resources'
+  } from '@hcengineering/uploader'
+  import { getCollaborationUser, getObjectId } from '@hcengineering/view-resources'
 
   import AttachmentsGrid from './AttachmentsGrid.svelte'
 

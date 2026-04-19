@@ -1,5 +1,5 @@
-import core, { MeasureMetricsContext, toFindResult } from '@intabiafusion/core'
-import type { SessionFindAll } from '@intabiafusion/server-core'
+import core, { MeasureMetricsContext, toFindResult } from '@hcengineering/core'
+import type { SessionFindAll } from '@hcengineering/server-core'
 import { QueryJoiner } from '../queryJoin'
 
 describe('test query joiner', () => {

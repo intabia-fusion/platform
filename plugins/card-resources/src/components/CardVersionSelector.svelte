@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Card, cardId } from '@intabiafusion/card'
-  import core, { Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, DropdownLabels, DropdownTextItem, getCurrentLocation, navigate, showPopup } from '@intabiafusion/ui'
+  import { Card, cardId } from '@hcengineering/card'
+  import core, { Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, DropdownLabels, DropdownTextItem, getCurrentLocation, navigate, showPopup } from '@hcengineering/ui'
   import card from '../plugin'
   import NewVersionPopup from './NewVersionPopup.svelte'
 

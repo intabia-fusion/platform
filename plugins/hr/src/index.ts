@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import type { Contact, Employee } from '@intabiafusion/contact'
-import type { Arr, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Type } from '@intabiafusion/core'
-import { NotificationType } from '@intabiafusion/notification'
-import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { Viewlet } from '@intabiafusion/view'
+import type { Contact, Employee } from '@hcengineering/contact'
+import type { Arr, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Type } from '@hcengineering/core'
+import { NotificationType } from '@hcengineering/notification'
+import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { Viewlet } from '@hcengineering/view'
 
 /**
  * @public

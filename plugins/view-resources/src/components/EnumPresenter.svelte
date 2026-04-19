@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { EnumOf } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { DropdownLabels, DropdownTextItem, tooltip } from '@intabiafusion/ui'
+  import core, { EnumOf } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { DropdownLabels, DropdownTextItem, tooltip } from '@hcengineering/ui'
   import StringPresenter from './StringPresenter.svelte'
 
   export let value: string

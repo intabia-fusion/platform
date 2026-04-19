@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import client from '@intabiafusion/client'
-import { WorkspaceUuid, type Client } from '@intabiafusion/core'
-import { setMetadata } from '@intabiafusion/platform'
-import { createClient, getTransactorEndpoint } from '@intabiafusion/server-client'
+import client from '@hcengineering/client'
+import { WorkspaceUuid, type Client } from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import { getWorkspaceToken } from './utils'
 
 const endpoints = new Map<WorkspaceUuid, string>()

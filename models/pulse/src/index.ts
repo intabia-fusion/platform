@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import type { Person } from '@intabiafusion/contact'
-import { DOMAIN_TRANSIENT, type Class, type Doc, type PersonId, type Ref, type Timestamp } from '@intabiafusion/core'
-import { Model, type Builder } from '@intabiafusion/model'
-import core, { TDoc } from '@intabiafusion/model-core'
-import type { IntlString } from '@intabiafusion/platform'
-import type { DocumentPresence, TypingIndicator } from '@intabiafusion/pulse'
+import type { Person } from '@hcengineering/contact'
+import { DOMAIN_TRANSIENT, type Class, type Doc, type PersonId, type Ref, type Timestamp } from '@hcengineering/core'
+import { Model, type Builder } from '@hcengineering/model'
+import core, { TDoc } from '@hcengineering/model-core'
+import type { IntlString } from '@hcengineering/platform'
+import type { DocumentPresence, TypingIndicator } from '@hcengineering/pulse'
 import pulse from './plugin'
 
-export { pulseId } from '@intabiafusion/pulse'
+export { pulseId } from '@hcengineering/pulse'
 
 @Model(pulse.class.DocumentPresence, core.class.Doc, DOMAIN_TRANSIENT)
 export class TDocumentPresence extends TDoc implements DocumentPresence {

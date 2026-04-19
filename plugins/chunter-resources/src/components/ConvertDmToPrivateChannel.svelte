@@ -15,11 +15,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { getClient, Card } from '@intabiafusion/presentation'
-  import { DirectMessage } from '@intabiafusion/chunter'
-  import workbench from '@intabiafusion/workbench'
-  import { getResource } from '@intabiafusion/platform'
-  import { EditBox } from '@intabiafusion/ui'
+  import { getClient, Card } from '@hcengineering/presentation'
+  import { DirectMessage } from '@hcengineering/chunter'
+  import workbench from '@hcengineering/workbench'
+  import { getResource } from '@hcengineering/platform'
+  import { EditBox } from '@hcengineering/ui'
 
   import chunter from '../plugin'
 

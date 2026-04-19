@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PluginConfiguration, systemAccountUuid } from '@intabiafusion/core'
+  import { PluginConfiguration, systemAccountUuid } from '@hcengineering/core'
   import {
     createQuery,
     getClient,
@@ -21,9 +21,9 @@
     hasResource,
     isDisabled,
     isAdminUser
-  } from '@intabiafusion/presentation'
-  import ratingPlugin, { getRaiting, type PersonRating } from '@intabiafusion/rating'
-  import { Breadcrumb, Button, Header, Icon, IconInfo, Label, Scroller } from '@intabiafusion/ui'
+  } from '@hcengineering/presentation'
+  import ratingPlugin, { getRaiting, type PersonRating } from '@hcengineering/rating'
+  import { Breadcrumb, Button, Header, Icon, IconInfo, Label, Scroller } from '@hcengineering/ui'
   import setting from '../plugin'
 
   const client = getClient()

@@ -16,8 +16,8 @@
   import DocumentIcon from './DocumentIcon.svelte'
   import document from '../plugin'
 
-  import type { IconProps } from '@intabiafusion/view'
-  import type { Asset } from '@intabiafusion/platform'
+  import type { IconProps } from '@hcengineering/view'
+  import type { Asset } from '@hcengineering/platform'
 
   export let icon: Asset
   export let color: number | number[] | undefined

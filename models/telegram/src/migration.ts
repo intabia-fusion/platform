@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Space } from '@intabiafusion/core'
+import core, { type Ref, type Space } from '@hcengineering/core'
 import {
   migrateSpace,
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
-import { telegramId } from '@intabiafusion/telegram'
+} from '@hcengineering/model'
+import { telegramId } from '@hcengineering/telegram'
 import { DOMAIN_TELEGRAM } from '.'
 
 export const telegramOperation: MigrateOperation = {

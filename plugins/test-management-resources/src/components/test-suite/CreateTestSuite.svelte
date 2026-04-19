@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Data, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Card, SpaceSelector, getClient } from '@intabiafusion/presentation'
-  import { StyledTextArea } from '@intabiafusion/text-editor-resources'
-  import { TestSuite, TestProject } from '@intabiafusion/test-management'
-  import { EditBox } from '@intabiafusion/ui'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { Data, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { Card, SpaceSelector, getClient } from '@hcengineering/presentation'
+  import { StyledTextArea } from '@hcengineering/text-editor-resources'
+  import { TestSuite, TestProject } from '@hcengineering/test-management'
+  import { EditBox } from '@hcengineering/ui'
+  import { ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import testManagement from '../../plugin'
   import ProjectPresenter from '../project/ProjectSpacePresenter.svelte'

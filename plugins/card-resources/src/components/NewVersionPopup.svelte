@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { cardId, Card as CardType } from '@intabiafusion/card'
-  import core from '@intabiafusion/core'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { getCurrentLocation, Label, navigate, Toggle } from '@intabiafusion/ui'
+  import { cardId, Card as CardType } from '@hcengineering/card'
+  import core from '@hcengineering/core'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { getCurrentLocation, Label, navigate, Toggle } from '@hcengineering/ui'
   import plugin from '../plugin'
   import { createNewVersion } from '../utils'
 

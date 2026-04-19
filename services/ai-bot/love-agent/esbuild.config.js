@@ -49,7 +49,7 @@ await esbuild.build({
   },
 }).catch(() => process.exit(1));
 
-// Post-process: rewrite @intabiafusion/audio-dsp imports
+// Post-process: rewrite @hcengineering/audio-dsp imports
 const bundleDir = resolve(__dirname, 'bundle');
 const jsFiles = await getJsFiles(bundleDir);
 
@@ -57,7 +57,7 @@ for (const file of jsFiles) {
   if (file.endsWith('audio-dsp.js')) continue;
 
   let content = await readFile(file, 'utf-8');
-  if (!content.includes('@intabiafusion/audio-dsp')) continue;
+  if (!content.includes('@hcengineering/audio-dsp')) continue;
 
   // Calculate relative path from this file to bundle/audio-dsp.js
   const fileDir = dirname(file);
@@ -66,7 +66,7 @@ for (const file of jsFiles) {
   const prefix = depth > 0 ? '../'.repeat(depth) : './';
 
   content = content.replace(
-    /from\s+["']@intabiafusion\/audio-dsp(\/[^"']*)?["']/g,
+    /from\s+["']@hcengineering\/audio-dsp(\/[^"']*)?["']/g,
     `from "${prefix}audio-dsp.js"`
   );
 

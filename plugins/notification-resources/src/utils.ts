@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import activity, { type ActivityMessage, type DocUpdateMessage } from '@intabiafusion/activity'
-import { isActivityMessageClass, messageInFocus, sortActivityMessages } from '@intabiafusion/activity-resources'
-import { Analytics } from '@intabiafusion/analytics'
-import chunter, { type ThreadMessage } from '@intabiafusion/chunter'
+import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
+import { isActivityMessageClass, messageInFocus, sortActivityMessages } from '@hcengineering/activity-resources'
+import { Analytics } from '@hcengineering/analytics'
+import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   type Class,
   type Doc,
@@ -27,7 +27,7 @@ import core, {
   type WithLookup,
   getClassCollaborators,
   generateId
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import notification, {
   type ActivityInboxNotification,
   type DisplayInboxNotification,
@@ -40,9 +40,9 @@ import notification, {
   type NotificationType,
   type NotificationTypeSetting,
   type ReactionInboxNotification
-} from '@intabiafusion/notification'
-import { getMetadata, getResource } from '@intabiafusion/platform'
-import { createQuery, getClient, MessageBox } from '@intabiafusion/presentation'
+} from '@hcengineering/notification'
+import { getMetadata, getResource } from '@hcengineering/platform'
+import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
 import {
   getCurrentLocation,
   getEventPositionElement,
@@ -53,10 +53,10 @@ import {
   parseLocation,
   type ResolvedLocation,
   showPopup
-} from '@intabiafusion/ui'
-import view, { decodeObjectURI, encodeObjectURI, type LinkIdProvider } from '@intabiafusion/view'
-import { getObjectLinkId, parseLinkId } from '@intabiafusion/view-resources'
-import type { LocationData } from '@intabiafusion/workbench'
+} from '@hcengineering/ui'
+import view, { decodeObjectURI, encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
+import { getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
+import type { LocationData } from '@hcengineering/workbench'
 import { get, writable } from 'svelte/store'
 
 import { InboxNotificationsClientImpl } from './inboxNotificationsClient'

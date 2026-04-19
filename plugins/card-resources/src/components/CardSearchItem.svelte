@@ -14,8 +14,8 @@
 //
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { WithLookup } from '@intabiafusion/core'
+  import { Card } from '@hcengineering/card'
+  import { WithLookup } from '@hcengineering/core'
   import CardIcon from './CardIcon.svelte'
 
   export let value: WithLookup<Card>

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, Metadata } from '@intabiafusion/platform'
+  import { Asset, Metadata } from '@hcengineering/platform'
   import {
     ButtonIcon,
     fromCodePoint,
@@ -23,8 +23,8 @@
     themeStore,
     Label,
     Component
-  } from '@intabiafusion/ui'
-  import emojiPlugin from '@intabiafusion/emoji'
+  } from '@hcengineering/ui'
+  import emojiPlugin from '@hcengineering/emoji'
   import { createEventDispatcher } from 'svelte'
   import { iconsLibrary } from '../icons'
   import view from '../plugin'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { parseMessagesDoc, parseTranslatedMessagesDoc } from '@intabiafusion/communication-shared'
+import { parseMessagesDoc, parseTranslatedMessagesDoc } from '@hcengineering/communication-shared'
 import {
   BlobID,
   type CardID,
@@ -23,8 +23,8 @@ import {
   type Message,
   MessagesDoc,
   type Notification, TranslatedMessage, TranslatedMessagesDoc
-} from '@intabiafusion/communication-types'
-import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
+} from '@hcengineering/communication-types'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID, lang: string): Promise<TranslatedMessage[]> {
   try {

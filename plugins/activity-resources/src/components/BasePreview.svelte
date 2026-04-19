@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { ComponentExtensions, getClient, LiteMessageViewer } from '@intabiafusion/presentation'
-  import { Person } from '@intabiafusion/contact'
-  import { Avatar, getPersonByPersonIdCb, SystemAvatar } from '@intabiafusion/contact-resources'
-  import core, { PersonId, Doc, Timestamp } from '@intabiafusion/core'
-  import { Icon, Label, resizeObserver, TimeSince, tooltip } from '@intabiafusion/ui'
-  import { Asset, getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
-  import activity, { ActivityMessage, ActivityMessagePreviewType } from '@intabiafusion/activity'
-  import { classIcon, DocNavLink } from '@intabiafusion/view-resources'
-  import { markupToText } from '@intabiafusion/text'
+  import { ComponentExtensions, getClient, LiteMessageViewer } from '@hcengineering/presentation'
+  import { Person } from '@hcengineering/contact'
+  import { Avatar, getPersonByPersonIdCb, SystemAvatar } from '@hcengineering/contact-resources'
+  import core, { PersonId, Doc, Timestamp } from '@hcengineering/core'
+  import { Icon, Label, resizeObserver, TimeSince, tooltip } from '@hcengineering/ui'
+  import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import activity, { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import { classIcon, DocNavLink } from '@hcengineering/view-resources'
+  import { markupToText } from '@hcengineering/text'
 
   export let message: ActivityMessage | undefined = undefined
   export let text: string | undefined = undefined

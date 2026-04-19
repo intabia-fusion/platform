@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import { type IntlString, type Resource, mergeIds } from '@intabiafusion/platform'
-import { type PresentationMiddlewareCreator } from '@intabiafusion/presentation/src/pipeline'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import view, { viewId } from '@intabiafusion/view'
+import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
+import { type PresentationMiddlewareCreator } from '@hcengineering/presentation/src/pipeline'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import view, { viewId } from '@hcengineering/view'
 
 export default mergeIds(viewId, view, {
   component: {

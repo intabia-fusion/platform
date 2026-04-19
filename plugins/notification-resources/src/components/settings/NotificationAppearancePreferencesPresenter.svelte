@@ -1,8 +1,8 @@
 <script lang="ts">
-  import core, { Data, Doc, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Grid, Label, Toggle } from '@intabiafusion/ui'
-  import notification, { NotificationAppearancePreference } from '@intabiafusion/notification'
+  import core, { Data, Doc, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Grid, Label, Toggle } from '@hcengineering/ui'
+  import notification, { NotificationAppearancePreference } from '@hcengineering/notification'
 
   import { appearancePreferences } from '../../stores'
 

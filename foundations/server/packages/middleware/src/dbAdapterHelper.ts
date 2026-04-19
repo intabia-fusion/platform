@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { withContext, type MeasureContext } from '@intabiafusion/core'
-import type { Middleware, PipelineContext } from '@intabiafusion/server-core'
-import { BaseMiddleware, DomainIndexHelperImpl } from '@intabiafusion/server-core'
+import { withContext, type MeasureContext } from '@hcengineering/core'
+import type { Middleware, PipelineContext } from '@hcengineering/server-core'
+import { BaseMiddleware, DomainIndexHelperImpl } from '@hcengineering/server-core'
 
 /**
  * @public

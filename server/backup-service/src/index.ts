@@ -18,13 +18,13 @@ import {
   type MeasureContext,
   type WorkspaceIds,
   type WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
-import { setMetadata } from '@intabiafusion/platform'
-import { backupService, doBackupWorkspace } from '@intabiafusion/server-backup'
-import serverClientPlugin from '@intabiafusion/server-client'
-import { type DbConfiguration, type PipelineFactory, type StorageAdapter } from '@intabiafusion/server-core'
-import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken, { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import { backupService, doBackupWorkspace } from '@hcengineering/server-backup'
+import serverClientPlugin from '@hcengineering/server-client'
+import { type DbConfiguration, type PipelineFactory, type StorageAdapter } from '@hcengineering/server-core'
+import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import { config as _config } from './config'
 
 export function startBackup (

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Channel } from '@intabiafusion/contact'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { AnyComponent, Component } from '@intabiafusion/ui'
+  import contact, { Channel } from '@hcengineering/contact'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { AnyComponent, Component } from '@hcengineering/ui'
   import { channelProviders } from '../utils'
-  import { DocUpdateMessage } from '@intabiafusion/activity'
+  import { DocUpdateMessage } from '@hcengineering/activity'
 
   export let _id: Ref<Channel>
   export let _class: Ref<Class<Channel>>

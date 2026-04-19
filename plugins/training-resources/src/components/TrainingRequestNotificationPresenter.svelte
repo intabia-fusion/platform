@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessagePreviewType, DocUpdateMessage } from '@intabiafusion/activity'
-  import { BaseMessagePreview } from '@intabiafusion/activity-resources'
-  import { Action } from '@intabiafusion/ui'
-  import training from '@intabiafusion/training'
+  import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
+  import { BaseMessagePreview } from '@hcengineering/activity-resources'
+  import { Action } from '@hcengineering/ui'
+  import training from '@hcengineering/training'
 
   export let message: DocUpdateMessage
   export let actions: Action[] = []

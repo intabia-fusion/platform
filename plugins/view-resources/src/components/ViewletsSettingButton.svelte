@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { DocumentQuery, WithLookup } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ButtonIcon, showPopup, closeTooltip } from '@intabiafusion/ui'
-  import { ViewOptions, ViewOptionsModel, Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import core, { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { ViewOptions, ViewOptionsModel, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { getDefaults, getViewOptions, viewOptionStore } from '../viewOptions'

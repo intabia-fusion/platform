@@ -34,11 +34,11 @@ import core, {
   type SessionData,
   type AccountUuid,
   matchQuery
-} from '@intabiafusion/core'
-import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
-import { type Middleware, type TxMiddlewareResult, type PipelineContext } from '@intabiafusion/server-core'
-import contact from '@intabiafusion/contact'
-import { BaseMiddleware } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { type Middleware, type TxMiddlewareResult, type PipelineContext } from '@hcengineering/server-core'
+import contact from '@hcengineering/contact'
+import { BaseMiddleware } from '@hcengineering/server-core'
 
 /**
  * @public

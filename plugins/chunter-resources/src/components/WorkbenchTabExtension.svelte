@@ -13,22 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WorkbenchTab } from '@intabiafusion/workbench'
+  import { WorkbenchTab } from '@hcengineering/workbench'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
     isActivityNotification,
     isMentionNotification,
     NotifyMarker
-  } from '@intabiafusion/notification-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import { InboxNotification } from '@intabiafusion/notification'
+  } from '@hcengineering/notification-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { InboxNotification } from '@hcengineering/notification'
   import { onDestroy } from 'svelte'
-  import { concatLink, Doc, Ref } from '@intabiafusion/core'
-  import view, { decodeObjectURI } from '@intabiafusion/view'
-  import { chunterId } from '@intabiafusion/chunter'
-  import { parseLinkId } from '@intabiafusion/view-resources'
-  import { parseLocation } from '@intabiafusion/ui'
+  import { concatLink, Doc, Ref } from '@hcengineering/core'
+  import view, { decodeObjectURI } from '@hcengineering/view'
+  import { chunterId } from '@hcengineering/chunter'
+  import { parseLinkId } from '@hcengineering/view-resources'
+  import { parseLocation } from '@hcengineering/ui'
 
   import chunter from '../plugin'
 

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import inventory, { Category } from '@intabiafusion/inventory'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { Ref } from '@hcengineering/core'
+  import inventory, { Category } from '@hcengineering/inventory'
+  import { createQuery } from '@hcengineering/presentation'
   import CategoryPresenter from './CategoryPresenter.svelte'
 
   export let value: Ref<Category>

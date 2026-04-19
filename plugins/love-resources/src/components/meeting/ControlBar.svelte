@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Room } from '@intabiafusion/love'
-  import { IconMaximize, ModernButton, Popup, showPopup, TooltipInstance } from '@intabiafusion/ui'
+  import { Room } from '@hcengineering/love'
+  import { IconMaximize, ModernButton, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
 
   import love from '../../plugin'
   import { myInfo, myOffice } from '../../stores'

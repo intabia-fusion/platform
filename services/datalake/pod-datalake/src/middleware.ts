@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid } from '@intabiafusion/core'
-import { extractToken } from '@intabiafusion/server-client'
-import { Token } from '@intabiafusion/server-token'
+import { systemAccountUuid } from '@hcengineering/core'
+import { extractToken } from '@hcengineering/server-client'
+import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, RequestHandler } from 'express'
 import { validate } from 'uuid'
 import { ApiError } from './error'

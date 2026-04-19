@@ -24,12 +24,12 @@ import type {
   AccountUuid,
   Domain,
   IntegrationKind
-} from '@intabiafusion/core'
-import type { Metadata, Plugin } from '@intabiafusion/platform'
-import { Asset, IntlString, Resource, plugin } from '@intabiafusion/platform'
-import { TemplateField, TemplateFieldCategory } from '@intabiafusion/templates'
-import { Action, AnyComponent } from '@intabiafusion/ui'
-import { type Integration as AccountIntegration } from '@intabiafusion/account-client'
+} from '@hcengineering/core'
+import type { Metadata, Plugin } from '@hcengineering/platform'
+import { Asset, IntlString, Resource, plugin } from '@hcengineering/platform'
+import { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
+import { Action, AnyComponent } from '@hcengineering/ui'
+import { type Integration as AccountIntegration } from '@hcengineering/account-client'
 
 import { SpaceTypeCreator, SpaceTypeEditor } from './spaceTypeEditor'
 

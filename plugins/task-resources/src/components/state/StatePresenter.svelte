@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import { IconWithEmoji, getClient, reduceCalls } from '@intabiafusion/presentation'
-  import task, { Project, ProjectType, TaskType } from '@intabiafusion/task'
+  import core, { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import { IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
+  import task, { Project, ProjectType, TaskType } from '@hcengineering/task'
   import {
     ColorDefinition,
     Icon,
@@ -25,9 +25,9 @@
     getColorNumberByText,
     getPlatformColorDef,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import { selectedTypeStore, typeStore } from '../..'
   import IconBacklog from '../icons/IconBacklog.svelte'

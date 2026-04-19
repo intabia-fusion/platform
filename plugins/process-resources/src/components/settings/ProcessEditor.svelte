@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, SortingOrder } from '@intabiafusion/core'
-  import { createQuery, getClient, MessageBox, IconDownload } from '@intabiafusion/presentation'
-  import { Process, State, Transition } from '@intabiafusion/process'
-  import { clearSettingsStore, settingsStore } from '@intabiafusion/setting-resources'
+  import { Ref, SortingOrder } from '@hcengineering/core'
+  import { createQuery, getClient, MessageBox, IconDownload } from '@hcengineering/presentation'
+  import { Process, State, Transition } from '@hcengineering/process'
+  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import {
     ButtonIcon,
     defineSeparators,
@@ -29,9 +29,9 @@
     Scroller,
     secondNavSeparators,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { exportProcess } from '../../exporter'
-  import view from '@intabiafusion/view'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
   import ContextEditor from './ContextEditor.svelte'

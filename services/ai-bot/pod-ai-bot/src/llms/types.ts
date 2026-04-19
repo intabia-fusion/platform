@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
-import type { PersonMessage } from '@intabiafusion/ai-bot'
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { PersonMessage } from '@hcengineering/ai-bot'
 import type { HistoryRecord } from '../types'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 

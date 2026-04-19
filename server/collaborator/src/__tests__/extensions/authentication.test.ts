@@ -15,17 +15,17 @@
 
 import { AuthenticationExtension } from '../../extensions/authentication'
 import { buildContext } from '../../context'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/server-token', () => ({
   decodeToken: jest.fn()
 }))
 
-jest.mock('@intabiafusion/collaborator-client', () => ({
+jest.mock('@hcengineering/collaborator-client', () => ({
   decodeDocumentId: jest.fn()
 }))
 
-jest.mock('@intabiafusion/account', () => ({
+jest.mock('@hcengineering/account', () => ({
   isReadOnlyOrGuest: jest.fn()
 }))
 
@@ -37,9 +37,9 @@ jest.mock('../../utils', () => ({
   getWorkspaceIds: jest.fn()
 }))
 
-const mockDecodeToken = jest.requireMock('@intabiafusion/server-token').decodeToken
-const mockDecodeDocumentId = jest.requireMock('@intabiafusion/collaborator-client').decodeDocumentId
-const mockIsReadOnlyOrGuest = jest.requireMock('@intabiafusion/account').isReadOnlyOrGuest
+const mockDecodeToken = jest.requireMock('@hcengineering/server-token').decodeToken
+const mockDecodeDocumentId = jest.requireMock('@hcengineering/collaborator-client').decodeDocumentId
+const mockIsReadOnlyOrGuest = jest.requireMock('@hcengineering/account').isReadOnlyOrGuest
 const mockBuildContext = buildContext as jest.MockedFunction<typeof buildContext>
 const mockGetWorkspaceIds = jest.requireMock('../../utils').getWorkspaceIds
 

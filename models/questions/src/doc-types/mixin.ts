@@ -13,11 +13,11 @@ import type {
   QuestionDataEditor,
   AnswerDataPresenter,
   AnswerDataEditor
-} from '@intabiafusion/questions'
-import type { Class, Ref } from '@intabiafusion/core'
-import { Mixin } from '@intabiafusion/model'
-import core, { TClass } from '@intabiafusion/model-core'
-import type { Resource } from '@intabiafusion/platform'
+} from '@hcengineering/questions'
+import type { Class, Ref } from '@hcengineering/core'
+import { Mixin } from '@hcengineering/model'
+import core, { TClass } from '@hcengineering/model-core'
+import type { Resource } from '@hcengineering/platform'
 import questions from '../plugin'
 
 /** @public */

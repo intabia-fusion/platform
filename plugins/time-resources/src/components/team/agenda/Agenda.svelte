@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Event, getAllEvents } from '@intabiafusion/calendar'
-  import { IdMap, Ref } from '@intabiafusion/core'
-  import { Project } from '@intabiafusion/task'
-  import { ToDo, WorkSlot } from '@intabiafusion/time'
+  import { Event, getAllEvents } from '@hcengineering/calendar'
+  import { IdMap, Ref } from '@hcengineering/core'
+  import { Project } from '@hcengineering/task'
+  import { ToDo, WorkSlot } from '@hcengineering/time'
   import Border from '../../Border.svelte'
   import Header from '../../Header.svelte'
   import WithTeamData from '../WithTeamData.svelte'
   import { toSlots } from '../utils'
   import DayPlan from './DayPlan.svelte'
-  import { employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
 
   export let space: Ref<Project>
   export let currentDate: Date

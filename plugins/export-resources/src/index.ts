@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Client, Doc, Ref } from '@intabiafusion/core'
-import exportPlugin, { type ExportResultRecord } from '@intabiafusion/export'
-import { type Resources, translate } from '@intabiafusion/platform'
-import { themeStore } from '@intabiafusion/ui'
+import type { Client, Doc, Ref } from '@hcengineering/core'
+import exportPlugin, { type ExportResultRecord } from '@hcengineering/export'
+import { type Resources, translate } from '@hcengineering/platform'
+import { themeStore } from '@hcengineering/ui'
 import { get } from 'svelte/store'
 import ExportButton from './components/ExportButton.svelte'
 import ExportSettings from './components/ExportSettings.svelte'

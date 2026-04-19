@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import '@intabiafusion/platform-rig/profiles/ui/svelte'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 
 import Cropper from './components/Cropper.svelte'
 

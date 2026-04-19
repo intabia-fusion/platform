@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { TxOperations } from '@intabiafusion/core'
+import { TxOperations } from '@hcengineering/core'
 import {
   type MigrateOperation,
   type MigrationClient,
@@ -22,10 +22,10 @@ import {
   tryMigrate,
   tryUpgrade,
   createDefaultSpace
-} from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import tags from '@intabiafusion/tags'
-import { timeId, ToDoPriority } from '@intabiafusion/time'
+} from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import tags from '@hcengineering/tags'
+import { timeId, ToDoPriority } from '@hcengineering/time'
 import { DOMAIN_TIME } from '.'
 import time from './plugin'
 

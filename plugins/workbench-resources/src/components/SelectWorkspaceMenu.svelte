@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { isArchivingMode, systemAccountUuid, WorkspaceInfoWithStatus } from '@intabiafusion/core'
-  import login from '@intabiafusion/login'
-  import { getMetadata, getResource } from '@intabiafusion/platform'
-  import presentation, { createQuery, decodeTokenPayload, hasResource, isAdminUser } from '@intabiafusion/presentation'
+  import contact from '@hcengineering/contact'
+  import { isArchivingMode, systemAccountUuid, WorkspaceInfoWithStatus } from '@hcengineering/core'
+  import login from '@hcengineering/login'
+  import { getMetadata, getResource } from '@hcengineering/platform'
+  import presentation, { createQuery, decodeTokenPayload, hasResource, isAdminUser } from '@hcengineering/presentation'
   import {
     closePopup,
     Component,
@@ -35,13 +35,13 @@
     resolvedLocationStore,
     SearchEdit,
     ticker
-  } from '@intabiafusion/ui'
-  import { workbenchId } from '@intabiafusion/workbench'
+  } from '@hcengineering/ui'
+  import { workbenchId } from '@hcengineering/workbench'
   import { onDestroy, onMount } from 'svelte'
 
-  import { Analytics } from '@intabiafusion/analytics'
-  import type { PersonRating } from '@intabiafusion/rating'
-  import ratingPlugin from '@intabiafusion/rating'
+  import { Analytics } from '@hcengineering/analytics'
+  import type { PersonRating } from '@hcengineering/rating'
+  import ratingPlugin from '@hcengineering/rating'
   import { workspacesStore } from '../utils'
   // import Drag from './icons/Drag.svelte'
 

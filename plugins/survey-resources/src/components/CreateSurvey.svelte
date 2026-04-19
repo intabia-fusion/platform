@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Data, generateId } from '@intabiafusion/core'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { Survey } from '@intabiafusion/survey'
-  import { createFocusManager, EditBox, FocusHandler } from '@intabiafusion/ui'
+  import { Data, generateId } from '@hcengineering/core'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { Survey } from '@hcengineering/survey'
+  import { createFocusManager, EditBox, FocusHandler } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import survey from '../plugin'
 

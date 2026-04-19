@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import { Mixin, type Builder } from '@intabiafusion/model'
+import { Mixin, type Builder } from '@hcengineering/model'
 
-import core, { type Tx } from '@intabiafusion/core'
-import { TClass } from '@intabiafusion/model-core'
-import { type Resource } from '@intabiafusion/platform'
-import serverCore, { type TriggerControl } from '@intabiafusion/server-core'
-import tracker from '@intabiafusion/tracker'
-import serverTime, { type ToDoFactory, type OnToDo } from '@intabiafusion/server-time'
-import time, { type ToDo, type WorkSlot } from '@intabiafusion/time'
-import notification, { type NotificationType } from '@intabiafusion/notification'
-import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
+import core, { type Tx } from '@hcengineering/core'
+import { TClass } from '@hcengineering/model-core'
+import { type Resource } from '@hcengineering/platform'
+import serverCore, { type TriggerControl } from '@hcengineering/server-core'
+import tracker from '@hcengineering/tracker'
+import serverTime, { type ToDoFactory, type OnToDo } from '@hcengineering/server-time'
+import time, { type ToDo, type WorkSlot } from '@hcengineering/time'
+import notification, { type NotificationType } from '@hcengineering/notification'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
 
 @Mixin(serverTime.mixin.ToDoFactory, core.class.Class)
 export class TToDoFactory extends TClass implements ToDoFactory {
@@ -97,4 +97,4 @@ export function createModel (builder: Builder): void {
   )
 }
 
-export * from '@intabiafusion/server-time'
+export * from '@hcengineering/server-time'

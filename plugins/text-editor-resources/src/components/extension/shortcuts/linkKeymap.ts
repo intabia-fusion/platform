@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { showPopup } from '@intabiafusion/ui'
+import { showPopup } from '@hcengineering/ui'
 import { Extension } from '@tiptap/core'
 import { type MarkType } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'

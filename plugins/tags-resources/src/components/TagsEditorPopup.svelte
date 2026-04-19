@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import tags, { TagElement, TagsEvents } from '@intabiafusion/tags'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import tags, { TagElement, TagsEvents } from '@hcengineering/tags'
+  import { Analytics } from '@hcengineering/analytics'
 
   import TagsPopup from './TagsPopup.svelte'
-  import { getObjectId } from '@intabiafusion/view-resources'
+  import { getObjectId } from '@hcengineering/view-resources'
 
   export let object: Doc
   export let targetClass: Ref<Class<Doc>> = object._class

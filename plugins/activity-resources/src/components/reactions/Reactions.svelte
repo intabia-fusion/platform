@@ -14,15 +14,15 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Reaction } from '@intabiafusion/activity'
-  import { Doc, getCurrentAccount, PersonId, Ref, Blob } from '@intabiafusion/core'
-  import { Icon, showPopup, tooltip } from '@intabiafusion/ui'
-  import { includesAny } from '@intabiafusion/contact'
-  import emojiPlugin from '@intabiafusion/emoji'
+  import { Reaction } from '@hcengineering/activity'
+  import { Doc, getCurrentAccount, PersonId, Ref, Blob } from '@hcengineering/core'
+  import { Icon, showPopup, tooltip } from '@hcengineering/ui'
+  import { includesAny } from '@hcengineering/contact'
+  import emojiPlugin from '@hcengineering/emoji'
 
   import ReactionsTooltip from './ReactionsTooltip.svelte'
   import { updateDocReactions } from '../../utils'
-  import { getBlobRef } from '@intabiafusion/presentation'
+  import { getBlobRef } from '@hcengineering/presentation'
 
   export let reactions: Reaction[] = []
   export let object: Doc | undefined = undefined

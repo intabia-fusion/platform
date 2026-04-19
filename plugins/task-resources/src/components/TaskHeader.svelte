@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import core, { Class, Doc, Mixin, Ref, RefTo } from '@intabiafusion/core'
-  import { AttributesBar, getClient, KeyedAttribute } from '@intabiafusion/presentation'
-  import { UserBox } from '@intabiafusion/contact-resources'
-  import { Task } from '@intabiafusion/task'
+  import contact from '@hcengineering/contact'
+  import core, { Class, Doc, Mixin, Ref, RefTo } from '@hcengineering/core'
+  import { AttributesBar, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { UserBox } from '@hcengineering/contact-resources'
+  import { Task } from '@hcengineering/task'
   import task from '../plugin'
-  import { DocAttributeBar } from '@intabiafusion/view-resources'
+  import { DocAttributeBar } from '@hcengineering/view-resources'
 
   export let object: Task
   export let keys: KeyedAttribute[]

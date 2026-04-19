@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import core from '@intabiafusion/core'
-import serverCollaboration from '@intabiafusion/server-collaboration'
-import serverCore from '@intabiafusion/server-core'
+import core from '@hcengineering/core'
+import serverCollaboration from '@hcengineering/server-collaboration'
+import serverCore from '@hcengineering/server-core'
 
-export { serverCollaborationId } from '@intabiafusion/server-collaboration'
+export { serverCollaborationId } from '@hcengineering/server-collaboration'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

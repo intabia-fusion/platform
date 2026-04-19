@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import documents, { Document } from '@intabiafusion/controlled-documents'
-  import { Employee } from '@intabiafusion/contact'
-  import { EmployeeBox, EmployeePresenter, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
-  import core, { Ref, Space, notEmpty } from '@intabiafusion/core'
-  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, Icon, Label } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import documents, { Document } from '@hcengineering/controlled-documents'
+  import { Employee } from '@hcengineering/contact'
+  import { EmployeeBox, EmployeePresenter, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import core, { Ref, Space, notEmpty } from '@hcengineering/core'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, Icon, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
   import { canChangeDocumentOwner, isDocOwner } from '../../../utils'

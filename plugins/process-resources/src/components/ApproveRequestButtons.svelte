@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ApproveRequest } from '@intabiafusion/process'
-  import { Button, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ApproveRequest } from '@hcengineering/process'
+  import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import SignatureDialog from './SignatureDialog.svelte'
   import process from '../plugin'
 

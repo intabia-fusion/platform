@@ -2,7 +2,7 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Question } from '@intabiafusion/questions'
+import type { Question } from '@hcengineering/questions'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export function canUpdateQuestion (object: Question<unknown>): boolean {

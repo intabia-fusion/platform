@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { HTMLViewer } from '@intabiafusion/presentation'
-  import { ShowMore } from '@intabiafusion/ui'
+  import { HTMLViewer } from '@hcengineering/presentation'
+  import { ShowMore } from '@hcengineering/ui'
 
   export let value: string
 </script>

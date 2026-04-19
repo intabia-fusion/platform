@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type TextEditorCommand } from '@intabiafusion/text-editor'
+import { type TextEditorCommand } from '@hcengineering/text-editor'
 import { type Command, type CommandProps, Extension, type Range, getMarkRange, mergeAttributes } from '@tiptap/core'
 import { type MarkType, type Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'

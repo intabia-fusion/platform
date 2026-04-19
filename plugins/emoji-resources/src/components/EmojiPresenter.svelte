@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { getBlobRef } from '@intabiafusion/presentation'
+  import { getBlobRef } from '@hcengineering/presentation'
 
   import { getCustomEmoji } from '../utils'
 

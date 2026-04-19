@@ -4,16 +4,16 @@
 -->
 
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Doc, type Blob, type Ref } from '@intabiafusion/core'
-  import presentation, { PDFViewer, createQuery, getClient } from '@intabiafusion/presentation'
-  import guest, { PublicLink, createPublicLink } from '@intabiafusion/guest'
-  import view from '@intabiafusion/view'
-  import { Location } from '@intabiafusion/ui'
-  import { getDocTitle, getObjectLinkFragment } from '@intabiafusion/view-resources'
-  import { printToPDF } from '@intabiafusion/print'
-  import { signPDF } from '@intabiafusion/sign'
-  import { getMetadata } from '@intabiafusion/platform'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Doc, type Blob, type Ref } from '@hcengineering/core'
+  import presentation, { PDFViewer, createQuery, getClient } from '@hcengineering/presentation'
+  import guest, { PublicLink, createPublicLink } from '@hcengineering/guest'
+  import view from '@hcengineering/view'
+  import { Location } from '@hcengineering/ui'
+  import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
+  import { printToPDF } from '@hcengineering/print'
+  import { signPDF } from '@hcengineering/sign'
+  import { getMetadata } from '@hcengineering/platform'
 
   export let object: Doc
   export let signed: boolean = false

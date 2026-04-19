@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessage } from '@intabiafusion/activity'
-  import { Person } from '@intabiafusion/contact'
-  import { Doc } from '@intabiafusion/core'
-  import { Label, languageStore } from '@intabiafusion/ui'
-  import { IntlString } from '@intabiafusion/platform'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { Person } from '@hcengineering/contact'
+  import { Doc } from '@hcengineering/core'
+  import { Label, languageStore } from '@hcengineering/ui'
+  import { IntlString } from '@hcengineering/platform'
 
   import { LinkData, getLinkData } from '../../activityMessagesUtils'
   import ActivityDocLink from '../ActivityDocLink.svelte'

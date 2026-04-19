@@ -18,12 +18,12 @@ import type {
   SingleChoiceAssessmentAnswer,
   SingleChoiceQuestion,
   SingleChoiceQuestionAnswer
-} from '@intabiafusion/questions'
-import { type Class, type MixinData, type Ref } from '@intabiafusion/core'
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import tracker from '@intabiafusion/model-tracker'
-import view, { createAction } from '@intabiafusion/model-view'
+} from '@hcengineering/questions'
+import { type Class, type MixinData, type Ref } from '@hcengineering/core'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import tracker from '@hcengineering/model-tracker'
+import view, { createAction } from '@hcengineering/model-view'
 import {
   TAnswer,
   TAssessment,
@@ -58,7 +58,7 @@ import questions from './plugin'
 
 export { questionsOperation } from './migration'
 export { default } from './plugin'
-export { questionsId } from '@intabiafusion/questions/src/index'
+export { questionsId } from '@hcengineering/questions/src/index'
 export * from './doc-types'
 
 export function createModel (builder: Builder): void {

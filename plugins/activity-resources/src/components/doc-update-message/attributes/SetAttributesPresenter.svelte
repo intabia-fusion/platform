@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { Icon, Label, IconEdit } from '@intabiafusion/ui'
-  import { AttributeModel } from '@intabiafusion/view'
-  import activity, { DocAttributeUpdates, DocUpdateMessageViewlet } from '@intabiafusion/activity'
+  import ui, { Icon, Label, IconEdit } from '@hcengineering/ui'
+  import { AttributeModel } from '@hcengineering/view'
+  import activity, { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
 
   import ChangeAttributesTemplate from './ChangeAttributesTemplate.svelte'
   import { getIsTextType } from '../../../utils'
-  import { Ref, Space } from '@intabiafusion/core'
+  import { Ref, Space } from '@hcengineering/core'
 
   export let viewlet: DocUpdateMessageViewlet | undefined
   export let attributeModel: AttributeModel

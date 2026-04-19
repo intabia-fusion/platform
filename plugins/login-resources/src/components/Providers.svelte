@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { concatLink } from '@intabiafusion/core'
-  import platform, { getMetadata } from '@intabiafusion/platform'
-  import { type ProviderInfo } from '@intabiafusion/account-client'
-  import { AnySvelteComponent, Grid, deviceOptionsStore, getCurrentLocation } from '@intabiafusion/ui'
+  import { concatLink } from '@hcengineering/core'
+  import platform, { getMetadata } from '@hcengineering/platform'
+  import { type ProviderInfo } from '@hcengineering/account-client'
+  import { AnySvelteComponent, Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
 
   import FormButton from './internal/FormButton.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
   import { onMount } from 'svelte'
   import login from '../plugin'
   import { getProviders } from '../utils'

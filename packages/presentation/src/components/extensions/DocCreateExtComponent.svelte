@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Component } from '@intabiafusion/ui'
+  import { Component } from '@hcengineering/ui'
   import { CreateExtensionKind } from '../../types'
   import { DocCreateExtensionManager } from './manager'
-  import { Space } from '@intabiafusion/core'
+  import { Space } from '@hcengineering/core'
 
   export let manager: DocCreateExtensionManager
   export let kind: CreateExtensionKind

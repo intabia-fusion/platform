@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { getClient, createQuery } from '@intabiafusion/presentation'
-  import { Button, ButtonSize, Component, Icon, IconSize, showPopup } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { IconPicker } from '@intabiafusion/view-resources'
-  import { Ref } from '@intabiafusion/core'
+  import { Card } from '@hcengineering/card'
+  import { getClient, createQuery } from '@hcengineering/presentation'
+  import { Button, ButtonSize, Component, Icon, IconSize, showPopup } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { IconPicker } from '@hcengineering/view-resources'
+  import { Ref } from '@hcengineering/core'
 
   import card from '../plugin'
   import { getCardIconInfo } from '../utils'

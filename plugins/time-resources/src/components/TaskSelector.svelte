@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Class } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Task } from '@intabiafusion/task'
-  import { Button, Icon, Label, showPanel } from '@intabiafusion/ui'
-  import view, { ObjectPanel } from '@intabiafusion/view'
-  import { ToDo } from '@intabiafusion/time'
+  import { Class } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Task } from '@hcengineering/task'
+  import { Button, Icon, Label, showPanel } from '@hcengineering/ui'
+  import view, { ObjectPanel } from '@hcengineering/view'
+  import { ToDo } from '@hcengineering/time'
   import time from '../plugin'
   import WorkItemPresenter from './WorkItemPresenter.svelte'
 

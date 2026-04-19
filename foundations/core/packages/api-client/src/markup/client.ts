@@ -21,10 +21,10 @@ import {
   WorkspaceUuid,
   concatLink,
   makeCollabId
-} from '@intabiafusion/core'
-import { type CollaboratorClient, getClient } from '@intabiafusion/collaborator-client'
-import { htmlToJSON, jsonToHTML, jsonToMarkup, markupToJSON } from '@intabiafusion/text'
-import { markdownToMarkup, markupToMarkdown } from '@intabiafusion/text-markdown'
+} from '@hcengineering/core'
+import { type CollaboratorClient, getClient } from '@hcengineering/collaborator-client'
+import { htmlToJSON, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
+import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 
 import { type MarkupOperations, type MarkupFormat, type MarkupRef } from './types'
 

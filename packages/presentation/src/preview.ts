@@ -1,7 +1,7 @@
-import type { Blob, Ref } from '@intabiafusion/core'
-import { concatLink } from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
-import { withRetry } from '@intabiafusion/retry'
+import type { Blob, Ref } from '@hcengineering/core'
+import { concatLink } from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import { withRetry } from '@hcengineering/retry'
 
 import { getFileUrl, getCurrentWorkspaceUuid, getFileStorage } from './file'
 import presentation from './plugin'

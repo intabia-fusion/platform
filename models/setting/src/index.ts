@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact from '@intabiafusion/contact'
+import contact from '@hcengineering/contact'
 import {
   AccountRole,
   DOMAIN_MODEL,
@@ -21,13 +21,13 @@ import {
   type Blob,
   type Ref,
   type IntegrationKind
-} from '@intabiafusion/core'
-import exportPlugin from '@intabiafusion/export'
-import { Mixin, Model, UX, type Builder } from '@intabiafusion/model'
-import core, { defineCollaborators, TClass, TConfiguration, TDoc } from '@intabiafusion/model-core'
-import view, { createAction } from '@intabiafusion/model-view'
-import notification, { type MessageNotificationType } from '@intabiafusion/notification'
-import type { Asset, IntlString } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import exportPlugin from '@hcengineering/export'
+import { Mixin, Model, UX, type Builder } from '@hcengineering/model'
+import core, { defineCollaborators, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
+import view, { createAction } from '@hcengineering/model-view'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
+import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   DOMAIN_SETTING,
   settingId,
@@ -43,15 +43,15 @@ import {
   type SpaceTypeEditorSection,
   type UserMixin,
   type WorkspaceSetting
-} from '@intabiafusion/setting'
-import templates from '@intabiafusion/templates'
+} from '@hcengineering/setting'
+import templates from '@hcengineering/templates'
 import setting from './plugin'
 
-import workbench, { WidgetType } from '@intabiafusion/model-workbench'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import activity from '@intabiafusion/activity'
+import workbench, { WidgetType } from '@hcengineering/model-workbench'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import activity from '@hcengineering/activity'
 
-export { settingId } from '@intabiafusion/setting'
+export { settingId } from '@hcengineering/setting'
 export { settingOperation } from './migration'
 export { default } from './plugin'
 

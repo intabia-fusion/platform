@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type ActivityMessage } from '@intabiafusion/activity'
-import aiBot from '@intabiafusion/ai-bot'
-import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@intabiafusion/ai-bot-resources'
+import { type ActivityMessage } from '@hcengineering/activity'
+import aiBot from '@hcengineering/ai-bot'
+import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
 import {
   type Channel,
   type ChatMessage,
   createDirect,
   type DirectMessage,
   type ThreadMessage
-} from '@intabiafusion/chunter'
-import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@intabiafusion/contact'
-import { employeeByAccountStore, PersonIcon } from '@intabiafusion/contact-resources'
+} from '@hcengineering/chunter'
+import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@hcengineering/contact'
+import { employeeByAccountStore, PersonIcon } from '@hcengineering/contact-resources'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -36,20 +36,20 @@ import core, {
   type Ref,
   type Space,
   type Timestamp
-} from '@intabiafusion/core'
-import { type DocNotifyContext, type InboxNotification, type ReadState } from '@intabiafusion/notification'
+} from '@hcengineering/core'
+import { type DocNotifyContext, type InboxNotification, type ReadState } from '@hcengineering/notification'
 import {
   InboxNotificationsClientImpl,
   isActivityNotification,
   isMentionNotification,
   isReactionNotification
-} from '@intabiafusion/notification-resources'
-import { type Asset, getMetadata, type IntlString } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
-import { type AnySvelteComponent, languageStore } from '@intabiafusion/ui'
-import { classIcon, getDocLabel, getDocTitle } from '@intabiafusion/view-resources'
+} from '@hcengineering/notification-resources'
+import { type Asset, getMetadata, type IntlString } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
+import { type AnySvelteComponent, languageStore } from '@hcengineering/ui'
+import { classIcon, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
-import love, { type MeetingMinutes } from '@intabiafusion/love'
+import love, { type MeetingMinutes } from '@hcengineering/love'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'

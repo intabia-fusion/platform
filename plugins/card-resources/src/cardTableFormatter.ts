@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
-import { translate, type IntlString } from '@intabiafusion/platform'
-import cardPlugin, { type Card, type CardSpace } from '@intabiafusion/card'
-import { type AttributeModel } from '@intabiafusion/view'
-import { getClient } from '@intabiafusion/presentation'
-import { isIntlString } from '@intabiafusion/converter-resources'
+import { type Class, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
+import { translate, type IntlString } from '@hcengineering/platform'
+import cardPlugin, { type Card, type CardSpace } from '@hcengineering/card'
+import { type AttributeModel } from '@hcengineering/view'
+import { getClient } from '@hcengineering/presentation'
+import { isIntlString } from '@hcengineering/converter-resources'
 import { getCardIds, getCardVersion } from './cardUtils'
 import { formatCardTagsForMarkdown, isTagsColumn } from './tagFormatter'
 

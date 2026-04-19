@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import tags, { TagReference } from '@intabiafusion/tags'
-  import { ButtonBase, ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@intabiafusion/ui'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import tags, { TagReference } from '@hcengineering/tags'
+  import { ButtonBase, ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import tagsPlugin from '../plugin'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'

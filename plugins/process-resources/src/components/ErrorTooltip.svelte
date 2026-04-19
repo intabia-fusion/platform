@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { translate } from '@intabiafusion/platform'
-  import { ExecutionError } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { translate } from '@hcengineering/platform'
+  import { ExecutionError } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
 
   export let value: ExecutionError[]
 

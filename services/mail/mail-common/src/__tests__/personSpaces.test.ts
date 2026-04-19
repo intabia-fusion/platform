@@ -22,8 +22,8 @@ import {
   Doc,
   Space,
   toFindResult
-} from '@intabiafusion/core'
-import contact, { PersonSpace } from '@intabiafusion/contact'
+} from '@hcengineering/core'
+import contact, { PersonSpace } from '@hcengineering/contact'
 import { PersonSpacesCache, PersonSpacesCacheFactory } from '../personSpaces'
 
 /* eslint-disable @typescript-eslint/unbound-method */

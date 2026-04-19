@@ -14,13 +14,13 @@
 //
 
 import os from 'os'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient from '@intabiafusion/server-client'
-import { initStatisticsContext } from '@intabiafusion/server-core'
-import serverToken from '@intabiafusion/server-token'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient from '@hcengineering/server-client'
+import { initStatisticsContext } from '@hcengineering/server-core'
+import serverToken from '@hcengineering/server-token'
 
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { type MeasureContext, newMetrics } from '@intabiafusion/core'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { type MeasureContext, newMetrics } from '@hcengineering/core'
 import { join } from 'path'
 import config from './config'
 import { registerLoaders } from './loaders'

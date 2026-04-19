@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { type Doc, reduceCalls } from '@intabiafusion/core'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { type Doc, reduceCalls } from '@hcengineering/core'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import { onMount } from 'svelte'
 
   import { updatePresence, deletePresence } from '../presence'

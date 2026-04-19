@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@intabiafusion/core'
-import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
-import { gmailId } from '@intabiafusion/gmail'
-import gmail from '@intabiafusion/gmail-resources/src/plugin'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
-import type { DocUpdateMessageViewlet } from '@intabiafusion/activity'
-import { type Action } from '@intabiafusion/view'
-import { type NotificationGroup } from '@intabiafusion/notification'
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
+import { gmailId } from '@hcengineering/gmail'
+import gmail from '@hcengineering/gmail-resources/src/plugin'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
+import type { DocUpdateMessageViewlet } from '@hcengineering/activity'
+import { type Action } from '@hcengineering/view'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 export default mergeIds(gmailId, gmail, {
   action: {

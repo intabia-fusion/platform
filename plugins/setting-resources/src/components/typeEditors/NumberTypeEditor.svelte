@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { TypeNumber as TypeNumberType } from '@intabiafusion/core'
-  import core from '@intabiafusion/core'
-  import { TypeNumber } from '@intabiafusion/model'
-  import { Label, NumberInput, Toggle } from '@intabiafusion/ui'
+  import type { TypeNumber as TypeNumberType } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import { TypeNumber } from '@hcengineering/model'
+  import { Label, NumberInput, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
 

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DirectMessage } from '@intabiafusion/chunter'
-  import contact, { getCurrentEmployee } from '@intabiafusion/contact'
-  import { CombineAvatars, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
-  import { type Ref, notEmpty } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { SearchEdit } from '@intabiafusion/ui'
-  import { openDoc } from '@intabiafusion/view-resources'
+  import { DirectMessage } from '@hcengineering/chunter'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
+  import { CombineAvatars, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import { type Ref, notEmpty } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { SearchEdit } from '@hcengineering/ui'
+  import { openDoc } from '@hcengineering/view-resources'
 
   import { userSearch } from '../index'
   import chunter from '../plugin'

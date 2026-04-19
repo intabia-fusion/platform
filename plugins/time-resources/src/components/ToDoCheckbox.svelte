@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ToDoPriority } from '@intabiafusion/time'
-  import { CheckBox } from '@intabiafusion/ui'
+  import { ToDoPriority } from '@hcengineering/time'
+  import { CheckBox } from '@hcengineering/ui'
   import { getToDoPriorityColor } from '../utils'
 
   export let checked: boolean = false

@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { type IntlString, translate } from '@intabiafusion/platform'
+import { type IntlString, translate } from '@hcengineering/platform'
 import { LocalizedSearch } from '../search'
 import type { DropdownIntlItem } from '../types'
 
 // Mock dependencies
-jest.mock('@intabiafusion/platform', () => ({
+jest.mock('@hcengineering/platform', () => ({
   translate: jest.fn()
 }))
 
-jest.mock('@intabiafusion/theme', () => ({
+jest.mock('@hcengineering/theme', () => ({
   themeStore: {
     language: 'en'
   }

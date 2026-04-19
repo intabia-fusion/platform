@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref } from '@intabiafusion/core'
-import drive, { type File, type Drive, type Folder, driveId } from '@intabiafusion/drive'
-import { getClient } from '@intabiafusion/presentation'
-import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@intabiafusion/ui'
-import view, { type ObjectPanel } from '@intabiafusion/view'
-import { accessDeniedStore } from '@intabiafusion/view-resources'
+import type { Doc, Ref } from '@hcengineering/core'
+import drive, { type File, type Drive, type Folder, driveId } from '@hcengineering/drive'
+import { getClient } from '@hcengineering/presentation'
+import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@hcengineering/ui'
+import view, { type ObjectPanel } from '@hcengineering/view'
+import { accessDeniedStore } from '@hcengineering/view-resources'
 
 export function getPanelFragment<T extends Doc> (object: Pick<T, '_class' | '_id'>): string {
   const hierarchy = getClient().getHierarchy()

@@ -27,8 +27,8 @@ import {
   type TxFactory,
   type WithLookup,
   type WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
-import { type StorageAdapter } from '@intabiafusion/storage'
+} from '@hcengineering/core'
+import { type StorageAdapter } from '@hcengineering/storage'
 
 export interface Client {
   ctx: MeasureContext

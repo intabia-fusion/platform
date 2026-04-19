@@ -3,13 +3,13 @@
 //
 //
 
-import { Class, Doc, DocumentQuery, FindOptions, FindResult, Hierarchy, Ref, concatLink } from '@intabiafusion/core'
-import document, { Document, documentId } from '@intabiafusion/document'
-import { getMetadata } from '@intabiafusion/platform'
-import { workbenchId } from '@intabiafusion/workbench'
-import serverCore from '@intabiafusion/server-core'
+import { Class, Doc, DocumentQuery, FindOptions, FindResult, Hierarchy, Ref, concatLink } from '@hcengineering/core'
+import document, { Document, documentId } from '@hcengineering/document'
+import { getMetadata } from '@hcengineering/platform'
+import { workbenchId } from '@hcengineering/workbench'
+import serverCore from '@hcengineering/server-core'
 import slugify from 'slugify'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 function getDocumentId (doc: Document): string {
   const slug = slugify(doc.title, { lower: true })

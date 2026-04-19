@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Class, IdMap, Ref, Status } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { DocPopup, getClient } from '@intabiafusion/presentation'
-  import { Task, TaskType } from '@intabiafusion/task'
-  import { getObjectId, ObjectPresenter, statusStore } from '@intabiafusion/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Class, IdMap, Ref, Status } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { DocPopup, getClient } from '@hcengineering/presentation'
+  import { Task, TaskType } from '@hcengineering/task'
+  import { getObjectId, ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { taskTypeStore } from '..'
 

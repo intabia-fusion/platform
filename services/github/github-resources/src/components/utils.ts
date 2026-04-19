@@ -1,14 +1,14 @@
-import { Analytics } from '@intabiafusion/analytics'
-import { concatLink, getCurrentAccount, toIdMap, type IdMap } from '@intabiafusion/core'
+import { Analytics } from '@hcengineering/analytics'
+import { concatLink, getCurrentAccount, toIdMap, type IdMap } from '@hcengineering/core'
 import {
   makeQuery,
   type GithubAuthentication,
   type GithubIntegrationRepository,
   type GithubProject
-} from '@intabiafusion/github'
-import { PlatformError, getMetadata, unknownError } from '@intabiafusion/platform'
-import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
-import { location } from '@intabiafusion/ui'
+} from '@hcengineering/github'
+import { PlatformError, getMetadata, unknownError } from '@hcengineering/platform'
+import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+import { location } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 import github from '../plugin'
 

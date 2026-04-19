@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@intabiafusion/core'
-  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Timestamp } from '@hcengineering/core'
+  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
   import ui, {
     Label,
     areDatesEqual,
@@ -25,7 +25,7 @@
     IconChevronLeft,
     IconChevronRight,
     getFormattedDate
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
 
   export let currentDate: Date = new Date()
   // Step for navigation: number of days to shift, or 'month' for a calendar-month step.

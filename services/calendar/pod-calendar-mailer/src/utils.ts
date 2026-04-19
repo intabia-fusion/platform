@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getClient as getAccountClient, AccountClient } from '@intabiafusion/account-client'
-import { createRestTxOperations } from '@intabiafusion/api-client'
-import { Event } from '@intabiafusion/calendar'
-import core, { Hierarchy, PersonId, systemAccountUuid, TxOperations, WorkspaceUuid } from '@intabiafusion/core'
-import love from '@intabiafusion/love'
-import { generateToken } from '@intabiafusion/server-token'
+import { getClient as getAccountClient, AccountClient } from '@hcengineering/account-client'
+import { createRestTxOperations } from '@hcengineering/api-client'
+import { Event } from '@hcengineering/calendar'
+import core, { Hierarchy, PersonId, systemAccountUuid, TxOperations, WorkspaceUuid } from '@hcengineering/core'
+import love from '@hcengineering/love'
+import { generateToken } from '@hcengineering/server-token'
 import config from './config'
 
 export async function getClient (

@@ -11,14 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AccountRole, MeasureContext, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
+import { AccountRole, MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
   Event,
   MessageEventType,
   NotificationEventType,
   PeerEventType,
   SessionData
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   AccountUuid,
   CardID,
@@ -27,7 +27,7 @@ import {
   MessageID,
   MessageType, NotificationID,
   SocialID
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 import { PermissionsMiddleware } from '../../middleware/permissions'
 import { Enriched, Middleware, MiddlewareContext } from '../../types'

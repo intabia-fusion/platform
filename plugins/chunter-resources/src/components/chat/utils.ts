@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Chat, type DirectMessage } from '@intabiafusion/chunter'
-import contact from '@intabiafusion/contact'
+import { type Chat, type DirectMessage } from '@hcengineering/chunter'
+import contact from '@hcengineering/contact'
 import core, {
   AccountRole,
   getCurrentAccount,
@@ -25,14 +25,14 @@ import core, {
   type Class,
   type Doc,
   type Space
-} from '@intabiafusion/core'
-import notification from '@intabiafusion/notification'
-import { readNotifyContext } from '@intabiafusion/notification-resources'
-import { getClient } from '@intabiafusion/presentation'
-import { type Action, showPopup } from '@intabiafusion/ui'
-import view from '@intabiafusion/view'
-import { type SpecialNavModel } from '@intabiafusion/workbench'
-import activity from '@intabiafusion/activity'
+} from '@hcengineering/core'
+import notification from '@hcengineering/notification'
+import { readNotifyContext } from '@hcengineering/notification-resources'
+import { getClient } from '@hcengineering/presentation'
+import { type Action, showPopup } from '@hcengineering/ui'
+import view from '@hcengineering/view'
+import { type SpecialNavModel } from '@hcengineering/workbench'
+import activity from '@hcengineering/activity'
 
 import chunter from '../../plugin'
 import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel, type SortFnOptions } from './types'

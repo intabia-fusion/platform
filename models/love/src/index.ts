@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact, { type Employee, type Person } from '@intabiafusion/contact'
+import contact, { type Employee, type Person } from '@hcengineering/contact'
 import {
   AccountRole,
   type CollectionSize,
@@ -27,7 +27,7 @@ import {
   IndexKind,
   type AccountUuid,
   SocialIdType
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   type DevicesPreference,
   type Floor,
@@ -48,7 +48,7 @@ import {
   type TranscriptionState,
   type RecordingState,
   type UserMeetingInvite
-} from '@intabiafusion/love'
+} from '@hcengineering/love'
 import {
   type Builder,
   Collection,
@@ -68,25 +68,25 @@ import {
   TypeBoolean,
   Hidden,
   TypeNumber
-} from '@intabiafusion/model'
-import calendar, { TEvent, TSchedule } from '@intabiafusion/model-calendar'
-import core, { defineCollaborators, TAttachedDoc, TDoc } from '@intabiafusion/model-core'
-import preference, { TPreference } from '@intabiafusion/model-preference'
-import presentation from '@intabiafusion/model-presentation'
-import view, { createAction, createAttributePresenter } from '@intabiafusion/model-view'
-import media from '@intabiafusion/media'
-import notification, { type MessageNotificationType, type TxNotificationType } from '@intabiafusion/notification'
-import { getEmbeddedLabel } from '@intabiafusion/platform'
-import setting from '@intabiafusion/setting'
-import workbench, { WidgetType } from '@intabiafusion/workbench'
-import activity from '@intabiafusion/activity'
-import chunter from '@intabiafusion/chunter'
-import attachment from '@intabiafusion/attachment'
-import time, { type ToDo, type Todoable } from '@intabiafusion/time'
+} from '@hcengineering/model'
+import calendar, { TEvent, TSchedule } from '@hcengineering/model-calendar'
+import core, { defineCollaborators, TAttachedDoc, TDoc } from '@hcengineering/model-core'
+import preference, { TPreference } from '@hcengineering/model-preference'
+import presentation from '@hcengineering/model-presentation'
+import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
+import media from '@hcengineering/media'
+import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
+import { getEmbeddedLabel } from '@hcengineering/platform'
+import setting from '@hcengineering/setting'
+import workbench, { WidgetType } from '@hcengineering/workbench'
+import activity from '@hcengineering/activity'
+import chunter from '@hcengineering/chunter'
+import attachment from '@hcengineering/attachment'
+import time, { type ToDo, type Todoable } from '@hcengineering/time'
 
 import love from './plugin'
 
-export { loveId } from '@intabiafusion/love'
+export { loveId } from '@hcengineering/love'
 export * from './migration'
 export const DOMAIN_LOVE = 'love' as Domain
 export const DOMAIN_LOVE_PENDING = 'love-pending' as Domain

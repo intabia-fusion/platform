@@ -11,9 +11,9 @@
 <!-- See the License for the specific language governing permissions and -->
 <!-- limitations under the License. -->
 <script lang="ts">
-  import { ActivityAttributeUpdate } from '@intabiafusion/communication-types'
-  import communication, { UserVote } from '@intabiafusion/communication'
-  import { Icon, Label } from '@intabiafusion/ui'
+  import { ActivityAttributeUpdate } from '@hcengineering/communication-types'
+  import communication, { UserVote } from '@hcengineering/communication'
+  import { Icon, Label } from '@hcengineering/ui'
 
   export let update: ActivityAttributeUpdate
 

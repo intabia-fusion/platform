@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, WorkspaceUuid, PersonUuid, Account } from '@intabiafusion/core'
-import { HulylakeWorkspaceClient, getWorkspaceClient } from '@intabiafusion/hulylake-client'
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import { loadMessages } from '@intabiafusion/communication-shared'
+import { MeasureContext, WorkspaceUuid, PersonUuid, Account } from '@hcengineering/core'
+import { HulylakeWorkspaceClient, getWorkspaceClient } from '@hcengineering/hulylake-client'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { loadMessages } from '@hcengineering/communication-shared'
 import {
   CardID,
   MessageID,
@@ -23,17 +23,17 @@ import {
   SocialID,
   FindMessagesOptions,
   BlobID
-} from '@intabiafusion/communication-types'
-import { DbAdapter } from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-types'
+import { DbAdapter } from '@hcengineering/communication-sdk-types'
 import { LowLevelClient } from '../client'
 import { Blob } from '../blob'
 import { Metadata } from '../types'
 
 // Mock dependencies
-jest.mock('@intabiafusion/hulylake-client')
-jest.mock('@intabiafusion/account-client')
-jest.mock('@intabiafusion/communication-shared')
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/hulylake-client')
+jest.mock('@hcengineering/account-client')
+jest.mock('@hcengineering/communication-shared')
+jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn(() => 'mock-token')
 }))
 

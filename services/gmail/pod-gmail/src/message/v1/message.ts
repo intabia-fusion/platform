@@ -24,12 +24,12 @@ import {
   TxUpdateDoc,
   AttachedData,
   Data
-} from '@intabiafusion/core'
-import gmail, { type Message } from '@intabiafusion/gmail'
+} from '@hcengineering/core'
+import gmail, { type Message } from '@hcengineering/gmail'
 import { type GaxiosResponse } from 'gaxios'
 import { gmail_v1 } from 'googleapis'
-import core from '@intabiafusion/core'
-import attachment, { Attachment } from '@intabiafusion/attachment'
+import core from '@hcengineering/core'
+import attachment, { Attachment } from '@hcengineering/attachment'
 import sanitizeHtml from 'sanitize-html'
 
 import { IMessageManager } from '../types'
@@ -37,7 +37,7 @@ import { type Channel } from '../../types'
 import { AttachmentHandler } from '../attachments'
 import { decode64 } from '../../base64'
 import { diffAttributes } from '../../utils'
-import { SyncOptions } from '@intabiafusion/mail-common'
+import { SyncOptions } from '@hcengineering/mail-common'
 
 const EMAIL_REGEX =
   /(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/

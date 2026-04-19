@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/network-backrpc",
+      "packageName": "@hcengineering/network-backrpc",
       "comment": "typing refactoring",
       "type": "none"
     }
   ],
-  "packageName": "@intabiafusion/network-backrpc"
+  "packageName": "@hcengineering/network-backrpc"
 }

@@ -23,9 +23,9 @@
     PropertyType,
     Ref,
     Type
-  } from '@intabiafusion/core'
-  import { Asset, getEmbeddedLabel } from '@intabiafusion/platform'
-  import presentation, { getClient, Card } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation, { getClient, Card } from '@hcengineering/presentation'
   import {
     AnyComponent,
     Component,
@@ -35,12 +35,12 @@
     showPopup,
     ButtonIcon,
     Toggle
-  } from '@intabiafusion/ui'
-  import { DropdownIntlItem } from '@intabiafusion/ui/src/types'
+  } from '@hcengineering/ui'
+  import { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import setting from '../plugin'
-  import view from '@intabiafusion/view'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
-  import { IconPicker } from '@intabiafusion/view-resources'
+  import { IconPicker } from '@hcengineering/view-resources'
 
   export let _class: Ref<Class<Doc>>
   export let isCard: boolean = false

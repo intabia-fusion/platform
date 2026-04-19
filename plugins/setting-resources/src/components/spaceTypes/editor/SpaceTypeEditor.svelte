@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import core, { SpaceType, SpaceTypeDescriptor } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { SpaceTypeEditor } from '@intabiafusion/setting'
+  import { getClient } from '@hcengineering/presentation'
+  import core, { SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { SpaceTypeEditor } from '@hcengineering/setting'
   import {
     ButtonIcon,
     Component,
@@ -26,7 +26,7 @@
     Separator,
     defineSeparators,
     secondNavSeparators
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
 
   export let type: SpaceType
   export let descriptor: SpaceTypeDescriptor | undefined

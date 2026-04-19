@@ -20,8 +20,8 @@ import core, {
   type MeasureContext,
   type Ref,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import { getDataId, type StorageAdapter } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { getDataId, type StorageAdapter } from '@hcengineering/server-core'
 import { Readable } from 'stream'
 import { Doc as YDoc } from 'yjs'
 import { loadCollabJson, loadCollabYdoc, removeCollabYdoc, saveCollabJson, saveCollabYdoc } from '../storage'

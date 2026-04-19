@@ -14,19 +14,19 @@
 -->
 
 <script lang="ts">
-  import { getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
+  import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
   import {
     Context,
     ContextId,
     Process,
     SelectedExecutionContext,
     UpdateCriteriaComponent
-  } from '@intabiafusion/process'
-  import { AnyComponent, Component } from '@intabiafusion/ui'
+  } from '@hcengineering/process'
+  import { AnyComponent, Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext, getCriteriaEditor, getMockAttribute } from '../../utils'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'
-  import { AnyAttribute } from '@intabiafusion/core'
+  import { AnyAttribute } from '@hcengineering/core'
 
   export let process: Process
   export let value: string | undefined

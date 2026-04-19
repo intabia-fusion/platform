@@ -10,12 +10,12 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { type Class, type Doc, type DocumentQuery, type Ref } from '@intabiafusion/core'
-import presentation from '@intabiafusion/presentation'
-import { addNotification, NotificationSeverity } from '@intabiafusion/ui'
-import { getMetadata, translate } from '@intabiafusion/platform'
-import { type RelationDefinition } from '@intabiafusion/export'
-import { getCurrentLanguage } from '@intabiafusion/theme'
+import { type Class, type Doc, type DocumentQuery, type Ref } from '@hcengineering/core'
+import presentation from '@hcengineering/presentation'
+import { addNotification, NotificationSeverity } from '@hcengineering/ui'
+import { getMetadata, translate } from '@hcengineering/platform'
+import { type RelationDefinition } from '@hcengineering/export'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import ExportNotification from './components/ExportNotification.svelte'
 import plugin from './plugin'
 

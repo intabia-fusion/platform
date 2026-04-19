@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import core, { type Class, type Doc } from '@intabiafusion/core'
-import drive from '@intabiafusion/drive'
-import serverCore, { type ObjectDDParticipant } from '@intabiafusion/server-core'
-import serverDrive from '@intabiafusion/server-drive'
+import core, { type Class, type Doc } from '@hcengineering/core'
+import drive from '@hcengineering/drive'
+import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
+import serverDrive from '@hcengineering/server-drive'
 
-export { serverDriveId } from '@intabiafusion/server-drive'
+export { serverDriveId } from '@hcengineering/server-drive'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
+  import { Event } from '@hcengineering/calendar'
   import love from '../plugin'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import { MeetingMinutes, MeetingStatus } from '@intabiafusion/love'
-  import { Button, Icon, IconRedo, Label } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+  import { Button, Icon, IconRedo, Label } from '@hcengineering/ui'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
 
   export let value: Event

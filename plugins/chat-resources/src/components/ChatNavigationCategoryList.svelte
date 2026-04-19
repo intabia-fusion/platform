@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import card, { MasterTag } from '@intabiafusion/card'
-  import { Ref, SortingOrder } from '@intabiafusion/core'
-  import { SpecialView } from '@intabiafusion/workbench-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import view, { BuildModelKey, type ViewOptions } from '@intabiafusion/view'
+  import card, { MasterTag } from '@hcengineering/card'
+  import { Ref, SortingOrder } from '@hcengineering/core'
+  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import view, { BuildModelKey, type ViewOptions } from '@hcengineering/view'
 
   export let type: Ref<MasterTag>
 

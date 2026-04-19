@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Button, ButtonKind, ButtonSize, Label, showPopup } from '@intabiafusion/ui'
-  import { Project } from '@intabiafusion/controlled-documents'
+  import { Ref, Space } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Button, ButtonKind, ButtonSize, Label, showPopup } from '@hcengineering/ui'
+  import { Project } from '@hcengineering/controlled-documents'
   import { createEventDispatcher } from 'svelte'
 
   import ProjectSelectorPopup from './ProjectSelectorPopup.svelte'

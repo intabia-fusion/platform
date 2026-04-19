@@ -16,9 +16,9 @@
 -->
 
 <script lang="ts">
-  import { createQuery } from '@intabiafusion/presentation'
-  import { navigate } from '@intabiafusion/ui'
-  import type { Training, TrainingRequest } from '@intabiafusion/training'
+  import { createQuery } from '@hcengineering/presentation'
+  import { navigate } from '@hcengineering/ui'
+  import type { Training, TrainingRequest } from '@hcengineering/training'
   import training from '../plugin'
   import { trainingRequestRoute, TrainingRequestRouteTab } from '../routing/routes/trainingRequestRoute'
   import { canViewTrainingTraineesResults } from '../utils'

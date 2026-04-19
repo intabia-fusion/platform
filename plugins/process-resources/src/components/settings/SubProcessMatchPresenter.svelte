@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process, State } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process, State } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
 
   export let params: Record<string, any>

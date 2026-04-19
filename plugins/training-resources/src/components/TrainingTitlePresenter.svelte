@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { type Training } from '@intabiafusion/training'
-  import { DocNavLink } from '@intabiafusion/view-resources'
+  import { type Training } from '@hcengineering/training'
+  import { DocNavLink } from '@hcengineering/view-resources'
 
   export let value: Training
   export let disabled: boolean = false

@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Data, Ref, TypedSpace } from '@intabiafusion/core'
-  import { Employee } from '@intabiafusion/contact'
-  import { type ControlledDocument } from '@intabiafusion/controlled-documents'
+  import { Data, Ref, TypedSpace } from '@hcengineering/core'
+  import { Employee } from '@hcengineering/contact'
+  import { type ControlledDocument } from '@hcengineering/controlled-documents'
 
   import DocTeam from '../../document/DocTeam.svelte'
 

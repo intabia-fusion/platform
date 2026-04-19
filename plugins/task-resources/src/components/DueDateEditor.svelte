@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { DueDatePresenter, ButtonSize, ButtonKind } from '@intabiafusion/ui'
-  import { WithLookup } from '@intabiafusion/core'
-  import task, { Task } from '@intabiafusion/task'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { DueDatePresenter, ButtonSize, ButtonKind } from '@hcengineering/ui'
+  import { WithLookup } from '@hcengineering/core'
+  import task, { Task } from '@hcengineering/task'
+  import { statusStore } from '@hcengineering/view-resources'
 
   export let object: WithLookup<Task>
   export let width: string | undefined = undefined

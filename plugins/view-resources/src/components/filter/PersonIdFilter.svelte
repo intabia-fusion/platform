@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@intabiafusion/core'
-  import { Component } from '@intabiafusion/ui'
-  import contact from '@intabiafusion/contact'
-  import { Filter } from '@intabiafusion/view'
+  import { Ref, Space } from '@hcengineering/core'
+  import { Component } from '@hcengineering/ui'
+  import contact from '@hcengineering/contact'
+  import { Filter } from '@hcengineering/view'
 
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { createQuery, getClient } from '@intabiafusion/presentation'
+import { createQuery, getClient } from '@hcengineering/presentation'
 import {
   type PersonId,
   type Class,
@@ -25,12 +25,12 @@ import {
   SortingOrder,
   type Space,
   type Timestamp
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { derived, get, type Readable, writable } from 'svelte/store'
-import activity, { type ActivityMessage, type ActivityReference } from '@intabiafusion/activity'
-import attachment from '@intabiafusion/attachment'
-import { sortActivityMessages } from '@intabiafusion/activity-resources'
-import notification, { type DocNotifyContext } from '@intabiafusion/notification'
+import activity, { type ActivityMessage, type ActivityReference } from '@hcengineering/activity'
+import attachment from '@hcengineering/attachment'
+import { sortActivityMessages } from '@hcengineering/activity-resources'
+import notification, { type DocNotifyContext } from '@hcengineering/notification'
 
 export type LoadMode = 'forward' | 'backward'
 

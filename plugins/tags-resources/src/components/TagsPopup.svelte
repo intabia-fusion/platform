@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import presentation, { createQuery, getClient } from '@intabiafusion/presentation'
-  import { TagCategory, TagElement, findTagCategory } from '@intabiafusion/tags'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import { TagCategory, TagElement, findTagCategory } from '@hcengineering/tags'
   import {
     Button,
     EditWithIcon,
@@ -30,7 +30,7 @@
     resizeObserver,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { createTagElement } from '../utils'

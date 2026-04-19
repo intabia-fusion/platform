@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import { AccountRole, Doc, getCurrentAccount, PersonId, Ref, uniqueNotEmpty } from '@intabiafusion/core'
-  import { Card, isAdminUser } from '@intabiafusion/presentation'
-  import ui, { Button, Label } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import view from '@intabiafusion/view-resources/src/plugin'
+  import { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import { AccountRole, Doc, getCurrentAccount, PersonId, Ref, uniqueNotEmpty } from '@hcengineering/core'
+  import { Card, isAdminUser } from '@hcengineering/presentation'
+  import ui, { Button, Label } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
 
   import { getPersonRefsByPersonIdsCb, PersonRefPresenter } from '..'
 

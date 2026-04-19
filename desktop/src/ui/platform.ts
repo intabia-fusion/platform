@@ -21,146 +21,146 @@ import {
   getMetadata,
   platformId,
   setMetadata
-} from '@intabiafusion/platform'
+} from '@hcengineering/platform'
 
-import { activityId } from '@intabiafusion/activity'
-import aiBot, { aiBotId } from '@intabiafusion/ai-bot'
-import { attachmentId } from '@intabiafusion/attachment'
-import calendar, { calendarId } from '@intabiafusion/calendar'
-import { cardId } from '@intabiafusion/card'
-import { chunterId } from '@intabiafusion/chunter'
-import client, { clientId } from '@intabiafusion/client'
-import contactPlugin, { contactId } from '@intabiafusion/contact'
-import { converterId } from '@intabiafusion/converter'
-import { documentsId } from '@intabiafusion/controlled-documents'
-import { desktopPreferencesId } from '@intabiafusion/desktop-preferences'
-import { desktopDownloadsId } from '@intabiafusion/desktop-downloads'
-import { diffviewId } from '@intabiafusion/diffview'
-import { documentId } from '@intabiafusion/document'
-import { driveId } from '@intabiafusion/drive'
-import exportPlugin, { exportId } from '@intabiafusion/export'
-import gmail, { gmailId } from '@intabiafusion/gmail'
-import globalProfile, { globalProfileId, globalProfileRoute } from '@intabiafusion/global-profile'
-import guest, { guestId } from '@intabiafusion/guest'
-import { hrId } from '@intabiafusion/hr'
-import { imageCropperId } from '@intabiafusion/image-cropper'
-import { inventoryId } from '@intabiafusion/inventory'
-import { leadId } from '@intabiafusion/lead'
-import login, { loginId } from '@intabiafusion/login'
-import notification, { notificationId } from '@intabiafusion/notification'
-import onboard, { onboardId } from '@intabiafusion/onboard'
-import presence, { presenceId } from '@intabiafusion/presence'
-import { pulseId } from '@intabiafusion/pulse'
-import { processId } from '@intabiafusion/process'
-import { productsId } from '@intabiafusion/products'
-import { questionsId } from '@intabiafusion/questions'
-import { recruitId } from '@intabiafusion/recruit'
-import rekoni from '@intabiafusion/rekoni'
-import { requestId } from '@intabiafusion/request'
-import setting, { settingId } from '@intabiafusion/setting'
-import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@intabiafusion/support'
-import { surveyId } from '@intabiafusion/survey'
-import { tagsId } from '@intabiafusion/tags'
-import { taskId } from '@intabiafusion/task'
-import telegram, { telegramId } from '@intabiafusion/telegram'
-import { templatesId } from '@intabiafusion/templates'
-import { testManagementId } from '@intabiafusion/test-management'
-import { timeId } from '@intabiafusion/time'
-import tracker, { trackerId } from '@intabiafusion/tracker'
-import { trainingId } from '@intabiafusion/training'
-import uiPlugin, { getCurrentLocation, locationStorageKeyId, navigate, setLocationStorageKey } from '@intabiafusion/ui'
-import { mediaId } from '@intabiafusion/media'
-import { uploaderId } from '@intabiafusion/uploader'
-import recorder, { recorderId } from '@intabiafusion/recorder'
-import { viewId } from '@intabiafusion/view'
-import workbench, { workbenchId } from '@intabiafusion/workbench'
-import { mailId } from '@intabiafusion/mail'
-import { chatId } from '@intabiafusion/chat'
-import { inboxId } from '@intabiafusion/inbox'
-import { achievementId } from '@intabiafusion/achievement'
-import communication, { communicationId } from '@intabiafusion/communication'
-import { emojiId } from '@intabiafusion/emoji'
-import { hulyMailId } from '@intabiafusion/huly-mail'
-import { aiAssistantId } from '@intabiafusion/ai-assistant'
-import { ratingId } from '@intabiafusion/rating'
-import billingPlugin, { billingId } from '@intabiafusion/billing'
+import { activityId } from '@hcengineering/activity'
+import aiBot, { aiBotId } from '@hcengineering/ai-bot'
+import { attachmentId } from '@hcengineering/attachment'
+import calendar, { calendarId } from '@hcengineering/calendar'
+import { cardId } from '@hcengineering/card'
+import { chunterId } from '@hcengineering/chunter'
+import client, { clientId } from '@hcengineering/client'
+import contactPlugin, { contactId } from '@hcengineering/contact'
+import { converterId } from '@hcengineering/converter'
+import { documentsId } from '@hcengineering/controlled-documents'
+import { desktopPreferencesId } from '@hcengineering/desktop-preferences'
+import { desktopDownloadsId } from '@hcengineering/desktop-downloads'
+import { diffviewId } from '@hcengineering/diffview'
+import { documentId } from '@hcengineering/document'
+import { driveId } from '@hcengineering/drive'
+import exportPlugin, { exportId } from '@hcengineering/export'
+import gmail, { gmailId } from '@hcengineering/gmail'
+import globalProfile, { globalProfileId, globalProfileRoute } from '@hcengineering/global-profile'
+import guest, { guestId } from '@hcengineering/guest'
+import { hrId } from '@hcengineering/hr'
+import { imageCropperId } from '@hcengineering/image-cropper'
+import { inventoryId } from '@hcengineering/inventory'
+import { leadId } from '@hcengineering/lead'
+import login, { loginId } from '@hcengineering/login'
+import notification, { notificationId } from '@hcengineering/notification'
+import onboard, { onboardId } from '@hcengineering/onboard'
+import presence, { presenceId } from '@hcengineering/presence'
+import { pulseId } from '@hcengineering/pulse'
+import { processId } from '@hcengineering/process'
+import { productsId } from '@hcengineering/products'
+import { questionsId } from '@hcengineering/questions'
+import { recruitId } from '@hcengineering/recruit'
+import rekoni from '@hcengineering/rekoni'
+import { requestId } from '@hcengineering/request'
+import setting, { settingId } from '@hcengineering/setting'
+import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@hcengineering/support'
+import { surveyId } from '@hcengineering/survey'
+import { tagsId } from '@hcengineering/tags'
+import { taskId } from '@hcengineering/task'
+import telegram, { telegramId } from '@hcengineering/telegram'
+import { templatesId } from '@hcengineering/templates'
+import { testManagementId } from '@hcengineering/test-management'
+import { timeId } from '@hcengineering/time'
+import tracker, { trackerId } from '@hcengineering/tracker'
+import { trainingId } from '@hcengineering/training'
+import uiPlugin, { getCurrentLocation, locationStorageKeyId, navigate, setLocationStorageKey } from '@hcengineering/ui'
+import { mediaId } from '@hcengineering/media'
+import { uploaderId } from '@hcengineering/uploader'
+import recorder, { recorderId } from '@hcengineering/recorder'
+import { viewId } from '@hcengineering/view'
+import workbench, { workbenchId } from '@hcengineering/workbench'
+import { mailId } from '@hcengineering/mail'
+import { chatId } from '@hcengineering/chat'
+import { inboxId } from '@hcengineering/inbox'
+import { achievementId } from '@hcengineering/achievement'
+import communication, { communicationId } from '@hcengineering/communication'
+import { emojiId } from '@hcengineering/emoji'
+import { hulyMailId } from '@hcengineering/huly-mail'
+import { aiAssistantId } from '@hcengineering/ai-assistant'
+import { ratingId } from '@hcengineering/rating'
+import billingPlugin, { billingId } from '@hcengineering/billing'
 
-import '@intabiafusion/activity-assets'
-import '@intabiafusion/analytics-collector-assets'
-import '@intabiafusion/attachment-assets'
-import '@intabiafusion/calendar-assets'
-import '@intabiafusion/card-assets'
-import '@intabiafusion/chunter-assets'
-import '@intabiafusion/contact-assets'
-import '@intabiafusion/controlled-documents-assets'
-import '@intabiafusion/desktop-preferences-assets'
-import '@intabiafusion/desktop-downloads-assets'
-import '@intabiafusion/diffview-assets'
-import '@intabiafusion/document-assets'
-import '@intabiafusion/drive-assets'
-import '@intabiafusion/export-assets'
-import '@intabiafusion/gmail-assets'
-import '@intabiafusion/guest-assets'
-import '@intabiafusion/global-profile-assets'
-import '@intabiafusion/hr-assets'
-import '@intabiafusion/inventory-assets'
-import '@intabiafusion/lead-assets'
-import '@intabiafusion/login-assets'
-import '@intabiafusion/love-assets'
-import '@intabiafusion/notification-assets'
-import '@intabiafusion/preference-assets'
-import '@intabiafusion/print-assets'
-import '@intabiafusion/process-assets'
-import '@intabiafusion/products-assets'
-import '@intabiafusion/questions-assets'
-import '@intabiafusion/recruit-assets'
-import '@intabiafusion/request-assets'
-import '@intabiafusion/setting-assets'
-import '@intabiafusion/support-assets'
-import '@intabiafusion/survey-assets'
-import '@intabiafusion/tags-assets'
-import '@intabiafusion/task-assets'
-import '@intabiafusion/telegram-assets'
-import '@intabiafusion/templates-assets'
-import '@intabiafusion/test-management-assets'
-import '@intabiafusion/text-editor-assets'
-import '@intabiafusion/time-assets'
-import '@intabiafusion/tracker-assets'
-import '@intabiafusion/training-assets'
-import '@intabiafusion/uploader-assets'
-import '@intabiafusion/recorder-assets'
-import '@intabiafusion/view-assets'
-import '@intabiafusion/workbench-assets'
-import '@intabiafusion/mail-assets'
-import '@intabiafusion/chat-assets'
-import '@intabiafusion/inbox-assets'
-import '@intabiafusion/achievement-assets'
-import '@intabiafusion/emoji-assets'
-import '@intabiafusion/media-assets'
-import '@intabiafusion/communication-assets'
-import '@intabiafusion/billing-assets'
-import '@intabiafusion/huly-mail-assets'
-import '@intabiafusion/ai-assistant-assets'
-import '@intabiafusion/rating-assets'
+import '@hcengineering/activity-assets'
+import '@hcengineering/analytics-collector-assets'
+import '@hcengineering/attachment-assets'
+import '@hcengineering/calendar-assets'
+import '@hcengineering/card-assets'
+import '@hcengineering/chunter-assets'
+import '@hcengineering/contact-assets'
+import '@hcengineering/controlled-documents-assets'
+import '@hcengineering/desktop-preferences-assets'
+import '@hcengineering/desktop-downloads-assets'
+import '@hcengineering/diffview-assets'
+import '@hcengineering/document-assets'
+import '@hcengineering/drive-assets'
+import '@hcengineering/export-assets'
+import '@hcengineering/gmail-assets'
+import '@hcengineering/guest-assets'
+import '@hcengineering/global-profile-assets'
+import '@hcengineering/hr-assets'
+import '@hcengineering/inventory-assets'
+import '@hcengineering/lead-assets'
+import '@hcengineering/login-assets'
+import '@hcengineering/love-assets'
+import '@hcengineering/notification-assets'
+import '@hcengineering/preference-assets'
+import '@hcengineering/print-assets'
+import '@hcengineering/process-assets'
+import '@hcengineering/products-assets'
+import '@hcengineering/questions-assets'
+import '@hcengineering/recruit-assets'
+import '@hcengineering/request-assets'
+import '@hcengineering/setting-assets'
+import '@hcengineering/support-assets'
+import '@hcengineering/survey-assets'
+import '@hcengineering/tags-assets'
+import '@hcengineering/task-assets'
+import '@hcengineering/telegram-assets'
+import '@hcengineering/templates-assets'
+import '@hcengineering/test-management-assets'
+import '@hcengineering/text-editor-assets'
+import '@hcengineering/time-assets'
+import '@hcengineering/tracker-assets'
+import '@hcengineering/training-assets'
+import '@hcengineering/uploader-assets'
+import '@hcengineering/recorder-assets'
+import '@hcengineering/view-assets'
+import '@hcengineering/workbench-assets'
+import '@hcengineering/mail-assets'
+import '@hcengineering/chat-assets'
+import '@hcengineering/inbox-assets'
+import '@hcengineering/achievement-assets'
+import '@hcengineering/emoji-assets'
+import '@hcengineering/media-assets'
+import '@hcengineering/communication-assets'
+import '@hcengineering/billing-assets'
+import '@hcengineering/huly-mail-assets'
+import '@hcengineering/ai-assistant-assets'
+import '@hcengineering/rating-assets'
 
-import analyticsCollector, { analyticsCollectorId } from '@intabiafusion/analytics-collector'
-import { concatLink, coreId } from '@intabiafusion/core'
-import love, { loveId } from '@intabiafusion/love'
-import presentation, { createFileStorage, presentationId } from '@intabiafusion/presentation'
-import print, { printId } from '@intabiafusion/print'
-import sign from '@intabiafusion/sign'
-import textEditor, { textEditorId } from '@intabiafusion/text-editor'
+import analyticsCollector, { analyticsCollectorId } from '@hcengineering/analytics-collector'
+import { concatLink, coreId } from '@hcengineering/core'
+import love, { loveId } from '@hcengineering/love'
+import presentation, { createFileStorage, presentationId } from '@hcengineering/presentation'
+import print, { printId } from '@hcengineering/print'
+import sign from '@hcengineering/sign'
+import textEditor, { textEditorId } from '@hcengineering/text-editor'
 
-import { AccentColorType, initThemeStore, setDefaultLanguage, setForceAccent } from '@intabiafusion/theme'
+import { AccentColorType, initThemeStore, setDefaultLanguage, setForceAccent } from '@hcengineering/theme'
 import { configureNotifications } from './notifications'
-import { configureAnalyticsProviders } from '@intabiafusion/analytics-providers'
+import { configureAnalyticsProviders } from '@hcengineering/analytics-providers'
 import { Branding, Config } from './types'
 import { ipcMainExposed } from './typesUtils'
 
-import github, { githubId } from '@intabiafusion/github'
-import '@intabiafusion/github-assets'
-import { preferenceId } from '@intabiafusion/preference'
-import { uiId } from '@intabiafusion/ui/src/plugin'
+import github, { githubId } from '@hcengineering/github'
+import '@hcengineering/github-assets'
+import { preferenceId } from '@hcengineering/preference'
+import { uiId } from '@hcengineering/ui/src/plugin'
 
 function configureI18n (): void {
   // Add localization
@@ -171,7 +171,7 @@ function configureI18n (): void {
         /* webpackInclude: /\.json$/ */
         /* webpackMode: "lazy" */
         /* webpackChunkName: "lang-[request]" */
-        `@intabiafusion/platform/lang/${lang}.json`
+        `@hcengineering/platform/lang/${lang}.json`
       )
   )
   addStringsLoader(
@@ -181,128 +181,128 @@ function configureI18n (): void {
         /* webpackInclude: /\.json$/ */
         /* webpackMode: "lazy" */
         /* webpackChunkName: "lang-[request]" */
-        `@intabiafusion/core/lang/${lang}.json`
+        `@hcengineering/core/lang/${lang}.json`
       )
   )
   addStringsLoader(
     presentationId,
-    async (lang: string) => await import(`@intabiafusion/presentation/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/presentation/lang/${lang}.json`)
   )
   addStringsLoader(
     textEditorId,
-    async (lang: string) => await import(`@intabiafusion/text-editor-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/text-editor-assets/lang/${lang}.json`)
   )
-  addStringsLoader(uiId, async (lang: string) => await import(`@intabiafusion/ui/lang/${lang}.json`))
-  addStringsLoader(mediaId, async (lang: string) => await import(`@intabiafusion/media-assets/lang/${lang}.json`))
-  addStringsLoader(uploaderId, async (lang: string) => await import(`@intabiafusion/uploader-assets/lang/${lang}.json`))
-  addStringsLoader(recorderId, async (lang: string) => await import(`@intabiafusion/recorder-assets/lang/${lang}.json`))
-  addStringsLoader(activityId, async (lang: string) => await import(`@intabiafusion/activity-assets/lang/${lang}.json`))
+  addStringsLoader(uiId, async (lang: string) => await import(`@hcengineering/ui/lang/${lang}.json`))
+  addStringsLoader(mediaId, async (lang: string) => await import(`@hcengineering/media-assets/lang/${lang}.json`))
+  addStringsLoader(uploaderId, async (lang: string) => await import(`@hcengineering/uploader-assets/lang/${lang}.json`))
+  addStringsLoader(recorderId, async (lang: string) => await import(`@hcengineering/recorder-assets/lang/${lang}.json`))
+  addStringsLoader(activityId, async (lang: string) => await import(`@hcengineering/activity-assets/lang/${lang}.json`))
   addStringsLoader(
     attachmentId,
-    async (lang: string) => await import(`@intabiafusion/attachment-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/attachment-assets/lang/${lang}.json`)
   )
-  addStringsLoader(calendarId, async (lang: string) => await import(`@intabiafusion/calendar-assets/lang/${lang}.json`))
-  addStringsLoader(chunterId, async (lang: string) => await import(`@intabiafusion/chunter-assets/lang/${lang}.json`))
-  addStringsLoader(contactId, async (lang: string) => await import(`@intabiafusion/contact-assets/lang/${lang}.json`))
-  addStringsLoader(driveId, async (lang: string) => await import(`@intabiafusion/drive-assets/lang/${lang}.json`))
-  addStringsLoader(gmailId, async (lang: string) => await import(`@intabiafusion/gmail-assets/lang/${lang}.json`))
-  addStringsLoader(hrId, async (lang: string) => await import(`@intabiafusion/hr-assets/lang/${lang}.json`))
+  addStringsLoader(calendarId, async (lang: string) => await import(`@hcengineering/calendar-assets/lang/${lang}.json`))
+  addStringsLoader(chunterId, async (lang: string) => await import(`@hcengineering/chunter-assets/lang/${lang}.json`))
+  addStringsLoader(contactId, async (lang: string) => await import(`@hcengineering/contact-assets/lang/${lang}.json`))
+  addStringsLoader(driveId, async (lang: string) => await import(`@hcengineering/drive-assets/lang/${lang}.json`))
+  addStringsLoader(gmailId, async (lang: string) => await import(`@hcengineering/gmail-assets/lang/${lang}.json`))
+  addStringsLoader(hrId, async (lang: string) => await import(`@hcengineering/hr-assets/lang/${lang}.json`))
   addStringsLoader(
     inventoryId,
-    async (lang: string) => await import(`@intabiafusion/inventory-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/inventory-assets/lang/${lang}.json`)
   )
-  addStringsLoader(leadId, async (lang: string) => await import(`@intabiafusion/lead-assets/lang/${lang}.json`))
-  addStringsLoader(loginId, async (lang: string) => await import(`@intabiafusion/login-assets/lang/${lang}.json`))
+  addStringsLoader(leadId, async (lang: string) => await import(`@hcengineering/lead-assets/lang/${lang}.json`))
+  addStringsLoader(loginId, async (lang: string) => await import(`@hcengineering/login-assets/lang/${lang}.json`))
   addStringsLoader(
     notificationId,
-    async (lang: string) => await import(`@intabiafusion/notification-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/notification-assets/lang/${lang}.json`)
   )
-  addStringsLoader(onboardId, async (lang: string) => await import(`@intabiafusion/onboard-assets/lang/${lang}.json`))
+  addStringsLoader(onboardId, async (lang: string) => await import(`@hcengineering/onboard-assets/lang/${lang}.json`))
   addStringsLoader(
     preferenceId,
-    async (lang: string) => await import(`@intabiafusion/preference-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/preference-assets/lang/${lang}.json`)
   )
-  addStringsLoader(recruitId, async (lang: string) => await import(`@intabiafusion/recruit-assets/lang/${lang}.json`))
-  addStringsLoader(requestId, async (lang: string) => await import(`@intabiafusion/request-assets/lang/${lang}.json`))
-  addStringsLoader(settingId, async (lang: string) => await import(`@intabiafusion/setting-assets/lang/${lang}.json`))
-  addStringsLoader(supportId, async (lang: string) => await import(`@intabiafusion/support-assets/lang/${lang}.json`))
-  addStringsLoader(tagsId, async (lang: string) => await import(`@intabiafusion/tags-assets/lang/${lang}.json`))
-  addStringsLoader(taskId, async (lang: string) => await import(`@intabiafusion/task-assets/lang/${lang}.json`))
-  addStringsLoader(telegramId, async (lang: string) => await import(`@intabiafusion/telegram-assets/lang/${lang}.json`))
+  addStringsLoader(recruitId, async (lang: string) => await import(`@hcengineering/recruit-assets/lang/${lang}.json`))
+  addStringsLoader(requestId, async (lang: string) => await import(`@hcengineering/request-assets/lang/${lang}.json`))
+  addStringsLoader(settingId, async (lang: string) => await import(`@hcengineering/setting-assets/lang/${lang}.json`))
+  addStringsLoader(supportId, async (lang: string) => await import(`@hcengineering/support-assets/lang/${lang}.json`))
+  addStringsLoader(tagsId, async (lang: string) => await import(`@hcengineering/tags-assets/lang/${lang}.json`))
+  addStringsLoader(taskId, async (lang: string) => await import(`@hcengineering/task-assets/lang/${lang}.json`))
+  addStringsLoader(telegramId, async (lang: string) => await import(`@hcengineering/telegram-assets/lang/${lang}.json`))
   addStringsLoader(
     templatesId,
-    async (lang: string) => await import(`@intabiafusion/templates-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/templates-assets/lang/${lang}.json`)
   )
-  addStringsLoader(trackerId, async (lang: string) => await import(`@intabiafusion/tracker-assets/lang/${lang}.json`))
-  addStringsLoader(viewId, async (lang: string) => await import(`@intabiafusion/view-assets/lang/${lang}.json`))
+  addStringsLoader(trackerId, async (lang: string) => await import(`@hcengineering/tracker-assets/lang/${lang}.json`))
+  addStringsLoader(viewId, async (lang: string) => await import(`@hcengineering/view-assets/lang/${lang}.json`))
   addStringsLoader(
     workbenchId,
-    async (lang: string) => await import(`@intabiafusion/workbench-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/workbench-assets/lang/${lang}.json`)
   )
 
   addStringsLoader(
     desktopPreferencesId,
-    async (lang: string) => await import(`@intabiafusion/desktop-preferences-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/desktop-preferences-assets/lang/${lang}.json`)
   )
   addStringsLoader(
     desktopDownloadsId,
-    async (lang: string) => await import(`@intabiafusion/desktop-downloads-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/desktop-downloads-assets/lang/${lang}.json`)
   )
-  addStringsLoader(diffviewId, async (lang: string) => await import(`@intabiafusion/diffview-assets/lang/${lang}.json`))
-  addStringsLoader(documentId, async (lang: string) => await import(`@intabiafusion/document-assets/lang/${lang}.json`))
-  addStringsLoader(timeId, async (lang: string) => await import(`@intabiafusion/time-assets/lang/${lang}.json`))
-  addStringsLoader(githubId, async (lang: string) => await import(`@intabiafusion/github-assets/lang/${lang}.json`))
+  addStringsLoader(diffviewId, async (lang: string) => await import(`@hcengineering/diffview-assets/lang/${lang}.json`))
+  addStringsLoader(documentId, async (lang: string) => await import(`@hcengineering/document-assets/lang/${lang}.json`))
+  addStringsLoader(timeId, async (lang: string) => await import(`@hcengineering/time-assets/lang/${lang}.json`))
+  addStringsLoader(githubId, async (lang: string) => await import(`@hcengineering/github-assets/lang/${lang}.json`))
   addStringsLoader(
     documentsId,
-    async (lang: string) => await import(`@intabiafusion/controlled-documents-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/controlled-documents-assets/lang/${lang}.json`)
   )
-  addStringsLoader(productsId, async (lang: string) => await import(`@intabiafusion/products-assets/lang/${lang}.json`))
+  addStringsLoader(productsId, async (lang: string) => await import(`@hcengineering/products-assets/lang/${lang}.json`))
   addStringsLoader(
     questionsId,
-    async (lang: string) => await import(`@intabiafusion/questions-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/questions-assets/lang/${lang}.json`)
   )
-  addStringsLoader(trainingId, async (lang: string) => await import(`@intabiafusion/training-assets/lang/${lang}.json`))
-  addStringsLoader(guestId, async (lang: string) => await import(`@intabiafusion/guest-assets/lang/${lang}.json`))
+  addStringsLoader(trainingId, async (lang: string) => await import(`@hcengineering/training-assets/lang/${lang}.json`))
+  addStringsLoader(guestId, async (lang: string) => await import(`@hcengineering/guest-assets/lang/${lang}.json`))
   addStringsLoader(
     globalProfileId,
-    async (lang: string) => await import(`@intabiafusion/global-profile-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/global-profile-assets/lang/${lang}.json`)
   )
-  addStringsLoader(loveId, async (lang: string) => await import(`@intabiafusion/love-assets/lang/${lang}.json`))
-  addStringsLoader(printId, async (lang: string) => await import(`@intabiafusion/print-assets/lang/${lang}.json`))
-  addStringsLoader(exportId, async (lang: string) => await import(`@intabiafusion/export-assets/lang/${lang}.json`))
+  addStringsLoader(loveId, async (lang: string) => await import(`@hcengineering/love-assets/lang/${lang}.json`))
+  addStringsLoader(printId, async (lang: string) => await import(`@hcengineering/print-assets/lang/${lang}.json`))
+  addStringsLoader(exportId, async (lang: string) => await import(`@hcengineering/export-assets/lang/${lang}.json`))
   addStringsLoader(
     analyticsCollectorId,
-    async (lang: string) => await import(`@intabiafusion/analytics-collector-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/analytics-collector-assets/lang/${lang}.json`)
   )
   addStringsLoader(
     testManagementId,
-    async (lang: string) => await import(`@intabiafusion/test-management-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/test-management-assets/lang/${lang}.json`)
   )
-  addStringsLoader(surveyId, async (lang: string) => await import(`@intabiafusion/survey-assets/lang/${lang}.json`))
-  addStringsLoader(cardId, async (lang: string) => await import(`@intabiafusion/card-assets/lang/${lang}.json`))
-  addStringsLoader(mailId, async (lang: string) => await import(`@intabiafusion/mail-assets/lang/${lang}.json`))
-  addStringsLoader(chatId, async (lang: string) => await import(`@intabiafusion/chat-assets/lang/${lang}.json`))
-  addStringsLoader(inboxId, async (lang: string) => await import(`@intabiafusion/inbox-assets/lang/${lang}.json`))
-  addStringsLoader(processId, async (lang: string) => await import(`@intabiafusion/process-assets/lang/${lang}.json`))
+  addStringsLoader(surveyId, async (lang: string) => await import(`@hcengineering/survey-assets/lang/${lang}.json`))
+  addStringsLoader(cardId, async (lang: string) => await import(`@hcengineering/card-assets/lang/${lang}.json`))
+  addStringsLoader(mailId, async (lang: string) => await import(`@hcengineering/mail-assets/lang/${lang}.json`))
+  addStringsLoader(chatId, async (lang: string) => await import(`@hcengineering/chat-assets/lang/${lang}.json`))
+  addStringsLoader(inboxId, async (lang: string) => await import(`@hcengineering/inbox-assets/lang/${lang}.json`))
+  addStringsLoader(processId, async (lang: string) => await import(`@hcengineering/process-assets/lang/${lang}.json`))
   addStringsLoader(
     achievementId,
-    async (lang: string) => await import(`@intabiafusion/achievement-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/achievement-assets/lang/${lang}.json`)
   )
   addStringsLoader(
     communicationId,
-    async (lang: string) => await import(`@intabiafusion/communication-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/communication-assets/lang/${lang}.json`)
   )
-  addStringsLoader(emojiId, async (lang: string) => await import(`@intabiafusion/emoji-assets/lang/${lang}.json`))
-  addStringsLoader(billingId, async (lang: string) => await import(`@intabiafusion/billing-assets/lang/${lang}.json`))
+  addStringsLoader(emojiId, async (lang: string) => await import(`@hcengineering/emoji-assets/lang/${lang}.json`))
+  addStringsLoader(billingId, async (lang: string) => await import(`@hcengineering/billing-assets/lang/${lang}.json`))
   addStringsLoader(
     hulyMailId,
-    async (lang: string) => await import(`@intabiafusion/huly-mail-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/huly-mail-assets/lang/${lang}.json`)
   )
   addStringsLoader(
     aiAssistantId,
-    async (lang: string) => await import(`@intabiafusion/ai-assistant-assets/lang/${lang}.json`)
+    async (lang: string) => await import(`@hcengineering/ai-assistant-assets/lang/${lang}.json`)
   )
-  addStringsLoader(ratingId, async (lang: string) => await import(`@intabiafusion/rating-assets/lang/${lang}.json`))
+  addStringsLoader(ratingId, async (lang: string) => await import(`@hcengineering/rating-assets/lang/${lang}.json`))
 }
 
 export class PlatformBranding {
@@ -438,90 +438,90 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   addLocation(coreId, async () => ({ default: async () => ({}) }))
   addLocation(presentationId, async () => ({ default: async () => ({}) }))
 
-  addLocation(clientId, async () => await import('@intabiafusion/client-resources'))
-  addLocation(loginId, async () => await import('@intabiafusion/login-resources'))
-  addLocation(onboardId, async () => await import('@intabiafusion/onboard-resources'))
-  addLocation(workbenchId, async () => await import('@intabiafusion/workbench-resources'))
-  addLocation(viewId, async () => await import('@intabiafusion/view-resources'))
-  addLocation(converterId, async () => await import('@intabiafusion/converter-resources'))
-  addLocation(taskId, async () => await import('@intabiafusion/task-resources'))
-  addLocation(contactId, async () => await import('@intabiafusion/contact-resources'))
-  addLocation(chunterId, async () => await import('@intabiafusion/chunter-resources'))
-  addLocation(recruitId, async () => await import('@intabiafusion/recruit-resources'))
-  addLocation(activityId, async () => await import('@intabiafusion/activity-resources'))
-  addLocation(settingId, async () => await import('@intabiafusion/setting-resources'))
-  addLocation(leadId, async () => await import('@intabiafusion/lead-resources'))
-  addLocation(telegramId, async () => await import('@intabiafusion/telegram-resources'))
-  addLocation(attachmentId, async () => await import('@intabiafusion/attachment-resources'))
-  addLocation(gmailId, async () => await import('@intabiafusion/gmail-resources'))
-  addLocation(imageCropperId, async () => await import('@intabiafusion/image-cropper-resources'))
-  addLocation(inventoryId, async () => await import('@intabiafusion/inventory-resources'))
-  addLocation(templatesId, async () => await import('@intabiafusion/templates-resources'))
-  addLocation(notificationId, async () => await import('@intabiafusion/notification-resources'))
-  addLocation(tagsId, async () => await import('@intabiafusion/tags-resources'))
-  addLocation(calendarId, async () => await import('@intabiafusion/calendar-resources'))
-  addLocation(analyticsCollectorId, async () => await import('@intabiafusion/analytics-collector-resources'))
-  addLocation(aiBotId, async () => await import('@intabiafusion/ai-bot-resources'))
+  addLocation(clientId, async () => await import('@hcengineering/client-resources'))
+  addLocation(loginId, async () => await import('@hcengineering/login-resources'))
+  addLocation(onboardId, async () => await import('@hcengineering/onboard-resources'))
+  addLocation(workbenchId, async () => await import('@hcengineering/workbench-resources'))
+  addLocation(viewId, async () => await import('@hcengineering/view-resources'))
+  addLocation(converterId, async () => await import('@hcengineering/converter-resources'))
+  addLocation(taskId, async () => await import('@hcengineering/task-resources'))
+  addLocation(contactId, async () => await import('@hcengineering/contact-resources'))
+  addLocation(chunterId, async () => await import('@hcengineering/chunter-resources'))
+  addLocation(recruitId, async () => await import('@hcengineering/recruit-resources'))
+  addLocation(activityId, async () => await import('@hcengineering/activity-resources'))
+  addLocation(settingId, async () => await import('@hcengineering/setting-resources'))
+  addLocation(leadId, async () => await import('@hcengineering/lead-resources'))
+  addLocation(telegramId, async () => await import('@hcengineering/telegram-resources'))
+  addLocation(attachmentId, async () => await import('@hcengineering/attachment-resources'))
+  addLocation(gmailId, async () => await import('@hcengineering/gmail-resources'))
+  addLocation(imageCropperId, async () => await import('@hcengineering/image-cropper-resources'))
+  addLocation(inventoryId, async () => await import('@hcengineering/inventory-resources'))
+  addLocation(templatesId, async () => await import('@hcengineering/templates-resources'))
+  addLocation(notificationId, async () => await import('@hcengineering/notification-resources'))
+  addLocation(tagsId, async () => await import('@hcengineering/tags-resources'))
+  addLocation(calendarId, async () => await import('@hcengineering/calendar-resources'))
+  addLocation(analyticsCollectorId, async () => await import('@hcengineering/analytics-collector-resources'))
+  addLocation(aiBotId, async () => await import('@hcengineering/ai-bot-resources'))
 
-  addLocation(trackerId, async () => await import('@intabiafusion/tracker-resources'))
-  addLocation(hrId, async () => await import('@intabiafusion/hr-resources'))
-  addLocation(requestId, async () => await import('@intabiafusion/request-resources'))
-  addLocation(driveId, async () => await import('@intabiafusion/drive-resources'))
-  addLocation(supportId, async () => await import('@intabiafusion/support-resources'))
-  addLocation(diffviewId, async () => await import('@intabiafusion/diffview-resources'))
-  addLocation(documentId, async () => await import('@intabiafusion/document-resources'))
-  addLocation(timeId, async () => await import('@intabiafusion/time-resources'))
-  addLocation(questionsId, async () => await import('@intabiafusion/questions-resources'))
-  addLocation(trainingId, async () => await import('@intabiafusion/training-resources'))
-  addLocation(productsId, async () => await import('@intabiafusion/products-resources'))
-  addLocation(documentsId, async () => await import('@intabiafusion/controlled-documents-resources'))
-  addLocation(mediaId, async () => await import('@intabiafusion/media-resources'))
-  addLocation(uploaderId, async () => await import('@intabiafusion/uploader-resources'))
-  addLocation(recorderId, async () => await import('@intabiafusion/recorder-resources'))
-  addLocation(presenceId, async () => await import('@intabiafusion/presence-resources'))
-  addLocation(githubId, async () => await import(/* webpackChunkName: "github" */ '@intabiafusion/github-resources'))
+  addLocation(trackerId, async () => await import('@hcengineering/tracker-resources'))
+  addLocation(hrId, async () => await import('@hcengineering/hr-resources'))
+  addLocation(requestId, async () => await import('@hcengineering/request-resources'))
+  addLocation(driveId, async () => await import('@hcengineering/drive-resources'))
+  addLocation(supportId, async () => await import('@hcengineering/support-resources'))
+  addLocation(diffviewId, async () => await import('@hcengineering/diffview-resources'))
+  addLocation(documentId, async () => await import('@hcengineering/document-resources'))
+  addLocation(timeId, async () => await import('@hcengineering/time-resources'))
+  addLocation(questionsId, async () => await import('@hcengineering/questions-resources'))
+  addLocation(trainingId, async () => await import('@hcengineering/training-resources'))
+  addLocation(productsId, async () => await import('@hcengineering/products-resources'))
+  addLocation(documentsId, async () => await import('@hcengineering/controlled-documents-resources'))
+  addLocation(mediaId, async () => await import('@hcengineering/media-resources'))
+  addLocation(uploaderId, async () => await import('@hcengineering/uploader-resources'))
+  addLocation(recorderId, async () => await import('@hcengineering/recorder-resources'))
+  addLocation(presenceId, async () => await import('@hcengineering/presence-resources'))
+  addLocation(githubId, async () => await import(/* webpackChunkName: "github" */ '@hcengineering/github-resources'))
   addLocation(
     desktopPreferencesId,
     async () =>
-      await import(/* webpackChunkName: "desktop-preferences" */ '@intabiafusion/desktop-preferences-resources')
+      await import(/* webpackChunkName: "desktop-preferences" */ '@hcengineering/desktop-preferences-resources')
   )
   addLocation(
     desktopDownloadsId,
-    async () => await import(/* webpackChunkName: "desktop-downloads" */ '@intabiafusion/desktop-downloads-resources')
+    async () => await import(/* webpackChunkName: "desktop-downloads" */ '@hcengineering/desktop-downloads-resources')
   )
-  addLocation(guestId, () => import(/* webpackChunkName: "guest" */ '@intabiafusion/guest-resources'))
+  addLocation(guestId, () => import(/* webpackChunkName: "guest" */ '@hcengineering/guest-resources'))
   addLocation(
     globalProfileId,
-    () => import(/* webpackChunkName: "global-profile" */ '@intabiafusion/global-profile-resources')
+    () => import(/* webpackChunkName: "global-profile" */ '@hcengineering/global-profile-resources')
   )
-  addLocation(loveId, () => import(/* webpackChunkName: "love" */ '@intabiafusion/love-resources'))
-  addLocation(printId, () => import(/* webpackChunkName: "print" */ '@intabiafusion/print-resources'))
-  addLocation(exportId, () => import(/* webpackChunkName: "export" */ '@intabiafusion/export-resources'))
-  addLocation(textEditorId, () => import(/* webpackChunkName: "text-editor" */ '@intabiafusion/text-editor-resources'))
+  addLocation(loveId, () => import(/* webpackChunkName: "love" */ '@hcengineering/love-resources'))
+  addLocation(printId, () => import(/* webpackChunkName: "print" */ '@hcengineering/print-resources'))
+  addLocation(exportId, () => import(/* webpackChunkName: "export" */ '@hcengineering/export-resources'))
+  addLocation(textEditorId, () => import(/* webpackChunkName: "text-editor" */ '@hcengineering/text-editor-resources'))
   addLocation(
     testManagementId,
-    () => import(/* webpackChunkName: "test-management" */ '@intabiafusion/test-management-resources')
+    () => import(/* webpackChunkName: "test-management" */ '@hcengineering/test-management-resources')
   )
-  addLocation(surveyId, () => import(/* webpackChunkName: "survey" */ '@intabiafusion/survey-resources'))
-  addLocation(cardId, () => import(/* webpackChunkName: "card" */ '@intabiafusion/card-resources'))
-  addLocation(chatId, () => import(/* webpackChunkName: "chat" */ '@intabiafusion/chat-resources'))
-  addLocation(inboxId, () => import(/* webpackChunkName: "inbox" */ '@intabiafusion/inbox-resources'))
-  addLocation(processId, () => import(/* webpackChunkName: "process" */ '@intabiafusion/process-resources'))
-  addLocation(achievementId, () => import(/* webpackChunkName: "achievement" */ '@intabiafusion/achievement-resources'))
+  addLocation(surveyId, () => import(/* webpackChunkName: "survey" */ '@hcengineering/survey-resources'))
+  addLocation(cardId, () => import(/* webpackChunkName: "card" */ '@hcengineering/card-resources'))
+  addLocation(chatId, () => import(/* webpackChunkName: "chat" */ '@hcengineering/chat-resources'))
+  addLocation(inboxId, () => import(/* webpackChunkName: "inbox" */ '@hcengineering/inbox-resources'))
+  addLocation(processId, () => import(/* webpackChunkName: "process" */ '@hcengineering/process-resources'))
+  addLocation(achievementId, () => import(/* webpackChunkName: "achievement" */ '@hcengineering/achievement-resources'))
   addLocation(
     communicationId,
-    () => import(/* webpackChunkName: "communication" */ '@intabiafusion/communication-resources')
+    () => import(/* webpackChunkName: "communication" */ '@hcengineering/communication-resources')
   )
-  addLocation(emojiId, () => import(/* webpackChunkName: "achievement" */ '@intabiafusion/emoji-resources'))
+  addLocation(emojiId, () => import(/* webpackChunkName: "achievement" */ '@hcengineering/emoji-resources'))
   if ((config.BILLING_URL ?? '') !== '') {
-    addLocation(billingId, () => import(/* webpackChunkName: "billing" */ '@intabiafusion/billing-resources'))
+    addLocation(billingId, () => import(/* webpackChunkName: "billing" */ '@hcengineering/billing-resources'))
   }
-  addLocation(hulyMailId, () => import(/* webpackChunkName: "huly-mail" */ '@intabiafusion/huly-mail-resources'))
+  addLocation(hulyMailId, () => import(/* webpackChunkName: "huly-mail" */ '@hcengineering/huly-mail-resources'))
   addLocation(
     aiAssistantId,
-    () => import(/* webpackChunkName: "ai-assistant" */ '@intabiafusion/ai-assistant-resources')
+    () => import(/* webpackChunkName: "ai-assistant" */ '@hcengineering/ai-assistant-resources')
   )
-  addLocation(ratingId, async () => await import(/* webpackChunkName: "rating" */ '@intabiafusion/rating-resources'))
+  addLocation(ratingId, async () => await import(/* webpackChunkName: "rating" */ '@hcengineering/rating-resources'))
 
   setMetadata(client.metadata.FilterModel, 'ui')
   setMetadata(client.metadata.ExtraFilter, disabledFeatures)

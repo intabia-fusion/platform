@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { Question, QuestionKind } from '@intabiafusion/survey'
+  import { Question, QuestionKind } from '@hcengineering/survey'
   import {
     ButtonIcon,
     EditBox,
@@ -25,7 +25,7 @@
     eventToHTMLElement,
     showPopup,
     tooltip
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import survey from '../plugin'

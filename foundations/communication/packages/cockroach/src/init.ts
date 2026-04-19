@@ -14,7 +14,7 @@
 //
 
 import type postgres from 'postgres'
-import { Domain } from '@intabiafusion/communication-sdk-types'
+import { Domain } from '@hcengineering/communication-sdk-types'
 
 /* eslint-disable @typescript-eslint/naming-convention */
 

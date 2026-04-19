@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { AccountUuid } from '@intabiafusion/core'
-  import { employeeByAccountStore, PersonPresenter } from '@intabiafusion/contact-resources'
-  import contact, { Person } from '@intabiafusion/contact'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { AccountUuid } from '@hcengineering/core'
+  import { employeeByAccountStore, PersonPresenter } from '@hcengineering/contact-resources'
+  import contact, { Person } from '@hcengineering/contact'
+  import { createQuery } from '@hcengineering/presentation'
 
   export let collaborator: AccountUuid
 

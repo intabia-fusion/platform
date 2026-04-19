@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type WorkspaceUuid, type MeasureContext } from '@intabiafusion/core'
+import { type WorkspaceUuid, type MeasureContext } from '@hcengineering/core'
 
 import type {
   AddSessionActive,
@@ -21,10 +21,10 @@ import type {
   ConnectionSocket,
   Session,
   SessionManager
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
-import { type Response } from '@intabiafusion/rpc'
-import type { Token } from '@intabiafusion/server-token'
+import { type Response } from '@hcengineering/rpc'
+import type { Token } from '@hcengineering/server-token'
 
 export interface WebsocketData {
   connectionSocket?: ConnectionSocket

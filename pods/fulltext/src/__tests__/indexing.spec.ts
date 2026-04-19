@@ -11,10 +11,10 @@ import core, {
   type WorkspaceDataId,
   type WorkspaceInfoWithStatus,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { WorkspaceManager } from '../manager'
 
-import { createPlatformQueue, parseQueueConfig } from '@intabiafusion/kafka'
+import { createPlatformQueue, parseQueueConfig } from '@hcengineering/kafka'
 import {
   createDummyStorageAdapter,
   QueueTopic,
@@ -23,8 +23,8 @@ import {
   type FulltextListener,
   type IndexedDoc,
   type QueueWorkspaceMessage
-} from '@intabiafusion/server-core'
-import { decodeToken, generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 import { createDoc, test, type TestDocument } from './minmodel'
 

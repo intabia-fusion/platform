@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { Class, DocumentQuery, Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@intabiafusion/ui'
-  import type { IconSize } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import documents, { type Document } from '@intabiafusion/controlled-documents'
+  import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import documents, { type Document } from '@hcengineering/controlled-documents'
 
   import documentsRes from '../plugin'
   import DocumentsPopup from './DocumentsPopup.svelte'

@@ -49,11 +49,11 @@ import {
   type UserStatus,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import type { Asset, Resource } from '@intabiafusion/platform'
-import type { LiveQuery } from '@intabiafusion/query'
-import type { RateLimitInfo, ReqId, Request, Response } from '@intabiafusion/rpc'
-import type { Token } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import type { Asset, Resource } from '@hcengineering/platform'
+import type { LiveQuery } from '@hcengineering/query'
+import type { RateLimitInfo, ReqId, Request, Response } from '@hcengineering/rpc'
+import type { Token } from '@hcengineering/server-token'
 
 import type { DbAdapter, DomainHelper } from './adapter'
 import { type PlatformQueue, type PlatformQueueProducer, type QueueTopic } from './queue'

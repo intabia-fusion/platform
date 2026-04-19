@@ -1,5 +1,5 @@
-import attachment, { type Attachment } from '@intabiafusion/attachment'
-import { getClient as getCollaboratorClient } from '@intabiafusion/collaborator-client'
+import attachment, { type Attachment } from '@hcengineering/attachment'
+import { getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
 import documents, {
   type ChangeControl,
   type ControlledDocument,
@@ -11,7 +11,7 @@ import documents, {
   createChangeControl,
   createControlledDocFromTemplate,
   createDocumentTemplate
-} from '@intabiafusion/controlled-documents'
+} from '@hcengineering/controlled-documents'
 import core, {
   type AttachedData,
   type BackupClient,
@@ -24,9 +24,9 @@ import core, {
   makeDocCollabId,
   systemAccountUuid,
   type Blob
-} from '@intabiafusion/core'
-import { createClient, getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 import { findAll, getOuterHTML } from 'domutils'
 import { parseDocument } from 'htmlparser2'
 

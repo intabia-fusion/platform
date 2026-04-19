@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Context, Func, Process, ProcessFunction, SelectedContext } from '@intabiafusion/process'
+  import core, { AnyAttribute, Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Context, Func, Process, ProcessFunction, SelectedContext } from '@hcengineering/process'
   import {
     ButtonIcon,
     CheckBox,
@@ -28,8 +28,8 @@
     Scroller,
     showPopup,
     Submenu
-  } from '@intabiafusion/ui'
-  import { AttributeCategory } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import FallbackEditor from '../contextEditors/FallbackEditor.svelte'

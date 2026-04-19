@@ -2,8 +2,8 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import core, { Doc, TxOperations } from '@intabiafusion/core'
-import { type Location } from '@intabiafusion/ui'
+import core, { Doc, TxOperations } from '@hcengineering/core'
+import { type Location } from '@hcengineering/ui'
 
 import guest from './index'
 

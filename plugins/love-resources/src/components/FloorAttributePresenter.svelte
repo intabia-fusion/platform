@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ObjectMention } from '@intabiafusion/view-resources'
-  import { Floor } from '@intabiafusion/love'
-  import { Ref } from '@intabiafusion/core'
+  import { ObjectMention } from '@hcengineering/view-resources'
+  import { Floor } from '@hcengineering/love'
+  import { Ref } from '@hcengineering/core'
 
   import { floors } from '../stores'
 

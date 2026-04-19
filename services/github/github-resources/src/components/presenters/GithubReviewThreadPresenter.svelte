@@ -3,17 +3,17 @@
 //
 -->
 <script lang="ts">
-  import core, { PersonId, Ref, WithLookup, getCurrentAccount } from '@intabiafusion/core'
-  import { GithubPullRequest, GithubReviewComment, GithubReviewThread } from '@intabiafusion/github'
+  import core, { PersonId, Ref, WithLookup, getCurrentAccount } from '@hcengineering/core'
+  import { GithubPullRequest, GithubReviewComment, GithubReviewThread } from '@hcengineering/github'
 
-  import { ActivityMessageHeader, ActivityMessageTemplate } from '@intabiafusion/activity-resources'
-  import { Person } from '@intabiafusion/contact'
-  import { EmployeePresenter, getPersonByPersonId, getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { ReferenceInput } from '@intabiafusion/text-editor-resources'
-  import { Button, Component, Label, PaletteColorIndexes, getPlatformColor, themeStore } from '@intabiafusion/ui'
-  import diffview from '@intabiafusion/diffview'
+  import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
+  import { Person } from '@hcengineering/contact'
+  import { EmployeePresenter, getPersonByPersonId, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { ReferenceInput } from '@hcengineering/text-editor-resources'
+  import { Button, Component, Label, PaletteColorIndexes, getPlatformColor, themeStore } from '@hcengineering/ui'
+  import diffview from '@hcengineering/diffview'
   import github from '../../plugin'
   import ReviewCommentPresenter from './ReviewCommentPresenter.svelte'
   import { githubConfiguration } from '../../configuration'

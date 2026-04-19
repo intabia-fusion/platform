@@ -14,10 +14,10 @@
 //
 
 import type { NextFunction, Request, Response } from 'express'
-import { extractToken, getAccountClient } from '@intabiafusion/server-client'
-import { AccountRole, systemAccountUuid } from '@intabiafusion/core'
-import { Token } from '@intabiafusion/server-token'
-import type { LoginInfo, LoginInfoRequest, WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { extractToken, getAccountClient } from '@hcengineering/server-client'
+import { AccountRole, systemAccountUuid } from '@hcengineering/core'
+import { Token } from '@hcengineering/server-token'
+import type { LoginInfo, LoginInfoRequest, WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 export interface RequestWithAuth extends Request {
   token?: Token

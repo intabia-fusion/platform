@@ -2,9 +2,9 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { focusActionWithAvailability } from '@intabiafusion/questions-resources'
-import type { TrainingRequest } from '@intabiafusion/training'
-import { getClient } from '@intabiafusion/presentation'
+import { focusActionWithAvailability } from '@hcengineering/questions-resources'
+import type { TrainingRequest } from '@hcengineering/training'
+import { getClient } from '@hcengineering/presentation'
 import { canCancelTrainingRequest, getCurrentEmployeeRef } from '../utils'
 
 export const trainingRequestCancelAction = focusActionWithAvailability<TrainingRequest>(

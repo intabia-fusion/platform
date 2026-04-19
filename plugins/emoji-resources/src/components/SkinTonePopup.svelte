@@ -4,8 +4,8 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
   import { createEventDispatcher } from 'svelte'
-  import { Label, closeTooltip, ModernCheckbox } from '@intabiafusion/ui'
-  import { Emoji } from '@intabiafusion/emoji'
+  import { Label, closeTooltip, ModernCheckbox } from '@hcengineering/ui'
+  import { Emoji } from '@hcengineering/emoji'
   import { skinTones } from '../types'
   import { getEmojiSkins } from '../utils'
 

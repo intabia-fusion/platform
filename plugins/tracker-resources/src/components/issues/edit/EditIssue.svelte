@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyleBoxCollabEditor } from '@intabiafusion/attachment-resources'
-  import { Class, Doc, Ref, WithLookup } from '@intabiafusion/core'
-  import { Panel } from '@intabiafusion/panel'
+  import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
+  import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import { Panel } from '@hcengineering/panel'
   import presentation, {
     ActionContext,
     ComponentExtensions,
     contextStore,
     createQuery,
     getClient
-  } from '@intabiafusion/presentation'
-  import setting, { settingId } from '@intabiafusion/setting'
-  import { taskTypeStore, typeStore } from '@intabiafusion/task-resources'
-  import { Issue, TrackerEvents } from '@intabiafusion/tracker'
+  } from '@hcengineering/presentation'
+  import setting, { settingId } from '@hcengineering/setting'
+  import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
+  import { Issue, TrackerEvents } from '@hcengineering/tracker'
   import {
     AnyComponent,
     Button,
@@ -38,12 +38,12 @@
     createFocusManager,
     getCurrentResolvedLocation,
     navigate
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { DocNavLink, ParentsNavigator, showMenu, RelationsEditor } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { DocNavLink, ParentsNavigator, showMenu, RelationsEditor } from '@hcengineering/view-resources'
   import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { Analytics } from '@hcengineering/analytics'
 
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { generateIssueShortLink, getIssueIdByIdentifier } from '../../../issues'

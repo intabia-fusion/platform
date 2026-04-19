@@ -16,7 +16,7 @@ import { type GaxiosResponse } from 'gaxios'
 import { gmail_v1 } from 'googleapis'
 import sanitizeHtml from 'sanitize-html'
 
-import { type MeasureContext, TxOperations } from '@intabiafusion/core'
+import { type MeasureContext, TxOperations } from '@hcengineering/core'
 import {
   createMessages,
   parseEmailHeader,
@@ -27,9 +27,9 @@ import {
   getMessageExtra,
   MailHeader,
   SyncOptions
-} from '@intabiafusion/mail-common'
-import { type KeyValueClient } from '@intabiafusion/kvs-client'
-import { AccountClient, isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@intabiafusion/account-client'
+} from '@hcengineering/mail-common'
+import { type KeyValueClient } from '@hcengineering/kvs-client'
+import { AccountClient, isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 import { IMessageManager } from '../types'
 import config from '../../config'

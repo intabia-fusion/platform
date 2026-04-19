@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RegionInfo, AccountAggregatedInfo } from '@intabiafusion/account-client'
+  import { RegionInfo, AccountAggregatedInfo } from '@hcengineering/account-client'
   import {
     AccountUuid,
     groupByArray,
@@ -13,15 +13,15 @@
     systemAccountUuid,
     versionToString,
     type WorkspaceInfoWithStatus
-  } from '@intabiafusion/core'
-  import { getEmbeddedLabel, getMetadata } from '@intabiafusion/platform'
+  } from '@hcengineering/core'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, {
     copyTextToClipboard,
     isAdminUser,
     MessageBox,
     type OverviewStatistics,
     type WorkspaceStatistics
-  } from '@intabiafusion/presentation'
+  } from '@hcengineering/presentation'
   import {
     Button,
     ButtonMenu,
@@ -39,8 +39,8 @@
     SearchEdit,
     showPopup,
     ticker
-  } from '@intabiafusion/ui'
-  import { workbenchId } from '@intabiafusion/workbench'
+  } from '@hcengineering/ui'
+  import { workbenchId } from '@hcengineering/workbench'
   import { getAccountClient, getAllWorkspaces, getRegionInfo, performWorkspaceOperation } from '../utils'
 
   $: now = $ticker

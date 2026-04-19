@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import {} from '@intabiafusion/core'
-import { mergeIds } from '@intabiafusion/platform'
-import rating, { ratingId } from '@intabiafusion/rating'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
+import {} from '@hcengineering/core'
+import { mergeIds } from '@hcengineering/platform'
+import rating, { ratingId } from '@hcengineering/rating'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
 
 export default mergeIds(ratingId, rating, {
   component: {

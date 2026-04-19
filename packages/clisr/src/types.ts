@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/measurements'
-import { type Response, type Request } from '@intabiafusion/rpc'
+import { type MeasureContext } from '@hcengineering/measurements'
+import { type Response, type Request } from '@hcengineering/rpc'
 
 /**
  * @public

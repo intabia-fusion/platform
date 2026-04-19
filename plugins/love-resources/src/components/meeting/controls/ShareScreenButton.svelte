@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@intabiafusion/ui'
+  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
   import { isShareWithSound, liveKitClient } from '../../../utils'
   import ShareSettingPopup from '../../ShareSettingPopup.svelte'
   import love from '../../../plugin'

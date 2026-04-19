@@ -1,5 +1,5 @@
-import { type DefSeparators } from '@intabiafusion/ui'
-import { type RoomLanguage } from '@intabiafusion/love'
+import { type DefSeparators } from '@hcengineering/ui'
+import { type RoomLanguage } from '@hcengineering/love'
 
 export interface ResizeInitParams {
   x: number

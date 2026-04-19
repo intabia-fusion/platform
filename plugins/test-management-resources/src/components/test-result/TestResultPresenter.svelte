@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { TestCase, TestResult } from '@intabiafusion/test-management'
-  import { WithLookup } from '@intabiafusion/core'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { TestCase, TestResult } from '@hcengineering/test-management'
+  import { WithLookup } from '@hcengineering/core'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import testManagement from '../../plugin'
 

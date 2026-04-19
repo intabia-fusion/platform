@@ -23,10 +23,10 @@
     TEMPLATE_PREFIX,
     createChangeControl,
     createDocumentTemplate
-  } from '@intabiafusion/controlled-documents'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { type AttachedData, type Class, type Data, type Ref, type Mixin, generateId } from '@intabiafusion/core'
-  import { MessageBox, getClient } from '@intabiafusion/presentation'
+  } from '@hcengineering/controlled-documents'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { type AttachedData, type Class, type Data, type Ref, type Mixin, generateId } from '@hcengineering/core'
+  import { MessageBox, getClient } from '@hcengineering/presentation'
   import {
     AnySvelteComponent,
     addNotification,
@@ -35,9 +35,9 @@
     NotificationSeverity,
     ModernWizardDialog,
     type IWizardStep
-  } from '@intabiafusion/ui'
-  import { getCurrentLanguage } from '@intabiafusion/theme'
-  import { translate } from '@intabiafusion/platform'
+  } from '@hcengineering/ui'
+  import { getCurrentLanguage } from '@hcengineering/theme'
+  import { translate } from '@hcengineering/platform'
 
   import documents from '../../plugin'
   import { getProjectDocumentLink } from '../../navigation'

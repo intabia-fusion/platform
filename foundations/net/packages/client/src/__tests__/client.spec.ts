@@ -1,8 +1,8 @@
-import type { ContainerEndpointRef, ContainerUuid, GetOptions } from '@intabiafusion/network-core'
+import type { ContainerEndpointRef, ContainerUuid, GetOptions } from '@hcengineering/network-core'
 import { NetworkClientImpl } from '../client'
 
 // Mock BackRPCClient used inside NetworkClientImpl
-jest.mock('@intabiafusion/network-backrpc', () => {
+jest.mock('@hcengineering/network-backrpc', () => {
   return {
     BackRPCClient: jest.fn().mockImplementation(() => ({
       waitConnection: jest.fn().mockResolvedValue(undefined),

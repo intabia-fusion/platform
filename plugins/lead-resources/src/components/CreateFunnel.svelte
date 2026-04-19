@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import core, {
     getCurrentAccount,
     Ref,
@@ -24,17 +24,17 @@
     WithLookup,
     notEmpty,
     AccountUuid
-  } from '@intabiafusion/core'
-  import lead, { Funnel, LeadEvents } from '@intabiafusion/lead'
-  import presentation, { getClient, SpaceCreateCard } from '@intabiafusion/presentation'
-  import task, { ProjectType } from '@intabiafusion/task'
-  import ui, { Component, EditBox, Label, Toggle, ToggleWithLabel } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import lead, { Funnel, LeadEvents } from '@hcengineering/lead'
+  import presentation, { getClient, SpaceCreateCard } from '@hcengineering/presentation'
+  import task, { ProjectType } from '@hcengineering/task'
+  import ui, { Component, EditBox, Label, Toggle, ToggleWithLabel } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
   import leadRes from '../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
-  import view from '@intabiafusion/view'
+  import { Analytics } from '@hcengineering/analytics'
+  import view from '@hcengineering/view'
 
   export let funnel: Funnel | undefined = undefined
   const dispatch = createEventDispatcher()

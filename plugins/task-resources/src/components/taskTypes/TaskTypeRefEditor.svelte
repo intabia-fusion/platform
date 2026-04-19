@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { TaskType } from '@intabiafusion/task'
-  import { DropdownLabels, DropdownTextItem } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { TaskType } from '@hcengineering/task'
+  import { DropdownLabels, DropdownTextItem } from '@hcengineering/ui'
 
   export let label: IntlString
   export let value: Ref<TaskType>[] = []

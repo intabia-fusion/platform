@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Markup } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { EmptyMarkup } from '@intabiafusion/text'
-  import textEditor from '@intabiafusion/text-editor'
-  import { ButtonSize, Label } from '@intabiafusion/ui'
+  import { Markup } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { EmptyMarkup } from '@hcengineering/text'
+  import textEditor from '@hcengineering/text-editor'
+  import { ButtonSize, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import StyledTextEditor from './StyledTextEditor.svelte'

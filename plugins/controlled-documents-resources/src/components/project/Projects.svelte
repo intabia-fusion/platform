@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref, WithLookup } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { DocumentSpace, DocumentSpaceType, Project } from '@intabiafusion/controlled-documents'
+  import { Class, Ref, WithLookup } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { DocumentSpace, DocumentSpaceType, Project } from '@hcengineering/controlled-documents'
   import documents from '../../plugin'
   import ProjectsView from './ProjectsView.svelte'
 

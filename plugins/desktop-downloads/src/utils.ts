@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getResource } from '@intabiafusion/platform'
+import { getResource } from '@hcengineering/platform'
 import { type DownloadItem } from './types'
 import plugin from './plugin'
 

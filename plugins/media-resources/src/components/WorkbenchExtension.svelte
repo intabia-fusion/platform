@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { pushRootBarComponent } from '@intabiafusion/ui'
+  import { pushRootBarComponent } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   import media from '../plugin'

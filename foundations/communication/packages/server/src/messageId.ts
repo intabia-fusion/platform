@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MessageID } from '@intabiafusion/communication-types'
+import { MessageID } from '@hcengineering/communication-types'
 
 const EPOCH_OFFSET_US = BigInt(Date.UTC(2022, 0, 1)) * 1000n
 const monoStartNs = process.hrtime.bigint()

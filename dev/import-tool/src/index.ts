@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { concatLink, TxOperations } from '@intabiafusion/core'
+import { concatLink, TxOperations } from '@hcengineering/core'
 import {
   ClickupImporter,
   defaultDocumentPreprocessors,
@@ -23,9 +23,9 @@ import {
   HulyFormatImporter,
   importNotion,
   type Logger
-} from '@intabiafusion/importer'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClientPlugin, { createClient, getAccountClient } from '@intabiafusion/server-client'
+} from '@hcengineering/importer'
+import { setMetadata } from '@hcengineering/platform'
+import serverClientPlugin, { createClient, getAccountClient } from '@hcengineering/server-client'
 import { program } from 'commander'
 import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'

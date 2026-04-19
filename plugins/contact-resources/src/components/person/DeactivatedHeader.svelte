@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
-  import contact from '@intabiafusion/contact'
-  import type { IntlString } from '@intabiafusion/platform'
+  import { Label } from '@hcengineering/ui'
+  import contact from '@hcengineering/contact'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let header: IntlString = contact.string.DeactivatedAccount
 </script>

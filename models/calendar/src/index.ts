@@ -27,8 +27,8 @@ import {
   type Schedule,
   type ScheduleAvailability,
   type Visibility
-} from '@intabiafusion/calendar'
-import { type Contact, type Employee } from '@intabiafusion/contact'
+} from '@hcengineering/calendar'
+import { type Contact, type Employee } from '@hcengineering/contact'
 import {
   DateRangeMode,
   IndexKind,
@@ -39,7 +39,7 @@ import {
   type Timestamp,
   type PersonId,
   AccountRole
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ArrOf,
   Collection,
@@ -56,23 +56,23 @@ import {
   TypeTimestamp,
   UX,
   type Builder
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import contact from '@intabiafusion/model-contact'
-import core, { defineCollaborators, TAttachedDoc, TClass, TDoc } from '@intabiafusion/model-core'
-import view, { createAction } from '@intabiafusion/model-view'
-import notification from '@intabiafusion/notification'
-import setting from '@intabiafusion/setting'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import workbench from '@intabiafusion/model-workbench'
-import { WidgetType } from '@intabiafusion/workbench'
-import preference, { TPreference } from '@intabiafusion/model-preference'
-import { calendarIntegrationKind } from '@intabiafusion/calendar'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import contact from '@hcengineering/model-contact'
+import core, { defineCollaborators, TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
+import view, { createAction } from '@hcengineering/model-view'
+import notification from '@hcengineering/notification'
+import setting from '@hcengineering/setting'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import workbench from '@hcengineering/model-workbench'
+import { WidgetType } from '@hcengineering/workbench'
+import preference, { TPreference } from '@hcengineering/model-preference'
+import { calendarIntegrationKind } from '@hcengineering/calendar'
 
 import calendar from './plugin'
 
-export * from '@intabiafusion/calendar'
-export { calendarId } from '@intabiafusion/calendar'
+export * from '@hcengineering/calendar'
+export { calendarId } from '@hcengineering/calendar'
 export { calendarOperation } from './migration'
 
 export const DOMAIN_CALENDAR = 'calendar' as Domain

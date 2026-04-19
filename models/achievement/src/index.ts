@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import core from '@intabiafusion/core'
-import { type Builder } from '@intabiafusion/model'
-import contact from '@intabiafusion/contact'
-import presentation from '@intabiafusion/model-presentation'
+import core from '@hcengineering/core'
+import { type Builder } from '@hcengineering/model'
+import contact from '@hcengineering/contact'
+import presentation from '@hcengineering/model-presentation'
 
 import achievement from './plugin'
 
 export { default } from './plugin'
-export { achievementId } from '@intabiafusion/achievement'
+export { achievementId } from '@hcengineering/achievement'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(

@@ -13,8 +13,8 @@
   limitations under the License.
 */
 
-import { generateToken } from '@intabiafusion/server-token'
-import { systemAccountUuid } from '@intabiafusion/core'
+import { generateToken } from '@hcengineering/server-token'
+import { systemAccountUuid } from '@hcengineering/core'
 import { writeFile, mkdir } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import { existsSync } from 'fs'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, generateId } from '@intabiafusion/core'
-  import { ActionContext } from '@intabiafusion/presentation'
-  import { Scroller, tableSP } from '@intabiafusion/ui'
-  import { BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref, generateId } from '@hcengineering/core'
+  import { ActionContext } from '@hcengineering/presentation'
+  import { Scroller, tableSP } from '@hcengineering/ui'
+  import { BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { onDestroy, onMount } from 'svelte'
   import { type ViewletContext, ViewletContextStore, viewletContextStore } from '../viewletContextStore'
   import RelationshipTable from './RelationshipTable.svelte'

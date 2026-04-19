@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@intabiafusion/core'
+  import { type Blob, type Ref } from '@hcengineering/core'
   import AudioPlayer from './AudioPlayer.svelte'
 
   export let value: Ref<Blob>

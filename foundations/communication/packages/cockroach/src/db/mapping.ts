@@ -29,8 +29,8 @@ import {
   MessageMeta,
   ThreadMeta,
   BlobID
-} from '@intabiafusion/communication-types'
-import { Domain } from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-types'
+import { Domain } from '@hcengineering/communication-sdk-types'
 
 import { DbModel } from '../schema'
 

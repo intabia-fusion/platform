@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { RecurringRule } from '@intabiafusion/calendar'
+  import { RecurringRule } from '@hcengineering/calendar'
   import {
     Button,
     CheckBox,
@@ -25,7 +25,7 @@
     eventToHTMLElement,
     getUserTimezone,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
   import RRulePresenter from './RRulePresenter.svelte'

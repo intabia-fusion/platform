@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import type { AnySvelteComponent } from '@intabiafusion/ui'
-  import { AppItem } from '@intabiafusion/workbench-resources'
-  import { RoomType } from '@intabiafusion/love'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { AppItem } from '@hcengineering/workbench-resources'
+  import { RoomType } from '@hcengineering/love'
   import { currentRoom } from '../../../stores'
-  import { state } from '@intabiafusion/media-resources'
+  import { state } from '@hcengineering/media-resources'
   import love from '../../../plugin'
   import { lkSessionConnected, ScreenSharingState, screenSharingState } from '../../../liveKitClient'
 

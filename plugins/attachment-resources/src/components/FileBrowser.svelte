@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
-  import contact, { getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import core, { Class, Ref, Space } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label, Loading, navigate, TabList, getLocation } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { Attachment } from '@hcengineering/attachment'
+  import contact, { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import core, { Class, Ref, Space } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label, Loading, navigate, TabList, getLocation } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   import { dateFileBrowserFilters, FileBrowserSortMode, fileTypeFileBrowserFilters, sortModeToOptionObject } from '..'
   import attachment from '../plugin'

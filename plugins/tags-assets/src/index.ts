@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import tags from '@intabiafusion/tags'
+import { loadMetadata } from '@hcengineering/platform'
+import tags from '@hcengineering/tags'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(tags.icon, {

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closeWidget, closeWidgetTab } from '@intabiafusion/workbench-resources'
-  import { Widget } from '@intabiafusion/workbench'
-  import { ChatWidgetTab } from '@intabiafusion/chunter'
+  import { closeWidget, closeWidgetTab } from '@hcengineering/workbench-resources'
+  import { Widget } from '@hcengineering/workbench'
+  import { ChatWidgetTab } from '@hcengineering/chunter'
 
   import ChannelSidebarView from './ChannelSidebarView.svelte'
   import chunter from '../plugin'

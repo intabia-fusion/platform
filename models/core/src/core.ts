@@ -63,7 +63,7 @@ import {
   type Version,
   type VersionableClass,
   type TransientTTL
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   Hidden,
   Index,
@@ -79,8 +79,8 @@ import {
   TypeString,
   TypeTimestamp,
   UX
-} from '@intabiafusion/model'
-import { getEmbeddedLabel, type IntlString, type Plugin } from '@intabiafusion/platform'
+} from '@hcengineering/model'
+import { getEmbeddedLabel, type IntlString, type Plugin } from '@hcengineering/platform'
 import core from './component'
 
 // C O R E

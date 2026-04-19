@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Component, Label } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import type { Class, Doc } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Component, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let value: Class<Doc>
 

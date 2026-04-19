@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@intabiafusion/core'
-import { generateToken } from '@intabiafusion/server-token'
+import { MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { generateToken } from '@hcengineering/server-token'
 import { AccessToken, EgressInfo } from 'livekit-server-sdk'
-import { getClient as getBillingClient, LiveKitSessionData } from '@intabiafusion/billing-client'
+import { getClient as getBillingClient, LiveKitSessionData } from '@hcengineering/billing-client'
 import config from './config'
 
 interface LiveKitSession {

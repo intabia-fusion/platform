@@ -23,9 +23,9 @@ import {
   type ColorMetaName,
   type ColorMetaNameOrHex
 } from '../drawingUtils'
-import { ThemeVariant, type ThemeVariantType } from '@intabiafusion/theme'
+import { ThemeVariant, type ThemeVariantType } from '@hcengineering/theme'
 
-jest.mock('@intabiafusion/theme', () => ({
+jest.mock('@hcengineering/theme', () => ({
   ThemeVariant: {
     Dark: 'dark',
     Light: 'light'
@@ -81,7 +81,7 @@ const StubPlatformColors: Record<string, { light: any, dark: any }> = {
     }
   }
 }
-jest.mock('@intabiafusion/ui', () => ({
+jest.mock('@hcengineering/ui', () => ({
   getPlatformColorByName: jest.fn().mockImplementation((name: string, darkTheme: boolean) => {
     const colorDefinition = StubPlatformColors[name]
     if (colorDefinition == null) {

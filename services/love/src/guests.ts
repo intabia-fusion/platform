@@ -1,14 +1,14 @@
-import { MeasureContext, readOnlyGuestAccountUuid, Ref } from '@intabiafusion/core'
-import { MeetingMinutes, MeetingStatus, ParticipantMetadata } from '@intabiafusion/love'
+import { MeasureContext, readOnlyGuestAccountUuid, Ref } from '@hcengineering/core'
+import { MeetingMinutes, MeetingStatus, ParticipantMetadata } from '@hcengineering/love'
 import { RoomServiceClient } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
-import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@intabiafusion/account-client'
-import { decodeToken, generateToken, Token } from '@intabiafusion/server-token'
+import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { decodeToken, generateToken, Token } from '@hcengineering/server-token'
 import config from './config'
 import { Request, Response } from 'express'
 import { createToken, decodeMeetingToken, extractToken, getRoomName } from './utils'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { combineName } from '@intabiafusion/contact'
+import { getAccountClient } from '@hcengineering/server-client'
+import { combineName } from '@hcengineering/contact'
 
 export class GuestManager {
   constructor (

@@ -21,8 +21,8 @@ import {
   FindPeersParams,
   SortingOrder,
   Peer
-} from '@intabiafusion/communication-types'
-import { Domain } from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-types'
+import { Domain } from '@hcengineering/communication-sdk-types'
 
 import { BaseDb } from './base'
 import { DbModel, DbModelFilter } from '../schema'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Association, AssociationQuery, Class, Client, Doc, Ref, Type } from '@intabiafusion/core'
-  import { Asset, getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
-  import { createQuery, getAttributePresenterClass, getClient, hasResource } from '@intabiafusion/presentation'
-  import { DropdownLabelsIntl, Loading, resizeObserver } from '@intabiafusion/ui'
-  import { BuildModelKey, Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import core, { AnyAttribute, Association, AssociationQuery, Class, Client, Doc, Ref, Type } from '@hcengineering/core'
+  import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import { createQuery, getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
+  import { DropdownLabelsIntl, Loading, resizeObserver } from '@hcengineering/ui'
+  import { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'

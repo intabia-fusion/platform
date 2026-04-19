@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { Icon, IconSize, Label } from '@intabiafusion/ui'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { Icon, IconSize, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { flip } from 'svelte/animate'
 

@@ -5,9 +5,9 @@
 
   import ServerManagerGeneral from './ServerManagerGeneral.svelte'
 
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import presentation from '@intabiafusion/presentation'
-  import { Breadcrumb, ButtonIcon, Header, IconClose, IconSettings, Switcher, TabItem } from '@intabiafusion/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation from '@hcengineering/presentation'
+  import { Breadcrumb, ButtonIcon, Header, IconClose, IconSettings, Switcher, TabItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   const dispatch = createEventDispatcher()

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { SelectPopup } from '@intabiafusion/ui'
-  import notification, { DocNotificationMode, DocNotifyContext } from '@intabiafusion/notification'
+  import { SelectPopup } from '@hcengineering/ui'
+  import notification, { DocNotificationMode, DocNotifyContext } from '@hcengineering/notification'
 
   import Mention from './icons/Mention.svelte'
-  import { Doc, getCurrentAccount, Ref } from '@intabiafusion/core'
+  import { Doc, getCurrentAccount, Ref } from '@hcengineering/core'
   import { InboxNotificationsClientImpl } from '../inboxNotificationsClient'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { getCurrentEmployeeSpace } from '@intabiafusion/contact'
+  import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 
   export let value: Doc | Doc[]
 

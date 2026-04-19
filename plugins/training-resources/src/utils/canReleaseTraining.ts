@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { TrainingState, type Training } from '@intabiafusion/training'
+import { TrainingState, type Training } from '@hcengineering/training'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export function canReleaseTraining (object: Training): boolean {

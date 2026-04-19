@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, getName, Person } from '@intabiafusion/contact'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Employee, getName, Person } from '@hcengineering/contact'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import {
     getPlatformAvatarColorDef,
     getPlatformAvatarColorForTextDef,
@@ -24,9 +24,9 @@
     LabelAndProps,
     themeStore,
     tooltip
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { ObjectPresenterType } from '@hcengineering/view'
   import Avatar from './Avatar.svelte'
   import PersonElement from './PersonElement.svelte'
 

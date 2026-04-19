@@ -24,7 +24,7 @@
     "tsBuildInfoFile": ".build/build.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@intabiafusion/audio-dsp": ["../../../packages/audio-dsp/src/index.ts"]
+      "@hcengineering/audio-dsp": ["../../../packages/audio-dsp/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

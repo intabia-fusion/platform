@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TagCategory } from '@intabiafusion/tags'
+  import { TagCategory } from '@hcengineering/tags'
 
   export let value: TagCategory
 </script>

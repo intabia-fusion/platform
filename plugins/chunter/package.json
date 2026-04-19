@@ -1,6 +1,6 @@
 {
-  "name": "@intabiafusion/chunter",
-  "version": "1.0.0",
+  "name": "@hcengineering/chunter",
+  "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -22,7 +22,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -37,18 +37,18 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@intabiafusion/activity": "workspace:^1.0.0",
-    "@intabiafusion/contact": "workspace:^1.0.0",
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/notification": "workspace:^1.0.0",
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/ui": "workspace:^1.0.0",
-    "@intabiafusion/view": "workspace:^1.0.0",
-    "@intabiafusion/workbench": "workspace:^1.0.0",
-    "@intabiafusion/retry": "workspace:^1.0.0",
+    "@hcengineering/activity": "workspace:^0.7.0",
+    "@hcengineering/contact": "workspace:^0.7.0",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/notification": "workspace:^0.7.0",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/ui": "workspace:^0.7.0",
+    "@hcengineering/view": "workspace:^0.7.0",
+    "@hcengineering/workbench": "workspace:^0.7.0",
+    "@hcengineering/retry": "workspace:^0.7.17",
     "fast-equals": "^5.2.2"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/platform",
   "publishConfig": {
     "access": "public"
   }

@@ -15,10 +15,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
 
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { getMetadata } from '@intabiafusion/platform'
-  import { pushRootBarComponent } from '@intabiafusion/ui'
-  import presentation from '@intabiafusion/presentation'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { getMetadata } from '@hcengineering/platform'
+  import { pushRootBarComponent } from '@hcengineering/ui'
+  import presentation from '@hcengineering/presentation'
 
   import billing from '../plugin'
   import { getWorkspaceInfo } from '../utils'

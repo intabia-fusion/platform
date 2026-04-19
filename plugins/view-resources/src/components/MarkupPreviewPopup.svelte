@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MessageViewer } from '@intabiafusion/presentation'
-  import { deviceOptionsStore as deviceInfo, resizeObserver } from '@intabiafusion/ui'
+  import { MessageViewer } from '@hcengineering/presentation'
+  import { deviceOptionsStore as deviceInfo, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let value: string

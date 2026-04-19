@@ -36,8 +36,8 @@ import core, {
   type TxResult,
   type TxWorkspaceEvent,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import { PlatformError, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { PlatformError, unknownError } from '@hcengineering/platform'
 import { createHash, type Hash } from 'crypto'
 import fs from 'fs'
 import type { DbAdapter } from './adapter'

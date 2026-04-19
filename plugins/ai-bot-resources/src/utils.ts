@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 import { writable } from 'svelte/store'
-import contact, { type SocialIdentity } from '@intabiafusion/contact'
-import { createQuery, onClient } from '@intabiafusion/presentation'
-import { aiBotEmailSocialKey } from '@intabiafusion/ai-bot'
+import contact, { type SocialIdentity } from '@hcengineering/contact'
+import { createQuery, onClient } from '@hcengineering/presentation'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 
 export const aiBotSocialIdentityStore = writable<SocialIdentity>()
 const identityQuery = createQuery(true)

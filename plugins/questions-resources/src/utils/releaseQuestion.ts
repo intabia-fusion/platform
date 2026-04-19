@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Question } from '@intabiafusion/questions'
-import { type TxOperations } from '@intabiafusion/core'
+import type { Question } from '@hcengineering/questions'
+import { type TxOperations } from '@hcengineering/core'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 import { updateQuestion } from './updateQuestion'
 

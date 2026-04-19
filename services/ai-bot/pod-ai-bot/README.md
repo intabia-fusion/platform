@@ -183,7 +183,7 @@ Get AI identity for joining a room.
 rush install
 
 # Build
-rush build --to @intabiafusion/pod-ai-bot
+rush build --to @hcengineering/pod-ai-bot
 
 # Run locally
 rushx run-local

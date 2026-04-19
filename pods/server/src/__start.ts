@@ -3,25 +3,25 @@
 //
 
 // Add this to the VERY top of the first file loaded in your app
-import { Analytics } from '@intabiafusion/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import contactPlugin from '@intabiafusion/contact'
-import { newMetrics, setOperationLogProfiling } from '@intabiafusion/core'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { setMetadata } from '@intabiafusion/platform'
+import { Analytics } from '@hcengineering/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import contactPlugin from '@hcengineering/contact'
+import { newMetrics, setOperationLogProfiling } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { setMetadata } from '@hcengineering/platform'
 
-import { serverConfigFromEnv } from '@intabiafusion/server'
-import serverCalendar from '@intabiafusion/server-calendar'
-import serverCard from '@intabiafusion/server-card'
+import { serverConfigFromEnv } from '@hcengineering/server'
+import serverCalendar from '@hcengineering/server-calendar'
+import serverCard from '@hcengineering/server-card'
 import serverCore, {
   initStatisticsContext,
   loadBrandingMap,
   type StorageConfiguration,
   type WorkspaceStatistics
-} from '@intabiafusion/server-core'
-import serverNotification from '@intabiafusion/server-notification'
-import { storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import serverNotification from '@hcengineering/server-notification'
+import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken from '@hcengineering/server-token'
 import { join } from 'path'
 import { start } from '.'
 import { profileStart, profileStop } from './profiler'

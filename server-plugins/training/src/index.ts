@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { plugin, type Plugin, type Resource } from '@intabiafusion/platform'
-import { TypeMatchFuncResource } from '@intabiafusion/server-notification'
-import type { TrainingRequest } from '@intabiafusion/training'
-import { type Presenter } from '@intabiafusion/server-activity'
+import { plugin, type Plugin, type Resource } from '@hcengineering/platform'
+import { TypeMatchFuncResource } from '@hcengineering/server-notification'
+import type { TrainingRequest } from '@hcengineering/training'
+import { type Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public

@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, DOMAIN_STATUS, Ref, RefTo } from '@intabiafusion/core'
-  import { TypeRef } from '@intabiafusion/model'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Component, DropdownLabelsIntl, Label } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view-resources/src/plugin'
-  import card from '@intabiafusion/card'
+  import core, { AnyAttribute, Class, Doc, DOMAIN_STATUS, Ref, RefTo } from '@hcengineering/core'
+  import { TypeRef } from '@hcengineering/model'
+  import { getClient } from '@hcengineering/presentation'
+  import { Component, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view-resources/src/plugin'
+  import card from '@hcengineering/card'
   import { createEventDispatcher } from 'svelte'
-  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@intabiafusion/ui'
-  import contactPlugin from '@intabiafusion/contact'
+  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
+  import contactPlugin from '@hcengineering/contact'
 
   export let type: RefTo<Doc> | undefined
   export let attribute: AnyAttribute | undefined

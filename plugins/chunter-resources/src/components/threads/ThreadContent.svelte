@@ -1,10 +1,10 @@
 <script lang="ts">
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
-  import { Label } from '@intabiafusion/ui'
-  import core, { Doc, Ref, Space } from '@intabiafusion/core'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
-  import notification from '@intabiafusion/notification'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import { Label } from '@hcengineering/ui'
+  import core, { Doc, Ref, Space } from '@hcengineering/core'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import notification from '@hcengineering/notification'
+  import { createQuery, getClient } from '@hcengineering/presentation'
 
   import ThreadParentMessage from './ThreadParentPresenter.svelte'
   import ReverseChannelScrollView from '../ReverseChannelScrollView.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Person } from '@intabiafusion/contact'
+import type { Person } from '@hcengineering/contact'
 import {
   AttachedDoc,
   Attribute,
@@ -29,14 +29,14 @@ import {
   SpaceType,
   SpaceTypeDescriptor,
   TypedSpace
-} from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { AnyComponent, ComponentExtensionId } from '@intabiafusion/ui'
-import { Action, IconProps, ViewletDescriptor } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
+import { Action, IconProps, ViewletDescriptor } from '@hcengineering/view'
 
 export * from './utils'
-export type { Rank } from '@intabiafusion/rank'
+export type { Rank } from '@hcengineering/rank'
 
 /** @public */
 export interface DocWithRank extends Doc {

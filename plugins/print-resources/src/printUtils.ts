@@ -11,16 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Class, Client, Doc, Ref } from '@intabiafusion/core'
-import type { Location } from '@intabiafusion/ui'
-import { Analytics } from '@intabiafusion/analytics'
-import guest, { type PublicLink, createPublicLink } from '@intabiafusion/guest'
-import view from '@intabiafusion/view'
-import { getDocTitle, getObjectLinkFragment } from '@intabiafusion/view-resources'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation, { getFileUrl } from '@intabiafusion/presentation'
-import { printToPDF } from '@intabiafusion/print'
-import { signPDF } from '@intabiafusion/sign'
+import type { Class, Client, Doc, Ref } from '@hcengineering/core'
+import type { Location } from '@hcengineering/ui'
+import { Analytics } from '@hcengineering/analytics'
+import guest, { type PublicLink, createPublicLink } from '@hcengineering/guest'
+import view from '@hcengineering/view'
+import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
+import { getMetadata } from '@hcengineering/platform'
+import presentation, { getFileUrl } from '@hcengineering/presentation'
+import { printToPDF } from '@hcengineering/print'
+import { signPDF } from '@hcengineering/sign'
 
 export interface PdfResult {
   blobId: string

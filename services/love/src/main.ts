@@ -16,9 +16,9 @@ import {
   getClient as getAccountClientRaw,
   isWorkspaceLoginInfo,
   type AccountClient
-} from '@intabiafusion/account-client'
-import { createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
+} from '@hcengineering/account-client'
+import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
   parseRoomName,
   ParticipantMetadata,
@@ -28,14 +28,14 @@ import {
   QueueMeetingUpdateMetadataMessage,
   QueueWebhookMeetingMessage,
   RoomMetadata
-} from '@intabiafusion/love'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient from '@intabiafusion/server-client'
+} from '@hcengineering/love'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient from '@hcengineering/server-client'
 
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@intabiafusion/server-core'
-import { storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken, { generateToken } from '@intabiafusion/server-token'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@hcengineering/server-core'
+import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import cors from 'cors'
 import express, { type Request } from 'express'
 import {

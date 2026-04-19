@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Doc, Domain, Ref, type BackupStatus, type WorkspaceUuid } from '@intabiafusion/core'
+import { Doc, Domain, Ref, type BackupStatus, type WorkspaceUuid } from '@hcengineering/core'
 export * from './storage'
 
 /**

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import { upgradeDownloadProgress } from '@intabiafusion/presentation'
+  import { getMetadata } from '@hcengineering/platform'
+  import { upgradeDownloadProgress } from '@hcengineering/presentation'
   import {
     Button,
     Component,
@@ -25,10 +25,10 @@
     fetchMetadataLocalStorage,
     location,
     setMetadataLocalStorage
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { connect, disconnect, error, errorActions } from '../connect'
 
-  import workbench, { workbenchId } from '@intabiafusion/workbench'
+  import workbench, { workbenchId } from '@hcengineering/workbench'
   import { onDestroy } from 'svelte'
   import workbenchRes from '../plugin'
   import { workspaceCreating } from '../utils'

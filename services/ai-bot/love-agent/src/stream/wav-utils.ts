@@ -27,7 +27,7 @@ import {
   normalizeAudio as normalizeAudioDsp,
   createWavFileFromFloat,
   WAV_HEADER_SIZE
-} from '@intabiafusion/audio-dsp'
+} from '@hcengineering/audio-dsp'
 
 /**
  * Creates a WAV file header for PCM audio data

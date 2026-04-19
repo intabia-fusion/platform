@@ -4,17 +4,17 @@
 //
 -->
 <script lang="ts">
-  import { Employee } from '@intabiafusion/contact'
-  import { UserBoxItems, getPermittedPersons, permissionsStore } from '@intabiafusion/contact-resources'
+  import { Employee } from '@hcengineering/contact'
+  import { UserBoxItems, getPermittedPersons, permissionsStore } from '@hcengineering/contact-resources'
   import documents, {
     ControlledDocument,
     ControlledDocumentState,
     DocumentRequest
-  } from '@intabiafusion/controlled-documents'
-  import { Class, Ref, TxOperations } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { RequestStatus } from '@intabiafusion/request'
-  import { Label, ModernDialog, showPopup } from '@intabiafusion/ui'
+  } from '@hcengineering/controlled-documents'
+  import { Class, Ref, TxOperations } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { RequestStatus } from '@hcengineering/request'
+  import { Label, ModernDialog, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import documentsRes from '../plugin'

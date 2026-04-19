@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { makeLocalesTest } from '@intabiafusion/platform'
+import { makeLocalesTest } from '@hcengineering/platform'
 
 it(
   'Locales are equale',

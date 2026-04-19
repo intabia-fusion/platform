@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref } from '@intabiafusion/core'
-  import drive, { type Drive } from '@intabiafusion/drive'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { showMenu } from '@intabiafusion/view-resources'
+  import { type Ref } from '@hcengineering/core'
+  import drive, { type Drive } from '@hcengineering/drive'
+  import { createQuery } from '@hcengineering/presentation'
+  import { showMenu } from '@hcengineering/view-resources'
 
   import FolderBrowser from './FolderBrowser.svelte'
 

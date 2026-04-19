@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { AccountRole, Blob, Permission, Ref, Timestamp, TypedSpace } from '@intabiafusion/core'
+import type { AccountRole, Blob, Permission, Ref, Timestamp, TypedSpace } from '@hcengineering/core'
 import type {
   Asset,
   IntlString,
   /* Metadata, Plugin, plugin, */ Resource /*, Service */
-} from '@intabiafusion/platform'
+} from '@hcengineering/platform'
 import { /* getContext, */ type ComponentType } from 'svelte'
 
 /**

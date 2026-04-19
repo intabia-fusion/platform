@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Label, Toggle } from '@intabiafusion/ui'
+  import { Label, Toggle } from '@hcengineering/ui'
   import plugin from '../plugin'
   import { setUseScreenShareSound, useScreenShareSound } from '../recording'
 </script>

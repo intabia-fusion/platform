@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * This script validates that all @intabiafusion packages use the same versions
+ * This script validates that all @hcengineering packages use the same versions
  * across all dependencies (including devDependencies).
  * 
  * This is similar to `rush check` but also checks for transitive dependencies
- * and only validates @intabiafusion packages.
+ * and only validates @hcengineering packages.
  * 
  * The script will fail with exit code 1 if any version mismatches are found.
  */
@@ -14,7 +14,7 @@ const fs = require('fs')
 const path = require('path')
 const execSync = require('child_process').execSync
 
-const SCOPE = '@intabiafusion'
+const SCOPE = '@hcengineering'
 
 /**
  * Find the repository root by looking for rush.json
@@ -35,7 +35,7 @@ function findRepoRoot() {
 }
 
 /**
- * Parse pnpm-lock.yaml to extract resolved @intabiafusion package versions
+ * Parse pnpm-lock.yaml to extract resolved @hcengineering package versions
  * and track which packages depend on which versions
  * @returns {Object} Map of package names to version -> dependents mapping
  */
@@ -68,7 +68,7 @@ function parseLockfile() {
       continue
     }
     
-    // Parse @intabiafusion package entries like '  @intabiafusion/platform@0.7.3:' or '@intabiafusion/analytics@0.7.4:'
+    // Parse @hcengineering package entries like '  @hcengineering/platform@0.7.3:' or '@hcengineering/analytics@0.7.4:'
     if (inPackagesSection && line.match(new RegExp(`^  '?(${SCOPE}/[^@']+)@([^':()]+)(?:\\([^)]*\\))*'?:`))) {
       const packageMatch = line.match(new RegExp(`^  '?(${SCOPE}/[^@']+)@([^':()]+)(?:\\([^)]*\\))*'?:`))
       if (packageMatch) {
@@ -110,10 +110,10 @@ function parseLockfile() {
       inDependenciesSection = false
     }
     
-    // Parse dependency lines like "      '@intabiafusion/platform': 0.7.3"
-    // This tells us that currentPackageName@currentPackageVersion depends on @intabiafusion/platform@0.7.3
+    // Parse dependency lines like "      '@hcengineering/platform': 0.7.3"
+    // This tells us that currentPackageName@currentPackageVersion depends on @hcengineering/platform@0.7.3
     if (inDependenciesSection && currentPackageName && currentPackageVersion) {
-      const depMatch = line.match(/^\s{6}'?(@intabiafusion\/[^']+)'?:\s+([0-9.]+)/)
+      const depMatch = line.match(/^\s{6}'?(@hcengineering\/[^']+)'?:\s+([0-9.]+)/)
       if (depMatch) {
         const depPackageName = depMatch[1]
         const depVersion = depMatch[2]
@@ -189,7 +189,7 @@ function readPackageJson(projectPath) {
 }
 
 /**
- * Extract @intabiafusion dependencies from package.json
+ * Extract @hcengineering dependencies from package.json
  * @param {Object} packageJson - Parsed package.json
  * @param {string} packageName - Name of the package
  * @returns {Object} Map of dependency name to version
@@ -224,7 +224,7 @@ function extractHceDependencies(packageJson, packageName) {
  * @returns {Object} Map of dependency name to list of versions and users
  */
 function buildDependencyMap(projects) {
-  console.log('🔍 Scanning all packages for @intabiafusion dependencies...\n')
+  console.log('🔍 Scanning all packages for @hcengineering dependencies...\n')
   
   const dependencyMap = {}
   let totalPackages = 0
@@ -256,7 +256,7 @@ function buildDependencyMap(projects) {
   }
   
   console.log(`✅ Scanned ${totalPackages} packages`)
-  console.log(`✅ Found ${totalDependencies} @intabiafusion dependencies\n`)
+  console.log(`✅ Found ${totalDependencies} @hcengineering dependencies\n`)
   
   return dependencyMap
 }
@@ -355,7 +355,7 @@ function displayLockfileMismatches(mismatches) {
   console.log('❌ LOCKFILE VERSION MISMATCHES FOUND')
   console.log('━'.repeat(80))
   console.log()
-  console.log('The following @intabiafusion packages have multiple resolved versions')
+  console.log('The following @hcengineering packages have multiple resolved versions')
   console.log('in pnpm-lock.yaml (transitive dependencies):')
   console.log()
   
@@ -397,7 +397,7 @@ function displayLockfileMismatches(mismatches) {
  * Main function
  */
 function main() {
-  console.log('🚀 Checking @intabiafusion dependency versions...\n')
+  console.log('🚀 Checking @hcengineering dependency versions...\n')
   
   // Get all projects from rush
   const projects = getProjects()
@@ -413,14 +413,14 @@ function main() {
   const lockfileVersions = parseLockfile()
   const lockfileMismatches = findLockfileMismatches(lockfileVersions)
   
-  console.log(`✅ Found ${Object.keys(lockfileVersions).length} unique @intabiafusion packages in lockfile`)
+  console.log(`✅ Found ${Object.keys(lockfileVersions).length} unique @hcengineering packages in lockfile`)
   console.log(`${lockfileMismatches.length > 0 ? '❌' : '✅'} Found ${lockfileMismatches.length} packages with multiple resolved versions\n`)
   
   const hasErrors = packageJsonMismatches.length > 0 || lockfileMismatches.length > 0
   
   if (!hasErrors) {
     console.log('━'.repeat(80))
-    console.log('✅ SUCCESS - All @intabiafusion dependencies use consistent versions!')
+    console.log('✅ SUCCESS - All @hcengineering dependencies use consistent versions!')
     console.log('━'.repeat(80))
     console.log()
     console.log('✓ All package.json dependencies are consistent')

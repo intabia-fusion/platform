@@ -28,7 +28,7 @@ Both live in `DOMAIN_TRANSIENT` (InMemory adapter, already wired in `server/serv
 
 ## Package structure
 
-- `plugins/pulse` — interfaces only (`DocumentPresence`, `TypingIndicator`, plugin id, class refs). Deps: `@intabiafusion/core`, `@intabiafusion/contact`, `@intabiafusion/platform`.
+- `plugins/pulse` — interfaces only (`DocumentPresence`, `TypingIndicator`, plugin id, class refs). Deps: `@hcengineering/core`, `@hcengineering/contact`, `@hcengineering/platform`.
 - `models/pulse` — `@Model` classes + `createModel` that runs `createModel(...)` and applies `TransientTTL` mixins. Registered in `models/all/src/index.ts` and `rush.json`.
 - `plugins/presence-resources/src/{presence,typing}.ts` — rewritten on top of `createQuery(true)` + `getClient()`. Svelte-action pattern preserved (`presence`, `typing` still return `{update, destroy}`).
 
@@ -36,12 +36,12 @@ Both live in `DOMAIN_TRANSIENT` (InMemory adapter, already wired in `server/serv
 
 - Deleted `packages/hulypulse-client`, `foundations/hulypulse`.
 - Removed `packages/presentation/src/pulse.ts` + `PulseUrl` metadata.
-- Dropped `@intabiafusion/hulypulse-client` dep from `presentation`, `presence-resources`, `love-resources`.
+- Dropped `@hcengineering/hulypulse-client` dep from `presentation`, `presence-resources`, `love-resources`.
 - Removed `PULSE_URL` / `pulseUrl` from `dev/prod/src/platform.ts`, `pods/front/src/__start.ts`, `server/front/src/{index,starter}.ts`, `desktop/src/ui/{types,platform}.ts`, `benchmarks/run_benchmark.sh`, `dev/prod/public/config{,-dev}.json`.
 - Dropped `hulypulse` service from `dev/docker-compose.yaml` and `pods/external/services.d/hulypulse.service`.
 - Removed `build-hulypulse` job from `.github/workflows/main.yml`.
 - Removed `hulypulse` subtree pull from `scripts/takeUpstream.sh`.
-- Removed `hulypulse-client` entry from `rush.json`; added `@intabiafusion/pulse`, `@intabiafusion/model-pulse`.
+- Removed `hulypulse-client` entry from `rush.json`; added `@hcengineering/pulse`, `@hcengineering/model-pulse`.
 
 ## Client-side plugin registration gotcha
 
@@ -50,13 +50,13 @@ Both live in `DOMAIN_TRANSIENT` (InMemory adapter, already wired in `server/serv
 Fix: include `pulseId` in `ExtraPlugins` metadata:
 - `dev/prod/src/platform.ts`: `setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin, pulseId as Plugin])`
 - `desktop/src/ui/platform.ts`: same
-- Add `@intabiafusion/pulse` dep to both packages so `pulseId` can be imported.
+- Add `@hcengineering/pulse` dep to both packages so `pulseId` can be imported.
 
 Symptom when missing: console shows `domain not found: pulse:class:DocumentPresence` / `ancestors not found: pulse:class:TypingIndicator` as `pageerror`, typing indicator span stays empty. Debug by injecting a probe calling `client.findAll('pulse:class:TypingIndicator', {})`.
 
 ## Build / test workflow for pulse
 
-1. Rebuild front image after changing `dev/prod` config: `rush fast-build:docker-build --to @intabiafusion/pod-front` (~8s incremental). Model changes also need `--to @intabiafusion/pod-server`. Full rebuild: `rush fast-build:docker-build` (~3.5min, 42 images).
+1. Rebuild front image after changing `dev/prod` config: `rush fast-build:docker-build --to @hcengineering/pod-front` (~8s incremental). Model changes also need `--to @hcengineering/pod-server`. Full rebuild: `rush fast-build:docker-build` (~3.5min, 42 images).
 2. Restart sanity env: `cd tests && ./prepare-pg.sh` — includes `--remove-orphans` on both `down` and `up` to clean stale services.
 3. Run Playwright pulse spec without auto-opening HTML report:
    ```

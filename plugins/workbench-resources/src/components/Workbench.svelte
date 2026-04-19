@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import contact from '@intabiafusion/contact'
-  import { myEmployeeStore } from '@intabiafusion/contact-resources'
+  import { Analytics } from '@hcengineering/analytics'
+  import contact from '@hcengineering/contact'
+  import { myEmployeeStore } from '@hcengineering/contact-resources'
   import core, {
     AccountRole,
     Class,
@@ -25,12 +25,12 @@
     Ref,
     SortingOrder,
     Space
-  } from '@intabiafusion/core'
-  import login, { loginId } from '@intabiafusion/login'
-  import notification, { DocNotifyContext, InboxNotification, notificationId } from '@intabiafusion/notification'
-  import { BrowserNotificatator, InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
-  import inbox, { inboxId } from '@intabiafusion/inbox'
-  import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@intabiafusion/platform'
+  } from '@hcengineering/core'
+  import login, { loginId } from '@hcengineering/login'
+  import notification, { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
+  import { BrowserNotificatator, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import inbox, { inboxId } from '@hcengineering/inbox'
+  import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
   import {
     ActionContext,
     ComponentExtensions,
@@ -39,9 +39,9 @@
     getClient,
     isAdminUser,
     reduceCalls
-  } from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
-  import support, { SupportStatus } from '@intabiafusion/support'
+  } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
+  import support, { SupportStatus } from '@hcengineering/support'
   import {
     AnyComponent,
     areLocationsEqual,
@@ -82,8 +82,8 @@
     showPopup,
     TooltipInstance,
     workbenchSeparators
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import {
     accessDeniedStore,
     ActionHandler,
@@ -92,15 +92,15 @@
     NavLink,
     parseLinkId,
     updateFocus
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import type {
     Application,
     NavigatorModel,
     SpecialNavModel,
     ViewConfiguration,
     WorkbenchTab
-  } from '@intabiafusion/workbench'
-  import communication from '@intabiafusion/communication'
+  } from '@hcengineering/workbench'
+  import communication from '@hcengineering/communication'
   import { getContext, onDestroy, onMount, tick } from 'svelte'
   import { subscribeMobile } from '../mobile'
   import workbench from '../plugin'

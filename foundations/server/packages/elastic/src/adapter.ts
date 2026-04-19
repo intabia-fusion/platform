@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import {
   Class,
   Doc,
@@ -26,11 +26,11 @@ import {
   SearchQuery,
   TxResult,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import type { FullTextAdapter, IndexedDoc, SearchScoring, SearchStringResult } from '@intabiafusion/server-core'
-import serverCore from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import type { FullTextAdapter, IndexedDoc, SearchScoring, SearchStringResult } from '@hcengineering/server-core'
+import serverCore from '@hcengineering/server-core'
 import { Client, errors as esErr, estypes } from '@elastic/elasticsearch'
-import { getMetadata } from '@intabiafusion/platform'
+import { getMetadata } from '@hcengineering/platform'
 
 import { KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN, KEYBOARD_MAPPINGS_LATIN_TO_CYRILLIC } from './utils'
 

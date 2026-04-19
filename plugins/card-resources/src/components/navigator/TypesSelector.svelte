@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, Label, showPopup, getEventPositionElement } from '@intabiafusion/ui'
-  import { ObjectBoxPopup } from '@intabiafusion/view-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { MasterTag } from '@intabiafusion/card'
+  import { Button, Label, showPopup, getEventPositionElement } from '@hcengineering/ui'
+  import { ObjectBoxPopup } from '@hcengineering/view-resources'
+  import { Ref } from '@hcengineering/core'
+  import { MasterTag } from '@hcengineering/card'
   import card from '../../plugin'
   export let value: Ref<MasterTag>[]
 

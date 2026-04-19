@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Class, DocumentQuery, Ref, Space } from '@intabiafusion/core'
-  import type { IntlString, Asset } from '@intabiafusion/platform'
-  import { IModeSelector, resolvedLocationStore } from '@intabiafusion/ui'
-  import { type Document, DocumentState } from '@intabiafusion/controlled-documents'
+  import { Class, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
+  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import { type Document, DocumentState } from '@hcengineering/controlled-documents'
 
   import Documents from './Documents.svelte'
   import document from '../plugin'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { translateCB } from '@intabiafusion/platform'
-  import presentation, { createQuery } from '@intabiafusion/presentation'
-  import { TagCategory, TagElement } from '@intabiafusion/tags'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
+  import presentation, { createQuery } from '@hcengineering/presentation'
+  import { TagCategory, TagElement } from '@hcengineering/tags'
   import {
     Button,
     CheckBox,
@@ -27,7 +27,7 @@
     getPlatformColorDef,
     resizeObserver,
     themeStore
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import tags from '../plugin'
 

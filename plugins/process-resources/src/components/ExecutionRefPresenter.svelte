@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Execution } from '@intabiafusion/process'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Execution } from '@hcengineering/process'
   import plugin from '../plugin'
 
   export let value: Ref<Execution>

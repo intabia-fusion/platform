@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { generateId } from '@intabiafusion/core'
-import type { IntlString, Metadata } from '@intabiafusion/platform'
-import { setMetadata, translate } from '@intabiafusion/platform'
+import { generateId } from '@hcengineering/core'
+import type { IntlString, Metadata } from '@hcengineering/platform'
+import { setMetadata, translate } from '@hcengineering/platform'
 import autolinker from 'autolinker'
 import { writable } from 'svelte/store'
 import { NotificationPosition, NotificationSeverity, notificationsStore, type Notification } from '.'

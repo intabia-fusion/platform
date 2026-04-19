@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@intabiafusion/platform'
-import { exportId } from '@intabiafusion/export'
-import { type ComponentPointExtension } from '@intabiafusion/presentation'
-import { type Ref } from '@intabiafusion/core'
-import exportPlugin from '@intabiafusion/export-resources/src/plugin'
+import { mergeIds } from '@hcengineering/platform'
+import { exportId } from '@hcengineering/export'
+import { type ComponentPointExtension } from '@hcengineering/presentation'
+import { type Ref } from '@hcengineering/core'
+import exportPlugin from '@hcengineering/export-resources/src/plugin'
 
 export default mergeIds(exportId, exportPlugin, {
   extensions: {

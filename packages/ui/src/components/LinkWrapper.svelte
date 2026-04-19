@@ -15,8 +15,8 @@
 <script lang="ts">
   // This component converts all URLs from the provided string or IntlString to Links.
 
-  import { IntlString, translateCB } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/theme'
+  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
   import { replaceURLs } from '../utils'
 
   export let text: string | undefined = undefined

@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import documents, { TExternalSpace, TProject } from '@intabiafusion/model-controlled-documents'
-import type { Document } from '@intabiafusion/controlled-documents'
-import type { Product, ProductVersionState, ProductVersion } from '@intabiafusion/products'
-import { productsId } from '@intabiafusion/products'
-import activity from '@intabiafusion/activity'
-import { type Attachment } from '@intabiafusion/attachment'
-import contact from '@intabiafusion/contact'
-import chunter from '@intabiafusion/chunter'
-import { getRoleAttributeProps } from '@intabiafusion/setting'
+import documents, { TExternalSpace, TProject } from '@hcengineering/model-controlled-documents'
+import type { Document } from '@hcengineering/controlled-documents'
+import type { Product, ProductVersionState, ProductVersion } from '@hcengineering/products'
+import { productsId } from '@hcengineering/products'
+import activity from '@hcengineering/activity'
+import { type Attachment } from '@hcengineering/attachment'
+import contact from '@hcengineering/contact'
+import chunter from '@hcengineering/chunter'
+import { getRoleAttributeProps } from '@hcengineering/setting'
 import type {
   Type,
   Ref,
@@ -32,8 +32,8 @@ import type {
   Role,
   Class,
   Doc
-} from '@intabiafusion/core'
-import { IndexKind, AccountUuid } from '@intabiafusion/core'
+} from '@hcengineering/core'
+import { IndexKind, AccountUuid } from '@hcengineering/core'
 import {
   type Builder,
   Model,
@@ -51,20 +51,20 @@ import {
   ReadOnly,
   Mixin,
   TypeAccountUuid
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import core, { TType } from '@intabiafusion/model-core'
-import presentation from '@intabiafusion/model-presentation'
-import tracker from '@intabiafusion/model-tracker'
-import { type Action } from '@intabiafusion/view'
-import view, { createAction } from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import { getEmbeddedLabel, type Asset } from '@intabiafusion/platform'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import core, { TType } from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
+import tracker from '@hcengineering/model-tracker'
+import { type Action } from '@hcengineering/view'
+import view, { createAction } from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
 
 import products from './plugin'
 import { roles } from './roles'
 
-export { productsId } from '@intabiafusion/products/src/index'
+export { productsId } from '@hcengineering/products/src/index'
 
 const productPermissions: Ref<Permission>[] = [
   documents.permission.CreateDocument,

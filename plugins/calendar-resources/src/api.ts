@@ -13,17 +13,17 @@
 // limitations under the License.
 //
 
-import { getMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
-import login from '@intabiafusion/login'
-import { type Integration } from '@intabiafusion/account-client'
+import { getMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
+import login from '@hcengineering/login'
+import { type Integration } from '@hcengineering/account-client'
 import {
   type IntegrationClient,
   getIntegrationClient as getIntegrationClientRaw,
   request
-} from '@intabiafusion/integration-client'
+} from '@hcengineering/integration-client'
 import calendar from './plugin'
-import { calendarIntegrationKind } from '@intabiafusion/calendar'
+import { calendarIntegrationKind } from '@hcengineering/calendar'
 
 export async function signout (integration: Integration, client: IntegrationClient): Promise<void> {
   const url = getMetadata(calendar.metadata.CalendarServiceURL)

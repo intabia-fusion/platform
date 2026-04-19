@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Document, DocumentSnapshot } from '@intabiafusion/document'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Button, Label, Lazy, Scroller, showPopup } from '@intabiafusion/ui'
+  import { Document, DocumentSnapshot } from '@hcengineering/document'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Button, Label, Lazy, Scroller, showPopup } from '@hcengineering/ui'
 
   import document from '../../plugin'
   import HistoryView from './HistoryView.svelte'

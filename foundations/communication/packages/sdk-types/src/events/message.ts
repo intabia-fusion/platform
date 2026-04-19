@@ -13,7 +13,7 @@ import type {
   AttachmentUpdateData,
   Emoji,
   PersonUuid
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 import type { BaseEvent } from './common'
 

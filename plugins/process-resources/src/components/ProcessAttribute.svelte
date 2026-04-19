@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@intabiafusion/card'
-  import { AnyAttribute, Class, Doc, Ref } from '@intabiafusion/core'
-  import { Context, createContext, parseContext, Process, SelectedContext } from '@intabiafusion/process'
+  import { MasterTag, Tag } from '@hcengineering/card'
+  import { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
+  import { Context, createContext, parseContext, Process, SelectedContext } from '@hcengineering/process'
   import {
     AnySvelteComponent,
     Button,
@@ -25,8 +25,8 @@
     Label,
     showPopup,
     tooltip
-  } from '@intabiafusion/ui'
-  import { AttributeCategory } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ContextSelectorPopup from './attributeEditors/ContextSelectorPopup.svelte'
   import ContextValue from './attributeEditors/ContextValue.svelte'

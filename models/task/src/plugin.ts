@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import {} from '@intabiafusion/notification'
-import type { Doc, Ref, Space } from '@intabiafusion/core'
-import { mergeIds, type IntlString } from '@intabiafusion/platform'
-import { type TagCategory } from '@intabiafusion/tags'
-import { taskId } from '@intabiafusion/task'
-import task from '@intabiafusion/task-resources/src/plugin'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
-import type { Action, ActionCategory, ViewAction, Viewlet } from '@intabiafusion/view'
+import {} from '@hcengineering/notification'
+import type { Doc, Ref, Space } from '@hcengineering/core'
+import { mergeIds, type IntlString } from '@hcengineering/platform'
+import { type TagCategory } from '@hcengineering/tags'
+import { taskId } from '@hcengineering/task'
+import task from '@hcengineering/task-resources/src/plugin'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
+import type { Action, ActionCategory, ViewAction, Viewlet } from '@hcengineering/view'
 
 export default mergeIds(taskId, task, {
   action: {

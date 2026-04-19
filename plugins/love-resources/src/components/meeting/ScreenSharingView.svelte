@@ -10,7 +10,7 @@
     RoomEvent,
     Track
   } from 'livekit-client'
-  import { IconScale, IconScaleFull, ButtonIcon } from '@intabiafusion/ui'
+  import { IconScale, IconScaleFull, ButtonIcon } from '@hcengineering/ui'
 
   export let hasActiveTrack: boolean = false
   export let showLocalTrack: boolean = true

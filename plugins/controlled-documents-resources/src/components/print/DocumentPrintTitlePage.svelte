@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
-  import documents, { DocumentState } from '@intabiafusion/controlled-documents'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
+  import { Label } from '@hcengineering/ui'
+  import documents, { DocumentState } from '@hcengineering/controlled-documents'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
 
   import { $controlledDocument as controlledDocument } from '../../stores/editors/document'
   import DocumentHistory from '../document/DocumentHistory.svelte'

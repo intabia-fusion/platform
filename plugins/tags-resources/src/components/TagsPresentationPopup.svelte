@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, IdMap, Ref, toIdMap } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { TagElement, TagReference } from '@intabiafusion/tags'
+  import { Class, Doc, IdMap, Ref, toIdMap } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { TagElement, TagReference } from '@hcengineering/tags'
   import tags from '../plugin'
   import TagItem from './TagItem.svelte'
   import { selectedTagElements } from '../utils'
-  import { Label } from '@intabiafusion/ui'
+  import { Label } from '@hcengineering/ui'
 
   export let object: Doc
   export let _class: Ref<Class<Doc>>

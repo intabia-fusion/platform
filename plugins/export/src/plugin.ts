@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Class, Client, Doc, Ref } from '@intabiafusion/core'
-import { type IntlString, type Metadata, type Plugin, plugin, type Resource, type Asset } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import type { NotificationGroup, TxNotificationType } from '@intabiafusion/notification'
+import type { Class, Client, Doc, Ref } from '@hcengineering/core'
+import { type IntlString, type Metadata, type Plugin, plugin, type Resource, type Asset } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import type { NotificationGroup, TxNotificationType } from '@hcengineering/notification'
 import type { ExportResultRecord } from './types'
 
 export const exportId = 'export' as Plugin

@@ -1,4 +1,4 @@
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import type {
   Doc,
   Domain,
@@ -8,8 +8,8 @@ import type {
   MeasureContext,
   ModelDb,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import core, { DOMAIN_BENCHMARK, DOMAIN_MODEL, IndexKind, IndexOrder } from '@intabiafusion/core'
+} from '@hcengineering/core'
+import core, { DOMAIN_BENCHMARK, DOMAIN_MODEL, IndexKind, IndexOrder } from '@hcengineering/core'
 import { deepEqual } from 'fast-equals'
 import type { DomainHelper, DomainHelperOperations } from './adapter'
 

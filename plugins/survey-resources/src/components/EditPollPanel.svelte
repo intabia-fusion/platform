@@ -15,13 +15,13 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Panel } from '@intabiafusion/panel'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Poll } from '@intabiafusion/survey'
-  import { Button, DebouncedCaller, IconMoreH, ThrottledCaller } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { DocNavLink, ParentsNavigator, showMenu } from '@intabiafusion/view-resources'
+  import { Ref } from '@hcengineering/core'
+  import { Panel } from '@hcengineering/panel'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Poll } from '@hcengineering/survey'
+  import { Button, DebouncedCaller, IconMoreH, ThrottledCaller } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { DocNavLink, ParentsNavigator, showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import survey from '../plugin'
   import EditPoll from './EditPoll.svelte'

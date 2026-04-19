@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type UpdateContentRequest, type UpdateContentResponse } from '@intabiafusion/collaborator-client'
-import { MeasureContext } from '@intabiafusion/core'
+import { type UpdateContentRequest, type UpdateContentResponse } from '@hcengineering/collaborator-client'
+import { MeasureContext } from '@hcengineering/core'
 import { applyUpdate, encodeStateAsUpdate } from 'yjs'
 import { Context } from '../../context'
 import { RpcMethodParams } from '../rpc'

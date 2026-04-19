@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Component, Label, Loading, Progress, Toggle } from '@intabiafusion/ui'
+  import { Component, Label, Loading, Progress, Toggle } from '@hcengineering/ui'
   import love from '../../plugin'
   import { myPreferences } from '../../stores'
   import { blurProcessor, updateBlurRadius } from '../../utils'
-  import mediaPlugin, { getMediaDevices } from '@intabiafusion/media'
+  import mediaPlugin, { getMediaDevices } from '@hcengineering/media'
 
   $: blurRadius = $myPreferences?.blurRadius ?? 0
 </script>

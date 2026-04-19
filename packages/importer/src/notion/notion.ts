@@ -20,9 +20,9 @@ import {
   type TxOperations,
   generateId,
   makeCollabId
-} from '@intabiafusion/core'
-import document, { type Document, type Teamspace, getFirstRank } from '@intabiafusion/document'
-import { makeRank } from '@intabiafusion/rank'
+} from '@hcengineering/core'
+import document, { type Document, type Teamspace, getFirstRank } from '@hcengineering/document'
+import { makeRank } from '@hcengineering/rank'
 import {
   jsonToMarkup,
   MarkupMarkType,
@@ -30,12 +30,12 @@ import {
   MarkupNodeType,
   traverseNode,
   traverseNodeMarks
-} from '@intabiafusion/text'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
+} from '@hcengineering/text'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
 
-import { type Attachment } from '@intabiafusion/attachment'
-import attachment from '@intabiafusion/model-attachment'
-import core from '@intabiafusion/model-core'
+import { type Attachment } from '@hcengineering/attachment'
+import attachment from '@hcengineering/model-attachment'
+import core from '@hcengineering/model-core'
 import { type Dirent } from 'fs'
 import { readdir, readFile, stat } from 'fs/promises'
 import { contentType } from 'mime-types'

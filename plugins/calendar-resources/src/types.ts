@@ -1,4 +1,4 @@
-import { type Timestamp } from '@intabiafusion/core'
+import { type Timestamp } from '@hcengineering/core'
 
 export interface CalendarElement {
   id: string

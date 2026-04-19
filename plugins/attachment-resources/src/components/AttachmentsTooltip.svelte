@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
+  import { Attachment } from '@hcengineering/attachment'
 
   export let attachments: Attachment[] = []
 </script>

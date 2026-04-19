@@ -1,10 +1,10 @@
 <script lang="ts">
-  import documents, { DocumentCategory } from '@intabiafusion/controlled-documents'
-  import { Ref } from '@intabiafusion/core'
+  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
+  import { Ref } from '@hcengineering/core'
 
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
   export let value: Ref<DocumentCategory> | undefined

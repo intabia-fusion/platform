@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { PersonId } from '@intabiafusion/core'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import contact from '@intabiafusion/contact'
-  import { getPersonRefByPersonIdStore } from '@intabiafusion/contact-resources'
+  import { PersonId } from '@hcengineering/core'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import contact from '@hcengineering/contact'
+  import { getPersonRefByPersonIdStore } from '@hcengineering/contact-resources'
 
   export let socialIds: PersonId[] = []
 

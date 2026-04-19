@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, FindOptions, IdMap, toIdMap } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import presentation, { createQuery, ObjectPopup } from '@intabiafusion/presentation'
-  import { TemplateField, TemplateFieldCategory } from '@intabiafusion/templates'
-  import { Label } from '@intabiafusion/ui'
+  import { DocumentQuery, FindOptions, IdMap, toIdMap } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import presentation, { createQuery, ObjectPopup } from '@hcengineering/presentation'
+  import { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
+  import { Label } from '@hcengineering/ui'
   import templates from '../plugin'
 
   export let options: FindOptions<TemplateField> | undefined = undefined

@@ -14,16 +14,16 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
-  import { ActionContext } from '@intabiafusion/presentation'
-  import { WithLookup } from '@intabiafusion/core'
-  import testManagement, { TestResult, TestCase } from '@intabiafusion/test-management'
-  import { Panel } from '@intabiafusion/panel'
-  import { Button } from '@intabiafusion/ui'
+  import { ActionContext } from '@hcengineering/presentation'
+  import { WithLookup } from '@hcengineering/core'
+  import testManagement, { TestResult, TestCase } from '@hcengineering/test-management'
+  import { Panel } from '@hcengineering/panel'
+  import { Button } from '@hcengineering/ui'
 
   import { testResultIteratorProvider, testIteratorStore } from './store/testIteratorStore'
   import TestResultAside from './TestResultAside.svelte'
   import TestCaseDetails from '../test-case/TestCaseDetails.svelte'
-  import view from '@intabiafusion/view'
+  import view from '@hcengineering/view'
 
   const dispatch = createEventDispatcher()
 

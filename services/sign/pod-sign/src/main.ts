@@ -2,11 +2,11 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient from '@intabiafusion/server-client'
-import { loadBrandingMap } from '@intabiafusion/server-core'
-import { storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken from '@intabiafusion/server-token'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient from '@hcengineering/server-client'
+import { loadBrandingMap } from '@hcengineering/server-core'
+import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken from '@hcengineering/server-token'
 
 import config from './config'
 import { createServer, listen } from './server'

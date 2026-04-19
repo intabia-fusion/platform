@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/core'
-import serverCore from '@intabiafusion/server-core'
-import serverAiBot from '@intabiafusion/server-ai-bot'
-import chunter from '@intabiafusion/chunter'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/core'
+import serverCore from '@hcengineering/server-core'
+import serverAiBot from '@hcengineering/server-ai-bot'
+import chunter from '@hcengineering/chunter'
 
-export { serverAiBotId } from '@intabiafusion/server-ai-bot'
+export { serverAiBotId } from '@hcengineering/server-ai-bot'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

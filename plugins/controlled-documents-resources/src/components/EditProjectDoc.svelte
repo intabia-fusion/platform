@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, WithLookup } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Loading } from '@intabiafusion/ui'
-  import documents, { type ControlledDocument, type ProjectDocument } from '@intabiafusion/controlled-documents'
+  import { Ref, WithLookup } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Loading } from '@hcengineering/ui'
+  import documents, { type ControlledDocument, type ProjectDocument } from '@hcengineering/controlled-documents'
 
   import EditDocPanel from './EditDocPanel.svelte'
 

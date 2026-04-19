@@ -24,7 +24,7 @@ import {
   SocialIdType,
   systemAccountUuid,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   generateWorkspaceUrl,
   cleanEmail,
@@ -66,16 +66,16 @@ import {
   resetRegionConfig
 } from '../utils'
 // eslint-disable-next-line import/no-named-default
-import platform, { getMetadata, PlatformError, Severity, Status } from '@intabiafusion/platform'
-import { decodeTokenVerbose, generateToken, TokenError } from '@intabiafusion/server-token'
+import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
+import { decodeTokenVerbose, generateToken, TokenError } from '@hcengineering/server-token'
 import { randomBytes } from 'crypto'
 
 import { type AccountDB, type AccountEvent, AccountEventType, type Workspace } from '../types'
 import { accountPlugin } from '../plugin'
 
 // Mock platform with minimum required functionality
-jest.mock('@intabiafusion/platform', () => {
-  const actual = jest.requireActual('@intabiafusion/platform')
+jest.mock('@hcengineering/platform', () => {
+  const actual = jest.requireActual('@hcengineering/platform')
 
   return {
     ...actual,
@@ -87,14 +87,14 @@ jest.mock('@intabiafusion/platform', () => {
 })
 
 // Mock server-token
-jest.mock('@intabiafusion/server-token', () => ({
-  TokenError: jest.requireActual('@intabiafusion/server-token').TokenError,
+jest.mock('@hcengineering/server-token', () => ({
+  TokenError: jest.requireActual('@hcengineering/server-token').TokenError,
   decodeTokenVerbose: jest.fn(),
   generateToken: jest.fn()
 }))
 
 // Mock analytics
-jest.mock('@intabiafusion/analytics', () => ({
+jest.mock('@hcengineering/analytics', () => ({
   Analytics: {
     handleError: jest.fn()
   }

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
   import Button from '../Button.svelte'
   import Scroller from '../Scroller.svelte'
   import WizardBar from './ModernWizardBar.svelte'

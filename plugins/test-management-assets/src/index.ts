@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import testManagement from '@intabiafusion/test-management'
-import { loadMetadata } from '@intabiafusion/platform'
+import testManagement from '@hcengineering/test-management'
+import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(testManagement.icon, {

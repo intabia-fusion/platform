@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocNotifyContext } from '@intabiafusion/notification'
-  import { Doc } from '@intabiafusion/core'
-  import { getDocLinkTitle, getDocTitle } from '@intabiafusion/view-resources'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import chunter from '@intabiafusion/chunter'
-  import { languageStore } from '@intabiafusion/ui'
+  import { DocNotifyContext } from '@hcengineering/notification'
+  import { Doc } from '@hcengineering/core'
+  import { getDocLinkTitle, getDocTitle } from '@hcengineering/view-resources'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import chunter from '@hcengineering/chunter'
+  import { languageStore } from '@hcengineering/ui'
 
   import NotifyContextIcon from './NotifyContextIcon.svelte'
 

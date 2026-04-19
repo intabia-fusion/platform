@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { translate } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { MethodParams, Process, Step } from '@intabiafusion/process'
-  import { Component, Icon, IconError, Label, tooltip } from '@intabiafusion/ui'
+  import { Doc } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { MethodParams, Process, Step } from '@hcengineering/process'
+  import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
   import plugin from '../../plugin'
 
   export let action: Step<Doc>

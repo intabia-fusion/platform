@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, DocumentQuery, FindOptions, Ref, Status } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Project, Task, getStates } from '@intabiafusion/task'
-  import type { TabItem } from '@intabiafusion/ui'
-  import { ScrollerBar, TabList, Switcher } from '@intabiafusion/ui'
-  import { TableBrowser, statusStore } from '@intabiafusion/view-resources'
+  import { Class, DocumentQuery, FindOptions, Ref, Status } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Project, Task, getStates } from '@hcengineering/task'
+  import type { TabItem } from '@hcengineering/ui'
+  import { ScrollerBar, TabList, Switcher } from '@hcengineering/ui'
+  import { TableBrowser, statusStore } from '@hcengineering/view-resources'
   import { typeStore } from '..'
   import task from '../plugin'
   import Lost from './icons/Lost.svelte'

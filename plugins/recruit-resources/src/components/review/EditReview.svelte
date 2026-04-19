@@ -14,16 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact } from '@intabiafusion/contact'
-  import { UserBox } from '@intabiafusion/contact-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import { RecruitEvents, Review } from '@intabiafusion/recruit'
-  import { FullDescriptionBox } from '@intabiafusion/text-editor-resources'
-  import { EditBox, Grid } from '@intabiafusion/ui'
-  import { ObjectPresenter, openDoc } from '@intabiafusion/view-resources'
+  import contact, { Contact } from '@hcengineering/contact'
+  import { UserBox } from '@hcengineering/contact-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { RecruitEvents, Review } from '@hcengineering/recruit'
+  import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
+  import { EditBox, Grid } from '@hcengineering/ui'
+  import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import recruit from '../../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let object: Review
 

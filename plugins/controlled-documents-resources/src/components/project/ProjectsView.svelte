@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref, WithLookup } from '@intabiafusion/core'
-  import { IntlString, translate } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/ui'
-  import { Viewlet, ViewOptions } from '@intabiafusion/view'
-  import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@intabiafusion/view-resources'
-  import { Project, DocumentSpace } from '@intabiafusion/controlled-documents'
+  import { Class, Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import { IntlString, translate } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/ui'
+  import { Viewlet, ViewOptions } from '@hcengineering/view'
+  import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { Project, DocumentSpace } from '@hcengineering/controlled-documents'
 
   export let space: Ref<DocumentSpace>
   export let _class: Ref<Class<Project>>

@@ -3,10 +3,10 @@
 //
 //
 
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import { CollaboratorClient, getClient as getCollaboratorClient } from '@intabiafusion/collaborator-client'
-import { systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
-import { generateToken } from '@intabiafusion/server-token'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
+import { systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { generateToken } from '@hcengineering/server-token'
 import config from './config'
 
 /**
