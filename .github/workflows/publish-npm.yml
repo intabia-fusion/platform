@@ -51,15 +51,5 @@ jobs:
 
       - name: Publish to npm
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "::error::NPM_TOKEN secret is not set."
-            exit 1
-          fi
-          {
-            echo "registry=https://registry.npmjs.org/"
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
-          } > "$HOME/.npmrc"
-          npm whoami
-          node common/scripts/bump.js --publish "${{ github.event.inputs.version }}"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node common/scripts/bump.js --publish "${{ github.event.inputs.version }}"
