@@ -35,7 +35,7 @@ import serverClient from '@hcengineering/server-client'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@hcengineering/server-core'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
-import serverToken, { generateToken } from '@hcengineering/server-token'
+import serverToken, { decodeToken, generateToken } from '@hcengineering/server-token'
 import cors from 'cors'
 import express, { type Request } from 'express'
 import {
@@ -198,7 +198,7 @@ export const main = async (): Promise<void> => {
             msg.workspace,
             queueMsg.meetingId,
             wsLoginInfo,
-            mm.title
+            mm.name
           )
         }
         break
@@ -250,6 +250,32 @@ export const main = async (): Promise<void> => {
   app.post('/getToken', async (req, res) => {
     const { meetingId, workspaceId } = decodeMeetingToken(req, res)
     if (meetingId == null || workspaceId == null) {
+      return
+    }
+
+    // Check access to private meetings
+    try {
+      const token = extractToken(req.headers)
+      if (token === undefined) {
+        res.status(401).send()
+        return
+      }
+      const decoded = decodeToken(token)
+      const accountUuid = decoded.account
+
+      // System accounts always have access
+      if (accountUuid !== systemAccountUuid) {
+        const wsClient = await WorkspaceClient.create(workspaceId, ctx)
+        const meetingDoc = await wsClient.findMeetingById(meetingId)
+        if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
+          ctx.warn('Access denied to private meeting', { meetingId, account: accountUuid })
+          res.status(403).send({ error: 'Access denied to private meeting' })
+          return
+        }
+      }
+    } catch (err: any) {
+      ctx.error('Failed to check meeting access', { error: err?.message ?? String(err) })
+      res.status(401).send()
       return
     }
 
@@ -335,7 +361,7 @@ export const main = async (): Promise<void> => {
         workspaceId,
         meetingId,
         wsLoginInfo,
-        req.body.title ?? 'recording'
+        req.body.name ?? 'recording'
       )
       res.send()
     } catch (e) {

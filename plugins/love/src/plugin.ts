@@ -88,10 +88,12 @@ const love = plugin(loveId, {
     Finished: '' as IntlString,
     Pending: '' as IntlString,
     StartWithRecording: '' as IntlString,
+    StartPrivate: '' as IntlString,
     RecordingState: '' as IntlString,
     RecordingNotStarted: '' as IntlString,
     RecordingRecording: '' as IntlString,
     RecordingFinished: '' as IntlString,
+    Summary: '' as IntlString,
     Recording: '' as IntlString,
     StoppingRecord: '' as IntlString,
     Kick: '' as IntlString,
@@ -106,7 +108,11 @@ const love = plugin(loveId, {
     HideParticipants: '' as IntlString,
     Scheduled: '' as IntlString,
     ScheduledIn: '' as IntlString,
-    WaitForHost: '' as IntlString
+    WaitForHost: '' as IntlString,
+    CloseRoom: '' as IntlString,
+    OpenRoom: '' as IntlString,
+    Private: '' as IntlString,
+    Busy: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,
@@ -152,7 +158,9 @@ const love = plugin(loveId, {
   },
   component: {
     SelectScreenSourcePopup: '' as AnyComponent,
-    GuestMeetingApp: '' as AnyComponent
+    GuestMeetingApp: '' as AnyComponent,
+    RoomMeetingsFooter: '' as AnyComponent,
+    MeetingMinutesBreadcrumb: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,

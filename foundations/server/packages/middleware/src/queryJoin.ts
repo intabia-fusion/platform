@@ -14,27 +14,13 @@
 //
 
 import {
-  type Class,
-  type Doc,
-  type DocumentQuery,
-  type Domain,
-  type FindResult,
   type LoadModelResponse,
   type MeasureContext,
-  type Ref,
-  type SearchOptions,
-  type SearchQuery,
-  type SearchResult,
   type SessionData,
   type Timestamp,
   type Tx
 } from '@hcengineering/core'
-import {
-  BaseMiddleware,
-  type Middleware,
-  type PipelineContext,
-  type ServerFindOptions
-} from '@hcengineering/server-core'
+import { BaseMiddleware, type Middleware, type PipelineContext } from '@hcengineering/server-core'
 
 interface Query {
   key: string
@@ -103,6 +89,9 @@ export class QueryJoinMiddleware extends BaseMiddleware implements Middleware {
     this.joiner = new QueryJoiner()
   }
 
+  // Only loadModel is safe to join across users since it returns the same data for all.
+  // findAll, searchFulltext, groupBy are per-user (security is applied at the DB level)
+  // and must not be deduplicated.
   loadModel (
     ctx: MeasureContext<SessionData>,
     lastModelTx: Timestamp,
@@ -119,39 +108,5 @@ export class QueryJoinMiddleware extends BaseMiddleware implements Middleware {
     next: Middleware | undefined
   ): Promise<QueryJoinMiddleware> {
     return new QueryJoinMiddleware(context, next)
-  }
-
-  override findAll<T extends Doc>(
-    ctx: MeasureContext,
-    _class: Ref<Class<T>>,
-    query: DocumentQuery<T>,
-    options?: ServerFindOptions<T>
-  ): Promise<FindResult<T>> {
-    const opt = { ...options }
-    delete opt.ctx
-    return this.joiner.query(
-      ctx,
-      `findAll-${_class}-${JSON.stringify(query)}-${JSON.stringify(options)}`,
-      async (ctx) => {
-        return await this.provideFindAll(ctx, _class, query, options)
-      }
-    )
-  }
-
-  groupBy<T, P extends Doc>(
-    ctx: MeasureContext<SessionData>,
-    domain: Domain,
-    field: string,
-    query?: DocumentQuery<P>
-  ): Promise<Map<T, number>> {
-    return this.joiner.query(ctx, `groupBy-${domain}-${field}-${JSON.stringify(query ?? {})})`, async (ctx) => {
-      return await this.provideGroupBy(ctx, domain, field, query)
-    })
-  }
-
-  searchFulltext (ctx: MeasureContext<SessionData>, query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
-    return this.joiner.query(ctx, `searchFulltext-${JSON.stringify(query)}-${JSON.stringify(options)}`, async (ctx) => {
-      return await this.provideSearchFulltext(ctx, query, options)
-    })
   }
 }

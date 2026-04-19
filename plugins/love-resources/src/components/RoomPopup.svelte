@@ -25,7 +25,7 @@
   import { getObjectLinkFragment } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import { currentMeetingMinutes, infos, myInfo } from '../stores'
+  import { currentMeetingMinutes, infos, myInfo, meetings } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import MicrophoneButton from './meeting/controls/MicrophoneButton.svelte'
   import CameraButton from './meeting/controls/CameraButton.svelte'
@@ -35,7 +35,14 @@
   import { createMeeting } from '../meetings'
 
   export let room: Room
-  export let meeting: MeetingMinutes
+  export let meetingId: Ref<MeetingMinutes>
+
+  // Get meeting from store
+  $: meeting = $meetings.find((m) => m._id === meetingId)
+  // If participants exist in room but meeting is not accessible (private and not a member),
+  // the meeting won't appear in our meetings store - detect this case
+  $: hasParticipants = info.length > 0
+  $: isPrivateMeeting = hasParticipants && meeting === undefined
 
   const client = getClient()
   async function getPerson (info: ParticipantInfo | undefined): Promise<Person | null> {
@@ -56,11 +63,14 @@
   const dispatch = createEventDispatcher()
 
   async function connect (): Promise<void> {
-    await createMeeting(room, meeting)
+    if (meeting !== undefined) {
+      await createMeeting(room, meeting)
+    }
     dispatch('close')
   }
 
   async function backOrOpen (): Promise<void> {
+    const meeting = $meetings.find((m) => m._id === meetingId)
     if (meeting !== undefined) {
       const hierarchy = client.getHierarchy()
       const panelComponent = hierarchy.classHierarchyMixin(meeting._class as Ref<Class<Doc>>, view.mixin.ObjectPanel)
@@ -72,15 +82,15 @@
     }
   }
 
-  function canGoBack (joined: boolean, location: Location, meetingMinutes?: MeetingMinutes): boolean {
+  function canGoBack (joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
     if (!joined) return false
     if (location.path[2] !== loveId) return true
-    if (meetingMinutes === undefined) return false
+    if (meetingMinutesId === undefined) return false
 
     const panel = $panelstore.panel
     const { _id } = panel ?? {}
 
-    return _id !== meetingMinutes._id
+    return _id !== meetingMinutesId
   }
 </script>
 
@@ -108,7 +118,7 @@
       </div>
     {/if}
     <div style="width: auto" />
-    {#if canGoBack(joined, $location, $currentMeetingMinutes)}
+    {#if canGoBack(joined, $location, meetingId)}
       <ModernButton
         icon={IconArrowLeft}
         label={love.string.MeetingMinutes}
@@ -119,7 +129,7 @@
     {/if}
     {#if joined}
       <LeaveRoomButton {room} noLabel={false} size="medium" on:leave={() => dispatch('close')} />
-    {:else}
+    {:else if !isPrivateMeeting}
       <div class="flex flex-row-center gap-2">
         <ModernButton
           icon={love.icon.MeetingMinutes}
@@ -135,6 +145,7 @@
           kind={'primary'}
           autoFocus
           on:click={connect}
+          dataId={'room-enter'}
         />
       </div>
     {/if}

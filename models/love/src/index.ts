@@ -17,7 +17,6 @@ import contact, { type Employee, type Person } from '@hcengineering/contact'
 import {
   AccountRole,
   type CollectionSize,
-  type Doc,
   type Domain,
   type MarkupBlobRef,
   type Ref,
@@ -26,7 +25,8 @@ import {
   DateRangeMode,
   IndexKind,
   type AccountUuid,
-  SocialIdType
+  SocialIdType,
+  DOMAIN_SPACE
 } from '@hcengineering/core'
 import {
   type DevicesPreference,
@@ -67,10 +67,12 @@ import {
   UX,
   TypeBoolean,
   Hidden,
-  TypeNumber
+  TypeNumber,
+  ArrOf,
+  TypeAccountUuid
 } from '@hcengineering/model'
 import calendar, { TEvent, TSchedule } from '@hcengineering/model-calendar'
-import core, { defineCollaborators, TAttachedDoc, TDoc } from '@hcengineering/model-core'
+import core, { TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
@@ -127,11 +129,11 @@ export class TRoom extends TDoc implements Room {
   @Prop(TypeBoolean(), love.string.StartWithRecording)
     startWithRecording!: boolean
 
+  @Prop(TypeBoolean(), love.string.StartPrivate)
+    startPrivate!: boolean
+
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
     attachments?: number
-
-  @Prop(PropCollection(love.class.MeetingMinutes), love.string.MeetingMinutes)
-    meetings?: number
 
   @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
     messages?: number
@@ -222,7 +224,7 @@ export class TMeeting extends TEvent implements MeetingEventLink {
   meetingId!: Ref<MeetingMinutes>
 }
 
-@Model(love.class.MeetingMinutes, core.class.Doc, DOMAIN_MEETING_MINUTES)
+@Model(love.class.MeetingMinutes, core.class.Space, DOMAIN_SPACE)
 @UX(
   love.string.MeetingMinutes,
   love.icon.MeetingMinutes,
@@ -230,21 +232,25 @@ export class TMeeting extends TEvent implements MeetingEventLink {
   'createdOn',
   undefined,
   love.string.MeetingsMinutes,
-  'title'
+  'name'
 )
-export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Todoable {
-  @Prop(TypeRef(core.class.Doc), love.string.Room, { editor: love.component.MeetingMinutesDocEditor })
-  @Index(IndexKind.Indexed)
-  @ReadOnly()
-  declare attachedTo: Ref<Doc>
+export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable {
+  // From TSpace we inherit: name, description, private, archived, members, owners
 
-  @Prop(TypeString(), view.string.Title)
-  @Index(IndexKind.FullText)
-    title!: string
-
+  // Note: description in Space is CollaborativeDoc, but we need MarkupBlobRef
+  // Use descriptionRef for MarkupBlobRef storage
   @Prop(TypeCollaborativeDoc(), core.string.Description)
   @Index(IndexKind.FullText)
-    description!: MarkupBlobRef | null
+    descriptionRef!: MarkupBlobRef | null
+
+  @Prop(TypeCollaborativeDoc(), love.string.Summary)
+  @Index(IndexKind.FullText)
+    summary!: MarkupBlobRef | null
+
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+  @Index(IndexKind.Indexed)
+  @ReadOnly()
+    roomId?: Ref<Room>
 
   @Prop(TypeAny(love.component.MeetingMinutesStatusPresenter, love.string.Status), love.string.Status, {
     editor: love.component.MeetingMinutesStatusPresenter
@@ -298,9 +304,10 @@ export class TMeetingMinutes extends TAttachedDoc implements MeetingMinutes, Tod
   @Prop(Collection(time.class.ToDo), getEmbeddedLabel('Action Items'))
     todos?: CollectionSize<ToDo>
 
-  access!: RoomAccess
-
   language!: RoomLanguage
+
+  @Prop(ArrOf(TypeAccountUuid()), love.string.Organizators)
+  declare owners: AccountUuid[]
 }
 
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
@@ -536,6 +543,19 @@ export function createModel (builder: Builder): void {
     }
   })
 
+  createAction(builder, {
+    action: love.actionImpl.ToggleRoomPrivacy,
+    label: love.string.CloseRoom,
+    icon: love.icon.DND,
+    category: love.category.Office,
+    input: 'focus',
+    target: love.class.MeetingMinutes,
+    visibilityTester: love.function.CanToggleRoomPrivacy,
+    context: {
+      mode: 'context'
+    }
+  })
+
   builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
     ofClass: love.class.Room,
     components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
@@ -601,6 +621,8 @@ export function createModel (builder: Builder): void {
         { key: 'status', presenter: love.component.MeetingMinutesStatusPresenter, label: love.string.Status },
         { key: 'messages', displayProps: { key: 'messages', suffix: true } },
         { key: 'transcription', displayProps: { key: 'transcription', suffix: true } },
+        'owners',
+        { key: 'private', displayProps: { key: 'private', suffix: true } },
         'createdOn',
         'meetingEnd'
       ],
@@ -727,7 +749,7 @@ export function createModel (builder: Builder): void {
     enabledTypes: [love.ids.MeetingMinutesChatNotification]
   })
 
-  defineCollaborators(builder, love.class.MeetingMinutes, { fields: ['createdBy'], provideSecurity: true })
+  // defineCollaborators(builder, love.class.MeetingMinutes, { fields: ['createdBy'], provideSecurity: true })
 
   builder.mixin(love.class.Room, core.class.Class, core.mixin.IndexConfiguration, {
     indexes: [],
@@ -742,6 +764,15 @@ export function createModel (builder: Builder): void {
   builder.mixin(love.class.Floor, core.class.Class, core.mixin.IndexConfiguration, {
     indexes: [],
     searchDisabled: true
+  })
+
+  // ObjectEditorFooter for Room and Office to show meetings at the bottom
+  builder.mixin(love.class.Room, core.class.Class, view.mixin.ObjectEditorFooter, {
+    editor: love.component.RoomMeetingsFooter
+  })
+
+  builder.mixin(love.class.Office, core.class.Class, view.mixin.ObjectEditorFooter, {
+    editor: love.component.RoomMeetingsFooter
   })
 
   builder.createDoc(core.class.FullTextSearchContext, core.space.Model, {
@@ -769,6 +800,11 @@ export function createModel (builder: Builder): void {
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: contact.extension.EmployeePopupActions,
     component: love.component.InviteEmployeeButton
+  })
+
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: view.extensions.EditDocPreTitleExtension,
+    component: love.component.MeetingMinutesBreadcrumb
   })
 
   createAttributePresenter(

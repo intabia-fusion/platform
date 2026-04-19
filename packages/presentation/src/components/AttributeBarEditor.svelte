@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { checkForbiddenPermission, reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

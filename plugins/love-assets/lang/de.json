@@ -82,6 +82,7 @@
     "MeetingMinutes": "Meetingprotokoll",
     "MeetingsMinutes": "Meetingprotokolle",
     "StartMeeting": "Meeting starten",
+    "EndMeeting": "Meeting beenden",
     "Video": "Video",
     "NoMeetingMinutes": "Keine Meetingprotokolle",
     "JoinMeeting": "Meeting beitreten",
@@ -95,11 +96,13 @@
     "Finished": "Beendet",
     "Pending": "Ausstehend",
     "StartWithRecording": "Mit Aufnahme starten",
+    "StartPrivate": "Privat starten",
     "RecordingState": "Aufnahmestatus",
     "RecordingNotStarted": "Nicht gestartet",
     "RecordingRecording": "Aufnahme",
     "RecordingFinished": "Beendet",
     "Recording": "Aufnahme",
+    "Summary": "Zusammenfassung",
     "StoppingRecord": "Aufnahme wird beendet",
     "Language": "Sprache",
     "Kick": "Teilnehmer entfernen",
@@ -126,6 +129,11 @@
     "ShowParticipants": "Teilnehmer anzeigen",
     "HideParticipants": "Teilnehmer ausblenden",
     "Scheduled": "Geplant",
-    "WaitForHost": "Bitte warten Sie, bis der Gastgeber die Besprechung startet."
+    "WaitForHost": "Bitte warten Sie, bis der Gastgeber die Besprechung startet.",
+    "CloseRoom": "Raum schließen",
+    "OpenRoom": "Raum öffnen",
+    "Private": "Privat",
+    "Busy": "Beschäftigt",
+    "Organizators": "Organisatoren"
   }
 }

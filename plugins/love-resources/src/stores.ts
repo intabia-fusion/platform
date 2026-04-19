@@ -31,6 +31,17 @@ export const myOffice = derived(rooms, (val) => {
   return val.find((p) => (p as Office).person === personId) as Office | undefined
 })
 export const infos = writable<ParticipantInfo[]>([])
+export const aiBotPerson = writable<Ref<Person> | undefined>(undefined)
+
+aiBotSocialIdentityStore.subscribe((sid) => {
+  if (sid === undefined) {
+    aiBotPerson.set(undefined)
+    return
+  }
+  void getPersonRefByPersonId(sid._id).then((ref) => {
+    aiBotPerson.set(ref ?? undefined)
+  })
+})
 export const myInfo = derived(infos, (val) => {
   const personId = getCurrentEmployee()
   return val.find((p) => p.person === personId)
@@ -150,7 +161,7 @@ onClient(() => {
     })
   )
 
-  // All active meetings
+  // All meetings (for detailed info)
   const meetingsPromise = new Promise<void>((resolve) =>
     meetingsQuery.query(
       love.class.MeetingMinutes,
@@ -220,4 +231,26 @@ export const personPrimaryOffice = derived(rooms, (val) => {
   }
 
   return officeMap
+})
+
+/**
+ * Store that tracks which persons are in private meetings (meetings we don't have access to).
+ * These persons should be shown as "Busy" in the UI.
+ * Logic: If a person has ParticipantInfo (is in a meeting) but the meeting is not in our meetings store
+ * (because we don't have access to that Space), they are considered busy.
+ */
+export const busyPersons = derived([infos, meetings, aiBotPerson], ([infos, meetings, aiPerson]) => {
+  const busySet = new Set<Ref<Person>>()
+  const accessibleMeetings = new Set(meetings.map((m) => m._id))
+
+  for (const info of infos) {
+    // Skip aiBot - it can be in multiple meetings simultaneously
+    if (aiPerson !== undefined && info.person === aiPerson) continue
+    // If participant is in a meeting we don't have access to, mark as busy
+    if (info.meeting !== undefined && !accessibleMeetings.has(info.meeting)) {
+      busySet.add(info.person)
+    }
+  }
+
+  return busySet
 })

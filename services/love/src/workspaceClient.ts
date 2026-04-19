@@ -167,7 +167,7 @@ export class WorkspaceClient {
 
     await this.client.addCollection(
       attachment.class.Attachment,
-      meeting.space,
+      meeting._id,
       meeting._id,
       meeting._class,
       'attachments',
@@ -197,7 +197,7 @@ export class WorkspaceClient {
 
     await this.client.addCollection<MeetingMinutes, ActivityInfoMessage>(
       activity.class.ActivityInfoMessage,
-      meeting.space,
+      meeting._id,
       meeting._id,
       meeting._class,
       'activity',
@@ -380,7 +380,7 @@ export class WorkspaceClient {
         })
         return
       }
-      const attachedRoom: Ref<Room> | undefined = meetingDoc.attachedTo as Ref<Room>
+      const attachedRoom: Ref<Room> | undefined = meetingDoc.roomId
 
       const infos = await this.client.findAll(love.class.ParticipantInfo, {
         person,
@@ -614,7 +614,7 @@ export class WorkspaceClient {
 
       const docId = await this.client.addCollection(
         love.class.PendingRecording,
-        meetingDoc.space,
+        meetingDoc._id,
         meetingDoc._id,
         meetingDoc._class,
         'recordings',

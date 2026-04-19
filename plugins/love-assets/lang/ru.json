@@ -95,10 +95,12 @@
     "Finished": "Завершено",
     "Pending": "Ожидание",
     "StartWithRecording": "Начинать с записью",
+    "StartPrivate": "Начинать приватно",
     "RecordingState": "Статус записи",
     "RecordingNotStarted": "Не начато",
     "RecordingRecording": "Запись",
     "RecordingFinished": "Завершено",
+    "Summary": "Резюме",
     "Recording": "Запись",
     "StoppingRecord": "Остановка записи...",
     "Language": "Язык",
@@ -126,6 +128,11 @@
     "ShowParticipants": "Показать участников",
     "HideParticipants": "Скрыть участников",
     "Scheduled": "Запланировано",
-    "WaitForHost": "Пожалуйста, дождитесь, пока организатор начнет встречу."
+    "WaitForHost": "Пожалуйста, дождитесь, пока организатор начнет встречу.",
+    "CloseRoom": "Закрыть комнату",
+    "OpenRoom": "Открыть комнату",
+    "Organizators": "Организаторы",
+    "Private": "Приватная",
+    "Busy": "Занят"
   }
 }

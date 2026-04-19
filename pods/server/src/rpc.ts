@@ -1,11 +1,5 @@
 import { getClient as getAccountClientRaw, type AccountClient } from '@hcengineering/account-client'
-import contact, {
-  AvatarType,
-  combineName,
-  type Person,
-  type SocialIdentity,
-  type SocialIdentityRef
-} from '@hcengineering/contact'
+import { ensureEmployeeForPerson } from '@hcengineering/contact'
 import core, {
   buildSocialIdString,
   generateId,
@@ -14,7 +8,6 @@ import core, {
   type Space,
   systemAccountUuid,
   type Timestamp,
-  TxFactory,
   TxOperations,
   TxProcessor,
   type AttachedData,
@@ -33,9 +26,21 @@ import core, {
   type MixinData,
   type MixinUpdate,
   type SocialIdType,
-  AccountRole
+  AccountRole,
+  type Account,
+  type AccountUuid,
+  type Person as GlobalPerson,
+  type SocialId,
+  type Client,
+  type FindOptions,
+  type FindResult,
+  type DocumentQuery,
+  type Tx,
+  type TxResult,
+  type WithLookup
 } from '@hcengineering/core'
 import { rpcJSONReplacer, type RateLimitInfo } from '@hcengineering/rpc'
+import platform, { PlatformError, unknownError } from '@hcengineering/platform'
 import {
   wrapPipeline,
   type ClientSessionCtx,
@@ -52,8 +57,6 @@ import { compress } from 'snappy'
 import { promisify } from 'util'
 import { gzip } from 'zlib'
 import { retrieveJson } from './utils'
-
-import { unknownError } from '@hcengineering/platform'
 
 export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
 interface RPCClientInfo {
@@ -249,7 +252,19 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         )
       }
     } catch (err: any) {
-      sendError(res, 500, { message: 'Failed to execute operation', error: err.message })
+      if (err instanceof PlatformError) {
+        const statusCode =
+          err.status.code === platform.status.BadRequest
+            ? 400
+            : err.status.code === platform.status.Unauthorized
+              ? 401
+              : err.status.code === platform.status.Forbidden
+                ? 403
+                : 500
+        sendError(res, statusCode, { message: err.message, error: err.status })
+      } else {
+        sendError(res, 500, { message: 'Failed to execute operation', error: err.message })
+      }
     }
   }
 
@@ -659,85 +674,62 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       const accountClient = getAccountClient(token)
 
       const { uuid, socialId } = await accountClient.ensurePerson(socialType, socialValue, firstName, lastName)
-      const primaryPersonId =
+
+      const primarySocialId =
         session.getUser() === systemAccountUuid ? core.account.System : pickPrimarySocialId(session.getSocialIds())._id
-      const txFactory: TxFactory = new TxFactory(primaryPersonId)
 
-      let [person] = await session.findAllRaw(ctx, contact.class.Person, { personUuid: uuid }, { limit: 1 })
-      let personRef: Ref<Person> = person?._id
-
-      if (personRef === undefined) {
-        const createPersonTx = txFactory.createTxCreateDoc(contact.class.Person, contact.space.Contacts, {
-          avatarType: AvatarType.COLOR,
-          name: combineName(firstName, lastName),
-          personUuid: uuid
-        })
-        const createUniquePersonTx = txFactory.createTxApplyIf(
-          core.space.Workspace,
-          socialId,
-          [],
-          [
-            {
-              _class: contact.class.Person,
-              query: { personUuid: uuid }
-            }
-          ],
-          [createPersonTx],
-          'createLocalPerson'
-        )
-
-        await session.txRaw(ctx, createUniquePersonTx)
-        personRef = createPersonTx.objectId
-        if (options?.addGuestEmployee === true) {
-          ;[person] = await session.findAllRaw(ctx, contact.class.Person, { personUuid: uuid }, { limit: 1 })
-        }
-      }
-
-      if (person !== undefined && options?.addGuestEmployee === true) {
-        const h = ctx.pipeline.context.hierarchy
-        if (!h.hasMixin(person, contact.mixin.Employee)) {
-          const op = txFactory.createTxMixin(person._id, contact.class.Person, person.space, contact.mixin.Employee, {
-            active: true,
-            role: AccountRole.Guest
-          })
-          await session.txRaw(ctx, op)
-        }
-      }
-
-      const [socialIdentity] = await session.findAllRaw(
-        ctx,
-        contact.class.SocialIdentity,
-        {
-          attachedTo: personRef,
-          type: socialType,
-          value: socialValue
+      // Adapter wrapping server Session as a Client for ensureEmployeeForPerson
+      const clientAdapter: Pick<Client, 'findOne' | 'findAll' | 'tx'> = {
+        findOne: async <T extends Doc>(
+          _class: Ref<Class<T>>,
+          query: DocumentQuery<T>,
+          opts?: FindOptions<T>
+        ): Promise<WithLookup<T> | undefined> => {
+          const result = await session.findAllRaw(ctx, _class, query, { ...(opts ?? {}), limit: 1 })
+          return result[0]
         },
-        { limit: 1 }
-      )
-
-      if (socialIdentity === undefined) {
-        const data: AttachedData<SocialIdentity> = {
-          key: buildSocialIdString({ type: socialType, value: socialValue }),
-          type: socialType,
-          value: socialValue,
-          isDeleted: false
-        }
-
-        const addSocialIdentityTx = txFactory.createTxCollectionCUD(
-          contact.class.Person,
-          personRef,
-          contact.space.Contacts,
-          'socialIds',
-          txFactory.createTxCreateDoc(
-            contact.class.SocialIdentity,
-            contact.space.Contacts,
-            data as Data<SocialIdentity>,
-            socialId as SocialIdentityRef
-          )
-        )
-
-        await session.txRaw(ctx, addSocialIdentityTx)
+        findAll: async <T extends Doc>(
+          _class: Ref<Class<T>>,
+          query: DocumentQuery<T>,
+          opts?: FindOptions<T>
+        ): Promise<FindResult<T>> => {
+          return await session.findAllRaw(ctx, _class, query, opts)
+        },
+        tx: async (tx: Tx): Promise<TxResult> => await session.txRaw(ctx, tx)
       }
+
+      const socialIdEntry: SocialId = {
+        _id: socialId,
+        type: socialType,
+        value: socialValue,
+        key: buildSocialIdString({ type: socialType, value: socialValue }),
+        verifiedOn: Date.now(),
+        isDeleted: false
+      }
+
+      const account: Account = {
+        uuid: uuid as AccountUuid,
+        primarySocialId,
+        role: options?.addGuestEmployee === true ? AccountRole.Guest : AccountRole.User,
+        socialIds: [socialId],
+        fullSocialIds: [socialIdEntry]
+      }
+
+      const globalPerson: GlobalPerson = {
+        uuid,
+        firstName,
+        lastName
+      }
+
+      const personRef = await ensureEmployeeForPerson(
+        ctx.ctx,
+        account,
+        account,
+        clientAdapter,
+        [socialIdEntry],
+        globalPerson,
+        { createEmployee: options?.addGuestEmployee === true, roleOverride: 'GUEST' }
+      )
 
       const result = { uuid, socialId, localPerson: personRef }
 

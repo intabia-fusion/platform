@@ -60,7 +60,30 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   triggers: Triggers
   storageAdapter!: StorageAdapter
   cache = new Map<string, any>()
+  scopes = new Map<string, Promise<any>>()
   intervalId: NodeJS.Timeout
+
+  withScope = async <T>(scope: string, fn: () => Promise<T>): Promise<T> => {
+    const prev = this.scopes.get(scope)
+    if (prev != null) {
+      try {
+        await prev
+      } catch {}
+    }
+    let release: () => void = () => {}
+    const p = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    this.scopes.set(scope, p)
+    try {
+      return await fn()
+    } finally {
+      if (this.scopes.get(scope) === p) {
+        this.scopes.delete(scope)
+      }
+      release()
+    }
+  }
 
   constructor (context: PipelineContext, next: Middleware | undefined) {
     super(context, next)
@@ -141,6 +164,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       modelDb: this.context.modelDb,
       hierarchy: this.context.hierarchy,
       cache: this.cache,
+      withScope: this.withScope,
       userStatusMap: this.context.userStatusMap ?? new Map(),
       domainRequest: async (ctx, domain, params) => {
         return (await this.context.head?.domainRequest(ctx, domain, params)) ?? { domain, value: undefined }

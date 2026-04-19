@@ -300,6 +300,12 @@ export interface TriggerControl {
 
   // Current set of transactions to being processed for apply/bulks
   txes: Tx[]
+
+  // Per-workspace scoped lock. Serializes concurrent callers with the same scope
+  // within a single process. Useful for guarding non-atomic read-then-write sequences
+  // inside triggers (e.g. find-or-create patterns) since TxApplyIf is not honored
+  // for derived txes issued via control.apply.
+  withScope: <T>(scope: string, fn: () => Promise<T>) => Promise<T>
 }
 
 /**

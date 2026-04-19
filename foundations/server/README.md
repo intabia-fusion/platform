@@ -23,7 +23,6 @@ This repository includes the following server packages:
 
 ### Database Adapters
 
-- [@hcengineering/mongo](packages/mongo) - MongoDB adapter for document storage
 - [@hcengineering/postgres](packages/postgres) - PostgreSQL adapter for relational data
 - [@hcengineering/elastic](packages/elastic) - Elasticsearch adapter for full-text search and analytics
 

@@ -14,61 +14,15 @@
 // limitations under the License.
 //
 
-import core, {
+import {
   type BackupClient,
   type Class,
   type Client as CoreClient,
   type Doc,
-  DOMAIN_TX,
   type Ref,
-  type Tx,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
 import { connect } from '@hcengineering/server-tool'
-import { generateModelDiff, printDiff } from './mdiff'
-
-export async function diffWorkspace (mongoUrl: string, dbName: string, rawTxes: Tx[]): Promise<void> {
-  const client = getMongoClient(mongoUrl)
-  try {
-    const _client = await client.getClient()
-    const db = getWorkspaceMongoDB(_client, dbName)
-
-    console.log('diffing transactions...')
-
-    const currentModel = await db
-      .collection(DOMAIN_TX)
-      .find<Tx>({
-      objectSpace: core.space.Model,
-      modifiedBy: core.account.System,
-      objectClass: { $ne: 'contact:class:PersonAccount' } // Note: we may keep these transactions in old workspaces for history purposes
-    })
-      .toArray()
-
-    const txes = rawTxes.filter((tx) => {
-      return (
-        tx.objectSpace === core.space.Model &&
-        tx.modifiedBy === core.account.System &&
-        (tx as any).objectClass !== 'contact:class:PersonAccount'
-      )
-    })
-
-    const { diffTx, dropTx } = await generateModelDiff(currentModel, txes)
-    if (diffTx.length > 0) {
-      console.log('DIFF Transactions:')
-
-      printDiff(diffTx)
-    }
-    if (dropTx.length > 0) {
-      console.log('Broken Transactions:')
-      for (const tx of dropTx) {
-        console.log(JSON.stringify(tx, undefined, 2))
-      }
-    }
-  } finally {
-    client.close()
-  }
-}
 
 function setByPath (obj: Record<string, any>, path: string[], value: any): Record<string, any> {
   let current = obj

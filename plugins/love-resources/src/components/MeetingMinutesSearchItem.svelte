@@ -26,6 +26,6 @@
     <Icon icon={love.icon.MeetingMinutes} size={'medium'} />
   </div>
   <span class="overflow-label">
-    {value.title}
+    {value.name}
   </span>
 </div>

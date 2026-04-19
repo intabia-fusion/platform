@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Restore workspace contents in mongo/elastic
+# Restore workspace contents in postgres/elastic
 rush build
 rush bundle
 rush docker:build

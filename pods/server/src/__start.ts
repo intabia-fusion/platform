@@ -98,7 +98,6 @@ const { shutdown, sessionManager } = start(metricsContext, config.dbUrl, {
     start: profileStart,
     stop: profileStop
   },
-  mongoUrl: config.mongoUrl,
   queue
 })
 

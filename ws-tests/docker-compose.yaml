@@ -28,27 +28,28 @@ services:
       - STREAM_REGION=
       - STREAM_QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
-  mongodb:
-    image: 'mongo:7-jammy'
-    command: mongod --port 27018
-    ports:
-      - 27018:27018
-    healthcheck:
-      test: echo "try { db.currentOp().ok } catch (err) { }" | mongosh --port 27018 --quiet
-      interval: 5s
-      timeout: 30s
-      start_period: 0s
-      start_interval: 1s
-      retries: 30
-    environment:
-      - PUID=1000
-      - PGID=1000
-    restart: unless-stopped
   cockroach:
     image: cockroachdb/cockroach:v24.1.2
     command: start-single-node --insecure
     ports:
       - '26258:26257'
+    restart: unless-stopped
+  postgres:
+    image: postgres:18.1
+    command: ['postgres', '-p', '5433']
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -p 5433']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - 5433:5433
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     restart: unless-stopped
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
@@ -160,10 +161,12 @@ services:
     depends_on:
       cockroach:
         condition: service_started
+      postgres:
+        condition: service_healthy
     links:
-      - mongodb
       - minio
       - cockroach
+      - postgres
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
       - ./region-config.yaml:/var/cfg/region-config.yaml
@@ -174,7 +177,7 @@ services:
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - STATS_URL=http://stats:4901
       - WORKSPACE_LIMIT_PER_USER=100
-      - DB_URL=${DB_EU_URL}
+      - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://localhost:8083
@@ -195,7 +198,7 @@ services:
     image: intabiafusion/workspace
     pull_policy: never
     links:
-      - mongodb
+      - cockroach
       - minio
       - stats
     volumes:
@@ -209,7 +212,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - REGION=
       - ACCOUNTS_URL=http://account:3003
-      - ACCOUNTS_DB_URL=${DB_EU_URL}
+      - ACCOUNTS_DB_URL=${DB_URL}
       - BRANDING_PATH=/var/cfg/branding.json
       - BACKUP_STORAGE=${BACKUP_STORAGE_CONFIG}
       - BACKUP_BUCKET=${BACKUP_BUCKET_NAME}
@@ -218,7 +221,11 @@ services:
   workspace_europe:
     image: intabiafusion/workspace
     pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
     links:
+      - postgres
       - cockroach
       - minio
       - stats
@@ -233,7 +240,7 @@ services:
       - STATS_URL=http://stats:4901
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - ACCOUNTS_URL=http://account:3003
-      - ACCOUNTS_DB_URL=${DB_EU_URL}
+      - ACCOUNTS_DB_URL=${DB_URL}
       - BRANDING_PATH=/var/cfg/branding.json
       - BACKUP_STORAGE=${BACKUP_STORAGE_CONFIG}
       - BACKUP_BUCKET=${BACKUP_BUCKET_NAME}
@@ -243,7 +250,6 @@ services:
     image: intabiafusion/collaborator
     pull_policy: never
     links:
-      - mongodb
       - minio
       - transactor
       - stats
@@ -259,7 +265,6 @@ services:
     pull_policy: never
     links:
       - account
-      - mongodb
       - minio
       - elastic
       - collaborator
@@ -292,7 +297,7 @@ services:
     image: intabiafusion/transactor
     pull_policy: never
     links:
-      - mongodb
+      - cockroach
       - minio
       - account
       - stats
@@ -320,8 +325,11 @@ services:
   transactor-europe:
     image: intabiafusion/transactor
     pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
     links:
-      - cockroach
+      - postgres
       - minio
       - account
       - stats
@@ -359,7 +367,7 @@ services:
     restart: unless-stopped
     links:
       - elastic
-      - mongodb
+      - cockroach
       - rekoni
     environment:
       - PORT=4710
@@ -375,9 +383,12 @@ services:
   fulltext-europe:
     image: intabiafusion/fulltext
     pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
     links:
       - elastic
-      - cockroach
+      - postgres
       - rekoni
     environment:
       - PORT=4711
@@ -420,8 +431,8 @@ services:
         condition: service_started
       account:
         condition: service_started
-      cockroach:
-        condition: service_started
+      postgres:
+        condition: service_healthy
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
     environment:

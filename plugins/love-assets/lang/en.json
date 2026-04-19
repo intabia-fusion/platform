@@ -94,10 +94,12 @@
     "Finished": "Finished",
     "Pending": "Pending",
     "StartWithRecording": "Start with recording",
+    "StartPrivate": "Start private",
     "RecordingState": "Recording state",
     "RecordingNotStarted": "Not started",
     "RecordingRecording": "Recording",
     "RecordingFinished": "Finished",
+    "Summary": "Summary",
     "Recording": "Recording",
     "StoppingRecord": "Stopping recording...",
     "Language": "Language",
@@ -126,6 +128,11 @@
     "ShowParticipants": "Show participants",
     "HideParticipants": "Hide participants",
     "Scheduled": "Scheduled",
-    "WaitForHost": "Please wait for the host to start the meeting."
+    "WaitForHost": "Please wait for the host to start the meeting.",
+    "CloseRoom": "Close room",
+    "OpenRoom": "Open room",
+    "Private": "Private",
+    "Busy": "Busy",
+    "Organizators": "Organizers"
   }
 }

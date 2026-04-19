@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { Room, isOffice, type ParticipantInfo } from '@hcengineering/love'
+  import { Room, isOffice, MeetingStatus, type ParticipantInfo } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { getMetadata, IntlString } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
+  import { Ref } from '@hcengineering/core'
+  import { getCurrentEmployee } from '@hcengineering/contact'
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
@@ -26,9 +28,9 @@
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
   import RoomPreview from './RoomPreview.svelte'
-  import { Ref } from '@hcengineering/core'
 
   export let object: Room
+  export let readonly: boolean = false
 
   const dispatch = createEventDispatcher()
 
@@ -44,7 +46,7 @@
   })
 
   async function connect (): Promise<void> {
-    const mm = get(meetings).find((it) => it.attachedTo === object._id)
+    const mm = get(meetings).find((it) => it.roomId === object._id)
     if (mm !== undefined) {
       await joinMeeting(mm)
     } else {
@@ -107,6 +109,13 @@
   }
 
   $: roomInfos = getInfo(object._id, $infos)
+
+  const me = getCurrentEmployee()
+  // Room is locked if participants are present but meeting is not in our accessible meetings store
+  $: isLockedByPrivateMeeting =
+    roomInfos.length > 0 &&
+    !roomInfos.some((p) => p.person === me) &&
+    !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished)
 </script>
 
 <div class="flex flex-col">
@@ -116,7 +125,7 @@
         <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
       </div>
 
-      {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
+      {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
         <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
       {/if}
     </div>
@@ -142,5 +151,10 @@
     max-width: 500px;
     overflow: hidden;
     padding: 2rem;
+  }
+
+  .step-tb-6 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 </style>

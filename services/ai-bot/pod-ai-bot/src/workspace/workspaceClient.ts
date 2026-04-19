@@ -48,6 +48,7 @@ import {
   Timestamp,
   toIdMap,
   withContext,
+  systemAccountUuid,
   type Account,
   type WorkspaceIds
 } from '@hcengineering/core'
@@ -58,6 +59,7 @@ import { getTools } from '../utils/tools'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { getAccountClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 import { jsonToMarkup, markupToText } from '@hcengineering/text'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
@@ -191,11 +193,13 @@ export class WorkspaceClient {
     await this.checkEmployeeInfo(this.client)
 
     if (this.aiPerson !== undefined && config.LoveEndpoint !== '') {
+      const systemToken = generateToken(systemAccountUuid, this.wsIds.uuid, { service: 'aibot' })
+      const systemClient = connectPlatform(systemToken, this.wsIds.uuid, this.transactorUrl)
       this.love = new LoveController(
         this.wsIds.uuid,
         this.ctx.newChild('love', {}, { span: false }),
         this.token,
-        this.client,
+        systemClient,
         this.aiPerson
       )
     }

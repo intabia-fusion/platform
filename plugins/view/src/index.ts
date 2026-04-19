@@ -335,7 +335,8 @@ const view = plugin(viewId, {
     MarkdownFormatting: '' as Ref<ActionCategory>
   },
   extensions: {
-    EditDocTitleExtension: '' as ComponentExtensionId
+    EditDocTitleExtension: '' as ComponentExtensionId,
+    EditDocPreTitleExtension: '' as ComponentExtensionId
   },
   filter: {
     FilterArrayAll: '' as Ref<FilterMode>,
