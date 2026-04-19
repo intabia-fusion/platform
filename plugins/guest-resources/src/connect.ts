@@ -56,6 +56,8 @@ export async function connect (title: string): Promise<Client | undefined> {
       connectAttempt++
       const delay = Math.min(1000 * 2 ** Math.min(connectAttempt - 1, 4), 10000)
       await new Promise((resolve) => setTimeout(resolve, delay))
+      // Abort if user navigated away to another workspace while we were waiting
+      if (wsUrl !== getCurrentLocation().path[1]) return
       continue
     }
     connectAttempt = 0
