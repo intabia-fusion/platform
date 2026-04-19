@@ -33,7 +33,7 @@ import {
 import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { Preference } from '@hcengineering/preference'
-import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@hcengineering/ui'
+import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@hcengineering/ui/src/types'
 import type { Action } from '@hcengineering/view'
 
 /**

@@ -46,6 +46,7 @@ import {
   type SocialIdType,
   type WithLookup
 } from '@hcengineering/core'
+import type { MarkupFormat, MarkupRef } from '../markup'
 
 /**
  * A list of client operations to perform on.
@@ -124,11 +125,66 @@ export interface ClientOperations {
   ) => Promise<TxResult>
 
   /**
+   * Update a top-level document by class/space/id. Server routes to updateDoc/updateCollection
+   * based on class hierarchy — no model required on client.
+   */
+  updateDoc: <T extends Doc>(
+    _class: Ref<Class<T>>,
+    space: Ref<Space>,
+    objectId: Ref<T>,
+    update: DocumentUpdate<T>,
+    retrieve?: boolean,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
+
+  /**
+   * Update an attached (collection) document by class/space/id + attachment info.
+   */
+  updateCollection: <T extends Doc, P extends AttachedDoc>(
+    _class: Ref<Class<P>>,
+    space: Ref<Space>,
+    objectId: Ref<P>,
+    attachedTo: Ref<T>,
+    attachedToClass: Ref<Class<T>>,
+    collection: Extract<keyof T, string> | string,
+    update: DocumentUpdate<P>,
+    retrieve?: boolean,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
+
+  /**
    * Remove a document or collection document.
    *
    * For documents be aware all collection documents attached will be removed as well.
    */
   remove: <T extends Doc>(doc: T, modifiedOn?: Timestamp, modifiedBy?: PersonId) => Promise<TxResult>
+
+  /**
+   * Remove a top-level document by class/space/id. Server routes to removeDoc/removeCollection.
+   */
+  removeDoc: <T extends Doc>(
+    _class: Ref<Class<T>>,
+    space: Ref<Space>,
+    objectId: Ref<T>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
+
+  /**
+   * Remove an attached (collection) document by class/space/id + attachment info.
+   */
+  removeCollection: <T extends Doc, P extends AttachedDoc>(
+    _class: Ref<Class<P>>,
+    space: Ref<Space>,
+    objectId: Ref<P>,
+    attachedTo: Ref<T>,
+    attachedToClass: Ref<Class<T>>,
+    collection: Extract<keyof T, string> | string,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ) => Promise<TxResult>
 
   createMixin: <D extends Doc, M extends D>(
     objectId: Ref<D>,
@@ -179,4 +235,29 @@ export interface RestClient extends ClientOperations {
    * Perform a full text search request.
    */
   searchFulltext: (query: SearchQuery, options: SearchOptions) => Promise<SearchResult>
+
+  /**
+   * Upload a markup value (markdown/html/markup JSON) to the collaborator service
+   * and obtain a blob reference that can be stored in the document attribute.
+   * Requires a collaborator endpoint (pass it when constructing the client).
+   */
+  uploadMarkup: (
+    objectClass: Ref<Class<Doc>>,
+    objectId: Ref<Doc>,
+    objectAttr: string,
+    markup: string,
+    format: MarkupFormat
+  ) => Promise<MarkupRef>
+
+  /**
+   * Fetch a markup value from the collaborator service by its blob reference
+   * and return it in the requested format.
+   */
+  fetchMarkup: (
+    objectClass: Ref<Class<Doc>>,
+    objectId: Ref<Doc>,
+    objectAttr: string,
+    markup: MarkupRef,
+    format: MarkupFormat
+  ) => Promise<string>
 }
