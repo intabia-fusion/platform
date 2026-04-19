@@ -77,43 +77,6 @@ function isAlreadyPublished (name, version) {
   })
 }
 
-function normalizeWorkspaceDeps (packagePath) {
-  // npm publish rejects workspace: ranges. Rewrite to plain semver, return original for restore.
-  const packageJsonPath = path.join(packagePath, 'package.json')
-  let original = null
-  try {
-    original = fs.readFileSync(packageJsonPath, 'utf8')
-    const pkg = JSON.parse(original)
-    const depFields = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
-    let changed = false
-    for (const field of depFields) {
-      const deps = pkg[field]
-      if (!deps || typeof deps !== 'object') continue
-      for (const [n, range] of Object.entries(deps)) {
-        if (typeof range === 'string' && range.startsWith('workspace:')) {
-          deps[n] = range.replace(/^workspace:/, '')
-          changed = true
-        }
-      }
-    }
-    if (changed) {
-      fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8')
-    }
-  } catch (err) {
-    console.warn(`normalize failed for ${packagePath}: ${err.message}`)
-  }
-  return original
-}
-
-function restorePackageJson (packagePath, original) {
-  if (original == null) return
-  try {
-    fs.writeFileSync(path.join(packagePath, 'package.json'), original, 'utf8')
-  } catch (err) {
-    console.warn(`restore failed for ${packagePath}: ${err.message}`)
-  }
-}
-
 async function publish (name) {
   const package = packages[name]
   const version = jsons[name] && jsons[name].version
@@ -125,15 +88,12 @@ async function publish (name) {
   let backoff = 10000
   while (true) {
     attempt++
-    const original = normalizeWorkspaceDeps(package.path)
     try {
       console.log(`publishing ${name} (attempt ${attempt})`)
-      execSync('npm publish --access public 2>&1', { encoding: 'utf-8', cwd: package.path })
+      execSync('pnpm publish --no-git-checks --access public 2>&1', { encoding: 'utf-8', cwd: package.path })
       console.log('published:', name)
-      restorePackageJson(package.path, original)
       return
     } catch (err) {
-      restorePackageJson(package.path, original)
       const output = String((err.stdout || '') + (err.stderr || '') + (err.message || ''))
       process.stdout.write(output)
       const rateLimited = output.includes('E429') || output.includes('rate limit')
