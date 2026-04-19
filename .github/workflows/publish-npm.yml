@@ -3,37 +3,46 @@ name: Publish npm
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: 'Ref to publish (e.g. refs/tags/v0.7.382 or a branch)'
+      version:
+        description: 'Version to publish (e.g. 1.0.0). Bumps all publishable packages before publish.'
         required: true
-        default: 'refs/heads/develop'
+      ref:
+        description: 'Git ref to checkout (branch or tag)'
+        required: true
+        default: 'develop'
 
 jobs:
   publish-npm:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
-      - uses: actions/setup-node@v6
+
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - name: Cache node modules
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-node-platform
+
+      - name: Cache rush/pnpm store
+        uses: actions/cache@v4
         with:
           path: common/temp
-          key: ${{ runner.os }}-build-cache-node-platform-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: ${{ runner.os }}-build-cache-node-platform-
-      - name: Installing...
+          key: ${{ runner.os }}-build-cache-node-foundation-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-build-cache-node-foundation-
+
+      - name: Install
         run: node common/scripts/install-run-rush.js install
-      - name: Building...
+
+      - name: Bump versions
+        run: node common/scripts/bump.js --fix "${{ github.event.inputs.version }}"
+
+      - name: Validate (build + lint + test)
         run: node common/scripts/install-run-rush.js fast-build:validate
+
       - name: Publish to npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -43,10 +52,5 @@ jobs:
             exit 1
           fi
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-          REF="${{ github.event.inputs.ref }}"
-          VERSION="${REF#refs/tags/v}"
-          VERSION="${VERSION#v}"
-          if [[ "$REF" == refs/tags/v* ]]; then
-            node common/scripts/bump.js --check "$VERSION"
-          fi
-          node common/scripts/safe-publish.js
+          npm whoami
+          node common/scripts/bump.js --publish "${{ github.event.inputs.version }}"
