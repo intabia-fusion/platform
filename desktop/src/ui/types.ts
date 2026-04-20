@@ -71,6 +71,10 @@ export interface Config {
   DISABLED_FEATURES?: string
   SIGNUP_URL?: string
   SUPPORT_EMAIL?: string
+  LICENSE_URL?: string
+  USERAGREEMENT_URL?: string
+  CONFIDENTIAL_URL?: string
+  PERSONAL_DATA_URL?: string
 
   ACCENT_THEME?: string
   LOGIN_THEME?: string
