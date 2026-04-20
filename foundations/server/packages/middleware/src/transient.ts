@@ -58,12 +58,11 @@ export class TransientMiddleware extends BaseMiddleware implements Middleware {
       this.ttlValues.set(cl._id as Ref<Class<Doc>>, cl.ttl)
     }
 
-    this.dbProvider = context.adapterManager?.getAdapter?.(DOMAIN_TRANSIENT, true)
-    if (this.dbProvider !== undefined) {
-      this.ttlChecker = setInterval(() => {
-        void this.checkTTL()
-      }, 1000)
-    }
+    // adapterManager is initialized later in the pipeline by DBAdapterMiddleware,
+    // so resolve the provider lazily inside checkTTL.
+    this.ttlChecker = setInterval(() => {
+      void this.checkTTL()
+    }, 1000)
   }
 
   async close (): Promise<void> {
@@ -83,7 +82,8 @@ export class TransientMiddleware extends BaseMiddleware implements Middleware {
 
   checkTTL = reduceCalls(async () => {
     if (this.dbProvider === undefined) {
-      return
+      this.dbProvider = this.context.adapterManager?.getAdapter?.(DOMAIN_TRANSIENT, true)
+      if (this.dbProvider === undefined) return
     }
     this.now = Date.now() / 1000 // Now in seconds
 
