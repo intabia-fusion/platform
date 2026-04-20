@@ -120,7 +120,7 @@ export class AmoCrmClient {
 
     this.ctx.info('AmoCRM lead created', { response: JSON.stringify(response) })
 
-    if (comment !== undefined) {
+    if (comment != null && comment.trim() !== '') {
       const entityId = response[0].id
       await this.createNote(entityId, comment)
     }
