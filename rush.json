@@ -1027,6 +1027,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@intabiafusion/api-bundle-builder",
+      "projectFolder": "dev/api",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/import-tool",
       "projectFolder": "dev/import-tool",
       "shouldPublish": false

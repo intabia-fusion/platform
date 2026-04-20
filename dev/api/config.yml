@@ -1,0 +1,47 @@
+# Scopes of input monorepo packages (what we read and rewrite from).
+# Packages from any of these scopes are treated as bundle-internal and are
+# rewritten to `@intabia-fusion/api/<shortname>`.
+sourceScopes:
+  - "@hcengineering"
+  - "@intabiafusion"
+# Scope of the published bundle (what consumers import).
+scope: "@intabia-fusion"
+bundleName: "@intabia-fusion/api"
+version: "1.0.2"
+
+# Entry points. Build traverses dependencies + peerDependencies transitively
+# within the sourceScopes. Everything reachable must be either in the bundle
+# (via roots/transitive) or listed in excludeScope; otherwise build fails.
+roots:
+  - "@hcengineering/tracker"
+  - "@hcengineering/chunter"
+  - "@hcengineering/contact"
+  - "@hcengineering/card"
+  - "@hcengineering/chat"
+  - "@hcengineering/client"
+  - "@hcengineering/client-resources"
+  - "@hcengineering/api-client"
+  - "@hcengineering/account-client"
+  - "@hcengineering/task"
+  - "@hcengineering/core"
+  - "@hcengineering/document"
+  - "@hcengineering/rank"
+  - "@hcengineering/tags"
+  - "@hcengineering/query"
+  - "@intabiafusion/clisr"
+
+# Packages auto-excluded if they contain *.svelte files or depend on 'svelte'.
+# Any import of an excluded package from a bundled file => build fails.
+excludeScope: []
+
+# Packages normally excluded (svelte), but we want a selective subset:
+# whitelist some .ts files; transitively copy their in-package ts imports.
+# Encountering .svelte or non-ts imports from the same package => fail.
+partial:
+  "@hcengineering/ui":
+    include:
+      - "src/types.ts"
+      - "src/colors.ts"
+
+# non-scope deps merge strategy: highest | first | fail
+depsMerge: highest

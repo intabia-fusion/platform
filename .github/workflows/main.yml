@@ -103,6 +103,22 @@ jobs:
       - name: Validate...
         run: node common/scripts/install-run-rush.js fast-build:validate
 
+      - name: Build @intabia-fusion/api bundle
+        run: |
+          cd dev/api
+          node scripts/build-bundle.js
+          cd bundle
+          npm install
+          npx tsc
+          npm pack
+
+      - name: Upload @intabia-fusion/api bundle artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: intabia-fusion-api-bundle
+          path: dev/api/bundle/intabia-fusion-api-*.tgz
+          if-no-files-found: error
+
       - name: Cache build results
         uses: actions/cache@v5
         env:

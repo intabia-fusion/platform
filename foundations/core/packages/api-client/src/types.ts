@@ -36,6 +36,7 @@ import {
   type TxResult,
   type WithLookup
 } from '@hcengineering/core'
+import type { LiveQuery } from '@hcengineering/query'
 import { type MarkupContent, type MarkupOperations } from './markup'
 
 type WithPropertyType<T, X, Y> = {
@@ -59,6 +60,13 @@ export type PlatformClient = {
   getModel: () => ModelDb
 
   getAccount: () => Promise<Account>
+
+  /**
+   * Create a live query instance bound to this client's WebSocket connection.
+   * The returned LiveQuery receives every transaction from the server and lets
+   * callers subscribe to reactive findAll results via `.query(...)`.
+   */
+  createLiveQuery: () => LiveQuery
 
   close: () => Promise<void>
 } & FindOperations &
