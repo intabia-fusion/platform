@@ -106,14 +106,20 @@ export async function connect (title: string): Promise<Client | undefined> {
   let workspaceLoginInfo: WorkspaceLoginInfo | undefined
 
   let retryCounter = 5
+  let connectAttempt = 0
   while (true) {
     const selectResult = await ctx.with('select-workspace', {}, async () => await selectWorkspace(wsUrl, null))
     workspaceLoginInfo = selectResult[1] ?? undefined
     if (!selectResult[2]) {
-      // Connection error happen, wait and retry
-      await new Promise((resolve) => setTimeout(resolve, 25))
+      // Connection error: exponential backoff capped at 10s to avoid request storm when server is down
+      connectAttempt++
+      const delay = Math.min(500 * 2 ** Math.min(connectAttempt - 1, 5), 10000)
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      // Abort if user navigated away to another workspace while we were waiting
+      if (wsUrl !== getCurrentLocation().path[1]) return
       continue
     }
+    connectAttempt = 0
 
     // OK but unauthorized - we need to login
     if (workspaceLoginInfo == null) {
