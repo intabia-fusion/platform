@@ -36839,7 +36839,7 @@ importers:
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/workbench
-      '@hcengineering/clisr':
+      '@intabiafusion/clisr':
         specifier: workspace:^0.7.0
         version: link:../../../packages/clisr
       cors:
@@ -39532,7 +39532,7 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/server/packages/core
-      '@hcengineering/clisr':
+      '@intabiafusion/clisr':
         specifier: workspace:^0.7.0
         version: link:../../../packages/clisr
       '@types/nodemailer':

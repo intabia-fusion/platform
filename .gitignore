@@ -121,3 +121,4 @@ benchmarks/front-benchmark/front-benchmark
 build-comparison/
 dev/gh-picker/gh-picker
 /dev/prod/.build_cache
+.claude/settings.local.json

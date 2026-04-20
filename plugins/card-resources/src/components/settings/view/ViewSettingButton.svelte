@@ -22,10 +22,6 @@
   import { AttributeConfig, Config } from '@hcengineering/view-resources'
   import ViewOptionsButton from './ViewOptionsButton.svelte'
   import ViewletSetting from './ViewSetting.svelte'
-<<<<<<< HEAD
-  import { Data } from '@hcengineering/core'
-=======
->>>>>>> 7da0bdfb9c (Process minor fixes (#10704))
 
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
   export let viewlet: Data<Viewlet> | undefined = undefined

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git cherry-pick *)",
-      "Bash(git show *)"
-    ]
-  },
-  "$version": 3
-}
