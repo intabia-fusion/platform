@@ -14,10 +14,22 @@
 -->
 <script lang="ts">
   import contact from '@intabiafusion/contact'
-  import { isArchivingMode, systemAccountUuid, WorkspaceInfoWithStatus } from '@intabiafusion/core'
+  import {
+    getCurrentAccount,
+    isArchivingMode,
+    SortingOrder,
+    systemAccountUuid,
+    WorkspaceInfoWithStatus
+  } from '@intabiafusion/core'
   import login from '@intabiafusion/login'
   import { getMetadata, getResource } from '@intabiafusion/platform'
-  import presentation, { createQuery, decodeTokenPayload, hasResource, isAdminUser } from '@intabiafusion/presentation'
+  import presentation, {
+    createQuery,
+    decodeTokenPayload,
+    hasResource,
+    isAdminUser,
+    getCurrentWorkspaceUuid
+  } from '@intabiafusion/presentation'
   import {
     closePopup,
     Component,
@@ -34,15 +46,17 @@
     navigate,
     resolvedLocationStore,
     SearchEdit,
-    ticker
+    ticker,
+    WorkspaceLogo
   } from '@intabiafusion/ui'
   import { workbenchId } from '@intabiafusion/workbench'
   import { onDestroy, onMount } from 'svelte'
-
   import { Analytics } from '@intabiafusion/analytics'
   import type { PersonRating } from '@intabiafusion/rating'
   import ratingPlugin from '@intabiafusion/rating'
+
   import { workspacesStore } from '../utils'
+  import { workspacesNotificationStore } from '../workbench'
   // import Drag from './icons/Drag.svelte'
 
   onMount(() => {
@@ -50,6 +64,8 @@
       $workspacesStore = await f()
     })
   })
+
+  const currentWorkspaceUuid = getCurrentWorkspaceUuid()
 
   const levelQuery = createQuery()
 
@@ -126,7 +142,7 @@
   const _endpoint: string = fetchMetadataLocalStorage(login.metadata.LoginEndpoint) ?? ''
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 
-  let endpoint = _endpoint.replace(/^ws/g, 'http')
+  let endpoint = 'http://huly.local:8080'
   if (endpoint.endsWith('/')) {
     endpoint = endpoint.substring(0, endpoint.length - 1)
   }
@@ -152,6 +168,18 @@
       data?: Record<string, any>
     }>
     >) ?? {}
+
+  $: workspacesNotification = $workspacesNotificationStore
+  $: sortedWorkspaces = $workspacesStore
+    .filter((it) => search === '' || (it.name?.includes(search) ?? false) || it.url.includes(search))
+    .sort((a, b) => {
+      if (a.uuid === currentWorkspaceUuid) return -1
+      if (b.uuid === currentWorkspaceUuid) return 1
+      const aName = (a.name ?? a.url).toLowerCase()
+      const bName = (b.name ?? b.url).toLowerCase()
+      return aName.localeCompare(bName)
+    })
+    .slice(0, 500)
 </script>
 
 {#if $workspacesStore.length}
@@ -159,22 +187,22 @@
   <div class="antiPopup" on:keydown={keyDown}>
     <div class="ap-space x2" />
 
-    <div class="p-2 ml-2 mr-2 mb-2 flex-grow flex flex-col">
-      <div class="text-lg font-bold">
-        {getMetadata(presentation.metadata.WorkspaceName) ?? ''}
-      </div>
-      {#if hasRating}
-        <div class="flex-row-center text-sm">
-          <Component
-            is={ratingPlugin.component.RatingRing}
-            props={{ rating: sysRating?.rating ?? 0, showValues: true }}
-          />
-        </div>
-        <div class="flex-row-center mt-2">
-          <Component is={ratingPlugin.component.RatingActivities} props={{ rating: sysRating }} />
-        </div>
-      {/if}
-    </div>
+    <!--    <div class="p-2 ml-2 mr-2 mb-2 flex-grow flex flex-col">-->
+    <!--      <div class="text-lg font-bold">-->
+    <!--        {getMetadata(presentation.metadata.WorkspaceName) ?? ''}-->
+    <!--      </div>-->
+    <!--      {#if hasRating}-->
+    <!--        <div class="flex-row-center text-sm">-->
+    <!--          <Component-->
+    <!--            is={ratingPlugin.component.RatingRing}-->
+    <!--            props={{ rating: sysRating?.rating ?? 0, showValues: true }}-->
+    <!--          />-->
+    <!--        </div>-->
+    <!--        <div class="flex-row-center mt-2">-->
+    <!--          <Component is={ratingPlugin.component.RatingActivities} props={{ rating: sysRating }} />-->
+    <!--        </div>-->
+    <!--      {/if}-->
+    <!--    </div>-->
 
     {#if isAdmin}
       <div class="p-2 ml-2 mr-2 mb-2 flex-grow flex-row-center">
@@ -194,9 +222,7 @@
     {/if}
     <div class="ap-scroll">
       <div class="ap-box">
-        {#each $workspacesStore
-          .filter((it) => search === '' || (it.name?.includes(search) ?? false) || it.url.includes(search))
-          .slice(0, 500) as ws, i}
+        {#each sortedWorkspaces as ws, i}
           {@const wsName = ws.name ?? ws.url}
           {@const _activeSession = activeSessions[ws.uuid]}
           {@const lastUsageDays = Math.round((Date.now() - (ws.lastVisit ?? 0)) / (1000 * 3600 * 24))}
@@ -220,34 +246,41 @@
               <!-- <div class="logo empty" /> -->
               <!-- <div class="flex-col flex-grow"> -->
               <div class="flex-col flex-grow">
-                <span class="label overflow-label flex flex-grow flex-between">
-                  {wsName}
-                  {#if isArchivingMode(ws.mode)}
-                    - <Label label={presentation.string.Archived} />
-                  {/if}
-                  {#if isAdmin}
-                    {#if ws.region != null && ws.region !== ''}
-                      - ({ws.region})
+                <div class="flex-presenter flex-gap-2">
+                  <WorkspaceLogo
+                    name={wsName}
+                    notify={workspacesNotification?.[ws.uuid] === true && ws.uuid !== currentWorkspaceUuid}
+                    logoUrl={ws.logo != null ? `${endpoint}/account/workspace/${ws.uuid}/logo?t=${ws.logo}` : undefined}
+                  />
+                  <span class="label overflow-label flex flex-grow flex-between">
+                    {wsName}
+                    {#if isArchivingMode(ws.mode)}
+                      - <Label label={presentation.string.Archived} />
                     {/if}
-                  {/if}
-                  {#if isAdmin && ws.lastVisit != null && ws.lastVisit !== 0}
-                    <div class="text-sm">
-                      {#if ws.backupInfo != null}
-                        {@const sz = Math.max(
-                          ws.backupInfo.backupSize,
-                          ws.backupInfo.dataSize + ws.backupInfo.blobsSize
-                        )}
-                        {@const szGb = Math.round((sz * 100) / 1024) / 100}
-                        {#if szGb > 0}
-                          {Math.round((sz * 100) / 1024) / 100}Gb -
-                        {:else}
-                          {Math.round(sz)}Mb -
-                        {/if}
+                    {#if isAdmin}
+                      {#if ws.region != null && ws.region !== ''}
+                        - ({ws.region})
                       {/if}
-                      ({lastUsageDays} days)
-                    </div>
-                  {/if}
-                </span>
+                    {/if}
+                    {#if isAdmin && ws.lastVisit != null && ws.lastVisit !== 0}
+                      <div class="text-sm">
+                        {#if ws.backupInfo != null}
+                          {@const sz = Math.max(
+                            ws.backupInfo.backupSize,
+                            ws.backupInfo.dataSize + ws.backupInfo.blobsSize
+                          )}
+                          {@const szGb = Math.round((sz * 100) / 1024) / 100}
+                          {#if szGb > 0}
+                            {Math.round((sz * 100) / 1024) / 100}Gb -
+                          {:else}
+                            {Math.round(sz)}Mb -
+                          {/if}
+                        {/if}
+                        ({lastUsageDays} days)
+                      </div>
+                    {/if}
+                  </span>
+                </div>
                 {#if isAdmin && wsName !== ws.url}
                   <span class="text-xs">
                     ({ws.url})
@@ -283,5 +316,23 @@
 <style lang="scss">
   .active {
     background-color: var(--theme-inbox-people-counter-bgcolor);
+  }
+
+  .logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &.empty {
+      background-color: var(--theme-sidebar-hover-bgcolor);
+    }
   }
 </style>

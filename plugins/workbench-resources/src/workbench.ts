@@ -19,11 +19,12 @@ import core, {
   generateId,
   getCurrentAccount,
   reduceCalls,
-  type Ref
+  type Ref,
+  SortingOrder
 } from '@intabiafusion/core'
 import notification, { notificationId } from '@intabiafusion/notification'
 import { type Asset, getMetadata, getResource, type IntlString, setMetadata, translate } from '@intabiafusion/platform'
-import presentation, { configurationStore, getClient } from '@intabiafusion/presentation'
+import presentation, { configurationStore, createQuery, getClient, onClient } from '@intabiafusion/presentation'
 import {
   type AnyComponent,
   getCurrentLocation,
@@ -39,6 +40,7 @@ import view from '@intabiafusion/view'
 import { parseLinkId } from '@intabiafusion/view-resources'
 import { type Application, workbenchId, type WorkbenchTab } from '@intabiafusion/workbench'
 import { derived, get, writable } from 'svelte/store'
+import pulse, { type WorkspacesNotification } from '@intabiafusion/pulse'
 
 import setting from '@intabiafusion/setting'
 import workbench from './plugin'
@@ -325,4 +327,26 @@ async function getDefaultTabName (loc: Location): Promise<string | undefined> {
 configurationStore.subscribe((config) => {
   const arePermissionsDisabled = config.get(setting.ids.DisablePermissionsConfiguration)?.enabled ?? false
   setMetadata(core.metadata.DisablePermissions, arePermissionsDisabled)
+})
+
+export const workspacesNotificationStore = writable<WorkspacesNotification | undefined>(undefined)
+
+const workspacesNotificationQuery = createQuery(true)
+onClient(() => {
+  workspacesNotificationQuery.query(
+    pulse.class.WorkspacesNotification,
+    {
+      account: getCurrentAccount().uuid
+    },
+    (res) => {
+      const r = res[0]
+      if (r != null) {
+        workspacesNotificationStore.set(r)
+      }
+    },
+    {
+      limit: 1,
+      sort: { createdOn: SortingOrder.Descending }
+    }
+  )
 })

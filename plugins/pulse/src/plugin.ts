@@ -16,7 +16,7 @@
 import type { Class, Ref } from '@intabiafusion/core'
 import type { Plugin } from '@intabiafusion/platform'
 import { plugin } from '@intabiafusion/platform'
-import type { DocumentPresence, TypingIndicator } from './types'
+import type { DocumentPresence, TypingIndicator, WorkspacesNotification } from './types'
 
 /** @public */
 export const pulseId = 'pulse' as Plugin
@@ -25,7 +25,8 @@ export const pulseId = 'pulse' as Plugin
 const pulsePlugin = plugin(pulseId, {
   class: {
     DocumentPresence: '' as Ref<Class<DocumentPresence>>,
-    TypingIndicator: '' as Ref<Class<TypingIndicator>>
+    TypingIndicator: '' as Ref<Class<TypingIndicator>>,
+    WorkspacesNotification: '' as Ref<Class<WorkspacesNotification>>
   }
 })
 

@@ -66,6 +66,7 @@
     "@intabiafusion/chat": "workspace:^1.0.0",
     "@intabiafusion/communication": "workspace:^1.0.0",
     "@intabiafusion/rating": "workspace:^1.0.0",
+    "@intabiafusion/pulse": "workspace:^1.0.0",
     "fast-equals": "^5.2.2"
   }
 }

@@ -31,6 +31,8 @@ import {
   type WorkspaceDataId,
   type WorkspaceUuid,
   type WorkspaceInfo,
+  type Ref,
+  type Blob,
   type IntegrationKind
 } from '@intabiafusion/core'
 import type { EndpointInfo } from './utils'
@@ -117,6 +119,7 @@ export interface Workspace {
   passwordAgingRule?: number // Number of days after which password must be changed
   dataId?: WorkspaceDataId // Old workspace identifier. E.g. Database name in Mongo, bucket in R2, etc.
   branding?: string
+  logo?: Ref<Blob>
   location?: Location
   region?: string
   createdBy?: PersonUuid
@@ -361,6 +364,7 @@ export interface AccountDB {
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
+  updateWorkspaceLogo: (workspaceId: WorkspaceUuid, logo: Ref<Blob> | null) => Promise<void>
   generatePersonUuid: () => Promise<PersonUuid>
 }
 

@@ -59,6 +59,7 @@
     "cookies": "^0.9.1",
     "@koa/cors": "^5.0.0",
     "@intabiafusion/server-token": "workspace:^1.0.0",
+    "@intabiafusion/server-storage": "workspace:^1.0.0",
     "@intabiafusion/analytics": "workspace:^1.0.0"
   }
 }

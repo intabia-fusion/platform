@@ -15,7 +15,8 @@ import core, {
   Ref,
   type SessionData,
   systemAccountUuid,
-  TxFactory
+  TxFactory,
+  type TxRemoveDoc
 } from '@intabiafusion/core'
 import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
 import notification, { ReadState } from '@intabiafusion/notification'
@@ -147,6 +148,29 @@ export class NotificationMiddleware extends BaseMiddleware {
 
   private throwForbidden (): void {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  async handleBroadcast (ctx: MeasureContext<SessionData>): Promise<void> {
+    const txes = ctx.contextData.broadcast?.txes ?? []
+    const removedMap = ctx.contextData.removedMap
+    const hierarchy = this.context.hierarchy
+
+    if (txes.length > 0 && removedMap !== undefined) {
+      for (const tx of txes) {
+        if (tx._class !== core.class.TxRemoveDoc) continue
+        const removeTx = tx as TxRemoveDoc<Doc>
+        if (hierarchy.isDerived(removeTx.objectClass, notification.class.InboxNotification)) {
+          const doc = removedMap.get(removeTx.objectId)
+          if (doc !== undefined) {
+            removeTx.removedDoc = doc
+          }
+        }
+      }
+    }
+
+    if (this.next !== undefined) {
+      await this.next.handleBroadcast(ctx)
+    }
   }
 
   async close (): Promise<void> {

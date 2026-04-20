@@ -27,12 +27,12 @@
     pickPrimarySocialId,
     readOnlyGuestAccountUuid,
     Ref,
-    WorkspaceAccountPermission
+    WorkspaceAccountPermission,
+    Blob
   } from '@intabiafusion/core'
   import { loginId } from '@intabiafusion/login'
   import { translateCB } from '@intabiafusion/platform'
   import { createQuery, getClient, MessageBox, uiContext } from '@intabiafusion/presentation'
-  import { WorkspaceSetting } from '@intabiafusion/setting'
   import {
     Breadcrumb,
     Button,
@@ -57,9 +57,8 @@
     Toggle
   } from '@intabiafusion/ui'
   import settingsRes from '../plugin'
-  import ApiTokenPopup from './ApiTokenPopup.svelte'
   import WorkspacePermissionEditor from './WorkspacePermissionEditor.svelte'
-  import de from 'date-fns/locale/de'
+  import { workspacesStore } from '@intabiafusion/workbench-resources'
 
   let loading = true
   let isEditingName = false
@@ -69,7 +68,9 @@
   let allowReadOnlyGuests: boolean
   let allowGuestSignUp: boolean
   let passwordAgingRule: number | undefined = undefined
+  let logo: Ref<Blob> | null = null
 
+  const client = getClient()
   const accountClient = getAccountClient()
   const disabledSet = ['\n', '<', '>', '/', '\\']
 
@@ -94,6 +95,7 @@
     workspaceUrl = res.url
     oldName = res.name
     name = oldName
+    logo = res.logo ?? null
     allowReadOnlyGuests = res.allowReadOnlyGuest ?? false
     allowGuestSignUp = res.allowGuestSignUp ?? false
     passwordAgingRule = res.passwordAgingRule ?? undefined
@@ -131,34 +133,23 @@
 
   // Avatar
   let avatarEditor: EditableAvatar
-  let workspaceSettings: WorkspaceSetting | undefined = undefined
-
-  const client = getClient()
-  void client.findOne(settingsRes.class.WorkspaceSetting, {}).then((r) => {
-    workspaceSettings = r
-  })
 
   async function handleAvatarDone (): Promise<void> {
-    const existing = await client.findOne(settingsRes.class.WorkspaceSetting, { _id: settingsRes.ids.WorkspaceSetting })
-    if (existing !== undefined) {
-      const avatar = await avatarEditor.createAvatar()
-      // Remove old avatar if changed
-      if (existing.icon != null && existing.icon !== avatar.avatar) {
-        await avatarEditor.removeAvatar(existing.icon)
-      }
+    const avatar = await avatarEditor.createAvatar()
+    const newLogo = avatar.avatarType === AvatarType.IMAGE ? (avatar.avatar ?? null) : null
 
-      const icon = avatar.avatarType === AvatarType.IMAGE ? avatar.avatar : null
-      await client.diffUpdate(existing, { icon })
-    } else {
-      const avatar = await avatarEditor.createAvatar()
-
-      await client.createDoc(
-        settingsRes.class.WorkspaceSetting,
-        core.space.Workspace,
-        { icon: avatar.avatar },
-        settingsRes.ids.WorkspaceSetting
-      )
+    // Remove old avatar if changed
+    if (logo != null && logo !== newLogo) {
+      await avatarEditor.removeAvatar(logo)
     }
+
+    await accountClient.updateWorkspaceLogo(newLogo)
+    logo = newLogo
+
+    // Update global store so dependent components like Logo or SelectWorkspaceMenu refresh immediately
+    workspacesStore.update((workspaces) =>
+      workspaces.map((ws) => (ws.url === workspaceUrl ? { ...ws, logo: newLogo ?? undefined } : ws))
+    )
   }
 
   const permissionConfigurationQuery = createQuery()
@@ -306,8 +297,8 @@
           <div class="ws">
             <EditableAvatar
               person={{
-                avatarType: workspaceSettings?.icon !== undefined ? AvatarType.IMAGE : AvatarType.COLOR,
-                avatar: workspaceSettings?.icon
+                avatarType: logo != null ? AvatarType.IMAGE : AvatarType.COLOR,
+                avatar: logo
               }}
               size="medium"
               {name}

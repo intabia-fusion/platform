@@ -57,6 +57,7 @@
   "dependencies": {
     "@intabiafusion/account-client": "workspace:^1.0.0",
     "@intabiafusion/activity": "workspace:^1.0.0",
+    "@intabiafusion/pulse": "workspace:^1.0.0",
     "@intabiafusion/analytics": "workspace:^1.0.0",
     "@intabiafusion/analytics-service": "workspace:^1.0.0",
     "@intabiafusion/api-client": "workspace:^1.0.0",

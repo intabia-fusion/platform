@@ -33,7 +33,9 @@ import {
   readOnlyGuestAccountUuid,
   type WorkspaceMemberInfo,
   type WorkspaceUuid,
-  type IntegrationKind
+  type IntegrationKind,
+  type Ref,
+  type Blob
 } from '@intabiafusion/core'
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@intabiafusion/platform'
 import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@intabiafusion/server-token'
@@ -1610,6 +1612,25 @@ export async function updateWorkspaceName (
   )
 }
 
+export async function updateWorkspaceLogo (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { logo: Ref<Blob> | null }
+): Promise<void> {
+  const { logo } = params
+  const { account, workspace } = decodeTokenVerbose(ctx, token)
+
+  const role = await db.getWorkspaceRole(account, workspace)
+  if (role == null || getRolePower(role) < getRolePower(AccountRole.Maintainer)) {
+    ctx.error('Need to be at least maintainer to update workspace logo', { workspace, account, role })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  await db.updateWorkspaceLogo(workspace, logo)
+}
+
 export async function deleteWorkspace (
   ctx: MeasureContext,
   db: AccountDB,
@@ -3029,6 +3050,7 @@ export type AccountMethods =
   | 'leaveWorkspace'
   | 'changeUsername'
   | 'updateWorkspaceName'
+  | 'updateWorkspaceLogo'
   | 'deleteWorkspace'
   | 'getRegionInfo'
   | 'getUserWorkspaces'
@@ -3106,6 +3128,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     leaveWorkspace: wrap(leaveWorkspace),
     changeUsername: wrap(changeUsername),
     updateWorkspaceName: wrap(updateWorkspaceName),
+    updateWorkspaceLogo: wrap(updateWorkspaceLogo),
     deleteWorkspace: wrap(deleteWorkspace),
     updateWorkspaceRole: wrap(updateWorkspaceRole),
     isAllowReadOnlyGuests: wrap(isAllowReadOnlyGuests),

@@ -37,6 +37,7 @@ import core, {
   TxFactory,
   TxProcessor,
   TxRemoveDoc,
+  TxResult,
   TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
@@ -92,13 +93,13 @@ import { createMentionsData, getMentionNotificationContent } from './mention'
 import { getReactionNotificationContent } from './reaction'
 
 class Workspace {
-  private readonly cache: WsCache
+  public readonly cache: WsCache
 
   private inProgress = false
   private lastTxDate: Timestamp | undefined = undefined
 
   private readonly txFactory = new TxFactory(core.account.System)
-  private readonly client: Client
+  public readonly client: Client
 
   private constructor (
     private readonly ctx: MeasureContext,
@@ -154,6 +155,8 @@ class Workspace {
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
+    if (txes.length === 0) return
+
     for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
       const batch = txes.slice(i, i + config.ApplyTxBatchSize)
       const txApply = this.txFactory.createTxApplyIf(core.space.Tx, 'notifications', [], [], batch, undefined, true)
@@ -187,6 +190,9 @@ class Workspace {
         options?: FindOptions<T>
       ): Promise<WithLookup<T> | undefined> => {
         return (await this.pipeline.findAll(this.ctx, _class, query, { ...options, limit: 1 }))[0]
+      },
+      apply: async (tx: TxCUD<Doc>): Promise<TxResult> => {
+        return await this.rest.tx(tx)
       }
     }
   }

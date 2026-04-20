@@ -25,6 +25,7 @@ import {
   Ref,
   TxCUD,
   TxFactory,
+  TxResult,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@intabiafusion/core'
@@ -70,6 +71,8 @@ export interface Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
+
+  apply: (tx: TxCUD<Doc>) => Promise<TxResult>
 }
 
 export interface MentionResult {

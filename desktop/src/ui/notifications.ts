@@ -25,7 +25,7 @@ import notification, {
   getNotificationThreadId
 } from '@intabiafusion/notification'
 import { addEventListener, getMetadata, IntlString, translate } from '@intabiafusion/platform'
-import { createNotificationsQuery, getClient } from '@intabiafusion/presentation'
+import { createNotificationsQuery, getClient, getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
 import { location } from '@intabiafusion/ui'
 import workbench, { workbenchId } from '@intabiafusion/workbench'
 import desktopPreferences, { defaultNotificationPreference } from '@intabiafusion/desktop-preferences'
@@ -35,8 +35,10 @@ import { inboxId } from '@intabiafusion/inbox'
 import communication from '@intabiafusion/communication'
 import activity from '@intabiafusion/activity'
 import chunter, { ThreadMessage } from '@intabiafusion/chunter'
+import { workspacesNotificationStore, workspacesStore } from '@intabiafusion/workbench-resources'
 
 import { ipcMainExposed } from './typesUtils'
+import { get } from 'svelte/store'
 
 let client: TxOperations
 
@@ -151,15 +153,40 @@ export function configureNotifications (): void {
     const notificationsQuery = createNotificationsQuery(true)
     const notificationsCountQuery = createNotificationsQuery(true)
 
+    let hasOtherWorkspaceNotifications = false
+
+    function updateBadge (): void {
+      if (!preferences.showUnreadCounter) {
+        electronAPI.setBadge(0)
+        return
+      }
+
+      const total = prevUnViewdNotificationsCount + newUnreadNotifications
+      if (total > 0) {
+        electronAPI.setBadge(total)
+      } else if (hasOtherWorkspaceNotifications) {
+        electronAPI.setBadge('•')
+      } else {
+        electronAPI.setBadge(0)
+      }
+    }
+
+    workspacesNotificationStore.subscribe(state => {
+      if (state != null) {
+        const currentWorkspace = getCurrentWorkspaceUuid()
+        const workspaces = get(workspacesStore)
+        hasOtherWorkspaceNotifications = workspaces.some(it => it.uuid !== currentWorkspace && state?.[it.uuid])
+      }
+      updateBadge()
+    })
+
     const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
 
     if (isCommunicationEnabled) {
       notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, res => {
         newUnreadNotifications = res.getTotal()
 
-        if (preferences.showUnreadCounter) {
-          electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
-        }
+        updateBadge()
 
         if (preferences.bounceAppIcon) {
           electronAPI.dockBounce()
@@ -215,13 +242,12 @@ export function configureNotifications (): void {
       // We need to get the most recent notifications
 
       if (prevUnViewdNotificationsCount !== unViewedNotifications.length) {
-        if (preferences.showUnreadCounter) {
-          electronAPI.setBadge(unViewedNotifications.length + newUnreadNotifications)
-        }
+        prevUnViewdNotificationsCount = unViewedNotifications.length
+        updateBadge()
+
         if (preferences.bounceAppIcon) {
           electronAPI.dockBounce()
         }
-        prevUnViewdNotificationsCount = unViewedNotifications.length
       }
 
       const notification = getLasUnViewedNotification(unViewedNotifications, notificationHistory)
@@ -259,17 +285,14 @@ export function configureNotifications (): void {
     })
 
     activePreferences.subscribe((newPreferences) => {
-      if (preferences.showUnreadCounter && !newPreferences.showUnreadCounter) {
-        electronAPI.setBadge(0)
-      }
-      if (!preferences.showUnreadCounter && newPreferences.showUnreadCounter) {
-        electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
-      }
+      const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
 
-      if (newPreferences.showNotifications && !preferences.showNotifications) {
+      preferences = newPreferences
+      updateBadge()
+
+      if (showNotificationsChanged) {
         startNotificationQuery()
       }
-      preferences = newPreferences
     })
   })
 

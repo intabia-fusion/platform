@@ -29354,6 +29354,9 @@ importers:
       '@intabiafusion/presentation':
         specifier: workspace:^1.0.0
         version: link:../../packages/presentation
+      '@intabiafusion/pulse':
+        specifier: workspace:^1.0.0
+        version: link:../pulse
       '@intabiafusion/rating':
         specifier: workspace:^1.0.0
         version: link:../rating
@@ -35087,6 +35090,9 @@ importers:
       '@intabiafusion/server-core':
         specifier: workspace:^1.0.0
         version: link:../../foundations/server/packages/core
+      '@intabiafusion/server-storage':
+        specifier: workspace:^1.0.0
+        version: link:../../foundations/server/packages/server-storage
       '@intabiafusion/server-token':
         specifier: workspace:^1.0.0
         version: link:../../foundations/core/packages/token
@@ -39888,6 +39894,9 @@ importers:
       '@intabiafusion/postgres':
         specifier: workspace:^1.0.0
         version: link:../../foundations/server/packages/postgres
+      '@intabiafusion/pulse':
+        specifier: workspace:^1.0.0
+        version: link:../../plugins/pulse
       '@intabiafusion/retry':
         specifier: workspace:^1.0.0
         version: link:../../foundations/core/packages/retry

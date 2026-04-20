@@ -21,7 +21,13 @@ import accountEn from '@intabiafusion/account/lang/en.json'
 import accountRu from '@intabiafusion/account/lang/ru.json'
 import { Analytics } from '@intabiafusion/analytics'
 import { registerProviders } from '@intabiafusion/auth-providers'
-import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@intabiafusion/core'
+import {
+  metricsAggregate,
+  type Branding,
+  type BrandingMap,
+  type MeasureContext,
+  type WorkspaceUuid
+} from '@intabiafusion/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@intabiafusion/platform'
 import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@intabiafusion/server-token'
 import cors from '@koa/cors'
@@ -31,6 +37,7 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
+import { storageConfigFromEnv, buildStorageFromConfig } from '@intabiafusion/server-storage'
 import { migrateFromOldAccounts } from './migration/migration'
 
 import { getPlatformQueue } from '@intabiafusion/kafka'
@@ -153,6 +160,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
+  const storage = buildStorageFromConfig(storageConfigFromEnv())
+
   const migrations = accountsDb.then(async ([db]) => {
     if (oldAccsUrl !== undefined) {
       await migrateFromOldAccounts(oldAccsUrl, db, oldAccsNs)
@@ -377,6 +386,68 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     ctx.res.writeHead(204)
     ctx.res.end()
+  })
+
+  router.get('/workspace/:workspaceId/logo', async (ctx) => {
+    const wsUuid = ctx.params.workspaceId as WorkspaceUuid
+    const token = extractToken(ctx.request.headers)
+
+    const decodedToken = token != null ? decodeTokenVerbose(measureCtx, token) : null
+    const accountUuid = decodedToken?.account
+
+    if (accountUuid == null) {
+      ctx.status = 401
+      ctx.body = 'Unauthorized'
+      return
+    }
+
+    const [db] = await accountsDb
+
+    const role = await db.getWorkspaceRole(accountUuid, wsUuid)
+    if (role == null) {
+      ctx.status = 401
+      ctx.body = 'Unauthorized'
+      return
+    }
+
+    const wsInfo = await db.workspace.findOne({ uuid: wsUuid })
+
+    if (wsInfo?.logo == null) {
+      ctx.status = 404
+      ctx.body = 'Logo not found'
+      return
+    }
+
+    const logoRef = wsInfo.logo
+    console.log(logoRef, wsUuid, wsInfo.url)
+
+    try {
+      const blob = await storage.stat(measureCtx, { uuid: wsUuid, url: wsInfo.url }, logoRef)
+      console.log('Blob', blob)
+      if (blob === undefined) {
+        ctx.status = 404
+        ctx.body = 'Logo not found'
+        return
+      }
+
+      const body = await storage.get(measureCtx, { uuid: wsUuid, url: wsInfo.url }, logoRef)
+
+      ctx.set('Content-Type', blob.contentType)
+      ctx.set('Content-Length', blob.size.toString())
+      if (blob.etag != null) {
+        ctx.set('ETag', blob.etag)
+      }
+      ctx.body = body
+    } catch (err: any) {
+      if (err.code === 404 || err.name === 'NotFoundError') {
+        ctx.status = 404
+        ctx.body = 'Logo not found in storage'
+        return
+      }
+      Analytics.handleError(err)
+      ctx.status = 500
+      ctx.body = 'Internal server error'
+    }
   })
 
   router.put('/api/v1/manage', async (req, res) => {

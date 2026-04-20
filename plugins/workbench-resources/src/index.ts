@@ -47,6 +47,7 @@ export { SpecialView }
 
 export * from './utils'
 export * from './sidebar'
+export * from './workbench'
 export default async (): Promise<Resources> => ({
   component: {
     WorkbenchApp,

@@ -22,7 +22,9 @@ import {
   type AccountUuid,
   buildSocialIdString,
   type SocialKey,
-  type PersonUuid
+  type PersonUuid,
+  type Ref,
+  type Blob
 } from '@intabiafusion/core'
 import type {
   Collection,
@@ -655,6 +657,10 @@ export class MongoAccountDB implements AccountDB {
       },
       { passwordAgingRule: days }
     )
+  }
+
+  async updateWorkspaceLogo (workspaceId: WorkspaceUuid, logo: Ref<Blob> | null): Promise<void> {
+    await this.workspace.update({ uuid: workspaceId as any }, { logo } as any)
   }
 
   async getPendingWorkspace (

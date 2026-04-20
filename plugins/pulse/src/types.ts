@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, PersonId, Ref, Timestamp } from '@intabiafusion/core'
-import type { Person } from '@intabiafusion/contact'
+import type { AccountUuid, Class, Doc, PersonId, Ref, Timestamp, WorkspaceUuid } from '@intabiafusion/core'
+import type { Person, PersonSpace } from '@intabiafusion/contact'
 import type { IntlString } from '@intabiafusion/platform'
 
 /** @public */
@@ -30,4 +30,11 @@ export interface TypingIndicator extends Doc {
   objectId: string
   socialId: PersonId
   status?: IntlString
+}
+
+/** @public */
+export interface WorkspacesNotification extends Doc<PersonSpace> {
+  space: Ref<PersonSpace>
+  account: AccountUuid
+  [workspace: WorkspaceUuid]: boolean
 }

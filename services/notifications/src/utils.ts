@@ -54,6 +54,7 @@ import { getResource, IntlString } from '@intabiafusion/platform'
 import { isEmptyMarkup, markupToText } from '@intabiafusion/text-core'
 import chunter, { ChatMessage } from '@intabiafusion/chunter'
 import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@intabiafusion/server-activity'
+import { generateToken } from '@intabiafusion/server-token'
 
 import { Client, NotificationSettings, NotifyResult } from './types'
 import config from './config'
@@ -98,6 +99,29 @@ export function getTransactorApiEndpoint (ws: { endpoint: string }): string {
   return ws.endpoint.replace('wss://', 'https://').replace('ws://', 'http://')
 }
 
+export async function getUserWorkspaces (account: AccountUuid): Promise<WorkspaceInfoWithStatus[]> {
+  const accountClient = getAccountClient(generateToken(account), 30000)
+  const connectionErrorCodes = ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND']
+  const st = Date.now()
+  const timeout = -1
+  while (true) {
+    try {
+      const workspaces = await accountClient.getUserWorkspaces()
+
+      return workspaces.filter((it) => it.isDisabled !== true && it.mode === 'active')
+    } catch (err: any) {
+      if (timeout > 0 && st + timeout < Date.now()) {
+        // Timeout happened
+        throw err
+      }
+      if (connectionErrorCodes.includes(err?.cause?.code)) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 1000))
+      } else {
+        throw err
+      }
+    }
+  }
+}
 function getAllProviders (client: Client): NotificationProvider[] {
   const providers: NotificationProvider[] = client.model.findAllSync(notification.class.NotificationProvider, {})
 

@@ -903,6 +903,7 @@ export interface WorkspaceInfo {
   url: string
   region?: string
   branding?: string
+  logo?: Ref<Blob>
   createdOn: number
   createdBy?: PersonUuid // Should always be set for NEW workspaces
   billingAccount?: PersonUuid // Should always be set for NEW workspaces

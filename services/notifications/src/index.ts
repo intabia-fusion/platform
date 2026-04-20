@@ -17,7 +17,7 @@ import { MeasureContext, newMetrics, Tx } from '@intabiafusion/core'
 import { getPlatformQueue } from '@intabiafusion/kafka'
 import { setMetadata } from '@intabiafusion/platform'
 import serverClient from '@intabiafusion/server-client'
-import serverCore, { initStatisticsContext, QueueTopic } from '@intabiafusion/server-core'
+import serverCore, { initStatisticsContext, QueueTopic, QueueUserMessage } from '@intabiafusion/server-core'
 import serverToken from '@intabiafusion/server-token'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
 import { Analytics } from '@intabiafusion/analytics'
@@ -68,7 +68,7 @@ async function main (): Promise<void> {
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
   const worker = new Worker(ctx, model)
 
-  const consumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
+  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     try {
       const ws = queueMessage.workspace
       const tx = queueMessage.value
@@ -80,9 +80,26 @@ async function main (): Promise<void> {
     }
   })
 
+  const userConsumer = queue.createConsumer<QueueUserMessage>(
+    ctx,
+    QueueTopic.Users,
+    queue.getClientId(),
+    async (ctx, queueMessage) => {
+      try {
+        const ws = queueMessage.workspace
+        const message = queueMessage.value
+
+        await worker.user(ctx, ws, message)
+      } catch (e) {
+        console.error(e)
+        throw e
+      }
+    }
+  )
+
   const shutdown = (): void => {
     worker.close()
-    void consumer.close().then(() => queue.shutdown().then(() => process.exit()))
+    void Promise.all([txConsumer.close(), userConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 
   process.once('SIGINT', shutdown)
