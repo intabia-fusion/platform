@@ -96,6 +96,10 @@
     }
   }
 
+  function typingObjectId (card: Card): string {
+    return card.peerId != null ? `peer:${card.peerId}` : card._id
+  }
+
   async function handleSubmit (event: CustomEvent<Markup>): Promise<void> {
     event.preventDefault()
     event.stopPropagation()
@@ -127,7 +131,7 @@
       dispatch('edited')
     }
 
-    void clearTyping(acc.primarySocialId, card._id)
+    void clearTyping(acc.primarySocialId, typingObjectId(card))
   }
 
   onDestroy(() => {
@@ -313,7 +317,7 @@
     if (message !== undefined) return
     if (!isEmptyMarkup(markup)) {
       throttle.call(() => {
-        void setTyping(acc.primarySocialId, card.peerId ? `peer:${card.peerId}` : card._id, card.space)
+        void setTyping(acc.primarySocialId, typingObjectId(card), card.space)
       })
     }
   }
