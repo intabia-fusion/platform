@@ -340,6 +340,26 @@
           }, 100)
         })
       }
+    } else if (isSafariBrowser) {
+      // Safari bug: local mic mute/unmute can suspend the AudioContext used
+      // for remote playback, causing the user to stop hearing everyone.
+      // Only act when the context was actually suspended — avoid churning
+      // remote audio elements on every local unmute.
+      const ctxState = getAudioContextState().state
+      if (ctxState !== 'running') {
+        void ensureAudioUnlocked(true).then(() => {
+          setTimeout(() => {
+            const pausedElements = getAudioElementsState().filter((el) => el.paused)
+            if (pausedElements.length > 0) {
+              console.warn('[WorkbenchExtension.handleTrackUnmuted] Local unmute paused remote audio, reattaching', {
+                ids: pausedElements.map((el) => el.id),
+                ctxState
+              })
+              reattachAllAudioTracks()
+            }
+          }, 100)
+        })
+      }
     }
   }
 
@@ -482,12 +502,17 @@
             continue
           }
 
-          // Check actual audio output via AnalyserNode
-          if (!hasAudioOutput(element, publication.trackSid)) {
+          // Silence is NOT a reliable signal of broken audio — participants may simply
+          // not be speaking. Only treat silence as a problem when it coincides with a
+          // real browser-level symptom (MediaStreamTrack.muted flipped by the browser
+          // while publication is not muted, or the audio element got paused).
+          const browserMuted = mediaTrack.muted && !publication.isMuted
+          const elementPaused = element.paused && !element.ended
+          if (!hasAudioOutput(element, publication.trackSid) && (browserMuted || elementPaused)) {
             const count = (silentTrackCounts.get(publication.trackSid) ?? 0) + 1
             silentTrackCounts.set(publication.trackSid, count)
             if (count >= SILENT_THRESHOLD) {
-              problems.push(`${trackKey}: silent for ${count} checks (~${(count * AUDIO_CHECK_INTERVAL_MS) / 1000}s)`)
+              problems.push(`${trackKey}: silent + ${browserMuted ? 'browser-muted' : 'paused'} for ${count} checks`)
               needsRecovery = true
             }
           } else {
