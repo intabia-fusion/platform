@@ -383,7 +383,7 @@ services:
       - USERAGREEMENT_URL=https://huly.local:8080/legal/user-agreement
       - CONFIDENTIAL_URL=https://huly.local:8080/legal/confidential
       - SUPPORT_EMAIL=platform@intabia.ru
-      - PERSONAL_DATA_URL=https://huly.local:8080/legal/personal_data
+      - PERSONAL_DATA_URL=https://huly.local:8080/legal/agreement
     restart: unless-stopped
   transactor:
     image: intabiafusion/transactor

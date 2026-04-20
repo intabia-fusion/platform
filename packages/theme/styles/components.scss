@@ -2537,3 +2537,9 @@
 .consent-link a {
   color: var(--login-content-color);
 }
+
+.consent-link a:focus-visible {
+  outline: 1px solid var(--login-primary-button-default, var(--primary-button-default));
+  outline-offset: 1px;
+  border-radius: 2px;
+}
