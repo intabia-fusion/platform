@@ -78,6 +78,7 @@ export interface Config {
 
   ACCENT_THEME?: string
   LOGIN_THEME?: string
+  COPYRIGHT?: string
 }
 
 export interface Branding {
