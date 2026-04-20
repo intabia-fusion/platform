@@ -15,6 +15,7 @@
     "AccountNotFound": "Účet nenalezen",
     "AccountNotConfirmed": "Účet není potvrzen",
     "WorkspaceNotFound": "Pracovní prostor nenalezen",
+    "NotFound": "Nenalezeno",
     "InvalidPassword": "Neplatné heslo",
     "AccountAlreadyExists": "Účet již existuje",
     "WorkspaceRateLimit": "Server je zaneprázdněný. Prosím, chvíli počkejte a zkuste to znovu",

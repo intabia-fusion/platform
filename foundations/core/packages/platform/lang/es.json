@@ -15,6 +15,7 @@
     "AccountNotFound": "Cuenta no encontrada",
     "AccountNotConfirmed": "Cuenta no confirmada",
     "WorkspaceNotFound": "Espacio de trabajo no encontrado",
+    "NotFound": "No encontrado",
     "InvalidPassword": "Contraseña inválida",
     "AccountAlreadyExists": "La cuenta ya existe",
     "WorkspaceRateLimit": "El servidor está ocupado. Espere un momento e inténtelo de nuevo",
