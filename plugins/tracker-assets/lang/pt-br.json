@@ -117,6 +117,8 @@
     "RemoveComponentDialogClose": "Eliminar o componente?",
     "RemoveComponentDialogCloseNote": "Tem a certeza de que deseja eliminar este componente? Esta operação não pode ser desfeita",
     "Grouping": "Agrupamento",
+    "SwimLaneBy": "Raia",
+    "SwimLaneNone": "Nenhum",
     "Ordering": "Ordenação",
     "CompletedIssues": "Tarefas Concluídas",
     "NoGrouping": "Sem agrupamento",
@@ -276,7 +278,10 @@
     "UnsetParentIssue": "Desmarcar problema pai",
     "ForbidCreateProjectPermission": "Proibir criação de projeto",
     "ForbidCreateProjectPermissionDescription": "Proíbe os usuários de criar novos projetos",
-    "AdditionalProperties": "Propriedades adicionais"
+    "AdditionalProperties": "Propriedades adicionais",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "Compacto"
   },
   "status": {},
   "emailTemplate": {

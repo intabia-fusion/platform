@@ -48,9 +48,9 @@ export async function setViewGroup (page: Page, groupName: string): Promise<void
 
 export async function setViewOrder (page: Page, orderName: string): Promise<void> {
   await page.click('button[data-id="btn-viewOptions"]')
-  await page.click('.antiCard >> .ordering >> button')
+  await page.click('.antiCard >> .ordering-primary >> button')
   await page.click(`.menu-item:has-text("${orderName}")`)
-  await expect(page.locator('.antiCard >> .ordering >> button')).toContainText(orderName)
+  await expect(page.locator('.antiCard >> .ordering-primary >> button')).toContainText(orderName)
 
   await page.keyboard.press('Escape')
 }

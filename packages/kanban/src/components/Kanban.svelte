@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,9 +28,9 @@
   } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import { ScrollBox, Scroller } from '@hcengineering/ui'
-  import { createEventDispatcher } from 'svelte'
-  import { CardDragEvent, DocWithRank, Item } from '../types'
+  import { IconChevronDown, IconChevronRight, ScrollBox, Scroller } from '@hcengineering/ui'
+  import { createEventDispatcher, onDestroy } from 'svelte'
+  import { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
   import KanbanRow from './KanbanRow.svelte'
 
   export let categories: CategoryType[] = []
@@ -56,16 +57,123 @@
   export let getUpdateProps: (doc: Doc, state: CategoryType) => DocumentUpdate<Item> | undefined
   export let getAvailableCategories: ((doc: Doc) => Promise<CategoryType[]>) | undefined = undefined
 
+  // SwimLane support. When empty - classic kanban layout (legacy).
+  export let swimLanes: SwimLane[] = []
+  export let swimLaneKey: string | undefined = undefined
+  export let getSwimLaneUpdateProps: ((doc: Doc, swimLane: SwimLane) => DocumentUpdate<Item> | undefined) | undefined =
+    undefined
+  export let getSwimLaneQuery: ((swimLane: SwimLane) => DocumentQuery<DocWithRank>) | undefined = undefined
+  export let getSwimLaneOfDoc: ((doc: Doc) => string | undefined) | undefined = undefined
+  export let storageKey: string | undefined = undefined
+  export let controlKey: string | undefined = undefined
+  export let getSwimLaneHeaderStyle:
+  | ((swimLane: SwimLane) => { background?: string, color?: string } | undefined)
+  | undefined = undefined
+  export let compact: boolean = false
+
+  import { registerSwimLaneControls } from '../swimlane'
+
+  let unregisterControls: (() => void) | undefined
+
+  $: if (swimLaneMode && controlKey !== undefined) {
+    if (unregisterControls !== undefined) unregisterControls()
+    unregisterControls = registerSwimLaneControls(controlKey, { collapseAll, expandAll })
+  } else {
+    if (unregisterControls !== undefined) {
+      unregisterControls()
+      unregisterControls = undefined
+    }
+  }
+
+  onDestroy(() => {
+    if (unregisterControls !== undefined) {
+      unregisterControls()
+      unregisterControls = undefined
+    }
+  })
+
   const dispatch = createEventDispatcher()
 
   const limiter = new RateLimiter(10)
 
-  async function move (state: CategoryType): Promise<void> {
+  $: swimLaneMode = swimLanes.length > 0 && swimLaneKey !== undefined
+
+  // Collapse state persisted in localStorage.
+  let collapsed = new Set<string>()
+
+  function loadCollapsed (key: string | undefined): Set<string> {
+    if (key === undefined || typeof localStorage === 'undefined') return new Set()
+    try {
+      const raw = localStorage.getItem(`kanban-swimlane-collapsed-${key}`)
+      if (raw == null) return new Set()
+      const arr: string[] = JSON.parse(raw)
+      return new Set(arr)
+    } catch {
+      return new Set()
+    }
+  }
+
+  function saveCollapsed (key: string | undefined, set: Set<string>): void {
+    if (key === undefined || typeof localStorage === 'undefined') return
+    try {
+      localStorage.setItem(`kanban-swimlane-collapsed-${key}`, JSON.stringify([...set]))
+    } catch {
+      // ignore
+    }
+  }
+
+  $: collapsed = loadCollapsed(storageKey)
+
+  function toggleSwimLane (id: string): void {
+    if (collapsed.has(id)) collapsed.delete(id)
+    else collapsed.add(id)
+    collapsed = new Set(collapsed)
+    saveCollapsed(storageKey, collapsed)
+  }
+
+  function collapseAll (): void {
+    collapsed = new Set(swimLanes.map((s) => s._id))
+    saveCollapsed(storageKey, collapsed)
+  }
+
+  function expandAll (): void {
+    collapsed = new Set()
+    saveCollapsed(storageKey, collapsed)
+  }
+
+  // Filter docs of a category that belong to a given swim lane.
+  function getSwimLaneCategoryValues (
+    swimLane: SwimLane,
+    category: CategoryType,
+    _groupByDocs: typeof groupByDocs,
+    _dragCard: Item | undefined,
+    _dragCardCurrentSwimLane: SwimLane | undefined
+  ): Item[] {
+    const arr = getGroupByValues(_groupByDocs, category) ?? []
+    const ofDoc = getSwimLaneOfDoc
+    if (ofDoc === undefined) return arr
+    return arr.filter((doc) => {
+      if (_dragCard !== undefined && doc._id === _dragCard._id && _dragCardCurrentSwimLane !== undefined) {
+        return _dragCardCurrentSwimLane._id === swimLane._id
+      }
+      return ofDoc(doc) === swimLane._id
+    })
+  }
+
+  function countSwimLane (swimLane: SwimLane): number {
+    let total = 0
+    for (const cat of categories) {
+      total += getSwimLaneCategoryValues(swimLane, cat, groupByDocs, dragCard, dragCardCurrentSwimLane).length
+    }
+    return total
+  }
+
+  async function move (state: CategoryType, targetSwimLane?: SwimLane): Promise<void> {
     if (dragCard === undefined) {
       return
     }
 
-    const canDrop = !dragCardAvailableCategories || dragCardAvailableCategories.includes(state)
+    const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
 
     if (!canDrop) {
       dragCard = undefined
@@ -82,6 +190,19 @@
       return
     }
 
+    // Merge swim lane field update if target swim lane differs from source.
+    if (
+      swimLaneMode &&
+      targetSwimLane !== undefined &&
+      getSwimLaneUpdateProps !== undefined &&
+      (dragCardInitialSwimLane === undefined || dragCardInitialSwimLane._id !== targetSwimLane._id)
+    ) {
+      const swimUpdates = getSwimLaneUpdateProps(dragCard, targetSwimLane)
+      if (swimUpdates !== undefined) {
+        updates = { ...updates, ...swimUpdates }
+      }
+    }
+
     if (!dontUpdateRank && dragCardInitialRank !== dragCard.rank && dragCardInitialRank !== undefined) {
       const dragCardRank = dragCard.rank
       updates = {
@@ -95,6 +216,7 @@
     }
     dragCard = undefined
     dragCardAvailableCategories = undefined
+    dragCardCurrentSwimLane = undefined
   }
 
   const client = getClient()
@@ -105,6 +227,8 @@
   let dragCardInitialPosition: number | undefined
   let dragCardState: CategoryType | undefined
   let dragCardAvailableCategories: CategoryType[] | undefined
+  let dragCardInitialSwimLane: SwimLane | undefined
+  let dragCardCurrentSwimLane: SwimLane | undefined
 
   let isDragging = false
 
@@ -116,10 +240,15 @@
     await client.update(dragCard, updateValue)
   }
 
-  function panelDragOver (event: Event | undefined, state: CategoryType): void {
+  function panelDragOver (event: Event | undefined, state: CategoryType, swimLane?: SwimLane): void {
     event?.preventDefault()
-    if (dragCard !== undefined && dragCardState !== state) {
-      const canDrop = !dragCardAvailableCategories || dragCardAvailableCategories.includes(state)
+    if (dragCard === undefined) return
+
+    const swimLaneChanged =
+      swimLane !== undefined && (dragCardCurrentSwimLane === undefined || dragCardCurrentSwimLane._id !== swimLane._id)
+
+    if (dragCardState !== state || swimLaneChanged) {
+      const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
 
       if (!canDrop) {
         return
@@ -130,17 +259,23 @@
         return
       }
 
-      const oldArr = getGroupByValues(groupByDocs, dragCardState)
-      const index = oldArr.findIndex((p) => p._id === dragCard?._id)
-      if (index !== -1) {
-        oldArr.splice(index, 1)
-        setGroupByValues(groupByDocs, dragCardState, oldArr)
+      if (dragCardState !== state) {
+        const oldArr = getGroupByValues(groupByDocs, dragCardState)
+        const index = oldArr.findIndex((p) => p._id === dragCard?._id)
+        if (index !== -1) {
+          oldArr.splice(index, 1)
+          setGroupByValues(groupByDocs, dragCardState, oldArr)
+        }
+
+        dragCardState = state
+        const arr = getGroupByValues(groupByDocs, state) ?? []
+        arr.push(dragCard)
+        setGroupByValues(groupByDocs, state, arr)
       }
 
-      dragCardState = state
-      const arr = getGroupByValues(groupByDocs, state) ?? []
-      arr.push(dragCard)
-      setGroupByValues(groupByDocs, state, arr)
+      if (swimLaneChanged) {
+        dragCardCurrentSwimLane = swimLane
+      }
 
       groupByDocs = groupByDocs
     }
@@ -246,10 +381,12 @@
     isDragging = false
   }
 
-  async function onDragStart (object: Item, state: CategoryType): Promise<void> {
+  async function onDragStart (object: Item, state: CategoryType, swimLane?: SwimLane): Promise<void> {
     dragCardInitialState = state
     dragCardState = state
     dragCardInitialRank = object.rank
+    dragCardInitialSwimLane = swimLane
+    dragCardCurrentSwimLane = swimLane
     const items = getGroupByValues(groupByDocs, state) ?? []
     dragCardInitialPosition = items.findIndex((p) => p._id === object._id)
     dragCard = object
@@ -266,11 +403,20 @@
 
   const stateRefs: HTMLElement[] = []
   const stateRows: KanbanRow[] = []
+  const swimRowBindings: Record<string, KanbanRow> = {}
 
   $: stateRefs.length = categories.length
   $: stateRows.length = categories.length
 
-  function scrollInto (statePos: number, obj: Item): void {
+  function swimCellKey (laneId: string, stateIdx: number): string {
+    return `${laneId}::${stateIdx}`
+  }
+
+  function scrollInto (statePos: number, obj: Item, lane?: SwimLane): void {
+    if (swimLaneMode && lane !== undefined) {
+      swimRowBindings[swimCellKey(lane._id, statePos)]?.scroll(obj)
+      return
+    }
     stateRefs[statePos]?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
     stateRows[statePos]?.scroll(obj)
   }
@@ -287,15 +433,39 @@
     return -1
   }
 
+  function findSwimLaneOfDoc (doc: Doc): SwimLane | undefined {
+    if (!swimLaneMode || getSwimLaneOfDoc === undefined) return undefined
+    const id = getSwimLaneOfDoc(doc)
+    if (id === undefined) return undefined
+    return swimLanes.find((s) => s._id === id)
+  }
+
+  function visibleSwimLanes (): SwimLane[] {
+    return swimLanes.filter((s) => !collapsed.has(s._id))
+  }
+
+  function getCellObjects (st: CategoryType, lane?: SwimLane): Item[] {
+    if (swimLaneMode && lane !== undefined) {
+      return getSwimLaneCategoryValues(lane, st, groupByDocs, dragCard, dragCardCurrentSwimLane)
+    }
+    return getGroupByValues(groupByDocs, st) ?? []
+  }
+
   export function select (offset: 1 | -1 | 0, of?: Doc, dir?: 'vertical' | 'horizontal'): void {
     let pos = (of != null ? objects.findIndex((it) => it._id === of._id) : selection) ?? -1
     if (pos === -1) {
-      for (const st of categories) {
-        const stateObjs = getGroupByValues(groupByDocs, st) ?? []
-        if (stateObjs.length > 0) {
-          pos = objects.findIndex((it) => it._id === stateObjs[0]._id)
-          break
+      const lanes = swimLaneMode ? visibleSwimLanes() : [undefined as SwimLane | undefined]
+      for (const lane of lanes) {
+        let found = false
+        for (const st of categories) {
+          const stateObjs = getCellObjects(st, lane)
+          if (stateObjs.length > 0) {
+            pos = objects.findIndex((it) => it._id === stateObjs[0]._id)
+            found = true
+            break
+          }
         }
+        if (found) break
       }
     }
 
@@ -315,26 +485,51 @@
     if (objState === -1) {
       return
     }
-    const stateObjs = getGroupByValues(groupByDocs, categories[objState]) ?? []
+
+    const currentLane: SwimLane | undefined = swimLaneMode ? findSwimLaneOfDoc(obj) : undefined
+    const stateObjs = getCellObjects(categories[objState], currentLane)
     const statePos = stateObjs.findIndex((it) => it._id === obj._id)
     if (statePos === undefined) {
       return
     }
 
+    const lanes = swimLaneMode ? visibleSwimLanes() : []
+    const laneIdx = currentLane !== undefined ? lanes.findIndex((l) => l._id === currentLane?._id) : -1
+
     if (offset === -1) {
       if (dir === undefined || dir === 'vertical') {
-        const obj = stateObjs[statePos - 1] ?? stateObjs[0]
-        scrollInto(objState, obj)
-        dispatch('obj-focus', obj)
+        if (statePos > 0) {
+          const next = stateObjs[statePos - 1]
+          scrollInto(objState, next, currentLane)
+          dispatch('obj-focus', next)
+          return
+        }
+        // cross lanes upward in same column
+        if (swimLaneMode && laneIdx > 0) {
+          for (let i = laneIdx - 1; i >= 0; i--) {
+            const arr = getCellObjects(categories[objState], lanes[i])
+            if (arr.length > 0) {
+              const next = arr[arr.length - 1]
+              scrollInto(objState, next, lanes[i])
+              dispatch('obj-focus', next)
+              return
+            }
+          }
+        }
+        const next = stateObjs[0]
+        if (next !== undefined) {
+          scrollInto(objState, next, currentLane)
+          dispatch('obj-focus', next)
+        }
         return
       } else {
         while (objState > 0) {
           objState--
-          const nstateObjs = getGroupByValues(groupByDocs, categories[objState]) ?? []
+          const nstateObjs = getCellObjects(categories[objState], currentLane)
           if (nstateObjs.length > 0) {
-            const obj = nstateObjs[statePos] ?? nstateObjs[nstateObjs.length - 1]
-            scrollInto(objState, obj)
-            dispatch('obj-focus', obj)
+            const next = nstateObjs[statePos] ?? nstateObjs[nstateObjs.length - 1]
+            scrollInto(objState, next, currentLane)
+            dispatch('obj-focus', next)
             break
           }
         }
@@ -342,18 +537,37 @@
     }
     if (offset === 1) {
       if (dir === undefined || dir === 'vertical') {
-        const obj = stateObjs[statePos + 1] ?? stateObjs[stateObjs.length - 1]
-        scrollInto(objState, obj)
-        dispatch('obj-focus', obj)
+        if (statePos < stateObjs.length - 1) {
+          const next = stateObjs[statePos + 1]
+          scrollInto(objState, next, currentLane)
+          dispatch('obj-focus', next)
+          return
+        }
+        if (swimLaneMode && laneIdx !== -1 && laneIdx < lanes.length - 1) {
+          for (let i = laneIdx + 1; i < lanes.length; i++) {
+            const arr = getCellObjects(categories[objState], lanes[i])
+            if (arr.length > 0) {
+              const next = arr[0]
+              scrollInto(objState, next, lanes[i])
+              dispatch('obj-focus', next)
+              return
+            }
+          }
+        }
+        const next = stateObjs[stateObjs.length - 1]
+        if (next !== undefined) {
+          scrollInto(objState, next, currentLane)
+          dispatch('obj-focus', next)
+        }
         return
       } else {
         while (objState < categories.length - 1) {
           objState++
-          const nstateObjs = getGroupByValues(groupByDocs, categories[objState]) ?? []
+          const nstateObjs = getCellObjects(categories[objState], currentLane)
           if (nstateObjs.length > 0) {
-            const obj = nstateObjs[statePos] ?? nstateObjs[nstateObjs.length - 1]
-            scrollInto(objState, obj)
-            dispatch('obj-focus', obj)
+            const next = nstateObjs[statePos] ?? nstateObjs[nstateObjs.length - 1]
+            scrollInto(objState, next, currentLane)
+            dispatch('obj-focus', next)
             break
           }
         }
@@ -380,68 +594,188 @@
   }
 </script>
 
-<div class="kanban-container">
-  <ScrollBox>
-    <div class="kanban-content">
-      {#each categories as state, si (typeof state === 'object' ? state.name : state)}
-        {@const stateObjects = getGroupByValues(groupByDocs, state)}
-
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-          class="panel-container"
-          bind:this={stateRefs[si]}
-          on:dragover={(event) => {
-            panelDragOver(event, state)
-          }}
-          on:drop={() => {
-            void move(state).then(() => {
-              isDragging = false
-            })
-          }}
-        >
-          {#if $$slots.header !== undefined}
-            {#key si}
-              <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
-            {/key}
-          {/if}
-          <Scroller padding={'.25rem .5rem'} on:dragover on:drop>
-            <slot name="beforeCard" {state} />
-            <KanbanRow
-              bind:this={stateRows[si]}
-              on:obj-focus
-              {stateObjects}
-              {isDragging}
-              {dragCard}
-              {objects}
-              {selection}
-              {checkedSet}
-              {state}
-              {limiter}
-              cardDragOver={(evt, obj) => {
-                cardDragOver(evt, obj, state)
-              }}
-              cardDrop={(evt, obj) => {
-                void cardDrop(evt, obj, state)
-              }}
-              {onDragStart}
-              {showMenu}
-              {_class}
-              {query}
-              {options}
-              {groupByKey}
-            >
-              <svelte:fragment slot="card" let:object let:dragged>
-                <slot name="card" {object} {dragged} />
-              </svelte:fragment>
-            </KanbanRow>
-
-            <slot name="afterCard" {state} />
-          </Scroller>
+<div class="kanban-container" class:swimlane-mode={swimLaneMode} class:compact>
+  {#if swimLaneMode}
+    <div class="kanban-swimlane-scroll">
+      <div class="kanban-swimlane-root">
+        <!-- sticky column headers row -->
+        <div class="swimlane-header-row" style:--kanban-col-count={categories.length}>
+          {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+            {@const stateObjects = getGroupByValues(groupByDocs, state)}
+            <div class="swimlane-col-header">
+              {#if $$slots.header !== undefined}
+                {#key si}
+                  <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
+                {/key}
+              {/if}
+            </div>
+          {/each}
         </div>
-      {/each}
-      <slot name="afterPanel" />
+
+        {#each swimLanes as swimLane (swimLane._id)}
+          {@const isCollapsed = collapsed.has(swimLane._id)}
+          {@const laneCount = countSwimLane(swimLane)}
+          {@const laneStyle = getSwimLaneHeaderStyle?.(swimLane)}
+          <div class="swimlane-block">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+              class="swimlane-header"
+              style:background-color={laneStyle?.background ?? 'var(--theme-panel-color, var(--theme-bg-color))'}
+              style:--swimlane-title-color={laneStyle?.color}
+              on:click={() => {
+                toggleSwimLane(swimLane._id)
+              }}
+            >
+              <div class="swimlane-toggle">
+                <svelte:component this={isCollapsed ? IconChevronRight : IconChevronDown} size={'small'} />
+              </div>
+              {#if $$slots.swimLaneHeader !== undefined}
+                <slot
+                  name="swimLaneHeader"
+                  {swimLane}
+                  count={laneCount}
+                  collapsed={isCollapsed}
+                  toggle={() => {
+                    toggleSwimLane(swimLane._id)
+                  }}
+                />
+              {:else}
+                <span class="swimlane-title">{swimLane.title}</span>
+                <span class="swimlane-count">{laneCount}</span>
+              {/if}
+            </div>
+
+            {#if !isCollapsed}
+              <div class="swimlane-grid" style:--kanban-col-count={categories.length}>
+                {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+                  {@const laneStateObjects = getSwimLaneCategoryValues(
+                    swimLane,
+                    state,
+                    groupByDocs,
+                    dragCard,
+                    dragCardCurrentSwimLane
+                  )}
+                  <!-- svelte-ignore a11y-no-static-element-interactions -->
+                  <div
+                    class="swimlane-cell"
+                    class:drop-target={isDragging}
+                    on:dragover={(event) => {
+                      panelDragOver(event, state, swimLane)
+                    }}
+                    on:drop={() => {
+                      void move(state, swimLane).then(() => {
+                        isDragging = false
+                      })
+                    }}
+                  >
+                    <slot name="beforeCard" {state} {swimLane} />
+                    <KanbanRow
+                      bind:this={swimRowBindings[swimCellKey(swimLane._id, si)]}
+                      on:obj-focus
+                      stateObjects={laneStateObjects}
+                      {isDragging}
+                      {dragCard}
+                      {objects}
+                      {selection}
+                      {checkedSet}
+                      {state}
+                      {limiter}
+                      cardDragOver={(evt, obj) => {
+                        cardDragOver(evt, obj, state)
+                      }}
+                      cardDrop={(evt, obj) => {
+                        void cardDrop(evt, obj, state)
+                      }}
+                      onDragStart={(obj, st) => {
+                        void onDragStart(obj, st, swimLane)
+                      }}
+                      {showMenu}
+                      {_class}
+                      {query}
+                      {options}
+                      {groupByKey}
+                      swimLaneQuery={getSwimLaneQuery?.(swimLane)}
+                      initialLimit={compact ? 8 : 3}
+                      limitStep={10}
+                    >
+                      <svelte:fragment slot="card" let:object let:dragged>
+                        <slot name="card" {object} {dragged} {swimLane} />
+                      </svelte:fragment>
+                    </KanbanRow>
+
+                    <slot name="afterCard" {state} {swimLane} />
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
     </div>
-  </ScrollBox>
+  {:else}
+    <ScrollBox>
+      <div class="kanban-content">
+        {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+          {@const stateObjects = getGroupByValues(groupByDocs, state)}
+
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="panel-container"
+            bind:this={stateRefs[si]}
+            on:dragover={(event) => {
+              panelDragOver(event, state)
+            }}
+            on:drop={() => {
+              void move(state).then(() => {
+                isDragging = false
+              })
+            }}
+          >
+            {#if $$slots.header !== undefined}
+              {#key si}
+                <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
+              {/key}
+            {/if}
+            <Scroller padding={'.25rem .5rem'} on:dragover on:drop>
+              <slot name="beforeCard" {state} />
+              <KanbanRow
+                bind:this={stateRows[si]}
+                on:obj-focus
+                {stateObjects}
+                {isDragging}
+                {dragCard}
+                {objects}
+                {selection}
+                {checkedSet}
+                {state}
+                {limiter}
+                cardDragOver={(evt, obj) => {
+                  cardDragOver(evt, obj, state)
+                }}
+                cardDrop={(evt, obj) => {
+                  void cardDrop(evt, obj, state)
+                }}
+                {onDragStart}
+                {showMenu}
+                {_class}
+                {query}
+                {options}
+                {groupByKey}
+              >
+                <svelte:fragment slot="card" let:object let:dragged>
+                  <slot name="card" {object} {dragged} />
+                </svelte:fragment>
+              </KanbanRow>
+
+              <slot name="afterCard" {state} />
+            </Scroller>
+          </div>
+        {/each}
+        <slot name="afterPanel" />
+      </div>
+    </ScrollBox>
+  {/if}
   {#if isDragging}
     <slot name="doneBar" onDone={updateDone} />
   {/if}
@@ -454,6 +788,14 @@
     height: 100%;
     min-width: 0;
     min-height: 0;
+
+    --kanban-col-width: 20rem;
+    --kanban-col-gap: 0.5rem;
+
+    &.compact {
+      --kanban-col-width: 14rem;
+      --kanban-col-gap: 0.375rem;
+    }
   }
   .kanban-content {
     display: flex;
@@ -464,10 +806,107 @@
   .panel-container {
     display: flex;
     flex-direction: column;
-    width: 20rem;
-    min-width: 20rem;
+    width: var(--kanban-col-width);
+    min-width: var(--kanban-col-width);
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0.25rem;
+  }
+
+  // SwimLane layout
+  .kanban-swimlane-scroll {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+  .kanban-swimlane-root {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.5rem 0.5rem;
+    width: max-content;
+    min-width: 100%;
+  }
+  .swimlane-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(var(--kanban-col-count), var(--kanban-col-width));
+    gap: var(--kanban-col-gap);
+    padding: 1rem 0 0.5rem;
+    background-color: var(--theme-panel-color, var(--theme-bg-color));
+    border-bottom: 1px solid var(--theme-divider-color);
+  }
+  .swimlane-col-header {
+    width: var(--kanban-col-width);
+
+    :global(> *) {
+      margin: 0 !important;
+    }
+  }
+
+  .swimlane-block {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+    background-color: var(--theme-list-row-color, var(--theme-bg-color));
+  }
+  .swimlane-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--theme-divider-color);
+    user-select: none;
+    position: sticky;
+    top: 4rem;
+    left: 0;
+    z-index: 4;
+    width: max-content;
+    min-width: 100%;
+    box-shadow: 0 1px 0 var(--theme-divider-color);
+  }
+  .swimlane-toggle {
+    display: inline-flex;
+    width: 1rem;
+    height: 1rem;
+  }
+  .swimlane-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--kanban-col-count), var(--kanban-col-width));
+    gap: var(--kanban-col-gap);
+    padding: 0.5rem 0;
+  }
+  .swimlane-cell {
+    display: flex;
+    flex-direction: column;
+    width: var(--kanban-col-width);
+    min-height: 4rem;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+
+    &.drop-target {
+      background-color: var(--theme-drop-zone-bg-color, var(--theme-button-hovered));
+      border: 1px dashed var(--theme-divider-color);
+    }
+  }
+  .swimlane-title {
+    font-weight: 600;
+    color: var(--swimlane-title-color, var(--theme-caption-color));
+  }
+  .swimlane-count {
+    color: var(--theme-dark-color);
+    font-size: 0.8125rem;
+    padding: 0 0.375rem;
+    background: var(--theme-button-hovered);
+    border-radius: 0.5rem;
+    line-height: 1.25rem;
   }
 </style>

@@ -45,6 +45,9 @@
   export let options: FindOptions<DocWithRank> | undefined = undefined
   export let groupByKey: any
   export let limiter: RateLimiter
+  export let swimLaneQuery: DocumentQuery<DocWithRank> | undefined = undefined
+  export let initialLimit: number = 50
+  export let limitStep: number = 20
 
   export let cardDragOver: (evt: CardDragEvent, object: Item) => void
   export let cardDrop: (evt: CardDragEvent, object: Item) => void
@@ -69,13 +72,24 @@
     }
   }
 
-  let limit = 50
+  let limit = initialLimit
+  let previousInitialLimit = initialLimit
+
+  $: if (initialLimit !== previousInitialLimit) {
+    if (limit === previousInitialLimit) {
+      limit = initialLimit
+    } else {
+      limit = Math.max(limit, initialLimit)
+    }
+    previousInitialLimit = initialLimit
+  }
 
   let limitedObjects: IdMap<DocWithRank> = new Map()
 
   const docQuery = createQuery()
   $: groupQuery = {
     ...query,
+    ...(swimLaneQuery ?? {}),
     [groupByKey]:
       typeof state === 'object'
         ? state.name !== undefined
@@ -152,7 +166,7 @@
         icon={IconMoreH}
         label={ui.string.ShowMore}
         on:click={() => {
-          limit = limit + 20
+          limit = limit + limitStep
         }}
       />
     </div>

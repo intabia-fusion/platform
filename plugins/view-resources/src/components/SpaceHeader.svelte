@@ -24,6 +24,8 @@
   let scroller: HTMLElement
 
   $: viewletActions = viewlet != null ? getViewletSpecialActions(getClient(), viewlet) : []
+  $: actionViewletActions = viewletActions.filter((a) => a.location == null || a.location === 'actions')
+  $: extraViewletActions = viewletActions.filter((a) => a.location === 'extra')
 </script>
 
 <Header
@@ -53,7 +55,7 @@
     <FilterButton {_class} {space} />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    {#each viewletActions as action (action._id)}
+    {#each actionViewletActions as action (action._id)}
       <ComponentExtensions
         extension={action.extension}
         props={{
@@ -66,6 +68,17 @@
     <slot name="actions" />
   </svelte:fragment>
   <svelte:fragment slot="extra">
+    {#each extraViewletActions as action (action._id)}
+      <ComponentExtensions
+        extension={action.extension}
+        props={{
+          _class,
+          query: resultQuery,
+          viewlet,
+          config: action.config ?? {}
+        }}
+      />
+    {/each}
     <slot name="extra" />
     {#if modeSelectorProps !== undefined}
       <ModeSelector kind={'subtle'} props={modeSelectorProps} />

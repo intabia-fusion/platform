@@ -1,5 +1,5 @@
 //
-// Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,9 +13,24 @@
 // limitations under the License.
 //
 
-import '@hcengineering/platform-rig/profiles/ui/svelte'
-export * from './types'
-export * from './swimlane'
+import { writable } from 'svelte/store'
 
-export { default as Kanban } from './components/Kanban.svelte'
-export { default as KanbanSwimLaneActions } from './components/KanbanSwimLaneActions.svelte'
+export interface SwimLaneControls {
+  collapseAll: () => void
+  expandAll: () => void
+}
+
+export const swimLaneControlStore = writable<Map<string, SwimLaneControls>>(new Map())
+
+export function registerSwimLaneControls (key: string, controls: SwimLaneControls): () => void {
+  swimLaneControlStore.update((m) => {
+    m.set(key, controls)
+    return m
+  })
+  return () => {
+    swimLaneControlStore.update((m) => {
+      m.delete(key)
+      return m
+    })
+  }
+}
