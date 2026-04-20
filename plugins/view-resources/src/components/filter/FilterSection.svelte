@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref, RefTo, Space, Status } from '@intabiafusion/core'
-  import { translate } from '@intabiafusion/platform'
-  import { getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
+  import core, { Class, Doc, Ref, RefTo, Space, Status } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
     Component,
@@ -25,8 +25,8 @@
     Label,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import { Filter, FilterMode } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Filter, FilterMode } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import view from '../../plugin'
   import ModeSelector from './ModeSelector.svelte'

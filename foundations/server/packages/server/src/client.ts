@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { LoginInfoWithWorkspaces } from '@intabiafusion/account-client'
+import type { LoginInfoWithWorkspaces } from '@hcengineering/account-client'
 import {
   generateId,
   TxProcessor,
@@ -45,8 +45,8 @@ import {
   type TxResult,
   type WorkspaceDataId,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import { PlatformError, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { PlatformError, unknownError } from '@hcengineering/platform'
 import {
   BackupClientOps,
   createBroadcastEvent,
@@ -59,8 +59,8 @@ import {
   type Session,
   type SessionRequest,
   type StatisticsElement
-} from '@intabiafusion/server-core'
-import { type Token } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import { type Token } from '@hcengineering/server-token'
 
 const useReserveContext = (process.env.USE_RESERVE_CTX ?? 'true') === 'true'
 

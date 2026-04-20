@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { getResource } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui'
+import { getResource } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui'
 import type { ComponentType, SvelteComponent } from 'svelte'
 
 export type SvelteRendererComponent = typeof SvelteComponent | ComponentType | AnyComponent

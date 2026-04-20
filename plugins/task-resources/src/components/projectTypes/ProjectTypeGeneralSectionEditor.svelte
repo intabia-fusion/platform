@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type ProjectType, type ProjectTypeDescriptor } from '@intabiafusion/task'
-  import { SpaceTypeGeneralSectionEditor } from '@intabiafusion/setting-resources'
-  import { Component } from '@intabiafusion/ui'
+  import { type ProjectType, type ProjectTypeDescriptor } from '@hcengineering/task'
+  import { SpaceTypeGeneralSectionEditor } from '@hcengineering/setting-resources'
+  import { Component } from '@hcengineering/ui'
 
   export let type: ProjectType | undefined
   export let descriptor: ProjectTypeDescriptor | undefined

@@ -1,6 +1,6 @@
-import type { Asset, IntlString } from '@intabiafusion/platform'
-import { type EmojiWithGroup } from '@intabiafusion/emoji'
-import emojiPlugin from '@intabiafusion/emoji'
+import type { Asset, IntlString } from '@hcengineering/platform'
+import { type EmojiWithGroup } from '@hcengineering/emoji'
+import emojiPlugin from '@hcengineering/emoji'
 
 export interface EmojiCategory {
   id: string

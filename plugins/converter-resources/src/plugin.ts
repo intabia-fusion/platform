@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@intabiafusion/platform'
-import converter, { converterId } from '@intabiafusion/converter'
+import { mergeIds } from '@hcengineering/platform'
+import converter, { converterId } from '@hcengineering/converter'
 
 export default mergeIds(converterId, converter, {})

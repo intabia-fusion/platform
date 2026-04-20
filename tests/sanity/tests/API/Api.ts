@@ -1,4 +1,4 @@
-import type { WorkspaceInfoWithStatus, WorkspaceLoginInfo } from '@intabiafusion/account'
+import type { WorkspaceInfoWithStatus, WorkspaceLoginInfo } from '@hcengineering/account'
 import { APIRequestContext } from '@playwright/test'
 import { DevUrl, LocalUrl, PlatformURI, PlatformWorkspaceRegion } from '../utils'
 

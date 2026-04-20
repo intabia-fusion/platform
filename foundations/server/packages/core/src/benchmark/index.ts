@@ -33,7 +33,7 @@ import core, {
   type Tx,
   type TxCreateDoc,
   type TxResult
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import type { DbAdapter } from '../adapter'
 import { DummyDbAdapter } from '../mem'
 

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import cardPlugin, { type Card } from '@intabiafusion/card'
-  import { type ActivityMessage } from '@intabiafusion/communication-types'
-  import view from '@intabiafusion/view'
-  import { DocNavLink, ObjectIcon } from '@intabiafusion/view-resources'
-  import { Icon, Label } from '@intabiafusion/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import cardPlugin, { type Card } from '@hcengineering/card'
+  import { type ActivityMessage } from '@hcengineering/communication-types'
+  import view from '@hcengineering/view'
+  import { DocNavLink, ObjectIcon } from '@hcengineering/view-resources'
+  import { Icon, Label } from '@hcengineering/ui'
 
   import communication from './../../../plugin'
 

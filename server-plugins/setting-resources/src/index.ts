@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import contact, { Person, getFirstName, getLastName } from '@intabiafusion/contact'
-import core, { PersonId, Doc, Role, Tx, TxUpdateDoc } from '@intabiafusion/core'
-import { getEmbeddedLabel, translate } from '@intabiafusion/platform'
-import type { TriggerControl } from '@intabiafusion/server-core'
-import setting, { Integration } from '@intabiafusion/setting'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+import contact, { Person, getFirstName, getLastName } from '@hcengineering/contact'
+import core, { PersonId, Doc, Role, Tx, TxUpdateDoc } from '@hcengineering/core'
+import { getEmbeddedLabel, translate } from '@hcengineering/platform'
+import type { TriggerControl } from '@hcengineering/server-core'
+import setting, { Integration } from '@hcengineering/setting'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 const integrationTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const integration = doc as Integration

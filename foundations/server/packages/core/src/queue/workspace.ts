@@ -1,4 +1,4 @@
-import type { Class, Doc, Domain, Ref } from '@intabiafusion/core'
+import type { Class, Doc, Domain, Ref } from '@hcengineering/core'
 
 export enum QueueWorkspaceEvent {
   Up = 'up',

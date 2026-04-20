@@ -24,10 +24,10 @@
     RateLimiter,
     Ref,
     Space
-  } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { makeRank } from '@intabiafusion/rank'
-  import { ScrollBox, Scroller } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { makeRank } from '@hcengineering/rank'
+  import { ScrollBox, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { CardDragEvent, DocWithRank, Item } from '../types'
   import KanbanRow from './KanbanRow.svelte'

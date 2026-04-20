@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/account-client",
+      "packageName": "@hcengineering/account-client",
       "comment": "Add permission methods",
       "type": "patch"
     }
   ],
-  "packageName": "@intabiafusion/account-client"
+  "packageName": "@hcengineering/account-client"
 }

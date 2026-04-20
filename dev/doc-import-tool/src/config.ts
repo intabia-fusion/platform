@@ -1,7 +1,7 @@
-import { type Employee } from '@intabiafusion/contact'
-import { type Ref, type WorkspaceDataId, type WorkspaceUuid } from '@intabiafusion/core'
-import { type DocumentSpace } from '@intabiafusion/controlled-documents'
-import { type StorageAdapter } from '@intabiafusion/server-core'
+import { type Employee } from '@hcengineering/contact'
+import { type Ref, type WorkspaceDataId, type WorkspaceUuid } from '@hcengineering/core'
+import { type DocumentSpace } from '@hcengineering/controlled-documents'
+import { type StorageAdapter } from '@hcengineering/server-core'
 
 import { type HtmlConversionBackend } from './convert/convert'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Attachment } from '@intabiafusion/attachment'
-import card, { type Card, type CardSpace, type MasterTag, type Tag } from '@intabiafusion/card'
+import { type Attachment } from '@hcengineering/attachment'
+import card, { type Card, type CardSpace, type MasterTag, type Tag } from '@hcengineering/card'
 import core, {
   type Association,
   type Attribute,
@@ -26,12 +26,12 @@ import core, {
   type Ref,
   type Relation,
   type Space
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { contentType } from 'mime-types'
 import * as path from 'path'
-import { type IntlString } from '@intabiafusion/platform'
+import { type IntlString } from '@hcengineering/platform'
 import { type Logger } from '../importer/logger'
 import { type Props, type UnifiedDoc, type UnifiedFile, type UnifiedMixin, type UnifiedUpdate } from '../types'
 import { type UnifiedFormatParser } from './parser'

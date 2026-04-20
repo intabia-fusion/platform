@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
-  import { Label } from '@intabiafusion/ui'
+  import { IntlString } from '@hcengineering/platform'
+  import { Label } from '@hcengineering/ui'
 
   export let label: IntlString
 </script>

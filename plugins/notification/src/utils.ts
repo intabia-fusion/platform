@@ -1,5 +1,5 @@
-import { Hierarchy, Ref } from '@intabiafusion/core'
-import activity, { ActivityMessage } from '@intabiafusion/activity'
+import { Hierarchy, Ref } from '@hcengineering/core'
+import activity, { ActivityMessage } from '@hcengineering/activity'
 
 import notification, { ActivityInboxNotification, InboxNotification, MentionInboxNotification } from '.'
 

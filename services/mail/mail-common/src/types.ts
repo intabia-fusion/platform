@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Card } from '@intabiafusion/card'
-import { MessageExtra } from '@intabiafusion/communication-types'
-import { OperationDomain, PersonId, PersonUuid, Ref, Space, WorkspaceUuid } from '@intabiafusion/core'
+import { Card } from '@hcengineering/card'
+import { MessageExtra } from '@hcengineering/communication-types'
+import { OperationDomain, PersonId, PersonUuid, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
 
 //
 export interface Attachment {

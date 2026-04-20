@@ -1,4 +1,4 @@
-import { BackRPCClient, type BackRPCResponseSend } from '@intabiafusion/network-backrpc'
+import { BackRPCClient, type BackRPCResponseSend } from '@hcengineering/network-backrpc'
 import {
   agentDirectRef,
   EndpointKind,
@@ -21,7 +21,7 @@ import {
   type TickManager,
   NetworkEventKind,
   createProxy
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 import { v4 as uuidv4 } from 'uuid'
 import { ContainerConnectionImpl, NetworkDirectConnectionImpl, RoutedNetworkAgentConnectionImpl } from './agent'
 import { opNames } from './types'

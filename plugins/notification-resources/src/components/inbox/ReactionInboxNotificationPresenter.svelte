@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreview, BasePreview } from '@intabiafusion/activity-resources'
-  import { ReactionInboxNotification } from '@intabiafusion/notification'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ActivityMessage } from '@intabiafusion/activity'
-  import { Doc } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { EmojiPresenter } from '@intabiafusion/emoji-resources'
+  import { ActivityMessagePreview, BasePreview } from '@hcengineering/activity-resources'
+  import { ReactionInboxNotification } from '@hcengineering/notification'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { Doc } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { EmojiPresenter } from '@hcengineering/emoji-resources'
 
   export let object: Doc | undefined
   export let value: ReactionInboxNotification

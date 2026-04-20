@@ -2,10 +2,10 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { metricsAggregate, type MeasureContext } from '@intabiafusion/core'
-import { setMetadata } from '@intabiafusion/platform'
-import { RPCHandler } from '@intabiafusion/rpc'
+import { Analytics } from '@hcengineering/analytics'
+import { metricsAggregate, type MeasureContext } from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import { RPCHandler } from '@hcengineering/rpc'
 import {
   getCPUInfo,
   getMemoryInfo,
@@ -13,8 +13,8 @@ import {
   type MemoryStatistics,
   type ServiceStatistics,
   type WorkspaceStatistics
-} from '@intabiafusion/server-core'
-import serverToken, { decodeToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import serverToken, { decodeToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type { IncomingHttpHeaders } from 'http'
 import Koa from 'koa'

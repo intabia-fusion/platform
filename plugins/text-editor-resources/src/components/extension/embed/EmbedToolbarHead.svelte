@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { ObjectNode } from '@intabiafusion/presentation'
+  import { ObjectNode } from '@hcengineering/presentation'
   import { NodeViewProps } from '../../node-view'
   import { parseReferenceUrl } from '../reference'
   import { EmbedCursor, shouldShowLink } from './embed'

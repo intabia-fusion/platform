@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ColorDefinition, IconSize, getPlatformColorDef, themeStore } from '@intabiafusion/ui'
+  import { ColorDefinition, IconSize, getPlatformColorDef, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   export let size: IconSize = 'small'

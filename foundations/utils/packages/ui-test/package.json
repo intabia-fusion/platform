@@ -1,8 +1,8 @@
 {
-  "name": "@intabiafusion/ui-test",
-  "version": "1.0.0",
+  "name": "@hcengineering/ui-test",
+  "version": "0.7.13",
   "author": "Copyright © Hardcore Engineering Inc.",
-  "template": "@intabiafusion/node-package",
+  "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "main": "./lib/index.js",
   "types": "./types/index.d.ts",
@@ -32,7 +32,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "svelte-loader": "^3.2.0",
     "sass": "^1.80.0",
     "svelte-preprocess": "^5.1.4",
@@ -55,7 +55,7 @@
   "dependencies": {
     "svelte": "^4.2.20"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/huly.utils",
   "publishConfig": {
     "access": "public"
   }

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Mixin, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { type DocumentTemplate } from '@intabiafusion/controlled-documents'
-  import { ActionContext } from '@intabiafusion/presentation'
-  import { Button, IconAdd, Loading, showPopup } from '@intabiafusion/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { TableBrowser, ViewletPanelHeader } from '@intabiafusion/view-resources'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
+  import { Mixin, DocumentQuery, Ref } from '@hcengineering/core'
+  import { type DocumentTemplate } from '@hcengineering/controlled-documents'
+  import { ActionContext } from '@hcengineering/presentation'
+  import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 
   import documents from '../plugin'
 

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { NewMessage, SharedMessage } from '@intabiafusion/gmail'
-  import { AttachmentsPresenter } from '@intabiafusion/attachment-resources'
-  import { CheckBox, Label } from '@intabiafusion/ui'
+  import type { NewMessage, SharedMessage } from '@hcengineering/gmail'
+  import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
+  import { CheckBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getTime } from '../utils'
   import gmail from '../plugin'

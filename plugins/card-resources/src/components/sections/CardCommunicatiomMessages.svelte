@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { MessagesSection } from '@intabiafusion/communication-resources'
-  import { NotificationContext } from '@intabiafusion/communication-types'
+  import { Card } from '@hcengineering/card'
+  import { MessagesSection } from '@hcengineering/communication-resources'
+  import { NotificationContext } from '@hcengineering/communication-types'
 
   export let doc: Card
   export let readonly: boolean = false

@@ -12,12 +12,12 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc,
   type Hierarchy
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import activity, {
   type ActivityMessageControl,
   type DocUpdateMessage,
   type DocUpdateMessageHistory
-} from '@intabiafusion/activity'
+} from '@hcengineering/activity'
 
 import type Cache from './cache'
 import { type Client } from './types'

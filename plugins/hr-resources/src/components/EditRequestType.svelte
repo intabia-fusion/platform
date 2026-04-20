@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Request, RequestType } from '@intabiafusion/hr'
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { DropdownLabelsIntl, Label } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Request, RequestType } from '@hcengineering/hr'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../plugin'
 

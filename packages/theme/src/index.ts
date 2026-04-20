@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import '@intabiafusion/platform-rig/profiles/ui/svelte'
+import { Analytics } from '@hcengineering/analytics'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
 import { derived, writable } from 'svelte/store'
 import { ThemeVariant, type ThemeVariantType, AccentColor, type AccentColorType } from './variants'
 

@@ -13,21 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Class, Doc, getCurrentAccount, Ref } from '@intabiafusion/core'
-  import notification, { BrowserNotification } from '@intabiafusion/notification'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { AccountRole, Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
+  import notification, { BrowserNotification } from '@hcengineering/notification'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     addNotification,
     getCurrentResolvedLocation,
     Location,
     NotificationSeverity,
     languageStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { parseLinkId } from '@intabiafusion/view-resources'
-  import { Analytics } from '@intabiafusion/analytics'
-  import workbench, { Application } from '@intabiafusion/workbench'
-  import { getResource, translate } from '@intabiafusion/platform'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { parseLinkId } from '@hcengineering/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
+  import workbench, { Application } from '@hcengineering/workbench'
+  import { getResource, translate } from '@hcengineering/platform'
 
   import { checkPermission, pushAllowed, subscribePush } from '../utils'
   import Notification from './Notification.svelte'

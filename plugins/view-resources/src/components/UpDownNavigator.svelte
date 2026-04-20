@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Doc } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Button, IconDownOutline, IconUpOutline, navigate } from '@intabiafusion/ui'
+  import { Doc } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Button, IconDownOutline, IconUpOutline, navigate } from '@hcengineering/ui'
   import { tick } from 'svelte'
   import { select } from '../actionImpl'
   import view from '../plugin'

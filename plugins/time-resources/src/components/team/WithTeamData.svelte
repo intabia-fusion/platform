@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { Calendar, Event } from '@intabiafusion/calendar'
-  import { visibleCalendarStore, hidePrivateEvents, calendarByIdStore } from '@intabiafusion/calendar-resources'
-  import { Person } from '@intabiafusion/contact'
-  import { IdMap, Ref, toIdMap } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import task, { Project } from '@intabiafusion/task'
-  import time, { ToDo, WorkSlot } from '@intabiafusion/time'
+  import calendar, { Calendar, Event } from '@hcengineering/calendar'
+  import { visibleCalendarStore, hidePrivateEvents, calendarByIdStore } from '@hcengineering/calendar-resources'
+  import { Person } from '@hcengineering/contact'
+  import { IdMap, Ref, toIdMap } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import task, { Project } from '@hcengineering/task'
+  import time, { ToDo, WorkSlot } from '@hcengineering/time'
 
   export let space: Ref<Project>
   export let fromDate: number

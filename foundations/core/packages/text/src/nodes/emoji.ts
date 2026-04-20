@@ -14,7 +14,7 @@
 //
 
 import { Node, mergeAttributes } from '@tiptap/core'
-import type { Blob, Ref } from '@intabiafusion/core'
+import type { Blob, Ref } from '@hcengineering/core'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {

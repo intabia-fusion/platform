@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, toIdMap, groupByArray } from '@intabiafusion/core'
+  import core, { IdMap, Ref, toIdMap, groupByArray } from '@hcengineering/core'
   import {
     NotificationType,
     NotificationProvider,
@@ -21,10 +21,10 @@
     NotificationTypeSetting,
     NotificationProviderDefaults,
     NotificationProviderSetting
-  } from '@intabiafusion/notification'
-  import { getResource } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { DropdownLabelsIntl, Grid, Label, ModernToggle } from '@intabiafusion/ui'
+  } from '@hcengineering/notification'
+  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { DropdownLabelsIntl, Grid, Label, ModernToggle } from '@hcengineering/ui'
 
   import notification from '../../plugin'
   import { providersSettings } from '../../utils'

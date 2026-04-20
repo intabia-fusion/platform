@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-// TypeScript mock for @intabiafusion/platform-rig/profiles/ui/svelte
+// TypeScript mock for @hcengineering/platform-rig/profiles/ui/svelte
 // This is used in Jest tests to avoid loading the actual Svelte runtime
 // which uses ES modules that Jest doesn't handle well by default
 

@@ -1,15 +1,15 @@
-import { type AccountClient } from '@intabiafusion/account-client'
-import { calendarIntegrationKind } from '@intabiafusion/calendar'
+import { type AccountClient } from '@hcengineering/account-client'
+import { calendarIntegrationKind } from '@hcengineering/calendar'
 import {
   type PersonId,
   type WorkspaceInfoWithStatus,
   type WorkspaceUuid,
   isActiveMode,
   systemAccountUuid
-} from '@intabiafusion/core'
-import { getClient as getKvsClient } from '@intabiafusion/kvs-client'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import { getClient as getKvsClient } from '@hcengineering/kvs-client'
+import { getAccountClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 import type { Db } from 'mongodb'
 
 interface Credentials {

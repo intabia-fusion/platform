@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Channel, Person, SocialIdentity, getName } from '@intabiafusion/contact'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Channel, Person, SocialIdentity, getName } from '@hcengineering/contact'
   import core, {
     ArrOf,
     Doc,
@@ -28,10 +28,10 @@
     Tx,
     TxOperations,
     TxProcessor
-  } from '@intabiafusion/core'
-  import { Card, createQuery, getClient, updateAttribute } from '@intabiafusion/presentation'
-  import { Label, Spinner, Toggle } from '@intabiafusion/ui'
-  import { isCollectionAttr } from '@intabiafusion/view-resources'
+  } from '@hcengineering/core'
+  import { Card, createQuery, getClient, updateAttribute } from '@hcengineering/presentation'
+  import { Label, Spinner, Toggle } from '@hcengineering/ui'
+  import { isCollectionAttr } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import contact from '../plugin'

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
-  import { type IntlString } from '@intabiafusion/platform'
+  import { Label } from '@hcengineering/ui'
+  import { type IntlString } from '@hcengineering/platform'
 
   export let label: IntlString
   export let text: string | Promise<string> = ''

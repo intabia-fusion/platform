@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconSize, resolvedLocationStore } from '@intabiafusion/ui'
-  import { Asset } from '@intabiafusion/platform'
+  import { Icon, IconSize, resolvedLocationStore } from '@hcengineering/ui'
+  import { Asset } from '@hcengineering/platform'
 
   export let size: IconSize
   export let variant: 'circle' | 'roundedRect' = 'roundedRect'

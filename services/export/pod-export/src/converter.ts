@@ -31,11 +31,11 @@ import {
   WorkspaceIds,
   type IdMap,
   type Space
-} from '@intabiafusion/core'
-import { type Attachment } from '@intabiafusion/attachment'
-import attachment from '@intabiafusion/model-attachment'
-import core from '@intabiafusion/model-core'
-import { StorageAdapter } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { type Attachment } from '@hcengineering/attachment'
+import attachment from '@hcengineering/model-attachment'
+import core from '@hcengineering/model-core'
+import { StorageAdapter } from '@hcengineering/server-core'
 import { UnifiedAttachment, UnifiedDoc } from './types'
 
 interface DocCache {

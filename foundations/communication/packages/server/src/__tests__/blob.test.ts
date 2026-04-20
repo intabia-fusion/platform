@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, SortingOrder, WorkspaceUuid, PersonUuid } from '@intabiafusion/core'
-import { HulylakeWorkspaceClient, getWorkspaceClient } from '@intabiafusion/hulylake-client'
+import { MeasureContext, SortingOrder, WorkspaceUuid, PersonUuid } from '@hcengineering/core'
+import { HulylakeWorkspaceClient, getWorkspaceClient } from '@hcengineering/hulylake-client'
 import {
   CardID,
   BlobID,
@@ -28,13 +28,13 @@ import {
   AttachmentUpdateData,
   MessageType,
   SocialID
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import { Blob } from '../blob'
 import { Metadata } from '../types'
 
 // Mock dependencies
-jest.mock('@intabiafusion/hulylake-client')
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/hulylake-client')
+jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn(() => 'mock-token')
 }))
 jest.mock('uuid', () => ({

@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import contact, { Employee } from '@intabiafusion/contact'
-  import type { Class, Doc, DocumentQuery, IdMap, Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@intabiafusion/ui'
-  import type { IconSize } from '@intabiafusion/ui'
-  import { getClient } from '@intabiafusion/presentation'
+  import contact, { Employee } from '@hcengineering/contact'
+  import type { Class, Doc, DocumentQuery, IdMap, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { getClient } from '@hcengineering/presentation'
 
   import plugin from '../plugin'
   import { employeeByIdStore } from '../utils'

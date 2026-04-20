@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Staff } from '@intabiafusion/hr'
-  import { floorFractionDigits } from '@intabiafusion/ui'
+  import { Staff } from '@hcengineering/hr'
+  import { floorFractionDigits } from '@hcengineering/ui'
 
   export let value: Staff
   export let display: (staff: Staff) => number | string

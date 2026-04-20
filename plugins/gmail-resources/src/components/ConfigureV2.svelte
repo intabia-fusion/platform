@@ -16,18 +16,18 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
-  import presentation, { Card, getClient, getCurrentWorkspaceUuid, SpaceSelector } from '@intabiafusion/presentation'
-  import { Icon, Label, Loading } from '@intabiafusion/ui'
-  import type { Integration } from '@intabiafusion/account-client'
-  import { isWorkspaceIntegration, getIntegrationConfig } from '@intabiafusion/integration-client'
-  import card from '@intabiafusion/card'
-  import contact from '@intabiafusion/contact'
+  import presentation, { Card, getClient, getCurrentWorkspaceUuid, SpaceSelector } from '@hcengineering/presentation'
+  import { Icon, Label, Loading } from '@hcengineering/ui'
+  import type { Integration } from '@hcengineering/account-client'
+  import { isWorkspaceIntegration, getIntegrationConfig } from '@hcengineering/integration-client'
+  import card from '@hcengineering/card'
+  import contact from '@hcengineering/contact'
 
   import { getIntegrationClient, startSync } from '../api'
   import gmail from '../plugin'
-  import core, { getCurrentAccount, Ref, Space } from '@intabiafusion/core'
+  import core, { getCurrentAccount, Ref, Space } from '@hcengineering/core'
   import GmailColor from './icons/GmailColor.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let integration: Integration
 

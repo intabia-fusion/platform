@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Timestamp } from '@intabiafusion/core'
+  import { Ref, Timestamp } from '@hcengineering/core'
   import DatePresenter from './DatePresenter.svelte'
-  import { Label, RangeDatePopup, SimpleDatePopup, showPopup } from '@intabiafusion/ui'
+  import { Label, RangeDatePopup, SimpleDatePopup, showPopup } from '@hcengineering/ui'
   import view from '../../plugin'
-  import { Filter, FilterMode } from '@intabiafusion/view'
+  import { Filter, FilterMode } from '@hcengineering/view'
 
   export let filter: Filter
   export let onChange: (e: Filter) => void

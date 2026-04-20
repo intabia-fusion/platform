@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { showPopup, resizeObserver, deviceOptionsStore as deviceInfo, PopupResult } from '@intabiafusion/ui'
-  import { Ref, Class, Doc } from '@intabiafusion/core'
+  import { showPopup, resizeObserver, deviceOptionsStore as deviceInfo, PopupResult } from '@hcengineering/ui'
+  import { Ref, Class, Doc } from '@hcengineering/core'
   import { onDestroy, onMount } from 'svelte'
   import MentionPopup from './MentionPopup.svelte'
   import DummyPopup from './DummyPopup.svelte'

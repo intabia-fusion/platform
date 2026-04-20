@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Issue } from '@intabiafusion/tracker'
+  import { Issue } from '@hcengineering/tracker'
 
-  import { getClient } from '@intabiafusion/presentation'
-  import type { ButtonKind } from '@intabiafusion/ui'
-  import { HyperlinkEditor } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import type { ButtonKind } from '@hcengineering/ui'
+  import { HyperlinkEditor } from '@hcengineering/view-resources'
   import github from '../../plugin'
   import { integrationRepositories } from '../utils'
 

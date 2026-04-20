@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { SortingOrder, type SortingQuery } from '@intabiafusion/core'
-import { type Asset, type IntlString } from '@intabiafusion/platform'
+import { SortingOrder, type SortingQuery } from '@hcengineering/core'
+import { type Asset, type IntlString } from '@hcengineering/platform'
 import {
   IssuePriority,
   IssuesDateModificationPeriod,
@@ -22,7 +22,7 @@ import {
   IssuesOrdering,
   MilestoneStatus,
   type Issue
-} from '@intabiafusion/tracker'
+} from '@hcengineering/tracker'
 import tracker from './plugin'
 
 export const issuePriorities: Record<IssuePriority, { icon: Asset, label: IntlString }> = {

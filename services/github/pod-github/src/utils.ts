@@ -1,4 +1,4 @@
-import { Doc } from '@intabiafusion/core'
+import { Doc } from '@hcengineering/core'
 import { deepEqual } from 'fast-equals'
 
 export function equalExceptKeys<T extends Doc> (a: T | T[], b: T | T[], keys: (keyof T)[]): boolean {

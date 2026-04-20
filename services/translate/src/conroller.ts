@@ -24,16 +24,16 @@ import core, {
   TxProcessor,
   TxUpdateDoc,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import { createRestClient, RestClient } from '@intabiafusion/api-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import contact, { Translation } from '@intabiafusion/contact'
-import { BlobID, CardID, Markdown, Message, MessageID } from '@intabiafusion/communication-types'
-import { withRetry } from '@intabiafusion/retry'
-import { Analytics } from '@intabiafusion/analytics'
+} from '@hcengineering/core'
+import { createRestClient, RestClient } from '@hcengineering/api-client'
+import { generateToken } from '@hcengineering/server-token'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import contact, { Translation } from '@hcengineering/contact'
+import { BlobID, CardID, Markdown, Message, MessageID } from '@hcengineering/communication-types'
+import { withRetry } from '@hcengineering/retry'
+import { Analytics } from '@hcengineering/analytics'
 import OpenAI from 'openai'
-import { MessageEventType, TranslateMessageEvent, UpdatePatchEvent } from '@intabiafusion/communication-sdk-types'
+import { MessageEventType, TranslateMessageEvent, UpdatePatchEvent } from '@hcengineering/communication-sdk-types'
 
 import { Storage } from './storage'
 import config from './config'

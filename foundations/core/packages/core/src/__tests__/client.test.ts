@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type IntlString, type Plugin } from '@intabiafusion/platform'
+import { type IntlString, type Plugin } from '@hcengineering/platform'
 import { ClientConnectEvent, type DocChunk } from '..'
 import type { Class, Data, Doc, Domain, PluginConfiguration, Ref, Space, Timestamp } from '../classes'
 import { ClassifierKind, DOMAIN_MODEL } from '../classes'

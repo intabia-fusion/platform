@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { CalendarEventPresenter, Event } from '@intabiafusion/calendar'
-  import { EventPresenter, calendarByIdStore, isVisible } from '@intabiafusion/calendar-resources'
-  import { Doc } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@intabiafusion/ui'
-  import view, { ObjectEditor } from '@intabiafusion/view'
-  import { showMenu } from '@intabiafusion/view-resources'
+  import calendar, { CalendarEventPresenter, Event } from '@hcengineering/calendar'
+  import { EventPresenter, calendarByIdStore, isVisible } from '@hcengineering/calendar-resources'
+  import { Doc } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
+  import view, { ObjectEditor } from '@hcengineering/view'
+  import { showMenu } from '@hcengineering/view-resources'
 
   export let event: Event
   export let hour: number

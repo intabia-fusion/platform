@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-import type { Training } from '@intabiafusion/training'
+import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+import type { Training } from '@hcengineering/training'
 import { get } from 'svelte/store'
 import { canViewTraining } from './canViewTraining'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'

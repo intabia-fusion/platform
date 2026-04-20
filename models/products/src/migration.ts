@@ -18,9 +18,9 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   tryMigrate
-} from '@intabiafusion/model'
-import { DOMAIN_DOCUMENTS } from '@intabiafusion/model-controlled-documents'
-import products, { productsId } from '@intabiafusion/products'
+} from '@hcengineering/model'
+import { DOMAIN_DOCUMENTS } from '@hcengineering/model-controlled-documents'
+import products, { productsId } from '@hcengineering/products'
 
 async function migratePatchVersion (client: MigrationClient): Promise<void> {
   await client.update(

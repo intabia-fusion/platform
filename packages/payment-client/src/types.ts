@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, WorkspaceUuid } from '@intabiafusion/core'
+import type { AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
@@ -51,8 +51,8 @@ export interface CheckoutResponse {
 
 /**
  * Subscription data for checkout status
- * Matches @intabiafusion/account-client Subscription type
- * @see @intabiafusion/account-client
+ * Matches @hcengineering/account-client Subscription type
+ * @see @hcengineering/account-client
  */
 export interface SubscriptionData {
   id: string // Internal unique subscription ID

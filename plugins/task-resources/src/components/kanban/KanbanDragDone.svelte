@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import type { Project } from '@intabiafusion/task'
-  import task, { getStates } from '@intabiafusion/task'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { Ref, Status } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import type { Project } from '@hcengineering/task'
+  import task, { getStates } from '@hcengineering/task'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { typeStore } from '../..'
   import Lost from '../icons/Lost.svelte'

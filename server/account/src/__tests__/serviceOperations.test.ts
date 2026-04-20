@@ -21,9 +21,9 @@ import {
   type PersonUuid,
   SocialIdType,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import platform, { PlatformError, Status, Severity } from '@intabiafusion/platform'
-import { decodeTokenVerbose } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import platform, { PlatformError, Status, Severity } from '@hcengineering/platform'
+import { decodeTokenVerbose } from '@hcengineering/server-token'
 
 import {
   type AccountDB,
@@ -51,8 +51,8 @@ import {
 } from '../serviceOperations'
 
 // Mock platform
-jest.mock('@intabiafusion/platform', () => {
-  const actual = jest.requireActual('@intabiafusion/platform')
+jest.mock('@hcengineering/platform', () => {
+  const actual = jest.requireActual('@hcengineering/platform')
   return {
     ...actual,
     ...actual.default,
@@ -62,7 +62,7 @@ jest.mock('@intabiafusion/platform', () => {
 })
 
 // Mock server-token
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/server-token', () => ({
   decodeTokenVerbose: jest.fn(),
   generateToken: jest.fn()
 }))

@@ -9,7 +9,7 @@ import {
   type FindResult,
   type Ref,
   type Timestamp
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import type { Query, QueryId } from './types'
 
 export interface DocumentRef {

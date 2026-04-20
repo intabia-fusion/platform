@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Vacancy } from '@intabiafusion/recruit'
-  import { Icon, getPlatformAvatarColorForTextDef, themeStore, tooltip } from '@intabiafusion/ui'
-  import { ObjectPresenterType } from '@intabiafusion/view'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Vacancy } from '@hcengineering/recruit'
+  import { Icon, getPlatformAvatarColorForTextDef, themeStore, tooltip } from '@hcengineering/ui'
+  import { ObjectPresenterType } from '@hcengineering/view'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import recruit from '../plugin'

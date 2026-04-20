@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { PersonRefPresenter } from '@intabiafusion/contact-resources'
-  import { DocumentValidationState } from '@intabiafusion/controlled-documents'
-  import { Chevron, Label, tooltip } from '@intabiafusion/ui'
+  import { PersonRefPresenter } from '@hcengineering/contact-resources'
+  import { DocumentValidationState } from '@hcengineering/controlled-documents'
+  import { Chevron, Label, tooltip } from '@hcengineering/ui'
   import { slide } from 'svelte/transition'
 
   import documentsRes from '../../../plugin'

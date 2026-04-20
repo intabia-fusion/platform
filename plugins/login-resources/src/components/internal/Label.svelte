@@ -12,9 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
-  import { translateCB } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/theme'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
 
   export let label: IntlString
   export let params: Record<string, any> = {}

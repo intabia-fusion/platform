@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Asset, Resource } from '@intabiafusion/platform'
+import type { Asset, Resource } from '@hcengineering/platform'
 
 import type { Association, AttachedDoc, Class, Doc, Domain, Ref, Space } from './classes'
 import type { Tx } from './tx'

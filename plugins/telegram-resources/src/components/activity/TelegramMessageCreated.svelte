@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient, HTMLViewer } from '@intabiafusion/presentation'
-  import { TelegramMessage } from '@intabiafusion/telegram'
-  import { Ref } from '@intabiafusion/core'
-  import { buildRemovedDoc, checkIsObjectRemoved } from '@intabiafusion/view-resources'
+  import { createQuery, getClient, HTMLViewer } from '@hcengineering/presentation'
+  import { TelegramMessage } from '@hcengineering/telegram'
+  import { Ref } from '@hcengineering/core'
+  import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
 
   import telegram from '../../plugin'
 

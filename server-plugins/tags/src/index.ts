@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { ObjectDDParticipantFunc, TriggerFunc } from '@intabiafusion/server-core'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
 
 /**
  * @public

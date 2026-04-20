@@ -32,7 +32,7 @@ import {
   type ShortcodesDataset
 } from 'emojibase'
 import emojiPlugin from './plugin'
-import { getResource, getResourceP } from '@intabiafusion/platform'
+import { getResource, getResourceP } from '@hcengineering/platform'
 import { ParsedTextWithEmojis } from './types'
 
 export const emojiRegex = new RegExp(`(?:^|\\s)(${EMOJI_REGEX.source})$`)

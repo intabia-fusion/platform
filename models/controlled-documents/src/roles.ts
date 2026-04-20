@@ -2,7 +2,7 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import core from '@intabiafusion/core'
+import core from '@hcengineering/core'
 
 import documents from './plugin'
 

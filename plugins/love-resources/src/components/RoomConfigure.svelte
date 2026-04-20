@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Person } from '@intabiafusion/contact'
-  import { AssigneeBox } from '@intabiafusion/contact-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ActionIcon, EditBox, Icon, IconDelete, resizeObserver } from '@intabiafusion/ui'
-  import { Room, RoomAccess, RoomType, isOffice } from '@intabiafusion/love'
+  import contact, { Contact, Person } from '@hcengineering/contact'
+  import { AssigneeBox } from '@hcengineering/contact-resources'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ActionIcon, EditBox, Icon, IconDelete, resizeObserver } from '@hcengineering/ui'
+  import { Room, RoomAccess, RoomType, isOffice } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
@@ -26,7 +26,7 @@
   import { infos, lockedRoom } from '../stores'
   import { RoomSide, shadowNormal } from '../types'
   import { getRoomLabel } from '../utils'
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
 
   export let room: Room
   export let cellSize: number

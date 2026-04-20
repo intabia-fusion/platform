@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { combineName, getFirstName, getLastName } from '@intabiafusion/contact'
-  import { ChannelsEditor, EditableAvatar, myEmployeeStore } from '@intabiafusion/contact-resources'
-  import { AccountRole, getCurrentAccount, SocialIdType } from '@intabiafusion/core'
-  import login, { loginId } from '@intabiafusion/login'
-  import platform, { getResource, PlatformError } from '@intabiafusion/platform'
-  import { AttributeEditor, createQuery, getClient, hasResource, MessageBox } from '@intabiafusion/presentation'
+  import contact, { combineName, getFirstName, getLastName } from '@hcengineering/contact'
+  import { ChannelsEditor, EditableAvatar, myEmployeeStore } from '@hcengineering/contact-resources'
+  import { AccountRole, getCurrentAccount, SocialIdType } from '@hcengineering/core'
+  import login, { loginId } from '@hcengineering/login'
+  import platform, { getResource, PlatformError } from '@hcengineering/platform'
+  import { AttributeEditor, createQuery, getClient, hasResource, MessageBox } from '@hcengineering/presentation'
   import {
     Breadcrumb,
     Button,
@@ -30,10 +30,10 @@
     navigate,
     Scroller,
     showPopup
-  } from '@intabiafusion/ui'
-  import { logIn, logOut } from '@intabiafusion/workbench-resources'
+  } from '@hcengineering/ui'
+  import { logIn, logOut } from '@hcengineering/workbench-resources'
 
-  import rating, { type PersonRating } from '@intabiafusion/rating'
+  import rating, { type PersonRating } from '@hcengineering/rating'
   import setting from '../plugin'
   import SocialIdsEditor from './socialIds/SocialIdsEditor.svelte'
 

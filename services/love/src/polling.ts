@@ -13,9 +13,9 @@
   limitations under the License.
 */
 
-import { MeasureContext, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { Person } from '@intabiafusion/contact'
-import { MeetingMinutes, parseRoomName } from '@intabiafusion/love'
+import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { Person } from '@hcengineering/contact'
+import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
 import { RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { parseParticipantMetadata } from './utils'

@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack } from '@intabiafusion/ui'
+  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack } from '@hcengineering/ui'
   import FormButton from './internal/FormButton.svelte'
-  import { OK, Severity, Status } from '@intabiafusion/platform'
+  import { OK, Severity, Status } from '@hcengineering/platform'
   import Label from './internal/Label.svelte'
   import LoginCodeInput from './internal/LoginCodeInput.svelte'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { Timestamp } from '@intabiafusion/core'
-  import { LoginInfo } from '@intabiafusion/account-client'
+  import { Timestamp } from '@hcengineering/core'
+  import { LoginInfo } from '@hcengineering/account-client'
 
   import { BottomAction, doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp, signUpOtp } from '../index'
   import login from '../plugin'

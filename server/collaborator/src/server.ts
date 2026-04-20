@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { MeasureContext, generateId, metricsAggregate } from '@intabiafusion/core'
-import type { StorageAdapter } from '@intabiafusion/server-core'
-import { Token, TokenError, decodeToken } from '@intabiafusion/server-token'
+import { Analytics } from '@hcengineering/analytics'
+import { MeasureContext, generateId, metricsAggregate } from '@hcengineering/core'
+import type { StorageAdapter } from '@hcengineering/server-core'
+import { Token, TokenError, decodeToken } from '@hcengineering/server-token'
 import { Hocuspocus } from '@hocuspocus/server'
 import bp from 'body-parser'
 import cors from 'cors'

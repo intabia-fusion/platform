@@ -12,8 +12,8 @@
 // limitations under the License.
 
 import { get, writable } from 'svelte/store'
-import { getCurrentAccount } from '@intabiafusion/core'
-import { location } from '@intabiafusion/ui'
+import { getCurrentAccount } from '@hcengineering/core'
+import { location } from '@hcengineering/ui'
 
 export interface ViewSetting {
   id: string

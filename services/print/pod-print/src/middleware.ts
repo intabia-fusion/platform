@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import { type Response, type Request, type NextFunction, type RequestHandler } from 'express'
 
 export interface MeasueContextOptions {

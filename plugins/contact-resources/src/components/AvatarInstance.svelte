@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/theme'
-  import { AnySvelteComponent, ColorDefinition, Icon, IconSize, resizeObserver } from '@intabiafusion/ui'
+  import { Asset } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
+  import { AnySvelteComponent, ColorDefinition, Icon, IconSize, resizeObserver } from '@hcengineering/ui'
   import AvatarIcon from './icons/Avatar.svelte'
   import { createEventDispatcher } from 'svelte'
 

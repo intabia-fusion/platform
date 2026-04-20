@@ -2,7 +2,7 @@
 // Copyright © 2024 Hardcore Engineering Inc
 //
 
-import { addEventListener, PlatformEvent, Severity, Status, translate } from '@intabiafusion/platform'
+import { addEventListener, PlatformEvent, Severity, Status, translate } from '@hcengineering/platform'
 
 export const providers: AnalyticProvider[] = []
 export interface AnalyticProvider {

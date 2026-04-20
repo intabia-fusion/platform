@@ -18,10 +18,10 @@
     DocumentState,
     ProjectDocumentTree,
     getDocumentName
-  } from '@intabiafusion/controlled-documents'
-  import { type Doc, type Ref } from '@intabiafusion/core'
-  import { type Action } from '@intabiafusion/ui'
-  import { TreeItem } from '@intabiafusion/view-resources'
+  } from '@hcengineering/controlled-documents'
+  import { type Doc, type Ref } from '@hcengineering/core'
+  import { type Action } from '@hcengineering/ui'
+  import { TreeItem } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   export let tree = new ProjectDocumentTree()

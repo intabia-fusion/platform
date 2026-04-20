@@ -12,23 +12,23 @@ importers:
 
   ../../packages/client-query:
     dependencies:
-      '@intabiafusion/communication-query':
+      '@hcengineering/communication-query':
         specifier: workspace:^0.7.11
         version: link:../query
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/hulylake-client':
+      '@hcengineering/hulylake-client':
         specifier: ^0.7.17
         version: 0.7.17
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -73,13 +73,13 @@ importers:
 
   ../../packages/cockroach:
     dependencies:
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-shared':
+      '@hcengineering/communication-shared':
         specifier: workspace:^0.7.11
         version: link:../shared
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
       postgres:
@@ -89,7 +89,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -140,16 +140,16 @@ importers:
 
   ../../packages/query:
     dependencies:
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-shared':
+      '@hcengineering/communication-shared':
         specifier: workspace:^0.7.11
         version: link:../shared
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/hulylake-client':
+      '@hcengineering/hulylake-client':
         specifier: ^0.7.17
         version: 0.7.17
       fast-equals:
@@ -159,7 +159,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -207,23 +207,23 @@ importers:
 
   ../../packages/rest-client:
     dependencies:
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-shared':
+      '@hcengineering/communication-shared':
         specifier: workspace:^0.7.11
         version: link:../shared
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.19
         version: 0.7.19
       snappyjs:
         specifier: ^0.7.0
         version: 0.7.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -271,14 +271,14 @@ importers:
 
   ../../packages/sdk-types:
     dependencies:
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.19
         version: 0.7.19
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -323,34 +323,34 @@ importers:
 
   ../../packages/server:
     dependencies:
-      '@intabiafusion/account-client':
+      '@hcengineering/account-client':
         specifier: ^0.7.18
         version: 0.7.18
-      '@intabiafusion/communication-cockroach':
+      '@hcengineering/communication-cockroach':
         specifier: workspace:^0.7.11
         version: link:../cockroach
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-shared':
+      '@hcengineering/communication-shared':
         specifier: workspace:^0.7.11
         version: link:../shared
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.19
         version: 0.7.19
-      '@intabiafusion/hulylake-client':
+      '@hcengineering/hulylake-client':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/server-token':
+      '@hcengineering/server-token':
         specifier: ^0.7.17
         version: 0.7.17
-      '@intabiafusion/text-core':
+      '@hcengineering/text-core':
         specifier: ^0.7.18
         version: 0.7.18
-      '@intabiafusion/text-markdown':
+      '@hcengineering/text-markdown':
         specifier: ^0.7.18
         version: 0.7.18
       uuid:
@@ -360,7 +360,7 @@ importers:
         specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -414,17 +414,17 @@ importers:
 
   ../../packages/shared:
     dependencies:
-      '@intabiafusion/communication-sdk-types':
+      '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../sdk-types
-      '@intabiafusion/communication-types':
+      '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../types
-      '@intabiafusion/hulylake-client':
+      '@hcengineering/hulylake-client':
         specifier: ^0.7.17
         version: 0.7.17
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -469,11 +469,11 @@ importers:
 
   ../../packages/types:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: ^0.7.19
         version: 0.7.19
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@types/jest':
@@ -518,7 +518,7 @@ importers:
 
   ../scripts:
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)
       '@typescript-eslint/eslint-plugin':
@@ -1056,41 +1056,41 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
-  '@intabiafusion/account-client@0.7.18':
+  '@hcengineering/account-client@0.7.18':
     resolution: {integrity: sha512-o7iU2cx2rRtkv3ntvbMaw4f8Wk6of7Cot+y6MAsHXTlELLStcKjCQcLRj7abne0sdN/N3luaNVkJBqfu4JpHHw==}
 
-  '@intabiafusion/analytics@0.7.17':
+  '@hcengineering/analytics@0.7.17':
     resolution: {integrity: sha512-AzB2DvmDctEJge8VeAHS3YyRYij/QQlARxa2OCNiY+Vv+2+OsQk0NZsw1yqZqsMkVJ40FTUrzOkI7UdM6RPO1Q==}
 
-  '@intabiafusion/core@0.7.19':
+  '@hcengineering/core@0.7.19':
     resolution: {integrity: sha512-BMkVkVXMU8qmbR2KAeMZ3YIMfa07/AzdCEY7PNn7dfAZyc63vrLz+Jl0CPvN7cq9p6x/WBkMfS+eKFwtvhZIUA==}
 
-  '@intabiafusion/hulylake-client@0.7.17':
+  '@hcengineering/hulylake-client@0.7.17':
     resolution: {integrity: sha512-TPqdc5nd7xV73Y1B2EJ7GxpWazp9ACV1AqHlm6ebYwU1CzXQvbuJxF68itbHmPiNiCmmuiDruJmjnyLGwL18Kw==}
 
-  '@intabiafusion/measurements@0.7.18':
+  '@hcengineering/measurements@0.7.18':
     resolution: {integrity: sha512-4MxYthJhNWPfR389lN5cIFtrhzgmhi39Fx/dqIOOYF+6g0WWA6GtWXi+ORRM8l/AWKSastZqsWxMdBbT+0htdg==}
 
-  '@intabiafusion/platform-rig@0.7.19':
+  '@hcengineering/platform-rig@0.7.19':
     resolution: {integrity: sha512-3Fi5nU+nEPjzzcm3FIfEZU+ZgdkiSfL46ojbj42jdXnWMkxew2aZZVtfmIpPnMUP9AMZlj2/EA+yOcMzfY/VmA==}
     hasBin: true
 
-  '@intabiafusion/platform@0.7.17':
+  '@hcengineering/platform@0.7.17':
     resolution: {integrity: sha512-PJH38bQ3yZgP52vHV7r8Y+JkCuH0nV9kic/CNt4XuNXQp9nTjzBlDnl+1IrCo6hU+x3QweKVIEzMXzU9J4hhEA==}
 
-  '@intabiafusion/retry@0.7.17':
+  '@hcengineering/retry@0.7.17':
     resolution: {integrity: sha512-JPIGoWP3RHTET0laQV4rqlNxjn3tT9O54XNxCxsxhTFF5xeC02XxmW/xV4Gh6QWE5/QCXY5DD3Sz3ild3Cr7Uw==}
 
-  '@intabiafusion/server-token@0.7.17':
+  '@hcengineering/server-token@0.7.17':
     resolution: {integrity: sha512-MDoGzVOTScJXnx2jHL63szclhiqPOKEXk7bmUj6i/HLUQoU6UAl9TTq1Zx/TomyzFQUx8Vkuj0j0bJMUcmLXmQ==}
 
-  '@intabiafusion/text-core@0.7.18':
+  '@hcengineering/text-core@0.7.18':
     resolution: {integrity: sha512-UZ/ZMwVcf60WpnYYcsA7RqYE4JlHnAGVdmUDHX2SYzXXvDIK7deGWD9AKyK4yqI1mb19ccyCr5fGyGoLxx9k/g==}
 
-  '@intabiafusion/text-html@0.7.18':
+  '@hcengineering/text-html@0.7.18':
     resolution: {integrity: sha512-hGPgptTk2Kfvlg8lAniaFe8jpf3RD4mZD0eL6CoPlXTKylUOklOGHFGWId+QjUYGPLBVkODPErmZxrZKbkRSWg==}
 
-  '@intabiafusion/text-markdown@0.7.18':
+  '@hcengineering/text-markdown@0.7.18':
     resolution: {integrity: sha512-GEslsa/gPp5NH+VPg/G8vOVzt9XdEUr8myoFDBz0LGlQVs6veAEv1psUdOynKeHV/ntF3qmN3hSHg0LrMyoGfA==}
 
   '@humanwhocodes/config-array@0.13.0':
@@ -3651,30 +3651,30 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@intabiafusion/account-client@0.7.18':
+  '@hcengineering/account-client@0.7.18':
     dependencies:
-      '@intabiafusion/core': 0.7.19
-      '@intabiafusion/platform': 0.7.17
+      '@hcengineering/core': 0.7.19
+      '@hcengineering/platform': 0.7.17
 
-  '@intabiafusion/analytics@0.7.17':
+  '@hcengineering/analytics@0.7.17':
     dependencies:
-      '@intabiafusion/platform': 0.7.17
+      '@hcengineering/platform': 0.7.17
 
-  '@intabiafusion/core@0.7.19':
+  '@hcengineering/core@0.7.19':
     dependencies:
-      '@intabiafusion/analytics': 0.7.17
-      '@intabiafusion/measurements': 0.7.18
-      '@intabiafusion/platform': 0.7.17
+      '@hcengineering/analytics': 0.7.17
+      '@hcengineering/measurements': 0.7.18
+      '@hcengineering/platform': 0.7.17
       fast-equals: 5.3.2
 
-  '@intabiafusion/hulylake-client@0.7.17':
+  '@hcengineering/hulylake-client@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.19
-      '@intabiafusion/retry': 0.7.17
+      '@hcengineering/core': 0.7.19
+      '@hcengineering/retry': 0.7.17
 
-  '@intabiafusion/measurements@0.7.18': {}
+  '@hcengineering/measurements@0.7.18': {}
 
-  '@intabiafusion/platform-rig@0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)':
+  '@hcengineering/platform-rig@0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)':
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.9.3)
@@ -3707,34 +3707,34 @@ snapshots:
       - supports-color
       - ts-node
 
-  '@intabiafusion/platform@0.7.17':
+  '@hcengineering/platform@0.7.17':
     dependencies:
       intl-messageformat: 10.7.17
 
-  '@intabiafusion/retry@0.7.17': {}
+  '@hcengineering/retry@0.7.17': {}
 
-  '@intabiafusion/server-token@0.7.17':
+  '@hcengineering/server-token@0.7.17':
     dependencies:
-      '@intabiafusion/core': 0.7.19
-      '@intabiafusion/platform': 0.7.17
+      '@hcengineering/core': 0.7.19
+      '@hcengineering/platform': 0.7.17
       jwt-simple: 0.5.6
       uuid: 8.3.2
 
-  '@intabiafusion/text-core@0.7.18':
+  '@hcengineering/text-core@0.7.18':
     dependencies:
-      '@intabiafusion/core': 0.7.19
+      '@hcengineering/core': 0.7.19
       fast-equals: 5.3.2
       hash-it: 6.0.0
 
-  '@intabiafusion/text-html@0.7.18':
+  '@hcengineering/text-html@0.7.18':
     dependencies:
-      '@intabiafusion/text-core': 0.7.18
+      '@hcengineering/text-core': 0.7.18
       htmlparser2: 9.1.0
 
-  '@intabiafusion/text-markdown@0.7.18':
+  '@hcengineering/text-markdown@0.7.18':
     dependencies:
-      '@intabiafusion/text-core': 0.7.18
-      '@intabiafusion/text-html': 0.7.18
+      '@hcengineering/text-core': 0.7.18
+      '@hcengineering/text-html': 0.7.18
       fast-equals: 5.3.2
       markdown-it: 14.1.0
 

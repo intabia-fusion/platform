@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { Request, Response } from 'express'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import {
   type EmailContact,
   type EmailMessage,
@@ -23,9 +23,9 @@ import {
   isHulyMessage,
   generateNewEmailId,
   MailHeader
-} from '@intabiafusion/mail-common'
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import { createRestTxOperations } from '@intabiafusion/api-client'
+} from '@hcengineering/mail-common'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { createRestTxOperations } from '@hcengineering/api-client'
 
 import { mailServiceToken, baseConfig, kvsClient } from './client'
 import config from './config'

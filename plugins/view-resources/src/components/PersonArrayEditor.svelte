@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PersonId } from '@intabiafusion/core'
-  import contact from '@intabiafusion/contact'
-  import { IntlString } from '@intabiafusion/platform'
-  import { ButtonKind, ButtonSize, Component } from '@intabiafusion/ui'
+  import { PersonId } from '@hcengineering/core'
+  import contact from '@hcengineering/contact'
+  import { IntlString } from '@hcengineering/platform'
+  import { ButtonKind, ButtonSize, Component } from '@hcengineering/ui'
 
   export let label: IntlString
   export let value: PersonId[]

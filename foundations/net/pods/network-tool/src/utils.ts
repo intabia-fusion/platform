@@ -1,4 +1,4 @@
-import { TickManagerImpl } from '@intabiafusion/network-core'
+import { TickManagerImpl } from '@hcengineering/network-core'
 
 // Create tick manager
 export const tickManager = new TickManagerImpl(2)

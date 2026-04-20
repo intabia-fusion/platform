@@ -26,10 +26,10 @@
     RateLimiter,
     Ref,
     Space
-  } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { DocWithRank, makeRank } from '@intabiafusion/task'
+  } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { DocWithRank, makeRank } from '@hcengineering/task'
   import ui, {
     AnyComponent,
     AnySvelteComponent,
@@ -38,8 +38,8 @@
     Loading,
     Label,
     Scroller
-  } from '@intabiafusion/ui'
-  import { AttributeModel, BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { AttributeModel, BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { fade } from 'svelte/transition'
   import { showMenu } from '../../actions'

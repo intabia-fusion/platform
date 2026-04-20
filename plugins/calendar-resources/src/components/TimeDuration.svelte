@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { themeStore, formatDuration } from '@intabiafusion/ui'
+  import { themeStore, formatDuration } from '@hcengineering/ui'
 
   export let value: number
 

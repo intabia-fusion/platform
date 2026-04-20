@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Ref } from '@intabiafusion/core'
-  import { SharedMessages } from '@intabiafusion/gmail'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Ref } from '@hcengineering/core'
+  import { SharedMessages } from '@hcengineering/gmail'
 
   import gmail from '../../plugin'
   import SharedMessagesView from '../SharedMessages.svelte'

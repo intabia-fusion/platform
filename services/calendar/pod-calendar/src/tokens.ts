@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { AccountClient, IntegrationSecret } from '@intabiafusion/account-client'
-import { WorkspaceUuid } from '@intabiafusion/core'
-import { calendarIntegrationKind } from '@intabiafusion/calendar'
+import { AccountClient, IntegrationSecret } from '@hcengineering/account-client'
+import { WorkspaceUuid } from '@hcengineering/core'
+import { calendarIntegrationKind } from '@hcengineering/calendar'
 
 export async function getWorkspaceTokens (
   accountClient: AccountClient,

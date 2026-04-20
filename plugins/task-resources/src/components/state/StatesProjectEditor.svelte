@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { settingsStore } from '@intabiafusion/setting-resources'
-  import { ProjectStatus, ProjectType, TaskType } from '@intabiafusion/task'
-  import { IconMoreV2, IconOpenedArrow, Label } from '@intabiafusion/ui'
-  import { ObjectPresenter, statusStore } from '@intabiafusion/view-resources'
+  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { settingsStore } from '@hcengineering/setting-resources'
+  import { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
+  import { IconMoreV2, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'
 

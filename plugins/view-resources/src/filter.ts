@@ -9,11 +9,11 @@ import core, {
   type ObjQueryType,
   type Ref,
   type RefTo
-} from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import { createQuery, getClient, type LiveQuery } from '@intabiafusion/presentation'
-import { getCurrentResolvedLocation, locationToUrl, type AnyComponent } from '@intabiafusion/ui'
-import { type Filter, type FilterMode, type FilteredView, type KeyFilter } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import { createQuery, getClient, type LiveQuery } from '@hcengineering/presentation'
+import { getCurrentResolvedLocation, locationToUrl, type AnyComponent } from '@hcengineering/ui'
+import { type Filter, type FilterMode, type FilteredView, type KeyFilter } from '@hcengineering/view'
 import { get, writable } from 'svelte/store'
 import view from './plugin'
 

@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { CardEvents, MasterTag, Tag } from '@intabiafusion/card'
-  import core, { Class, ClassifierKind, Data, Ref } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { EditBox, getColorNumberByText, Icon, Label } from '@intabiafusion/ui'
+  import { CardEvents, MasterTag, Tag } from '@hcengineering/card'
+  import core, { Class, ClassifierKind, Data, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { EditBox, getColorNumberByText, Icon, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let parent: MasterTag | Tag | undefined = undefined
   export let _class: Ref<Class<MasterTag>> | Ref<Class<Tag>>

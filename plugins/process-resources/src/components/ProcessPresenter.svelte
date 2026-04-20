@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process } from '@intabiafusion/process'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process } from '@hcengineering/process'
 
   export let value: Ref<Process>
 

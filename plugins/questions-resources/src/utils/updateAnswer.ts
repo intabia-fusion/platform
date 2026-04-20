@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Answer, Question } from '@intabiafusion/questions'
-import type { DocumentUpdate, TxOperations } from '@intabiafusion/core'
+import type { Answer, Question } from '@hcengineering/questions'
+import type { DocumentUpdate, TxOperations } from '@hcengineering/core'
 
 export async function updateAnswer<A extends Answer<Question<unknown>, unknown>> (
   client: TxOperations,

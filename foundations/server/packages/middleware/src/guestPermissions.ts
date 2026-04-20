@@ -3,7 +3,7 @@ import {
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import core, {
   type Account,
   AccountRole,
@@ -18,9 +18,9 @@ import core, {
   type TxCUD,
   TxProcessor,
   type TxUpdateDoc
-} from '@intabiafusion/core'
-import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
-import contact, { type Person } from '@intabiafusion/contact'
+} from '@hcengineering/core'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import contact, { type Person } from '@hcengineering/contact'
 
 export class GuestPermissionsMiddleware extends BaseMiddleware implements Middleware {
   static async create (

@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Calendar, type Event } from '@intabiafusion/calendar'
-import { isVisible } from '@intabiafusion/calendar-resources'
-import { type Contact, type Person } from '@intabiafusion/contact'
-import { type IdMap, type Ref } from '@intabiafusion/core'
-import { type ToDo, type WorkSlot } from '@intabiafusion/time'
+import { type Calendar, type Event } from '@hcengineering/calendar'
+import { isVisible } from '@hcengineering/calendar-resources'
+import { type Contact, type Person } from '@hcengineering/contact'
+import { type IdMap, type Ref } from '@hcengineering/core'
+import { type ToDo, type WorkSlot } from '@hcengineering/time'
 import { type EventPersonMapping } from '../../types'
 
 export function isVisibleMe (value: Event, me: Ref<Contact>): boolean {

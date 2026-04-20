@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Button } from '@intabiafusion/ui'
+  import { Button } from '@hcengineering/ui'
 
   import testManagement from '../../plugin'
 </script>

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { WorkbenchEvents, type Widget, type WidgetTab } from '@intabiafusion/workbench'
-import { type Class, type Doc, getCurrentAccount, type Ref } from '@intabiafusion/core'
+import { WorkbenchEvents, type Widget, type WidgetTab } from '@hcengineering/workbench'
+import { type Class, type Doc, getCurrentAccount, type Ref } from '@hcengineering/core'
 import { get, writable } from 'svelte/store'
-import { getCurrentLocation, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
-import { getResource } from '@intabiafusion/platform'
+import { getCurrentLocation, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+import { getResource } from '@hcengineering/platform'
 
 import { locationWorkspaceStore } from './utils'
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 
 export enum SidebarVariant {
   MINI = 'mini',

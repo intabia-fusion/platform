@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { FindLabelsParams, Label } from '@intabiafusion/communication-types'
+import type { FindLabelsParams, Label } from '@hcengineering/communication-types'
 import {
   CardEventType,
   CreateLabelEvent,
@@ -25,8 +25,8 @@ import {
   RemoveCardEvent,
   RemoveLabelEvent,
   UpdateCardTypeEvent
-} from '@intabiafusion/communication-sdk-types'
-import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
+} from '@hcengineering/communication-sdk-types'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { QueryResult } from '../result'
 import { type Query, type QueryId, QueryOptions } from '../types'

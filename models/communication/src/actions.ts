@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Builder } from '@intabiafusion/model'
-import view, { createAction } from '@intabiafusion/model-view'
-import card from '@intabiafusion/model-card'
-import core from '@intabiafusion/model-core'
-import emoji from '@intabiafusion/model-emoji'
+import { type Builder } from '@hcengineering/model'
+import view, { createAction } from '@hcengineering/model-view'
+import card from '@hcengineering/model-card'
+import core from '@hcengineering/model-core'
+import emoji from '@hcengineering/model-emoji'
 
 import communication from './plugin'
 

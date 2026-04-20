@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import { Ref, Mixin, Doc } from '@intabiafusion/core'
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { type TriggerControl } from '@intabiafusion/server-core'
-import { TemplateField } from '@intabiafusion/templates'
+import { Ref, Mixin, Doc } from '@hcengineering/core'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { type TriggerControl } from '@hcengineering/server-core'
+import { TemplateField } from '@hcengineering/templates'
 
 export type TemplateFieldServerFunc = (
   control: TriggerControl,

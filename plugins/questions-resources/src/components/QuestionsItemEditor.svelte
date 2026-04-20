@@ -3,12 +3,12 @@
 -->
 
 <script lang="ts">
-  import { type Class, type DocumentUpdate } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Button, IconMoreV, Loading } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { showMenu } from '@intabiafusion/view-resources'
+  import { type Class, type DocumentUpdate } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { Button, IconMoreV, Loading } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { showMenu } from '@hcengineering/view-resources'
   import type {
     Answer,
     Question,
@@ -16,7 +16,7 @@
     QuestionDataEditorComponent,
     QuestionDataPresenter,
     QuestionMixin
-  } from '@intabiafusion/questions'
+  } from '@hcengineering/questions'
   import { deepEqual } from 'fast-equals'
   import { canUpdateQuestion, getQuestionMixin, isAssessment, updateQuestion } from '../utils'
   import LabelEditor from './LabelEditor.svelte'

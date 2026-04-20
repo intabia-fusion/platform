@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import activity, { ActivityMessage } from '@intabiafusion/activity'
-import contact, { Employee, type Person } from '@intabiafusion/contact'
+import activity, { ActivityMessage } from '@hcengineering/activity'
+import contact, { Employee, type Person } from '@hcengineering/contact'
 import core, {
   AccountUuid,
   AnyAttribute,
@@ -31,10 +31,10 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc
-} from '@intabiafusion/core'
-import notification, { DocNotifyContext } from '@intabiafusion/notification'
-import { type TriggerControl } from '@intabiafusion/server-core'
-import { isActivityDoc } from '@intabiafusion/server-activity-resources'
+} from '@hcengineering/core'
+import notification, { DocNotifyContext } from '@hcengineering/notification'
+import { type TriggerControl } from '@hcengineering/server-core'
+import { isActivityDoc } from '@hcengineering/server-activity-resources'
 
 import { PushNotificationsHandler } from './push'
 import {

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Ref, Blob, AccountUuid, WorkspaceUuid, PersonId, BlobMetadata, PersonUuid } from '@intabiafusion/core'
+import type { Ref, Blob, AccountUuid, WorkspaceUuid, PersonId, BlobMetadata, PersonUuid } from '@hcengineering/core'
 
 export type { AccountUuid, PersonUuid, WorkspaceUuid, BlobMetadata }
 

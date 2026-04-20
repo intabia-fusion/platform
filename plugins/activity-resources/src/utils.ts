@@ -1,4 +1,4 @@
-import type { ActivityMessage, Reaction } from '@intabiafusion/activity'
+import type { ActivityMessage, Reaction } from '@hcengineering/activity'
 import core, {
   getCurrentAccount,
   isOtherHour,
@@ -7,8 +7,8 @@ import core, {
   type Space,
   type Blob,
   type TxOperations
-} from '@intabiafusion/core'
-import { getClient, isSpace } from '@intabiafusion/presentation'
+} from '@hcengineering/core'
+import { getClient, isSpace } from '@hcengineering/presentation'
 import {
   closePopup,
   getCurrentResolvedLocation,
@@ -16,9 +16,9 @@ import {
   showPopup,
   type Location,
   type LabelAndProps
-} from '@intabiafusion/ui'
-import { type AttributeModel } from '@intabiafusion/view'
-import emojiPlugin from '@intabiafusion/emoji'
+} from '@hcengineering/ui'
+import { type AttributeModel } from '@hcengineering/view'
+import emojiPlugin from '@hcengineering/emoji'
 import { get } from 'svelte/store'
 
 import { savedMessagesStore } from './activity'

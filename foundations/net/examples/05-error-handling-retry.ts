@@ -15,16 +15,16 @@
  * // cd examples && rushx run:retry
  */
 
-import { AgentImpl, TickManagerImpl, NetworkImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
-import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
+import { AgentImpl, TickManagerImpl, NetworkImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
+import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
 import type { 
   Container, 
   ContainerUuid, 
   ClientUuid,
   ContainerKind,
   GetOptions
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 
 class UnreliableServiceContainer implements Container {
   private callCount = 0

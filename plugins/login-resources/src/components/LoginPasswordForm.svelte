@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type IntlString, OK, Severity, Status } from '@intabiafusion/platform'
-  import { type LoginInfo } from '@intabiafusion/account-client'
+  import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
+  import { type LoginInfo } from '@hcengineering/account-client'
 
   import { doLogin, doLoginNavigate } from '../utils'
   import Form from './Form.svelte'

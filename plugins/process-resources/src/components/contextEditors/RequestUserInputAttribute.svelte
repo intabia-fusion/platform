@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, generateId, Ref, RefTo, Space } from '@intabiafusion/core'
-  import { findAttributeEditor, getClient } from '@intabiafusion/presentation'
-  import { AnyComponent, Component, Label } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import core, { AnyAttribute, Class, Doc, generateId, Ref, RefTo, Space } from '@hcengineering/core'
+  import { findAttributeEditor, getClient } from '@hcengineering/presentation'
+  import { AnyComponent, Component, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
   export let key: string

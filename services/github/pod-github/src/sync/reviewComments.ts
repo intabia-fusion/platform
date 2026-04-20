@@ -11,14 +11,14 @@ import core, {
   Ref,
   TxOperations,
   withContext
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
   GithubProject,
   GithubReviewComment
-} from '@intabiafusion/github'
-import { LiveQuery } from '@intabiafusion/query'
+} from '@hcengineering/github'
+import { LiveQuery } from '@hcengineering/query'
 import {
   ContainerFocus,
   DocSyncManager,
@@ -31,7 +31,7 @@ import {
 import { ReviewComment as ReviewCommentExternalData, reviewCommentDetails } from './githubTypes'
 import { collectUpdate, deleteObjects, ensureGraphQLOctokit, errorToObj, isGHWriteAllowed } from './utils'
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import { PullRequestReviewCommentCreatedEvent, PullRequestReviewCommentEvent } from '@octokit/webhooks-types'
 import config from '../config'
 

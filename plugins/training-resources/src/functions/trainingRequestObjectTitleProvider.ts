@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Client, type Ref } from '@intabiafusion/core'
-import { translate } from '@intabiafusion/platform'
-import { getCurrentLanguage } from '@intabiafusion/theme'
-import type { TrainingRequest } from '@intabiafusion/training'
+import { type Client, type Ref } from '@hcengineering/core'
+import { translate } from '@hcengineering/platform'
+import { getCurrentLanguage } from '@hcengineering/theme'
+import type { TrainingRequest } from '@hcengineering/training'
 import training from '../plugin'
 
 export async function trainingRequestObjectTitleProvider (

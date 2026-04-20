@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@intabiafusion/contact'
-  import { Doc, Mixin, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label, RadioButton } from '@intabiafusion/ui'
-  import { FixedColumn } from '@intabiafusion/view-resources'
+  import { Person } from '@hcengineering/contact'
+  import { Doc, Mixin, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label, RadioButton } from '@hcengineering/ui'
+  import { FixedColumn } from '@hcengineering/view-resources'
 
   export let value: Person
   export let targetEmp: Person

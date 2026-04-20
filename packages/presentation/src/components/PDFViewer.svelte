@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // import { Doc } from '@intabiafusion/core'
-  import type { Blob, Ref } from '@intabiafusion/core'
-  import { Button, Dialog, EmbeddedPDF, Label, Spinner } from '@intabiafusion/ui'
+  // import { Doc } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
+  import { Button, Dialog, EmbeddedPDF, Label, Spinner } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import presentation, { getFileUrl } from '..'
   import ActionContext from './ActionContext.svelte'

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { Asset, IntlString, Metadata, Plugin, StatusCode } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { Asset, IntlString, Metadata, Plugin, StatusCode } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 import type { BenchmarkDoc } from './benchmark'
 import type {
   Account,

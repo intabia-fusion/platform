@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tag } from '@intabiafusion/card'
+  import { Tag } from '@hcengineering/card'
   import CardTagColored from './CardTagColored.svelte'
 
   export let tags: Array<Tag> = []

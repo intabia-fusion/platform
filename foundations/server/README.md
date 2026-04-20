@@ -6,7 +6,7 @@
 
 ## About
 
-Huly Server is a collection of server-side packages extracted from the [Huly Platform](https://github.com/intabia-fusion/foundation). This repository contains backend infrastructure components, storage adapters, and server-side utilities that power the Huly ecosystem.
+Huly Server is a collection of server-side packages extracted from the [Huly Platform](https://github.com/hcengineering/platform). This repository contains backend infrastructure components, storage adapters, and server-side utilities that power the Huly ecosystem.
 
 These packages provide essential server-side functionality including database adapters (MongoDB, PostgreSQL, Elasticsearch), storage providers (MinIO, S3), messaging infrastructure (Kafka), and collaborative editing capabilities. They are designed to be modular, scalable, and production-ready for building robust backend services.
 
@@ -16,29 +16,29 @@ This repository includes the following server packages:
 
 ### Server Core
 
-- [@intabiafusion/server-core](packages/core) - Core server infrastructure, adapters, storage management, and server-side utilities
-- [@intabiafusion/server](packages/server) - Main server implementation and runtime
-- [@intabiafusion/server-client](packages/client) - Server-side client implementation for inter-service communication
-- [@intabiafusion/middleware](packages/middleware) - Server middleware components and request processing
+- [@hcengineering/server-core](packages/core) - Core server infrastructure, adapters, storage management, and server-side utilities
+- [@hcengineering/server](packages/server) - Main server implementation and runtime
+- [@hcengineering/server-client](packages/client) - Server-side client implementation for inter-service communication
+- [@hcengineering/middleware](packages/middleware) - Server middleware components and request processing
 
 ### Database Adapters
 
-- [@intabiafusion/mongo](packages/mongo) - MongoDB adapter for document storage
-- [@intabiafusion/postgres](packages/postgres) - PostgreSQL adapter for relational data
-- [@intabiafusion/elastic](packages/elastic) - Elasticsearch adapter for full-text search and analytics
+- [@hcengineering/mongo](packages/mongo) - MongoDB adapter for document storage
+- [@hcengineering/postgres](packages/postgres) - PostgreSQL adapter for relational data
+- [@hcengineering/elastic](packages/elastic) - Elasticsearch adapter for full-text search and analytics
 
 ### Storage Providers
 
-- [@intabiafusion/server-storage](packages/server-storage) - Storage abstraction layer and implementations
-- [@intabiafusion/minio](packages/minio) - MinIO storage provider for object storage
-- [@intabiafusion/s3](packages/s3) - AWS S3 compatible storage provider
-- [@intabiafusion/datalake](packages/datalake) - Data lake storage and management
-- [@intabiafusion/hulylake](packages/hulylake) - Huly lake storage and management
+- [@hcengineering/server-storage](packages/server-storage) - Storage abstraction layer and implementations
+- [@hcengineering/minio](packages/minio) - MinIO storage provider for object storage
+- [@hcengineering/s3](packages/s3) - AWS S3 compatible storage provider
+- [@hcengineering/datalake](packages/datalake) - Data lake storage and management
+- [@hcengineering/hulylake](packages/hulylake) - Huly lake storage and management
 
 ### Infrastructure
 
-- [@intabiafusion/kafka](packages/kafka) - Apache Kafka integration for event streaming and messaging
-- [@intabiafusion/collaboration](packages/collaboration) - Real-time collaborative editing infrastructure
+- [@hcengineering/kafka](packages/kafka) - Apache Kafka integration for event streaming and messaging
+- [@hcengineering/collaboration](packages/collaboration) - Real-time collaborative editing infrastructure
 
 ## Pre-requisites
 
@@ -211,10 +211,10 @@ KAFKA_BROKERS=localhost:9092
 
 ## Related Projects
 
-- [Huly Platform](https://github.com/intabia-fusion/foundation) - The main Huly Platform repository
-- [Huly Core](https://github.com/intabia-fusion/huly.core) - Core packages and client libraries
-- [Huly Self-Host](https://github.com/intabia-fusion/huly-selfhost) - Self-hosting solution for Huly
-- [Huly Examples](https://github.com/intabia-fusion/huly-examples) - API usage examples
+- [Huly Platform](https://github.com/hcengineering/platform) - The main Huly Platform repository
+- [Huly Core](https://github.com/hcengineering/huly.core) - Core packages and client libraries
+- [Huly Self-Host](https://github.com/hcengineering/huly-selfhost) - Self-hosting solution for Huly
+- [Huly Examples](https://github.com/hcengineering/huly-examples) - API usage examples
 
 ## Contributing
 
@@ -228,6 +228,6 @@ Licensed under the [EPL-2.0](LICENSE) license.
 
 - [Huly Website](https://huly.io/)
 - [Documentation](https://docs.huly.io/)
-- [Community](https://github.com/intabia-fusion/foundation/discussions)
+- [Community](https://github.com/hcengineering/platform/discussions)
 
 © 2025 [Hardcore Engineering Inc](https://hardcoreeng.com/).

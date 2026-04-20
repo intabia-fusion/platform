@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import chunter, { ChatMessage, DirectMessage } from '@intabiafusion/chunter'
-  import { Label } from '@intabiafusion/ui'
-  import { ActivityMessagePresenter } from '@intabiafusion/activity-resources'
+  import { SortingOrder } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import chunter, { ChatMessage, DirectMessage } from '@hcengineering/chunter'
+  import { Label } from '@hcengineering/ui'
+  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
 
   import chunterResources from '../plugin'
   import { getChannelSpace } from '../utils'

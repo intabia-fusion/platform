@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@intabiafusion/card'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { ButtonIcon, getCurrentLocation, Icon, IconAdd, Label, navigate, showPopup } from '@intabiafusion/ui'
+  import { MasterTag } from '@hcengineering/card'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { ButtonIcon, getCurrentLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
   import card from '../../plugin'
   import CreateTag from '../CreateTag.svelte'
   import TagsHierarchy from './TagsHierarchy.svelte'

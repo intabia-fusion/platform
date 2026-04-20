@@ -35,11 +35,11 @@ import core, {
   type Tx,
   type TxResult,
   type WithLookup
-} from '@intabiafusion/core'
-import { getMetadata, type IntlString, type Resources } from '@intabiafusion/platform'
-import { addTxListener } from '@intabiafusion/presentation'
-import type { ClientHook } from '@intabiafusion/presentation/src/plugin'
-import { testing } from '@intabiafusion/ui'
+} from '@hcengineering/core'
+import { getMetadata, type IntlString, type Resources } from '@hcengineering/platform'
+import { addTxListener } from '@hcengineering/presentation'
+import type { ClientHook } from '@hcengineering/presentation/src/plugin'
+import { testing } from '@hcengineering/ui'
 import devmodel from './plugin'
 
 export interface TxWitHResult {

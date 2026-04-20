@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
-  import contact from '@intabiafusion/contact'
-  import { statusByUserStore } from '@intabiafusion/contact-resources'
-  import core, { Class, Doc, notEmpty, reduceCalls, Ref } from '@intabiafusion/core'
-  import { getResource, IntlString, translate } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
+  import contact from '@hcengineering/contact'
+  import { statusByUserStore } from '@hcengineering/contact-resources'
+  import core, { Class, Doc, notEmpty, reduceCalls, Ref } from '@hcengineering/core'
+  import { getResource, IntlString, translate } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import ui, {
     Action,
     AnySvelteComponent,
@@ -31,18 +31,18 @@
     ModernButton,
     NavGroup,
     showPopup
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { getDocIdentifier } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { getDocIdentifier } from '@hcengineering/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
     isActivityNotification,
     isMentionNotification,
     NotifyMarker
-  } from '@intabiafusion/notification-resources'
-  import { Chat } from '@intabiafusion/chunter'
-  import { DocNotifyContext, InboxNotification } from '@intabiafusion/notification'
+  } from '@hcengineering/notification-resources'
+  import { Chat } from '@hcengineering/chunter'
+  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'

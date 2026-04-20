@@ -15,7 +15,7 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import core, {
     Data,
     RolesAssignment,
@@ -27,15 +27,15 @@
     WithLookup,
     notEmpty,
     AccountUuid
-  } from '@intabiafusion/core'
-  import { Drive, DriveEvents } from '@intabiafusion/drive'
-  import presentation, { Card, getClient, reduceCalls } from '@intabiafusion/presentation'
-  import { EditBox, Label, Toggle } from '@intabiafusion/ui'
-  import { SpaceTypeSelector } from '@intabiafusion/view-resources'
+  } from '@hcengineering/core'
+  import { Drive, DriveEvents } from '@hcengineering/drive'
+  import presentation, { Card, getClient, reduceCalls } from '@hcengineering/presentation'
+  import { EditBox, Label, Toggle } from '@hcengineering/ui'
+  import { SpaceTypeSelector } from '@hcengineering/view-resources'
 
   import driveRes from '../plugin'
-  import { Analytics } from '@intabiafusion/analytics'
-  import view from '@intabiafusion/view'
+  import { Analytics } from '@hcengineering/analytics'
+  import view from '@hcengineering/view'
 
   export let drive: Drive | undefined = undefined
 

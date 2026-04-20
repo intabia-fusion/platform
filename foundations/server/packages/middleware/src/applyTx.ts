@@ -19,9 +19,9 @@ import core, {
   type TxApplyIf,
   type TxApplyResult,
   type TxResult
-} from '@intabiafusion/core'
-import type { Middleware, PipelineContext, TxMiddlewareResult } from '@intabiafusion/server-core'
-import { BaseMiddleware } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
+import { BaseMiddleware } from '@hcengineering/server-core'
 
 /**
  * Will support apply tx

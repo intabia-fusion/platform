@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import request from '@intabiafusion/request'
+import request from '@hcengineering/request'
 import {
   type ChangeControl,
   type ControlledDocument,
@@ -39,10 +39,10 @@ import {
   type DocumentTraining,
   type DocumentSnapshot,
   type ControlledDocumentSnapshot
-} from '@intabiafusion/controlled-documents'
-import { TRequest } from '@intabiafusion/model-request'
-import { type Attachment } from '@intabiafusion/attachment'
-import contact, { type Employee } from '@intabiafusion/contact'
+} from '@hcengineering/controlled-documents'
+import { TRequest } from '@hcengineering/model-request'
+import { type Attachment } from '@hcengineering/attachment'
+import contact, { type Employee } from '@hcengineering/contact'
 import {
   DateRangeMode,
   IndexKind,
@@ -58,7 +58,7 @@ import {
   type RolesAssignment,
   type Rank,
   type AccountUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ArrOf,
   Collection,
@@ -77,9 +77,9 @@ import {
   TypeMarkup,
   ReadOnly,
   TypeRank
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import chunter, { TChatMessage } from '@intabiafusion/model-chunter'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import chunter, { TChatMessage } from '@hcengineering/model-chunter'
 import core, {
   TAttachedDoc,
   TDoc,
@@ -87,11 +87,11 @@ import core, {
   TType,
   TSpaceTypeDescriptor,
   TSpaceType
-} from '@intabiafusion/model-core'
-import { getEmbeddedLabel } from '@intabiafusion/platform'
-import tags, { type TagReference } from '@intabiafusion/tags'
-import time, { type ToDo } from '@intabiafusion/time'
-import training, { type Training, type TrainingRequest } from '@intabiafusion/training'
+} from '@hcengineering/model-core'
+import { getEmbeddedLabel } from '@hcengineering/platform'
+import tags, { type TagReference } from '@hcengineering/tags'
+import time, { type ToDo } from '@hcengineering/time'
+import training, { type Training, type TrainingRequest } from '@hcengineering/training'
 
 import documents from './plugin'
 

@@ -2,7 +2,7 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import core, { DOMAIN_TX, toIdMap, type AnyAttribute, type Ref, type Status } from '@intabiafusion/core'
+import core, { DOMAIN_TX, toIdMap, type AnyAttribute, type Ref, type Status } from '@hcengineering/core'
 import {
   tryMigrate,
   tryUpgrade,
@@ -12,13 +12,13 @@ import {
   type MigrationDocumentQuery,
   type MigrationIterator,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
-import chunter from '@intabiafusion/model-chunter'
-import { DOMAIN_SPACE } from '@intabiafusion/model-core'
-import { DOMAIN_TASK } from '@intabiafusion/model-task'
-import task from '@intabiafusion/task'
-import { htmlToMarkup } from '@intabiafusion/text'
-import tracker, { type Component, type Issue, type Project } from '@intabiafusion/tracker'
+} from '@hcengineering/model'
+import chunter from '@hcengineering/model-chunter'
+import { DOMAIN_SPACE } from '@hcengineering/model-core'
+import { DOMAIN_TASK } from '@hcengineering/model-task'
+import task from '@hcengineering/task'
+import { htmlToMarkup } from '@hcengineering/text'
+import tracker, { type Component, type Issue, type Project } from '@hcengineering/tracker'
 import {
   GithubPullRequestState,
   githubId,
@@ -26,12 +26,12 @@ import {
   type GithubIntegration,
   type GithubIntegrationRepository,
   type GithubPullRequest
-} from '@intabiafusion/github'
+} from '@hcengineering/github'
 import github from './plugin'
 
-import { DOMAIN_TIME } from '@intabiafusion/model-time'
-import { DOMAIN_TRACKER } from '@intabiafusion/model-tracker'
-import time from '@intabiafusion/time'
+import { DOMAIN_TIME } from '@hcengineering/model-time'
+import { DOMAIN_TRACKER } from '@hcengineering/model-tracker'
+import time from '@hcengineering/time'
 import { DOMAIN_GITHUB, DOMAIN_GITHUB_SYNC, DOMAIN_GITHUB_USER } from '.'
 
 export async function guessStatus (status: Status, statuses: Status[]): Promise<Status> {

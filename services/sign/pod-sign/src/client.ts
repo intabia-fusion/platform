@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import { type Client } from '@intabiafusion/core'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import { createClient } from '@intabiafusion/server-client/src'
+import { type Client } from '@hcengineering/core'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import { createClient } from '@hcengineering/server-client/src'
 
 export async function getClient (token: string): Promise<Client> {
   const endpoint = await getTransactorEndpoint(token)

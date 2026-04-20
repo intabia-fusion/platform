@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { AccountClient, Integration } from '@intabiafusion/account-client'
+import { AccountClient, Integration } from '@hcengineering/account-client'
 import {
   MeasureContext,
   RateLimiter,
@@ -21,7 +21,7 @@ import {
   WorkspaceUuid,
   isActiveMode,
   isDeletingMode
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import config from './config'
 import { getIntegrations } from './integrations'
 import { WorkspaceClient } from './workspaceClient'

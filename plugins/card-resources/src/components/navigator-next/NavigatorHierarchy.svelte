@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import card, { CardSpace, MasterTag } from '@intabiafusion/card'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
+  import card, { CardSpace, MasterTag } from '@hcengineering/card'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
 
   import type { TypesNavigatorConfig } from '../../types'
   import NavigatorType from './NavigatorType.svelte'

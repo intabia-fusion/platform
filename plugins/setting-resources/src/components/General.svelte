@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card } from '@intabiafusion/card'
-  import chat from '@intabiafusion/chat'
-  import communication, { GuestCommunicationSettings } from '@intabiafusion/communication'
-  import contact, { AvatarType, ensureEmployeeForPerson } from '@intabiafusion/contact'
-  import { EditableAvatar, getAccountClient } from '@intabiafusion/contact-resources'
+  import card, { Card } from '@hcengineering/card'
+  import chat from '@hcengineering/chat'
+  import communication, { GuestCommunicationSettings } from '@hcengineering/communication'
+  import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
+  import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
   import core, {
     type Account,
     AccountRole,
@@ -29,10 +29,10 @@
     Ref,
     WorkspaceAccountPermission,
     Blob
-  } from '@intabiafusion/core'
-  import { loginId } from '@intabiafusion/login'
-  import { translateCB } from '@intabiafusion/platform'
-  import { createQuery, getClient, MessageBox, uiContext } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import { loginId } from '@hcengineering/login'
+  import { translateCB } from '@hcengineering/platform'
+  import { createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
   import {
     Breadcrumb,
     Button,
@@ -55,10 +55,10 @@
     showPopup,
     themeStore,
     Toggle
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import settingsRes from '../plugin'
   import WorkspacePermissionEditor from './WorkspacePermissionEditor.svelte'
-  import { workspacesStore } from '@intabiafusion/workbench-resources'
+  import { workspacesStore } from '@hcengineering/workbench-resources'
 
   let loading = true
   let isEditingName = false

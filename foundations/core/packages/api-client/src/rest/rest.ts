@@ -39,6 +39,7 @@ import {
   type Tx,
   type TxResult,
   type WithLookup,
+  type WorkspaceUuid,
   Data,
   Space,
   Timestamp,
@@ -48,21 +49,27 @@ import {
   Mixin,
   MixinData,
   MixinUpdate
-} from '@intabiafusion/core'
-import { PlatformError, type Status, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
 
 import { AuthOptions } from '../types'
 import { getWorkspaceToken } from '../utils'
+import { createMarkupOperations, type MarkupFormat, type MarkupOperations, type MarkupRef } from '../markup'
 import type { EnsurePersonOptions, RestClient } from './types'
 import { extractJson, withRetry } from './utils'
 
-export function createRestClient (endpoint: string, workspaceId: string, token: string): RestClient {
-  return new RestClientImpl(endpoint, workspaceId, token)
+export function createRestClient (
+  endpoint: string,
+  workspaceId: string,
+  token: string,
+  collaboratorEndpoint?: string
+): RestClient {
+  return new RestClientImpl(endpoint, workspaceId, token, collaboratorEndpoint)
 }
 
 export async function connectRest (url: string, options: AuthOptions): Promise<RestClient> {
-  const { endpoint, token, workspaceId } = await getWorkspaceToken(url, options)
-  return createRestClient(endpoint, workspaceId, token)
+  const { endpoint, token, workspaceId, info } = await getWorkspaceToken(url, options)
+  return createRestClient(endpoint, workspaceId, token, info.collaboratorEndpoint)
 }
 
 const rateLimitError = 'rate-limit'
@@ -79,12 +86,31 @@ export class RestClientImpl implements RestClient {
 
   remaining: number = 1000
   limit: number = 1000
+
+  private markupOps: MarkupOperations | undefined
+
   constructor (
     endpoint: string,
     readonly workspace: string,
-    readonly token: string
+    readonly token: string,
+    readonly collaboratorEndpoint?: string
   ) {
     this.endpoint = endpoint.replace('ws', 'http')
+  }
+
+  private getMarkupOps (): MarkupOperations {
+    if (this.collaboratorEndpoint === undefined || this.collaboratorEndpoint === '') {
+      throw new PlatformError(unknownError(new Error('Collaborator endpoint is not configured for this RestClient')))
+    }
+    if (this.markupOps === undefined) {
+      this.markupOps = createMarkupOperations(
+        this.endpoint,
+        this.workspace as WorkspaceUuid,
+        this.token,
+        this.collaboratorEndpoint
+      )
+    }
+    return this.markupOps
   }
 
   jsonHeaders (): Record<string, string> {
@@ -522,5 +548,112 @@ export class RestClientImpl implements RestClient {
       modifiedOn,
       modifiedBy
     })
+  }
+
+  // Server routes /api/v1/update to updateDoc vs updateCollection based on class hierarchy.
+  // These wrappers let callers operate by class/space/id without holding the full Doc object.
+
+  updateDoc<T extends Doc>(
+    _class: Ref<Class<T>>,
+    space: Ref<Space>,
+    objectId: Ref<T>,
+    update: DocumentUpdate<T>,
+    retrieve?: boolean,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('update', {
+      _class,
+      _id: objectId,
+      space,
+      update,
+      retrieve,
+      modifiedOn,
+      modifiedBy
+    })
+  }
+
+  updateCollection<T extends Doc, P extends AttachedDoc>(
+    _class: Ref<Class<P>>,
+    space: Ref<Space>,
+    objectId: Ref<P>,
+    attachedTo: Ref<T>,
+    attachedToClass: Ref<Class<T>>,
+    collection: Extract<keyof T, string> | string,
+    update: DocumentUpdate<P>,
+    retrieve?: boolean,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('update', {
+      _class,
+      _id: objectId,
+      space,
+      attachedTo,
+      attachedToClass,
+      collection,
+      update,
+      retrieve,
+      modifiedOn,
+      modifiedBy
+    })
+  }
+
+  removeDoc<T extends Doc>(
+    _class: Ref<Class<T>>,
+    space: Ref<Space>,
+    objectId: Ref<T>,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('remove', {
+      _class,
+      _id: objectId,
+      space,
+      modifiedOn,
+      modifiedBy
+    })
+  }
+
+  removeCollection<T extends Doc, P extends AttachedDoc>(
+    _class: Ref<Class<P>>,
+    space: Ref<Space>,
+    objectId: Ref<P>,
+    attachedTo: Ref<T>,
+    attachedToClass: Ref<Class<T>>,
+    collection: Extract<keyof T, string> | string,
+    modifiedOn?: Timestamp,
+    modifiedBy?: PersonId
+  ): Promise<TxResult> {
+    return this.v1op('remove', {
+      _class,
+      _id: objectId,
+      space,
+      attachedTo,
+      attachedToClass,
+      collection,
+      modifiedOn,
+      modifiedBy
+    })
+  }
+
+  async uploadMarkup (
+    objectClass: Ref<Class<Doc>>,
+    objectId: Ref<Doc>,
+    objectAttr: string,
+    markup: string,
+    format: MarkupFormat
+  ): Promise<MarkupRef> {
+    return await this.getMarkupOps().uploadMarkup(objectClass, objectId, objectAttr, markup, format)
+  }
+
+  async fetchMarkup (
+    objectClass: Ref<Class<Doc>>,
+    objectId: Ref<Doc>,
+    objectAttr: string,
+    markup: MarkupRef,
+    format: MarkupFormat
+  ): Promise<string> {
+    return await this.getMarkupOps().fetchMarkup(objectClass, objectId, objectAttr, markup, format)
   }
 }

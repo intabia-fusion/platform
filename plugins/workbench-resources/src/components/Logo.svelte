@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@intabiafusion/presentation'
-  import { WorkspaceLogo } from '@intabiafusion/ui'
+  import { getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
+  import { WorkspaceLogo } from '@hcengineering/ui'
 
   import { workspacesStore } from '../utils'
   import { workspacesNotificationStore } from '../workbench'

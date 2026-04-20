@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { concatLink, Doc } from '@intabiafusion/core'
-import { inventoryId, Product } from '@intabiafusion/inventory'
-import { getMetadata } from '@intabiafusion/platform'
-import serverCore from '@intabiafusion/server-core'
-import view from '@intabiafusion/view'
-import { workbenchId } from '@intabiafusion/workbench'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+import { concatLink, Doc } from '@hcengineering/core'
+import { inventoryId, Product } from '@hcengineering/inventory'
+import { getMetadata } from '@hcengineering/platform'
+import serverCore from '@hcengineering/server-core'
+import view from '@hcengineering/view'
+import { workbenchId } from '@hcengineering/workbench'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 /**
  * @public

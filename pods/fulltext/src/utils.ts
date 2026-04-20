@@ -7,7 +7,7 @@ import core, {
   type Tx,
   type TxCUD,
   TxProcessor
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 export function fulltextModelFilter (h: Hierarchy, model: Tx[]): Tx[] {
   const allowedClasess: Ref<Class<Doc>>[] = [

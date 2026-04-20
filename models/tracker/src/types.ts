@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import chunter from '@intabiafusion/chunter'
-import contact, { type Employee, type Person } from '@intabiafusion/contact'
+import chunter from '@hcengineering/chunter'
+import contact, { type Employee, type Person } from '@hcengineering/contact'
 import {
   DOMAIN_MODEL,
   DateRangeMode,
@@ -30,7 +30,7 @@ import {
   type Role,
   type CollectionSize,
   type AccountUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ArrOf,
   Collection,
@@ -48,13 +48,13 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import core, { TAttachedDoc, TDoc, TStatus, TType } from '@intabiafusion/model-core'
-import task, { TTask, TProject as TTaskProject } from '@intabiafusion/model-task'
-import { getEmbeddedLabel, type IntlString } from '@intabiafusion/platform'
-import tags, { type TagElement } from '@intabiafusion/tags'
-import time, { type ToDo } from '@intabiafusion/time'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import core, { TAttachedDoc, TDoc, TStatus, TType } from '@hcengineering/model-core'
+import task, { TTask, TProject as TTaskProject } from '@hcengineering/model-task'
+import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+import tags, { type TagElement } from '@hcengineering/tags'
+import time, { type ToDo } from '@hcengineering/time'
 import {
   type ProjectTargetPreference,
   type Component,
@@ -73,11 +73,11 @@ import {
   type RelatedSpaceRule,
   type TimeReportDayType,
   type TimeSpendReport
-} from '@intabiafusion/tracker'
+} from '@hcengineering/tracker'
 import tracker from './plugin'
-import { type TaskType } from '@intabiafusion/task'
+import { type TaskType } from '@hcengineering/task'
 
-import preference, { TPreference } from '@intabiafusion/model-preference'
+import preference, { TPreference } from '@hcengineering/model-preference'
 
 export const DOMAIN_TRACKER = 'tracker' as Domain
 

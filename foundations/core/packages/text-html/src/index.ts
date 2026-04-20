@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MarkupNode } from '@intabiafusion/text-core'
+import { type MarkupNode } from '@hcengineering/text-core'
 import { type HtmlParserOptions, HtmlParser } from './parser'
 import { type HtmlSerializerOptions, HtmlSerializer } from './serializer'
 

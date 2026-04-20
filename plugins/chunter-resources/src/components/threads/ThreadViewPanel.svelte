@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { ActivityMessage } from '@intabiafusion/activity'
-  import { location as locationStore } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { location as locationStore } from '@hcengineering/ui'
 
   import ThreadView from './ThreadView.svelte'
 

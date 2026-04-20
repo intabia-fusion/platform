@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import recorder from '@intabiafusion/recorder'
-import { loadMetadata } from '@intabiafusion/platform'
+import recorder from '@hcengineering/recorder'
+import { loadMetadata } from '@hcengineering/platform'
 
 const recordIcon = require('../assets/icon.svg') as string // eslint-disable-line
 loadMetadata(recorder.icon, {

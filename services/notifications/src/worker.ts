@@ -30,17 +30,17 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import activity from '@intabiafusion/activity'
-import { generateToken } from '@intabiafusion/server-token'
-import { createRestClient } from '@intabiafusion/api-client'
-import { StorageAdapter } from '@intabiafusion/storage'
-import notification, { InboxNotification, TxNotificationType } from '@intabiafusion/notification'
-import { buildStorageFromConfig, storageConfigFrom } from '@intabiafusion/server-storage'
-import pulse, { WorkspacesNotification } from '@intabiafusion/pulse'
-import { QueueUserEvent, QueueUserMessage } from '@intabiafusion/server-core'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { PersonSpace } from '@intabiafusion/contact'
+} from '@hcengineering/core'
+import activity from '@hcengineering/activity'
+import { generateToken } from '@hcengineering/server-token'
+import { createRestClient } from '@hcengineering/api-client'
+import { StorageAdapter } from '@hcengineering/storage'
+import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
+import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
+import { QueueUserEvent, QueueUserMessage } from '@hcengineering/server-core'
+import { getAccountClient } from '@hcengineering/server-client'
+import { PersonSpace } from '@hcengineering/contact'
 
 import Workspace from './workspace'
 import {

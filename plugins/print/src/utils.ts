@@ -2,7 +2,7 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { getMetadata } from '@intabiafusion/platform'
+import { getMetadata } from '@hcengineering/platform'
 
 import print from './plugin'
 

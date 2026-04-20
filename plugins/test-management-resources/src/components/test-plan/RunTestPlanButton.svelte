@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref } from '@intabiafusion/core'
-  import { Button, location } from '@intabiafusion/ui'
-  import type { TestPlan } from '@intabiafusion/test-management'
-  import testManagement from '@intabiafusion/test-management'
+  import { Ref } from '@hcengineering/core'
+  import { Button, location } from '@hcengineering/ui'
+  import type { TestPlan } from '@hcengineering/test-management'
+  import testManagement from '@hcengineering/test-management'
 
   import { showCreateTestRunPanel } from '../../utils'
   import { getTestPlanIdFromLocation } from '../../navigation'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
+  import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
   import { AnySvelteComponent, ButtonIcon, Icon, IconClose, Label, tooltip } from '../index'

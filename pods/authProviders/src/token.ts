@@ -1,5 +1,5 @@
-import { type AccountDB, getLoginInfoByToken } from '@intabiafusion/account'
-import { BrandingMap, concatLink, MeasureContext, getBranding } from '@intabiafusion/core'
+import { type AccountDB, getLoginInfoByToken } from '@hcengineering/account'
+import { BrandingMap, concatLink, MeasureContext, getBranding } from '@hcengineering/core'
 import Router from 'koa-router'
 import qs from 'querystringify'
 import { Strategy as CustomStrategy } from 'passport-custom'

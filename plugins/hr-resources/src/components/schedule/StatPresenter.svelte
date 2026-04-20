@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
+  import { Ref } from '@hcengineering/core'
 
-  import { Request, Staff } from '@intabiafusion/hr'
+  import { Request, Staff } from '@hcengineering/hr'
 
   export let value: Staff
   export let display: (requests: Request[], staff: Staff) => number | string

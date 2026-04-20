@@ -29,7 +29,7 @@ import {
   type TxResult,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { type StorageAdapter } from './storage'
 import type { ServerFindOptions } from './types'
 

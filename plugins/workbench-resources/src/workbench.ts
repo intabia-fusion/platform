@@ -21,10 +21,10 @@ import core, {
   reduceCalls,
   type Ref,
   SortingOrder
-} from '@intabiafusion/core'
-import notification, { notificationId } from '@intabiafusion/notification'
-import { type Asset, getMetadata, getResource, type IntlString, setMetadata, translate } from '@intabiafusion/platform'
-import presentation, { configurationStore, createQuery, getClient, onClient } from '@intabiafusion/presentation'
+} from '@hcengineering/core'
+import notification, { notificationId } from '@hcengineering/notification'
+import { type Asset, getMetadata, getResource, type IntlString, setMetadata, translate } from '@hcengineering/platform'
+import presentation, { configurationStore, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import {
   type AnyComponent,
   getCurrentLocation,
@@ -35,14 +35,14 @@ import {
   locationToUrl,
   navigate,
   parseLocation
-} from '@intabiafusion/ui'
-import view from '@intabiafusion/view'
-import { parseLinkId } from '@intabiafusion/view-resources'
-import { type Application, workbenchId, type WorkbenchTab } from '@intabiafusion/workbench'
+} from '@hcengineering/ui'
+import view from '@hcengineering/view'
+import { parseLinkId } from '@hcengineering/view-resources'
+import { type Application, workbenchId, type WorkbenchTab } from '@hcengineering/workbench'
 import { derived, get, writable } from 'svelte/store'
-import pulse, { type WorkspacesNotification } from '@intabiafusion/pulse'
+import pulse, { type WorkspacesNotification } from '@hcengineering/pulse'
 
-import setting from '@intabiafusion/setting'
+import setting from '@hcengineering/setting'
 import workbench from './plugin'
 import { locationWorkspaceStore } from './utils'
 

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Event, EventResult, SessionData } from '@intabiafusion/communication-sdk-types'
-import type { MeasureContext } from '@intabiafusion/core'
+import type { Event, EventResult, SessionData } from '@hcengineering/communication-sdk-types'
+import type { MeasureContext } from '@hcengineering/core'
 
 import type { CommunicationCallbacks, Enriched, Middleware, MiddlewareContext, TriggerCtx } from '../types'
 import { BaseMiddleware } from './base'

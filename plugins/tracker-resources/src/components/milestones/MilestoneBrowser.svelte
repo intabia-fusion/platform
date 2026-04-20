@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, WithLookup } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Milestone } from '@intabiafusion/tracker'
-  import { Button, IconAdd, SearchInput, TabItem, Switcher, showPopup, Header, Breadcrumbs } from '@intabiafusion/ui'
-  import { ViewOptions, Viewlet } from '@intabiafusion/view'
-  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { Milestone } from '@hcengineering/tracker'
+  import { Button, IconAdd, SearchInput, TabItem, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
+  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import { MilestoneViewMode, getIncludedMilestoneStatuses, milestoneTitleMap } from '../../utils'
   import MilestoneContent from './MilestoneContent.svelte'

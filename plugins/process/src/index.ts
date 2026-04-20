@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Card, ExportFunc, MasterTag, Tag } from '@intabiafusion/card'
-import { Association, Class, Client, Doc, DocumentUpdate, ObjQueryType, Rank, Ref, Tx, Type } from '@intabiafusion/core'
-import { Asset, IntlString, Plugin, plugin, Resource } from '@intabiafusion/platform'
-import { ToDo } from '@intabiafusion/time'
-import { AnyComponent } from '@intabiafusion/ui'
-import { AttributeCategory } from '@intabiafusion/view'
+import { Card, ExportFunc, MasterTag, Tag } from '@hcengineering/card'
+import { Association, Class, Client, Doc, DocumentUpdate, ObjQueryType, Rank, Ref, Tx, Type } from '@hcengineering/core'
+import { Asset, IntlString, Plugin, plugin, Resource } from '@hcengineering/platform'
+import { ToDo } from '@hcengineering/time'
+import { AnyComponent } from '@hcengineering/ui'
+import { AttributeCategory } from '@hcengineering/view'
 import { SelectedExecutionContext } from './types'
 
 /**

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentsPresenter } from '@intabiafusion/attachment-resources'
+  import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
   import {
     CategoryType,
     Class,
@@ -26,14 +26,14 @@
     mergeQueries,
     Ref,
     WithLookup
-  } from '@intabiafusion/core'
-  import { Item, Kanban as KanbanUI } from '@intabiafusion/kanban'
-  import notification from '@intabiafusion/notification'
-  import { ActionContext, createQuery, getClient } from '@intabiafusion/presentation'
-  import tags from '@intabiafusion/tags'
-  import { DocWithRank, getStates } from '@intabiafusion/task'
-  import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@intabiafusion/task-resources'
-  import { Issue, IssuesGrouping, IssuesOrdering, Project, reduceChildInfoTree } from '@intabiafusion/tracker'
+  } from '@hcengineering/core'
+  import { Item, Kanban as KanbanUI } from '@hcengineering/kanban'
+  import notification from '@hcengineering/notification'
+  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import tags from '@hcengineering/tags'
+  import { DocWithRank, getStates } from '@hcengineering/task'
+  import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
+  import { Issue, IssuesGrouping, IssuesOrdering, Project, reduceChildInfoTree } from '@hcengineering/tracker'
   import {
     Button,
     ColorDefinition,
@@ -44,8 +44,8 @@
     Loading,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import {
     enabledConfig,
     focusStore,
@@ -62,8 +62,8 @@
     setGroupByValues,
     showMenu,
     statusStore
-  } from '@intabiafusion/view-resources'
-  import { ChatMessagesPresenter } from '@intabiafusion/chunter-resources'
+  } from '@hcengineering/view-resources'
+  import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'

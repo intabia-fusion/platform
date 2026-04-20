@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { LoginInfo } from '@intabiafusion/login'
-  import { changeUsername } from '@intabiafusion/login-resources'
-  import { OK, Severity, Status, unknownError } from '@intabiafusion/platform'
+  import { LoginInfo } from '@hcengineering/login'
+  import { changeUsername } from '@hcengineering/login-resources'
+  import { OK, Severity, Status, unknownError } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import onboard from '../plugin'
   import Form from './Form.svelte'

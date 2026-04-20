@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, Label } from '@intabiafusion/ui'
-  import { Application } from '@intabiafusion/workbench'
+  import { Icon, Label } from '@hcengineering/ui'
+  import { Application } from '@hcengineering/workbench'
 
   export let value: Application
 </script>

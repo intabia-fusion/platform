@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize } from '@intabiafusion/ui'
+  import { IconSize } from '@hcengineering/ui'
 
   export let size: IconSize
   // export let fill: string = 'var(--theme-caption-color)'

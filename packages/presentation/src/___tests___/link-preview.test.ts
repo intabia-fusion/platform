@@ -14,7 +14,7 @@
 //
 
 import { canDisplayLinkPreview, fetchLinkPreviewDetails, type LinkPreviewDetails } from '../link-preview'
-import { setMetadata } from '@intabiafusion/platform'
+import { setMetadata } from '@hcengineering/platform'
 import plugin from '../plugin'
 
 const fechFunc =

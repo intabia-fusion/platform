@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Card } from '@intabiafusion/card'
-  import { AttributeModel } from '@intabiafusion/view'
-  import { ActivityMessage, ActivityMessageExtra } from '@intabiafusion/communication-types'
-  import { Person } from '@intabiafusion/contact'
+  import { getClient } from '@hcengineering/presentation'
+  import { Card } from '@hcengineering/card'
+  import { AttributeModel } from '@hcengineering/view'
+  import { ActivityMessage, ActivityMessageExtra } from '@hcengineering/communication-types'
+  import { Person } from '@hcengineering/contact'
 
   import ActivityObjectValue from './activity/ActivityObjectValue.svelte'
   import ActivityUpdateViewer from './activity/ActivityUpdateViewer.svelte'

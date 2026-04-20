@@ -1,7 +1,7 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 //
-import { MeasureLogger, ParamsType } from '@intabiafusion/core'
+import { MeasureLogger, ParamsType } from '@hcengineering/core'
 import { basename, dirname, join } from 'path'
 import winston from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'

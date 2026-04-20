@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TestProject } from '@intabiafusion/test-management'
+  import { TestProject } from '@hcengineering/test-management'
 
   export let value: TestProject | undefined
   export let inline: boolean = false

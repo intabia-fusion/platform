@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Document } from '@intabiafusion/document'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { EditBox } from '@intabiafusion/ui'
+  import { Document } from '@hcengineering/document'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { EditBox } from '@hcengineering/ui'
   import document from '../plugin'
 
   export let doc: Document

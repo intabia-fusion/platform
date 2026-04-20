@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/communication-server
+# Change Log - @hcengineering/communication-server
 
 This log was last generated on Mon, 27 Oct 2025 16:28:25 GMT and should not be manually modified.
 

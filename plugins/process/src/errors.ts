@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { IntlString } from '@intabiafusion/platform'
+import { IntlString } from '@hcengineering/platform'
 import { ExecutionError, Transition } from '.'
-import { Ref } from '@intabiafusion/core'
+import { Ref } from '@hcengineering/core'
 
 export class ProcessError extends Error {
   constructor (

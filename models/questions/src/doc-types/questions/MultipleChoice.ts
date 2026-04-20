@@ -10,10 +10,10 @@ import type {
   MultipleChoiceQuestion,
   MultipleChoiceQuestionAnswer,
   MultipleChoiceQuestionData
-} from '@intabiafusion/questions'
-import { IndexKind, type Ref, type Type } from '@intabiafusion/core'
-import { Hidden, Index, Model, Prop, TypeRef, UX } from '@intabiafusion/model'
-import core, { TType } from '@intabiafusion/model-core'
+} from '@hcengineering/questions'
+import { IndexKind, type Ref, type Type } from '@hcengineering/core'
+import { Hidden, Index, Model, Prop, TypeRef, UX } from '@hcengineering/model'
+import core, { TType } from '@hcengineering/model-core'
 import questions from '../../plugin'
 import { TAnswer, TAssessment, TQuestion } from '../base'
 

@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AttachedDoc, Ref, AccountUuid } from '@intabiafusion/core'
-import { PersonSpace } from '@intabiafusion/contact'
-import { MessageID } from '@intabiafusion/communication-types'
-import { Card } from '@intabiafusion/card'
+import { AttachedDoc, Ref, AccountUuid } from '@hcengineering/core'
+import { PersonSpace } from '@hcengineering/contact'
+import { MessageID } from '@hcengineering/communication-types'
+import { Card } from '@hcengineering/card'
 
 export interface PollAnswer extends AttachedDoc<Poll> {
   options: string[]

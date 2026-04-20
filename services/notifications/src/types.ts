@@ -28,7 +28,7 @@ import {
   TxResult,
   type WithLookup,
   WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   DocNotifyContext,
   MentionInboxNotification,
@@ -36,10 +36,10 @@ import {
   type NotificationProviderSetting,
   NotificationType,
   type NotificationTypeSetting
-} from '@intabiafusion/notification'
-import { Employee, SocialIdentity } from '@intabiafusion/contact'
-import { StorageAdapter } from '@intabiafusion/storage'
-import { Receiver } from '@intabiafusion/server-notification'
+} from '@hcengineering/notification'
+import { Employee, SocialIdentity } from '@hcengineering/contact'
+import { StorageAdapter } from '@hcengineering/storage'
+import { Receiver } from '@hcengineering/server-notification'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]

@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@intabiafusion/core'
-import { type Resources } from '@intabiafusion/platform'
-import { showPopup } from '@intabiafusion/ui'
-import { type Category, type Product } from '@intabiafusion/inventory'
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import { type Resources } from '@hcengineering/platform'
+import { showPopup } from '@hcengineering/ui'
+import { type Category, type Product } from '@hcengineering/inventory'
 
 import Categories from './components/Categories.svelte'
 import CategoryPresenter from './components/CategoryPresenter.svelte'

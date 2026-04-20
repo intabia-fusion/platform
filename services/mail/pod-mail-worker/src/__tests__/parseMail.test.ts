@@ -15,7 +15,7 @@
 
 import fs from 'fs/promises'
 import path from 'path'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import { type MtaMessage } from '../types'
 
 // Create a mock logger context

@@ -12,10 +12,10 @@
 // limitations under the License.
 import { get, writable } from 'svelte/store'
 
-import type { AccountUuid, Class, Ref } from '@intabiafusion/core'
-import type { Person } from '@intabiafusion/contact'
-import { getClient } from '@intabiafusion/presentation'
-import type { LabelAndProps } from '@intabiafusion/ui'
+import type { AccountUuid, Class, Ref } from '@hcengineering/core'
+import type { Person } from '@hcengineering/contact'
+import { getClient } from '@hcengineering/presentation'
+import type { LabelAndProps } from '@hcengineering/ui'
 
 import contact from '../../plugin'
 import EmployeePreviewPopup from './EmployeePreviewPopup.svelte'

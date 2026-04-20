@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import {
     Label,
     showPopup,
@@ -22,11 +22,11 @@
     eventToHTMLElement,
     getFocusManager,
     TooltipAlignment
-  } from '@intabiafusion/ui'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import EnumPopup from './EnumPopup.svelte'
-  import core, { Ref, Class, DocumentQuery, Enum } from '@intabiafusion/core'
-  import { ObjectCreate } from '@intabiafusion/presentation'
+  import core, { Ref, Class, DocumentQuery, Enum } from '@hcengineering/core'
+  import { ObjectCreate } from '@hcengineering/presentation'
 
   export let label: IntlString
   export let value: Enum | undefined

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Employee } from '@intabiafusion/contact'
+import type { Employee } from '@hcengineering/contact'
 import type {
   TestCase,
   TestSuite,
@@ -26,11 +26,11 @@ import type {
   TestResult,
   TestPlan,
   TestPlanItem
-} from '@intabiafusion/test-management'
-import { type Attachment } from '@intabiafusion/attachment'
-import contact from '@intabiafusion/contact'
-import chunter from '@intabiafusion/chunter'
-import { getEmbeddedLabel } from '@intabiafusion/platform'
+} from '@hcengineering/test-management'
+import { type Attachment } from '@hcengineering/attachment'
+import contact from '@hcengineering/contact'
+import chunter from '@hcengineering/chunter'
+import { getEmbeddedLabel } from '@hcengineering/platform'
 import {
   DateRangeMode,
   IndexKind,
@@ -44,7 +44,7 @@ import {
   type MarkupBlobRef,
   type Class,
   type AccountUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   Mixin,
   Model,
@@ -59,13 +59,13 @@ import {
   ReadOnly,
   TypeDate,
   Hidden
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import core, { TAttachedDoc, TDoc, TType, TTypedSpace } from '@intabiafusion/model-core'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import core, { TAttachedDoc, TDoc, TType, TTypedSpace } from '@hcengineering/model-core'
 
 import testManagement from './plugin'
 
-export { testManagementId } from '@intabiafusion/test-management/src/index'
+export { testManagementId } from '@hcengineering/test-management/src/index'
 
 export const DOMAIN_TEST_MANAGEMENT = 'test-management' as Domain
 

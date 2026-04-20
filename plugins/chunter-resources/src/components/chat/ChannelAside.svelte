@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { getCurrentAccount, Ref, notEmpty, AccountUuid } from '@intabiafusion/core'
-  import presentation from '@intabiafusion/presentation'
-  import { Label, showPopup, tooltip } from '@intabiafusion/ui'
+  import core, { getCurrentAccount, Ref, notEmpty, AccountUuid } from '@hcengineering/core'
+  import presentation from '@hcengineering/presentation'
+  import { Label, showPopup, tooltip } from '@hcengineering/ui'
 
-  import { Channel, ChunterSpace, ObjectChatPanel } from '@intabiafusion/chunter'
-  import { Employee, Person } from '@intabiafusion/contact'
+  import { Channel, ChunterSpace, ObjectChatPanel } from '@hcengineering/chunter'
+  import { Employee, Person } from '@hcengineering/contact'
   import {
     EmployeeBox,
     employeeRefByAccountUuidStore,
     SelectUsersPopup,
     employeeByIdStore,
     getPersonRefByPersonIdCb
-  } from '@intabiafusion/contact-resources'
+  } from '@hcengineering/contact-resources'
 
   import ChannelMembers from '../ChannelMembers.svelte'
   import DocAside from './DocAside.svelte'

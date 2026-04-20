@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { type File, type Folder, type Resource } from '@intabiafusion/drive'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { type File, type Folder, type Resource } from '@hcengineering/drive'
+  import { getClient } from '@hcengineering/presentation'
+  import { ObjectPresenterType } from '@hcengineering/view'
 
   import drive from '../plugin'
 

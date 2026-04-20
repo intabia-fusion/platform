@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { matchQuery, Doc } from '@intabiafusion/core'
-  import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@intabiafusion/notification'
-  import { ActivityMessagePreview, sortActivityMessages } from '@intabiafusion/activity-resources'
-  import activity, { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
-  import { Component } from '@intabiafusion/ui'
-  import { Person } from '@intabiafusion/contact'
+  import { getClient } from '@hcengineering/presentation'
+  import { matchQuery, Doc } from '@hcengineering/core'
+  import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@hcengineering/notification'
+  import { ActivityMessagePreview, sortActivityMessages } from '@hcengineering/activity-resources'
+  import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+  import { Component } from '@hcengineering/ui'
+  import { Person } from '@hcengineering/contact'
 
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
 

@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@intabiafusion/ui'
+  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import LanguagePresenter from './LanguagePresenter.svelte'

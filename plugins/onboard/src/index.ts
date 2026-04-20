@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui'
+import type { Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 /** @public */
 export const onboardId = 'onboard' as Plugin

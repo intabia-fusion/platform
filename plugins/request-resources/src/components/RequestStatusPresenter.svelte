@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
-  import { BooleanIcon, Label } from '@intabiafusion/ui'
+  import { IntlString } from '@hcengineering/platform'
+  import { BooleanIcon, Label } from '@hcengineering/ui'
   import request from '../plugin'
-  import { RequestStatus } from '@intabiafusion/request'
+  import { RequestStatus } from '@hcengineering/request'
 
   export let value: RequestStatus
 

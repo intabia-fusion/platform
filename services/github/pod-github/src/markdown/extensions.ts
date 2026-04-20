@@ -1,4 +1,4 @@
-import { extensionKit, ServerKit } from '@intabiafusion/text'
+import { extensionKit, ServerKit } from '@hcengineering/text'
 
 import { AnyExtension, mergeAttributes, Node } from '@tiptap/core'
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Document } from '@intabiafusion/controlled-documents'
-  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import type { IntlString, Asset } from '@intabiafusion/platform'
-  import { IModeSelector } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
-  import { ViewletPanelHeader } from '@intabiafusion/view-resources'
+  import { Document } from '@hcengineering/controlled-documents'
+  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
+  import { IModeSelector } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import { ViewletPanelHeader } from '@hcengineering/view-resources'
 
   import document from '../plugin'
   import DocumentsContent from './document/DocumentsContent.svelte'

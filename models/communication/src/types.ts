@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrOf, type Builder, Model, TypeAny, TypeNumber, TypeRef } from '@intabiafusion/model'
-import core, { TAttachedDoc, TConfiguration, TDoc } from '@intabiafusion/model-core'
-import { type Class, type Domain, DOMAIN_MODEL, type Ref } from '@intabiafusion/core'
-import { type Asset, type IntlString } from '@intabiafusion/platform'
+import { ArrOf, type Builder, Model, TypeAny, TypeNumber, TypeRef } from '@hcengineering/model'
+import core, { TAttachedDoc, TConfiguration, TDoc } from '@hcengineering/model-core'
+import { type Class, type Domain, DOMAIN_MODEL, type Ref } from '@hcengineering/core'
+import { type Asset, type IntlString } from '@hcengineering/platform'
 import {
   type Applet,
   type MessageAction,
@@ -26,17 +26,17 @@ import {
   type CustomActivityPresenter,
   type GuestCommunicationSettings,
   type AppletGetTitleFnResource
-} from '@intabiafusion/communication'
-import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
-import { type AppletType } from '@intabiafusion/communication-types'
-import card, { createSystemType } from '@intabiafusion/model-card'
-import type { AnyComponent } from '@intabiafusion/ui'
-import contact, { type PersonSpace } from '@intabiafusion/contact'
-import { type Card, type MasterTag } from '@intabiafusion/card'
-import { DOMAIN_SETTING } from '@intabiafusion/setting'
-import view from '@intabiafusion/model-view'
-import notification, { generateClassNotificationTypes } from '@intabiafusion/model-notification'
-import { type NotificationGroup } from '@intabiafusion/notification'
+} from '@hcengineering/communication'
+import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import { type AppletType } from '@hcengineering/communication-types'
+import card, { createSystemType } from '@hcengineering/model-card'
+import type { AnyComponent } from '@hcengineering/ui'
+import contact, { type PersonSpace } from '@hcengineering/contact'
+import { type Card, type MasterTag } from '@hcengineering/card'
+import { DOMAIN_SETTING } from '@hcengineering/setting'
+import view from '@hcengineering/model-view'
+import notification, { generateClassNotificationTypes } from '@hcengineering/model-notification'
+import { type NotificationGroup } from '@hcengineering/notification'
 
 import communication from './plugin'
 

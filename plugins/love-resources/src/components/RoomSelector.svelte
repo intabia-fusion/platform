@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, formatName } from '@intabiafusion/contact'
-  import { getPersonByPersonRefStore } from '@intabiafusion/contact-resources'
-  import { translate } from '@intabiafusion/platform'
-  import { notEmpty, Ref } from '@intabiafusion/core'
-  import love, { isOffice, Room } from '@intabiafusion/love'
-  import { Dropdown, Icon } from '@intabiafusion/ui'
+  import { getCurrentEmployee, formatName } from '@hcengineering/contact'
+  import { getPersonByPersonRefStore } from '@hcengineering/contact-resources'
+  import { translate } from '@hcengineering/platform'
+  import { notEmpty, Ref } from '@hcengineering/core'
+  import love, { isOffice, Room } from '@hcengineering/love'
+  import { Dropdown, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { rooms } from '../stores'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let value: Ref<Room> | undefined
   export let disabled: boolean = false

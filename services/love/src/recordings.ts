@@ -1,6 +1,6 @@
-import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
-import { MeasureContext, Ref, WorkspaceIds, WorkspaceUuid } from '@intabiafusion/core'
-import { MeetingMinutes, queueEvents, QueueMeetingMessage, RecordingFormat, RecordingState } from '@intabiafusion/love'
+import { WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { MeasureContext, Ref, WorkspaceIds, WorkspaceUuid } from '@hcengineering/core'
+import { MeetingMinutes, queueEvents, QueueMeetingMessage, RecordingFormat, RecordingState } from '@hcengineering/love'
 import {
   EgressClient,
   EncodedFileOutput,
@@ -10,7 +10,7 @@ import {
   WebhookConfig
 } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
-import { PlatformQueueProducer, StorageConfig } from '@intabiafusion/server-core'
+import { PlatformQueueProducer, StorageConfig } from '@hcengineering/server-core'
 import { getS3UploadParams } from './storage'
 import { getRecordingPreset } from './preset'
 import config from './config'

@@ -21,9 +21,9 @@ import core, {
   type WorkspaceIds,
   systemAccountUuid,
   withContext
-} from '@intabiafusion/core'
-import { type HulylakeClient, type PutOptions, getClient } from '@intabiafusion/hulylake-client'
-import { getMetadata } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { type HulylakeClient, type PutOptions, getClient } from '@hcengineering/hulylake-client'
+import { getMetadata } from '@hcengineering/platform'
 import {
   type BlobStorageIterator,
   type BucketInfo,
@@ -31,8 +31,8 @@ import {
   type StorageConfig,
   type StorageConfiguration,
   type UploadedObjectInfo
-} from '@intabiafusion/server-core'
-import serverToken, { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import { Readable } from 'stream'
 import { NotFoundError } from './error'
 

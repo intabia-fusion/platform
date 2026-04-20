@@ -13,8 +13,8 @@
   limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata } from '@intabiafusion/platform'
-  import { PreviewControls } from '@intabiafusion/ui'
+  import platform, { getMetadata } from '@hcengineering/platform'
+  import { PreviewControls } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   // Check if we're in development mode

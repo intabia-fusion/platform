@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { MeasureContext, PersonUuid, PersonId, WorkspaceUuid } from '@intabiafusion/core'
-import { RestClient, createRestClient } from '@intabiafusion/api-client'
-import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { MeasureContext, PersonUuid, PersonId, WorkspaceUuid } from '@hcengineering/core'
+import { RestClient, createRestClient } from '@hcengineering/api-client'
+import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { PersonCache, PersonCacheFactory, CachedPerson } from '../person'
 import { EmailContact } from '../types'
 
 // Mock the createRestClient function
-jest.mock('@intabiafusion/api-client', () => ({
-  ...jest.requireActual('@intabiafusion/api-client'),
+jest.mock('@hcengineering/api-client', () => ({
+  ...jest.requireActual('@hcengineering/api-client'),
   createRestClient: jest.fn()
 }))
 

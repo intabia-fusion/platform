@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@intabiafusion/platform'
-import type { IntlString, Metadata } from '@intabiafusion/platform'
+import { mergeIds } from '@hcengineering/platform'
+import type { IntlString, Metadata } from '@hcengineering/platform'
 
-import workbench, { workbenchId } from '@intabiafusion/workbench'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import workbench, { workbenchId } from '@hcengineering/workbench'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 export default mergeIds(workbenchId, workbench, {
   string: {

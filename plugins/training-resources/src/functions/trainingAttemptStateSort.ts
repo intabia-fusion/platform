@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import { type TrainingAttemptState, trainingAttemptStateOrder } from '@intabiafusion/training'
-import { type TxOperations } from '@intabiafusion/core'
+import { type TrainingAttemptState, trainingAttemptStateOrder } from '@hcengineering/training'
+import { type TxOperations } from '@hcengineering/core'
 
 export async function trainingAttemptStateSort (
   _: TxOperations,

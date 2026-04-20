@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import type { AttachedDoc, Class, Doc, Ref } from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { AnyComponent } from '@intabiafusion/ui'
-import { FilterMode } from '@intabiafusion/view'
+import type { AttachedDoc, Class, Doc, Ref } from '@hcengineering/core'
+import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui'
+import { FilterMode } from '@hcengineering/view'
 
 export * from './analytics'
 

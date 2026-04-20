@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@intabiafusion/platform'
-import desktopPreferences, { desktopPreferencesId } from '@intabiafusion/desktop-preferences'
+import { mergeIds } from '@hcengineering/platform'
+import desktopPreferences, { desktopPreferencesId } from '@hcengineering/desktop-preferences'
 
 export default mergeIds(desktopPreferencesId, desktopPreferences, {})

@@ -3,11 +3,11 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
-  import type { ButtonKind, ButtonShape, ButtonSize, LabelAndProps, SelectPopupValueType } from '@intabiafusion/ui'
-  import { ButtonWithDropdown, Icon, IconDropdown, SelectPopup, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import { GithubIntegrationRepository, GithubProject } from '@intabiafusion/github'
+  import { Ref } from '@hcengineering/core'
+  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonShape, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
+  import { ButtonWithDropdown, Icon, IconDropdown, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

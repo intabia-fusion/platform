@@ -27,7 +27,7 @@ import {
   AttachmentUpdateData,
   CardID,
   CardType
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import {
   AddAttachmentsOperation,
   CreateMessageEvent,
@@ -44,7 +44,7 @@ import {
   AttachmentPatchEvent,
   BlobPatchEvent,
   ThreadPatchEvent
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 
 import { withTotal } from './utils'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DateRangeMode } from '@intabiafusion/core'
+  import { DateRangeMode } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import Month from './Month.svelte'
   import Shifts from './Shifts.svelte'

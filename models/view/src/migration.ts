@@ -20,11 +20,11 @@ import {
   type MigrationDocumentQuery,
   type MigrationUpgradeClient,
   tryMigrate
-} from '@intabiafusion/model'
-import { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
-import view, { type Filter, type FilteredView, type ViewletPreference, viewId } from '@intabiafusion/view'
-import { getSocialIdFromOldAccount, getSocialKeyByOldAccount, getUniqueAccounts } from '@intabiafusion/model-core'
-import core, { type AccountUuid, type PersonId } from '@intabiafusion/core'
+} from '@hcengineering/model'
+import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
+import view, { type Filter, type FilteredView, type ViewletPreference, viewId } from '@hcengineering/view'
+import { getSocialIdFromOldAccount, getSocialKeyByOldAccount, getUniqueAccounts } from '@hcengineering/model-core'
+import core, { type AccountUuid, type PersonId } from '@hcengineering/core'
 
 import { DOMAIN_VIEW } from '.'
 

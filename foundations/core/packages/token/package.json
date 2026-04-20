@@ -1,6 +1,6 @@
 {
-  "name": "@intabiafusion/server-token",
-  "version": "1.0.0",
+  "name": "@hcengineering/server-token",
+  "version": "0.7.17",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
@@ -24,7 +24,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@types/node": "^22.18.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
@@ -42,12 +42,12 @@
     "eslint-plugin-svelte": "^2.35.1"
   },
   "dependencies": {
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/platform": "workspace:^1.0.0",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/platform": "workspace:^0.7.19",
     "jwt-simple": "^0.5.6",
     "uuid": "^8.3.2"
   },
-  "repository": "https://github.com/intabia-fusion/foundation",
+  "repository": "https://github.com/hcengineering/huly.core",
   "publishConfig": {
     "access": "public"
   },

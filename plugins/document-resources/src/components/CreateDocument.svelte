@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Data, generateId, Ref } from '@intabiafusion/core'
-  import { Document, DocumentEvents, Teamspace } from '@intabiafusion/document'
-  import { IconWithEmoji, Card, getClient, SpaceSelector } from '@intabiafusion/presentation'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Data, generateId, Ref } from '@hcengineering/core'
+  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
+  import { IconWithEmoji, Card, getClient, SpaceSelector } from '@hcengineering/presentation'
   import {
     Button,
     createFocusManager,
@@ -27,9 +27,9 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { IconPicker, ObjectBox } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { IconPicker, ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import document from '../plugin'

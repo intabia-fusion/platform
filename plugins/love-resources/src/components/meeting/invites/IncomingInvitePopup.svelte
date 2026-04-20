@@ -12,14 +12,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person, formatName } from '@intabiafusion/contact'
-  import { Avatar, getPersonByPersonRefCb } from '@intabiafusion/contact-resources'
-  import { Label, ModernButton } from '@intabiafusion/ui'
+  import { Person, formatName } from '@hcengineering/contact'
+  import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
+  import { Label, ModernButton } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import love from '../../../plugin'
   import { responseToInviteRequest } from '../../../invites'
-  import { type UserMeetingInvite } from '@intabiafusion/love'
+  import { type UserMeetingInvite } from '@hcengineering/love'
 
   export let invite: UserMeetingInvite
 

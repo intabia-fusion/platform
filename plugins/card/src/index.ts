@@ -27,11 +27,11 @@ import {
   SpaceType,
   TypedSpace,
   VersionableDoc
-} from '@intabiafusion/core'
-import { Asset, IntlString, plugin, Plugin, Resource } from '@intabiafusion/platform'
-import { Preference } from '@intabiafusion/preference'
-import type { AnyComponent, ComponentExtensionId } from '@intabiafusion/ui'
-import { IconProps } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { Asset, IntlString, plugin, Plugin, Resource } from '@hcengineering/platform'
+import { Preference } from '@hcengineering/preference'
+import type { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
+import { IconProps } from '@hcengineering/view'
 
 export * from './analytics'
 

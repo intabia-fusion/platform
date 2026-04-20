@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { Employee } from '@intabiafusion/contact'
-  import { AccountArrayEditor, AssigneeBox, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { Analytics } from '@hcengineering/analytics'
+  import { Employee } from '@hcengineering/contact'
+  import { AccountArrayEditor, AssigneeBox, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import core, {
     Data,
     DocumentUpdate,
@@ -28,12 +28,12 @@
     getCurrentAccount,
     notEmpty,
     AccountUuid
-  } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import presentation, { IconWithEmoji, Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import task, { ProjectType, TaskType } from '@intabiafusion/task'
-  import { taskTypeStore, typeStore } from '@intabiafusion/task-resources'
-  import { IssueStatus, Project, TimeReportDayType, TrackerEvents } from '@intabiafusion/tracker'
+  } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import presentation, { IconWithEmoji, Card, createQuery, getClient } from '@hcengineering/presentation'
+  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
+  import { IssueStatus, Project, TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
   import {
     Button,
     Component,
@@ -45,9 +45,9 @@
     getPlatformColorForTextDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { IconPicker } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { IconPicker } from '@hcengineering/view-resources'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 

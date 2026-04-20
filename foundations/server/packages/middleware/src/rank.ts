@@ -24,14 +24,14 @@ import core, {
   type TxMixin,
   type TypeRank,
   SortingOrder
-} from '@intabiafusion/core'
-import { makeRank } from '@intabiafusion/rank'
+} from '@hcengineering/core'
+import { makeRank } from '@hcengineering/rank'
 import {
   type Middleware,
   type TxMiddlewareResult,
   type PipelineContext,
   BaseMiddleware
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 /**
  * Special value to indicate that rank should be auto-generated

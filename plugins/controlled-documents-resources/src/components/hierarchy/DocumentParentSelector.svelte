@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import documents, { ProjectDocumentTree, type DocumentSpace, type Project } from '@intabiafusion/controlled-documents'
-  import { type Doc, type Ref } from '@intabiafusion/core'
-  import { getPlatformColorForTextDef, themeStore } from '@intabiafusion/ui'
-  import { TreeNode } from '@intabiafusion/view-resources'
+  import documents, { ProjectDocumentTree, type DocumentSpace, type Project } from '@hcengineering/controlled-documents'
+  import { type Doc, type Ref } from '@hcengineering/core'
+  import { getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
+  import { TreeNode } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import { createDocumentHierarchyQuery } from '../../utils'

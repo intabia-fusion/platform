@@ -23,8 +23,8 @@
     Ref,
     SortingOrder,
     Space
-  } from '@intabiafusion/core'
-  import presentation, { getClient } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
     deviceOptionsStore,
     EditWithIcon,
@@ -34,8 +34,8 @@
     Label,
     Loading,
     resizeObserver
-  } from '@intabiafusion/ui'
-  import { Filter } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Filter } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { FILTER_DEBOUNCE_MS } from '../../filter'
   import view from '../../plugin'

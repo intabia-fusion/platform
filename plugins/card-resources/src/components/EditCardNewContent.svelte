@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import communication from '@intabiafusion/communication'
-  import { NotificationContext } from '@intabiafusion/communication-types'
-  import { Ref } from '@intabiafusion/core'
-  import { resizeObserver } from '@intabiafusion/ui'
+  import { Card } from '@hcengineering/card'
+  import communication from '@hcengineering/communication'
+  import { NotificationContext } from '@hcengineering/communication-types'
+  import { Ref } from '@hcengineering/core'
+  import { resizeObserver } from '@hcengineering/ui'
 
-  import { MessageInput } from '@intabiafusion/communication-resources'
-  import { getMetadata } from '@intabiafusion/platform'
+  import { MessageInput } from '@hcengineering/communication-resources'
+  import { getMetadata } from '@hcengineering/platform'
   import EditCardTableOfContents from './EditCardTableOfContents.svelte'
 
   export let _id: Ref<Card>

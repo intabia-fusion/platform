@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MarkupNode, MarkupNodeType, MarkupMarkType } from '@intabiafusion/text-core'
+import { MarkupNode, MarkupNodeType, MarkupMarkType } from '@hcengineering/text-core'
 import { markdownToMarkup, markupToMarkdown } from '..'
 import { isMarkdownsEquals, normalizeMarkdown } from '../compare'
 

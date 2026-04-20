@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import tags, { TagElement } from '@intabiafusion/tags'
-  import { selectedTagElements } from '@intabiafusion/tags-resources'
-  import { Component, getCurrentResolvedLocation, navigate } from '@intabiafusion/ui'
-  import { Filter } from '@intabiafusion/view'
-  import { buildFilterKey, setFilters } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import tags, { TagElement } from '@hcengineering/tags'
+  import { selectedTagElements } from '@hcengineering/tags-resources'
+  import { Component, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import { Filter } from '@hcengineering/view'
+  import { buildFilterKey, setFilters } from '@hcengineering/view-resources'
   import tracker from '../plugin'
 
   function setFilterTag (tag: TagElement) {

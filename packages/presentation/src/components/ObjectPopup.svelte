@@ -20,9 +20,9 @@
     type DocumentQuery,
     type FindOptions,
     type Ref
-  } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { Label } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { searchFor, type SearchItem } from '..'
   import { ObjectCreate, type ObjectSearchCategory } from '../types'

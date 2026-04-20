@@ -14,8 +14,8 @@
 //
 
 import { derived, get, type Readable, writable } from 'svelte/store'
-import { type PersonId, type Ref } from '@intabiafusion/core'
-import { contactCache, type ContactCacheChange, type Person } from '@intabiafusion/contact'
+import { type PersonId, type Ref } from '@hcengineering/core'
+import { contactCache, type ContactCacheChange, type Person } from '@hcengineering/contact'
 
 import { getPersonRefsByPersonIds, getPersonsByPersonIds, getPersonsByPersonRefs } from './utils'
 

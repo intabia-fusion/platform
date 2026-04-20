@@ -26,7 +26,7 @@ Containers are the core building blocks of Huly Network applications. They encap
 Every container must implement the `Container` interface:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 interface Container {
   // Handle requests from clients
@@ -124,8 +124,8 @@ export class CalculatorContainer implements Container {
 Containers are created by factory functions:
 
 ```typescript
-import type { GetOptions, ContainerUuid } from '@intabiafusion/network-core'
-import { createNetworkClient } from '@intabiafusion/network-client'
+import type { GetOptions, ContainerUuid } from '@hcengineering/network-core'
+import { createNetworkClient } from '@hcengineering/network-client'
 
 const client = createNetworkClient('localhost:3737')
 await client.waitConnection(5000)

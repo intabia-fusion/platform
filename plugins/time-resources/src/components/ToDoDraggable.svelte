@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
-  import type { WithLookup } from '@intabiafusion/core'
-  import type { ToDo } from '@intabiafusion/time'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { ToDo } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import { dragging } from '../dragging'
   import time from '../plugin'

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MarkupNode, jsonToMarkup, markupToJSON, htmlToJSON } from '@intabiafusion/text'
-import { MarkdownParser, storeNodes, storeMarks, MarkdownState } from '@intabiafusion/text-markdown'
+import { MarkupNode, jsonToMarkup, markupToJSON, htmlToJSON } from '@hcengineering/text'
+import { MarkdownParser, storeNodes, storeMarks, MarkdownState } from '@hcengineering/text-markdown'
 import { GithubKit } from './extensions'
 import { hasHulyLink, hasHulyLinkText } from '../sync/guest'
 

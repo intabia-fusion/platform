@@ -21,10 +21,10 @@ import core, {
   type Space,
   type TxOperations,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import contact, { type Employee } from '@intabiafusion/contact'
-import { type StorageAdapter } from '@intabiafusion/server-core'
-import { isEffectiveDocument, shouldSkipDocument } from '@intabiafusion/export'
+} from '@hcengineering/core'
+import contact, { type Employee } from '@hcengineering/contact'
+import { type StorageAdapter } from '@hcengineering/server-core'
+import { isEffectiveDocument, shouldSkipDocument } from '@hcengineering/export'
 import { AttachmentExporter } from './attachment-exporter'
 import { DataMapper } from './data-mapper'
 import { DocumentExporter } from './document-exporter'

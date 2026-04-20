@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonSize, TimeSince } from '@intabiafusion/ui'
+  import { Button, ButtonSize, TimeSince } from '@hcengineering/ui'
 
   export let value: number
   export let kind: 'no-border' | 'link' | 'list' = 'no-border'

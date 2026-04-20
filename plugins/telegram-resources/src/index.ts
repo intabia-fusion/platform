@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
-import { type Integration } from '@intabiafusion/account-client'
+import { type Resources } from '@hcengineering/platform'
+import { type Integration } from '@hcengineering/account-client'
 
 import Chat from './components/Chat.svelte'
 import Connect from './components/Connect.svelte'

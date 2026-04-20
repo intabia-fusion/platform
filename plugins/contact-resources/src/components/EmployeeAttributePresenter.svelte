@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Employee } from '@intabiafusion/contact'
-  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, Space } from '@intabiafusion/core'
-  import { ButtonKind, IconSize } from '@intabiafusion/ui'
+  import { Employee } from '@hcengineering/contact'
+  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, Space } from '@hcengineering/core'
+  import { ButtonKind, IconSize } from '@hcengineering/ui'
   import { employeeRefByAccountUuidStore, PersonLabelTooltip } from '..'
   import contact from '../plugin'
   import { employeeByIdStore } from '../utils'
   import AssigneeBox from './AssigneeBox.svelte'
   import EmployeePresenter from './EmployeePresenter.svelte'
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
 
   export let value: Ref<Employee> | null | undefined
   export let kind: ButtonKind = 'link'

@@ -22,7 +22,7 @@ import {
   UpdateNotificationContextEvent,
   RemovePatchEvent,
   RemoveCollaboratorsEvent
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   type AccountUuid,
   type ActivityCollaboratorsUpdate,
@@ -30,8 +30,8 @@ import {
   MessageType,
   NotificationType,
   SubscriptionLabelID
-} from '@intabiafusion/communication-types'
-import { groupByArray } from '@intabiafusion/core'
+} from '@hcengineering/communication-types'
+import { groupByArray } from '@hcengineering/core'
 
 import type { TriggerCtx, TriggerFn, Triggers } from '../types'
 import { getAddCollaboratorsMessageContent, getRemoveCollaboratorsMessageContent } from './utils'

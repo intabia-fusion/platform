@@ -4,12 +4,12 @@
 -->
 
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { type Blob, type BlobMetadata, type Ref } from '@intabiafusion/core'
-  import { getMetadata } from '@intabiafusion/platform'
-  import presentation, { getFileUrl } from '@intabiafusion/presentation'
-  import { convertToHTML } from '@intabiafusion/print'
-  import { EmbeddedHTML, Spinner, themeStore } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { type Blob, type BlobMetadata, type Ref } from '@hcengineering/core'
+  import { getMetadata } from '@hcengineering/platform'
+  import presentation, { getFileUrl } from '@hcengineering/presentation'
+  import { convertToHTML } from '@hcengineering/print'
+  import { EmbeddedHTML, Spinner, themeStore } from '@hcengineering/ui'
 
   export let value: Ref<Blob>
   export let name: string

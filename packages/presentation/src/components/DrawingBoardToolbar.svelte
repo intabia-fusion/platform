@@ -25,7 +25,7 @@
     SelectPopupValueType,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { ComponentType, createEventDispatcher, onMount } from 'svelte'
   import IconEraser from './icons/Eraser.svelte'
   import IconMove from './icons/Move.svelte'
@@ -39,8 +39,8 @@
   import DrawingBoardToolbarColorIcon from './DrawingBoardToolbarColorIcon.svelte'
   import DrawingBoardColorSelectorIcon from './DrawingBoardColorSelectorIcon.svelte'
   import { ColorsList, DrawingBoardColoringSetup } from '../drawingColors'
-  import { Analytics } from '@intabiafusion/analytics'
-  import type { IntlString } from '@intabiafusion/platform'
+  import { Analytics } from '@hcengineering/analytics'
+  import type { IntlString } from '@hcengineering/platform'
 
   interface ToolPresentation {
     label: IntlString

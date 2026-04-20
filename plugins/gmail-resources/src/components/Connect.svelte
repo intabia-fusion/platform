@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { getMetadata, translate } from '@intabiafusion/platform'
-  import { Button, Html, IconClose, Label, themeStore, IconError } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { getMetadata, translate } from '@hcengineering/platform'
+  import { Button, Html, IconClose, Label, themeStore, IconError } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import gmail from '../plugin'
-  import { concatLink } from '@intabiafusion/core'
-  import presentation from '@intabiafusion/presentation'
+  import { concatLink } from '@hcengineering/core'
+  import presentation from '@hcengineering/presentation'
 
   const dispatch = createEventDispatcher()
 

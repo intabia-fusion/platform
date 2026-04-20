@@ -1,4 +1,4 @@
-import { concatLink, MeasureContext } from '@intabiafusion/core'
+import { concatLink, MeasureContext } from '@hcengineering/core'
 
 import config from './config'
 import { MailMessage } from './types'

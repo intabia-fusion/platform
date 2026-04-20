@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessagePreviewType, DocUpdateMessage } from '@intabiafusion/activity'
-  import { BaseMessagePreview } from '@intabiafusion/activity-resources'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Icon, Label } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
+  import activity, { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
+  import { BaseMessagePreview } from '@hcengineering/activity-resources'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { getClient } from '@hcengineering/presentation'
+  import { Icon, Label } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
 
   import request from '../plugin'
 

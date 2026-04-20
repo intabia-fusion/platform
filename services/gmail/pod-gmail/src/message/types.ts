@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { SyncOptions } from '@intabiafusion/mail-common'
+import { SyncOptions } from '@hcengineering/mail-common'
 import { type GaxiosResponse } from 'gaxios'
 import { gmail_v1 } from 'googleapis'
 

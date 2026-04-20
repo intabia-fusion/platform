@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { Button, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { ActivityMessagesFilter } from '@intabiafusion/activity'
-  import { Ref } from '@intabiafusion/core'
+  import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { ActivityMessagesFilter } from '@hcengineering/activity'
+  import { Ref } from '@hcengineering/core'
 
   import ActivityFilterPopup from './ActivityFilterPopup.svelte'
 

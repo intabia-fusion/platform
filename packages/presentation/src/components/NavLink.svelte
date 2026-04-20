@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import uiPlugin, { closePopup, closeTooltip, navigate, parseLocation } from '@intabiafusion/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import uiPlugin, { closePopup, closeTooltip, navigate, parseLocation } from '@hcengineering/ui'
   import presentation from '../plugin'
 
   export let href: string | undefined

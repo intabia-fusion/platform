@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Ref, type Markup } from '@intabiafusion/core'
-import { type CardSpace, type MasterTag } from '@intabiafusion/card'
-import { EmptyMarkup } from '@intabiafusion/text'
-import { getCurrentLocation, type Location } from '@intabiafusion/ui'
+import { type Ref, type Markup } from '@hcengineering/core'
+import { type CardSpace, type MasterTag } from '@hcengineering/card'
+import { EmptyMarkup } from '@hcengineering/text'
+import { getCurrentLocation, type Location } from '@hcengineering/ui'
 
 /**
  * Card draft interface for DraftController

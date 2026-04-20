@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@intabiafusion/contact'
-  import { Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { Vacancy, VacancyList } from '@intabiafusion/recruit'
-  import { AnySvelteComponent, Icon, tooltip } from '@intabiafusion/ui'
+  import { Organization } from '@hcengineering/contact'
+  import { Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { Vacancy, VacancyList } from '@hcengineering/recruit'
+  import { AnySvelteComponent, Icon, tooltip } from '@hcengineering/ui'
 
   export let value: VacancyList
   export let values:

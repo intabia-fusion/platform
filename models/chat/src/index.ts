@@ -13,20 +13,20 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import workbench from '@intabiafusion/model-workbench'
-import { chatId } from '@intabiafusion/chat'
-import card, { createSystemType } from '@intabiafusion/model-card'
-import communication from '@intabiafusion/communication'
-import { PaletteColorIndexes } from '@intabiafusion/ui/src/colors'
-import { AccountRole, type Ref } from '@intabiafusion/core'
-import notification, { type NotificationGroup } from '@intabiafusion/notification'
-import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import workbench from '@hcengineering/model-workbench'
+import { chatId } from '@hcengineering/chat'
+import card, { createSystemType } from '@hcengineering/model-card'
+import communication from '@hcengineering/communication'
+import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
+import { AccountRole, type Ref } from '@hcengineering/core'
+import notification, { type NotificationGroup } from '@hcengineering/notification'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 
 import chat from './plugin'
 
-export { chatId } from '@intabiafusion/chat'
+export { chatId } from '@hcengineering/chat'
 export { chatOperation } from './migration'
 export default chat
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@intabiafusion/core'
-  import presentation, { createQuery } from '@intabiafusion/presentation'
-  import { IssueTemplate } from '@intabiafusion/tracker'
-  import { Label, Spinner } from '@intabiafusion/ui'
+  import { Doc, DocumentQuery } from '@hcengineering/core'
+  import presentation, { createQuery } from '@hcengineering/presentation'
+  import { IssueTemplate } from '@hcengineering/tracker'
+  import { Label, Spinner } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import IssueTemplatePresenter from '../../templates/IssueTemplatePresenter.svelte'
 

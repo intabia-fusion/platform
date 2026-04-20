@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@intabiafusion/contact'
-  import { UsersPopup } from '@intabiafusion/contact-resources'
-  import type { Ref } from '@intabiafusion/core'
-  import { type Department } from '@intabiafusion/hr'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { Table, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import contact, { Employee } from '@hcengineering/contact'
+  import { UsersPopup } from '@hcengineering/contact-resources'
+  import type { Ref } from '@hcengineering/core'
+  import { type Department } from '@hcengineering/hr'
+  import { getClient } from '@hcengineering/presentation'
+  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import hr from '../plugin'
 
   export let department: Department

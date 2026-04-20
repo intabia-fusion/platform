@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { translate } from '@intabiafusion/platform'
+  import { translate } from '@hcengineering/platform'
   import ui from '../plugin'
-  import { themeStore } from '@intabiafusion/theme'
+  import { themeStore } from '@hcengineering/theme'
   import { DAY, HOUR, MINUTE } from '../types'
 
   export let value: number

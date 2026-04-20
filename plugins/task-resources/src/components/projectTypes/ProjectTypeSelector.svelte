@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import type { ProjectType, ProjectTypeDescriptor } from '@intabiafusion/task'
-  import task from '@intabiafusion/task'
-  import type { DropdownTextItem } from '@intabiafusion/ui'
-  import { ButtonKind, ButtonSize, DropdownLabels } from '@intabiafusion/ui'
+  import type { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import type { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { ButtonKind, ButtonSize, DropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

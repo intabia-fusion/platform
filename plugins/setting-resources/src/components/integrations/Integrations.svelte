@@ -15,10 +15,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { fade } from 'svelte/transition'
-  import { createQuery, getCurrentWorkspaceUuid } from '@intabiafusion/presentation'
-  import { type IntegrationType, IntegrationError } from '@intabiafusion/setting'
-  import setting from '@intabiafusion/setting'
-  import { type Integration } from '@intabiafusion/account-client'
+  import { createQuery, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import { type IntegrationType, IntegrationError } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
+  import { type Integration } from '@hcengineering/account-client'
   import {
     Header,
     Breadcrumb,
@@ -28,15 +28,15 @@
     TabItem,
     Switcher,
     Loading
-  } from '@intabiafusion/ui'
-  import { translate } from '@intabiafusion/platform'
-  import { onIntegrationEvent } from '@intabiafusion/integration-client'
+  } from '@hcengineering/ui'
+  import { translate } from '@hcengineering/platform'
+  import { onIntegrationEvent } from '@hcengineering/integration-client'
 
   import IntegrationCard from './IntegrationCard.svelte'
   import IntegrationErrorNotification from './IntegrationErrorNotification.svelte'
   import { getAccountClient } from '../../utils'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { IntegrationKind } from '@intabiafusion/core'
+  import { Analytics } from '@hcengineering/analytics'
+  import { IntegrationKind } from '@hcengineering/core'
 
   const typeQuery = createQuery()
 

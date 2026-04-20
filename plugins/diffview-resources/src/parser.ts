@@ -26,7 +26,7 @@ import {
   type DiffHunk,
   type DiffLine,
   DiffLineType
-} from '@intabiafusion/diffview'
+} from '@hcengineering/diffview'
 import { isDevNullName } from './utils'
 
 const diff2htmlConfig: Diff2HtmlConfig = {

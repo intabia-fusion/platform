@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref } from '@intabiafusion/core'
-  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { Table, ViewletsSettingButton } from '@intabiafusion/view-resources'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { Table, ViewletsSettingButton } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import CreateApplication from './CreateApplication.svelte'
   import IconApplication from './icons/Application.svelte'

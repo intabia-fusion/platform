@@ -1,4 +1,4 @@
-import { Class, Doc, type AnyAttribute, type Association, type Ref } from '@intabiafusion/core'
+import { Class, Doc, type AnyAttribute, type Association, type Ref } from '@hcengineering/core'
 import { ContextId, ProcessFunction } from '.'
 
 export interface Context {

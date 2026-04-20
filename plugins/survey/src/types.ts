@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { AttachedDoc, Doc, Ref } from '@intabiafusion/core'
+import { AttachedDoc, Doc, Ref } from '@hcengineering/core'
 
 /** @public */
 export interface Survey extends Doc {

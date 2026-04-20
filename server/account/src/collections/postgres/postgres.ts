@@ -24,7 +24,7 @@ import {
   type PersonUuid,
   type Ref,
   type Blob
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
 import { getMigrations } from './migrations'
 import type {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Integration } from '@intabiafusion/setting'
+  import { Integration } from '@hcengineering/setting'
   import Connect from './Connect.svelte'
 
   export let integration: Integration

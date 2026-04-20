@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/postgres",
+      "packageName": "@hcengineering/postgres",
       "comment": "Fix ne predicate",
       "type": "patch"
     }
   ],
-  "packageName": "@intabiafusion/postgres"
+  "packageName": "@hcengineering/postgres"
 }

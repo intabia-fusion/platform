@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { decodeContent, decodeEncodedWords } from '../decode'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 
 jest.mock(
   '../config',

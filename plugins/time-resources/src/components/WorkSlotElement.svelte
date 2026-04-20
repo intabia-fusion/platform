@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Label } from '@intabiafusion/ui'
-  import { ToDo, WorkSlot } from '@intabiafusion/time'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
+  import { ToDo, WorkSlot } from '@hcengineering/time'
   import ToDoPresenter from './ToDoPresenter.svelte'
-  import calendar from '@intabiafusion/calendar'
+  import calendar from '@hcengineering/calendar'
 
   export let event: WorkSlot
   export let oneRow: boolean = false

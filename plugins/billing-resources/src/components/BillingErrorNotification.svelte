@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { Notification, NotificationToast } from '@intabiafusion/ui'
+  import { Notification, NotificationToast } from '@hcengineering/ui'
 
   export let notification: Notification
   export let onRemove: () => void

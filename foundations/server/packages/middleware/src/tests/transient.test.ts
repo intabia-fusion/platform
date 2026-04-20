@@ -24,8 +24,8 @@ import core, {
   type Ref,
   type Space,
   type Tx
-} from '@intabiafusion/core'
-import type { DbAdapter, PipelineContext } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import type { DbAdapter, PipelineContext } from '@hcengineering/server-core'
 import { TransientMiddleware } from '../transient'
 
 interface TransientDoc extends Doc {
@@ -197,5 +197,92 @@ describe('TransientMiddleware.checkTTL', () => {
 
     expect(env.broadcasts.length).toBe(0)
     expect(map.has(id)).toBe(false)
+  })
+
+  it('resolves dbProvider lazily when adapterManager is not yet initialized at construction time', async () => {
+    // Reproduces production wiring: DBAdapterMiddleware is created AFTER TransientMiddleware
+    // in the pipeline, so context.adapterManager is undefined when TransientMiddleware is constructed.
+    const ctx = new MeasureMetricsContext('test', {})
+    const hierarchy = new Hierarchy()
+    const modelDb = new ModelDb(hierarchy)
+    ;(modelDb as any).findAllSync = (): any[] => []
+
+    const adapter = new FakeAdapter()
+    const broadcasts: Tx[][] = []
+
+    const pipelineContext: PipelineContext = {
+      workspace: { uuid: 'test-ws' as any, url: 'test', dataId: 'test' as any },
+      hierarchy,
+      modelDb,
+      branding: null as any,
+      // Not set yet — mimics real pipeline order.
+      adapterManager: undefined,
+      storageAdapter: {} as any,
+      contextVars: {},
+      lastTx: '',
+      lastHash: '',
+      broadcastEvent: async (_c: MeasureContext, txes: Tx[]): Promise<void> => {
+        broadcasts.push(txes)
+      }
+    }
+
+    const mw = await TransientMiddleware.create(ctx, pipelineContext, undefined)
+
+    // Now simulate DBAdapterMiddleware wiring adapterManager after construction.
+    pipelineContext.adapterManager = {
+      getAdapter: (_domain: string, _required: boolean): DbAdapter => adapter as unknown as DbAdapter
+    } as any
+
+    const id = generateId<TransientDoc>()
+    const doc: TransientDoc = {
+      _id: id,
+      _class: transientClass,
+      space: transientSpace,
+      modifiedOn: Date.now(),
+      modifiedBy: core.account.System,
+      payload: 'p'
+    }
+    adapter.put(doc)
+
+    const map = (mw as any).ttlObjectMap as Map<Ref<Doc>, number>
+    map.set(id, Date.now() / 1000 - 10)
+
+    // Before the fix: dbProvider was resolved once in constructor (undefined) and never retried,
+    // so this call would be a no-op. After the fix: checkTTL resolves dbProvider lazily.
+    await (mw as any).checkTTL()
+    await flush()
+
+    expect(map.has(id)).toBe(false)
+    expect(adapter.store.has(id)).toBe(false)
+    expect(broadcasts.length).toBe(1)
+
+    await mw.close()
+  })
+
+  it('ttlChecker interval starts even when adapterManager is undefined at construction', async () => {
+    // Before the fix: setInterval was gated behind `if (this.dbProvider !== undefined)`,
+    // so if adapterManager was not yet set, the interval never started and TTL expiry never fired.
+    const ctx = new MeasureMetricsContext('test', {})
+    const hierarchy = new Hierarchy()
+    const modelDb = new ModelDb(hierarchy)
+    ;(modelDb as any).findAllSync = (): any[] => []
+
+    const pipelineContext: PipelineContext = {
+      workspace: { uuid: 'test-ws' as any, url: 'test', dataId: 'test' as any },
+      hierarchy,
+      modelDb,
+      branding: null as any,
+      adapterManager: undefined,
+      storageAdapter: {} as any,
+      contextVars: {},
+      lastTx: '',
+      lastHash: '',
+      broadcastEvent: async (): Promise<void> => {}
+    }
+
+    const mw = await TransientMiddleware.create(ctx, pipelineContext, undefined)
+    expect((mw as any).ttlChecker).toBeDefined()
+    await mw.close()
+    expect((mw as any).ttlChecker).toBeUndefined()
   })
 })

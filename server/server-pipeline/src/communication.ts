@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { SessionData as CommunicationSession, Event, ServerApi } from '@intabiafusion/communication-sdk-types'
+import type { SessionData as CommunicationSession, Event, ServerApi } from '@hcengineering/communication-sdk-types'
 import core, {
   generateId,
   type DomainParams,
@@ -23,14 +23,14 @@ import core, {
   type SessionData,
   type TxDomainEvent,
   type WorkspaceIds
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   type CommunicationCallbacks,
   type Middleware,
   type MiddlewareCreator,
   type PipelineContext,
   BaseMiddleware
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
 

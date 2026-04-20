@@ -1,4 +1,4 @@
-import { BackRPCServer } from '@intabiafusion/network-backrpc'
+import { BackRPCServer } from '@hcengineering/network-backrpc'
 import {
   type Container,
   type ClientUuid,
@@ -8,7 +8,7 @@ import {
   type TickManager,
   type ContainerEndpointRef,
   containerDirectRef
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 
 export class DummyWorkspaceContainer implements Container {
   server!: BackRPCServer<ClientUuid>

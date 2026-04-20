@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { MeasureContext, Ref, WorkspaceUuid } from '@intabiafusion/core'
+import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import config from './config'
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { createTranscriptionConsumer, SendToDeadLetterCallback, TranscriptionConsumer } from './transcription/consumer'
 import { AIControl } from './controller'
-import love, { parseRoomName } from '@intabiafusion/love'
-import { Person } from '@intabiafusion/contact'
-import { ChatMessage } from '@intabiafusion/chunter'
-import { PlatformQueueProducer } from '@intabiafusion/server-core'
+import love, { parseRoomName } from '@hcengineering/love'
+import { Person } from '@hcengineering/contact'
+import { ChatMessage } from '@hcengineering/chunter'
+import { PlatformQueueProducer } from '@hcengineering/server-core'
 import { TranscriptionConfig, TranscriptionQueueTask } from './transcription/types'
 import { ClisrServer } from '@intabiafusion/clisr'
 import { createTranscriptionProvider } from './transcription'

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref } from '@intabiafusion/core'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import type { Action, IconSize } from '@intabiafusion/ui'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Action, IconSize } from '@hcengineering/ui'
   import TreeElement from './TreeElement.svelte'
-  import { AnySvelteComponent } from '@intabiafusion/ui'
+  import { AnySvelteComponent } from '@hcengineering/ui'
 
   export let _id: Ref<Doc> | string | undefined = undefined
   export let icon: Asset | AnySvelteComponent | undefined = undefined

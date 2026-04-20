@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
-import client, { clientId } from '@intabiafusion/client'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import client, { clientId } from '@hcengineering/client'
 import {
   type Account,
   type Class,
@@ -39,8 +39,9 @@ import {
   WorkspaceUuid,
   generateId,
   pickPrimarySocialId
-} from '@intabiafusion/core'
-import { addLocation, getResource } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { addLocation, getResource } from '@hcengineering/platform'
+import { LiveQuery } from '@hcengineering/query'
 
 import { type ServerConfig, loadServerConfig } from './config'
 import {
@@ -98,7 +99,7 @@ async function createClient (
   options: ConnectOptions,
   collaboratorEndpoint?: string
 ): Promise<PlatformClient> {
-  addLocation(clientId, () => import(/* webpackChunkName: "client" */ '@intabiafusion/client-resources'))
+  addLocation(clientId, () => import(/* webpackChunkName: "client" */ '@hcengineering/client-resources'))
 
   const { socketFactory, connectionTimeout } = options
 
@@ -114,6 +115,8 @@ async function createClient (
 class PlatformClientImpl implements PlatformClient {
   private readonly client: TxOperations
   private readonly markup: MarkupOperations
+  private liveQueries: Array<WeakRef<LiveQuery>> = []
+  private notifyInstalled = false
 
   constructor (
     private readonly url: string,
@@ -140,6 +143,28 @@ class PlatformClientImpl implements PlatformClient {
 
   async getAccount (): Promise<Account> {
     return this.account
+  }
+
+  createLiveQuery (): LiveQuery {
+    const lq = new LiveQuery(this.connection)
+    this.liveQueries.push(new WeakRef(lq))
+    if (!this.notifyInstalled) {
+      const prev = this.connection.notify?.bind(this.connection)
+      this.connection.notify = (...tx) => {
+        prev?.(...tx)
+        const alive: Array<WeakRef<LiveQuery>> = []
+        for (const ref of this.liveQueries) {
+          const q = ref.deref()
+          if (q !== undefined) {
+            alive.push(ref)
+            void q.tx(...tx)
+          }
+        }
+        this.liveQueries = alive
+      }
+      this.notifyInstalled = true
+    }
+    return lq
   }
 
   async findOne<T extends Doc>(

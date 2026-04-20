@@ -15,17 +15,17 @@
 //
 -->
 <script lang="ts">
-  import type { Schedule, ScheduleAvailability } from '@intabiafusion/calendar'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import core, { Data, generateId, Space } from '@intabiafusion/core'
+  import type { Schedule, ScheduleAvailability } from '@hcengineering/calendar'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import core, { Data, generateId, Space } from '@hcengineering/core'
   import {
     ComponentExtensions,
     createQuery,
     DocCreateExtComponent,
     DocCreateExtensionManager,
     getClient
-  } from '@intabiafusion/presentation'
-  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  } from '@hcengineering/presentation'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import ui, {
     Button,
     ButtonIcon,
@@ -49,13 +49,13 @@
     showPopup,
     themeStore,
     TimeInputBox
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
   import CalendarSelector from './CalendarSelector.svelte'
   import TimeZoneSelector from './TimeZoneSelector.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let schedule: Schedule | undefined
 

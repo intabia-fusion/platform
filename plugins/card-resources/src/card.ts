@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getClient } from '@intabiafusion/presentation'
-import cardPlugin, { type Card, type CardSection } from '@intabiafusion/card'
-import { getResource } from '@intabiafusion/platform'
-import { type Heading } from '@intabiafusion/text-editor'
+import { getClient } from '@hcengineering/presentation'
+import cardPlugin, { type Card, type CardSection } from '@hcengineering/card'
+import { getResource } from '@hcengineering/platform'
+import { type Heading } from '@hcengineering/text-editor'
 
 export async function getCardSections (card: Card): Promise<CardSection[]> {
   const client = getClient()

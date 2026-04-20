@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import hr, { Department } from '@intabiafusion/hr'
+  import { Ref } from '@hcengineering/core'
+  import hr, { Department } from '@hcengineering/hr'
   import DepartmentPresenter from './DepartmentPresenter.svelte'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { createQuery } from '@hcengineering/presentation'
 
   export let value: Ref<Department>
 

@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import type { Task } from '@intabiafusion/task'
-  import { Icon } from '@intabiafusion/ui'
-  import { DocNavLink } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Task } from '@hcengineering/task'
+  import { Icon } from '@hcengineering/ui'
+  import { DocNavLink } from '@hcengineering/view-resources'
   import task from '../plugin'
 
   export let value: Task

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { loadMetadata } from '@intabiafusion/platform'
-import textEditor from '@intabiafusion/text-editor'
+import { loadMetadata } from '@hcengineering/platform'
+import textEditor from '@hcengineering/text-editor'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(textEditor.icon, {

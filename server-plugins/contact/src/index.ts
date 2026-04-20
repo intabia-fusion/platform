@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { TriggerFunc, SearchPresenterProvider } from '@intabiafusion/server-core'
-import { Presenter } from '@intabiafusion/server-activity'
-import { TemplateFieldServerFunc } from '@intabiafusion/server-templates'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { TriggerFunc, SearchPresenterProvider } from '@hcengineering/server-core'
+import { Presenter } from '@hcengineering/server-activity'
+import { TemplateFieldServerFunc } from '@hcengineering/server-templates'
 
 export * from './utils'
 

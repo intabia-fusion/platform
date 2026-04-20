@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Class, type Blob, type Doc, type Ref } from '@intabiafusion/core'
+import { Class, type Blob, type Doc, type Ref } from '@hcengineering/core'
 
 /** @public */
 export type MarkupRef = Ref<Blob>

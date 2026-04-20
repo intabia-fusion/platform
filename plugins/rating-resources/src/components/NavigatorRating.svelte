@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import { Ref, type Class, type Doc } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { FixedColumn, ObjectPresenter } from '@intabiafusion/view-resources'
+  import { Ref, type Class, type Doc } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { FixedColumn, ObjectPresenter } from '@hcengineering/view-resources'
   import RatingEditor from './RatingEditor.svelte'
-  import type { DocReaction } from '@intabiafusion/rating'
+  import type { DocReaction } from '@hcengineering/rating'
 
   export let _class: Class<Doc>
   export let docs: { _id: Ref<Doc>, reactions: DocReaction[] }[] = []

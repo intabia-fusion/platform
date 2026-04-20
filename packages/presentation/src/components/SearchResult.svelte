@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { notEmpty, SearchResultDoc } from '@intabiafusion/core'
-  import { getResourceC } from '@intabiafusion/platform'
-  import { Icon, type AnySvelteComponent } from '@intabiafusion/ui'
+  import { notEmpty, SearchResultDoc } from '@hcengineering/core'
+  import { getResourceC } from '@hcengineering/platform'
+  import { Icon, type AnySvelteComponent } from '@hcengineering/ui'
   import IconWithEmoji from './IconWithEmoji.svelte'
 
   export let value: SearchResultDoc

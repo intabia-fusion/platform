@@ -22,8 +22,8 @@ import {
   type Ref,
   type Space,
   type TxOperations
-} from '@intabiafusion/core'
-import core from '@intabiafusion/model-core'
+} from '@hcengineering/core'
+import core from '@hcengineering/model-core'
 import { type ExportState } from './types'
 
 /**

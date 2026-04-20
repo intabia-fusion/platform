@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@intabiafusion/contact'
-  import { Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
+  import { Organization } from '@hcengineering/contact'
+  import { Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
   import UserBox from './UserBox.svelte'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import contact from '../plugin'
 
   export let value: Ref<Organization> | undefined

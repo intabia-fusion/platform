@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { MeasureContext, Ref, Space } from '@intabiafusion/core'
-import { type KeyValueClient } from '@intabiafusion/kvs-client'
-import { Card } from '@intabiafusion/card'
+import { MeasureContext, Ref, Space } from '@hcengineering/core'
+import { type KeyValueClient } from '@hcengineering/kvs-client'
+import { Card } from '@hcengineering/card'
 
 export interface ThreadInfo {
   threadId: Ref<Card>

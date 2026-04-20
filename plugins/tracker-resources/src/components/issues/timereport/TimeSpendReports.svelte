@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, SortingOrder } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Issue, TimeSpendReport } from '@intabiafusion/tracker'
-  import { Expandable, Label, MiniToggle, Spinner, floorFractionDigits } from '@intabiafusion/ui'
+  import { DocumentQuery, SortingOrder } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { Expandable, Label, MiniToggle, Spinner, floorFractionDigits } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportsList from './TimeSpendReportsList.svelte'

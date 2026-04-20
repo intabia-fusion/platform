@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Event } from '@intabiafusion/calendar'
-import type { Channel, Organization, Person } from '@intabiafusion/contact'
+import { Event } from '@hcengineering/calendar'
+import type { Channel, Organization, Person } from '@hcengineering/contact'
 import type {
   AttachedData,
   AttachedDoc,
@@ -24,10 +24,10 @@ import type {
   Ref,
   Status,
   Timestamp
-} from '@intabiafusion/core'
-import { Poll } from '@intabiafusion/survey'
-import { TagReference } from '@intabiafusion/tags'
-import type { Project, Task } from '@intabiafusion/task'
+} from '@hcengineering/core'
+import { Poll } from '@hcengineering/survey'
+import { TagReference } from '@hcengineering/tags'
+import type { Project, Task } from '@hcengineering/task'
 
 /** @public */
 export interface Vacancy extends Project {

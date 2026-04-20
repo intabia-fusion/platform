@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import type { Action } from '@intabiafusion/ui'
-  import { ButtonIcon, NavItem } from '@intabiafusion/ui'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Action } from '@hcengineering/ui'
+  import { ButtonIcon, NavItem } from '@hcengineering/ui'
 
   export let icon: Asset | undefined = undefined
   export let iconProps: Record<string, any> | undefined = undefined

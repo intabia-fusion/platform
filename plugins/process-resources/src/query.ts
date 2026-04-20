@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type QuerySelector } from '@intabiafusion/core'
-import { getEmbeddedLabel, type IntlString } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui'
-import view from '@intabiafusion/view-resources/src/plugin'
+import { type QuerySelector } from '@hcengineering/core'
+import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui'
+import view from '@hcengineering/view-resources/src/plugin'
 import plugin from './plugin'
 
 export interface Mode {

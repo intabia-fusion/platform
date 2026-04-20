@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Document } from '@intabiafusion/document'
+  import { Document } from '@hcengineering/document'
 
   export let value: Document
 </script>

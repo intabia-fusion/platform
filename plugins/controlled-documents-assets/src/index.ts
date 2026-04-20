@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import documents from '@intabiafusion/controlled-documents'
-import { loadMetadata } from '@intabiafusion/platform'
+import documents from '@hcengineering/controlled-documents'
+import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(documents.icon, {

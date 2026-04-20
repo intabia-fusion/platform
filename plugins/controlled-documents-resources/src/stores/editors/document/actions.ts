@@ -22,11 +22,11 @@ import {
   type EditorMode,
   type Project,
   type ProjectDocument
-} from '@intabiafusion/controlled-documents'
-import { type Attachment } from '@intabiafusion/attachment'
-import { type Class, type Ref, type WithLookup } from '@intabiafusion/core'
-import { type PopupAlignment } from '@intabiafusion/ui'
-import type { Training } from '@intabiafusion/training'
+} from '@hcengineering/controlled-documents'
+import { type Attachment } from '@hcengineering/attachment'
+import { type Class, type Ref, type WithLookup } from '@hcengineering/core'
+import { type PopupAlignment } from '@hcengineering/ui'
+import type { Training } from '@hcengineering/training'
 import { createEvent } from 'effector'
 
 const generateActionName = (action: string): string => `documents/actions/${action}`

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Breadcrumbs, Header } from '@intabiafusion/ui'
-  import { IntlString } from '@intabiafusion/platform'
+  import { Breadcrumbs, Header } from '@hcengineering/ui'
+  import { IntlString } from '@hcengineering/platform'
 
   import { CalendarMode } from '../index'
   import CalendarNavigation from './CalendarNavigation.svelte'

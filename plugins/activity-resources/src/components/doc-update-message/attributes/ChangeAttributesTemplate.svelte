@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconEdit, Component } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Doc, Ref, Space } from '@intabiafusion/core'
-  import { AttributeModel } from '@intabiafusion/view'
-  import { DocAttributeUpdates, DocUpdateMessageViewlet } from '@intabiafusion/activity'
+  import { Icon, IconEdit, Component } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { Doc, Ref, Space } from '@hcengineering/core'
+  import { AttributeModel } from '@hcengineering/view'
+  import { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
 
   import { getAttributeValues } from '../../../activityMessagesUtils'
 

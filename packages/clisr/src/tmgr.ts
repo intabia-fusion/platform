@@ -1,7 +1,7 @@
 // A task manager client and server using Clisr for communication.
 //
 
-import { type MeasureContext } from '@intabiafusion/measurements'
+import { type MeasureContext } from '@hcengineering/measurements'
 import { ClisrServer } from './server'
 import { ClisrClient } from './client'
 import express, { type Express } from 'express'

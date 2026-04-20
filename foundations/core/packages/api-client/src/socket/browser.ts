@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type ClientSocket, type ClientSocketFactory } from '@intabiafusion/client'
+import { type ClientSocket, type ClientSocketFactory } from '@hcengineering/client'
 
 /** @public */
 export const BrowserWebSocketFactory: ClientSocketFactory = (url: string): ClientSocket => {

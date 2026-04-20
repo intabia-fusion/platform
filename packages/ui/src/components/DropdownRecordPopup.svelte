@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import { resizeObserver } from '..'
   import CheckBox from './CheckBox.svelte'

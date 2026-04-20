@@ -1,10 +1,19 @@
 <script lang="ts">
-  import { getMetadata, translate } from '@intabiafusion/platform'
-  import { themeStore } from '@intabiafusion/ui'
+  import { getMetadata, translate } from '@hcengineering/platform'
+  import { themeStore, desktopPlatform } from '@hcengineering/ui'
   import login from '../plugin'
 
   export let agreedPersonalData: boolean = false
   export let agreedRules: boolean = false
+
+  let personalDatalabel = ''
+  $: void translate(
+    login.string.AgreedPersonalData,
+    { link: getMetadata(login.metadata.PersonalDataUrl) },
+    $themeStore.language
+  ).then((res) => {
+    personalDatalabel = res
+  })
 
   let rulesLabel = ''
   $: void translate(
@@ -19,25 +28,46 @@
     rulesLabel = res
   })
 
-  let personalDatalabel = ''
-  $: void translate(
-    login.string.AgreedPersonalData,
-    { link: getMetadata(login.metadata.PersonalDataUrl) },
-    $themeStore.language
-  ).then((res) => {
-    personalDatalabel = res
-  })
+  function handleLinkClick (event: MouseEvent): void {
+    const target = event.target as HTMLElement
+    const anchor = target.closest('a')
+    if (anchor != null) {
+      const href = anchor.getAttribute('href')
+      if (href != null) {
+        event.preventDefault()
+        window.open(anchor.href, '_blank', desktopPlatform ? 'externalBrowser=yes' : '')
+      }
+    }
+  }
+
+  function handleLinkKeyDown (event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      const target = event.target as HTMLElement
+      const anchor = target.closest('a')
+      if (anchor != null) {
+        const href = anchor.getAttribute('href')
+        if (href != null) {
+          event.preventDefault()
+          window.open(anchor.href, '_blank', desktopPlatform ? 'externalBrowser=yes' : '')
+        }
+      }
+    }
+  }
 </script>
 
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  <span class="consent-link">{@html personalDatalabel}</span>
+  <span class="consent-link" role="presentation" on:click={handleLinkClick} on:keydown={handleLinkKeyDown}>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html personalDatalabel}
+  </span>
 </label>
 <label class="check-label">
   <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  <span class="consent-link">{@html rulesLabel}</span>
+  <span class="consent-link" role="presentation" on:click={handleLinkClick} on:keydown={handleLinkKeyDown}>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html rulesLabel}
+  </span>
 </label>
 
 <style lang="scss">

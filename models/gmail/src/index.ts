@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import activity from '@intabiafusion/activity'
-import { type Channel } from '@intabiafusion/contact'
-import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@intabiafusion/core'
+import activity from '@hcengineering/activity'
+import { type Channel } from '@hcengineering/contact'
+import { type Class, type Domain, IndexKind, type Ref, type Timestamp, type Type } from '@hcengineering/core'
 import {
   type Message,
   type NewMessage,
   type SharedMessage,
   type SharedMessages,
   gmailIntegrationKind
-} from '@intabiafusion/gmail'
+} from '@hcengineering/gmail'
 import {
   ArrOf,
   type Builder,
@@ -34,17 +34,17 @@ import {
   TypeString,
   TypeTimestamp,
   UX
-} from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import contact from '@intabiafusion/model-contact'
-import core, { TAttachedDoc, TDoc } from '@intabiafusion/model-core'
-import view, { createAction } from '@intabiafusion/model-view'
-import setting from '@intabiafusion/setting'
+} from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import contact from '@hcengineering/model-contact'
+import core, { TAttachedDoc, TDoc } from '@hcengineering/model-core'
+import view, { createAction } from '@hcengineering/model-view'
+import setting from '@hcengineering/setting'
 
 import gmail from './plugin'
 import { defineNotifications } from './notification'
 
-export { gmailId } from '@intabiafusion/gmail'
+export { gmailId } from '@hcengineering/gmail'
 export { gmailOperation } from './migration'
 export { default } from './plugin'
 

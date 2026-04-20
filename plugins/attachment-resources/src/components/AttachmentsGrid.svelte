@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
-  import { Loading, updatePopup, Scroller } from '@intabiafusion/ui'
-  import { ListSelectionProvider } from '@intabiafusion/view-resources'
+  import { Attachment } from '@hcengineering/attachment'
+  import { Loading, updatePopup, Scroller } from '@hcengineering/ui'
+  import { ListSelectionProvider } from '@hcengineering/view-resources'
   import AttachmentPresenter from './AttachmentPresenter.svelte'
   import AttachmentPreview from './AttachmentPreview.svelte'
 

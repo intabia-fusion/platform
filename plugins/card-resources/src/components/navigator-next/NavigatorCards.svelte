@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card, CardSpace, FavoriteCard, MasterTag } from '@intabiafusion/card'
-  import { Ref, WithLookup } from '@intabiafusion/core'
-  import { createQuery, createNotificationContextsQuery, getClient } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { Label, NotificationContext, NotificationType, SortingOrder } from '@intabiafusion/communication-types'
-  import { NavGroup } from '@intabiafusion/ui'
-  import preference from '@intabiafusion/preference'
+  import cardPlugin, { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
+  import { Ref, WithLookup } from '@hcengineering/core'
+  import { createQuery, createNotificationContextsQuery, getClient } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { Label, NotificationContext, NotificationType, SortingOrder } from '@hcengineering/communication-types'
+  import { NavGroup } from '@hcengineering/ui'
+  import preference from '@hcengineering/preference'
   import { createEventDispatcher } from 'svelte'
-  import { labelsStore } from '@intabiafusion/communication-resources'
+  import { labelsStore } from '@hcengineering/communication-resources'
 
   import type { CardsNavigatorConfig } from '../../types'
   import NavigatorCard from './NavigatorCard.svelte'

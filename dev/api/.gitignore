@@ -1,0 +1,4 @@
+bundle/
+node_modules/
+*.tgz
+.npmrc

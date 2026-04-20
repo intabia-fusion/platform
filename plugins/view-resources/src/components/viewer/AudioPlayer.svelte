@@ -22,9 +22,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob as HulyBlob, type Ref } from '@intabiafusion/core'
-  import { CircleButton, Progress, CheckBox, Spinner } from '@intabiafusion/ui'
-  import { getFileUrl } from '@intabiafusion/presentation'
+  import { type Blob as HulyBlob, type Ref } from '@hcengineering/core'
+  import { CircleButton, Progress, CheckBox, Spinner } from '@hcengineering/ui'
+  import { getFileUrl } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
 
   import Pause from '../icons/Pause.svelte'
@@ -48,7 +48,7 @@
     if (reduceNoise !== null) return
     try {
       // Use dynamic import with explicit path
-      const audioDsp = await import('@intabiafusion/audio-dsp')
+      const audioDsp = await import('@hcengineering/audio-dsp')
       reduceNoise = audioDsp.reduceNoise
       console.log('[AudioPlayer] audio-dsp loaded successfully')
     } catch (err) {

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@intabiafusion/ui'
+  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
   import CamSettingPopup from '../CamSettingPopup.svelte'
-  import { RoomType } from '@intabiafusion/love'
+  import { RoomType } from '@hcengineering/love'
   import { currentRoom } from '../../../stores'
   import love from '../../../plugin'
-  import { state, toggleCamState } from '@intabiafusion/media-resources'
-  import view from '@intabiafusion/view'
-  import { getClient } from '@intabiafusion/presentation'
+  import { state, toggleCamState } from '@hcengineering/media-resources'
+  import view from '@hcengineering/view'
+  import { getClient } from '@hcengineering/presentation'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'
   export let checkActions: boolean = true

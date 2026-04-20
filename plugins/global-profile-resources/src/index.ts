@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import '@intabiafusion/platform-rig/profiles/ui/svelte'
-import { type Resources } from '@intabiafusion/platform'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
+import { type Resources } from '@hcengineering/platform'
 import GlobalProfileApp from './components/GlobalProfileApp.svelte'
 
 export default async (): Promise<Resources> => ({

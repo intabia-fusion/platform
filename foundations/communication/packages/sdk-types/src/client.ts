@@ -23,7 +23,7 @@ import type {
   Label, MessageMeta,
   Notification,
   NotificationContext, WithTotal
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 import type { EventResult, Event } from './events/event'
 

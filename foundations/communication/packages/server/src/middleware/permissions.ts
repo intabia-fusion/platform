@@ -20,9 +20,9 @@ import {
   NotificationEventType,
   PeerEventType,
   type SessionData
-} from '@intabiafusion/communication-sdk-types'
-import { AccountRole, systemAccountUuid } from '@intabiafusion/core'
-import type { AccountUuid, CardID, MessageID, SocialID } from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-sdk-types'
+import { AccountRole, systemAccountUuid } from '@hcengineering/core'
+import type { AccountUuid, CardID, MessageID, SocialID } from '@hcengineering/communication-types'
 
 import { ApiError } from '../error'
 import type { Enriched, Middleware, MiddlewareContext } from '../types'

@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@intabiafusion/contact'
-  import type { AttachedData, Doc, Ref } from '@intabiafusion/core'
-  import presentation from '@intabiafusion/presentation'
-  import { CircleButton, eventToHTMLElement, IconAdd, Label, showPopup } from '@intabiafusion/ui'
+  import { Channel } from '@hcengineering/contact'
+  import type { AttachedData, Doc, Ref } from '@hcengineering/core'
+  import presentation from '@hcengineering/presentation'
+  import { CircleButton, eventToHTMLElement, IconAdd, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import contact from '../plugin'
   import ChannelsView from './ChannelsView.svelte'

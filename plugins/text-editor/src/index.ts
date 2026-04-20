@@ -17,6 +17,6 @@
 import { textEditorId } from './plugin'
 
 export { default } from './plugin'
-export * from '@intabiafusion/presentation/src/types'
+export * from '@hcengineering/presentation/src/types'
 export * from './types'
 export { textEditorId }

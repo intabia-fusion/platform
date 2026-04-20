@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import type { AttributeModel } from '@intabiafusion/view'
-import type { IntlString } from '@intabiafusion/platform'
-import type { Class, Client, Doc, Hierarchy, Ref } from '@intabiafusion/core'
+import type { AttributeModel } from '@hcengineering/view'
+import type { IntlString } from '@hcengineering/platform'
+import type { Class, Client, Doc, Hierarchy, Ref } from '@hcengineering/core'
 import { rebuildRelationshipTableViewModel } from '../data/relationshipBuilder'
 
-jest.mock('@intabiafusion/view-resources', () => ({
+jest.mock('@hcengineering/view-resources', () => ({
   buildConfigAssociation: jest.fn(() => []),
   buildConfigLookup: jest.fn(() => ({}))
 }))

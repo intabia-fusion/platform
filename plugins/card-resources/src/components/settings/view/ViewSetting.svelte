@@ -15,12 +15,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import core, { AnyAttribute, Association, AssociationQuery, Class, Client, Doc, Ref, Type } from '@intabiafusion/core'
-  import { Asset, getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
-  import { getAttributePresenterClass, getClient, hasResource } from '@intabiafusion/presentation'
-  import { resizeObserver } from '@intabiafusion/ui'
-  import view, { BuildModelKey, Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { buildConfigLookup, getKeyLabel, ViewletClassSettings } from '@intabiafusion/view-resources'
+  import core, { AnyAttribute, Association, AssociationQuery, Class, Client, Doc, Ref, Type } from '@hcengineering/core'
+  import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import { getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
+  import { resizeObserver } from '@hcengineering/ui'
+  import view, { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { buildConfigLookup, getKeyLabel, ViewletClassSettings } from '@hcengineering/view-resources'
 
   export let viewlet: Viewlet
 

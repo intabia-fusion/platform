@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { AccountClient, IntegrationSecretKey } from '@intabiafusion/account-client'
-import { Event, RecurringRule, calendarIntegrationKind } from '@intabiafusion/calendar'
+import { AccountClient, IntegrationSecretKey } from '@hcengineering/account-client'
+import { Event, RecurringRule, calendarIntegrationKind } from '@hcengineering/calendar'
 import {
   Doc,
   Hierarchy,
@@ -24,8 +24,8 @@ import {
   systemAccountUuid,
   Timestamp,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import { generateToken } from '@hcengineering/server-token'
 import { Credentials, OAuth2Client } from 'google-auth-library'
 import { calendar_v3, google } from 'googleapis'
 import config from './config'

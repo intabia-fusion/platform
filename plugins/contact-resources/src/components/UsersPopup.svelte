@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, getFirstName, getLastName, getName, Person } from '@intabiafusion/contact'
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, Label } from '@intabiafusion/ui'
+  import contact, { Contact, getFirstName, getLastName, getName, Person } from '@hcengineering/contact'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
+  import { AnySvelteComponent, Label } from '@hcengineering/ui'
   import UserInfo from './UserInfo.svelte'
   import { createEventDispatcher } from 'svelte'
 

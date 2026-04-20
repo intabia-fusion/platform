@@ -13,7 +13,7 @@
     SingleChoiceQuestion,
     SingleChoiceQuestionAnswer,
     SingleChoiceQuestionData
-  } from '@intabiafusion/questions'
+  } from '@hcengineering/questions'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList from './OptionsList.svelte'
   import RadioButton from './RadioButton.svelte'

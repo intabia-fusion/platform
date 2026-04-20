@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Card, type MasterTag } from '@intabiafusion/card'
+import { type Card, type MasterTag } from '@hcengineering/card'
 import core, {
   type AnyAttribute,
   type ArrOf,
@@ -31,9 +31,9 @@ import core, {
   type TxFactory,
   TxProcessor,
   type Type
-} from '@intabiafusion/core'
-import { getResource, type IntlString, PlatformError, Severity, Status } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
+} from '@hcengineering/core'
+import { getResource, type IntlString, PlatformError, Severity, Status } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
 import {
   type Context,
   type ContextId,
@@ -57,9 +57,9 @@ import {
   type Transition,
   type UpdateCriteriaComponent,
   type UserResult
-} from '@intabiafusion/process'
-import { showPopup } from '@intabiafusion/ui'
-import { type AttributeCategory } from '@intabiafusion/view'
+} from '@hcengineering/process'
+import { showPopup } from '@hcengineering/ui'
+import { type AttributeCategory } from '@hcengineering/view'
 import process from './plugin'
 
 export function isTypeEqual (toCheck: Type<any> | undefined, attr: Type<any>): boolean {

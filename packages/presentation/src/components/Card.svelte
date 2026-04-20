@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import {
     Button,
     IconClose,
@@ -24,7 +24,7 @@
     resizeObserver,
     IconBack,
     getFocusManager
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation from '..'
   import IconForward from './icons/Forward.svelte'

@@ -12,14 +12,14 @@ importers:
 
   ../../packages/account-client:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -73,11 +73,11 @@ importers:
 
   ../../packages/analytics:
     dependencies:
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -122,16 +122,16 @@ importers:
 
   ../../packages/analytics-service:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../analytics
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/measurements-otlp':
+      '@hcengineering/measurements-otlp':
         specifier: workspace:^0.7.17
         version: link:../measurements-otlp
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       winston:
@@ -141,7 +141,7 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(winston@3.18.3)
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -186,35 +186,35 @@ importers:
 
   ../../packages/api-client:
     dependencies:
-      '@intabiafusion/account-client':
+      '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../account-client
-      '@intabiafusion/client':
+      '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../client
-      '@intabiafusion/client-resources':
+      '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../client-resources
-      '@intabiafusion/collaborator-client':
+      '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../collaborator-client
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
-      '@intabiafusion/text':
+      '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../text
-      '@intabiafusion/text-markdown':
+      '@hcengineering/text-markdown':
         specifier: workspace:^0.7.20
         version: link:../text-markdown
       snappyjs:
         specifier: ^0.7.0
         version: 0.7.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -275,14 +275,14 @@ importers:
 
   ../../packages/client:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -330,26 +330,26 @@ importers:
 
   ../../packages/client-resources:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../analytics
-      '@intabiafusion/client':
+      '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../client
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
-      '@intabiafusion/rpc':
+      '@hcengineering/rpc':
         specifier: workspace:^0.7.17
         version: link:../rpc
       snappyjs:
         specifier: ^0.7.0
         version: 0.7.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -406,11 +406,11 @@ importers:
 
   ../../packages/collaborator-client:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -464,20 +464,20 @@ importers:
 
   ../../packages/core:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../analytics
-      '@intabiafusion/measurements':
+      '@hcengineering/measurements':
         specifier: workspace:^0.7.18
         version: link:../measurements
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -525,14 +525,14 @@ importers:
 
   ../../packages/hulylake-client:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/retry':
+      '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../retry
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -586,7 +586,7 @@ importers:
 
   ../../packages/measurements:
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -625,7 +625,7 @@ importers:
 
   ../../packages/measurements-otlp:
     dependencies:
-      '@intabiafusion/measurements':
+      '@hcengineering/measurements':
         specifier: workspace:^0.7.18
         version: link:../measurements
       '@opentelemetry/api':
@@ -671,7 +671,7 @@ importers:
         specifier: ^2.0.1
         version: 2.1.0(@opentelemetry/api@1.9.0)
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -710,22 +710,22 @@ importers:
 
   ../../packages/model:
     dependencies:
-      '@intabiafusion/account-client':
+      '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../account-client
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../analytics
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
-      '@intabiafusion/rank':
+      '@hcengineering/rank':
         specifier: workspace:^0.7.17
         version: link:../rank
-      '@intabiafusion/storage':
+      '@hcengineering/storage':
         specifier: workspace:^0.7.17
         version: link:../storage
       fast-equals:
@@ -735,7 +735,7 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -790,7 +790,7 @@ importers:
         specifier: ^10.7.14
         version: 10.7.18
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -839,7 +839,7 @@ importers:
         specifier: ^3.4.7
         version: 3.4.7
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -881,20 +881,20 @@ importers:
 
   ../../packages/query:
     dependencies:
-      '@intabiafusion/analytics':
+      '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../analytics
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -939,14 +939,14 @@ importers:
 
   ../../packages/rank:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
       lexorank:
         specifier: ~1.0.4
         version: 1.0.5
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -991,7 +991,7 @@ importers:
 
   ../../packages/retry:
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1039,17 +1039,17 @@ importers:
 
   ../../packages/rpc:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.5
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1097,17 +1097,17 @@ importers:
 
   ../../packages/storage:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1155,11 +1155,11 @@ importers:
 
   ../../packages/storage-client:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1210,10 +1210,10 @@ importers:
 
   ../../packages/text:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/text-core':
+      '@hcengineering/text-core':
         specifier: workspace:^0.7.18
         version: link:../text-core
       '@tiptap/core':
@@ -1331,7 +1331,7 @@ importers:
         specifier: ^0.4.2
         version: 0.4.2(prosemirror-inputrules@1.5.1)(prosemirror-model@1.25.3)(prosemirror-state@1.4.3)(prosemirror-view@1.41.3)
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1379,7 +1379,7 @@ importers:
 
   ../../packages/text-core:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
       fast-equals:
@@ -1389,7 +1389,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1440,14 +1440,14 @@ importers:
 
   ../../packages/text-html:
     dependencies:
-      '@intabiafusion/text-core':
+      '@hcengineering/text-core':
         specifier: workspace:^0.7.18
         version: link:../text-core
       htmlparser2:
         specifier: ^9.0.0
         version: 9.1.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1492,10 +1492,10 @@ importers:
 
   ../../packages/text-markdown:
     dependencies:
-      '@intabiafusion/text-core':
+      '@hcengineering/text-core':
         specifier: workspace:^0.7.18
         version: link:../text-core
-      '@intabiafusion/text-html':
+      '@hcengineering/text-html':
         specifier: workspace:^0.7.18
         version: link:../text-html
       fast-equals:
@@ -1505,7 +1505,7 @@ importers:
         specifier: ^14.0.0
         version: 14.1.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1553,13 +1553,13 @@ importers:
 
   ../../packages/text-ydoc:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/text':
+      '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../text
-      '@intabiafusion/text-core':
+      '@hcengineering/text-core':
         specifier: workspace:^0.7.18
         version: link:../text-core
       y-protocols:
@@ -1569,7 +1569,7 @@ importers:
         specifier: ^13.6.27
         version: 13.6.27
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1623,10 +1623,10 @@ importers:
 
   ../../packages/token:
     dependencies:
-      '@intabiafusion/core':
+      '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
-      '@intabiafusion/platform':
+      '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../platform
       jwt-simple:
@@ -1636,7 +1636,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@types/jest':
@@ -1687,7 +1687,7 @@ importers:
 
   ../scripts:
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.19
         version: 0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))
       '@typescript-eslint/eslint-plugin':
@@ -2095,7 +2095,7 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  '@intabiafusion/platform-rig@0.7.19':
+  '@hcengineering/platform-rig@0.7.19':
     resolution: {integrity: sha512-3Fi5nU+nEPjzzcm3FIfEZU+ZgdkiSfL46ojbj42jdXnWMkxew2aZZVtfmIpPnMUP9AMZlj2/EA+yOcMzfY/VmA==}
     hasBin: true
 
@@ -5993,7 +5993,7 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@intabiafusion/platform-rig@0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))':
+  '@hcengineering/platform-rig@0.7.19(@babel/core@7.28.4)(postcss-load-config@3.1.4(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3)))(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.18.10)(typescript@5.9.3))':
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.9.3)

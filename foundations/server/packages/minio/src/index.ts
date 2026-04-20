@@ -23,8 +23,8 @@ import core, {
   type MeasureContext,
   type Ref,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
 import serverCore, {
   removeAllObjects,
   getDataId,
@@ -35,7 +35,7 @@ import serverCore, {
   type StorageConfig,
   type StorageConfiguration,
   type UploadedObjectInfo
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import { type Readable } from 'stream'
 
 export interface MinioConfig extends StorageConfig {

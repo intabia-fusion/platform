@@ -2,8 +2,8 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import training from '@intabiafusion/training'
+import { loadMetadata } from '@hcengineering/platform'
+import training from '@hcengineering/training'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(training.icon, {

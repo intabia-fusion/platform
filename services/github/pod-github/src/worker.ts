@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { AccountClient } from '@intabiafusion/account-client'
-import { Analytics } from '@intabiafusion/analytics'
-import chunter from '@intabiafusion/chunter'
-import { CollaboratorClient } from '@intabiafusion/collaborator-client'
+import type { AccountClient } from '@hcengineering/account-client'
+import { Analytics } from '@hcengineering/analytics'
+import chunter from '@hcengineering/chunter'
+import { CollaboratorClient } from '@hcengineering/collaborator-client'
 import contact, {
   AvatarType,
   Person,
   type Employee,
   type SocialIdentity,
   type SocialIdentityRef
-} from '@intabiafusion/contact'
+} from '@hcengineering/contact'
 import core, {
   AttachedDoc,
   Branding,
@@ -50,7 +50,7 @@ import core, {
   type PersonUuid,
   type TimeRateLimiter,
   type WorkspaceIds
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import github, {
   DocSyncInfo,
   GithubAuthentication,
@@ -60,16 +60,16 @@ import github, {
   GithubProject,
   githubId,
   type GithubUserInfo
-} from '@intabiafusion/github'
-import { LiveQuery } from '@intabiafusion/query'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { StorageAdapter } from '@intabiafusion/server-core'
-import { getPublicLinkUrl } from '@intabiafusion/server-guest-resources'
-import { generateToken } from '@intabiafusion/server-token'
-import task, { ProjectType, TaskType } from '@intabiafusion/task'
-import { MarkupNode, MarkupNodeType, jsonToMarkup } from '@intabiafusion/text'
-import { isMarkdownsEquals } from '@intabiafusion/text-markdown'
-import tracker from '@intabiafusion/tracker'
+} from '@hcengineering/github'
+import { LiveQuery } from '@hcengineering/query'
+import { getAccountClient } from '@hcengineering/server-client'
+import { StorageAdapter } from '@hcengineering/server-core'
+import { getPublicLinkUrl } from '@hcengineering/server-guest-resources'
+import { generateToken } from '@hcengineering/server-token'
+import task, { ProjectType, TaskType } from '@hcengineering/task'
+import { MarkupNode, MarkupNodeType, jsonToMarkup } from '@hcengineering/text'
+import { isMarkdownsEquals } from '@hcengineering/text-markdown'
+import tracker from '@hcengineering/tracker'
 import { User } from '@octokit/webhooks-types'
 import { App, Octokit } from 'octokit'
 import { createPlatformClient } from './client'

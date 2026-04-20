@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc, type DocumentQuery, type Ref, type WithLookup } from '@intabiafusion/core'
-  import { permissionsStore } from '@intabiafusion/contact-resources'
-  import drive, { type Drive, type Folder } from '@intabiafusion/drive'
-  import { Scroller, SearchInput, Panel, Button, IconMoreH } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewOptions } from '@intabiafusion/view'
+  import { type Doc, type DocumentQuery, type Ref, type WithLookup } from '@hcengineering/core'
+  import { permissionsStore } from '@hcengineering/contact-resources'
+  import drive, { type Drive, type Folder } from '@hcengineering/drive'
+  import { Scroller, SearchInput, Panel, Button, IconMoreH } from '@hcengineering/ui'
+  import view, { Viewlet, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,
@@ -27,7 +27,7 @@
     DocAttributeBar,
     showMenu,
     canCreateObject
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
 
   import DrivePresenter from './DrivePresenter.svelte'
   import FolderHeader from './FolderHeader.svelte'

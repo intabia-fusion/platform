@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityReference, type UserMentionInfo } from '@intabiafusion/activity'
-import contact, { type Employee } from '@intabiafusion/contact'
+import activity, { type ActivityReference, type UserMentionInfo } from '@hcengineering/activity'
+import contact, { type Employee } from '@hcengineering/contact'
 import core, {
   type Blob,
   type Class,
@@ -34,12 +34,12 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc,
   getClassCollaborators
-} from '@intabiafusion/core'
-import notification from '@intabiafusion/notification'
-import { type StorageAdapter, type TriggerControl } from '@intabiafusion/server-core'
-import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON } from '@intabiafusion/text-core'
+} from '@hcengineering/core'
+import notification from '@hcengineering/notification'
+import { type StorageAdapter, type TriggerControl } from '@hcengineering/server-core'
+import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON } from '@hcengineering/text-core'
 import { isCollaborativeType, isMarkupType } from './utils'
-import { getAddCollaboratorsTxes } from '@intabiafusion/server-contact'
+import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
 
 export function isDocMentioned (doc: Ref<Doc>, content: string): boolean {
   const references = []

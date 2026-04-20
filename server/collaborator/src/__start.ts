@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { MeasureMetricsContext, newMetrics } from '@intabiafusion/core'
+import { MeasureMetricsContext, newMetrics } from '@hcengineering/core'
 import { startCollaborator } from './starter'
 
 const ctx = new MeasureMetricsContext('collaborator', {}, {}, newMetrics())

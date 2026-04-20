@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { cardId } from '@intabiafusion/card'
-  import { processId, Process } from '@intabiafusion/process'
-  import { deviceOptionsStore as deviceInfo, NavItem, Scroller } from '@intabiafusion/ui'
-  import { NavLink } from '@intabiafusion/view-resources'
-  import { NavFooter, NavHeader, SavedView } from '@intabiafusion/workbench-resources'
+  import { cardId } from '@hcengineering/card'
+  import { processId, Process } from '@hcengineering/process'
+  import { deviceOptionsStore as deviceInfo, NavItem, Scroller } from '@hcengineering/ui'
+  import { NavLink } from '@hcengineering/view-resources'
+  import { NavFooter, NavHeader, SavedView } from '@hcengineering/workbench-resources'
   import plugin from '../plugin'
   import { Special } from '../types'
 

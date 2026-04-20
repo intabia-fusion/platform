@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ClassAttributes, ClassHierarchy, clearSettingsStore } from '@intabiafusion/setting-resources'
+  import { MasterTag } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ClassAttributes, ClassHierarchy, clearSettingsStore } from '@hcengineering/setting-resources'
   import {
     Breadcrumb,
     Button,
@@ -29,8 +29,8 @@
     navigate,
     showPopup,
     twoPanelsSeparators
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import card from '../plugin'
   import CreateTag from './CreateTag.svelte'
 

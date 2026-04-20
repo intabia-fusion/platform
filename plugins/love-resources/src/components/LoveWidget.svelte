@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Ref } from '@intabiafusion/core'
-  import love, { Floor, Room } from '@intabiafusion/love'
-  import { Breadcrumbs, ButtonIcon, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@intabiafusion/ui'
+  import { AccountRole, getCurrentAccount, hasAccountRole, Ref } from '@hcengineering/core'
+  import love, { Floor, Room } from '@hcengineering/love'
+  import { Breadcrumbs, ButtonIcon, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@hcengineering/ui'
   import { floors, rooms, selectedFloor } from '../stores'
   import FloorPreview from './FloorPreview.svelte'
   import EditFloorPopup from './EditFloorPopup.svelte'

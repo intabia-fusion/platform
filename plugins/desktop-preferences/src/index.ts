@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { Ref, Class, Data } from '@intabiafusion/core'
-import { Preference } from '@intabiafusion/preference'
-import { NotificationPreferencesGroup } from '@intabiafusion/notification'
-import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { AnyComponent } from '@intabiafusion/ui'
+import { Ref, Class, Data } from '@hcengineering/core'
+import { Preference } from '@hcengineering/preference'
+import { NotificationPreferencesGroup } from '@hcengineering/notification'
+import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui'
 
 /**
  * @public

@@ -1,10 +1,10 @@
-import { guestId } from '@intabiafusion/guest'
+import { guestId } from '@hcengineering/guest'
 import {
   tryMigrate,
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 
 export const guestOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {

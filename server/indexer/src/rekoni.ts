@@ -1,6 +1,6 @@
-import { systemAccountUuid, type MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
-import { type ContentTextAdapter } from '@intabiafusion/server-core'
-import { generateToken } from '@intabiafusion/server-token'
+import { systemAccountUuid, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type ContentTextAdapter } from '@hcengineering/server-core'
+import { generateToken } from '@hcengineering/server-token'
 
 /**
  * @public

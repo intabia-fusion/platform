@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import chunter, { type ChatMessage } from '@intabiafusion/chunter'
-  import { Ref, generateId } from '@intabiafusion/core'
-  import { ReferenceInput } from '@intabiafusion/text-editor-resources'
-  import { popupstore as popups } from '@intabiafusion/ui'
+  import chunter, { type ChatMessage } from '@hcengineering/chunter'
+  import { Ref, generateId } from '@hcengineering/core'
+  import { ReferenceInput } from '@hcengineering/text-editor-resources'
+  import { popupstore as popups } from '@hcengineering/ui'
 
   import { addDocumentCommentFx } from '../../../stores/editors/document'
 

@@ -1,4 +1,4 @@
-import { PlatformError, Severity, Status } from '@intabiafusion/platform'
+import { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { type Doc } from './classes'
 import { clone } from './clone'
 import core from './component'

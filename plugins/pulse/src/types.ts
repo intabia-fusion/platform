@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Class, Doc, PersonId, Ref, Timestamp, WorkspaceUuid } from '@intabiafusion/core'
-import type { Person, PersonSpace } from '@intabiafusion/contact'
-import type { IntlString } from '@intabiafusion/platform'
+import type { AccountUuid, Class, Doc, PersonId, Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import type { Person, PersonSpace } from '@hcengineering/contact'
+import type { IntlString } from '@hcengineering/platform'
 
 /** @public */
 export interface DocumentPresence extends Doc {

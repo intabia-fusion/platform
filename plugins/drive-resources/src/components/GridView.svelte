@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref, WithLookup } from '@intabiafusion/core'
-  import { type Resource } from '@intabiafusion/drive'
-  import { ActionContext, createQuery, getClient } from '@intabiafusion/presentation'
-  import { BuildModelKey, ViewOptions } from '@intabiafusion/view'
-  import { ListSelectionProvider, SelectDirection, buildConfigLookup, focusStore } from '@intabiafusion/view-resources'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, WithLookup } from '@hcengineering/core'
+  import { type Resource } from '@hcengineering/drive'
+  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import { BuildModelKey, ViewOptions } from '@hcengineering/view'
+  import { ListSelectionProvider, SelectDirection, buildConfigLookup, focusStore } from '@hcengineering/view-resources'
   import GridItem from './GridItem.svelte'
 
   export let _class: Ref<Class<Resource>>

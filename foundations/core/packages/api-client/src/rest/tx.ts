@@ -36,7 +36,7 @@ import {
   TxOperations,
   type TxResult,
   type WithLookup
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { RestClientImpl } from './rest'
 
 export async function createRestTxOperations (

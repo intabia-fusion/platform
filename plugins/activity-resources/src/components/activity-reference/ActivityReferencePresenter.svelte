@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityReference } from '@intabiafusion/activity'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Action, Label, languageStore, ShowMore } from '@intabiafusion/ui'
-  import { getPersonByPersonIdCb } from '@intabiafusion/contact-resources'
-  import { Doc } from '@intabiafusion/core'
-  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import view, { ObjectPanel } from '@intabiafusion/view'
-  import { DocNavLink, getDocLinkTitle } from '@intabiafusion/view-resources'
+  import activity, { ActivityReference } from '@hcengineering/activity'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Action, Label, languageStore, ShowMore } from '@hcengineering/ui'
+  import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
+  import { Doc } from '@hcengineering/core'
+  import { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import view, { ObjectPanel } from '@hcengineering/view'
+  import { DocNavLink, getDocLinkTitle } from '@hcengineering/view-resources'
 
   import ReferenceContent from './ReferenceContent.svelte'
   import ReferenceSrcPresenter from './ReferenceSrcPresenter.svelte'

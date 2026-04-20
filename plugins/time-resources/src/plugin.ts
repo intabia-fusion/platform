@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Ref } from '@intabiafusion/core'
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import { type TagCategory } from '@intabiafusion/tags'
-import time, { timeId } from '@intabiafusion/time'
+import { type Ref } from '@hcengineering/core'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type TagCategory } from '@hcengineering/tags'
+import time, { timeId } from '@hcengineering/time'
 
 export default mergeIds(timeId, time, {
   category: {

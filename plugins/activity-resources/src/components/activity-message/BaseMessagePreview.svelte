@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
-  import { ActivityMessage, ActivityMessagePreviewType } from '@intabiafusion/activity'
+  import { IntlString } from '@hcengineering/platform'
+  import { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
 
   import ReactionsPreview from '../reactions/ReactionsPreview.svelte'
   import BasePreview from '../BasePreview.svelte'
-  import { Action } from '@intabiafusion/ui'
+  import { Action } from '@hcengineering/ui'
 
   export let text: string | undefined = undefined
   export let intlLabel: IntlString | undefined = undefined

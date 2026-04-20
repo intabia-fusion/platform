@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { type PersonId } from '@intabiafusion/core'
-  import { EmojiPresenter } from '@intabiafusion/emoji-resources'
-  import { Icon, IconComponent, IconSize, tooltip } from '@intabiafusion/ui'
+  import { type PersonId } from '@hcengineering/core'
+  import { EmojiPresenter } from '@hcengineering/emoji-resources'
+  import { Icon, IconComponent, IconSize, tooltip } from '@hcengineering/ui'
 
   import ReactionsTooltip from './ReactionsTooltip.svelte'
 

@@ -15,22 +15,22 @@
 //
 -->
 <script lang="ts">
-  import { Schedule } from '@intabiafusion/calendar'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
+  import { Schedule } from '@hcengineering/calendar'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import presentation, {
     copyTextToClipboard,
     createQuery,
     getClient,
     getCurrentWorkspaceUrl,
     MessageBox
-  } from '@intabiafusion/presentation'
-  import { Action, ButtonIcon, IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { TreeElement } from '@intabiafusion/view-resources'
+  } from '@hcengineering/presentation'
+  import { Action, ButtonIcon, IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { TreeElement } from '@hcengineering/view-resources'
   import ScheduleEditor from './ScheduleEditor.svelte'
   import calendar from '../plugin'
-  import { SortingOrder } from '@intabiafusion/core'
-  import { getMetadata } from '@intabiafusion/platform'
+  import { SortingOrder } from '@hcengineering/core'
+  import { getMetadata } from '@hcengineering/platform'
 
   const currentUser = getCurrentEmployee()
   const scheduleUrl = getMetadata(calendar.metadata.PublicScheduleURL)

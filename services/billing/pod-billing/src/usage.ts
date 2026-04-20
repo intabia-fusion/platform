@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type AccountClient, type Subscription, getClient } from '@intabiafusion/account-client'
+import { type AccountClient, type Subscription, getClient } from '@hcengineering/account-client'
 import {
   type MeasureContext,
   type UsageStatus,
@@ -22,9 +22,9 @@ import {
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid
-} from '@intabiafusion/core'
-import { type StorageConfig } from '@intabiafusion/server-core'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import { type StorageConfig } from '@hcengineering/server-core'
+import { generateToken } from '@hcengineering/server-token'
 
 import { collectDatalakeStats } from './billing'
 import { type Config } from './config'

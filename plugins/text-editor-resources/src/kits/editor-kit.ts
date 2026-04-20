@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Class, type Doc, type Ref, type Space } from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
+import { type Class, type Doc, type Ref, type Space } from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
 import {
   CodeExtension,
   codeOptions,
@@ -24,8 +24,8 @@ import {
   extensionKit,
   mergeKitOptions,
   TextColorStylingKit
-} from '@intabiafusion/text'
-import textEditor, { type ActionContext, type ExtensionCreator, type TextEditorMode } from '@intabiafusion/text-editor'
+} from '@hcengineering/text'
+import textEditor, { type ActionContext, type ExtensionCreator, type TextEditorMode } from '@hcengineering/text-editor'
 import { type AnyExtension, Extension } from '@tiptap/core'
 import TableHeader from '@tiptap/extension-table-header'
 import 'prosemirror-codemark/dist/codemark.css'

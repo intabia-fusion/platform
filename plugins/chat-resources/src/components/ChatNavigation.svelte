@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag } from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { SubscriptionLabelID } from '@intabiafusion/communication-types'
-  import chat, { chatId } from '@intabiafusion/chat'
-  import { Navigator } from '@intabiafusion/card-resources'
-  import communication from '@intabiafusion/communication'
-  import { NavGroup } from '@intabiafusion/ui'
+  import cardPlugin, { Card, MasterTag } from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { SubscriptionLabelID } from '@hcengineering/communication-types'
+  import chat, { chatId } from '@hcengineering/chat'
+  import { Navigator } from '@hcengineering/card-resources'
+  import communication from '@hcengineering/communication'
+  import { NavGroup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let card: Card | undefined = undefined

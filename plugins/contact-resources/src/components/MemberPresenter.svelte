@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Member } from '@intabiafusion/contact'
-  import { getClient } from '@intabiafusion/presentation'
-  import { DocNavLink } from '@intabiafusion/view-resources'
+  import contact, { Member } from '@hcengineering/contact'
+  import { getClient } from '@hcengineering/presentation'
+  import { DocNavLink } from '@hcengineering/view-resources'
   import { ContactPresenter } from '..'
 
   export let value: Member

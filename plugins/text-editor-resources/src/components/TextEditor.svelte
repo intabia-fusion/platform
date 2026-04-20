@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { type Blob, Markup, type Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { EmptyMarkup, getMarkup, markupToJSON } from '@intabiafusion/text'
-  import textEditor from '@intabiafusion/text-editor'
-  import { themeStore } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { type Blob, Markup, type Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { EmptyMarkup, getMarkup, markupToJSON } from '@hcengineering/text'
+  import textEditor from '@hcengineering/text-editor'
+  import { themeStore } from '@hcengineering/ui'
   import { Content, Editor, FocusPosition, mergeAttributes } from '@tiptap/core'
   import { ParseOptions } from '@tiptap/pm/model'
   import { EditorView } from '@tiptap/pm/view'

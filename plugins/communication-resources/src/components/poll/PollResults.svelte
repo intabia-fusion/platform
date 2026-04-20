@@ -12,11 +12,11 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Label, Modal, Scroller } from '@intabiafusion/ui'
-  import { employeeByAccountStore, UserDetails } from '@intabiafusion/contact-resources'
-  import { Poll } from '@intabiafusion/communication'
-  import { AccountUuid, notEmpty } from '@intabiafusion/core'
-  import { Employee } from '@intabiafusion/contact'
+  import { Label, Modal, Scroller } from '@hcengineering/ui'
+  import { employeeByAccountStore, UserDetails } from '@hcengineering/contact-resources'
+  import { Poll } from '@hcengineering/communication'
+  import { AccountUuid, notEmpty } from '@hcengineering/core'
+  import { Employee } from '@hcengineering/contact'
 
   import { PollConfig } from '../../poll'
   import communication from '../../plugin'

@@ -30,8 +30,8 @@
     defineSeparators,
     twoPanelsSeparators,
     resizeObserver
-  } from '@intabiafusion/ui'
-  import { Class, Doc, DocumentQuery, Ref, Space, mergeQueries } from '@intabiafusion/core'
+  } from '@hcengineering/ui'
+  import { Class, Doc, DocumentQuery, Ref, Space, mergeQueries } from '@hcengineering/core'
   import ClassHeader from './ClassHeader.svelte'
 
   export let space: Ref<Space> | undefined = undefined

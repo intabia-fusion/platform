@@ -14,10 +14,10 @@
 //
 
 import { writable } from 'svelte/store'
-import { type ChatMessage } from '@intabiafusion/chunter'
-import { type Markup, type Ref } from '@intabiafusion/core'
-import { languageStore } from '@intabiafusion/ui'
-import { type ActivityMessage } from '@intabiafusion/activity'
+import { type ChatMessage } from '@hcengineering/chunter'
+import { type Markup, type Ref } from '@hcengineering/core'
+import { languageStore } from '@hcengineering/ui'
+import { type ActivityMessage } from '@hcengineering/activity'
 
 export const translatingMessagesStore = writable<Set<Ref<ChatMessage>>>(new Set())
 export const translatedMessagesStore = writable<Map<Ref<ChatMessage>, Markup>>(new Map())

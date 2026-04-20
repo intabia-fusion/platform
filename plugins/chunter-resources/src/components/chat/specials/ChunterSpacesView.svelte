@@ -22,9 +22,9 @@
     WithLookup,
     mergeQueries,
     getCurrentAccount
-  } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
     AnySvelteComponent,
@@ -36,8 +36,8 @@
     Loading,
     SearchInput,
     showPopup
-  } from '@intabiafusion/ui'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,
@@ -45,10 +45,10 @@
     getResultQuery,
     ViewletSelector,
     ViewletSettingButton
-  } from '@intabiafusion/view-resources'
+  } from '@hcengineering/view-resources'
   import { deepEqual } from 'fast-equals'
   import { ComponentType } from 'svelte'
-  import chunter, { ChunterSpace } from '@intabiafusion/chunter'
+  import chunter, { ChunterSpace } from '@hcengineering/chunter'
 
   export let _class: Ref<Class<ChunterSpace>>
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined

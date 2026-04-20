@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@intabiafusion/contact'
-  import type { Attachment } from '@intabiafusion/attachment'
-  import core, { BlobType, type WithLookup } from '@intabiafusion/core'
+  import contact, { PermissionsStore } from '@hcengineering/contact'
+  import type { Attachment } from '@hcengineering/attachment'
+  import core, { BlobType, type WithLookup } from '@hcengineering/core'
   import presentation, {
     canPreviewFile,
     getBlobRef,
@@ -24,12 +24,12 @@
     previewTypes,
     getJsonOrEmpty,
     sizeToWidth
-  } from '@intabiafusion/presentation'
-  import { Label, Spinner } from '@intabiafusion/ui'
+  } from '@hcengineering/presentation'
+  import { Label, Spinner } from '@hcengineering/ui'
   import WebIcon from './icons/Web.svelte'
   import filesize from 'filesize'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { getResource } from '@intabiafusion/platform'
+  import { getResource } from '@hcengineering/platform'
   import { Readable } from 'svelte/store'
   import { getType, isAttachment, openAttachmentInSidebar, showAttachmentPreviewPopup } from '../utils'
   import AttachmentName from './AttachmentName.svelte'

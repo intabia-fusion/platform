@@ -22,10 +22,10 @@ import core, {
   SocialIdType,
   TxOperations,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import gmail, { gmailIntegrationKind, type NewMessage } from '@intabiafusion/gmail'
-import { type StorageAdapter } from '@intabiafusion/server-core'
-import setting from '@intabiafusion/setting'
+} from '@hcengineering/core'
+import gmail, { gmailIntegrationKind, type NewMessage } from '@hcengineering/gmail'
+import { type StorageAdapter } from '@hcengineering/server-core'
+import setting from '@hcengineering/setting'
 import type { Credentials, OAuth2Client } from 'google-auth-library'
 import { gmail_v1, google } from 'googleapis'
 import {
@@ -34,15 +34,15 @@ import {
   WorkspaceLoginInfo,
   isWorkspaceLoginInfo,
   AccountClient
-} from '@intabiafusion/account-client'
+} from '@hcengineering/account-client'
 import {
   MailRecipient,
   type SyncOptions,
   getChannel,
   getMailHeaders,
   isSyncedMessage
-} from '@intabiafusion/mail-common'
-import chat from '@intabiafusion/chat'
+} from '@hcengineering/mail-common'
+import chat from '@hcengineering/chat'
 
 import { encode64 } from './base64'
 import config from './config'
@@ -59,8 +59,8 @@ import { createMessageManager } from './message/adapter'
 import { SyncManager } from './message/sync'
 import { getEmail } from './gmail/utils'
 import { IMessageManager } from './message/types'
-import { CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
-import { Card } from '@intabiafusion/card'
+import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+import { Card } from '@hcengineering/card'
 import { makeHTMLBodyV2 } from './message/v2/send'
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.modify']

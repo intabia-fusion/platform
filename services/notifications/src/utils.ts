@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getAccountClient } from '@intabiafusion/server-client'
+import { getAccountClient } from '@hcengineering/server-client'
 import core, {
   AccountUuid,
   type AnyAttribute,
@@ -32,8 +32,8 @@ import core, {
   TxCUD,
   TxProcessor,
   WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
-import activity, { DocUpdateMessage, ActivityMessage } from '@intabiafusion/activity'
+} from '@hcengineering/core'
+import activity, { DocUpdateMessage, ActivityMessage } from '@hcengineering/activity'
 import notification, {
   NotificationProvider,
   NotificationType,
@@ -42,19 +42,19 @@ import notification, {
   InboxNotification,
   NotificationContent,
   DocNotificationMode
-} from '@intabiafusion/notification'
+} from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
   normalizeTextMessage,
   Receiver,
   Sender,
   TypeMatchClient
-} from '@intabiafusion/server-notification'
-import { getResource, IntlString } from '@intabiafusion/platform'
-import { isEmptyMarkup, markupToText } from '@intabiafusion/text-core'
-import chunter, { ChatMessage } from '@intabiafusion/chunter'
-import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@intabiafusion/server-activity'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-notification'
+import { getResource, IntlString } from '@hcengineering/platform'
+import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
+import chunter, { ChatMessage } from '@hcengineering/chunter'
+import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@hcengineering/server-activity'
+import { generateToken } from '@hcengineering/server-token'
 
 import { Client, NotificationSettings, NotifyResult } from './types'
 import config from './config'

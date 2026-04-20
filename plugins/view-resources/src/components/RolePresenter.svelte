@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, ClassifierKind, Doc, Mixin, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
-  import { Icon, Label, themeStore, tooltip } from '@intabiafusion/ui'
+  import { Class, ClassifierKind, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
+  import { Icon, Label, themeStore, tooltip } from '@hcengineering/ui'
   import { getMixinStyle } from '../utils'
 
   export let value: Doc

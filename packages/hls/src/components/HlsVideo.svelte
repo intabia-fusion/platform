@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { getMetadata } from '@intabiafusion/platform'
-  import presentation, { getFileUrl } from '@intabiafusion/presentation'
+  import { getMetadata } from '@hcengineering/platform'
+  import presentation, { getFileUrl } from '@hcengineering/presentation'
   import HLS, { HlsConfig, LoaderConfiguration, LoaderContext, LoaderCallbacks, LoadPolicy } from 'hls.js'
   import { onDestroy, onMount } from 'svelte'
   import Plyr from 'plyr'

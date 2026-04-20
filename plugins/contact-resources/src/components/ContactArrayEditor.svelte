@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Contact } from '@intabiafusion/contact'
-  import { ArrOf, Doc, Ref, RefTo } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { ButtonKind } from '@intabiafusion/ui'
+  import { Contact } from '@hcengineering/contact'
+  import { ArrOf, Doc, Ref, RefTo } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { ButtonKind } from '@hcengineering/ui'
   import ContactList from './ContactList.svelte'
 
   export let label: IntlString

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import type { TaskType } from '@intabiafusion/task'
-  import view from '@intabiafusion/view'
+  import { Ref } from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
+  import view from '@hcengineering/view'
   import { taskTypeStore } from '../../'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
-  import { getClient } from '@intabiafusion/presentation'
-  import task from '@intabiafusion/task'
+  import { getClient } from '@hcengineering/presentation'
+  import task from '@hcengineering/task'
 
   export let value: TaskType | Ref<TaskType> | undefined
 

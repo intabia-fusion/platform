@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
-  import { NotificationContext } from '@intabiafusion/communication-types'
+  import { Card } from '@hcengineering/card'
+  import { NotificationContext } from '@hcengineering/communication-types'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import MessagesList from './MessagesList.svelte'

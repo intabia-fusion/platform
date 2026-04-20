@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreview } from '@intabiafusion/activity-resources'
-  import { ReactionInboxNotification } from '@intabiafusion/notification'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ActivityMessage } from '@intabiafusion/activity'
-  import { Doc } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Person } from '@intabiafusion/contact'
-  import { Label } from '@intabiafusion/ui'
-  import { EmojiPresenter } from '@intabiafusion/emoji-resources'
+  import { ActivityMessagePreview } from '@hcengineering/activity-resources'
+  import { ReactionInboxNotification } from '@hcengineering/notification'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { Doc } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Person } from '@hcengineering/contact'
+  import { Label } from '@hcengineering/ui'
+  import { EmojiPresenter } from '@hcengineering/emoji-resources'
 
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
   import inbox from '../../plugin'

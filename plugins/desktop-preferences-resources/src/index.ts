@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 import DesktopPreferencesPresenter from './components/DesktopPreferencesPresenter.svelte'
 
 export default async (): Promise<Resources> => ({

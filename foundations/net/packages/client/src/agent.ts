@@ -4,7 +4,7 @@ import {
   type BackRPCResponseSend,
   type BackRPCServerHandler,
   type ClientId
-} from '@intabiafusion/network-backrpc'
+} from '@hcengineering/network-backrpc'
 import {
   agentDirectRef,
   type ClientUuid,
@@ -14,7 +14,7 @@ import {
   type NetworkEvent,
   type TickManager,
   createProxy
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 import { opNames } from './types'
 
 /**

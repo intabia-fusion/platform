@@ -1,8 +1,8 @@
-# Reusable action: set all @intabiafusion package versions from a v tag ref
+# Reusable action: set all @hcengineering package versions from a v tag ref
 # (e.g. refs/tags/v0.7.370 → 0.7.370) using common/scripts/bump.js.
 # Call only when github.ref is a v* tag (e.g. if: startsWith(github.ref, 'refs/tags/v')).
 name: 'Set package versions'
-description: 'Set all @intabiafusion package versions from a v tag ref using bump.js'
+description: 'Set all @hcengineering package versions from a v tag ref using bump.js'
 inputs:
   ref:
     description: 'Git ref for the tag (e.g. github.ref, e.g. refs/tags/v0.7.370)'

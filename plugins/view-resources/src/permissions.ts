@@ -1,4 +1,4 @@
-import { type PermissionsStore } from '@intabiafusion/contact'
+import { type PermissionsStore } from '@hcengineering/contact'
 import core, {
   type AnyAttribute,
   type Class,
@@ -7,9 +7,9 @@ import core, {
   type Ref,
   type Space,
   type TypedSpace
-} from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
-import { getClient } from '@intabiafusion/presentation'
+} from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import { getClient } from '@hcengineering/presentation'
 
 export function canChangeAttribute (
   attr: AnyAttribute,

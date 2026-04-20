@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { IconAdd } from '@intabiafusion/ui'
+  import { IconAdd } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
   import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '../../node-view'
   import { findTable, insertColumn, insertRow } from './utils'

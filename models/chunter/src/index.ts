@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessageControl } from '@intabiafusion/activity'
-import { type Chat, chunterId, type ChunterSpace } from '@intabiafusion/chunter'
-import contact from '@intabiafusion/contact'
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/model-core'
-import presentation from '@intabiafusion/model-presentation'
-import view from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import { WidgetType } from '@intabiafusion/workbench'
-import { AccountRole, type Class, type IndexingConfiguration } from '@intabiafusion/core'
+import activity, { type ActivityMessageControl } from '@hcengineering/activity'
+import { type Chat, chunterId, type ChunterSpace } from '@hcengineering/chunter'
+import contact from '@hcengineering/contact'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
+import view from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import { WidgetType } from '@hcengineering/workbench'
+import { AccountRole, type Class, type IndexingConfiguration } from '@hcengineering/core'
 
 import { defineActions } from './actions'
 import { defineNotifications } from './notifications'
@@ -39,7 +39,7 @@ import {
   TThreadMessage
 } from './types'
 
-export { chunterId } from '@intabiafusion/chunter'
+export { chunterId } from '@hcengineering/chunter'
 export { chunterOperation } from './migration'
 export * from './types'
 

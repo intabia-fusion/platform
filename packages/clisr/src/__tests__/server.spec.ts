@@ -2,9 +2,9 @@
 // Tests for ClisrServer.checkHello and CLisrClient.handleMsg
 // Comments in tests are in English as per repository conventions.
 
-import { Analytics } from '@intabiafusion/analytics'
-import { MeasureMetricsContext, type MeasureContext } from '@intabiafusion/measurements'
-import { RPCHandler } from '@intabiafusion/rpc'
+import { Analytics } from '@hcengineering/analytics'
+import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
+import { RPCHandler } from '@hcengineering/rpc'
 import { ClisrClient } from '../client'
 import { ClisrServer, createWebsocketClientSocket as createConnectionSocket } from '../server'
 import {

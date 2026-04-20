@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   import Label from './Label.svelte'
   import { StateType } from '../types'

@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-import { DOMAIN_TX, type WorkspaceDataId, type MeasureContext, type Ref, type WorkspaceIds } from '@intabiafusion/core'
-import { DOMAIN_ATTACHMENT } from '@intabiafusion/model-attachment'
-import contact, { DOMAIN_CHANNEL } from '@intabiafusion/model-contact'
-import { DOMAIN_TELEGRAM } from '@intabiafusion/model-telegram'
-import { getMongoClient, getWorkspaceMongoDB } from '@intabiafusion/mongo'
-import { type StorageAdapter } from '@intabiafusion/server-core'
-import telegram, { type SharedTelegramMessage, type SharedTelegramMessages } from '@intabiafusion/telegram'
+import { DOMAIN_TX, type WorkspaceDataId, type MeasureContext, type Ref, type WorkspaceIds } from '@hcengineering/core'
+import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import contact, { DOMAIN_CHANNEL } from '@hcengineering/model-contact'
+import { DOMAIN_TELEGRAM } from '@hcengineering/model-telegram'
+import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
+import { type StorageAdapter } from '@hcengineering/server-core'
+import telegram, { type SharedTelegramMessage, type SharedTelegramMessages } from '@hcengineering/telegram'
 import { type Document, type UpdateFilter } from 'mongodb'
 
 const LastMessages = 'last-msgs'

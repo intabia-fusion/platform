@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
-  import { type Doc, type Ref, type WithLookup } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { Attachment } from '@hcengineering/attachment'
+  import { type Doc, type Ref, type WithLookup } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
 
   import attachment from '../plugin'

@@ -15,7 +15,7 @@
 
 import { type ComponentType } from 'svelte'
 import { writable } from 'svelte/store'
-import type { AnyComponent } from '@intabiafusion/ui'
+import type { AnyComponent } from '@hcengineering/ui'
 
 /**
  * @public

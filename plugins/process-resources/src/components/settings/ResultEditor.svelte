@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Type } from '@intabiafusion/core'
-  import { Process, UserResult } from '@intabiafusion/process'
-  import { Button, EditBox, IconClose, Label } from '@intabiafusion/ui'
+  import core, { Type } from '@hcengineering/core'
+  import { Process, UserResult } from '@hcengineering/process'
+  import { Button, EditBox, IconClose, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { generateContextId } from '../../utils'
   import ResultTypeSelector from './ResultTypeSelector.svelte'

@@ -14,16 +14,16 @@
 // limitations under the License.
 //
 
-import { contactId } from '@intabiafusion/contact'
-import contact from '@intabiafusion/contact-resources/src/plugin'
-import type { Client, Doc, DocManager, Ref } from '@intabiafusion/core'
-import { type ObjectSearchCategory, type ObjectSearchFactory } from '@intabiafusion/model-presentation'
-import { type NotificationGroup } from '@intabiafusion/notification'
-import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
-import { type TemplateFieldFunc } from '@intabiafusion/templates'
-import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
-import { type Action, type ActionCategory, type ViewAction } from '@intabiafusion/view'
-import { type LocationData } from '@intabiafusion/workbench'
+import { contactId } from '@hcengineering/contact'
+import contact from '@hcengineering/contact-resources/src/plugin'
+import type { Client, Doc, DocManager, Ref } from '@hcengineering/core'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
+import { type NotificationGroup } from '@hcengineering/notification'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
+import { type TemplateFieldFunc } from '@hcengineering/templates'
+import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
+import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
+import { type LocationData } from '@hcengineering/workbench'
 
 export default mergeIds(contactId, contact, {
   activity: {

@@ -14,12 +14,12 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@intabiafusion/core'
-import notification, { notificationId } from '@intabiafusion/notification'
-import { type IntlString, type Resource, mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
-import { type Action, type ActionCategory, type ViewAction } from '@intabiafusion/view'
-import { type Application, type LocationData } from '@intabiafusion/workbench'
+import { type Doc, type Ref } from '@hcengineering/core'
+import notification, { notificationId } from '@hcengineering/notification'
+import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
+import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
+import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
+import { type Application, type LocationData } from '@hcengineering/workbench'
 
 export default mergeIds(notificationId, notification, {
   string: {

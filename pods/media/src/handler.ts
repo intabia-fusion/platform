@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import attachment, { type Attachment } from '@intabiafusion/attachment'
-import { Event, MessageEventType } from '@intabiafusion/communication-sdk-types'
-import { BlobAttachment } from '@intabiafusion/communication-types'
-import drive, { type FileVersion } from '@intabiafusion/drive'
+import attachment, { type Attachment } from '@hcengineering/attachment'
+import { Event, MessageEventType } from '@hcengineering/communication-sdk-types'
+import { BlobAttachment } from '@hcengineering/communication-types'
+import drive, { type FileVersion } from '@hcengineering/drive'
 import core, {
   type Blob,
   type Doc,
@@ -27,8 +27,8 @@ import core, {
   type TxDomainEvent,
   type WorkspaceUuid,
   OperationDomain
-} from '@intabiafusion/core'
-import { PlatformQueueProducer } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { PlatformQueueProducer } from '@hcengineering/server-core'
 import { BlobSource, BlobSourceType, VideoTranscodeRequest, VideoTranscodeResult } from './types'
 import { WorkspaceClient } from './client'
 

@@ -3,8 +3,8 @@
 # 🌐 Huly Virtual Network
 
 [![License: EPL 2.0](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
-[![npm version](https://img.shields.io/npm/v/@intabiafusion/network-core.svg)](https://www.npmjs.com/package/@intabiafusion/network-core)
-[![CI](https://github.com/intabia-fusion/huly.net/workflows/CI/badge.svg)](https://github.com/intabia-fusion/huly.net/actions)
+[![npm version](https://img.shields.io/npm/v/@hcengineering/network-core.svg)](https://www.npmjs.com/package/@hcengineering/network-core)
+[![CI](https://github.com/hcengineering/huly.net/workflows/CI/badge.svg)](https://github.com/hcengineering/huly.net/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178c6.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-339933.svg)](https://nodejs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -141,14 +141,14 @@ This monorepo contains four main packages and deployment pods:
 
 ### Packages
 
-- **`@intabiafusion/network-core`**: Core network implementation, agent management, and container orchestration
-- **`@intabiafusion/network-backrpc`**: ZeroMQ-based RPC communication layer with bidirectional messaging
-- **`@intabiafusion/network-client`**: Client libraries for connecting to the network and managing containers
-- **`@intabiafusion/network-server`**: Network server implementation with multi-client support
+- **`@hcengineering/network-core`**: Core network implementation, agent management, and container orchestration
+- **`@hcengineering/network-backrpc`**: ZeroMQ-based RPC communication layer with bidirectional messaging
+- **`@hcengineering/network-client`**: Client libraries for connecting to the network and managing containers
+- **`@hcengineering/network-server`**: Network server implementation with multi-client support
 
 ### Deployment Pods
 
-- **`@intabiafusion/network-pod`**: Dockerized network server for production deployment
+- **`@hcengineering/network-pod`**: Dockerized network server for production deployment
 
 ## ⚠️ Important Limitations
 
@@ -259,7 +259,7 @@ flowchart TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/intabia-fusion/huly.net.git
+git clone https://github.com/hcengineering/huly.net.git
 cd huly.net
 
 # Install dependencies and build
@@ -285,10 +285,10 @@ docker run -p 3737:3737 hardcoreeng/network-pod
 Here's a complete end-to-end example to get you started:
 
 ```typescript
-import { NetworkImpl, TickManagerImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
-import { createNetworkClient } from '@intabiafusion/network-client'
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import { NetworkImpl, TickManagerImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
+import { createNetworkClient } from '@hcengineering/network-client'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 // 1. Create a simple container implementation
 class MyServiceContainer implements Container {
@@ -397,7 +397,7 @@ See the [Examples README](examples/README.md) for detailed explanations and usag
 This example shows a simple container that handles requests and maintains state:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 class DataProcessorContainer implements Container {
   private data: Map<string, any> = new Map()
@@ -461,7 +461,7 @@ await containerRef.close()
 This example demonstrates real-time event broadcasting to multiple connected clients:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 class ChatRoomContainer implements Container {
   private clients = new Map<ClientUuid, (data: any) => Promise<void>>()
@@ -550,9 +550,9 @@ await chatRef.close()
 This example shows how to implement automatic failover for critical services:
 
 ```typescript
-import { TickManagerImpl, AgentImpl } from '@intabiafusion/network-core'
-import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
-import type { Container, ContainerUuid, ClientUuid, ContainerKind } from '@intabiafusion/network-core'
+import { TickManagerImpl, AgentImpl } from '@hcengineering/network-core'
+import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
+import type { Container, ContainerUuid, ClientUuid, ContainerKind } from '@hcengineering/network-core'
 
 class LeaderServiceContainer implements Container {
   private isActive = false
@@ -690,7 +690,7 @@ runHAExample().catch(console.error)
 This example demonstrates managing per-tenant containers with labels:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid, GetOptions } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid, GetOptions } from '@hcengineering/network-core'
 
 class TenantWorkspaceContainer implements Container {
   private users = new Set<string>()
@@ -800,7 +800,7 @@ await tenant2Workspace.close()
 This example shows how to configure timeouts for development vs production:
 
 ```typescript
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 
 // Development: Long timeout for debugging (1 hour)
 const devClient = createNetworkClient('localhost:3737', 3600)
@@ -854,8 +854,8 @@ const client = createClientForEnvironment('localhost:3737')
 This example shows using direct connections vs routed connections:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
 
 class DirectAccessContainer implements Container {
   constructor(readonly uuid: ContainerUuid) {}
@@ -894,7 +894,7 @@ await containerRef.close()
 This example demonstrates monitoring container lifecycle and network events:
 
 ```typescript
-import type { NetworkEvent, NetworkEventKind } from '@intabiafusion/network-core'
+import type { NetworkEvent, NetworkEventKind } from '@hcengineering/network-core'
 
 // Monitor all network events
 const unsubscribe = client.onUpdate(async (event: NetworkEvent) => {
@@ -993,9 +993,9 @@ try {
 This example shows a complete production-ready setup:
 
 ```typescript
-import { NetworkImpl, TickManagerImpl, AgentImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
-import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
+import { NetworkImpl, TickManagerImpl, AgentImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
+import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
 
 // Production container with proper lifecycle management
 class ProductionContainer implements Container {
@@ -1193,8 +1193,8 @@ serveAgent(
 **Basic Usage Example:**
 
 ```typescript
-import { createNetworkClient, containerOnAgentEndpointRef } from '@intabiafusion/network-client'
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import { createNetworkClient, containerOnAgentEndpointRef } from '@hcengineering/network-client'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 // 1. Create a container implementation
 class MyServiceContainer implements Container {
@@ -1235,8 +1235,8 @@ await containerRef.close()
 **High Availability Example with Stateless Containers:**
 
 ```typescript
-import { createNetworkClient, containerOnAgentEndpointRef } from '@intabiafusion/network-client'
-import type { Container, ContainerUuid, ContainerKind } from '@intabiafusion/network-core'
+import { createNetworkClient, containerOnAgentEndpointRef } from '@hcengineering/network-client'
+import type { Container, ContainerUuid, ContainerKind } from '@hcengineering/network-core'
 
 class LeaderServiceContainer implements Container {
   constructor(readonly uuid: ContainerUuid, readonly instanceName: string) {}
@@ -1444,7 +1444,7 @@ The network includes built-in health monitoring with configurable timeouts:
 - **Container Reference Tracking**: Automatic lifecycle management based on client references
 
 ```typescript
-import { timeouts } from '@intabiafusion/network-core'
+import { timeouts } from '@hcengineering/network-core'
 
 console.log('Alive timeout:', timeouts.aliveTimeout, 'seconds') // 3
 console.log('Ping interval:', timeouts.pingInterval, 'seconds') // 1
@@ -1478,11 +1478,11 @@ node common/scripts/install-run-rush.js build:watch
 
 We love contributions! Huly Virtual Network is open source and we welcome contributions of all kinds:
 
-- 🐛 **Bug Reports**: Found a bug? [Open an issue](https://github.com/intabia-fusion/huly.net/issues/new?template=bug_report.md)
-- ✨ **Feature Requests**: Have an idea? [Request a feature](https://github.com/intabia-fusion/huly.net/issues/new?template=feature_request.md)
+- 🐛 **Bug Reports**: Found a bug? [Open an issue](https://github.com/hcengineering/huly.net/issues/new?template=bug_report.md)
+- ✨ **Feature Requests**: Have an idea? [Request a feature](https://github.com/hcengineering/huly.net/issues/new?template=feature_request.md)
 - 📖 **Documentation**: Improve our docs, add examples, or fix typos
 - 💻 **Code**: Submit pull requests with bug fixes or new features
-- ❓ **Questions**: [Ask questions](https://github.com/intabia-fusion/huly.net/issues/new?template=question.md) to help improve our documentation
+- ❓ **Questions**: [Ask questions](https://github.com/hcengineering/huly.net/issues/new?template=question.md) to help improve our documentation
 
 Please read our [Contributing Guide](CONTRIBUTING.md) for details on our development process, coding standards, and how to submit pull requests.
 
@@ -1561,18 +1561,18 @@ We are considering adding optional security features in future releases:
 - Authorization controls for container access
 - Audit logging for security monitoring
 
-If you have specific security requirements or concerns, please [open an issue](https://github.com/intabia-fusion/huly.net/issues) to discuss your use case.
+If you have specific security requirements or concerns, please [open an issue](https://github.com/hcengineering/huly.net/issues) to discuss your use case.
 
 ## 🙏 Acknowledgments
 
 - Built with [ZeroMQ](https://zeromq.org/) for high-performance messaging
 - Managed with [Rush.js](https://rushjs.io/) for monorepo orchestration
-- Part of the [Huly Platform](https://github.com/intabia-fusion/foundation) ecosystem
+- Part of the [Huly Platform](https://github.com/hcengineering/platform) ecosystem
 
 ## 📬 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/intabia-fusion/huly.net/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/intabia-fusion/huly.net/discussions)
+- **Issues**: [GitHub Issues](https://github.com/hcengineering/huly.net/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/hcengineering/huly.net/discussions)
 - **Website**: [huly.io](https://huly.io)
 
 ## 📊 Project Status
@@ -1587,7 +1587,7 @@ If you find this project useful, please consider giving it a star! It helps othe
 
 ## 🔗 Related Projects
 
-- **[Huly Platform](https://github.com/intabia-fusion/foundation)** - The main Huly platform that uses this network
+- **[Huly Platform](https://github.com/hcengineering/platform)** - The main Huly platform that uses this network
 - **[ZeroMQ](https://zeromq.org/)** - High-performance asynchronous messaging library
 - **[Rush.js](https://rushjs.io/)** - Scalable monorepo build orchestrator
 

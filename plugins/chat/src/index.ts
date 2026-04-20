@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Ref } from '@intabiafusion/core'
-import { plugin, IntlString, type Plugin, Asset } from '@intabiafusion/platform'
-import { MasterTag } from '@intabiafusion/card'
+import { Ref } from '@hcengineering/core'
+import { plugin, IntlString, type Plugin, Asset } from '@hcengineering/platform'
+import { MasterTag } from '@hcengineering/card'
 
 export const chatId = 'chat' as Plugin
 

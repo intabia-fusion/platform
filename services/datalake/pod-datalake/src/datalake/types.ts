@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import { type Readable } from 'stream'
 import { S3Bucket } from '../s3'
 import { WorkspaceStatsResult, WorkspaceStatsByTypeResult } from './db'

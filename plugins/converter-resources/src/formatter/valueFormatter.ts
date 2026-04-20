@@ -22,10 +22,10 @@ import core, {
   type PersonId,
   getDisplayTime,
   getObjectValue
-} from '@intabiafusion/core'
-import { translate, type IntlString, getResource } from '@intabiafusion/platform'
-import type { AttributeModel } from '@intabiafusion/view'
-import converter from '@intabiafusion/converter'
+} from '@hcengineering/core'
+import { translate, type IntlString, getResource } from '@hcengineering/platform'
+import type { AttributeModel } from '@hcengineering/view'
+import converter from '@hcengineering/converter'
 import { getFormattersForClass } from './registry'
 import {
   formatArrayValue,

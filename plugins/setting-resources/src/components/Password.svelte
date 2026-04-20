@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import login from '@intabiafusion/login'
-  import { getResource } from '@intabiafusion/platform'
-  import presentation from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
-  import { Breadcrumb, Button, EditBox, Header, Icon, Label } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import login from '@hcengineering/login'
+  import { getResource } from '@hcengineering/platform'
+  import presentation from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
+  import { Breadcrumb, Button, EditBox, Header, Icon, Label } from '@hcengineering/ui'
   import plugin from '../plugin'
   import Error from './icons/Error.svelte'
 

@@ -1,21 +1,21 @@
 {
-  "name": "@intabiafusion/storage-client",
+  "name": "@hcengineering/storage-client",
   "entries": [
     {
       "version": "0.7.17",
-      "tag": "@intabiafusion/storage-client_v0.7.17",
+      "tag": "@hcengineering/storage-client_v0.7.17",
       "date": "Mon, 27 Oct 2025 13:27:12 GMT",
       "comments": {
         "dependency": [
           {
-            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.17` to `0.7.18`"
+            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.17` to `0.7.18`"
           }
         ]
       }
     },
     {
       "version": "0.7.8",
-      "tag": "@intabiafusion/storage-client_v0.7.8",
+      "tag": "@hcengineering/storage-client_v0.7.8",
       "date": "Thu, 23 Oct 2025 18:03:30 GMT",
       "comments": {
         "patch": [
@@ -27,7 +27,7 @@
     },
     {
       "version": "0.7.7",
-      "tag": "@intabiafusion/storage-client_v0.7.7",
+      "tag": "@hcengineering/storage-client_v0.7.7",
       "date": "Tue, 21 Oct 2025 19:04:55 GMT",
       "comments": {
         "patch": [
@@ -40,14 +40,14 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@intabiafusion/core\" from `^0.7.8` to `0.7.10`"
+            "comment": "Updating dependency \"@hcengineering/core\" from `^0.7.8` to `0.7.10`"
           }
         ]
       }
     },
     {
       "version": "0.7.6",
-      "tag": "@intabiafusion/storage-client_v0.7.6",
+      "tag": "@hcengineering/storage-client_v0.7.6",
       "date": "Tue, 14 Oct 2025 15:36:13 GMT",
       "comments": {
         "patch": [
@@ -59,7 +59,7 @@
     },
     {
       "version": "0.7.5",
-      "tag": "@intabiafusion/storage-client_v0.7.5",
+      "tag": "@hcengineering/storage-client_v0.7.5",
       "date": "Tue, 14 Oct 2025 06:29:02 GMT",
       "comments": {
         "patch": [

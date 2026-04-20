@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, generateId, PersonId, Ref } from '@intabiafusion/core'
-  import { Category, Product } from '@intabiafusion/inventory'
-  import { Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import { Button, DropdownLabels, DropdownTextItem, EditBox } from '@intabiafusion/ui'
+  import core, { Doc, generateId, PersonId, Ref } from '@hcengineering/core'
+  import { Category, Product } from '@hcengineering/inventory'
+  import { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { Button, DropdownLabels, DropdownTextItem, EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import inventory from '../plugin'
 

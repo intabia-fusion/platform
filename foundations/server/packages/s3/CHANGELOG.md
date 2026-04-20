@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/s3
+# Change Log - @hcengineering/s3
 
 This log was last generated on Wed, 26 Nov 2025 16:04:43 GMT and should not be manually modified.
 

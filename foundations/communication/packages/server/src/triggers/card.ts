@@ -20,8 +20,8 @@ import {
   type Event,
   UpdateCardTypeEvent,
   RemoveCardEvent
-} from '@intabiafusion/communication-sdk-types'
-import { type ActivityTypeUpdate, ActivityUpdateType, MessageType } from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-sdk-types'
+import { type ActivityTypeUpdate, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 

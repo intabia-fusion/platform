@@ -4,8 +4,8 @@
 //
 -->
 <script lang="ts">
-  import { Icon } from '@intabiafusion/ui'
-  import { GithubIntegrationRepository } from '@intabiafusion/github'
+  import { Icon } from '@hcengineering/ui'
+  import { GithubIntegrationRepository } from '@hcengineering/github'
   import github from '../../plugin'
 
   export let value: GithubIntegrationRepository

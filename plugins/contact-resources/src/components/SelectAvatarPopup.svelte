@@ -15,11 +15,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import MD5 from 'crypto-js/md5'
-  import { AvatarType, checkHasGravatar, type AvatarInfo } from '@intabiafusion/contact'
-  import type { Ref } from '@intabiafusion/core'
-  import { Blob as PlatformBlob } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import presentation, { Card, getFileUrl, uiContext } from '@intabiafusion/presentation'
+  import { AvatarType, checkHasGravatar, type AvatarInfo } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { Blob as PlatformBlob } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import presentation, { Card, getFileUrl, uiContext } from '@hcengineering/presentation'
   import ui, {
     AnySvelteComponent,
     Button,
@@ -32,8 +32,8 @@
     getPlatformAvatarColors,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import { ColorsPopup } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { ColorsPopup } from '@hcengineering/view-resources'
   import contact from '../plugin'
   import { getAvatarTypeDropdownItems } from '../utils'
   import AvatarComponent from './Avatar.svelte'

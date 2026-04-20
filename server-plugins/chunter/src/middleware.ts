@@ -3,7 +3,7 @@ import {
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import core, {
   type Doc,
   Tx,
@@ -21,11 +21,11 @@ import core, {
   type DocumentQuery,
   type FindOptions,
   type FindResult
-} from '@intabiafusion/core'
-import notification, { InboxNotification } from '@intabiafusion/notification'
-import chunter, { Chat, type DirectMessage } from '@intabiafusion/chunter'
-import { PersonSpace } from '@intabiafusion/contact'
-import platform, { PlatformError, Severity, Status } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import notification, { InboxNotification } from '@hcengineering/notification'
+import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'
+import { PersonSpace } from '@hcengineering/contact'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain

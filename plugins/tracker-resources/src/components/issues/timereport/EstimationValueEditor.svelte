@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
-  import type { ButtonSize } from '@intabiafusion/ui'
-  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@intabiafusion/ui'
-  import { EditBoxPopup } from '@intabiafusion/view-resources'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
+  import { EditBoxPopup } from '@hcengineering/view-resources'
   import TimePresenter from './TimePresenter.svelte'
-  import { Issue, reduceChildInfoTree } from '@intabiafusion/tracker'
+  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
 
   // export let label: IntlString
   export let placeholder: IntlString

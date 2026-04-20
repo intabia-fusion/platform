@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Review } from '@intabiafusion/recruit'
-  import recruit from '@intabiafusion/recruit'
-  import { Table } from '@intabiafusion/view-resources'
+  import type { Review } from '@hcengineering/recruit'
+  import recruit from '@hcengineering/recruit'
+  import { Table } from '@hcengineering/view-resources'
 
   export let value: Review
 </script>

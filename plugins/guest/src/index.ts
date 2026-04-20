@@ -1,7 +1,7 @@
-import { Class, Doc, PersonUuid, Ref } from '@intabiafusion/core'
-import type { Asset, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { AnyComponent, Location } from '@intabiafusion/ui'
+import { Class, Doc, PersonUuid, Ref } from '@hcengineering/core'
+import type { Asset, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { AnyComponent, Location } from '@hcengineering/ui'
 
 export * from './utils'
 

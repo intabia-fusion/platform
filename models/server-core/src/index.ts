@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import { Mixin, Model, type Builder } from '@intabiafusion/model'
-import { TClass, TDoc } from '@intabiafusion/model-core'
-import type { Resource } from '@intabiafusion/platform'
+import { Mixin, Model, type Builder } from '@hcengineering/model'
+import { TClass, TDoc } from '@hcengineering/model-core'
+import type { Resource } from '@hcengineering/platform'
 
-import core, { DOMAIN_MODEL } from '@intabiafusion/core'
+import core, { DOMAIN_MODEL } from '@hcengineering/core'
 import type {
   FieldTemplateComponent,
   ObjectDDParticipant,
@@ -26,10 +26,10 @@ import type {
   SearchPresenter,
   Trigger,
   TriggerFunc
-} from '@intabiafusion/server-core'
-import serverCore from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
+import serverCore from '@hcengineering/server-core'
 
-export { serverCoreId } from '@intabiafusion/server-core'
+export { serverCoreId } from '@hcengineering/server-core'
 
 @Model(serverCore.class.Trigger, core.class.Doc, DOMAIN_MODEL)
 export class TTrigger extends TDoc implements Trigger {

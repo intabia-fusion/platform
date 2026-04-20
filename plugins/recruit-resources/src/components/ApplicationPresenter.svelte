@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import recruit, { Applicant } from '@intabiafusion/recruit'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { ObjectPresenterType } from '@intabiafusion/view'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import recruit, { Applicant } from '@hcengineering/recruit'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { ObjectPresenterType } from '@hcengineering/view'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   export let value: Applicant
   export let inline: boolean = false

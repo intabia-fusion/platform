@@ -5,7 +5,7 @@
 
 import { ClisrClient } from '../client'
 import { ClientSocketReadyState, FRAME_PING, FRAME_PONG } from '../types'
-import { MeasureMetricsContext } from '@intabiafusion/measurements'
+import { MeasureMetricsContext } from '@hcengineering/measurements'
 
 /**
  * Helper: create a minimal MeasureContext for tests.

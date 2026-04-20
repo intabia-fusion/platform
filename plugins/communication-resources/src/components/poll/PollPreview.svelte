@@ -12,10 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Applet } from '@intabiafusion/communication'
+  import { Applet } from '@hcengineering/communication'
   import { createEventDispatcher } from 'svelte'
-  import { Label } from '@intabiafusion/ui'
-  import presentation from '@intabiafusion/presentation'
+  import { Label } from '@hcengineering/ui'
+  import presentation from '@hcengineering/presentation'
 
   import { PollConfig } from '../../poll'
 

@@ -29,14 +29,14 @@ import core, {
   TxFactory,
   TxProcessor,
   type VersionableDoc
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   BaseMiddleware,
   type ServerFindOptions,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 /**
  * @public

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { createFocusManager, EditBox, FocusHandler } from '@intabiafusion/ui'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { createFocusManager, EditBox, FocusHandler } from '@hcengineering/ui'
 
-  import { ChannelsEditor, EditableAvatar } from '@intabiafusion/contact-resources'
-  import core, { getCurrentAccount, Ref } from '@intabiafusion/core'
-  import { Department } from '@intabiafusion/hr'
-  import setting, { IntegrationType } from '@intabiafusion/setting'
+  import { ChannelsEditor, EditableAvatar } from '@hcengineering/contact-resources'
+  import core, { getCurrentAccount, Ref } from '@hcengineering/core'
+  import { Department } from '@hcengineering/hr'
+  import setting, { IntegrationType } from '@hcengineering/setting'
   import { createEventDispatcher, onMount } from 'svelte'
   import hr from '../plugin'
   import Members from './Members.svelte'

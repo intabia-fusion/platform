@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@intabiafusion/core'
-import { mergeIds } from '@intabiafusion/platform'
-import { type ViewAction, type Action } from '@intabiafusion/view'
-import { type FilePreviewExtension } from '@intabiafusion/presentation/src/types'
-import { printId } from '@intabiafusion/print'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { mergeIds } from '@hcengineering/platform'
+import { type ViewAction, type Action } from '@hcengineering/view'
+import { type FilePreviewExtension } from '@hcengineering/presentation/src/types'
+import { printId } from '@hcengineering/print'
 // This import is needed because of similar import in print plugin
 // Otherwise, TS complains about missing types for resulting merge
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import print from '@intabiafusion/print-resources/src/plugin'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import print from '@hcengineering/print-resources/src/plugin'
 
 export default mergeIds(printId, print, {
   action: {

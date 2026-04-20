@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, Class } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Doc, Ref, Class } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     Component,
     defineSeparators,
@@ -25,15 +25,15 @@
     Location,
     restoreLocation,
     deviceOptionsStore as deviceInfo
-  } from '@intabiafusion/ui'
-  import { NavigatorModel, SpecialNavModel } from '@intabiafusion/workbench'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
+  } from '@hcengineering/ui'
+  import { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { onMount, onDestroy } from 'svelte'
-  import { Chat, chunterId } from '@intabiafusion/chunter'
-  import view, { decodeObjectURI } from '@intabiafusion/view'
-  import { parseLinkId, getObjectLinkId } from '@intabiafusion/view-resources'
-  import { ActivityMessage } from '@intabiafusion/activity'
-  import { loadSavedAttachments } from '@intabiafusion/attachment-resources'
+  import { Chat, chunterId } from '@hcengineering/chunter'
+  import view, { decodeObjectURI } from '@hcengineering/view'
+  import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { loadSavedAttachments } from '@hcengineering/attachment-resources'
 
   import ChatNavigator from './navigator/ChatNavigator.svelte'
   import ChannelView from '../ChannelView.svelte'

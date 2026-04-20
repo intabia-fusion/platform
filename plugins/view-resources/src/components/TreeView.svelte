@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { type Location } from '@intabiafusion/ui'
-  import { type Resource } from '@intabiafusion/platform'
-  import { IntlString, Asset } from '@intabiafusion/platform'
+  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { type Location } from '@hcengineering/ui'
+  import { type Resource } from '@hcengineering/platform'
+  import { IntlString, Asset } from '@hcengineering/platform'
 
   import FoldersBrowser from './folders/FoldersBrowser.svelte'
 

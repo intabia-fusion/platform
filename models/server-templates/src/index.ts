@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import { Mixin, type Builder } from '@intabiafusion/model'
-import { TTemplateField } from '@intabiafusion/model-templates'
-import { type Resource } from '@intabiafusion/platform'
-import serverTemplates, { type TemplateFieldServerFunc } from '@intabiafusion/server-templates'
-import templates, { type TemplateField } from '@intabiafusion/templates'
+import { Mixin, type Builder } from '@hcengineering/model'
+import { TTemplateField } from '@hcengineering/model-templates'
+import { type Resource } from '@hcengineering/platform'
+import serverTemplates, { type TemplateFieldServerFunc } from '@hcengineering/server-templates'
+import templates, { type TemplateField } from '@hcengineering/templates'
 
 @Mixin(serverTemplates.mixin.ServerTemplateField, templates.class.TemplateField)
 export class TServerTemplateField extends TTemplateField implements TemplateField {
   serverFunc!: Resource<TemplateFieldServerFunc>
 }
 
-export { serverTemplatesId } from '@intabiafusion/server-templates'
+export { serverTemplatesId } from '@hcengineering/server-templates'
 
 export function createModel (builder: Builder): void {
   builder.createModel(TServerTemplateField)

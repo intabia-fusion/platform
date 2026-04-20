@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getAccountDB } from '@intabiafusion/account'
-import calendar from '@intabiafusion/calendar'
-import chunter, { type ChatMessage } from '@intabiafusion/chunter'
-import { loadCollabYdoc, saveCollabYdoc, yDocToBuffer } from '@intabiafusion/collaboration'
-import contact from '@intabiafusion/contact'
+import { getAccountDB } from '@hcengineering/account'
+import calendar from '@hcengineering/calendar'
+import chunter, { type ChatMessage } from '@hcengineering/chunter'
+import { loadCollabYdoc, saveCollabYdoc, yDocToBuffer } from '@hcengineering/collaboration'
+import contact from '@hcengineering/contact'
 import core, {
   type ArrOf,
   type BackupClient,
@@ -60,20 +60,20 @@ import core, {
   updateAttribute,
   platformNow,
   platformNowDiff
-} from '@intabiafusion/core'
-import activity, { DOMAIN_ACTIVITY } from '@intabiafusion/model-activity'
-import { DOMAIN_SPACE } from '@intabiafusion/model-core'
-import recruitModel, { defaultApplicantStatuses } from '@intabiafusion/model-recruit'
-import { getMongoClient, getWorkspaceMongoDB } from '@intabiafusion/mongo'
-import recruit, { type Applicant, type Vacancy } from '@intabiafusion/recruit'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import { type StorageAdapter } from '@intabiafusion/server-core'
-import { generateToken } from '@intabiafusion/server-token'
-import { connect } from '@intabiafusion/server-tool'
-import tags, { type TagCategory, type TagElement, type TagReference } from '@intabiafusion/tags'
-import task, { type ProjectType, type Task, type TaskType } from '@intabiafusion/task'
-// import { updateYDocContent } from '@intabiafusion/text-ydoc'
-import tracker from '@intabiafusion/tracker'
+} from '@hcengineering/core'
+import activity, { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
+import { DOMAIN_SPACE } from '@hcengineering/model-core'
+import recruitModel, { defaultApplicantStatuses } from '@hcengineering/model-recruit'
+import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
+import recruit, { type Applicant, type Vacancy } from '@hcengineering/recruit'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import { type StorageAdapter } from '@hcengineering/server-core'
+import { generateToken } from '@hcengineering/server-token'
+import { connect } from '@hcengineering/server-tool'
+import tags, { type TagCategory, type TagElement, type TagReference } from '@hcengineering/tags'
+import task, { type ProjectType, type Task, type TaskType } from '@hcengineering/task'
+// import { updateYDocContent } from '@hcengineering/text-ydoc'
+import tracker from '@hcengineering/tracker'
 import { deepEqual } from 'fast-equals'
 import { type Db } from 'mongodb'
 

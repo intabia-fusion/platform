@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx } from '@intabiafusion/core'
+import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx } from '@hcengineering/core'
 import {
   toMessageEvent,
   isNewChannelTx,
@@ -23,16 +23,16 @@ import {
   markdownToText,
   isSyncedMessage,
   getMailHeadersRecord
-} from '@intabiafusion/mail-common'
-import { ConsumerHandle, PlatformQueue, QueueTopic } from '@intabiafusion/server-core'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { CreateMessageEvent } from '@intabiafusion/communication-sdk-types'
-import chat from '@intabiafusion/chat'
-import { Card } from '@intabiafusion/card'
+} from '@hcengineering/mail-common'
+import { ConsumerHandle, PlatformQueue, QueueTopic } from '@hcengineering/server-core'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
+import chat from '@hcengineering/chat'
+import { Card } from '@hcengineering/card'
 import { LRUCache } from 'lru-cache'
 
 import config from './config'
-import { AccountClient, MailboxOptions } from '@intabiafusion/account-client'
+import { AccountClient, MailboxOptions } from '@hcengineering/account-client'
 import { getAccountClient } from './client'
 import { getClient as getWorkspaceClient, releaseClient } from './workspaceClient'
 import { sendEmail } from './send'

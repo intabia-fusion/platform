@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@intabiafusion/platform'
-  import { TagElement, TagReference } from '@intabiafusion/tags'
+  import { Asset } from '@hcengineering/platform'
+  import { TagElement, TagReference } from '@hcengineering/tags'
   import {
     ActionIcon,
     AnySvelteComponent,
@@ -23,7 +23,7 @@
     getPlatformColorDef,
     themeStore,
     tooltip
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { getTagStyle, tagLevel } from '../utils'

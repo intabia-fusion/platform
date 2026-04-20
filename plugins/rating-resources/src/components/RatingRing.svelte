@@ -1,7 +1,7 @@
 <!-- Circular Level Display with Progress -->
 <script lang="ts">
-  import { translateCB } from '@intabiafusion/platform'
-  import ratingPlugin, { getLevelInfo } from '@intabiafusion/rating'
+  import { translateCB } from '@hcengineering/platform'
+  import ratingPlugin, { getLevelInfo } from '@hcengineering/rating'
 
   export let rating: number = 0
   export let showValues = false

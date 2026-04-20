@@ -19,7 +19,7 @@ import {
   type Markup,
   type Blob as PlatformBlob,
   type Ref
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { type FileUploader, type UploadResult } from './uploader'
 
 interface FileUploadError {

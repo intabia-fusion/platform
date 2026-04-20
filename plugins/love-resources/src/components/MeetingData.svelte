@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Room } from '@intabiafusion/love'
-  import { Button, CheckBox } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Room } from '@hcengineering/love'
+  import { Button, CheckBox } from '@hcengineering/ui'
   import { Writable } from 'svelte/store'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'

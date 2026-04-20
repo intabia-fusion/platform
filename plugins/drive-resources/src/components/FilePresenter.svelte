@@ -15,12 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { File } from '@intabiafusion/drive'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Icon, tooltip } from '@intabiafusion/ui'
-  import { ObjectPresenterType } from '@intabiafusion/view'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { WithLookup } from '@hcengineering/core'
+  import { File } from '@hcengineering/drive'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Icon, tooltip } from '@hcengineering/ui'
+  import { ObjectPresenterType } from '@hcengineering/view'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import { formatFileVersion, getFileTypeIcon } from '../utils'
 

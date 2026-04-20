@@ -13,5 +13,5 @@
 // limitations under the License.
 //
 
-import '@intabiafusion/platform-rig/profiles/ui/svelte'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
 export { default as HlsVideo } from './components/HlsVideo.svelte'

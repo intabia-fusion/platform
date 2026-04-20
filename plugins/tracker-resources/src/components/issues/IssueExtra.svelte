@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, afterUpdate } from 'svelte'
-  import { WithLookup } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import type { Issue } from '@intabiafusion/tracker'
-  import { Component } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { WithLookup } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Issue } from '@hcengineering/tracker'
+  import { Component } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let value: WithLookup<Issue>
   export let shouldUseMargin: boolean = false

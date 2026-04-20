@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@intabiafusion/presentation'
-  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
+  import { Card } from '@hcengineering/presentation'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
 

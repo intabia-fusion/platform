@@ -69,10 +69,10 @@ Welcome to the Huly Virtual Network documentation! This directory contains compr
 
 ## 🔗 External Resources
 
-- [Main Repository](https://github.com/intabia-fusion/huly.net)
+- [Main Repository](https://github.com/hcengineering/huly.net)
 - [Examples Directory](../examples/)
 - [ZeroMQ Documentation](https://zeromq.org/documentation/)
-- [Huly Platform](https://github.com/intabia-fusion/foundation)
+- [Huly Platform](https://github.com/hcengineering/platform)
 
 ## 🤝 Contributing to Documentation
 

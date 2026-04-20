@@ -13,14 +13,14 @@
     type OrderingQuestion,
     type OrderingQuestionData,
     type OrderingPosition
-  } from '@intabiafusion/questions'
+  } from '@hcengineering/questions'
   import {
     Button,
     DropdownLabelsPopup,
     type DropdownTextItem,
     type PopupPositionElement,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { moveItem } from '../utils'
   import LabelEditor from './LabelEditor.svelte'
   import OptionsList, { type OptionsListDropEvent } from './OptionsList.svelte'

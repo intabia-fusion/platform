@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import activity, { DocUpdateMessage } from '@intabiafusion/activity'
-import { Analytics } from '@intabiafusion/analytics'
-import { loadCollabJson, loadCollabYdoc, saveCollabJson, saveCollabYdoc } from '@intabiafusion/collaboration'
-import { decodeDocumentId } from '@intabiafusion/collaborator-client'
-import { CreateMessageEvent, MessageEventType } from '@intabiafusion/communication-sdk-types'
-import { ActivityCollaborativeChange, ActivityUpdateType, MessageType } from '@intabiafusion/communication-types'
-import core, { AttachedData, Doc, MeasureContext, OperationDomain, Ref, Space, TxOperations } from '@intabiafusion/core'
-import { StorageAdapter } from '@intabiafusion/server-core'
-import { areEqualMarkups } from '@intabiafusion/text'
-import { markupToYDoc } from '@intabiafusion/text-ydoc'
+import activity, { DocUpdateMessage } from '@hcengineering/activity'
+import { Analytics } from '@hcengineering/analytics'
+import { loadCollabJson, loadCollabYdoc, saveCollabJson, saveCollabYdoc } from '@hcengineering/collaboration'
+import { decodeDocumentId } from '@hcengineering/collaborator-client'
+import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
+import { ActivityCollaborativeChange, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
+import core, { AttachedData, Doc, MeasureContext, OperationDomain, Ref, Space, TxOperations } from '@hcengineering/core'
+import { StorageAdapter } from '@hcengineering/server-core'
+import { areEqualMarkups } from '@hcengineering/text'
+import { markupToYDoc } from '@hcengineering/text-ydoc'
 import { Doc as YDoc } from 'yjs'
 
 import { Context } from '../context'

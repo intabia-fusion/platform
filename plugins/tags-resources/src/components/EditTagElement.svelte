@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Data, DocumentUpdate } from '@intabiafusion/core'
-  import { Card, createQuery, getClient } from '@intabiafusion/presentation'
-  import { TagElement, TagReference } from '@intabiafusion/tags'
+  import core, { Data, DocumentUpdate } from '@hcengineering/core'
+  import { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { TagElement, TagReference } from '@hcengineering/tags'
   import {
     DropdownLabels,
     EditBox,
@@ -23,9 +23,9 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import { DropdownTextItem } from '@intabiafusion/ui/src/types'
-  import { ColorsPopup } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { DropdownTextItem } from '@hcengineering/ui/src/types'
+  import { ColorsPopup } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { getTagStyle } from '../utils'

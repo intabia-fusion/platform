@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@intabiafusion/core'
-import platform, { PlatformError } from '@intabiafusion/platform'
-import { TokenError, decodeToken } from '@intabiafusion/server-token'
-import { StorageAdapter } from '@intabiafusion/storage'
+import { Analytics } from '@hcengineering/analytics'
+import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@hcengineering/core'
+import platform, { PlatformError } from '@hcengineering/platform'
+import { TokenError, decodeToken } from '@hcengineering/server-token'
+import { StorageAdapter } from '@hcengineering/storage'
 import bp from 'body-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
@@ -29,7 +29,7 @@ import morgan from 'morgan'
 import { join, normalize, resolve } from 'path'
 import { cwd } from 'process'
 import { v4 as uuid } from 'uuid'
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
 import fs, { mkdtempSync } from 'fs'

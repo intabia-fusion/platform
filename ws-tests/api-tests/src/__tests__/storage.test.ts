@@ -21,9 +21,9 @@ import {
   type ServerConfig,
   type StorageClient,
   type WorkspaceToken
-} from '@intabiafusion/api-client'
-import { systemAccountUuid, generateUuid, type Ref, type Blob } from '@intabiafusion/core'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/api-client'
+import { systemAccountUuid, generateUuid, type Ref, type Blob } from '@hcengineering/core'
+import { generateToken } from '@hcengineering/server-token'
 
 describe('storage-api-server', () => {
   const frontUrl = 'http://huly.local:8083'

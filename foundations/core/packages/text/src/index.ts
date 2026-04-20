@@ -14,7 +14,7 @@
 //
 
 export * from './extensions'
-export * from '@intabiafusion/text-core'
+export * from '@hcengineering/text-core'
 export * from './nodes'
 export * from './markup/utils'
 export * from './marks/code'

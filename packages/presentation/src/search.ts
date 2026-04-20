@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Class, Ref, Doc, SearchResultDoc, TxOperations } from '@intabiafusion/core'
+import type { Class, Ref, Doc, SearchResultDoc, TxOperations } from '@hcengineering/core'
 import { type ObjectSearchCategory } from './types'
 import plugin from './plugin'
 import { getClient } from './utils'

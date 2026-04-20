@@ -2,10 +2,10 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Doc } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import { getPanelURI } from '@intabiafusion/ui'
-import view, { type ObjectPanel } from '@intabiafusion/view'
+import type { Doc } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import { getPanelURI } from '@hcengineering/ui'
+import view, { type ObjectPanel } from '@hcengineering/view'
 
 export function getPanelFragment<T extends Doc> (object: Pick<T, '_class' | '_id'>): string {
   const hierarchy = getClient().getHierarchy()

@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
   import DocumentInfoLabel from './DocumentInfoLabel.svelte'
 
   export let label: IntlString

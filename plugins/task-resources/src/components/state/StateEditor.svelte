@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@intabiafusion/core'
-  import { Project } from '@intabiafusion/task'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
-  import { Button, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  import { Ref, Status } from '@hcengineering/core'
+  import { Project } from '@hcengineering/task'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import StatePresenter from './StatePresenter.svelte'
   import StatesPopup from './StatesPopup.svelte'
   import { selectedTaskTypeStore, selectedTypeStore } from '../../index'

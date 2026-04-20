@@ -2,11 +2,11 @@
 // Copyright © 2023, 2025 Hardcore Engineering Inc.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { newMetrics } from '@intabiafusion/core'
-import { startFront } from '@intabiafusion/front/src/starter'
-import { initStatisticsContext } from '@intabiafusion/server-core'
+import { Analytics } from '@hcengineering/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { newMetrics } from '@hcengineering/core'
+import { startFront } from '@hcengineering/front/src/starter'
+import { initStatisticsContext } from '@hcengineering/server-core'
 import { join } from 'path'
 
 configureAnalytics('front', process.env.VERSION ?? '0.7.0')

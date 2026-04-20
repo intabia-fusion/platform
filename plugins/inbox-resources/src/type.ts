@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Card } from '@intabiafusion/card'
-import { type Class, type Doc, type Ref } from '@intabiafusion/core'
-import { type NotificationContext } from '@intabiafusion/communication-types'
-import { type DisplayInboxNotification, type DocNotifyContext } from '@intabiafusion/notification'
+import { type Card } from '@hcengineering/card'
+import { type Class, type Doc, type Ref } from '@hcengineering/core'
+import { type NotificationContext } from '@hcengineering/communication-types'
+import { type DisplayInboxNotification, type DocNotifyContext } from '@hcengineering/notification'
 
 export type NavigationItem =
   | {

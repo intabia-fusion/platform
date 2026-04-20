@@ -20,8 +20,8 @@ import {
   type Tx,
   type TxResult,
   type WithLookup
-} from '@intabiafusion/core'
-import platform, { PlatformError, setPlatformStatus, unknownError, type Resource } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import platform, { PlatformError, setPlatformStatus, unknownError, type Resource } from '@hcengineering/platform'
 
 /**
  * @public

@@ -14,18 +14,18 @@
 //
 
 import { createContent } from '../../../rpc/methods/createContent'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 
-jest.mock('@intabiafusion/collaborator-client', () => ({
+jest.mock('@hcengineering/collaborator-client', () => ({
   decodeDocumentId: jest.fn()
 }))
 
-jest.mock('@intabiafusion/collaboration', () => ({
+jest.mock('@hcengineering/collaboration', () => ({
   saveCollabJson: jest.fn()
 }))
 
-const mockDecodeDocumentId = jest.requireMock('@intabiafusion/collaborator-client').decodeDocumentId
-const mockSaveCollabJson = jest.requireMock('@intabiafusion/collaboration').saveCollabJson
+const mockDecodeDocumentId = jest.requireMock('@hcengineering/collaborator-client').decodeDocumentId
+const mockSaveCollabJson = jest.requireMock('@hcengineering/collaboration').saveCollabJson
 
 describe('createContent', () => {
   const mockCtx: MeasureContext = {

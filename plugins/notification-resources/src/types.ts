@@ -1,6 +1,6 @@
-import type { Ref } from '@intabiafusion/core'
-import type { DisplayInboxNotification, DocNotifyContext } from '@intabiafusion/notification'
-import type { IntlString } from '@intabiafusion/platform'
+import type { Ref } from '@hcengineering/core'
+import type { DisplayInboxNotification, DocNotifyContext } from '@hcengineering/notification'
+import type { IntlString } from '@hcengineering/platform'
 
 export type InboxNotificationsFilter = 'all' | 'unread'
 

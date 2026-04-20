@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { ApproveRequest } from '@intabiafusion/process'
-  import { getUserTimezone, tooltip } from '@intabiafusion/ui'
-  import { BooleanPresenter } from '@intabiafusion/view-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { ApproveRequest } from '@hcengineering/process'
+  import { getUserTimezone, tooltip } from '@hcengineering/ui'
+  import { BooleanPresenter } from '@hcengineering/view-resources'
 
   export let value: ApproveRequest
 

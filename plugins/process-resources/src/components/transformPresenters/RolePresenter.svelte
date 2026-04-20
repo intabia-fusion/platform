@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Role } from '@intabiafusion/card'
-  import { getClient } from '@intabiafusion/presentation'
-  import { SelectedContextFunc } from '@intabiafusion/process'
-  import { Label } from '@intabiafusion/ui'
+  import { Role } from '@hcengineering/card'
+  import { getClient } from '@hcengineering/presentation'
+  import { SelectedContextFunc } from '@hcengineering/process'
+  import { Label } from '@hcengineering/ui'
 
   export let contextValue: SelectedContextFunc
 

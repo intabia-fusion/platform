@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, Label, Toggle } from '@intabiafusion/ui'
-  import globalProfile from '@intabiafusion/global-profile'
+  import { Button, Label, Toggle } from '@hcengineering/ui'
+  import globalProfile from '@hcengineering/global-profile'
   import ProfileField from './ProfileField.svelte'
 
   export let firstName: string = ''

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
-  import { Ref, type WithLookup } from '@intabiafusion/core'
-  import { ListSelectionProvider } from '@intabiafusion/view-resources'
-  import { updatePopup } from '@intabiafusion/ui'
+  import { Attachment } from '@hcengineering/attachment'
+  import { Ref, type WithLookup } from '@hcengineering/core'
+  import { ListSelectionProvider } from '@hcengineering/view-resources'
+  import { updatePopup } from '@hcengineering/ui'
   import { AttachmentImageSize } from '../types'
   import AttachmentPreview from './AttachmentPreview.svelte'
 

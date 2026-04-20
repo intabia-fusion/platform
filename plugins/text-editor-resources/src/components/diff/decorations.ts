@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MarkupNode } from '@intabiafusion/text'
+import { type MarkupNode } from '@hcengineering/text'
 import { type Editor } from '@tiptap/core'
 import { ChangeSet } from '@tiptap/pm/changeset'
 import { type Node as ProseMirrorNode, type Schema } from '@tiptap/pm/model'

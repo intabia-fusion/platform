@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePresenter } from '@intabiafusion/activity-resources'
-  import { ActivityMessage } from '@intabiafusion/activity'
+  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
+  import { ActivityMessage } from '@hcengineering/activity'
 
   export let message: ActivityMessage
   export let readonly = false

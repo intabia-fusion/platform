@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@intabiafusion/core'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, Label } from '@intabiafusion/ui'
-  import { ObjectPresenter } from '@intabiafusion/view-resources'
-  import documents, { type Document } from '@intabiafusion/controlled-documents'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
+  import { AnySvelteComponent, Label } from '@hcengineering/ui'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
+  import documents, { type Document } from '@hcengineering/controlled-documents'
 
   export let _class: Ref<Class<Document>>
   export let options: FindOptions<Document> | undefined = undefined

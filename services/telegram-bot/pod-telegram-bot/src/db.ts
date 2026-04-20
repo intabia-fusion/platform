@@ -14,8 +14,8 @@
 //
 
 import postgres from 'postgres'
-import { AccountUuid, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { ActivityMessage } from '@intabiafusion/activity'
+import { AccountUuid, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { ActivityMessage } from '@hcengineering/activity'
 
 import config from './config'
 import { ChannelId, ChannelRecord, MessageRecord, OtpRecord, ReplyRecord } from './types'

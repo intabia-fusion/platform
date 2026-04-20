@@ -1,5 +1,5 @@
-import { type MasterTag } from '@intabiafusion/card'
-import card from '@intabiafusion/card'
+import { type MasterTag } from '@hcengineering/card'
+import card from '@hcengineering/card'
 import core, {
   type Doc,
   type Ref,
@@ -11,9 +11,9 @@ import core, {
   type ModelDb,
   type Hierarchy,
   type Type
-} from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import { type Process, type Transition } from '@intabiafusion/process'
+} from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import { type Process, type Transition } from '@hcengineering/process'
 import processPlugin from './plugin'
 
 export function exportProcesses (_id: Ref<MasterTag>): {

@@ -15,16 +15,16 @@
 
 import { buildMarkdownTableFromDocs, copyAsMarkdownTable } from '../markdown'
 import { isIntlString } from '../formatter'
-import type { Doc, Class, Ref } from '@intabiafusion/core'
+import type { Doc, Class, Ref } from '@hcengineering/core'
 import type { CopyAsMarkdownTableProps } from '../types'
-import { getClient } from '@intabiafusion/presentation'
-import { getCurrentLanguage } from '@intabiafusion/theme'
-import { copyMarkdown, buildModel, getObjectLinkFragment } from '@intabiafusion/view-resources'
-import core from '@intabiafusion/core'
-import { type IntlString } from '@intabiafusion/platform'
+import { getClient } from '@hcengineering/presentation'
+import { getCurrentLanguage } from '@hcengineering/theme'
+import { copyMarkdown, buildModel, getObjectLinkFragment } from '@hcengineering/view-resources'
+import core from '@hcengineering/core'
+import { type IntlString } from '@hcengineering/platform'
 
-jest.mock('@intabiafusion/platform', () => {
-  const actual = jest.requireActual('@intabiafusion/platform')
+jest.mock('@hcengineering/platform', () => {
+  const actual = jest.requireActual('@hcengineering/platform')
   return {
     ...actual,
     translate: jest.fn(async (str: unknown) => `translated:${String(str)}`),
@@ -37,22 +37,22 @@ jest.mock('@intabiafusion/platform', () => {
   }
 })
 
-jest.mock('@intabiafusion/presentation', () => ({
+jest.mock('@hcengineering/presentation', () => ({
   getClient: jest.fn()
 }))
 
-jest.mock('@intabiafusion/theme', () => ({
+jest.mock('@hcengineering/theme', () => ({
   getCurrentLanguage: jest.fn(() => 'en')
 }))
 
-jest.mock('@intabiafusion/view-resources', () => ({
+jest.mock('@hcengineering/view-resources', () => ({
   copyMarkdown: jest.fn(),
   buildModel: jest.fn(),
   buildConfigLookup: jest.fn(() => ({})),
   getObjectLinkFragment: jest.fn()
 }))
 
-jest.mock('@intabiafusion/ui', () => ({
+jest.mock('@hcengineering/ui', () => ({
   addNotification: jest.fn(),
   NotificationSeverity: { Success: 'success', Error: 'error' },
   locationToUrl: jest.fn((loc: unknown) => {
@@ -64,7 +64,7 @@ jest.mock('@intabiafusion/ui', () => ({
   getCurrentResolvedLocation: jest.fn(() => ({ path: ['workbench', 'w3', 'card', 'test-id'] }))
 }))
 
-jest.mock('@intabiafusion/view', () => {
+jest.mock('@hcengineering/view', () => {
   const viewMock = {
     string: {
       Copied: 'view:string:Copied',
@@ -214,7 +214,7 @@ describe('converter-resources', () => {
       const props: CopyAsMarkdownTableProps = { cardClass: 'card:class:Card' as Ref<Class<Doc>> }
       await copyAsMarkdownTable([mockDoc], evt, props)
       expect(copyMarkdown).toHaveBeenCalled()
-      const { addNotification } = await import('@intabiafusion/ui')
+      const { addNotification } = await import('@hcengineering/ui')
       expect(addNotification).toHaveBeenCalled()
     })
   })

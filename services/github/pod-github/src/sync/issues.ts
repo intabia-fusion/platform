@@ -6,7 +6,7 @@
   TODO:
   * Add since to synchronization
 */
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import core, {
   AttachedData,
   Doc,
@@ -23,7 +23,7 @@ import core, {
   makeDocCollabId,
   withContext,
   type MeasureContext
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import github, {
   DocSyncInfo,
   GithubIntegrationRepository,
@@ -31,9 +31,9 @@ import github, {
   GithubProject,
   IntegrationRepositoryData,
   GithubIssue as TGithubIssue
-} from '@intabiafusion/github'
-import task, { TaskType, calcRank } from '@intabiafusion/task'
-import tracker, { Issue, IssuePriority } from '@intabiafusion/tracker'
+} from '@hcengineering/github'
+import task, { TaskType, calcRank } from '@hcengineering/task'
+import tracker, { Issue, IssuePriority } from '@hcengineering/tracker'
 import { Issue as GithubIssue, IssuesEvent, ProjectsV2ItemEvent } from '@octokit/webhooks-types'
 import { Octokit } from 'octokit'
 import config from '../config'

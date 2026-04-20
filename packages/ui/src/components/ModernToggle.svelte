@@ -3,7 +3,7 @@
   // © 2023 Hardcore Engineering, Inc. All Rights Reserved.
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import Label from './Label.svelte'
 
   export let title: string | undefined = undefined

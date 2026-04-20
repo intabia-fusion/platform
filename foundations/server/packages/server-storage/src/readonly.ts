@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { WorkspaceIds, Blob, MeasureContext } from '@intabiafusion/core'
-import type { BlobStorageIterator, BucketInfo, StorageAdapter, UploadedObjectInfo } from '@intabiafusion/storage'
+import type { WorkspaceIds, Blob, MeasureContext } from '@hcengineering/core'
+import type { BlobStorageIterator, BucketInfo, StorageAdapter, UploadedObjectInfo } from '@hcengineering/storage'
 import { type Readable } from 'stream'
 
 class ReadonlyError extends Error {

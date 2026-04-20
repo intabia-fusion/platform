@@ -12,12 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Message, Notification, ReactionNotificationContent, SocialID } from '@intabiafusion/communication-types'
-  import { EmojiPresenter } from '@intabiafusion/emoji-resources'
-  import { Card } from '@intabiafusion/card'
-  import { Label } from '@intabiafusion/ui'
-  import { Person } from '@intabiafusion/contact'
-  import { employeeByPersonIdStore, getPersonByPersonId } from '@intabiafusion/contact-resources'
+  import { Message, Notification, ReactionNotificationContent, SocialID } from '@hcengineering/communication-types'
+  import { EmojiPresenter } from '@hcengineering/emoji-resources'
+  import { Card } from '@hcengineering/card'
+  import { Label } from '@hcengineering/ui'
+  import { Person } from '@hcengineering/contact'
+  import { employeeByPersonIdStore, getPersonByPersonId } from '@hcengineering/contact-resources'
 
   import NotificationPreview from './preview/NotificationPreview.svelte'
   import PreviewTemplate from './preview/PreviewTemplate.svelte'

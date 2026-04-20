@@ -13,16 +13,16 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import core from '@intabiafusion/core'
-import lead from '@intabiafusion/model-lead'
-import notification, { type NotificationType } from '@intabiafusion/notification'
-import serverLead from '@intabiafusion/server-lead'
-import serverNotification, { type TypeMatch } from '@intabiafusion/server-notification'
-import serverActivity from '@intabiafusion/server-activity'
+import core from '@hcengineering/core'
+import lead from '@hcengineering/model-lead'
+import notification, { type NotificationType } from '@hcengineering/notification'
+import serverLead from '@hcengineering/server-lead'
+import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
+import serverActivity from '@hcengineering/server-activity'
 
-export { serverLeadId } from '@intabiafusion/server-lead'
+export { serverLeadId } from '@hcengineering/server-lead'
 
 export function createModel (builder: Builder): void {
   builder.mixin(lead.class.Lead, core.class.Class, serverActivity.mixin.UrlPresenter, {

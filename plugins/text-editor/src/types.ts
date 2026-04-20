@@ -1,6 +1,6 @@
-import { type Asset, type IntlString, type Resource } from '@intabiafusion/platform'
-import { type Class, type Space, type PersonId, type Doc, type Markup, type Ref, type Blob } from '@intabiafusion/core'
-import type { AnySvelteComponent } from '@intabiafusion/ui/src/types'
+import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import { type Class, type Space, type PersonId, type Doc, type Markup, type Ref, type Blob } from '@hcengineering/core'
+import type { AnySvelteComponent } from '@hcengineering/ui/src/types'
 import { type AnyExtension, type Content, type Editor, type SingleCommands } from '@tiptap/core'
 import { type ParseOptions } from '@tiptap/pm/model'
 

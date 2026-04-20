@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Organization } from '@intabiafusion/contact'
-  import { CreateOrganization } from '@intabiafusion/contact-resources'
-  import { Ref, TxOperations } from '@intabiafusion/core'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { RecruitEvents } from '@intabiafusion/recruit'
+  import contact, { Organization } from '@hcengineering/contact'
+  import { CreateOrganization } from '@hcengineering/contact-resources'
+  import { Ref, TxOperations } from '@hcengineering/core'
+  import { Analytics } from '@hcengineering/analytics'
+  import { RecruitEvents } from '@hcengineering/recruit'
 
   import recruit from '../plugin'
 

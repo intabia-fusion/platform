@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
+  import { Label } from '@hcengineering/ui'
 
-  import contact from '@intabiafusion/contact'
+  import contact from '@hcengineering/contact'
 
   export let timezone: string | undefined
 

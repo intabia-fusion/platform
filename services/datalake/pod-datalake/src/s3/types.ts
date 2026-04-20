@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import { Readable } from 'stream'
 
 export interface S3Object {

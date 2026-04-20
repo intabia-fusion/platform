@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { TestSuite } from '@intabiafusion/test-management'
+  import { Class, Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { TestSuite } from '@hcengineering/test-management'
 
   import testManagement from '../../plugin'
   import TestSuitePresenter from './TestSuitePresenter.svelte'

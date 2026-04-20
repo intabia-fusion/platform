@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Channel, Contact, getName } from '@intabiafusion/contact'
-  import { Ref } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { CircleButton, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink } from '@intabiafusion/view-resources'
+  import contact, { Channel, Contact, getName } from '@hcengineering/contact'
+  import { Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { CircleButton, tooltip } from '@hcengineering/ui'
+  import { DocNavLink } from '@hcengineering/view-resources'
   import { channelProviders } from '../../utils'
 
   export let value: Channel

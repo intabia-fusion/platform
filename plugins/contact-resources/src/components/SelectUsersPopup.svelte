@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import presentation from '@intabiafusion/presentation'
-  import { deviceOptionsStore, EditWithIcon, IconSearch, Modal, Scroller } from '@intabiafusion/ui'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Class, Ref } from '@intabiafusion/core'
-  import { Employee } from '@intabiafusion/contact'
+  import presentation from '@hcengineering/presentation'
+  import { deviceOptionsStore, EditWithIcon, IconSearch, Modal, Scroller } from '@hcengineering/ui'
+  import { IntlString } from '@hcengineering/platform'
+  import { Class, Ref } from '@hcengineering/core'
+  import { Employee } from '@hcengineering/contact'
 
   import contact from '../plugin'
   import UsersList from './UsersList.svelte'

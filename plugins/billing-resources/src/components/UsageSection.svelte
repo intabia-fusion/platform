@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tier } from '@intabiafusion/billing'
-  import { UsageStatus } from '@intabiafusion/core'
-  import { Label } from '@intabiafusion/ui'
+  import { Tier } from '@hcengineering/billing'
+  import { UsageStatus } from '@hcengineering/core'
+  import { Label } from '@hcengineering/ui'
   import plugin from '../plugin'
   import UsageProgress from './UsageProgress.svelte'
   import { calculateLimits } from '../utils'

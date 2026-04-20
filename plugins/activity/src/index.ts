@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Person } from '@intabiafusion/contact'
+import { Person } from '@hcengineering/contact'
 import {
   PersonId,
   AttachedDoc,
@@ -29,12 +29,12 @@ import {
   Blob,
   Markup,
   Client
-} from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { Preference } from '@intabiafusion/preference'
-import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@intabiafusion/ui'
-import type { Action } from '@intabiafusion/view'
+} from '@hcengineering/core'
+import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { Preference } from '@hcengineering/preference'
+import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@hcengineering/ui/src/types'
+import type { Action } from '@hcengineering/view'
 
 /**
  * @public

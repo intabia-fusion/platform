@@ -31,9 +31,9 @@ import core, {
   type TxCUD,
   TxFactory,
   type AccountUuid
-} from '@intabiafusion/core'
-import type { IntlString, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import type { IntlString, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 import { taskPlugin } from './tasks'
 
 export const txFactory = new TxFactory(core.account.System)

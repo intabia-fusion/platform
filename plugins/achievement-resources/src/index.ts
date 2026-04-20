@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 import PersonAchievementsPresenter from './components/PersonAchievementsPresenter.svelte'
 
 export const achievementResourceId = 'achievement-resources' as const

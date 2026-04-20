@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Issue, Project } from '@intabiafusion/tracker'
+  import type { Issue, Project } from '@hcengineering/tracker'
   import { activeProjects } from '../../utils'
 
   export let value: Issue

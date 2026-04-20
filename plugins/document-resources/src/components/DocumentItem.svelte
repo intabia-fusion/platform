@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@intabiafusion/core'
-  import { Document } from '@intabiafusion/document'
+  import { WithLookup } from '@hcengineering/core'
+  import { Document } from '@hcengineering/document'
   import document from '../plugin'
   import DocumentIcon from './DocumentIcon.svelte'
 

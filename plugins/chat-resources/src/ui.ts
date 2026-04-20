@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Message } from '@intabiafusion/communication-types'
+import { type Message } from '@hcengineering/communication-types'
 
 export interface MessagesGroup {
   day: number

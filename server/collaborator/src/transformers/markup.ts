@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { markupToYDoc, yDocToMarkup } from '@intabiafusion/text-ydoc'
+import { markupToYDoc, yDocToMarkup } from '@hcengineering/text-ydoc'
 import { Transformer } from '@hocuspocus/transformer'
 import { Doc } from 'yjs'
 

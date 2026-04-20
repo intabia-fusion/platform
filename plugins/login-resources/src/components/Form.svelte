@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
-  import { OK, Severity, Status, translate } from '@intabiafusion/platform'
-  import { deviceOptionsStore as deviceInfo, themeStore } from '@intabiafusion/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import { OK, Severity, Status, translate } from '@hcengineering/platform'
+  import { deviceOptionsStore as deviceInfo, themeStore } from '@hcengineering/ui'
   import Label from './internal/Label.svelte'
   import StylishEdit from './internal/StylishEdit.svelte'
   import FormButton from './internal/FormButton.svelte'

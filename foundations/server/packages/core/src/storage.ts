@@ -7,9 +7,9 @@ import {
   type Ref,
   type StorageIterator,
   type WorkspaceUuid
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 
-export * from '@intabiafusion/storage'
+export * from '@hcengineering/storage'
 
 /**
  * @public

@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Class, Mixin, Ref, Type } from '@intabiafusion/core'
-import { type Asset, type IntlString, type Plugin, plugin } from '@intabiafusion/platform'
+import type { Class, Mixin, Ref, Type } from '@hcengineering/core'
+import { type Asset, type IntlString, type Plugin, plugin } from '@hcengineering/platform'
 import type {
   Answer,
   Assessment,

@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import inbox, { inboxId } from '@intabiafusion/inbox'
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui'
+import inbox, { inboxId } from '@hcengineering/inbox'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 export default mergeIds(inboxId, inbox, {
   component: {

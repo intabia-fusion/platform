@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Ref, Space } from '@intabiafusion/core'
-  import core from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { EditBox, Label, Scroller, Panel, Component } from '@intabiafusion/ui'
+  import type { Class, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { EditBox, Label, Scroller, Panel, Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import workbench from '../../plugin'
-  import contact from '@intabiafusion/contact'
+  import contact from '@hcengineering/contact'
 
   export let _id: Ref<Space>
   export let _class: Ref<Class<Space>>

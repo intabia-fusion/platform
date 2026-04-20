@@ -1,5 +1,5 @@
-import core from '@intabiafusion/core'
-import { formatName } from '@intabiafusion/contact'
+import core from '@hcengineering/core'
+import { formatName } from '@hcengineering/contact'
 
 import { NOTIFICATION_BODY_SIZE, Sender } from './index'
 

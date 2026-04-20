@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnyComponent, Component, Tabs } from '@intabiafusion/ui'
+  import contact from '@hcengineering/contact'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnyComponent, Component, Tabs } from '@hcengineering/ui'
 
   const client = getClient()
 

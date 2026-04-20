@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Transition } from '@intabiafusion/process'
+  import { Transition } from '@hcengineering/process'
   import TransitionPresenter from './TransitionPresenter.svelte'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Ref } from '@intabiafusion/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Ref } from '@hcengineering/core'
 
   export let value: Ref<Transition>
 

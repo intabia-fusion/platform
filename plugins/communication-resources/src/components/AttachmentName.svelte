@@ -12,12 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/communication-types'
-  import { Label } from '@intabiafusion/ui'
-  import { isAppletAttachment, isBlobAttachment } from '@intabiafusion/communication-shared'
-  import { getResource } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import communication from '@intabiafusion/communication'
+  import { Attachment } from '@hcengineering/communication-types'
+  import { Label } from '@hcengineering/ui'
+  import { isAppletAttachment, isBlobAttachment } from '@hcengineering/communication-shared'
+  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import communication from '@hcengineering/communication'
 
   export let attachment: Attachment
   export let lower: boolean = false

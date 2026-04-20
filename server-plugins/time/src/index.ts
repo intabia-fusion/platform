@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { Class, Doc, Mixin, Ref, Tx } from '@intabiafusion/core'
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { TriggerControl, TriggerFunc } from '@intabiafusion/server-core'
-import { Task } from '@intabiafusion/task'
-import { ToDo, WorkSlot } from '@intabiafusion/time'
-import { CreateNotificationResource } from '@intabiafusion/server-notification'
+import { Class, Doc, Mixin, Ref, Tx } from '@hcengineering/core'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
+import { Task } from '@hcengineering/task'
+import { ToDo, WorkSlot } from '@hcengineering/time'
+import { CreateNotificationResource } from '@hcengineering/server-notification'
 
 /**
  * @public

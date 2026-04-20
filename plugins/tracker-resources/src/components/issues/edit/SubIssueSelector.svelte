@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, SortingOrder, StatusCategory, WithLookup, toIdMap } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import task from '@intabiafusion/task'
-  import { Issue, IssueStatus } from '@intabiafusion/tracker'
+  import core, { IdMap, Ref, SortingOrder, StatusCategory, WithLookup, toIdMap } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import task from '@hcengineering/task'
+  import { Issue, IssueStatus } from '@hcengineering/tracker'
   import {
     Icon,
     IconDetails,
@@ -28,8 +28,8 @@
     navigate,
     themeStore,
     tooltip
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import { issueLinkFragmentProvider } from '../../../issues'
   import tracker from '../../../plugin'
   import { listIssueStatusOrder } from '../../../utils'

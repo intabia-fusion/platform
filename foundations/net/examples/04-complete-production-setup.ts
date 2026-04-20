@@ -13,9 +13,9 @@
  * // cd examples && rushx run:production
  */
 
-import { NetworkImpl, TickManagerImpl, AgentImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
-import { createNetworkClient, NetworkAgentServer } from '@intabiafusion/network-client'
+import { NetworkImpl, TickManagerImpl, AgentImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
+import { createNetworkClient, NetworkAgentServer } from '@hcengineering/network-client'
 import type { 
   Container, 
   ContainerUuid, 
@@ -23,7 +23,7 @@ import type {
   ContainerKind,
   GetOptions,
   NetworkEvent
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 
 // Production container with proper lifecycle management
 class ProductionServiceContainer implements Container {

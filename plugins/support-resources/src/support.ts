@@ -15,17 +15,17 @@
 
 import { type Unsubscriber, get } from 'svelte/store'
 
-import { getCurrentAccount } from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
+import { getCurrentAccount } from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
 import support, {
   type SupportClient,
   type SupportStatusCallback,
   type SupportSystem,
   type SupportWidget,
   type SupportWidgetConfig
-} from '@intabiafusion/support'
-import { location, themeStore } from '@intabiafusion/ui'
-import { createQuery, type LiveQuery, getClient } from '@intabiafusion/presentation'
+} from '@hcengineering/support'
+import { location, themeStore } from '@hcengineering/ui'
+import { createQuery, type LiveQuery, getClient } from '@hcengineering/presentation'
 
 class SupportClientImpl implements SupportClient {
   private readonly supportSystem: SupportSystem

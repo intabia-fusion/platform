@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import calendar, { Event } from '@intabiafusion/calendar'
-import contact from '@intabiafusion/contact'
-import { AccountUuid, Doc, MeasureContext, PersonId, Ref, Space, WorkspaceUuid } from '@intabiafusion/core'
-import notification from '@intabiafusion/notification'
-import { IntlString } from '@intabiafusion/platform'
+import calendar, { Event } from '@hcengineering/calendar'
+import contact from '@hcengineering/contact'
+import { AccountUuid, Doc, MeasureContext, PersonId, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
+import notification from '@hcengineering/notification'
+import { IntlString } from '@hcengineering/platform'
 import { getClient } from './utils'
 
 export enum MeetingNotificationType {

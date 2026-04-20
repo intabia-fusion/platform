@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import serverCore, { TriggerControl } from '@intabiafusion/server-core'
-import serverNotification from '@intabiafusion/server-notification'
-import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@intabiafusion/core'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import serverNotification from '@hcengineering/server-notification'
+import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
   getNotificationMessageId,
@@ -25,14 +25,14 @@ import notification, {
   notificationId,
   PushData,
   PushSubscription
-} from '@intabiafusion/notification'
-import activity, { ActivityMessage } from '@intabiafusion/activity'
-import serverView from '@intabiafusion/server-view'
-import { getMetadata, getResource } from '@intabiafusion/platform'
-import { workbenchId } from '@intabiafusion/workbench'
-import { encodeObjectURI } from '@intabiafusion/view'
-import { PersonSpace } from '@intabiafusion/contact'
-import chunter, { ThreadMessage } from '@intabiafusion/chunter'
+} from '@hcengineering/notification'
+import activity, { ActivityMessage } from '@hcengineering/activity'
+import serverView from '@hcengineering/server-view'
+import { getMetadata, getResource } from '@hcengineering/platform'
+import { workbenchId } from '@hcengineering/workbench'
+import { encodeObjectURI } from '@hcengineering/view'
+import { PersonSpace } from '@hcengineering/contact'
+import chunter, { ThreadMessage } from '@hcengineering/chunter'
 
 import { getTranslatedNotificationContent } from './utils'
 

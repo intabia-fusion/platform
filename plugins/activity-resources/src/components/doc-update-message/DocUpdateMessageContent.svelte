@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, Label } from '@intabiafusion/ui'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import activity, { DocUpdateMessage, DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@intabiafusion/activity'
-  import { createQuery, getClient, IconWithEmoji } from '@intabiafusion/presentation'
-  import { Doc } from '@intabiafusion/core'
-  import attachment from '@intabiafusion/attachment'
-  import view from '@intabiafusion/view'
+  import { Icon, Label } from '@hcengineering/ui'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import activity, { DocUpdateMessage, DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { Doc } from '@hcengineering/core'
+  import attachment from '@hcengineering/attachment'
+  import view from '@hcengineering/view'
 
   import DocUpdateMessageObjectValue from './DocUpdateMessageObjectValue.svelte'
 

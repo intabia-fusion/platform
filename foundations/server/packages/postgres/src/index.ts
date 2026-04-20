@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import { getDBClient, retryTxn } from '@intabiafusion/postgres-base'
-import type { WorkspaceDestroyAdapter } from '@intabiafusion/server-core'
+import { getDBClient, retryTxn } from '@hcengineering/postgres-base'
+import type { WorkspaceDestroyAdapter } from '@hcengineering/server-core'
 import { domainSchemas } from './schemas'
 
 export { domainSchemas, getDocFieldsByDomains, translateDomain, type FieldSchema, type Schema } from './schemas'
 export * from './storage'
 export { convertDoc, createTables } from './utils'
 
-export * from '@intabiafusion/postgres-base'
+export * from '@hcengineering/postgres-base'
 
 export function createPostgreeDestroyAdapter (url: string): WorkspaceDestroyAdapter {
   return {

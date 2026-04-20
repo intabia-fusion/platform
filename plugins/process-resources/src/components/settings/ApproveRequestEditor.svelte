@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import core, { AnyAttribute } from '@intabiafusion/core'
-  import { getAttributeEditor, getAttributePresenterClass, getClient } from '@intabiafusion/presentation'
-  import { ApproveRequest, parseContext, Process, Step } from '@intabiafusion/process'
-  import { AnySvelteComponent, Label, Toggle } from '@intabiafusion/ui'
+  import contact from '@hcengineering/contact'
+  import core, { AnyAttribute } from '@hcengineering/core'
+  import { getAttributeEditor, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
+  import { ApproveRequest, parseContext, Process, Step } from '@hcengineering/process'
+  import { AnySvelteComponent, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { getContext, getMockAttribute } from '../../utils'

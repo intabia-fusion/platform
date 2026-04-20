@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Event } from '@intabiafusion/calendar'
-import { MeasureContext, PersonId, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { MeetingEventLink, Room } from '@intabiafusion/love'
+import { Event } from '@hcengineering/calendar'
+import { MeasureContext, PersonId, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { MeetingEventLink, Room } from '@hcengineering/love'
 import { MeetingNotificationType } from '../notification'
 import { eventCreated, eventUpdated, eventDeleted, eventMixin } from '../handlers'
 import * as notification from '../notification'

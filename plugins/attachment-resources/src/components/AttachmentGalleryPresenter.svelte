@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Attachment } from '@intabiafusion/attachment'
-  import type { WithLookup } from '@intabiafusion/core'
-  import { getFileUrl } from '@intabiafusion/presentation'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { WithLookup } from '@hcengineering/core'
+  import { getFileUrl } from '@hcengineering/presentation'
   import filesize from 'filesize'
   import { getType, showAttachmentPreviewPopup } from '../utils'
 

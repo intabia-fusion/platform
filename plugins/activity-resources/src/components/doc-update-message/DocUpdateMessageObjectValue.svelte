@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@intabiafusion/activity'
+  import { DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
   import core, {
     Class,
     Doc,
@@ -24,12 +24,12 @@
     Timestamp,
     TxCreateDoc,
     TxProcessor
-  } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnyComponent, Component } from '@intabiafusion/ui'
-  import view, { ObjectPanel } from '@intabiafusion/view'
-  import { buildRemovedDoc, DocNavLink, getDocTitle, isAttachedDoc } from '@intabiafusion/view-resources'
-  import contact from '@intabiafusion/contact'
+  } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnyComponent, Component } from '@hcengineering/ui'
+  import view, { ObjectPanel } from '@hcengineering/view'
+  import { buildRemovedDoc, DocNavLink, getDocTitle, isAttachedDoc } from '@hcengineering/view-resources'
+  import contact from '@hcengineering/contact'
 
   export let message: DocUpdateMessageHistory
   export let space: Ref<Space>

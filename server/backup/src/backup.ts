@@ -33,12 +33,12 @@ import core, {
   type Tx,
   type TxCUD,
   type WorkspaceIds
-} from '@intabiafusion/core'
-import { type Person as GlobalPerson, type SocialId, type AccountDB } from '@intabiafusion/account'
-import contact, { type Person, type SocialIdentity, type SocialIdentityRef } from '@intabiafusion/contact'
-import { DOMAIN_CHANNEL, DOMAIN_CONTACT } from '@intabiafusion/model-contact'
-import { BlobClient } from '@intabiafusion/server-client'
-import { BackupClientOps, createDummyStorageAdapter, estimateDocSize, type Pipeline } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { type Person as GlobalPerson, type SocialId, type AccountDB } from '@hcengineering/account'
+import contact, { type Person, type SocialIdentity, type SocialIdentityRef } from '@hcengineering/contact'
+import { DOMAIN_CHANNEL, DOMAIN_CONTACT } from '@hcengineering/model-contact'
+import { BlobClient } from '@hcengineering/server-client'
+import { BackupClientOps, createDummyStorageAdapter, estimateDocSize, type Pipeline } from '@hcengineering/server-core'
 import { deepEqual } from 'fast-equals'
 import { createReadStream, createWriteStream, mkdtempSync } from 'node:fs'
 import { rm } from 'node:fs/promises'

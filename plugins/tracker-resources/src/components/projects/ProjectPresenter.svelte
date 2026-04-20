@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount, Ref } from '@intabiafusion/core'
-  import presentation, { createQuery, IconWithEmoji, isAdminUser } from '@intabiafusion/presentation'
-  import { Project } from '@intabiafusion/tracker'
-  import { Icon, Label, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { NavLink } from '@intabiafusion/view-resources'
+  import { getCurrentAccount, Ref } from '@hcengineering/core'
+  import presentation, { createQuery, IconWithEmoji, isAdminUser } from '@hcengineering/presentation'
+  import { Project } from '@hcengineering/tracker'
+  import { Icon, Label, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { NavLink } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
 
   export let value: Project | Ref<Project> | undefined

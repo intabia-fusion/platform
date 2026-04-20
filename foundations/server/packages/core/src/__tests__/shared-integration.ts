@@ -19,7 +19,7 @@
  *
  * Usage in your adapter test file:
  * ```typescript
- * import { runSharedIntegrationTests } from '@intabiafusion/server-core/src/__tests__/shared-integration.test'
+ * import { runSharedIntegrationTests } from '@hcengineering/server-core/src/__tests__/shared-integration.test'
  *
  * describe('My Adapter Tests', () => {
  *   // ... setup code ...
@@ -33,7 +33,7 @@
  * ```
  */
 
-import core, { type Client, type Ref, SortingOrder, type Space, type TxOperations } from '@intabiafusion/core'
+import core, { type Client, type Ref, SortingOrder, type Space, type TxOperations } from '@hcengineering/core'
 
 /**
  * Test context provided to the shared test suite

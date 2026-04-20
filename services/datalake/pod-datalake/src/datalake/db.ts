@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 import postgres, { Sql, type Row } from 'postgres'
 import { type Location, type UUID } from './types'
 import { type RetryOptions, retry } from './retry'

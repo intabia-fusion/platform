@@ -20,15 +20,15 @@
 
   import { onMount, onDestroy } from 'svelte'
   import { get } from 'svelte/store'
-  import { getEmbeddedLabel, getMetadata, IntlString } from '@intabiafusion/platform'
+  import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
   import love from '../../plugin'
   import { liveKitClient, lk } from '../../utils'
   import { lkSessionConnected } from '../../liveKitClient'
-  import { closePanel, CheckBox } from '@intabiafusion/ui'
+  import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
   import { RoomEvent } from 'livekit-client'
-  import { AuthLikeForm, Label } from '@intabiafusion/login-resources'
-  import { generateId } from '@intabiafusion/core'
+  import { AuthLikeForm, Label } from '@hcengineering/login-resources'
+  import { generateId } from '@hcengineering/core'
 
   export let meetingId: string | undefined
   export let guestToken: string | undefined

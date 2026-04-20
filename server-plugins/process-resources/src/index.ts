@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import cardPlugin, { Card } from '@intabiafusion/card'
+import cardPlugin, { Card } from '@hcengineering/card'
 import core, {
   ArrOf,
   Doc,
@@ -28,7 +28,7 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import process, {
   ContextId,
   Execution,
@@ -46,9 +46,9 @@ import process, {
   ApproveRequest,
   ExecutionStatus,
   Trigger
-} from '@intabiafusion/process'
-import { QueueTopic, TriggerControl } from '@intabiafusion/server-core'
-import { ProcessMessage } from '@intabiafusion/server-process'
+} from '@hcengineering/process'
+import { QueueTopic, TriggerControl } from '@hcengineering/server-core'
+import { ProcessMessage } from '@hcengineering/server-process'
 import {
   Absolute,
   Add,

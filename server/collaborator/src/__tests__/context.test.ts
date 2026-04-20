@@ -15,9 +15,9 @@
 
 import { buildContext } from '../context'
 import * as platformModule from '../platform'
-import type { WorkspaceIds } from '@intabiafusion/core'
+import type { WorkspaceIds } from '@hcengineering/core'
 
-jest.mock('@intabiafusion/server-token', () => ({
+jest.mock('@hcengineering/server-token', () => ({
   decodeToken: jest.fn()
 }))
 
@@ -25,7 +25,7 @@ jest.mock('../platform', () => ({
   simpleClientFactory: jest.fn()
 }))
 
-const mockDecodeToken = jest.requireMock('@intabiafusion/server-token').decodeToken
+const mockDecodeToken = jest.requireMock('@hcengineering/server-token').decodeToken
 const mockSimpleClientFactory = platformModule.simpleClientFactory as jest.MockedFunction<
   typeof platformModule.simpleClientFactory
 >

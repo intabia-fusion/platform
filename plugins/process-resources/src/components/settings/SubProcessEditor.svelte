@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card from '@intabiafusion/card'
-  import { Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Execution, ExecutionContext, parseContext, Process, Step } from '@intabiafusion/process'
-  import { DropdownLabels, DropdownTextItem, Label, Toggle } from '@intabiafusion/ui'
+  import card from '@hcengineering/card'
+  import { Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Execution, ExecutionContext, parseContext, Process, Step } from '@hcengineering/process'
+  import { DropdownLabels, DropdownTextItem, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { getContextMasterTag } from '../../utils'

@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { CheckBox, resizeObserver } from '@intabiafusion/ui'
+  import { CheckBox, resizeObserver } from '@hcengineering/ui'
   import BooleanPresenter from './BooleanPresenter.svelte'
 
   export let value: boolean | null | undefined

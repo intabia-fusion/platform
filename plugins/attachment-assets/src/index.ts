@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import attachment from '@intabiafusion/attachment'
-import { loadMetadata } from '@intabiafusion/platform'
+import attachment from '@hcengineering/attachment'
+import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(attachment.icon, {

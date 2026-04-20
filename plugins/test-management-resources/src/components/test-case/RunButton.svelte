@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery, Ref, Space, mergeQueries } from '@intabiafusion/core'
-  import { Button } from '@intabiafusion/ui'
-  import { selectionStore } from '@intabiafusion/view-resources'
-  import type { TestCase } from '@intabiafusion/test-management'
-  import { createQuery } from '@intabiafusion/presentation'
+  import { Doc, DocumentQuery, Ref, Space, mergeQueries } from '@hcengineering/core'
+  import { Button } from '@hcengineering/ui'
+  import { selectionStore } from '@hcengineering/view-resources'
+  import type { TestCase } from '@hcengineering/test-management'
+  import { createQuery } from '@hcengineering/presentation'
 
   import testManagement from '../../plugin'
   import { showCreateTestRunPanel } from '../../utils'

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import activity, { ActivityMessage } from '@intabiafusion/activity'
+import activity, { ActivityMessage } from '@hcengineering/activity'
 import chunter, {
   Chat,
   ChatMessage,
@@ -21,8 +21,8 @@ import chunter, {
   ChunterSpace,
   DirectMessage,
   ThreadMessage
-} from '@intabiafusion/chunter'
-import contact, { formatName, type Person } from '@intabiafusion/contact'
+} from '@hcengineering/chunter'
+import contact, { formatName, type Person } from '@hcengineering/contact'
 import core, {
   Class,
   concatLink,
@@ -45,19 +45,19 @@ import core, {
   SortingOrder,
   getClassCollaborators,
   AccountUuid
-} from '@intabiafusion/core'
-import notification, { DocNotifyContext } from '@intabiafusion/notification'
-import { getMetadata, translate } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import notification, { DocNotifyContext } from '@hcengineering/notification'
+import { getMetadata, translate } from '@hcengineering/platform'
 import {
   getAccountBySocialId,
   getAddCollaboratorsTxes,
   getPerson,
   getPersonSpaces
-} from '@intabiafusion/server-contact'
-import serverCore, { TriggerControl } from '@intabiafusion/server-core'
-import { workbenchId } from '@intabiafusion/workbench'
-import { encodeObjectURI } from '@intabiafusion/view'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+} from '@hcengineering/server-contact'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import { workbenchId } from '@hcengineering/workbench'
+import { encodeObjectURI } from '@hcengineering/view'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 import { JoinChannelTypeMatch } from './utils'
 

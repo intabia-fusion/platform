@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { DocumentQuery, Doc, Ref, Class, FindOptions } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
+import type { DocumentQuery, Doc, Ref, Class, FindOptions } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 
 export interface IteratorState<T extends Doc> {
   query: DocumentQuery<T>

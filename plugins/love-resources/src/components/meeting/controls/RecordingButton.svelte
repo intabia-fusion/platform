@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { ButtonBaseSize, ModernButton } from '@intabiafusion/ui'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { ButtonBaseSize, ModernButton } from '@hcengineering/ui'
   import { isRecording, isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'

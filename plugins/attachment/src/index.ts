@@ -14,12 +14,12 @@
 // limitations under the License.
 //
 
-import type { AttachedDoc, Blob, BlobMetadata, Class, Doc, Ref } from '@intabiafusion/core'
-import type { Asset, Plugin } from '@intabiafusion/platform'
-import { IntlString, plugin, Resource } from '@intabiafusion/platform'
-import type { Preference } from '@intabiafusion/preference'
-import { AnyComponent } from '@intabiafusion/ui'
-import { Widget } from '@intabiafusion/workbench'
+import type { AttachedDoc, Blob, BlobMetadata, Class, Doc, Ref } from '@hcengineering/core'
+import type { Asset, Plugin } from '@hcengineering/platform'
+import { IntlString, plugin, Resource } from '@hcengineering/platform'
+import type { Preference } from '@hcengineering/preference'
+import { AnyComponent } from '@hcengineering/ui'
+import { Widget } from '@hcengineering/workbench'
 
 export * from './analytics'
 

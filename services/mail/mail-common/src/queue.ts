@@ -1,7 +1,7 @@
 import { Kafka, Producer } from 'kafkajs'
-import { parseQueueConfig } from '@intabiafusion/kafka'
+import { parseQueueConfig } from '@hcengineering/kafka'
 import { BaseConfig } from './types'
-import { MeasureContext } from '@intabiafusion/core'
+import { MeasureContext } from '@hcengineering/core'
 
 let queueRegistry: KafkaQueueRegistry | undefined
 

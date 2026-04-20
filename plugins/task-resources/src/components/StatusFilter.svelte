@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, FindResult, IdMap, Ref, RefTo, Space, Status, toIdMap } from '@intabiafusion/core'
-  import { translate } from '@intabiafusion/platform'
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { ProjectStatus, ProjectType, TaskType } from '@intabiafusion/task'
+  import core, { Doc, FindResult, IdMap, Ref, RefTo, Space, Status, toIdMap } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
   import ui, {
     EditWithIcon,
     Icon,
@@ -28,16 +28,16 @@
     deviceOptionsStore,
     resizeObserver,
     themeStore
-  } from '@intabiafusion/ui'
-  import { Filter } from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import { Filter } from '@hcengineering/view'
   import {
     FILTER_DEBOUNCE_MS,
     FilterRemovedNotification,
     sortFilterValues,
     statusStore
-  } from '@intabiafusion/view-resources'
-  import view from '@intabiafusion/view-resources/src/plugin'
-  import { buildConfigLookup, getPresenter } from '@intabiafusion/view-resources/src/utils'
+  } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view-resources/src/plugin'
+  import { buildConfigLookup, getPresenter } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
   import { typesOfJoinedProjectsStore, selectedTaskTypeStore, selectedTypeStore, taskTypeStore, typeStore } from '..'
 

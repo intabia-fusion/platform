@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import type { AttributeModel } from '@intabiafusion/view'
+import type { AttributeModel } from '@hcengineering/view'
 import { modelToConfig } from '../model/tableModel'
 
-jest.mock('@intabiafusion/view-resources', () => ({
+jest.mock('@hcengineering/view-resources', () => ({
   buildModel: jest.fn(),
   buildConfigLookup: jest.fn()
 }))
 
-jest.mock('@intabiafusion/view', () => ({
+jest.mock('@hcengineering/view', () => ({
   default: {
     class: { Viewlet: 'view:class:Viewlet', ViewletPreference: 'view:class:ViewletPreference' },
     viewlet: { Table: 'view:viewlet:Table' }

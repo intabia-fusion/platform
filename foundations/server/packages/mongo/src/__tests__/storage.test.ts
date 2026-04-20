@@ -24,9 +24,9 @@ import core, {
   type Space,
   TxOperations,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { type DbAdapter, wrapAdapterToClient } from '@intabiafusion/server-core'
-import { runSharedIntegrationTests } from '@intabiafusion/server-core/src/__tests__/shared-integration'
+} from '@hcengineering/core'
+import { type DbAdapter, wrapAdapterToClient } from '@hcengineering/server-core'
+import { runSharedIntegrationTests } from '@hcengineering/server-core/src/__tests__/shared-integration'
 import { createMongoAdapter, createMongoTxAdapter } from '..'
 import { getMongoClient, type MongoClientReference, shutdownMongo } from '../utils'
 import { genMinModel } from './minmodel'

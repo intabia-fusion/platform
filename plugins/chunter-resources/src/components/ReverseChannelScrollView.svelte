@@ -13,21 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
   import {
     ActivityMessagePresenter,
     canGroupMessages,
     messageInFocus,
     editingMessageStore,
     clearMessageInLocation
-  } from '@intabiafusion/activity-resources'
-  import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@intabiafusion/core'
-  import { DocNotifyContext, ReadState } from '@intabiafusion/notification'
-  import { InboxNotificationsClientImpl } from '@intabiafusion/notification-resources'
-  import { addTxListener, getClient, removeTxListener } from '@intabiafusion/presentation'
-  import { ModernButton, Scroller, Loading } from '@intabiafusion/ui'
+  } from '@hcengineering/activity-resources'
+  import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
+  import { DocNotifyContext, ReadState } from '@hcengineering/notification'
+  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
+  import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
-  import { ChatMessage } from '@intabiafusion/chunter'
+  import { ChatMessage } from '@hcengineering/chunter'
 
   import { ChannelDataProvider, MessageMetadata } from '../channelDataProvider'
   import chunter from '../plugin'

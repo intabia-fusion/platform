@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/communication-types'
+  import { Attachment } from '@hcengineering/communication-types'
 
   import AttachmentName from './AttachmentName.svelte'
 

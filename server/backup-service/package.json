@@ -1,11 +1,11 @@
 {
-  "name": "@intabiafusion/backup-service",
-  "version": "1.0.0",
+  "name": "@hcengineering/backup-service",
+  "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@intabiafusion/node-package",
+  "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -19,7 +19,7 @@
     "_phase:validate": "compile validate"
   },
   "devDependencies": {
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.1.1",
@@ -36,19 +36,19 @@
     "@types/jest": "^29.5.5"
   },
   "dependencies": {
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/contact": "workspace:^1.0.0",
-    "@intabiafusion/client-resources": "workspace:^1.0.0",
-    "@intabiafusion/client": "workspace:^1.0.0",
-    "@intabiafusion/model": "workspace:^1.0.0",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/contact": "workspace:^0.7.0",
+    "@hcengineering/client-resources": "workspace:^0.7.18",
+    "@hcengineering/client": "workspace:^0.7.18",
+    "@hcengineering/model": "workspace:^0.7.17",
     "tar-stream": "^3.1.7",
-    "@intabiafusion/server-tool": "workspace:^1.0.0",
-    "@intabiafusion/server-core": "workspace:^1.0.0",
-    "@intabiafusion/server-storage": "workspace:^1.0.0",
-    "@intabiafusion/server-backup": "workspace:^1.0.0",
-    "@intabiafusion/minio": "workspace:^1.0.0",
-    "@intabiafusion/server-token": "workspace:^1.0.0",
-    "@intabiafusion/server-client": "workspace:^1.0.0"
+    "@hcengineering/server-tool": "workspace:^0.7.0",
+    "@hcengineering/server-core": "workspace:^0.7.18",
+    "@hcengineering/server-storage": "workspace:^0.7.17",
+    "@hcengineering/server-backup": "workspace:^0.7.0",
+    "@hcengineering/minio": "workspace:^0.7.17",
+    "@hcengineering/server-token": "workspace:^0.7.17",
+    "@hcengineering/server-client": "workspace:^0.7.17"
   }
 }

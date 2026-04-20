@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Component, Issue, Project } from '@intabiafusion/tracker'
-  import { Button, Grid, IconArrowRight, Label, eventToHTMLElement, showPopup } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { Component, Issue, Project } from '@hcengineering/tracker'
+  import { Button, Grid, IconArrowRight, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
 
   import tracker from '../../../plugin'
   import { ComponentToUpdate } from '../../../utils'

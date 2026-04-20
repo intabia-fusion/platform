@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref, Doc } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import task, { Project } from '@intabiafusion/task'
+  import { Ref, Doc } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import task, { Project } from '@hcengineering/task'
   import {
     ModeSelector,
     Separator,
@@ -27,18 +27,18 @@
     Breadcrumbs,
     getPlatformColorDef,
     getPlatformColorForTextDef
-  } from '@intabiafusion/ui'
-  import type { BreadcrumbItem } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
+  import type { BreadcrumbItem } from '@hcengineering/ui'
   import time from '../../plugin'
   import { teamSeparators } from '../../utils'
   import TeamNavigator from './TeamNavigator.svelte'
   import Agenda from './agenda/Agenda.svelte'
   import Calendar from './calendar/Calendar.svelte'
-  import { IconWithEmoji, getClient } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { Analytics } from '@intabiafusion/analytics'
-  import tracker, { Project as Proj } from '@intabiafusion/tracker'
-  import { TimeEvents } from '@intabiafusion/time'
+  import { IconWithEmoji, getClient } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { Analytics } from '@hcengineering/analytics'
+  import tracker, { Project as Proj } from '@hcengineering/tracker'
+  import { TimeEvents } from '@hcengineering/time'
 
   const client = getClient()
 

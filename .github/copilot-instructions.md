@@ -38,8 +38,8 @@ rush add -p PKG      # Add dependency
 
 ```bash
 # Build Docker images for specific service
-rush docker:build --to @intabiafusion/pod-ai-bot
-rush docker:build --to @intabiafusion/love-agent
+rush docker:build --to @hcengineering/pod-ai-bot
+rush docker:build --to @hcengineering/love-agent
 
 # Restart Docker containers to use new images
 docker compose -f dev/docker-compose.yaml restart aibot
@@ -60,7 +60,7 @@ Example for ai-bot service:
 cd services/ai-bot/pod-ai-bot
 diagnostics path: "services/ai-bot/pod-ai-bot/src/workspace/love.ts"
 cd ../../..
-rush docker:build --to @intabiafusion/pod-ai-bot
+rush docker:build --to @hcengineering/pod-ai-bot
 docker compose -f dev/docker-compose.yaml restart aibot
 ```
 

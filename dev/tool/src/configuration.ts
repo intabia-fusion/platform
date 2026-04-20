@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import core, { type BackupClient, type Client as CoreClient, TxFactory, type WorkspaceUuid } from '@intabiafusion/core'
-import { connect } from '@intabiafusion/server-tool'
+import core, { type BackupClient, type Client as CoreClient, TxFactory, type WorkspaceUuid } from '@hcengineering/core'
+import { connect } from '@hcengineering/server-tool'
 
 function toLen (val: string, sep: string, len: number): string {
   while (val.length < len) {

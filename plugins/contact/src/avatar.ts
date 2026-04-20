@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type Data, type Ref, TxOperations } from '@intabiafusion/core'
-import type { ColorDefinition } from '@intabiafusion/ui'
-import { getMetadata, getResource } from '@intabiafusion/platform'
+import { type Data, type Ref, TxOperations } from '@hcengineering/core'
+import type { ColorDefinition } from '@hcengineering/ui'
+import { getMetadata, getResource } from '@hcengineering/platform'
 import contact, { AvatarInfo, AvatarProvider, getAvatarProviderId, getFirstName, getLastName } from '.'
 
 export interface AvatarUrlInfo {

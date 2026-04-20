@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import workbench from '@intabiafusion/workbench'
+import { loadMetadata } from '@hcengineering/platform'
+import workbench from '@hcengineering/workbench'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(workbench.icon, {

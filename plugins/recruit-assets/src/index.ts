@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import recruit from '@intabiafusion/recruit'
+import { loadMetadata } from '@hcengineering/platform'
+import recruit from '@hcengineering/recruit'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(recruit.icon, {

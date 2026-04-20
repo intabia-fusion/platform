@@ -1,4 +1,4 @@
-# Change Log - @intabiafusion/retry
+# Change Log - @hcengineering/retry
 
 This log was last generated on Tue, 14 Oct 2025 04:58:17 GMT and should not be manually modified.
 

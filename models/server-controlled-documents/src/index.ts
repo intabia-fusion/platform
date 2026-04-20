@@ -1,17 +1,17 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
 //
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/core'
-import serverCore from '@intabiafusion/server-core'
-import { RequestStatus } from '@intabiafusion/request'
-import documents, { DocumentState } from '@intabiafusion/controlled-documents'
-import serverDocuments from '@intabiafusion/server-controlled-documents'
-import serverNotification from '@intabiafusion/server-notification'
-import notification from '@intabiafusion/notification'
-import serverActivity from '@intabiafusion/server-activity'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/core'
+import serverCore from '@hcengineering/server-core'
+import { RequestStatus } from '@hcengineering/request'
+import documents, { DocumentState } from '@hcengineering/controlled-documents'
+import serverDocuments from '@hcengineering/server-controlled-documents'
+import serverNotification from '@hcengineering/server-notification'
+import notification from '@hcengineering/notification'
+import serverActivity from '@hcengineering/server-activity'
 
-export { serverDocumentsId } from '@intabiafusion/server-controlled-documents/src/index'
+export { serverDocumentsId } from '@hcengineering/server-controlled-documents/src/index'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

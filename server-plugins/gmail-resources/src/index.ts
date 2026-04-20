@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import contact, { Channel, Employee, Person, SocialIdentity } from '@intabiafusion/contact'
+import contact, { Channel, Employee, Person, SocialIdentity } from '@hcengineering/contact'
 import {
   AccountUuid,
   Class,
@@ -30,15 +30,15 @@ import {
   TxCreateDoc,
   TxProcessor,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import gmail, { Message } from '@intabiafusion/gmail'
-import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@intabiafusion/server-core'
-import { InboxNotification, NotificationType } from '@intabiafusion/notification'
-import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@intabiafusion/server-notification'
-import { getMetadata } from '@intabiafusion/platform'
-import { ActivityMessage, DocUpdateMessage } from '@intabiafusion/activity'
-import { getEmployeeByAcc } from '@intabiafusion/server-contact'
-import { getContentByTemplate, getNotificationMessages } from '@intabiafusion/server-notification-resources'
+} from '@hcengineering/core'
+import gmail, { Message } from '@hcengineering/gmail'
+import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
+import { InboxNotification, NotificationType } from '@hcengineering/notification'
+import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
+import { getMetadata } from '@hcengineering/platform'
+import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { getEmployeeByAcc } from '@hcengineering/server-contact'
+import { getContentByTemplate, getNotificationMessages } from '@hcengineering/server-notification-resources'
 
 async function FindMessages (
   doc: Doc,

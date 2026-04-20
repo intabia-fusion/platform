@@ -15,7 +15,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import {
     Button,

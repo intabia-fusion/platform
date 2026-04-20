@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { Label, Section, Scroller } from '@intabiafusion/ui'
-  import { Table, ViewletsSettingButton } from '@intabiafusion/view-resources'
-  import { Viewlet, ViewletPreference } from '@intabiafusion/view'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { Label, Section, Scroller } from '@hcengineering/ui'
+  import { Table, ViewletsSettingButton } from '@hcengineering/view-resources'
+  import { Viewlet, ViewletPreference } from '@hcengineering/view'
 
   import love from '../plugin'
 

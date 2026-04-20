@@ -18,16 +18,16 @@
     getClient,
     type LinkPreviewDetails,
     LinkPreviewAttachmentMetadata
-  } from '@intabiafusion/presentation'
-  import { type Attachment } from '@intabiafusion/attachment'
-  import { type WithLookup } from '@intabiafusion/core'
+  } from '@hcengineering/presentation'
+  import { type Attachment } from '@hcengineering/attachment'
+  import { type WithLookup } from '@hcengineering/core'
   import { onMount } from 'svelte'
 
   import TrashIcon from './icons/Trash.svelte'
   import { getImageDimensions } from '../utils'
   import LinkPreviewIcon from './LinkPreviewIcon.svelte'
   import LinkPreviewImage from './LinkPreviewImage.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let attachment: WithLookup<Attachment>
   export let isOwn = false

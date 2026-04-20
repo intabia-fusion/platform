@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Location, location, locationStorageKeyId, locationToUrl, navigate } from '@intabiafusion/ui'
+  import { Location, location, locationStorageKeyId, locationToUrl, navigate } from '@hcengineering/ui'
   import { setFilters } from '../../filter'
 
   export let app: string | undefined = undefined

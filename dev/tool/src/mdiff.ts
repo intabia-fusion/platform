@@ -8,7 +8,7 @@ import core, {
   type Ref,
   type Tx,
   type Type
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import { deepEqual } from 'fast-equals'
 
 /**

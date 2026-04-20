@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { createStore } from 'effector'
-import { type Document, type DocumentSnapshot } from '@intabiafusion/controlled-documents'
+import { type Document, type DocumentSnapshot } from '@hcengineering/controlled-documents'
 import { comparisonCleared, comparisonRequested, controlledDocumentClosed } from './actions'
 
 export const $comparedDocument = createStore<Document | DocumentSnapshot | null>(null)

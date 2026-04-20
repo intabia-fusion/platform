@@ -14,16 +14,16 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import contact from '@intabiafusion/contact'
-import core from '@intabiafusion/core'
-import serverContact from '@intabiafusion/server-contact'
-import serverCore from '@intabiafusion/server-core'
-import serverActivity from '@intabiafusion/server-activity'
-import serverTemplates from '@intabiafusion/server-templates'
-import templates from '@intabiafusion/templates'
-export { serverContactId } from '@intabiafusion/server-contact'
+import contact from '@hcengineering/contact'
+import core from '@hcengineering/core'
+import serverContact from '@hcengineering/server-contact'
+import serverCore from '@hcengineering/server-core'
+import serverActivity from '@hcengineering/server-activity'
+import serverTemplates from '@hcengineering/server-templates'
+import templates from '@hcengineering/templates'
+export { serverContactId } from '@hcengineering/server-contact'
 
 export function createModel (builder: Builder): void {
   builder.mixin(contact.class.Person, core.class.Class, serverActivity.mixin.UrlPresenter, {

@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import activity from '@intabiafusion/activity'
-import { loadMetadata } from '@intabiafusion/platform'
+import activity from '@hcengineering/activity'
+import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(activity.icon, {

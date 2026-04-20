@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getResource, translate } from '@intabiafusion/platform'
-  import { ComponentExtensions, getClient, reduceCalls } from '@intabiafusion/presentation'
+  import { Asset, getResource, translate } from '@hcengineering/platform'
+  import { ComponentExtensions, getClient, reduceCalls } from '@hcengineering/presentation'
   import {
     AnySvelteComponent,
     closePanel,
@@ -24,10 +24,10 @@
     locationToUrl,
     ModernTab,
     navigate
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { showMenu } from '@intabiafusion/view-resources'
-  import { WorkbenchTab } from '@intabiafusion/workbench'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { showMenu } from '@hcengineering/view-resources'
+  import { WorkbenchTab } from '@hcengineering/workbench'
 
   import workbench from '../plugin'
   import { closeTab, getTabDataByLocation, getTabLocation, selectTab, tabIdStore, tabsStore } from '../workbench'

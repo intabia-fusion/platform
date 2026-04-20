@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Card } from '@intabiafusion/card'
+  import { Card } from '@hcengineering/card'
   import {
     type Message,
     type NotificationContext,
@@ -20,17 +20,17 @@
     NotificationType,
     Notification,
     Window
-  } from '@intabiafusion/communication-types'
+  } from '@hcengineering/communication-types'
   import {
     createMessagesQuery,
     createNotificationsQuery,
     getCommunicationClient,
     type MessageQueryParams
-  } from '@intabiafusion/presentation'
-  import { SortingOrder, getCurrentAccount } from '@intabiafusion/core'
+  } from '@hcengineering/presentation'
+  import { SortingOrder, getCurrentAccount } from '@hcengineering/core'
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
-  import { deviceOptionsStore as deviceInfo, isAppFocusedStore } from '@intabiafusion/ui'
-  import { translationStore } from '@intabiafusion/contact-resources'
+  import { deviceOptionsStore as deviceInfo, isAppFocusedStore } from '@hcengineering/ui'
+  import { translationStore } from '@hcengineering/contact-resources'
 
   import { createMessagesObserver, getGroupDay, groupMessagesByDay, MessagesGroup } from '../messages'
   import MessagesGroupPresenter from './message/MessagesGroupPresenter.svelte'

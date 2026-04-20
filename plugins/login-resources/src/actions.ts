@@ -1,8 +1,8 @@
 import { goTo } from './utils'
 import login from './plugin'
 import { type BottomAction } from '.'
-import { setMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
+import { setMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
 
 export const signUpAction: BottomAction = {
   caption: login.string.DoNotHaveAnAccount,

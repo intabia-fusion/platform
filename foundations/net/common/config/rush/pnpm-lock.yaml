@@ -12,13 +12,13 @@ importers:
 
   ../../examples:
     dependencies:
-      '@intabiafusion/network-client':
+      '@hcengineering/network-client':
         specifier: workspace:^0.7.10
         version: link:../packages/client
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../packages/core
-      '@intabiafusion/network-server':
+      '@hcengineering/network-server':
         specifier: workspace:^0.7.10
         version: link:../packages/server
     devDependencies:
@@ -34,7 +34,7 @@ importers:
 
   ../../packages/backrpc:
     dependencies:
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../core
       uuid:
@@ -44,7 +44,7 @@ importers:
         specifier: ^6.5.0
         version: 6.5.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -95,17 +95,17 @@ importers:
 
   ../../packages/client:
     dependencies:
-      '@intabiafusion/network-backrpc':
+      '@hcengineering/network-backrpc':
         specifier: workspace:^0.7.10
         version: link:../backrpc
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../core
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -160,7 +160,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -211,20 +211,20 @@ importers:
 
   ../../packages/server:
     dependencies:
-      '@intabiafusion/network-backrpc':
+      '@hcengineering/network-backrpc':
         specifier: workspace:^0.7.10
         version: link:../backrpc
-      '@intabiafusion/network-client':
+      '@hcengineering/network-client':
         specifier: workspace:^0.7.10
         version: link:../client
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../core
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -275,17 +275,17 @@ importers:
 
   ../../pods/network-pod:
     dependencies:
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../../packages/core
-      '@intabiafusion/network-server':
+      '@hcengineering/network-server':
         specifier: workspace:^0.7.10
         version: link:../../packages/server
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -342,10 +342,10 @@ importers:
 
   ../../pods/network-tool:
     dependencies:
-      '@intabiafusion/network-client':
+      '@hcengineering/network-client':
         specifier: workspace:^0.7.10
         version: link:../../packages/client
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../../packages/core
       commander:
@@ -358,7 +358,7 @@ importers:
         specifier: ^6.5.0
         version: 6.5.0
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/jest':
@@ -415,14 +415,14 @@ importers:
 
   ../../tests:
     dependencies:
-      '@intabiafusion/network-client':
+      '@hcengineering/network-client':
         specifier: workspace:^0.7.10
         version: link:../packages/client
-      '@intabiafusion/network-core':
+      '@hcengineering/network-core':
         specifier: workspace:^0.7.10
         version: link:../packages/core
     devDependencies:
-      '@intabiafusion/platform-rig':
+      '@hcengineering/platform-rig':
         specifier: ^0.7.8
         version: 0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       '@types/body-parser':
@@ -984,7 +984,7 @@ packages:
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  '@intabiafusion/platform-rig@0.7.8':
+  '@hcengineering/platform-rig@0.7.8':
     resolution: {integrity: sha512-w19uz2e+pCsn6nuDGvpw5Gl33foVMYo6FaHRL1icVDAxaA9RMRE3SNYuroxOv4XzjNu/mhFo9XU6QuJB2ta1Xg==}
     hasBin: true
     peerDependencies:
@@ -3324,7 +3324,7 @@ snapshots:
 
   '@eslint/js@8.57.1': {}
 
-  '@intabiafusion/platform-rig@0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)':
+  '@hcengineering/platform-rig@0.7.8(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint-config-standard-with-typescript@40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.2))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)':
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2)
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.9.2)

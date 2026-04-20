@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Class, Ref, WithLookup } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { ControlledDocument, DocumentApprovalRequest } from '@intabiafusion/controlled-documents'
+  import { Class, Ref, WithLookup } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ControlledDocument, DocumentApprovalRequest } from '@hcengineering/controlled-documents'
 
   import EditDoc from '../EditDoc.svelte'
 

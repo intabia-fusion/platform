@@ -13,23 +13,23 @@
 // limitations under the License.
 //
 
-import { type Builder, Mixin } from '@intabiafusion/model'
-import serverCore from '@intabiafusion/server-core'
-import core from '@intabiafusion/core'
+import { type Builder, Mixin } from '@hcengineering/model'
+import serverCore from '@hcengineering/server-core'
+import core from '@hcengineering/core'
 import serverActivity, {
   type IdentifierPresenter,
   type Presenter,
   type TitlePresenter,
   type UrlPresenter
-} from '@intabiafusion/server-activity'
-import { TClass } from '@intabiafusion/model-core'
-import activity from '@intabiafusion/activity'
-import notification from '@intabiafusion/notification'
-import card from '@intabiafusion/card'
-import type { Resource } from '@intabiafusion/platform'
+} from '@hcengineering/server-activity'
+import { TClass } from '@hcengineering/model-core'
+import activity from '@hcengineering/activity'
+import notification from '@hcengineering/notification'
+import card from '@hcengineering/card'
+import type { Resource } from '@hcengineering/platform'
 
 export { activityServerOperation } from './migration'
-export { serverActivityId } from '@intabiafusion/server-activity'
+export { serverActivityId } from '@hcengineering/server-activity'
 
 @Mixin(serverActivity.mixin.TitlePresenter, core.class.Class)
 export class TTitlePresenter extends TClass implements TitlePresenter {

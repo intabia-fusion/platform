@@ -2,15 +2,15 @@
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import core from '@intabiafusion/core'
-import serverCore from '@intabiafusion/server-core'
-import serverGithub from '@intabiafusion/server-github'
-import time from '@intabiafusion/time'
-import tracker from '@intabiafusion/tracker'
+import core from '@hcengineering/core'
+import serverCore from '@hcengineering/server-core'
+import serverGithub from '@hcengineering/server-github'
+import time from '@hcengineering/time'
+import tracker from '@hcengineering/tracker'
 
-export { serverGithubId } from '@intabiafusion/server-github'
+export { serverGithubId } from '@hcengineering/server-github'
 
 export function createModel (builder: Builder): void {
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

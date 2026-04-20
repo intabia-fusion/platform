@@ -7,7 +7,7 @@ import {
   nodeParagraph,
   nodeReference,
   nodeText
-} from '@intabiafusion/text-core'
+} from '@hcengineering/text-core'
 import { jsonToHTML } from '../utils'
 
 describe('dsl', () => {

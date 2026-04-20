@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@intabiafusion/activity'
-  import chunter from '@intabiafusion/chunter'
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { DocNotifyContext, InboxNotification, notificationId } from '@intabiafusion/notification'
-  import { ActionContext, getClient } from '@intabiafusion/presentation'
+  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import chunter from '@hcengineering/chunter'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
+  import { ActionContext, getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
     closePanel,
@@ -33,11 +33,11 @@
     Separator,
     TabItem,
     TabList
-  } from '@intabiafusion/ui'
-  import view, { decodeObjectURI } from '@intabiafusion/view'
-  import { parseLinkId } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view, { decodeObjectURI } from '@hcengineering/view'
+  import { parseLinkId } from '@hcengineering/view-resources'
   import { get } from 'svelte/store'
-  import { getResource } from '@intabiafusion/platform'
+  import { getResource } from '@hcengineering/platform'
 
   import { InboxNotificationsClientImpl } from '../../inboxNotificationsClient'
   import notification from '../../plugin'

@@ -1,9 +1,9 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
 //
-import { Analytics } from '@intabiafusion/analytics'
-import { configureAnalytics, SplitLogger } from '@intabiafusion/analytics-service'
-import { MeasureMetricsContext, metricsToString, newMetrics } from '@intabiafusion/core'
+import { Analytics } from '@hcengineering/analytics'
+import { configureAnalytics, SplitLogger } from '@hcengineering/analytics-service'
+import { MeasureMetricsContext, metricsToString, newMetrics } from '@hcengineering/core'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import { serveStats } from './stats'

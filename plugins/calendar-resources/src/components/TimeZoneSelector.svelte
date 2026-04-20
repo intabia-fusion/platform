@@ -21,7 +21,7 @@
     eventToHTMLElement,
     getTimeZoneName,
     showPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import calendar from '../plugin'
 
   export let timeZone: string

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
   import NumberEditor from './NumberEditor.svelte'
-  import { AnyAttribute } from '@intabiafusion/core'
+  import { AnyAttribute } from '@hcengineering/core'
 
   export let value: number | undefined
   export let label: IntlString

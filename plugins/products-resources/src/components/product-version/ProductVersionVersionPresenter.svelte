@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import { ProductVersion } from '@intabiafusion/products'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { ProductVersion } from '@hcengineering/products'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import { getProductVersionVersion } from '../../utils'
 

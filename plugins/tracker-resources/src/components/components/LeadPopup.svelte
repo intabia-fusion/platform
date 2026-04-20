@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@intabiafusion/contact'
-  import { Avatar } from '@intabiafusion/contact-resources'
-  import { Label } from '@intabiafusion/ui'
+  import { Employee } from '@hcengineering/contact'
+  import { Avatar } from '@hcengineering/contact-resources'
+  import { Label } from '@hcengineering/ui'
   import tracker from '../../plugin'
 
   export let lead: Employee

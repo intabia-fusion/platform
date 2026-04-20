@@ -1,4 +1,4 @@
-# Foundation is a fork of hcengineering Platform targeting stability and enhancements in Tracker and other components.
+# Foundation is an evolution of hcengineering Platform - extended and improved, with a focus on stability and enhancements in Tracker and other components.
 
 ![GitHub License](https://img.shields.io/github/license/intabia-fusion/foundation?style=for-the-badge)
 
@@ -6,14 +6,14 @@
 
 ## About
 
-A fork of hcengineering/platform will be improved and maintained by a group of developer.
+An evolution of hcengineering/platform - extended, improved, and maintained by a group of developers.
 
 ## Overview
 The Platform is a robust framework designed to accelerate the development of business applications, such as CRM systems.
 This repository includes several applications, such as Chat, Project Management, CRM, HRM, and ATS.
 
 ## Differences
-This is a fork of the Platform. For a concise list of how this branch differs from the original repository, see the `features.md` file at the repository root. It lists the main changes: new packages for media and streaming (for example, `foundations/hulylake`, `packages/audio-dsp`), updates to Docker images and local build scripts, removal of some legacy plugins, and other improvements.
+Foundation evolves the Platform. For a concise list of how this branch differs from the original repository, see the `features.md` file at the repository root. It lists the main changes: new packages for media and streaming (for example, `foundations/hulylake`, `packages/audio-dsp`), updates to Docker images and local build scripts, removal of some legacy plugins, and other improvements.
 
 ## Self-Hosting
 
@@ -22,8 +22,40 @@ If you're primarily interested in self-hosting Foundation or moving from hcengin
 
 ## API Client
 
-If you want to interact with Foundation programmatically, please wait, packages will be ready soon. API mostly will be compativly with Platform on initial steps, 
-and may stay same or with minimal changes for make it stable.
+Foundation ships a single npm bundle for programmatic access:
+[`@intabia-fusion/api`](https://www.npmjs.com/package/@intabia-fusion/api).
+
+- Connect to a workspace, read and write documents via REST, subscribe to
+  reactive updates over WebSocket (LiveQuery).
+- Flat subpath exports mirror source packages:
+  `@intabia-fusion/api/api-client`, `@intabia-fusion/api/core`,
+  `@intabia-fusion/api/tracker`, `@intabia-fusion/api/contact`,
+  `@intabia-fusion/api/chunter`, `@intabia-fusion/api/query`, etc.
+
+```bash
+npm install @intabia-fusion/api ws
+```
+
+```ts
+import { NodeWebSocketFactory, connect } from '@intabia-fusion/api/api-client'
+import tracker from '@intabia-fusion/api/tracker'
+
+const client = await connect('http://localhost:8087', {
+  email: 'user1', password: '1234', workspace: 'ws1',
+  socketFactory: NodeWebSocketFactory, connectionTimeout: 30000
+})
+const issues = await client.findAll(tracker.class.Issue, {})
+await client.close()
+```
+
+Sources and build pipeline: [`dev/api`](./dev/api/README.md) (build with
+`node scripts/build-bundle.js` + `tsc` + `npm pack`, configuration in
+`dev/api/config.yml`).
+
+Runnable examples:
+[`intabia-fusion/platform-examples`](https://github.com/intabia-fusion/platform-examples/tree/main/platform-api)
+(tracker, contact, chunter, documents, WebSocket live-query). API is mostly
+compatible with upstream Platform and is kept stable between minor versions.
 
 ## Changelog
 
@@ -37,7 +69,7 @@ The Platform uses two types of version tags to distinguish between production-re
   - Example: `v0.7.310`, `v0.7.307`, `v0.6.501`
   - These versions are recommended for production deployments
   - Suitable for self-hosted installations
-  - Published with release notes on [GitHub Releases](https://github.com/intabia-fusion/foundation/releases)
+  - Published with release notes on [GitHub Releases](https://github.com/hcengineering/platform/releases)
 
 - **Development Versions (`s*`)** - Pre-release builds for developers
   - Example: `s0.7.313`, `s0.7.292`, `s0.7.288`

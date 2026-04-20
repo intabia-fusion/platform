@@ -21,8 +21,8 @@ import core, {
   toIdMap,
   type Tx,
   type TxUpdateDoc
-} from '@intabiafusion/core'
-import { getResourcePlugin, type Plugin, type Resource } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { getResourcePlugin, type Plugin, type Resource } from '@hcengineering/platform'
 import { writable } from 'svelte/store'
 import { addTxListener, createQuery } from '.'
 

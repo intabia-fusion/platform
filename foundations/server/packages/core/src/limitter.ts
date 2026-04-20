@@ -1,1 +1,1 @@
-export { RateLimiter } from '@intabiafusion/core'
+export { RateLimiter } from '@hcengineering/core'

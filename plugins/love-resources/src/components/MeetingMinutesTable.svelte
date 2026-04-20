@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Floor, Room } from '@intabiafusion/love'
-  import { Component } from '@intabiafusion/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@intabiafusion/view'
-  import core, { WithLookup } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
+  import { Floor, Room } from '@hcengineering/love'
+  import { Component } from '@hcengineering/ui'
+  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import core, { WithLookup } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
 
   import lovePlg from '../plugin'
 

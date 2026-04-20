@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Icon, IconDelete, Label, tooltip, IconAdd, Component } from '@intabiafusion/ui'
-  import { ActivityTagUpdate, Markdown } from '@intabiafusion/communication-types'
-  import cardPlugin, { Tag } from '@intabiafusion/card'
+  import { getClient } from '@hcengineering/presentation'
+  import { Icon, IconDelete, Label, tooltip, IconAdd, Component } from '@hcengineering/ui'
+  import { ActivityTagUpdate, Markdown } from '@hcengineering/communication-types'
+  import cardPlugin, { Tag } from '@hcengineering/card'
 
   import communication from '../../../plugin'
 

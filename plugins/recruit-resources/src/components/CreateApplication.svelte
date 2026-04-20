@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyledBox } from '@intabiafusion/attachment-resources'
-  import chunter from '@intabiafusion/chunter'
-  import type { Contact, Employee, Person } from '@intabiafusion/contact'
-  import contact from '@intabiafusion/contact'
-  import { EmployeeBox, ExpandRightDouble, UserBox } from '@intabiafusion/contact-resources'
+  import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import chunter from '@hcengineering/chunter'
+  import type { Contact, Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import { EmployeeBox, ExpandRightDouble, UserBox } from '@hcengineering/contact-resources'
   import core, {
     AccountRole,
     Class,
@@ -33,19 +33,19 @@
     generateId,
     getCurrentAccount,
     hasAccountRole
-  } from '@intabiafusion/core'
-  import { OK, Resource, Severity, Status, getResource } from '@intabiafusion/platform'
+  } from '@hcengineering/core'
+  import { OK, Resource, Severity, Status, getResource } from '@hcengineering/platform'
   import presentation, {
     Card,
     InlineAttributeBar,
     SpaceSelect,
     createQuery,
     getClient
-  } from '@intabiafusion/presentation'
-  import { recruitId, type Applicant, type Candidate, type Vacancy, RecruitEvents } from '@intabiafusion/recruit'
-  import { TaskType, getStates } from '@intabiafusion/task'
-  import { TaskKindSelector, selectedTypeStore, typeStore } from '@intabiafusion/task-resources'
-  import { EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
+  } from '@hcengineering/presentation'
+  import { recruitId, type Applicant, type Candidate, type Vacancy, RecruitEvents } from '@hcengineering/recruit'
+  import { TaskType, getStates } from '@hcengineering/task'
+  import { TaskKindSelector, selectedTypeStore, typeStore } from '@hcengineering/task-resources'
+  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import ui, {
     Button,
     ColorPopup,
@@ -58,15 +58,15 @@
     getPlatformColorDef,
     showPopup,
     themeStore
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import recruit from '../plugin'
   import CandidateCard from './CandidateCard.svelte'
   import VacancyCard from './VacancyCard.svelte'
   import VacancyOrgPresenter from './VacancyOrgPresenter.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
   import { getCandidateIdentifier, getSequenceId } from '../utils'
 
   export let space: Ref<Vacancy>

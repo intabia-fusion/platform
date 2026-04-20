@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient, ObjectPopup } from '@intabiafusion/presentation'
-  import { Card } from '@intabiafusion/card'
-  import { Class, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Label } from '@intabiafusion/ui'
+  import { getClient, ObjectPopup } from '@hcengineering/presentation'
+  import { Card } from '@hcengineering/card'
+  import { Class, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import CardPresenter from './CardPresenter.svelte'
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Ref, IntegrationKind } from '@intabiafusion/core'
-import { type Plugin, plugin } from '@intabiafusion/platform'
-import type { Handler, IntegrationType } from '@intabiafusion/setting'
-import type { AnyComponent } from '@intabiafusion/ui'
+import type { Ref, IntegrationKind } from '@hcengineering/core'
+import { type Plugin, plugin } from '@hcengineering/platform'
+import type { Handler, IntegrationType } from '@hcengineering/setting'
+import type { AnyComponent } from '@hcengineering/ui'
 
 /**
  * @public

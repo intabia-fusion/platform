@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import core, { ClassifierKind, Ref, WithLookup, generateId } from '@intabiafusion/core'
-  import { getEmbeddedLabel, getMetadata, translate } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import task, { TaskType, updateProjectType, type TaskStatusFactory } from '@intabiafusion/task'
-  import tracker, { Project, createStatesData } from '@intabiafusion/tracker'
+  import { Analytics } from '@hcengineering/analytics'
+  import core, { ClassifierKind, Ref, WithLookup, generateId } from '@hcengineering/core'
+  import { getEmbeddedLabel, getMetadata, translate } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import task, { TaskType, updateProjectType, type TaskStatusFactory } from '@hcengineering/task'
+  import tracker, { Project, createStatesData } from '@hcengineering/tracker'
   import ui, {
     Button,
     IconChevronDown,
@@ -12,13 +12,13 @@
     getEventPopupPositionElement,
     showPopup,
     DropdownLabelsPopup
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import {
     GithubIntegration,
     GithubIntegrationRepository,
     githubPullRequestStates,
     type GithubProject
-  } from '@intabiafusion/github'
+  } from '@hcengineering/github'
   import github from '../plugin'
 
   export let integration: WithLookup<GithubIntegration>

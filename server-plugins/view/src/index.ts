@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@intabiafusion/platform'
-import { TriggerControl, TriggerFunc } from '@intabiafusion/server-core'
-import { plugin } from '@intabiafusion/platform'
-import { Class, Doc, Mixin, Ref } from '@intabiafusion/core'
+import type { Plugin, Resource } from '@hcengineering/platform'
+import { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
+import { plugin } from '@hcengineering/platform'
+import { Class, Doc, Mixin, Ref } from '@hcengineering/core'
 
 /**
  * @public

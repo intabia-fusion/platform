@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AttachedData, Doc, FindOptions, type Rank, Ref, SortingOrder } from '@intabiafusion/core'
-  import { ObjectPopup, getClient } from '@intabiafusion/presentation'
-  import { makeRank } from '@intabiafusion/task'
-  import { Issue, IssueDraft } from '@intabiafusion/tracker'
+  import core, { AttachedData, Doc, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
+  import { ObjectPopup, getClient } from '@hcengineering/presentation'
+  import { makeRank } from '@hcengineering/task'
+  import { Issue, IssueDraft } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../plugin'
   import IssueStatusIcon from './issues/IssueStatusIcon.svelte'

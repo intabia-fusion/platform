@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-// Full copy from @intabiafusion/postgres
+// Full copy from @hcengineering/postgres
 import postgres from 'postgres'
 import { v4 as uuid } from 'uuid'
 

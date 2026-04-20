@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData, Ref } from '@intabiafusion/core'
+  import { AttachedData, Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
-  import { EditBox, Button, ScrollBox, Label } from '@intabiafusion/ui'
-  import { getClient } from '@intabiafusion/presentation'
+  import { EditBox, Button, ScrollBox, Label } from '@hcengineering/ui'
+  import { getClient } from '@hcengineering/presentation'
 
-  import { ChannelProvider, Channel } from '@intabiafusion/contact'
+  import { ChannelProvider, Channel } from '@hcengineering/contact'
   import contact from '../plugin'
 
   export let values: Channel[]

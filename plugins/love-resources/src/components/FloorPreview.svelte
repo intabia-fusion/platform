@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import platform, { getMetadata, IntlString } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
+  import contact from '@hcengineering/contact'
+  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import {
     AccordionItem,
     ButtonIcon,
@@ -30,8 +30,8 @@
     eventToHTMLElement,
     showPopup,
     type SelectPopupValueType
-  } from '@intabiafusion/ui'
-  import love, { Floor, isOffice, Office, ParticipantInfo, Room } from '@intabiafusion/love'
+  } from '@hcengineering/ui'
+  import love, { Floor, isOffice, Office, ParticipantInfo, Room } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
   import { infos } from '../stores'
@@ -39,7 +39,7 @@
   import EditFloorPopup from './EditFloorPopup.svelte'
   import FloorGrid from './FloorGrid.svelte'
   import RoomPreview from './RoomPreview.svelte'
-  import { loadUsersStatus } from '@intabiafusion/contact-resources'
+  import { loadUsersStatus } from '@hcengineering/contact-resources'
 
   export let floor: Floor
   export let configurable: boolean = false

@@ -14,16 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { NewMessage, SharedMessage } from '@intabiafusion/gmail'
-  import { Button, IconArrowLeft, Label, Scroller, tooltip } from '@intabiafusion/ui'
+  import { NewMessage, SharedMessage } from '@hcengineering/gmail'
+  import { Button, IconArrowLeft, Label, Scroller, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import gmail from '../plugin'
   import FullMessageContent from './FullMessageContent.svelte'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import attachment, { Attachment } from '@intabiafusion/attachment'
-  import { AttachmentPresenter } from '@intabiafusion/attachment-resources'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Ref } from '@intabiafusion/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import attachment, { Attachment } from '@hcengineering/attachment'
+  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Ref } from '@hcengineering/core'
 
   export let currentMessage: SharedMessage
   export let newMessage: boolean

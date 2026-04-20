@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { ObjectPopup } from '@intabiafusion/presentation'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import { TrainingState } from '@intabiafusion/training'
+  import { ObjectPopup } from '@hcengineering/presentation'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import { TrainingState } from '@hcengineering/training'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
   import { getCurrentEmployeeRef } from '../utils'

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import core, { getCurrentAccount, groupByArray, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Breadcrumb, Grid, Header, Label, Scroller, Toggle } from '@intabiafusion/ui'
+  import core, { getCurrentAccount, groupByArray, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Breadcrumb, Grid, Header, Label, Scroller, Toggle } from '@hcengineering/ui'
   import calendar from '../plugin'
-  import setting from '@intabiafusion/setting'
-  import { Calendar, ExternalCalendar, getPrimaryCalendar, PrimaryCalendar, Visibility } from '@intabiafusion/calendar'
+  import setting from '@hcengineering/setting'
+  import { Calendar, ExternalCalendar, getPrimaryCalendar, PrimaryCalendar, Visibility } from '@hcengineering/calendar'
   import VisibilityEditor from './VisibilityEditor.svelte'
   import CalendarSelector from './CalendarSelector.svelte'
 

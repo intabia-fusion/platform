@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { setPlatformStatus, unknownError } from '@intabiafusion/platform'
-import { imageSizeToRatio, getImageSize } from '@intabiafusion/presentation'
+import { setPlatformStatus, unknownError } from '@hcengineering/platform'
+import { imageSizeToRatio, getImageSize } from '@hcengineering/presentation'
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { type EditorView } from '@tiptap/pm/view'
 
 import { type FileAttachFunction } from '../types'
-import type { Blob, Ref } from '@intabiafusion/core'
+import type { Blob, Ref } from '@hcengineering/core'
 
 /**
  * @public

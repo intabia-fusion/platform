@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type IntlString, translate } from '@intabiafusion/platform'
-import { type ThemeOptions } from '@intabiafusion/theme'
+import { type IntlString, translate } from '@hcengineering/platform'
+import { type ThemeOptions } from '@hcengineering/theme'
 import { type PlaceholderOptions, Placeholder } from '@tiptap/extension-placeholder'
 import { type Readable, get } from 'svelte/store'
 

@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-  import { createQuery } from '@intabiafusion/presentation'
-  import view from '@intabiafusion/view'
-  import { Button, navigate, Notification, NotificationToast } from '@intabiafusion/ui'
-  import type { Training } from '@intabiafusion/training'
+  import { createQuery } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { Button, navigate, Notification, NotificationToast } from '@hcengineering/ui'
+  import type { Training } from '@hcengineering/training'
   import { trainingRoute } from '../routing/routes/trainingRoute'
   import PanelTitle from './PanelTitle.svelte'
   import training from '../plugin'

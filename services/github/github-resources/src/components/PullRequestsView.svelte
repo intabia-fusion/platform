@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { DocumentQuery, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { IntlString, translateCB } from '@intabiafusion/platform'
-  import { IModeSelector, themeStore } from '@intabiafusion/ui'
-  import { ViewOptions, Viewlet } from '@intabiafusion/view'
-  import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@intabiafusion/view-resources'
-  import { GithubPullRequest } from '@intabiafusion/github'
+  import { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { IModeSelector, themeStore } from '@hcengineering/ui'
+  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { GithubPullRequest } from '@hcengineering/github'
   import github from '../plugin'
 
   export let space: Ref<Space> | undefined = undefined

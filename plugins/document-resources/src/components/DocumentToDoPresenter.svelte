@@ -1,8 +1,8 @@
 <script lang="ts">
-  import core, { Space } from '@intabiafusion/core'
-  import document, { Document } from '@intabiafusion/document'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Icon, Label } from '@intabiafusion/ui'
+  import core, { Space } from '@hcengineering/core'
+  import document, { Document } from '@hcengineering/document'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Icon, Label } from '@hcengineering/ui'
 
   export let value: Document
   export let withoutSpace: boolean

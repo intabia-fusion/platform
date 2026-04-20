@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Doc, SocialId, WorkspaceUuid } from '@intabiafusion/core'
+import type { AccountUuid, Doc, SocialId, WorkspaceUuid } from '@hcengineering/core'
 import type { NextFunction, Request, Response } from 'express'
 import type { Credentials } from 'google-auth-library'
-import type { Channel as PlatformChannel } from '@intabiafusion/contact'
+import type { Channel as PlatformChannel } from '@hcengineering/contact'
 
 export type Token = User & Credentials
 

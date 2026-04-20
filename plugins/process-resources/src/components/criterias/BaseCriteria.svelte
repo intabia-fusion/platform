@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { AnyAttribute } from '@intabiafusion/core'
-  import { Context, Process } from '@intabiafusion/process'
-  import { Component } from '@intabiafusion/ui'
+  import { AnyAttribute } from '@hcengineering/core'
+  import { Context, Process } from '@hcengineering/process'
+  import { Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { buildResult, Mode, ModeId, Modes, parseValue } from '../../query'
   import BaseCriteriaEditor from './BaseCriteriaEditor.svelte'

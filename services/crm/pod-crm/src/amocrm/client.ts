@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 
 import config from '../config'
 import {

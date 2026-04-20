@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, RefTo } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import { Ref, RefTo } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import recruit from '../plugin'
-  import { Vacancy } from '@intabiafusion/recruit'
-  import { SpaceSelect } from '@intabiafusion/presentation'
+  import { Vacancy } from '@hcengineering/recruit'
+  import { SpaceSelect } from '@hcengineering/presentation'
 
   export let value: Ref<Vacancy> | undefined
   export let label: IntlString = recruit.string.Vacancy

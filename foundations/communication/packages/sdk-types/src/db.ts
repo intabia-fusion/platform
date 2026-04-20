@@ -43,7 +43,7 @@ import {
   ThreadMeta,
   FindMessagesMetaParams,
   BlobID
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 
 export interface DbAdapter {
   // MessageMeta

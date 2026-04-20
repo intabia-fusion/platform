@@ -63,7 +63,7 @@ import core, {
   type TxUpdateDoc,
   type WithLookup,
   type WorkspaceIds
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   calcHashHash,
   type DbAdapter,
@@ -73,7 +73,7 @@ import {
   type ServerFindOptions,
   type StorageAdapter,
   type TxAdapter
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 import {
   ObjectId,
   type AbstractCursor,

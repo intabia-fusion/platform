@@ -1,9 +1,9 @@
 {
-  "name": "@intabiafusion/communication-rest-client",
+  "name": "@hcengineering/communication-rest-client",
   "entries": [
     {
       "version": "0.7.12",
-      "tag": "@intabiafusion/communication-rest-client_v0.7.12",
+      "tag": "@hcengineering/communication-rest-client_v0.7.12",
       "date": "Mon, 27 Oct 2025 16:28:25 GMT",
       "comments": {
         "patch": [
@@ -13,17 +13,17 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-types\" from `^0.7.11` to `0.7.12`"
+            "comment": "Updating dependency \"@hcengineering/communication-types\" from `^0.7.11` to `0.7.12`"
           },
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-sdk-types\" from `^0.7.11` to `0.7.12`"
+            "comment": "Updating dependency \"@hcengineering/communication-sdk-types\" from `^0.7.11` to `0.7.12`"
           }
         ]
       }
     },
     {
       "version": "0.7.9",
-      "tag": "@intabiafusion/communication-rest-client_v0.7.9",
+      "tag": "@hcengineering/communication-rest-client_v0.7.9",
       "date": "Sat, 25 Oct 2025 22:20:35 GMT",
       "comments": {
         "patch": [
@@ -33,17 +33,17 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-types\" from `^0.7.8` to `0.7.9`"
+            "comment": "Updating dependency \"@hcengineering/communication-types\" from `^0.7.8` to `0.7.9`"
           },
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-sdk-types\" from `^0.7.8` to `0.7.9`"
+            "comment": "Updating dependency \"@hcengineering/communication-sdk-types\" from `^0.7.8` to `0.7.9`"
           }
         ]
       }
     },
     {
       "version": "0.7.4",
-      "tag": "@intabiafusion/communication-rest-client_v0.7.4",
+      "tag": "@hcengineering/communication-rest-client_v0.7.4",
       "date": "Tue, 14 Oct 2025 10:12:38 GMT",
       "comments": {
         "patch": [
@@ -53,13 +53,13 @@
         ],
         "dependency": [
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-types\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@hcengineering/communication-types\" from `^0.7.3` to `0.7.4`"
           },
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-sdk-types\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@hcengineering/communication-sdk-types\" from `^0.7.3` to `0.7.4`"
           },
           {
-            "comment": "Updating dependency \"@intabiafusion/communication-shared\" from `^0.7.3` to `0.7.4`"
+            "comment": "Updating dependency \"@hcengineering/communication-shared\" from `^0.7.3` to `0.7.4`"
           }
         ]
       }

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentStyleBoxCollabEditor } from '@intabiafusion/attachment-resources'
-  import { ActionContext, createQuery, getClient } from '@intabiafusion/presentation'
-  import { type Class, type Ref } from '@intabiafusion/core'
-  import { TestRun } from '@intabiafusion/test-management'
-  import { Panel } from '@intabiafusion/panel'
-  import { EditBox } from '@intabiafusion/ui'
+  import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
+  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import { type Class, type Ref } from '@hcengineering/core'
+  import { TestRun } from '@hcengineering/test-management'
+  import { Panel } from '@hcengineering/panel'
+  import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import testManagement from '../../plugin'

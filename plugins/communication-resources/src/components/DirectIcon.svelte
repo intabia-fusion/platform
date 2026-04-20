@@ -12,13 +12,13 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Direct } from '@intabiafusion/communication'
-  import { Icon, IconSize } from '@intabiafusion/ui'
-  import { getClient } from '@intabiafusion/presentation'
-  import contact, { Employee, getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import { classIcon } from '@intabiafusion/view-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { Avatar, employeeByIdStore, getPersonByPersonRef } from '@intabiafusion/contact-resources'
+  import { Direct } from '@hcengineering/communication'
+  import { Icon, IconSize } from '@hcengineering/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import contact, { Employee, getCurrentEmployee, Person } from '@hcengineering/contact'
+  import { classIcon } from '@hcengineering/view-resources'
+  import { Ref } from '@hcengineering/core'
+  import { Avatar, employeeByIdStore, getPersonByPersonRef } from '@hcengineering/contact-resources'
 
   import communication from '../plugin'
 

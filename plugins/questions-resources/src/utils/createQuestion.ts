@@ -2,8 +2,8 @@
 // Copyright @ 2024 Hardcore Engineering Inc.
 //
 
-import type { Question } from '@intabiafusion/questions'
-import { type AttachedData, type Class, type Doc, type Ref, type Space, type TxOperations } from '@intabiafusion/core'
+import type { Question } from '@hcengineering/questions'
+import { type AttachedData, type Class, type Doc, type Ref, type Space, type TxOperations } from '@hcengineering/core'
 import { getCurrentEmployeeRef } from './getCurrentEmployeeRef'
 
 export type CreateQuestionData<Q extends Question<any>> = Omit<AttachedData<Q>, 'owner' | 'releasedBy' | 'releasedOn'>

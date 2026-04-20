@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@intabiafusion/attachment'
-  import { Doc, getCurrentAccount, type WithLookup } from '@intabiafusion/core'
-  import { getClient, getFileUrl } from '@intabiafusion/presentation'
-  import { Icon, IconMoreV, Menu, showPopup } from '@intabiafusion/ui'
+  import attachment, { Attachment } from '@hcengineering/attachment'
+  import { Doc, getCurrentAccount, type WithLookup } from '@hcengineering/core'
+  import { getClient, getFileUrl } from '@hcengineering/presentation'
+  import { Icon, IconMoreV, Menu, showPopup } from '@hcengineering/ui'
   import { AttachmentPresenter } from '..'
   import FileDownload from './icons/FileDownload.svelte'
 

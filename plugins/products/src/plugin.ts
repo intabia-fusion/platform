@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { Mixin, Type, type Class, type Doc, type Ref } from '@intabiafusion/core'
-import type { Asset, IntlString, Plugin } from '@intabiafusion/platform'
+import { Mixin, Type, type Class, type Doc, type Ref } from '@hcengineering/core'
+import type { Asset, IntlString, Plugin } from '@hcengineering/platform'
 
-import { plugin } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import { ActionCategory, Viewlet } from '@intabiafusion/view'
-import type { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@intabiafusion/controlled-documents'
+import { plugin } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { ActionCategory, Viewlet } from '@hcengineering/view'
+import type { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@hcengineering/controlled-documents'
 import { Product, ProductVersion, ProductVersionState } from './types'
 
 /** @public */

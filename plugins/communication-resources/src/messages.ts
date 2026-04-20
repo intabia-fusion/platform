@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Message } from '@intabiafusion/communication-types'
-import { isAppFocusedStore } from '@intabiafusion/ui'
+import { type Message } from '@hcengineering/communication-types'
+import { isAppFocusedStore } from '@hcengineering/ui'
 import { get } from 'svelte/store'
 
 export interface MessagesGroup {

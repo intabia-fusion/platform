@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { type IntlString } from '@intabiafusion/platform'
-import { type TextEditorHandler } from '@intabiafusion/text-editor'
-import { type LinkPreviewParams, type BlobParams, type AppletType } from '@intabiafusion/communication-types'
-import type { Markup, Ref } from '@intabiafusion/core'
-import type { IconComponent } from '@intabiafusion/ui'
-import { type Applet } from '@intabiafusion/communication'
+import { type IntlString } from '@hcengineering/platform'
+import { type TextEditorHandler } from '@hcengineering/text-editor'
+import { type LinkPreviewParams, type BlobParams, type AppletType } from '@hcengineering/communication-types'
+import type { Markup, Ref } from '@hcengineering/core'
+import type { IconComponent } from '@hcengineering/ui'
+import { type Applet } from '@hcengineering/communication'
 
 export type TextInputActionFn = (element: HTMLElement, editor: TextEditorHandler, event?: MouseEvent) => void
 

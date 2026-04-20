@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Process, type Method, type Step } from '@intabiafusion/process'
-  import { Component, Label } from '@intabiafusion/ui'
+  import { Doc, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Process, type Method, type Step } from '@hcengineering/process'
+  import { Component, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

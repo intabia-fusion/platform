@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { releaseStream } from '@intabiafusion/media'
+  import { releaseStream } from '@hcengineering/media'
   import { onDestroy } from 'svelte'
 
   export let selected: MediaDeviceInfo

@@ -27,7 +27,7 @@ For production, use process monitoring (systemd, PM2, Kubernetes) to ensure quic
 
 ```bash
 # Clone the repository
-git clone https://github.com/intabia-fusion/huly.net.git
+git clone https://github.com/hcengineering/huly.net.git
 cd huly.net
 
 # Install dependencies
@@ -56,9 +56,9 @@ docker run -d \
 ### Option 3: NPM Packages (Coming Soon)
 
 ```bash
-npm install @intabiafusion/network-core \
-            @intabiafusion/network-client \
-            @intabiafusion/network-server
+npm install @hcengineering/network-core \
+            @hcengineering/network-client \
+            @hcengineering/network-server
 ```
 
 ## Your First Network Application
@@ -68,7 +68,7 @@ npm install @intabiafusion/network-core \
 Create a file `my-container.ts`:
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 export class HelloWorldContainer implements Container {
   constructor(readonly uuid: ContainerUuid) {
@@ -104,8 +104,8 @@ export class HelloWorldContainer implements Container {
 Create a file `server.ts`:
 
 ```typescript
-import { NetworkImpl, TickManagerImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
+import { NetworkImpl, TickManagerImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
 
 const tickManager = new TickManagerImpl(1000)
 tickManager.start()
@@ -129,9 +129,9 @@ process.on('SIGINT', async () => {
 Create a file `agent.ts`:
 
 ```typescript
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 import { HelloWorldContainer } from './my-container'
-import type { GetOptions, ContainerUuid } from '@intabiafusion/network-core'
+import type { GetOptions, ContainerUuid } from '@hcengineering/network-core'
 
 // Create client and serve agent with container factory
 const client = createNetworkClient('localhost:3737')
@@ -164,7 +164,7 @@ process.on('SIGINT', async () => {
 Create a file `client.ts`:
 
 ```typescript
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 
 async function main() {
   // Connect to network
@@ -232,10 +232,10 @@ Status: { status: 'running', uuid: 'hello-1234567890' }
 For a single-file demo, create `demo.ts`:
 
 ```typescript
-import { NetworkImpl, TickManagerImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
-import { createNetworkClient } from '@intabiafusion/network-client'
-import type { Container, ContainerUuid, ClientUuid, GetOptions } from '@intabiafusion/network-core'
+import { NetworkImpl, TickManagerImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
+import { createNetworkClient } from '@hcengineering/network-client'
+import type { Container, ContainerUuid, ClientUuid, GetOptions } from '@hcengineering/network-core'
 
 class DemoContainer implements Container {
   constructor(readonly uuid: ContainerUuid) {}
@@ -384,7 +384,7 @@ For more help, see the [Troubleshooting Guide](TROUBLESHOOTING.md).
 - [Examples Directory](../examples/) - Complete working examples
 - [Core Concepts](CORE_CONCEPTS.md) - Architecture deep dive
 - [API Reference](API_CORE.md) - Detailed API documentation
-- [GitHub Repository](https://github.com/intabia-fusion/huly.net)
+- [GitHub Repository](https://github.com/hcengineering/huly.net)
 
 ---
 

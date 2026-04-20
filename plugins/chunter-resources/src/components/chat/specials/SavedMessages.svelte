@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment, SavedAttachments } from '@intabiafusion/attachment'
-  import { AttachmentPreview, savedAttachmentsStore } from '@intabiafusion/attachment-resources'
-  import { getName as getContactName } from '@intabiafusion/contact'
-  import { getPersonByPersonId } from '@intabiafusion/contact-resources'
-  import { getDisplayTime, Ref, WithLookup } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Label, Scroller, Lazy } from '@intabiafusion/ui'
-  import activity, { ActivityMessage, SavedMessage } from '@intabiafusion/activity'
-  import { ActivityMessagePresenter, savedMessagesStore } from '@intabiafusion/activity-resources'
+  import { Attachment, SavedAttachments } from '@hcengineering/attachment'
+  import { AttachmentPreview, savedAttachmentsStore } from '@hcengineering/attachment-resources'
+  import { getName as getContactName } from '@hcengineering/contact'
+  import { getPersonByPersonId } from '@hcengineering/contact-resources'
+  import { getDisplayTime, Ref, WithLookup } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Label, Scroller, Lazy } from '@hcengineering/ui'
+  import activity, { ActivityMessage, SavedMessage } from '@hcengineering/activity'
+  import { ActivityMessagePresenter, savedMessagesStore } from '@hcengineering/activity-resources'
 
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'

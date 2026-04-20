@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import client, { clientId } from '@intabiafusion/client'
-import { type Client, type LoadModelResponse, type Tx } from '@intabiafusion/core'
-import { addLocation, getMetadata, getResource, setMetadata } from '@intabiafusion/platform'
+import client, { clientId } from '@hcengineering/client'
+import { type Client, type LoadModelResponse, type Tx } from '@hcengineering/core'
+import { addLocation, getMetadata, getResource, setMetadata } from '@hcengineering/platform'
 import crypto from 'node:crypto'
 import plugin from './plugin'
 
@@ -46,7 +46,7 @@ export async function createClient (
     })
     return socket
   })
-  addLocation(clientId, () => import('@intabiafusion/client-resources'))
+  addLocation(clientId, () => import('@hcengineering/client-resources'))
 
   if (model !== undefined) {
     let prev = ''

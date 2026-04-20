@@ -2,9 +2,9 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 
-import { type Builder } from '@intabiafusion/model'
-import core from '@intabiafusion/core'
-import documents from '@intabiafusion/controlled-documents'
+import { type Builder } from '@hcengineering/model'
+import core from '@hcengineering/core'
+import documents from '@hcengineering/controlled-documents'
 
 export function definePermissions (builder: Builder): void {
   builder.createDoc(

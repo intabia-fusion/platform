@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Doc, Ref, Relation } from '@intabiafusion/core'
-  import { createQuery, getClient, ObjectPopup } from '@intabiafusion/presentation'
+  import core, { Association, Doc, Ref, Relation } from '@hcengineering/core'
+  import { createQuery, getClient, ObjectPopup } from '@hcengineering/presentation'
   import ObjectPresenter from './ObjectPresenter.svelte'
 
   export let association: string

@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
-import { BaseConfig } from '@intabiafusion/mail-common'
-import { generateToken } from '@intabiafusion/server-token'
-import { getClient } from '@intabiafusion/kvs-client'
-import { AccountClient, getClient as getAccountClientRaw } from '@intabiafusion/account-client'
+import { systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { BaseConfig } from '@hcengineering/mail-common'
+import { generateToken } from '@hcengineering/server-token'
+import { getClient } from '@hcengineering/kvs-client'
+import { AccountClient, getClient as getAccountClientRaw } from '@hcengineering/account-client'
 
 import config from './config'
 

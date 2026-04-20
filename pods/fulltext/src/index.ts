@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { newMetrics, type Tx } from '@intabiafusion/core'
-import { initStatisticsContext, type StorageConfiguration } from '@intabiafusion/server-core'
+import { Analytics } from '@hcengineering/analytics'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { newMetrics, type Tx } from '@hcengineering/core'
+import { initStatisticsContext, type StorageConfiguration } from '@hcengineering/server-core'
 import { join } from 'path'
 
-import { createElasticAdapter } from '@intabiafusion/elastic'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { setMetadata } from '@intabiafusion/platform'
-import { createRekoniAdapter, type FulltextDBConfiguration } from '@intabiafusion/server-indexer'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
-import serverToken from '@intabiafusion/server-token'
+import { createElasticAdapter } from '@hcengineering/elastic'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { setMetadata } from '@hcengineering/platform'
+import { createRekoniAdapter, type FulltextDBConfiguration } from '@hcengineering/server-indexer'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
+import serverToken from '@hcengineering/server-token'
 import { readFileSync } from 'fs'
 import { startIndexer } from './server'
 

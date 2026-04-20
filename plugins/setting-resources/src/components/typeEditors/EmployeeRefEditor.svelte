@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card from '@intabiafusion/card'
-  import { AnyAttribute, Class, Doc, Ref, Role } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { DropdownLabels, Label, Toggle } from '@intabiafusion/ui'
+  import card from '@hcengineering/card'
+  import { AnyAttribute, Class, Doc, Ref, Role } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { DropdownLabels, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
 

@@ -16,13 +16,13 @@
 -->
 
 <script lang="ts">
-  import { Class, Ref, type WithLookup } from '@intabiafusion/core'
-  import { Panel } from '@intabiafusion/panel'
-  import { ActionContext, createQuery } from '@intabiafusion/presentation'
-  import { Button, IconMoreH, navigate, type IModeSelector, rawLocation } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import { showMenu } from '@intabiafusion/view-resources'
-  import { type Training, type TrainingAttempt, type TrainingRequest } from '@intabiafusion/training'
+  import { Class, Ref, type WithLookup } from '@hcengineering/core'
+  import { Panel } from '@hcengineering/panel'
+  import { ActionContext, createQuery } from '@hcengineering/presentation'
+  import { Button, IconMoreH, navigate, type IModeSelector, rawLocation } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { showMenu } from '@hcengineering/view-resources'
+  import { type Training, type TrainingAttempt, type TrainingRequest } from '@hcengineering/training'
   import training from '../plugin'
   import { MyResultsRouteTab, myResultsRoute } from '../routing/routes/myResultsRoute'
   import { TrainingAttemptRouteTab, trainingAttemptRoute } from '../routing/routes/trainingAttemptRoute'

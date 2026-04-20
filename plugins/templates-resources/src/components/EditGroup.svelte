@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SpaceMembers } from '@intabiafusion/contact-resources'
-  import contact from '@intabiafusion/contact-resources/src/plugin'
-  import core from '@intabiafusion/core'
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { TemplateCategory } from '@intabiafusion/templates'
-  import { EditBox, Grid, Label } from '@intabiafusion/ui'
-  import { BooleanPresenter } from '@intabiafusion/view-resources'
+  import { SpaceMembers } from '@hcengineering/contact-resources'
+  import contact from '@hcengineering/contact-resources/src/plugin'
+  import core from '@hcengineering/core'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { TemplateCategory } from '@hcengineering/templates'
+  import { EditBox, Grid, Label } from '@hcengineering/ui'
+  import { BooleanPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import templates from '../plugin'
 

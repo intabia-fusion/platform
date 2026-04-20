@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@intabiafusion/card'
-  import core, { Association, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ObjectBox } from '@intabiafusion/view-resources'
+  import { MasterTag, Tag } from '@hcengineering/card'
+  import core, { Association, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ObjectBox } from '@hcengineering/view-resources'
 
   import card from '../../../plugin'
 

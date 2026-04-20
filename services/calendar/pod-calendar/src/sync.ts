@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { AccountClient } from '@intabiafusion/account-client'
+import { AccountClient } from '@hcengineering/account-client'
 import calendar, {
   AccessLevel,
   Calendar,
@@ -23,8 +23,8 @@ import calendar, {
   ReccuringInstance,
   Visibility,
   calendarIntegrationKind
-} from '@intabiafusion/calendar'
-import contact, { Contact, getPersonRefsBySocialIds, Person } from '@intabiafusion/contact'
+} from '@hcengineering/calendar'
+import contact, { Contact, getPersonRefsBySocialIds, Person } from '@hcengineering/contact'
 import core, {
   AttachedData,
   Data,
@@ -38,9 +38,9 @@ import core, {
   SocialIdType,
   TxOperations,
   TxProcessor
-} from '@intabiafusion/core'
-import setting from '@intabiafusion/setting'
-import { htmlToMarkup } from '@intabiafusion/text'
+} from '@hcengineering/core'
+import setting from '@hcengineering/setting'
+import { htmlToMarkup } from '@hcengineering/text'
 import { deepEqual } from 'fast-equals'
 import { calendar_v3 } from 'googleapis'
 import { getClient } from './client'

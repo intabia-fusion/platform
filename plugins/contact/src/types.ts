@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Permission, Ref, Space } from '@intabiafusion/core'
-import { ColorDefinition } from '@intabiafusion/ui'
-import { type Card } from '@intabiafusion/card'
+import { Permission, Ref, Space } from '@hcengineering/core'
+import { ColorDefinition } from '@hcengineering/ui'
+import { type Card } from '@hcengineering/card'
 
 import { Person } from './index'
 

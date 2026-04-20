@@ -25,16 +25,16 @@ import core, {
   type Tx,
   type TxCUD,
   type TxResult
-} from '@intabiafusion/core'
-import { PlatformError, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { PlatformError, unknownError } from '@hcengineering/platform'
 import type {
   DbAdapter,
   DBAdapterManager,
   Middleware,
   PipelineContext,
   TxMiddlewareResult
-} from '@intabiafusion/server-core'
-import { BaseMiddleware } from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
+import { BaseMiddleware } from '@hcengineering/server-core'
 
 /**
  * Will route transactions to domain adapters.

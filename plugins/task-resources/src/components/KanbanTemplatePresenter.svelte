@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import type { ProjectType } from '@intabiafusion/task'
+  import { getClient } from '@hcengineering/presentation'
+  import type { ProjectType } from '@hcengineering/task'
 
   export let value: ProjectType
 

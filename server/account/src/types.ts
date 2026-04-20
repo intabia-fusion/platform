@@ -34,7 +34,7 @@ import {
   type Ref,
   type Blob,
   type IntegrationKind
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import type { EndpointInfo } from './utils'
 
 /* ========= D A T A B A S E  E N T I T I E S ========= */

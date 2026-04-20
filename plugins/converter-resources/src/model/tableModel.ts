@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Client, type Doc, type Hierarchy, type Ref } from '@intabiafusion/core'
-import type { AttributeModel, BuildModelKey, Viewlet } from '@intabiafusion/view'
-import viewPlugin from '@intabiafusion/view'
-import { buildModel, buildConfigLookup } from '@intabiafusion/view-resources'
+import core, { type Class, type Client, type Doc, type Hierarchy, type Ref } from '@hcengineering/core'
+import type { AttributeModel, BuildModelKey, Viewlet } from '@hcengineering/view'
+import viewPlugin from '@hcengineering/view'
+import { buildModel, buildConfigLookup } from '@hcengineering/view-resources'
 import { DocumentAttributeKey } from '../formatter/utils'
 
 /**

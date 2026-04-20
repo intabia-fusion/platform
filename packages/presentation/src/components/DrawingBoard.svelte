@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Analytics } from '@intabiafusion/analytics'
-  import { resizeObserver } from '@intabiafusion/ui'
+  import { Analytics } from '@hcengineering/analytics'
+  import { resizeObserver } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
   import { drawing, type DrawingData, type DrawingTool } from '../drawing'
   import DrawingBoardToolbar from './DrawingBoardToolbar.svelte'
   import { DrawingCommandsProcessor } from '../drawingCommandsProcessor'
   import { Doc as YDoc } from 'yjs'
   import { ColorMetaNameOrHex } from '../drawingUtils'
-  import { themeStore } from '@intabiafusion/theme'
+  import { themeStore } from '@hcengineering/theme'
   import { ColorsList, ThemeAwareColor } from '../drawingColors'
   import { DrawingCmd, CommandUid, DrawTextCmd } from '../drawingCommand'
 

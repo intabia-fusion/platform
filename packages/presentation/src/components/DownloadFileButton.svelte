@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref, Blob } from '@intabiafusion/core'
-  import { Button } from '@intabiafusion/ui'
+  import type { Ref, Blob } from '@hcengineering/core'
+  import { Button } from '@hcengineering/ui'
 
   import { getFileUrl } from '../file'
   import Download from './icons/Download.svelte'
   import presentation from '../plugin'
-  import { IntlString } from '@intabiafusion/platform'
+  import { IntlString } from '@hcengineering/platform'
 
   export let file: Ref<Blob> | undefined
   export let name: string

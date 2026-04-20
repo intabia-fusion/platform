@@ -26,9 +26,9 @@ import core, {
   TxCUD,
   TxProcessor,
   TxRemoveDoc
-} from '@intabiafusion/core'
-import { TriggerControl } from '@intabiafusion/server-core'
-import tags, { TagElement, TagReference } from '@intabiafusion/tags'
+} from '@hcengineering/core'
+import { TriggerControl } from '@hcengineering/server-core'
+import tags, { TagElement, TagReference } from '@hcengineering/tags'
 
 /**
  * @public

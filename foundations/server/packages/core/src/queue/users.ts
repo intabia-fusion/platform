@@ -1,4 +1,4 @@
-import type { AccountUuid, PersonId } from '@intabiafusion/core'
+import type { AccountUuid, PersonId } from '@hcengineering/core'
 
 export enum QueueUserEvent {
   login = 'login',

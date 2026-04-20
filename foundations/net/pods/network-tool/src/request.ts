@@ -1,10 +1,10 @@
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 import {
   type NetworkEvent,
   type ContainerKind,
   type ContainerUuid,
   NetworkEventKind
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 import { program } from 'commander'
 import { addShutdownHandler, tickManager } from './utils'
 

@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Process } from '@intabiafusion/process'
+  import { Process } from '@hcengineering/process'
   import UpdateAttributePresenter from '../presenters/UpdateAttributePresenter.svelte'
 
   export let process: Process

@@ -20,8 +20,8 @@ import {
   type LowLevelStorage,
   type MeasureContext,
   type Ref
-} from '@intabiafusion/core'
-import { isId } from '@intabiafusion/core'
+} from '@hcengineering/core'
+import { isId } from '@hcengineering/core'
 import { type ExportState, type RelationDefinition } from './types'
 
 /**

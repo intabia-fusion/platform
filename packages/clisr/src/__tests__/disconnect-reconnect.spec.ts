@@ -16,7 +16,7 @@
 
 // Tests for disconnect/reconnect scenarios in ClisrClient and ClisrServer
 
-import { MeasureMetricsContext, type MeasureContext } from '@intabiafusion/measurements'
+import { MeasureMetricsContext, type MeasureContext } from '@hcengineering/measurements'
 import { ClisrClient } from '../client'
 import { ClisrServer } from '../server'
 import {

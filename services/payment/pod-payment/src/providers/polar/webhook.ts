@@ -15,7 +15,7 @@
 
 import type { Request, Response } from 'express'
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks'
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 
 import { getAccountClient } from '../../utils'
 import { transformPolarSubscriptionToData } from './utils'

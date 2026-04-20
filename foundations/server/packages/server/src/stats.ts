@@ -4,8 +4,8 @@ import {
   type Metrics,
   metricsAggregate,
   type MetricsData
-} from '@intabiafusion/core'
-import { type SessionManager } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { type SessionManager } from '@hcengineering/server-core'
 import os from 'node:os'
 
 /**

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
+import { Analytics } from '@hcengineering/analytics'
 import core, {
   AccountRole,
   getCurrentAccount,
@@ -25,17 +25,17 @@ import core, {
   type Doc,
   type Ref,
   type WithLookup
-} from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import { addRefreshListener, getClient } from '@intabiafusion/presentation'
-import { getEventPositionElement, showPopup } from '@intabiafusion/ui'
+} from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import { addRefreshListener, getClient } from '@hcengineering/presentation'
+import { getEventPositionElement, showPopup } from '@hcengineering/ui'
 import {
   type Action,
   type ActionGroup,
   type ActionIgnore,
   type ViewActionInput,
   type ViewContextType
-} from '@intabiafusion/view'
+} from '@hcengineering/view'
 import Menu from './components/Menu.svelte'
 import view from './plugin'
 import { type FocusSelection, type SelectionStore } from './selection'

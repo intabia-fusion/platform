@@ -1,4 +1,4 @@
-import { type ViewContext, type ViewContextType } from '@intabiafusion/view'
+import { type ViewContext, type ViewContextType } from '@hcengineering/view'
 import { writable } from 'svelte/store'
 
 /**

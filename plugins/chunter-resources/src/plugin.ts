@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import chunter, { chunterId } from '@intabiafusion/chunter'
-import type { Client, Doc, Ref, Space } from '@intabiafusion/core'
-import type { IntlString, Resource } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui/src/types'
-import { type DocNotifyContext, type InboxNotification } from '@intabiafusion/notification'
+import chunter, { chunterId } from '@hcengineering/chunter'
+import type { Client, Doc, Ref, Space } from '@hcengineering/core'
+import type { IntlString, Resource } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
+import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
 
 export default mergeIds(chunterId, chunter, {
   component: {

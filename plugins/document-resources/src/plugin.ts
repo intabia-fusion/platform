@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { type Client, type Doc, type Ref } from '@intabiafusion/core'
-import document, { documentId, type Document } from '@intabiafusion/document'
-import { mergeIds, type IntlString, type Resource } from '@intabiafusion/platform'
-import { type AnyComponent, type Location } from '@intabiafusion/ui/src/types'
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import document, { documentId, type Document } from '@hcengineering/document'
+import { mergeIds, type IntlString, type Resource } from '@hcengineering/platform'
+import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 
 export default mergeIds(documentId, document, {
   component: {

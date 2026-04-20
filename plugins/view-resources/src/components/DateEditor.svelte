@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TypeDate } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { DateRangePresenter } from '@intabiafusion/ui'
+  import { TypeDate } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { DateRangePresenter } from '@hcengineering/ui'
 
   export let value: number | null | undefined
   export let type: TypeDate | undefined

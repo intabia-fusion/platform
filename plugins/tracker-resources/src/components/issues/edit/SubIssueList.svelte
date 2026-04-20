@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { ActionContext } from '@intabiafusion/presentation'
-  import { Issue } from '@intabiafusion/tracker'
-  import { AnyComponent, AnySvelteComponent, registerFocus } from '@intabiafusion/ui'
-  import { ViewOptions, Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { List, ListSelectionProvider, SelectDirection } from '@intabiafusion/view-resources'
+  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { ActionContext } from '@hcengineering/presentation'
+  import { Issue } from '@hcengineering/tracker'
+  import { AnyComponent, AnySvelteComponent, registerFocus } from '@hcengineering/ui'
+  import { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { List, ListSelectionProvider, SelectDirection } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { DeleteConfirmationPopup } from '@intabiafusion/contact-resources'
-  import { Status } from '@intabiafusion/core'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import task, { TaskType } from '@intabiafusion/task'
-  import { ButtonMenu } from '@intabiafusion/ui'
+  import { DeleteConfirmationPopup } from '@hcengineering/contact-resources'
+  import { Status } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import task, { TaskType } from '@hcengineering/task'
+  import { ButtonMenu } from '@hcengineering/ui'
 
   export let object: Status
   export let taskType: TaskType

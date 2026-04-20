@@ -26,8 +26,8 @@ A feature that lets multiple agents compete to manage the same container UUID. T
 ### Basic Example
 
 ```typescript
-import { AgentImpl } from '@intabiafusion/network-core'
-import { createNetworkClient, containerOnAgentEndpointRef } from '@intabiafusion/network-client'
+import { AgentImpl } from '@hcengineering/network-core'
+import { createNetworkClient, containerOnAgentEndpointRef } from '@hcengineering/network-client'
 
 // 1. Create your container
 class MyService implements Container {

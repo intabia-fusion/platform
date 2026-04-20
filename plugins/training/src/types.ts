@@ -1,5 +1,5 @@
-import type { Attachment } from '@intabiafusion/attachment'
-import type { Employee } from '@intabiafusion/contact'
+import type { Attachment } from '@hcengineering/attachment'
+import type { Employee } from '@hcengineering/contact'
 import {
   type AttachedDoc,
   type CollectionSize,
@@ -8,8 +8,8 @@ import {
   type Ref,
   type Timestamp,
   type TypedSpace
-} from '@intabiafusion/core'
-import type { Answer, Percentage, Question } from '@intabiafusion/questions'
+} from '@hcengineering/core'
+import type { Answer, Percentage, Question } from '@hcengineering/questions'
 
 export const trainingPrefix = 'TR'
 

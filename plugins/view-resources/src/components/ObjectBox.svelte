@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref, mergeQueries } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import presentation, { ObjectCreate, getClient } from '@intabiafusion/presentation'
+  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref, mergeQueries } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import presentation, { ObjectCreate, getClient } from '@hcengineering/presentation'
   import {
     ActionIcon,
     AnySvelteComponent,
@@ -28,8 +28,8 @@
     getEventPositionElement,
     getFocusManager,
     showPopup
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ObjectBoxPopup from './ObjectBoxPopup.svelte'
   import ObjectPresenter from './ObjectPresenter.svelte'

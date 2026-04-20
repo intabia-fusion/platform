@@ -16,15 +16,15 @@ import {
   fetchLinkPreviewDetails,
   getClient,
   getCommunicationClient
-} from '@intabiafusion/presentation'
-import { type Card } from '@intabiafusion/card'
-import { AccountRole, type Data, getCurrentAccount, type Ref, type Space, type Markup } from '@intabiafusion/core'
-import { getMetadata, translate } from '@intabiafusion/platform'
-import { addNotification, languageStore, NotificationSeverity, showPopup } from '@intabiafusion/ui'
-import { type Emoji, type LinkPreviewParams, type Message } from '@intabiafusion/communication-types'
-import emoji from '@intabiafusion/emoji'
-import { markdownToMarkup, markupToMarkdown } from '@intabiafusion/text-markdown'
-import { jsonToMarkup, markupToJSON } from '@intabiafusion/text'
+} from '@hcengineering/presentation'
+import { type Card } from '@hcengineering/card'
+import { AccountRole, type Data, getCurrentAccount, type Ref, type Space, type Markup } from '@hcengineering/core'
+import { getMetadata, translate } from '@hcengineering/platform'
+import { addNotification, languageStore, NotificationSeverity, showPopup } from '@hcengineering/ui'
+import { type Emoji, type LinkPreviewParams, type Message } from '@hcengineering/communication-types'
+import emoji from '@hcengineering/emoji'
+import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
+import { jsonToMarkup, markupToJSON } from '@hcengineering/text'
 
 import { isCardSubscribed, guestCommunicationAllowedCards } from './stores'
 import IconAt from './components/icons/At.svelte'
@@ -32,9 +32,9 @@ import IconAt from './components/icons/At.svelte'
 import communication from './plugin'
 import { type TextInputAction } from './types'
 import { get } from 'svelte/store'
-import view from '@intabiafusion/view'
-import { type Direct } from '@intabiafusion/communication'
-import { type Employee } from '@intabiafusion/contact'
+import view from '@hcengineering/view'
+import { type Direct } from '@hcengineering/communication'
+import { type Employee } from '@hcengineering/contact'
 
 export async function unsubscribe (card: Card): Promise<void> {
   const client = getCommunicationClient()

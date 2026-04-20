@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
-  import { Button, IconDelete, Label, Modal, ModernEditbox, showPopup } from '@intabiafusion/ui'
-  import view, { Viewlet } from '@intabiafusion/view'
-  import { clearSettingsStore } from '@intabiafusion/setting-resources'
-  import setting from '@intabiafusion/setting'
+  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
+  import { Button, IconDelete, Label, Modal, ModernEditbox, showPopup } from '@hcengineering/ui'
+  import view, { Viewlet } from '@hcengineering/view'
+  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import setting from '@hcengineering/setting'
 
   import DescriptorBox from './DescriptorBox.svelte'
   import ViewSettingButton from './ViewSettingButton.svelte'

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import platform, { OK, PlatformEvent, Severity, Status, addEventListener, getMetadata } from '@intabiafusion/platform'
+  import platform, { OK, PlatformEvent, Severity, Status, addEventListener, getMetadata } from '@hcengineering/platform'
   import { onDestroy, onMount } from 'svelte'
   import type { AnyComponent, WidthType } from '../../types'
   import { deviceSizes, deviceWidths } from '../../types'
   // import { applicationShortcutKey } from '../../utils'
-  import { Theme, themeStore } from '@intabiafusion/theme'
+  import { Theme, themeStore } from '@hcengineering/theme'
   import {
     IconArrowLeft,
     IconArrowRight,

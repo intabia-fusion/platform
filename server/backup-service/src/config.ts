@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type BackupConfig } from '@intabiafusion/server-backup'
+import { type BackupConfig } from '@hcengineering/server-backup'
 
 interface Config extends Omit<BackupConfig, 'Token'> {
   AccountsURL: string

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Member, Organization } from '@intabiafusion/contact'
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Scroller } from '@intabiafusion/ui'
+  import contact, { Contact, Member, Organization } from '@hcengineering/contact'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import ExpandRightDouble from './icons/ExpandRightDouble.svelte'
   import OrganizationCard from './OrganizationCard.svelte'

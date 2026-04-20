@@ -13,28 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@intabiafusion/core'
-  import { createQuery, getPreviewThumbnail } from '@intabiafusion/presentation'
-  import setting from '@intabiafusion/setting'
+  import { type Blob, type Ref } from '@hcengineering/core'
+  import { getPreviewThumbnail } from '@hcengineering/presentation'
+  import { currentWorkspaceStore } from '@hcengineering/workbench-resources'
 
   export let workspace: string
   export let title: string
   export let reference: string
 
   const logoSize = 128
-  const query = createQuery()
 
   let iconDataUrl: string | undefined = undefined
 
-  query.query(setting.class.WorkspaceSetting, {}, (res) => {
-    const ws = res[0]
-    const icon = ws?.icon
-    if (icon != null) {
-      void fetchIconAsDataUrl(icon)
-    }
-  })
+  $: void fetchIconAsDataUrl($currentWorkspaceStore?.logo)
 
-  async function fetchIconAsDataUrl (iconRef: Ref<Blob>): Promise<void> {
+  async function fetchIconAsDataUrl (iconRef?: Ref<Blob>): Promise<void> {
+    if (iconRef == null) return
     try {
       const url = getPreviewThumbnail(iconRef, logoSize, logoSize, 1)
       const response = await fetch(url)

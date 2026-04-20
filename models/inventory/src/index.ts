@@ -13,20 +13,20 @@
 // limitations under the License.
 //
 
-import { type Domain, IndexKind, type Ref } from '@intabiafusion/core'
-import { type Category, type Product, type Variant, inventoryId } from '@intabiafusion/inventory'
-import { type Builder, Collection, Index, Model, Prop, TypeRef, TypeString, UX } from '@intabiafusion/model'
-import attachment from '@intabiafusion/model-attachment'
-import core, { TAttachedDoc } from '@intabiafusion/model-core'
-import { createAction } from '@intabiafusion/model-view'
-import workbench from '@intabiafusion/model-workbench'
-import setting from '@intabiafusion/setting'
-import view, { type Viewlet } from '@intabiafusion/view'
-import chunter from '@intabiafusion/model-chunter'
-import activity from '@intabiafusion/activity'
+import { type Domain, IndexKind, type Ref } from '@hcengineering/core'
+import { type Category, type Product, type Variant, inventoryId } from '@hcengineering/inventory'
+import { type Builder, Collection, Index, Model, Prop, TypeRef, TypeString, UX } from '@hcengineering/model'
+import attachment from '@hcengineering/model-attachment'
+import core, { TAttachedDoc } from '@hcengineering/model-core'
+import { createAction } from '@hcengineering/model-view'
+import workbench from '@hcengineering/model-workbench'
+import setting from '@hcengineering/setting'
+import view, { type Viewlet } from '@hcengineering/view'
+import chunter from '@hcengineering/model-chunter'
+import activity from '@hcengineering/activity'
 
 import inventory from './plugin'
-export { inventoryId } from '@intabiafusion/inventory'
+export { inventoryId } from '@hcengineering/inventory'
 export { inventoryOperation } from './migration'
 export { default } from './plugin'
 

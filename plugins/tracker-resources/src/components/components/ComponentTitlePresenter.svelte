@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component } from '@intabiafusion/tracker'
-  import { Icon } from '@intabiafusion/ui'
+  import { Component } from '@hcengineering/tracker'
+  import { Icon } from '@hcengineering/ui'
   import tracker from '../../plugin'
 
   export let value: Component | undefined

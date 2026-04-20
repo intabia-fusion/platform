@@ -14,11 +14,11 @@
 -->
 
 <script lang="ts">
-  import contact, { Person, type Contact } from '@intabiafusion/contact'
-  import { type Ref } from '@intabiafusion/core'
-  import { Asset } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { AnySvelteComponent, IconSize } from '@intabiafusion/ui'
+  import contact, { Person, type Contact } from '@hcengineering/contact'
+  import { type Ref } from '@hcengineering/core'
+  import { Asset } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { AnySvelteComponent, IconSize } from '@hcengineering/ui'
 
   import { getPersonByPersonRefCb } from '../utils'
   import Avatar from './Avatar.svelte'

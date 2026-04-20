@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotifyContext } from '@intabiafusion/notification'
-  import { Component, Icon, IconSize } from '@intabiafusion/ui'
-  import { getClient } from '@intabiafusion/presentation'
-  import { classIcon } from '@intabiafusion/view-resources'
-  import view from '@intabiafusion/view'
-  import { Doc } from '@intabiafusion/core'
+  import notification, { DocNotifyContext } from '@hcengineering/notification'
+  import { Component, Icon, IconSize } from '@hcengineering/ui'
+  import { getClient } from '@hcengineering/presentation'
+  import { classIcon } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view'
+  import { Doc } from '@hcengineering/core'
 
   import NotifyMarker from './NotifyMarker.svelte'
 

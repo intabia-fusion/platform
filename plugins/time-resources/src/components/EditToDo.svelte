@@ -13,21 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Visibility } from '@intabiafusion/calendar'
-  import calendar from '@intabiafusion/calendar-resources/src/plugin'
-  import core, { Class, Ref, Space, getCurrentAccount, Markup } from '@intabiafusion/core'
-  import { SpaceSelector, getClient, createQuery } from '@intabiafusion/presentation'
-  import tags from '@intabiafusion/tags'
-  import task from '@intabiafusion/task'
-  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
-  import { ModernEditbox, CheckBox, Component, IconClose, Label, Modal, Spinner, ButtonIcon } from '@intabiafusion/ui'
-  import { ToDo, ToDoPriority } from '@intabiafusion/time'
+  import { Visibility } from '@hcengineering/calendar'
+  import calendar from '@hcengineering/calendar-resources/src/plugin'
+  import core, { Class, Ref, Space, getCurrentAccount, Markup } from '@hcengineering/core'
+  import { SpaceSelector, getClient, createQuery } from '@hcengineering/presentation'
+  import tags from '@hcengineering/tags'
+  import task from '@hcengineering/task'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
+  import { ModernEditbox, CheckBox, Component, IconClose, Label, Modal, Spinner, ButtonIcon } from '@hcengineering/ui'
+  import { ToDo, ToDoPriority } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
   import DueDateEditor from './DueDateEditor.svelte'
   import PriorityEditor from './PriorityEditor.svelte'
   import TodoWorkslots from './TodoWorkslots.svelte'
-  import { VisibilityEditor } from '@intabiafusion/calendar-resources'
+  import { VisibilityEditor } from '@hcengineering/calendar-resources'
 
   // export let object: ToDo
   export let _id: Ref<ToDo>

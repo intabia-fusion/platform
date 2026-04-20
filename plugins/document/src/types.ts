@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { AccountUuid, Doc, MarkupBlobRef, Rank, Ref, TypedSpace } from '@intabiafusion/core'
-import { IconProps } from '@intabiafusion/view'
+import { AccountUuid, Doc, MarkupBlobRef, Rank, Ref, TypedSpace } from '@hcengineering/core'
+import { IconProps } from '@hcengineering/view'
 
 /** @public */
 export interface Teamspace extends TypedSpace, IconProps {}

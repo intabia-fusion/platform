@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Employee, Person } from '@intabiafusion/contact'
+import { Employee, Person } from '@hcengineering/contact'
 import {
   AttachedDoc,
   Attribute,
@@ -31,11 +31,11 @@ import {
   Timestamp,
   Type,
   type Permission
-} from '@intabiafusion/core'
-import { Asset, IntlString, Plugin, Resource, plugin } from '@intabiafusion/platform'
-import { Preference } from '@intabiafusion/preference'
-import { TagCategory, TagElement, TagReference } from '@intabiafusion/tags'
-import { ToDo } from '@intabiafusion/time'
+} from '@hcengineering/core'
+import { Asset, IntlString, Plugin, Resource, plugin } from '@hcengineering/platform'
+import { Preference } from '@hcengineering/preference'
+import { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
+import { ToDo } from '@hcengineering/time'
 import {
   ProjectType,
   ProjectTypeDescriptor,
@@ -44,9 +44,9 @@ import {
   TaskStatusFactory,
   TaskType,
   TaskTypeDescriptor
-} from '@intabiafusion/task'
-import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@intabiafusion/ui'
-import { Action, ActionCategory, IconProps } from '@intabiafusion/view'
+} from '@hcengineering/task'
+import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@hcengineering/ui'
+import { Action, ActionCategory, IconProps } from '@hcengineering/view'
 
 export * from './analytics'
 

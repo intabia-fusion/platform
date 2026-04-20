@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import chat, { chatId } from '@intabiafusion/chat'
-import { mergeIds } from '@intabiafusion/platform'
-import type { AnyComponent } from '@intabiafusion/ui'
+import chat, { chatId } from '@hcengineering/chat'
+import { mergeIds } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 export default mergeIds(chatId, chat, {
   component: {

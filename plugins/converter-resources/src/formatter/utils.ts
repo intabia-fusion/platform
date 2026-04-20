@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import core, { type AnyAttribute, type Class, type Doc, type Ref } from '@intabiafusion/core'
-import { translate, type IntlString } from '@intabiafusion/platform'
+import core, { type AnyAttribute, type Class, type Doc, type Ref } from '@hcengineering/core'
+import { translate, type IntlString } from '@hcengineering/platform'
 
 export enum DocumentAttributeKey {
   CreatedBy = 'createdBy',

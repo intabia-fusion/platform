@@ -1,4 +1,4 @@
-import { newMetrics, type MeasureLogger } from '@intabiafusion/measurements'
+import { newMetrics, type MeasureLogger } from '@hcengineering/measurements'
 import { context, trace } from '@opentelemetry/api'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { OpenTelemetryMetricsContext } from '../telemetry'

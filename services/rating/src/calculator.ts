@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Api as CommunicationApi } from '@intabiafusion/communication-server'
-import contact, { type Person, type SocialIdentity } from '@intabiafusion/contact'
+import { Api as CommunicationApi } from '@hcengineering/communication-server'
+import contact, { type Person, type SocialIdentity } from '@hcengineering/contact'
 import core, {
   type AccountUuid,
   type Class,
@@ -30,7 +30,7 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc,
   type WorkspaceIds
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -39,8 +39,8 @@ import {
   DomainTxMiddleware,
   LowLevelMiddleware,
   ModelMiddleware
-} from '@intabiafusion/middleware'
-import { _parseId, type Id, PlatformError, unknownError } from '@intabiafusion/platform'
+} from '@hcengineering/middleware'
+import { _parseId, type Id, PlatformError, unknownError } from '@hcengineering/platform'
 import {
   type ConsumerControl,
   createDummyStorageAdapter,
@@ -48,10 +48,10 @@ import {
   type MiddlewareCreator,
   type Pipeline,
   type PipelineContext
-} from '@intabiafusion/server-core'
-import { getConfig } from '@intabiafusion/server-pipeline'
+} from '@hcengineering/server-core'
+import { getConfig } from '@hcengineering/server-pipeline'
 
-import { type AccountClient } from '@intabiafusion/account-client'
+import { type AccountClient } from '@hcengineering/account-client'
 import rating, {
   type DocReaction,
   DOMAIN_PERSON_RATING,
@@ -59,9 +59,9 @@ import rating, {
   type PersonRating,
   ratingId,
   ReactionKind
-} from '@intabiafusion/rating'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/rating'
+import { getAccountClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 import { LRUCache } from 'lru-cache'
 import { calculatePersonRating, fulltextModelFilter, getRatingDomains } from './utils'
 

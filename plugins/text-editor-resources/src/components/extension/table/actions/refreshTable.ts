@@ -14,8 +14,8 @@
 
 import { type Editor } from '@tiptap/core'
 import { Node } from '@tiptap/pm/model'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
-import { showPopup } from '@intabiafusion/ui'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { showPopup } from '@hcengineering/ui'
 import { findTable } from '../utils'
 import { getTableMetadata } from '../tableMetadata'
 import TableRefreshConfirmation from './TableRefreshConfirmation.svelte'

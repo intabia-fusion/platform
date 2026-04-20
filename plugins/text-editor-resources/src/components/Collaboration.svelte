@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { type Doc } from '@intabiafusion/core'
-  import { encodeDocumentId } from '@intabiafusion/collaborator-client'
-  import { getAttribute, getClient, KeyedAttribute } from '@intabiafusion/presentation'
-  import { CollaborationIds } from '@intabiafusion/text-editor'
+  import { type Doc } from '@hcengineering/core'
+  import { encodeDocumentId } from '@hcengineering/collaborator-client'
+  import { getAttribute, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { CollaborationIds } from '@hcengineering/text-editor'
   import { onDestroy, setContext } from 'svelte'
 
   import { createTiptapCollaborationData } from '../provider/utils'

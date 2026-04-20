@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Mixin, Ref, Space } from '@intabiafusion/core'
-import type { Asset, IntlString, Metadata, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { type AnyComponent, type ComponentExtensionId, type Location } from '@intabiafusion/ui'
-import { type Action, type ViewAction } from '@intabiafusion/view'
+import type { Class, Doc, Mixin, Ref, Space } from '@hcengineering/core'
+import type { Asset, IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { type AnyComponent, type ComponentExtensionId, type Location } from '@hcengineering/ui'
+import { type Action, type ViewAction } from '@hcengineering/view'
 
 import type {
   Application,

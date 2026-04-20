@@ -14,12 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata, setMetadata, OK, Severity, Status } from '@intabiafusion/platform'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { type LoginInfo, type WorkspaceLoginInfo } from '@intabiafusion/account-client'
-  import presentation from '@intabiafusion/presentation'
-  import { type Location, getCurrentLocation, navigate, setMetadataLocalStorage } from '@intabiafusion/ui'
-  import { logIn, workbenchId } from '@intabiafusion/workbench'
+  import platform, { getMetadata, setMetadata, OK, Severity, Status } from '@hcengineering/platform'
+  import { Analytics } from '@hcengineering/analytics'
+  import { type LoginInfo, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+  import presentation from '@hcengineering/presentation'
+  import { type Location, getCurrentLocation, navigate, setMetadataLocalStorage } from '@hcengineering/ui'
+  import { logIn, workbenchId } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
 
   import { getAccount, getInviteInfo, joinByInvite, setLoginInfo } from '../utils'

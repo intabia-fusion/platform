@@ -6,9 +6,9 @@ import { registerGithub } from './github'
 import { registerGoogle } from './google'
 import { registerOpenid } from './openid'
 import { registerToken } from './token'
-import { BrandingMap, MeasureContext } from '@intabiafusion/core'
-import { type AccountDB } from '@intabiafusion/account'
-import { type ProviderInfo } from '@intabiafusion/account-client'
+import { BrandingMap, MeasureContext } from '@hcengineering/core'
+import { type AccountDB } from '@hcengineering/account'
+import { type ProviderInfo } from '@hcengineering/account-client'
 
 export type Passport = typeof passport
 

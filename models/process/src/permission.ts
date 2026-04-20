@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import core from '@intabiafusion/core'
+import core from '@hcengineering/core'
 import process from '.'
-import { type Builder } from '@intabiafusion/model'
-import { ExecutionStatus } from '@intabiafusion/process'
+import { type Builder } from '@hcengineering/model'
+import { ExecutionStatus } from '@hcengineering/process'
 
 export function definePermissions (builder: Builder): void {
   builder.createDoc(

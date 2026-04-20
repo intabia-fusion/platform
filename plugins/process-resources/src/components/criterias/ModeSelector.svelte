@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { DropdownLabelsIntl } from '@intabiafusion/ui'
+  import { DropdownLabelsIntl } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Mode } from '../../query'
 

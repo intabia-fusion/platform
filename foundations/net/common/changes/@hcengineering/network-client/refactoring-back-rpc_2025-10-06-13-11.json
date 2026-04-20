@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "packageName": "@intabiafusion/network-client",
+      "packageName": "@hcengineering/network-client",
       "comment": "renamings",
       "type": "none"
     }
   ],
-  "packageName": "@intabiafusion/network-client"
+  "packageName": "@hcengineering/network-client"
 }

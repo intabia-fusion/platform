@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@intabiafusion/contact'
-  import { Doc, Ref } from '@intabiafusion/core'
-  import type { Request, RequestType, Staff } from '@intabiafusion/hr'
-  import { Department } from '@intabiafusion/hr'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Button, DropdownIntlItem, Label, Loading, showPopup, tableToCSV } from '@intabiafusion/ui'
-  import { BuildModelKey, Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { TableBrowser, ViewletSelector, ViewletSettingButton } from '@intabiafusion/view-resources'
+  import { Employee } from '@hcengineering/contact'
+  import { Doc, Ref } from '@hcengineering/core'
+  import type { Request, RequestType, Staff } from '@hcengineering/hr'
+  import { Department } from '@hcengineering/hr'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Button, DropdownIntlItem, Label, Loading, showPopup, tableToCSV } from '@hcengineering/ui'
+  import { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { TableBrowser, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import hr from '../../plugin'
   import {
     EmployeeReports,

@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import uploader, { uploaderId } from '@intabiafusion/uploader'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import uploader, { uploaderId } from '@hcengineering/uploader'
 
 export default mergeIds(uploaderId, uploader, {
   component: {

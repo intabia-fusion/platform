@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { MeasureMetricsContext } from '@intabiafusion/core'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { QueueTopic } from '@intabiafusion/server-core'
-import { TimeMachineMessage } from '@intabiafusion/server-process'
+import { MeasureMetricsContext } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { QueueTopic } from '@hcengineering/server-core'
+import { TimeMachineMessage } from '@hcengineering/server-process'
 import { TimeMachineDB } from './db'
 import { SendTimeEvent } from './activities'
 import config from './config'

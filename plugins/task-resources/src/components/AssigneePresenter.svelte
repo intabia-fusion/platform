@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person, getName } from '@intabiafusion/contact'
-  import { Class, Doc, Ref, Space } from '@intabiafusion/core'
-  import { Task } from '@intabiafusion/task'
-  import { getClient } from '@intabiafusion/presentation'
-  import { UsersPopup, employeeByIdStore } from '@intabiafusion/contact-resources'
-  import { AttributeModel } from '@intabiafusion/view'
-  import { eventToHTMLElement, showPopup } from '@intabiafusion/ui'
-  import { getObjectPresenter } from '@intabiafusion/view-resources'
-  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import contact, { Employee, Person, getName } from '@hcengineering/contact'
+  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { Task } from '@hcengineering/task'
+  import { getClient } from '@hcengineering/presentation'
+  import { UsersPopup, employeeByIdStore } from '@hcengineering/contact-resources'
+  import { AttributeModel } from '@hcengineering/view'
+  import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { getObjectPresenter } from '@hcengineering/view-resources'
+  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
   import task from '../plugin'
 
   export let value: Ref<Person> | Person | null | undefined

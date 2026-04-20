@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessagePreviewType } from '@intabiafusion/activity'
-  import { BaseMessagePreview } from '@intabiafusion/activity-resources'
-  import attachment, { Attachment } from '@intabiafusion/attachment'
-  import { AttachmentsTooltip } from '@intabiafusion/attachment-resources'
-  import { ChatMessage } from '@intabiafusion/chunter'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { Action, Icon, Label, tooltip } from '@intabiafusion/ui'
-  import { isEmptyMarkup } from '@intabiafusion/text'
+  import { ActivityMessagePreviewType } from '@hcengineering/activity'
+  import { BaseMessagePreview } from '@hcengineering/activity-resources'
+  import attachment, { Attachment } from '@hcengineering/attachment'
+  import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
+  import { ChatMessage } from '@hcengineering/chunter'
+  import { createQuery } from '@hcengineering/presentation'
+  import { Action, Icon, Label, tooltip } from '@hcengineering/ui'
+  import { isEmptyMarkup } from '@hcengineering/text'
 
   export let value: ChatMessage
   export let readonly = false

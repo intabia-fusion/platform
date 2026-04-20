@@ -1,8 +1,8 @@
 <script lang="ts">
   import love from '../../../plugin'
-  import { ModernButton } from '@intabiafusion/ui'
+  import { ModernButton } from '@hcengineering/ui'
   import { myInfo, myOffice } from '../../../stores'
-  import { isOffice, Room } from '@intabiafusion/love'
+  import { isOffice, Room } from '@hcengineering/love'
   import { createEventDispatcher } from 'svelte'
   import { leaveMeeting } from '../../../meetings'
 

@@ -14,15 +14,15 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref } from '@intabiafusion/core'
+  import { Ref } from '@hcengineering/core'
   import type {
     NotificationType,
     NotificationGroup,
     NotificationPreferencesGroup,
     NotificationTypeSetting
-  } from '@intabiafusion/notification'
-  import { getResource } from '@intabiafusion/platform'
-  import { getClient, isDisabled } from '@intabiafusion/presentation'
+  } from '@hcengineering/notification'
+  import { getResource } from '@hcengineering/platform'
+  import { getClient, isDisabled } from '@hcengineering/presentation'
   import {
     Breadcrumb,
     defineSeparators,
@@ -36,7 +36,7 @@
     Scroller,
     Separator,
     twoPanelsSeparators
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
 
   import notification from '../../plugin'
   import NotificationGroupSetting from './NotificationGroupSetting.svelte'

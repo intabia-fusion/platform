@@ -14,11 +14,11 @@
 //
 -->
 <script lang="ts">
-  import { markdownToMarkup } from '@intabiafusion/text-markdown'
-  import presentation, { Card } from '@intabiafusion/presentation'
-  import textEditor from '@intabiafusion/text-editor'
+  import { markdownToMarkup } from '@hcengineering/text-markdown'
+  import presentation, { Card } from '@hcengineering/presentation'
+  import textEditor from '@hcengineering/text-editor'
   import { createEventDispatcher } from 'svelte'
-  import type { TableMetadata } from '@intabiafusion/view'
+  import type { TableMetadata } from '@hcengineering/view'
 
   import MarkupDiffViewer from '../../../MarkupDiffViewer.svelte'
   import TableSourceInfo from './TableSourceInfo.svelte'

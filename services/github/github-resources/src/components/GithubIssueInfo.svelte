@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Icon, Label } from '@intabiafusion/ui'
-  import { GithubIntegrationRepository } from '@intabiafusion/github'
+  import { Ref } from '@hcengineering/core'
+  import { Icon, Label } from '@hcengineering/ui'
+  import { GithubIntegrationRepository } from '@hcengineering/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

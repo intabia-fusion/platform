@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { ContextId, parseContext, Process, SelectedExecutionContext, UserResult } from '@intabiafusion/process'
-  import { Button, eventToHTMLElement, SelectPopup, showPopup } from '@intabiafusion/ui'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { ContextId, parseContext, Process, SelectedExecutionContext, UserResult } from '@hcengineering/process'
+  import { Button, eventToHTMLElement, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import ContextCriteria from '../criterias/ContextCriteria.svelte'
 

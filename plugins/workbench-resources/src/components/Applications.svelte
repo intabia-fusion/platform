@@ -14,22 +14,22 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { AccountRole, getCurrentAccount, type Ref } from '@intabiafusion/core'
-  import { createNotificationsQuery, createQuery } from '@intabiafusion/presentation'
-  import { Scroller, deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
-  import { NavLink } from '@intabiafusion/view-resources'
-  import type { Application } from '@intabiafusion/workbench'
-  import workbench from '@intabiafusion/workbench'
-  import { chatId } from '@intabiafusion/chat'
-  import { inboxId } from '@intabiafusion/inbox'
-  import { getMetadata, getResource } from '@intabiafusion/platform'
-  import { InboxNotificationsClientImpl, appearancePreferences } from '@intabiafusion/notification-resources'
+  import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
+  import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
+  import { Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { NavLink } from '@hcengineering/view-resources'
+  import type { Application } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
+  import { chatId } from '@hcengineering/chat'
+  import { inboxId } from '@hcengineering/inbox'
+  import { getMetadata, getResource } from '@hcengineering/platform'
+  import { InboxNotificationsClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
   import notification, {
     DocNotifyContext,
     InboxNotification,
     NotificationAppearancePreference
-  } from '@intabiafusion/notification'
-  import { NotificationType } from '@intabiafusion/communication-types'
+  } from '@hcengineering/notification'
+  import { NotificationType } from '@hcengineering/communication-types'
 
   import AppItem from './AppItem.svelte'
 

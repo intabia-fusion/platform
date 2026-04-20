@@ -1,8 +1,8 @@
-import { Doc, Ref, TxOperations, AccountUuid } from '@intabiafusion/core'
-import notification, { DocNotifyContext } from '@intabiafusion/notification'
-import { IntlString } from '@intabiafusion/platform'
-import { PersonSpace } from '@intabiafusion/contact'
-import github from '@intabiafusion/github'
+import { Doc, Ref, TxOperations, AccountUuid } from '@hcengineering/core'
+import notification, { DocNotifyContext } from '@hcengineering/notification'
+import { IntlString } from '@hcengineering/platform'
+import { PersonSpace } from '@hcengineering/contact'
+import github from '@hcengineering/github'
 
 export async function createNotification (
   client: TxOperations,

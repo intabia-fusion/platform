@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@intabiafusion/card'
-  import { AnyAttribute, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
+  import { MasterTag, Tag } from '@hcengineering/card'
+  import { AnyAttribute, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import {
     Context,
     Process,
@@ -23,8 +23,8 @@
     ProcessFunction,
     RelatedContext,
     SelectedContext
-  } from '@intabiafusion/process'
-  import { eventToHTMLElement, Label, resizeObserver, Scroller, showPopup, Submenu } from '@intabiafusion/ui'
+  } from '@hcengineering/process'
+  import { eventToHTMLElement, Label, resizeObserver, Scroller, showPopup, Submenu } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { generateContextId, getRelationObjectReduceFunc, getValueReduceFunc } from '../../utils'

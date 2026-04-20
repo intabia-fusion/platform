@@ -16,20 +16,20 @@ import account, {
   type AccountNotification,
   type CrmNotification,
   initRegionConfig
-} from '@intabiafusion/account'
-import accountEn from '@intabiafusion/account/lang/en.json'
-import accountRu from '@intabiafusion/account/lang/ru.json'
-import { Analytics } from '@intabiafusion/analytics'
-import { registerProviders } from '@intabiafusion/auth-providers'
+} from '@hcengineering/account'
+import accountEn from '@hcengineering/account/lang/en.json'
+import accountRu from '@hcengineering/account/lang/ru.json'
+import { Analytics } from '@hcengineering/analytics'
+import { registerProviders } from '@hcengineering/auth-providers'
 import {
   metricsAggregate,
   type Branding,
   type BrandingMap,
   type MeasureContext,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@intabiafusion/platform'
-import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
+import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type Cookies from 'cookies'
 import { type IncomingHttpHeaders } from 'http'
@@ -37,11 +37,11 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
-import { storageConfigFromEnv, buildStorageFromConfig } from '@intabiafusion/server-storage'
+import { storageConfigFromEnv, buildStorageFromConfig } from '@hcengineering/server-storage'
 import { migrateFromOldAccounts } from './migration/migration'
 
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { QueueTopic } from '@intabiafusion/server-core'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { QueueTopic } from '@hcengineering/server-core'
 
 export * from './migration/utils'
 export * from './migration/types'
@@ -80,7 +80,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
         ➡️ Recommended Action:
         Migrate to CockroachDB before upgrading to v7. See migration instructions at:
-        https://github.com/intabia-fusion/huly-selfhost
+        https://github.com/hcengineering/huly-selfhost
 
         To proceed with MongoDB (despite these limitations):
         Set environment variable PROCEED_V7_MONGO=true.

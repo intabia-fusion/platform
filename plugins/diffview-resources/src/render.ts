@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type DiffHunk, type DiffLine, DiffLineType, EmptyLine } from '@intabiafusion/diffview'
-import { type HighlightOptions, highlightLines } from '@intabiafusion/highlight'
+import { type DiffHunk, type DiffLine, DiffLineType, EmptyLine } from '@hcengineering/diffview'
+import { type HighlightOptions, highlightLines } from '@hcengineering/highlight'
 
 export interface RenderOptions {
   syntaxHighlight: {

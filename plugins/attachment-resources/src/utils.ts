@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type Attachment } from '@intabiafusion/attachment'
+import { type Attachment } from '@hcengineering/attachment'
 import {
   type BlobMetadata,
   type Blob,
@@ -26,12 +26,12 @@ import {
   type Space,
   type WithLookup,
   type BlobType
-} from '@intabiafusion/core'
-import { getResource, setPlatformStatus, unknownError } from '@intabiafusion/platform'
-import { type FileOrBlob, getClient, getPreviewAlignment, uploadFile } from '@intabiafusion/presentation'
-import { closeTooltip, showPopup, type PopupResult } from '@intabiafusion/ui'
-import workbench, { type WidgetTab } from '@intabiafusion/workbench'
-import view from '@intabiafusion/view'
+} from '@hcengineering/core'
+import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+import { type FileOrBlob, getClient, getPreviewAlignment, uploadFile } from '@hcengineering/presentation'
+import { closeTooltip, showPopup, type PopupResult } from '@hcengineering/ui'
+import workbench, { type WidgetTab } from '@hcengineering/workbench'
+import view from '@hcengineering/view'
 
 import attachment from './plugin'
 import AttachmentPreviewPopup from './components/AttachmentPreviewPopup.svelte'

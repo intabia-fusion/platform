@@ -2,7 +2,7 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
 //
-// Script to check and update @intabiafusion/* dependencies across all Rush packages
+// Script to check and update @hcengineering/* dependencies across all Rush packages
 //
 
 const fs = require('fs')
@@ -10,7 +10,7 @@ const path = require('path')
 const https = require('https')
 const { execSync } = require('child_process')
 
-const SCOPE = '@intabiafusion/'
+const SCOPE = '@hcengineering/'
 
 /**
  * Get list of Rush projects using 'rush list --json'
@@ -123,7 +123,7 @@ function isNewerVersion(current, latest) {
 }
 
 /**
- * Check and update @intabiafusion dependencies in a package.json
+ * Check and update @hcengineering dependencies in a package.json
  */
 async function updatePackageDependencies(project, latestVersions, dryRun = false) {
   // Use fullPath from rush list output
@@ -193,12 +193,12 @@ async function updatePackageDependencies(project, latestVersions, dryRun = false
 }
 
 /**
- * Get all @intabiafusion packages and their latest versions
+ * Get all @hcengineering packages and their latest versions
  */
 async function fetchLatestVersions(projects) {
   const packageNames = new Set()
 
-  // Collect all @intabiafusion package names from all projects
+  // Collect all @hcengineering package names from all projects
   for (const project of projects) {
     const packageJsonPath = project.fullPath ? path.join(project.fullPath, 'package.json') : null
     if (!packageJsonPath || !fs.existsSync(packageJsonPath)) continue
@@ -218,7 +218,7 @@ async function fetchLatestVersions(projects) {
     }
   }
 
-  console.log(`\n🔍 Checking latest versions for ${packageNames.size} @intabiafusion packages...\n`)
+  console.log(`\n🔍 Checking latest versions for ${packageNames.size} @hcengineering packages...\n`)
 
   const latestVersions = {}
   const promises = Array.from(packageNames).map(async (packageName) => {
@@ -249,7 +249,7 @@ async function main() {
   // Show help
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-Rush @intabiafusion Dependencies Updater
+Rush @hcengineering Dependencies Updater
 
 Usage:
   update-hcengineering-deps [options]
@@ -259,7 +259,7 @@ Options:
   --help, -h       Show this help message
 
 Description:
-  This script checks all Rush packages for @intabiafusion/* dependencies
+  This script checks all Rush packages for @hcengineering/* dependencies
   and updates them to the latest versions available in npm registry.
 
   Workspace dependencies (using 'workspace:' protocol) are never modified.
@@ -281,7 +281,7 @@ After updating:
 
   const dryRun = args.includes('--dry-run') || args.includes('-n')
 
-  console.log('🚀 Rush @intabiafusion Dependencies Updater\n')
+  console.log('🚀 Rush @hcengineering Dependencies Updater\n')
 
   // Get Rush projects using 'rush list --json'
   const projects = getRushProjects()
@@ -295,7 +295,7 @@ After updating:
   const latestVersions = await fetchLatestVersions(projects)
 
   if (Object.keys(latestVersions).length === 0) {
-    console.log('\n⚠️  No @intabiafusion packages found in npm registry')
+    console.log('\n⚠️  No @hcengineering packages found in npm registry')
     return
   }
 
@@ -313,7 +313,7 @@ After updating:
   console.log('\n' + '='.repeat(80))
 
   if (totalUpdates === 0) {
-    console.log('✅ All @intabiafusion dependencies are up to date!')
+    console.log('✅ All @hcengineering dependencies are up to date!')
   } else {
     if (dryRun) {
       console.log(`\n📊 Found ${totalUpdates} potential update(s)`)

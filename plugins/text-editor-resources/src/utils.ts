@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import { SelectPopup, showPopup, type PopupAlignment } from '@intabiafusion/ui'
+import { SelectPopup, showPopup, type PopupAlignment } from '@hcengineering/ui'
 import { type Editor, type Attribute } from '@tiptap/core'
 
-import { type ActionContext } from '@intabiafusion/text-editor'
+import { type ActionContext } from '@hcengineering/text-editor'
 import { mInsertTable } from './components/extensions'
 import LinkPopup from './components/LinkPopup.svelte'
 

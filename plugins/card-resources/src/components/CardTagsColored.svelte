@@ -12,11 +12,11 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Class, ClassifierKind, Doc, Mixin, Ref } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Card, MasterTag, Tag } from '@intabiafusion/card'
+  import { Class, ClassifierKind, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { Card, MasterTag, Tag } from '@hcengineering/card'
   import { onMount, onDestroy } from 'svelte'
-  import { tooltip } from '@intabiafusion/ui'
+  import { tooltip } from '@hcengineering/ui'
   import CardTagColored from './CardTagColored.svelte'
   import TagsPopup from './TagsPopup.svelte'
 

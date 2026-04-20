@@ -17,9 +17,9 @@ import {
   type CreateContentRequest,
   type CreateContentResponse,
   decodeDocumentId
-} from '@intabiafusion/collaborator-client'
-import { saveCollabJson } from '@intabiafusion/collaboration'
-import { type Blob, type Ref, MeasureContext } from '@intabiafusion/core'
+} from '@hcengineering/collaborator-client'
+import { saveCollabJson } from '@hcengineering/collaboration'
+import { type Blob, type Ref, MeasureContext } from '@hcengineering/core'
 import { Context } from '../../context'
 import { RpcMethodParams } from '../rpc'
 

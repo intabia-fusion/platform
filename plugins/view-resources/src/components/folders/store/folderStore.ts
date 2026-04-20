@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Doc, type Ref } from '@intabiafusion/core'
+import { type Doc, type Ref } from '@hcengineering/core'
 import { writable, type Writable } from 'svelte/store'
 
 import { type FoldersState, FoldersManager, emptyFoldersState } from './folderUtils'

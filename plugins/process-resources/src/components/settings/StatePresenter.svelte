@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { createQuery } from '@intabiafusion/presentation'
-  import process, { State } from '@intabiafusion/process'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import process, { State } from '@hcengineering/process'
 
   export let value: Ref<State>
 

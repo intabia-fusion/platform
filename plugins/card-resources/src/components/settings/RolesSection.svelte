@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Role, Tag } from '@intabiafusion/card'
-  import contact from '@intabiafusion/contact'
-  import core from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { clearSettingsStore } from '@intabiafusion/setting-resources'
-  import { ButtonIcon, getCurrentResolvedLocation, Icon, IconAdd, Label, navigate, showPopup } from '@intabiafusion/ui'
+  import { MasterTag, Role, Tag } from '@hcengineering/card'
+  import contact from '@hcengineering/contact'
+  import core from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import { ButtonIcon, getCurrentResolvedLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
   import card from '../../plugin'
   import RolesPopup from './RolesPopup.svelte'
 

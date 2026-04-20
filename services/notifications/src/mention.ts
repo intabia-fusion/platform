@@ -24,13 +24,13 @@ import core, {
   TxCUD,
   Blob,
   type TxRemoveDoc
-} from '@intabiafusion/core'
-import notification, { DocNotifyContext, NotificationContent, TxNotificationType } from '@intabiafusion/notification'
-import activity, { ActivityMessage, UserMentionInfo } from '@intabiafusion/activity'
-import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON, markupToText } from '@intabiafusion/text-core'
-import { Receiver, MentionRef, Sender, getSenderName, normalizeTextMessage } from '@intabiafusion/server-notification'
-import contact, { type Employee, Person } from '@intabiafusion/contact'
-import { IntlString } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import notification, { DocNotifyContext, NotificationContent, TxNotificationType } from '@hcengineering/notification'
+import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
+import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON, markupToText } from '@hcengineering/text-core'
+import { Receiver, MentionRef, Sender, getSenderName, normalizeTextMessage } from '@hcengineering/server-notification'
+import contact, { type Employee, Person } from '@hcengineering/contact'
+import { IntlString } from '@hcengineering/platform'
 
 import { Client, NotificationSettings, NotifyResult, MentionResult } from './types'
 import { getDocIdentifier, getDocTitle, getDocUrl, getTxNotifyResult } from './utils'

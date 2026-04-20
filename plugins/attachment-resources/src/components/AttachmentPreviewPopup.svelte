@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { type Attachment, type Drawing } from '@intabiafusion/attachment'
-  import core, { SortingOrder } from '@intabiafusion/core'
-  import { DrawingData, FilePreviewPopup, getClient } from '@intabiafusion/presentation'
+  import attachment, { type Attachment, type Drawing } from '@hcengineering/attachment'
+  import core, { SortingOrder } from '@hcengineering/core'
+  import { DrawingData, FilePreviewPopup, getClient } from '@hcengineering/presentation'
   import { isAttachment } from '../utils'
 
   export let value: Attachment

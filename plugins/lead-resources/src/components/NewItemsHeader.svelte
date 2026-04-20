@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { showPopup, HeaderButton } from '@intabiafusion/ui'
+  import { showPopup, HeaderButton } from '@hcengineering/ui'
   import lead from '../plugin'
   import CreateCustomer from './CreateCustomer.svelte'
-  import { AccountRole } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
+  import { AccountRole } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
 
   const client = getClient()
 

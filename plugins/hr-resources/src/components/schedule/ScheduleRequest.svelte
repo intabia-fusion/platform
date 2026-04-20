@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import hr, { Request, RequestType } from '@intabiafusion/hr'
-  import { getClient } from '@intabiafusion/presentation'
-  import { jsonToText, markupToJSON } from '@intabiafusion/text'
-  import { Icon, Label, closeTooltip } from '@intabiafusion/ui'
-  import { showMenu } from '@intabiafusion/view-resources'
+  import hr, { Request, RequestType } from '@hcengineering/hr'
+  import { getClient } from '@hcengineering/presentation'
+  import { jsonToText, markupToJSON } from '@hcengineering/text'
+  import { Icon, Label, closeTooltip } from '@hcengineering/ui'
+  import { showMenu } from '@hcengineering/view-resources'
 
   export let request: Request
   export let editable: boolean = false

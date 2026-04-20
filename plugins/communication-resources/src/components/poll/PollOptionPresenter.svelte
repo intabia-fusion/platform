@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { CheckBox, Loading } from '@intabiafusion/ui'
-  import { getCurrentAccount, WithLookup } from '@intabiafusion/core'
-  import { Poll, PollAnswer } from '@intabiafusion/communication'
+  import { CheckBox, Loading } from '@hcengineering/ui'
+  import { getCurrentAccount, WithLookup } from '@hcengineering/core'
+  import { Poll, PollAnswer } from '@hcengineering/communication'
   import { createEventDispatcher } from 'svelte'
 
   import { PollOption } from '../../poll'

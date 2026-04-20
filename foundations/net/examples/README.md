@@ -274,7 +274,7 @@ NODE_ENV=development rushx run:basic
 ### Container Implementation Template
 
 ```typescript
-import type { Container, ContainerUuid, ClientUuid } from '@intabiafusion/network-core'
+import type { Container, ContainerUuid, ClientUuid } from '@hcengineering/network-core'
 
 class MyContainer implements Container {
   constructor(readonly uuid: ContainerUuid) {}
@@ -299,7 +299,7 @@ class MyContainer implements Container {
 ### Client Usage Template
 
 ```typescript
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 
 const client = createNetworkClient('localhost:3737')
 await client.waitConnection(5000)
@@ -314,7 +314,7 @@ await client.close()
 ### Agent Setup Template
 
 ```typescript
-import { createNetworkClient } from '@intabiafusion/network-client'
+import { createNetworkClient } from '@hcengineering/network-client'
 
 const client = createNetworkClient('localhost:3737')
 await client.waitConnection(5000)

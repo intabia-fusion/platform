@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, Doc, PersonId, Ref, SortingOrder, Tx, TxCreateDoc, TxProcessor } from '@intabiafusion/core'
-import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@intabiafusion/server-core'
-import { aiBotEmailSocialKey, AIEventRequest } from '@intabiafusion/ai-bot'
-import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@intabiafusion/chunter'
-import contact, { Employee, SocialIdentity } from '@intabiafusion/contact'
+import core, { AccountUuid, Doc, PersonId, Ref, SortingOrder, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
+import { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
+import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@hcengineering/chunter'
+import contact, { Employee, SocialIdentity } from '@hcengineering/contact'
 
-import { MarkupNodeType, markupToJSON, traverseNode } from '@intabiafusion/text'
+import { MarkupNodeType, markupToJSON, traverseNode } from '@hcengineering/text'
 
 interface WorkspaceCacheEntry {
   primary: SocialIdentity[]

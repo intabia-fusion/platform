@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, Person, combineName, getCurrentEmployee, getFirstName, getLastName } from '@intabiafusion/contact'
-  import { AccountRole, Ref, getCurrentAccount, hasAccountRole, type AccountUuid } from '@intabiafusion/core'
-  import { AttributeEditor, createQuery, getClient, hasResource } from '@intabiafusion/presentation'
-  import type { PersonRating } from '@intabiafusion/rating'
-  import ratingPlugin from '@intabiafusion/rating'
-  import setting, { IntegrationType } from '@intabiafusion/setting'
-  import { Component, EditBox, FocusHandler, Scroller, createFocusManager } from '@intabiafusion/ui'
+  import { Channel, Person, combineName, getCurrentEmployee, getFirstName, getLastName } from '@hcengineering/contact'
+  import { AccountRole, Ref, getCurrentAccount, hasAccountRole, type AccountUuid } from '@hcengineering/core'
+  import { AttributeEditor, createQuery, getClient, hasResource } from '@hcengineering/presentation'
+  import type { PersonRating } from '@hcengineering/rating'
+  import ratingPlugin from '@hcengineering/rating'
+  import setting, { IntegrationType } from '@hcengineering/setting'
+  import { Component, EditBox, FocusHandler, Scroller, createFocusManager } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import contact from '../plugin'
   import Avatar from './Avatar.svelte'

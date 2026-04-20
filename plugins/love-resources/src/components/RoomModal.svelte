@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
-  import presentation from '@intabiafusion/presentation'
-  import { Modal } from '@intabiafusion/ui'
+  import presentation from '@hcengineering/presentation'
+  import { Modal } from '@hcengineering/ui'
 
   import { currentRoom, roomModalActive } from '../stores'
   import RoomComponent from './Room.svelte'

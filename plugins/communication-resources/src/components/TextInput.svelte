@@ -11,12 +11,12 @@
 <!-- See the License for the specific language governing permissions and -->
 <!-- limitations under the License. -->
 <script lang="ts">
-  import { Markup, type Blob, type Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { areEqualMarkups, EmptyMarkup, isEmptyMarkup } from '@intabiafusion/text'
-  import { TextEditorHandler } from '@intabiafusion/text-editor'
-  import { TextEditor } from '@intabiafusion/text-editor-resources'
-  import { Button, ButtonIcon, handler, IconComponent, IconSend, registerFocus } from '@intabiafusion/ui'
+  import { Markup, type Blob, type Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { areEqualMarkups, EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
+  import { TextEditorHandler } from '@hcengineering/text-editor'
+  import { TextEditor } from '@hcengineering/text-editor-resources'
+  import { Button, ButtonIcon, handler, IconComponent, IconSend, registerFocus } from '@hcengineering/ui'
   import { FocusPosition } from '@tiptap/core'
   import { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher } from 'svelte'

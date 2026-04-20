@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo } from '@intabiafusion/ui'
+  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
 
   import Tabs from './Tabs.svelte'
   import Providers from './Providers.svelte'

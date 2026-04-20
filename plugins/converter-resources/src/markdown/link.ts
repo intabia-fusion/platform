@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import type { Doc, Hierarchy } from '@intabiafusion/core'
-import { concatLink } from '@intabiafusion/core'
-import { getMetadata } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
-import { getObjectLinkFragment } from '@intabiafusion/view-resources'
-import { locationToUrl } from '@intabiafusion/ui'
-import view from '@intabiafusion/view'
+import type { Doc, Hierarchy } from '@hcengineering/core'
+import { concatLink } from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
+import { getObjectLinkFragment } from '@hcengineering/view-resources'
+import { locationToUrl } from '@hcengineering/ui'
+import view from '@hcengineering/view'
 import { escapeMarkdownLinkText, escapeMarkdownLinkUrl } from './escape'
 
 /**

@@ -6,9 +6,9 @@ import {
   type QuestionInitFunction,
   type QuestionInitFunctionResult,
   type SingleChoiceAssessment
-} from '@intabiafusion/questions'
-import { type Hierarchy } from '@intabiafusion/core'
-import type { ThemeOptions } from '@intabiafusion/theme'
+} from '@hcengineering/questions'
+import { type Hierarchy } from '@hcengineering/core'
+import type { ThemeOptions } from '@hcengineering/theme'
 import { SingleChoiceQuestionInit } from './SingleChoiceQuestionInit'
 
 export const SingleChoiceAssessmentInit: QuestionInitFunction<SingleChoiceAssessment> = async (

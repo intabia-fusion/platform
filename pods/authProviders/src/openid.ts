@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type AccountDB } from '@intabiafusion/account'
-import { type ProviderInfo } from '@intabiafusion/account-client'
-import { BrandingMap, concatLink, MeasureContext, getBranding, SocialIdType } from '@intabiafusion/core'
+import { type AccountDB } from '@hcengineering/account'
+import { type ProviderInfo } from '@hcengineering/account-client'
+import { BrandingMap, concatLink, MeasureContext, getBranding, SocialIdType } from '@hcengineering/core'
 import Router from 'koa-router'
 import { Issuer, Strategy } from 'openid-client'
 

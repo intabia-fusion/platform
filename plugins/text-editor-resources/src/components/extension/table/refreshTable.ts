@@ -12,10 +12,10 @@
 // limitations under the License.
 //
 
-import type { Client, Doc } from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
-import converter from '@intabiafusion/converter'
-import { type BuildMarkdownTableMetadata, type TableMetadata } from '@intabiafusion/view'
+import type { Client, Doc } from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
+import converter from '@hcengineering/converter'
+import { type BuildMarkdownTableMetadata, type TableMetadata } from '@hcengineering/view'
 
 /**
  * Build markdown table string from documents and metadata

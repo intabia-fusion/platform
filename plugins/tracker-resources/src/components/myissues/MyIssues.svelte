@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import core, { DocumentQuery, getCurrentAccount, Ref } from '@intabiafusion/core'
-  import type { IntlString, Asset } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import type { Issue, IssueStatus } from '@intabiafusion/tracker'
-  import { IModeSelector, resolvedLocationStore } from '@intabiafusion/ui'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import core, { DocumentQuery, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import type { Issue, IssueStatus } from '@hcengineering/tracker'
+  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import task from '@intabiafusion/task'
+  import task from '@hcengineering/task'
   import tracker from '../../plugin'
   import IssuesView from '../issues/IssuesView.svelte'
 

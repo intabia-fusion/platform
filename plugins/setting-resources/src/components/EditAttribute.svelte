@@ -22,9 +22,9 @@
     PropertyType,
     Ref,
     Type
-  } from '@intabiafusion/core'
-  import { Asset, getEmbeddedLabel, getResource, translateCB } from '@intabiafusion/platform'
-  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import { Asset, getEmbeddedLabel, getResource, translateCB } from '@hcengineering/platform'
+  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import {
     AnyComponent,
     ButtonIcon,
@@ -38,9 +38,9 @@
     showPopup,
     themeStore,
     Toggle
-  } from '@intabiafusion/ui'
-  import { IconPicker } from '@intabiafusion/view-resources'
-  import view from '@intabiafusion/view-resources/src/plugin'
+  } from '@hcengineering/ui'
+  import { IconPicker } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view-resources/src/plugin'
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
 

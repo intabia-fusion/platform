@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { getPopupPositionElement, showPopup } from '@intabiafusion/ui'
+  import { getPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TableofContentsPopup from './TableOfContentsPopup.svelte'
-  import { Heading } from '@intabiafusion/text-editor'
+  import { Heading } from '@hcengineering/text-editor'
 
   export let items: Heading[] = []
   export let selected: Heading | undefined = undefined

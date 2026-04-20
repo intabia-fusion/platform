@@ -6,8 +6,8 @@ import {
   type Ref,
   type SearchResultDoc,
   type Space
-} from '@intabiafusion/core'
-import { getResource } from '@intabiafusion/platform'
+} from '@hcengineering/core'
+import { getResource } from '@hcengineering/platform'
 
 import plugin, {
   type FieldTemplate,
@@ -16,7 +16,7 @@ import plugin, {
   type IndexedDoc,
   type SearchPresenter,
   type SearchScoring
-} from '@intabiafusion/server-core'
+} from '@hcengineering/server-core'
 
 export function findSearchPresenter (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): SearchPresenter | undefined {
   try {

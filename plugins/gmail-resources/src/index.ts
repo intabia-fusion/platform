@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import { getMetadata, type Resources } from '@intabiafusion/platform'
-import presentation from '@intabiafusion/presentation'
+import { getMetadata, type Resources } from '@hcengineering/platform'
+import presentation from '@hcengineering/presentation'
 import GmailWriteMessage from './components/activity/GmailWriteMessage.svelte'
 import GmailSharedMessage from './components/activity/GmailSharedMessage.svelte'
 import Configure from './components/Configure.svelte'
@@ -24,10 +24,10 @@ import IconGmail from './components/icons/GmailColor.svelte'
 import Main from './components/Main.svelte'
 import NewMessages from './components/NewMessages.svelte'
 import IntegrationState from './components/IntegrationState.svelte'
-import gmail from '@intabiafusion/gmail'
+import gmail from '@hcengineering/gmail'
 import { checkHasEmail, MessageTitleProvider } from './utils'
 import { getIntegrationClient, signout } from './api'
-import type { Integration } from '@intabiafusion/account-client'
+import type { Integration } from '@hcengineering/account-client'
 
 export default async (): Promise<Resources> => ({
   component: {

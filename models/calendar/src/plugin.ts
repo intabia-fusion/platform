@@ -13,21 +13,21 @@
 // limitations under the License.
 //
 
-import { calendarId } from '@intabiafusion/calendar'
-import calendar from '@intabiafusion/calendar-resources/src/plugin'
-import { type Doc, type Ref } from '@intabiafusion/core'
-import { type NotificationGroup } from '@intabiafusion/notification'
-import type { IntlString } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import { calendarId } from '@hcengineering/calendar'
+import calendar from '@hcengineering/calendar-resources/src/plugin'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { type NotificationGroup } from '@hcengineering/notification'
+import type { IntlString } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 import {
   type Action,
   type ActionCategory,
   type ViewAction,
   type Viewlet,
   type ViewletDescriptor
-} from '@intabiafusion/view'
-import { type Widget } from '@intabiafusion/workbench'
+} from '@hcengineering/view'
+import { type Widget } from '@hcengineering/workbench'
 
 export default mergeIds(calendarId, calendar, {
   component: {

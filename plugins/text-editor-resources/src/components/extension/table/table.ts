@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import textEditor, { type ActionContext } from '@intabiafusion/text-editor'
-import { getEventPositionElement, SelectPopup, showPopup } from '@intabiafusion/ui'
+import textEditor, { type ActionContext } from '@hcengineering/text-editor'
+import { getEventPositionElement, SelectPopup, showPopup } from '@hcengineering/ui'
 import { type Editor } from '@tiptap/core'
 import TiptapTable from '@tiptap/extension-table'
 import { CellSelection, TableMap } from '@tiptap/pm/tables'

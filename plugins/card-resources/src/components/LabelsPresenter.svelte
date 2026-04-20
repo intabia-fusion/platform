@@ -14,13 +14,13 @@
 -->
 
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { Card } from '@intabiafusion/card'
-  import { Label } from '@intabiafusion/communication-types'
-  import tag, { type TagElement } from '@intabiafusion/tags'
-  import { TagElementPresenter } from '@intabiafusion/tags-resources'
-  import { Ref } from '@intabiafusion/core'
-  import { labelsStore } from '@intabiafusion/communication-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import { Card } from '@hcengineering/card'
+  import { Label } from '@hcengineering/communication-types'
+  import tag, { type TagElement } from '@hcengineering/tags'
+  import { TagElementPresenter } from '@hcengineering/tags-resources'
+  import { Ref } from '@hcengineering/core'
+  import { labelsStore } from '@hcengineering/communication-resources'
 
   export let value: Card | undefined = undefined
 

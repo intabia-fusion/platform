@@ -1,11 +1,11 @@
 import { writable } from 'svelte/store'
 
-import { createQuery } from '@intabiafusion/presentation'
+import { createQuery } from '@hcengineering/presentation'
 import desktopPreferences, {
   defaultNotificationPreference,
   type DesktopNotificationPreference,
   type DesktopNotificationPreferenceData
-} from '@intabiafusion/desktop-preferences'
+} from '@hcengineering/desktop-preferences'
 
 // /**
 //  * @public

@@ -11,9 +11,9 @@
 <!-- See the License for the specific language governing permissions and -->
 <!-- limitations under the License. -->
 <script lang="ts">
-  import { SelectPopup, SelectPopupValueType } from '@intabiafusion/ui'
+  import { SelectPopup, SelectPopupValueType } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import { languagesDisplayData } from '../translation'
   import LanguageIcon from './LanguageIcon.svelte'

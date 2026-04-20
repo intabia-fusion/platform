@@ -1,8 +1,8 @@
 <script lang="ts">
-  import core, { Class, Doc, Ref, getCurrentAccount } from '@intabiafusion/core'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { Button, EditBox, ToggleWithLabel, getCurrentResolvedLocation } from '@intabiafusion/ui'
-  import { ViewOptions } from '@intabiafusion/view'
+  import core, { Class, Doc, Ref, getCurrentAccount } from '@hcengineering/core'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { Button, EditBox, ToggleWithLabel, getCurrentResolvedLocation } from '@hcengineering/ui'
+  import { ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { filterStore } from '../../filter'
   import view from '../../plugin'

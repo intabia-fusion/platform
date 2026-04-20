@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
-  import { EditBox, Label } from '@intabiafusion/ui'
-  import globalProfile from '@intabiafusion/global-profile'
+  import type { IntlString } from '@hcengineering/platform'
+  import { EditBox, Label } from '@hcengineering/ui'
+  import globalProfile from '@hcengineering/global-profile'
 
   export let value: string
   export let label: IntlString

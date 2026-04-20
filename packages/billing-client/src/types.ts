@@ -1,4 +1,4 @@
-import { WorkspaceUuid } from '@intabiafusion/core'
+import { WorkspaceUuid } from '@hcengineering/core'
 
 export interface BillingStats {
   liveKitStats: LiveKitStats

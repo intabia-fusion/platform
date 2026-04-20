@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Asset, type IntlString } from '@intabiafusion/platform'
+import { type Asset, type IntlString } from '@hcengineering/platform'
 import {
   type Class,
   type Doc,
@@ -20,10 +20,10 @@ import {
   type UserStatus,
   type AccountUuid,
   type DocumentQuery
-} from '@intabiafusion/core'
-import { type DocNotifyContext } from '@intabiafusion/notification'
-import { type AnySvelteComponent, type IconSize, type Action } from '@intabiafusion/ui'
-import { type Chat } from '@intabiafusion/chunter'
+} from '@hcengineering/core'
+import { type DocNotifyContext } from '@hcengineering/notification'
+import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
+import { type Chat } from '@hcengineering/chunter'
 
 export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 

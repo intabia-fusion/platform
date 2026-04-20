@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { TxOperations } from '@intabiafusion/core'
-import { type TrainingState, trainingStateOrder } from '@intabiafusion/training'
+import type { TxOperations } from '@hcengineering/core'
+import { type TrainingState, trainingStateOrder } from '@hcengineering/training'
 
 export async function trainingStateSort (_: TxOperations, states: TrainingState[]): Promise<TrainingState[]> {
   return states

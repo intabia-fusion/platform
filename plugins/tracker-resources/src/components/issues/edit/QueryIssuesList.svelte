@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Issue } from '@intabiafusion/tracker'
-  import { Button, Chevron, ExpandCollapse, IconAdd, closeTooltip, resizeObserver, showPopup } from '@intabiafusion/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@intabiafusion/view'
-  import { ViewletsSettingButton, restrictionStore } from '@intabiafusion/view-resources'
+  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Issue } from '@hcengineering/tracker'
+  import { Button, Chevron, ExpandCollapse, IconAdd, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
   import { afterUpdate } from 'svelte'
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Metadata, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import type { TriggerFunc } from '@intabiafusion/server-core'
-import { Presenter } from '@intabiafusion/server-activity'
+import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import type { TriggerFunc } from '@hcengineering/server-core'
+import { Presenter } from '@hcengineering/server-activity'
 
 /**
  * @public

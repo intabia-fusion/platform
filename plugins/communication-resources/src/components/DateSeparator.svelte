@@ -12,9 +12,9 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { themeStore } from '@intabiafusion/ui'
-  import { translate } from '@intabiafusion/platform'
-  import { Timestamp } from '@intabiafusion/core'
+  import { themeStore } from '@hcengineering/ui'
+  import { translate } from '@hcengineering/platform'
+  import { Timestamp } from '@hcengineering/core'
 
   import ui from '../plugin'
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, handler } from '@intabiafusion/ui'
-  import type { RefAction, TextEditorHandler } from '@intabiafusion/text-editor'
-  import { getEditorHandler } from '@intabiafusion/text-editor-resources/src/components/editor-context'
+  import { ButtonIcon, handler } from '@hcengineering/ui'
+  import type { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import { getEditorHandler } from '@hcengineering/text-editor-resources/src/components/editor-context'
 
   export let actions: RefAction[] = []
 

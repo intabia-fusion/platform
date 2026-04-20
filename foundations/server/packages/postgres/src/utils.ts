@@ -30,8 +30,8 @@ import core, {
   systemAccountUuid,
   type WithLookup,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { type DomainHelperOperations } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { type DomainHelperOperations } from '@hcengineering/server-core'
 import type postgres from 'postgres'
 import { type ParameterOrJSON } from 'postgres'
 import {
@@ -46,7 +46,7 @@ import {
   type SchemaAndFields,
   translateDomain
 } from './schemas'
-import { retryTxn, type DBClient } from '@intabiafusion/postgres-base'
+import { retryTxn, type DBClient } from '@hcengineering/postgres-base'
 
 const loadedDomains = new Set<string>()
 

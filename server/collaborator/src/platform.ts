@@ -22,10 +22,10 @@ import core, {
   systemAccountUuid,
   TxOperations,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import { createClient, getTransactorEndpoint } from '@intabiafusion/server-client'
-import { Token, generateToken } from '@intabiafusion/server-token'
-import { getClient as getAccountClient } from '@intabiafusion/account-client'
+} from '@hcengineering/core'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { Token, generateToken } from '@hcengineering/server-token'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
 
 import config from './config'
 

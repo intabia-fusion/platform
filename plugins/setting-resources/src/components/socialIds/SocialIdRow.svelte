@@ -13,21 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { SocialIdentity, SocialIdentityProvider, SocialIdentityRef } from '@intabiafusion/contact'
-  import { SocialIdentityPresenter } from '@intabiafusion/contact-resources'
+  import contact, { SocialIdentity, SocialIdentityProvider, SocialIdentityRef } from '@hcengineering/contact'
+  import { SocialIdentityPresenter } from '@hcengineering/contact-resources'
   import {
     getCurrentAccount,
     loginSocialTypes,
     pickPrimarySocialId,
     setCurrentAccount,
     SocialId
-  } from '@intabiafusion/core'
-  import { setPlatformStatus, unknownError } from '@intabiafusion/platform'
-  import { getClient, MessageBox } from '@intabiafusion/presentation'
-  import { getPlatformColorDef, Label, PaletteColorIndexes, showPopup, themeStore } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import { setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import { getClient, MessageBox } from '@hcengineering/presentation'
+  import { getPlatformColorDef, Label, PaletteColorIndexes, showPopup, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
   import setting from '../../plugin'
   import { getAccountClient } from '../../utils'
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Timestamp } from '@intabiafusion/core'
-  import { IntlString, getEmbeddedLabel } from '@intabiafusion/platform'
+  import { Timestamp } from '@hcengineering/core'
+  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
   import {
     Label,
     areDatesEqual,
@@ -11,7 +11,7 @@
     IconChevronLeft,
     IconChevronRight,
     getFormattedDate
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import IconSun from './icons/Sun.svelte'
   import time from '../plugin'
 

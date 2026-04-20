@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { RateLimiter, concatLink, metricsAggregate, platformNow, type Metrics } from '@intabiafusion/core'
-  import login from '@intabiafusion/login'
-  import { getEmbeddedLabel, getMetadata } from '@intabiafusion/platform'
-  import presentation, { getClient, isAdminUser, uiContext } from '@intabiafusion/presentation'
-  import { Button, EditBox, IconArrowLeft, IconArrowRight, fetchMetadataLocalStorage, ticker } from '@intabiafusion/ui'
+  import core, { RateLimiter, concatLink, metricsAggregate, platformNow, type Metrics } from '@hcengineering/core'
+  import login from '@hcengineering/login'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
+  import presentation, { getClient, isAdminUser, uiContext } from '@hcengineering/presentation'
+  import { Button, EditBox, IconArrowLeft, IconArrowRight, fetchMetadataLocalStorage, ticker } from '@hcengineering/ui'
   import MetricsInfo from './statistics/MetricsInfo.svelte'
 
   const _endpoint: string = fetchMetadataLocalStorage(login.metadata.LoginEndpoint) ?? ''

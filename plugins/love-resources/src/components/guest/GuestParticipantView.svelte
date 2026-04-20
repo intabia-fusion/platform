@@ -17,8 +17,8 @@
   // Does not query contact caches or person lookups. Falls back to participant.name / identity.
 
   import { onDestroy, onMount } from 'svelte'
-  import { Avatar } from '@intabiafusion/contact-resources'
-  import { Loading } from '@intabiafusion/ui'
+  import { Avatar } from '@hcengineering/contact-resources'
+  import { Loading } from '@hcengineering/ui'
   import MicDisabled from '../icons/MicDisabled.svelte'
   import BadConnection from '../icons/BadConnection.svelte'
   import Reaction from '../meeting/Reaction.svelte'
@@ -37,7 +37,7 @@
   } from 'livekit-client'
 
   import { lk, liveKitClient } from '../../utils'
-  import { formatName } from '@intabiafusion/contact'
+  import { formatName } from '@hcengineering/contact'
 
   export let _id: string
   export let participant: Participant | undefined = undefined

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@intabiafusion/platform'
+import { type Resources } from '@hcengineering/platform'
 
 import Presence from './components/Presence.svelte'
 import PresenceAvatars from './components/PresenceAvatars.svelte'

@@ -69,7 +69,7 @@ runs:
       shell: bash
       run: |
         cd ./${{ inputs.test-folder }}/api-tests
-        node ../../common/scripts/install-run-rush.js fast-build:validate --to @intabiafusion/api-tests
+        node ../../common/scripts/install-run-rush.js fast-build:validate --to @hcengineering/api-tests
         node ../../common/scripts/install-run-rushx.js api-test --verbose
 
     - name: Start profiling

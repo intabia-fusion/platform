@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person } from '@intabiafusion/contact'
-  import { IconSize, LabelAndProps, tooltip } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
-  import { ObjectPresenterType } from '@intabiafusion/view'
+  import { Employee, Person } from '@hcengineering/contact'
+  import { IconSize, LabelAndProps, tooltip } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import { ObjectPresenterType } from '@hcengineering/view'
 
   import Avatar from './Avatar.svelte'
 

@@ -15,7 +15,7 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
-  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@intabiafusion/contact-resources'
+  import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import core, {
     Data,
     DocumentUpdate,
@@ -28,15 +28,15 @@
     Class,
     notEmpty,
     AccountUuid
-  } from '@intabiafusion/core'
-  import presentation, { Card, getClient } from '@intabiafusion/presentation'
-  import { StyledTextBox } from '@intabiafusion/text-editor-resources'
-  import { EditBox, Label, Toggle } from '@intabiafusion/ui'
-  import { SpaceTypeSelector } from '@intabiafusion/view-resources'
-  import documents, { DocumentSpace, DocumentSpaceType } from '@intabiafusion/controlled-documents'
+  } from '@hcengineering/core'
+  import presentation, { Card, getClient } from '@hcengineering/presentation'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
+  import { EditBox, Label, Toggle } from '@hcengineering/ui'
+  import { SpaceTypeSelector } from '@hcengineering/view-resources'
+  import documents, { DocumentSpace, DocumentSpaceType } from '@hcengineering/controlled-documents'
 
   import documentsRes from '../../plugin'
-  import view from '@intabiafusion/view'
+  import view from '@hcengineering/view'
 
   export let docSpace: DocumentSpace | undefined = undefined
   export let clazz: Ref<Class<DocumentSpace>> = documents.class.OrgSpace

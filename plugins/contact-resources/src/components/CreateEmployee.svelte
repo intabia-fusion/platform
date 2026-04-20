@@ -21,7 +21,7 @@
     Employee,
     Person,
     SocialIdentityRef
-  } from '@intabiafusion/contact'
+  } from '@hcengineering/contact'
   import {
     AccountRole,
     AttachedData,
@@ -30,17 +30,17 @@
     generateId,
     Ref,
     SocialIdType
-  } from '@intabiafusion/core'
-  import login from '@intabiafusion/login'
-  import { getResource } from '@intabiafusion/platform'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@intabiafusion/ui'
+  } from '@hcengineering/core'
+  import login from '@hcengineering/login'
+  import { getResource } from '@hcengineering/platform'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
   import { employeeBySocialKeyStore, getAccountClient } from '../utils'
   import EditableAvatar from './EditableAvatar.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let canSave: boolean = true
   export let onCreate: ((id: Ref<Employee>) => Promise<void>) | undefined = undefined

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Space } from '@intabiafusion/core'
-  import { Card } from '@intabiafusion/presentation'
-  import ui from '@intabiafusion/ui'
+  import { Space } from '@hcengineering/core'
+  import { Card } from '@hcengineering/presentation'
+  import ui from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../plugin'
   import EditRelatedTargets from './EditRelatedTargets.svelte'

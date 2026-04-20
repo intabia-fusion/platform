@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import core, { ClassifierKind } from '@intabiafusion/core'
-import { type Builder } from '@intabiafusion/model'
-import chat from '@intabiafusion/chat'
+import core, { ClassifierKind } from '@hcengineering/core'
+import { type Builder } from '@hcengineering/model'
+import chat from '@hcengineering/chat'
 
-import card from '@intabiafusion/card'
-import mail from '@intabiafusion/mail'
+import card from '@hcengineering/card'
+import mail from '@hcengineering/mail'
 
-export { mailId } from '@intabiafusion/mail'
+export { mailId } from '@hcengineering/mail'
 
 export function createModel (builder: Builder): void {
   // Create mail tags for Thread and Channel master tags

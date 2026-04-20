@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { LinkPreviewCard } from '@intabiafusion/attachment-resources'
+  import { LinkPreviewCard } from '@hcengineering/attachment-resources'
 
   import { LinkPreviewDraft } from '../../types'
 

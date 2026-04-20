@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@intabiafusion/card'
-  import core from '@intabiafusion/core'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { EditBox } from '@intabiafusion/ui'
+  import { MasterTag, Tag } from '@hcengineering/card'
+  import core from '@hcengineering/core'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../../plugin'
 

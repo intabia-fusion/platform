@@ -20,10 +20,10 @@
     isArchivingMode,
     isRestoringMode,
     isUpgradingMode
-  } from '@intabiafusion/core'
-  import { LoginInfo } from '@intabiafusion/login'
-  import { OK, Severity, Status } from '@intabiafusion/platform'
-  import presentation, { MessageBox, reduceCalls } from '@intabiafusion/presentation'
+  } from '@hcengineering/core'
+  import { LoginInfo } from '@hcengineering/login'
+  import { OK, Severity, Status } from '@hcengineering/platform'
+  import presentation, { MessageBox, reduceCalls } from '@hcengineering/presentation'
   import {
     Button,
     IconBack,
@@ -33,11 +33,11 @@
     deviceOptionsStore as deviceInfo,
     showPopup,
     ticker
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import Label from './internal/Label.svelte'
   import FormButton from './internal/FormButton.svelte'
-  import { themeStore } from '@intabiafusion/theme'
-  import { logOut } from '@intabiafusion/workbench'
+  import { themeStore } from '@hcengineering/theme'
+  import { logOut } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
 
   import login from '../plugin'

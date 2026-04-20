@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Issue, IssueTemplate, Milestone, Project, TrackerEvents } from '@intabiafusion/tracker'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Issue, IssueTemplate, Milestone, Project, TrackerEvents } from '@hcengineering/tracker'
+  import { Analytics } from '@hcengineering/analytics'
   import {
     ButtonKind,
     ButtonShape,
     ButtonSize,
     DatePresenter,
     deviceOptionsStore as deviceInfo
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { createEventDispatcher, afterUpdate } from 'svelte'
   import { activeMilestone } from '../../issues'
   import tracker from '../../plugin'

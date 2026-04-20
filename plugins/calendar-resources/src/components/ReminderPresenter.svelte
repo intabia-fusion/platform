@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
-  import { getResource } from '@intabiafusion/platform'
-  import { DateTimeRangePresenter, showPanel, tooltip } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { Event } from '@hcengineering/calendar'
+  import { getResource } from '@hcengineering/platform'
+  import { DateTimeRangePresenter, showPanel, tooltip } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let value: Event
 

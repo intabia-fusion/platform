@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@intabiafusion/core'
+import { type MeasureContext } from '@hcengineering/core'
 import { type DbAdapterFactory } from './adapter'
 import type { ContentTextAdapterFactory, ServiceAdapterConfig } from './types'
 

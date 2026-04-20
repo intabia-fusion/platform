@@ -26,17 +26,17 @@ import core, {
   Space,
   TxFactory,
   WorkspaceUuid
-} from '@intabiafusion/core'
-import notification from '@intabiafusion/notification'
-import chunter, { ChatMessage, ChunterSpace, ThreadMessage } from '@intabiafusion/chunter'
-import contact, { Person } from '@intabiafusion/contact'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import activity, { ActivityMessage } from '@intabiafusion/activity'
-import attachment, { Attachment } from '@intabiafusion/attachment'
-import { StorageAdapter } from '@intabiafusion/server-core'
-import { createRestClient, RestClient } from '@intabiafusion/api-client'
-import { isEmptyMarkup } from '@intabiafusion/text'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/core'
+import notification from '@hcengineering/notification'
+import chunter, { ChatMessage, ChunterSpace, ThreadMessage } from '@hcengineering/chunter'
+import contact, { Person } from '@hcengineering/contact'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import activity, { ActivityMessage } from '@hcengineering/activity'
+import attachment, { Attachment } from '@hcengineering/attachment'
+import { StorageAdapter } from '@hcengineering/server-core'
+import { createRestClient, RestClient } from '@hcengineering/api-client'
+import { isEmptyMarkup } from '@hcengineering/text'
+import { generateToken } from '@hcengineering/server-token'
 
 import { ChannelRecord, MessageRecord, PlatformFileInfo, TelegramFileInfo } from './types'
 

@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { AccountRole, type AccountUuid, type Class, DOMAIN_MODEL, type Ref, type Space } from '@intabiafusion/core'
-import { type Builder, Mixin, Model, Prop, TypeRef, UX } from '@intabiafusion/model'
-import preference, { TPreference } from '@intabiafusion/model-preference'
-import { createAction } from '@intabiafusion/model-view'
-import core, { TClass, TDoc } from '@intabiafusion/model-core'
-import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@intabiafusion/platform'
-import view, { type KeyBinding } from '@intabiafusion/view'
+import { AccountRole, type AccountUuid, type Class, DOMAIN_MODEL, type Ref, type Space } from '@hcengineering/core'
+import { type Builder, Mixin, Model, Prop, TypeRef, UX } from '@hcengineering/model'
+import preference, { TPreference } from '@hcengineering/model-preference'
+import { createAction } from '@hcengineering/model-view'
+import core, { TClass, TDoc } from '@hcengineering/model-core'
+import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@hcengineering/platform'
+import view, { type KeyBinding } from '@hcengineering/view'
 import type {
   Application,
   ApplicationNavModel,
@@ -31,16 +31,16 @@ import type {
   WidgetTab,
   WidgetType,
   WorkbenchTab
-} from '@intabiafusion/workbench'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import presentation from '@intabiafusion/model-presentation'
+} from '@hcengineering/workbench'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import presentation from '@hcengineering/model-presentation'
 
 import workbench from './plugin'
 
-export { workbenchId } from '@intabiafusion/workbench'
+export { workbenchId } from '@hcengineering/workbench'
 export { workbenchOperation } from './migration'
 export type { Application, Widget }
-export { WidgetType } from '@intabiafusion/workbench'
+export { WidgetType } from '@hcengineering/workbench'
 
 @Model(workbench.class.Application, core.class.Doc, DOMAIN_MODEL)
 @UX(workbench.string.Application)

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Component, ComponentExtensionId } from '@intabiafusion/ui'
+  import { Component, ComponentExtensionId } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import { ComponentPointExtension } from '../../types'
   import { getClient } from '../../utils'
-  import { getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
+  import { getCurrentAccount, hasAccountRole } from '@hcengineering/core'
 
   export let extension: ComponentExtensionId
   export let props: Record<string, any> = {}

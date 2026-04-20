@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref } from '@intabiafusion/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
-  import type { Asset, IntlString } from '@intabiafusion/platform'
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { AnyComponent, IconSize, AnySvelteComponent } from '..'
   import {
     showPopup,

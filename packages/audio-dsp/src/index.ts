@@ -12,7 +12,7 @@
 // limitations under the License.
 
 /**
- * @intabiafusion/audio-dsp
+ * @hcengineering/audio-dsp
  *
  * Audio Digital Signal Processing library for Huly platform.
  *

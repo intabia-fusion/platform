@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Class, type Ref } from '@intabiafusion/core'
-import { type Asset, type IntlString, type Metadata, plugin, type Plugin } from '@intabiafusion/platform'
-import { AnyComponent } from '@intabiafusion/ui'
+import { type Class, type Ref } from '@hcengineering/core'
+import { type Asset, type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui'
 import { Tier } from './types'
 
 /** @public */

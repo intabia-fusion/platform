@@ -13,15 +13,15 @@
 // limitations under the License.
 //
 
-import drive from '@intabiafusion/drive'
+import drive from '@hcengineering/drive'
 import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient,
   createDefaultSpace,
   tryUpgrade
-} from '@intabiafusion/model'
-import { recorderId } from '@intabiafusion/recorder'
+} from '@hcengineering/model'
+import { recorderId } from '@hcengineering/recorder'
 import recorder from './plugin'
 
 export const recorderOperation: MigrateOperation = {

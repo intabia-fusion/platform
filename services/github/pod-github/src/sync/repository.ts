@@ -11,8 +11,8 @@ import core, {
   TxOperations,
   generateId,
   withContext
-} from '@intabiafusion/core'
-import github, { DocSyncInfo, GithubIntegrationRepository, GithubProject } from '@intabiafusion/github'
+} from '@hcengineering/core'
+import github, { DocSyncInfo, GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
 import { Endpoints } from '@octokit/types'
 import {
   Repository,
@@ -384,7 +384,7 @@ export class RepositorySyncMapper implements DocSyncManager {
     /**
      Variants:
      "https://api.github.com/repos/hcengineering/anticrm/issues/comments/1679316918"
-     "https://github.com/intabia-fusion/uberflow/pull/195"
+     "https://github.com/hcengineering/uberflow/pull/195"
      * */
     ctx.info('handle repository rename', { repo, workspace: this.provider.getWorkspaceId() })
     const update = async (): Promise<void> => {

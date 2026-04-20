@@ -1,5 +1,5 @@
-import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@intabiafusion/core'
-import type { StorageConfiguration } from '@intabiafusion/server-core'
+import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@hcengineering/core'
+import type { StorageConfiguration } from '@hcengineering/server-core'
 import { DatalakeService, processConfigFromEnv, type DatalakeConfig } from '.'
 
 const MB = 1024 * 1024

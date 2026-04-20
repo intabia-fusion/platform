@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { MediaSession, MediaState } from '@intabiafusion/media'
+import type { MediaSession, MediaState } from '@hcengineering/media'
 import { type Readable, derived, readable, writable } from 'svelte/store'
 
 export interface PermissionStore {

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import type { TestRun } from '@intabiafusion/test-management'
-  import { Label, ProgressCircle, Loading } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import type { TestRun } from '@hcengineering/test-management'
+  import { Label, ProgressCircle, Loading } from '@hcengineering/ui'
 
   import TestRunResult from './TestRunResult.svelte'
   import { type TestRunStats, getTestRunStats } from '../../testRunUtils'

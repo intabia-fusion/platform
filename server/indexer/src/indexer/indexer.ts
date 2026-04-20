@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import { Analytics } from '@intabiafusion/analytics'
-import attachmentPlugin, { type Attachment } from '@intabiafusion/attachment'
-import contactPlugin, { formatName } from '@intabiafusion/contact'
+import { Analytics } from '@hcengineering/analytics'
+import attachmentPlugin, { type Attachment } from '@hcengineering/attachment'
+import contactPlugin, { formatName } from '@hcengineering/contact'
 import core, {
   type AnyAttribute,
   type AttachedDoc,
@@ -48,8 +48,8 @@ import core, {
   withContext,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import drivePlugin, { type FileVersion } from '@intabiafusion/drive'
+} from '@hcengineering/core'
+import drivePlugin, { type FileVersion } from '@hcengineering/drive'
 import type {
   ConsumerControl,
   ContentTextAdapter,
@@ -58,10 +58,10 @@ import type {
   FulltextListener,
   IndexedDoc,
   StorageAdapter
-} from '@intabiafusion/server-core'
-import { RateLimiter, SessionDataImpl } from '@intabiafusion/server-core'
-import { jsonToText, markupToJSON, markupToText } from '@intabiafusion/text'
-import card, { type Card } from '@intabiafusion/card'
+} from '@hcengineering/server-core'
+import { RateLimiter, SessionDataImpl } from '@hcengineering/server-core'
+import { jsonToText, markupToJSON, markupToText } from '@hcengineering/text'
+import card, { type Card } from '@hcengineering/card'
 import { findSearchPresenter, updateDocWithPresenter } from '../mapper'
 import { type FullTextPipeline } from './types'
 import { blobPseudoClass, createIndexedDoc, createIndexedDocFromMessage, getContent, messagePseudoClass } from './utils'
@@ -78,7 +78,7 @@ import {
   type SessionData as CommunicationSession,
   type UpdateCardTypeEvent,
   type UpdatePatchEvent
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   type AttachmentID,
   type BlobAttachment,
@@ -86,18 +86,18 @@ import {
   type CardID,
   type Message,
   type MessageID
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import {
   isBlobAttachment,
   isBlobAttachmentType,
   isLinkPreviewAttachment,
   loadMessages,
   loadMessagesGroups
-} from '@intabiafusion/communication-shared'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
-import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
-import chunter, { type DirectMessage } from '@intabiafusion/chunter'
-import { type Person } from '@intabiafusion/contact'
+} from '@hcengineering/communication-shared'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
+import chunter, { type DirectMessage } from '@hcengineering/chunter'
+import { type Person } from '@hcengineering/contact'
 
 export * from './types'
 export * from './utils'

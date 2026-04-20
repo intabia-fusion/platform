@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { Attrs, MarkupMark, MarkupMarkType, MarkupNode, MarkupNodeType } from '@intabiafusion/text-core'
-import { htmlToMarkup } from '@intabiafusion/text-html'
+import { Attrs, MarkupMark, MarkupMarkType, MarkupNode, MarkupNodeType } from '@hcengineering/text-core'
+import { htmlToMarkup } from '@hcengineering/text-html'
 import MarkdownIt, { type Token } from 'markdown-it'
 import type { RuleCore } from 'markdown-it/lib/parser_core'
 import type StateCore from 'markdown-it/lib/rules_core/state_core'

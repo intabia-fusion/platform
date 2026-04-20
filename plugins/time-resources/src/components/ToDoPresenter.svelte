@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar from '@intabiafusion/calendar'
-  import { getCurrentEmployee } from '@intabiafusion/contact'
-  import { getCurrentAccount } from '@intabiafusion/core'
-  import { getClient } from '@intabiafusion/presentation'
-  import { ToDo } from '@intabiafusion/time'
-  import { CheckBox, Label } from '@intabiafusion/ui'
+  import calendar from '@hcengineering/calendar'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { ToDo } from '@hcengineering/time'
+  import { CheckBox, Label } from '@hcengineering/ui'
   import time from '../plugin'
   import WorkItemPresenter from './WorkItemPresenter.svelte'
 

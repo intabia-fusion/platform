@@ -14,9 +14,9 @@
 
 import { type Node } from '@tiptap/pm/model'
 import { TableMap } from '@tiptap/pm/tables'
-import type { Client } from '@intabiafusion/core'
-import { getClient } from '@intabiafusion/presentation'
-import type { TableMetadata } from '@intabiafusion/view'
+import type { Client } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
+import type { TableMetadata } from '@hcengineering/view'
 import { buildMarkdownTableFromDocs } from '../refreshTable'
 
 /**

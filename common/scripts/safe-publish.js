@@ -1,18 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Safe publish script that skips packages that are already published.
- *
- * Usage:
- *   node safe-publish.js [--include <package-name>]
- *
- * Options:
- *   --include <name>  Only consider packages whose name includes <name>
+ * Safe publish script that skips packages that are already published
+ * Usage: node safe-publish.js [--include <package-name>]
  */
 
 const { execSync, spawnSync } = require('child_process')
-const fs = require('fs')
-const path = require('path')
 const https = require('https')
 const http = require('http')
 
@@ -83,7 +76,7 @@ function getPublishablePackages(includePattern) {
         return false
       }
 
-      return shouldPublish && project.name.startsWith('@intabiafusion')
+      return shouldPublish && project.name.startsWith('@hcengineering')
     })
   } catch (err) {
     console.error('Error getting package list:', err.message)
@@ -92,112 +85,21 @@ function getPublishablePackages(includePattern) {
 }
 
 /**
- * Normalize workspace: dependency ranges in package.json to plain semver
- * so that consumers without workspace support can install the package.
- * Returns the original package.json string so it can be restored.
- */
-function normalizeWorkspaceDeps(packagePath) {
-  const packageJsonPath = path.join(packagePath, 'package.json')
-  let original = null
-
-  try {
-    original = fs.readFileSync(packageJsonPath, 'utf8')
-    const pkg = JSON.parse(original)
-
-    const depFields = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
-
-    let changed = false
-    for (const field of depFields) {
-      const deps = pkg[field]
-      if (!deps || typeof deps !== 'object') continue
-
-      for (const [name, range] of Object.entries(deps)) {
-        if (typeof range === 'string' && range.startsWith('workspace:')) {
-          const normalized = range.replace(/^workspace:/, '')
-          deps[name] = normalized
-          changed = true
-        }
-      }
-    }
-
-    if (changed) {
-      fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8')
-    }
-  } catch (err) {
-    console.warn(`Warning: could not normalize workspace dependencies for ${packagePath}: ${err.message}`)
-  }
-
-  return original
-}
-
-/**
  * Publish a single package
  */
-function sleepSync(ms) {
-  execSync(`sleep ${Math.max(0.1, ms / 1000)}`)
-}
-
 function publishPackage(packagePath, packageName) {
-  const originalPackageJson = normalizeWorkspaceDeps(packagePath)
-
   try {
-    try {
-      execSync('npm pkg fix', { cwd: packagePath, encoding: 'utf-8', stdio: 'pipe' })
-    } catch {
-      // Ignore pkg fix errors (e.g. npm < 10)
-    }
-    let attempt = 0
-    let backoff = 10000
-    while (true) {
-      attempt++
-      try {
-        console.log(`Publishing ${packageName} (attempt ${attempt})...`)
-        execSync('npm publish 2>&1', {
-          cwd: packagePath,
-          encoding: 'utf-8',
-          stdio: 'pipe'
-        })
-        console.log(`✓ Successfully published ${packageName}`)
-        return true
-      } catch (err) {
-        const output = String((err.stdout || '') + (err.stderr || '') + (err.message || ''))
-        process.stdout.write(output)
-        const rateLimited = output.includes('E429') || output.includes('rate limit')
-        const alreadyPublished =
-          output.includes('cannot publish over') ||
-          (output.includes('E403') && output.includes('previously published'))
-        const authError =
-          output.includes('ENEEDAUTH') ||
-          output.includes('E401') ||
-          output.includes('need auth') ||
-          output.includes('Unauthorized')
-        if (alreadyPublished) {
-          console.log(`⊘ Already published: ${packageName}`)
-          return true
-        }
-        if (authError) {
-          console.error(`✗ Auth error publishing ${packageName} — aborting.`)
-          process.exit(2)
-        }
-        if (rateLimited) {
-          console.log(`rate-limited, backoff ${backoff}ms then retry (attempt ${attempt})`)
-          sleepSync(backoff)
-          backoff = Math.min(backoff * 2, 300000)
-          continue
-        }
-        console.error(`✗ Failed to publish ${packageName} (non-retryable)`)
-        return false
-      }
-    }
-  } finally {
-    if (originalPackageJson != null) {
-      try {
-        const packageJsonPath = path.join(packagePath, 'package.json')
-        fs.writeFileSync(packageJsonPath, originalPackageJson, 'utf8')
-      } catch (err) {
-        console.warn(`Warning: could not restore original package.json for ${packagePath}: ${err.message}`)
-      }
-    }
+    console.log(`Publishing ${packageName}...`)
+    execSync('npm publish', {
+      cwd: packagePath,
+      stdio: 'inherit',
+      encoding: 'utf-8'
+    })
+    console.log(`✓ Successfully published ${packageName}`)
+    return true
+  } catch (err) {
+    console.error(`✗ Failed to publish ${packageName}:`, err.message)
+    return false
   }
 }
 

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Product } from '@intabiafusion/inventory'
-  import { Icon } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectMention } from '@intabiafusion/view-resources'
+  import { Product } from '@hcengineering/inventory'
+  import { Icon } from '@hcengineering/ui'
+  import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import inventory from '../plugin'
 

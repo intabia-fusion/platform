@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getMongoClient } from '@intabiafusion/mongo'
+import { getMongoClient } from '@hcengineering/mongo'
 
 import { MongoAccountDB } from './collections/mongo'
 

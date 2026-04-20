@@ -25,7 +25,7 @@ import {
   type PersonUuid,
   type Ref,
   type Blob
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import type {
   Collection,
   CreateIndexesOptions,

@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient, MultipleDraftController } from '@intabiafusion/presentation'
-  import { HeaderButton, showPopup } from '@intabiafusion/ui'
+  import { getClient, MultipleDraftController } from '@hcengineering/presentation'
+  import { HeaderButton, showPopup } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import recruit from '../plugin'
   import CreateCandidate from './CreateCandidate.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
-  import { RecruitEvents } from '@intabiafusion/recruit'
-  import view from '@intabiafusion/view'
-  import { AccountRole } from '@intabiafusion/core'
+  import { Analytics } from '@hcengineering/analytics'
+  import { RecruitEvents } from '@hcengineering/recruit'
+  import view from '@hcengineering/view'
+  import { AccountRole } from '@hcengineering/core'
 
   let draftExists = false
 

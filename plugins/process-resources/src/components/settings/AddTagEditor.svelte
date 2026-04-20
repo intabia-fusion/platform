@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { Tag } from '@intabiafusion/card'
-  import { Process, Step } from '@intabiafusion/process'
+  import cardPlugin, { Tag } from '@hcengineering/card'
+  import { Process, Step } from '@hcengineering/process'
   import ParamsEditor from './ParamsEditor.svelte'
-  import { Ref } from '@intabiafusion/core'
-  import presentation, { getClient } from '@intabiafusion/presentation'
-  import { Button, eventToHTMLElement, Label, SelectPopup, showPopup, tooltip } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { Button, eventToHTMLElement, Label, SelectPopup, showPopup, tooltip } from '@hcengineering/ui'
   import TagSelector from './TagSelector.svelte'
   import { createEventDispatcher } from 'svelte'
 

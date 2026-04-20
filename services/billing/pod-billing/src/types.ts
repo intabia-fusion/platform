@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, type WorkspaceUuid } from '@intabiafusion/core'
+import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 
 export interface LiveKitSessionsUsageData {
   day: string

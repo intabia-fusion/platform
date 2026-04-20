@@ -1,11 +1,11 @@
 {
-  "name": "@intabiafusion/import-tool",
-  "version": "1.0.0",
+  "name": "@hcengineering/import-tool",
+  "version": "0.7.0",
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
-  "template": "@intabiafusion/node-package",
+  "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
     "build": "compile",
@@ -19,8 +19,8 @@
     "docker:tbuild": "docker build -t intabiafusion/import-tool . --platform=linux/amd64 && ../../common/scripts/docker_tag_push.sh intabiafusion/import-tool",
     "docker:staging": "../../common/scripts/docker_tag.sh intabiafusion/import-tool staging",
     "docker:push": "../../common/scripts/docker_tag.sh intabiafusion/import-tool",
-    "run-local": "rush bundle --to @intabiafusion/import-tool >/dev/null && cross-env SERVER_SECRET=secret ACCOUNTS_URL=http://localhost:3000 TRANSACTOR_URL=ws://localhost:3333 MINIO_ACCESS_KEY=minioadmin MINIO_SECRET_KEY=minioadmin MINIO_ENDPOINT=localhost MONGO_URL=mongodb://localhost:27017 TELEGRAM_DATABASE=telegram-service REKONI_URL=http://localhost:4004 MODEL_VERSION=$(node ../../common/scripts/show_version.js) GIT_REVISION=$(git describe --all --long) node --max-old-space-size=18000 ./bundle/bundle.js",
-    "run-local-brk": "rush bundle --to @intabiafusion/import-tool >/dev/null && cross-env SERVER_SECRET=secret ACCOUNTS_URL=http://localhost:3000 TRANSACTOR_URL=ws://localhost:3333 MINIO_ACCESS_KEY=minioadmin MINIO_SECRET_KEY=minioadmin MINIO_ENDPOINT=localhost MONGO_URL=mongodb://localhost:27017 TELEGRAM_DATABASE=telegram-service REKONI_URL=http://localhost:4004 MODEL_VERSION=$(node ../../common/scripts/show_version.js) GIT_REVISION=$(git describe --all --long) node --inspect-brk --enable-source-maps --max-old-space-size=18000 ./bundle/bundle.js",
+    "run-local": "rush bundle --to @hcengineering/import-tool >/dev/null && cross-env SERVER_SECRET=secret ACCOUNTS_URL=http://localhost:3000 TRANSACTOR_URL=ws://localhost:3333 MINIO_ACCESS_KEY=minioadmin MINIO_SECRET_KEY=minioadmin MINIO_ENDPOINT=localhost MONGO_URL=mongodb://localhost:27017 TELEGRAM_DATABASE=telegram-service REKONI_URL=http://localhost:4004 MODEL_VERSION=$(node ../../common/scripts/show_version.js) GIT_REVISION=$(git describe --all --long) node --max-old-space-size=18000 ./bundle/bundle.js",
+    "run-local-brk": "rush bundle --to @hcengineering/import-tool >/dev/null && cross-env SERVER_SECRET=secret ACCOUNTS_URL=http://localhost:3000 TRANSACTOR_URL=ws://localhost:3333 MINIO_ACCESS_KEY=minioadmin MINIO_SECRET_KEY=minioadmin MINIO_ENDPOINT=localhost MONGO_URL=mongodb://localhost:27017 TELEGRAM_DATABASE=telegram-service REKONI_URL=http://localhost:4004 MODEL_VERSION=$(node ../../common/scripts/show_version.js) GIT_REVISION=$(git describe --all --long) node --inspect-brk --enable-source-maps --max-old-space-size=18000 ./bundle/bundle.js",
     "run": "cross-env node --max-old-space-size=8000 ./bundle/bundle.js",
     "upgrade": "rushx run-local upgrade",
     "format": "format src",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "cross-env": "~7.0.3",
-    "@intabiafusion/platform-rig": "workspace:^1.0.0",
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint": "^8.54.0",
     "ts-node": "^10.9.2",
@@ -51,10 +51,10 @@
     "@types/js-yaml": "^4.0.9"
   },
   "dependencies": {
-    "@intabiafusion/core": "workspace:^1.0.0",
-    "@intabiafusion/platform": "workspace:^1.0.0",
-    "@intabiafusion/server-client": "workspace:^1.0.0",
-    "@intabiafusion/importer": "workspace:^1.0.0",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/server-client": "workspace:^0.7.17",
+    "@hcengineering/importer": "workspace:^0.7.0",
     "commander": "^14.0.0",
     "js-yaml": "^4.1.0",
     "mammoth": "^1.9.0"

@@ -3,16 +3,16 @@
 //
 //
 
-import { type Builder } from '@intabiafusion/model'
+import { type Builder } from '@hcengineering/model'
 
-import core, { type Class, type Doc } from '@intabiafusion/core'
-import document from '@intabiafusion/document'
-import serverCore, { type ObjectDDParticipant } from '@intabiafusion/server-core'
-import serverDocument from '@intabiafusion/server-document'
-import serverActivity from '@intabiafusion/server-activity'
-import serverView from '@intabiafusion/server-view'
+import core, { type Class, type Doc } from '@hcengineering/core'
+import document from '@hcengineering/document'
+import serverCore, { type ObjectDDParticipant } from '@hcengineering/server-core'
+import serverDocument from '@hcengineering/server-document'
+import serverActivity from '@hcengineering/server-activity'
+import serverView from '@hcengineering/server-view'
 
-export { serverDocumentId } from '@intabiafusion/server-document'
+export { serverDocumentId } from '@hcengineering/server-document'
 
 export function createModel (builder: Builder): void {
   builder.mixin(document.class.Document, core.class.Class, serverActivity.mixin.UrlPresenter, {

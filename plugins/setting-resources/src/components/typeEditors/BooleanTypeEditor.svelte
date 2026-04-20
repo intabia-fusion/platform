@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Type } from '@intabiafusion/core'
-  import { TypeBoolean } from '@intabiafusion/model'
-  import { Label, Toggle } from '@intabiafusion/ui'
-  import { BooleanEditor } from '@intabiafusion/view-resources'
+  import core, { AnyAttribute, Type } from '@hcengineering/core'
+  import { TypeBoolean } from '@hcengineering/model'
+  import { Label, Toggle } from '@hcengineering/ui'
+  import { BooleanEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
 

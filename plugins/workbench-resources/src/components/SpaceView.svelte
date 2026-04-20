@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { getClient, reduceCalls } from '@intabiafusion/presentation'
-  import { AnyComponent, Component, resolvedLocationStore } from '@intabiafusion/ui'
-  import view, { ViewOptions, Viewlet } from '@intabiafusion/view'
+  import core, { Class, Doc, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import { AnyComponent, Component, resolvedLocationStore } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
   import {
     activeViewlet,
     getViewOptions,
     makeViewletKey,
     updateActiveViewlet,
     viewOptionStore
-  } from '@intabiafusion/view-resources'
-  import type { ViewConfiguration } from '@intabiafusion/workbench'
+  } from '@hcengineering/view-resources'
+  import type { ViewConfiguration } from '@hcengineering/workbench'
   import { onDestroy } from 'svelte'
   import SpaceContent from './SpaceContent.svelte'
   import SpaceHeader from './SpaceHeader.svelte'

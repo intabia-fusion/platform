@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { concatLink } from '@intabiafusion/core'
+import { concatLink } from '@hcengineering/core'
 
 export interface ServerConfig {
   ACCOUNTS_URL: string

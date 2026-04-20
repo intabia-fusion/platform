@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { IntlString, Metadata, Plugin } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
+import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
 
 export const analyticsCollectorId = 'analytics' as Plugin
 

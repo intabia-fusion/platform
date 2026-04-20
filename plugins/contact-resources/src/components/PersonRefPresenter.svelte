@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@intabiafusion/contact'
-  import { Class, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { createQuery } from '@intabiafusion/presentation'
-  import { IconSize } from '@intabiafusion/ui'
+  import contact, { Person } from '@hcengineering/contact'
+  import { Class, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery } from '@hcengineering/presentation'
+  import { IconSize } from '@hcengineering/ui'
   import { PersonLabelTooltip } from '..'
   import PersonPresenter from './PersonPresenter.svelte'
 

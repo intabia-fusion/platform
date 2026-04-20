@@ -1,4 +1,4 @@
-import { getLevelInfo } from '@intabiafusion/rating'
+import { getLevelInfo } from '@hcengineering/rating'
 
 describe('raiting to level tests', () => {
   it('check levels', () => {

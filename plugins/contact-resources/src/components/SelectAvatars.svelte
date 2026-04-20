@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@intabiafusion/contact'
-  import type { Class, DocumentQuery, Ref } from '@intabiafusion/core'
-  import type { IntlString } from '@intabiafusion/platform'
-  import { showPopup } from '@intabiafusion/ui'
-  import type { IconSize } from '@intabiafusion/ui'
+  import contact, { Employee } from '@hcengineering/contact'
+  import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { showPopup } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { employeeByIdStore } from '../utils'
   import CombineAvatars from './CombineAvatars.svelte'

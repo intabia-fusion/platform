@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getClient, type SubscriptionType, type AccountClient } from '@intabiafusion/account-client'
+import { getClient, type SubscriptionType, type AccountClient } from '@hcengineering/account-client'
 
 /**
  * Get account client for service operations

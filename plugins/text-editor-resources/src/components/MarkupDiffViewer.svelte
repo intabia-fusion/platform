@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@intabiafusion/core'
-  import { jsonToPmNode, MarkupNode } from '@intabiafusion/text'
+  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { jsonToPmNode, MarkupNode } from '@hcengineering/text'
   import { Editor, Extension, mergeAttributes } from '@tiptap/core'
   import { Plugin, PluginKey } from '@tiptap/pm/state'
   import { DecorationSet } from '@tiptap/pm/view'

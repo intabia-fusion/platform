@@ -19,7 +19,7 @@ import {
   MessageEventType,
   PeerEventType,
   type SessionData
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
 import { BaseMiddleware } from './base'

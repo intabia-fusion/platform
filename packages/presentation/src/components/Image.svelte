@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Blob, Ref } from '@intabiafusion/core'
-  import { Blurhash, Image, Loading } from '@intabiafusion/ui'
+  import type { Blob, Ref } from '@hcengineering/core'
+  import { Blurhash, Image, Loading } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getBlobRef } from '../preview'
 

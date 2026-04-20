@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MeasureContext, WorkspaceUuid } from '@intabiafusion/core'
+import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import {
   CardID,
   Collaborator,
@@ -28,9 +28,9 @@ import {
   Notification,
   NotificationContext,
   Peer
-} from '@intabiafusion/communication-types'
-import { Event, EventResult, SessionData } from '@intabiafusion/communication-sdk-types'
-import { createDbAdapter } from '@intabiafusion/communication-cockroach'
+} from '@hcengineering/communication-types'
+import { Event, EventResult, SessionData } from '@hcengineering/communication-sdk-types'
+import { createDbAdapter } from '@hcengineering/communication-cockroach'
 import { Api } from '../index'
 import { getMetadata } from '../metadata'
 import { buildMiddlewares } from '../middlewares'
@@ -38,7 +38,7 @@ import { Blob } from '../blob'
 import { LowLevelClient } from '../client'
 
 // Mock dependencies
-jest.mock('@intabiafusion/communication-cockroach')
+jest.mock('@hcengineering/communication-cockroach')
 jest.mock('../metadata')
 jest.mock('../middlewares')
 jest.mock('../blob')

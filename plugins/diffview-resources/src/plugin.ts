@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type IntlString, mergeIds } from '@intabiafusion/platform'
-import diffview, { diffviewId } from '@intabiafusion/diffview'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
+import diffview, { diffviewId } from '@hcengineering/diffview'
 
 export default mergeIds(diffviewId, diffview, {
   string: {

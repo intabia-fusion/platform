@@ -17,8 +17,8 @@ import {
   getClient as getAccountClientRaw,
   isWorkspaceLoginInfo,
   type AccountClient
-} from '@intabiafusion/account-client'
-import { Analytics } from '@intabiafusion/analytics'
+} from '@hcengineering/account-client'
+import { Analytics } from '@hcengineering/analytics'
 import {
   generateId,
   platformNow,
@@ -27,9 +27,9 @@ import {
   type Tx,
   type WorkspaceIds,
   type WorkspaceUuid
-} from '@intabiafusion/core'
-import { Status, UNAUTHORIZED, unknownStatus } from '@intabiafusion/platform'
-import { RPCHandler, type Response } from '@intabiafusion/rpc'
+} from '@hcengineering/core'
+import { Status, UNAUTHORIZED, unknownStatus } from '@hcengineering/platform'
+import { RPCHandler, type Response } from '@hcengineering/rpc'
 import {
   doSessionOp,
   getFile,
@@ -39,7 +39,7 @@ import {
   wipeStatistics,
   type BlobResponse,
   type WebsocketData
-} from '@intabiafusion/server'
+} from '@hcengineering/server'
 import {
   LOGGING_ENABLED,
   pingConst,
@@ -47,8 +47,8 @@ import {
   type ConnectionSocket,
   type SessionManager,
   type StorageAdapter
-} from '@intabiafusion/server-core'
-import { decodeToken, type Token } from '@intabiafusion/server-token'
+} from '@hcengineering/server-core'
+import { decodeToken, type Token } from '@hcengineering/server-token'
 import 'bufferutil'
 import cors from 'cors'
 import express, { type Response as ExpressResponse, type NextFunction, type Request } from 'express'

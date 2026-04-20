@@ -14,13 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@intabiafusion/core'
-  import { createQuery, getClient } from '@intabiafusion/presentation'
-  import { Label, Loading } from '@intabiafusion/ui'
-  import { buildModel } from '@intabiafusion/view-resources'
-  import { Category } from '@intabiafusion/inventory'
+  import { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Label, Loading } from '@hcengineering/ui'
+  import { buildModel } from '@hcengineering/view-resources'
+  import { Category } from '@hcengineering/inventory'
   import HierarchyElement from './HierarchyElement.svelte'
-  import { buildConfigLookup } from '@intabiafusion/view-resources/src/utils'
+  import { buildConfigLookup } from '@hcengineering/view-resources/src/utils'
 
   export let _class: Ref<Class<Category>>
   export let query: DocumentQuery<Category> = {}

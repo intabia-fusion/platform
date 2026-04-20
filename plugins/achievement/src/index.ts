@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Asset, IntlString, plugin, Plugin } from '@intabiafusion/platform'
+import { Asset, IntlString, plugin, Plugin } from '@hcengineering/platform'
 
 /**
  * @public

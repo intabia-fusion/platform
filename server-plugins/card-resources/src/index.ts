@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import card, { Card, cardId, MasterTag, Tag } from '@intabiafusion/card'
+import card, { Card, cardId, MasterTag, Tag } from '@hcengineering/card'
 import core, {
   AccountUuid,
   AnyAttribute,
@@ -41,11 +41,11 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc
-} from '@intabiafusion/core'
-import serverCore, { TriggerControl } from '@intabiafusion/server-core'
-import setting from '@intabiafusion/setting'
-import { workbenchId } from '@intabiafusion/workbench'
-import view from '@intabiafusion/view'
+} from '@hcengineering/core'
+import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import setting from '@hcengineering/setting'
+import { workbenchId } from '@hcengineering/workbench'
+import view from '@hcengineering/view'
 import {
   AddCollaboratorsEvent,
   CardEventType,
@@ -56,18 +56,18 @@ import {
   CreatePeerEvent,
   ThreadPatchEvent,
   MessageEventType
-} from '@intabiafusion/communication-sdk-types'
-import { getEmployee, getPersonSpaces } from '@intabiafusion/server-contact'
-import contact, { Employee, formatName, Person } from '@intabiafusion/contact'
-import communication, { Direct } from '@intabiafusion/communication'
-import { CardPeer } from '@intabiafusion/communication-types'
-import { getMetadata } from '@intabiafusion/platform'
-import notification, { NotificationGroup } from '@intabiafusion/notification'
+} from '@hcengineering/communication-sdk-types'
+import { getEmployee, getPersonSpaces } from '@hcengineering/server-contact'
+import contact, { Employee, formatName, Person } from '@hcengineering/contact'
+import communication, { Direct } from '@hcengineering/communication'
+import { CardPeer } from '@hcengineering/communication-types'
+import { getMetadata } from '@hcengineering/platform'
+import notification, { NotificationGroup } from '@hcengineering/notification'
 import {
   getClassNotificationGroup,
   generateAttributeNotificationType
-} from '@intabiafusion/server-notification-resources'
-import { Presenter, PresenterControl } from '@intabiafusion/server-activity'
+} from '@hcengineering/server-notification-resources'
+import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 async function OnAttribute (ctx: TxCreateDoc<AnyAttribute>[], control: TriggerControl): Promise<Tx[]> {
   const attr = TxProcessor.createDoc2Doc(ctx[0])

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type SpaceType, type SpaceTypeDescriptor } from '@intabiafusion/core'
+  import { type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
 
   import ClassAttributes from '../../ClassAttributes.svelte'
 

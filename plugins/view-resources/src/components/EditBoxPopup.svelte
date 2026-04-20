@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@intabiafusion/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
-  import { Button, EditBox, IconCheck, resizeObserver } from '@intabiafusion/ui'
-  import type { EditStyle } from '@intabiafusion/ui'
+  import { Button, EditBox, IconCheck, resizeObserver } from '@hcengineering/ui'
+  import type { EditStyle } from '@hcengineering/ui'
 
   export let value: string | number | undefined
   export let format: 'text' | 'password' | 'number'

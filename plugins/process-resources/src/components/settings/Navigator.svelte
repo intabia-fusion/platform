@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { State, Transition } from '@intabiafusion/process'
-  import { getCurrentLocation, navigate, ButtonIcon, IconDescription, NavItem, Separator } from '@intabiafusion/ui'
+  import { Ref } from '@hcengineering/core'
+  import { State, Transition } from '@hcengineering/process'
+  import { getCurrentLocation, navigate, ButtonIcon, IconDescription, NavItem, Separator } from '@hcengineering/ui'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import process from '../../plugin'
 

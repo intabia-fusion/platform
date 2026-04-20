@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { ObjectBox } from '@intabiafusion/view-resources'
-  import view, { ViewletDescriptor } from '@intabiafusion/view'
-  import { IntlString } from '@intabiafusion/platform'
+  import { Ref } from '@hcengineering/core'
+  import { ObjectBox } from '@hcengineering/view-resources'
+  import view, { ViewletDescriptor } from '@hcengineering/view'
+  import { IntlString } from '@hcengineering/platform'
   import card from '../../../plugin'
 
   export let value: Ref<ViewletDescriptor> | undefined = undefined

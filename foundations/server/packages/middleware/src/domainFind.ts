@@ -24,10 +24,10 @@ import {
   type Ref,
   type SessionData,
   DOMAIN_MODEL
-} from '@intabiafusion/core'
-import { PlatformError, unknownError } from '@intabiafusion/platform'
-import type { DBAdapterManager, Middleware, PipelineContext, ServerFindOptions } from '@intabiafusion/server-core'
-import { BaseMiddleware, emptyFindResult } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { PlatformError, unknownError } from '@hcengineering/platform'
+import type { DBAdapterManager, Middleware, PipelineContext, ServerFindOptions } from '@hcengineering/server-core'
+import { BaseMiddleware, emptyFindResult } from '@hcengineering/server-core'
 
 /**
  * Will perform a find inside adapters

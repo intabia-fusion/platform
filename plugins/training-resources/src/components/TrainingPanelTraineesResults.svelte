@@ -16,9 +16,9 @@
 -->
 
 <script lang="ts">
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import type { Training } from '@intabiafusion/training'
-  import { navigate } from '@intabiafusion/ui'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import type { Training } from '@hcengineering/training'
+  import { navigate } from '@hcengineering/ui'
   import training from '../plugin'
   import { trainingRoute, TrainingRouteTab } from '../routing/routes/trainingRoute'
   import { canViewTrainingTraineesResults, getCurrentEmployeeRef } from '../utils'

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TagElement } from '@intabiafusion/tags'
-  import { getPlatformColorDef, themeStore } from '@intabiafusion/ui'
+  import { TagElement } from '@hcengineering/tags'
+  import { getPlatformColorDef, themeStore } from '@hcengineering/ui'
 
   export let values: TagElement[]
   export let limit: number = 4

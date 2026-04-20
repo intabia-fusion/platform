@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import '@intabiafusion/controlled-documents'
-import { productsId } from '@intabiafusion/products'
-import products from '@intabiafusion/products-resources/src/plugin'
-import type { Client, Doc, Ref, Role } from '@intabiafusion/core'
-import { type Resource, mergeIds } from '@intabiafusion/platform'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import type { Action } from '@intabiafusion/view'
+import '@hcengineering/controlled-documents'
+import { productsId } from '@hcengineering/products'
+import products from '@hcengineering/products-resources/src/plugin'
+import type { Client, Doc, Ref, Role } from '@hcengineering/core'
+import { type Resource, mergeIds } from '@hcengineering/platform'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import type { Action } from '@hcengineering/view'
 
 export default mergeIds(productsId, products, {
   action: {

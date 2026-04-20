@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Collaborator, FindCollaboratorsParams } from '@intabiafusion/communication-types'
+import type { AccountUuid, Collaborator, FindCollaboratorsParams } from '@hcengineering/communication-types'
 import {
   AddCollaboratorsEvent,
   CardEventType,
@@ -24,8 +24,8 @@ import {
   type QueryCallback,
   RemoveCardEvent,
   RemoveCollaboratorsEvent
-} from '@intabiafusion/communication-sdk-types'
-import { type HulylakeWorkspaceClient } from '@intabiafusion/hulylake-client'
+} from '@hcengineering/communication-sdk-types'
+import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
 import { QueryResult } from '../result'
 import { QueryOptions, type Query, type QueryId } from '../types'

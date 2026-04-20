@@ -22,12 +22,12 @@ import {
   type Ref,
   type RelatedDocument,
   type WithLookup
-} from '@intabiafusion/core'
-import { type Document, type Teamspace } from '@intabiafusion/document'
-import { type Resources } from '@intabiafusion/platform'
-import { getClient, type ObjectSearchResult } from '@intabiafusion/presentation'
-import { showPopup } from '@intabiafusion/ui'
-import { openDoc } from '@intabiafusion/view-resources'
+} from '@hcengineering/core'
+import { type Document, type Teamspace } from '@hcengineering/document'
+import { type Resources } from '@hcengineering/platform'
+import { getClient, type ObjectSearchResult } from '@hcengineering/presentation'
+import { showPopup } from '@hcengineering/ui'
+import { openDoc } from '@hcengineering/view-resources'
 
 import CreateDocument from './components/CreateDocument.svelte'
 import DocumentIcon from './components/DocumentIcon.svelte'

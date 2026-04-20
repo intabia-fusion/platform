@@ -18,7 +18,7 @@ import {
   NotificationEventType,
   type Event,
   MessageEventType
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   type AccountUuid,
   BlobID,
@@ -32,10 +32,10 @@ import {
   type ReactionNotificationContent,
   type SocialID,
   SortingOrder
-} from '@intabiafusion/communication-types'
-import { markdownToMarkup } from '@intabiafusion/text-markdown'
-import { jsonToMarkup, markupToText } from '@intabiafusion/text-core'
-import { readOnlyGuestAccountUuid } from '@intabiafusion/core'
+} from '@hcengineering/communication-types'
+import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { jsonToMarkup, markupToText } from '@hcengineering/text-core'
+import { readOnlyGuestAccountUuid } from '@hcengineering/core'
 
 import type { Enriched, TriggerCtx } from '../types'
 import { getNameBySocialID } from '../triggers/utils'

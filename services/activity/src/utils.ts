@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getAccountClient } from '@intabiafusion/server-client'
+import { getAccountClient } from '@hcengineering/server-client'
 import core, {
   type AnyAttribute,
   type ArrOf,
@@ -38,7 +38,7 @@ import core, {
   type TxUpdateDoc,
   type Type,
   type WorkspaceInfoWithStatus
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import activity, {
   type ActivityMessage,
   type ActivityMessageControl,
@@ -46,14 +46,14 @@ import activity, {
   type DocUpdateAction,
   type DocUpdateMessage,
   type DocUpdateMessageHistory
-} from '@intabiafusion/activity'
-import { getResource, translate } from '@intabiafusion/platform'
-import { isEmptyMarkup, markupToText } from '@intabiafusion/text-core'
+} from '@hcengineering/activity'
+import { getResource, translate } from '@hcengineering/platform'
+import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import serverActivity, {
   type IdentifierPresenter,
   type TitlePresenter,
   type UrlPresenter
-} from '@intabiafusion/server-activity'
+} from '@hcengineering/server-activity'
 
 import { type Client } from './types'
 import type Cache from './cache'

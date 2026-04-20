@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@intabiafusion/core'
-  import { Asset, IntlString } from '@intabiafusion/platform'
-  import { AnyComponent, AnySvelteComponent, ButtonKind, ButtonShape, ButtonSize } from '@intabiafusion/ui'
+  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
+  import { Asset, IntlString } from '@hcengineering/platform'
+  import { AnyComponent, AnySvelteComponent, ButtonKind, ButtonShape, ButtonSize } from '@hcengineering/ui'
   import { ComponentType, createEventDispatcher } from 'svelte'
   import { ObjectCreate } from '../types'
   import SpaceSelect from './SpaceSelect.svelte'

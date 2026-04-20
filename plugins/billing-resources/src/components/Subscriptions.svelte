@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type SubscriptionData, SubscriptionType } from '@intabiafusion/account-client'
-  import { type SubscribeRequest, type CheckoutStatus } from '@intabiafusion/payment-client'
-  import { Tier } from '@intabiafusion/billing'
-  import { getMetadata, translate } from '@intabiafusion/platform'
-  import presentation, { getClient, MessageBox } from '@intabiafusion/presentation'
-  import { type Ref, SortingOrder, UsageStatus } from '@intabiafusion/core'
+  import { type SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
+  import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
+  import { Tier } from '@hcengineering/billing'
+  import { getMetadata, translate } from '@hcengineering/platform'
+  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
+  import { type Ref, SortingOrder, UsageStatus } from '@hcengineering/core'
   import {
     IconCheckmark,
     Label,
@@ -32,7 +32,7 @@
     showPopup,
     addNotification,
     NotificationSeverity
-  } from '@intabiafusion/ui'
+  } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
 
   import plugin from '../plugin'

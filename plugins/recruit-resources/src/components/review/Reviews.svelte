@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar from '@intabiafusion/calendar'
-  import { Organization } from '@intabiafusion/contact'
-  import { DateRangeMode, Doc, FindOptions, Ref } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Applicant, Review } from '@intabiafusion/recruit'
-  import { Button, DatePresenter, IconAdd, Label, Scroller, showPopup } from '@intabiafusion/ui'
-  import { Table } from '@intabiafusion/view-resources'
+  import calendar from '@hcengineering/calendar'
+  import { Organization } from '@hcengineering/contact'
+  import { DateRangeMode, Doc, FindOptions, Ref } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { Applicant, Review } from '@hcengineering/recruit'
+  import { Button, DatePresenter, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
+  import { Table } from '@hcengineering/view-resources'
   import recruit from '../../plugin'
   import FileDuo from '../icons/FileDuo.svelte'
   import SectionEmpty from '../SectionEmpty.svelte'

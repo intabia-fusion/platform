@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { groupByArray, MeasureContext, systemAccountUuid, WorkspaceUuid } from '@intabiafusion/core'
-import { generateToken } from '@intabiafusion/server-token'
+import { groupByArray, MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { generateToken } from '@hcengineering/server-token'
 import {
   getClient as getBillingClient,
   type BillingClient,
   AiTranscriptData,
   AiTokensData
-} from '@intabiafusion/billing-client'
-import { withRetry } from '@intabiafusion/retry'
+} from '@hcengineering/billing-client'
+import { withRetry } from '@hcengineering/retry'
 
 import config from './config'
 

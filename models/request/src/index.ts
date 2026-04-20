@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import activity from '@intabiafusion/activity'
-import type { Person } from '@intabiafusion/contact'
-import contact from '@intabiafusion/contact'
-import { type Timestamp, type Domain, type Ref, type Tx } from '@intabiafusion/core'
+import activity from '@hcengineering/activity'
+import type { Person } from '@hcengineering/contact'
+import contact from '@hcengineering/contact'
+import { type Timestamp, type Domain, type Ref, type Tx } from '@hcengineering/core'
 import {
   ArrOf,
   type Builder,
@@ -28,23 +28,23 @@ import {
   TypeRef,
   TypeString,
   UX
-} from '@intabiafusion/model'
-import chunter, { TChatMessage } from '@intabiafusion/model-chunter'
-import core, { defineCollaborators, TAttachedDoc, TClass } from '@intabiafusion/model-core'
-import { generateClassNotificationTypes } from '@intabiafusion/model-notification'
-import view from '@intabiafusion/model-view'
-import notification from '@intabiafusion/notification'
+} from '@hcengineering/model'
+import chunter, { TChatMessage } from '@hcengineering/model-chunter'
+import core, { defineCollaborators, TAttachedDoc, TClass } from '@hcengineering/model-core'
+import { generateClassNotificationTypes } from '@hcengineering/model-notification'
+import view from '@hcengineering/model-view'
+import notification from '@hcengineering/notification'
 import {
   type Request,
   type RequestDecisionComment,
   type RequestPresenter,
   type RequestStatus
-} from '@intabiafusion/request'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+} from '@hcengineering/request'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 import request from './plugin'
 
 export { requestOperation } from './migration'
-export { requestId } from '@intabiafusion/request'
+export { requestId } from '@hcengineering/request'
 export { default } from './plugin'
 
 export const DOMAIN_REQUEST = 'request' as Domain

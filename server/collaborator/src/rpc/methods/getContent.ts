@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { MeasureContext } from '@intabiafusion/core'
-import { type GetContentRequest, type GetContentResponse } from '@intabiafusion/collaborator-client'
+import { MeasureContext } from '@hcengineering/core'
+import { type GetContentRequest, type GetContentResponse } from '@hcengineering/collaborator-client'
 import { Context } from '../../context'
 import { RpcMethodParams } from '../rpc'
 

@@ -1,4 +1,4 @@
-import { type AnySvelteComponent, ModernPopup, showPopup } from '@intabiafusion/ui'
+import { type AnySvelteComponent, ModernPopup, showPopup } from '@hcengineering/ui'
 import { handleSvg } from './icons'
 
 export interface OptionItem {

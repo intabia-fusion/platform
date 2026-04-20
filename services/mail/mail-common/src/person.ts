@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, PersonId, PersonUuid, SocialIdType, WorkspaceUuid } from '@intabiafusion/core'
-import { type RestClient } from '@intabiafusion/api-client'
-import { createRestClient } from '@intabiafusion/api-client'
+import { type MeasureContext, PersonId, PersonUuid, SocialIdType, WorkspaceUuid } from '@hcengineering/core'
+import { type RestClient } from '@hcengineering/api-client'
+import { createRestClient } from '@hcengineering/api-client'
 import { EmailContact } from './types'
-import { WorkspaceLoginInfo } from '@intabiafusion/account-client'
+import { WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 export interface CachedPerson {
   socialId: PersonId

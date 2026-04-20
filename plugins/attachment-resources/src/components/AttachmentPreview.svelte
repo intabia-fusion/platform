@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@intabiafusion/attachment'
-  import { BlobType, WithLookup } from '@intabiafusion/core'
-  import { ListSelectionProvider } from '@intabiafusion/view-resources'
+  import { Attachment } from '@hcengineering/attachment'
+  import { BlobType, WithLookup } from '@hcengineering/core'
+  import { ListSelectionProvider } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { AttachmentImageSize } from '../types'
   import { getType, isAttachment, showAttachmentPreviewPopup } from '../utils'

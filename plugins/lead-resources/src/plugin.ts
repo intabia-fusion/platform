@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import lead, { leadId } from '@intabiafusion/lead'
-import { type IntlString, mergeIds, type Resource } from '@intabiafusion/platform'
-import { type Client, type Doc, type Ref } from '@intabiafusion/core'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
+import lead, { leadId } from '@hcengineering/lead'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
+import { type Client, type Doc, type Ref } from '@hcengineering/core'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 export default mergeIds(leadId, lead, {
   string: {

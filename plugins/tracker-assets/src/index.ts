@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { loadMetadata } from '@intabiafusion/platform'
-import tracker from '@intabiafusion/tracker'
+import { loadMetadata } from '@hcengineering/platform'
+import tracker from '@hcengineering/tracker'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(tracker.icon, {

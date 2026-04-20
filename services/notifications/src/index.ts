@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import { MeasureContext, newMetrics, Tx } from '@intabiafusion/core'
-import { getPlatformQueue } from '@intabiafusion/kafka'
-import { setMetadata } from '@intabiafusion/platform'
-import serverClient from '@intabiafusion/server-client'
-import serverCore, { initStatisticsContext, QueueTopic, QueueUserMessage } from '@intabiafusion/server-core'
-import serverToken from '@intabiafusion/server-token'
-import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@intabiafusion/analytics-service'
-import { Analytics } from '@intabiafusion/analytics'
+import { MeasureContext, newMetrics, Tx } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
+import { setMetadata } from '@hcengineering/platform'
+import serverClient from '@hcengineering/server-client'
+import serverCore, { initStatisticsContext, QueueTopic, QueueUserMessage } from '@hcengineering/server-core'
+import serverToken from '@hcengineering/server-token'
+import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
+import { Analytics } from '@hcengineering/analytics'
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import {
@@ -30,13 +30,13 @@ import {
   setAdapterSecurity,
   registerServerPlugins,
   registerStringLoaders
-} from '@intabiafusion/server-pipeline'
+} from '@hcengineering/server-pipeline'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
   shutdownPostgres
-} from '@intabiafusion/postgres'
+} from '@hcengineering/postgres'
 
 import { Worker } from './worker'
 import config from './config'

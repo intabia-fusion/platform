@@ -23,10 +23,10 @@ import {
   type MeasureContext,
   type Ref,
   type StorageIterator
-} from '@intabiafusion/core'
-import { PlatformError, unknownStatus } from '@intabiafusion/platform'
-import type { Middleware, PipelineContext } from '@intabiafusion/server-core'
-import { BaseMiddleware } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import { PlatformError, unknownStatus } from '@hcengineering/platform'
+import type { Middleware, PipelineContext } from '@hcengineering/server-core'
+import { BaseMiddleware } from '@hcengineering/server-core'
 
 /**
  * Will perform a find inside adapters

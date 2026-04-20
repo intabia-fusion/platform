@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@intabiafusion/presentation'
-  import { State } from '@intabiafusion/process'
-  import { ButtonIcon, EditBox, IconDelete } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { getClient } from '@hcengineering/presentation'
+  import { State } from '@hcengineering/process'
+  import { ButtonIcon, EditBox, IconDelete } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
 
   export let value: State
   const client = getClient()

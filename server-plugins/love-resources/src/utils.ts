@@ -1,6 +1,6 @@
-import { PersonId, type Ref } from '@intabiafusion/core'
-import notification, { NotificationProvider } from '@intabiafusion/notification'
-import { TriggerControl } from '@intabiafusion/server-core'
+import { PersonId, type Ref } from '@hcengineering/core'
+import notification, { NotificationProvider } from '@hcengineering/notification'
+import { TriggerControl } from '@hcengineering/server-core'
 
 export async function getInviteAllowedProviders (
   control: TriggerControl,

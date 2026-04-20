@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@intabiafusion/core'
-  import { Person } from '@intabiafusion/contact'
+  import { Ref } from '@hcengineering/core'
+  import { Person } from '@hcengineering/contact'
   import contact from '../plugin'
   import CombineAvatars from './CombineAvatars.svelte'
 

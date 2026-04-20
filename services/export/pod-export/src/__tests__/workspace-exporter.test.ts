@@ -25,9 +25,9 @@ import {
   type Hierarchy,
   type LowLevelStorage,
   generateId
-} from '@intabiafusion/core'
-import core from '@intabiafusion/model-core'
-import { type StorageAdapter, type Pipeline } from '@intabiafusion/server-core'
+} from '@hcengineering/core'
+import core from '@hcengineering/model-core'
+import { type StorageAdapter, type Pipeline } from '@hcengineering/server-core'
 import { CrossWorkspaceExporter, type PipelineFactory, type RelationDefinition } from '../workspace'
 
 // Mock document classes

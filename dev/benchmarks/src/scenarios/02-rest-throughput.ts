@@ -13,9 +13,9 @@
   limitations under the License.
 */
 
-import core, { generateId, type Ref } from '@intabiafusion/core'
-import type { RestClient } from '@intabiafusion/api-client'
-import tracker, { type Issue, type Project } from '@intabiafusion/tracker'
+import core, { generateId, type Ref } from '@hcengineering/core'
+import type { RestClient } from '@hcengineering/api-client'
+import tracker, { type Issue, type Project } from '@hcengineering/tracker'
 
 import type { BenchConfig } from '../config'
 import {

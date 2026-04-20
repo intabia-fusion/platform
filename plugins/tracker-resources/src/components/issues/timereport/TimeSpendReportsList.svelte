@@ -13,23 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@intabiafusion/contact'
-  import { UserBox } from '@intabiafusion/contact-resources'
-  import { Ref, Space, WithLookup } from '@intabiafusion/core'
-  import { Issue, Project, TimeReportDayType, TimeSpendReport } from '@intabiafusion/tracker'
+  import contact from '@hcengineering/contact'
+  import { UserBox } from '@hcengineering/contact-resources'
+  import { Ref, Space, WithLookup } from '@hcengineering/core'
+  import { Issue, Project, TimeReportDayType, TimeSpendReport } from '@hcengineering/tracker'
   import {
     DatePresenter,
     ListView,
     deviceOptionsStore as deviceInfo,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
-  import { FixedColumn, ListSelectionProvider, showMenu } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { FixedColumn, ListSelectionProvider, showMenu } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import { activeProjects } from '../../../utils'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
-  import { getClient } from '@intabiafusion/presentation'
+  import { getClient } from '@hcengineering/presentation'
 
   export let reports: WithLookup<TimeSpendReport>[]
   export let issue: Issue

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountUuid, AccountRole, getCurrentAccount, hasAccountRole } from '@intabiafusion/core'
-  import { IntlString } from '@intabiafusion/platform'
-  import { Button, ButtonKind, ButtonSize } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
+  import { AccountUuid, AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { Button, ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import AccountArrayEditor from './AccountArrayEditor.svelte'
 
   export let label: IntlString

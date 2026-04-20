@@ -1,9 +1,9 @@
 <script lang="ts">
-  import core, { Data, Ref } from '@intabiafusion/core'
-  import { getEmbeddedLabel, getResource } from '@intabiafusion/platform'
-  import { createQuery, getClient, MessageViewer, SpaceSelector } from '@intabiafusion/presentation'
-  import { MessageTemplate, TemplateCategory } from '@intabiafusion/templates'
-  import { StyledTextEditor } from '@intabiafusion/text-editor-resources'
+  import core, { Data, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel, getResource } from '@hcengineering/platform'
+  import { createQuery, getClient, MessageViewer, SpaceSelector } from '@hcengineering/presentation'
+  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import { StyledTextEditor } from '@hcengineering/text-editor-resources'
   import {
     Action,
     Button,
@@ -19,8 +19,8 @@
     defineSeparators,
     twoPanelsSeparators,
     Scroller
-  } from '@intabiafusion/ui'
-  import { getActions as getContributedActions, TreeItem, TreeNode } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { getActions as getContributedActions, TreeItem, TreeNode } from '@hcengineering/view-resources'
   import templatesPlugin from '../plugin'
   import CreateTemplateCategory from './CreateTemplateCategory.svelte'
   import FieldPopup from './FieldPopup.svelte'

@@ -14,7 +14,7 @@ import {
   type Metrics,
   type ParamsType,
   type WithOptions
-} from '@intabiafusion/measurements'
+} from '@hcengineering/measurements'
 import {
   context,
   metrics as otelMetrics,

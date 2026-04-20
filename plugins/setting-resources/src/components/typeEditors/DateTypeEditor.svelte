@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { DateRangeMode, TypeDate as DateType } from '@intabiafusion/core'
-  import { TypeDate } from '@intabiafusion/model'
-  import { IntlString } from '@intabiafusion/platform'
-  import { DropdownLabelsIntl, Label, DropdownIntlItem } from '@intabiafusion/ui'
+  import core, { DateRangeMode, TypeDate as DateType } from '@hcengineering/core'
+  import { TypeDate } from '@hcengineering/model'
+  import { IntlString } from '@hcengineering/platform'
+  import { DropdownLabelsIntl, Label, DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
-  import type { ButtonKind, ButtonSize } from '@intabiafusion/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
 
   export let type: DateType | undefined
   export let editable: boolean = true

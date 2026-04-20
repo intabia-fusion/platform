@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@intabiafusion/calendar'
-  import { Label, addZero } from '@intabiafusion/ui'
+  import { Event } from '@hcengineering/calendar'
+  import { Label, addZero } from '@hcengineering/ui'
   import calendar from '../plugin'
 
   export let event: Event

@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Candidate } from '@intabiafusion/recruit'
-  import { Label } from '@intabiafusion/ui'
-  import { DocNavLink, ObjectPresenter, Table } from '@intabiafusion/view-resources'
+  import type { Candidate } from '@hcengineering/recruit'
+  import { Label } from '@hcengineering/ui'
+  import { DocNavLink, ObjectPresenter, Table } from '@hcengineering/view-resources'
   import recruit from '../plugin'
 
   export let value: Candidate

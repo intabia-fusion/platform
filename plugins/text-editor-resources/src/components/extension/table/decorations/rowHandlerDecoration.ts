@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import textEditor from '@intabiafusion/text-editor'
+import textEditor from '@hcengineering/text-editor'
 import { type Editor } from '@tiptap/core'
 import { CellSelection, TableMap } from '@tiptap/pm/tables'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'

@@ -20,7 +20,7 @@ import {
   type Event,
   type SessionData,
   PeerEventType
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 import {
   type AccountUuid,
   type BlobID,
@@ -41,9 +41,9 @@ import {
   type NotificationContext,
   NotificationType,
   SortingOrder
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import { z, ZodString, ZodType, ZodTypeDef } from 'zod'
-import { isBlobAttachmentType, isLinkPreviewAttachmentType } from '@intabiafusion/communication-shared'
+import { isBlobAttachmentType, isLinkPreviewAttachmentType } from '@hcengineering/communication-shared'
 
 import type { Enriched, Middleware, Subscription } from '../types'
 import { BaseMiddleware } from './base'

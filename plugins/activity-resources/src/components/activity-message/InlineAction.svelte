@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label } from '@intabiafusion/ui'
+  import { Label } from '@hcengineering/ui'
 
   import { MessageInlineAction } from '../../types'
 

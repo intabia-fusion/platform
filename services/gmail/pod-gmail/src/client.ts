@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-import { WorkspaceUuid, type Client } from '@intabiafusion/core'
-import { createClient, getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { systemAccountUuid } from '@intabiafusion/core'
+import { WorkspaceUuid, type Client } from '@hcengineering/core'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { systemAccountUuid } from '@hcengineering/core'
 import {
   createRestClient as createCommunicationRestClient,
   RestClient as CommunicationRestClient
-} from '@intabiafusion/communication-rest-client'
+} from '@hcengineering/communication-rest-client'
 
 export async function getClient (token: string): Promise<Client> {
   const endpoint = await getTransactorEndpoint(token)

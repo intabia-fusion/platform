@@ -10,11 +10,11 @@
     AnswerDataPresenter,
     Question,
     QuestionMixin
-  } from '@intabiafusion/questions'
-  import type { Class, Ref } from '@intabiafusion/core'
-  import { getResource } from '@intabiafusion/platform'
-  import { getClient } from '@intabiafusion/presentation'
-  import { Icon, Loading } from '@intabiafusion/ui'
+  } from '@hcengineering/questions'
+  import type { Class, Ref } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import { Icon, Loading } from '@hcengineering/ui'
   import questions from '../plugin'
   import { assessAnswer, getQuestionMixin, isAssessment, updateAnswer } from '../utils'
   import LabelEditor from './LabelEditor.svelte'

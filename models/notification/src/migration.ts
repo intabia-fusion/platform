@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import chunter, { type Chat } from '@intabiafusion/chunter'
-import contact, { type PersonSpace } from '@intabiafusion/contact'
+import chunter, { type Chat } from '@hcengineering/chunter'
+import contact, { type PersonSpace } from '@hcengineering/contact'
 import core, {
   DOMAIN_TX,
   type PersonId,
@@ -30,7 +30,7 @@ import core, {
   DOMAIN_TRANSIENT,
   type Mixin,
   type Domain
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   migrateSpace,
   type MigrateUpdate,
@@ -39,7 +39,7 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 import notification, {
   notificationId,
   type PushSubscription,
@@ -47,16 +47,16 @@ import notification, {
   type DocNotifyContext,
   type InboxNotification,
   type ReadState
-} from '@intabiafusion/notification'
-import { DOMAIN_PREFERENCE } from '@intabiafusion/preference'
+} from '@hcengineering/notification'
+import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
   DOMAIN_SPACE,
   getSocialKeyByOldAccount,
   getAccountUuidByOldAccount,
   getUniqueAccountsFromOldAccounts,
   getSocialIdFromOldAccount
-} from '@intabiafusion/model-core'
-import activity from '@intabiafusion/activity'
+} from '@hcengineering/model-core'
+import activity from '@hcengineering/activity'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
 
 interface OldCollaborators extends Doc {

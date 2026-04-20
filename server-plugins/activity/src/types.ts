@@ -1,6 +1,6 @@
-import { Class, Doc } from '@intabiafusion/core'
-import { Resource } from '@intabiafusion/platform'
-import { TriggerControl } from '@intabiafusion/server-core'
+import { Class, Doc } from '@hcengineering/core'
+import { Resource } from '@hcengineering/platform'
+import { TriggerControl } from '@hcengineering/server-core'
 
 export type PresenterControl = Pick<
 TriggerControl,

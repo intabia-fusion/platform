@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { AccountUuid, MeasureContext, PersonId, Ref, WorkspaceUuid } from '@intabiafusion/core'
-import { StorageAdapter, type StorageConfiguration } from '@intabiafusion/server-core'
-import chunter, { ChunterSpace } from '@intabiafusion/chunter'
-import { formatName } from '@intabiafusion/contact'
-import { getAccountClient } from '@intabiafusion/server-client'
-import { ActivityMessage } from '@intabiafusion/activity'
+import { AccountUuid, MeasureContext, PersonId, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { StorageAdapter, type StorageConfiguration } from '@hcengineering/server-core'
+import chunter, { ChunterSpace } from '@hcengineering/chunter'
+import { formatName } from '@hcengineering/contact'
+import { getAccountClient } from '@hcengineering/server-client'
+import { ActivityMessage } from '@hcengineering/activity'
 
 import {
   ChannelId,
@@ -36,10 +36,10 @@ import config from './config'
 import {
   TelegramNotificationQueueMessage,
   TelegramWorkspaceSubscriptionQueueMessage
-} from '@intabiafusion/server-telegram'
-import { generateToken } from '@intabiafusion/server-token'
+} from '@hcengineering/server-telegram'
+import { generateToken } from '@hcengineering/server-token'
 import { Telegraf } from 'telegraf'
-import { buildStorageFromConfig, storageConfigFromEnv } from '@intabiafusion/server-storage'
+import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 
 import { Limiter } from './limiter'
 import { TgContext } from './telegraf/types'

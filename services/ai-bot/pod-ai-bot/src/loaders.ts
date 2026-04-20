@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { coreId } from '@intabiafusion/core'
-import coreEng from '@intabiafusion/core/lang/en.json'
-import platformEng from '@intabiafusion/platform/lang/en.json'
+import { coreId } from '@hcengineering/core'
+import coreEng from '@hcengineering/core/lang/en.json'
+import platformEng from '@hcengineering/platform/lang/en.json'
 
-import { addStringsLoader, platformId } from '@intabiafusion/platform'
+import { addStringsLoader, platformId } from '@hcengineering/platform'
 
 export function registerLoaders (): void {
   addStringsLoader(coreId, async (lang: string) => coreEng)

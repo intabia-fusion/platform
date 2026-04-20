@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import {} from '@intabiafusion/notification'
-import type { IntlString } from '@intabiafusion/platform'
-import { mergeIds } from '@intabiafusion/platform'
-import task, { taskId } from '@intabiafusion/task'
-import { type AnyComponent } from '@intabiafusion/ui/src/types'
-import { type GetAllValuesFunc, type SortFunc } from '@intabiafusion/view'
+import {} from '@hcengineering/notification'
+import type { IntlString } from '@hcengineering/platform'
+import { mergeIds } from '@hcengineering/platform'
+import task, { taskId } from '@hcengineering/task'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { type GetAllValuesFunc, type SortFunc } from '@hcengineering/view'
 
 export default mergeIds(taskId, task, {
   string: {

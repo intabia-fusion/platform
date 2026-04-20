@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ComponentExtensions } from '@intabiafusion/presentation'
+  import { ComponentExtensions } from '@hcengineering/presentation'
 
   import media from '../plugin'
 
   import MediaPopupCamSelector from './MediaPopupCamSelector.svelte'
   import MediaPopupMicSelector from './MediaPopupMicSelector.svelte'
   import MediaPopupSpkSelector from './MediaPopupSpkSelector.svelte'
-  import { getMediaDevices } from '@intabiafusion/media'
-  import { Loading } from '@intabiafusion/ui'
+  import { getMediaDevices } from '@hcengineering/media'
+  import { Loading } from '@hcengineering/ui'
 
   let micOpened = false
   let camOpened = false

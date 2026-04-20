@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type Person as GlobalPerson, type SocialId } from '@intabiafusion/account'
+import { type Person as GlobalPerson, type SocialId } from '@hcengineering/account'
 import core, {
   Doc,
   Domain,
@@ -24,7 +24,7 @@ import core, {
   Ref,
   type Space,
   type Blob
-} from '@intabiafusion/core'
+} from '@hcengineering/core'
 import {
   createReadStream,
   createWriteStream,

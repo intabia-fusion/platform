@@ -16,12 +16,12 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
-  import presentation, { Card, getClient, getCurrentWorkspaceUuid, SpaceSelector } from '@intabiafusion/presentation'
-  import { DropdownLabels, Icon, Label, Loading } from '@intabiafusion/ui'
-  import { type Integration } from '@intabiafusion/account-client'
-  import { isWorkspaceIntegration, getIntegrationConfig } from '@intabiafusion/integration-client'
-  import card from '@intabiafusion/card'
-  import contact from '@intabiafusion/contact'
+  import presentation, { Card, getClient, getCurrentWorkspaceUuid, SpaceSelector } from '@hcengineering/presentation'
+  import { DropdownLabels, Icon, Label, Loading } from '@hcengineering/ui'
+  import { type Integration } from '@hcengineering/account-client'
+  import { isWorkspaceIntegration, getIntegrationConfig } from '@hcengineering/integration-client'
+  import card from '@hcengineering/card'
+  import contact from '@hcengineering/contact'
 
   import { getIntegrationClient, getAccountClient } from '../utils'
   import hulyMail from '../plugin'
@@ -32,9 +32,9 @@
     SocialIdType,
     Space,
     type PersonId
-  } from '@intabiafusion/core'
+  } from '@hcengineering/core'
   import HulyMail from './icons/HulyMail.svelte'
-  import { Analytics } from '@intabiafusion/analytics'
+  import { Analytics } from '@hcengineering/analytics'
 
   export let integration: Integration | undefined = undefined
 

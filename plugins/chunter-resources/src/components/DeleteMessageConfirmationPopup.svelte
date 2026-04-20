@@ -12,11 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, FocusHandler, Label, createFocusManager, Scroller } from '@intabiafusion/ui'
+  import { Button, FocusHandler, Label, createFocusManager, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
-  import { ChatMessage } from '@intabiafusion/chunter'
-  import view from '@intabiafusion/view'
-  import presentation, { getClient } from '@intabiafusion/presentation'
+  import { ChatMessage } from '@hcengineering/chunter'
+  import view from '@hcengineering/view'
+  import presentation, { getClient } from '@hcengineering/presentation'
 
   import DeleteMessagePresenter from './DeleteMessagePresenter.svelte'
   import chunter from '../plugin'

@@ -13,10 +13,10 @@
 // limitations under the License.
 //
 
-import type { Person } from '@intabiafusion/contact'
-import type { Metadata, Plugin, Resource } from '@intabiafusion/platform'
-import { plugin } from '@intabiafusion/platform'
-import { AnyComponent } from '@intabiafusion/ui/src/types'
+import type { Person } from '@hcengineering/contact'
+import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
+import { plugin } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui/src/types'
 
 /** @public */
 export const presenceId = 'presence' as Plugin

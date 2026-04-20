@@ -41,7 +41,7 @@ import {
   FindThreadMetaParams,
   MessageMeta, ThreadMeta, BlobID,
   FindMessagesMetaParams
-} from '@intabiafusion/communication-types'
+} from '@hcengineering/communication-types'
 import type {
   CollaboratorQuery,
   CollaboratorUpdate,
@@ -52,7 +52,7 @@ import type {
   NotificationContextUpdate,
   NotificationQuery,
   NotificationUpdate, ThreadMetaQuery, ThreadMetaUpdate
-} from '@intabiafusion/communication-sdk-types'
+} from '@hcengineering/communication-sdk-types'
 
 import { MessagesDb } from './db/message'
 import { NotificationsDb } from './db/notification'

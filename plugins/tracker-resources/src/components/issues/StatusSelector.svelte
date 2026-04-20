@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, Status, WithLookup } from '@intabiafusion/core'
-  import { ProjectType, TaskType } from '@intabiafusion/task'
-  import { typeStore } from '@intabiafusion/task-resources'
-  import { IssueStatus } from '@intabiafusion/tracker'
+  import { IdMap, Ref, Status, WithLookup } from '@hcengineering/core'
+  import { ProjectType, TaskType } from '@hcengineering/task'
+  import { typeStore } from '@hcengineering/task-resources'
+  import { IssueStatus } from '@hcengineering/tracker'
   import {
     Button,
     ButtonKind,
@@ -27,8 +27,8 @@
     TooltipAlignment,
     eventToHTMLElement,
     showPopup
-  } from '@intabiafusion/ui'
-  import { statusStore } from '@intabiafusion/view-resources'
+  } from '@hcengineering/ui'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import IssueStatusIcon from './IssueStatusIcon.svelte'

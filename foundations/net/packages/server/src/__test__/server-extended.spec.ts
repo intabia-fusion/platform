@@ -1,4 +1,4 @@
-import { NetworkClientImpl } from '@intabiafusion/network-client'
+import { NetworkClientImpl } from '@hcengineering/network-client'
 import {
   AgentImpl,
   containerUuid,
@@ -11,7 +11,7 @@ import {
   type GetOptions,
   type Container,
   type ClientUuid
-} from '@intabiafusion/network-core'
+} from '@hcengineering/network-core'
 import { NetworkServer } from '../server'
 
 class MockContainer implements Container {

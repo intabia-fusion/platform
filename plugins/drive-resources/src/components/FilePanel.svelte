@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref, type WithLookup } from '@intabiafusion/core'
-  import { checkMyPermission, permissionsStore } from '@intabiafusion/contact-resources'
-  import { createFileVersion, type File as DriveFile, type FileVersion } from '@intabiafusion/drive'
-  import { Panel } from '@intabiafusion/panel'
-  import { createQuery, getClient, getFileUrl } from '@intabiafusion/presentation'
-  import { Button, IconMoreH } from '@intabiafusion/ui'
-  import { FileUploadCallbackParams, showFilesUploadPopup } from '@intabiafusion/uploader'
-  import view from '@intabiafusion/view'
-  import { canChangeDoc, showMenu } from '@intabiafusion/view-resources'
+  import { type Ref, type WithLookup } from '@hcengineering/core'
+  import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
+  import { createFileVersion, type File as DriveFile, type FileVersion } from '@hcengineering/drive'
+  import { Panel } from '@hcengineering/panel'
+  import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
+  import { Button, IconMoreH } from '@hcengineering/ui'
+  import { FileUploadCallbackParams, showFilesUploadPopup } from '@hcengineering/uploader'
+  import view from '@hcengineering/view'
+  import { canChangeDoc, showMenu } from '@hcengineering/view-resources'
 
   import EditFile from './EditFile.svelte'
   import FileAside from './FileAside.svelte'

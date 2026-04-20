@@ -1,5 +1,5 @@
-import { NetworkImpl, TickManagerImpl } from '@intabiafusion/network-core'
-import { NetworkServer } from '@intabiafusion/network-server'
+import { NetworkImpl, TickManagerImpl } from '@hcengineering/network-core'
+import { NetworkServer } from '@hcengineering/network-server'
 
 /**
  * Main entry point for the network pod

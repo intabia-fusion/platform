@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { getEmbeddedLabel } from '@intabiafusion/platform'
-  import { Card, getClient } from '@intabiafusion/presentation'
-  import { DocSyncInfo } from '@intabiafusion/github'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Card, getClient } from '@hcengineering/presentation'
+  import { DocSyncInfo } from '@hcengineering/github'
 
   export let issue: DocSyncInfo
   function allowEdit (): void {

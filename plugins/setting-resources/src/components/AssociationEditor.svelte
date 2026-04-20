@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Class, Data, Doc, Ref } from '@intabiafusion/core'
-  import { getEmbeddedLabel, IntlString } from '@intabiafusion/platform'
-  import presentation, { getClient } from '@intabiafusion/presentation'
+  import core, { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import {
     Button,
     ButtonKind,
@@ -25,9 +25,9 @@
     EditBox,
     Label,
     NestedDropdown
-  } from '@intabiafusion/ui'
-  import view from '@intabiafusion/view'
-  import card from '@intabiafusion/card'
+  } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import card from '@hcengineering/card'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { SortingOrder } from '@intabiafusion/core'
+import { SortingOrder } from '@hcengineering/core'
 
 import type { MessageID } from './message'
 import type { ContextID, NotificationID, NotificationType } from './notification'

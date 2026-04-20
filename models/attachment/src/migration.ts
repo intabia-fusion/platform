@@ -18,7 +18,7 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient
-} from '@intabiafusion/model'
+} from '@hcengineering/model'
 import attachment, { attachmentId, DOMAIN_ATTACHMENT } from '.'
 
 export const attachmentOperation: MigrateOperation = {

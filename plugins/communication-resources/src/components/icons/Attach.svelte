@@ -12,7 +12,7 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { IconSize } from '@intabiafusion/ui'
+  import { IconSize } from '@hcengineering/ui'
 
   export let size: IconSize = 'small'
   export let fill: string = 'currentColor'

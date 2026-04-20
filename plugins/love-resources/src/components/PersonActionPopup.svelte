@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@intabiafusion/contact'
-  import { Ref } from '@intabiafusion/core'
-  import { isOffice, Room } from '@intabiafusion/love'
-  import { ActionIcon, closePopup } from '@intabiafusion/ui'
+  import { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import { Ref } from '@hcengineering/core'
+  import { isOffice, Room } from '@hcengineering/love'
+  import { ActionIcon, closePopup } from '@hcengineering/ui'
   import love from '../plugin'
   import { myOffice } from '../stores'
   import { kick } from '../meetings'

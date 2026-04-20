@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Milestone } from '@intabiafusion/tracker'
-  import { getMonthName, Icon } from '@intabiafusion/ui'
+  import { Milestone } from '@hcengineering/tracker'
+  import { getMonthName, Icon } from '@hcengineering/ui'
   import tracker from '../../plugin'
   export let value: Milestone | undefined
 </script>

@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Notification } from '@intabiafusion/communication-types'
-  import { Card } from '@intabiafusion/card'
+  import { Notification } from '@hcengineering/communication-types'
+  import { Card } from '@hcengineering/card'
 
   import NotificationPreview from './preview/NotificationPreview.svelte'
 

@@ -6,12 +6,12 @@ import {
   getAccount,
   // listWorkspacesPure,
   type Workspace
-} from '@intabiafusion/account'
-import core, { type MeasureContext, TxOperations } from '@intabiafusion/core'
-import contact from '@intabiafusion/model-contact'
-import { getTransactorEndpoint } from '@intabiafusion/server-client'
-import { generateToken } from '@intabiafusion/server-token'
-import { connect } from '@intabiafusion/server-tool'
+} from '@hcengineering/account'
+import core, { type MeasureContext, TxOperations } from '@hcengineering/core'
+import contact from '@hcengineering/model-contact'
+import { getTransactorEndpoint } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
+import { connect } from '@hcengineering/server-tool'
 
 // export async function renameAccount (
 //   ctx: MeasureContext,
