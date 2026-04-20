@@ -15,7 +15,9 @@
 
 import core, {
   type Class,
+  ClassifierKind,
   type Doc,
+  DOMAIN_TRANSIENT,
   generateId,
   Hierarchy,
   MeasureMetricsContext,
@@ -23,9 +25,13 @@ import core, {
   ModelDb,
   type Ref,
   type Space,
-  type Tx
+  TxFactory,
+  type Tx,
+  type WorkspaceIds,
+  type WorkspaceUuid
 } from '@hcengineering/core'
-import type { DbAdapter, PipelineContext } from '@hcengineering/server-core'
+import type { IntlString } from '@hcengineering/platform'
+import { createInMemoryAdapter, type DbAdapter, type PipelineContext } from '@hcengineering/server-core'
 import { TransientMiddleware } from '../transient'
 
 interface TransientDoc extends Doc {
@@ -254,6 +260,88 @@ describe('TransientMiddleware.checkTTL', () => {
 
     expect(map.has(id)).toBe(false)
     expect(adapter.store.has(id)).toBe(false)
+    expect(broadcasts.length).toBe(1)
+
+    await mw.close()
+  })
+
+  it('integration with real InMemoryAdapter: clean removes docs so findAll no longer returns them', async () => {
+    // Regression: InMemoryAdapter used to inherit a no-op `clean` from DummyDbAdapter,
+    // so TransientMiddleware.checkTTL broadcast TxRemoveDoc but the doc stayed in modeldb forever.
+    const ctx = new MeasureMetricsContext('test', {})
+    const hierarchy = new Hierarchy()
+    const modelDb = new ModelDb(hierarchy)
+    ;(modelDb as any).findAllSync = (): any[] => []
+
+    const txFactory = new TxFactory(core.account.System)
+    const objTx = txFactory.createTxCreateDoc(
+      core.class.Class,
+      core.space.Model,
+      { label: 'Obj' as IntlString, kind: ClassifierKind.CLASS },
+      core.class.Obj
+    )
+    const docTx = txFactory.createTxCreateDoc(
+      core.class.Class,
+      core.space.Model,
+      { label: 'Doc' as IntlString, extends: core.class.Obj, kind: ClassifierKind.CLASS },
+      core.class.Doc
+    )
+    const transientClassTx = txFactory.createTxCreateDoc(
+      core.class.Class,
+      core.space.Model,
+      { label: 'Transient' as IntlString, extends: core.class.Doc, kind: ClassifierKind.CLASS },
+      transientClass as Ref<Class<Doc>>
+    )
+    hierarchy.tx(objTx)
+    hierarchy.tx(docTx)
+    hierarchy.tx(transientClassTx)
+
+    const ws: WorkspaceIds = {
+      uuid: 'test-ws' as WorkspaceUuid,
+      url: 'test',
+      dataId: 'test' as any
+    }
+    const adapter = await createInMemoryAdapter(ctx, hierarchy, '', ws)
+
+    const broadcasts: Tx[][] = []
+    const pipelineContext: PipelineContext = {
+      workspace: { uuid: 'test-ws' as any, url: 'test', dataId: 'test' as any },
+      hierarchy,
+      modelDb,
+      branding: null as any,
+      adapterManager: {
+        getAdapter: (_domain: string, _required: boolean): DbAdapter => adapter
+      } as any,
+      storageAdapter: {} as any,
+      contextVars: {},
+      lastTx: '',
+      lastHash: '',
+      broadcastEvent: async (_c: MeasureContext, txes: Tx[]): Promise<void> => {
+        broadcasts.push(txes)
+      }
+    }
+
+    const mw = await TransientMiddleware.create(ctx, pipelineContext, undefined)
+
+    // Populate the adapter through the public transaction API.
+    const id = generateId<TransientDoc>()
+    await adapter.tx(ctx, txFactory.createTxCreateDoc(transientClass, transientSpace, { payload: 'p' }, id))
+
+    // Sanity: doc is visible before TTL fires.
+    const beforeFind = await adapter.findAll(ctx, transientClass, {})
+    expect(beforeFind).toHaveLength(1)
+
+    const map = (mw as any).ttlObjectMap as Map<Ref<Doc>, number>
+    map.set(id, Date.now() / 1000 - 10)
+
+    await (mw as any).checkTTL()
+    await flush()
+
+    // Key assertion: after clean the doc must be gone from the adapter
+    // (not just broadcast-removed on clients).
+    const afterFind = await adapter.findAll(ctx, transientClass, {})
+    expect(afterFind).toHaveLength(0)
+    expect(await adapter.load(ctx, DOMAIN_TRANSIENT, [id])).toHaveLength(0)
     expect(broadcasts.length).toBe(1)
 
     await mw.close()
