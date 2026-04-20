@@ -155,6 +155,15 @@ class InMemoryAdapter extends DummyDbAdapter implements DbAdapter {
     return this.modeldb.findAll(core.class.Doc, { _id: { $in: docs } })
   }
 
+  async clean (ctx: MeasureContext, domain: Domain, docs: Ref<Doc>[]): Promise<void> {
+    for (const id of docs) {
+      const existing = this.modeldb.findObject(id)
+      if (existing !== undefined) {
+        this.modeldb.delDoc(id)
+      }
+    }
+  }
+
   tx (ctx: MeasureContext, ...tx: Tx[]): Promise<TxResult[]> {
     // Filter transactions with broadcast only flags
     const ftx = tx.filter((it) => {
