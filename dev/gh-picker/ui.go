@@ -43,6 +43,9 @@ var (
 	cherryPickedStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#50C878"))
 
+	partialStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#E5C07B"))
+
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF6B6B"))
 

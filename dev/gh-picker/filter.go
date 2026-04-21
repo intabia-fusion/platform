@@ -70,7 +70,7 @@ func (m Model) selectedHashes() []string {
 	return hs
 }
 
-// filterMissingCommits returns only commits that are not cherry-picked
+// filterMissingCommits returns commits not fully cherry-picked (keeps partial)
 func filterMissingCommits(items []commitItem) []commitItem {
 	var filtered []commitItem
 	for _, item := range items {
