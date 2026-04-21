@@ -22,6 +22,7 @@
     DocumentUpdate,
     FindOptions,
     generateId,
+    getObjectValue,
     Lookup,
     mergeQueries,
     Ref,
@@ -34,7 +35,7 @@
   import { defaultPriorities, issuePriorities } from '../../types'
   import { translate } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
-  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import { ActionContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
   import { DocWithRank, getStates, TaskType } from '@hcengineering/task'
   import {
@@ -69,6 +70,7 @@
   } from '@hcengineering/ui'
   import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import {
+    buildModel,
     enabledConfig,
     focusStore,
     getCategoryQueryNoLookup,
@@ -77,6 +79,7 @@
     getGroupByValues,
     getPresenter,
     groupBy,
+    ListPresenter,
     ListSelectionProvider,
     noCategory,
     openDoc,
@@ -115,6 +118,17 @@
   $: groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
   $: orderBy = viewOptions.orderBy
   $: compactMode = viewOptions.compactMode === true
+
+  let customAttrModels: AttributeModel[] = []
+  const buildCustomAttrModels = reduceCalls(async function (cfg: (string | BuildModelKey)[]): Promise<void> {
+    const customKeys = cfg.filter((c): c is BuildModelKey => typeof c !== 'string' && c.displayProps?.custom === true)
+    if (customKeys.length === 0) {
+      customAttrModels = []
+      return
+    }
+    customAttrModels = await buildModel({ client, _class, keys: customKeys, ignoreMissing: true })
+  })
+  $: void buildCustomAttrModels(config)
 
   let accentColors = new Map<string, ColorDefinition>()
   const setAccentColor = (n: number, ev: CustomEvent<ColorDefinition>) => {
@@ -716,6 +730,18 @@
             {#if enabledConfig(config, 'subIssues') && issue && issue.subIssues > 0}
               <SubIssuesSelector value={issue} {currentProject} size={'small'} />
             {/if}
+            {#each customAttrModels as attrModel (attrModel.key)}
+              <ListPresenter
+                docObject={issue}
+                attributeModel={attrModel}
+                value={getObjectValue(attrModel.key, issue)}
+                onChange={undefined}
+                props={{}}
+                hideDivider={true}
+                compactMode={true}
+                customStyle={'square'}
+              />
+            {/each}
             {#if enabledConfig(config, 'dueDate') && (!compactMode || issue.dueDate != null)}
               <DueDatePresenter value={issue} size={'small'} kind={'link-bordered'} />
             {/if}
@@ -874,7 +900,8 @@
     /* Global styles in components.scss */
     .card-labels {
       display: flex;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
+      gap: 0.25rem;
       margin: 0 0.75rem 0 1rem;
       min-width: 0;
 

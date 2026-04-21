@@ -501,6 +501,8 @@ function getKeyLookup<T extends Doc> (
   return lookup
 }
 
+export { injectCustomAttributes } from './customAttributes'
+
 export function buildConfigAssociation (config: Array<BuildModelKey | string>): AssociationQuery[] | undefined {
   const record: Record<string, any> = {}
   for (const key of config) {

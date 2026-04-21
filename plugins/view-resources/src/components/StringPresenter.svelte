@@ -37,7 +37,7 @@
   }
 </script>
 
-<span class={oneLine ? 'overflow-label' : 'lines-limit-2'} class:fs-bold={accent} use:tooltip={tooltipParams}>
+<span class={oneLine ? 'string-oneline' : 'lines-limit-2'} class:fs-bold={accent} use:tooltip={tooltipParams}>
   {#if Array.isArray(value)}
     {#each value as str, i}
       <span class:ml-1={i !== 0}><LinkWrapper text={str} /></span>
@@ -46,3 +46,14 @@
     <LinkWrapper text={value} />
   {/if}
 </span>
+
+<style lang="scss">
+  .string-oneline {
+    display: inline;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
+    min-width: 0;
+  }
+</style>

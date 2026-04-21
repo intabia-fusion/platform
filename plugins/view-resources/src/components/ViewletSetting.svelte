@@ -16,7 +16,7 @@
   import core, { AnyAttribute, Association, AssociationQuery, Class, Client, Doc, Ref, Type } from '@hcengineering/core'
   import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
   import { createQuery, getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
-  import { DropdownLabelsIntl, Loading, resizeObserver } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Label, Loading, ToggleWithLabel, resizeObserver } from '@hcengineering/ui'
   import { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
@@ -369,6 +369,57 @@
     })
   }
 
+  interface CustomAttributeItem {
+    key: string
+    label: IntlString
+    enabled: boolean
+  }
+
+  function getCustomAttributes (
+    selectedViewlet: Viewlet,
+    preference: ViewletPreference | undefined
+  ): CustomAttributeItem[] {
+    const enabled = new Set(preference?.customAttributes ?? [])
+    const seen = new Set<string>()
+    const result: CustomAttributeItem[] = []
+
+    const addAttr = (attr: AnyAttribute, useMixinProxy: boolean): void => {
+      if (attr.isCustom !== true) return
+      if (attr.hidden === true || attr.label === undefined) return
+      if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return
+      const key = useMixinProxy ? `${attr.attributeOf}.${attr.name}` : attr.name
+      if (seen.has(key)) return
+      seen.add(key)
+      result.push({ key, label: attr.label, enabled: enabled.has(key) })
+    }
+
+    for (const [, attr] of hierarchy.getAllAttributes(selectedViewlet.attachTo)) {
+      addAttr(attr, false)
+    }
+    for (const d of hierarchy.getDescendants(selectedViewlet.attachTo)) {
+      if (!hierarchy.isMixin(d)) continue
+      hierarchy.getOwnAttributes(d).forEach((attr) => {
+        addAttr(attr, true)
+      })
+    }
+    return result
+  }
+
+  async function saveCustomAttributes (viewletId: Ref<Viewlet>, items: CustomAttributeItem[]): Promise<void> {
+    const customAttributes = items.filter((i) => i.enabled).map((i) => i.key)
+    const preference = preferences.find((p) => p.attachedTo === viewletId)
+    if (preference !== undefined) {
+      await client.update(preference, { customAttributes })
+    } else {
+      const vl = viewlets.find((it) => it._id === viewletId)
+      await client.createDoc(view.class.ViewletPreference, core.space.Workspace, {
+        attachedTo: viewletId,
+        config: vl?.config ?? [],
+        customAttributes
+      })
+    }
+  }
+
   async function save (viewletId: Ref<Viewlet>, items: Array<Config | AttributeConfig>): Promise<void> {
     const configValues = items.filter(
       (p) =>
@@ -447,6 +498,7 @@
         {@const selectedPreferece = preferences.find((it) => it.attachedTo === selected)}
         {#if selectedViewlet}
           {@const citems = getConfig(selectedViewlet, selectedPreferece)}
+          {@const customItems = getCustomAttributes(selectedViewlet, selectedPreferece)}
           <ViewletClassSettings
             {viewlet}
             items={citems}
@@ -457,6 +509,24 @@
               save(selected, evt.detail)
             }}
           />
+          {#if customItems.length > 0}
+            <div class="antiDivider" />
+            <div class="menu-group__header">
+              <Label label={view.string.CustomAttributes} />
+            </div>
+            {#each customItems as item}
+              <div class="menu-item flex-row-center">
+                <ToggleWithLabel
+                  on={item.enabled}
+                  label={item.label}
+                  on:change={(e) => {
+                    item.enabled = e.detail
+                    saveCustomAttributes(selected, customItems)
+                  }}
+                />
+              </div>
+            {/each}
+          {/if}
         {/if}
       {/if}
     </div>
