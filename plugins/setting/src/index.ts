@@ -15,6 +15,7 @@
 
 import type {
   AccountRole,
+  Blob,
   Class,
   Configuration,
   Doc,
@@ -135,7 +136,9 @@ export interface OfficeSettings extends Configuration {
 /**
  * @public
  */
-export interface WorkspaceSetting extends Doc {}
+export interface WorkspaceSetting extends Doc {
+  icon?: Ref<Blob> | null
+}
 
 export enum IntegrationError {
   EMAIL_IS_ALREADY_USED = 'EMAIL_IS_ALREADY_USED'

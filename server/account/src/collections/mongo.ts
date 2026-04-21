@@ -22,9 +22,7 @@ import {
   type AccountUuid,
   buildSocialIdString,
   type SocialKey,
-  type PersonUuid,
-  type Ref,
-  type Blob
+  type PersonUuid
 } from '@hcengineering/core'
 import type {
   Collection,
@@ -657,10 +655,6 @@ export class MongoAccountDB implements AccountDB {
       },
       { passwordAgingRule: days }
     )
-  }
-
-  async updateWorkspaceLogo (workspaceId: WorkspaceUuid, logo: Ref<Blob> | null): Promise<void> {
-    await this.workspace.update({ uuid: workspaceId as any }, { logo } as any)
   }
 
   async getPendingWorkspace (

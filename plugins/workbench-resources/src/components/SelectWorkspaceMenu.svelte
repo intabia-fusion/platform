@@ -32,7 +32,6 @@
   } from '@hcengineering/presentation'
   import {
     closePopup,
-    Component,
     fetchMetadataLocalStorage,
     getCurrentLocation,
     Icon,
@@ -46,8 +45,7 @@
     navigate,
     resolvedLocationStore,
     SearchEdit,
-    ticker,
-    WorkspaceLogo
+    ticker
   } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
   import { onDestroy, onMount } from 'svelte'
@@ -247,11 +245,6 @@
               <!-- <div class="flex-col flex-grow"> -->
               <div class="flex-col flex-grow">
                 <div class="flex-presenter flex-gap-2">
-                  <WorkspaceLogo
-                    name={wsName}
-                    notify={workspacesNotification?.[ws.uuid] === true && ws.uuid !== currentWorkspaceUuid}
-                    logoUrl={ws.logo != null ? `${endpoint}/account/workspace/${ws.uuid}/logo?t=${ws.logo}` : undefined}
-                  />
                   <span class="label overflow-label flex flex-grow flex-between">
                     {wsName}
                     {#if isArchivingMode(ws.mode)}
@@ -302,6 +295,11 @@
                   <IconCheck size={'small'} />
                 {/if}
               </div>
+              {#if workspacesNotification?.[ws.uuid] === true && ws.uuid !== currentWorkspaceUuid}
+                <div class="notification-container">
+                  <span class="notification" />
+                </div>
+              {/if}
             </button>
           </a>
         {/each}
@@ -334,5 +332,20 @@
     &.empty {
       background-color: var(--theme-sidebar-hover-bgcolor);
     }
+  }
+
+  .notification-container {
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .notification {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--global-higlight-Color);
   }
 </style>

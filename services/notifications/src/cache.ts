@@ -440,6 +440,16 @@ class WsCache {
     return existing.concat(employees)
   }
 
+  public async findPersonSpace (_id: Ref<PersonSpace>): Promise<PersonSpace | undefined> {
+    const spaces = Array.from(this.personSpaces.values())
+    const cached = spaces.find((it) => it._id === _id)
+    if (cached != null) return cached
+
+    const space = await this.client.findOne(contact.class.PersonSpace, { _id })
+    if (space != null) this.personSpaces.set(space.account, space)
+    return space
+  }
+
   public async getPersonSpaces (accounts: AccountUuid[]): Promise<PersonSpace[]> {
     const result: PersonSpace[] = []
     const toLoad: AccountUuid[] = []

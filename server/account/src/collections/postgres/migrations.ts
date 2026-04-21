@@ -82,9 +82,7 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV22Migration(ns, flavor),
     getV23Migration(ns, flavor),
     getV24Migration(ns, flavor),
-    getV25Migration(ns, flavor),
-    getV26Migration(ns, flavor),
-    getV27Migration(ns, flavor)
+    getV25Migration(ns, flavor)
   ]
 }
 
@@ -808,35 +806,4 @@ function getV25Migration (ns: string, flavor: DBFlavor): [string, string] {
     `
 
   return ['account_db_v25_add_office_social_id_type', addValueSql]
-}
-
-function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
-  return [
-    'account_db_v26_add_workspace_logo',
-    `
-    ALTER TABLE ${ns}.workspace
-    ADD COLUMN IF NOT EXISTS logo UUID;
-    `
-  ]
-}
-
-function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
-  const updateSql =
-    flavor === 'postgres'
-      ? `
-    DO $$
-    BEGIN
-        IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'setting') THEN
-            EXECUTE 'UPDATE ${ns}.workspace w
-            SET logo = ((s.data::jsonb)->>''icon'')::UUID
-            FROM public.setting s
-            WHERE w.uuid = s."workspaceId"
-              AND s._class = ''setting:class:WorkspaceSetting''
-              AND (s.data::jsonb)->>''icon'' IS NOT NULL';
-        END IF;
-    END $$;
-    `
-      : ''
-
-  return ['account_db_v27_fill_workspace_logo', updateSql]
 }

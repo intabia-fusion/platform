@@ -21,13 +21,7 @@ import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
-import {
-  metricsAggregate,
-  type Branding,
-  type BrandingMap,
-  type MeasureContext,
-  type WorkspaceUuid
-} from '@hcengineering/core'
+import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
 import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
 import cors from '@koa/cors'
@@ -37,12 +31,10 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
-import { storageConfigFromEnv, buildStorageFromConfig } from '@hcengineering/server-storage'
-import { migrateFromOldAccounts } from './migration/migration'
-
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { QueueTopic } from '@hcengineering/server-core'
 
+import { migrateFromOldAccounts } from './migration/migration'
 export * from './migration/utils'
 export * from './migration/types'
 
@@ -160,7 +152,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
-  const storage = buildStorageFromConfig(storageConfigFromEnv())
 
   const migrations = accountsDb.then(async ([db]) => {
     if (oldAccsUrl !== undefined) {
@@ -386,92 +377,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     ctx.res.writeHead(204)
     ctx.res.end()
-  })
-
-  router.get('/workspace/:workspace/logo', async (ctx) => {
-    try {
-      const wsUuid = ctx.params.workspace as WorkspaceUuid
-      const token = extractToken(ctx.request.headers)
-
-      if (token === undefined) {
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.Unauthorized, {
-            message: 'Authentication token is missing'
-          })
-        })
-        ctx.res.writeHead(401)
-        ctx.res.end()
-        return
-      }
-
-      const decodedToken = token != null ? decodeTokenVerbose(measureCtx, token) : null
-      const accountUuid = decodedToken?.account
-
-      if (accountUuid == null) {
-        ctx.status = 401
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.Unauthorized, { message: 'Invalid or expired token' })
-        })
-        return
-      }
-
-      const [db] = await accountsDb
-
-      const role = await db.getWorkspaceRole(accountUuid, wsUuid)
-      if (role == null) {
-        ctx.status = 401
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.Unauthorized, {
-            message: 'User does not have access to this workspace'
-          })
-        })
-        return
-      }
-
-      const wsInfo = await db.workspace.findOne({ uuid: wsUuid })
-
-      if (wsInfo?.logo == null) {
-        ctx.status = 404
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.NotFound, { message: 'Workspace logo is not set' })
-        })
-        return
-      }
-
-      const logoRef = wsInfo.logo
-      const blob = await storage.stat(measureCtx, { uuid: wsUuid, url: wsInfo.url }, logoRef)
-
-      if (blob === undefined) {
-        ctx.status = 404
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.NotFound, { message: 'Workspace logo not found' })
-        })
-        return
-      }
-
-      const body = await storage.get(measureCtx, { uuid: wsUuid, url: wsInfo.url }, logoRef)
-
-      ctx.set('Content-Type', blob.contentType)
-      ctx.set('Content-Length', blob.size.toString())
-      if (blob.etag != null) {
-        ctx.set('ETag', blob.etag)
-      }
-      ctx.body = body
-    } catch (err: any) {
-      if (err.code === 404 || err.name === 'NotFoundError') {
-        ctx.status = 404
-        ctx.body = JSON.stringify({
-          error: new Status(Severity.ERROR, platform.status.NotFound, { message: 'Workspace logo file not found' })
-        })
-        return
-      }
-      Analytics.handleError(err)
-      console.error(err)
-      ctx.status = 500
-      ctx.body = JSON.stringify({
-        error: unknownStatus(err.message ?? 'Internal server error')
-      })
-    }
   })
 
   router.put('/api/v1/manage', async (req, res) => {

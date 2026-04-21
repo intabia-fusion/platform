@@ -14,21 +14,27 @@
 -->
 <script lang="ts">
   import { type Blob, type Ref } from '@hcengineering/core'
-  import { getPreviewThumbnail } from '@hcengineering/presentation'
-  import { currentWorkspaceStore } from '@hcengineering/workbench-resources'
+  import { createQuery, getPreviewThumbnail } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
 
   export let workspace: string
   export let title: string
   export let reference: string
 
   const logoSize = 128
+  const query = createQuery()
 
   let iconDataUrl: string | undefined = undefined
 
-  $: void fetchIconAsDataUrl($currentWorkspaceStore?.logo)
+  query.query(setting.class.WorkspaceSetting, {}, (res) => {
+    const ws = res[0]
+    const icon = ws?.icon
+    if (icon != null) {
+      void fetchIconAsDataUrl(icon)
+    }
+  })
 
-  async function fetchIconAsDataUrl (iconRef?: Ref<Blob>): Promise<void> {
-    if (iconRef == null) return
+  async function fetchIconAsDataUrl (iconRef: Ref<Blob>): Promise<void> {
     try {
       const url = getPreviewThumbnail(iconRef, logoSize, logoSize, 1)
       const response = await fetch(url)

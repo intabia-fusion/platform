@@ -135,7 +135,6 @@ export default plugin(platformId, {
     LoadingPlugin: '' as StatusCode<{ plugin: string }>,
     NoLocationForPlugin: '' as StatusCode<{ plugin: Plugin }>,
     ResourceNotFound: '' as StatusCode<{ resource: Resource<any> }>,
-    NotFound: '' as StatusCode,
 
     NoLoaderForStrings: '' as StatusCode<{ plugin: Plugin }>,
 

@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
+  import { createQuery, getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
   import { WorkspaceLogo } from '@hcengineering/ui'
+  import setting, { WorkspaceSetting } from '@hcengineering/setting'
 
   import { workspacesStore } from '../utils'
   import { workspacesNotificationStore } from '../workbench'
@@ -24,9 +25,14 @@
 
   const currentWorkspaceUuid = getCurrentWorkspaceUuid()
 
-  $: currentWorkspace = $workspacesStore.find((w) => w.uuid === currentWorkspaceUuid)
-  $: url = currentWorkspace?.logo != null ? getFileUrl(currentWorkspace.logo) : undefined
-  $: srcset = currentWorkspace?.logo != null ? getFileSrcSet(currentWorkspace.logo, 128) : undefined
+  const wsSettingQuery = createQuery()
+
+  let workspaceSetting: WorkspaceSetting | undefined = undefined
+  wsSettingQuery.query(setting.class.WorkspaceSetting, {}, (res) => {
+    workspaceSetting = res[0]
+  })
+  $: url = workspaceSetting?.icon != null ? getFileUrl(workspaceSetting.icon) : undefined
+  $: srcset = workspaceSetting?.icon != null ? getFileSrcSet(workspaceSetting.icon, 128) : undefined
 
   $: workspacesNotification = $workspacesNotificationStore
 

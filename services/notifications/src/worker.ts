@@ -305,9 +305,13 @@ export class Worker {
       this.scheduleUserNotifyStatusUpdate(ctx, user)
     } else if (_tx._class === core.class.TxRemoveDoc) {
       const tx = _tx as TxRemoveDoc<InboxNotification>
-      const notification = tx.removedDoc
-      if (notification === undefined) return
-      const user = notification.user
+      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+      if (wsClient == null) return
+
+      const space = await wsClient.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
+      const user = space?.account
+      if (user == null) return
+
       this.userLastActivity.set(user, Date.now())
       const current = this.userNotifyStatusMap.get(user)
       if (current?.[wsUuid] !== true) return

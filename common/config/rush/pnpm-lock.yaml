@@ -18264,9 +18264,6 @@ importers:
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
-      '@hcengineering/workbench-resources':
-        specifier: workspace:^0.7.0
-        version: link:../workbench-resources
       '@tiptap/core':
         specifier: ^2.11.7
         version: 2.27.1(@tiptap/pm@2.27.1)
@@ -35115,9 +35112,6 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
-      '@hcengineering/server-storage':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/server-storage
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/token

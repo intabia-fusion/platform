@@ -21,9 +21,7 @@ import {
   type AccountRole,
   type WorkspaceUuid,
   type AccountUuid,
-  type PersonUuid,
-  type Ref,
-  type Blob
+  type PersonUuid
 } from '@hcengineering/core'
 
 import { getMigrations } from './migrations'
@@ -904,7 +902,6 @@ export class PostgresAccountDB implements AccountDB {
           w.created_on,
           w.billing_account,
           w.password_aging_rule,
-          w.logo,
           json_build_object(
             'mode', s.mode,
             'processing_progress', s.processing_progress,
@@ -959,7 +956,6 @@ export class PostgresAccountDB implements AccountDB {
           w.created_by,
           w.created_on,
           w.billing_account,
-          w.logo,
           json_build_object(
             'mode', s.mode,
             'processing_progress', s.processing_progress,
@@ -1137,7 +1133,6 @@ export class PostgresAccountDB implements AccountDB {
               'url', w.url,
               'dataId', w.data_id,
               'branding', w.branding,
-              'logo', w.logo,
               'region', w.region,
               'createdBy', w.created_by,
               'createdOn', w.created_on,
@@ -1293,9 +1288,5 @@ export class PostgresAccountDB implements AccountDB {
       permission
     })
     return results.map((r) => r.accountUuid)
-  }
-
-  async updateWorkspaceLogo (workspaceId: WorkspaceUuid, logo: Ref<Blob> | null): Promise<void> {
-    await this.workspace.update({ uuid: workspaceId }, { logo: logo ?? undefined })
   }
 }

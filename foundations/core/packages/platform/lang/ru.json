@@ -15,7 +15,6 @@
     "AccountNotFound": "Аккаунт не найден",
     "AccountNotConfirmed": "Аккаунт не подтвержден",
     "WorkspaceNotFound": "Рабочее пространство не найдено",
-    "NotFound": "Не найдено",
     "InvalidPassword": "Неверный пароль",
     "AccountAlreadyExists": "Аккаунт уже существует",
     "WorkspaceRateLimit": "Сервер перегружен, пожалуйста, подождите",

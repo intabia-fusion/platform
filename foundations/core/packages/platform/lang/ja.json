@@ -15,7 +15,6 @@
     "AccountNotFound": "アカウントが見つからないか、認証情報が間違っています",
     "AccountNotConfirmed": "アカウントが確認されていません",
     "WorkspaceNotFound": "ワークスペースが見つかりません",
-    "NotFound": "見つかりません",
     "AccountAlreadyExists": "このアカウントはすでに存在します",
     "WorkspaceRateLimit": "サーバーが混雑しています。しばらく待ってから再度お試しください",
     "AccountAlreadyConfirmed": "このアカウントはすでに確認済みです",

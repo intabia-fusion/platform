@@ -15,7 +15,6 @@
     "AccountNotFound": "Hesap bulunamadı veya girilen kimlik bilgileri yanlış",
     "AccountNotConfirmed": "Hesap doğrulanmadı",
     "WorkspaceNotFound": "Çalışma alanı bulunamadı",
-    "NotFound": "Bulunamadı",
     "AccountAlreadyExists": "Hesap zaten mevcut",
     "WorkspaceRateLimit": "Sunucu meşgul, Lütfen biraz bekleyin ve tekrar deneyin",
     "AccountAlreadyConfirmed": "Hesap zaten doğrulandı",
