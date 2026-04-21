@@ -60,6 +60,7 @@ import {
   Model,
   Prop,
   ReadOnly,
+  TypeBoolean,
   TypeCollaborativeDoc,
   TypeNumber,
   TypeRank,
@@ -82,7 +83,7 @@ import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type BuildModelKey } from '@hcengineering/view'
 import { createActions } from './actions'
-import { definePermissions } from './permissions'
+import { defineActionPermissions, definePermissions } from './permissions'
 import card from './plugin'
 import notification, { type NotificationGroup } from '@hcengineering/notification'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
@@ -94,6 +95,9 @@ export class TMasterTag extends TClass implements MasterTag {
   color?: number
   background?: number
   removed?: boolean
+
+  @Prop(TypeBoolean(), card.string.SingleColumn)
+    singleColumn?: boolean
 }
 
 @Model(card.class.Tag, core.class.Mixin)
@@ -390,6 +394,15 @@ export function createSystemType (
     config: listConfig
   })
 
+  builder.createDoc(view.class.Viewlet, core.space.Model, {
+    attachTo: type,
+    descriptor: card.viewlet.CardGridDescriptor,
+    baseQuery: {
+      isLatest: true
+    },
+    config: []
+  })
+
   if (viewDefaults !== undefined) {
     builder.mixin(type, card.class.MasterTag, card.mixin.CardViewDefaults, viewDefaults)
   }
@@ -428,6 +441,7 @@ export function createModel (builder: Builder): void {
 
   defineTabs(builder)
   definePermissions(builder)
+  defineActionPermissions(builder)
 
   builder.mixin(card.class.Card, core.class.Class, view.mixin.ObjectIcon, {
     component: card.component.CardIcon
@@ -757,6 +771,43 @@ export function createModel (builder: Builder): void {
       config: ['']
     },
     card.viewlet.CardRelationshipTable
+  )
+
+  builder.createDoc(
+    view.class.ViewletDescriptor,
+    core.space.Model,
+    {
+      label: card.string.Grid,
+      icon: card.icon.Grid,
+      component: card.component.CardGridView
+    },
+    card.viewlet.CardGridDescriptor
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: card.class.Card,
+      descriptor: card.viewlet.CardGridDescriptor,
+      baseQuery: {
+        isLatest: true
+      },
+      config: [''],
+      configOptions: {
+        strict: true
+      },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['modifiedOn', SortingOrder.Descending],
+          ['rank', SortingOrder.Ascending],
+          ['title', SortingOrder.Descending]
+        ],
+        other: []
+      }
+    },
+    card.viewlet.CardGrid
   )
 
   builder.createDoc(

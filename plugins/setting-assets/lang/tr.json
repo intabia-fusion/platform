@@ -215,7 +215,8 @@
     "ImportDocumentDescription": "Kullanıcılara çalışma alanına belge içe aktarma yeteneği verir",
     "SelectUsers": "Kullanıcıları seç",
     "ShowInTitle": "Başlıkta göster",
-    "SpaceMembersOnly": "Yalnızca alan üyeleri"
+    "SpaceMembersOnly": "Yalnızca alan üyeleri",
+    "Reset": "Sıfırla"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

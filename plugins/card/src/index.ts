@@ -39,6 +39,7 @@ export interface MasterTag extends Class<Card> {
   background?: number
   removed?: boolean
   roles?: CollectionSize<Role>
+  singleColumn?: boolean
 }
 
 export interface Tag extends MasterTag, Mixin<Card> {}
@@ -183,6 +184,7 @@ const cardPlugin = plugin(cardId, {
     Feed: '' as Asset,
     All: '' as Asset,
     Duplicate: '' as Asset,
+    Grid: '' as Asset,
     Lock: '' as Asset
   },
   extensions: {
@@ -203,10 +205,15 @@ const cardPlugin = plugin(cardId, {
     AddTag: '' as IntlString,
     Feed: '' as IntlString,
     AllCards: '' as IntlString,
+    Grid: '' as IntlString,
     Favorites: '' as IntlString,
     CreateCard: '' as IntlString,
     Version: '' as IntlString,
     Versions: '' as IntlString,
+    LockSection: '' as IntlString,
+    UnLockSection: '' as IntlString,
+    SectionLocked: '' as IntlString,
+    SectionUnlocked: '' as IntlString,
     Default: '' as IntlString
   },
   section: {

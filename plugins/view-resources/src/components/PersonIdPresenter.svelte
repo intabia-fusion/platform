@@ -26,10 +26,11 @@
   export let noUnderline = false
   export let shrink: boolean = false
   export let avatarSize: IconSize = 'x-small'
+  export let withPadding: boolean = true
 
   const client = getClient()
   let person: Ref<Person> | undefined
-  $: if (value !== undefined) {
+  $: if (value !== undefined && typeof value === 'string') {
     getPersonRefByPersonIdCb(client, value, (p) => {
       person = p ?? undefined
     })
@@ -39,13 +40,15 @@
 </script>
 
 {#if person}
-  <ObjectPresenter
-    objectId={person}
-    _class={contact.class.Person}
-    {shouldShowName}
-    {shouldShowAvatar}
-    {noUnderline}
-    shrink={shrink ? 1 : 0}
-    props={{ avatarSize }}
-  />
+  <div class={withPadding ? 'pl-3' : ''}>
+    <ObjectPresenter
+      objectId={person}
+      _class={contact.class.Person}
+      {shouldShowName}
+      {shouldShowAvatar}
+      {noUnderline}
+      shrink={shrink ? 1 : 0}
+      props={{ avatarSize }}
+    />
+  </div>
 {/if}

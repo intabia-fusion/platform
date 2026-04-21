@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { checkForbiddenPermission, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { checkForbiddenPermission, reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -41,10 +41,18 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
-  let editor: AnySvelteComponent | undefined
+
+  interface Resolved {
+    editor: AnySvelteComponent
+    attribute: ReturnType<typeof hierarchy.getAttribute>
+    attributeKey: string
+  }
+  let resolved: Resolved | undefined
 
   function onChange (value: any): void {
+    if (resolved === undefined) return
     const doc = object as Doc
+    const { attribute, attributeKey } = resolved
 
     dispatch('update', { key, value })
 
@@ -57,22 +65,25 @@
     }
   }
 
-  function getEditor (_class: Ref<Class<Doc>>, key: KeyedAttribute | string): void {
-    void getAttributeEditor(client, _class, key).then((p) => {
-      editor = p
-    })
-  }
+  const resolveEditor = reduceCalls(async (_class: Ref<Class<Doc>>, key: KeyedAttribute | string): Promise<void> => {
+    const attribute = typeof key === 'string' ? hierarchy.getAttribute(_class, key) : key.attr
+    const attributeKey = typeof key === 'string' ? key : key.key
+    const editor = await getAttributeEditor(client, _class, key)
+    if (editor === undefined) {
+      resolved = undefined
+      return
+    }
+    resolved = { editor, attribute, attributeKey }
+  })
 
-  $: getEditor(_class, key)
+  $: void resolveEditor(_class, key)
 
-  $: attribute = typeof key === 'string' ? hierarchy.getAttribute(_class, key) : key.attr
-  $: attributeKey = typeof key === 'string' ? key : key.key
-  $: isReadonly = readonly || (attribute.readonly ?? false)
-
-  $: icon = attribute?.icon ?? attribute?.type?.icon
+  $: isReadonly = readonly || (resolved?.attribute.readonly ?? false)
+  $: icon = resolved?.attribute?.icon ?? resolved?.attribute?.type?.icon
 </script>
 
-{#if editor}
+{#if resolved}
+  {@const { editor, attribute, attributeKey } = resolved}
   {#if showHeader}
     <span
       class="labelOnPanel"
