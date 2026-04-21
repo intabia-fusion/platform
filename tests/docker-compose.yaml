@@ -498,6 +498,8 @@ services:
         condition: service_started
       transactor0:
         condition: service_started
+    volumes:
+      - ./region-config.yaml:/var/cfg/region-config.yaml
     environment:
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3003
@@ -505,6 +507,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - FRONT_URL=http://localhost:8083
       - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION_CONFIG=/var/cfg/region-config.yaml
       - QUEUE_REGION=
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped

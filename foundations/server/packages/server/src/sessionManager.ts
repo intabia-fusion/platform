@@ -500,6 +500,24 @@ export class TSessionManager implements SessionManager {
       .reduce<number>((acc) => acc + 1, 0)
   }
 
+  getActiveUsers (): Record<AccountUuid, WorkspaceUuid[]> {
+    const users: Record<AccountUuid, WorkspaceUuid[]> = {}
+    for (const [wsId, workspace] of this.workspaces.entries()) {
+      for (const val of workspace.sessions.values()) {
+        const accountUuid = val.session.getUser()
+        if (accountUuid !== systemAccountUuid && accountUuid !== readOnlyGuestAccountUuid) {
+          if (users[accountUuid] == null) {
+            users[accountUuid] = []
+          }
+          if (!users[accountUuid].includes(wsId)) {
+            users[accountUuid].push(wsId)
+          }
+        }
+      }
+    }
+    return users
+  }
+
   checkHealth (): SessionHealth {
     const now = Date.now()
 

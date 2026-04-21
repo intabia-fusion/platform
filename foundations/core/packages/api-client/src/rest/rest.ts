@@ -48,7 +48,8 @@ import {
   DocumentUpdate,
   Mixin,
   MixinData,
-  MixinUpdate
+  MixinUpdate,
+  AccountUuid
 } from '@hcengineering/core'
 import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
 
@@ -655,5 +656,23 @@ export class RestClientImpl implements RestClient {
     format: MarkupFormat
   ): Promise<string> {
     return await this.getMarkupOps().fetchMarkup(objectClass, objectId, objectAttr, markup, format)
+  }
+
+  async getSessions (): Promise<Record<AccountUuid, WorkspaceUuid[]>> {
+    const requestUrl = concatLink(this.endpoint, '/api/v1/sessions')
+    await this.checkRate()
+    const result = await withRetry<any>(async () => {
+      const response = await fetch(requestUrl, this.requestInit())
+      if (!response.ok) {
+        await this.checkRateLimits(response)
+        throw new PlatformError(unknownError(response.statusText))
+      }
+      this.updateRateLimit(response)
+      return await extractJson<Record<AccountUuid, WorkspaceUuid[]>>(response)
+    }, isRLE)
+    if (result.error !== undefined) {
+      throw new PlatformError(result.error)
+    }
+    return result
   }
 }

@@ -1117,6 +1117,8 @@ services:
         condition: service_started
       transactor:
         condition: service_started
+    volumes:
+      - ./region-config.yaml:/var/cfg/region-config.yaml
     environment:
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3000
@@ -1124,6 +1126,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - REGION_CONFIG=/var/cfg/region-config.yaml
       - FRONT_URL=http://huly.local:8087
       - STATS_URL=http://huly.local:4900
   notification:

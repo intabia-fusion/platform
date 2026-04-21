@@ -97,6 +97,8 @@ async function main (): Promise<void> {
     }
   )
 
+  void worker.syncSessions()
+
   const shutdown = (): void => {
     worker.close()
     void Promise.all([txConsumer.close(), userConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))

@@ -64,6 +64,8 @@ export class Worker {
   private readonly storage: StorageAdapter
 
   private readonly interval: NodeJS.Timeout | undefined = undefined
+  private readonly lazyInitInterval: NodeJS.Timeout | undefined = undefined
+  private readonly lazyInitSet = new Set<AccountUuid>()
 
   private readonly userNotifyStatusMap = new Map<AccountUuid, Record<WorkspaceUuid, boolean>>()
   private readonly userMetaCache = new Map<
@@ -77,9 +79,10 @@ export class Worker {
   private readonly userUpdateTimers = new Map<AccountUuid, NodeJS.Timeout>()
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly connectedUsers = new Map<AccountUuid, Set<WorkspaceUuid>>()
+  private readonly initPromises = new Map<AccountUuid, Promise<void>>()
 
   constructor (
-    ctx: MeasureContext,
+    private readonly ctx: MeasureContext,
     private readonly modelTxes: Tx[]
   ) {
     for (const tx of modelTxes) {
@@ -112,6 +115,7 @@ export class Worker {
         const userInactivityLimit = 20 * 60 * 1000 // 20 minutes
         for (const [user, lastTime] of this.userLastActivity.entries()) {
           if (now - lastTime > userInactivityLimit) {
+            this.lazyInitSet.delete(user)
             this.userNotifyStatusMap.delete(user)
             this.userWorkspacesCache.delete(user)
             this.userMetaCache.delete(user)
@@ -122,6 +126,44 @@ export class Worker {
       },
       5 * 60 * 1000 // 5 minutes
     )
+
+    this.lazyInitInterval = setInterval(() => {
+      if (this.lazyInitSet.size === 0) return
+      const users = Array.from(this.lazyInitSet).slice(0, 10)
+      for (const user of users) {
+        this.lazyInitSet.delete(user)
+        const ws = this.connectedUsers.get(user) ?? new Set()
+        if (ws.size > 0) {
+          void this.initNotifyStatus(ctx, ws, user).catch(console.error)
+        }
+      }
+    }, 1000)
+  }
+
+  // Initializing connected user during service startup
+  public async syncSessions (): Promise<void> {
+    const endpoints = config.TransactorEndpoints
+    const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
+    for (const endpoint of endpoints) {
+      try {
+        const client = createRestClient(endpoint, '', token)
+        const users = await client.getSessions()
+        for (const [_account, workspaces] of Object.entries(users)) {
+          const account = _account as AccountUuid
+          const current = this.connectedUsers.get(account) ?? new Set()
+          for (const wsUuid of workspaces) {
+            current.add(wsUuid)
+          }
+
+          this.userLastActivity.set(account, Date.now())
+          if (!this.userNotifyStatusMap.has(account)) {
+            this.lazyInitSet.add(account)
+          }
+        }
+      } catch (e) {
+        this.ctx.error(`Failed to fetch sessions from transactor ${endpoint}`, { e, endpoint })
+      }
+    }
   }
 
   async tx (ctx: MeasureContext, ws: WorkspaceUuid, _tx: Tx): Promise<void> {
@@ -153,30 +195,67 @@ export class Worker {
 
   async user (ctx: MeasureContext, ws: WorkspaceUuid, message: QueueUserMessage): Promise<void> {
     if (message.type === QueueUserEvent.login) {
-      let userConnected = this.connectedUsers.get(message.user)
-      if (userConnected === undefined) {
-        userConnected = new Set()
-        this.connectedUsers.set(message.user, userConnected)
+      let connectedWorkspaces = this.connectedUsers.get(message.user)
+      if (connectedWorkspaces === undefined) {
+        connectedWorkspaces = new Set()
+        this.connectedUsers.set(message.user, connectedWorkspaces)
       }
-      userConnected.add(ws)
+      connectedWorkspaces.add(ws)
 
       this.userLastActivity.set(message.user, Date.now())
-      await this.initNotifyStatus(ctx, ws, message.user)
+      if (!this.userNotifyStatusMap.has(message.user)) {
+        this.lazyInitSet.add(message.user)
+      } else {
+        this.scheduleUserNotifyStatusUpdate(ctx, message.user)
+      }
     } else if (message.type === QueueUserEvent.logout) {
       this.connectedUsers.get(message.user)?.delete(ws)
     }
   }
 
-  private async initNotifyStatus (ctx: MeasureContext, wsUuid: WorkspaceUuid, user: AccountUuid): Promise<void> {
-    const workspaces = await this.getUserWorkspacesCached(user, wsUuid)
+  private async ensureNotifyStatusInitialized (
+    ctx: MeasureContext,
+    wsUuid: WorkspaceUuid,
+    user: AccountUuid
+  ): Promise<void> {
+    if (this.lazyInitSet.has(user)) {
+      this.lazyInitSet.delete(user)
+    }
+    if (!this.userNotifyStatusMap.has(user)) {
+      await this.initNotifyStatus(ctx, new Set([wsUuid]), user)
+    }
+  }
+
+  private async initNotifyStatus (
+    ctx: MeasureContext,
+    targetWorkspaces: Set<WorkspaceUuid>,
+    user: AccountUuid
+  ): Promise<void> {
+    let promise = this.initPromises.get(user)
+    if (promise != null) {
+      await promise
+      return
+    }
+
+    promise = this._initNotifyStatus(ctx, targetWorkspaces, user)
+    this.initPromises.set(user, promise)
+    try {
+      await promise
+    } finally {
+      this.initPromises.delete(user)
+    }
+  }
+
+  private async _initNotifyStatus (
+    ctx: MeasureContext,
+    targetWorkspaces: Set<WorkspaceUuid>,
+    user: AccountUuid
+  ): Promise<void> {
+    if (targetWorkspaces.size === 0) return
+
+    const workspaces = await this.getUserWorkspacesCached(user, targetWorkspaces)
     if (workspaces.length === 0) return
-    if (workspaces.length === 1 && workspaces[0] === wsUuid) return
-
-    const userMeta = await this.getCachedUserMeta(ctx, user, wsUuid)
-    if (userMeta === undefined) return
-
-    const connectedWsClient = await this.getWorkspaceClient(ctx, wsUuid)
-    if (connectedWsClient == null) return
+    if (workspaces.length === 1 && targetWorkspaces.has(workspaces[0])) return
 
     const notifyStatus: Record<WorkspaceUuid, boolean> = {}
     for (const _wsUuid of workspaces) {
@@ -200,31 +279,72 @@ export class Worker {
       }
     }
 
-    const tx = connectedWsClient.client.txFactory.createTxCreateDoc<WorkspacesNotification>(
-      pulse.class.WorkspacesNotification,
-      userMeta.spaceId,
-      {
-        account: user,
-        ...notifyStatus
-      }
-    )
-
     this.userNotifyStatusMap.set(user, notifyStatus)
-    await connectedWsClient.client.apply(tx)
+
+    const res: Record<
+    WorkspaceUuid,
+    {
+      wsClient: Workspace
+      tx: TxCreateDoc<WorkspacesNotification>
+    }
+    > = {}
+
+    for (const wsUuid of targetWorkspaces) {
+      if (workspaces.length === 1 && workspaces[0] === wsUuid) continue
+
+      const userMeta = await this.getCachedUserMeta(ctx, user, wsUuid)
+      if (userMeta === undefined) continue
+
+      const connectedWsClient = await this.getWorkspaceClient(ctx, wsUuid)
+      if (connectedWsClient == null) continue
+
+      res[wsUuid] = {
+        wsClient: connectedWsClient,
+        tx: connectedWsClient.client.txFactory.createTxCreateDoc<WorkspacesNotification>(
+          pulse.class.WorkspacesNotification,
+          userMeta.spaceId as any,
+          {
+            account: user,
+            ...notifyStatus
+          },
+          undefined,
+          undefined,
+          userMeta.socialId as any
+        )
+      }
+    }
+
+    await Promise.allSettled(
+      Object.entries(res).map(async ([wsId, { tx, wsClient }]) => {
+        try {
+          await wsClient.client.apply(tx)
+        } catch (e) {
+          ctx.error(`Failed to apply init notification status to workspace ${wsId} for user ${user}`, { e })
+        }
+      })
+    )
   }
 
-  private async getUserWorkspacesCached (user: AccountUuid, currentWsUuid?: WorkspaceUuid): Promise<WorkspaceUuid[]> {
+  private async getUserWorkspacesCached (
+    user: AccountUuid,
+    targetWorkspaces = new Set<WorkspaceUuid>()
+  ): Promise<WorkspaceUuid[]> {
     const cached = this.userWorkspacesCache.get(user)
-    if (cached !== undefined) {
-      if (currentWsUuid === undefined || cached.includes(currentWsUuid)) {
-        return cached
-      }
+
+    if (cached != null) {
+      const cachedSet = new Set(cached)
+
+      const hasAllTargets = [...targetWorkspaces].every((target) => cachedSet.has(target))
+      if (hasAllTargets) return cached
+
       this.userWorkspacesCache.delete(user)
     }
 
     const workspaces = await getUserWorkspaces(user)
-    const uuids = workspaces.map((it) => it.uuid)
+    const uuids = workspaces.map((w) => w.uuid)
+
     this.userWorkspacesCache.set(user, uuids)
+
     return uuids
   }
 
@@ -291,10 +411,12 @@ export class Worker {
       const notification = TxProcessor.createDoc2Doc(tx)
       const user = notification.user
       this.userLastActivity.set(user, Date.now())
+      await this.ensureNotifyStatusInitialized(ctx, wsUuid, user)
+
       const current = this.userNotifyStatusMap.get(user)
       if (current?.[wsUuid] === true) return
 
-      const workspaces = await this.getUserWorkspacesCached(user, wsUuid)
+      const workspaces = await this.getUserWorkspacesCached(user, new Set([wsUuid]))
       if (workspaces.length === 0) return
       if (workspaces.length === 1 && workspaces[0] === wsUuid) return
 
@@ -313,15 +435,30 @@ export class Worker {
       if (user == null) return
 
       this.userLastActivity.set(user, Date.now())
+      await this.ensureNotifyStatusInitialized(ctx, wsUuid, user)
+
       const current = this.userNotifyStatusMap.get(user)
       if (current?.[wsUuid] !== true) return
 
-      const workspaces = await this.getUserWorkspacesCached(user, wsUuid)
+      const workspaces = await this.getUserWorkspacesCached(user, new Set([wsUuid]))
       if (workspaces.length === 0) return
       if (workspaces.length === 1 && workspaces[0] === wsUuid) return
 
+      const unread = await wsClient.client.findOne(
+        notification.class.InboxNotification,
+        {
+          user,
+          isViewed: false,
+          archived: false
+        },
+        { limit: 1 }
+      )
+      const notify = unread != null
+
       const notifyStatus = current ?? {}
-      notifyStatus[wsUuid] = false
+      if (notifyStatus[wsUuid] === notify) return
+
+      notifyStatus[wsUuid] = notify
       this.userNotifyStatusMap.set(user, notifyStatus)
 
       this.scheduleUserNotifyStatusUpdate(ctx, user)
@@ -337,8 +474,9 @@ export class Worker {
 
       const user = n.user
       this.userLastActivity.set(user, Date.now())
+      await this.ensureNotifyStatusInitialized(ctx, wsUuid, user)
 
-      const workspaces = await this.getUserWorkspacesCached(user, wsUuid)
+      const workspaces = await this.getUserWorkspacesCached(user, new Set([wsUuid]))
       if (workspaces.length === 0) return
       if (workspaces.length === 1 && workspaces[0] === wsUuid) return
 
@@ -463,10 +601,12 @@ export class Worker {
 
   public close (): void {
     clearInterval(this.interval)
+    if (this.lazyInitInterval != null) clearInterval(this.lazyInitInterval)
     for (const timer of this.userUpdateTimers.values()) {
       clearTimeout(timer)
     }
     this.userUpdateTimers.clear()
     this.connectedUsers.clear()
+    this.lazyInitSet.clear()
   }
 }

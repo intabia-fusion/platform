@@ -783,6 +783,8 @@ export interface SessionManager {
   getStatistics: () => WorkspaceStatistics[]
 
   checkHealth: () => SessionHealth
+
+  getActiveUsers: () => Record<AccountUuid, WorkspaceUuid[]>
 }
 
 export const pingConst = 'ping'

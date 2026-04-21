@@ -197,6 +197,30 @@ export function startHttpServer (
     }
   })
 
+  app.get('/api/v1/sessions', (req, res) => {
+    try {
+      const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
+      const payload = decodeToken(token)
+
+      if (payload.account !== systemAccountUuid) {
+        res.writeHead(401)
+        res.end()
+        return
+      }
+
+      const users = sessions.getActiveUsers()
+
+      const json = JSON.stringify(users)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(json)
+    } catch (err: any) {
+      Analytics.handleError(err)
+      ctx.error('error', { err })
+      res.writeHead(404, {})
+      res.end()
+    }
+  })
+
   app.get('/api/v1/profiling', (req, res) => {
     try {
       const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
