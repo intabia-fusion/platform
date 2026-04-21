@@ -123,6 +123,7 @@
     "CompletedIssues": "Abgeschlossene Aufgaben",
     "NoGrouping": "Keine Gruppierung",
     "NoAssignee": "Nicht zugewiesen",
+    "NoParent": "Kein übergeordnetes Element",
     "LastUpdated": "Zuletzt aktualisiert",
     "DueDate": "Fälligkeitsdatum",
     "Manual": "Manuell",

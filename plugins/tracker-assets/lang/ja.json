@@ -123,6 +123,7 @@
     "CompletedIssues": "完了したイシュー",
     "NoGrouping": "グループ化なし",
     "NoAssignee": "担当者なし",
+    "NoParent": "親なし",
     "LastUpdated": "最終更新日",
     "DueDate": "期日",
     "Manual": "手動",

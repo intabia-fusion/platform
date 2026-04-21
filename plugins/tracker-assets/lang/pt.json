@@ -123,6 +123,7 @@
     "CompletedIssues": "Tarefas Concluídas",
     "NoGrouping": "Sem agrupamento",
     "NoAssignee": "Sem atribuição",
+    "NoParent": "Sem pai",
     "LastUpdated": "Última atualização",
     "DueDate": "Data de vencimento",
     "Manual": "Manual",

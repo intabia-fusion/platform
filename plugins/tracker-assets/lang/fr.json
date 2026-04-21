@@ -123,6 +123,7 @@
     "CompletedIssues": "Issues terminées",
     "NoGrouping": "Aucun regroupement",
     "NoAssignee": "Non assigné",
+    "NoParent": "Sans parent",
     "LastUpdated": "Dernière mise à jour",
     "DueDate": "Date d'échéance",
     "Manual": "Manuel",

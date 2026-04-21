@@ -123,6 +123,7 @@
     "CompletedIssues": "Завершённые задачи",
     "NoGrouping": "Нет группировки",
     "NoAssignee": "Нет исполнителя",
+    "NoParent": "Без родителя",
     "LastUpdated": "Последнее обновление",
     "DueDate": "Срок",
     "Manual": "Пользовательский",
