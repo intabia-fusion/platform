@@ -30,7 +30,7 @@
 
   const client = getClient()
   let person: Ref<Person> | undefined
-  $: if (value !== undefined) {
+  $: if (value !== undefined && typeof value === 'string') {
     getPersonRefByPersonIdCb(client, value, (p) => {
       person = p ?? undefined
     })
