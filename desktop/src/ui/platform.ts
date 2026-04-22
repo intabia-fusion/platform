@@ -436,7 +436,8 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
       [onboardId, onboard.component.OnboardApp],
       [calendarId, calendar.component.ConnectApp],
       [guestId, guest.component.GuestApp],
-      [globalProfileRoute, globalProfile.component.GlobalProfileApp]
+      [globalProfileRoute, globalProfile.component.GlobalProfileApp],
+      ['meetings', love.component.GuestMeetingApp]
     ])
   )
 
