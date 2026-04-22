@@ -172,6 +172,11 @@ export class AmoCrmClient {
       throw new Error(`HTTP error: ${response.status}`)
     }
 
+    // Handle 204 No Content response from AMOCRM
+    if (response.status === 204) {
+      return null as T
+    }
+
     return (await response.json()) as T
   }
 
@@ -232,7 +237,11 @@ export class AmoCrmClient {
     const data = await this.get<T>(path, label)
 
     const result = new Map<string, number>()
-    extractItems(data).forEach((item) => result.set(item.name, item.id))
+
+    // Handle case when data is null (204 No Content response)
+    if (data !== null) {
+      extractItems(data).forEach((item) => result.set(item.name, item.id))
+    }
 
     this.ctx.info(`${label} fetched`, { available: Array.from(result.keys()).join(', ') })
 
