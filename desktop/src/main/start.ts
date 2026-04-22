@@ -127,6 +127,9 @@ function runTheApp (): void {
       if (!isInternal) {
         event.preventDefault()
         void shell.openExternal(url)
+      } else if (url.startsWith(FRONT_URL) && window.webContents.getURL() !== url) {
+        event.preventDefault()
+        window.webContents.send(IpcMessage.HandleDeepLink, url)
       }
     })
     window.webContents.setWindowOpenHandler(({ url, features }) => {
