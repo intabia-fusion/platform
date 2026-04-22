@@ -35,6 +35,23 @@ import {
 } from './types.js'
 
 /**
+ * How often to run spectral (FFT) analysis when the fast RMS/ZCR path
+ * gives a confident answer. 1 = every frame, 5 = every 50 ms at 10 ms frames.
+ *
+ * Spectral features are still forced when the fast path result is ambiguous
+ * (RMS close to VAD threshold), so speech onsets aren't missed.
+ */
+export const SPECTRAL_DECIMATION_DEFAULT = 5
+
+/**
+ * RMS band (relative to VAD threshold) where we consider the frame "ambiguous"
+ * and force a spectral recompute even during decimation. Outside this band the
+ * primary RMS criterion alone is decisive.
+ */
+const AMBIGUOUS_RMS_LOW = 0.5
+const AMBIGUOUS_RMS_HIGH = 2.0
+
+/**
  * Calculate spectral features: band energies, spectral centroid
  * Uses FFT for speech-relevant frequency bands
  *
@@ -199,7 +216,8 @@ export function analyzeAudioBuffer (
     highBandEnergy: spectralAnalysis.highBandEnergy,
     spectralCentroid: spectralAnalysis.spectralCentroid,
     spectralFlux,
-    spectrum: spectralAnalysis.spectrum
+    spectrum: spectralAnalysis.spectrum,
+    spectralValid: true
   }
 }
 
@@ -261,6 +279,13 @@ export function isFrameSpeech (analysis: AudioAnalysis, adaptiveVAD?: AdaptiveVA
 
   const primaryCriteria = rmsAboveThreshold || sufficientActivity
 
+  // Spectral secondary/tertiary criteria require real spectral data. When the
+  // analyzer skipped the FFT for this frame (see AudioAnalyzer), spectralValid
+  // is false and these features are zeroed — fall back to the primary criterion.
+  if (analysis.spectralValid === false) {
+    return primaryCriteria
+  }
+
   // Secondary requires multiple spectral features to agree
   const spectralFeatureCount =
     (zcrInSpeechRange ? 1 : 0) +
@@ -274,4 +299,184 @@ export function isFrameSpeech (analysis: AudioAnalysis, adaptiveVAD?: AdaptiveVA
   const tertiaryCriteria = hasSpectralOnset && analysis.rms > vadThreshold * 0.7 && centroidInSpeechRange
 
   return primaryCriteria || secondaryCriteria || tertiaryCriteria
+}
+
+/**
+ * Per-stream audio analyzer that caches reusable buffers (Hann window,
+ * sample array, FFT workspace) and optionally skips spectral analysis on a
+ * fraction of frames to cut CPU.
+ *
+ * Frame size is assumed stable for the life of the analyzer (it is, for a
+ * given LiveKit AudioStream). A change in byte length triggers a realloc.
+ */
+export class AudioAnalyzer {
+  private sampleArray: Float32Array | null = null
+  private hannWindow: Float64Array | null = null
+  private hannWindowSize = 0
+  private frameCount = 0
+  private lastSpectral: SpectralAnalysisResult | null = null
+
+  constructor (
+    readonly sampleRate: number = 16000,
+    readonly spectralDecimation: number = SPECTRAL_DECIMATION_DEFAULT
+  ) {}
+
+  /**
+   * Run analysis on a 16-bit PCM frame.
+   *
+   * @param buf             raw PCM bytes
+   * @param previousSpectrum previous frame spectrum (for flux); usually the
+   *                         last spectrum this analyzer produced
+   * @param vadThreshold    current VAD RMS threshold — used to decide if the
+   *                        spectral path must run even during decimation
+   */
+  analyze (
+    buf: Buffer,
+    previousSpectrum: Float64Array | null,
+    vadThreshold: number = VAD_THRESHOLD_DEFAULT
+  ): AudioAnalysis {
+    const numSamples = buf.length >> 1
+    if (this.sampleArray === null || this.sampleArray.length !== numSamples) {
+      this.sampleArray = new Float32Array(numSamples)
+    }
+    const sampleArray = this.sampleArray
+
+    let activeSamples = 0
+    let sumSquares = 0
+    let peak = 0
+    let zeroCrossings = 0
+    let previousSample = 0
+
+    for (let i = 0, j = 0; i < buf.length; i += 2, j++) {
+      const sample = buf.readInt16LE(i)
+      const normalized = sample / 32768
+      const absNormalized = normalized >= 0 ? normalized : -normalized
+      sampleArray[j] = normalized
+
+      sumSquares += normalized * normalized
+      if (absNormalized > peak) peak = absNormalized
+      if (absNormalized > VAD_FRAME_THRESHOLD) activeSamples++
+
+      if (j > 0 && ((previousSample >= 0 && normalized < 0) || (previousSample < 0 && normalized >= 0))) {
+        zeroCrossings++
+      }
+      previousSample = normalized
+    }
+
+    const rms = Math.sqrt(sumSquares / numSamples)
+    const zeroCrossingRate = zeroCrossings / numSamples
+
+    // Decide whether to run FFT this frame. Rules:
+    //   - every `spectralDecimation`-th frame
+    //   - frames where RMS is in the ambiguous band around VAD threshold
+    //   - first frame (seed lastSpectral so flux has a prior)
+    const fc = this.frameCount++
+    const ambiguous = rms > vadThreshold * AMBIGUOUS_RMS_LOW && rms < vadThreshold * AMBIGUOUS_RMS_HIGH
+    const runSpectral =
+      this.spectralDecimation <= 1 || this.lastSpectral === null || fc % this.spectralDecimation === 0 || ambiguous
+
+    let spectralResult: SpectralAnalysisResult | null = null
+    let spectralFlux = 0
+    if (runSpectral) {
+      spectralResult = this.computeSpectralFeatures(sampleArray)
+      if (previousSpectrum !== null && spectralResult.spectrum.length === previousSpectrum.length) {
+        const spec = spectralResult.spectrum
+        let fluxSum = 0
+        for (let i = 0; i < spec.length; i++) {
+          const diff = spec[i] - previousSpectrum[i]
+          if (diff > 0) fluxSum += diff
+        }
+        spectralFlux = fluxSum / spec.length
+      }
+      this.lastSpectral = spectralResult
+    }
+
+    // If we skipped the FFT, return primary metrics only; isFrameSpeech()
+    // treats `spectralValid === false` as "spectral features unavailable"
+    // and falls back to the RMS/activity criterion.
+    if (spectralResult === null) {
+      return {
+        rms,
+        peak,
+        activeSamples,
+        totalSamples: numSamples,
+        sumSquares,
+        zeroCrossingRate,
+        lowBandEnergy: 0,
+        highBandEnergy: 0,
+        spectralCentroid: 0,
+        spectralFlux: 0,
+        spectrum: null,
+        spectralValid: false
+      }
+    }
+
+    return {
+      rms,
+      peak,
+      activeSamples,
+      totalSamples: numSamples,
+      sumSquares,
+      zeroCrossingRate,
+      lowBandEnergy: spectralResult.lowBandEnergy,
+      highBandEnergy: spectralResult.highBandEnergy,
+      spectralCentroid: spectralResult.spectralCentroid,
+      spectralFlux,
+      spectrum: spectralResult.spectrum,
+      spectralValid: true
+    }
+  }
+
+  private computeSpectralFeatures (samples: Float32Array): SpectralAnalysisResult {
+    const targetSize = Math.min(512, samples.length)
+    const fftSize = nearestPowerOf2(targetSize)
+
+    let paddedSamples: Float32Array
+    if (samples.length >= fftSize) {
+      paddedSamples = samples.length === fftSize ? samples : samples.slice(0, fftSize)
+    } else {
+      paddedSamples = new Float32Array(fftSize)
+      paddedSamples.set(samples)
+    }
+
+    if (this.hannWindow === null || this.hannWindowSize !== fftSize) {
+      this.hannWindow = createHannWindow(fftSize)
+      this.hannWindowSize = fftSize
+    }
+
+    const frames = stft(paddedSamples, fftSize, fftSize, this.hannWindow ?? undefined)
+    const spectrum = frames.length > 0 ? magnitude(frames[0].real, frames[0].imag) : new Float64Array(fftSize)
+
+    const binWidth = this.sampleRate / fftSize
+    const speechLowBin = Math.floor(SPEECH_BAND_LOW / binWidth)
+    const speechHighBin = Math.min(Math.ceil(SPEECH_BAND_HIGH / binWidth), fftSize / 2 - 1)
+    const highLowBin = Math.floor(HIGH_BAND_LOW / binWidth)
+    const highHighBin = Math.min(Math.ceil(HIGH_BAND_HIGH / binWidth), fftSize / 2 - 1)
+
+    let totalEnergy = 0
+    let speechBandEnergy = 0
+    let highBandEnergy = 0
+    let weightedFrequencySum = 0
+    let totalMagnitude = 0
+
+    for (let k = 0; k < spectrum.length; k++) {
+      const frequency = k * binWidth
+      const mag = spectrum[k]
+      const magSq = mag * mag
+
+      totalEnergy += magSq
+      totalMagnitude += mag
+      weightedFrequencySum += frequency * mag
+
+      if (k >= speechLowBin && k <= speechHighBin) speechBandEnergy += magSq
+      if (k >= highLowBin && k <= highHighBin) highBandEnergy += magSq
+    }
+
+    return {
+      lowBandEnergy: totalEnergy > 0 ? speechBandEnergy / totalEnergy : 0,
+      highBandEnergy: totalEnergy > 0 ? highBandEnergy / totalEnergy : 0,
+      spectralCentroid: totalMagnitude > 0 ? weightedFrequencySum / totalMagnitude : 0,
+      spectrum
+    }
+  }
 }
