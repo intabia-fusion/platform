@@ -47,23 +47,13 @@ export class AmoCrmClient {
       return
     }
 
-    const customFields = await this.fetchCustomFields()
-
     const leadCustomFields: AmoCrmLeadCustomFieldValue[] = []
-    for (const [name, value] of Object.entries(cookieValues)) {
-      // Yandex Metric start with _ym, need delete first symbol for AmoCRM
-      const id = customFields.get(name.startsWith('_') ? name.substring(1) : name)
-      if (id !== undefined) {
-        leadCustomFields.push({
-          field_id: id,
-          values: [
-            {
-              value
-            }
-          ]
-        })
-      }
-    }
+
+    const textCustomFields = await this.fetchTextCustomFields()
+    this.addCustomFieldsFromCookies(cookieValues, textCustomFields, leadCustomFields, true)
+
+    const trackingDataCustomFields = await this.fetchTrackigDataCustomFields()
+    this.addCustomFieldsFromCookies(cookieValues, trackingDataCustomFields, leadCustomFields, false)
 
     const contactCustomFields: AmoCrmContactCustomFieldValue[] = []
     if (email !== undefined) {
@@ -148,10 +138,18 @@ export class AmoCrmClient {
     )
   }
 
-  private async fetchCustomFields (): Promise<Map<string, number>> {
+  private async fetchTextCustomFields (): Promise<Map<string, number>> {
     return await this.fetchMap(
       '/api/v4/leads/custom_fields?filter[type][0]=text',
-      'AmoCRM custom fields',
+      'AmoCRM text custom fields',
+      (d: AmoCrmCustomFieldsResponse) => d._embedded.custom_fields
+    )
+  }
+
+  private async fetchTrackigDataCustomFields (): Promise<Map<string, number>> {
+    return await this.fetchMap(
+      '/api/v4/leads/custom_fields?filter[type][0]=tracking_data',
+      'AmoCRM tracing data custom fields',
       (d: AmoCrmCustomFieldsResponse) => d._embedded.custom_fields
     )
   }
@@ -198,6 +196,29 @@ export class AmoCrmClient {
     }
 
     return (await response.json()) as TRes
+  }
+
+  private addCustomFieldsFromCookies (
+    cookieValues: Record<string, string>,
+    fieldMap: Map<string, number>,
+    result: AmoCrmLeadCustomFieldValue[],
+    stripUnderscore: boolean
+  ): void {
+    for (const [name, value] of Object.entries(cookieValues)) {
+      // Yandex Metric start with _ym, need delete first symbol for AmoCRM text field
+      const fieldName = stripUnderscore && name.startsWith('_') ? name.substring(1) : name
+      const id = fieldMap.get(fieldName)
+      if (id !== undefined) {
+        result.push({
+          field_id: id,
+          values: [
+            {
+              value
+            }
+          ]
+        })
+      }
+    }
   }
 
   private async fetchMap<T>(
