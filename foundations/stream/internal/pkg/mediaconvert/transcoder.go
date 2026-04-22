@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025-2026 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -150,7 +150,7 @@ func (p *Transcoder) Transcode(ctx context.Context, task *Task) (*TaskResult, er
 	var opts = Options{
 		Input:     sourceFilePath,
 		OutputDir: p.outputDir,
-		LogLevel:  LogLevel(p.cfg.LogLevel),
+		LogLevel:  resolveFfmpegLogLevel(p.cfg),
 		Profiles:  profiles,
 		UploadID:  task.ID,
 		Threads:   p.cfg.MaxThreadCount,

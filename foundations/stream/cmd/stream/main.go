@@ -43,13 +43,13 @@ func main() {
 		syscall.SIGQUIT,
 	)
 	defer cancel()
-	ctx = log.WithFields(ctx)
 
-	var logger = log.FromContext(ctx)
 	var cfg, err = config.FromEnv()
 	if err != nil {
 		panic(err.Error())
 	}
+	ctx = log.WithLevel(ctx, cfg.LogLevel)
+	var logger = log.FromContext(ctx)
 	logger.Sugar().Debug("using config", zap.Any("config", cfg))
 
 	// Set up OpenTelemetry.

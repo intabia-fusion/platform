@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.24.4 AS base
+FROM golang:1.26.2 AS base
 
 WORKDIR /app
 
@@ -19,6 +19,11 @@ ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 ENV GOBIN=/bin
 ENV PATH=$PATH:$GOBIN
+# Pin cache paths so every RUN sees the same locations that we mount as
+# BuildKit caches below. Defaults already match, but setting them explicitly
+# avoids surprises if the base image ever changes.
+ENV GOMODCACHE=/go/pkg/mod
+ENV GOCACHE=/root/.cache/go-build
 ARG BUILDARCH=amd64
 
 # Download modules once into a dedicated layer so they can be cached
@@ -33,8 +38,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Linter stage: reuse downloaded modules from deps
 FROM base AS linter
 
-# Install linter and run it against the source
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.5.0
+# Cache the golangci-lint binary across builds via a build cache mount.
+RUN --mount=type=cache,target=/root/.cache/golangci-lint \
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+    | sh -s -- -b $(go env GOPATH)/bin v2.5.0
 
 # Copy go.mod and go.sum for module resolution
 COPY go.mod go.sum ./
@@ -44,7 +51,24 @@ COPY . ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/.cache/golangci-lint \
     golangci-lint run --verbose
+
+# Tester stage: run the unit tests with the race detector.
+# Runs in parallel with linter/builder — BuildKit schedules them concurrently.
+FROM base AS tester
+
+# CGO is required for -race.
+ENV CGO_ENABLED=1
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY go.mod go.sum ./
+COPY . ./
+
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go test -race -count=1 ./...
 
 # Builder stage: reuse modules and build caches, then compile
 FROM base AS builder

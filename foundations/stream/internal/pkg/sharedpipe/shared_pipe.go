@@ -1,4 +1,4 @@
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025-2026 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -60,9 +60,14 @@ func (w *Writer) Close() error {
 }
 
 func (w *Writer) Write(p []byte) (n int, err error) {
+	// Copy input: the caller is allowed to reuse p after Write returns.
+	// Without copying, concurrent readers would race with the caller's buffer.
+	buf := make([]byte, len(p))
+	copy(buf, p)
+
 	var completePrevious = w.curr.Load().ready
 	var curr = w.curr.Load()
-	curr.Next.Store(&Chunk{content: p, ready: make(chan struct{}), done: w.done})
+	curr.Next.Store(&Chunk{content: buf, ready: make(chan struct{}), done: w.done})
 	w.curr.Store(curr.Next.Load())
 	close(completePrevious)
 	return len(p), nil

@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025-2026 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -26,11 +26,22 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/hcengineering/stream/internal/pkg/config"
 	"github.com/hcengineering/stream/internal/pkg/log"
 	"github.com/hcengineering/stream/internal/pkg/manifest"
 	"github.com/hcengineering/stream/internal/pkg/profile"
 	"go.uber.org/zap"
 )
+
+// resolveFfmpegLogLevel picks the ffmpeg -v value from config. Falls back to
+// the application log level for backwards compatibility when FfmpegLogLevel is
+// empty.
+func resolveFfmpegLogLevel(cfg *config.Config) LogLevel {
+	if cfg.FfmpegLogLevel != "" {
+		return LogLevel(cfg.FfmpegLogLevel)
+	}
+	return LogLevel(cfg.LogLevel)
+}
 
 // LogLevel is ffmpeg log level
 type LogLevel string
