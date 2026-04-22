@@ -175,6 +175,7 @@ export default mergeIds(trackerId, tracker, {
     CompletedIssues: '' as IntlString,
     NoGrouping: '' as IntlString,
     NoAssignee: '' as IntlString,
+    NoParent: '' as IntlString,
     LastUpdated: '' as IntlString,
     DueDate: '' as IntlString,
     Manual: '' as IntlString,

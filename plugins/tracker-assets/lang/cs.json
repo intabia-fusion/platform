@@ -123,6 +123,7 @@
     "CompletedIssues": "Dokončené úkoly",
     "NoGrouping": "Bez seskupení",
     "NoAssignee": "Bez přiřazení",
+    "NoParent": "Bez nadřazeného",
     "LastUpdated": "Poslední aktualizace",
     "DueDate": "Datum splnění",
     "Manual": "Manuální",

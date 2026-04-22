@@ -123,6 +123,7 @@
     "CompletedIssues": "Tamamlanan sorunlar",
     "NoGrouping": "Gruplama yok",
     "NoAssignee": "Atanan yok",
+    "NoParent": "Üst öğe yok",
     "LastUpdated": "Son güncelleme",
     "DueDate": "Bitiş tarihi",
     "Manual": "Manuel",

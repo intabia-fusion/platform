@@ -123,6 +123,7 @@
     "CompletedIssues": "已完成问题",
     "NoGrouping": "无分组",
     "NoAssignee": "无受理人",
+    "NoParent": "无父级",
     "LastUpdated": "最后更新",
     "DueDate": "截止日期",
     "Manual": "手动",
