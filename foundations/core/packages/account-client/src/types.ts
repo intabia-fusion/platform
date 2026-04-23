@@ -236,3 +236,14 @@ export interface Subscription {
  * Used by billing service to upsert subscription data
  */
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
+
+/**
+ * Account presence status within a specific workspace
+ */
+export interface AccountWorkspacePresence {
+  accountUuid: AccountUuid
+  workspaceUuid: WorkspaceUuid
+  online: boolean
+  updatedOn: Timestamp
+  transactorId: string
+}

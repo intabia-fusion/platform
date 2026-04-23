@@ -33,7 +33,6 @@ export interface Config {
   DbUrl: string
   ApplyTxBatchSize: number
   FrontUrl: string
-  TransactorEndpoints: string[]
 }
 
 function getAllowedProviders (): (Ref<NotificationProvider> | 'all')[] {
@@ -55,8 +54,7 @@ const config: Config = (() => {
     LastNameFirst: process.env.LAST_NAME_FIRST ?? 'false',
     DbUrl: process.env.DB_URL,
     ApplyTxBatchSize: parseInt(process.env.APPLY_TX_BATCH_SIZE ?? '100'),
-    FrontUrl: process.env.FRONT_URL,
-    TransactorEndpoints: getTransactorEndpoints()
+    FrontUrl: process.env.FRONT_URL
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
@@ -67,79 +65,5 @@ const config: Config = (() => {
 
   return params as Config
 })()
-
-interface EndpointEntry {
-  external: string
-  internal: string
-}
-
-interface RegionEndpoints {
-  name?: string
-  transactors: EndpointEntry[]
-  collaborators: EndpointEntry[]
-}
-
-interface RegionConfig {
-  regions: Record<string, RegionEndpoints>
-  workspaces?: Record<string, RegionEndpoints>
-}
-
-function loadRegionConfig (): RegionConfig {
-  const configPath = process.env.REGION_CONFIG
-  if (configPath !== undefined && configPath.length > 0) {
-    const content = readFileSync(configPath, 'utf-8')
-    const config = yaml.load(content)
-    return validateRegionConfig(config, `REGION_CONFIG file '${configPath}'`)
-  }
-
-  const configJson = process.env.REGION_CONFIG_JSON
-  if (configJson !== undefined && configJson.length > 0) {
-    const config = JSON.parse(configJson)
-    return validateRegionConfig(config, 'REGION_CONFIG_JSON env variable')
-  }
-
-  throw new Error('REGION_CONFIG or REGION_CONFIG_JSON must be set')
-}
-
-function validateRegionConfig (config: unknown, source: string): RegionConfig {
-  if (config === null || typeof config !== 'object') {
-    throw new Error(`Invalid region config from ${source}: expected an object`)
-  }
-  const obj = config as Record<string, unknown>
-  if (obj.regions === undefined || typeof obj.regions !== 'object' || obj.regions === null) {
-    throw new Error(`Invalid region config from ${source}: missing or invalid 'regions' field`)
-  }
-  return config as RegionConfig
-}
-
-function getTransactorEndpoints (): string[] {
-  const endpoints = new Set<string>()
-
-  try {
-    const regionConfig = loadRegionConfig()
-
-    for (const region of Object.values(regionConfig.regions)) {
-      for (const t of region.transactors) {
-        endpoints.add(t.internal.replace('ws://', 'http://').replace('wss://', 'https://'))
-      }
-    }
-    if (regionConfig.workspaces != null) {
-      for (const ws of Object.values(regionConfig.workspaces)) {
-        for (const t of ws.transactors) {
-          endpoints.add(t.internal.replace('ws://', 'http://').replace('wss://', 'https://'))
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load or parse REGION_CONFIG', e)
-  }
-
-  if (endpoints.size === 0) {
-    throw new Error('No transactor endpoints found in REGION_CONFIG')
-  }
-
-  console.log('Transactor endpoints: ', endpoints)
-  return Array.from(endpoints)
-}
 
 export default config

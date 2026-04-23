@@ -28,7 +28,8 @@ import {
   type WorkspaceUuid,
   type AccountUuid,
   type UsageStatus,
-  readOnlyGuestAccountUuid
+  readOnlyGuestAccountUuid,
+  systemAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
@@ -50,7 +51,8 @@ import type {
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
   WorkspaceOperation,
-  WorkspaceStatus
+  WorkspaceStatus,
+  AccountWorkspacePresence
 } from './types'
 import {
   integrationServices,
@@ -118,6 +120,36 @@ export async function listAccounts (
   const { skip, limit, search } = params
 
   return await db.listAccounts(search, skip, limit)
+}
+
+export async function getPresence (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    account?: AccountUuid
+    workspace?: WorkspaceUuid
+    online?: boolean
+  }
+): Promise<AccountWorkspacePresence[]> {
+  const { account: tokenAccount } = decodeTokenVerbose(ctx, token)
+
+  if (tokenAccount !== systemAccountUuid) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { account, workspace, online } = params
+  const filter: {
+    accountUuid?: AccountUuid
+    workspaceUuid?: WorkspaceUuid
+    online?: boolean
+  } = {}
+  if (account !== undefined) filter.accountUuid = account
+  if (workspace !== undefined) filter.workspaceUuid = workspace
+  if (online !== undefined) filter.online = online
+
+  return await db.userWorkspacePresence.find(filter)
 }
 
 export async function performWorkspaceOperation (
@@ -1147,6 +1179,7 @@ export type AccountServiceMethods =
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
   | 'upsertSubscription'
+  | 'getPresence'
 
 /**
  * @public
@@ -1181,6 +1214,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     findPersonBySocialKey: wrap(findPersonBySocialKey),
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
-    upsertSubscription: wrap(upsertSubscription)
+    upsertSubscription: wrap(upsertSubscription),
+    getPresence: wrap(getPresence)
   }
 }

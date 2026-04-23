@@ -56,7 +56,8 @@ import type {
   UserProfile,
   WorkspaceInviteInfo,
   WorkspaceLoginInfo,
-  WorkspaceOperation
+  WorkspaceOperation,
+  AccountWorkspacePresence
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -263,6 +264,7 @@ export interface AccountClient {
 
   setCookie: () => Promise<void>
   deleteCookie: () => Promise<void>
+  getPresence: (params?: { account?: AccountUuid, workspace?: WorkspaceUuid, online?: boolean }) => Promise<AccountWorkspacePresence[]>
 }
 
 /** @public */
@@ -1343,6 +1345,15 @@ class AccountClientImpl implements AccountClient {
       method: 'getWorkspaceUsersWithPermission',
       params
     })
+  }
+
+  async getPresence (params?: { account?: AccountUuid, workspace?: WorkspaceUuid, online?: boolean }): Promise<AccountWorkspacePresence[]> {
+    const request = {
+      method: 'getPresence' as const,
+      params: params ?? {}
+    }
+
+    return await this.rpc(request)
   }
 }
 

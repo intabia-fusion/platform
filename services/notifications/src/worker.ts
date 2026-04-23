@@ -33,7 +33,7 @@ import core, {
 } from '@hcengineering/core'
 import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
-import { createRestClient, type TransactorSessionSnapshot } from '@hcengineering/api-client'
+import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
 import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
@@ -142,27 +142,22 @@ export class Worker {
 
   // Initializing connected user during service startup
   public async syncSessions (): Promise<void> {
-    const endpoints = config.TransactorEndpoints
-    const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
-    for (const endpoint of endpoints) {
-      try {
-        const client = createRestClient(endpoint, '', token)
-        const { sessions }: TransactorSessionSnapshot = await client.getSessions()
-        for (const [_account, workspaces] of Object.entries(sessions)) {
-          const account = _account as AccountUuid
-          const current = this.connectedUsers.get(account) ?? new Set()
-          for (const wsUuid of workspaces) {
-            current.add(wsUuid)
-          }
+    try {
+      const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
+      const presence = await getAccountClient(token).getPresence({ online: true })
+      for (const p of presence) {
+        const account = p.accountUuid
+        const current = this.connectedUsers.get(account) ?? new Set()
+        current.add(p.workspaceUuid)
+        this.connectedUsers.set(account, current)
 
-          this.userLastActivity.set(account, Date.now())
-          if (!this.userNotifyStatusMap.has(account)) {
-            this.lazyInitSet.add(account)
-          }
+        this.userLastActivity.set(account, Date.now())
+        if (!this.userNotifyStatusMap.has(account)) {
+          this.lazyInitSet.add(account)
         }
-      } catch (e) {
-        this.ctx.error(`Failed to fetch sessions from transactor ${endpoint}`, { e, endpoint })
       }
+    } catch (e) {
+      this.ctx.error('Failed to fetch sessions from account service', { e })
     }
   }
 
