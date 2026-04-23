@@ -20,13 +20,12 @@
   import { TreeSeparator } from '@hcengineering/workbench-resources'
   import { Chat } from '@hcengineering/chunter'
   import { createQuery } from '@hcengineering/presentation'
-  import { onDestroy } from 'svelte'
+  import contact, { Employee } from '@hcengineering/contact'
 
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'
   import { chatNavGroupModels, chatSpecials } from '../utils'
   import ChatSpecialElement from './ChatSpecialElement.svelte'
-  import contact, { Employee } from '@hcengineering/contact'
 
   export let object: Doc | undefined
   export let chat: Chat | undefined
@@ -79,11 +78,6 @@
     employeesQuery.unsubscribe()
     employees = []
   }
-
-  onDestroy(() => {
-    pinnedChatsQuery.unsubscribe()
-    employeesQuery.unsubscribe()
-  })
 
   const globalActions = [
     {

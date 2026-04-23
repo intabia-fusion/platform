@@ -510,7 +510,6 @@ export interface SearchPresenter extends Class<Doc> {
   iconConfig?: FieldTemplateComponent
   title: FieldTemplateComponent | FieldTemplate
   shortTitle?: FieldTemplateComponent | FieldTemplate
-  fulltextSummary?: FieldTemplateComponent | FieldTemplate
   scoring?: SearchScoring[]
 }
 
