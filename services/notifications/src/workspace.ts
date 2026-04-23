@@ -466,11 +466,15 @@ class Workspace {
       if (!this.client.hierarchy.isDerived(tx.objectClass, activity.class.DocUpdateMessage)) return []
 
       const updateTx = tx as TxUpdateDoc<DocUpdateMessage>
-      const ops = updateTx.operations
+      const ops = updateTx.operations ?? {}
       const historyChanged =
         ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
 
-      if (historyChanged) {
+      // Skip processing if it's a simple aggregation of history within CREATE_COMBINE_THRESHOLD.
+      // This aggregation ONLY uses $push: { history: ... } and doesn't change the main message content.
+      const isCombine = ops.$push?.history !== undefined && Object.keys(ops).length === 1
+
+      if (historyChanged && !isCombine) {
         return await this.processUpdateMessage(updateTx, notifiedUsers, _res)
       }
     }
