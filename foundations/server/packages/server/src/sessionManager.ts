@@ -39,6 +39,7 @@ import core, {
   platformNowDiff,
   readOnlyGuestAccountUuid,
   SocialIdType,
+  systemAccount,
   systemAccountUuid,
   type Tx,
   TxFactory,
@@ -74,16 +75,18 @@ import {
   type PipelineFactory,
   type PlatformQueue,
   type PlatformQueueProducer,
+  type QueueOnlineUserTx,
   QueueTopic,
+  type QueueTransactorMessage,
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
   type Session,
+  SessionDataImpl,
   type SessionHealth,
   type SessionManager,
-  userEvents,
   transactorEvents,
-  type QueueTransactorMessage,
+  userEvents,
   type UserStatistics,
   workspaceEvents,
   type WorkspaceStatistics
@@ -129,6 +132,7 @@ export class TSessionManager implements SessionManager {
   usersProducer: PlatformQueueProducer<QueueUserMessage>
   lifecycleProducer: PlatformQueueProducer<QueueTransactorMessage>
   workspaceConsumer: ConsumerHandle
+  onlineUserTxConsumer: ConsumerHandle
 
   transactorId: string
 
@@ -188,6 +192,39 @@ export class TSessionManager implements SessionManager {
           // Handle workspace messages
           this.workspaceInfoCache.delete(msg.workspace)
         }
+      }
+    )
+
+    this.onlineUserTxConsumer = this.queue.createConsumer<QueueOnlineUserTx>(
+      ctx.newChild('transactor-online-user-tx-consumer', {}, { span: false }),
+      QueueTopic.OnlineUserTx,
+      'transactor-online-user-tx',
+      async (ctx, msg) => {
+        const { workspaceUuid, tx, account } = msg.value
+        const workspace = this.workspaces.get(workspaceUuid)
+        if (workspace == null) return
+
+        const session = this.getUserSession(workspaceUuid, account)
+        if (session == null) return
+
+        await workspace.with(async (pipeline) => {
+          ctx.contextData = new SessionDataImpl(
+            systemAccount,
+            'online-user-tx',
+            true,
+            { txes: [], targets: {}, queue: [], sessions: {} },
+            workspace.wsId,
+            true,
+            undefined,
+            undefined,
+            pipeline.context.modelDb,
+            new Map(),
+            'transactor'
+          )
+          await pipeline.tx(ctx, [tx])
+          //TODO: wait async triggers?
+          await pipeline.handleBroadcast(ctx)
+        })
       }
     )
 
@@ -513,6 +550,12 @@ export class TSessionManager implements SessionManager {
     return Array.from(workspace.sessions.values())
       .filter((it) => it.session.getUser() === accountUuid)
       .reduce<number>((acc) => acc + 1, 0)
+  }
+
+  getUserSession (workspaceUuid: WorkspaceUuid, accountUuid: AccountUuid): Session | undefined {
+    const workspace = this.workspaces.get(workspaceUuid)
+    if (workspace == null) return undefined
+    return Array.from(workspace.sessions.values()).find((it) => it.session.getUser() === accountUuid)?.session
   }
 
   getActiveUsers (): Record<AccountUuid, WorkspaceUuid[]> {

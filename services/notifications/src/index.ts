@@ -66,7 +66,7 @@ async function main (): Promise<void> {
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
-  const worker = new Worker(ctx, model)
+  const worker = new Worker(ctx, model, queue)
 
   const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     try {
@@ -97,7 +97,17 @@ async function main (): Promise<void> {
     }
   )
 
-  void worker.syncSessions()
+  const sync = async (): Promise<void> => {
+    const success = await worker.syncSessions()
+
+    if (success) return
+    setTimeout(() => {
+      void sync()
+    }, 10 * 1000)
+  }
+
+  // Initial delay of 5 seconds to give other services a head start.
+  setTimeout(() => { void sync() }, 5 * 1000)
 
   const shutdown = (): void => {
     worker.close()

@@ -190,9 +190,6 @@ class Workspace {
         options?: FindOptions<T>
       ): Promise<WithLookup<T> | undefined> => {
         return (await this.pipeline.findAll(this.ctx, _class, query, { ...options, limit: 1 }))[0]
-      },
-      apply: async (tx: TxCUD<Doc>): Promise<TxResult> => {
-        return await this.rest.tx(tx)
       }
     }
   }

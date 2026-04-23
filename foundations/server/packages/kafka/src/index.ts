@@ -189,6 +189,7 @@ class PlatformQueueImpl implements PlatformQueue {
       await admin.connect()
       const topics = new Set(await admin.listTopics())
       await this.checkCreateTopic(admin, QueueTopic.Tx, topics, tx)
+      await this.checkCreateTopic(admin, QueueTopic.OnlineUserTx, topics, tx)
       await this.checkCreateTopic(admin, QueueTopic.Fulltext, topics, 5)
       await this.checkCreateTopic(admin, QueueTopic.Workspace, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.Users, topics, 1)
@@ -226,6 +227,7 @@ class PlatformQueueImpl implements PlatformQueue {
         }
       } else {
         await this.checkDeleteTopic(admin, QueueTopic.Tx, existing)
+        await this.checkDeleteTopic(admin, QueueTopic.OnlineUserTx, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Fulltext, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Workspace, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Users, existing)

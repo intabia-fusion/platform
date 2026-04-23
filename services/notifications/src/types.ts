@@ -25,9 +25,9 @@ import {
   Ref,
   TxCUD,
   TxFactory,
-  TxResult,
   type WithLookup,
-  WorkspaceInfoWithStatus
+  WorkspaceInfoWithStatus,
+  WorkspaceUuid
 } from '@hcengineering/core'
 import {
   DocNotifyContext,
@@ -37,7 +37,7 @@ import {
   NotificationType,
   type NotificationTypeSetting
 } from '@hcengineering/notification'
-import { Employee, SocialIdentity } from '@hcengineering/contact'
+import { Employee, PersonSpace, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 
@@ -71,8 +71,6 @@ export interface Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
-
-  apply: (tx: TxCUD<Doc>) => Promise<TxResult>
 }
 
 export interface MentionResult {
@@ -83,4 +81,80 @@ export interface MentionResult {
     receiver: Receiver
     notifyResult: NotifyResult
   }[]
+}
+
+/**
+ * Stores all user-specific information (caches, statuses, and timers)
+ * required to manage the process of sending WorkspacesNotification events.
+ */
+export interface UserState {
+  /**
+   * The time of the user's last activity.
+   * Updated upon login, receiving transactions from the user, etc.
+   * If the user is inactive for more than 20 minutes, their state is cleared from the service memory.
+   */
+  lastActivityOn: number
+
+  /**
+   * A set of workspaces the user is currently connected to (online).
+   * Updated via queue events (`QueueUserEvent.login` / `logout`)
+   * or during periodic synchronization (`syncSessions`).
+   */
+  connectedWorkspaces: Set<WorkspaceUuid>
+
+  /**
+   * Indicates whether the initial loading (initialization) of the unread notification status
+   * from the database has been successfully completed at least once.
+   */
+  isNotifyStatusInitialized: boolean
+
+  /**
+   * A flag indicating that the service should attempt to load (initialize)
+   * the unread notification statuses for this user in the background (lazy init).
+   */
+  needsInitialization: boolean
+
+  /**
+   * The Promise of the current initialization to prevent race conditions.
+   */
+  initPromise?: Promise<boolean>
+
+  /**
+   * A counter for failed status initialization attempts.
+   * If there are more than 5 attempts, the service stops trying for this user.
+   */
+  initRetries: number
+
+  /**
+   * A timestamp (Date.now() + delay) until which no repeated initialization attempts
+   * should be made if the previous one failed.
+   * Allows avoiding multiple setTimeout calls in memory.
+   */
+  nextInitAttempt?: number
+
+  /**
+   * A cache of notification statuses: whether the user has unread notifications (true/false)
+   * for each specific workspace.
+   * This structure is used to form the attributes of the WorkspacesNotification event.
+   */
+  unreadStatusByWorkspace: Record<WorkspaceUuid, boolean>
+
+  /**
+   * A cache of the reference to the user's space (PersonSpace) for each workspace.
+   * This information is necessary for the correct addressing and saving of the WorkspacesNotification transaction.
+   */
+  spaceIdByWorkspace: Map<WorkspaceUuid, Ref<PersonSpace>>
+
+  /**
+   * A timer for debouncing (delayed sending) of the WorkspacesNotification event.
+   * Allows batching several quick status changes into a single send (e.g., a 1-second delay),
+   * reducing system load during mass notification updates.
+   */
+  debounceTimer?: NodeJS.Timeout
+
+  /**
+   * The time of the last logout (sessions === 0) for the workspace.
+   * Used for delayed removal (grace period).
+   */
+  loggedOutAt: Map<WorkspaceUuid, number>
 }

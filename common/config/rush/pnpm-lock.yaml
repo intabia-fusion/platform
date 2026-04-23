@@ -39883,6 +39883,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../plugins/activity
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/ai-bot
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics

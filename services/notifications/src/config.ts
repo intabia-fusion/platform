@@ -48,7 +48,7 @@ const config: Config = (() => {
     QueueConfig: process.env.QUEUE_CONFIG,
     QueueRegion: process.env.QUEUE_REGION,
     AccountsUrl: process.env.ACCOUNTS_URL,
-    ServiceId: process.env.SERVICE_ID ?? 'notifications-service',
+    ServiceId: process.env.SERVICE_ID ?? 'notifications',
     StorageConfig: process.env.STORAGE_CONFIG,
     AllowedNotificationProviders: getAllowedProviders(),
     LastNameFirst: process.env.LAST_NAME_FIRST ?? 'false',

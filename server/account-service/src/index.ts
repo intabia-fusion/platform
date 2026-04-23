@@ -32,7 +32,7 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic, type QueueTransactorMessage, type QueueUserLogin } from '@hcengineering/server-core'
+import { QueueTopic, type QueueTransactorMessage, type QueueUserMessage } from '@hcengineering/server-core'
 
 import { handlePresenceBatch, handleTransactorLifecycle, initPresenceRehydration } from './presence'
 import { migrateFromOldAccounts } from './migration/migration'
@@ -161,7 +161,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       console.log('Migrations verified/done')
     }
 
-    initPresenceRehydration(measureCtx, db, SERVICE_ID)
+    const userEventProducer = platformQueue.getProducer<QueueUserMessage>(measureCtx, QueueTopic.Users)
+    initPresenceRehydration(measureCtx, db, SERVICE_ID, userEventProducer)
   })
 
   const transactorLifecycleConsumer = platformQueue.createConsumer<QueueTransactorMessage>(
@@ -173,7 +174,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     }
   )
 
-  const usersConsumer = platformQueue.createBatchConsumer<QueueUserLogin>(
+  const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
     measureCtx.newChild('users-consumer', {}, { span: false }),
     QueueTopic.Users,
     'presence-tracker',

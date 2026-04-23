@@ -14,13 +14,17 @@
 //
 
 import { type AccountDB, type AccountWorkspacePresence, getAllTransactors, EndpointKind } from '@hcengineering/account'
-import { type AccountUuid, type MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { type AccountUuid, type MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
 import {
   QueueUserEvent,
   type QueueUserLogin,
+  type QueueUserLogout,
+  type QueueUserMessage,
   QueueTransactorEvent,
   type QueueTransactorMessage,
-  type ConsumerMessage
+  type ConsumerMessage,
+  userEvents,
+  type PlatformQueueProducer
 } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient, type TransactorSessionSnapshot } from '@hcengineering/api-client'
@@ -40,19 +44,21 @@ export async function handleTransactorLifecycle (
 
 export async function handlePresenceBatch (
   ctx: MeasureContext,
-  msgs: ConsumerMessage<QueueUserLogin>[],
+  msgs: ConsumerMessage<QueueUserMessage>[],
   _db: Promise<[AccountDB, () => void]>
 ): Promise<void> {
-  const presences: AccountWorkspacePresence[] = msgs.map((msg) => {
-    const { type, user, sessions, transactorId, timestamp } = msg.value
-    return {
-      accountUuid: user,
-      workspaceUuid: msg.workspace,
-      online: type === QueueUserEvent.login || (sessions ?? 0) > 0,
-      updatedOn: timestamp,
-      transactorId
-    }
-  })
+  const presences: AccountWorkspacePresence[] = msgs
+    .filter((msg) => [QueueUserEvent.login, QueueUserEvent.logout].includes(msg.value.type))
+    .map((msg) => {
+      const { type, user, sessions, transactorId, timestamp } = msg.value as QueueUserLogin | QueueUserLogout
+      return {
+        accountUuid: user,
+        workspaceUuid: msg.workspace,
+        online: type === QueueUserEvent.login || (sessions ?? 0) > 0,
+        updatedOn: timestamp,
+        transactorId
+      }
+    })
 
   if (presences.length > 0) {
     const [db] = await _db
@@ -60,12 +66,22 @@ export async function handlePresenceBatch (
   }
 }
 
-export function initPresenceRehydration (ctx: MeasureContext, db: AccountDB, serviceId: string): void {
+export function initPresenceRehydration (
+  ctx: MeasureContext,
+  db: AccountDB,
+  serviceId: string,
+  userProducer: PlatformQueueProducer<QueueUserMessage>
+): void {
   // Start rehydration loop in background
-  void runStartupRehydration(ctx, db, serviceId)
+  void runStartupRehydration(ctx, db, serviceId, userProducer)
 }
 
-async function runStartupRehydration (ctx: MeasureContext, db: AccountDB, serviceId: string): Promise<void> {
+async function runStartupRehydration (
+  ctx: MeasureContext,
+  db: AccountDB,
+  serviceId: string,
+  userProducer: PlatformQueueProducer<QueueUserMessage>
+): Promise<void> {
   let pendingEndpoints = getAllTransactors(EndpointKind.Internal)
   const startTime = Date.now()
 
@@ -78,6 +94,11 @@ async function runStartupRehydration (ctx: MeasureContext, db: AccountDB, servic
       ctx.info('Presence rehydration completed successfully for all transactors')
       // Only after we got a FULL snapshot, we can safely reset statuses for sessions that didn't reappear
       await db.resetPresenceOffline(startTime)
+
+      // Send rehydrated event to notify other services (e.g. pod-notifications) to re-sync
+      await userProducer.send(ctx, '' as WorkspaceUuid, [
+        userEvents.rehydrated({ timestamp: Date.now() })
+      ])
       break
     }
 
