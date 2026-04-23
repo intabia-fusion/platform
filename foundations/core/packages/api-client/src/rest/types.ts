@@ -263,5 +263,10 @@ export interface RestClient extends ClientOperations {
     format: MarkupFormat
   ) => Promise<string>
 
-  getSessions: () => Promise<Record<AccountUuid, WorkspaceUuid[]>>
+  getSessions: () => Promise<TransactorSessionSnapshot>
+}
+
+export interface TransactorSessionSnapshot {
+  transactorId: string
+  sessions: Record<AccountUuid, WorkspaceUuid[]>
 }

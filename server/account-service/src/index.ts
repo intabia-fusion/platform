@@ -32,12 +32,14 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic } from '@hcengineering/server-core'
+import { QueueTopic, type QueueTransactorMessage, type QueueUserLogin } from '@hcengineering/server-core'
 
+import { handlePresenceBatch, handleTransactorLifecycle, initPresenceRehydration } from './presence'
 import { migrateFromOldAccounts } from './migration/migration'
 export * from './migration/utils'
 export * from './migration/types'
 
+const SERVICE_ID = 'account'
 const AUTH_TOKEN_COOKIE = 'account-metadata-Token'
 
 const KEEP_ALIVE_HEADERS = {
@@ -97,7 +99,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
-  const platformQueue = getPlatformQueue('account')
+  const platformQueue = getPlatformQueue(SERVICE_ID)
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
@@ -158,7 +160,28 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       await migrateFromOldAccounts(oldAccsUrl, db, oldAccsNs)
       console.log('Migrations verified/done')
     }
+
+    initPresenceRehydration(measureCtx, db, SERVICE_ID)
   })
+
+  const transactorLifecycleConsumer = platformQueue.createConsumer<QueueTransactorMessage>(
+    measureCtx.newChild('transactor-lifecycle-consumer', {}, { span: false }),
+    QueueTopic.TransactorLifecycle,
+    'transactor-lifecycle-tracker',
+    async (ctx, msg) => {
+      await handleTransactorLifecycle(ctx, msg, accountsDb)
+    }
+  )
+
+  const usersConsumer = platformQueue.createBatchConsumer<QueueUserLogin>(
+    measureCtx.newChild('users-consumer', {}, { span: false }),
+    QueueTopic.Users,
+    'presence-tracker',
+    async (ctx, msgs) => {
+      await handlePresenceBatch(ctx, msgs, accountsDb)
+    },
+    { batchSize: 500, batchTimeout: 1000 }
+  )
 
   const app = new Koa()
   const router = new Router()
@@ -501,6 +524,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     onClose?.()
     void notificationProducer.close()
     void crmProducer.close()
+    void usersConsumer.close()
+    void transactorLifecycleConsumer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

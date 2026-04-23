@@ -33,7 +33,7 @@ import core, {
 } from '@hcengineering/core'
 import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
-import { createRestClient } from '@hcengineering/api-client'
+import { createRestClient, type TransactorSessionSnapshot } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
 import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
@@ -147,8 +147,8 @@ export class Worker {
     for (const endpoint of endpoints) {
       try {
         const client = createRestClient(endpoint, '', token)
-        const users = await client.getSessions()
-        for (const [_account, workspaces] of Object.entries(users)) {
+        const { sessions }: TransactorSessionSnapshot = await client.getSessions()
+        for (const [_account, workspaces] of Object.entries(sessions)) {
           const account = _account as AccountUuid
           const current = this.connectedUsers.get(account) ?? new Set()
           for (const wsUuid of workspaces) {

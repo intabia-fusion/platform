@@ -48,15 +48,14 @@ import {
   DocumentUpdate,
   Mixin,
   MixinData,
-  MixinUpdate,
-  AccountUuid
+  MixinUpdate
 } from '@hcengineering/core'
 import { PlatformError, type Status, unknownError } from '@hcengineering/platform'
 
 import { AuthOptions } from '../types'
 import { getWorkspaceToken } from '../utils'
 import { createMarkupOperations, type MarkupFormat, type MarkupOperations, type MarkupRef } from '../markup'
-import type { EnsurePersonOptions, RestClient } from './types'
+import type { EnsurePersonOptions, RestClient, TransactorSessionSnapshot } from './types'
 import { extractJson, withRetry } from './utils'
 
 export function createRestClient (
@@ -658,7 +657,7 @@ export class RestClientImpl implements RestClient {
     return await this.getMarkupOps().fetchMarkup(objectClass, objectId, objectAttr, markup, format)
   }
 
-  async getSessions (): Promise<Record<AccountUuid, WorkspaceUuid[]>> {
+  async getSessions (): Promise<TransactorSessionSnapshot> {
     const requestUrl = concatLink(this.endpoint, '/api/v1/sessions')
     await this.checkRate()
     const result = await withRetry<any>(async () => {
@@ -668,7 +667,7 @@ export class RestClientImpl implements RestClient {
         throw new PlatformError(unknownError(response.statusText))
       }
       this.updateRateLimit(response)
-      return await extractJson<Record<AccountUuid, WorkspaceUuid[]>>(response)
+      return await extractJson<TransactorSessionSnapshot>(response)
     }, isRLE)
     if (result.error !== undefined) {
       throw new PlatformError(result.error)

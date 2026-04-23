@@ -58,7 +58,8 @@ import type {
   WorkspaceOperation,
   WorkspaceStatus,
   WorkspaceStatusData,
-  WorkspacePermission
+  WorkspacePermission,
+  AccountWorkspacePresence
 } from '../types'
 import { isShallowEqual } from '../utils'
 
@@ -411,6 +412,7 @@ export class MongoAccountDB implements AccountDB {
 
   workspaceMembers: MongoDbCollection<WorkspaceMember>
   workspacePermission: MongoDbCollection<WorkspacePermission>
+  userWorkspacePresence: MongoDbCollection<AccountWorkspacePresence>
 
   constructor (readonly db: Db) {
     this.migration = new MongoDbCollection<MigrationInfo, 'key'>('migration', db, 'key')
@@ -431,6 +433,7 @@ export class MongoAccountDB implements AccountDB {
 
     this.workspaceMembers = new MongoDbCollection<WorkspaceMember>('workspaceMembers', db)
     this.workspacePermission = new MongoDbCollection<WorkspacePermission>('workspacePermissions', db)
+    this.userWorkspacePresence = new MongoDbCollection<AccountWorkspacePresence>('accountWorkspacePresence', db)
   }
 
   async init (): Promise<void> {
@@ -482,6 +485,13 @@ export class MongoAccountDB implements AccountDB {
         options: {
           name: 'hc_account_workspace_members_account_uuid_1'
         }
+      }
+    ])
+
+    await this.userWorkspacePresence.ensureIndices([
+      {
+        key: { accountUuid: 1, workspaceUuid: 1 },
+        options: { unique: true, name: 'hc_account_account_workspace_presence_pk' }
       }
     ])
   }
@@ -942,5 +952,21 @@ export class MongoAccountDB implements AccountDB {
       permission
     })
     return results.map((r) => r.accountUuid)
+  }
+
+  async upsertPresence (data: AccountWorkspacePresence): Promise<void> {
+    throw new Error('Not implemented')
+  }
+
+  async batchUpsertPresence (data: AccountWorkspacePresence[]): Promise<void> {
+    throw new Error('Not implemented')
+  }
+
+  async clearPresenceForTransactor (transactorId: string, beforeTimestamp: number): Promise<void> {
+    throw new Error('Not implemented')
+  }
+
+  async resetPresenceOffline (beforeTimestamp: number): Promise<void> {
+    throw new Error('Not implemented')
   }
 }

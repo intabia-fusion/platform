@@ -208,9 +208,10 @@ export function startHttpServer (
         return
       }
 
-      const users = sessions.getActiveUsers()
-
-      const json = JSON.stringify(users)
+      const json = JSON.stringify({
+        transactorId: sessions.transactorId,
+        sessions: sessions.getActiveUsers()
+      })
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(json)
     } catch (err: any) {

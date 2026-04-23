@@ -50,7 +50,8 @@ import type {
   UserProfile,
   Subscription,
   DBFlavor,
-  WorkspacePermission
+  WorkspacePermission,
+  AccountWorkspacePresence
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -539,6 +540,7 @@ export class PostgresAccountDB implements AccountDB {
   userProfile: PostgresDbCollection<UserProfile, 'personUuid'>
   subscription: PostgresDbCollection<Subscription, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
+  userWorkspacePresence: PostgresDbCollection<AccountWorkspacePresence>
 
   constructor (
     readonly client: Sql,
@@ -608,6 +610,15 @@ export class PostgresAccountDB implements AccountDB {
       timestampFields: ['createdOn'],
       withRetryClient
     })
+    this.userWorkspacePresence = new PostgresDbCollection<AccountWorkspacePresence>(
+      'account_workspace_presence',
+      client,
+      {
+        ns,
+        timestampFields: ['updatedOn'],
+        withRetryClient
+      }
+    )
   }
 
   getWsMembersTableName (): string {
@@ -1288,5 +1299,66 @@ export class PostgresAccountDB implements AccountDB {
       permission
     })
     return results.map((r) => r.accountUuid)
+  }
+
+  async upsertPresence (data: AccountWorkspacePresence): Promise<void> {
+    const snakeData = convertKeysToSnakeCase(data)
+    const keys = Object.keys(snakeData)
+    const columns = keys.map((k) => `"${k}"`).join(', ')
+    const values = keys.map((_, i) => `$${i + 1}`).join(', ')
+    const updates = keys
+      .filter((k) => k !== 'account_uuid' && k !== 'workspace_uuid')
+      .map((k) => `"${k}" = EXCLUDED."${k}"`)
+      .join(', ')
+
+    const sql = `
+      INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
+      VALUES (${values})
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
+      WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
+    `
+    await this.userWorkspacePresence.unsafe(sql, Object.values(snakeData))
+  }
+
+  async batchUpsertPresence (data: AccountWorkspacePresence[]): Promise<void> {
+    if (data.length === 0) return
+    const snakeData = convertKeysToSnakeCase(data)
+    const keys = Object.keys(snakeData[0])
+    const columns = keys.map((k) => `"${k}"`).join(', ')
+    const updates = keys
+      .filter((k) => k !== 'account_uuid' && k !== 'workspace_uuid')
+      .map((k) => `"${k}" = EXCLUDED."${k}"`)
+      .join(', ')
+
+    const values: any[] = []
+    const rows = snakeData
+      .map((d: any, i: number) => {
+        const rowValues = keys.map((k) => d[k])
+        values.push(...rowValues)
+        return `(${rowValues.map((_, j) => `$${i * keys.length + j + 1}`).join(', ')})`
+      })
+      .join(', ')
+
+    const sql = `
+      INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
+      VALUES ${rows}
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
+      WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
+    `
+    await this.userWorkspacePresence.unsafe(sql, values)
+  }
+
+  async clearPresenceForTransactor (transactorId: string, beforeTimestamp: number): Promise<void> {
+    await this.userWorkspacePresence.update(
+      { transactorId, online: true, updatedOn: { $lt: beforeTimestamp } },
+      { online: false, updatedOn: beforeTimestamp }
+    )
+  }
+
+  async resetPresenceOffline (beforeTimestamp: number): Promise<void> {
+    await this.userWorkspacePresence.update(
+      { online: true, updatedOn: { $lt: beforeTimestamp } },
+      { online: false, updatedOn: beforeTimestamp }
+    )
   }
 }

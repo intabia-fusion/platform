@@ -351,6 +351,7 @@ services:
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+      - TRANSACTOR_ID=transactor0
   transactor1:
     image: intabiafusion/transactor
     pull_policy: never
@@ -391,6 +392,7 @@ services:
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+      - TRANSACTOR_ID=transactor1
   collaborator0:
     image: intabiafusion/collaborator
     pull_policy: never

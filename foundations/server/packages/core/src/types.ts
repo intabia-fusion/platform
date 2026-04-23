@@ -720,6 +720,7 @@ export type SessionHealth = 'healthy' | 'degraded' | 'unhealthy'
  * @public
  */
 export interface SessionManager {
+  transactorId: string
   // workspaces: Map<WorkspaceUuid, Workspace>
   sessions: Map<string, { session: Session, socket: ConnectionSocket }>
 

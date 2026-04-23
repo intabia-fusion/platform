@@ -2,38 +2,21 @@
 
 TypeScript/Svelte 4 monorepo. Rush.js (pnpm), Node >=24 <25, Webpack 5, Electron, Jest.
 
-## Documentation Policy
-
-**Every task = create/update `docs/memory/<topic>.md`**. Capture heuristics, decisions, edge cases, and workflows discovered during implementation.
-
-### What to document
-- Non-obvious architectural decisions with rationale
-- Complex feature flows (step-by-step with diagrams if needed)
-- Debugging findings (root causes, workarounds, gotchas)
-- Integration patterns (how to use APIs, services)
-- Migration/upgrade procedures
-
-### What NOT to document
-- Obvious code behavior (let code speak)
-- Temporary debugging logs (clean after fix)
-- Trivial setup steps (covered by README)
-
-### Location
-- `docs/memory/<topic>.md` - accumulate knowledge here
-- Keep concise, update incrementally
-- One file per topic/feature
-
 ## Core Rules
 
 **Output**: Answer first, reasoning after. No preamble. No hollow closings. ASCII only (no em dashes, smart quotes, Unicode bullets).
 
-**Code**: Simplest working solution. Read before modify. No over-engineering. Three similar lines > premature abstraction. No `any` without reason. Strict types, interfaces over types.
-
-**Accuracy**: Never speculate about unread code. Reference file = read first. Unsure = "I don't know." User corrections = ground truth.
+**Code**: Simplest working solution. No over-engineering. Three similar lines > premature abstraction. No `any` without reason. Strict types, interfaces over types.
 
 **Git**: Read-only (diff, status, log). NO commits, resets, reverts, branch switches.
 
 **Formatting**: NEVER run `rushx format`. User handles it. Can corrupt/erase files.
+
+**Language**: Use the same language as the user and respond in that language.
+
+## Search
+- NEVER run global search (grep -R .)
+- EXCLUDE: node_modules, dist, build, .git
 
 ## Build & Validation
 

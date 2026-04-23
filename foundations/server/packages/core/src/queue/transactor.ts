@@ -13,37 +13,30 @@
 // limitations under the License.
 //
 
-import { type AccountUuid, type PersonId } from '@hcengineering/core'
-
-export enum QueueUserEvent {
-  login = 'login',
-  logout = 'logout'
+export enum QueueTransactorEvent {
+  started = 'started',
+  stopped = 'stopped'
 }
 
-export interface QueueUserMessage {
-  type: QueueUserEvent
-  user: AccountUuid
+export interface QueueTransactorMessage {
+  type: QueueTransactorEvent
   transactorId: string
   timestamp: number
 }
 
-export interface QueueUserLogin extends QueueUserMessage {
-  type: QueueUserEvent.login | QueueUserEvent.logout
-  sessions: number
-  socialIds: PersonId[]
-}
-
-export const userEvents = {
-  login: function userLogin (data: Omit<QueueUserLogin, 'type'>): QueueUserLogin {
+export const transactorEvents = {
+  started: function transactorStarted (transactorId: string, timestamp?: number): QueueTransactorMessage {
     return {
-      type: QueueUserEvent.login,
-      ...data
+      type: QueueTransactorEvent.started,
+      transactorId,
+      timestamp: timestamp ?? Date.now()
     }
   },
-  logout: function userLogout (data: Omit<QueueUserLogin, 'type'>): QueueUserLogin {
+  stopped: function transactorStopped (transactorId: string, timestamp?: number): QueueTransactorMessage {
     return {
-      type: QueueUserEvent.logout,
-      ...data
+      type: QueueTransactorEvent.stopped,
+      transactorId,
+      timestamp: timestamp ?? Date.now()
     }
   }
 }
