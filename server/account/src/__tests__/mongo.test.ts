@@ -676,6 +676,7 @@ describe('MongoAccountDB', () => {
   let accountDb: MongoAccountDB
   let mockSocialId: any
   let mockAccount: any
+  let mockMeetingLink: any
   let mockWorkspace: any
   let mockWorkspaceMembers: any
   let mockWorkspaceStatus: any
@@ -727,6 +728,13 @@ describe('MongoAccountDB', () => {
       insertOne: jest.fn()
     }
 
+    mockMeetingLink = {
+      insertOne: jest.fn(),
+      findOne: jest.fn(),
+      deleteMany: jest.fn(),
+      ensureIndices: jest.fn()
+    }
+
     mockMigration = {
       insertOne: jest.fn(),
       update: jest.fn(),
@@ -742,7 +750,8 @@ describe('MongoAccountDB', () => {
       workspace: { get: () => mockWorkspace },
       workspaceMembers: { get: () => mockWorkspaceMembers },
       workspaceStatus: { get: () => mockWorkspaceStatus },
-      migration: { get: () => mockMigration }
+      migration: { get: () => mockMigration },
+      meetingLink: { get: () => mockMeetingLink }
     })
   })
 
@@ -789,6 +798,18 @@ describe('MongoAccountDB', () => {
           options: {
             name: 'hc_account_workspace_members_account_uuid_1'
           }
+        }
+      ])
+
+      // Verify meeting link indices
+      expect(accountDb.meetingLink.ensureIndices).toHaveBeenCalledWith([
+        {
+          key: { workspaceId: 1 },
+          options: { name: 'hc_account_meeting_link_workspace_id_1' }
+        },
+        {
+          key: { createdAt: 1 },
+          options: { name: 'hc_account_meeting_link_created_at_1' }
         }
       ])
     })
