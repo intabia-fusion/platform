@@ -50,7 +50,8 @@ import type {
   UserProfile,
   Subscription,
   DBFlavor,
-  WorkspacePermission
+  WorkspacePermission,
+  MeetingLink
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -532,6 +533,7 @@ export class PostgresAccountDB implements AccountDB {
   accountEvent: PostgresDbCollection<AccountEvent>
   otp: PostgresDbCollection<OTP>
   invite: PostgresDbCollection<WorkspaceInvite, 'id'>
+  meetingLink: PostgresDbCollection<MeetingLink, 'id'>
   mailbox: PostgresDbCollection<Mailbox, 'mailbox'>
   mailboxSecret: PostgresDbCollection<MailboxSecret>
   integration: PostgresDbCollection<Integration>
@@ -575,6 +577,12 @@ export class PostgresAccountDB implements AccountDB {
       ns,
       idKey: 'id',
       timestampFields: ['expiresOn'],
+      withRetryClient
+    })
+    this.meetingLink = new PostgresDbCollection<MeetingLink, 'id'>('meeting_links', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdAt'],
       withRetryClient
     })
     this.mailbox = new PostgresDbCollection<Mailbox, 'mailbox'>('mailbox', client, { ns, withRetryClient })

@@ -121,6 +121,7 @@
     "InvalidOrExpiredLink": "Bağlantı geçersiz veya süresi dolmuş.",
     "CheckingLink": "Bağlantı kontrol ediliyor ve hazırlanıyor...",
     "PreparingGuestConnection": "Misafir bağlantısı hazırlanıyor...",
+    "ResolvingLink": "Bağlantı çözümleniyor...",
     "Error": "Hata",
     "ShowParticipants": "Katılımcıları göster",
     "HideParticipants": "Katılımcıları gizle",

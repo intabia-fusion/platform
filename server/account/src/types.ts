@@ -143,6 +143,13 @@ export interface WorkspaceInvite {
   autoJoin?: boolean
 }
 
+export interface MeetingLink {
+  id: string
+  guestToken: string
+  workspaceId: string
+  createdAt: number
+}
+
 export interface WorkspacePermission {
   workspaceUuid: WorkspaceUuid
   accountUuid: AccountUuid
@@ -316,6 +323,7 @@ export interface AccountDB {
   accountEvent: DbCollection<AccountEvent>
   otp: DbCollection<OTP>
   invite: DbCollection<WorkspaceInvite>
+  meetingLink: DbCollection<MeetingLink>
   mailbox: DbCollection<Mailbox>
   mailboxSecret: DbCollection<MailboxSecret>
   integration: DbCollection<Integration>

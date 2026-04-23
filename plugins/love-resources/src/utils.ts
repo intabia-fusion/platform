@@ -503,39 +503,26 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
-  const endpoint = getMetadata(love.metadata.ServiceEndpoint)
-  if (endpoint === undefined) {
-    console.error('Love service endpoint is not configured')
-    return ''
-  }
-
-  const platformToken = getMetadata(presentation.metadata.Token)
-  if (platformToken === undefined) {
-    throw new Error('Platform token not found')
-  }
-
   try {
-    const guestToken = await getLoveClient().getGuestToken(mm)
-
-    const navigateUrl = getCurrentLocation()
-    navigateUrl.path = ['meetings']
-    navigateUrl.query = {
-      guestToken
-    }
-
-    // Build direct guest link (no createAccessLink). Use current front origin to build a full URL.
-    // This simplifies the flow: result link will be like https://front/meetings?meetingId=...&guestToken=...
-    try {
-      const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
-
-      const query = new URLSearchParams({ guestToken })
-      return concatLink(front, `/meetings?${query.toString()}`)
-    } catch (err: any) {
-      console.error('Failed to create guest link', err)
+    const shortIdOrToken = await getLoveClient().getGuestToken(mm)
+    if (shortIdOrToken === '') {
+      console.error('Failed to create guest link')
       return ''
     }
+
+    const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
+
+    // shortIdOrToken is either a 12-char shortId (new) or a full JWT (fallback)
+    // Short ids never contain dots; JWTs always have two dots (header.payload.sig)
+    const isShortId = !shortIdOrToken.includes('.')
+    if (isShortId) {
+      return concatLink(front, `/meetings/${shortIdOrToken}`)
+    } else {
+      const query = new URLSearchParams({ guestToken: shortIdOrToken })
+      return concatLink(front, `/meetings?${query.toString()}`)
+    }
   } catch (err: any) {
-    console.error('Failed to generate guest token', err)
+    console.error('Failed to generate guest link', err)
     return ''
   }
 }

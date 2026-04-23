@@ -1,4 +1,11 @@
-import { MeasureContext, readOnlyGuestAccountUuid, Ref } from '@hcengineering/core'
+import {
+  MeasureContext,
+  readOnlyGuestAccountUuid,
+  Ref,
+  systemAccountUuid,
+  type WorkspaceUuid,
+  concatLink
+} from '@hcengineering/core'
 import { MeetingMinutes, MeetingStatus, ParticipantMetadata } from '@hcengineering/love'
 import { RoomServiceClient } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
@@ -15,6 +22,31 @@ export class GuestManager {
     readonly ctx: MeasureContext,
     readonly roomClient: RoomServiceClient
   ) {}
+
+  private async createShortLink (guestToken: string, workspaceId: string): Promise<string | null> {
+    try {
+      const sysToken = generateToken(systemAccountUuid, workspaceId as WorkspaceUuid, { service: 'love' })
+      const res = await fetch(concatLink(config.AccountsURL, '/api/v1/createShortLink'), {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + sysToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ guestToken, workspaceId })
+      })
+
+      if (!res.ok) {
+        this.ctx.error('[createShortLink] account-service returned error', { status: res.status })
+        return null
+      }
+
+      const data = await res.json()
+      return data?.shortId ?? null
+    } catch (err: any) {
+      this.ctx.error('[createShortLink] failed', { err })
+      return null
+    }
+  }
 
   async handleGuestToken (req: Request, res: Response): Promise<void> {
     const { meetingId, workspaceId } = decodeMeetingToken(req, res)
@@ -54,7 +86,13 @@ export class GuestManager {
       config.ApiSecret
     )
 
-    return guestToken
+    const shortId = await this.createShortLink(guestToken, wsLoginInfo.workspace)
+    if (shortId === null) {
+      this.ctx.error('[createGuestToken] failed to create short link, falling back to raw token', { meetingId })
+      return guestToken
+    }
+
+    return shortId
   }
 
   async handleGuestInfo (req: Request, res: Response): Promise<void> {
@@ -92,8 +130,14 @@ export class GuestManager {
       }
       const meetingStatus = meetingDoc.status
       const roomName = getRoomName(workspace, meetingId)
-      const rooms = await this.roomClient.listRooms([roomName])
-      const roomFound = !(rooms === undefined || rooms.length === 0)
+      let roomFound = false
+      try {
+        const rooms = await this.roomClient.listRooms([roomName])
+        roomFound = !(rooms === undefined || rooms.length === 0)
+      } catch (e) {
+        this.ctx.warn('[guestInfo] Failed to check LiveKit room, assuming not found', { roomName })
+        roomFound = false
+      }
 
       res.status(200).send({
         meetingId,

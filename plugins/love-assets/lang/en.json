@@ -121,6 +121,7 @@
     "InvalidOrExpiredLink": "The link is invalid or expired.",
     "CheckingLink": "Checking link and preparing...",
     "PreparingGuestConnection": "Preparing guest connection...",
+    "ResolvingLink": "Resolving link...",
     "Error": "Error",
     "ShowParticipants": "Show participants",
     "HideParticipants": "Hide participants",
