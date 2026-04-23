@@ -145,6 +145,16 @@ export interface AudioAnalysis {
   spectralFlux: number
   /** Cached spectrum for flux calculation */
   spectrum: Float64Array | null
+  /**
+   * True if spectral features (lowBandEnergy, highBandEnergy, spectralCentroid,
+   * spectralFlux) were actually computed for this frame. The analyzer may skip
+   * the FFT on a fraction of frames for performance. When false, consumers
+   * should ignore spectral-derived fields and fall back to RMS/ZCR.
+   *
+   * Optional so hand-constructed analyses in tests stay compatible — treated
+   * as true when undefined.
+   */
+  spectralValid?: boolean
 }
 
 /**

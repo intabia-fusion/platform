@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025-2026 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -210,6 +210,7 @@ func (p *Scheduler) processTask(ctx context.Context, task *Task) error {
 	var opts = Options{
 		Input:     sourceFilePath,
 		OutputDir: p.cfg.OutputDir,
+		LogLevel:  resolveFfmpegLogLevel(p.cfg),
 		UploadID:  task.ID,
 		Threads:   p.cfg.MaxThreadCount,
 		Profiles:  profiles,

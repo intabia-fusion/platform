@@ -26,6 +26,9 @@ type Commit struct {
 	Author       string
 	Date         string
 	CherryPicked bool
+	Partial      bool     // True if only some files/lines are already present in HEAD
+	AppliedRatio string   // e.g. "3/5 files" when Partial
+	MissingFiles []string // files not yet applied to HEAD (set when Partial)
 	HasConflict  bool   // True if cherry-pick would have conflicts
 	Diff         string // Full diff of the commit
 }
@@ -97,46 +100,202 @@ func GetCommitsFromUpstream(upstreamBranch string) ([]Commit, error) {
 	return commits, nil
 }
 
-// CheckCherryPickedOne inspects a single commit and fills CherryPicked/HasConflict fields
+// CheckCherryPickedOne inspects a single commit and fills CherryPicked/Partial/HasConflict
 func CheckCherryPickedOne(commit *Commit) {
 	if _, err := GitExec("merge-base", "--is-ancestor", commit.Hash, "HEAD"); err == nil {
 		commit.CherryPicked = true
+		commit.Partial = false
 		commit.HasConflict = false
 		return
 	}
 	if out, _ := GitExec("log", "HEAD", "--format=%s", "--grep="+commit.Subject, "-1"); strings.TrimSpace(out) == commit.Subject {
 		commit.CherryPicked = true
+		commit.Partial = false
 		commit.HasConflict = false
 		return
 	}
-	patch, err := GitExec("diff", commit.Hash+"^.."+commit.Hash)
-	if err != nil {
+	files, err := GetCommitFiles(commit.Hash)
+	if err != nil || len(files) == 0 {
 		commit.CherryPicked = false
 		commit.HasConflict = false
 		return
 	}
-	if strings.TrimSpace(patch) == "" {
+	applied := 0
+	total := 0
+	conflictAny := false
+	var missing []string
+	for _, f := range files {
+		state := checkFileApplied(commit.Hash, f)
+		switch state {
+		case fileApplied:
+			applied++
+			total++
+		case fileMissing:
+			total++
+			missing = append(missing, f)
+		case fileConflict:
+			total++
+			conflictAny = true
+			missing = append(missing, f)
+		case fileSkip:
+			// binary/rename/etc — ignore in ratio
+		}
+	}
+	if total == 0 {
 		commit.CherryPicked = true
 		commit.HasConflict = false
 		return
 	}
-	cmd := exec.Command("git", "apply", "--check", "-")
-	cmd.Stdin = strings.NewReader(patch)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		stderrStr := stderr.String()
-		if strings.Contains(stderrStr, "already exists") || strings.Contains(stderrStr, "No changes") {
-			commit.CherryPicked = true
-			commit.HasConflict = false
-		} else {
-			commit.CherryPicked = false
-			commit.HasConflict = true
-		}
+	if applied == total {
+		commit.CherryPicked = true
+		commit.Partial = false
+		commit.HasConflict = false
+		commit.AppliedRatio = ""
+		return
+	}
+	if applied > 0 {
+		commit.CherryPicked = false
+		commit.Partial = true
+		commit.HasConflict = conflictAny
+		commit.AppliedRatio = fmt.Sprintf("%d/%d files", applied, total)
+		commit.MissingFiles = missing
 		return
 	}
 	commit.CherryPicked = false
-	commit.HasConflict = false
+	commit.Partial = false
+	commit.HasConflict = conflictAny
+}
+
+type fileState int
+
+const (
+	fileMissing fileState = iota
+	fileApplied
+	fileConflict
+	fileSkip
+)
+
+// checkFileApplied checks whether the changes to a single file in `hash` are
+// already present in HEAD. Works even if the commit was squashed/combined on
+// upstream: we compare added/removed lines against current HEAD content.
+func checkFileApplied(hash, file string) fileState {
+	patch, err := GitExec("diff", "--no-color", hash+"^.."+hash, "--", file)
+	if err != nil || strings.TrimSpace(patch) == "" {
+		return fileSkip
+	}
+	if strings.Contains(patch, "Binary files") || strings.Contains(patch, "GIT binary patch") {
+		return fileSkip
+	}
+	// Try forward apply: if it still applies cleanly, file is NOT yet applied.
+	if runApplyCheck(patch, false) {
+		return fileMissing
+	}
+	// Try reverse apply: if the patch reverses cleanly, the end-state is
+	// already in HEAD — treat as applied.
+	if runApplyCheck(patch, true) {
+		return fileApplied
+	}
+	// Fallback: inspect added/removed lines vs HEAD content of file.
+	headContent, err := GitExec("show", "HEAD:"+file)
+	if err != nil {
+		// file doesn't exist in HEAD — can't be applied
+		return fileMissing
+	}
+	added, removed := extractChangedLines(patch)
+	if len(added) == 0 && len(removed) == 0 {
+		return fileSkip
+	}
+	headNorm := normalizeWS(headContent)
+	addedHit := 0
+	for _, ln := range added {
+		if strings.Contains(headNorm, normalizeWS(ln)) {
+			addedHit++
+		}
+	}
+	removedHit := 0
+	for _, ln := range removed {
+		if strings.Contains(headNorm, normalizeWS(ln)) {
+			removedHit++
+		}
+	}
+	// All added lines present AND all removed lines gone -> applied
+	addedTotal := len(added)
+	if addedHit == addedTotal && removedHit == 0 {
+		return fileApplied
+	}
+	// Fuzzy threshold: most added lines present -> applied. We ignore the
+	// removed-lines metric because short removed lines (e.g. a single call
+	// expression) frequently reoccur elsewhere in the file and cause false
+	// negatives. The added-lines signal is the reliable one.
+	if addedTotal > 0 {
+		addedRatio := float64(addedHit) / float64(addedTotal)
+		if addedRatio >= 0.85 {
+			return fileApplied
+		}
+	}
+	_ = removedHit
+	// Otherwise: genuinely absent or conflicting
+	if addedHit > 0 {
+		return fileConflict
+	}
+	return fileMissing
+}
+
+// normalizeWS collapses runs of whitespace (incl. newlines) to single spaces
+// so that reformatted code still matches line-level contains checks.
+func normalizeWS(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	prevSpace := false
+	for _, r := range s {
+		if r == ' ' || r == '\t' || r == '\n' || r == '\r' {
+			if !prevSpace {
+				b.WriteByte(' ')
+				prevSpace = true
+			}
+			continue
+		}
+		b.WriteRune(r)
+		prevSpace = false
+	}
+	return b.String()
+}
+
+func runApplyCheck(patch string, reverse bool) bool {
+	args := []string{"apply", "--check"}
+	if reverse {
+		args = append(args, "--reverse")
+	}
+	args = append(args, "-")
+	cmd := exec.Command("git", args...)
+	cmd.Stdin = strings.NewReader(patch)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	return cmd.Run() == nil
+}
+
+// extractChangedLines returns non-trivial added and removed lines from a
+// unified diff (skips file headers and empty/whitespace-only lines).
+func extractChangedLines(patch string) (added, removed []string) {
+	for _, ln := range strings.Split(patch, "\n") {
+		if strings.HasPrefix(ln, "+++") || strings.HasPrefix(ln, "---") {
+			continue
+		}
+		if strings.HasPrefix(ln, "+") {
+			s := strings.TrimSpace(ln[1:])
+			if len(s) >= 3 {
+				added = append(added, s)
+			}
+			continue
+		}
+		if strings.HasPrefix(ln, "-") {
+			s := strings.TrimSpace(ln[1:])
+			if len(s) >= 3 {
+				removed = append(removed, s)
+			}
+		}
+	}
+	return
 }
 
 // CheckCherryPicked batch variant (no progress reporting)
@@ -225,6 +384,20 @@ func HasCherryPickInProgress() bool {
 // GetCommitDiff returns the diff for a specific commit
 func GetCommitDiff(hash string) (string, error) {
 	out, err := GitExec("show", hash, "--stat", "-p", "--color=never")
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
+// GetCommitDiffForFiles returns diff for commit limited to given files
+func GetCommitDiffForFiles(hash string, files []string) (string, error) {
+	if len(files) == 0 {
+		return "", nil
+	}
+	args := []string{"show", hash, "--stat", "-p", "--color=never", "--"}
+	args = append(args, files...)
+	out, err := GitExec(args...)
 	if err != nil {
 		return "", err
 	}

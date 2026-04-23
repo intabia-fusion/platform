@@ -215,7 +215,8 @@
     "ImportDocumentDescription": "ユーザーにワークスペースにドキュメントをインポートする機能を付与します",
     "SelectUsers": "ユーザーを選択",
     "ShowInTitle": "タイトルに表示",
-    "SpaceMembersOnly": "スペースメンバーのみ"
+    "SpaceMembersOnly": "スペースメンバーのみ",
+    "Reset": "リセット"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

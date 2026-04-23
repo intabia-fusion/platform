@@ -74,6 +74,14 @@
     "CardUpdated": "Karte aktualisiert",
     "CardCreated": "Karte erstellt",
     "MyCards": "Meine Karten",
-    "GotoMyCards": "Zu meinen Karten"
+    "GotoMyCards": "Zu meinen Karten",
+    "LockSection": "Sperren",
+    "UnLockSection": "Entsperren",
+    "SectionLocked": "Sektion {section} gesperrt",
+    "SectionUnlocked": "Sektion {section} entsperrt",
+    "LayoutAuto": "Auto",
+    "SingleColumn": "Einspaltig",
+    "TwoColumns": "Zwei spaltig",
+    "Grid": "Gitter"
   }
 }

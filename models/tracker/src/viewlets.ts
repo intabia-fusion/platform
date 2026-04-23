@@ -77,7 +77,8 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
       action: view.function.HideArchived,
       label: view.string.HideArchived
     },
-    ...(!kanban ? [showColorsViewOption, showDaysViewOption] : [showDaysViewOption]),
+    showColorsViewOption,
+    showDaysViewOption,
     ...(kanban
       ? [
           {
@@ -92,7 +93,7 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
               { id: 'component', label: tracker.string.Component },
               { id: 'milestone', label: tracker.string.Milestone },
               { id: 'status', label: tracker.string.Status },
-              { id: 'kind', label: task.string.TaskType },
+              { id: 'attachedTo', label: task.string.TaskParent },
               { id: 'space', label: tracker.string.Project }
             ],
             label: tracker.string.SwimLaneBy

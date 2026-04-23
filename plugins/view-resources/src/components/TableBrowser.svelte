@@ -23,6 +23,7 @@
   import { LoadingProps } from '../utils'
   import { type ViewletContext, ViewletContextStore, viewletContextStore } from '../viewletContextStore'
   import Table from './Table.svelte'
+  import { setViewOptions } from '../viewOptions'
 
   export let _class: Ref<Class<Doc>>
   export let query: DocumentQuery<Doc>
@@ -57,6 +58,13 @@
   const selection = listProvider.selection
 
   const contextId = generateId()
+  async function onSort (event: CustomEvent<{ key: string, order: SortingOrder }>) {
+    const { key, order } = event.detail
+    if (viewlet && viewOptions) {
+      viewOptions.orderBy = [key, order]
+      setViewOptions(viewlet, viewOptions)
+    }
+  }
 
   // Set viewlet context in store when component mounts/updates
   $: {
@@ -131,6 +139,7 @@
     on:content={(evt) => {
       listProvider.update(evt.detail)
     }}
+    on:sort={onSort}
     on:check={(evt) => {
       listProvider.updateSelection(evt.detail.docs, evt.detail.value)
     }}

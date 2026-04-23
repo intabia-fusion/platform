@@ -163,10 +163,28 @@ func loadDiffFiltered(hash, folder string) tea.Cmd {
 	}
 }
 
-// loadDiffCmd picks the right diff loader based on mode/folder.
+// loadDiffForFiles returns diff limited to explicit file list
+func loadDiffForFiles(hash string, files []string) tea.Cmd {
+	return func() tea.Msg {
+		diff, err := GetCommitDiffForFiles(hash, files)
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return diffMsg{hash: hash, diff: diff}
+	}
+}
+
+// loadDiffCmd picks the right diff loader based on mode/folder/partial state.
 func (m Model) loadDiffCmd(hash string) tea.Cmd {
 	if m.mode == ModeOutgoing && m.selectedFolder != "" {
 		return loadDiffFiltered(hash, m.selectedFolder)
+	}
+	if m.mode == ModeIncoming {
+		for _, it := range m.items {
+			if it.commit.Hash == hash && it.commit.Partial && len(it.commit.MissingFiles) > 0 {
+				return loadDiffForFiles(hash, it.commit.MissingFiles)
+			}
+		}
 	}
 	return loadDiff(hash)
 }

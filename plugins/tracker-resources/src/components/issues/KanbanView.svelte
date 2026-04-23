@@ -22,6 +22,7 @@
     DocumentUpdate,
     FindOptions,
     generateId,
+    getObjectValue,
     Lookup,
     mergeQueries,
     Ref,
@@ -30,27 +31,18 @@
   import { Item, Kanban as KanbanUI, SwimLane } from '@hcengineering/kanban'
   import { employeeByIdStore } from '@hcengineering/contact-resources'
   import { Employee, getName } from '@hcengineering/contact'
-  import { componentStore } from '../../component'
   import { defaultPriorities, issuePriorities } from '../../types'
-  import { translate } from '@hcengineering/platform'
+  import { IntlString, translate } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
-  import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
+  import { ActionContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import { DocWithRank, getStates, TaskType } from '@hcengineering/task'
+  import { DocWithRank, getStates } from '@hcengineering/task'
+  import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
   import {
-    getTaskKanbanResultQuery,
-    taskTypeStore,
-    typeStore,
-    updateTaskKanbanCategories
-  } from '@hcengineering/task-resources'
-  import {
-    Component as TrackerComponent,
     Issue,
     IssuePriority,
     IssuesGrouping,
     IssuesOrdering,
-    IssueStatus,
-    Milestone,
     Project,
     reduceChildInfoTree
   } from '@hcengineering/tracker'
@@ -69,6 +61,7 @@
   } from '@hcengineering/ui'
   import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import {
+    buildModel,
     enabledConfig,
     focusStore,
     getCategoryQueryNoLookup,
@@ -77,6 +70,7 @@
     getGroupByValues,
     getPresenter,
     groupBy,
+    ListPresenter,
     ListSelectionProvider,
     noCategory,
     openDoc,
@@ -115,6 +109,17 @@
   $: groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
   $: orderBy = viewOptions.orderBy
   $: compactMode = viewOptions.compactMode === true
+
+  let customAttrModels: AttributeModel[] = []
+  const buildCustomAttrModels = reduceCalls(async function (cfg: (string | BuildModelKey)[]): Promise<void> {
+    const customKeys = cfg.filter((c): c is BuildModelKey => typeof c !== 'string' && c.displayProps?.custom === true)
+    if (customKeys.length === 0) {
+      customAttrModels = []
+      return
+    }
+    customAttrModels = await buildModel({ client, _class, keys: customKeys, ignoreMissing: true })
+  })
+  $: void buildCustomAttrModels(config)
 
   let accentColors = new Map<string, ColorDefinition>()
   const setAccentColor = (n: number, ev: CustomEvent<ColorDefinition>) => {
@@ -174,6 +179,8 @@
 
   let fastQueryIds = new Set<Ref<DocWithRank>>()
 
+  $: swimLaneBy = (viewOptions.swimLaneBy as string) ?? 'none'
+
   let categoryQueryOptions: Partial<FindOptions<DocWithRank>>
   $: categoryQueryOptions = {
     ...getCategoryQueryNoLookupOptions(resultOptions),
@@ -183,7 +190,7 @@
       _class: 1,
       rank: 1,
       ...getCategoryQueryProjection(client.getHierarchy(), _class, queryNoLookup, viewOptions.groupBy),
-      ...(swimLaneBy !== 'none' ? { [swimLaneBy]: 1 } : {})
+      ...(swimLaneBy !== 'none' && swimLaneBy !== '' ? { [swimLaneBy]: 1 } : {})
     }
   }
 
@@ -275,234 +282,104 @@
     }
   }
 
-  // SwimLane support
+  // SwimLane support (generic by attribute name).
   const UNASSIGNED_SWIM = '__swim_unassigned__'
-  $: swimLaneBy = (viewOptions.swimLaneBy as string) ?? 'none'
+  // Fields that must not be changed via drag (project immutable).
+  const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space'])
 
   let swimLanes: SwimLane[] = []
-  let unassignedLabel = ''
-  $: void translate(tracker.string.NoAssignee, {}, $themeStore.language).then((v) => {
-    unassignedLabel = v
-  })
-
-  function buildPriorityLanes (): SwimLane[] {
-    return defaultPriorities
-      .map((p) => ({
-        _id: String(p),
-        title: '',
-        value: p,
-        icon: issuePriorities[p].icon
-      }))
-      .reverse()
+  let emptyLabel = ''
+  const EMPTY_LABEL_BY_FIELD: Record<string, IntlString> = {
+    assignee: tracker.string.NoAssignee,
+    component: tracker.string.NoComponent,
+    milestone: tracker.string.NoMilestone,
+    attachedTo: tracker.string.NoParent
   }
-
-  function buildAssigneeLanes (tasks: Issue[], employees: typeof $employeeByIdStore): SwimLane[] {
-    const ids = new Set<Ref<Employee>>()
-    let hasUnassigned = false
-    for (const t of tasks) {
-      if (t.assignee == null) hasUnassigned = true
-      else ids.add(t.assignee as Ref<Employee>)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const emp = employees.get(id)
-      lanes.push({
-        _id: id,
-        title: emp !== undefined ? getName(client.getHierarchy(), emp) : id,
-        value: id
-      })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    if (hasUnassigned) {
-      lanes.unshift({ _id: UNASSIGNED_SWIM, title: unassignedLabel, value: null })
-    }
-    return lanes
-  }
-
-  function buildComponentLanes (tasks: Issue[], compStore: typeof $componentStore): SwimLane[] {
-    const ids = new Set<Ref<TrackerComponent>>()
-    let hasEmpty = false
-    for (const t of tasks) {
-      if (t.component == null) hasEmpty = true
-      else ids.add(t.component)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const comp = compStore.get(id)
-      lanes.push({ _id: id, title: comp !== undefined ? comp.label : id, value: id })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    if (hasEmpty) {
-      lanes.unshift({ _id: UNASSIGNED_SWIM, title: unassignedLabel, value: null })
-    }
-    return lanes
-  }
-
-  function buildProjectLanes (tasks: Issue[], projects: typeof $activeProjects): SwimLane[] {
-    const ids = new Set<Ref<Project>>()
-    for (const t of tasks) {
-      if (t.space != null) ids.add(t.space)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const p = projects.get(id)
-      lanes.push({ _id: id, title: p !== undefined ? (p.name ?? id) : id, value: id })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    return lanes
-  }
-
-  function buildKindLanes (tasks: Issue[], types: typeof $taskTypeStore): SwimLane[] {
-    const ids = new Set<Ref<TaskType>>()
-    let hasEmpty = false
-    for (const t of tasks) {
-      if (t.kind == null) hasEmpty = true
-      else ids.add(t.kind)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const tt = types.get(id)
-      lanes.push({ _id: id, title: tt !== undefined ? (tt.name ?? id) : id, value: id })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    if (hasEmpty) {
-      lanes.unshift({ _id: UNASSIGNED_SWIM, title: unassignedLabel, value: null })
-    }
-    return lanes
-  }
-
-  function buildStatusLanes (tasks: Issue[], statuses: typeof $statusStore): SwimLane[] {
-    const ids = new Set<Ref<IssueStatus>>()
-    for (const t of tasks) {
-      if (t.status != null) ids.add(t.status)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const st = statuses.byId.get(id)
-      lanes.push({ _id: id, title: st !== undefined ? (st.name ?? id) : id, value: id })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    return lanes
-  }
-
-  function buildMilestoneLanes (tasks: Issue[], milestones: Map<Ref<Milestone>, { label: string }>): SwimLane[] {
-    const ids = new Set<Ref<Milestone>>()
-    let hasEmpty = false
-    for (const t of tasks) {
-      if (t.milestone == null) hasEmpty = true
-      else ids.add(t.milestone)
-    }
-    const lanes: SwimLane[] = []
-    for (const id of ids) {
-      const m = milestones.get(id)
-      lanes.push({ _id: id, title: m !== undefined ? m.label : id, value: id })
-    }
-    lanes.sort((a, b) => a.title.localeCompare(b.title))
-    if (hasEmpty) {
-      lanes.unshift({ _id: UNASSIGNED_SWIM, title: unassignedLabel, value: null })
-    }
-    return lanes
-  }
-
-  // Load milestones on-demand when swimLaneBy=milestone.
-  let milestoneMap = new Map<Ref<Milestone>, { label: string }>()
-  const milestoneQuery = createQuery()
-  $: if (swimLaneBy === 'milestone') {
-    milestoneQuery.query(tracker.class.Milestone, {}, (res) => {
-      milestoneMap = new Map(res.map((m) => [m._id, { label: m.label }]))
-    })
-  } else {
-    milestoneQuery.unsubscribe()
-  }
-
-  async function resolvePriorityTitles (lanes: SwimLane[], lang: string): Promise<SwimLane[]> {
-    const resolved = await Promise.all(
-      lanes.map(async (lane) => {
-        const p = lane.value as number
-        const info = issuePriorities[p as keyof typeof issuePriorities]
-        const title = await translate(info.label, {}, lang)
-        return { ...lane, title }
-      })
-    )
-    return resolved
-  }
-
-  $: issueTasks = tasks as Issue[]
-
   $: {
-    if (swimLaneBy === 'priority') {
-      void resolvePriorityTitles(buildPriorityLanes(), $themeStore.language).then((r) => {
-        swimLanes = r
-      })
-    } else if (swimLaneBy === 'assignee') {
-      swimLanes = buildAssigneeLanes(issueTasks, $employeeByIdStore)
-    } else if (swimLaneBy === 'component') {
-      swimLanes = buildComponentLanes(issueTasks, $componentStore)
-    } else if (swimLaneBy === 'space') {
-      swimLanes = buildProjectLanes(issueTasks, $activeProjects)
-    } else if (swimLaneBy === 'kind') {
-      swimLanes = buildKindLanes(issueTasks, $taskTypeStore)
-    } else if (swimLaneBy === 'status') {
-      swimLanes = buildStatusLanes(issueTasks, $statusStore)
-    } else if (swimLaneBy === 'milestone') {
-      swimLanes = buildMilestoneLanes(issueTasks, milestoneMap)
-    } else {
-      swimLanes = []
-    }
+    const intl = EMPTY_LABEL_BY_FIELD[swimLaneBy] ?? tracker.string.NoAssignee
+    void translate(intl, {}, $themeStore.language).then((v) => {
+      emptyLabel = v
+    })
   }
+
+  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean } {
+    if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
+    if (swimLaneBy === 'attachedTo' && v === tracker.ids.NoParent) {
+      return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
+    }
+    return { key: String(v), value: v, empty: false }
+  }
+
+  function buildGenericLanes (field: string, tasks: DocWithRank[]): SwimLane[] {
+    if (field === 'none' || field === '') return []
+    const seen = new Map<string, { value: unknown, empty: boolean }>()
+    for (const t of tasks) {
+      const raw = getObjectValue(field, t)
+      const n = normalizeSwimValue(raw)
+      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty })
+    }
+    // Priority has a fixed ordered set; preseed to keep empty lanes too.
+    if (field === 'priority') {
+      for (const p of defaultPriorities) {
+        const k = String(p)
+        if (!seen.has(k)) seen.set(k, { value: p, empty: false })
+      }
+    }
+    const lanes: SwimLane[] = []
+    let unassigned: SwimLane | undefined
+    for (const [key, { value, empty }] of seen) {
+      const lane: SwimLane = {
+        _id: key,
+        title: empty ? emptyLabel : '',
+        value,
+        icon: field === 'priority' && !empty ? issuePriorities[value as IssuePriority]?.icon : undefined
+      }
+      if (empty) unassigned = lane
+      else lanes.push(lane)
+    }
+    if (field === 'priority') {
+      lanes.sort(
+        (a, b) =>
+          defaultPriorities.indexOf(b.value as IssuePriority) - defaultPriorities.indexOf(a.value as IssuePriority)
+      )
+    }
+    if (unassigned !== undefined) lanes.unshift(unassigned)
+    return lanes
+  }
+
+  $: swimLanes = buildGenericLanes(swimLaneBy, tasks)
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
-    const issue = doc as Issue
-    if (swimLaneBy === 'priority') {
-      return String(issue.priority ?? 0)
-    }
-    if (swimLaneBy === 'assignee') {
-      return issue.assignee ?? UNASSIGNED_SWIM
-    }
-    if (swimLaneBy === 'component') {
-      return issue.component ?? UNASSIGNED_SWIM
-    }
-    if (swimLaneBy === 'space') {
-      return issue.space ?? undefined
-    }
-    if (swimLaneBy === 'kind') {
-      return issue.kind ?? UNASSIGNED_SWIM
-    }
-    if (swimLaneBy === 'status') {
-      return issue.status ?? undefined
-    }
-    if (swimLaneBy === 'milestone') {
-      return issue.milestone ?? UNASSIGNED_SWIM
-    }
-    return undefined
+    if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
+    const raw = getObjectValue(swimLaneBy, doc)
+    return normalizeSwimValue(raw).key
   }
 
   function getSwimLaneQuery (swimLane: SwimLane): DocumentQuery<any> {
-    if (swimLaneBy === 'priority') return { priority: swimLane.value }
-    if (swimLaneBy === 'assignee') return { assignee: swimLane.value }
-    if (swimLaneBy === 'component') return { component: swimLane.value }
-    if (swimLaneBy === 'space') return { space: swimLane.value }
-    if (swimLaneBy === 'kind') return { kind: swimLane.value }
-    if (swimLaneBy === 'status') return { status: swimLane.value }
-    if (swimLaneBy === 'milestone') return { milestone: swimLane.value }
-    return {}
+    if (swimLaneBy === 'none' || swimLaneBy === '') return {}
+    return { [swimLaneBy]: swimLane.value }
   }
 
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
-    const v = swimLane.value
-    let update: DocumentUpdate<Issue> | undefined
-    if (swimLaneBy === 'priority') update = { priority: v as IssuePriority }
-    else if (swimLaneBy === 'assignee') update = { assignee: v as Ref<Employee> | null }
-    else if (swimLaneBy === 'component') update = { component: v as Ref<TrackerComponent> | null }
-    // space (project) is immutable on existing docs via drag -> do not allow cross-project drop.
-    else if (swimLaneBy === 'space') return undefined
-    else if (swimLaneBy === 'kind') update = { kind: v as Ref<TaskType> }
-    else if (swimLaneBy === 'status') update = { status: v as Ref<IssueStatus> }
-    else if (swimLaneBy === 'milestone') update = { milestone: v as Ref<Milestone> | null }
-    return update as DocumentUpdate<Item> | undefined
+    if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
+    if (IMMUTABLE_SWIM_FIELDS.has(swimLaneBy)) return undefined
+    const update: DocumentUpdate<Item> = { [swimLaneBy]: swimLane.value } as unknown as DocumentUpdate<Item>
+    return update
   }
 
-  function getSwimLaneHeaderStyle (swimLane: SwimLane): { background?: string, color?: string } | undefined {
+  let swimLaneAccents = new Map<string, ColorDefinition>()
+  function setSwimLaneAccent (id: string, ev: CustomEvent<ColorDefinition>): void {
+    const prev = swimLaneAccents.get(id)
+    if (prev?.name === ev.detail?.name) return
+    swimLaneAccents.set(id, ev.detail)
+    swimLaneAccents = swimLaneAccents
+  }
+
+  $: showColors = (viewOptions as any).shouldShowColors !== false
+
+  $: getSwimLaneHeaderStyle = (swimLane: SwimLane): { background?: string, color?: string } | undefined => {
+    void swimLaneAccents
+    if (!showColors) return undefined
     if (swimLaneBy === 'priority') {
       const color = getPlatformColorDef(
         IssuePriorityColor[(swimLane.value as IssuePriority) ?? IssuePriority.NoPriority],
@@ -512,16 +389,32 @@
     }
     if (swimLaneBy === 'assignee') {
       const emp = $employeeByIdStore.get(swimLane._id as Ref<Employee>)
-      if (emp == null) return undefined
-      const name = getName(client.getHierarchy(), emp)
-      const color = getPlatformAvatarColorForTextDef(name, $themeStore.dark)
-      return { background: color.background, color: color.title }
+      if (emp != null) {
+        const name = getName(client.getHierarchy(), emp)
+        const color = getPlatformAvatarColorForTextDef(name, $themeStore.dark)
+        return { background: color.background, color: color.title }
+      }
     }
-    if (swimLaneBy === 'space') {
-      const color = getPlatformAvatarColorForTextDef(swimLane.title, $themeStore.dark)
-      return { background: color.background, color: color.title }
+    const accent = swimLaneAccents.get(swimLane._id)
+    if (accent !== undefined) {
+      return { background: accent.background, color: accent.title }
     }
     return undefined
+  }
+
+  // Generic lane header presenter resolution.
+  let swimLanePresenter: AttributeModel | undefined
+  $: void resolveSwimLanePresenter(swimLaneBy)
+  async function resolveSwimLanePresenter (field: string): Promise<void> {
+    if (field === 'none' || field === '') {
+      swimLanePresenter = undefined
+      return
+    }
+    try {
+      swimLanePresenter = await getPresenter(client, _class, { key: field }, { key: field })
+    } catch {
+      swimLanePresenter = undefined
+    }
   }
 
   $: swimLaneStorageKey = viewlet?._id != null ? `${String(viewlet._id)}-${swimLaneBy}` : undefined
@@ -621,6 +514,27 @@
       showMenu(evt.detail.evt, { object: evt.detail.objects, baseMenuClass })
     }}
   >
+    <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:toggle>
+      <div class="swimlane-header-inner">
+        {#if swimLane._id === UNASSIGNED_SWIM || swimLanePresenter === undefined}
+          <span class="swimlane-title">{swimLane.title || emptyLabel}</span>
+        {:else}
+          <svelte:component
+            this={swimLanePresenter.presenter}
+            value={swimLane.value}
+            kind={'list-header'}
+            size={'small'}
+            {space}
+            accent
+            colorInherit={!$themeStore.dark}
+            on:accent-color={(ev) => {
+              setSwimLaneAccent(swimLane._id, ev)
+            }}
+          />
+        {/if}
+        <span class="swimlane-count">{count}</span>
+      </div>
+    </svelte:fragment>
     <svelte:fragment slot="header" let:state let:count let:index>
       {@const color = accentColors.get(`${index}${$themeStore.dark}${groupByKey}`)}
       {@const headerBGColor = color?.background ?? defaultBackground($themeStore.dark)}
@@ -716,6 +630,18 @@
             {#if enabledConfig(config, 'subIssues') && issue && issue.subIssues > 0}
               <SubIssuesSelector value={issue} {currentProject} size={'small'} />
             {/if}
+            {#each customAttrModels as attrModel (attrModel.key)}
+              <ListPresenter
+                docObject={issue}
+                attributeModel={attrModel}
+                value={getObjectValue(attrModel.key, issue)}
+                onChange={undefined}
+                props={{}}
+                hideDivider={true}
+                compactMode={true}
+                customStyle={'square'}
+              />
+            {/each}
             {#if enabledConfig(config, 'dueDate') && (!compactMode || issue.dueDate != null)}
               <DueDatePresenter value={issue} size={'small'} kind={'link-bordered'} />
             {/if}
@@ -814,6 +740,25 @@
 {/if}
 
 <style lang="scss">
+  .swimlane-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .swimlane-title {
+    font-weight: 600;
+    color: var(--swimlane-title-color, var(--theme-caption-color));
+  }
+  .swimlane-count {
+    color: var(--theme-dark-color);
+    font-size: 0.8125rem;
+    padding: 0 0.375rem;
+    background: var(--theme-button-hovered);
+    border-radius: 0.5rem;
+    line-height: 1.25rem;
+  }
   .header {
     margin: 0 0.75rem 0.5rem;
     padding: 0 0.5rem 0 1.25rem;
@@ -874,7 +819,8 @@
     /* Global styles in components.scss */
     .card-labels {
       display: flex;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
+      gap: 0.25rem;
       margin: 0 0.75rem 0 1rem;
       min-width: 0;
 

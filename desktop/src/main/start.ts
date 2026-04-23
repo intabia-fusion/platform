@@ -122,6 +122,16 @@ function runTheApp (): void {
   }
 
   function hookOpenWindow (window: BrowserWindow): void {
+    window.webContents.on('will-navigate', (event, url) => {
+      const isInternal = url.startsWith(FRONT_URL) || url.startsWith('file://')
+      if (!isInternal) {
+        event.preventDefault()
+        void shell.openExternal(url)
+      } else if (url.startsWith(FRONT_URL) && window.webContents.getURL() !== url) {
+        event.preventDefault()
+        window.webContents.send(IpcMessage.HandleDeepLink, url)
+      }
+    })
     window.webContents.setWindowOpenHandler(({ url, features }) => {
       console.log('opening window', url)
 

@@ -165,13 +165,15 @@
       return
     }
 
+    const _parentIssue = parentIssue
     return {
       ...draft,
       ...(status != null ? { status } : {}),
       ...(priority != null ? { priority } : {}),
       ...(assignee != null ? { assignee } : {}),
       ...(component != null ? { component } : {}),
-      ...(milestone != null ? { milestone } : {})
+      ...(milestone != null ? { milestone } : {}),
+      ...(_parentIssue !== undefined ? { parentIssue: _parentIssue._id } : {})
     }
   }
 
@@ -362,7 +364,7 @@
   }
 
   $: if (_space !== undefined) {
-    spaceQuery.query(tracker.class.Project, { _id: _space }, (res) => {
+    spaceQuery.query(tracker.class.Project, { _id: _space, members: getCurrentAccount().uuid }, (res) => {
       resetDefaultAssigneeId()
       currentProject = res[0]
     })
@@ -687,6 +689,13 @@
 
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
 
+  function isMemberOfProject (project: Project | undefined): boolean {
+    if (project == null) return false
+    const members = project.members
+    if (!Array.isArray(members)) return true
+    return members.includes(me.uuid)
+  }
+
   async function findDefaultSpace (): Promise<Project | undefined> {
     let targetRef: Ref<Project> | undefined
     if (relatedTo !== undefined) {
@@ -731,12 +740,14 @@
         }
       })
       if (projects.length > 0) {
-        return projects[0]
+        const candidate = projects[0]
+        return isMemberOfProject(candidate) ? candidate : undefined
       }
     }
 
     if (targetRef !== undefined) {
-      return await client.findOne(tracker.class.Project, { _id: targetRef })
+      const candidate = await client.findOne(tracker.class.Project, { _id: targetRef })
+      return isMemberOfProject(candidate) ? candidate : undefined
     }
   }
 
@@ -771,6 +782,10 @@
   <svelte:fragment slot="header">
     <SpaceSelector
       _class={tracker.class.Project}
+      query={{
+        archived: false,
+        members: getCurrentAccount().uuid
+      }}
       label={tracker.string.Project}
       bind:space={_space}
       on:object={(evt) => {
@@ -780,6 +795,7 @@
       size={'small'}
       component={ProjectPresenter}
       defaultIcon={tracker.icon.Home}
+      clearInvalidValue={true}
       {findDefaultSpace}
     />
     <ObjectBox
@@ -1052,7 +1068,7 @@
       <Button
         loading={okProcessing}
         focusIndex={10001}
-        disabled={!canSave}
+        disabled={canSave !== true}
         label={okLabel}
         kind={'primary'}
         size={'large'}

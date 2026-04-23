@@ -622,6 +622,7 @@
             <div
               class="swimlane-header"
               style:background-color={laneStyle?.background ?? 'var(--theme-panel-color, var(--theme-bg-color))'}
+              style:color={laneStyle?.color ?? 'var(--theme-caption-color)'}
               style:--swimlane-title-color={laneStyle?.color}
               on:click={() => {
                 toggleSwimLane(swimLane._id)
@@ -696,7 +697,7 @@
                       {options}
                       {groupByKey}
                       swimLaneQuery={getSwimLaneQuery?.(swimLane)}
-                      initialLimit={compact ? 8 : 3}
+                      initialLimit={3}
                       limitStep={10}
                     >
                       <svelte:fragment slot="card" let:object let:dragged>

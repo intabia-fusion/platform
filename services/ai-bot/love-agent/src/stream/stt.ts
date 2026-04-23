@@ -38,7 +38,8 @@ import {
   LOOK_AHEAD_BUFFER_MS
 } from './types.js'
 
-import { analyzeAudioBuffer, isFrameSpeech } from './audio-analysis.js'
+import { AudioAnalyzer, isFrameSpeech, getAdaptiveVADThreshold } from './audio-analysis.js'
+import { AudioAnalyzerWasm } from './fft-wasm.js'
 
 import { createAdaptiveVADState, updateNoiseFloor, updateSpeechRate, findOptimalCutPoint } from './chunk-detection.js'
 
@@ -662,6 +663,21 @@ export class STT implements Stt {
     }
     this.chunkStateBySid.set(sid, chunkState)
 
+    // Prefer WASM analyzer (~2x faster). Fall back to JS if the .wasm
+    // binary is not available (e.g. in an environment where it wasn't
+    // bundled). LOVE_DISABLE_WASM_FFT=1 forces the JS path.
+    let analyzer: AudioAnalyzer | AudioAnalyzerWasm
+    if (process.env.LOVE_DISABLE_WASM_FFT === '1') {
+      analyzer = new AudioAnalyzer(this.sampleRate)
+    } else {
+      try {
+        analyzer = new AudioAnalyzerWasm(this.sampleRate)
+      } catch (err) {
+        console.warn('WASM FFT unavailable, falling back to JS analyzer', err)
+        analyzer = new AudioAnalyzer(this.sampleRate)
+      }
+    }
+
     this.startSession(sid, streamDir)
 
     console.info('Stream started', {
@@ -687,7 +703,8 @@ export class STT implements Stt {
       timing.lastFrameEndTime = frameEndTime
 
       const buf = Buffer.from(new Uint8Array(frame.data.buffer))
-      const analysis = analyzeAudioBuffer(buf, this.sampleRate, chunkState.adaptiveVAD.previousFrameSpectrum)
+      const vadThreshold = getAdaptiveVADThreshold(chunkState.adaptiveVAD)
+      const analysis = analyzer.analyze(buf, chunkState.adaptiveVAD.previousFrameSpectrum, vadThreshold)
       const frameHasSpeech = isFrameSpeech(analysis, chunkState.adaptiveVAD)
 
       updateNoiseFloor(chunkState.adaptiveVAD, analysis.rms, !frameHasSpeech)

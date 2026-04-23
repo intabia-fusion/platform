@@ -249,6 +249,13 @@ func (m Model) renderCommitItemW(item commitItem, isSelected bool, width int) st
 	}
 	subject := truncate(commit.Subject, maxSubjectLen)
 	info := fmt.Sprintf("%s • %s", truncate(commit.Author, 15), commit.Date)
+	if commit.Partial {
+		ratio := commit.AppliedRatio
+		if ratio == "" {
+			ratio = "partial"
+		}
+		info = "◐ " + ratio + " | " + info
+	}
 	if commit.HasConflict {
 		info = "⚠ CONFLICT | " + info
 	}
@@ -259,6 +266,9 @@ func (m Model) renderCommitItemW(item commitItem, isSelected bool, width int) st
 	}
 	if commit.HasConflict {
 		return line1 + "\n" + errorStyle.Render(line2)
+	}
+	if commit.Partial {
+		return line1 + "\n" + partialStyle.Render(line2)
 	}
 	return line1 + "\n" + infoStyle.Render(line2)
 }
@@ -273,6 +283,10 @@ func (m Model) renderDiffPanel(focused bool, width int) string {
 		b.WriteString(fmt.Sprintf("%s | %s | %s\n", commit.ShortHash, commit.Author, commit.Date))
 		b.WriteString(truncate(commit.Subject, width-4))
 		b.WriteString("\n")
+		if commit.Partial && len(commit.MissingFiles) > 0 {
+			b.WriteString(partialStyle.Render(fmt.Sprintf("showing %d missing file(s) only", len(commit.MissingFiles))))
+			b.WriteString("\n")
+		}
 		b.WriteString(strings.Repeat("─", width-4))
 		b.WriteString("\n")
 

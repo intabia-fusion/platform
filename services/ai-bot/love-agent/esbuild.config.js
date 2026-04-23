@@ -1,7 +1,7 @@
 import esbuild from 'esbuild';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { readdir, readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir, copyFile } from 'fs/promises';
 import { join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -72,3 +72,11 @@ for (const file of jsFiles) {
 
   await writeFile(file, content);
 }
+
+// Copy compiled WASM kernel next to the bundled JS so the runtime loader can
+// find it at bundle/wasm/fft.wasm.
+await mkdir(resolve(bundleDir, 'wasm'), { recursive: true });
+await copyFile(
+  resolve(__dirname, 'src/wasm/fft.wasm'),
+  resolve(bundleDir, 'wasm/fft.wasm')
+);

@@ -572,15 +572,6 @@ async function main() {
 
         // Run validation on rebuilt packages
         if (result.errors.length === 0 && validationPool) {
-          // Update package hashes for changed packages BEFORE validation
-          // This ensures we use the same hashes as compile_all.js would calculate
-          for (const pkg of orderedPackages) {
-            const node = graph.get(pkg)
-            if (node && node.project && node.project.fullPath) {
-              packageHashes.set(pkg, calculatePackageHash(node.project.fullPath))
-            }
-          }
-
           // Determine which packages need validation:
           // 1. Packages that were rebuilt AND need validation
           // 2. Packages whose dependencies were rebuilt (need re-validation)

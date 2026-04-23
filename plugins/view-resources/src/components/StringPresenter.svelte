@@ -17,14 +17,14 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { LabelAndProps, LinkWrapper, tooltip } from '@hcengineering/ui'
 
-  export let value: string | string[] | undefined
+  export let value: string | string[] | null | undefined
   export let accent: boolean = false
   export let oneLine: boolean = false
 
   $: tooltipParams = getTooltip(value)
 
-  function getTooltip (value: string | string[] | undefined): LabelAndProps | undefined {
-    if (value === undefined) return
+  function getTooltip (value: string | string[] | null | undefined): LabelAndProps | undefined {
+    if (value == null) return
     let str = ''
     if (Array.isArray(value)) {
       str = value.reduce((acc, curr, i) => (acc += i === 0 ? curr : ` ${curr}`), '')
@@ -37,7 +37,7 @@
   }
 </script>
 
-<span class={oneLine ? 'overflow-label' : 'lines-limit-2'} class:fs-bold={accent} use:tooltip={tooltipParams}>
+<span class={oneLine ? 'string-oneline' : 'lines-limit-2'} class:fs-bold={accent} use:tooltip={tooltipParams}>
   {#if Array.isArray(value)}
     {#each value as str, i}
       <span class:ml-1={i !== 0}><LinkWrapper text={str} /></span>
@@ -46,3 +46,14 @@
     <LinkWrapper text={value} />
   {/if}
 </span>
+
+<style lang="scss">
+  .string-oneline {
+    display: inline;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
+    min-width: 0;
+  }
+</style>
