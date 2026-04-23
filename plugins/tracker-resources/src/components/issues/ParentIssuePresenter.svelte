@@ -9,7 +9,9 @@
   import { createQuery } from '@hcengineering/presentation'
   import IssuePresenter from './IssuePresenter.svelte'
   import { translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/ui'
+  import { getPlatformAvatarColorForTextDef, themeStore } from '@hcengineering/ui'
+  import { taskTypeStore } from '@hcengineering/task-resources'
+  import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
 
   export let value: Ref<Issue> | undefined
@@ -33,6 +35,12 @@
 
   // Use provided object or fallback to queried issue
   $: actualIssue = object ?? queriedIssue
+  $: taskType = actualIssue?.kind != null ? $taskTypeStore.get(actualIssue.kind) : undefined
+
+  const dispatch = createEventDispatcher()
+  $: if (actualIssue?.title != null) {
+    dispatch('accent-color', getPlatformAvatarColorForTextDef(actualIssue.title, $themeStore.dark))
+  }
 
   let label: string = ''
 
@@ -47,7 +55,12 @@
 
 {#if actualIssue}
   <div class="flex-row-center">
-    <IssuePresenter value={actualIssue} {kind} {disabled} shouldShowAvatar={true} on:accent-color />
+    <IssuePresenter value={actualIssue} {kind} {disabled} shouldShowAvatar={true} />
+    {#if taskType !== undefined}
+      <span class="label overflow-label ml-2 fs-bold" title={taskType.name}>
+        {taskType.name}
+      </span>
+    {/if}
     <span class="label overflow-label ml-2" title={actualIssue.title}>
       {actualIssue.title}
     </span>

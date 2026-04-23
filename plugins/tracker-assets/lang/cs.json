@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "Smazat komponentu?",
     "RemoveComponentDialogCloseNote": "Opravdu chcete smazat tuto komponentu? Tuto operaci nelze vrátit zpět",
     "Grouping": "Seskupení",
+    "SwimLaneBy": "Swim lane",
+    "SwimLaneNone": "None",
     "Ordering": "Řazení",
     "CompletedIssues": "Dokončené úkoly",
     "NoGrouping": "Bez seskupení",
     "NoAssignee": "Bez přiřazení",
+    "NoParent": "Bez nadřazeného",
     "LastUpdated": "Poslední aktualizace",
     "DueDate": "Datum splnění",
     "Manual": "Manuální",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "Sedm hodin",
     "EightHoursLength": "Osm hodin",
     "HourLabel": "h",
+    "MinuteLabel": "m",
     "Saved": "Uloženo...",
     "CreatedIssue": "Úkol vytvořen",
     "CreatedSubIssue": "Podúkol vytvořen",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "Odebrat nadřazený úkol",
     "ForbidCreateProjectPermission": "Zakázat vytvoření projektu",
     "ForbidCreateProjectPermissionDescription": "Zakazuje uživatelům vytvářet nové projekty",
-    "AdditionalProperties": "Další vlastnosti"
+    "AdditionalProperties": "Další vlastnosti",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "Kompaktní"
   },
   "status": {},
   "emailTemplate": {

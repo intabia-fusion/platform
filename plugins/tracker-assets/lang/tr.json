@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "Bileşeni sil?",
     "RemoveComponentDialogCloseNote": "Bu bileşeni silmek istediğinizden emin misiniz? Bu işlem geri alınamaz",
     "Grouping": "Gruplama",
+    "SwimLaneBy": "Kulvar",
+    "SwimLaneNone": "Yok",
     "Ordering": "Sıralama",
     "CompletedIssues": "Tamamlanan sorunlar",
     "NoGrouping": "Gruplama yok",
     "NoAssignee": "Atanan yok",
+    "NoParent": "Üst öğe yok",
     "LastUpdated": "Son güncelleme",
     "DueDate": "Bitiş tarihi",
     "Manual": "Manuel",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "Yedi Saat",
     "EightHoursLength": "Sekiz Saat",
     "HourLabel": "s",
+    "MinuteLabel": "dk",
     "Saved": "Kaydedildi...",
     "CreatedIssue": "Sorun oluşturuldu",
     "CreatedSubIssue": "Alt sorun oluşturuldu",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "Üst sorunu kaldır",
     "ForbidCreateProjectPermission": "Proje oluşturmayı yasakla",
     "ForbidCreateProjectPermissionDescription": "Kullanıcıların yeni proje oluşturmasını yasakla",
-    "AdditionalProperties": "Ek özellikler"
+    "AdditionalProperties": "Ek özellikler",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "Kompakt"
   },
   "status": {},
   "emailTemplate": {

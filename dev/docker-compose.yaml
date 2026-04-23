@@ -382,7 +382,6 @@ services:
       - LINK_PREVIEW_URL=http://huly.local:4042
       - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
       - USAGE_URL=http://huly.local:8080/terms
-      - COPYRIGHT=
       - SUPPORT_URL=https://t.me/intabia
       - LICENSE_URL=https://huly.local:8080/legal/license
       - USERAGREEMENT_URL=https://huly.local:8080/legal/user-agreement

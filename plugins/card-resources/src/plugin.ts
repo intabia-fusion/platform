@@ -56,7 +56,8 @@ export default mergeIds(cardId, card, {
     CreateCard: '' as AnyComponent,
     CardHeaderButton: '' as AnyComponent,
     CreateRolePopup: '' as AnyComponent,
-    MyCards: '' as AnyComponent
+    MyCards: '' as AnyComponent,
+    CardGridView: '' as AnyComponent
   },
   function: {
     CardFactory: '' as Resource<(props?: Record<string, any>) => Promise<Ref<Doc> | undefined>>,
@@ -73,7 +74,9 @@ export default mergeIds(cardId, card, {
     ForbidRemoveCard: '' as Ref<Permission>,
     ForbidUpdateCard: '' as Ref<Permission>,
     ForbidAddTag: '' as Ref<Permission>,
-    ForbidRemoveTag: '' as Ref<Permission>
+    ForbidRemoveTag: '' as Ref<Permission>,
+    LockSection: '' as Ref<Permission>,
+    UnlockSection: '' as Ref<Permission>
   },
   sectionComponent: {
     AttachmentsSection: '' as AnyComponent,
@@ -94,6 +97,8 @@ export default mergeIds(cardId, card, {
     CardChildList: '' as Ref<Viewlet>,
     CardFeedDescriptor: '' as Ref<ViewletDescriptor>,
     CardFeed: '' as Ref<Viewlet>,
+    CardGridDescriptor: '' as Ref<ViewletDescriptor>,
+    CardGrid: '' as Ref<Viewlet>,
     CardRelationshipTable: '' as Ref<Viewlet>
   },
   string: {
@@ -165,6 +170,9 @@ export default mergeIds(cardId, card, {
     CardUpdated: '' as IntlString,
     CardCreated: '' as IntlString,
     MyCards: '' as IntlString,
-    GotoMyCards: '' as IntlString
+    GotoMyCards: '' as IntlString,
+    SingleColumn: '' as IntlString,
+    TwoColumns: '' as IntlString,
+    LayoutAuto: '' as IntlString
   }
 })

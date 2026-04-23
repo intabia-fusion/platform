@@ -41,8 +41,8 @@ import (
 var tracer = otel.Tracer("storage.datalake")
 
 type uploadResult struct {
-	key   string
-	error string
+	Key   string `json:"key"`
+	Error string `json:"error"`
 }
 
 // DatalakeStorage represents datalake storage
@@ -158,9 +158,8 @@ func (d *DatalakeStorage) PutFile(ctx context.Context, filename string, options 
 	}
 
 	for _, res := range result {
-		if res.error != "" {
-			tracing.RecordError(span, err)
-			return fmt.Errorf("upload error: %v %v", res.key, res.error)
+		if res.Error != "" {
+			return fmt.Errorf("upload error: %v %v", res.Key, res.Error)
 		}
 	}
 

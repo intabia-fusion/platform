@@ -74,7 +74,9 @@ export default mergeIds(trackerId, tracker, {
     TrackerNotificationGroup: '' as Ref<NotificationGroup>,
     AssigneeNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     BaseProjectType: '' as Ref<ProjectType>,
-    DefaultProjectType: '' as Ref<ProjectType>
+    DefaultProjectType: '' as Ref<ProjectType>,
+    KanbanSwimLaneActions: '' as Ref<Doc>,
+    KanbanSwimLaneActionsExtension: '' as Ref<Doc>
   },
   actionImpl: {
     Move: '' as ViewAction,

@@ -4,7 +4,7 @@
   import { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
-  import { buildConfigLookup, getKeyLabel } from '../utils'
+  import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
   import { isDropdownType, isToggleType, noCategory } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
@@ -25,6 +25,7 @@
   const lookup = buildConfigLookup(hierarchy, viewlet.attachTo, viewlet.config, viewlet.options?.lookup)
 
   const groupBy = config.groupBy
+    .filter((p) => canResolveAttribute(hierarchy, viewlet.attachTo, p, lookup))
     .map((p) => {
       return {
         id: p,
@@ -33,13 +34,15 @@
     })
     .concat({ id: noCategory, label: view.string.NoGrouping })
 
-  const orderBy = config.orderBy.map((p) => {
-    const key = p[0]
-    return {
-      id: key,
-      label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
-    }
-  })
+  const orderBy = config.orderBy
+    .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
+    .map((p) => {
+      const key = p[0]
+      return {
+        id: key,
+        label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
+      }
+    })
 
   function selectGrouping (value: string, i: number) {
     groups[i] = value
@@ -100,7 +103,7 @@
     {/each}
   {/if}
   {#if hasMultipleSelections(config.orderBy)}
-    <div class="antiCard-menu__item ordering">
+    <div class="antiCard-menu__item ordering-primary">
       <span class="overflow-label"><Label label={view.string.Ordering} /></span>
       <DropdownLabelsIntl
         label={view.string.Ordering}
@@ -147,7 +150,11 @@
           }}
         />
       {:else if isDropdownType(model)}
-        {@const items = model.values.filter(({ hidden }) => !hidden?.(viewOptions))}
+        {@const items = model.values.filter(({ id, hidden }) => {
+          if (hidden?.(viewOptions) === true) return false
+          if (model.hideGroupByDuplicates === true && viewOptions.groupBy[0] === id) return false
+          return true
+        })}
         <DropdownLabelsIntl
           label={model.label}
           kind={'regular'}

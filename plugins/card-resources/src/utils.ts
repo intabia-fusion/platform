@@ -16,6 +16,7 @@ import { Analytics } from '@hcengineering/analytics'
 import { type Card, CardEvents, cardId, type CardSpace, type MasterTag, type Tag } from '@hcengineering/card'
 import { chatId } from '@hcengineering/chat'
 import communication from '@hcengineering/communication'
+import { type PermissionsStore } from '@hcengineering/contact'
 import core, {
   AccountRole,
   type Class,
@@ -72,6 +73,7 @@ import CardSearchItem from './components/CardSearchItem.svelte'
 import CreateSpace from './components/navigator/CreateSpace.svelte'
 import card from './plugin'
 import { type NavigatorConfig } from './types'
+import { writable } from 'svelte/store'
 
 export async function deleteMasterTag (tag: MasterTag | undefined, onDelete?: () => void): Promise<void> {
   if (tag !== undefined) {
@@ -659,10 +661,18 @@ export function cardCustomLinkEncode (doc: Card): Location {
 }
 
 export async function checkOldMessagesSectionVisibility (doc: Card): Promise<boolean> {
+  if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
+    return false
+  }
+
   return getMetadata(communication.metadata.Enabled) !== true
 }
 
 export async function checkCommunicationMessagesSectionVisibility (doc: Card): Promise<boolean> {
+  if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
+    return false
+  }
+
   return getMetadata(communication.metadata.Enabled) === true
 }
 
@@ -754,4 +764,32 @@ export async function canGetSpaceAccessPublicLink (doc?: Doc | Doc[]): Promise<b
   }
 
   return await canCopyLink(doc)
+}
+
+export function canLockSection (space: Ref<Space>, store: PermissionsStore): boolean {
+  if (getMetadata(core.metadata.DisablePermissions) === true) return true
+  if (store.whitelist.has(space)) return true
+  const allowed = store.ps[space]?.has(card.permission.LockSection)
+  if (allowed) return true
+  return !store.restrictedSpaces.has(space)
+}
+
+export function canUnlockSection (space: Ref<Space>, store: PermissionsStore): boolean {
+  if (getMetadata(core.metadata.DisablePermissions) === true) return true
+  if (store.whitelist.has(space)) return true
+  const allowed = store.ps[space]?.has(card.permission.UnlockSection)
+  if (allowed) return true
+  return !store.restrictedSpaces.has(space)
+}
+
+export const viewStore = writable<Record<Ref<MasterTag>, string>>(
+  JSON.parse(localStorage.getItem('card.layout') ?? '{}')
+)
+
+export function setViewMode (type: Ref<MasterTag>, mode: string): void {
+  viewStore.update((views) => {
+    views[type] = mode
+    localStorage.setItem('card.layout', JSON.stringify(views))
+    return views
+  })
 }

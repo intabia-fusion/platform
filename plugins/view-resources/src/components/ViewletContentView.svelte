@@ -4,6 +4,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { AnySvelteComponent, Component, Loading } from '@hcengineering/ui'
   import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { injectCustomAttributes } from '../utils'
 
   export let viewlet: WithLookup<Viewlet>
   export let _class: Ref<Class<Doc>>
@@ -71,12 +72,10 @@
 
     // Add viewlet configurations.
     for (const pref of preference) {
-      if (pref.config.length > 0) {
-        const vl = configurationRaw.find((it) => it._id === pref.attachedTo)
-        if (vl !== undefined) {
-          newConfigurations[vl.attachTo] = pref.config
-        }
-      }
+      const vl = configurationRaw.find((it) => it._id === pref.attachedTo)
+      if (vl === undefined) continue
+      const base = pref.config.length > 0 ? pref.config : vl.config
+      newConfigurations[vl.attachTo] = injectCustomAttributes(base, pref.customAttributes)
     }
 
     configurations = newConfigurations
@@ -87,7 +86,8 @@
 
   $: updateConfiguration(configurationRaw, preference)
 
-  $: config = preference.find((it) => it.attachedTo === viewlet._id)?.config ?? viewlet.config
+  $: currentPreference = preference.find((it) => it.attachedTo === viewlet._id)
+  $: config = injectCustomAttributes(currentPreference?.config ?? viewlet.config, currentPreference?.customAttributes)
 </script>
 
 {#if viewlet?.$lookup?.descriptor?.component}

@@ -64,6 +64,7 @@ import IssueSearchIcon from './components/issues/IssueSearchIcon.svelte'
 import IssueStatusPresenter from './components/issues/IssueStatusPresenter.svelte'
 import IssuesView from './components/issues/IssuesView.svelte'
 import KanbanView from './components/issues/KanbanView.svelte'
+import { KanbanSwimLaneActions } from '@hcengineering/kanban'
 import ModificationDatePresenter from './components/issues/ModificationDatePresenter.svelte'
 import NotificationIssuePresenter from './components/issues/NotificationIssuePresenter.svelte'
 import PriorityEditor from './components/issues/PriorityEditor.svelte'
@@ -443,6 +444,7 @@ export default async (): Promise<Resources> => ({
     EditComponent,
     IssuesView,
     KanbanView,
+    KanbanSwimLaneActions,
     ProjectComponents,
     IssuePreview,
     RelationsPopup,

@@ -74,6 +74,14 @@
     "CardUpdated": "Card updated",
     "CardCreated": "Card created",
     "MyCards": "My cards",
-    "GotoMyCards": "Go to my cards"
+    "GotoMyCards": "Go to my cards",
+    "LockSection": "Lock section",
+    "UnLockSection": "Unlock section",
+    "SectionLocked": "Section {section} locked",
+    "SectionUnlocked": "Section {section} unlocked",
+    "LayoutAuto": "Auto",
+    "SingleColumn": "Single column",
+    "TwoColumns": "Two columns",
+    "Grid": "Grid"
   }
 }

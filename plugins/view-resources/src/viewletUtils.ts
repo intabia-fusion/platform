@@ -13,6 +13,7 @@ export interface ResolvedViewletSpecialAction {
   _id: Ref<ViewletViewAction>
   extension: ViewletViewAction['extension']
   config?: Record<string, any>
+  location?: ViewletViewAction['location']
 }
 
 /**
@@ -57,7 +58,7 @@ export function getViewletSpecialActions (client: Client, viewlet: Viewlet): Res
   for (const a of [...byViewlet, ...byDescriptor]) {
     if (seen.has(a.extension)) continue
     seen.add(a.extension)
-    result.push({ _id: a._id, extension: a.extension, config: a.config })
+    result.push({ _id: a._id, extension: a.extension, config: a.config, location: a.location })
   }
   return result
 }

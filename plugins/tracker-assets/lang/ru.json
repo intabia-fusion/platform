@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "Удалить компонент?",
     "RemoveComponentDialogCloseNote": "Уверены, что хотите удалить этот компонент? Эта операция не может быть отменена.",
     "Grouping": "Группировка",
+    "SwimLaneBy": "Дорожка",
+    "SwimLaneNone": "Нет",
     "Ordering": "Сортировка",
     "CompletedIssues": "Завершённые задачи",
     "NoGrouping": "Нет группировки",
     "NoAssignee": "Нет исполнителя",
+    "NoParent": "Без родителя",
     "LastUpdated": "Последнее обновление",
     "DueDate": "Срок",
     "Manual": "Пользовательский",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "Семь Часов",
     "EightHoursLength": "Восемь Часов",
     "HourLabel": "ч",
+    "MinuteLabel": "м",
     "Saved": "Сохранено...",
     "CreatedIssue": "Создал(а) задачу",
     "CreatedSubIssue": "Создал(а) подзадачу",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "Снять родительскую задачу",
     "ForbidCreateProjectPermission": "Запретить создание проекта",
     "ForbidCreateProjectPermissionDescription": "Запрещает пользователям создавать новые проекты",
-    "AdditionalProperties": "Дополнительные свойства"
+    "AdditionalProperties": "Дополнительные свойства",
+    "CollapseAll": "Свернуть все",
+    "ExpandAll": "Развернуть все",
+    "CompactMode": "Компактно"
   },
   "status": {},
   "emailTemplate": {

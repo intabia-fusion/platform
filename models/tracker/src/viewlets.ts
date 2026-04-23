@@ -17,6 +17,7 @@ import contact from '@hcengineering/contact'
 import { SortingOrder } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
 import view, { showColorsViewOption, showDaysViewOption } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
@@ -76,7 +77,35 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
       action: view.function.HideArchived,
       label: view.string.HideArchived
     },
-    ...(!kanban ? [showColorsViewOption, showDaysViewOption] : [showDaysViewOption])
+    showColorsViewOption,
+    showDaysViewOption,
+    ...(kanban
+      ? [
+          {
+            key: 'swimLaneBy',
+            type: 'dropdown' as const,
+            defaultValue: 'none',
+            hideGroupByDuplicates: true,
+            values: [
+              { id: 'none', label: tracker.string.SwimLaneNone },
+              { id: 'assignee', label: tracker.string.Assignee },
+              { id: 'priority', label: tracker.string.Priority },
+              { id: 'component', label: tracker.string.Component },
+              { id: 'milestone', label: tracker.string.Milestone },
+              { id: 'status', label: tracker.string.Status },
+              { id: 'attachedTo', label: task.string.TaskParent },
+              { id: 'space', label: tracker.string.Project }
+            ],
+            label: tracker.string.SwimLaneBy
+          },
+          {
+            key: 'compactMode',
+            type: 'toggle' as const,
+            defaultValue: false,
+            label: tracker.string.CompactMode
+          }
+        ]
+      : [])
   ]
 })
 
@@ -494,6 +523,31 @@ export function defineViewlets (builder: Builder): void {
       ]
     },
     tracker.viewlet.IssueKanban
+  )
+
+  builder.createDoc(
+    view.class.ViewletViewAction,
+    core.space.Model,
+    {
+      viewlet: tracker.viewlet.IssueKanban,
+      extension: tracker.extensions.KanbanSwimLaneActions,
+      location: 'extra',
+      config: {
+        collapseLabel: tracker.string.CollapseAll,
+        expandLabel: tracker.string.ExpandAll
+      }
+    },
+    tracker.ids.KanbanSwimLaneActions
+  )
+
+  builder.createDoc(
+    presentation.class.ComponentPointExtension,
+    core.space.Model,
+    {
+      extension: tracker.extensions.KanbanSwimLaneActions,
+      component: tracker.component.KanbanSwimLaneActions
+    },
+    tracker.ids.KanbanSwimLaneActionsExtension
   )
 
   const componentListViewOptions: ViewOptionsModel = {

@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "コンポーネントを削除しますか？",
     "RemoveComponentDialogCloseNote": "本当にこのコンポーネントを削除しますか？この操作は元に戻せません",
     "Grouping": "グループ化",
+    "SwimLaneBy": "スイムレーン",
+    "SwimLaneNone": "なし",
     "Ordering": "順序",
     "CompletedIssues": "完了したイシュー",
     "NoGrouping": "グループ化なし",
     "NoAssignee": "担当者なし",
+    "NoParent": "親なし",
     "LastUpdated": "最終更新日",
     "DueDate": "期日",
     "Manual": "手動",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "7時間",
     "EightHoursLength": "8時間",
     "HourLabel": "時間",
+    "MinuteLabel": "分",
     "Saved": "保存済み...",
     "CreatedIssue": "イシューを作成しました",
     "CreatedSubIssue": "子イシューを作成しました",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "親イシューの設定を解除",
     "ForbidCreateProjectPermission": "プロジェクト作成禁止",
     "ForbidCreateProjectPermissionDescription": "ユーザーが新しいプロジェクトを作成することを禁止します",
-    "AdditionalProperties": "追加プロパティ"
+    "AdditionalProperties": "追加プロパティ",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "コンパクト"
   },
   "status": {},
   "emailTemplate": {

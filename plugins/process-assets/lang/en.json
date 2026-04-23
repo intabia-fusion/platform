@@ -157,7 +157,19 @@
     "ReviewAction": "Review",
     "Review": "Review",
     "LockField": "Lock field",
-    "UnlockField": "Unlock field"
+    "UnlockField": "Unlock field",
+    "TextFromNumber": "Text from number",
+    "TextFromDate": "Text from date",
+    "TextFromCheckbox": "Text from checkbox",
+    "NumberFromDate": "Number from date",
+    "DateFromNumber": "Date from number",
+    "NumberFromText": "Number from text",
+    "DateFromText": "Date from text",
+    "YearFromDate": "Year from date",
+    "MonthFromDate": "Month from date",
+    "DayFromDate": "Day from date",
+    "DateDifference": "Date difference",
+    "EmptyValue": "Empty value"
   },
   "error": {
     "MethodNotFound": "Method not found: {methodId}",

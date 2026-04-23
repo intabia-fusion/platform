@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "¿Eliminar el componente?",
     "RemoveComponentDialogCloseNote": "¿Estás seguro de que quieres eliminar este componente? Esta operación no se puede deshacer",
     "Grouping": "Agrupación",
+    "SwimLaneBy": "Carril",
+    "SwimLaneNone": "Ninguno",
     "Ordering": "Ordenación",
     "CompletedIssues": "Tareas completadas",
     "NoGrouping": "Sin agrupación",
     "NoAssignee": "Sin asignar",
+    "NoParent": "Sin padre",
     "LastUpdated": "Última actualización",
     "DueDate": "Fecha de vencimiento",
     "Manual": "Manual",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "Siete horas",
     "EightHoursLength": "Ocho horas",
     "HourLabel": "h",
+    "MinuteLabel": "m",
     "Saved": "Guardado...",
     "CreatedIssue": "Problema creado",
     "CreatedSubIssue": "Sub-problema creado",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "Unset parent issue",
     "ForbidCreateProjectPermission": "Prohibir crear proyecto",
     "ForbidCreateProjectPermissionDescription": "Prohíbe a los usuarios crear nuevos proyectos",
-    "AdditionalProperties": "Propiedades adicionales"
+    "AdditionalProperties": "Propiedades adicionales",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "Compacto"
   },
   "status": {},
   "emailTemplate": {

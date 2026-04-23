@@ -1,0 +1,6 @@
+bundle.js
+dist
+node_modules/
+.build
+typings
+lib

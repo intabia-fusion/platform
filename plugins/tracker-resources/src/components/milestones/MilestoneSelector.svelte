@@ -18,19 +18,10 @@
   import { createQuery } from '@hcengineering/presentation'
   import { Milestone } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult } from '@hcengineering/ui'
-  import {
-    Button,
-    ButtonShape,
-    IconAdd,
-    Label,
-    SelectPopup,
-    eventToHTMLElement,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
+  import { Button, ButtonShape, Label, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
-  import NewMilestone from './NewMilestone.svelte'
+  import MilestoneSelectorPopup from './MilestoneSelectorPopup.svelte'
 
   export let value: Ref<Milestone> | null | undefined
   export let space: DocumentQuery<Milestone>['space'] | undefined = undefined
@@ -108,6 +99,8 @@
   $: milestones = getMilestoneInfo(rawMilestones, selectedMilestone)
 
   let milestonePopup: PopupResult | undefined
+
+  $: popupSpace = typeof space === 'string' ? space : undefined
   const handleMilestoneEditorOpened = async (event: MouseEvent): Promise<void> => {
     event.stopPropagation()
     if (!isEditable) {
@@ -115,8 +108,12 @@
     }
 
     milestonePopup = showPopup(
-      SelectPopup,
-      { value: milestones, placeholder: popupPlaceholder, searchable: true },
+      MilestoneSelectorPopup,
+      {
+        value: milestones,
+        placeholder: popupPlaceholder,
+        space: popupSpace
+      },
       eventToHTMLElement(event),
       (evt) => {
         onChange?.(evt)
@@ -129,32 +126,14 @@
 </script>
 
 {#if isAction}
-  <SelectPopup
+  <MilestoneSelectorPopup
     value={milestones}
     placeholder={popupPlaceholder}
-    searchable
+    space={popupSpace}
     on:close={(evt) => {
       if (onChange !== undefined) onChange(evt.detail)
     }}
-  >
-    <svelte:fragment slot="buttons">
-      <div class="p-1">
-        <Button
-          kind={'ghost'}
-          size={'large'}
-          icon={IconAdd}
-          dataId={'btnAdd'}
-          on:click={() => {
-            showPopup(NewMilestone, {}, undefined, (evt) => {
-              // if (evt?.detail !== undefined && onChange !== undefined) {
-              //   onChange(evt.detail)
-              // }
-            })
-          }}
-        />
-      </div>
-    </svelte:fragment>
-  </SelectPopup>
+  />
 {:else if onlyIcon || milestoneText === undefined}
   <Button
     id="milestone"

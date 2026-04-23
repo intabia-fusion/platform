@@ -117,10 +117,13 @@
     "RemoveComponentDialogClose": "删除组件？",
     "RemoveComponentDialogCloseNote": "您确定要删除此组件吗？此操作无法撤销",
     "Grouping": "分组",
+    "SwimLaneBy": "泳道",
+    "SwimLaneNone": "无",
     "Ordering": "排序",
     "CompletedIssues": "已完成问题",
     "NoGrouping": "无分组",
     "NoAssignee": "无受理人",
+    "NoParent": "无父级",
     "LastUpdated": "最后更新",
     "DueDate": "截止日期",
     "Manual": "手动",
@@ -251,6 +254,7 @@
     "SevenHoursLength": "七小时",
     "EightHoursLength": "八小时",
     "HourLabel": "小时",
+    "MinuteLabel": "分",
     "Saved": "已保存...",
     "CreatedIssue": "已创建问题",
     "CreatedSubIssue": "已创建子问题",
@@ -276,7 +280,10 @@
     "UnsetParentIssue": "取消父问题",
     "ForbidCreateProjectPermission": "禁止创建项目",
     "ForbidCreateProjectPermissionDescription": "禁止用户创建新项目",
-    "AdditionalProperties": "附加属性"
+    "AdditionalProperties": "附加属性",
+    "CollapseAll": "Collapse all",
+    "ExpandAll": "Expand all",
+    "CompactMode": "紧凑"
   },
   "status": {},
   "emailTemplate": {
