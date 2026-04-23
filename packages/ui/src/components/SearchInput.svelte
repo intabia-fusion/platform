@@ -28,6 +28,7 @@
   export let autoFocus: boolean = false
   export let width: string | undefined = undefined
   export let delay: number = 500
+  export let kind: 'primary' | 'ghost' = 'primary'
 
   let input: HTMLInputElement
   let phTranslate: string = ''
@@ -58,7 +59,7 @@
   })
 </script>
 
-<label class="searchInput-wrapper" class:collapsed class:filled={value && value !== ''} style:width>
+<label class="searchInput-wrapper {kind}" class:collapsed class:filled={value && value !== ''} style:width>
   <div class="searchInput-icon">
     <IconSearch size={'small'} />
   </div>
@@ -70,6 +71,8 @@
     placeholder={phTranslate}
     autocomplete="off"
     spellcheck="false"
+    on:focus
+    on:blur
     on:change={() => {
       restartTimer()
     }}
@@ -105,11 +108,16 @@
     padding: 0 var(--spacing-0_5) 0 0;
     height: var(--global-small-Size);
     min-width: var(--global-small-Size);
-    background-color: var(--theme-button-default); // var(--input-BackgroundColor);
+
     border-radius: var(--small-BorderRadius);
-    box-shadow: inset 0 0 0 1px var(--theme-button-border); // var(--input-BorderColor);
+
     transition: max-width 0.2s;
     cursor: text;
+
+    &.primary {
+      box-shadow: inset 0 0 0 1px var(--theme-button-border); // var(--input-BorderColor);
+      background-color: var(--theme-button-default); // var(--input-BackgroundColor);
+    }
 
     .searchInput-icon,
     .searchInput-button {

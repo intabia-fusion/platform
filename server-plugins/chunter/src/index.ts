@@ -15,7 +15,7 @@
 
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import { ObjectDDParticipantFunc, TriggerFunc } from '@hcengineering/server-core'
+import { ObjectDDParticipantFunc, SearchPresenterProvider, TriggerFunc } from '@hcengineering/server-core'
 import { TypeMatchFuncResource } from '@hcengineering/server-notification'
 import { Presenter } from '@hcengineering/server-activity'
 
@@ -34,6 +34,7 @@ export default plugin(serverChunterId, {
     CommentRemove: '' as Resource<ObjectDDParticipantFunc>,
     ChannelUrlPresenter: '' as Resource<Presenter>,
     ChannelTitlePresenter: '' as Resource<Presenter>,
+    ChatSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
     JoinChannelTypeMatch: '' as TypeMatchFuncResource
   }
 })

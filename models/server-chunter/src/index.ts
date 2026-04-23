@@ -92,4 +92,14 @@ export function createModel (builder: Builder): void {
       match: serverChunter.function.JoinChannelTypeMatch
     }
   )
+
+  builder.mixin(chunter.class.Chat, core.class.Class, serverCore.mixin.SearchPresenter, {
+    title: [['func', serverChunter.function.ChatSearchTitleProvider, 'title']],
+    shortTitle: [['func', serverChunter.function.ChatSearchTitleProvider, 'short']],
+    fulltextSummary: [['func', serverChunter.function.ChatSearchTitleProvider, 'title']]
+  })
+
+  builder.mixin(chunter.class.Channel, core.class.Class, serverCore.mixin.SearchPresenter, {
+    title: [['name']]
+  })
 }
