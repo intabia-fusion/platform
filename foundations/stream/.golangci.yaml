@@ -1,7 +1,7 @@
 ---
 version: "2"
 run:
-  go: "1.23"
+  go: "1.26"
   timeout: 2m
   issues-exit-code: 1
   tests: true
@@ -32,8 +32,12 @@ linters:
     - whitespace
   settings:
     goheader:
+      values:
+        regexp:
+          COPYRIGHT_LINE: 'Copyright © {{ YEAR_RANGE }} (Hardcore Engineering Inc\.|Intabia Fusion\.)'
+          YEAR_RANGE: '\d{4}(-\d{4})?'
       template: |-
-        Copyright © {{ mod-year-range }} Hardcore Engineering Inc.
+        {{ COPYRIGHT_LINE }}
 
         Licensed under the Eclipse Public License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License. You may

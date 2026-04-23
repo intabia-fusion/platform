@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2025-2026 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,12 +18,14 @@ package executor_test
 import (
 	"context"
 	"os/exec"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/hcengineering/stream/internal/pkg/executor"
 	"github.com/hcengineering/stream/internal/pkg/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommandExecutor_Execute_Success(t *testing.T) {
@@ -115,6 +117,37 @@ func TestCommandExecutor_Execute_Error(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestCommandExecutor_BoundedMemoryOnNoisyStderr verifies that a long-running
+// process producing large amounts of stderr does not blow up memory usage —
+// output must pass through the ring buffer with bounded retention.
+func TestCommandExecutor_BoundedMemoryOnNoisyStderr(t *testing.T) {
+	// Produce ~20MB of stderr via yes(1) redirected to stderr.
+	// If the executor buffered everything, heap would grow by ~20MB.
+	script := `for i in $(seq 1 200000); do echo "noisy stderr line number $i with some padding to make it longer" >&2; done`
+	cmd := exec.Command("sh", "-c", script)
+
+	ctx := context.Background()
+	ctx = log.WithFields(ctx)
+
+	runtime.GC()
+	var before runtime.MemStats
+	runtime.ReadMemStats(&before)
+
+	err := executor.ExecuteCommands(ctx, []*exec.Cmd{cmd})
+	require.NoError(t, err)
+
+	runtime.GC()
+	var after runtime.MemStats
+	runtime.ReadMemStats(&after)
+
+	growth := int64(after.HeapInuse) - int64(before.HeapInuse)
+	t.Logf("heap growth: %d bytes (cap %d)", growth, executor.MaxStderrTailBytes*4)
+	// Allow headroom for scanner buffers + goroutine stacks, but reject
+	// multi-megabyte growth that would indicate unbounded buffering.
+	assert.Less(t, growth, int64(4*1024*1024),
+		"executor retained too much stderr in memory")
 }
 
 func TestCommandExecutor_Execute_Parallel(t *testing.T) {
