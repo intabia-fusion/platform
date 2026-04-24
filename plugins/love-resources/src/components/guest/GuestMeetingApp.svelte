@@ -237,7 +237,7 @@
       }
 
       const data = await resp.json()
-      return data?.guestToken ?? null
+      return data?.payload ?? null
     } catch (err: any) {
       console.error('[GuestMeetingApp] resolveShortLink error', err)
       return null

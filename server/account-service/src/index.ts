@@ -502,7 +502,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     )
   })
 
-  // ======= M E E T I N G   L I N K S =======
+  // ======= S H O R T   L I N K S =======
 
   router.post('/api/v1/createShortLink', async (ctx) => {
     const token = extractToken(ctx.request.headers)
@@ -525,11 +525,11 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       return
     }
 
-    const { guestToken, workspaceId } = ctx.request.body as any
+    const { payload, workspaceId } = ctx.request.body as any
 
-    if (typeof guestToken !== 'string' || typeof workspaceId !== 'string') {
+    if (typeof payload !== 'string' || typeof workspaceId !== 'string') {
       ctx.res.writeHead(400, KEEP_ALIVE_HEADERS)
-      ctx.res.end(JSON.stringify({ error: 'guestToken and workspaceId are required' }))
+      ctx.res.end(JSON.stringify({ error: 'payload and workspaceId are required' }))
       return
     }
 
@@ -538,7 +538,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       await migrations
 
       const shortId = generateShortId()
-      await db.meetingLink.insertOne({ id: shortId, guestToken, workspaceId })
+      await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
 
       ctx.res.writeHead(200, KEEP_ALIVE_HEADERS)
       ctx.res.end(JSON.stringify({ shortId }))
@@ -563,7 +563,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       const [db] = await accountsDb
       await migrations
 
-      const link = await db.meetingLink.findOne({ id: shortId })
+      const link = await db.shortLink.findOne({ id: shortId })
 
       if (link === null) {
         ctx.res.writeHead(404, KEEP_ALIVE_HEADERS)
@@ -572,7 +572,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       }
 
       ctx.res.writeHead(200, KEEP_ALIVE_HEADERS)
-      ctx.res.end(JSON.stringify({ guestToken: link.guestToken }))
+      ctx.res.end(JSON.stringify({ payload: link.payload }))
     } catch (err: any) {
       Analytics.handleError(err)
       measureCtx.error('resolveShortLink failed', { error: err })

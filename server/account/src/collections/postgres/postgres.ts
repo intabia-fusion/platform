@@ -51,7 +51,7 @@ import type {
   Subscription,
   DBFlavor,
   WorkspacePermission,
-  MeetingLink
+  ShortLink
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -533,7 +533,7 @@ export class PostgresAccountDB implements AccountDB {
   accountEvent: PostgresDbCollection<AccountEvent>
   otp: PostgresDbCollection<OTP>
   invite: PostgresDbCollection<WorkspaceInvite, 'id'>
-  meetingLink: PostgresDbCollection<MeetingLink, 'id'>
+  shortLink: PostgresDbCollection<ShortLink, 'id'>
   mailbox: PostgresDbCollection<Mailbox, 'mailbox'>
   mailboxSecret: PostgresDbCollection<MailboxSecret>
   integration: PostgresDbCollection<Integration>
@@ -579,7 +579,7 @@ export class PostgresAccountDB implements AccountDB {
       timestampFields: ['expiresOn'],
       withRetryClient
     })
-    this.meetingLink = new PostgresDbCollection<MeetingLink, 'id'>('meeting_links', client, {
+    this.shortLink = new PostgresDbCollection<ShortLink, 'id'>('short_links', client, {
       ns,
       idKey: 'id',
       timestampFields: ['createdAt'],

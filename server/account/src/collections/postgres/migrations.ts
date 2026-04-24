@@ -813,22 +813,22 @@ function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
   const types = dbTypes[flavor]
 
   return [
-    'account_db_v26_create_meeting_links_table',
+    'account_db_v26_create_short_links_table',
     `
-    /* ======= M E E T I N G   L I N K S ======= */
-    /* Short-link registry: maps a random short id to a full guest JWT token */
-    /* Created by love-service via account-service, resolved publicly by the frontend */
-    CREATE TABLE IF NOT EXISTS ${ns}.meeting_links (
+    /* ======= S H O R T   L I N K S ======= */
+    /* Short-link registry: maps a random short id to an arbitrary payload string */
+    /* Currently used for guest meeting links, but applicable to any shareable URL */
+    CREATE TABLE IF NOT EXISTS ${ns}.short_links (
         id           ${types.string}  NOT NULL,
-        guest_token  ${types.string}  NOT NULL,
+        payload  ${types.string}  NOT NULL,
         workspace_id ${types.string}  NOT NULL,
         created_at   BIGINT          NOT NULL DEFAULT current_epoch_ms(),
-        CONSTRAINT meeting_links_pk PRIMARY KEY (id)
+        CONSTRAINT short_links_pk PRIMARY KEY (id)
     );
 
     /* ======= I N D E X E S ======= */
-    CREATE INDEX IF NOT EXISTS meeting_links_workspace_idx ON ${ns}.meeting_links (workspace_id);
-    CREATE INDEX IF NOT EXISTS meeting_links_created_at_idx ON ${ns}.meeting_links (created_at);
+    CREATE INDEX IF NOT EXISTS short_links_workspace_idx ON ${ns}.short_links (workspace_id);
+    CREATE INDEX IF NOT EXISTS short_links_created_at_idx ON ${ns}.short_links (created_at);
     `
   ]
 }

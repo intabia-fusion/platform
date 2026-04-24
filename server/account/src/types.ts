@@ -143,9 +143,9 @@ export interface WorkspaceInvite {
   autoJoin?: boolean
 }
 
-export interface MeetingLink {
+export interface ShortLink {
   id: string
-  guestToken: string
+  payload: string
   workspaceId: string
   createdAt: number
 }
@@ -323,7 +323,7 @@ export interface AccountDB {
   accountEvent: DbCollection<AccountEvent>
   otp: DbCollection<OTP>
   invite: DbCollection<WorkspaceInvite>
-  meetingLink: DbCollection<MeetingLink>
+  shortLink: DbCollection<ShortLink>
   mailbox: DbCollection<Mailbox>
   mailboxSecret: DbCollection<MailboxSecret>
   integration: DbCollection<Integration>

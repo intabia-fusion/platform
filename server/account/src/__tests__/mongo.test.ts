@@ -676,7 +676,7 @@ describe('MongoAccountDB', () => {
   let accountDb: MongoAccountDB
   let mockSocialId: any
   let mockAccount: any
-  let mockMeetingLink: any
+  let mockShortLink: any
   let mockWorkspace: any
   let mockWorkspaceMembers: any
   let mockWorkspaceStatus: any
@@ -728,7 +728,7 @@ describe('MongoAccountDB', () => {
       insertOne: jest.fn()
     }
 
-    mockMeetingLink = {
+    mockShortLink = {
       insertOne: jest.fn(),
       findOne: jest.fn(),
       deleteMany: jest.fn(),
@@ -751,7 +751,7 @@ describe('MongoAccountDB', () => {
       workspaceMembers: { get: () => mockWorkspaceMembers },
       workspaceStatus: { get: () => mockWorkspaceStatus },
       migration: { get: () => mockMigration },
-      meetingLink: { get: () => mockMeetingLink }
+      shortLink: { get: () => mockShortLink }
     })
   })
 
@@ -801,15 +801,15 @@ describe('MongoAccountDB', () => {
         }
       ])
 
-      // Verify meeting link indices
-      expect(accountDb.meetingLink.ensureIndices).toHaveBeenCalledWith([
+      // Verify short link indices
+      expect(accountDb.shortLink.ensureIndices).toHaveBeenCalledWith([
         {
           key: { workspaceId: 1 },
-          options: { name: 'hc_account_meeting_link_workspace_id_1' }
+          options: { name: 'hc_account_short_link_workspace_id_1' }
         },
         {
           key: { createdAt: 1 },
-          options: { name: 'hc_account_meeting_link_created_at_1' }
+          options: { name: 'hc_account_short_link_created_at_1' }
         }
       ])
     })

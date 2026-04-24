@@ -32,7 +32,7 @@ export class GuestManager {
           Authorization: 'Bearer ' + sysToken,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ guestToken, workspaceId })
+        body: JSON.stringify({ payload: guestToken, workspaceId })
       })
 
       if (!res.ok) {
