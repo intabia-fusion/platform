@@ -439,7 +439,7 @@ export interface WithFind {
     ctx: MeasureContext,
     clazz: Ref<Class<T>>,
     query: DocumentQuery<T>,
-    options?: FindOptions<T>
+    options?: ServerFindOptions<T>
   ) => Promise<FindResult<T>>
 }
 
@@ -470,8 +470,10 @@ export type SearchPresenterProvider = (
   parent: Doc | undefined,
   space: Space | undefined,
   hierarchy: Hierarchy,
-  mode: string
-) => string
+  mode: string,
+  ctx: MeasureContext,
+  storage: WithFind
+) => string | Promise<string>
 
 export type FieldParamKind = 'space' | 'parent'
 

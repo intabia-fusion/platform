@@ -16,7 +16,7 @@
   import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
   import { statusByUserStore } from '@hcengineering/contact-resources'
-  import core, { Class, Doc, notEmpty, reduceCalls, Ref } from '@hcengineering/core'
+  import core, { Class, Doc, notEmpty, reduceCalls, Ref, WithLookup } from '@hcengineering/core'
   import { getResource, IntlString, translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import ui, {
@@ -47,6 +47,7 @@
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
   import { getChannelName, getObjectIcon } from '../../../utils'
+  import { getChatNavItemKey } from '../utils'
   import { ChatNavItemModel, SortFnOptions } from '../types'
   import ChatNavItem from './ChatNavItem.svelte'
 
@@ -60,6 +61,7 @@
   export let createAction: Action | undefined
   export let objectId: Ref<Doc> | undefined
   export let pinned: Chat[] = []
+  export let sortByScore: boolean = false
   export let sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
 
   const client = getClient()
@@ -84,11 +86,24 @@
     $languageStore
   )
 
+  function getScore (i: ChatNavItemModel): number {
+    const score = (i.chat as WithLookup<Chat>)?.$source?.$score
+    if (score != null) return score
+
+    return (i.object as WithLookup<Doc>)?.$source?.$score ?? 0
+  }
+
   $: (() => {
-    const newSortedItems = sortFn(items, {
-      contextByDoc: $contextByDocStore,
-      userStatusByAccount: $statusByUserStore
-    })
+    const newSortedItems = sortByScore
+      ? items.sort((a, b) => {
+        const scoreDiff = getScore(b) - getScore(a)
+        if (scoreDiff !== 0) return scoreDiff
+        return (a.description ?? a.title).localeCompare(b.description ?? b.title)
+      })
+      : sortFn(items, {
+        contextByDoc: $contextByDocStore,
+        userStatusByAccount: $statusByUserStore
+      })
 
     // Check if the underlying identifiers (ids) changed order to skip Svelte updates if unnecessary
     const oldIds = sortedItems.map((i) => i.id).join()
@@ -210,7 +225,7 @@
     showMenu={menuOpened}
     testid={`section-${id}`}
   >
-    {#each sortedItems as item (item.id)}
+    {#each sortedItems as item (getChatNavItemKey(item))}
       {@const context = $contextByDocStore.get(item.id)}
       <ChatNavItem {context} isSelected={objectId === item.id} {item} type={'type-object'} on:select />
     {/each}

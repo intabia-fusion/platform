@@ -5,7 +5,8 @@ import {
   type Hierarchy,
   type Ref,
   type SearchResultDoc,
-  type Space
+  type Space,
+  type MeasureContext
 } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
 
@@ -15,7 +16,8 @@ import plugin, {
   type FieldTemplateParam,
   type IndexedDoc,
   type SearchPresenter,
-  type SearchScoring
+  type SearchScoring,
+  type WithFind
 } from '@hcengineering/server-core'
 
 export function findSearchPresenter (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): SearchPresenter | undefined {
@@ -39,7 +41,9 @@ export async function updateDocWithPresenter (
   elasticDoc: IndexedDoc,
   parentDoc: Doc | undefined,
   spaceDoc: Space | undefined,
-  searchPresenter: SearchPresenter
+  searchPresenter: SearchPresenter,
+  ctx: MeasureContext,
+  storage: WithFind
 ): Promise<void> {
   const props: { name: string, config: FieldTemplateComponent | FieldTemplate }[] = [
     {
@@ -69,7 +73,7 @@ export async function updateDocWithPresenter (
     switch (f[0]) {
       case 'func': {
         const rf = await getResource(f[1])
-        return rf(doc, parentDoc, spaceDoc, hierarchy, f[2])
+        return await rf(doc, parentDoc, spaceDoc, hierarchy, f[2], ctx, storage)
       }
       case 'space':
         return spaceDoc !== undefined ? getObjectValue(f[1], spaceDoc) : ''
