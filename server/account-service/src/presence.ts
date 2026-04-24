@@ -64,6 +64,14 @@ export async function handlePresenceBatch (
     const [db] = await _db
     await db.batchUpsertPresence(presences)
   }
+
+  const [db] = await _db
+  for (const msg of msgs) {
+    if (msg.value.type === QueueUserEvent.notifyStatusChanged) {
+      const { user, hasUnread } = msg.value
+      await db.setAccountWorkspaceBadgeStatus(user, msg.workspace, hasUnread)
+    }
+  }
 }
 
 export function initPresenceRehydration (
@@ -96,9 +104,7 @@ async function runStartupRehydration (
       await db.resetPresenceOffline(startTime)
 
       // Send rehydrated event to notify other services (e.g. pod-notifications) to re-sync
-      await userProducer.send(ctx, '' as WorkspaceUuid, [
-        userEvents.rehydrated({ timestamp: Date.now() })
-      ])
+      await userProducer.send(ctx, '' as WorkspaceUuid, [userEvents.rehydrated({ timestamp: Date.now() })])
       break
     }
 

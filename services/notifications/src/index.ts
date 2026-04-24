@@ -42,12 +42,12 @@ import { Worker } from './worker'
 import config from './config'
 
 void main().catch((err) => {
-  console.error(err)
+  getCtx().error('Service initialization failed', { err })
 })
 
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
+    getCtx().error('Failed to shutdown postgres properly', { err })
   })
 })
 async function main (): Promise<void> {
@@ -75,7 +75,7 @@ async function main (): Promise<void> {
 
       await worker.tx(ctx, ws, tx)
     } catch (e) {
-      console.error(e)
+      ctx.error('Failed to process tx message', { e })
       throw e
     }
   })
@@ -91,7 +91,7 @@ async function main (): Promise<void> {
 
         await worker.user(ctx, ws, message)
       } catch (e) {
-        console.error(e)
+        ctx.error('Failed to process user message', { e })
         throw e
       }
     }
@@ -107,10 +107,12 @@ async function main (): Promise<void> {
   }
 
   // Initial delay of 5 seconds to give other services a head start.
-  setTimeout(() => { void sync() }, 5 * 1000)
+  setTimeout(() => {
+    void sync()
+  }, 5 * 1000)
 
   const shutdown = (): void => {
-    worker.close()
+    void worker.close()
     void Promise.all([txConsumer.close(), userConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 

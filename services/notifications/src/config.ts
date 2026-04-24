@@ -16,8 +16,6 @@
 import { config as dotenvConfig } from 'dotenv'
 import { NotificationProvider } from '@hcengineering/notification'
 import { Ref } from '@hcengineering/core'
-import { readFileSync } from 'fs'
-import yaml from 'js-yaml'
 
 dotenvConfig()
 

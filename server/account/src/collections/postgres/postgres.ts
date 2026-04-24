@@ -51,7 +51,8 @@ import type {
   Subscription,
   DBFlavor,
   WorkspacePermission,
-  AccountWorkspacePresence
+  AccountWorkspacePresence,
+  AccountWorkspaceBadgeStatus
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -541,6 +542,7 @@ export class PostgresAccountDB implements AccountDB {
   subscription: PostgresDbCollection<Subscription, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
   userWorkspacePresence: PostgresDbCollection<AccountWorkspacePresence>
+  accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
 
   constructor (
     readonly client: Sql,
@@ -612,6 +614,15 @@ export class PostgresAccountDB implements AccountDB {
     })
     this.userWorkspacePresence = new PostgresDbCollection<AccountWorkspacePresence>(
       'account_workspace_presence',
+      client,
+      {
+        ns,
+        timestampFields: ['updatedOn'],
+        withRetryClient
+      }
+    )
+    this.accountWorkspaceBadgeStatus = new PostgresDbCollection<AccountWorkspaceBadgeStatus>(
+      'account_workspace_badge_status',
       client,
       {
         ns,
@@ -1360,5 +1371,23 @@ export class PostgresAccountDB implements AccountDB {
       { online: true, updatedOn: { $lt: beforeTimestamp } },
       { online: false, updatedOn: beforeTimestamp }
     )
+  }
+
+  async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
+    return await this.accountWorkspaceBadgeStatus.find({ accountUuid: accountId })
+  }
+
+  async setAccountWorkspaceBadgeStatus (
+    accountId: AccountUuid,
+    workspaceId: WorkspaceUuid,
+    hasUnread: boolean
+  ): Promise<void> {
+    const updatedOn = Date.now()
+    const sql = `
+      INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
+    `
+    await this.accountWorkspaceBadgeStatus.unsafe(sql, [accountId, workspaceId, hasUnread, updatedOn])
   }
 }

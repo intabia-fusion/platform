@@ -66,6 +66,6 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(pulse.class.WorkspacesNotification, core.class.Class, core.mixin.TransientTTL, {
-    ttl: 30
+    ttl: 300
   })
 }

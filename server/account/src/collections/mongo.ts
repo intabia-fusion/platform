@@ -59,7 +59,8 @@ import type {
   WorkspaceStatus,
   WorkspaceStatusData,
   WorkspacePermission,
-  AccountWorkspacePresence
+  AccountWorkspacePresence,
+  AccountWorkspaceBadgeStatus
 } from '../types'
 import { isShallowEqual } from '../utils'
 
@@ -413,6 +414,7 @@ export class MongoAccountDB implements AccountDB {
   workspaceMembers: MongoDbCollection<WorkspaceMember>
   workspacePermission: MongoDbCollection<WorkspacePermission>
   userWorkspacePresence: MongoDbCollection<AccountWorkspacePresence>
+  accountWorkspaceBadgeStatus: MongoDbCollection<AccountWorkspaceBadgeStatus>
 
   constructor (readonly db: Db) {
     this.migration = new MongoDbCollection<MigrationInfo, 'key'>('migration', db, 'key')
@@ -434,6 +436,10 @@ export class MongoAccountDB implements AccountDB {
     this.workspaceMembers = new MongoDbCollection<WorkspaceMember>('workspaceMembers', db)
     this.workspacePermission = new MongoDbCollection<WorkspacePermission>('workspacePermissions', db)
     this.userWorkspacePresence = new MongoDbCollection<AccountWorkspacePresence>('accountWorkspacePresence', db)
+    this.accountWorkspaceBadgeStatus = new MongoDbCollection<AccountWorkspaceBadgeStatus>(
+      'accountWorkspaceBadgeStatus',
+      db
+    )
   }
 
   async init (): Promise<void> {
@@ -967,6 +973,18 @@ export class MongoAccountDB implements AccountDB {
   }
 
   async resetPresenceOffline (beforeTimestamp: number): Promise<void> {
+    throw new Error('Not implemented')
+  }
+
+  async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
+    throw new Error('Not implemented')
+  }
+
+  async setAccountWorkspaceBadgeStatus (
+    accountId: AccountUuid,
+    workspaceId: WorkspaceUuid,
+    hasUnread: boolean
+  ): Promise<void> {
     throw new Error('Not implemented')
   }
 }

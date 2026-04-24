@@ -103,36 +103,6 @@ export interface UserState {
   connectedWorkspaces: Set<WorkspaceUuid>
 
   /**
-   * Indicates whether the initial loading (initialization) of the unread notification status
-   * from the database has been successfully completed at least once.
-   */
-  isNotifyStatusInitialized: boolean
-
-  /**
-   * A flag indicating that the service should attempt to load (initialize)
-   * the unread notification statuses for this user in the background (lazy init).
-   */
-  needsInitialization: boolean
-
-  /**
-   * The Promise of the current initialization to prevent race conditions.
-   */
-  initPromise?: Promise<boolean>
-
-  /**
-   * A counter for failed status initialization attempts.
-   * If there are more than 5 attempts, the service stops trying for this user.
-   */
-  initRetries: number
-
-  /**
-   * A timestamp (Date.now() + delay) until which no repeated initialization attempts
-   * should be made if the previous one failed.
-   * Allows avoiding multiple setTimeout calls in memory.
-   */
-  nextInitAttempt?: number
-
-  /**
    * A cache of notification statuses: whether the user has unread notifications (true/false)
    * for each specific workspace.
    * This structure is used to form the attributes of the WorkspacesNotification event.
@@ -146,15 +116,13 @@ export interface UserState {
   spaceIdByWorkspace: Map<WorkspaceUuid, Ref<PersonSpace>>
 
   /**
-   * A timer for debouncing (delayed sending) of the WorkspacesNotification event.
-   * Allows batching several quick status changes into a single send (e.g., a 1-second delay),
-   * reducing system load during mass notification updates.
-   */
-  debounceTimer?: NodeJS.Timeout
-
-  /**
    * The time of the last logout (sessions === 0) for the workspace.
    * Used for delayed removal (grace period).
    */
   loggedOutAt: Map<WorkspaceUuid, number>
+
+  /**
+   * Indicates whether the full notification status cache has been fetched from AccountService.
+   */
+  isStatusFetched?: boolean
 }

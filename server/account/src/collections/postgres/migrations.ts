@@ -83,7 +83,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV23Migration(ns, flavor),
     getV24Migration(ns, flavor),
     getV25Migration(ns, flavor),
-    getV26Migration(ns, flavor)
+    getV26Migration(ns, flavor),
+    getV27Migration(ns, flavor)
   ]
 }
 
@@ -828,6 +829,25 @@ function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
 
     CREATE INDEX IF NOT EXISTS account_workspace_presence_workspace_idx ON ${ns}.account_workspace_presence (workspace_uuid);
     CREATE INDEX IF NOT EXISTS account_workspace_presence_transactor_idx ON ${ns}.account_workspace_presence (transactor_id);
+    `
+  ]
+}
+
+function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v27_account_workspace_badge_status',
+    `
+    /* ======= A C C O U N T   W O R K S P A C E   B A D G E   S T A T U S ======= */
+    CREATE TABLE IF NOT EXISTS ${ns}.account_workspace_badge_status (
+        account_uuid UUID NOT NULL,
+        workspace_uuid UUID NOT NULL,
+        has_unread ${types.bool} NOT NULL DEFAULT FALSE,
+        updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+        CONSTRAINT account_workspace_badge_status_pk PRIMARY KEY (account_uuid, workspace_uuid),
+        CONSTRAINT account_workspace_badge_status_membership_fk FOREIGN KEY (workspace_uuid, account_uuid) 
+            REFERENCES ${ns}.workspace_members(workspace_uuid, account_uuid) ON DELETE CASCADE
+    );
     `
   ]
 }

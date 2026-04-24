@@ -247,3 +247,10 @@ export interface AccountWorkspacePresence {
   updatedOn: Timestamp
   transactorId: string
 }
+
+export interface AccountWorkspaceBadgeStatus {
+  accountUuid: AccountUuid
+  workspaceUuid: WorkspaceUuid
+  hasUnread: boolean
+  updatedOn: Timestamp
+}

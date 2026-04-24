@@ -1180,6 +1180,7 @@ export type AccountServiceMethods =
   | 'getSubscriptionByProviderId'
   | 'upsertSubscription'
   | 'getPresence'
+  | 'getAccountWorkspaceBadgeStatuses'
 
 /**
  * @public
@@ -1215,6 +1216,19 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     upsertSubscription: wrap(upsertSubscription),
-    getPresence: wrap(getPresence)
+    getPresence: wrap(getPresence),
+    getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses)
   }
+}
+
+export async function getAccountWorkspaceBadgeStatuses (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { account: AccountUuid }
+): Promise<any[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  verifyAllowedServices(['workspace', 'tool', 'aibot', 'notifications'], extra)
+  return await db.getAccountWorkspaceBadgeStatuses(params.account)
 }

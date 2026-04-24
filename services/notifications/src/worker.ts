@@ -45,20 +45,16 @@ import {
   type QueueOnlineUserTx,
   QueueTopic,
   QueueUserEvent,
-  type QueueUserMessage
+  type QueueUserMessage,
+  userEvents
 } from '@hcengineering/server-core'
 import { getAccountClient } from '@hcengineering/server-client'
 import { PersonSpace } from '@hcengineering/contact'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
+import platform from '@hcengineering/platform'
 
 import Workspace from './workspace'
-import {
-  getTransactorApiEndpoint,
-  getUserWorkspaces,
-  getWorkspaceInfo,
-  isTxTrigger,
-  MAX_NOTIFICATION_TYPE_PRIORITY
-} from './utils'
+import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
 import config from './config'
 import { UserState } from './types'
 
@@ -73,13 +69,15 @@ export class Worker {
 
   private readonly storage: StorageAdapter
 
-  private readonly interval: NodeJS.Timeout | undefined = undefined
-  private readonly lazyInitInterval: NodeJS.Timeout | undefined = undefined
+  private readonly clearInterval: NodeJS.Timeout | undefined = undefined
+  private readonly flushInterval: NodeJS.Timeout | undefined = undefined
 
   private readonly userStates = new Map<AccountUuid, UserState>()
+  private readonly dirtyUsers = new Set<AccountUuid>()
 
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly onlineUserTxProducer: PlatformQueueProducer<QueueOnlineUserTx>
+  private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
 
   private aiBotAccountUuid?: AccountUuid
 
@@ -93,7 +91,14 @@ export class Worker {
     }
     this.sysModel.addTxes(ctx, modelTxes, true)
 
-    this.onlineUserTxProducer = this.queue.getProducer(ctx.newChild('online-user-tx-producer', {}, { span: false }), QueueTopic.OnlineUserTx)
+    this.onlineUserTxProducer = this.queue.getProducer(
+      ctx.newChild('online-user-tx-producer', {}, { span: false }),
+      QueueTopic.OnlineUserTx
+    )
+    this.userEventProducer = this.queue.getProducer(
+      ctx.newChild('user-event-producer', {}, { span: false }),
+      QueueTopic.Users
+    )
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel
@@ -105,7 +110,7 @@ export class Worker {
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
 
-    this.interval = setInterval(
+    this.clearInterval = setInterval(
       () => {
         const now = Date.now()
         for (const [uuid, workspace] of this.workspaces.entries()) {
@@ -121,7 +126,7 @@ export class Worker {
         const logoutGracePeriod = 60 * 1000 // 1 minute
         for (const [user, state] of this.userStates.entries()) {
           if (now - state.lastActivityOn > userInactivityLimit) {
-            this.clearUserState(user, state)
+            this.clearUserState(user)
             continue
           }
 
@@ -136,45 +141,42 @@ export class Worker {
       5 * 60 * 1000 // 5 minutes
     )
 
-    this.lazyInitInterval = setInterval(() => {
-      const now = Date.now()
-      const usersToInit = Array.from(this.userStates.entries())
-        .filter(([, state]) => state.needsInitialization && state.initPromise == null && now >= (state.nextInitAttempt ?? 0))
-        .slice(0, 100)
-
-      for (const [user, state] of usersToInit) {
-        state.needsInitialization = false
-        if (state.connectedWorkspaces.size > 0) {
-          void this.initNotifyStatus(ctx, state.connectedWorkspaces, user)
-            .then((success) => {
-              if (!success) {
-                if (state.initRetries < 5) {
-                  state.initRetries++
-                  state.needsInitialization = true
-                  state.nextInitAttempt = Date.now() + 5000
-                } else {
-                  this.ctx.error('Failed to initialize notify status after 5 retries', { user })
-                  state.initRetries = 0
-                }
-              } else {
-                state.initRetries = 0
-                state.nextInitAttempt = undefined
-              }
-            })
-            .catch((e) => {
-              if (state.initRetries < 5) {
-                this.ctx.error('Unhandled error during lazy notify status init', { user, e })
-                state.initRetries++
-                state.needsInitialization = true
-                state.nextInitAttempt = Date.now() + 5000
-              } else {
-                this.ctx.error('Failed to initialize notify status after 5 retries (Unhandled error)', { user, e })
-                state.initRetries = 0
-              }
-            })
-        }
-      }
+    this.flushInterval = setInterval(() => {
+      void this.flushDirtyUsers()
     }, 1000)
+  }
+
+  private async flushDirtyUsers (): Promise<void> {
+    if (this.dirtyUsers.size === 0) return
+    const users = Array.from(this.dirtyUsers)
+    this.dirtyUsers.clear()
+
+    const chunkSize = 50
+    for (let i = 0; i < users.length; i += chunkSize) {
+      const chunk = users.slice(i, i + chunkSize)
+
+      const results = await Promise.allSettled(
+        chunk.map(async (user) => {
+          await withRetry(
+            async () => {
+              await this.sendWorkspacesNotifyStatusToUser(this.ctx, user)
+            },
+            { maxRetries: 3 }
+          )
+        })
+      )
+
+      const failed = results.reduce<{ user: string, error: any }[]>((acc, result, index) => {
+        if (result.status === 'rejected') {
+          acc.push({ user: chunk[index], error: result.reason })
+        }
+        return acc
+      }, [])
+
+      if (failed.length > 0) {
+        this.ctx.error('Failed to apply debounced notification status for some users', { failed })
+      }
+    }
   }
 
   private getOrCreateUserState (user: AccountUuid): UserState {
@@ -183,9 +185,6 @@ export class Worker {
       state = {
         lastActivityOn: Date.now(),
         connectedWorkspaces: new Set(),
-        isNotifyStatusInitialized: false,
-        needsInitialization: false,
-        initRetries: 0,
         unreadStatusByWorkspace: {},
         spaceIdByWorkspace: new Map(),
         loggedOutAt: new Map()
@@ -195,10 +194,37 @@ export class Worker {
     return state
   }
 
-  private clearUserState (user: AccountUuid, state: UserState): void {
-    if (state.debounceTimer !== undefined) {
-      clearTimeout(state.debounceTimer)
+  private async registerUserConnection (
+    ctx: MeasureContext,
+    ws: WorkspaceUuid,
+    account: AccountUuid,
+    isExplicitLogin: boolean
+  ): Promise<void> {
+    if (account === this.aiBotAccountUuid || account === systemAccountUuid) return
+    const state = this.getOrCreateUserState(account)
+
+    state.lastActivityOn = Date.now()
+    let shouldScheduleUpdate = false
+
+    if (isExplicitLogin || !state.connectedWorkspaces.has(ws)) {
+      state.loggedOutAt.delete(ws)
+      state.connectedWorkspaces.add(ws)
+      shouldScheduleUpdate = true
     }
+
+    if (state.isStatusFetched !== true) {
+      await this.fetchUserNotifyStatus(account)
+      state.isStatusFetched = true
+      shouldScheduleUpdate = true
+    }
+
+    if (shouldScheduleUpdate) {
+      this.scheduleUserNotifyStatusUpdate(ctx, account)
+    }
+  }
+
+  private clearUserState (user: AccountUuid): void {
+    this.dirtyUsers.delete(user)
     this.userStates.delete(user)
   }
 
@@ -227,10 +253,6 @@ export class Worker {
         const state = this.getOrCreateUserState(account)
         state.connectedWorkspaces.add(p.workspaceUuid)
         state.lastActivityOn = Date.now()
-
-        if (!state.isNotifyStatusInitialized && !state.needsInitialization) {
-          state.needsInitialization = true
-        }
       }
       return true
     } catch (e) {
@@ -258,22 +280,11 @@ export class Worker {
     const workspace = await this.getWorkspaceClient(ctx, ws)
     if (workspace == null) return
 
-    // Activity-based discovery: if the modifier is not a system account,
-    // they must be online and connected to this workspace.
     const socialId = tx.modifiedBy
-    if (socialId === aiBotEmailSocialKey) return
-    if (socialId != null && socialId !== core.account.System) {
+    if (socialId !== core.account.System) {
       const account = await workspace.cache.getAccountBySocialId(socialId)
       if (account != null) {
-        if (account === this.aiBotAccountUuid) return
-        const state = this.getOrCreateUserState(account)
-        if (!state.connectedWorkspaces.has(ws)) {
-          state.connectedWorkspaces.add(ws)
-          state.lastActivityOn = Date.now()
-          void this.ensureNotifyStatusInitialized(ctx, ws, account).catch((e) => {
-            ctx.error('Failed to async init notify status during tx processing', { e, account, ws })
-          })
-        }
+        await this.registerUserConnection(ctx, ws, account, true)
       }
     }
 
@@ -282,168 +293,58 @@ export class Worker {
 
   async user (ctx: MeasureContext, ws: WorkspaceUuid, message: QueueUserMessage): Promise<void> {
     if (message.type === QueueUserEvent.rehydrated) {
-      this.ctx.info('Account service rehydrated, triggering session sync')
       void this.syncSessions()
       return
     }
 
     if (message.type === QueueUserEvent.login) {
-      if (message.user === this.aiBotAccountUuid) return
-      const state = this.getOrCreateUserState(message.user)
-
-      state.loggedOutAt.delete(ws)
-      state.connectedWorkspaces.add(ws)
-      state.lastActivityOn = Date.now()
-
-      if (!state.isNotifyStatusInitialized || !(ws in state.unreadStatusByWorkspace)) {
-        state.needsInitialization = true
-      } else {
-        this.scheduleUserNotifyStatusUpdate(ctx, message.user)
-      }
+      await this.registerUserConnection(ctx, ws, message.user, true)
     } else if (message.type === QueueUserEvent.logout) {
-      if (message.user === this.aiBotAccountUuid) return
+      if (message.user === this.aiBotAccountUuid || message.user === systemAccountUuid) return
       const state = this.userStates.get(message.user)
       if (state != null && message.sessions === 0) {
         state.loggedOutAt.set(ws, message.timestamp)
       }
+    } else if (message.type === QueueUserEvent.notifyStatusChanged) {
+      if (message.user === this.aiBotAccountUuid || message.user === systemAccountUuid) return
+
+      const state = this.userStates.get(message.user)
+      if (state == null) return // No active state, no need to track or broadcast
+      if (state.connectedWorkspaces.size === 0) return // No active sessions, nothing to broadcast to
+
+      if (state.isStatusFetched !== true) {
+        await this.fetchUserNotifyStatus(message.user)
+        state.isStatusFetched = true
+      }
+
+      state.unreadStatusByWorkspace[ws] = message.hasUnread
+      this.scheduleUserNotifyStatusUpdate(ctx, message.user)
     }
   }
 
-  private async ensureNotifyStatusInitialized (
-    ctx: MeasureContext,
-    wsUuid: WorkspaceUuid,
-    user: AccountUuid
-  ): Promise<void> {
-    const state = this.getOrCreateUserState(user)
-    state.needsInitialization = false
+  private async fetchUserNotifyStatus (user: AccountUuid): Promise<void> {
+    const state = this.userStates.get(user)
+    if (state == null) return
 
-    if (!state.isNotifyStatusInitialized) {
-      await this.initNotifyStatus(ctx, new Set([wsUuid]), user)
-    }
-  }
-
-  private async initNotifyStatus (
-    ctx: MeasureContext,
-    targetWorkspaces: Set<WorkspaceUuid>,
-    user: AccountUuid
-  ): Promise<boolean> {
-    const state = this.getOrCreateUserState(user)
-
-    while (state.initPromise != null) {
-      await state.initPromise
-    }
-
-    const hasAllTargets = [...targetWorkspaces].every(ws => ws in state.unreadStatusByWorkspace)
-    if (hasAllTargets) return true
-
-    state.initPromise = this._initNotifyStatus(ctx, targetWorkspaces, user)
     try {
-      return await state.initPromise
-    } finally {
-      state.initPromise = undefined
-    }
-  }
+      const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
+      const client = getAccountClient(token)
+      const statuses = await client.getAccountWorkspaceBadgeStatuses(user)
 
-  private async _initNotifyStatus (
-    ctx: MeasureContext,
-    targetWorkspaces: Set<WorkspaceUuid>,
-    user: AccountUuid
-  ): Promise<boolean> {
-    const state = this.getOrCreateUserState(user)
-
-    if (targetWorkspaces.size === 0) {
-      state.isNotifyStatusInitialized = true
-      return true
-    }
-
-    const workspaces = await this.getUserWorkspacesCached(user, targetWorkspaces)
-    if (workspaces.length === 0) {
-      state.isNotifyStatusInitialized = true
-      return true
-    }
-
-    let hasErrors = false
-    for (const _wsUuid of workspaces) {
-      if (_wsUuid in state.unreadStatusByWorkspace) continue
-
-      try {
-        const wsClient = await this.getWorkspaceClient(ctx, _wsUuid)
-        if (wsClient == null) continue
-
-        const unread = await wsClient.client.findOne(
-          notification.class.InboxNotification,
-          {
-            user,
-            isViewed: false,
-            archived: false
-          },
-          { limit: 1 }
-        )
-
-        state.unreadStatusByWorkspace[_wsUuid] = unread != null
-      } catch (e) {
-        console.error(`Failed to init notify status for user ${user} in workspace ${_wsUuid}`, e)
-        hasErrors = true
+      for (const status of statuses) {
+        state.unreadStatusByWorkspace[status.workspaceUuid] = status.hasUnread
       }
+    } catch (e) {
+      this.ctx.error('Failed to fetch user notification statuses', { e, user })
+      throw e
     }
-
-    if (hasErrors) return false
-
-    state.isNotifyStatusInitialized = true
-    await this.applyWorkspaceNotifyStatus(ctx, user)
-    return true
-  }
-
-  private async getUserWorkspacesCached (
-    user: AccountUuid,
-    targetWorkspaces = new Set<WorkspaceUuid>()
-  ): Promise<WorkspaceUuid[]> {
-    const state = this.getOrCreateUserState(user)
-
-    // Если статусы уже были однажды проинициализированы,
-    // используем ключи unreadStatusByWorkspace как актуальный список воркспейсов.
-    if (state.isNotifyStatusInitialized) {
-      const cachedWorkspaces = Object.keys(state.unreadStatusByWorkspace)
-      const cachedSet = new Set(cachedWorkspaces)
-
-      const hasAllTargets = [...targetWorkspaces].every((target) => cachedSet.has(target))
-      if (hasAllTargets) {
-        return cachedWorkspaces as WorkspaceUuid[]
-      }
-    }
-
-    // Если кэша нет или пользователь был добавлен в новый воркспейс,
-    // запрашиваем актуальный список из сервиса аккаунтов.
-    const workspaces = await getUserWorkspaces(user)
-    const uuids = workspaces.map((w) => w.uuid)
-
-    // При инвалидации кэша удаляем старые воркспейсы (откуда пользователя могли удалить)
-    const newWorkspacesSet = new Set(uuids)
-    for (const _ws of Object.keys(state.unreadStatusByWorkspace)) {
-      const ws = _ws as WorkspaceUuid
-      if (!newWorkspacesSet.has(ws)) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete state.unreadStatusByWorkspace[ws]
-        state.spaceIdByWorkspace.delete(ws)
-        state.connectedWorkspaces.delete(ws)
-      }
-    }
-
-    return uuids
   }
 
   private scheduleUserNotifyStatusUpdate (ctx: MeasureContext, user: AccountUuid): void {
     const state = this.userStates.get(user)
     if (state == null) return
 
-    if (state.debounceTimer != null) return
-
-    state.debounceTimer = setTimeout(() => {
-      state.debounceTimer = undefined
-      this.applyWorkspaceNotifyStatus(ctx, user).catch((e) => {
-        console.error(`Failed to apply debounced notification status for user ${user}`, e)
-      })
-    }, 1000)
+    this.dirtyUsers.add(user)
   }
 
   private async getPersonSpaceId (
@@ -467,7 +368,8 @@ export class Worker {
         return space._id
       }
     } catch (e) {
-      console.error(`Failed to get space data for user ${user} in workspace ${wsUuid}`, e)
+      ctx.error('Failed to get space data for user', { e, user, wsUuid })
+      throw e
     }
 
     return undefined
@@ -501,26 +403,26 @@ export class Worker {
     _tx: TxCUD<InboxNotification>
   ): Promise<void> {
     const user = await this.getTxUser(ctx, wsUuid, _tx)
-    if (user == null || user === this.aiBotAccountUuid) return
+    if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
 
-    const state = this.userStates.get(user)
-    if (state == null) return
+    const state = this.getOrCreateUserState(user)
+
+    if (state.isStatusFetched !== true) {
+      await this.fetchUserNotifyStatus(user)
+      state.isStatusFetched = true
+    }
 
     state.lastActivityOn = Date.now()
-    await this.ensureNotifyStatusInitialized(ctx, wsUuid, user)
-
-    const workspaces = await this.getUserWorkspacesCached(user, new Set([wsUuid]))
-    if (workspaces.length <= 1) return
 
     if (_tx._class === core.class.TxCreateDoc) {
       const tx = _tx as TxCreateDoc<InboxNotification>
       const doc = TxProcessor.createDoc2Doc(tx)
-      if (doc.isViewed || doc.archived) return
 
+      if (doc.isViewed || doc.archived) return
       if (state.unreadStatusByWorkspace[wsUuid]) return
 
+      await this.persistNotifyStatus(user, wsUuid, true, _tx.createdOn ?? _tx.modifiedOn)
       state.unreadStatusByWorkspace[wsUuid] = true
-      this.scheduleUserNotifyStatusUpdate(ctx, user)
     } else {
       if (_tx._class === core.class.TxUpdateDoc) {
         const tx = _tx as TxUpdateDoc<InboxNotification>
@@ -544,47 +446,81 @@ export class Worker {
 
       if (state.unreadStatusByWorkspace[wsUuid] === notify) return
 
+      await this.persistNotifyStatus(user, wsUuid, notify, _tx.modifiedOn)
       state.unreadStatusByWorkspace[wsUuid] = notify
-      this.scheduleUserNotifyStatusUpdate(ctx, user)
     }
   }
 
-  private async applyWorkspaceNotifyStatus (ctx: MeasureContext, user: AccountUuid): Promise<void> {
-    if (user === this.aiBotAccountUuid) return
+  private async persistNotifyStatus (
+    user: AccountUuid,
+    wsUuid: WorkspaceUuid,
+    hasUnread: boolean,
+    timestamp: number
+  ): Promise<void> {
+    try {
+      await this.userEventProducer.send(
+        this.ctx,
+        wsUuid,
+        [
+          userEvents.notifyStatusChanged({
+            user,
+            hasUnread,
+            timestamp
+          })
+        ],
+        user
+      )
+    } catch (e) {
+      this.ctx.error('Failed to send notifyStatusChanged to queue', { e, user, wsUuid, hasUnread })
+      throw e
+    }
+  }
+
+  private async sendWorkspacesNotifyStatusToUser (ctx: MeasureContext, user: AccountUuid): Promise<void> {
+    if (user === this.aiBotAccountUuid || user === systemAccountUuid) return
+
     const state = this.userStates.get(user)
-    if (state == null || state.connectedWorkspaces.size === 0) return
+    if (state == null || state.connectedWorkspaces.size === 0 || state.isStatusFetched !== true) return
 
-    for (const wsUuid of state.connectedWorkspaces) {
-      const spaceId = await this.getPersonSpaceId(ctx, user, wsUuid)
-      if (spaceId === undefined) continue
+    const results = await Promise.allSettled(
+      Array.from(state.connectedWorkspaces).map(async (wsUuid) => {
+        const spaceId = await this.getPersonSpaceId(ctx, user, wsUuid)
+        if (spaceId === undefined) return
 
-      const tx: TxCreateDoc<WorkspacesNotification> = {
-        _id: generateId(),
-        _class: core.class.TxCreateDoc,
-        objectId: generateId(),
-        objectClass: pulse.class.WorkspacesNotification,
-        objectSpace: spaceId,
-        space: spaceId,
-        modifiedBy: core.account.System,
-        modifiedOn: Date.now(),
-        createdBy: core.account.System,
-        attributes: {
-          account: user,
-          ...state.unreadStatusByWorkspace
-        }
-      }
-
-      try {
-        await this.onlineUserTxProducer.send(ctx, wsUuid, [
-          {
-            workspaceUuid: wsUuid,
-            tx,
-            account: user
+        const tx: TxCreateDoc<WorkspacesNotification> = {
+          _id: generateId(),
+          _class: core.class.TxCreateDoc,
+          objectId: generateId(),
+          objectClass: pulse.class.WorkspacesNotification,
+          objectSpace: spaceId,
+          space: spaceId,
+          modifiedBy: core.account.System,
+          modifiedOn: Date.now(),
+          createdBy: core.account.System,
+          attributes: {
+            account: user,
+            ...state.unreadStatusByWorkspace
           }
-        ])
-      } catch (e) {
-        ctx.error('Failed to send targeted online user transaction to queue', { e, user, wsUuid })
-      }
+        }
+
+        try {
+          await this.onlineUserTxProducer.send(ctx, wsUuid, [
+            {
+              workspaceUuid: wsUuid,
+              tx,
+              account: user
+            }
+          ])
+        } catch (e) {
+          ctx.error('Failed to send targeted online user transaction to queue', { e, user, wsUuid })
+          throw e
+        }
+      })
+    )
+
+    const failed = results.filter((r) => r.status === 'rejected')
+    if (failed.length > 0) {
+      throw new Error(`Failed to update notify status for ${failed.length} workspaces for user ${user}`)
     }
   }
 
@@ -621,6 +557,12 @@ export class Worker {
 
         this.workspaces.set(ws, workspace)
         return workspace
+      } catch (e: any) {
+        if (e?.status?.code === platform.status.Forbidden) {
+          ctx.error('Workspace is forbidden, dropping workspace initialization', { e, wsUuid: ws })
+          return undefined
+        }
+        throw e
       } finally {
         this.pendingWorkspaces.delete(ws)
       }
@@ -630,14 +572,11 @@ export class Worker {
     return await promise
   }
 
-  public close (): void {
-    clearInterval(this.interval)
-    if (this.lazyInitInterval != null) clearInterval(this.lazyInitInterval)
-    for (const state of this.userStates.values()) {
-      if (state.debounceTimer !== undefined) {
-        clearTimeout(state.debounceTimer)
-      }
-    }
+  public async close (): Promise<void> {
+    clearInterval(this.clearInterval)
+    clearInterval(this.flushInterval)
     this.userStates.clear()
+    this.dirtyUsers.clear()
+    await Promise.allSettled([this.userEventProducer.close, this.onlineUserTxProducer.close])
   }
 }

@@ -222,7 +222,7 @@ export class TSessionManager implements SessionManager {
             'transactor'
           )
           await pipeline.tx(ctx, [tx])
-          //TODO: wait async triggers?
+          // TODO: wait async triggers?
           await pipeline.handleBroadcast(ctx)
         })
       }
@@ -864,15 +864,20 @@ export class TSessionManager implements SessionManager {
 
         const accountUuid = account.account
         if (accountUuid !== systemAccountUuid && accountUuid !== guestAccount) {
-          await this.usersProducer.send(ctx, workspace.wsId.uuid, [
-            userEvents.login({
-              user: accountUuid,
-              sessions: this.countUserSessions(workspace, accountUuid),
-              socialIds: account.socialIds.map((it) => it._id),
-              transactorId: this.transactorId,
-              timestamp: Date.now()
-            })
-          ])
+          await this.usersProducer.send(
+            ctx,
+            workspace.wsId.uuid,
+            [
+              userEvents.login({
+                user: accountUuid,
+                sessions: this.countUserSessions(workspace, accountUuid),
+                socialIds: account.socialIds.map((it) => it._id),
+                transactorId: this.transactorId,
+                timestamp: Date.now()
+              })
+            ],
+            accountUuid
+          )
         }
 
         // Mark workspace as init completed and we had at least one client.
@@ -1174,15 +1179,20 @@ export class TSessionManager implements SessionManager {
         workspace.sessions.delete(sessionRef.session.sessionId)
 
         const userUuid = sessionRef.session.getUser()
-        await this.usersProducer.send(ctx, workspaceUuid, [
-          userEvents.logout({
-            user: userUuid,
-            sessions: this.countUserSessions(workspace, userUuid),
-            socialIds: sessionRef.session.getUserSocialIds(),
-            transactorId: this.transactorId,
-            timestamp: Date.now()
-          })
-        ])
+        await this.usersProducer.send(
+          ctx,
+          workspaceUuid,
+          [
+            userEvents.logout({
+              user: userUuid,
+              sessions: this.countUserSessions(workspace, userUuid),
+              socialIds: sessionRef.session.getUserSocialIds(),
+              transactorId: this.transactorId,
+              timestamp: Date.now()
+            })
+          ],
+          userUuid
+        )
 
         if (this.doHandleTick) {
           workspace.tickHandlers.set(sessionRef.session.sessionId, {

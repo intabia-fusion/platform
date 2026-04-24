@@ -18,10 +18,11 @@ import { type AccountUuid, type PersonId } from '@hcengineering/core'
 export enum QueueUserEvent {
   login = 'login',
   logout = 'logout',
-  rehydrated = 'rehydrated'
+  rehydrated = 'rehydrated',
+  notifyStatusChanged = 'notifyStatusChanged'
 }
 
-export type QueueUserMessage = QueueUserLogin | QueueUserLogout | QueueUserRehydrated
+export type QueueUserMessage = QueueUserLogin | QueueUserLogout | QueueUserRehydrated | QueueUserNotifyStatusChanged
 
 export interface QueueUserLogin {
   type: QueueUserEvent.login
@@ -46,6 +47,13 @@ export interface QueueUserRehydrated {
   timestamp: number
 }
 
+export interface QueueUserNotifyStatusChanged {
+  type: QueueUserEvent.notifyStatusChanged
+  user: AccountUuid
+  hasUnread: boolean
+  timestamp: number
+}
+
 export const userEvents = {
   login: function userLogin (data: Omit<QueueUserLogin, 'type'>): QueueUserLogin {
     return {
@@ -62,6 +70,14 @@ export const userEvents = {
   rehydrated: function userRehydrated (data: Omit<QueueUserRehydrated, 'type'>): QueueUserRehydrated {
     return {
       type: QueueUserEvent.rehydrated,
+      ...data
+    }
+  },
+  notifyStatusChanged: function notifyStatusChanged (
+    data: Omit<QueueUserNotifyStatusChanged, 'type'>
+  ): QueueUserNotifyStatusChanged {
+    return {
+      type: QueueUserEvent.notifyStatusChanged,
       ...data
     }
   }

@@ -300,6 +300,13 @@ export interface AccountWorkspacePresence {
   transactorId: string
 }
 
+export interface AccountWorkspaceBadgeStatus {
+  accountUuid: AccountUuid
+  workspaceUuid: WorkspaceUuid
+  hasUnread: boolean
+  updatedOn: Timestamp
+}
+
 /* ========= S U P P L E M E N T A R Y ========= */
 
 export interface WorkspaceInfoWithStatus extends Workspace {
@@ -335,6 +342,7 @@ export interface AccountDB {
   subscription: DbCollection<Subscription>
   workspacePermission: DbCollection<WorkspacePermission>
   userWorkspacePresence: DbCollection<AccountWorkspacePresence>
+  accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
 
   init: () => Promise<void>
   createWorkspace: (data: WorkspaceData, status: WorkspaceStatusData) => Promise<WorkspaceUuid>
@@ -378,6 +386,12 @@ export interface AccountDB {
   batchUpsertPresence: (data: AccountWorkspacePresence[]) => Promise<void>
   clearPresenceForTransactor: (transactorId: string, beforeTimestamp: number) => Promise<void>
   resetPresenceOffline: (beforeTimestamp: number) => Promise<void>
+  getAccountWorkspaceBadgeStatuses: (accountId: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
+  setAccountWorkspaceBadgeStatus: (
+    accountId: AccountUuid,
+    workspaceId: WorkspaceUuid,
+    hasUnread: boolean
+  ) => Promise<void>
 }
 
 export interface DbCollection<T> {

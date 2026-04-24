@@ -37,7 +37,6 @@ import core, {
   TxFactory,
   TxProcessor,
   TxRemoveDoc,
-  TxResult,
   TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
@@ -96,7 +95,7 @@ class Workspace {
   public readonly cache: WsCache
 
   private inProgress = false
-  private lastTxDate: Timestamp | undefined = undefined
+  private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System)
   public readonly client: Client
@@ -146,7 +145,7 @@ class Workspace {
     }
 
     if (res.length > 0) {
-      this.lastTxDate = tx.createdOn ?? tx.modifiedOn
+      this.lastUpdate = Date.now()
     }
 
     await this.applyTxes(res)
@@ -163,8 +162,7 @@ class Workspace {
       try {
         await this.rest.tx(txApply)
       } catch (e) {
-        console.error(e)
-        this.ctx.error('Failed to send tx batch', { tx: txApply, batchSize: batch.length })
+        this.ctx.error('Failed to send tx batch', { e, tx: txApply, batchSize: batch.length })
       }
     }
   }
@@ -782,7 +780,7 @@ class Workspace {
   }
 
   public getLastTxDate (): Timestamp | undefined {
-    return this.lastTxDate
+    return this.lastUpdate
   }
 
   static async create (
