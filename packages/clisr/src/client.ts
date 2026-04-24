@@ -430,13 +430,7 @@ export class ClisrClient {
         }
       }
 
-      request.handleTime?.(
-        Date.now() - request.startTime,
-        resp.result,
-        resp.time ?? 0,
-        resp.queue ?? 0,
-        Date.now() - (resp.bfst ?? 0)
-      )
+      request.handleTime?.(Date.now() - request.startTime, resp.result, resp.time ?? 0, resp.queue ?? 0)
       // Remove pending request before resolving/rejecting so state is consistent for logs/observers.
       this.requests.delete(resp.id)
       if (resp.error !== undefined) {
@@ -946,7 +940,7 @@ export class ClisrClient {
     retry?: () => Promise<boolean>
     handleResult?: (result: any) => Promise<void>
     once?: boolean // Require handleResult to retrieve result
-    measure?: (time: number, result: any, serverTime: number, queue: number, toReceive: number) => void
+    measure?: (time: number, result: any, serverTime: number, queue: number) => void
     allowReconnect?: boolean
     overrideId?: number
   }): Promise<any> {
