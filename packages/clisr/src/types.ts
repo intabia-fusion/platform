@@ -318,7 +318,7 @@ export interface Session {
 
 export class RequestPromise {
   startTime: number = Date.now()
-  handleTime?: (diff: number, result: any, serverTime: number, queue: number, toRecieve: number) => void
+  handleTime?: (diff: number, result: any, serverTime: number, queue: number) => void
   readonly promise: Promise<any>
   resolve!: (value?: any) => void
   reject!: (reason?: any) => void

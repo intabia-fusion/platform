@@ -1081,30 +1081,30 @@ services:
       - APPLY_TX_BATCH_SIZE=100
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
-  crm:
-    image: intabiafusion/crm
-    ports:
-      - '3001:3001'
-    extra_hosts:
-      - 'huly.local:host-gateway'
-    depends_on:
-      redpanda:
-        condition: service_started
-      account:
-        condition: service_started
-    environment:
-      - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - QUEUE_REGION=
-      - STATS_URL=http://huly.local:4900
-      - SERVICE_ID=crm
-      - SECRET=secret
-      - ENABLE_CONSOLE=true
-      - PORT=3001
-      - AMO_CRM_DOMAIN=
-      - AMO_CRM_PIPELINE_ID=
-      - AMO_CRM_TOKEN=
-      - AMO_CRM_RESPONSIBLE_USER_ID=
-    restart: unless-stopped
+  # crm:
+  #   image: intabiafusion/crm
+  #   ports:
+  #     - '3001:3001'
+  #   extra_hosts:
+  #     - 'huly.local:host-gateway'
+  #   depends_on:
+  #     redpanda:
+  #       condition: service_started
+  #     account:
+  #       condition: service_started
+  #   environment:
+  #     - QUEUE_CONFIG=${QUEUE_CONFIG}
+  #     - QUEUE_REGION=
+  #     - STATS_URL=http://huly.local:4900
+  #     - SERVICE_ID=crm
+  #     - SECRET=secret
+  #     - ENABLE_CONSOLE=true
+  #     - PORT=3001
+  #     - AMO_CRM_DOMAIN=
+  #     - AMO_CRM_PIPELINE_ID=
+  #     - AMO_CRM_TOKEN=
+  #     - AMO_CRM_RESPONSIBLE_USER_ID=
+  #   restart: unless-stopped
   notifications:
     image: intabiafusion/notifications
     extra_hosts:

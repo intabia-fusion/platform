@@ -562,6 +562,51 @@ describe('utils - parseDoc', () => {
     // BUG: This should be handled better
     expect(Number.isNaN(result.modifiedOn)).toBe(true)
   })
+
+  it('should strip lookup_* and reverse_lookup_* columns', () => {
+    const dbDoc: any = {
+      _id: 'doc:1',
+      _class: 'class:Test',
+      space: 'space:1',
+      modifiedOn: '1234567890',
+      modifiedBy: 'user:1',
+      createdOn: 1234567890,
+      createdBy: 'user:1',
+      workspaceId: 'workspace:123' as WorkspaceUuid,
+      lookup_activity_attachedTo__id: 'att:1',
+      lookup_activity_attachedTo__class: 'class:Msg',
+      lookup_activity_attachedTo_data: { foo: 'bar' },
+      reverse_lookup_activity_replies: [{ _id: 'r:1' }],
+      data: { keep: 'me' }
+    }
+
+    const result: any = parseDoc(dbDoc, mockSchema)
+
+    expect(result.keep).toBe('me')
+    expect(result.lookup_activity_attachedTo__id).toBeUndefined()
+    expect(result.lookup_activity_attachedTo__class).toBeUndefined()
+    expect(result.lookup_activity_attachedTo_data).toBeUndefined()
+    expect(result.reverse_lookup_activity_replies).toBeUndefined()
+  })
+
+  it('should strip %hash% field', () => {
+    const dbDoc: any = {
+      _id: 'doc:1',
+      _class: 'class:Test',
+      space: 'space:1',
+      modifiedOn: '1234567890',
+      modifiedBy: 'user:1',
+      createdOn: 1234567890,
+      createdBy: 'user:1',
+      '%hash%': '19dbb53e8c6',
+      workspaceId: 'workspace:123' as WorkspaceUuid,
+      data: {}
+    }
+
+    const result: any = parseDoc(dbDoc, mockSchema)
+
+    expect(result['%hash%']).toBeUndefined()
+  })
 })
 
 describe('utils - parseDocWithProjection', () => {
@@ -613,6 +658,30 @@ describe('utils - parseDocWithProjection', () => {
 
     expect(result._id).toBe('doc:1')
     expect(result.field1).toBe('value1')
+  })
+
+  it('should strip lookup_* and reverse_lookup_* columns', () => {
+    const dbDoc: any = {
+      _id: 'doc:1',
+      _class: 'class:Test',
+      space: 'space:1',
+      modifiedOn: '1234567890',
+      modifiedBy: 'user:1',
+      createdOn: 1234567890,
+      createdBy: 'user:1',
+      workspaceId: 'workspace:123' as WorkspaceUuid,
+      lookup_activity_attachedTo__id: 'att:1',
+      lookup_activity_attachedTo_data: { foo: 'bar' },
+      reverse_lookup_activity_replies: [{ _id: 'r:1' }],
+      data: { field1: 'value1' }
+    }
+
+    const result: any = parseDocWithProjection(dbDoc, 'pg_testing', undefined)
+
+    expect(result.field1).toBe('value1')
+    expect(result.lookup_activity_attachedTo__id).toBeUndefined()
+    expect(result.lookup_activity_attachedTo_data).toBeUndefined()
+    expect(result.reverse_lookup_activity_replies).toBeUndefined()
   })
 })
 

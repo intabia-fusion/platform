@@ -34,6 +34,7 @@ import core, {
   type FindResult,
   generateId,
   getCurrentAccount,
+  platformNow,
   hasAccountRole,
   type Hierarchy,
   MeasureMetricsContext,
@@ -526,9 +527,29 @@ export async function setClient (_client: Client): Promise<void> {
 /**
  * @public
  */
-export async function refreshClient (clean: boolean): Promise<void> {
+export async function refreshClient (clean: boolean, lastReconnectGapMs: number = 0): Promise<void> {
   if (!(liveQuery?.isClosed() ?? true)) {
-    await liveQuery?.refreshConnect(clean)
+    const startedAt = platformNow()
+    const stats = await liveQuery?.refreshConnect(clean, lastReconnectGapMs)
+    const elapsedMs = platformNow() - startedAt
+    if (stats !== undefined && elapsedMs > 1000) {
+      const fmt = (m: Map<string, { count: number, docs: number }>): string[] =>
+        [...m.entries()]
+          .sort((a, b) => b[1].docs - a[1].docs)
+          .slice(0, 10)
+          .map(([cls, v]) => `${cls}=${v.count}q/${v.docs}d`)
+      console.error('[refresh] slow liveQuery refreshConnect', {
+        elapsedMs,
+        gapMs: stats.gapMs,
+        dropIdle: stats.dropIdle,
+        droppedQueries: stats.droppedQueries,
+        droppedDocs: stats.droppedDocs,
+        activeQueries: stats.activeQueries,
+        activeDocs: stats.activeDocs,
+        topDropped: fmt(stats.droppedByClass),
+        topActive: fmt(stats.activeByClass)
+      })
+    }
     for (const q of globalQueries) {
       q.refreshClient()
     }

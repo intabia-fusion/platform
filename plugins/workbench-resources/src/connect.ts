@@ -12,6 +12,7 @@ import core, {
   isWorkspaceCreating,
   type MeasureMetricsContext,
   metricsToString,
+  platformNow,
   pickPrimarySocialId,
   setCurrentAccount,
   type SocialId,
@@ -229,6 +230,7 @@ export async function connect (title: string): Promise<Client | undefined> {
   }
 
   let tokenChanged = false
+  let lastOnConnectAt = 0
 
   if (_token !== token && _client !== undefined) {
     // We need to flush all data from memory
@@ -380,13 +382,17 @@ export async function connect (title: string): Promise<Client | undefined> {
             if (event === ClientConnectEvent.Connected || event === ClientConnectEvent.Reconnected) {
               setMetadata(presentation.metadata.SessionId, data)
             }
+            const gapMs = lastOnConnectAt === 0 ? 0 : platformNow() - lastOnConnectAt
+            lastOnConnectAt = platformNow()
             if ((_clientSet && event === ClientConnectEvent.Connected) || event === ClientConnectEvent.Refresh) {
+              console.log('[workbench] refreshClient triggered', { event, tokenChanged, gapMs })
               void ctx.with('refresh client', {}, async () => {
-                await refreshClient(tokenChanged)
+                await refreshClient(tokenChanged, gapMs)
                 await refreshCommunicationClient()
               })
               tokenChanged = false
             } else if (event === ClientConnectEvent.Reconnected) {
+              console.log('[workbench] reconnected no-refresh (lastTx unchanged)', { gapMs })
               await refreshCommunicationClient()
             }
 

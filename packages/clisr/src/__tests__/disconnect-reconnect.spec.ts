@@ -1110,8 +1110,7 @@ describe('ClisrClient additional edge cases', () => {
         id: '_1',
         result: { data: 'test' },
         time: Date.now(),
-        queue: 5,
-        bfst: Date.now() - 100
+        queue: 5
       } as any)
 
       expect(handleTime).toHaveBeenCalled()
