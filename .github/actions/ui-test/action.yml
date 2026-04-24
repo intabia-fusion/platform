@@ -15,6 +15,10 @@ inputs:
     description: 'Whether to run API tests (true/false)'
     required: false
     default: 'false'
+  run-backup-tests:
+    description: 'Whether to run backup tests (true/false)'
+    required: false
+    default: 'false'
   artifact-name-suffix:
     description: 'Suffix for artifact names'
     required: true
@@ -72,6 +76,14 @@ runs:
         cd ./${{ inputs.test-folder }}/api-tests
         node ../../common/scripts/install-run-rush.js fast-build:validate --to @hcengineering/api-tests
         node ../../common/scripts/install-run-rushx.js api-test --verbose
+
+    - name: Run backup tests
+      if: inputs.run-backup-tests == 'true'
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/backup-tests
+        node ../../common/scripts/install-run-rush.js fast-build:validate --to @hcengineering/backup-tests
+        node ../../common/scripts/install-run-rushx.js backup-test --verbose
 
     - name: Start profiling
       if: inputs.enable-profiling == 'true'

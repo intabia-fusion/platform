@@ -946,15 +946,30 @@ export async function backup (
         getObjKey = (obj: GlobalPerson) => obj.uuid
 
         if (fullCheck) {
+          const fullCheckStart = Date.now()
           let idx: number | undefined
-          while (true) {
-            const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CONTACT, idx))
-            idx = currentChunk.idx
-            const chuckDocs = await connection.loadDocs(
-              ctx,
-              DOMAIN_CONTACT,
-              currentChunk.docs.map((it) => it.id) as Ref<Doc>[]
-            )
+          ctx.info('fullCheck: scanning DOMAIN_CONTACT for Person.personUuid')
+          // Collect ids first, close cursor, then loadDocs in batches.
+          // Reason: PG pool may be size=1; cursor held by loadChunk blocks loadDocs.
+          const allIds: Ref<Doc>[] = []
+          try {
+            while (true) {
+              const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CONTACT, idx))
+              idx = currentChunk.idx
+              for (const d of currentChunk.docs) {
+                allIds.push(d.id as Ref<Doc>)
+              }
+              if (currentChunk.finished) break
+            }
+          } finally {
+            if (idx !== undefined) {
+              await ctx.with('closeChunk', {}, () => connection.closeChunk(ctx, idx as number))
+            }
+          }
+          let totalDocs = 0
+          for (const batch of chunkArray(allIds, 1000)) {
+            const chuckDocs = await connection.loadDocs(ctx, DOMAIN_CONTACT, batch)
+            totalDocs += chuckDocs.length
             for (const doc of chuckDocs) {
               if (doc._class === contact.class.Person) {
                 const person = doc as Person
@@ -963,10 +978,61 @@ export async function backup (
                 }
               }
             }
-            if (currentChunk.finished) {
-              break
+          }
+          ctx.info('fullCheck: DOMAIN_CONTACT done', {
+            totalIds: allIds.length,
+            totalDocs,
+            affectedPersons: affectedPersons.size,
+            elapsedMs: Date.now() - fullCheckStart
+          })
+        }
+
+        // Seed affected socialIds from existing account.socialId digest only when
+        // DOMAIN_CHANNEL scan was skipped (fullCheck off or "no changes in domain").
+        // Reason: without this account.person snapshot never builds, breaking FK
+        // social_id.person_uuid on restore.
+        if (affectedSocialIds.size === 0) {
+          try {
+            const sidDomain = toAccountDomain('socialId')
+            const sidDigest = await loadDigest(ctx, storage, backupInfo.snapshots, sidDomain, undefined, options.msg)
+            for (const sidId of sidDigest.keys()) {
+              affectedSocialIds.add(sidId as SocialIdentityRef)
+            }
+            ctx.info('seeded affectedSocialIds from account.socialId digest', {
+              added: sidDigest.size,
+              total: affectedSocialIds.size
+            })
+          } catch (err: any) {
+            ctx.error('failed to seed affectedSocialIds from digest', { err })
+          }
+        }
+
+        // Always derive personUuids referenced by affected socialIds, regardless of fullCheck.
+        // This guarantees FK integrity: every social_id.person_uuid has matching person snapshot.
+        // Filter out legacy hex-ObjectId values (pre-migration SocialIdentity in DOMAIN_CHANNEL):
+        // account.social_id._id is BIGINT, hex strings fail PG parse.
+        if (affectedSocialIds.size > 0) {
+          const numericIds = Array.from(affectedSocialIds).filter((it) => {
+            try {
+              BigInt(it)
+              return true
+            } catch (err: any) {
+              return false
+            }
+          })
+          const sidChunks = chunkArray(numericIds, 1000)
+          for (const sidChunk of sidChunks) {
+            const sids = await accountDb.socialId.find({ _id: { $in: sidChunk } })
+            for (const sid of sids) {
+              if (sid.personUuid != null) {
+                affectedPersons.add(sid.personUuid)
+              }
             }
           }
+          ctx.info('derived affectedPersons from affectedSocialIds', {
+            affectedSocialIds: affectedSocialIds.size,
+            affectedPersons: affectedPersons.size
+          })
         }
         affectedObjects = affectedPersons
       } else {
@@ -975,25 +1041,42 @@ export async function backup (
         getObjKey = (obj: SocialId) => obj._id
 
         if (fullCheck) {
+          const fullCheckStart = Date.now()
           let idx: number | undefined
-          while (true) {
-            const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CHANNEL, idx))
-            idx = currentChunk.idx
-            const chuckDocs = await connection.loadDocs(
-              ctx,
-              DOMAIN_CHANNEL,
-              currentChunk.docs.map((it) => it.id) as Ref<Doc>[]
-            )
+          ctx.info('fullCheck: scanning DOMAIN_CHANNEL for SocialIdentity')
+          // Collect ids first, close cursor, then loadDocs in batches (pool size=1 deadlock avoidance).
+          const allIds: Ref<Doc>[] = []
+          try {
+            while (true) {
+              const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CHANNEL, idx))
+              idx = currentChunk.idx
+              for (const d of currentChunk.docs) {
+                allIds.push(d.id as Ref<Doc>)
+              }
+              if (currentChunk.finished) break
+            }
+          } finally {
+            if (idx !== undefined) {
+              await ctx.with('closeChunk', {}, () => connection.closeChunk(ctx, idx as number))
+            }
+          }
+          let totalDocs = 0
+          for (const batch of chunkArray(allIds, 1000)) {
+            const chuckDocs = await connection.loadDocs(ctx, DOMAIN_CHANNEL, batch)
+            totalDocs += chuckDocs.length
             for (const doc of chuckDocs) {
               if (doc._class === contact.class.SocialIdentity) {
                 const sid = doc as SocialIdentity
                 affectedSocialIds.add(sid._id)
               }
             }
-            if (currentChunk.finished) {
-              break
-            }
           }
+          ctx.info('fullCheck: DOMAIN_CHANNEL done', {
+            totalIds: allIds.length,
+            totalDocs,
+            affectedSocialIds: affectedSocialIds.size,
+            elapsedMs: Date.now() - fullCheckStart
+          })
         }
         affectedObjects = affectedSocialIds
       }
@@ -1052,9 +1135,9 @@ export async function backup (
       const toLoadSorted = Array.from(toLoad).sort()
       const chunks = chunkArray(toLoadSorted, batchSize)
       for (const chunk of chunks) {
-        const objs = await accountDb[collection].find({
-          [key]: { $in: chunk, $gte: chunk[0], $lte: chunk[chunk.length - 1] }
-        })
+        // No $gte/$lte bounds: buildWhereClause only honors the first operator per
+        // field, so they were silently dropped anyway.
+        const objs = await accountDb[collection].find({ [key]: { $in: chunk } })
         for (const obj of objs) {
           // check if existing package need to be dumped
           if (addedDocuments() > dataBlobSize && _pack !== undefined) {
