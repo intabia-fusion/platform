@@ -121,6 +121,7 @@
     "InvalidOrExpiredLink": "Odkaz je neplatný nebo vypršel.",
     "CheckingLink": "Kontrola odkazu a příprava...",
     "PreparingGuestConnection": "Příprava připojení hosta...",
+    "ResolvingLink": "Načítání odkazu...",
     "Error": "Chyba",
     "ShowParticipants": "Zobrazit účastníky",
     "HideParticipants": "Skrýt účastníky",

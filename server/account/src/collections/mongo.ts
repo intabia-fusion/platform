@@ -45,6 +45,7 @@ import type {
   IntegrationSecret,
   Mailbox,
   MailboxSecret,
+  ShortLink,
   Operations,
   OTP,
   Query,
@@ -402,6 +403,7 @@ export class MongoAccountDB implements AccountDB {
   accountEvent: MongoDbCollection<AccountEvent>
   otp: MongoDbCollection<OTP>
   invite: MongoDbCollection<WorkspaceInvite, 'id'>
+  shortLink: MongoDbCollection<ShortLink, 'id'>
   mailbox: MongoDbCollection<Mailbox, 'mailbox'>
   mailboxSecret: MongoDbCollection<MailboxSecret>
   integration: MongoDbCollection<Integration>
@@ -422,6 +424,7 @@ export class MongoAccountDB implements AccountDB {
     this.accountEvent = new MongoDbCollection<AccountEvent>('accountEvent', db)
     this.otp = new MongoDbCollection<OTP>('otp', db)
     this.invite = new MongoDbCollection<WorkspaceInvite, 'id'>('invite', db, 'id')
+    this.shortLink = new MongoDbCollection<ShortLink, 'id'>('shortLink', db, 'id')
     this.mailbox = new MongoDbCollection<Mailbox, 'mailbox'>('mailbox', db)
     this.mailboxSecret = new MongoDbCollection<MailboxSecret>('mailboxSecrets', db)
     this.integration = new MongoDbCollection<Integration>('integration', db)
@@ -482,6 +485,17 @@ export class MongoAccountDB implements AccountDB {
         options: {
           name: 'hc_account_workspace_members_account_uuid_1'
         }
+      }
+    ])
+
+    await this.shortLink.ensureIndices([
+      {
+        key: { workspaceId: 1 },
+        options: { name: 'hc_account_short_link_workspace_id_1' }
+      },
+      {
+        key: { createdAt: 1 },
+        options: { name: 'hc_account_short_link_created_at_1' }
       }
     ])
   }

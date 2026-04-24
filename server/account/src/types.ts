@@ -143,6 +143,13 @@ export interface WorkspaceInvite {
   autoJoin?: boolean
 }
 
+export interface ShortLink {
+  id: string
+  payload: string
+  workspaceId: string
+  createdAt: number
+}
+
 export interface WorkspacePermission {
   workspaceUuid: WorkspaceUuid
   accountUuid: AccountUuid
@@ -316,6 +323,7 @@ export interface AccountDB {
   accountEvent: DbCollection<AccountEvent>
   otp: DbCollection<OTP>
   invite: DbCollection<WorkspaceInvite>
+  shortLink: DbCollection<ShortLink>
   mailbox: DbCollection<Mailbox>
   mailboxSecret: DbCollection<MailboxSecret>
   integration: DbCollection<Integration>

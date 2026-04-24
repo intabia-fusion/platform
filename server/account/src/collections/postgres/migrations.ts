@@ -82,7 +82,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV22Migration(ns, flavor),
     getV23Migration(ns, flavor),
     getV24Migration(ns, flavor),
-    getV25Migration(ns, flavor)
+    getV25Migration(ns, flavor),
+    getV26Migration(ns, flavor)
   ]
 }
 
@@ -806,4 +807,28 @@ function getV25Migration (ns: string, flavor: DBFlavor): [string, string] {
     `
 
   return ['account_db_v25_add_office_social_id_type', addValueSql]
+}
+
+function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+
+  return [
+    'account_db_v26_create_short_links_table',
+    `
+    /* ======= S H O R T   L I N K S ======= */
+    /* Short-link registry: maps a random short id to an arbitrary payload string */
+    /* Currently used for guest meeting links, but applicable to any shareable URL */
+    CREATE TABLE IF NOT EXISTS ${ns}.short_links (
+        id           ${types.string}  NOT NULL,
+        payload  ${types.string}  NOT NULL,
+        workspace_id ${types.string}  NOT NULL,
+        created_at   BIGINT          NOT NULL DEFAULT current_epoch_ms(),
+        CONSTRAINT short_links_pk PRIMARY KEY (id)
+    );
+
+    /* ======= I N D E X E S ======= */
+    CREATE INDEX IF NOT EXISTS short_links_workspace_idx ON ${ns}.short_links (workspace_id);
+    CREATE INDEX IF NOT EXISTS short_links_created_at_idx ON ${ns}.short_links (created_at);
+    `
+  ]
 }

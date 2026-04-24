@@ -119,6 +119,7 @@ export default mergeIds(loveId, love, {
     InvalidOrExpiredLink: '' as IntlString,
     CheckingLink: '' as IntlString,
     PreparingGuestConnection: '' as IntlString,
+    ResolvingLink: '' as IntlString,
     GuestJoin: '' as IntlString,
     StartOptions: '' as IntlString,
     Error: '' as IntlString,

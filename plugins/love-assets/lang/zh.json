@@ -121,6 +121,7 @@
     "InvalidOrExpiredLink": "链接无效或已过期。",
     "CheckingLink": "正在检查链接并进行准备...",
     "PreparingGuestConnection": "正在准备访客连接...",
+    "ResolvingLink": "正在解析链接...",
     "Error": "错误",
     "ShowParticipants": "显示参与者",
     "HideParticipants": "隐藏参与者",
