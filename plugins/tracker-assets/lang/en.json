@@ -255,6 +255,8 @@
     "EightHoursLength": "Eight Hours",
     "HourLabel": "h",
     "MinuteLabel": "m",
+    "AlreadyReportedThisDay": "Already reported this day: {hours}h",
+    "FixToEightHours": "Fix to 8h",
     "Saved": "Saved...",
     "CreatedIssue": "Created issue",
     "CreatedSubIssue": "Created sub-issue",

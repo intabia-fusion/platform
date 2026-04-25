@@ -255,6 +255,8 @@
     "EightHoursLength": "Восемь Часов",
     "HourLabel": "ч",
     "MinuteLabel": "м",
+    "AlreadyReportedThisDay": "Уже зарепорчено за этот день: {hours}ч",
+    "FixToEightHours": "Подогнать к 8ч",
     "Saved": "Сохранено...",
     "CreatedIssue": "Создал(а) задачу",
     "CreatedSubIssue": "Создал(а) подзадачу",
