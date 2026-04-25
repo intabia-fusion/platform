@@ -379,10 +379,9 @@ describe('ClisrServer and ClisrClient consistency', () => {
         sid: 'timeout-sid',
         sessionId: 'session-timeout',
         requests: new Map(),
-        // Make lastRequest sufficiently old to trigger timeout.
-        // Use a value larger than OperationTimeout so the session is considered timed out.
-        lastRequest: Date.now() - 3000000,
-        lastPing: Date.now(),
+        lastRequest: Date.now(),
+        // Make lastPing older than PingTimeout so the session is considered dead.
+        lastPing: Date.now() - (server.pingTimeout + 1000),
         socket: cs
       } as any
 
@@ -391,8 +390,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
       await server.handleTick()
 
       expect((server as any).sessions.has(session.sid)).toBe(false)
-      // After timeout, session should be queued for reconnect and socket closed.
-      expect(server.reconnectQueue.has(session.sid)).toBe(true)
+      // After timeout, session should be queued for reconnect (keyed by sessionId) and socket closed.
+      expect(server.reconnectQueue.has(session.sessionId)).toBe(true)
       expect(closed).toBe(true)
       expect(calls).toContainEqual({ ev: 'timeout', id: 'session-timeout' })
     } finally {
@@ -855,14 +854,17 @@ describe('ClisrServer and ClisrClient consistency', () => {
       sessionId: 'session-hang',
       requests: new Map(),
       lastRequest: Date.now(),
-      lastPing: Date.now() - (2 * 1000 * 1000 + 1000), // older than OperationTimeout
+      // Stale-but-not-dead: triggers probe ping but not handleSessionTimeout.
+      lastPing: Date.now() - (server.pingProbeAfter + 100),
       socket: fakeSocket,
       options: {}
     } as any
+    ;(server as any).sessions.set(session.sid, session)
 
     const rr = {
       session,
-      startTime: Date.now() - 51 * 1000 * 1000, // older than HangTimeout
+      // Older than HangLogTimeout — triggers warn.
+      startTime: Date.now() - (server.hangLogTimeout + 1000),
       method: 'hangOp'
     } as any
 
@@ -872,8 +874,10 @@ describe('ClisrServer and ClisrClient consistency', () => {
 
     await server.handleTick()
 
+    // Probe ping must be sent for stale session.
     expect(fakeSocket.sendRaw).toHaveBeenCalled()
-    expect(warnSpy).toHaveBeenCalledWith('found hang request', expect.objectContaining({ request: 'hangOp' }))
+    // Hang log must be emitted for the long-running request.
+    expect(warnSpy).toHaveBeenCalledWith('request running long', expect.objectContaining({ method: 'hangOp' }))
 
     warnSpy.mockRestore()
   })

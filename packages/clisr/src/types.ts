@@ -311,6 +311,8 @@ export interface Session {
 
   lastRequest: number
   lastPing: number
+  // Last time a server-initiated probe ping was sent for this session, for throttling.
+  lastProbePingAt?: number
 
   // Any user options, could be used to filter callbacks from server.
   options: Record<string, any>
@@ -330,6 +332,11 @@ export class RequestPromise {
   onDone?: () => void
 
   session?: Session
+
+  // Bookkeeping for handleTick: last time we emitted a hang-warn / op-status check.
+  lastHangLogAt?: number
+  lastStatusCheckAt?: number
+
   constructor (
     readonly method: string,
     readonly params: any[],
