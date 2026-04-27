@@ -7,7 +7,7 @@
     "ResourceUsage": "リソース使用状況",
     "DriveSize": "ファイルサイズ",
     "DriveCount": "ファイル数",
-    "OfficeSessionsDuration": "会議時間",
+    "OfficeSessionsDuration": "参加者の合計分数",
     "OfficeSessionsBandwidth": "会議帯域幅",
     "OfficeEgressDuration": "録画時間",
     "AI": "AI",

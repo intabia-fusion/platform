@@ -116,7 +116,7 @@
       <Category icon={love.icon.Love} label={love.string.Office}>
         <div class="row">
           <StatsCard
-            label={billingPlugin.string.MeetingMinutesUsage}
+            label={billingPlugin.string.OfficeSessionsDuration}
             text={formatDuration(totalMeetingMinutes * 60000, $themeStore.language)}
           />
           <StatsCard
@@ -125,7 +125,7 @@
           />
         </div>
         <div class="row">
-          <StatsCard label={billingPlugin.string.MaxParticipants} text={maxParticipants.toString()} />
+          <!--<StatsCard label={billingPlugin.string.MaxParticipants} text={maxParticipants.toString()} />-->
           <StatsCard
             label={billingPlugin.string.AvgMeetingDuration}
             text={formatDuration(avgMeetingDuration * 60000, $themeStore.language)}
@@ -141,7 +141,7 @@
             valueFormatter={(v) => formatDuration(v, $themeStore.language)}
             series={[
               {
-                label: billingPlugin.string.MeetingMinutesUsage,
+                label: billingPlugin.string.OfficeSessionsDuration,
                 color: 'var(--theme-state-primary-color)',
                 data: meetingMinutesByDay
               },
