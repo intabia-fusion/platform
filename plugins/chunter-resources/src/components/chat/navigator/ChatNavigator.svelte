@@ -156,10 +156,16 @@
 <style lang="scss">
   .header {
     min-height: 0;
+    position: relative;
   }
 
   .label {
     min-width: fit-content;
+    position: absolute;
+    left: var(--spacing-2_5);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .divider {
