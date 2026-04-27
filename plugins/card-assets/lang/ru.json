@@ -82,6 +82,7 @@
     "LayoutAuto": "Авто",
     "SingleColumn": "Один столбец",
     "TwoColumns": "Два столбца",
-    "Grid": "Сетка"
+    "Grid": "Сетка",
+    "RichtextProperties": "Текстовые поля"
   }
 }

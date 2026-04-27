@@ -17,10 +17,10 @@
   import { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'
-  import view from '@hcengineering/view'
 
   export let key: KeyedAttribute | string
   export let object: Doc | Record<string, any>

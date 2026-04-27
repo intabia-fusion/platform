@@ -1066,6 +1066,18 @@ function defineTabs (builder: Builder): void {
     card.class.CardSection,
     core.space.Model,
     {
+      label: card.string.RichtextProperties,
+      component: card.sectionComponent.MarkupPropertiesSection,
+      order: 150,
+      navigation: []
+    },
+    card.section.MarkupProperties
+  )
+
+  builder.createDoc(
+    card.class.CardSection,
+    core.space.Model,
+    {
       label: card.string.Content,
       component: card.sectionComponent.ContentSection,
       order: 200,

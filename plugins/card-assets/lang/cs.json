@@ -82,6 +82,7 @@
     "LayoutAuto": "Auto",
     "SingleColumn": "Jeden sloupec",
     "TwoColumns": "Dva sloupce",
-    "Grid": "Mřížka"
+    "Grid": "Mřížka",
+    "RichtextProperties": "Textová pole"
   }
 }
