@@ -210,7 +210,10 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
       }
 
       if (!read) {
-        await op.update(docNotifyContext, { lastView: Date.now() })
+        const ts = Math.max(docNotifyContext.lastUpdate ?? 0, docNotifyContext.lastView ?? 0)
+        if (ts > 0) {
+          await op.update(docNotifyContext, { lastView: ts })
+        }
       }
     }
 
@@ -289,7 +292,10 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         if (lastUpdate > lastView) {
           const read = await this.forceReadDocState(ops, context.objectId)
           if (!read) {
-            await ops.update(context, { lastView: Date.now() })
+            const ts = Math.max(context.lastUpdate ?? 0, context.lastView ?? 0)
+            if (ts > 0) {
+              await ops.update(context, { lastView: ts })
+            }
           }
         }
       }
@@ -321,7 +327,10 @@ export class InboxNotificationsClientImpl implements InboxNotificationsClient {
         if (lastUpdate > lastView) {
           const read = await this.forceReadDocState(ops, context.objectId)
           if (!read) {
-            await ops.update(context, { lastView: Date.now() })
+            const ts = Math.max(context.lastUpdate ?? 0, context.lastView ?? 0)
+            if (ts > 0) {
+              await ops.update(context, { lastView: ts })
+            }
           }
         }
       }
