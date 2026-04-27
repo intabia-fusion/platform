@@ -4,6 +4,9 @@
   export let width: number
   export let values: number[]
   export let minDistance = 40
+  export let labelWidth = 60
+
+  const CHAR_WIDTH = 8
 
   let minValue = 0
   let maxValue = 0
@@ -24,6 +27,14 @@
   }
 
   $: updateValues(values, height, minDistance)
+
+  $: {
+    const stepValues = Array.from({ length: stepsCount }, (_, i) => Math.round(minValue + valueStep * i))
+    void Promise.all(stepValues.map((v) => valueFormatter(v))).then((labels) => {
+      const maxLen = Math.max(...labels.map((l) => l.length))
+      labelWidth = maxLen * CHAR_WIDTH + 12
+    })
+  }
 </script>
 
 <g>

@@ -7,7 +7,7 @@
     "ResourceUsage": "Ressourcennutzung",
     "DriveSize": "Dateigröße",
     "DriveCount": "Dateianzahl",
-    "OfficeSessionsDuration": "Besprechungsdauer",
+    "OfficeSessionsDuration": "Gesamte Teilnehmerminuten",
     "OfficeSessionsBandwidth": "Besprechungsbandbreite",
     "OfficeEgressDuration": "Aufzeichnungsdauer",
     "AI": "AI",

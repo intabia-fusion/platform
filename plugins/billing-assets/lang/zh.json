@@ -7,7 +7,7 @@
     "ResourceUsage": "资源使用情况",
     "DriveSize": "文件大小",
     "DriveCount": "文件数量",
-    "OfficeSessionsDuration": "会议时间",
+    "OfficeSessionsDuration": "参与者总分钟数",
     "OfficeSessionsBandwidth": "会议带宽",
     "OfficeEgressDuration": "录制时间",
     "AI": "AI",
