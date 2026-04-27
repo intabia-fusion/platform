@@ -44,6 +44,7 @@ export class WorkspaceManager {
   indexers = new Map<string, WorkspaceIndexer | Promise<WorkspaceIndexer>>()
 
   restoring = new Set<WorkspaceUuid>()
+  wrongVersionAttempts = new Map<WorkspaceUuid, number>()
   sysHierarchy = new Hierarchy()
 
   workspaceConsumer?: ConsumerHandle
@@ -322,6 +323,9 @@ export class WorkspaceManager {
         workspaceInfo.versionMinor !== this.supportedVersion.minor ||
         workspaceInfo.versionPatch !== this.supportedVersion.patch
       ) {
+        const lastVisit = workspaceInfo.lastVisit ?? 0
+        const idleMs = Date.now() - lastVisit
+        const idle = idleMs > 24 * 60 * 60 * 1000
         ctx.warn('wrong version', {
           workspace,
           version: versionToString({
@@ -329,14 +333,23 @@ export class WorkspaceManager {
             minor: workspaceInfo.versionMinor,
             patch: workspaceInfo.versionPatch
           }),
-          supportedVersion: this.supportedVersion
+          supportedVersion: this.supportedVersion,
+          idle
         })
-        if (workspaceInfo.processingAttemps < 4) {
+        if (idle) {
+          this.wrongVersionAttempts.delete(workspace)
+          throw new Error('Workspace idle, skipping reindex')
+        }
+        const attempts = (this.wrongVersionAttempts.get(workspace) ?? 0) + 1
+        this.wrongVersionAttempts.set(workspace, attempts)
+        if (attempts < 4) {
           await new Promise((resolve) => setTimeout(resolve, 10000))
           continue
         }
+        this.wrongVersionAttempts.delete(workspace)
         throw new Error('Workspace limit reached')
       }
+      this.wrongVersionAttempts.delete(workspace)
       ctx.warn('indexer created', { workspace })
       return await WorkspaceIndexer.create(
         ctx,
