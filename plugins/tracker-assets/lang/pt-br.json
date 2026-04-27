@@ -255,6 +255,8 @@
     "EightHoursLength": "Oito Horas",
     "HourLabel": "h",
     "MinuteLabel": "m",
+    "AlreadyReportedThisDay": "Já registrado neste dia: {hours} h",
+    "FixToEightHours": "Ajustar para 8 h",
     "Saved": "Guardado...",
     "CreatedIssue": "Problema criado",
     "CreatedSubIssue": "Sub-problema criado",

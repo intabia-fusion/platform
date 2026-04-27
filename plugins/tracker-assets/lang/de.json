@@ -255,6 +255,8 @@
     "EightHoursLength": "Acht Stunden",
     "HourLabel": "Std",
     "MinuteLabel": "Min",
+    "AlreadyReportedThisDay": "Bereits an diesem Tag erfasst: {hours} Std",
+    "FixToEightHours": "Auf 8 Std anpassen",
     "Saved": "Gespeichert...",
     "CreatedIssue": "Aufgabe erstellt",
     "CreatedSubIssue": "Unteraufgabe erstellt",
