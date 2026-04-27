@@ -130,6 +130,8 @@
     >
       <div
         class="card-container"
+        data-id="kanban-card"
+        data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
         class:checked={checkedSet.has(object._id)}
         on:mouseover={mouseAttractor(() => dispatch('obj-focus', object))}

@@ -922,7 +922,7 @@ class Connection implements ClientConnection {
         }
       }
     })
-    if (result.lookupMap !== undefined) {
+    if (result.lookupMap != null) {
       // We need to extract lookup map to document lookups
       for (const d of result) {
         if (d.$lookup !== undefined) {

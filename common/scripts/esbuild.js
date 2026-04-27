@@ -8,6 +8,7 @@ const SCRIPT_DIR = __dirname
 const defaultConfig = {
   entryPoint: 'src/index.ts',
   outdir: 'bundle',
+  outfile: 'bundle.js',
   platform: 'node',
   minify: false,
   keepNames: true,
@@ -56,7 +57,7 @@ async function bundle(config) {
           })
         }
       }],
-      outfile: path.join(config.outdir, 'bundle.js'),
+      outfile: path.join(config.outdir, config.outfile),
       logLevel: config.logLevel,
       minify: config.minify,
       keepNames: config.keepNames,
@@ -84,6 +85,9 @@ async function main() {
       switch (key) {
         case 'entry':
           config.entryPoint = value
+          break
+        case 'out':
+          config.outfile = value
           break
         case 'minify':
           config.minify = value !== 'false'

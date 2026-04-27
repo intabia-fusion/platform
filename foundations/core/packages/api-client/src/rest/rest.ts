@@ -157,7 +157,9 @@ export class RestClientImpl implements RestClient {
       throw new PlatformError(result.error)
     }
 
-    if (result.lookupMap !== undefined) {
+    // rpcJSONReplacer serializes `undefined` as `null`, so lookupMap can arrive
+    // as null even when the server did not produce one — guard against both.
+    if (result.lookupMap != null) {
       // We need to extract lookup map to document lookups
       for (const d of result) {
         if (d.$lookup !== undefined) {
