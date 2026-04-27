@@ -431,6 +431,7 @@
     if (unViewed.length === 0) {
       forceRead = true
       await inboxClient.readDoc(object._id)
+      forceRead = false
     }
   }
 

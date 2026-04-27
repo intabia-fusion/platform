@@ -220,8 +220,8 @@ class Workspace {
 
       for (const context of ctx) {
         const current = context.lastView ?? 0
-        if (current > ts) continue
-        context.lastView = Math.max(current, ts)
+        if (current === ts) continue
+        context.lastView = ts
         res.push(
           this.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
             lastView: ts
@@ -272,8 +272,18 @@ class Workspace {
     const mentionType = matched.find((it) => it._id === notification.ids.MentionNotificationType)
 
     if (mentionType != null) {
-      if (hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)) {
-        res.push(...this.updateContextLastUpdate(contexts, tx.createdOn ?? tx.modifiedOn, sender.account, []))
+      if (
+        tx._class === core.class.TxCreateDoc &&
+        hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+      ) {
+        res.push(
+          ...this.updateContextLastUpdate(
+            contexts,
+            (txObject as ActivityMessage).createdOn ?? tx.modifiedOn,
+            sender.account,
+            []
+          )
+        )
       }
       const result = await createMentionsData(
         client,
@@ -299,7 +309,9 @@ class Workspace {
             d.context,
             d.receiver,
             d.notifyResult,
-            hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+            hierarchy.isDerived(txObject._class, activity.class.ActivityMessage),
+            [],
+            (txObject as ActivityMessage).createdOn
           ))
         )
       }
@@ -562,7 +574,8 @@ class Workspace {
           receiver,
           notifyResult,
           true,
-          res
+          res,
+          message.createdOn
         ))
       )
     }
@@ -580,7 +593,8 @@ class Workspace {
     receiver: Receiver,
     notifyResult: NotifyResult,
     isMessageNotify: boolean,
-    txes: TxCUD<Doc>[] = []
+    txes: TxCUD<Doc>[] = [],
+    messageCreatedOn?: Timestamp
   ): Promise<TxCUD<Doc>[]> {
     const res: TxCUD<Doc>[] = []
 
@@ -604,7 +618,7 @@ class Workspace {
     } else {
       const readState = await this.cache.getDocReadState(doc._id)
       const lastView = readState?.[receiver.account]?.timestamp ?? 0
-      const contextTx = this.getCreateContextTx(doc, receiver, modifiedOn, lastView, isMessageNotify)
+      const contextTx = this.getCreateContextTx(doc, receiver, modifiedOn, lastView, isMessageNotify, messageCreatedOn)
       res.push(contextTx)
       contextId = TxProcessor.createDoc2Doc(contextTx)._id
     }
@@ -635,7 +649,8 @@ class Workspace {
     receiver: Receiver,
     createdOn: Timestamp,
     lastView: Timestamp,
-    isMessageNotify: boolean
+    isMessageNotify: boolean,
+    messageCreatedOn?: Timestamp
   ): TxCreateDoc<DocNotifyContext> {
     const createTx = this.txFactory.createTxCreateDoc(notification.class.DocNotifyContext, receiver.space, {
       user: receiver.account,
@@ -643,7 +658,7 @@ class Workspace {
       objectClass: doc._class,
       objectSpace: doc.space,
       lastView,
-      lastUpdate: isMessageNotify ? createdOn : undefined,
+      lastUpdate: isMessageNotify ? (messageCreatedOn ?? createdOn) : undefined,
       lastNotify: createdOn,
       lastNotifiedMessage: isMessageNotify ? createdOn : undefined
     })
@@ -676,8 +691,6 @@ class Workspace {
     const res: TxCUD<Doc>[] = []
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
-
-    res.push(...this.updateContextLastUpdate(contexts, tx.modifiedOn, sender.account, _res))
 
     const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
 
