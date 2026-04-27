@@ -116,7 +116,11 @@ class Workspace {
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     this.inProgress = true
-    const domain = this.hierarchy.getDomain(tx.objectClass)
+    const domain = this.hierarchy.findDomain(tx.objectClass)
+    if (domain == null) {
+      this.inProgress = false
+      return
+    }
 
     if (domain === 'model') {
       this.model.addTxes(this.ctx, [tx], true)

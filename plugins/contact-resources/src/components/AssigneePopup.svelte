@@ -127,14 +127,12 @@
       otherCategory
     ]) {
       const res = await category.func(refs)
-      console.log('Category:', category.label, 'Result:', res)
       for (const contact of res) {
         if (categorizedPersons.has(contact)) continue
         categorizedPersons.set(contact, category)
       }
     }
     contacts = []
-    console.log('Categorized Persons:', categorizedPersons)
     categorizedPersons.forEach((p, k) => {
       const c = objects.find((e) => e._id === k)
       if (c) {
