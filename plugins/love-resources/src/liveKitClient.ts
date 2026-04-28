@@ -112,6 +112,13 @@ export class LiveKitClient {
 
     lkIsConnecting.set(true)
     this.currentSessionSupportsVideo = withVideo
+    const ncEnabled = $myPreferences?.noiseCancellation ?? true
+    this.liveKitRoom.options.audioCaptureDefaults = {
+      ...this.liveKitRoom.options.audioCaptureDefaults,
+      autoGainControl: true,
+      echoCancellation: ncEnabled,
+      noiseSuppression: ncEnabled
+    }
     try {
       const setupMediaSession = async (): Promise<void> => {
         this.currentMediaSession = await useMedia({
@@ -504,6 +511,26 @@ export class LiveKitClient {
           await this.setActiveCamera(mediaDevices.activeCamera.deviceId)
           await this.liveKitRoom.localParticipant.setCameraEnabled(true)
         }
+      }
+    }
+  }
+
+  async applyNoiseCancellation (value: boolean): Promise<void> {
+    this.liveKitRoom.options.audioCaptureDefaults = {
+      ...this.liveKitRoom.options.audioCaptureDefaults,
+      autoGainControl: true,
+      echoCancellation: value,
+      noiseSuppression: value
+    }
+    // Restart mic track so new capture constraints take effect mid-call.
+    const me = this.liveKitRoom.localParticipant
+    const micPub = me.getTrackPublication(Track.Source.Microphone)
+    if (micPub !== undefined && !micPub.isMuted) {
+      try {
+        await me.setMicrophoneEnabled(false)
+        await me.setMicrophoneEnabled(true)
+      } catch (e) {
+        console.error('[LiveKitClient.applyNoiseCancellation] failed to restart mic', e)
       }
     }
   }

@@ -83,7 +83,12 @@ export const isRecordingAvailable = writable<boolean>(false)
 export const isFullScreen = writable<boolean>(false)
 export const isShareWithSound = writable<boolean>(false)
 
-export let krispProcessor = KrispNoiseFilter()
+// Feature toggle: Krisp is a paid LiveKit add-on that has been failing to
+// authenticate (404). When false, microphone audio uses only the WebRTC
+// echoCancellation/noiseSuppression configured in audioCaptureDefaults.
+const useKrisp = false
+
+export let krispProcessor: ReturnType<typeof KrispNoiseFilter> | undefined = useKrisp ? KrispNoiseFilter() : undefined
 export let blurProcessor: ProcessorWrapper<BackgroundOptions> | undefined
 let localVideo: LocalVideoTrack | undefined
 
@@ -105,6 +110,7 @@ try {
  * resolve when the call is scheduled, not when the recreation completes.
  */
 async function recreateKrispProcessorImmediate (): Promise<void> {
+  if (!useKrisp) return
   try {
     // Stop processor on all local audio tracks before recreating
     // to release AudioContext references and avoid resource leaks
@@ -131,6 +137,7 @@ async function recreateKrispProcessorImmediate (): Promise<void> {
 export const recreateKrispProcessor = reduceCalls(recreateKrispProcessorImmediate)
 
 async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
+  if (!useKrisp || krispProcessor === undefined) return
   if (pub.track instanceof LocalAudioTrack) {
     if (!isKrispNoiseFilterSupported()) {
       console.warn('enhanced noise filter is currently not supported on this browser')
@@ -270,21 +277,23 @@ lk.on(RoomEvent.Connected, () => {
   isRecording.set(data.recording ?? false)
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
 })
-lk.on(RoomEvent.Disconnected, () => {
-  // Recreate Krisp processor on disconnect so that the next connect
-  // does not hit InvalidAccessError due to stale AudioContext references.
-  void recreateKrispProcessor()
-})
-lk.on(RoomEvent.Reconnecting, () => {
-  // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
-  // before the connection is re-established.
-  void recreateKrispProcessor()
-})
-lk.on(RoomEvent.Reconnected, () => {
-  // Ensure processor is fresh after successful reconnection
-  // as the AudioContext may have changed during reconnect.
-  void recreateKrispProcessor()
-})
+if (useKrisp) {
+  lk.on(RoomEvent.Disconnected, () => {
+    // Recreate Krisp processor on disconnect so that the next connect
+    // does not hit InvalidAccessError due to stale AudioContext references.
+    void recreateKrispProcessor()
+  })
+  lk.on(RoomEvent.Reconnecting, () => {
+    // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
+    // before the connection is re-established.
+    void recreateKrispProcessor()
+  })
+  lk.on(RoomEvent.Reconnected, () => {
+    // Ensure processor is fresh after successful reconnection
+    // as the AudioContext may have changed during reconnect.
+    void recreateKrispProcessor()
+  })
+}
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {
   try {
