@@ -117,7 +117,7 @@ export class Worker {
     const { model, hierarchy } = await client.getModel(true)
     const branding: Branding | undefined =
       wsInfo.branding !== undefined && wsInfo.branding !== ''
-        ? this.brandingMap[wsInfo.branding]
+        ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
         : this.brandingMap[Object.keys(this.brandingMap)[0]]
     const workspace = await Workspace.create(
       ctx.newChild(ws, {}),
