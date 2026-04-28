@@ -83,6 +83,7 @@
     "SingleColumn": "Einspaltig",
     "TwoColumns": "Zwei spaltig",
     "Grid": "Gitter",
-    "RichtextProperties": "Textfelder"
+    "RichtextProperties": "Textfelder",
+    "ShowAllVersions": "Alle Versionen anzeigen"
   }
 }
