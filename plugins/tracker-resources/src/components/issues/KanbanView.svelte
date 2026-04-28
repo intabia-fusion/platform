@@ -342,6 +342,9 @@
         (a, b) =>
           defaultPriorities.indexOf(b.value as IssuePriority) - defaultPriorities.indexOf(a.value as IssuePriority)
       )
+    } else {
+      // Stable, deterministic order by lane id (ascending) — prevents lane jumps on task reorder.
+      lanes.sort((a, b) => a._id.localeCompare(b._id))
     }
     if (unassigned !== undefined) lanes.unshift(unassigned)
     return lanes
@@ -364,6 +367,9 @@
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
     if (IMMUTABLE_SWIM_FIELDS.has(swimLaneBy)) return undefined
     const update: DocumentUpdate<Item> = { [swimLaneBy]: swimLane.value } as unknown as DocumentUpdate<Item>
+    if (swimLaneBy === 'attachedTo') {
+      ;(update as any).attachedToClass = tracker.class.Issue
+    }
     return update
   }
 
