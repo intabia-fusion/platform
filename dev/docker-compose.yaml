@@ -1116,6 +1116,8 @@ services:
         condition: service_started
       transactor:
         condition: service_started
+    volumes:
+      - ./branding.json:/var/cfg/branding.json
     environment:
       - SECRET=secret
       - ACCOUNTS_URL=http://huly.local:3000
@@ -1125,6 +1127,7 @@ services:
       - QUEUE_REGION=
       - FRONT_URL=http://huly.local:8087
       - STATS_URL=http://huly.local:4900
+      - BRANDING_PATH=/var/cfg/branding.json
   notification:
     image: intabiafusion/notification
     environment:

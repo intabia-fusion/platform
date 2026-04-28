@@ -16,6 +16,7 @@
 
 import core, {
   AccountUuid,
+  Branding,
   Class,
   Data,
   Doc,
@@ -108,6 +109,7 @@ class Workspace {
     private readonly model: ModelDb,
     private readonly rest: RestClient,
     private readonly storage: StorageAdapter,
+    private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[]
   ) {
     this.client = this.getClient()
@@ -186,6 +188,7 @@ class Workspace {
       storage: this.storage,
       hierarchy: this.hierarchy,
       model: this.model,
+      branding: this.branding,
       findAll: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -352,7 +355,7 @@ class Workspace {
         } else {
           const intlParams: Record<string, string | number> = {
             ...data.props,
-            senderName: getSenderName(sender, config.LastNameFirst)
+            senderName: getSenderName(sender, client.branding?.lastNameFirst)
           }
           const intlParamsNotLocalized: Record<string, IntlString> = { ...data.propsIntl }
 
@@ -456,7 +459,7 @@ class Workspace {
     const txes = await this.createNotifications(
       notification.class.ReactionInboxNotification,
       data,
-      getReactionNotificationContent(message, reaction, sender),
+      getReactionNotificationContent(this.client, message, reaction, sender),
       doc,
       reaction.modifiedOn,
       reaction.modifiedBy,
@@ -819,6 +822,7 @@ class Workspace {
     sysModel: Tx[],
     storage: StorageAdapter,
     rest: RestClient,
+    branding: Branding | undefined,
     txTypes: TxNotificationType[]
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
@@ -841,7 +845,7 @@ class Workspace {
         uuid: ws.uuid,
         url: ws.url
       },
-      branding: null,
+      branding: branding ?? null,
       modelDb,
       hierarchy,
       storageAdapter: storage,
@@ -858,7 +862,7 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, txTypes)
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, txTypes)
   }
 
   async close (): Promise<void> {

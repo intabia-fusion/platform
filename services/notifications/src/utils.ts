@@ -443,9 +443,7 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
     modelDb: client.model,
     txFactory: client.txFactory,
     ctx: client.ctx,
-    branding: {
-      lastNameFirst: config.LastNameFirst
-    },
+    branding: client.branding ?? null,
     findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   }
 }
@@ -473,7 +471,7 @@ export async function getMessageNotificationContent (
     intlParams.identifier = identifier
   }
 
-  intlParams.senderName = getSenderName(sender, config.LastNameFirst)
+  intlParams.senderName = getSenderName(sender, client.branding?.lastNameFirst)
 
   if (type.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
@@ -536,9 +534,7 @@ export async function getDocTitle (client: Client, doc: Doc): Promise<string | u
       workspace: client.workspace,
       hierarchy: client.hierarchy,
       modelDb: client.model,
-      branding: {
-        lastNameFirst: config.LastNameFirst
-      },
+      branding: client.branding ?? null,
       findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
     })
   }
@@ -560,9 +556,7 @@ export async function getDocIdentifier (client: Client, doc: Doc): Promise<strin
     workspace: client.workspace,
     hierarchy: client.hierarchy,
     modelDb: client.model,
-    branding: {
-      lastNameFirst: config.LastNameFirst
-    },
+    branding: client.branding ?? null,
     findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   })
 }
@@ -577,9 +571,7 @@ export async function getDocUrl (client: Client, doc: Doc): Promise<string | und
     workspace: client.workspace,
     hierarchy: client.hierarchy,
     modelDb: client.model,
-    branding: {
-      lastNameFirst: config.LastNameFirst
-    },
+    branding: client.branding ?? null,
     findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
   })
 }
