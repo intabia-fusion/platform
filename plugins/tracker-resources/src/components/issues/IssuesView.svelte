@@ -25,7 +25,7 @@
   export let icon: Asset | undefined = undefined
   export let modeSelectorProps: IModeSelector | undefined = undefined
 
-  let viewlet: WithLookup<Viewlet> | undefined = undefined
+  export let viewlet: WithLookup<Viewlet> | undefined = undefined
   const viewlets: WithLookup<Viewlet>[] | undefined = undefined
   let viewOptions: ViewOptions | undefined
 
@@ -42,8 +42,6 @@
       label = res
     })
   }
-
-  let finalQuery: DocumentQuery<Doc> | undefined
 
   $: $useShowDaysStore = (viewOptions as any)?.shouldShowDays === true
 

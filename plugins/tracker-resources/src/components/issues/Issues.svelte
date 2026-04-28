@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref } from '@hcengineering/core'
+  import { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import { Issue, IssueStatus, Project } from '@hcengineering/tracker'
@@ -87,9 +87,13 @@
     .filter((it) => it.parent === $selectedTypeStore)
     .map((it) => it._id)
 
+  let currentViewlet: WithLookup<Viewlet> | undefined = undefined
+
+  $: isListMode = currentViewlet?.descriptor === view.viewlet.List
+
   $: finalQuery = {
     ...query,
-    ...(allProjectsTypes
+    ...(allProjectsTypes || isListMode
       ? {}
       : $selectedTaskTypeStore !== undefined
         ? { kind: $selectedTaskTypeStore }
@@ -100,7 +104,7 @@
 </script>
 
 {#if query !== undefined && modeSelectorProps !== undefined}
-  <IssuesView query={finalQuery} space={currentSpace} {icon} {title} {modeSelectorProps}>
+  <IssuesView bind:viewlet={currentViewlet} query={finalQuery} space={currentSpace} {icon} {title} {modeSelectorProps}>
     <svelte:fragment slot="type_selector" let:viewlet>
       {#if !allProjectsTypes}
         <TypeSelector {baseClass} project={currentSpace} allTypes={toVL(viewlet)?.descriptor === view.viewlet.List} />
