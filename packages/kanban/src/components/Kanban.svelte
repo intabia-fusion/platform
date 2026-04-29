@@ -28,7 +28,7 @@
   } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import { IconChevronDown, IconChevronRight, Scroller } from '@hcengineering/ui'
+  import { IconChevronDown, IconChevronRight, Scroller, themeStore, defaultBackground } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
   import KanbanRow from './KanbanRow.svelte'
@@ -696,7 +696,11 @@
     <Scroller horizontal>
       <div class="kanban-swimlane-root">
         <!-- sticky column headers row -->
-        <div class="swimlane-header-row" style:--kanban-col-count={categories.length}>
+        <div
+          class="swimlane-header-row"
+          style:--kanban-col-count={categories.length}
+          style:--swimlane-row-bg={defaultBackground($themeStore.dark)}
+        >
           {#each categories as state, si (typeof state === 'object' ? state.name : state)}
             {@const stateObjects = getGroupByValues(groupByDocs, state)}
             <div class="swimlane-col-header">
@@ -720,7 +724,7 @@
               class="swimlane-header"
               data-id="kanban-swimlane-header"
               data-swimlane-collapsed={isCollapsed ? 'true' : 'false'}
-              style:background-color={laneStyle?.background ?? 'var(--theme-panel-color, var(--theme-bg-color))'}
+              style:--swimlane-header-bg={laneStyle?.background ?? defaultBackground($themeStore.dark)}
               style:color={laneStyle?.color ?? 'var(--theme-caption-color)'}
               style:--swimlane-title-color={laneStyle?.color}
               on:click={() => {
@@ -938,7 +942,7 @@
     grid-template-columns: repeat(var(--kanban-col-count), var(--kanban-col-width));
     gap: var(--kanban-col-gap);
     padding: 1rem 0 0.5rem;
-    background-color: var(--theme-panel-color, var(--theme-bg-color));
+    background: var(--swimlane-row-bg);
     border-bottom: 1px solid var(--theme-divider-color);
   }
   .swimlane-col-header {
@@ -971,6 +975,7 @@
     width: max-content;
     min-width: 100%;
     box-shadow: 0 1px 0 var(--theme-divider-color);
+    background: var(--swimlane-header-bg);
   }
   .swimlane-toggle {
     display: inline-flex;
