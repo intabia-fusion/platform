@@ -4,9 +4,8 @@
   import { getClient } from '@hcengineering/presentation'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
   import { ButtonKind, ButtonSize, DropdownLabelsIntl, type DropdownIntlItem } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy } from 'svelte'
-  import { selectedTaskTypeStore, taskTypeStore } from '../..'
-  import TaskTypeListPresenter from './TaskTypeListPresenter.svelte'
+  import { createEventDispatcher } from 'svelte'
+  import { taskTypeStore } from '../..'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
 
   export let value: Ref<TaskType> | undefined
@@ -18,7 +17,6 @@
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = undefined
   export let showAlways: boolean = false
-  export let allTypes = false
 
   const client = getClient()
 
@@ -45,10 +43,6 @@
     value = items[0].id as Ref<TaskType>
     change()
   }
-
-  onDestroy(() => {
-    $selectedTaskTypeStore = undefined
-  })
 
   const dispatch = createEventDispatcher()
 
