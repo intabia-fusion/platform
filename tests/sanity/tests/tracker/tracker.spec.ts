@@ -207,7 +207,6 @@ test.describe('Tracker tests', () => {
       await settingsPage.openSettings()
       await settingsPage.selectSpaceType('Default', 'Tracker')
       await settingsPage.addTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
-      await settingsPage.checkTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
 
       await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/tracker%3Aproject%3ADefaultProject/issues`)
       await page.waitForLoadState('networkidle')
@@ -244,11 +243,13 @@ test.describe('Tracker tests', () => {
       await expect(kanbanContainer).toContainText(issueBug)
       await expect(kanbanContainer).not.toContainText(issueDefault)
 
+      const issuesPage = new IssuesPage(page)
       await page.click(ViewletSelectors.Table)
 
-      const listContainer = page.locator('.list-container')
-      await expect(listContainer).toContainText(issueDefault)
-      await expect(listContainer).toContainText(issueBug)
+      await issuesPage.searchIssueByName(issueDefault)
+      await expect(page.locator('.list-container')).toContainText(issueDefault)
+      await issuesPage.searchIssueByName(issueBug)
+      await expect(page.locator('.list-container')).toContainText(issueBug)
     })
   })
 })
