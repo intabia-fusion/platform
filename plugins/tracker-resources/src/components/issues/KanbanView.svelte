@@ -169,7 +169,84 @@
   // Category information only
   let tasks: DocWithRank[] = []
 
-  $: groupByDocs = groupBy(tasks, groupByKey, categories)
+  // Optimistic overlay: pending field updates per doc id, applied to tasks on every rebuild
+  // until live-query snapshots catch up to the target values.
+  let pendingMoves = new Map<string, Record<string, unknown>>()
+
+  function applyPendingMoves (docs: DocWithRank[]): DocWithRank[] {
+    if (pendingMoves.size === 0) return docs
+    let needsResort = false
+    const result = docs.map((d) => {
+      const overlay = pendingMoves.get(d._id)
+      if (overlay === undefined) return d
+      // Check if snapshot already matches all overlay fields — if so, drop the entry.
+      let matches = true
+      for (const k of Object.keys(overlay)) {
+        if ((d as any)[k] !== overlay[k]) {
+          matches = false
+          break
+        }
+      }
+      if (matches) {
+        // Silently drop matched overlay — do NOT trigger a follow-up reactive
+        // tick by reassigning pendingMoves. The snapshot already carries the
+        // target values, so the next render is identical with or without the
+        // entry. Reassigning here causes a visible re-render flash because
+        // groupByDocs rebuilds twice in quick succession (once with overlay,
+        // once without) before the DOM stabilizes.
+        pendingMoves.delete(d._id)
+        return d
+      }
+      if ('rank' in overlay) needsResort = true
+      return { ...d, ...overlay } satisfies DocWithRank
+    })
+    if (needsResort && orderBy !== undefined) {
+      const [field, dir] = orderBy
+      result.sort((a, b) => {
+        const av = (a as any)[field]
+        const bv = (b as any)[field]
+        if (av === bv) return 0
+        return (av < bv ? -1 : 1) * dir
+      })
+    }
+    return result
+  }
+
+  function registerPendingMove (id: string, fields: Record<string, unknown>): void {
+    pendingMoves.set(id, { ...(pendingMoves.get(id) ?? {}), ...fields })
+    pendingMoves = pendingMoves
+  }
+
+  $: effectiveTasks = pendingMoves.size > 0 ? applyPendingMoves(tasks) : tasks
+
+  // Memoize groupByDocs by a cheap content hash so that downstream Kanban
+  // re-renders only when the partitioning actually changes. Without this,
+  // every batched live-query snapshot — even one that doesn't affect this
+  // view's grouping — triggers a full Kanban prop change and KanbanRow
+  // re-mounts. We hash via a 32-bit FNV-style accumulator over keys+ids;
+  // collision probability is negligible relative to user-visible reorderings.
+  let groupByDocs: Record<string | number, DocWithRank[]> = {}
+  let lastGroupHash = 0
+  $: {
+    const next = groupBy(effectiveTasks, groupByKey, categories)
+    const keys = Object.keys(next).sort()
+    let hash = 2166136261 >>> 0
+    const mix = (s: string): void => {
+      for (let i = 0; i < s.length; i++) {
+        hash = Math.imul(hash ^ s.charCodeAt(i), 16777619) >>> 0
+      }
+    }
+    for (const k of keys) {
+      mix(k)
+      const arr = (next as any)[k] ?? []
+      hash = Math.imul(hash ^ arr.length, 16777619) >>> 0
+      for (const item of arr) mix(item._id)
+    }
+    if (hash !== lastGroupHash) {
+      lastGroupHash = hash
+      groupByDocs = next
+    }
+  }
 
   let fastDocs: DocWithRank[] = []
   let slowDocs: DocWithRank[] = []
@@ -350,7 +427,7 @@
     return lanes
   }
 
-  $: swimLanes = buildGenericLanes(swimLaneBy, tasks)
+  $: swimLanes = buildGenericLanes(swimLaneBy, effectiveTasks)
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
@@ -488,6 +565,10 @@
     bind:this={kanbanUI}
     {categories}
     {dontUpdateRank}
+    {orderBy}
+    onMoveCommit={(id, fields) => {
+      registerPendingMove(id, fields)
+    }}
     {_class}
     query={resultQuery}
     options={resultOptions}

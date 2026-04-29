@@ -29,7 +29,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import { IconChevronDown, IconChevronRight, Scroller, themeStore, defaultBackground } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy } from 'svelte'
+  import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
   import KanbanRow from './KanbanRow.svelte'
 
@@ -53,6 +53,8 @@
   export let selection: number | undefined = undefined
   export let checked: Doc[] = []
   export let dontUpdateRank: boolean = false
+  export let orderBy: [string, 1 | -1] | undefined = undefined
+  export let onMoveCommit: ((id: string, fields: Record<string, unknown>) => void) | undefined = undefined
 
   export let getUpdateProps: (doc: Doc, state: CategoryType) => DocumentUpdate<Item> | undefined
   export let getAvailableCategories: ((doc: Doc) => Promise<CategoryType[]>) | undefined = undefined
@@ -148,7 +150,8 @@
     _groupByDocs: typeof groupByDocs,
     _dragCard: Item | undefined,
     _dragCardCurrentSwimLane: SwimLane | undefined,
-    _dragCardState: CategoryType | undefined
+    _dragCardState: CategoryType | undefined,
+    _dragCardTargetIndex: number | undefined
   ): Item[] {
     const raw = getGroupByValues(_groupByDocs, category) ?? []
     const ofDoc = getSwimLaneOfDoc
@@ -162,20 +165,28 @@
       dragCardInitialSwimLane !== undefined &&
       dragCardInitialSwimLane._id === swimLane._id &&
       dragCardInitialState === category
-    if (inThisLane && isOriginal && dragCardTargetIndex === undefined) {
+    if (inThisLane && isOriginal && _dragCardTargetIndex === undefined) {
       // Card stays at its original position in the original cell — no filtering of dragCard.
       return ofDoc === undefined ? raw : raw.filter((doc) => doc._id === _dragCard?._id || ofDoc(doc) === swimLane._id)
     }
     const arr = raw.filter((doc) => doc._id !== _dragCard?._id)
     const filtered = ofDoc === undefined ? arr : arr.filter((doc) => ofDoc(doc) === swimLane._id)
     if (inThisLane && _dragCard !== undefined) {
-      const idx = dragCardTargetIndex
+      const idx = _dragCardTargetIndex
       if (idx !== undefined && idx >= 0 && idx <= filtered.length) {
         return [...filtered.slice(0, idx), _dragCard, ...filtered.slice(idx)]
       }
       return [...filtered, _dragCard]
     }
     return filtered
+  }
+
+  // Legacy (non-swimlane) cell values. Returns raw cell content unchanged during
+  // drag — drag preview is shown via a CSS drop-zone highlight on the target
+  // column, not by relocating the card in the DOM. This avoids a Svelte reactivity
+  // cascade across every column on every dragover and keeps drag interaction smooth.
+  function getLegacyCategoryValues (category: CategoryType, _groupByDocs: typeof groupByDocs): Item[] {
+    return getGroupByValues(_groupByDocs, category) ?? []
   }
 
   function countSwimLane (swimLane: SwimLane): number {
@@ -187,7 +198,8 @@
         groupByDocs,
         dragCard,
         dragCardCurrentSwimLane,
-        dragCardState
+        dragCardState,
+        dragCardTargetIndex
       ).length
     }
     return total
@@ -226,20 +238,69 @@
       swimUpdates = getSwimLaneUpdateProps(dragCard, targetSwimLane)
     }
 
-    if (!dontUpdateRank && dragCardInitialRank !== dragCard.rank && dragCardInitialRank !== undefined) {
-      const dragCardRank = dragCard.rank
-      updates = {
-        ...updates,
-        rank: dragCardRank
+    if (!dontUpdateRank) {
+      // Compute target rank from neighbours of the target cell (lane+state).
+      let prevRank: Rank | undefined
+      let nextRank: Rank | undefined
+      if (swimLaneMode && targetSwimLane !== undefined) {
+        const visible = getSwimLaneCategoryValues(
+          targetSwimLane,
+          state,
+          groupByDocs,
+          dragCard,
+          targetSwimLane,
+          state,
+          dragCardTargetIndex
+        )
+        const idx = visible.findIndex((p) => p._id === dragCard?._id)
+        if (idx !== -1) {
+          prevRank = visible[idx - 1]?.rank
+          nextRank = visible[idx + 1]?.rank
+        } else if (dragCardTargetIndex !== undefined) {
+          const without = visible.filter((p) => p._id !== dragCard?._id)
+          prevRank = without[dragCardTargetIndex - 1]?.rank
+          nextRank = without[dragCardTargetIndex]?.rank
+        }
+      } else {
+        const arr = getGroupByValues(groupByDocs, state) ?? []
+        const filtered = arr.filter((d) => d._id !== dragCard._id)
+        const originalIdx = arr.findIndex((d) => d._id === dragCard._id)
+        const fallback = originalIdx === -1 ? filtered.length : originalIdx
+        const idx = dragCardTargetIndex ?? fallback
+        prevRank = filtered[idx - 1]?.rank
+        nextRank = filtered[idx]?.rank
       }
-      dragCard.rank = dragCardInitialRank
+      if (prevRank !== undefined || nextRank !== undefined) {
+        const newRank = makeRank(prevRank, nextRank)
+        if (newRank !== dragCardInitialRank && newRank !== dragCard.rank) {
+          updates = { ...updates, rank: newRank }
+        }
+      } else if (dragCardInitialRank !== dragCard.rank && dragCardInitialRank !== undefined) {
+        updates = { ...updates, rank: dragCard.rank }
+      }
     }
-    if (Object.keys(updates).length > 0) {
-      await client.diffUpdate(dragCard, updates)
+    // Build the diff against current card values. Do NOT mutate the card —
+    // optimistic positioning is handled via onMoveCommit (pendingMoves overlay
+    // in the host component), which keeps live-query in charge of the actual
+    // card state until the server confirms.
+    const movedCard = dragCard
+    const rawMerged: DocumentUpdate<Item> = { ...updates, ...(swimUpdates ?? {}) }
+    const cardValues = movedCard as unknown as Record<string, unknown>
+    const merged = Object.fromEntries(
+      Object.entries(rawMerged).filter(([key, value]) => cardValues[key] !== value)
+    ) as DocumentUpdate<Item>
+
+    if (Object.keys(merged).length > 0) {
+      // Optimistic overlay in the host (KanbanView) keeps the moved card in
+      // its new column/rank until the live-query roundtrip lands; the actual
+      // card data stays under live-query control.
+      onMoveCommit?.(movedCard._id, merged as Record<string, unknown>)
     }
-    if (swimUpdates !== undefined && Object.keys(swimUpdates).length > 0) {
-      // Plain update path — getDiffUpdate strips attachedTo/space, so we must bypass it.
-      await client.update(dragCard, swimUpdates)
+    // Restore focus on the just-moved card so keyboard navigation continues
+    // from there, mirroring the mouse-hover focus path.
+    dispatch('obj-focus', { ...movedCard, ...merged })
+    if (Object.keys(merged).length > 0) {
+      await client.update(dragCard, merged)
     }
     dragCard = undefined
     dragCardAvailableCategories = undefined
@@ -252,7 +313,6 @@
   let dragCard: Item | undefined
   let dragCardInitialRank: Rank | undefined
   let dragCardInitialState: CategoryType
-  let dragCardInitialPosition: number | undefined
   let dragCardState: CategoryType | undefined
   let dragCardAvailableCategories: CategoryType[] | undefined
   let dragCardInitialSwimLane: SwimLane | undefined
@@ -261,6 +321,49 @@
   let dragCardTargetIndex: number | undefined
 
   let isDragging = false
+
+  // Auto-scroll on edge during drag.
+  let scrollerEl: HTMLElement | undefined
+  let autoScrollRaf: number | undefined
+  let lastDragX = 0
+  let lastDragY = 0
+  const EDGE_PX = 60
+  const MAX_STEP = 24
+
+  function autoScrollTick (): void {
+    autoScrollRaf = undefined
+    if (!isDragging || scrollerEl === undefined) return
+    const r = scrollerEl.getBoundingClientRect()
+    let dx = 0
+    let dy = 0
+    if (lastDragX - r.left < EDGE_PX) {
+      dx = -Math.ceil(((EDGE_PX - (lastDragX - r.left)) / EDGE_PX) * MAX_STEP)
+    } else if (r.right - lastDragX < EDGE_PX) {
+      dx = Math.ceil(((EDGE_PX - (r.right - lastDragX)) / EDGE_PX) * MAX_STEP)
+    }
+    if (lastDragY - r.top < EDGE_PX) {
+      dy = -Math.ceil(((EDGE_PX - (lastDragY - r.top)) / EDGE_PX) * MAX_STEP)
+    } else if (r.bottom - lastDragY < EDGE_PX) {
+      dy = Math.ceil(((EDGE_PX - (r.bottom - lastDragY)) / EDGE_PX) * MAX_STEP)
+    }
+    if (dx !== 0) scrollerEl.scrollLeft += dx
+    if (dy !== 0) scrollerEl.scrollTop += dy
+    if (isDragging && (dx !== 0 || dy !== 0)) autoScrollRaf = requestAnimationFrame(autoScrollTick)
+  }
+
+  function handleDragMove (e: DragEvent): void {
+    if (!isDragging) return
+    lastDragX = e.clientX
+    lastDragY = e.clientY
+    if (autoScrollRaf === undefined) autoScrollRaf = requestAnimationFrame(autoScrollTick)
+  }
+
+  function stopAutoScroll (): void {
+    if (autoScrollRaf !== undefined) {
+      cancelAnimationFrame(autoScrollRaf)
+      autoScrollRaf = undefined
+    }
+  }
 
   async function updateDone (updateValue: DocumentUpdate<Item>): Promise<void> {
     isDragging = false
@@ -291,50 +394,36 @@
 
       if (dragCardState !== state) {
         if (!swimLaneMode) {
-          const oldArr = getGroupByValues(groupByDocs, dragCardState)
-          const index = oldArr.findIndex((p) => p._id === dragCard?._id)
-          if (index !== -1) {
-            oldArr.splice(index, 1)
-            setGroupByValues(groupByDocs, dragCardState, oldArr)
+          // Move dragCard into the target column synchronously via groupByDocs
+          // mutation so Svelte renders it in its new column on the next tick.
+          // Strip dragCard from EVERY category first to prevent duplicate-key
+          // errors if a transient parent rebuild re-injected it elsewhere.
+          for (const cat of categories) {
+            const a = getGroupByValues(groupByDocs, cat) ?? []
+            const i = a.findIndex((p) => p._id === dragCard?._id)
+            if (i !== -1) {
+              a.splice(i, 1)
+              setGroupByValues(groupByDocs, cat, a)
+            }
           }
-
           const arr = getGroupByValues(groupByDocs, state) ?? []
           arr.push(dragCard)
           setGroupByValues(groupByDocs, state, arr)
         }
         dragCardState = state
-        dragCardTargetIndex = undefined
+        dragCardTargetIndex = dontUpdateRank && orderBy?.[1] === -1 ? 0 : undefined
       }
 
       if (swimLaneChanged) {
         dragCardCurrentSwimLane = swimLane
-        dragCardTargetIndex = undefined
+        dragCardTargetIndex = dontUpdateRank && orderBy?.[1] === -1 ? 0 : undefined
       }
-
       groupByDocs = groupByDocs
     }
   }
   function panelDragLeave (event: Event | undefined, state: CategoryType): void {
     event?.preventDefault()
-    if (dragCard !== undefined && state !== dragCardInitialState) {
-      if (!swimLaneMode) {
-        // We need to restore original position
-        const oldArr = getGroupByValues(groupByDocs, state)
-        const index = oldArr.findIndex((p) => p._id === dragCard?._id)
-        if (index !== -1) {
-          oldArr.splice(index, 1)
-          setGroupByValues(groupByDocs, state, oldArr)
-        }
-
-        if (dragCardInitialPosition !== undefined) {
-          const newArr = getGroupByValues(groupByDocs, dragCardInitialState)
-          newArr.splice(dragCardInitialPosition, 0, dragCard)
-          setGroupByValues(groupByDocs, dragCardInitialState, newArr)
-        }
-
-        groupByDocs = groupByDocs
-      }
-    }
+    // Legacy preview is render-only via getLegacyCategoryValues — no restore needed.
   }
 
   function dragswap (ev: MouseEvent, i: number, s: number): boolean {
@@ -347,29 +436,19 @@
     return false
   }
 
-  interface DragCardOverPos {
-    dragCardId: Ref<Doc>
-    dragCardPos: number
-    overCardId: Ref<Doc>
-    overCardPos: number
-  }
-
-  let cardOverPos: DragCardOverPos | undefined
-
   function cardDragOver (evt: CardDragEvent, object: Item, state: CategoryType): void {
     if (swimLaneMode) {
       if (dragCard === undefined || dontUpdateRank) return
       if (object._id === dragCard._id) return
       const lane = dragCardCurrentSwimLane
       if (lane === undefined) return
-      const visible = getSwimLaneCategoryValues(lane, state, groupByDocs, dragCard, lane, state)
+      const visible = getSwimLaneCategoryValues(lane, state, groupByDocs, dragCard, lane, state, dragCardTargetIndex)
       const targetIdx = visible.findIndex((p) => p._id === object._id)
       const dragIdx = visible.findIndex((p) => p._id === dragCard?._id)
       if (targetIdx === -1) return
       const insertAfter = dragswap(evt, targetIdx, dragIdx)
       if (!insertAfter) return
       const desired = dragIdx === -1 || dragIdx > targetIdx ? targetIdx : targetIdx + 1
-      // visible list excludes dragCard; map "desired position in cell" to index over filtered-without-drag
       const without = visible.filter((p) => p._id !== dragCard?._id)
       let mapped = desired
       if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
@@ -386,41 +465,33 @@
       if (updates === undefined) {
         return
       }
-      if (object._id !== dragCard._id) {
-        let arr = getGroupByValues(groupByDocs, state) ?? []
-        let dragCardIndex = -1
-        let targetIndex = -1
-        if (
-          cardOverPos !== undefined &&
-          cardOverPos.overCardId === object._id &&
-          cardOverPos.dragCardId === dragCard._id
-        ) {
-          dragCardIndex = cardOverPos.dragCardPos
-          targetIndex = cardOverPos.overCardPos
-        } else {
-          dragCardIndex = arr.findIndex((p) => p._id === dragCard?._id)
-          targetIndex = arr.findIndex((p) => p._id === object._id)
-          cardOverPos = {
-            dragCardId: dragCard._id,
-            dragCardPos: dragCardIndex,
-            overCardId: object._id,
-            overCardPos: targetIndex
-          }
-        }
-
-        if (
-          dragCardIndex !== -1 &&
-          targetIndex !== -1 &&
-          dragswap(evt, targetIndex, dragCardIndex) &&
-          arr[targetIndex] !== undefined &&
-          arr[dragCardIndex] !== undefined
-        ) {
-          arr.splice(dragCardIndex, 1)
-          arr = [...arr.slice(0, targetIndex), dragCard, ...arr.slice(targetIndex)]
-          setGroupByValues(groupByDocs, state, arr)
-          groupByDocs = groupByDocs
-          cardOverPos = undefined
-        }
+      if (object._id === dragCard._id) return
+      const arr = getGroupByValues(groupByDocs, state) ?? []
+      const targetIdx = arr.findIndex((p) => p._id === object._id)
+      const dragIdx = arr.findIndex((p) => p._id === dragCard._id)
+      if (targetIdx === -1) return
+      const targetEl = (evt.target as HTMLElement).closest('[data-card-id]')
+      const beforeTarget = (() => {
+        const h = (evt.target as HTMLElement).offsetHeight || (targetEl?.offsetHeight ?? 0)
+        return evt.offsetY < h / 2
+      })()
+      const desired = beforeTarget ? targetIdx : targetIdx + 1
+      const withoutLen = arr.length - (dragIdx !== -1 ? 1 : 0)
+      let mapped = desired
+      if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
+      if (mapped < 0) mapped = 0
+      if (mapped > withoutLen) mapped = withoutLen
+      // Reorder dragCard inside the column array so Svelte can render the
+      // preview without any imperative DOM placeholder. Strip ALL occurrences
+      // of dragCard before insertion to defend against any transient parent
+      // rebuild that may have re-added it.
+      if (mapped !== dragIdx) {
+        const next = arr.filter((p) => p._id !== dragCard?._id)
+        const insertAt = Math.max(0, Math.min(mapped, next.length))
+        next.splice(insertAt, 0, dragCard)
+        setGroupByValues(groupByDocs, state, next)
+        groupByDocs = groupByDocs
+        dragCardTargetIndex = mapped
       }
     }
   }
@@ -428,11 +499,28 @@
   async function cardDrop (evt: CardDragEvent, object: Item, state: CategoryType, swimLane?: SwimLane): Promise<void> {
     if (dragCard !== undefined) {
       let updates: DocumentUpdate<Item> | undefined
-      if (!dontUpdateRank) {
+      // Drop on the source card itself with no movement: skip rank update entirely.
+      const droppedOnSelf = object._id === dragCard._id && dragCardTargetIndex === undefined
+      const stateChanged = dragCardInitialState !== state
+      // Always pick up state-mapped fields (status, space) when the column or
+      // anything else changed — even if rank can't be derived (empty cell).
+      if (stateChanged || !droppedOnSelf) {
+        const stateUpdates = getUpdateProps(dragCard, state)
+        if (stateUpdates !== undefined) updates = stateUpdates
+      }
+      if (!dontUpdateRank && !droppedOnSelf) {
         let prevRank: Rank | undefined
         let nextRank: Rank | undefined
         if (swimLaneMode && swimLane !== undefined) {
-          const visible = getSwimLaneCategoryValues(swimLane, state, groupByDocs, dragCard, swimLane, state)
+          const visible = getSwimLaneCategoryValues(
+            swimLane,
+            state,
+            groupByDocs,
+            dragCard,
+            swimLane,
+            state,
+            dragCardTargetIndex
+          )
           const idx = visible.findIndex((p) => p._id === dragCard?._id)
           if (idx !== -1) {
             prevRank = visible[idx - 1]?.rank
@@ -440,20 +528,16 @@
           }
         } else {
           const arr = getGroupByValues(groupByDocs, state) ?? []
-          const s = arr.findIndex((p) => p._id === dragCard?._id)
-          if (s !== -1) {
-            prevRank = arr[s - 1]?.rank
-            nextRank = arr[s + 1]?.rank
-          }
+          const filtered = arr.filter((d) => d._id !== dragCard._id)
+          const originalIdx = arr.findIndex((d) => d._id === dragCard._id)
+          const fallback = originalIdx === -1 ? filtered.length : originalIdx
+          const idx = dragCardTargetIndex ?? fallback
+          prevRank = filtered[idx - 1]?.rank
+          nextRank = filtered[idx]?.rank
         }
         if (prevRank !== undefined || nextRank !== undefined) {
-          dragCard.rank = makeRank(prevRank, nextRank)
-          updates = getUpdateProps(dragCard, state)
-          if (updates === undefined) {
-            updates = { rank: dragCard.rank }
-          } else {
-            updates = { ...updates, rank: dragCard.rank }
-          }
+          const newRank = makeRank(prevRank, nextRank)
+          updates = { ...(updates ?? {}), rank: newRank }
         }
       }
       let swimUpdates: DocumentUpdate<Item> | undefined
@@ -465,6 +549,16 @@
       ) {
         swimUpdates = getSwimLaneUpdateProps(dragCard, swimLane)
       }
+      // Register optimistic overlay BEFORE awaiting server — so the live-query
+      // snapshot doesn't snap the card back to its old position while the update
+      // is in flight.
+      const overlay: Record<string, unknown> = { ...(updates ?? {}), ...(swimUpdates ?? {}) }
+      if (Object.keys(overlay).length > 0) {
+        onMoveCommit?.(dragCard._id, overlay)
+      }
+      // Restore focus on the just-moved card so keyboard navigation continues
+      // from there, mirroring the mouse-hover focus path.
+      dispatch('obj-focus', { ...dragCard, ...overlay })
       if (updates !== undefined && Object.keys(updates).length > 0) {
         await client.diffUpdate(dragCard, updates)
       }
@@ -481,8 +575,6 @@
     dragCardInitialRank = object.rank
     dragCardInitialSwimLane = swimLane
     dragCardCurrentSwimLane = swimLane
-    const items = getGroupByValues(groupByDocs, state) ?? []
-    dragCardInitialPosition = items.findIndex((p) => p._id === object._id)
     dragCard = object
     isDragging = true
     dragCardTargetIndex = undefined
@@ -540,7 +632,15 @@
 
   function getCellObjects (st: CategoryType, lane?: SwimLane): Item[] {
     if (swimLaneMode && lane !== undefined) {
-      return getSwimLaneCategoryValues(lane, st, groupByDocs, dragCard, dragCardCurrentSwimLane, dragCardState)
+      return getSwimLaneCategoryValues(
+        lane,
+        st,
+        groupByDocs,
+        dragCard,
+        dragCardCurrentSwimLane,
+        dragCardState,
+        dragCardTargetIndex
+      )
     }
     return getGroupByValues(groupByDocs, st) ?? []
   }
@@ -691,9 +791,16 @@
   }
 </script>
 
-<div class="kanban-container" class:swimlane-mode={swimLaneMode} class:compact>
+<div
+  class="kanban-container"
+  class:swimlane-mode={swimLaneMode}
+  class:compact
+  on:dragover={handleDragMove}
+  on:dragend={stopAutoScroll}
+  on:drop={stopAutoScroll}
+>
   {#if swimLaneMode}
-    <Scroller horizontal>
+    <Scroller horizontal bind:divScroll={scrollerEl}>
       <div class="kanban-swimlane-root">
         <!-- sticky column headers row -->
         <div
@@ -759,7 +866,8 @@
                     groupByDocs,
                     dragCard,
                     dragCardCurrentSwimLane,
-                    dragCardState
+                    dragCardState,
+                    dragCardTargetIndex
                   )}
                   <!-- svelte-ignore a11y-no-static-element-interactions -->
                   <div
@@ -822,10 +930,10 @@
       </div>
     </Scroller>
   {:else}
-    <Scroller horizontal contentDirection="horizontal" align="stretch" noStretch={false}>
+    <Scroller horizontal contentDirection="horizontal" align="stretch" noStretch={false} bind:divScroll={scrollerEl}>
       <div class="kanban-content">
         {#each categories as state, si (typeof state === 'object' ? state.name : state)}
-          {@const stateObjects = getGroupByValues(groupByDocs, state)}
+          {@const stateObjects = getLegacyCategoryValues(state, groupByDocs)}
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
@@ -860,6 +968,8 @@
                 {checkedSet}
                 {state}
                 {limiter}
+                initialLimit={10}
+                limitStep={20}
                 cardDragOver={(evt, obj) => {
                   cardDragOver(evt, obj, state)
                 }}
@@ -892,6 +1002,13 @@
 </div>
 
 <style lang="scss">
+  :global(.kanban-drop-placeholder) {
+    pointer-events: none;
+    outline: 2px dashed var(--theme-divider-color);
+    outline-offset: -2px;
+    border-radius: 0.25rem;
+  }
+
   .kanban-container {
     position: relative;
     width: 100%;

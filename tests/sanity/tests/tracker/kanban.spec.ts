@@ -379,6 +379,165 @@ test.describe('Kanban board', () => {
       await board.expectCardInSwimLaneCell(b, parent, backlog)
     })
 
+    test('renders Assignee swim lanes including unassigned', async ({ page }) => {
+      // Find any employee assigned to existing issues.
+      const someAssigned = await client.findOne(tracker.class.Issue, { assignee: { $ne: null } } as any)
+      const targetAssignee = someAssigned?.assignee as string | undefined
+      // Always create one unassigned card.
+      await createIssue(client, ctx, { title: `${titlePrefix}sw-asg-unassigned`, status: 'Todo' })
+      if (targetAssignee != null) {
+        await createIssue(client, ctx, {
+          title: `${titlePrefix}sw-asg-anchor`,
+          status: 'Todo',
+          assignee: targetAssignee as Ref<any>
+        })
+      }
+
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      await board.setSwimLane('Assignee')
+
+      // Unassigned lane must render.
+      await expect(page.locator('[data-id="kanban-swimlane"][data-swimlane-id="__swim_unassigned__"]')).toBeVisible()
+      // At least one swimlane present.
+      const lanes = await board.swimLanes()
+      expect(lanes.length).toBeGreaterThan(0)
+    })
+
+    test('drag in Manual order keeps card on target position (no flicker to end)', async ({ page }) => {
+      const c1 = await createIssue(client, ctx, { title: `${titlePrefix}rank-1`, status: 'Backlog', priority: 0 })
+      const c2 = await createIssue(client, ctx, { title: `${titlePrefix}rank-2`, status: 'Backlog', priority: 0 })
+      const c3 = await createIssue(client, ctx, { title: `${titlePrefix}rank-3`, status: 'Backlog', priority: 0 })
+
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      await board.setSwimLane('Priority')
+
+      // Wait for c1 to be rendered in the swimlane.
+      await board.card(c1).waitFor({ state: 'visible', timeout: 15000 })
+      const noPriorityLaneId = await page
+        .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${c1}"])`)
+        .first()
+        .getAttribute('data-swimlane-id')
+      expect(noPriorityLaneId).not.toBeNull()
+      if (noPriorityLaneId === null) return
+      if (await board.isSwimLaneCollapsed(noPriorityLaneId)) await board.toggleSwimLane(noPriorityLaneId)
+
+      const backlog = ctx.statuses.get('Backlog') as string
+      await board.expectCardInSwimLaneCell(c1, noPriorityLaneId, backlog)
+      await board.expectCardInSwimLaneCell(c2, noPriorityLaneId, backlog)
+      await board.expectCardInSwimLaneCell(c3, noPriorityLaneId, backlog)
+
+      // Drop c3 onto c2 — manual rank update. Retry under flaky CDP drag.
+      // Verify c3 stays at its target position (immediately before c2), not flicker to end.
+      await expect
+        .poll(
+          async () => {
+            try {
+              await board.dragCardToCard(c3, c2)
+            } catch {
+              // ignore single failures
+            }
+            const cardIds = await board
+              .swimLaneCell(noPriorityLaneId, backlog)
+              .locator('[data-card-id]')
+              .evaluateAll((elements) => elements.map((el) => el.getAttribute('data-card-id') ?? ''))
+            const c2Index = cardIds.indexOf(c2)
+            const c3Index = cardIds.indexOf(c3)
+            return c2Index >= 0 && c3Index >= 0 && c3Index === c2Index - 1
+          },
+          { timeout: 30000, intervals: [2000] }
+        )
+        .toBe(true)
+
+      // All three still in same cell after settle.
+      await board.expectCardInSwimLaneCell(c1, noPriorityLaneId, backlog)
+      await board.expectCardInSwimLaneCell(c2, noPriorityLaneId, backlog)
+      await board.expectCardInSwimLaneCell(c3, noPriorityLaneId, backlog)
+    })
+
+    test('Show more counter does not flicker for unrelated cells while dragging', async ({ page }) => {
+      // Create > 3 cards in one cell so Show more is visible.
+      const ids: Array<Ref<Issue>> = []
+      for (let i = 0; i < 5; i++) {
+        ids.push(
+          await createIssue(client, ctx, {
+            title: `${titlePrefix}sm-${i}`,
+            status: 'Backlog',
+            priority: 0
+          })
+        )
+      }
+      // Card to drag from a different cell (different status).
+      const dragId = await createIssue(client, ctx, {
+        title: `${titlePrefix}sm-drag`,
+        status: 'Todo',
+        priority: 0
+      })
+
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      await board.setSwimLane('Priority')
+
+      const backlog = ctx.statuses.get('Backlog') as string
+      // The Backlog cell with 5 cards should have a Show more.
+      const cellLocator = page
+        .locator(`[data-id="kanban-swimlane-cell"][data-state="${backlog}"]`)
+        .filter({ hasText: 'Show more' })
+        .first()
+      await expect(cellLocator).toBeVisible()
+
+      const card = board.card(dragId)
+      const box = await card.boundingBox()
+      expect(box).not.toBeNull()
+      if (box === null) return
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 30, { steps: 4 })
+
+      // Show more must remain visible during drag (was the bug — disappeared on every cell).
+      await expect(cellLocator).toBeVisible()
+      await page.mouse.up()
+    })
+
+    test('drop into same cell does not update document', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, {
+        title: `${titlePrefix}noop-drop`,
+        status: 'Backlog',
+        priority: 0
+      })
+
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      await board.setSwimLane('Priority')
+
+      const backlog = ctx.statuses.get('Backlog') as string
+      await board.card(cardId).waitFor({ state: 'visible', timeout: 15000 })
+      const laneId = await page
+        .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
+        .first()
+        .getAttribute('data-swimlane-id')
+      expect(laneId).not.toBeNull()
+      if (laneId === null) return
+      if (await board.isSwimLaneCollapsed(laneId)) await board.toggleSwimLane(laneId)
+      await board.expectCardInSwimLaneCell(cardId, laneId, backlog)
+
+      const before = await client.findOne(tracker.class.Issue, { _id: cardId })
+      const beforeModifiedOn = before?.modifiedOn
+      expect(beforeModifiedOn).toBeDefined()
+
+      // Drop card back into the same cell - no rank/status/lane change expected.
+      await board.dragCardToSwimLaneCell(cardId, laneId, backlog)
+
+      // Wait briefly to allow any spurious update transactions to land.
+      await page.waitForTimeout(2000)
+
+      const after = await client.findOne(tracker.class.Issue, { _id: cardId })
+      expect(after?.modifiedOn).toBe(beforeModifiedOn)
+      expect(after?.status).toBe(before?.status)
+      expect(after?.rank).toBe(before?.rank)
+    })
+
     test('toggle collapse hides cells', async ({ page }) => {
       await createIssue(client, ctx, { title: `${titlePrefix}sw-toggle`, status: 'Backlog' })
 

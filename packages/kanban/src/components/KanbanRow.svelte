@@ -27,7 +27,6 @@
   } from '@hcengineering/core'
   import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { slide } from 'svelte/transition'
   import { CardDragEvent, DocWithRank, Item } from '../types'
   import { createQuery } from '@hcengineering/presentation'
 
@@ -60,8 +59,6 @@
     return object
   }
 
-  const slideD = (node: any, args: any) => (args.isDragging ? slide(node, args) : {})
-
   const stateRefs: HTMLElement[] = []
 
   $: stateRefs.length = stateObjects.length
@@ -87,28 +84,57 @@
   let limitedObjects: IdMap<DocWithRank> = new Map()
 
   const docQuery = createQuery()
-  $: groupQuery = {
-    ...query,
-    ...(swimLaneQuery ?? {}),
-    [groupByKey]:
-      typeof state === 'object'
-        ? state.name !== undefined
-          ? { $in: state.values.flatMap((x) => x._id) }
-          : undefined
-        : state
-  }
 
-  $: docQuery.query(
-    _class,
-    groupQuery,
-    (res) => {
-      limitedObjects = toIdMap(res)
-    },
-    { ...options, limit }
-  )
+  // Avoid re-running docQuery.query on every reactive tick: rebuild the query
+  // only when its real inputs change. dragCard reordering re-runs the parent
+  // reactivity chain — without this guard we'd fire a server query per swap.
+  let queryKey = ''
+  let lastQueryKey = ''
+  $: queryKey = JSON.stringify({
+    q: query,
+    sl: swimLaneQuery ?? null,
+    gk: groupByKey,
+    s: typeof state === 'object' ? (state.name ?? state.values.flatMap((x) => x._id)) : state,
+    o: options,
+    l: limit
+  })
+
+  $: if (queryKey !== lastQueryKey) {
+    lastQueryKey = queryKey
+    const groupQuery = {
+      ...query,
+      ...(swimLaneQuery ?? {}),
+      [groupByKey]:
+        typeof state === 'object'
+          ? state.name !== undefined
+            ? { $in: state.values.flatMap((x) => x._id) }
+            : undefined
+          : state
+    }
+    docQuery.query(
+      _class,
+      groupQuery,
+      (res) => {
+        limitedObjects = toIdMap(res)
+      },
+      { ...options, limit }
+    )
+  }
 
   function getObject (_id: Ref<DocWithRank>, limitedObjects: IdMap<DocWithRank>): DocWithRank | undefined {
     return limitedObjects.get(_id) ?? (_id === dragCard?._id ? dragCard : undefined)
+  }
+
+  $: hasMoreToShow = stateObjects.some((o) => !limitedObjects.has(o._id) && o._id !== dragCard?._id)
+
+  // Force native HTML5 drag image to be the whole card wrapper instead of the
+  // narrow inner element (e.g. an anchor in the title) the user may have
+  // grabbed onto.
+  function forceWrapperDragImage (evt: DragEvent): void {
+    const target = evt.currentTarget
+    if (!(target instanceof HTMLElement) || evt.dataTransfer === null) return
+    const rect = target.getBoundingClientRect()
+    evt.dataTransfer.setDragImage(target, evt.clientX - rect.left, evt.clientY - rect.top)
   }
 </script>
 
@@ -119,12 +145,11 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       bind:this={stateRefs[i]}
-      transition:slideD|local={{ isDragging }}
       class="p-1 flex-no-shrink border-radius-1 clear-mins"
       on:dragover|preventDefault={(evt) => {
         cardDragOver(evt, object)
       }}
-      on:drop|preventDefault={(evt) => {
+      on:drop|preventDefault|stopPropagation={(evt) => {
         cardDrop(evt, object)
       }}
     >
@@ -142,10 +167,9 @@
         }}
         draggable={true}
         class:draggable={true}
-        on:dragstart
-        on:dragend
         class:dragged
-        on:dragstart={() => {
+        on:dragstart={(evt) => {
+          forceWrapperDragImage(evt)
           onDragStart(object, state)
         }}
         on:dragend={() => {
@@ -159,7 +183,7 @@
     </div>
   {/if}
 {/each}
-{#if stateObjects.length > limitedObjects.size + (isDragging ? 1 : 0)}
+{#if stateObjects.length > limit && hasMoreToShow}
   <div class="p-1 flex-no-shrink clear-mins">
     <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
       <span class="caption-color">{limitedObjects.size}</span> <span>/</span><span>{stateObjects.length}</span>
