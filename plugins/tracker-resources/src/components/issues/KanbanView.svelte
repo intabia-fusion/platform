@@ -376,7 +376,7 @@
   let swimLaneAccents = new Map<string, ColorDefinition>()
   function setSwimLaneAccent (id: string, ev: CustomEvent<ColorDefinition>): void {
     const prev = swimLaneAccents.get(id)
-    if (prev?.name === ev.detail?.name) return
+    if (prev?.name === ev.detail?.name && prev?.background === ev.detail?.background) return
     swimLaneAccents.set(id, ev.detail)
     swimLaneAccents = swimLaneAccents
   }
