@@ -83,6 +83,7 @@
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'
+  import { componentStore } from '../../component'
   import { activeProjects, IssuePriorityColor } from '../../utils'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
@@ -379,21 +380,31 @@
     })
   }
 
-  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean } {
+  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean, title?: string } {
     if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
     if (swimLaneBy === 'attachedTo' && v === tracker.ids.NoParent) {
       return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
+    }
+    // Components with the same label may exist in different projects — group
+    // them under one swimlane keyed by the (case-folded, trimmed) label so the
+    // user sees a single "Chat" lane instead of one per project.
+    if (swimLaneBy === 'component') {
+      const c = $componentStore.get(v as Ref<Doc>)
+      if (c !== undefined) {
+        const label = c.label
+        return { key: 'component:' + label.toLowerCase().trim(), value: v, empty: false, title: label }
+      }
     }
     return { key: String(v), value: v, empty: false }
   }
 
   function buildGenericLanes (field: string, tasks: DocWithRank[]): SwimLane[] {
     if (field === 'none' || field === '') return []
-    const seen = new Map<string, { value: unknown, empty: boolean }>()
+    const seen = new Map<string, { value: unknown, empty: boolean, title?: string }>()
     for (const t of tasks) {
       const raw = getObjectValue(field, t)
       const n = normalizeSwimValue(raw)
-      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty })
+      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty, title: n.title })
     }
     // Priority has a fixed ordered set; preseed to keep empty lanes too.
     if (field === 'priority') {
@@ -404,10 +415,10 @@
     }
     const lanes: SwimLane[] = []
     let unassigned: SwimLane | undefined
-    for (const [key, { value, empty }] of seen) {
+    for (const [key, { value, empty, title }] of seen) {
       const lane: SwimLane = {
         _id: key,
-        title: empty ? emptyLabel : '',
+        title: empty ? emptyLabel : (title ?? ''),
         value,
         icon: field === 'priority' && !empty ? issuePriorities[value as IssuePriority]?.icon : undefined
       }
@@ -443,7 +454,22 @@
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
     if (IMMUTABLE_SWIM_FIELDS.has(swimLaneBy)) return undefined
-    const update: DocumentUpdate<Item> = { [swimLaneBy]: swimLane.value } as unknown as DocumentUpdate<Item>
+    let value: unknown = swimLane.value
+    // Components are aggregated by label across projects; pick the ref that
+    // belongs to the dropped issue's project, or skip the update entirely if
+    // this lane has no matching component for the issue's project.
+    if (swimLaneBy === 'component') {
+      const docSpace = (doc as any).space
+      const lane = $componentStore.filter(
+        (c) =>
+          c.label.toLowerCase().trim() === ($componentStore.get(swimLane.value as Ref<Doc>)?.label ?? '').toLowerCase().trim() &&
+          c.space === docSpace
+      )
+      const match = lane.length > 0 ? lane[0]._id : undefined
+      if (match === undefined) return undefined
+      value = match
+    }
+    const update: DocumentUpdate<Item> = { [swimLaneBy]: value } as unknown as DocumentUpdate<Item>
     if (swimLaneBy === 'attachedTo') {
       ;(update as any).attachedToClass = tracker.class.Issue
     }
