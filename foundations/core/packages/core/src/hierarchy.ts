@@ -248,7 +248,7 @@ export class Hierarchy {
           result.push(_id)
         }
       } catch (e) {
-        console.error(e)
+        // ignore
       }
     }
 

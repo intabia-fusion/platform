@@ -186,21 +186,61 @@
     }
   }
 
+  let resolvingShortLink = false
+
   function handleLocation (loc: Location): void {
     if (loc.path[0] !== 'meetings') {
       return
     }
     const q = loc.query ?? {}
+    const shortId = loc.path[1] // /meetings/aB3kR9mXqW2p
 
-    guestToken = q.guestToken ?? undefined
-
-    if (guestToken == null) {
+    if (q.guestToken != null) {
+      guestToken = q.guestToken
+      errorMessage = null
+      void fetchGuestInfo(0)
+    } else if (shortId != null && shortId !== '') {
+      errorMessage = null
+      resolvingShortLink = true
+      void resolveShortLink(shortId).then((resolved) => {
+        resolvingShortLink = false
+        if (resolved == null) {
+          errorMessage = love.string.InvalidOrExpiredLink
+          guestInfo = null
+        } else {
+          guestToken = resolved
+          void fetchGuestInfo(0)
+        }
+      })
+    } else {
       errorMessage = love.string.InvalidOrExpiredLink
       guestInfo = null
-    } else {
-      errorMessage = null
-      // Fire-and-forget: fetch guest info and attempt to resolve workspace
-      void fetchGuestInfo(0)
+    }
+  }
+
+  async function resolveShortLink (shortId: string): Promise<string | null> {
+    try {
+      const accountEndpoint = getMetadata(login.metadata.AccountsUrl)
+      if (accountEndpoint == null || accountEndpoint === '') {
+        console.error('[GuestMeetingApp] Accounts endpoint not configured')
+        return null
+      }
+
+      const resp = await fetch(`${accountEndpoint}/api/v1/resolveShortLink/${shortId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!resp.ok) {
+        console.error('[GuestMeetingApp] Failed to resolve short link', resp.status)
+        return null
+      }
+
+      const data = await resp.json()
+      return data?.payload ?? null
+    } catch (err: any) {
+      console.error('[GuestMeetingApp] resolveShortLink error', err)
+      return null
     }
   }
 
@@ -476,6 +516,10 @@
           />
         </div>
       {/if}
+    {:else if resolvingShortLink}
+      <div class="center">
+        <div class="message">{love.string.ResolvingLink}</div>
+      </div>
     {:else}
       <!-- In case location hasn't been populated yet we show a small loader/placeholder -->
       <div class="center">

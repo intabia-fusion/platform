@@ -210,15 +210,18 @@ async function createReferenceTxes (
       await control.findAll(control.ctx, core.class.Collaborator, { collaborator: account, attachedTo: ref.srcDocId })
     )[0]
 
-    if (collaborator == null) {
+    const spaceDoc = (await control.findAll(control.ctx, core.class.Space, { _id: space }))[0]
+    if (spaceDoc == null) return []
+
+    const isSpaceAvailable = !spaceDoc.private || spaceDoc.members.includes(account)
+    if (collaborator == null && isSpaceAvailable) {
       const srcDoc = (await control.findAll(control.ctx, ref.srcDocClass, { _id: ref.srcDocId }))[0]
       if (srcDoc != null) {
         res.push(...getAddCollaboratorsTxes(srcDoc._id, srcDoc._class, srcDoc.space, control, [account]))
       }
     }
 
-    const spaceDoc = (await control.findAll(control.ctx, core.class.Space, { _id: space }))[0]
-    if (spaceDoc != null && !spaceDoc.private && !spaceDoc.members.includes(account)) {
+    if (!spaceDoc.private && !spaceDoc.members.includes(account)) {
       res.push(
         control.txFactory.createTxUpdateDoc(spaceDoc._class, spaceDoc.space, spaceDoc._id, {
           $push: { members: account }

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, getCurrentAccount } from '@hcengineering/core'
-  import { Scroller, Label } from '@hcengineering/ui'
+  import { AccountRole, Doc, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { Scroller, Label, ButtonIcon, IconEdit, showPopup, Menu, SearchInput } from '@hcengineering/ui'
   import { SpecialNavModel } from '@hcengineering/workbench'
   import { NavLink } from '@hcengineering/view-resources'
   import { TreeSeparator } from '@hcengineering/workbench-resources'
   import { Chat } from '@hcengineering/chunter'
   import { createQuery } from '@hcengineering/presentation'
+  import contact, { Employee } from '@hcengineering/contact'
 
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'
@@ -32,26 +34,99 @@
 
   const me = getCurrentAccount()
   const pinnedChatsQuery = createQuery()
+  const employeesQuery = createQuery()
 
+  let search: string = ''
+
+  let employees: Employee[] = []
   let pinned: Chat[] = []
 
-  pinnedChatsQuery.query(
+  $: pinnedChatsQuery.query(
     chunter.class.Chat,
     {
       pinned: true,
-      hidden: false,
-      account: me.uuid
+      account: me.uuid,
+      ...(search !== ''
+        ? {
+            $search: `*${search}*`,
+            $searchStrict: true
+          }
+        : {
+            hidden: false
+          })
     },
     (res) => {
       pinned = res
     }
   )
+
+  $: if (search !== '') {
+    employeesQuery.query(
+      contact.mixin.Employee,
+      {
+        $search: `*${search}*`,
+        $searchStrict: true
+      },
+      (res) => {
+        employees = res
+      },
+      {
+        limit: 20
+      }
+    )
+  } else {
+    employeesQuery.unsubscribe()
+    employees = []
+  }
+
+  const globalActions = [
+    {
+      label: chunter.string.NewChannel,
+      icon: chunter.icon.Hashtag,
+      action: async (): Promise<void> => {
+        showPopup(chunter.component.CreateChannel, {}, 'top')
+      }
+    },
+    {
+      label: chunter.string.NewDirectChat,
+      icon: chunter.icon.Thread,
+      action: async (): Promise<void> => {
+        showPopup(chunter.component.CreateDirectChat, {}, 'top')
+      }
+    }
+  ]
+
+  let pressed: boolean = false
+
+  function handlePenClick (ev: Event): void {
+    pressed = true
+    showPopup(Menu, { actions: globalActions }, ev.target as HTMLElement, () => {
+      pressed = false
+    })
+  }
 </script>
 
 <div class="hulyNavPanel-header header">
-  <span class="overflow-label">
-    <Label label={chunter.string.Chat} />
+  <span class="overflow-label label">
+    {#if search === ''}
+      <Label label={chunter.string.Chat} />
+    {/if}
   </span>
+
+  {#if hasAccountRole(getCurrentAccount(), AccountRole.User)}
+    <div class="header-actions">
+      <SearchInput bind:value={search} collapsed kind="ghost" width="100%" />
+      <ButtonIcon
+        icon={IconEdit}
+        hasMenu
+        {pressed}
+        size="small"
+        kind="tertiary"
+        inheritColor
+        on:click={handlePenClick}
+      />
+    </div>
+  {/if}
 </div>
 
 {#each chatSpecials as special, row}
@@ -67,13 +142,40 @@
 
 <Scroller shrink bottomPadding="3rem">
   {#each chatNavGroupModels as model (model.id)}
-    <ChatNavGroup {object} {chat} {model} {pinned} on:select />
+    <ChatNavGroup {object} {chat} {model} {pinned} {search} {employees} on:select />
   {/each}
 </Scroller>
 
 <style lang="scss">
   .header {
     min-height: 0;
+    position: relative;
+  }
+
+  .label {
+    min-width: fit-content;
+    position: absolute;
+    left: var(--spacing-2_5);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    justify-content: end;
+    position: relative;
+    z-index: 1;
+
+    :global(.searchInput-wrapper:focus-within),
+    :global(.searchInput-wrapper:active),
+    :global(.searchInput-wrapper.filled) {
+      background-color: var(--input-opaque-BackgroundColor) !important;
+    }
   }
 
   .divider {

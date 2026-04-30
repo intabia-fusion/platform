@@ -255,6 +255,8 @@
     "EightHoursLength": "Osm hodin",
     "HourLabel": "h",
     "MinuteLabel": "m",
+    "AlreadyReportedThisDay": "Tento den již nahlášeno: {hours} h",
+    "FixToEightHours": "Upravit na 8 h",
     "Saved": "Uloženo...",
     "CreatedIssue": "Úkol vytvořen",
     "CreatedSubIssue": "Podúkol vytvořen",

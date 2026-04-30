@@ -38,6 +38,7 @@ import core, {
   FindOptions,
   FindResult,
   generateId,
+  platformNow,
   LoadModelResponse,
   type MeasureContext,
   MeasureMetricsContext,
@@ -63,10 +64,25 @@ const SECOND = 1000
 const pingTimeout = 10 * SECOND
 const hangTimeout = 5 * 60 * SECOND
 const dialTimeout = 30 * SECOND
+// After visibilitychange -> visible we probe with short timeout.
+const visibilityProbeTimeout = 1 * SECOND
+// Jitter window for reconnect resend storm.
+const reconnectJitterMs = 300
+// Throttle window for noisy diagnostics logs in hot paths.
+const diagLogThrottleMs = 5 * SECOND
+
+interface MeasureData {
+  time: number
+  serverTime: number
+  queue: number
+  result: any
+  compressedSize: number
+  uncompressedSize: number
+}
 
 class RequestPromise {
-  startTime: number = Date.now()
-  handleTime?: (diff: number, result: any, serverTime: number, queue: number, toRecieve: number) => void
+  startTime: number = platformNow()
+  handleTime?: (data: MeasureData) => void
   readonly promise: Promise<any>
   resolve!: (value?: any) => void
   reject!: (reason?: any) => void
@@ -114,11 +130,15 @@ class Connection implements ClientConnection {
 
   private upgrading: boolean = false
 
-  private pingResponse: number = Date.now()
+  private pingResponse: number = platformNow()
 
   private helloReceived: boolean = false
 
   private account: Account | undefined
+
+  private visibilityHandler?: () => void
+  private lastReconnectAt: number = 0
+  private lastVisibilityLogAt: number = 0
 
   onConnect?: (event: ClientConnectEvent, lastTx: string | undefined, data: any) => Promise<void>
 
@@ -158,7 +178,62 @@ class Connection implements ClientConnection {
     this.pushHandler(handler)
     this.onConnect = opt?.onConnect
 
+    this.installVisibilityHandler()
+
     this.scheduleOpen(this.ctx, false)
+  }
+
+  private installVisibilityHandler (): void {
+    if (typeof document === 'undefined') return
+    this.visibilityHandler = () => {
+      if (this.closed) return
+      if (document.visibilityState !== 'visible') return
+      const sinceLastPong = platformNow() - this.pingResponse
+      const pendingCount = this.requests.size
+      const readyState = this.websocket?.readyState
+      const now = platformNow()
+      if (now - this.lastVisibilityLogAt > diagLogThrottleMs) {
+        this.lastVisibilityLogAt = now
+        console.log('[conn] visibility=visible', {
+          readyState,
+          pendingCount,
+          sinceLastPong,
+          helloReceived: this.helloReceived,
+          workspace: this.workspace
+        })
+      }
+      // If socket dead / not ready - force reconnect immediately.
+      if (this.websocket === null || readyState !== ClientSocketReadyState.OPEN || !this.helloReceived) {
+        console.log('[conn] visibility -> force reconnect (socket not ready)')
+        this.scheduleOpen(this.ctx, true)
+        return
+      }
+      // Probe with short timeout. If pong not arrive -> force reconnect.
+      const probeStart = platformNow()
+      const probeSocket = this.websocket
+      void this.sendRequest({
+        method: pingConst,
+        params: [],
+        once: true,
+        handleResult: async () => {
+          if (this.websocket === probeSocket) {
+            this.pingResponse = platformNow()
+          }
+        }
+      }).catch(() => {})
+      setTimeout(() => {
+        if (this.closed) return
+        if (this.websocket !== probeSocket) return
+        if (this.pingResponse < probeStart) {
+          console.log('[conn] visibility probe timeout -> force reconnect', {
+            probeTimeout: visibilityProbeTimeout,
+            pendingCount: this.requests.size
+          })
+          this.scheduleOpen(this.ctx, true)
+        }
+      }, visibilityProbeTimeout)
+    }
+    document.addEventListener('visibilitychange', this.visibilityHandler)
   }
 
   pushHandler (handler: TxHandler): void {
@@ -171,7 +246,7 @@ class Connection implements ClientConnection {
   }
 
   private schedulePing (socketId: number): void {
-    this.pingResponse = Date.now()
+    this.pingResponse = platformNow()
     const wsocket = this.websocket
 
     clearInterval(this.interval)
@@ -180,11 +255,17 @@ class Connection implements ClientConnection {
         clearInterval(this.interval)
         return
       }
-      if (!this.upgrading && this.pingResponse !== 0 && Date.now() - this.pingResponse > hangTimeout) {
+      if (!this.upgrading && this.pingResponse !== 0 && platformNow() - this.pingResponse > hangTimeout) {
         // No ping response from server.
 
         if (this.websocket !== null) {
-          console.log('no ping response from server. Closing socket.', socketId, this.workspace, this.user)
+          console.log('no ping response from server. Closing socket.', {
+            socketId,
+            workspace: this.workspace,
+            user: this.user,
+            sinceLastPong: platformNow() - this.pingResponse,
+            pendingCount: this.requests.size
+          })
           clearInterval(this.interval)
           this.websocket.close(1000)
           return
@@ -192,6 +273,14 @@ class Connection implements ClientConnection {
       }
 
       if (!this.closed) {
+        const sinceLastPong = platformNow() - this.pingResponse
+        if (sinceLastPong > pingTimeout * 2 && this.requests.size > 0) {
+          console.log('[conn] ping tick - no pong but pending requests', {
+            sinceLastPong,
+            pendingCount: this.requests.size,
+            socketId
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         void this.sendRequest({
           method: pingConst,
@@ -199,7 +288,7 @@ class Connection implements ClientConnection {
           once: true,
           handleResult: async (result) => {
             if (this.websocket === wsocket) {
-              this.pingResponse = Date.now()
+              this.pingResponse = platformNow()
             }
           }
         }).catch((err) => {
@@ -216,6 +305,10 @@ class Connection implements ClientConnection {
     clearTimeout(this.openAction)
     clearTimeout(this.dialTimer)
     clearInterval(this.interval)
+    if (this.visibilityHandler !== undefined && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler)
+      this.visibilityHandler = undefined
+    }
     for (const handler of this.onConnectHandlers) {
       handler.reject(new Error('Connection closed'))
     }
@@ -286,7 +379,11 @@ class Connection implements ClientConnection {
   currentRateLimit: RateLimitInfo | undefined
   slowDownTimer = 0
 
-  handleMsg (socketId: number, resp: Response<any>): void {
+  handleMsg (
+    socketId: number,
+    resp: Response<any>,
+    sizes: { compressedSize: number, uncompressedSize: number } = { compressedSize: 0, uncompressedSize: 0 }
+  ): void {
     if (this.closed) {
       return
     }
@@ -381,8 +478,26 @@ class Connection implements ClientConnection {
           h.resolve()
         }
 
-        for (const [, v] of this.requests.entries()) {
-          v.reconnect?.()
+        this.lastReconnectAt = platformNow()
+        const pendingReqs = [...this.requests.values()]
+        if (pendingReqs.length > 0) {
+          const oldest = pendingReqs.reduce((m, r) => Math.max(m, platformNow() - r.startTime), 0)
+          console.log('[conn] hello reconnect resend', {
+            count: pendingReqs.length,
+            oldestAgeMs: oldest,
+            workspace: this.workspace
+          })
+        }
+        // Jitter resend to avoid burst on recovered slow mobile networks.
+        for (const v of pendingReqs) {
+          const delay = Math.floor(Math.random() * reconnectJitterMs)
+          if (delay === 0) {
+            v.reconnect?.()
+          } else {
+            setTimeout(() => {
+              if (!this.closed) v.reconnect?.()
+            }, delay)
+          }
         }
 
         void this.onConnect?.(
@@ -449,13 +564,14 @@ class Connection implements ClientConnection {
       }
 
       const request = this.requests.get(resp.id)
-      promise.handleTime?.(
-        Date.now() - promise.startTime,
-        resp.result,
-        resp.time ?? 0,
-        resp.queue ?? 0,
-        Date.now() - (resp.bfst ?? 0)
-      )
+      promise.handleTime?.({
+        time: platformNow() - promise.startTime,
+        result: resp.result,
+        serverTime: resp.time ?? 0,
+        queue: resp.queue ?? 0,
+        compressedSize: sizes.compressedSize,
+        uncompressedSize: sizes.uncompressedSize
+      })
       this.requests.delete(resp.id)
       if (resp.error !== undefined) {
         console.log(
@@ -512,7 +628,7 @@ class Connection implements ClientConnection {
         return true
       }
       if (text === pongConst) {
-        this.pingResponse = Date.now()
+        this.pingResponse = platformNow()
         return true
       }
     }
@@ -564,7 +680,7 @@ class Connection implements ClientConnection {
         return
       }
       if (event.data === pongConst) {
-        this.pingResponse = Date.now()
+        this.pingResponse = platformNow()
         return
       }
       if (event.data === pingConst) {
@@ -584,6 +700,7 @@ class Connection implements ClientConnection {
               // Support ping/pong
               return
             }
+            const compressedSize = data.byteLength
             if (this.compressionMode && this.helloReceived) {
               try {
                 data = uncompress(data)
@@ -592,9 +709,10 @@ class Connection implements ClientConnection {
                 console.error(err)
               }
             }
+            const uncompressedSize = data.byteLength
             try {
               const resp = this.rpcHandler.readResponse<any>(data, this.binaryMode)
-              this.handleMsg(socketId, resp)
+              this.handleMsg(socketId, resp, { compressedSize, uncompressedSize })
             } catch (err: any) {
               if (!this.helloReceived) {
                 // Just error and ignore for now.
@@ -609,6 +727,7 @@ class Connection implements ClientConnection {
           })
       } else {
         let data = event.data
+        const compressedSize = typeof data === 'string' ? data.length : (data?.byteLength ?? 0)
         if (this.compressionMode && this.helloReceived) {
           try {
             data = uncompress(data)
@@ -617,9 +736,10 @@ class Connection implements ClientConnection {
             console.error(err)
           }
         }
+        const uncompressedSize = typeof data === 'string' ? data.length : (data?.byteLength ?? 0)
         try {
           const resp = this.rpcHandler.readResponse<any>(data, this.binaryMode)
-          this.handleMsg(socketId, resp)
+          this.handleMsg(socketId, resp, { compressedSize, uncompressedSize })
         } catch (err: any) {
           if (!this.helloReceived) {
             // Just error and ignore for now.
@@ -635,6 +755,12 @@ class Connection implements ClientConnection {
         wsocket.close()
         return
       }
+      console.log('[conn] wsocket.onclose', {
+        code: ev.code,
+        reason: ev.reason,
+        pendingCount: this.requests.size,
+        workspace: this.workspace
+      })
       this.scheduleOpen(this.ctx, true)
     }
     wsocket.onopen = () => {
@@ -673,7 +799,7 @@ class Connection implements ClientConnection {
     retry?: () => Promise<boolean>
     handleResult?: (result: any) => Promise<void>
     once?: boolean // Require handleResult to retrieve result
-    measure?: (time: number, result: any, serverTime: number, queue: number, toRecieve: number) => void
+    measure?: (data: MeasureData) => void
     allowReconnect?: boolean
     overrideId?: number
   }): Promise<any> {
@@ -714,7 +840,7 @@ class Connection implements ClientConnection {
         }
         promise.sendData = (): void => {
           if (this.websocket?.readyState === ClientSocketReadyState.OPEN) {
-            promise.startTime = Date.now()
+            promise.startTime = platformNow()
 
             if (data.method !== pingConst) {
               const dta = this.rpcHandler.serialize(
@@ -775,24 +901,28 @@ class Connection implements ClientConnection {
     const result = await this.sendRequest({
       method: 'findAll',
       params: [_class, query, options],
-      measure: (time, result, serverTime, queue, toReceive) => {
+      measure: ({ time, serverTime, queue, result, compressedSize, uncompressedSize }) => {
         if (typeof window !== 'undefined' && (time > 1000 || serverTime > 500)) {
-          console.error(
-            'measure slow findAll',
+          console.error('measure slow findAll', {
             time,
             serverTime,
-            toReceive,
             queue,
             _class,
             query,
             options,
-            result,
-            JSON.stringify(result).length
-          )
+            reason: time > 1000 ? 'time' : 'serverTime',
+            compressedSize,
+            uncompressedSize,
+            ratio: compressedSize > 0 && uncompressedSize > 0 ? (uncompressedSize / compressedSize).toFixed(2) : 'n/a',
+            count: result.length,
+            lookupDocs: result.lookupMap !== undefined ? Object.keys(result.lookupMap).length : 0,
+            pendingCount: this.requests.size,
+            sinceReconnectMs: this.lastReconnectAt === 0 ? -1 : platformNow() - this.lastReconnectAt
+          })
         }
       }
     })
-    if (result.lookupMap !== undefined) {
+    if (result.lookupMap != null) {
       // We need to extract lookup map to document lookups
       for (const d of result) {
         if (d.$lookup !== undefined) {

@@ -9,7 +9,7 @@ export function normalizeTextMessage (message: string): string {
   return trimmed
 }
 
-export function getSenderName (sender: Sender, lastNameFirst: string): string {
+export function getSenderName (sender: Sender, lastNameFirst?: string): string {
   if (sender.socialId === core.account.System || sender.socialId === core.account.ConfigUser) {
     return 'System'
   }
@@ -22,5 +22,5 @@ export function getSenderName (sender: Sender, lastNameFirst: string): string {
     return 'Unknown user'
   }
 
-  return formatName(person.name, lastNameFirst)
+  return formatName(person.name, lastNameFirst ?? 'false')
 }

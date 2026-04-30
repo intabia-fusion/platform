@@ -52,7 +52,8 @@ import type {
   DBFlavor,
   WorkspacePermission,
   AccountWorkspacePresence,
-  AccountWorkspaceBadgeStatus
+  AccountWorkspaceBadgeStatus,
+  ShortLink
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -534,6 +535,7 @@ export class PostgresAccountDB implements AccountDB {
   accountEvent: PostgresDbCollection<AccountEvent>
   otp: PostgresDbCollection<OTP>
   invite: PostgresDbCollection<WorkspaceInvite, 'id'>
+  shortLink: PostgresDbCollection<ShortLink, 'id'>
   mailbox: PostgresDbCollection<Mailbox, 'mailbox'>
   mailboxSecret: PostgresDbCollection<MailboxSecret>
   integration: PostgresDbCollection<Integration>
@@ -579,6 +581,12 @@ export class PostgresAccountDB implements AccountDB {
       ns,
       idKey: 'id',
       timestampFields: ['expiresOn'],
+      withRetryClient
+    })
+    this.shortLink = new PostgresDbCollection<ShortLink, 'id'>('short_links', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdAt'],
       withRetryClient
     })
     this.mailbox = new PostgresDbCollection<Mailbox, 'mailbox'>('mailbox', client, { ns, withRetryClient })

@@ -60,6 +60,7 @@ import { encodeObjectURI } from '@hcengineering/view'
 import { Presenter, PresenterControl } from '@hcengineering/server-activity'
 
 import { JoinChannelTypeMatch } from './utils'
+import { ChatSearchTitleProvider } from './search'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -515,6 +516,7 @@ export default async () => ({
     CommentRemove,
     ChannelUrlPresenter: channelURLPresenter,
     ChannelTitlePresenter: channelTitlePresenter,
-    JoinChannelTypeMatch
+    JoinChannelTypeMatch,
+    ChatSearchTitleProvider
   }
 })

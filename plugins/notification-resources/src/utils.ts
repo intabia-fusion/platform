@@ -719,17 +719,14 @@ function arrayBufferToBase64 (buffer: ArrayBuffer | null): string {
 }
 
 export function notificationsComparator (notifications1: InboxNotification, notifications2: InboxNotification): number {
-  const createdOn1 = notifications1.createdOn ?? 0
-  const createdOn2 = notifications2.createdOn ?? 0
+  const time1 = notifications1.createdOn ?? notifications1.modifiedOn ?? 0
+  const time2 = notifications2.createdOn ?? notifications2.modifiedOn ?? 0
 
-  if (createdOn1 > createdOn2) {
-    return -1
-  }
-  if (createdOn1 < createdOn2) {
-    return 1
+  if (time1 !== time2) {
+    return time2 - time1
   }
 
-  return 0
+  return notifications1._id.localeCompare(notifications2._id)
 }
 
 export function isNotificationAllowed (type: NotificationType, providerId: Ref<NotificationProvider>): boolean {

@@ -7,7 +7,7 @@
     "ResourceUsage": "Использование ресурсов",
     "DriveSize": "Размер файлов",
     "DriveCount": "Количество файлов",
-    "OfficeSessionsDuration": "Время встреч",
+    "OfficeSessionsDuration": "Сумма минут по всем участникам",
     "OfficeSessionsBandwidth": "Трафик встреч",
     "OfficeEgressDuration": "Время записи",
     "AI": "AI",

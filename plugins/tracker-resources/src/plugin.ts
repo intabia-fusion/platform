@@ -310,6 +310,8 @@ export default mergeIds(trackerId, tracker, {
     EightHoursLength: '' as IntlString,
     HourLabel: '' as IntlString,
     MinuteLabel: '' as IntlString,
+    AlreadyReportedThisDay: '' as IntlString,
+    FixToEightHours: '' as IntlString,
     Saved: '' as IntlString,
     CreatedIssue: '' as IntlString,
     CreatedSubIssue: '' as IntlString,

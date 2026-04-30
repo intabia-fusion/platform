@@ -15,6 +15,7 @@
 
 import core, {
   AccountUuid,
+  Branding,
   Class,
   Doc,
   generateId,
@@ -40,6 +41,7 @@ import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server
 import { withRetry } from '@hcengineering/retry'
 import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
 import {
+  loadBrandingMap,
   type PlatformQueue,
   type PlatformQueueProducer,
   type QueueOnlineUserTx,
@@ -80,6 +82,8 @@ export class Worker {
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
 
   private aiBotAccountUuid?: AccountUuid
+
+  private readonly brandingMap = loadBrandingMap(config.BrandingPath)
 
   constructor (
     private readonly ctx: MeasureContext,
@@ -543,7 +547,10 @@ export class Worker {
         const client = createRestClient(endpoint, ws, token)
 
         const { model, hierarchy } = await client.getModel(true)
-
+        const branding: Branding | undefined =
+          wsInfo.branding !== undefined && wsInfo.branding !== ''
+            ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
+            : this.brandingMap[Object.keys(this.brandingMap)[0]]
         const workspace = await Workspace.create(
           ctx.newChild(ws, {}),
           wsInfo,
@@ -552,6 +559,7 @@ export class Worker {
           this.modelTxes,
           this.storage,
           client,
+          branding,
           this.txTypes
         )
 

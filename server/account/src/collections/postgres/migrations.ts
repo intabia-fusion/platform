@@ -84,7 +84,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV24Migration(ns, flavor),
     getV25Migration(ns, flavor),
     getV26Migration(ns, flavor),
-    getV27Migration(ns, flavor)
+    getV27Migration(ns, flavor),
+    getV28Migration(ns, flavor)
   ]
 }
 
@@ -813,7 +814,30 @@ function getV25Migration (ns: string, flavor: DBFlavor): [string, string] {
 function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
   const types = dbTypes[flavor]
   return [
-    'account_db_v26_account_workspace_presence',
+    'account_db_v26_create_short_links_table',
+    `
+    /* ======= S H O R T   L I N K S ======= */
+    /* Short-link registry: maps a random short id to an arbitrary payload string */
+    /* Currently used for guest meeting links, but applicable to any shareable URL */
+    CREATE TABLE IF NOT EXISTS ${ns}.short_links (
+        id           ${types.string}  NOT NULL,
+        payload  ${types.string}  NOT NULL,
+        workspace_id ${types.string}  NOT NULL,
+        created_at   BIGINT          NOT NULL DEFAULT current_epoch_ms(),
+        CONSTRAINT short_links_pk PRIMARY KEY (id)
+    );
+
+    /* ======= I N D E X E S ======= */
+    CREATE INDEX IF NOT EXISTS short_links_workspace_idx ON ${ns}.short_links (workspace_id);
+    CREATE INDEX IF NOT EXISTS short_links_created_at_idx ON ${ns}.short_links (created_at);
+    `
+  ]
+}
+
+function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v27_account_workspace_presence',
     `
     /* ======= A C C O U N T   W O R K S P A C E   P R E S E N C E ======= */
     CREATE TABLE IF NOT EXISTS ${ns}.account_workspace_presence (
@@ -833,10 +857,10 @@ function getV26Migration (ns: string, flavor: DBFlavor): [string, string] {
   ]
 }
 
-function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
+function getV28Migration (ns: string, flavor: DBFlavor): [string, string] {
   const types = dbTypes[flavor]
   return [
-    'account_db_v27_account_workspace_badge_status',
+    'account_db_v28_account_workspace_badge_status',
     `
     /* ======= A C C O U N T   W O R K S P A C E   B A D G E   S T A T U S ======= */
     CREATE TABLE IF NOT EXISTS ${ns}.account_workspace_badge_status (

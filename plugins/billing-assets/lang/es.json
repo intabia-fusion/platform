@@ -7,7 +7,7 @@
     "ResourceUsage": "Uso de recursos",
     "DriveSize": "Tamaño de archivos",
     "DriveCount": "Cantidad de archivos",
-    "OfficeSessionsDuration": "Tiempo de reuniones",
+    "OfficeSessionsDuration": "Total de minutos por participante",
     "OfficeSessionsBandwidth": "Ancho de banda de reuniones",
     "OfficeEgressDuration": "Tiempo de grabación",
     "AI": "IA",

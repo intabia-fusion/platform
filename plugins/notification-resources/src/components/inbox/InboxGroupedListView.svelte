@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -41,90 +42,84 @@
   let element: HTMLDivElement | undefined
 
   let clearingContexts = new Set<Ref<DocNotifyContext>>()
-
-  let displayData: [Ref<DocNotifyContext>, DisplayInboxNotification[]][] = []
   let viewlets: ActivityNotificationViewlet[] = []
 
   void client.findAll(notification.class.ActivityNotificationViewlet, {}).then((res) => {
     viewlets = res
   })
 
-  $: updateDisplayData(data)
+  let displayData: [Ref<DocNotifyContext>, DisplayInboxNotification[]][] = []
 
-  function updateDisplayData (data: InboxData): void {
-    const result: [Ref<DocNotifyContext>, DisplayInboxNotification[]][] = Array.from(data.entries())
+  $: displayData = Array.from(data.entries()).sort(([, a], [, b]) => notificationsComparator(a[0], b[0]))
 
-    displayData = result.sort(([, notifications1], [, notifications2]) =>
-      notificationsComparator(notifications1[0], notifications2[0])
-    )
+  let stableIndex = 0
+  $: {
+    const idx = displayData.findIndex(([c]) => c === selectedContext)
+    if (idx !== -1) {
+      stableIndex = idx
+    } else if (selectedContext && !data.has(selectedContext)) {
+      // Selection move logic when current item is deleted
+      const validIndex = Math.max(0, Math.min(stableIndex, displayData.length - 1))
+      const nextContextId = displayData[validIndex]?.[0]
+      dispatch('click', { context: nextContextId ? $contextByIdStore.get(nextContextId) : undefined })
+    }
   }
 
-  async function clearContext (listSelection: number): Promise<void> {
-    const contextId = displayData[listSelection]?.[0]
-    const context = $contextByIdStore.get(contextId)
-
-    if (contextId === undefined || context === undefined) return
-
-    clearingContexts = clearingContexts.add(contextId)
+  async function clearContext (context: DocNotifyContext): Promise<void> {
+    clearingContexts = clearingContexts.add(context._id)
 
     try {
       await removeContextNotifications(context)
     } finally {
-      clearingContexts.delete(contextId)
+      clearingContexts.delete(context._id)
       clearingContexts = clearingContexts
     }
   }
 
+  function handleActionClear (index: number): void {
+    const contextId = displayData[index]?.[0]
+    const context = $contextByIdStore.get(contextId)
+    if (context != null) void clearContext(context)
+  }
+
   async function onKeydown (key: KeyboardEvent): Promise<void> {
-    if (key.code === 'ArrowUp') {
-      key.stopPropagation()
-      key.preventDefault()
-      selectIndex(listSelection - 1)
+    const actions: Record<string, () => void> = {
+      ArrowUp: () => {
+        selectIndex(listSelection - 1)
+      },
+      ArrowDown: () => {
+        selectIndex(listSelection + 1)
+      },
+      Home: () => {
+        selectIndex(0)
+      },
+      End: () => {
+        selectIndex(displayData.length - 1)
+      },
+      Enter: () => dispatch('click', { context: $contextByIdStore.get(displayData[listSelection]?.[0]) }),
+      Backspace: () => {
+        handleActionClear(listSelection)
+      },
+      Delete: () => {
+        handleActionClear(listSelection)
+      }
     }
-    if (key.code === 'ArrowDown') {
-      key.stopPropagation()
-      key.preventDefault()
-      selectIndex(listSelection + 1)
-    }
-    if (key.code === 'Home') {
-      key.stopPropagation()
-      key.preventDefault()
-      selectIndex(0)
-    }
-    if (key.code === 'End') {
-      key.stopPropagation()
-      key.preventDefault()
-      selectIndex(displayData.length - 1)
-    }
-    if (key.code === 'Backspace' || key.code === 'Delete') {
-      key.preventDefault()
-      key.stopPropagation()
 
-      await clearContext(listSelection)
-    }
-    if (key.code === 'Enter') {
+    if (actions[key.code] != null) {
       key.preventDefault()
       key.stopPropagation()
-      const contextId = displayData[listSelection]?.[0]
-      const context = $contextByIdStore.get(contextId)
-
-      dispatch('click', { context })
+      actions[key.code]()
     }
   }
 
-  $: if (element != null) {
-    element.focus()
-  }
+  $: if (element != null) element.focus()
 
-  function getContextKey (index: number): string {
-    const contextId = displayData[index][0]
-    return contextId ?? index.toString()
-  }
+  const getContextKey = (index: number): string => displayData[index]?.[0] ?? index.toString()
 
   function selectIndex (index: number): void {
-    if (displayData.length === 0) return
-
-    list.select(Math.max(0, Math.min(index, displayData.length - 1)))
+    if (displayData.length > 0) {
+      list.select(Math.max(0, Math.min(index, displayData.length - 1)))
+    }
   }
 </script>
 
@@ -141,30 +136,29 @@
     bind:selection={listSelection}
     count={displayData.length}
     items={displayData}
-    highlightIndex={displayData.findIndex(([context]) => context === selectedContext)}
+    highlightIndex={Math.max(0, Math.min(stableIndex, displayData.length - 1))}
     noScroll
-    minHeight="5.625rem"
     kind="full-size"
     colorsSchema="lumia"
-    lazy={true}
     getKey={getContextKey}
   >
-    <svelte:fragment slot="item" let:item={itemIndex}>
-      {@const contextId = displayData[itemIndex]?.[0]}
-      {@const contextNotifications = displayData[itemIndex]?.[1]}
-      {@const context = $contextByIdStore.get(contextId)}
-      {#if context}
-        <DocNotifyContextCard
-          value={context}
-          notifications={contextNotifications}
-          {viewlets}
-          isClearing={clearingContexts.has(contextId)}
-          on:clear={() => clearContext(itemIndex)}
-          on:click={(event) => {
-            dispatch('click', event.detail)
-            listSelection = itemIndex
-          }}
-        />
+    <svelte:fragment slot="item" let:item={itemIndex} let:value={item}>
+      {#if item}
+        {@const [contextId, contextNotifications] = item}
+        {@const context = $contextByIdStore.get(contextId)}
+        {#if context}
+          <DocNotifyContextCard
+            value={context}
+            notifications={contextNotifications}
+            {viewlets}
+            isClearing={clearingContexts.has(contextId)}
+            on:clear={() => clearContext(context)}
+            on:click={(event) => {
+              dispatch('click', event.detail)
+              listSelection = itemIndex
+            }}
+          />
+        {/if}
       {/if}
     </svelte:fragment>
   </ListView>

@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import { chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
+import { type Chat, chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -23,7 +24,9 @@ import core, {
   type Space,
   DOMAIN_TX,
   DOMAIN_SPACE,
-  type AccountUuid
+  type AccountUuid,
+  DOMAIN_COLLABORATOR,
+  type Collaborator
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -296,6 +299,47 @@ async function migrateDuplicatedDirects (client: MigrationClient): Promise<void>
   }
 }
 
+async function removeUnavailableChats (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<Chat>(DOMAIN_CHUNTER_DOC, {
+    _class: chunter.class.Chat,
+    attachedToClass: { $in: [chunter.class.DirectMessage, chunter.class.Channel] }
+  })
+
+  try {
+    while (true) {
+      const chats = (await iterator.next(500)) ?? []
+      if (chats.length === 0) break
+
+      const spaceIds = Array.from(new Set(chats.map((c) => c.attachedTo as Ref<Space>)))
+      const spaces = await client.find<Space>(DOMAIN_SPACE, { _id: { $in: spaceIds } })
+      const spaceMap = new Map<Ref<Space>, Space>()
+      for (const space of spaces) {
+        spaceMap.set(space._id, space)
+      }
+
+      const chatsToDelete: Ref<Chat>[] = []
+      const collaboratorsToDelete: Pick<Collaborator, 'attachedTo' | 'collaborator'>[] = []
+
+      for (const chat of chats) {
+        const space = spaceMap.get(chat.attachedTo as Ref<Space>)
+        if (space != null && !space.members.includes(chat.account)) {
+          chatsToDelete.push(chat._id)
+          collaboratorsToDelete.push({ attachedTo: space._id, collaborator: chat.account })
+        }
+      }
+
+      if (chatsToDelete.length > 0) {
+        await client.deleteMany(DOMAIN_CHUNTER_DOC, { _id: { $in: chatsToDelete } })
+      }
+      if (collaboratorsToDelete.length > 0) {
+        await client.deleteMany<Collaborator>(DOMAIN_COLLABORATOR, { $or: collaboratorsToDelete })
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -380,6 +424,11 @@ export const chunterOperation: MigrateOperation = {
         state: 'migrate-duplicated-directs-v1',
         mode: 'upgrade',
         func: migrateDuplicatedDirects
+      },
+      {
+        state: 'remove-unavailable-chats-v1',
+        mode: 'upgrade',
+        func: removeUnavailableChats
       }
     ])
   },

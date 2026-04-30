@@ -17,6 +17,7 @@ import core, {
   AccountRole,
   type AnyAttribute,
   type AssociationQuery,
+  clone,
   type Class,
   type Doc,
   type DocInfo,
@@ -116,13 +117,14 @@ async function * createCursorGenerator (
   sql: string,
   params: any,
   schema: Schema,
-  bulkSize = 1000
+  bulkSize = 1000,
+  keepHash: boolean = false
 ): AsyncGenerator<Doc[]> {
   const cursor = client.unsafe(sql, doFetchTypes ? params : convertArrayParams(params)).cursor(bulkSize)
   try {
     let docs: Doc[] = []
     for await (const part of cursor) {
-      docs.push(...part.filter((it) => it != null).map((it) => parseDoc(it as any, schema)))
+      docs.push(...part.filter((it) => it != null).map((it) => parseDoc(it as any, schema, keepHash)))
       if (docs.length > 0) {
         yield docs
         docs = []
@@ -696,7 +698,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
           const res2 = this.modelDb.findAllSync(modelJoin.toClass, {
             [modelJoin.toField]: val
           })
-          obj[key] = modelJoin.isReverse ? res2 : res2[0]
+          // Clone to avoid mutating shared ModelDb instances when nested lookup
+          // populates $lookup on the parent doc (e.g. status.category).
+          obj[key] = modelJoin.isReverse
+            ? res2.map((d) => clone(d))
+            : res2[0] !== undefined
+              ? clone(res2[0])
+              : undefined
         }
       }
 
@@ -1554,7 +1562,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
         WHERE "workspaceId" = '${workspaceId}'
       `
 
-      return createCursorGenerator(client.raw(), sql, undefined, schema, limit)
+      return createCursorGenerator(client.raw(), sql, undefined, schema, limit, true)
     }
     let bulk: AsyncGenerator<Doc[]>
 

@@ -751,6 +751,20 @@ async function initReadStates (client: MigrationClient): Promise<void> {
   }
 }
 
+async function clearNotificationTx (client: MigrationClient): Promise<void> {
+  const _classes = [
+    notification.class.InboxNotification,
+    notification.class.ActivityInboxNotification,
+    notification.class.ReactionInboxNotification,
+    notification.class.MentionInboxNotification,
+    notification.class.CommonInboxNotification,
+    notification.class.DocNotifyContext
+  ]
+  for (const objectClass of _classes) {
+    await client.deleteMany(DOMAIN_TX, { objectClass })
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -978,6 +992,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'init-read-states-v100',
         mode: 'upgrade',
         func: initReadStates
+      },
+      {
+        state: 'clear-notification-tx-v1',
+        mode: 'upgrade',
+        func: clearNotificationTx
       }
     ])
   },

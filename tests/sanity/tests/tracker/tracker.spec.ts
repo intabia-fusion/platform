@@ -1,8 +1,8 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { CommonTrackerPage } from '../model/tracker/common-tracker-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { IssuesPage } from '../model/tracker/issues-page'
-import { PlatformSetting, PlatformURI, fillSearch } from '../utils'
+import { PlatformSetting, PlatformURI, fillSearch, generateId } from '../utils'
 import {
   DEFAULT_STATUSES,
   ViewletSelectors,
@@ -13,6 +13,8 @@ import {
   openIssue,
   performPanelTest
 } from './tracker.utils'
+import { SettingsPage } from '../model/settings-page'
+import { TaskTypes } from '../model/types'
 test.use({
   storageState: PlatformSetting
 })
@@ -190,6 +192,65 @@ test.describe('Tracker tests', () => {
     await issuesPage.openViewOptionsAndToggleShouldShowAll()
     await issuesPage.verifyCategoryHeadersVisibilityKanban()
     await issuesPage.openViewOptionsAndToggleShouldShowAll()
+  })
+
+  test.describe('TaskKindSelector tests', () => {
+    let settingsPage: SettingsPage
+
+    const taskTypeName = `Bug-${generateId(4)}`
+
+    test.beforeEach(async ({ page }) => {
+      settingsPage = new SettingsPage(page)
+
+      await settingsPage.navigateToWorkspace(`${PlatformURI}/workbench/sanity-ws`)
+      await settingsPage.openProfileMenu()
+      await settingsPage.openSettings()
+      await settingsPage.selectSpaceType('Default', 'Tracker')
+      await settingsPage.addTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
+
+      await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/tracker%3Aproject%3ADefaultProject/issues`)
+      await page.waitForLoadState('networkidle')
+    })
+
+    test('task-type-selection-persists-after-popup-close', async ({ page }) => {
+      await page.click(ViewletSelectors.Board)
+
+      await page.click('button[data-id="btnSelectTaskType"]')
+      await page.waitForSelector(`.menu-item:has-text("${taskTypeName}")`)
+      await page.click(`.menu-item:has-text("${taskTypeName}")`)
+
+      await expect(page.locator('button[data-id="btnSelectTaskType"]')).toContainText(taskTypeName)
+
+      await page.click('button:has-text("New issue")')
+      await page.waitForSelector('form.antiCard')
+      await page.keyboard.press('Escape')
+      await page.waitForSelector('form.antiCard', { state: 'detached' })
+
+      await expect(page.locator('button[data-id="btnSelectTaskType"]')).toContainText(taskTypeName)
+    })
+
+    test('task-type-filter-cleared-on-switch-to-list', async ({ page }) => {
+      const issueDefault = getIssueName('default-type')
+      const issueBug = getIssueName('bug-type')
+      await createIssue(page, { name: issueDefault })
+      await createIssue(page, { name: issueBug, taskType: taskTypeName })
+
+      await page.click(ViewletSelectors.Board)
+      await page.click('button[data-id="btnSelectTaskType"]')
+      await page.click(`.menu-item:has-text("${taskTypeName}")`)
+
+      const kanbanContainer = page.locator('.panel-container')
+      await expect(kanbanContainer).toContainText(issueBug)
+      await expect(kanbanContainer).not.toContainText(issueDefault)
+
+      const issuesPage = new IssuesPage(page)
+      await page.click(ViewletSelectors.Table)
+
+      await issuesPage.searchIssueByName(issueDefault)
+      await expect(page.locator('.list-container')).toContainText(issueDefault)
+      await issuesPage.searchIssueByName(issueBug)
+      await expect(page.locator('.list-container')).toContainText(issueBug)
+    })
   })
 })
 async function doSaveViewTest (

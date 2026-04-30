@@ -16,6 +16,7 @@
 
 import core, {
   AccountUuid,
+  Branding,
   Class,
   Data,
   Doc,
@@ -97,8 +98,8 @@ class Workspace {
   private inProgress = false
   private lastUpdate: Timestamp | undefined = Date.now()
 
-  private readonly txFactory = new TxFactory(core.account.System)
-  public readonly client: Client
+  private readonly txFactory = new TxFactory(core.account.System, true)
+  readonly client: Client
 
   private constructor (
     private readonly ctx: MeasureContext,
@@ -108,6 +109,7 @@ class Workspace {
     private readonly model: ModelDb,
     private readonly rest: RestClient,
     private readonly storage: StorageAdapter,
+    private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[]
   ) {
     this.client = this.getClient()
@@ -116,7 +118,11 @@ class Workspace {
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     this.inProgress = true
-    const domain = this.hierarchy.getDomain(tx.objectClass)
+    const domain = this.hierarchy.findDomain(tx.objectClass)
+    if (domain == null) {
+      this.inProgress = false
+      return
+    }
 
     if (domain === 'model') {
       this.model.addTxes(this.ctx, [tx], true)
@@ -158,7 +164,15 @@ class Workspace {
 
     for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
       const batch = txes.slice(i, i + config.ApplyTxBatchSize)
-      const txApply = this.txFactory.createTxApplyIf(core.space.Tx, 'notifications', [], [], batch, undefined, true)
+      const txApply = this.txFactory.createTxApplyIf(
+        core.space.DerivedTx,
+        'notifications',
+        [],
+        [],
+        batch,
+        undefined,
+        true
+      )
       try {
         await this.rest.tx(txApply)
       } catch (e) {
@@ -175,6 +189,7 @@ class Workspace {
       storage: this.storage,
       hierarchy: this.hierarchy,
       model: this.model,
+      branding: this.branding,
       findAll: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -209,8 +224,8 @@ class Workspace {
 
       for (const context of ctx) {
         const current = context.lastView ?? 0
-        if (current > ts) continue
-        context.lastView = Math.max(current, ts)
+        if (current === ts) continue
+        context.lastView = ts
         res.push(
           this.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
             lastView: ts
@@ -261,8 +276,18 @@ class Workspace {
     const mentionType = matched.find((it) => it._id === notification.ids.MentionNotificationType)
 
     if (mentionType != null) {
-      if (hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)) {
-        res.push(...this.updateContextLastUpdate(contexts, tx.createdOn ?? tx.modifiedOn, sender.account, []))
+      if (
+        tx._class === core.class.TxCreateDoc &&
+        hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+      ) {
+        res.push(
+          ...this.updateContextLastUpdate(
+            contexts,
+            (txObject as ActivityMessage).createdOn ?? tx.modifiedOn,
+            sender.account,
+            []
+          )
+        )
       }
       const result = await createMentionsData(
         client,
@@ -288,7 +313,9 @@ class Workspace {
             d.context,
             d.receiver,
             d.notifyResult,
-            hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+            hierarchy.isDerived(txObject._class, activity.class.ActivityMessage),
+            [],
+            (txObject as ActivityMessage).createdOn
           ))
         )
       }
@@ -329,7 +356,7 @@ class Workspace {
         } else {
           const intlParams: Record<string, string | number> = {
             ...data.props,
-            senderName: getSenderName(sender, config.LastNameFirst)
+            senderName: getSenderName(sender, client.branding?.lastNameFirst)
           }
           const intlParamsNotLocalized: Record<string, IntlString> = { ...data.propsIntl }
 
@@ -433,7 +460,7 @@ class Workspace {
     const txes = await this.createNotifications(
       notification.class.ReactionInboxNotification,
       data,
-      getReactionNotificationContent(message, reaction, sender),
+      getReactionNotificationContent(this.client, message, reaction, sender),
       doc,
       reaction.modifiedOn,
       reaction.modifiedBy,
@@ -467,11 +494,15 @@ class Workspace {
       if (!this.client.hierarchy.isDerived(tx.objectClass, activity.class.DocUpdateMessage)) return []
 
       const updateTx = tx as TxUpdateDoc<DocUpdateMessage>
-      const ops = updateTx.operations
+      const ops = updateTx.operations ?? {}
       const historyChanged =
         ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
 
-      if (historyChanged) {
+      // Skip processing if it's a simple aggregation of history within CREATE_COMBINE_THRESHOLD.
+      // This aggregation ONLY uses $push: { history: ... } and doesn't change the main message content.
+      const isCombine = ops.$push?.history !== undefined && Object.keys(ops).length === 1
+
+      if (historyChanged && !isCombine) {
         return await this.processUpdateMessage(updateTx, notifiedUsers, _res)
       }
     }
@@ -547,7 +578,8 @@ class Workspace {
           receiver,
           notifyResult,
           true,
-          res
+          res,
+          message.createdOn
         ))
       )
     }
@@ -565,7 +597,8 @@ class Workspace {
     receiver: Receiver,
     notifyResult: NotifyResult,
     isMessageNotify: boolean,
-    txes: TxCUD<Doc>[] = []
+    txes: TxCUD<Doc>[] = [],
+    messageCreatedOn?: Timestamp
   ): Promise<TxCUD<Doc>[]> {
     const res: TxCUD<Doc>[] = []
 
@@ -589,7 +622,7 @@ class Workspace {
     } else {
       const readState = await this.cache.getDocReadState(doc._id)
       const lastView = readState?.[receiver.account]?.timestamp ?? 0
-      const contextTx = this.getCreateContextTx(doc, receiver, modifiedOn, lastView, isMessageNotify)
+      const contextTx = this.getCreateContextTx(doc, receiver, modifiedOn, lastView, isMessageNotify, messageCreatedOn)
       res.push(contextTx)
       contextId = TxProcessor.createDoc2Doc(contextTx)._id
     }
@@ -620,7 +653,8 @@ class Workspace {
     receiver: Receiver,
     createdOn: Timestamp,
     lastView: Timestamp,
-    isMessageNotify: boolean
+    isMessageNotify: boolean,
+    messageCreatedOn?: Timestamp
   ): TxCreateDoc<DocNotifyContext> {
     const createTx = this.txFactory.createTxCreateDoc(notification.class.DocNotifyContext, receiver.space, {
       user: receiver.account,
@@ -628,7 +662,7 @@ class Workspace {
       objectClass: doc._class,
       objectSpace: doc.space,
       lastView,
-      lastUpdate: isMessageNotify ? createdOn : undefined,
+      lastUpdate: isMessageNotify ? (messageCreatedOn ?? createdOn) : undefined,
       lastNotify: createdOn,
       lastNotifiedMessage: isMessageNotify ? createdOn : undefined
     })
@@ -661,8 +695,6 @@ class Workspace {
     const res: TxCUD<Doc>[] = []
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
-
-    res.push(...this.updateContextLastUpdate(contexts, tx.modifiedOn, sender.account, _res))
 
     const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
 
@@ -791,6 +823,7 @@ class Workspace {
     sysModel: Tx[],
     storage: StorageAdapter,
     rest: RestClient,
+    branding: Branding | undefined,
     txTypes: TxNotificationType[]
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
@@ -813,7 +846,7 @@ class Workspace {
         uuid: ws.uuid,
         url: ws.url
       },
-      branding: null,
+      branding: branding ?? null,
       modelDb,
       hierarchy,
       storageAdapter: storage,
@@ -830,7 +863,7 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, txTypes)
+    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, txTypes)
   }
 
   async close (): Promise<void> {

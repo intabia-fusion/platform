@@ -130,6 +130,8 @@
     >
       <div
         class="card-container"
+        data-id="kanban-card"
+        data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
         class:checked={checkedSet.has(object._id)}
         on:mouseover={mouseAttractor(() => dispatch('obj-focus', object))}
@@ -159,8 +161,8 @@
 {/each}
 {#if stateObjects.length > limitedObjects.size + (isDragging ? 1 : 0)}
   <div class="p-1 flex-no-shrink clear-mins">
-    <div class="card-container flex-between p-4">
-      <span class="caption-color">{limitedObjects.size}</span> / {stateObjects.length}
+    <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
+      <span class="caption-color">{limitedObjects.size}</span> <span>/</span><span>{stateObjects.length}</span>
       <Button
         size={'small'}
         icon={IconMoreH}

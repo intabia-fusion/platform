@@ -255,6 +255,8 @@
     "EightHoursLength": "八小时",
     "HourLabel": "小时",
     "MinuteLabel": "分",
+    "AlreadyReportedThisDay": "当日已记录: {hours} 小时",
+    "FixToEightHours": "调整为 8 小时",
     "Saved": "已保存...",
     "CreatedIssue": "已创建问题",
     "CreatedSubIssue": "已创建子问题",

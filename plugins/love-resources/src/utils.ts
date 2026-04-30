@@ -83,7 +83,12 @@ export const isRecordingAvailable = writable<boolean>(false)
 export const isFullScreen = writable<boolean>(false)
 export const isShareWithSound = writable<boolean>(false)
 
-export let krispProcessor = KrispNoiseFilter()
+// Feature toggle: Krisp is a paid LiveKit add-on that has been failing to
+// authenticate (404). When false, microphone audio uses only the WebRTC
+// echoCancellation/noiseSuppression configured in audioCaptureDefaults.
+const useKrisp = false
+
+export let krispProcessor: ReturnType<typeof KrispNoiseFilter> | undefined = useKrisp ? KrispNoiseFilter() : undefined
 export let blurProcessor: ProcessorWrapper<BackgroundOptions> | undefined
 let localVideo: LocalVideoTrack | undefined
 
@@ -105,6 +110,7 @@ try {
  * resolve when the call is scheduled, not when the recreation completes.
  */
 async function recreateKrispProcessorImmediate (): Promise<void> {
+  if (!useKrisp) return
   try {
     // Stop processor on all local audio tracks before recreating
     // to release AudioContext references and avoid resource leaks
@@ -131,6 +137,7 @@ async function recreateKrispProcessorImmediate (): Promise<void> {
 export const recreateKrispProcessor = reduceCalls(recreateKrispProcessorImmediate)
 
 async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
+  if (!useKrisp || krispProcessor === undefined) return
   if (pub.track instanceof LocalAudioTrack) {
     if (!isKrispNoiseFilterSupported()) {
       console.warn('enhanced noise filter is currently not supported on this browser')
@@ -270,21 +277,23 @@ lk.on(RoomEvent.Connected, () => {
   isRecording.set(data.recording ?? false)
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
 })
-lk.on(RoomEvent.Disconnected, () => {
-  // Recreate Krisp processor on disconnect so that the next connect
-  // does not hit InvalidAccessError due to stale AudioContext references.
-  void recreateKrispProcessor()
-})
-lk.on(RoomEvent.Reconnecting, () => {
-  // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
-  // before the connection is re-established.
-  void recreateKrispProcessor()
-})
-lk.on(RoomEvent.Reconnected, () => {
-  // Ensure processor is fresh after successful reconnection
-  // as the AudioContext may have changed during reconnect.
-  void recreateKrispProcessor()
-})
+if (useKrisp) {
+  lk.on(RoomEvent.Disconnected, () => {
+    // Recreate Krisp processor on disconnect so that the next connect
+    // does not hit InvalidAccessError due to stale AudioContext references.
+    void recreateKrispProcessor()
+  })
+  lk.on(RoomEvent.Reconnecting, () => {
+    // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
+    // before the connection is re-established.
+    void recreateKrispProcessor()
+  })
+  lk.on(RoomEvent.Reconnected, () => {
+    // Ensure processor is fresh after successful reconnection
+    // as the AudioContext may have changed during reconnect.
+    void recreateKrispProcessor()
+  })
+}
 
 function parseMetadata (metadata: string | undefined): RoomMetadata {
   try {
@@ -503,39 +512,26 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
-  const endpoint = getMetadata(love.metadata.ServiceEndpoint)
-  if (endpoint === undefined) {
-    console.error('Love service endpoint is not configured')
-    return ''
-  }
-
-  const platformToken = getMetadata(presentation.metadata.Token)
-  if (platformToken === undefined) {
-    throw new Error('Platform token not found')
-  }
-
   try {
-    const guestToken = await getLoveClient().getGuestToken(mm)
-
-    const navigateUrl = getCurrentLocation()
-    navigateUrl.path = ['meetings']
-    navigateUrl.query = {
-      guestToken
-    }
-
-    // Build direct guest link (no createAccessLink). Use current front origin to build a full URL.
-    // This simplifies the flow: result link will be like https://front/meetings?meetingId=...&guestToken=...
-    try {
-      const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
-
-      const query = new URLSearchParams({ guestToken })
-      return concatLink(front, `/meetings?${query.toString()}`)
-    } catch (err: any) {
-      console.error('Failed to create guest link', err)
+    const shortIdOrToken = await getLoveClient().getGuestToken(mm)
+    if (shortIdOrToken === '') {
+      console.error('Failed to create guest link')
       return ''
     }
+
+    const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
+
+    // shortIdOrToken is either a 12-char shortId (new) or a full JWT (fallback)
+    // Short ids never contain dots; JWTs always have two dots (header.payload.sig)
+    const isShortId = !shortIdOrToken.includes('.')
+    if (isShortId) {
+      return concatLink(front, `/meetings/${shortIdOrToken}`)
+    } else {
+      const query = new URLSearchParams({ guestToken: shortIdOrToken })
+      return concatLink(front, `/meetings?${query.toString()}`)
+    }
   } catch (err: any) {
-    console.error('Failed to generate guest token', err)
+    console.error('Failed to generate guest link', err)
     return ''
   }
 }

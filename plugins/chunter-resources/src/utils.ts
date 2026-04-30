@@ -361,19 +361,37 @@ export async function readChannelMessages (messages: ActivityMessage[], readStat
 
   try {
     const allIds = getAllIds(messages)
+    const newTimestamp = messages[messages.length - 1]?.createdOn ?? 0
+    const contextId = readState != null ? get(inboxClient.contextByDoc)?.get(readState.attachedTo)?._id : undefined
+
+    const shouldReadNotification = (n: InboxNotification, isTarget: boolean, msg?: ActivityMessage): boolean => {
+      if (n.isViewed) return false
+      if (isTarget) return true
+
+      if (contextId != null && n.docNotifyContext === contextId) {
+        const msgTs = msg != null ? msg.createdOn : (n.createdOn ?? n.modifiedOn)
+        if ((msgTs ?? 0) > 0 && (msgTs ?? 0) <= newTimestamp) {
+          return true
+        }
+      }
+      return false
+    }
+
     const notifications = get(inboxClient.activityInboxNotifications)
-      .filter(({ attachedTo, $lookup, isViewed }) => {
-        if (isViewed) return false
-        return allIds.includes(attachedTo)
-      })
+      .filter((n) =>
+        shouldReadNotification(n, allIds.includes(n.attachedTo), n.$lookup?.attachedTo as ActivityMessage | undefined)
+      )
       .map((n) => n._id)
 
     const relatedMentions = get(inboxClient.otherInboxNotifications)
-      .filter((n) => !n.isViewed && isMentionNotification(n) && allIds.includes(n.mentionedIn as Ref<ActivityMessage>))
+      .filter(
+        (n) =>
+          isMentionNotification(n) && shouldReadNotification(n, allIds.includes(n.mentionedIn as Ref<ActivityMessage>))
+      )
       .map((n) => n._id)
 
     const reactionNotifications = get(inboxClient.otherInboxNotifications)
-      .filter((n) => !n.isViewed && isReactionNotification(n) && allIds.includes(n.attachedTo))
+      .filter((n) => isReactionNotification(n) && shouldReadNotification(n, allIds.includes(n.attachedTo)))
       .map((n) => n._id)
 
     chatReadMessagesStore.update((store) => new Set([...store, ...allIds]))
@@ -402,6 +420,12 @@ export async function readChannelMessages (messages: ActivityMessage[], readStat
             [getCurrentAccount().uuid]: { messageId: lastMessage._id, timestamp: newTimestamp }
           }
         )
+      } else {
+        const contextByDoc = get(inboxClient.contextByDoc)
+        const context = contextByDoc?.get(readState.attachedTo)
+        if (context != null && (context.lastView ?? 0) < prevTimestamp) {
+          await op.update(context, { lastView: prevTimestamp })
+        }
       }
     }
     await inboxClient.readNotifications(op, [...notifications, ...relatedMentions, ...reactionNotifications])

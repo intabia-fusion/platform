@@ -85,9 +85,17 @@ export type RequestHandler = (req: Request<any>, res: ExpressResponse, next?: Ne
 
 const backpressureSize = 100 * 1024
 
-const ReconnectTimeout = 10 * 1000 * 1000 // 10 seconds
-const OperationTimeout = 2 * 1000 * 1000 // 10 seconds
-const HangTimeout = 50 * 1000 * 1000 // 50 seconds
+// If a session has not exchanged any ping/pong/message within this window, treat it as dead.
+const PingTimeout = 30 * 1000 // 30 seconds
+// Probe interval: when stale-but-not-dead, send an explicit ping.
+const PingProbeAfter = 10 * 1000 // 10 seconds
+// How long we keep a closed session in reconnectQueue before rejecting its pending requests.
+const ReconnectTimeout = 5 * 1000 // 5 seconds
+// Pending request that has been running longer than this triggers a warn log (not a reject).
+// Workers may legitimately take long; we just want visibility.
+const HangLogTimeout = 5 * 60 * 1000 // 5 minutes
+// Repeat hang warn no more often than this for the same request.
+const HangLogInterval = 5 * 60 * 1000 // 5 minutes
 
 // Operation status check threshold: if a server->client operation has been executing
 // longer than this, server will query the client whether it is still executing the operation.
@@ -129,6 +137,14 @@ export class ClisrServer {
   httpServer?: http.Server
   private tickTimer?: ReturnType<typeof setInterval>
 
+  // Tunables (overridable for tests). Defaults match the production constants.
+  pingTimeout = PingTimeout
+  pingProbeAfter = PingProbeAfter
+  reconnectTimeout = ReconnectTimeout
+  hangLogTimeout = HangLogTimeout
+  hangLogInterval = HangLogInterval
+  tickIntervalMs = 1000
+
   constructor (
     readonly ctx: MeasureContext,
     readonly validateToken: (token: string) => Promise<boolean>,
@@ -139,37 +155,63 @@ export class ClisrServer {
 
   async handleTick (): Promise<void> {
     const now = Date.now()
+    // Reject sessions that did not return within ReconnectTimeout
     for (const [sid, session] of this.reconnectQueue.entries()) {
-      if (now - session.lastRequest > ReconnectTimeout) {
+      if (now - session.lastPing > this.reconnectTimeout) {
         await this.handleSessionDisconnect(sid, session)
       }
     }
+    // Detect dead sessions via ping. Active sessions update lastPing on any incoming frame.
     for (const [sid, session] of this.sessions.entries()) {
-      if (now - session.lastRequest > OperationTimeout) {
+      const sinceLastPing = now - session.lastPing
+      if (sinceLastPing > this.pingTimeout) {
+        this.ctx.warn('session ping timeout, marking dead', {
+          sessionId: session.sessionId,
+          client: session.clientHost,
+          sinceLastPingMs: sinceLastPing
+        })
         await this.handleSessionTimeout(sid, session)
+        continue
+      }
+      // Stale but not dead: send a probe ping to refresh liveness signal.
+      // Throttled to at most one probe per pingProbeAfter window so we don't spam
+      // an unresponsive client with pings on every tick.
+      if (sinceLastPing > this.pingProbeAfter) {
+        const lastProbe = session.lastProbePingAt ?? 0
+        if (now - lastProbe > this.pingProbeAfter) {
+          session.lastProbePingAt = now
+          try {
+            void session.socket.sendRaw(this.ctx, Buffer.from([FRAME_PING]))
+          } catch (err: any) {
+            this.ctx.error('failed to send probe ping', { err })
+          }
+        }
       }
     }
-    // Check and log hang requests and query long-running operations' status
+    // Visibility for long-running requests, and op-status checks.
     for (const [reqId, r] of this.requests.entries()) {
-      // Handle very long running operations (hang): send a ping with pending count
-      if (r.session !== undefined && now - r.startTime > HangTimeout && now - r.session.lastPing > OperationTimeout) {
-        // Operation is hang, send simple ping (no payload) to check liveness of the socket.
-        r.session.lastPing = now
-        try {
-          void r.session.socket.sendRaw(this.ctx, Buffer.from([FRAME_PING]))
-        } catch (err: any) {
-          this.ctx.error('failed to send ping frame', { err })
+      if (r.session === undefined) continue
+      const elapsed = now - r.startTime
+
+      // Hang log: warn if a request runs longer than hangLogTimeout, repeat every hangLogInterval.
+      if (elapsed > this.hangLogTimeout) {
+        if (r.lastHangLogAt === undefined || now - r.lastHangLogAt > this.hangLogInterval) {
+          r.lastHangLogAt = now
+          this.ctx.warn('request running long', {
+            id: reqId,
+            method: r.method,
+            elapsedMs: elapsed,
+            client: r.session.clientHost ?? r.session.sessionId
+          })
         }
-        this.ctx.warn('found hang request', { request: r.method, data: r.session.socket.data })
       }
 
       // For moderately long operations (> OpStatusTimeout), ask client whether it has the operation.
       // We send a dedicated FRAME_OP_STATUS frame carrying the operation id and expect a FRAME_OP_STATUS_RESP
       // from the client with { id, executing: boolean }.
-      if (r.session !== undefined && now - r.startTime > OpStatusTimeout) {
-        const lastCheck: number | undefined = (r as any).lastStatusCheck
-        if (lastCheck === undefined || now - lastCheck > OpStatusCheckInterval) {
-          ;(r as any).lastStatusCheck = now
+      if (elapsed > OpStatusTimeout) {
+        if (r.lastStatusCheckAt === undefined || now - r.lastStatusCheckAt > OpStatusCheckInterval) {
+          r.lastStatusCheckAt = now
           try {
             const payloadJson = JSON.stringify({ id: reqId })
             const payloadBytes = Buffer.from(payloadJson, 'utf8')
@@ -188,7 +230,9 @@ export class ClisrServer {
   private async handleSessionTimeout (sid: string, session: Session): Promise<void> {
     this.sessions.delete(sid)
     session.socket.close()
-    this.reconnectQueue.set(sid, session)
+    // Reset lastPing so reconnectQueue countdown starts fresh from now.
+    session.lastPing = Date.now()
+    this.reconnectQueue.set(session.sessionId, session)
     this.ctx.info('session timed out', { sessionId: session.sessionId, client: session.clientHost })
     for (const eh of this.eventHandlers) {
       try {
@@ -205,9 +249,18 @@ export class ClisrServer {
     const clientInfo = session.clientHost ?? session.sessionId
     this.ctx.info('session reconnect timed out', { sessionId: session.sessionId, client: session.clientHost })
 
+    // Reject pending requests bound to this session in the global registry as well, so
+    // round-robin callers (binaryRequest/requestWithFilter) can retry against another client.
+    for (const [rid, r] of this.requests) {
+      if (r.session === session) {
+        this.requests.delete(rid)
+        r.reject(new Error(`Session reconnect timeout (client: ${clientInfo})`))
+      }
+    }
     for (const rr of session.requests.values()) {
       rr.reject(new Error(`Session reconnect timeout (client: ${clientInfo})`))
     }
+    session.requests.clear()
 
     for (const eh of this.eventHandlers) {
       try {
@@ -298,6 +351,8 @@ export class ClisrServer {
     params: any[],
     sessionFilter?: (session: Session) => boolean
   ): Promise<any> {
+    let attempt = 0
+    let lastNoSessionsLog = 0
     while (true) {
       // Keep trying indefinitely
       let sessions = Array.from(this.sessions.values())
@@ -305,11 +360,16 @@ export class ClisrServer {
         sessions = sessions.filter(sessionFilter)
       }
       if (sessions.length === 0) {
-        // No sessions available, wait a bit and try again
+        const now = Date.now()
+        if (now - lastNoSessionsLog > 5000) {
+          lastNoSessionsLog = now
+          ctx.warn('request waiting for available client', { method, attempt })
+        }
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
 
+      attempt++
       const num = this.cindex++
       const s = sessions[num % sessions.length]
       const clientInfo = s.clientHost ?? s.sessionId
@@ -321,7 +381,7 @@ export class ClisrServer {
           })
         )
       } catch (err: any) {
-        ctx.error('request send error', { err, client: clientInfo })
+        ctx.warn('request retry', { method, attempt, client: clientInfo, error: err.message })
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
@@ -353,20 +413,46 @@ export class ClisrServer {
       const promise = new RequestPromise(method, [])
       promise.session = session
 
-      this.requests.set(id, promise)
-
       // Pass meta separately from headers
       const meta = ctx.extractMeta()
+      const frame = encodeBinaryRequest(id, method, data, meta, headers)
+
+      // sendData is used both for the initial send and for resend after reconnect.
+      promise.sendData = (): void => {
+        const target = promise.session ?? session
+        if (target.socket.isClosed) {
+          return
+        }
+        promise.startTime = Date.now()
+        try {
+          void target.socket.sendRaw(this.ctx, frame)
+        } catch (err: any) {
+          this.ctx.error('failed to send binary frame', { err, id, method })
+        }
+      }
+      promise.onDone = () => {
+        const s = promise.session ?? session
+        s.requests.delete(id)
+      }
+
+      this.requests.set(id, promise)
+      session.requests.set(id, promise)
 
       try {
-        const frame = encodeBinaryRequest(id, method, data, meta, headers)
-        void session.socket.sendRaw(ctx, frame)
+        promise.sendData()
       } catch (err: any) {
         this.requests.delete(id)
+        session.requests.delete(id)
         throw err
       }
 
-      return (await promise.promise) as T
+      try {
+        return (await promise.promise) as T
+      } finally {
+        // Ensure cleanup regardless of resolve/reject path.
+        this.requests.delete(id)
+        ;(promise.session ?? session).requests.delete(id)
+      }
     })
   }
 
@@ -386,16 +472,25 @@ export class ClisrServer {
     headers?: Record<string, any>,
     sessionCheck?: (session: Session) => boolean
   ): Promise<T> {
+    let attempt = 0
+    let lastNoSessionsLog = 0
     while (true) {
       let sessions = Array.from(this.sessions.values())
       if (sessionCheck !== undefined) {
         sessions = sessions.filter(sessionCheck)
       }
       if (sessions.length === 0) {
+        const now = Date.now()
+        // Throttle "no clients" warning to once per 5s to avoid log spam.
+        if (now - lastNoSessionsLog > 5000) {
+          lastNoSessionsLog = now
+          ctx.warn('binary request waiting for available client', { method, attempt })
+        }
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
 
+      attempt++
       const num = this.cindex++
       const s = sessions[num % sessions.length]
       const clientInfo = s.clientHost ?? s.sessionId
@@ -403,7 +498,12 @@ export class ClisrServer {
       try {
         return await this.sendBinaryRequest<T>(s, method, data, headers)
       } catch (err: any) {
-        ctx.error('binary request send error', { err, client: clientInfo })
+        ctx.warn('binary request retry', {
+          method,
+          attempt,
+          client: clientInfo,
+          error: err.message
+        })
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
@@ -418,7 +518,7 @@ export class ClisrServer {
 
     this.tickTimer = setInterval(() => {
       void this.handleTick()
-    }, 1000)
+    }, this.tickIntervalMs)
     // tickTimer will be cleared in `close()`; ensure tests call `server.close()` to cleanup timers
     this.app.use(cors())
 
@@ -479,11 +579,16 @@ export class ClisrServer {
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     ws.on('message', async (msg: RawData) => {
+      // Any incoming traffic from a client is a liveness signal, refresh lastPing
+      // so the session is not falsely marked dead while it is actively communicating.
+      session.lastPing = Date.now()
       await this.handleMessage(session, msg)
     })
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     ws.on('close', (code: number, reason: Buffer) => {
       this.sessions.delete(sid)
+      // Reset lastPing so reconnect window starts from now.
+      session.lastPing = Date.now()
       // Put into reconnect queue
       this.reconnectQueue.set(session.sessionId, session)
       this.ctx.info('connection closed', { code, reason: reason.toString(), user: session.sessionId })
@@ -873,10 +978,18 @@ export class ClisrServer {
           }
         }
         // Update the server's main requests map - replace requests that were from the old session
-        // with references to the new session
-        for (const [, /* _reqId */ request] of this.requests) {
+        // with references to the new session, and resend server-initiated binary requests
+        // (JSON callback resends are driven by the client side via reconnect()).
+        for (const [reqId, request] of this.requests) {
           if (request.session === oldSession) {
             request.session = session
+            if (typeof reqId === 'string' && reqId.startsWith('#b')) {
+              try {
+                request.sendData()
+              } catch (err: any) {
+                this.ctx.error('failed to resend binary request after reconnect', { err, id: reqId })
+              }
+            }
           }
         }
         oldSession.socket.close() // Just in case

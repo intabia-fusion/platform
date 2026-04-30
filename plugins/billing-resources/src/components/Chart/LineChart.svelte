@@ -19,6 +19,8 @@
   }
 
   let width = 100
+  let yAxisWidth = 60
+  $: margin.left = yAxisWidth + 8
   $: height = 0.3 * width
 
   $: innerWidth = width - margin.left - margin.right
@@ -32,7 +34,13 @@
   <svg role="img" {width} {height}>
     <g transform={`translate(${margin.left}, ${margin.top})`}>
       <XAxis height={innerHeight} width={innerWidth} values={dates} />
-      <GridLines height={innerHeight} width={innerWidth} {valueFormatter} values={allValues} />
+      <GridLines
+        height={innerHeight}
+        width={innerWidth}
+        {valueFormatter}
+        values={allValues}
+        bind:labelWidth={yAxisWidth}
+      />
       {#each series as s}
         <Line height={innerHeight} width={innerWidth} data={s.data} sharedValues={allValues} color={s.color} />
       {/each}

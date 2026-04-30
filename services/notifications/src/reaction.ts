@@ -18,9 +18,10 @@ import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import { IntlString } from '@hcengineering/platform'
 import { getSenderName, normalizeTextMessage, Sender } from '@hcengineering/server-notification'
 
-import config from './config'
+import { Client } from './types'
 
 export function getReactionNotificationContent (
+  client: Client,
   message: ActivityMessage,
   reaction: Reaction,
   sender: Sender
@@ -35,7 +36,7 @@ export function getReactionNotificationContent (
   }
 
   intlParams.reaction = reaction.emoji
-  intlParams.senderName = getSenderName(sender, config.LastNameFirst)
+  intlParams.senderName = getSenderName(sender, client.branding?.lastNameFirst)
 
   return {
     title: activity.string.ReactionNotificationTitle,

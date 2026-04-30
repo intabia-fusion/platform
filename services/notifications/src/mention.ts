@@ -35,7 +35,6 @@ import { IntlString } from '@hcengineering/platform'
 import { Client, NotificationSettings, NotifyResult, MentionResult } from './types'
 import { getDocIdentifier, getDocTitle, getDocUrl, getTxNotifyResult } from './utils'
 import Cache from './cache'
-import config from './config'
 
 export async function createMentionsData (
   client: Client,
@@ -340,7 +339,7 @@ export async function getMentionNotificationContent (
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
   intlParams.message = normalizeTextMessage(markupToText(message?.message ?? markup ?? ''))
-  intlParams.senderName = getSenderName(sender, config.LastNameFirst)
+  intlParams.senderName = getSenderName(sender, client.branding?.lastNameFirst)
 
   if (message != null) {
     const title = message.attachedToTitle

@@ -37,7 +37,7 @@
 
   import ChatNavigator from './navigator/ChatNavigator.svelte'
   import ChannelView from '../ChannelView.svelte'
-  import { chatSpecials } from './utils'
+  import { chatSpecials, createRealDirectFromFake, isFakeDirect } from './utils'
   import { SelectChannelEvent } from './types'
   import { openChannel, openThreadInSidebar } from '../../navigation'
   import chunter from '../../plugin'
@@ -149,8 +149,19 @@
     }
 
     const detail = (event.detail ?? {}) as SelectChannelEvent
-    const selectedObject = detail.object
+
+    let selectedObject = detail.object
     const selectedChat = detail.chat
+
+    if (isFakeDirect(selectedObject)) {
+      const direct = await createRealDirectFromFake(selectedObject)
+      if (direct != null) {
+        selectedObject = direct
+      } else {
+        selectedData = undefined
+        return
+      }
+    }
 
     const _class = selectedObject._class
     const _id = selectedObject._id
@@ -213,7 +224,7 @@
           ...currentSpecial.componentProps
         }}
         on:action={(e) => {
-          if (e?.detail) {
+          if (e?.detail != null) {
             const loc = getCurrentLocation()
             loc.query = { ...loc.query, ...e.detail }
             navigate(loc)

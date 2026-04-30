@@ -20,7 +20,7 @@ export class CommonPage {
   popupSpanLabel = (point: string): Locator =>
     this.page.locator(`div[class$="opup"] span[class*="label"]:has-text("${point}")`)
 
-  readonly inputSearchIcon = (): Locator => this.page.locator('.searchInput-wrapper')
+  readonly inputSearchIcon = (): Locator => this.page.locator('.hulyHeader-container .searchInput-wrapper')
 
   selectPopupSpanLines = (item: string): Locator =>
     this.page.locator('div.selectPopup span[class^="lines"]', { hasText: item })

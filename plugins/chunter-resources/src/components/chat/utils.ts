@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type Chat, type DirectMessage } from '@hcengineering/chunter'
-import contact from '@hcengineering/contact'
+import { type Chat, createDirect, type DirectMessage } from '@hcengineering/chunter'
+import contact, { type Employee } from '@hcengineering/contact'
 import core, {
   AccountRole,
   getCurrentAccount,
@@ -24,7 +24,8 @@ import core, {
   type Ref,
   type Class,
   type Doc,
-  type Space
+  type Space,
+  type WithLookup
 } from '@hcengineering/core'
 import notification from '@hcengineering/notification'
 import { readNotifyContext } from '@hcengineering/notification-resources'
@@ -425,4 +426,70 @@ export function shouldPushObjectInNavigator (
   const hierarchy = client.getHierarchy()
 
   return !classes.some((c) => hierarchy.isDerived(object._class, c))
+}
+
+export function createFakeDirectFromEmployee (employee: WithLookup<Employee>): WithLookup<DirectMessage> | undefined {
+  if (employee.personUuid == null) return
+  const me = getCurrentAccount()
+  return {
+    _id: `@fake-${employee._id}` as Ref<DirectMessage>,
+    _class: chunter.class.DirectMessage,
+    space: core.space.Space,
+    members: Array.from(new Set([employee.personUuid, me.uuid])),
+    type: 'person',
+    name: '',
+    private: true,
+    description: '',
+    archived: false,
+    modifiedBy: me.primarySocialId,
+    modifiedOn: Date.now(),
+    $source: employee.$source
+  }
+}
+
+export function isFakeDirect (direct: Doc): direct is DirectMessage {
+  return direct._class === chunter.class.DirectMessage && direct._id.startsWith('@fake-')
+}
+
+export async function createRealDirectFromFake (fake: DirectMessage): Promise<DirectMessage | undefined> {
+  const client = getClient()
+  const _id = await createDirect(client, fake.members)
+  if (_id == null) return
+
+  return await client.findOne(chunter.class.DirectMessage, { _id })
+}
+
+export function getDirectByAccountMap (directs: DirectMessage[]): Map<AccountUuid, DirectMessage> {
+  const me = getCurrentAccount()
+  const map = new Map<AccountUuid, DirectMessage>()
+
+  for (const it of directs) {
+    if (it.type !== 'person') continue
+
+    const other = it.members.find((m) => m !== me.uuid)
+
+    if (other == null) {
+      if (it.members.includes(me.uuid)) {
+        map.set(me.uuid, it)
+      }
+      continue
+    }
+
+    map.set(other, it)
+  }
+
+  return map
+}
+
+export function getChatNavItemKey (item: ChatNavItemModel): string {
+  const doc = item.object
+  if (doc._class === chunter.class.DirectMessage) {
+    const direct = doc as DirectMessage
+    if (direct.type === 'person') {
+      const me = getCurrentAccount()
+      const other = direct.members.find((m) => m !== me?.uuid) ?? me?.uuid
+      if (other != null) return `direct-${other}`
+    }
+  }
+  return item.id
 }
