@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -36,7 +37,6 @@
   const employeesQuery = createQuery()
 
   let search: string = ''
-  let searchExpanded: boolean = false
 
   let employees: Employee[] = []
   let pinned: Chat[] = []
@@ -107,22 +107,15 @@
 </script>
 
 <div class="hulyNavPanel-header header">
-  {#if !searchExpanded && search === ''}
-    <span class="overflow-label label">
+  <span class="overflow-label label">
+    {#if search === ''}
       <Label label={chunter.string.Chat} />
-    </span>
-  {/if}
+    {/if}
+  </span>
 
   {#if hasAccountRole(getCurrentAccount(), AccountRole.User)}
     <div class="header-actions">
-      <SearchInput
-        bind:value={search}
-        collapsed
-        on:focus={() => (searchExpanded = true)}
-        on:blur={() => (searchExpanded = false)}
-        kind="ghost"
-        width="100%"
-      />
+      <SearchInput bind:value={search} collapsed kind="ghost" width="100%" />
       <ButtonIcon
         icon={IconEdit}
         hasMenu
@@ -166,14 +159,7 @@
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
-  }
-
-  .divider {
-    width: 100%;
-    height: 1px;
-    background: var(--theme-navpanel-divider);
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
+    z-index: 0;
   }
 
   .header-actions {
@@ -182,18 +168,21 @@
     gap: 0.25rem;
     width: 100%;
     justify-content: end;
+    position: relative;
+    z-index: 1;
+
+    :global(.searchInput-wrapper:focus-within),
+    :global(.searchInput-wrapper:active),
+    :global(.searchInput-wrapper.filled) {
+      background-color: var(--input-opaque-BackgroundColor) !important;
+    }
   }
 
-  .searchInput-wrapper {
-    display: flex;
-    justify-content: stretch;
-    align-items: center;
-    align-self: stretch;
-    padding: 0 var(--spacing-0_5) 0 0;
-    height: var(--global-small-Size);
-    min-width: var(--global-small-Size);
-    background-color: var(--theme-button-default);
-    border-radius: var(--small-BorderRadius);
-    box-shadow: inset 0 0 0 1px var(--theme-button-border);
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--theme-navpanel-divider);
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 </style>
