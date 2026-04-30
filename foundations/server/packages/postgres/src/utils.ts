@@ -509,7 +509,7 @@ export function toWithLookup<T extends Doc> (doc: T): WithLookup<T> {
   return res
 }
 
-export function parseDoc<T extends Doc> (doc: DBDoc, schema: Schema): T {
+export function parseDoc<T extends Doc> (doc: DBDoc, schema: Schema, keepHash: boolean = false): T {
   const { workspaceId, data, '%hash%': _hash, ...rest } = doc
   for (const key in rest) {
     if (key.startsWith('lookup_') || key.startsWith('reverse_lookup_')) {
@@ -534,6 +534,10 @@ export function parseDoc<T extends Doc> (doc: DBDoc, schema: Schema): T {
     ...data,
     ...rest
   } as any as T
+
+  if (keepHash && _hash !== undefined) {
+    ;(res as any)['%hash%'] = _hash
+  }
 
   return res
 }

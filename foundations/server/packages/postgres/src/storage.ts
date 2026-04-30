@@ -117,13 +117,14 @@ async function * createCursorGenerator (
   sql: string,
   params: any,
   schema: Schema,
-  bulkSize = 1000
+  bulkSize = 1000,
+  keepHash: boolean = false
 ): AsyncGenerator<Doc[]> {
   const cursor = client.unsafe(sql, doFetchTypes ? params : convertArrayParams(params)).cursor(bulkSize)
   try {
     let docs: Doc[] = []
     for await (const part of cursor) {
-      docs.push(...part.filter((it) => it != null).map((it) => parseDoc(it as any, schema)))
+      docs.push(...part.filter((it) => it != null).map((it) => parseDoc(it as any, schema, keepHash)))
       if (docs.length > 0) {
         yield docs
         docs = []
@@ -1561,7 +1562,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
         WHERE "workspaceId" = '${workspaceId}'
       `
 
-      return createCursorGenerator(client.raw(), sql, undefined, schema, limit)
+      return createCursorGenerator(client.raw(), sql, undefined, schema, limit, true)
     }
     let bulk: AsyncGenerator<Doc[]>
 

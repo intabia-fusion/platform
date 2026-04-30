@@ -940,7 +940,7 @@ export function devTool (
     .option('--bl, --blobLimit <blobLimit>', 'A blob size limit in megabytes (default 5mb)', '5')
     .option('-f, --force', 'Force backup', false)
     .option('-t, --timeout <timeout>', 'Connect timeout in seconds', '30')
-    .option('-k, --keepSnapshots <keepSnapshots>', 'Keep snapshots for days', '14')
+    .option('-k, --keepSnapshots <keepSnapshots>', 'Keep snapshots for days', '78')
     .option('--fv, --fullVerify', 'Full verification', false)
     .action(
       async (
