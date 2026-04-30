@@ -129,14 +129,16 @@ export class LiveKitClient {
           autoDestroy: false
         })
       }
-      await Promise.all([
-        this.liveKitRoom.connect(wsURL, token, {
-          maxRetries: 1,
-          websocketTimeout: 10000,
-          peerConnectionTimeout: 10000
-        }),
-        setupMediaSession()
-      ])
+      // request media permissions first so the browser prompt does not race
+      // with LiveKit's PeerConnection timeout. denied permissions are fine -
+      // useMedia returns a session without active devices and the room still
+      // connects (user joins as listener).
+      await setupMediaSession()
+      await this.liveKitRoom.connect(wsURL, token, {
+        maxRetries: 3,
+        websocketTimeout: 20000,
+        peerConnectionTimeout: 30000
+      })
 
       this.currentMediaSession?.on('camera', (enabled) => {
         void this.setCameraEnabled(enabled)
