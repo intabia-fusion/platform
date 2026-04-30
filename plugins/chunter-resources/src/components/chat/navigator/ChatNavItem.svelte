@@ -17,7 +17,7 @@
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
-  import { getObjectLinkId, canLeaveSpace } from '@hcengineering/view-resources'
+  import { getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
@@ -28,14 +28,15 @@
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
   import { Doc, getCurrentAccount, Ref, Space } from '@hcengineering/core'
-  import { Chat } from '@hcengineering/chunter'
+  import { Channel, Chat } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
 
   import NavItem from './NavItem.svelte'
   import { ChatNavItemModel } from '../types'
   import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
-  import { leaveChannel } from '../../../utils'
+  import { leaveChannel, toggleChannelIcon } from '../../../utils'
+  import ChannelIcon from '../../ChannelIcon.svelte'
 
   export let context: DocNotifyContext | undefined
   export let item: ChatNavItemModel
@@ -138,10 +139,26 @@
       })
     }
 
+    if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
+      const channel = object as Channel
+      result.push({
+        icon: ChannelIcon,
+        iconProps: { value: object },
+        label: chunter.string.ChangeIcon,
+        group: 'tools',
+        component: IconPicker,
+        props: { icon: channel.icon, color: channel.emoji },
+        action: async (result) => {
+          if (result == null) return
+          await toggleChannelIcon(channel, result.icon, result.color)
+        }
+      })
+    }
+
     result.push({
       icon: notification.icon.Notifications,
       label: notification.string.EditNotifications,
-      group: 'tools',
+      group: 'associate',
       component: MutePopup,
       props: { value: object },
       action: async () => {}

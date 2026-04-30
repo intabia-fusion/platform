@@ -40,9 +40,9 @@
   $: value = parseIcon(icon)
 </script>
 
-<span class="emoji-{size} flex-row-center emoji" class:inline class:fitSize={inline}>
+<span class="emoji-{size} flex-row-center emoji clear-padding" class:inline class:fitSize={inline}>
   {#if value !== undefined}
-    <span class="value">
+    <span class="value clear-padding">
       {value}
     </span>
   {:else}
@@ -125,5 +125,9 @@
   .emoji-medium,
   .emoji-large {
     flex-shrink: 0;
+  }
+
+  .clear-padding {
+    padding: 0 !important;
   }
 </style>

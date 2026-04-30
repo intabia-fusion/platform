@@ -142,7 +142,8 @@
     "HideAll": "全部隐藏",
     "Seen": "已读",
     "ChannelsAndDMs": "频道和私信",
-    "CreateDirect": "创建私信"
+    "CreateDirect": "创建私信",
+    "ChangeIcon": "更改图标"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",
