@@ -55,6 +55,7 @@
   export let noborder: boolean = false
   export let boundary: HTMLElement | undefined = undefined
   export let autofocus: FocusPosition = false
+  export let isContentChanged = false
   export let onPaste: ((view: EditorView, event: ClipboardEvent) => boolean) | undefined = undefined
   export let onCancel: (() => void) | undefined = undefined
   export let docClass: Ref<Class<Doc>> | undefined = undefined
@@ -73,7 +74,7 @@
   $: shrinkButtons = checkAdaptiveMatching(devSize, 'sm')
 
   $: isEmptyContent = isEmpty || isEmptyMarkup(content)
-  $: canSubmit = (haveAttachment || !isEmptyContent) && !loading
+  $: canSubmit = (haveAttachment || !isEmptyContent || isContentChanged) && !loading
 
   function setContent (content: Markup): void {
     editor?.setContent(content)

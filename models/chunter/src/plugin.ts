@@ -44,7 +44,9 @@ export default mergeIds(chunterId, chunter, {
     MarkUnread: '' as Ref<Action>,
     ArchiveChannel: '' as Ref<Action>,
     UnarchiveChannel: '' as Ref<Action>,
-    CopyChatMessageLink: '' as Ref<Action<Doc, any>>
+    CopyChatMessageLink: '' as Ref<Action<Doc, any>>,
+    ReplyToMessage: '' as Ref<Action>,
+    ForwardMessage: '' as Ref<Action>
   },
   actionImpl: {
     ArchiveChannel: '' as ViewAction,
@@ -53,7 +55,9 @@ export default mergeIds(chunterId, chunter, {
     ReplyToThread: '' as ViewAction,
     TranslateMessage: '' as ViewAction,
     ShowOriginalMessage: '' as ViewAction,
-    SummarizeMessages: '' as ViewAction
+    SummarizeMessages: '' as ViewAction,
+    ReplyToMessage: '' as ViewAction,
+    ForwardMessage: '' as ViewAction
   },
   category: {
     Chunter: '' as Ref<ActionCategory>

@@ -20,7 +20,7 @@
 </script>
 
 <div class="delete-message-presenter">
-  <ActivityMessagePresenter {value} readonly withActions={false} hoverable={false} padding="1rem" />
+  <ActivityMessagePresenter {value} readonly withActions={false} hoverable={false} padding="1rem" skipLabel />
 </div>
 
 <style lang="scss">

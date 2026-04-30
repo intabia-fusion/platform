@@ -21,5 +21,7 @@ loadMetadata(activity.icon, {
   Activity: `${icons}#activity`,
   Emoji: `${icons}#emoji`,
   Bookmark: `${icons}#bookmark`,
-  BookmarkFilled: `${icons}#bookmark-filled`
+  BookmarkFilled: `${icons}#bookmark-filled`,
+  Forward: `${icons}#forward`,
+  ReplyTo: `${icons}#reply-to`
 })

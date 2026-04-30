@@ -32,6 +32,7 @@
   export let imageSize: AttachmentImageSize = 'auto'
   export let removable: boolean = false
   export let videoPreload = false
+  export let withActions = true
 
   const dispatch = createEventDispatcher()
 
@@ -43,9 +44,11 @@
 {#if type === 'video'}
   <div class="content buttonContainer flex-center" class:hovered>
     <AttachmentVideoPreview {value} preload={videoPreload} />
-    <div class="actions">
-      <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
-    </div>
+    {#if withActions}
+      <div class="actions">
+        <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
+      </div>
+    {/if}
   </div>
 {:else if value.metadata?.thumbnail !== undefined || type === 'image'}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -60,23 +63,29 @@
     }}
   >
     <AttachmentImagePreview {value} size={imageSize} />
-    <div class="actions">
-      <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
-    </div>
+    {#if withActions}
+      <div class="actions">
+        <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
+      </div>
+    {/if}
   </div>
 {:else if type === 'audio'}
   <div class="buttonContainer" class:hovered>
     <AudioPlayer {value} />
-    <div class="actions" style:padding={'0.125rem 0.25rem'}>
-      <AttachmentActions attachment={value} {isSaved} {removable} />
-    </div>
+    {#if withActions}
+      <div class="actions" style:padding={'0.125rem 0.25rem'}>
+        <AttachmentActions attachment={value} {isSaved} {removable} />
+      </div>
+    {/if}
   </div>
 {:else}
   <div class="flex buttonContainer extraWidth" class:hovered>
     <AttachmentPresenter {value} />
-    <div class="actions">
-      <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
-    </div>
+    {#if withActions}
+      <div class="actions">
+        <AttachmentActions bind:hovered attachment={value} {isSaved} {removable} />
+      </div>
+    {/if}
   </div>
 {/if}
 

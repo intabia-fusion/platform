@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type ActivityMessage } from '@hcengineering/activity'
+import { type ActivityMessage, type ForwardContent, type ForwardedAttachment } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
 import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
 import {
@@ -35,7 +35,8 @@ import core, {
   notEmpty,
   type Ref,
   type Space,
-  type Timestamp
+  type Timestamp,
+  type WithLookup
 } from '@hcengineering/core'
 import { type DocNotifyContext, type InboxNotification, type ReadState } from '@hcengineering/notification'
 import {
@@ -44,18 +45,27 @@ import {
   isMentionNotification,
   isReactionNotification
 } from '@hcengineering/notification-resources'
-import { type Asset, getMetadata, type IntlString } from '@hcengineering/platform'
+import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
-import { type AnySvelteComponent, languageStore } from '@hcengineering/ui'
-import { classIcon, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
+import { type AnySvelteComponent, type IconSize, languageStore, showPopup } from '@hcengineering/ui'
+import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
+import attachment, { type Attachment } from '@hcengineering/attachment'
+import { isEmptyMarkup } from '@hcengineering/text'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import { openChannelInSidebar, resetChunterLocIfEqual } from './navigation'
 import chunter from './plugin'
-import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from './stores'
+import {
+  replyingToMessageStore,
+  shownTranslatedMessagesStore,
+  translatedMessagesStore,
+  translatingMessagesStore
+} from './stores'
+import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
+import view from '@hcengineering/view'
 
 export async function getDmName (client: Client, space?: DirectMessage): Promise<string> {
   if (space === undefined) {
@@ -520,5 +530,124 @@ export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?:
     await client.update(channel, { $unset: { icon: true, emoji: true } })
   } else {
     await client.update(channel, { icon, emoji })
+}
+  }
+
+async function getForwardedAttachments (message: WithLookup<ChatMessage>): Promise<ForwardedAttachment[]> {
+  if ((message.attachments ?? 0) === 0) return []
+
+  const client = getClient()
+  const attachments = (
+    (message.$lookup?.attachments as Attachment[]) ??
+    (await client.findAll(attachment.class.Attachment, { attachedTo: message._id }))
+  ).filter((it) => it.type !== 'application/link-preview')
+
+  if (attachments.length === 0) return []
+
+  return attachments.map((it) => ({
+    originId: it._id,
+    name: it.name,
+    file: it.file,
+    size: it.size,
+    type: it.type,
+    createdOn: it.createdOn ?? it.modifiedOn,
+    metadata: it.metadata
+  }))
+}
+
+async function getForwardContent (message: WithLookup<ChatMessage>): Promise<ForwardContent | undefined> {
+  return {
+    author: message.createdBy ?? message.modifiedBy,
+    message: message.message,
+    createdOn: message.createdOn ?? message.modifiedOn,
+    attachments: await getForwardedAttachments(message)
+  }
+}
+
+export async function getForwardData (message: WithLookup<ChatMessage>): Promise<{
+  forwardedMessage?: Ref<ActivityMessage>
+  forwardFromId?: Ref<Doc>
+  forwardFromClass?: Ref<Class<Doc>>
+  forwardContent?: ForwardContent
+}> {
+  const hasContent = (message.attachments ?? 0) > 0 || !isEmptyMarkup(message.message)
+  if (hasContent) {
+    return {
+      forwardedMessage: message._id,
+      forwardFromId: message.attachedTo,
+      forwardFromClass: message.attachedToClass,
+      forwardContent: await getForwardContent(message)
+    }
+  } else if (message.forwardedMessage != null) {
+    return {
+      forwardedMessage: message.forwardedMessage,
+      forwardFromId: message.forwardFromId,
+      forwardFromClass: message.forwardFromClass,
+      forwardContent: message.forwardContent
+    }
+  }
+
+  return {}
+}
+
+export async function replyToMessage (message: ChatMessage): Promise<void> {
+  replyingToMessageStore.set(message)
+}
+
+export async function forwardMessage (message: ChatMessage): Promise<void> {
+  showPopup(ForwardMessageDialog, { message }, 'centered')
+}
+
+export async function getChatDocIcon (doc: Doc): Promise<{
+  icon: Asset | AnySvelteComponent
+  iconSize: IconSize
+  iconProps: Record<string, any>
+  withIconBackground: boolean
+}> {
+  const { _class } = doc
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const iconMixin = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIcon)
+
+  const isPerson = hierarchy.isDerived(_class, contact.class.Person)
+  const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
+
+  const iconSize: IconSize = isDirect || isPerson ? 'x-small' : 'small'
+
+  let icon: AnySvelteComponent | undefined
+
+  if (iconMixin?.component != null) {
+    icon = await getResource(iconMixin.component)
+  }
+
+  return {
+    icon: icon ?? getObjectIcon(_class) ?? chunter.icon.Hashtag,
+    iconProps: { showStatus: true, visiblePersons: 2 },
+    iconSize,
+    withIconBackground: !isDirect && !isPerson
+  }
+}
+
+export async function getChatDocTitle (
+  doc: Doc,
+  lang: string
+): Promise<{
+    identifier?: string
+    title: string
+  }> {
+  const { _class } = doc
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const titleIntl = client.getHierarchy().getClass(_class).label
+
+  const isPerson = hierarchy.isDerived(_class, contact.class.Person)
+  const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
+
+  const identifier = isPerson || isDirect ? undefined : await getDocIdentifier(client, doc._id, doc._class, doc)
+  const title = (await getChannelName(doc._id, doc._class, doc, lang)) ?? (await translate(titleIntl, {}, lang))
+
+  return {
+    identifier,
+    title
   }
 }

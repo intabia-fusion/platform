@@ -60,6 +60,7 @@
       icon: a.icon as Asset,
       inline: a.inline,
       group: a.context.group ?? 'other',
+      order: a.context.order,
       action: async (_: any, evt: Event) => {
         if (overrides?.has(a._id)) {
           overrides.get(a._id)?.(object, evt)
@@ -71,9 +72,19 @@
       props: { ...a.actionProps, value: object }
     }))
 
-    resActions = [...newActions, ...actions].sort(
-      (a, b) => (order as any)[a.group ?? 'other'] - (order as any)[b.group ?? 'other']
-    )
+    resActions = [...newActions, ...actions].sort((a, b) => {
+      const groupA = (order as any)[a.group ?? 'other']
+      const groupB = (order as any)[b.group ?? 'other']
+
+      if (groupA !== groupB) {
+        return groupA - groupB
+      }
+
+      const orderA = a.order ?? 99999
+      const orderB = b.order ?? 99999
+
+      return orderA - orderB
+    })
     if (resActions.length > 0) {
       loaded = true
     }

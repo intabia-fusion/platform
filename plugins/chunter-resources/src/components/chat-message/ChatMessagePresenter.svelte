@@ -28,10 +28,9 @@
   import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, languageStore, ShowMore } from '@hcengineering/ui'
+  import { Action, Button, IconEdit, languageStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 
   import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
@@ -40,6 +39,7 @@
   import DoubleCheck from '../icons/DoubleCheck.svelte'
   import MessageReadMarker from './MessageReadMarker.svelte'
   import MessageReadPopup from './MessageReadPopup.svelte'
+  import ForwardedMessagePresenter from '../ForwardedMessagePresenter.svelte'
 
   export let value: WithLookup<ChatMessage> | undefined
   export let doc: Doc | undefined = undefined
@@ -56,11 +56,9 @@
   export let hoverable = true
   export let inline = false
   export let hoverStyles: 'filledHover' = 'filledHover'
-  export let withShowMore: boolean = true
   export let attachmentImageSize: AttachmentImageSize = 'x-large'
   export let videoPreload = false
   export let hideLink = false
-  export let compact = false
   export let readonly = false
   export let type: ActivityMessageViewType = 'default'
   export let padding: string | null = null
@@ -179,7 +177,8 @@
             label: activity.string.Edit,
             icon: IconEdit,
             group: 'edit',
-            action: handleEditAction
+            action: handleEditAction,
+            order: 1
           }
         ]
       : []),
@@ -302,32 +301,21 @@
     </svelte:fragment>
     <svelte:fragment slot="afterTime">
       {#if !pending && isOwn && readState}
-        <div class="read-marker">
+        <div class="read-marker" class:center={type !== 'short'}>
           <MessageReadMarker bind:readEmployees createdOn={value.createdOn ?? value.modifiedOn} {readState} />
         </div>
       {/if}
     </svelte:fragment>
     <svelte:fragment slot="content">
       {#if !isEditing}
-        {#if withShowMore}
-          <ShowMore limit={compact ? 80 : undefined}>
-            <div class="clear-mins" {...!pending && { 'data-delivered': true }}>
-              <MessageViewer message={displayText} />
-              {#if (value.attachments ?? 0) > 0}
-                <div class="mt-2" />
-              {/if}
-              <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
-            </div>
-          </ShowMore>
-        {:else}
-          <div class="clear-mins" {...!pending && { 'data-delivered': true }}>
-            <MessageViewer message={displayText} />
-            {#if (value.attachments ?? 0) > 0}
-              <div class="mt-2" />
-            {/if}
-            <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
-          </div>
-        {/if}
+        <div class="clear-mins" {...!pending && { 'data-delivered': true }}>
+          <MessageViewer message={displayText} />
+          {#if (value.attachments ?? 0) > 0}
+            <div class="mt-2" />
+          {/if}
+          <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
+          <ForwardedMessagePresenter parent={value} {object} />
+        </div>
       {:else if object}
         <ChatMessageInput
           bind:this={refInput}
@@ -358,6 +346,38 @@
   .read-marker {
     display: flex;
     margin-left: 0.25rem;
+    max-height: 1.25rem;
+
+    &.center {
+      align-items: center;
+    }
+  }
+  .forwarded-header {
+    display: flex;
     align-items: center;
+    gap: 4px;
+    font-size: 0.85em;
+    color: var(--global-subtle-ui-Color);
+    margin-bottom: 4px;
+  }
+  .reply-block {
+    border-left: 2px solid var(--global-brand-BackgroundColor);
+    background: var(--global-surface-01-BackgroundColor);
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+  }
+  .reply-author {
+    font-weight: 500;
+    font-size: 0.85em;
+    margin-bottom: 2px;
+  }
+  .reply-text {
+    font-size: 0.85em;
+    color: var(--global-subtle-ui-Color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-height: 2em;
   }
 </style>

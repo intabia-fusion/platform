@@ -86,7 +86,13 @@ export async function getActions (
   filteredActions.sort((a, b) => {
     const aTarget = categories[a.context.group ?? 'top'] ?? 0
     const bTarget = categories[b.context.group ?? 'top'] ?? 0
-    return aTarget - bTarget
+    if (aTarget !== bTarget) {
+      return aTarget - bTarget
+    }
+    // sort by order inside group
+    const aOrder = a.context.order ?? 99999
+    const bOrder = b.context.order ?? 99999
+    return aOrder - bOrder
   })
   return filteredActions
 }

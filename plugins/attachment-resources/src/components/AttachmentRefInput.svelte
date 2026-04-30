@@ -70,6 +70,7 @@
   export let loading = false
   export let focusIndex: number = -1
   export let autofocus = false
+  export let isContentChanged = false
   export function submit (): void {
     refInput.submit()
   }
@@ -77,6 +78,7 @@
   export let extraActions: RefAction[] = []
   export let boundary: HTMLElement | undefined = undefined
   export let skipAttachmentsPreload = false
+  export let disableAttachments = false
   export let onKeyDown: ((event: KeyboardEvent) => boolean) | undefined = undefined
 
   let refInput: ReferenceInput
@@ -240,6 +242,7 @@
   }
 
   async function fileSelected (): Promise<void> {
+    if (disableAttachments) return
     progress = true
     await tick()
     const list = inputFile.files
@@ -257,6 +260,7 @@
   }
 
   async function fileDrop (e: DragEvent): Promise<void> {
+    if (disableAttachments) return
     const list = e.dataTransfer?.files
     const limiter = new RateLimiter(10)
 
@@ -498,18 +502,23 @@
       loading={loading || progress || loadingLinks}
       {boundary}
       {docClass}
+      {isContentChanged}
       extraActions={[
         ...extraActions,
-        {
-          label: textEditor.string.Attach,
-          icon: AttachIcon,
-          action: () => {
-            dispatch('focus')
-            inputFile.click()
-          },
-          order: 1001
-        },
-        ...uploadActions
+        ...(disableAttachments
+          ? []
+          : [
+              {
+                label: textEditor.string.Attach,
+                icon: AttachIcon,
+                action: () => {
+                  dispatch('focus')
+                  inputFile.click()
+                },
+                order: 1001
+              }
+            ]),
+        ...(disableAttachments ? [] : uploadActions)
       ]}
       showHeader={attachments.size > 0 || progress}
       haveAttachment={attachments.size > 0}
@@ -526,7 +535,7 @@
       }}
     >
       <div slot="header">
-        {#if attachments.size > 0 || progress}
+        {#if (attachments.size > 0 || progress) && !disableAttachments}
           <div class="flex-row-center list scroll-divider-color">
             {#if progress}
               <div class="flex p-3">

@@ -1,4 +1,4 @@
-export type AttachmentImageSize = 'x-large' | 'auto'
+export type AttachmentImageSize = 'medium' | 'x-large' | 'auto'
 
 export interface LinkPreviewData {
   url: string

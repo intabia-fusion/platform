@@ -617,6 +617,8 @@ export interface ViewContext {
 
   // Optional groupping
   group?: ActionGroup
+  // Sort actions inside group
+  order?: number
 }
 
 /**
