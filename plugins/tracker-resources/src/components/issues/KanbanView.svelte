@@ -250,7 +250,7 @@
       hash = Math.imul(hash ^ arr.length, 16777619) >>> 0
       for (const item of arr) mix(item._id)
       if (swimLaneBy !== 'none' && swimLaneBy !== '' && arr.length > 0) {
-        const v = (arr[0])[swimLaneBy]
+        const v = arr[0][swimLaneBy]
         mix(String(v))
       }
     }
