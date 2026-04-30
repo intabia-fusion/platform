@@ -238,11 +238,21 @@
         hash = Math.imul(hash ^ s.charCodeAt(i), 16777619) >>> 0
       }
     }
+    // Mix swimLaneBy so that toggling swim lane (which changes per-doc projection
+    // fields like `priority`) busts the memo and forces a fresh groupByDocs even
+    // if ids/lengths inside categories did not change.
+    mix(swimLaneBy)
+    // Mix the swim-lane value of the first doc of each category so a projection
+    // refresh that adds the swim field to existing docs invalidates the memo.
     for (const k of keys) {
       mix(k)
       const arr = (next as any)[k] ?? []
       hash = Math.imul(hash ^ arr.length, 16777619) >>> 0
       for (const item of arr) mix(item._id)
+      if (swimLaneBy !== 'none' && swimLaneBy !== '' && arr.length > 0) {
+        const v = (arr[0] as any)[swimLaneBy]
+        mix(String(v))
+      }
     }
     if (hash !== lastGroupHash) {
       lastGroupHash = hash

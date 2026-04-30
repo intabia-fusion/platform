@@ -260,29 +260,31 @@ test.describe('Kanban board', () => {
     })
 
     test('order is stable across drag', async ({ page }) => {
-      // Ensure all five priorities have at least one card so lanes do not disappear.
+      // Stable card lives in Urgent (4) — sparse lane, predictable visibility.
+      // Anchors in the other priorities keep the lanes from disappearing.
       const stable = await createIssue(client, ctx, {
         title: `${titlePrefix}sw-stable`,
         status: 'Backlog',
-        priority: 0
+        priority: 4
       })
-      for (let p = 1; p <= 4; p++) {
+      for (let p = 0; p <= 3; p++) {
         await createIssue(client, ctx, {
           title: `${titlePrefix}sw-stable-anchor-${p}`,
           status: 'Backlog',
           priority: p
         })
       }
-      // Anchor in Todo (priority=0) so the target cell has a card to drop onto.
+      // Anchor in Todo of the stable lane (Urgent) so the target cell has a card to drop onto.
       await createIssue(client, ctx, {
         title: `${titlePrefix}sw-stable-todo-anchor`,
         status: 'Todo',
-        priority: 0
+        priority: 4
       })
 
       await openTrackerBoard(page, ctx.project._id)
       const board = new KanbanBoardPage(page)
       await board.setSwimLane('Priority')
+      await board.revealCard(stable)
 
       const beforeOrder = await board.swimLanes()
       expect(beforeOrder.length).toBeGreaterThanOrEqual(5)
@@ -405,15 +407,19 @@ test.describe('Kanban board', () => {
     })
 
     test('drag in Manual order keeps card on target position (no flicker to end)', async ({ page }) => {
-      const c1 = await createIssue(client, ctx, { title: `${titlePrefix}rank-1`, status: 'Backlog', priority: 0 })
-      const c2 = await createIssue(client, ctx, { title: `${titlePrefix}rank-2`, status: 'Backlog', priority: 0 })
-      const c3 = await createIssue(client, ctx, { title: `${titlePrefix}rank-3`, status: 'Backlog', priority: 0 })
+      // Use Urgent (4) so the lane is sparsely populated and the cards land in
+      // the first 3 (initialLimit), avoiding "Show more" interference.
+      const c1 = await createIssue(client, ctx, { title: `${titlePrefix}rank-1`, status: 'Backlog', priority: 4 })
+      const c2 = await createIssue(client, ctx, { title: `${titlePrefix}rank-2`, status: 'Backlog', priority: 4 })
+      const c3 = await createIssue(client, ctx, { title: `${titlePrefix}rank-3`, status: 'Backlog', priority: 4 })
 
       await openTrackerBoard(page, ctx.project._id)
       const board = new KanbanBoardPage(page)
       await board.setSwimLane('Priority')
 
-      // Wait for c1 to be rendered in the swimlane.
+      // Wait for c1 to be rendered in the swimlane; reveal it via Show more if
+      // the lane is over capacity.
+      await board.revealCard(c1)
       await board.card(c1).waitFor({ state: 'visible', timeout: 15000 })
       const noPriorityLaneId = await page
         .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${c1}"])`)
@@ -457,14 +463,16 @@ test.describe('Kanban board', () => {
     })
 
     test('Show more counter does not flicker for unrelated cells while dragging', async ({ page }) => {
-      // Create > 3 cards in one cell so Show more is visible.
+      // Create > 3 cards in one Urgent/Backlog cell so Show more is visible.
+      // Using Urgent (4) keeps the test isolated from accumulated NoPriority
+      // issues across previous runs.
       const ids: Array<Ref<Issue>> = []
       for (let i = 0; i < 5; i++) {
         ids.push(
           await createIssue(client, ctx, {
             title: `${titlePrefix}sm-${i}`,
             status: 'Backlog',
-            priority: 0
+            priority: 4
           })
         )
       }
@@ -472,7 +480,7 @@ test.describe('Kanban board', () => {
       const dragId = await createIssue(client, ctx, {
         title: `${titlePrefix}sm-drag`,
         status: 'Todo',
-        priority: 0
+        priority: 4
       })
 
       await openTrackerBoard(page, ctx.project._id)
@@ -480,14 +488,17 @@ test.describe('Kanban board', () => {
       await board.setSwimLane('Priority')
 
       const backlog = ctx.statuses.get('Backlog') as string
-      // The Backlog cell with 5 cards should have a Show more.
+      // The Backlog cell with 5 cards should have a Show more button (locale-agnostic).
       const cellLocator = page
         .locator(`[data-id="kanban-swimlane-cell"][data-state="${backlog}"]`)
-        .filter({ hasText: 'Show more' })
+        .filter({ has: page.locator('[data-id="kanban-show-more"]') })
         .first()
       await expect(cellLocator).toBeVisible()
 
+      // Reveal the drag source card if it landed beyond the initial limit.
+      await board.revealCard(dragId)
       const card = board.card(dragId)
+      await card.scrollIntoViewIfNeeded()
       const box = await card.boundingBox()
       expect(box).not.toBeNull()
       if (box === null) return
@@ -504,7 +515,7 @@ test.describe('Kanban board', () => {
       const cardId = await createIssue(client, ctx, {
         title: `${titlePrefix}noop-drop`,
         status: 'Backlog',
-        priority: 0
+        priority: 4
       })
 
       await openTrackerBoard(page, ctx.project._id)
@@ -512,6 +523,7 @@ test.describe('Kanban board', () => {
       await board.setSwimLane('Priority')
 
       const backlog = ctx.statuses.get('Backlog') as string
+      await board.revealCard(cardId)
       await board.card(cardId).waitFor({ state: 'visible', timeout: 15000 })
       const laneId = await page
         .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
