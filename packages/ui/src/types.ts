@@ -81,6 +81,7 @@ export interface Action {
   label: IntlString
   labelParams?: Record<string, any>
   icon?: Asset | AnySvelteComponent
+  iconProps?: Record<string, any>
   action: (props: any, ev: Event) => Promise<void>
   inline?: boolean
   link?: string

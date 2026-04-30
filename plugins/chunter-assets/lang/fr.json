@@ -142,7 +142,8 @@
     "HideAll": "Tout masquer",
     "Seen": "Vu",
     "ChannelsAndDMs": "Canal et messages privés",
-    "CreateDirect": "Créer un message direct"
+    "CreateDirect": "Créer un message direct",
+    "ChangeIcon": "Changer l'icône"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vous a envoyé un message : \n\n{message}",

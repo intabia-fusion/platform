@@ -44,6 +44,8 @@ export interface ChunterSpace extends Space {
  */
 export interface Channel extends ChunterSpace {
   topic?: string
+  icon?: Asset
+  emoji?: number | number[]
 }
 
 /**

@@ -107,6 +107,7 @@ export default mergeIds(chunterId, chunter, {
     NoThreadsYet: '' as IntlString,
     DeleteMessageDescription: '' as IntlString,
     ChannelsAndDMs: '' as IntlString,
-    CreateDirect: '' as IntlString
+    CreateDirect: '' as IntlString,
+    ChangeIcon: '' as IntlString
   }
 })

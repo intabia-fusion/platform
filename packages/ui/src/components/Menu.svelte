@@ -90,9 +90,12 @@
         { ...action.props, popupCategory: nextCategory },
         { getBoundingClientRect: () => target.getBoundingClientRect(), kind: 'submenu' },
         (evt) => {
+          void action.action(evt, evt)
           dispatch('close')
         },
-        undefined,
+        (evt) => {
+          void action.action(evt, evt)
+        },
         { category, overlay: false }
       )
     }
@@ -151,7 +154,9 @@
                 action.action(ctx, evt)
               }}
             >
-              {#if action.icon}<div class="icon mr-2"><Icon icon={action.icon} size={'small'} /></div>{/if}
+              {#if action.icon}<div class="icon mr-2">
+                  <Icon icon={action.icon} iconProps={action.iconProps ?? {}} size={'small'} />
+                </div>{/if}
               <span class="overflow-label pr-4 flex-grow"
                 ><Label label={action.label} params={action.labelParams ?? {}} /></span
               >
@@ -171,7 +176,7 @@
             }}
           >
             {#if action.icon}
-              <div class="icon mr-2"><Icon icon={action.icon} size={'small'} /></div>
+              <div class="icon mr-2"><Icon icon={action.icon} iconProps={action.iconProps ?? {}} size={'small'} /></div>
             {/if}
             <span class="overflow-label pr-4 flex-grow"
               ><Label label={action.label} params={action.labelParams ?? {}} /></span
@@ -201,7 +206,7 @@
             }}
           >
             {#if action.icon}
-              <div class="icon mr-2"><Icon icon={action.icon} size={'small'} /></div>
+              <div class="icon mr-2"><Icon icon={action.icon} iconProps={action.iconProps ?? {}} size={'small'} /></div>
             {/if}
             <span class="overflow-label pr-4 flex-grow"
               ><Label label={action.label} params={action.labelParams ?? {}} /></span

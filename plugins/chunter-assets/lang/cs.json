@@ -142,7 +142,8 @@
     "HideAll": "Skrýt vše",
     "Seen": "Přečteno",
     "ChannelsAndDMs": "Kanály a privátní zprávy",
-    "CreateDirect": "Vytvořit přímou zprávu"
+    "CreateDirect": "Vytvořit přímou zprávu",
+    "ChangeIcon": "Změnit ikonu"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",

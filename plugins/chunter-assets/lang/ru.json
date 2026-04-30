@@ -143,7 +143,8 @@
     "HideAll": "Скрыть все",
     "Seen": "Прочитали",
     "ChannelsAndDMs": "Каналы и ЛС",
-    "CreateDirect": "Создать личный чат"
+    "CreateDirect": "Создать личный чат",
+    "ChangeIcon": "Изменить иконку"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} отправил(а) вам сообщение: \n\n{message}",
