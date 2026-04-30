@@ -915,11 +915,7 @@ function getSavedViewlets (): Record<string, Ref<Viewlet> | null> {
 
 export const activeViewlet = writable<Record<string, Ref<Viewlet> | null>>(getSavedViewlets())
 
-export function setActiveViewletId (
-  viewletId: Ref<Viewlet> | null,
-  loc?: Location,
-  ignoreFragment = false
-): void {
+export function setActiveViewletId (viewletId: Ref<Viewlet> | null, loc?: Location, ignoreFragment = false): void {
   const key = makeViewletKey(loc, ignoreFragment)
   const current = get(activeViewlet) ?? {}
   if (viewletId !== null && viewletId !== undefined) {
