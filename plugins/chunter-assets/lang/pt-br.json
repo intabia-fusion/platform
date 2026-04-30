@@ -143,7 +143,11 @@
     "Seen": "Lido",
     "ChannelsAndDMs": "Canais e DMs",
     "CreateDirect": "Criar mensagem direta",
-    "ChangeIcon": "Alterar ícone"
+    "ChangeIcon": "Alterar ícone",
+    "ResolveThread": "Resolver",
+    "PrivateChat": "Chat privado",
+    "ShowMessage": "Mostrar mensagem",
+    "ForwardMessage": "Encaminhar mensagem"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} te enviou uma mensagem: \n\n{message}",

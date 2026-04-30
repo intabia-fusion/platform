@@ -57,6 +57,14 @@
     "RemovedTag": "Etiket kaldırıldı: {title}",
     "AttributeSetTo": "{name}, {value} olarak ayarlandı",
     "ValueTooLarge": "Değer görüntülenemeyecek kadar büyük",
-    "SentAttachments": "Eklendi dosyalar"
+    "SentAttachments": "Eklendi dosyalar",
+    "ReplyTo": "{name} yanıtla",
+    "ForwardedFrom": "Gönderen",
+    "ReplyToMessage": "Mesaja yanıt ver",
+    "ForwardMessage": "Mesajı ilet",
+    "ForwardedMessage": "İletilen mesaj",
+    "ForwardedMessageFrom": "{name} tarafından iletilen mesaj",
+    "Forward": "İlet",
+    "Reply": "Yanıtla"
   }
 }

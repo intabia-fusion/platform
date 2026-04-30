@@ -56,6 +56,14 @@
     "AddedTag": "Etiqueta añadida: {title}",
     "RemovedTag": "Etiqueta eliminada: {title}",
     "ValueTooLarge": "Valor demasiado grande para mostrar",
-    "SentAttachments": "Enviado archivos adjuntos"
+    "SentAttachments": "Enviado archivos adjuntos",
+    "ReplyTo": "Responder a {name}",
+    "ForwardedFrom": "Reenviado de",
+    "ReplyToMessage": "Responder al mensaje",
+    "ForwardMessage": "Reenviar mensaje",
+    "ForwardedMessage": "Mensaje reenviado",
+    "ForwardedMessageFrom": "Mensaje reenviado de {name}",
+    "Forward": "Reenviar",
+    "Reply": "Responder"
   }
 }

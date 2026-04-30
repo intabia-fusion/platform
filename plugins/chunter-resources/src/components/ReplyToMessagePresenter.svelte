@@ -78,13 +78,13 @@
   let parentMessage: ChatMessage | undefined = undefined
   $: isThreadMessage = hierarchy.isDerived(replyTo.attachedToClass, activity.class.ActivityMessage)
 
-    $:if (isThreadMessage && parentMessage?._id !== replyTo.attachedTo) {
-      void client.findOne(chunter.class.ChatMessage, { _id: replyTo.attachedTo as Ref<ChatMessage> }).then(res => {
-        parentMessage = res
-      })
-    } else {
-      parentMessage = undefined
-    }
+  $: if (isThreadMessage && parentMessage?._id !== replyTo.attachedTo) {
+    void client.findOne(chunter.class.ChatMessage, { _id: replyTo.attachedTo as Ref<ChatMessage> }).then((res) => {
+      parentMessage = res
+    })
+  } else {
+    parentMessage = undefined
+  }
 
   $: loc = createLocation($location, replyTo, parentMessage)
 
@@ -157,8 +157,8 @@
           <span class="reply__attachment-label">
             <Label label={attachment.string.Attachments} />
           </span>
-        {:else if replyTo.forwardContent?.message}
-          <LiteMessageViewer message={replyTo.forwardContent.message} />
+        {:else if !isEmptyMarkup(replyTo.forwardContent?.message ?? '')}
+          <LiteMessageViewer message={replyTo.forwardContent?.message ?? ''} />
         {:else if (replyTo.forwardContent?.attachments?.length ?? 0) > 0}
           <span class="reply__attachment-label">
             <Label label={attachment.string.Attachments} />

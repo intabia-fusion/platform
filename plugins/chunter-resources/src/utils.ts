@@ -530,8 +530,8 @@ export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?:
     await client.update(channel, { $unset: { icon: true, emoji: true } })
   } else {
     await client.update(channel, { icon, emoji })
-}
   }
+}
 
 async function getForwardedAttachments (message: WithLookup<ChatMessage>): Promise<ForwardedAttachment[]> {
   if ((message.attachments ?? 0) === 0) return []

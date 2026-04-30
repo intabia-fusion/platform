@@ -57,6 +57,14 @@
     "AddedTag": "タグを追加しました：{title}",
     "RemovedTag": "タグを削除しました：{title}",
     "ValueTooLarge": "表示するには値が大きすぎます",
-    "SentAttachments": "添付ファイルを送信しました"
+    "SentAttachments": "添付ファイルを送信しました",
+    "ReplyTo": "{name} に返信",
+    "ForwardedFrom": "転送元",
+    "ReplyToMessage": "メッセージに返信",
+    "ForwardMessage": "メッセージを転送",
+    "ForwardedMessage": "転送されたメッセージ",
+    "ForwardedMessageFrom": "{name} から転送されたメッセージ",
+    "Forward": "転送",
+    "Reply": "返信"
   }
 }
