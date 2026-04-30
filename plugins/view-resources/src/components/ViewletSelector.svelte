@@ -56,7 +56,12 @@
       viewlets[0]
     if (viewlet?._id !== newViewlet?._id || !deepEqual(viewlet.config, newViewlet.config)) {
       viewlet = newViewlet
-      setActiveViewletId(newViewlet._id)
+      // Persist only when the user actively picked this viewlet (it is present in the store);
+      // do not overwrite storage with a default fallback - that perturbs the choice for other contexts
+      // (e.g. the issue panel resolves to a different location with a fragment-based key).
+      if (activeViewlet[key] === newViewlet._id) {
+        setActiveViewletId(newViewlet._id, undefined, ignoreFragment)
+      }
       dispatch('viewlet', viewlet)
     }
   }
@@ -105,7 +110,7 @@
         }
         viewlet = viewlets.find((vl) => vl._id === result.detail.id)
         if (viewlet) {
-          setActiveViewletId(viewlet._id)
+          setActiveViewletId(viewlet._id, undefined, ignoreFragment)
         }
       }
     }}

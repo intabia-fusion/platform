@@ -90,6 +90,7 @@ test.describe('Tracker Projects tests', () => {
       await trackerNavigationMenuPage.makeActionWithProject(updateProjectData.title, 'Edit project')
       await editProjectPage.checkProject(updateProjectData)
       await editProjectPage.buttonSaveProject().click()
+      await editProjectPage.popupHeader().waitFor({ state: 'hidden' })
     })
   })
 

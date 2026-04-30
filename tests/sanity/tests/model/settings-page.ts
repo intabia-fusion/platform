@@ -103,6 +103,7 @@ export class SettingsPage extends CommonPage {
       await this.selectPopupItem(taskType)
     }
     await this.asideFooterButton('Create').click()
+    await expect(this.taskTypeRow(`${name} ${taskType ?? TaskTypes.Task}`)).toBeVisible()
   }
 
   async checkTaskType (name: string, taskType?: TaskTypes): Promise<void> {
