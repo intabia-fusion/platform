@@ -18,8 +18,10 @@ import tracker, { type Issue } from '@hcengineering/tracker'
 import { type Ref, type TxOperations } from '@hcengineering/core'
 import {
   connectTracker,
+  createComponent,
   createIssue,
   deleteIssuesByTitlePrefix,
+  findProjectByName,
   getProjectContext,
   type ProjectContext
 } from '../API/TrackerApi'
@@ -407,11 +409,11 @@ test.describe('Kanban board', () => {
     })
 
     test('drag in Manual order keeps card on target position (no flicker to end)', async ({ page }) => {
-      // Use Urgent (4) so the lane is sparsely populated and the cards land in
-      // the first 3 (initialLimit), avoiding "Show more" interference.
-      const c1 = await createIssue(client, ctx, { title: `${titlePrefix}rank-1`, status: 'Backlog', priority: 4 })
-      const c2 = await createIssue(client, ctx, { title: `${titlePrefix}rank-2`, status: 'Backlog', priority: 4 })
-      const c3 = await createIssue(client, ctx, { title: `${titlePrefix}rank-3`, status: 'Backlog', priority: 4 })
+      // Use Medium (3) so this test owns its lane — other tests use Urgent (1)
+      // / NoPriority (0). Sparse lane keeps cards in the first 3 (initialLimit).
+      const c1 = await createIssue(client, ctx, { title: `${titlePrefix}rank-1`, status: 'Backlog', priority: 3 })
+      const c2 = await createIssue(client, ctx, { title: `${titlePrefix}rank-2`, status: 'Backlog', priority: 3 })
+      const c3 = await createIssue(client, ctx, { title: `${titlePrefix}rank-3`, status: 'Backlog', priority: 3 })
 
       await openTrackerBoard(page, ctx.project._id)
       const board = new KanbanBoardPage(page)
@@ -430,12 +432,17 @@ test.describe('Kanban board', () => {
       if (await board.isSwimLaneCollapsed(noPriorityLaneId)) await board.toggleSwimLane(noPriorityLaneId)
 
       const backlog = ctx.statuses.get('Backlog') as string
+      // Reveal all cards in this cell so cardIds reflects full ordering, not
+      // the truncated initial-limit slice.
+      await board.revealCard(c1)
+      await board.revealCard(c2)
+      await board.revealCard(c3)
       await board.expectCardInSwimLaneCell(c1, noPriorityLaneId, backlog)
       await board.expectCardInSwimLaneCell(c2, noPriorityLaneId, backlog)
       await board.expectCardInSwimLaneCell(c3, noPriorityLaneId, backlog)
 
       // Drop c3 onto c2 — manual rank update. Retry under flaky CDP drag.
-      // Verify c3 stays at its target position (immediately before c2), not flicker to end.
+      // Verify c3 stays immediately before c2 (not flickered to the end).
       await expect
         .poll(
           async () => {
@@ -450,6 +457,7 @@ test.describe('Kanban board', () => {
               .evaluateAll((elements) => elements.map((el) => el.getAttribute('data-card-id') ?? ''))
             const c2Index = cardIds.indexOf(c2)
             const c3Index = cardIds.indexOf(c3)
+            // c3 must be immediately before c2 in the visible ordering.
             return c2Index >= 0 && c3Index >= 0 && c3Index === c2Index - 1
           },
           { timeout: 30000, intervals: [2000] }
@@ -515,7 +523,7 @@ test.describe('Kanban board', () => {
       const cardId = await createIssue(client, ctx, {
         title: `${titlePrefix}noop-drop`,
         status: 'Backlog',
-        priority: 4
+        priority: 2
       })
 
       await openTrackerBoard(page, ctx.project._id)
@@ -573,6 +581,126 @@ test.describe('Kanban board', () => {
       await board.toggleSwimLane(laneId)
       await board.expectSwimLaneCollapsed(laneId, initial)
     })
+
+    test('toggle None -> Priority -> None -> Priority shows cards each time', async ({ page }) => {
+      // Regression: groupByDocs memo (hashed by ids+lengths) used to skip a refresh
+      // when projection added the swim-lane field — cards rendered as if the swim
+      // field were undefined and every lane appeared empty after the second switch.
+      const cardId = await createIssue(client, ctx, {
+        title: `${titlePrefix}toggle-priority`,
+        status: 'Backlog',
+        priority: 4
+      })
+
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+
+      for (let i = 0; i < 2; i++) {
+        await board.setSwimLane('Priority')
+        await board.revealCard(cardId)
+        // After projection refresh, cards must land in their priority lane — not
+        // the unassigned bucket. Lane id is the priority enum value as string.
+        const lane = await page
+          .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
+          .first()
+          .getAttribute('data-swimlane-id')
+        expect(lane, `iteration ${i}: card must be in some priority lane, not unassigned`).not.toBe(
+          '__swim_unassigned__'
+        )
+        expect(lane).not.toBeNull()
+        if (lane !== null) {
+          await board.expectCardInSwimLaneCell(cardId, lane, backlog)
+        }
+        await board.setSwimLane('None')
+        await board.expectCardInColumn(cardId, backlog)
+      }
+    })
+
+    test('component swim lane merges same-label components from different projects', async ({ page }) => {
+      // Regression for FUSIO-378: components with identical label living in
+      // different projects used to render as separate lanes. They should be
+      // grouped into one lane keyed by the (case-folded) label.
+      const secondProject = await findProjectByName(client, 'Second Project')
+      test.skip(secondProject === undefined, 'Second Project not seeded — skipping')
+      if (secondProject === undefined) return
+
+      const sharedLabel = `merge-${generateId(4)}`
+      const compA = await createComponent(client, ctx.project._id, sharedLabel)
+      const compB = await createComponent(client, secondProject._id, sharedLabel)
+
+      const issueA = await createIssue(client, ctx, {
+        title: `${titlePrefix}merge-A`,
+        status: 'Backlog',
+        component: compA
+      })
+      const ctxB = await getProjectContext(client, secondProject._id)
+      const issueB = await createIssue(client, ctxB, {
+        title: `${titlePrefix}merge-B`,
+        status: 'Backlog',
+        space: secondProject._id,
+        component: compB
+      })
+
+      // Open the All Issues view to see issues from both projects.
+      await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/all-issues`))?.finished()
+      await page.locator(ViewletSelectors.Board).click()
+      const board = new KanbanBoardPage(page)
+      await board.setSwimLane('Component')
+      await board.revealCard(issueA)
+      await board.revealCard(issueB)
+
+      const laneA = await page
+        .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${issueA}"])`)
+        .first()
+        .getAttribute('data-swimlane-id')
+      const laneB = await page
+        .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${issueB}"])`)
+        .first()
+        .getAttribute('data-swimlane-id')
+      expect(laneA).not.toBeNull()
+      expect(laneA).toBe(laneB)
+    })
+  })
+
+  test('drag preview follows cursor in non-manual ordering', async ({ page }) => {
+    // Regression: cardDragOver had a `dontUpdateRank` guard that prevented the
+    // visual preview from following the cursor when ordering was not Manual.
+    // Users could not see which column they were targeting.
+    const c1 = await createIssue(client, ctx, { title: `${titlePrefix}preview-1`, status: 'Backlog' })
+    const c2 = await createIssue(client, ctx, { title: `${titlePrefix}preview-2`, status: 'Todo' })
+
+    await openTrackerBoard(page, ctx.project._id)
+
+    // Switch ordering to Modified date so dontUpdateRank=true.
+    await page.locator('button[data-id="btn-viewOptions"]').click()
+    const orderingRow = page.locator('.antiCard-menu__item', { hasText: 'Ordering' })
+    await orderingRow.waitFor({ state: 'visible', timeout: 5000 })
+    await orderingRow.locator('button').click()
+    await page.locator('.menu-item').filter({ hasText: 'Modified date' }).first().click()
+    await page.keyboard.press('Escape')
+
+    const board = new KanbanBoardPage(page)
+    const todo = ctx.statuses.get('Todo') as string
+    const backlog = ctx.statuses.get('Backlog') as string
+    await board.revealCard(c1)
+    await board.revealCard(c2)
+    await board.expectCardInColumn(c1, backlog)
+    await board.expectCardInColumn(c2, todo)
+
+    // Drag c1 onto c2: status should change to Todo (state-only update — rank stays).
+    await expect
+      .poll(
+        async () => {
+          const current = (await client.findOne(tracker.class.Issue, { _id: c1 }))?.status as string | undefined
+          if (current === todo) return current
+          await board.dragCardToCard(c1, c2)
+          return current
+        },
+        { timeout: 30000, intervals: [2000] }
+      )
+      .toBe(todo)
+    await board.expectCardInColumn(c1, todo)
   })
 
   test('dragstart marks the card as dragged', async ({ page }) => {

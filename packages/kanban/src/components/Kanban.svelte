@@ -472,7 +472,7 @@
       if (targetIdx === -1) return
       const targetEl = (evt.target as HTMLElement).closest('[data-card-id]')
       const beforeTarget = (() => {
-        const h = (evt.target as HTMLElement)?.offsetHeight ?? (targetEl as HTMLElement)?.offsetHeight ?? 0
+        const h = (evt.target as HTMLElement)?.offsetHeight ?? targetEl?.offsetHeight ?? 0
         return evt.offsetY < h / 2
       })()
       const desired = beforeTarget ? targetIdx : targetIdx + 1
