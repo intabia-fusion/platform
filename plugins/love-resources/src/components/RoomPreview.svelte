@@ -337,7 +337,7 @@
       <!-- {#if !isOffice(room)}
         <RoomLanguage {room} />
       {/if} -->
-      {#if room.access === RoomAccess.DND || room.type === RoomType.Video || room.startPrivate || isLockedByPrivateMeeting}
+      {#if !isOffice(room) && (room.access === RoomAccess.DND || room.type === RoomType.Video || room.startPrivate || isLockedByPrivateMeeting)}
         <div class="flex-row-center flex-no-shrink h-full flex-gap-2">
           {#if isLockedByPrivateMeeting || room.startPrivate}
             <Icon
