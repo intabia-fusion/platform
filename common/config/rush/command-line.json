@@ -576,7 +576,7 @@
       "summary": "Compile all and up docker",
       "description": "Compiles all packages, runs bundle phase, then docker-build for packages with '_phase:docker-build'",
       "safeForSimultaneousRushProcesses": true,
-      "shellCommand": "rush fast-build:docker-build && rush docker:up"
+      "shellCommand": "rush fast-build && rush docker:up"
     },
     {
       "commandKind": "global",

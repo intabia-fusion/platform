@@ -39,6 +39,7 @@
   import { DocWithRank, getStates } from '@hcengineering/task'
   import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
   import {
+    Component as TrackerComponent,
     Issue,
     IssuePriority,
     IssuesGrouping,
@@ -389,7 +390,7 @@
     // them under one swimlane keyed by the (case-folded, trimmed) label so the
     // user sees a single "Chat" lane instead of one per project.
     if (swimLaneBy === 'component') {
-      const c = $componentStore.get(v as Ref<Doc>)
+      const c = $componentStore.get(v as Ref<TrackerComponent>)
       if (c !== undefined) {
         const label = c.label
         return { key: 'component:' + label.toLowerCase().trim(), value: v, empty: false, title: label }
@@ -462,7 +463,8 @@
       const docSpace = (doc as any).space
       const lane = $componentStore.filter(
         (c) =>
-          c.label.toLowerCase().trim() === ($componentStore.get(swimLane.value as Ref<Doc>)?.label ?? '').toLowerCase().trim() &&
+          c.label.toLowerCase().trim() ===
+            ($componentStore.get(swimLane.value as Ref<TrackerComponent>)?.label ?? '').toLowerCase().trim() &&
           c.space === docSpace
       )
       const match = lane.length > 0 ? lane[0]._id : undefined

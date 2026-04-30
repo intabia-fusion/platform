@@ -263,8 +263,8 @@
         }
       } else {
         const arr = getGroupByValues(groupByDocs, state) ?? []
-        const filtered = arr.filter((d) => d._id !== dragCard._id)
-        const originalIdx = arr.findIndex((d) => d._id === dragCard._id)
+        const filtered = arr.filter((d) => d._id !== dragCard?._id)
+        const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
         const fallback = originalIdx === -1 ? filtered.length : originalIdx
         const idx = dragCardTargetIndex ?? fallback
         prevRank = filtered[idx - 1]?.rank
@@ -438,7 +438,7 @@
 
   function cardDragOver (evt: CardDragEvent, object: Item, state: CategoryType): void {
     if (swimLaneMode) {
-      if (dragCard === undefined || dontUpdateRank) return
+      if (dragCard === undefined) return
       if (object._id === dragCard._id) return
       const lane = dragCardCurrentSwimLane
       if (lane === undefined) return
@@ -460,7 +460,7 @@
       }
       return
     }
-    if (dragCard !== undefined && !dontUpdateRank) {
+    if (dragCard !== undefined) {
       const updates = getUpdateProps(dragCard, state)
       if (updates === undefined) {
         return
@@ -468,7 +468,7 @@
       if (object._id === dragCard._id) return
       const arr = getGroupByValues(groupByDocs, state) ?? []
       const targetIdx = arr.findIndex((p) => p._id === object._id)
-      const dragIdx = arr.findIndex((p) => p._id === dragCard._id)
+      const dragIdx = arr.findIndex((p) => p._id === dragCard?._id)
       if (targetIdx === -1) return
       const targetEl = (evt.target as HTMLElement).closest('[data-card-id]')
       const beforeTarget = (() => {
@@ -528,8 +528,8 @@
           }
         } else {
           const arr = getGroupByValues(groupByDocs, state) ?? []
-          const filtered = arr.filter((d) => d._id !== dragCard._id)
-          const originalIdx = arr.findIndex((d) => d._id === dragCard._id)
+          const filtered = arr.filter((d) => d._id !== dragCard?._id)
+          const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
           const fallback = originalIdx === -1 ? filtered.length : originalIdx
           const idx = dragCardTargetIndex ?? fallback
           prevRank = filtered[idx - 1]?.rank
