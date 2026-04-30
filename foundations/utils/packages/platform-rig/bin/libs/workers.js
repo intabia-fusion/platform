@@ -198,16 +198,13 @@ class GenericWorkerPool {
   }
 
   validate(cwd, options = {}) {
-    const { srcDir = 'src', force = false, dependencyTypesHashes = {}, packageHash } = options
+    const { srcDir = 'src' } = options
     return new Promise((resolve, reject) => {
       const task = {
         id: ++this.taskId,
         type: 'validate',
         cwd,
-        srcDir,
-        force,
-        dependencyTypesHashes,
-        packageHash
+        srcDir
       }
 
       this.pending.push({ task, resolve, reject })
@@ -226,20 +223,6 @@ class GenericWorkerPool {
       this.pending.push({ task, resolve, reject })
       this._processNext()
     })
-  }
-
-  /**
-   * Enable watch mode on all workers (reduces cache sizes to prevent memory growth)
-   */
-  async setWatchMode() {
-    const promises = this.workers.map(worker => {
-      return new Promise((resolve) => {
-        const id = ++this.taskId
-        this.callbacks.set(id, () => resolve())
-        worker.postMessage({ id, type: 'set-watch-mode' })
-      })
-    })
-    await Promise.all(promises)
   }
 
   async terminate() {
