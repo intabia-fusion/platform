@@ -9,10 +9,20 @@ const { performance } = require('perf_hooks')
 const { join } = require('path')
 const fs = require('fs')
 
+// Parse srcDir from `_phase:format` script (e.g. "format src", "format tests").
+// Returns 'src' if not parseable.
+function parseSrcDir(phaseFormat) {
+  if (typeof phaseFormat !== 'string') return 'src'
+  const tokens = phaseFormat.trim().split(/\s+/)
+  if (tokens[0] !== 'format') return 'src'
+  const arg = tokens.slice(1).find((t) => !t.startsWith('-'))
+  return arg || 'src'
+}
+
 // Estimate package weight by counting source files. Heavier packages first = shorter tail.
-function estimatePackageWeight(cwd) {
+function estimatePackageWeight(cwd, srcDir = 'src') {
   let count = 0
-  const stack = [join(cwd, 'src')]
+  const stack = [join(cwd, srcDir)]
   while (stack.length > 0) {
     const dir = stack.pop()
     if (!fs.existsSync(dir)) continue
@@ -72,8 +82,8 @@ async function runFormatPhase(graph, packageNames, concurrency, options = {}) {
   const sortedNames = [...packageNames].sort((a, b) => {
     const na = graph.get(a)
     const nb = graph.get(b)
-    const wa = (na && na.project) ? estimatePackageWeight(na.project.fullPath) : 0
-    const wb = (nb && nb.project) ? estimatePackageWeight(nb.project.fullPath) : 0
+    const wa = (na && na.project) ? estimatePackageWeight(na.project.fullPath, parseSrcDir(na.phaseFormat)) : 0
+    const wb = (nb && nb.project) ? estimatePackageWeight(nb.project.fullPath, parseSrcDir(nb.phaseFormat)) : 0
     return wb - wa
   })
 
@@ -99,7 +109,8 @@ async function runFormatPhase(graph, packageNames, concurrency, options = {}) {
     }
 
     const taskStart = performance.now()
-    const result = await pool.runTask('format', cwd, { srcDir: 'src' })
+    const srcDir = parseSrcDir(node.phaseFormat)
+    const result = await pool.runTask('format', cwd, { srcDir })
     const waitTime = Math.round(performance.now() - taskStart)
     // Actual in-worker duration reported by worker; fallback to full wait time
     const taskTime = result.durationMs !== undefined ? result.durationMs : waitTime
