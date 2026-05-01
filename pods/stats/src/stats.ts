@@ -1,9 +1,10 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { metricsAggregate, type MeasureContext } from '@hcengineering/core'
+import { metricsAggregate, type MeasureContext, type Metrics } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import { RPCHandler } from '@hcengineering/rpc'
 import {
@@ -20,12 +21,43 @@ import type { IncomingHttpHeaders } from 'http'
 import Koa from 'koa'
 import bodyParser from 'koa-body'
 import Router from 'koa-router'
+import { compress as snappyCompress } from 'snappy'
 
 const serviceTimeout = 5 * 60000
 
 interface ServiceStatisticsEx extends ServiceStatistics {
   lastUpdate: number // Last updated
 }
+
+interface AnalyticsEntry {
+  service: string
+  path: string
+  operations: number
+  total: number
+  avg: number
+  top: Array<{ value: number, time?: number, params?: Record<string, any> }>
+}
+
+const round2 = (v: number): number => Math.round(v * 100) / 100
+
+const toTop = (t: {
+  value: number
+  time?: number
+  params: Record<string, any>
+}): {
+  value: number
+  time?: number
+  params?: Record<string, any>
+} => ({ value: round2(t.value), time: t.time !== undefined ? round2(t.time) : undefined, params: t.params })
+
+const buildEntry = (service: string, pathSegs: string[], m: Metrics): AnalyticsEntry => ({
+  service,
+  path: pathSegs.join('/'),
+  operations: m.operations,
+  total: round2(m.value),
+  avg: round2(m.value / (m.operations > 0 ? m.operations : 1)),
+  top: (m.topResult ?? []).slice(0, 3).map(toTop)
+})
 
 interface OverviewStatistics {
   memory: MemoryStatistics
@@ -70,7 +102,8 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   app.use(
     cors({
-      credentials: true
+      credentials: true,
+      exposeHeaders: ['X-Encoding']
     })
   )
 
@@ -246,6 +279,118 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
     }
   })
 
+  router.get('/api/v1/analytics', (req, res) => {
+    try {
+      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const payload = decodeToken(token)
+      if (payload.extra?.admin !== 'true') {
+        req.res.writeHead(401, {})
+        req.res.end()
+        return
+      }
+
+      const limitRaw = parseInt((req.query.limit as string) ?? '100')
+      const limit = Math.min(Math.max(isNaN(limitRaw) ? 100 : limitRaw, 1), 1000)
+      const sortKey = ((req.query.sort as string) ?? 'time') as 'time' | 'count' | 'avg'
+      if (sortKey !== 'time' && sortKey !== 'count' && sortKey !== 'avg') {
+        req.res.writeHead(400, {})
+        req.res.end()
+        return
+      }
+      const source = ((req.query.source as string) ?? 'all') as 'all' | 'client' | 'server'
+      if (source !== 'all' && source !== 'client' && source !== 'server') {
+        req.res.writeHead(400, {})
+        req.res.end()
+        return
+      }
+
+      const entries: AnalyticsEntry[] = []
+
+      const minOps = 10
+      // Soft cap on visited nodes - prevents pathologically deep trees from
+      // blocking the event loop on a single analytics request.
+      const maxVisits = 100_000
+      let visited = 0
+
+      const path: string[] = []
+      const walk = (service: string, m: Metrics): void => {
+        if (visited++ >= maxVisits) return
+        const childMeasurements: Array<[string, Metrics]> = []
+        for (const e of Object.entries(m.measurements)) {
+          if (!e[0].startsWith('#')) childMeasurements.push(e)
+        }
+        const hasChildMeasurements = childMeasurements.length > 0
+        const hasParams = Object.keys(m.params).length > 0
+        // True leaf: no child measurements and no params - emit the node itself.
+        if (!hasChildMeasurements && !hasParams && m.operations >= minOps) {
+          entries.push(buildEntry(service, path, m))
+        }
+        // Emit param values only when this node has no child measurements.
+        // Otherwise the more granular breakdown lives deeper in the tree
+        // (e.g. findAll has params.source AND measurements.client-find-all,
+        // where client-find-all/findAll/domain=X is the actually useful leaf).
+        if (!hasChildMeasurements && hasParams) {
+          for (const [pk, pvals] of Object.entries(m.params)) {
+            for (const [pv, pdata] of Object.entries(pvals)) {
+              if (pdata.operations < minOps) continue
+              path.push(`${pk}=${pv}`)
+              entries.push({
+                service,
+                path: path.join('/'),
+                operations: pdata.operations,
+                total: round2(pdata.value),
+                avg: round2(pdata.value / pdata.operations),
+                top: (pdata.topResult ?? []).slice(0, 3).map(toTop)
+              })
+              path.pop()
+            }
+          }
+        }
+        for (const [name, child] of childMeasurements) {
+          path.push(name)
+          walk(service, child)
+          path.pop()
+        }
+      }
+
+      let serviceCount = 0
+      for (const [name, svc] of statistics.entries()) {
+        if (Date.now() - svc.lastUpdate > serviceTimeout) continue
+        if (svc.stats === undefined) continue
+        serviceCount++
+        for (const [op, child] of Object.entries(svc.stats.measurements)) {
+          if (op.startsWith('#')) continue
+          path.push(op)
+          walk(name, child)
+          path.pop()
+        }
+      }
+
+      const filtered = entries.filter((e) => {
+        if (source === 'all') return true
+        const isClient = e.path === 'client' || e.path.startsWith('client/')
+        return source === 'client' ? isClient : !isClient
+      })
+
+      filtered.sort((a, b) => {
+        if (sortKey === 'count') return b.operations - a.operations
+        if (sortKey === 'avg') return b.avg - a.avg
+        return b.total - a.total
+      })
+
+      req.res.setHeader('Content-Type', 'application/json')
+      req.body = {
+        entries: filtered.slice(0, limit),
+        generatedAt: Date.now(),
+        services: serviceCount
+      }
+    } catch (err: any) {
+      Analytics.handleError(err)
+      req.res.writeHead(404, {})
+      req.res.end()
+    }
+  })
+
   router.put('/api/v1/manage', async (req, res) => {
     try {
       const token = req.query.token as string
@@ -274,6 +419,30 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       req.res.writeHead(404, {})
       req.res.end()
     }
+  })
+
+  // Optional snappy compression for JSON responses. Browsers cannot set the
+  // standard Accept-Encoding header via fetch(), so we use X-Accept-Encoding.
+  // Skip below 1KB - overhead exceeds savings.
+  app.use(async (ctx, next) => {
+    await next()
+    const accept = (ctx.headers['x-accept-encoding'] ?? '').toString().toLowerCase()
+    if (!accept.includes('snappy')) return
+    const contentType = (ctx.response.get('Content-Type') ?? '').toLowerCase()
+    if (!contentType.includes('application/json')) return
+    if (ctx.body == null) return
+    const json = typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body)
+    const buf = Buffer.from(json, 'utf8')
+    if (buf.length < 1024) {
+      ctx.body = json
+      return
+    }
+    const compressed = (await snappyCompress(buf))
+    // Custom header avoids browser auto-decoding ambiguity with
+    // Content-Encoding values it does not recognise.
+    ctx.set('X-Encoding', 'snappy')
+    ctx.set('Content-Type', 'application/octet-stream')
+    ctx.body = compressed
   })
 
   app.use(router.routes()).use(router.allowedMethods())

@@ -61,6 +61,7 @@
     "@hcengineering/inbox": "workspace:^0.7.0",
     "@hcengineering/communication-types": "workspace:^0.7.12",
     "fast-copy": "^3.0.2",
+    "snappyjs": "^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/chat": "workspace:^0.7.0",

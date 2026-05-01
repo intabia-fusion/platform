@@ -276,6 +276,7 @@ services:
       - DATALAKE_URL=http://localhost:4031
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+      - ANALYTICS_COLLECTOR_URL=http://localhost:4018
   front1:
     image: intabiafusion/front
     pull_policy: never
@@ -311,6 +312,7 @@ services:
       - DATALAKE_URL=http://localhost:4031
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+      - ANALYTICS_COLLECTOR_URL=http://localhost:4018
   transactor0:
     image: intabiafusion/transactor
     pull_policy: never
@@ -484,6 +486,24 @@ services:
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
+    restart: unless-stopped
+  analytics:
+    image: intabiafusion/analytics-collector
+    pull_policy: never
+    extra_hosts:
+      - 'huly.local:host-gateway'
+    links:
+      - stats
+      - account
+    ports:
+      - 4018:4018
+    environment:
+      - SECRET=secret
+      - PORT=4018
+      - SERVICE_ID=analytics-collector-service
+      - ACCOUNTS_URL=http://account:3003
+      - STATS_URL=http://stats:4901
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://huly.local:4318
     restart: unless-stopped
   notifications:
