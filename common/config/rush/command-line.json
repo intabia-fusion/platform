@@ -534,7 +534,7 @@
       "commandKind": "global",
       "name": "fast-build:format",
       "summary": "Fast format packages (prettier + eslint --fix)",
-      "description": "Runs prettier and eslint --fix in worker pool for packages with '_phase:format'. Uses per-package cache (.fast-build-cache.json) keyed by current package hash only",
+      "description": "Compiles and validates all packages, then runs prettier and eslint --fix in worker pool for packages with '_phase:format'. Validation is required so eslint type-aware rules have typings. Uses per-package cache (.fast-build-cache.json) keyed by current package hash only",
       "safeForSimultaneousRushProcesses": false,
       "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --format"
     },

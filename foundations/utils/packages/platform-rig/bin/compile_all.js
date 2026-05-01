@@ -68,6 +68,7 @@ function parseArgs(args) {
       doValidate = true  // --lint implies --validate
     } else if (arg === '--format') {
       doFormat = true
+      doValidate = true  // --format implies --validate (typings needed for eslint --fix)
     } else if (arg === '--force' || arg === '-f') {
       force = true
     } else if (arg === '--bundle') {
@@ -202,7 +203,7 @@ Examples:
  * Calculate package hash including all dependencies (transitive)
  * This ensures that when a dependency changes, dependent packages are rebuilt
  */
-function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set()) {
+function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set(), depTypesHashes = null) {
   // Prevent circular dependencies
   if (processed.has(packageName)) {
     return ''
@@ -218,11 +219,19 @@ function calculatePackageHashWithDeps(packageName, graph, packageHashes, process
   const baseHash = packageHashes.get(packageName) || ''
   const parts = [baseHash]
 
-  // Add hashes of all dependencies
+  // Add hashes of all dependencies (recurses src+package.json+tsconfig)
   for (const depName of node.dependencies) {
-    const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed)
+    const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed, depTypesHashes)
     if (depHash) {
       parts.push(`${depName}:${depHash}`)
+    }
+    // Also fold in dep's emitted types/ hash so changes in dep API (without
+    // src changes — e.g. tsc bump produces different .d.ts) invalidate dependents.
+    if (depTypesHashes) {
+      const t = depTypesHashes.get(depName)
+      if (t) {
+        parts.push(`${depName}:types:${t}`)
+      }
     }
   }
 
@@ -241,7 +250,7 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
   if (packages.length === 0) return { successCount: 0, total: 0, cacheHits: 0, errors: [], time: 0 }
 
   const { getWorkerPool } = require('./libs/workers')
-  const { markPhaseCompleted, isPhaseCached } = require('./libs/cache')
+  const { markPhaseCompleted, isPhaseCached, calculateOutputHashForDirs } = require('./libs/cache')
   const pool = await getWorkerPool(validationWorkers)
 
   const startTime = performance.now()
@@ -282,23 +291,20 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
     const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
     const pkgStart = performance.now()
 
-    // Get hash including all dependencies (like bundle phase)
-    const packageHash = calculatePackageHashWithDeps(packageName, graph, packageHashes)
+    // Get hash including all dependencies + their emitted types hashes
+    const packageHash = calculatePackageHashWithDeps(packageName, graph, packageHashes, new Set(), packageTypesHashes)
 
     // Validate produces types/ directory
     const outputDirs = ['types']
-    const outputsExist = outputDirs.every(d => existsSync(join(node.project.fullPath, d)))
 
-    // Check if validation is cached
-    if (!force && packageHash && outputsExist && isPhaseCached(node.project.fullPath, packageHash, 'validate', null, outputDirs)) {
-      // Get typesHash from cache for dependents
-      const typesDir = join(node.project.fullPath, 'types')
-      if (existsSync(typesDir)) {
-        const { calculateTypesHash } = require('./validate-worker')
-        const typesHash = calculateTypesHash(typesDir)
+    // isPhaseCached with outputDirs verifies output existence + content hash
+    if (!force && packageHash && isPhaseCached(node.project.fullPath, packageHash, 'validate', null, outputDirs)) {
+      // Compute typesHash for dependents from the unified cache helper
+      const typesHash = calculateOutputHashForDirs(node.project.fullPath, ['types'])
+      if (typesHash) {
         packageTypesHashes.set(packageName, typesHash)
       }
-      
+
       results.successCount++
       results.cacheHits++
       const pkgTime = Math.round(performance.now() - pkgStart)
@@ -306,32 +312,21 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
       return { success: true, fromCache: true }
     }
 
-    // Collect types hashes from dependencies
-    const dependencyTypesHashes = {}
-    for (const dep of node.dependencies) {
-      if (packages.includes(dep) && packageTypesHashes.has(dep)) {
-        dependencyTypesHashes[dep] = packageTypesHashes.get(dep)
-      }
-    }
-
     try {
-      const result = await pool.validate(node.project.fullPath, { srcDir, force, dependencyTypesHashes, packageHash })
+      const result = await pool.validate(node.project.fullPath, { srcDir })
       const pkgTime = Math.round(performance.now() - pkgStart)
 
       if (result.success) {
         results.successCount++
-        // Note: cache_hits is already incremented above for packages that hit the cache
-        // Worker-level cache is disabled, so we don't check result.fromCache here
-        const cacheInfo = ''
         const syncInfo = result.syncResult ? ` [${result.syncResult.copied}c/${result.syncResult.unchanged}u/${result.syncResult.removed}r]` : ''
         const cacheStatsInfo = result.cacheStats?.sourceCacheSize ? ` src:${result.cacheStats.sourceCacheSize} files` : ''
-        console.log(`    ${success('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${success('validated')}${cacheInfo}${syncInfo}${cacheStatsInfo} ${dim(pkgTime + 'ms')}`)
-        if (!result.fromCache) {
-          timings.push({ package: packageName, time: pkgTime })
-        }
-        // Store typesHash for dependents to use
-        if (result.typesHash) {
-          packageTypesHashes.set(packageName, result.typesHash)
+        console.log(`    ${success('V')} ${dim(completedCount + 1)}/${packages.length} ${packageName} ${success('validated')}${syncInfo}${cacheStatsInfo} ${dim(pkgTime + 'ms')}`)
+        timings.push({ package: packageName, time: pkgTime })
+
+        // Compute typesHash from the freshly emitted types/ for dependents to use
+        const typesHash = calculateOutputHashForDirs(node.project.fullPath, ['types'])
+        if (typesHash) {
+          packageTypesHashes.set(packageName, typesHash)
         }
 
         // Mark validate phase as completed in unified cache

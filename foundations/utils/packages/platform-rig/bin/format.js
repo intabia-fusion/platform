@@ -1,211 +1,67 @@
-const { join, dirname, relative, extname, basename } = require('path')
+#!/usr/bin/env node
+
+/**
+  Copyright © 2026 Intabia Fusion.
+  Licensed under the Eclipse Public License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  See https://www.eclipse.org/legal/epl-2.0
+*/
+
+// Per-package formatter (invoked as `format <srcDir>` from `_phase:format`).
+// Shares the unified `.fast-build-cache.json` cache used by `rush fast-build:format`,
+// so a package formatted by either entry point is recognised as up-to-date by the other.
+
+const { existsSync } = require('fs')
+const { join } = require('path')
+
+const { formatPackage } = require('./format-worker')
 const {
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  readdirSync,
-  lstatSync,
-  copyFileSync,
-  mkdirSync,
-  rmSync,
-  current
-} = require('fs')
-const crypto = require('crypto')
-const prettier = require('prettier')
-const { ESLint } = require('eslint')
+  isPhaseCached,
+  markPhaseCompleted,
+  calculatePackageHash
+} = require('./libs/cache')
 
-let pluginSvelte
-try {
-  pluginSvelte = require('prettier-plugin-svelte')
-} catch (e) {
-  console.warn('prettier-plugin-svelte not available')
-}
+async function main() {
+  const args = process.argv.slice(2)
+  const force = args.includes('-f') || args.includes('--force')
+  const srcArg = args.find((a) => !a.startsWith('-')) || 'src'
+  const cwd = process.cwd()
 
-if (!existsSync('.format')) {
-  mkdirSync('.format', { recursive: true })
-}
-
-let hash = {}
-
-if (existsSync('.format/format.json')) {
-  hash = JSON.parse(readFileSync('.format/format.json').toString())
-}
-
-let filesToCheck = []
-let allFiles = []
-
-let newHash = {}
-
-function calcFileHash(sourceFile, msg, addCheck) {
-  const hasher = crypto.createHash('md5')
-  hasher.update(readFileSync(sourceFile))
-  let digest = hasher.digest('hex')
-  if (hash[sourceFile] !== digest) {
-    if (addCheck) {
-      filesToCheck.push(sourceFile)
-    }
-    console.log(msg, relative(process.cwd(), sourceFile))
+  if (!existsSync(join(cwd, srcArg))) {
+    console.info(`format: ${srcArg} not found, skipping`)
+    process.exit(0)
   }
-  newHash[sourceFile] = digest
-  if (addCheck) {
-    allFiles.push(sourceFile)
+
+  const hash = calculatePackageHash(cwd)
+
+  if (!force && isPhaseCached(cwd, hash, 'format', null, [])) {
+    console.info('format: cached, no changes')
+    process.exit(0)
   }
-}
 
-function calcHash(source, msg, addCheck) {
-  const files = readdirSync(source)
-  for (const f of files) {
-    const sourceFile = join(source, f)
+  const result = await formatPackage(cwd, { srcDir: srcArg })
 
-    if (lstatSync(sourceFile).isDirectory()) {
-      calcHash(sourceFile, msg, addCheck)
-    } else {
-      let ext = basename(sourceFile)
-      if (!ext.endsWith('.ts') && !ext.endsWith('.js') && !ext.endsWith('.svelte')) {
-        continue
-      }
-      if (sourceFile.endsWith('.d.ts')) {
-        // Skip declaration files
-        continue
-      }
-      calcFileHash(sourceFile, msg, addCheck)
-    }
+  if (result.lintOutput) {
+    process.stderr.write(result.lintOutput + '\n')
   }
-}
-
-for (const v of process.argv.slice(2)) {
-  if (existsSync(v)) {
-    console.info('checking:', join(process.cwd(), v))
-    calcHash(join(process.cwd(), v), 'changed', true)
+  if (result.errors && result.errors.length > 0) {
+    process.stderr.write(result.errors.join('\n') + '\n')
   }
-}
 
-// Add package.json,  .eslintrc.js and node_modules/@hcengineering/platform-rig/ as hash roots.
-for (const f of ['package.json', '.eslintrc.js']) {
-  const fFile = join(process.cwd(), f)
-  if (existsSync(fFile)) {
-    calcFileHash(fFile, 'changed', false)
+  if (!result.success) {
+    console.error(`format: failed (${result.errorCount || 0} errors, ${result.errors?.length || 0} io errors)`)
+    process.exit(1)
   }
-}
 
-const rigPackage = 'node_modules/@hcengineering/platform-rig/'
-if (existsSync(rigPackage)) {
-  calcHash(join(process.cwd(), rigPackage), 'changed', false)
-}
+  // Hash changes after formatting if files were rewritten — store the new hash.
+  const finalHash = result.changed > 0 ? calculatePackageHash(cwd) : hash
+  markPhaseCompleted(cwd, finalHash, 'format', null, [])
 
-if (process.argv.includes('-f') || process.argv.includes('--force')) {
-  console.log('force checking')
-  filesToCheck = allFiles
-}
-
-if (filesToCheck.length > 0) {
-  ;(async () => {
-    try {
-      console.info(`running prettier ${filesToCheck.length}`)
-
-      // Run Prettier
-      const prettierLog = []
-      const prettierErrors = []
-
-      for (const file of filesToCheck) {
-        try {
-          let options = await prettier.resolveConfig(file)
-          const fileInfo = await prettier.getFileInfo(file)
-
-          if (!fileInfo.ignored) {
-            const input = readFileSync(file, 'utf8')
-
-            // Build prettier options - remove plugins from config to avoid resolution issues
-            const prettierOptions = {
-              ...(options || {}),
-              filepath: file,
-              plugins: [] // Clear any plugins from config
-            }
-
-            // Add svelte plugin directly if available and file is .svelte
-            if (pluginSvelte && file.endsWith('.svelte')) {
-              prettierOptions.plugins = [pluginSvelte]
-              prettierOptions.parser = 'svelte'
-            }
-
-            const formatted = await prettier.format(input, prettierOptions)
-
-            if (input !== formatted) {
-              writeFileSync(file, formatted, 'utf8')
-              prettierLog.push(`Formatted: ${relative(process.cwd(), file)}`)
-            }
-          }
-        } catch (error) {
-          prettierErrors.push(`Error formatting ${file}: ${error.message}`)
-        }
-      }
-
-      const prettierLogData = prettierLog.join('\n')
-      const prettierErrData = prettierErrors.join('\n')
-
-      if (prettierLogData) {
-        writeFileSync('.format/prettier.log', prettierLogData)
-        console.info(prettierLogData)
-      }
-
-      if (prettierErrData) {
-        writeFileSync('.format/prettier.err', prettierErrData)
-        console.error(prettierErrData)
-      }
-
-      console.log(`running eslint ${filesToCheck.length}`)
-
-      // Run ESLint
-      const eslint = new ESLint({ fix: true })
-      const results = await eslint.lintFiles(filesToCheck)
-
-      // Apply fixes
-      await ESLint.outputFixes(results)
-
-      const formatter = await eslint.loadFormatter('stylish')
-      const resultText = formatter.format(results)
-
-      writeFileSync('.format/eslint.log', resultText)
-
-      // Check for errors
-      const hasErrors = results.some((result) => result.errorCount > 0)
-      const hasWarnings = results.some((result) => result.warningCount > 0)
-
-      if (resultText) {
-        if (hasErrors) {
-          console.error(resultText)
-        } else {
-          console.info(resultText)
-        }
-      }
-
-      const prettierFailed = prettierErrors.length > 0
-      const eslintFailed = hasErrors
-
-      if (prettierFailed || eslintFailed) {
-        console.info('prettier or eslint failed')
-        // Make file empty, to prevent false passing if called without -f or --force.
-        writeFileSync('.format/format.json', JSON.stringify({}, undefined, 2))
-        process.exit(1)
-      }
-
-      hash = newHash
-      for (const v of process.argv.slice(2)) {
-        if (existsSync(v)) {
-          calcHash(join(process.cwd(), v), 'updated')
-        }
-      }
-      writeFileSync('.format/format.json', JSON.stringify(newHash, undefined, 2))
-
-      console.info('Formatting completed successfully.')
-      process.exit(0)
-    } catch (error) {
-      console.error('Formatting failed:', error)
-      writeFileSync('.format/format.json', JSON.stringify({}, undefined, 2))
-      process.exit(1)
-    }
-  })()
-} else {
-  console.info('No changes detected.')
+  console.info(`format: ${result.changed}/${result.total} files changed`)
   process.exit(0)
 }
+
+main().catch((err) => {
+  console.error('format: unexpected failure:', err.stack || err.message || err)
+  process.exit(1)
+})
