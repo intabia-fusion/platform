@@ -130,7 +130,7 @@ export class KanbanBoardPage extends CommonTrackerPage {
   // Cards beyond the initial limit (3 in swimlane mode) are not rendered until
   // the user expands the cell. Tests that rely on a freshly-created card in a
   // populated lane must reveal it before asserting visibility.
-  async revealCard (cardId: string, attempts: number = 20): Promise<void> {
+  async revealCard (cardId: string, attempts: number = 30): Promise<void> {
     for (let i = 0; i < attempts; i++) {
       if ((await this.card(cardId).count()) > 0) return
       const showMore = this.page.locator('button[data-id="btn-kanban-show-more"]').first()
@@ -142,6 +142,19 @@ export class KanbanBoardPage extends CommonTrackerPage {
       }
       await showMore.click().catch(() => {})
       await this.page.waitForTimeout(150)
+    }
+  }
+
+  // Click every "Show more" button on the board until no truncated cells remain.
+  // Use this in tests that read all cards in a cell via DOM — initialLimit can
+  // truncate the list and produce stale assertions.
+  async expandAllCells (maxClicks: number = 50): Promise<void> {
+    for (let i = 0; i < maxClicks; i++) {
+      const buttons = this.page.locator('button[data-id="btn-kanban-show-more"]')
+      const count = await buttons.count()
+      if (count === 0) return
+      await buttons.first().click().catch(() => {})
+      await this.page.waitForTimeout(120)
     }
   }
 

@@ -470,7 +470,7 @@
       const targetIdx = arr.findIndex((p) => p._id === object._id)
       const dragIdx = arr.findIndex((p) => p._id === dragCard?._id)
       if (targetIdx === -1) return
-      const targetEl = (evt.target as HTMLElement).closest('[data-card-id]')
+      const targetEl: HTMLElement | null = (evt.target as HTMLElement).closest('[data-card-id]')
       const beforeTarget = (() => {
         const h = (evt.target as HTMLElement)?.offsetHeight ?? targetEl?.offsetHeight ?? 0
         return evt.offsetY < h / 2
