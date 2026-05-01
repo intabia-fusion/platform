@@ -153,7 +153,10 @@ export class KanbanBoardPage extends CommonTrackerPage {
       const buttons = this.page.locator('button[data-id="btn-kanban-show-more"]')
       const count = await buttons.count()
       if (count === 0) return
-      await buttons.first().click().catch(() => {})
+      await buttons
+        .first()
+        .click()
+        .catch(() => {})
       await this.page.waitForTimeout(120)
     }
   }

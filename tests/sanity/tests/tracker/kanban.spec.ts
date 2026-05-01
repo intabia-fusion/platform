@@ -591,9 +591,7 @@ test.describe('Kanban board', () => {
       // cards rendered across all status cells in that lane.
       const ids: Array<Ref<Issue>> = []
       for (const status of ['Backlog', 'Todo', 'In Progress'] as const) {
-        ids.push(
-          await createIssue(client, ctx, { title: `${titlePrefix}counter-${status}`, status, priority: 1 })
-        )
+        ids.push(await createIssue(client, ctx, { title: `${titlePrefix}counter-${status}`, status, priority: 1 }))
       }
 
       await openTrackerBoard(page, ctx.project._id)
