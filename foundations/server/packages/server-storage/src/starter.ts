@@ -68,8 +68,7 @@ export function parseStorageEnv (storageEnv: string, storageConfig: StorageConfi
       hasProtocol = false
     }
     const uri = new URL(url)
-    const hostWithPort = uri.hostname + (uri.port !== '' ? ':' + uri.port : '')
-    let endpoint = (hasProtocol ? uri.protocol + '//' : '') + hostWithPort + (uri.pathname !== '/' ? uri.pathname : '')
+    let endpoint = (hasProtocol ? uri.protocol + '//' : '') + uri.hostname + (uri.pathname !== '/' ? uri.pathname : '') // Port should go away
     if (endpoint.endsWith('/')) {
       endpoint = endpoint.slice(0, endpoint.length - 1)
     }

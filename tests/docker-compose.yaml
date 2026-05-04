@@ -54,6 +54,8 @@ services:
   cockroach:
     image: cockroachdb/cockroach:v24.1.2
     command: start-single-node --insecure
+    ports:
+      - '26258:26257'
     restart: unless-stopped
   postgres:
     image: postgres:18.1
@@ -140,6 +142,8 @@ services:
     depends_on:
       elastic-plugins:
         condition: service_completed_successfully
+    ports:
+      - 9201:9200
     environment:
       - ELASTICSEARCH_PORT_NUMBER=9200
       - BITNAMI_DEBUG=true

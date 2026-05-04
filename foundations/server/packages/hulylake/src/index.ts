@@ -46,8 +46,21 @@ export interface HulylakeConfig extends StorageConfig {
 /**
  * @public
  */
+function withPort (endpoint: string, port: number | undefined): string {
+  if (!Number.isInteger(port)) return endpoint
+  try {
+    const u = new URL(endpoint)
+    u.port = String(port)
+    let s = u.toString()
+    if (s.endsWith('/') && !endpoint.endsWith('/')) s = s.slice(0, -1)
+    return s
+  } catch {
+    return `${endpoint}:${port}`
+  }
+}
+
 export function createHulylakeClient (cfg: HulylakeConfig, token: string): HulylakeClient {
-  return getClient(cfg.endpoint, token)
+  return getClient(withPort(cfg.endpoint, cfg.port), token)
 }
 
 export const CONFIG_KIND = 'hulylake'
