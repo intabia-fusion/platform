@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { type AccountDB, type AccountWorkspacePresence, getAllTransactors, EndpointKind } from '@hcengineering/account'
-import { type AccountUuid, type MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { type AccountDB, type AccountWorkspacePresence } from '@hcengineering/account'
+import { type MeasureContext } from '@hcengineering/core'
 import {
   QueueUserEvent,
   type QueueUserLogin,
@@ -22,12 +22,8 @@ import {
   type QueueUserMessage,
   QueueTransactorEvent,
   type QueueTransactorMessage,
-  type ConsumerMessage,
-  userEvents,
-  type PlatformQueueProducer
+  type ConsumerMessage
 } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
-import { createRestClient, type TransactorSessionSnapshot } from '@hcengineering/api-client'
 
 export async function handleTransactorLifecycle (
   ctx: MeasureContext,
@@ -72,89 +68,4 @@ export async function handlePresenceBatch (
       await db.setAccountWorkspaceBadgeStatus(user, msg.workspace, hasUnread)
     }
   }
-}
-
-export function initPresenceRehydration (
-  ctx: MeasureContext,
-  db: AccountDB,
-  serviceId: string,
-  userProducer: PlatformQueueProducer<QueueUserMessage>
-): void {
-  // Start rehydration loop in background
-  void runStartupRehydration(ctx, db, serviceId, userProducer)
-}
-
-async function runStartupRehydration (
-  ctx: MeasureContext,
-  db: AccountDB,
-  serviceId: string,
-  userProducer: PlatformQueueProducer<QueueUserMessage>
-): Promise<void> {
-  let pendingEndpoints = getAllTransactors(EndpointKind.Internal)
-  const startTime = Date.now()
-
-  ctx.info(`Starting presence rehydration for ${pendingEndpoints.length} transactors`)
-
-  while (pendingEndpoints.length > 0) {
-    const failedEndpoints = await rehydratePresence(ctx, db, serviceId, pendingEndpoints)
-
-    if (failedEndpoints.length === 0) {
-      ctx.info('Presence rehydration completed successfully for all transactors')
-      // Only after we got a FULL snapshot, we can safely reset statuses for sessions that didn't reappear
-      await db.resetPresenceOffline(startTime)
-
-      // Send rehydrated event to notify other services (e.g. pod-notifications) to re-sync
-      await userProducer.send(ctx, '' as WorkspaceUuid, [userEvents.rehydrated({ timestamp: Date.now() })])
-      break
-    }
-
-    pendingEndpoints = failedEndpoints
-    ctx.warn(
-      `Presence rehydration partially failed. ${pendingEndpoints.length} transactors remaining. Retrying in 1 minute...`
-    )
-    await new Promise((resolve) => setTimeout(resolve, 60 * 1000))
-  }
-}
-
-async function rehydratePresence (
-  ctx: MeasureContext,
-  db: AccountDB,
-  serviceId: string,
-  endpoints: string[]
-): Promise<string[]> {
-  const token = generateToken(systemAccountUuid, undefined, { service: serviceId })
-  const failedEndpoints: string[] = []
-
-  for (const endpoint of endpoints) {
-    try {
-      const time = Date.now()
-      const serverEndpoint = endpoint.replaceAll('wss://', 'https://').replace('ws://', 'http://')
-      const client = createRestClient(serverEndpoint, '', token)
-      const { sessions, transactorId }: TransactorSessionSnapshot = await client.getSessions()
-
-      const presences: AccountWorkspacePresence[] = []
-      for (const [account, workspaces] of Object.entries(sessions)) {
-        const accountUuid = account as AccountUuid
-        for (const workspaceUuid of workspaces) {
-          presences.push({
-            accountUuid,
-            workspaceUuid,
-            online: true,
-            updatedOn: time,
-            transactorId
-          })
-        }
-      }
-
-      if (presences.length > 0) {
-        await db.batchUpsertPresence(presences)
-      }
-      ctx.info(`Successfully rehydrated ${presences.length} sessions from transactor ${transactorId} (${endpoint})`)
-    } catch (err: any) {
-      ctx.error(`Failed to rehydrate presence from ${endpoint}: ${err.message}`)
-      failedEndpoints.push(endpoint)
-    }
-  }
-
-  return failedEndpoints
 }

@@ -296,10 +296,7 @@ export class Worker {
   }
 
   async user (ctx: MeasureContext, ws: WorkspaceUuid, message: QueueUserMessage): Promise<void> {
-    if (message.type === QueueUserEvent.rehydrated) {
-      void this.syncSessions()
-      return
-    }
+
 
     if (message.type === QueueUserEvent.login) {
       await this.registerUserConnection(ctx, ws, message.user, true)

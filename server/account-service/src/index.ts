@@ -35,7 +35,7 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import { QueueTopic, type QueueTransactorMessage, type QueueUserMessage } from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
-import { handlePresenceBatch, handleTransactorLifecycle, initPresenceRehydration } from './presence'
+import { handlePresenceBatch, handleTransactorLifecycle } from './presence'
 import { migrateFromOldAccounts } from './migration/migration'
 export * from './migration/utils'
 export * from './migration/types'
@@ -162,8 +162,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       console.log('Migrations verified/done')
     }
 
-    const userEventProducer = platformQueue.getProducer<QueueUserMessage>(measureCtx, QueueTopic.Users)
-    initPresenceRehydration(measureCtx, db, SERVICE_ID, userEventProducer)
   })
 
   const transactorLifecycleConsumer = platformQueue.createConsumer<QueueTransactorMessage>(

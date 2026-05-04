@@ -55,7 +55,7 @@ import { PlatformError, type Status, unknownError } from '@hcengineering/platfor
 import { AuthOptions } from '../types'
 import { getWorkspaceToken } from '../utils'
 import { createMarkupOperations, type MarkupFormat, type MarkupOperations, type MarkupRef } from '../markup'
-import type { EnsurePersonOptions, RestClient, TransactorSessionSnapshot } from './types'
+import type { EnsurePersonOptions, RestClient } from './types'
 import { extractJson, withRetry } from './utils'
 
 export function createRestClient (
@@ -659,21 +659,5 @@ export class RestClientImpl implements RestClient {
     return await this.getMarkupOps().fetchMarkup(objectClass, objectId, objectAttr, markup, format)
   }
 
-  async getSessions (): Promise<TransactorSessionSnapshot> {
-    const requestUrl = concatLink(this.endpoint, '/api/v1/sessions')
-    await this.checkRate()
-    const result = await withRetry<any>(async () => {
-      const response = await fetch(requestUrl, this.requestInit())
-      if (!response.ok) {
-        await this.checkRateLimits(response)
-        throw new PlatformError(unknownError(response.statusText))
-      }
-      this.updateRateLimit(response)
-      return await extractJson<TransactorSessionSnapshot>(response)
-    }, isRLE)
-    if (result.error !== undefined) {
-      throw new PlatformError(result.error)
-    }
-    return result
-  }
+
 }

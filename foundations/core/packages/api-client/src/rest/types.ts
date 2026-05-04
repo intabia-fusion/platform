@@ -45,8 +45,7 @@ import {
   type Ref,
   type SocialIdType,
   type WithLookup,
-  type AccountUuid,
-  type WorkspaceUuid
+  type AccountUuid
 } from '@hcengineering/core'
 import type { MarkupFormat, MarkupRef } from '../markup'
 
@@ -263,10 +262,4 @@ export interface RestClient extends ClientOperations {
     format: MarkupFormat
   ) => Promise<string>
 
-  getSessions: () => Promise<TransactorSessionSnapshot>
-}
-
-export interface TransactorSessionSnapshot {
-  transactorId: string
-  sessions: Record<AccountUuid, WorkspaceUuid[]>
 }
