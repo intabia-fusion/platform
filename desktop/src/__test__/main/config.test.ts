@@ -14,31 +14,29 @@
 //
 
 // Mock electron app before importing config
-const mockApp = {
-  getPath: jest.fn((name: string) => {
-    if (name === 'userData') {
-      return '/mock/userData'
-    }
-    return `/mock/${name}`
-  }),
-  getName: jest.fn(() => 'TestApp')
-}
+import { readPackedConfig, PackedConfig } from '../../main/config'
+import * as fs from 'fs'
 
 jest.mock('electron', () => ({
-  app: mockApp
+  app: {
+    getPath: jest.fn((name: string) => {
+      if (name === 'userData') {
+        return '/mock/userData'
+      }
+      return `/mock/${name}`
+    }),
+    getName: jest.fn(() => 'TestApp')
+  }
 }))
 
-// Mock fs module
-const mockFs = {
+jest.mock('fs', () => ({
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn()
-}
+}))
 
-jest.mock('fs', () => mockFs)
-
-import { readPackedConfig, PackedConfig } from '../../main/config'
+const mockFs = fs as jest.Mocked<typeof fs>
 
 describe('config', () => {
   let originalResourcesPath: string | undefined

@@ -14,11 +14,11 @@
 //
 
 describe('jsdom environment self checking', () => {
-    test('check Jest\'s jsdom environment', () => {
-        const isDOMAvailable = typeof document !== 'undefined';
-        expect(isDOMAvailable).toBe(true);
+  test("check Jest's jsdom environment", () => {
+    const isDOMAvailable = typeof document !== 'undefined'
+    expect(isDOMAvailable).toBe(true)
 
-        const isWindowAvailable = typeof window !== 'undefined';
-        expect(isWindowAvailable).toBe(true);
-    })
+    const isWindowAvailable = typeof window !== 'undefined'
+    expect(isWindowAvailable).toBe(true)
+  })
 })

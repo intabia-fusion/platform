@@ -27,15 +27,21 @@ export const addMenus = (sendCommand: (cmd: Command, ...args: any[]) => void): v
         {
           label: 'Settings',
           accelerator: isLinux ? 'Ctrl+,' : 'Meta+,',
-          click: () => { sendCommand(CommandOpenSettings) }
+          click: () => {
+            sendCommand(CommandOpenSettings)
+          }
         },
         {
           label: 'Select workspace',
-          click: () => { sendCommand(CommandSelectWorkspace) }
+          click: () => {
+            sendCommand(CommandSelectWorkspace)
+          }
         },
         {
           label: 'Logout',
-          click: () => { sendCommand(CommandLogout) }
+          click: () => {
+            sendCommand(CommandLogout)
+          }
         },
         { role: isMac ? 'close' : 'quit' }
       ]

@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,14 +17,18 @@
 import { AnalyticEvent, AnalyticEventType } from '@hcengineering/analytics-collector'
 import { recordOTELMetric, reportOTEL, reportOTELError } from '@hcengineering/analytics-service'
 import type { MeasureContext } from '@hcengineering/core'
+import { RPCHandler } from '@hcengineering/rpc'
 import { extractToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import cors from 'cors'
 import express, { type Express, type NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'
+import { uncompress } from 'snappy'
 import config from './config'
 import { ApiError } from './error'
 import { geoFieldMapping, getAllPossibleIps, getClientIp, getGeoLocationFromIp } from './geoip'
+
+const rpcHandler = new RPCHandler()
 
 type AsyncRequestHandler = (req: Request, res: Response, token: Token, next: NextFunction) => Promise<void>
 
@@ -238,26 +243,78 @@ async function preparePostHogEvent (event: AnalyticEvent, req: Request): Promise
   return regularEventForPostHog
 }
 
+// Sanitize a labels record into safe ParamsType for metrics: drop non-primitive
+// or oversized values to bound cardinality.
+function sanitizeLabels (labels: Record<string, any>): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {}
+  for (const [k, v] of Object.entries(labels)) {
+    if (v === null || v === undefined) continue
+    if (typeof v === 'string') {
+      if (v.length > 64) continue
+      out[k] = v
+    } else if (typeof v === 'number' || typeof v === 'boolean') {
+      out[k] = v
+    }
+  }
+  return out
+}
+
+// Decode an incoming /collect body. Supports two formats:
+// - application/json (legacy): array of AnalyticEvent.
+// - application/octet-stream + X-Encoding: snappy (preferred): snappy-compressed
+//   msgpack of an RPC-style {method:'collect', params:[events]} envelope.
+//   Custom X-Encoding header avoids browser/proxy auto-decode of non-standard codecs.
+async function decodeCollectBody (req: Request): Promise<AnalyticEvent[]> {
+  const ct = (req.headers['content-type'] ?? '').toString().toLowerCase()
+  if (ct.includes('application/json')) {
+    if (!Array.isArray(req.body)) throw new ApiError(400)
+    return req.body as AnalyticEvent[]
+  }
+  if (!ct.includes('application/octet-stream')) throw new ApiError(400)
+
+  const raw = req.body as Buffer
+  if (!Buffer.isBuffer(raw)) throw new ApiError(400)
+  const enc = (req.headers['x-encoding'] ?? '').toString().toLowerCase()
+  let decompressed: Buffer
+  try {
+    decompressed = enc === 'snappy' ? ((await uncompress(raw)) as Buffer) : raw
+  } catch {
+    throw new ApiError(400)
+  }
+  const rpcReq = rpcHandler.readRequest<[AnalyticEvent[]]>(decompressed, true)
+  if (rpcReq.method !== 'collect' || !Array.isArray(rpcReq.params?.[0])) {
+    throw new ApiError(400)
+  }
+  return rpcReq.params[0]
+}
+
 export function createServer (ctx: MeasureContext): Express {
   const app = express()
   app.use(cors())
-  app.use(express.json({ limit: config.MaxPayloadSize }))
+  app.use(express.json({ limit: config.MaxPayloadSize, type: 'application/json' }))
+  app.use(express.raw({ limit: config.MaxPayloadSize, type: 'application/octet-stream' }))
+
+  // Child context branch named "client" - flows to stats service as
+  // service=analytics-collector path=client/<metric>. Used to track
+  // client-reported metrics and errors alongside server metrics.
+  // NOTE: ctx.measure() writes "#name" leaves which are stripped by
+  // metricsClean before stats upload. Instead we open a short-lived
+  // child ctx per metric name and end() it with the value - this writes
+  // a normal "name" subtree visible in stats.
+  const clientCtx = ctx.newChild('client', {})
+  const recordClient = (name: string, value: number, labels: Record<string, string | number | boolean>): void => {
+    const child = clientCtx.newChild(name, labels, { span: 'disable' })
+    child.end(value)
+  }
 
   app.post(
     '/collect',
     wrapRequest(async (req, res, token) => {
-      if (req.body == null || !Array.isArray(req.body)) {
+      const events = await decodeCollectBody(req)
+      if (!isContentValid(events)) {
         throw new ApiError(400)
       }
 
-      if (!isContentValid(req.body)) {
-        throw new ApiError(400)
-      }
-
-      const events: AnalyticEvent[] = req.body
-      const payloadSize = JSON.stringify(req.body).length
-
-      console.log(`Received batch: ${events.length} events, ${payloadSize} bytes`)
       res.status(200)
       res.json({})
 
@@ -272,6 +329,11 @@ export function createServer (ctx: MeasureContext): Express {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           const { error_message, error_type, error_stack } = evt.properties ?? {}
           reportOTELError({ message: error_message ?? 'Unknown error', stack: error_stack, name: error_type ?? '' })
+          const errorType = typeof error_type === 'string' && error_type !== '' ? error_type : 'Error'
+          // Do not pass error_message as a label: messages are unbounded and
+          // would explode metrics-tree cardinality. The full message is sent
+          // via reportOTELError above; here we only count by errorType.
+          recordClient(`error/${errorType}`, 1, {})
         } else if (evt.event === AnalyticEventType.Metric) {
           const props = evt.properties ?? {}
           const metricName = typeof props.metric === 'string' ? props.metric : ''
@@ -279,6 +341,7 @@ export function createServer (ctx: MeasureContext): Express {
           if (metricName !== '' && Number.isFinite(value)) {
             const labels = typeof props.labels === 'object' && props.labels !== null ? props.labels : {}
             recordOTELMetric('client', metricName, value, { ...labels, distinct_id: evt.distinct_id })
+            recordClient(metricName, value, sanitizeLabels(labels))
           }
         } else {
           reportOTEL('info', evt.event, evt.timestamp, { ...evt.properties, distinct_id: evt.distinct_id })

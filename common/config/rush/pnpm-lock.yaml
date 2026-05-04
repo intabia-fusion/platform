@@ -13592,9 +13592,15 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
+      '@hcengineering/rpc':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rpc
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../ui
+      snappyjs:
+        specifier: ^0.7.0
+        version: 0.7.0
       ua-parser-js:
         specifier: ^2.0.4
         version: 2.0.6
@@ -29412,6 +29418,9 @@ importers:
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
+      snappyjs:
+        specifier: ^0.7.0
+        version: 0.7.0
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -29422,6 +29431,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.5
         version: 29.5.14
+      '@types/snappyjs':
+        specifier: ^0.7.1
+        version: 0.7.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.21.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -30719,6 +30731,9 @@ importers:
       koa-router:
         specifier: ^12.0.1
         version: 12.0.1
+      snappy:
+        specifier: ^7.2.2
+        version: 7.3.3
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -36969,6 +36984,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
+      '@hcengineering/rpc':
+        specifier: workspace:^0.7.17
+        version: link:../../../foundations/core/packages/rpc
       '@hcengineering/server-client':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/client
@@ -36990,6 +37008,9 @@ importers:
       maxmind:
         specifier: ^4.3.6
         version: 4.3.29
+      snappy:
+        specifier: ^7.2.2
+        version: 7.3.3
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

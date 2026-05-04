@@ -14,7 +14,15 @@
 //
 
 import { app, JumpListItem, JumpListCategory } from 'electron'
-import { Command, CommandOpenSettings, CommandOpenInbox, CommandOpenApplication, JumpListSpares, WindowAction, SendCommandDelegate } from '../ui/types'
+import {
+  Command,
+  CommandOpenSettings,
+  CommandOpenInbox,
+  CommandOpenApplication,
+  JumpListSpares,
+  WindowAction,
+  SendCommandDelegate
+} from '../ui/types'
 import * as path from 'path'
 
 const JUMP_COMMANDS = {
@@ -22,7 +30,7 @@ const JUMP_COMMANDS = {
   SETTINGS: '--jump-to-settings'
 } as const
 
-type JumpCommand = typeof JUMP_COMMANDS[keyof typeof JUMP_COMMANDS]
+type JumpCommand = (typeof JUMP_COMMANDS)[keyof typeof JUMP_COMMANDS]
 
 const JUMP_TO_APP_COMMAND_PREFIX = '--jump-to-app='
 
@@ -101,7 +109,8 @@ export function setupWindowsSpecific (activateWindow: WindowAction, sendCommand:
           break
         default: {
           // compile-time check: if jumpCommand is not a known value, this line errors
-          const _exhaustive: never = jumpCommandCode
+          const exhaustive: never = jumpCommandCode
+          void exhaustive
           break
         }
       }

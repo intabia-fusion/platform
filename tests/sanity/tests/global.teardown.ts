@@ -1,5 +1,5 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,17 +13,8 @@
 // limitations under the License.
 //
 
-import { isMenuBarAction } from '../../ui/typesUtils'
-import { MenuBarActions } from '../../ui/types'
+import { reportStats } from './stats'
 
-describe('isMenuBarAction', () => {
-  test('yes', () => {
-    for (const action of MenuBarActions) {
-      expect(isMenuBarAction(action)).toBe(true)
-    }
-  })
-
-  test('no', () => {
-    expect(isMenuBarAction('some random string')).toBe(false)
-  })
-})
+export default async function globalTeardown (): Promise<void> {
+  await reportStats()
+}

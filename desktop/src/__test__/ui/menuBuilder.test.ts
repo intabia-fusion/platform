@@ -26,7 +26,12 @@ describe('MenuBuilder', () => {
     document.body.innerHTML = ''
   })
 
-  function verifyTopLevelMenu (menuBar: HTMLElement, topLevelMenu: number, expectedMenuName: string, expectedAccelerator: string): void {
+  function verifyTopLevelMenu (
+    menuBar: HTMLElement,
+    topLevelMenu: number,
+    expectedMenuName: string,
+    expectedAccelerator: string
+  ): void {
     const menuButton = menuBar.children[topLevelMenu].children[0] as HTMLElement
     expect(menuButton.dataset.menu).toBe(expectedMenuName)
     expect(menuButton.dataset.accelerator).toBe(expectedAccelerator)
@@ -43,18 +48,13 @@ describe('MenuBuilder', () => {
     })
 
     test('method chaining', () => {
-      const result = systemUnderTest
-        .addTopLevelMenu('File', 'f')
-        .addTopLevelMenu('Edit', 'e')
+      const result = systemUnderTest.addTopLevelMenu('File', 'f').addTopLevelMenu('Edit', 'e')
 
       expect(result).toBe(systemUnderTest)
     })
 
     test('add multiple top-level menus', () => {
-      systemUnderTest
-        .addTopLevelMenu('File', 'f')
-        .addTopLevelMenu('Edit', 'e')
-        .addTopLevelMenu('View', 'v')
+      systemUnderTest.addTopLevelMenu('File', 'f').addTopLevelMenu('Edit', 'e').addTopLevelMenu('View', 'v')
 
       const builtMenu = systemUnderTest.build()
 
@@ -220,9 +220,7 @@ describe('MenuBuilder', () => {
     })
 
     test('dropdown items with shortcuts', () => {
-      systemUnderTest
-        .addTopLevelMenu('File', 'f')
-        .addMenuItem(0, 'New', 'paste', 'Ctrl+N')
+      systemUnderTest.addTopLevelMenu('File', 'f').addMenuItem(0, 'New', 'paste', 'Ctrl+N')
 
       const builtMenu = systemUnderTest.build()
 
@@ -236,9 +234,7 @@ describe('MenuBuilder', () => {
     })
 
     test('without shortcuts when empty', () => {
-      systemUnderTest
-        .addTopLevelMenu('File', 'f')
-        .addMenuItem(0, 'New', 'paste', '')
+      systemUnderTest.addTopLevelMenu('File', 'f').addMenuItem(0, 'New', 'paste', '')
 
       const builtMenu = systemUnderTest.build()
 
@@ -300,9 +296,7 @@ describe('MenuBuilder', () => {
 
   describe('edge cases', () => {
     test('empty labels', () => {
-      systemUnderTest
-        .addTopLevelMenu('', 'f')
-        .addMenuItem(0, '', 'cut', 'shortcut')
+      systemUnderTest.addTopLevelMenu('', 'f').addMenuItem(0, '', 'cut', 'shortcut')
 
       const builtMenu = systemUnderTest.build()
 
@@ -315,9 +309,7 @@ describe('MenuBuilder', () => {
     })
 
     test('special characters in labels', () => {
-      systemUnderTest
-        .addTopLevelMenu('File & Edit', 'f')
-        .addMenuItem(0, 'Save & Exit', 'cut', 'Ctrl+S')
+      systemUnderTest.addTopLevelMenu('File & Edit', 'f').addMenuItem(0, 'Save & Exit', 'cut', 'Ctrl+S')
 
       const builtMenu = systemUnderTest.build()
 
@@ -349,9 +341,7 @@ describe('MenuBuilder', () => {
     })
 
     test('unicode characters', () => {
-      systemUnderTest
-        .addTopLevelMenu('Файл', 'ф')
-        .addMenuItem(0, 'Новый', 'undo', 'Ctrl+N')
+      systemUnderTest.addTopLevelMenu('Файл', 'ф').addMenuItem(0, 'Новый', 'undo', 'Ctrl+N')
 
       const builtMenu = systemUnderTest.build()
 
