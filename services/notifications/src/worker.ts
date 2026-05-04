@@ -155,7 +155,7 @@ export class Worker {
     }
   }
 
-  private async resolveAiBotAccount (ctx: MeasureContext): Promise<void> {
+  public async resolveAiBotAccount (): Promise<void> {
     if (this.aiBotAccountUuid != null) return
     try {
       const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
@@ -165,17 +165,7 @@ export class Worker {
         this.aiBotAccountUuid = socialId.personUuid as AccountUuid
       }
     } catch (e) {
-      ctx.error('Failed to resolve AI bot account', { e })
-    }
-  }
-
-  public async initNotifyStatus (): Promise<boolean> {
-    try {
-      await this.resolveAiBotAccount(this.ctx)
-      return true
-    } catch (e) {
-      this.ctx.error('Failed to init notify status', { e })
-      return false
+      this.ctx.error('Failed to resolve AI bot account', { e })
     }
   }
 

@@ -33177,7 +33177,7 @@ importers:
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/pulse':
-        specifier: workspace:*
+        specifier: workspace:^0.7.0
         version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
@@ -35119,7 +35119,7 @@ importers:
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/pulse':
-        specifier: workspace:*
+        specifier: workspace:^0.7.0
         version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18

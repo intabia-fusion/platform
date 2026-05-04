@@ -81,11 +81,11 @@ async function main (): Promise<void> {
     }
   })
 
-  const sync = (): Promise<boolean> => withRetry(() => worker.initNotifyStatus())
+  const sync = (): Promise<void> => withRetry(() => worker.resolveAiBotAccount())
 
   // Initial delay of 5 seconds to give other services a head start.
   setTimeout(() => {
-    void sync
+    void sync()
   }, 5 * 1000)
 
   const shutdown = (): void => {

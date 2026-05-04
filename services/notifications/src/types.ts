@@ -27,8 +27,7 @@ import {
   TxCUD,
   TxFactory,
   type WithLookup,
-  WorkspaceInfoWithStatus,
-  WorkspaceUuid
+  WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import {
   DocNotifyContext,
@@ -84,4 +83,3 @@ export interface MentionResult {
     notifyResult: NotifyResult
   }[]
 }
-
