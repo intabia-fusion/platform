@@ -372,9 +372,7 @@ describe('notification', () => {
         mockClient.getMessageMeta.mockResolvedValue(meta)
         mockClient.findPersonUuid.mockResolvedValue(accountUuid)
 
-        const collaborators = [
-          { account: accountUuid, personUuid: 'person-1' as any }
-        ]
+        const collaborators = [{ account: accountUuid, personUuid: 'person-1' as any }]
         mockClient.db.getCollaboratorsCursor.mockReturnValue({
           [Symbol.asyncIterator]: async function * () {
             yield collaborators
@@ -680,9 +678,7 @@ describe('notification', () => {
 
         const result = await notify(mockCtx, event)
 
-        const createNotification = result.find(
-          (e) => e.type === NotificationEventType.CreateNotification
-        )
+        const createNotification = result.find((e) => e.type === NotificationEventType.CreateNotification)
         expect(createNotification).toBeDefined()
         expect(createNotification).toMatchObject({ read: true })
       })

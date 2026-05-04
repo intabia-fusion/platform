@@ -22,10 +22,13 @@ import {
 import {
   AccountUuid,
   CardID,
-  CardType, ContextID, Emoji,
+  CardType,
+  ContextID,
+  Emoji,
   Markdown,
   MessageID,
-  MessageType, NotificationID,
+  MessageType,
+  NotificationID,
   SocialID
 } from '@hcengineering/communication-types'
 
