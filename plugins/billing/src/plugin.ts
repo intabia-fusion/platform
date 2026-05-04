@@ -58,14 +58,12 @@ export const billingPlugin = plugin(billingId, {
     Tier: '' as IntlString,
     StorageLimit: '' as IntlString,
     TrafficLimit: '' as IntlString,
-    Common: '' as IntlString,
-    CommonDescription: '' as IntlString,
-    Rare: '' as IntlString,
-    RareDescription: '' as IntlString,
-    Epic: '' as IntlString,
-    EpicDescription: '' as IntlString,
-    Legendary: '' as IntlString,
-    LegendaryDescription: '' as IntlString,
+    Start: '' as IntlString,
+    StartDescription: '' as IntlString,
+    Standard: '' as IntlString,
+    StandardDescription: '' as IntlString,
+    Business: '' as IntlString,
+    BusinessDescription: '' as IntlString,
     UpgradePlan: '' as IntlString,
     LimitReached: '' as IntlString
   },
@@ -74,10 +72,9 @@ export const billingPlugin = plugin(billingId, {
     Subscriptions: '' as Asset
   },
   tier: {
-    Common: '' as Ref<Tier>,
-    Rare: '' as Ref<Tier>,
-    Epic: '' as Ref<Tier>,
-    Legendary: '' as Ref<Tier>
+    Start: '' as Ref<Tier>,
+    Standard: '' as Ref<Tier>,
+    Business: '' as Ref<Tier>
   }
 })
 

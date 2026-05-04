@@ -34,8 +34,8 @@ import { getAccountClient } from './utils'
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 
 const subscriptionRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 500,
   message: 'Too many subscription requests, please try again later',
   standardHeaders: true
 })
@@ -164,6 +164,32 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
       }
     } catch (err) {
       ctx.error('Failed to initialize payment provider Stripe', { err })
+    }
+  }
+
+  // Try TBank provider if neither Polar nor Stripe are configured
+  if (
+    provider == null &&
+    config.TbankSubscriptionsUrl !== undefined
+  ) {
+    try {
+      provider = PaymentProviderFactory.getInstance().create(
+        'tbank',
+        {
+          tbankSubscriptionsUrl: config.TbankSubscriptionsUrl
+        },
+        accountClient,
+        false
+      )
+
+      if (provider !== undefined) {
+        // TBank webhooks are handled directly by pod-tbank-subscriptions
+        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
+
+        ctx.info('TBank payment provider initialized successfully')
+      }
+    } catch (err) {
+      ctx.error('Failed to initialize payment provider TBank', { err })
     }
   }
 
@@ -370,7 +396,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   /**
    * POST /api/v1/subscriptions/:subscriptionId/updatePlan
    * Update a subscription to a different plan
-   * Body: { plan: string } - The new plan name (e.g., 'common', 'rare', 'epic', 'legendary')
+   * Body: { plan: string } - The new plan name (e.g., 'start', 'standard', 'business')
    * Authorization: Only workspace owner/admin can update
    * Note: subscriptionId is the internal subscription ID, not the provider's ID
    */
@@ -512,47 +538,52 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         const checkoutId = req.params.checkoutId
         const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
 
-        // Try to get subscription from Polar by checkout ID
+        // Try to get subscription from provider by checkout ID
         const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
 
         if (subscriptionData !== null) {
-          // Subscription exists in Polar - check if we need to update our DB
-          try {
-            // Get existing subscription from our DB if it exists
-            const existingSubscription = await accountClient.getSubscriptionByProviderId(
-              subscriptionData.provider,
-              subscriptionData.providerSubscriptionId
-            )
+          // For providers that pre-create a subscription before payment confirmation
+          // (e.g. TBank), check providerData.pending flag to determine actual completion
+          const isCompleted = subscriptionData.providerData?.pending !== true
 
-            // Check if we should upsert (doesn't exist or has changed)
-            const shouldUpsert =
-              existingSubscription === null ||
-              (subscriptionData.providerData?.modifiedAt !== undefined &&
-                (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
+          // Only sync to DB if subscription is confirmed (webhook received)
+          if (isCompleted) {
+            try {
+              // Get existing subscription from our DB if it exists
+              const existingSubscription = await accountClient.getSubscriptionByProviderId(
+                subscriptionData.provider,
+                subscriptionData.providerSubscriptionId
+              )
 
-            if (shouldUpsert) {
-              await accountClient.upsertSubscription(subscriptionData)
-              ctx.info('Subscription upserted from checkout poll', {
-                checkoutId,
-                subscriptionId: subscriptionData.id,
-                isNew: existingSubscription === null
-              })
+              // Check if we should upsert (doesn't exist or has changed)
+              const shouldUpsert =
+                existingSubscription === null ||
+                (subscriptionData.providerData?.modifiedAt !== undefined &&
+                  (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
+
+              if (shouldUpsert) {
+                await accountClient.upsertSubscription(subscriptionData)
+                ctx.info('Subscription upserted from checkout poll', {
+                  checkoutId,
+                  subscriptionId: subscriptionData.id,
+                  isNew: existingSubscription === null
+                })
+              }
+            } catch (err) {
+              ctx.error('Failed to sync subscription to DB', { checkoutId, err })
             }
-          } catch (err) {
-            ctx.error('Failed to sync subscription to DB', { checkoutId, err })
-            // Still return the subscription data even if DB update failed
           }
 
           res.status(200).json({
             checkoutId,
-            subscriptionId: subscriptionData.id,
-            status: 'completed',
-            subscription: subscriptionData
+            subscriptionId: isCompleted ? subscriptionData.id : null,
+            status: isCompleted ? 'completed' : 'pending',
+            subscription: isCompleted ? subscriptionData : null
           })
           return
         }
 
-        // Subscription not yet completed in Polar
+        // Subscription not yet found in provider
         res.status(200).json({
           checkoutId,
           subscriptionId: null,
