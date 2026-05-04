@@ -2,7 +2,7 @@
 
 # Account and Server Configuration
 accounts:
-  url: "http://huly.local:3000"  # URL of the accounts service
+  url: "http://localhost:3000"  # URL of the accounts service
   serverSecret: "secret"  # Server secret for authentication
   serviceId: "ai-bot-service"  # Service identifier (default: ai-bot-service)
 
@@ -27,7 +27,7 @@ llm:
   openai:
     apiKey: "token"  # OpenAI API key
     model: "gpt-4o-mini"  # OpenAI model to use (default: gpt-4o-mini)
-    baseUrl: "http://huly.local:1234/v1/"  # OpenAI base URL for custom endpoints (optional)
+    baseUrl: "http://localhost:1234/v1/"  # OpenAI base URL for custom endpoints (optional)
     translateModel: "openai/gpt-oss-20b"  # Model for translation tasks (default: same as model)
     summaryModel: "openai/gpt-oss-20b"  # Model for summary tasks (default: same as model)
   
@@ -42,7 +42,7 @@ llm:
 # STT (Speech-to-Text) Configuration
 stt:
   provider: "openai"  # STT provider type (openai, deepgram, etc.) (default: wsr)
-  url: "http://huly.local:9007"  # STT API URL (optional)
+  url: "http://localhost:9007"  # STT API URL (optional)
   apiKey: "key"  # STT API key (optional)
   model: ""  # STT model to use (optional)
 
@@ -61,9 +61,9 @@ vad:
 # Service Integration Configuration
 services:
   love:
-    endpoint: "http://huly.local:8096"  # Love service endpoint URL
+    endpoint: "http://localhost:8096"  # Love service endpoint URL
   billing:
-    url: "http://huly.local:4041"  # Billing service URL
+    url: "http://localhost:4041"  # Billing service URL
   datalab:
     apiKey: ""  # DataLab API key
 

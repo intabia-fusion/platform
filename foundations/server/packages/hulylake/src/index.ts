@@ -47,8 +47,7 @@ export interface HulylakeConfig extends StorageConfig {
  * @public
  */
 export function createHulylakeClient (cfg: HulylakeConfig, token: string): HulylakeClient {
-  const endpoint = Number.isInteger(cfg.port) ? `${cfg.endpoint}:${cfg.port}` : cfg.endpoint
-  return getClient(endpoint, token)
+  return getClient(cfg.endpoint, token)
 }
 
 export const CONFIG_KIND = 'hulylake'

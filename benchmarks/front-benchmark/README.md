@@ -34,7 +34,7 @@ go build -o front-benchmark main.go
 
 ## Параметры
 
-- `-url` - Базовый URL (default: `http://huly.local:8087`)
+- `-url` - Базовый URL (default: `http://localhost:8087`)
 - `-c` - Количество одновременных соединений (default: 50)
 - `-d` - Длительность теста (default: 30s)
 - `-t` - Таймаут запроса (default: 10s)
@@ -48,7 +48,7 @@ go build -o front-benchmark main.go
 ### Exact mode (новый!)
 Использует URL точно как указан, без добавления путей:
 ```bash
-./front-benchmark -url=http://huly.local:8087/config.json -exact -c=100
+./front-benchmark -url=http://localhost:8087/config.json -exact -c=100
 ```
 
 ### Append mode (по умолчанию)
@@ -61,7 +61,7 @@ go build -o front-benchmark main.go
 ./front-benchmark -files=/tmp/files.txt -c=100
 
 # Fallback на index.html
-./front-benchmark -url=http://huly.local:8087 -c=100
+./front-benchmark -url=http://localhost:8087 -c=100
 ```
 
 ## Примеры
@@ -78,7 +78,7 @@ go build -o front-benchmark main.go
 
 ### Тест конкретного файла
 ```bash
-./front-benchmark -url=http://huly.local:8087/index.html -c=100 -d=30s
+./front-benchmark -url=http://localhost:8087/index.html -c=100 -d=30s
 ```
 
 ### Другой контейнер

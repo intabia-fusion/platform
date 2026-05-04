@@ -77,8 +77,8 @@ Make sure you have all required environment variables configured (see [Environme
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `PORT` | Port to listen on | `3040` |
-| `ACCOUNTS_URL` | Accounts service URL | `http://huly.local:3000` |
-| `FRONT_URL` | Frontend URL for redirects | `https://huly.local:8087` |
+| `ACCOUNTS_URL` | Accounts service URL | `http://localhost:3000` |
+| `FRONT_URL` | Frontend URL for redirects | `https://localhost:8087` |
 
 ### Polar.sh Provider
 

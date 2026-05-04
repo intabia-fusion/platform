@@ -51,7 +51,7 @@ export function parseArgs (argv: string[]): BenchConfig {
   }
 
   return {
-    url: args.get('url') ?? process.env.HULY_URL ?? 'http://huly.local:8087',
+    url: args.get('url') ?? process.env.HULY_URL ?? 'http://localhost:8087',
     email: args.get('email') ?? process.env.HULY_EMAIL ?? 'user1',
     password: args.get('password') ?? process.env.HULY_PASSWORD ?? '1234',
     workspace: args.get('workspace') ?? process.env.HULY_WORKSPACE ?? 'bench-ws',

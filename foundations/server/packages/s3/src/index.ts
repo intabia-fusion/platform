@@ -71,9 +71,8 @@ export class S3Service implements StorageAdapter {
   expireTime: number
   client: S3
   constructor (readonly opt: S3Config) {
-    const endpoint = Number.isInteger(opt.port) ? `${opt.endpoint}:${opt.port}` : opt.endpoint
     this.client = new S3({
-      endpoint,
+      endpoint: opt.endpoint,
       credentials: {
         accessKeyId: opt.accessKey,
         secretAccessKey: opt.secretKey

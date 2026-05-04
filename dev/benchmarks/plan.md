@@ -33,7 +33,7 @@ dev/benchmarks/
 
 ```bash
 cd dev/benchmarks
-npx ts-node src/run.ts --url http://huly.local:8083 \
+npx ts-node src/run.ts --url http://localhost:8083 \
   --email user1 --password 1234 \
   --workspace bench-ws \
   --scenario all
@@ -41,20 +41,20 @@ npx ts-node src/run.ts --url http://huly.local:8083 \
 
 Individual scenarios:
 ```bash
-npx ts-node src/run.ts --url http://huly.local:8087 --scenario rest-throughput
-npx ts-node src/run.ts --url http://huly.local:8087 --scenario multi-workspace --workspaces 10 --clients 5
-npx ts-node src/run.ts --url http://huly.local:8087 --scenario spike --clients 100 --duration 30
+npx ts-node src/run.ts --url http://localhost:8087 --scenario rest-throughput
+npx ts-node src/run.ts --url http://localhost:8087 --scenario multi-workspace --workspaces 10 --clients 5
+npx ts-node src/run.ts --url http://localhost:8087 --scenario spike --clients 100 --duration 30
 ```
 
 With CPU profiling (requires `--transactor-url`):
 ```bash
-npx ts-node src/run.ts --url http://huly.local:8087 --scenario rest-throughput \
+npx ts-node src/run.ts --url http://localhost:8087 --scenario rest-throughput \
   --profile true --transactor-url http://localhost:3332 --profile-dir ./profiles
 ```
 
 Multi-workspace with explicit workspace list:
 ```bash
-npx ts-node src/run.ts --url http://huly.local:8087 --scenario multi-workspace \
+npx ts-node src/run.ts --url http://localhost:8087 --scenario multi-workspace \
   --workspace-list bench-ws-000,bench-ws-001,bench-ws-002 --clients 10
 ```
 
@@ -290,7 +290,7 @@ The benchmark suite can automatically capture CPU profiles from the transactor d
 **Typical workflow:**
 ```bash
 # Run stress test with profiling
-npx ts-node src/run.ts --url http://huly.local:8087 \
+npx ts-node src/run.ts --url http://localhost:8087 \
   --scenario rest-throughput --clients 1,10,20,50 --duration 30 \
   --profile true --transactor-url http://localhost:3332
 

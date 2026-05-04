@@ -60,7 +60,7 @@ Branch: `FUSIO-324`. Goal: make `foundations/stream` reliable on k8s
   → upload → set parent → result publish). No real ffmpeg needed if we
   inject a fake binary path.
 - **#14 TUS upload test in `ws-tests/api-tests`** — hit
-  `http://huly.local:1081/recording` via `tus-js-client`. Stack already
+  `http://localhost:1081/recording` via `tus-js-client`. Stack already
   runs stream + datalake per `ws-tests/docker-compose.yaml:2-14`. Reuse
   workspace token setup from `storage.test.ts`. Cases: happy path upload
   → blob in datalake, resumable abort/resume, reject without token.

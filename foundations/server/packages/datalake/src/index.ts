@@ -49,8 +49,7 @@ export interface DatalakeConfig extends StorageConfig {
  * @public
  */
 export function createDatalakeClient (cfg: DatalakeConfig, token: string): DatalakeClient {
-  const endpoint = Number.isInteger(cfg.port) ? `${cfg.endpoint}:${cfg.port}` : cfg.endpoint
-  return new DatalakeClient(endpoint, token)
+  return new DatalakeClient(cfg.endpoint, token)
 }
 
 export const CONFIG_KIND = 'datalake'

@@ -95,7 +95,7 @@ Map of how the platform talks to `foundations/stream` — upload, transcode, pla
 |---|---|---|---|
 | `STREAM_URL` | Front / Desktop | `server/front/src/starter.ts:99`, `desktop/src/ui/platform.ts:356` | TUS upload target |
 | `DATALAKE_URL` | Front / Desktop | `server/front/src/starter.ts:111` | Blob read target (HLS playback) |
-| `STREAM_ENDPOINT_URL` | Stream service | `internal/pkg/config/config.go:35` | Backend: `datalake://huly.local:4030` (prod) or `s3://...` |
+| `STREAM_ENDPOINT_URL` | Stream service | `internal/pkg/config/config.go:35` | Backend: `datalake://localhost:4030` (prod) or `s3://...` |
 
 ### Kafka topics
 

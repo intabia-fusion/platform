@@ -542,7 +542,7 @@ async function fetchSafe (ctx: MeasureContext, url: string | URL, init?: Request
   try {
     response = await ctx.with('fetch', {}, () => fetch(url, init), { url: url.toString() }, { span: 'disable' })
   } catch (err: any) {
-    ctx.error('network error', { err })
+    ctx.error('network error', { err, url: url.toString(), method: init?.method ?? 'GET' })
     throw new NetworkError(`Network error ${err}`)
   }
 
