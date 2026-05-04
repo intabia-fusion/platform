@@ -17,6 +17,7 @@ import { type AccountClient } from '@hcengineering/account-client'
 import type { PaymentProvider } from './providers'
 import { PolarProvider } from './providers/polar/provider'
 import { StripeProvider } from './providers/stripe/provider'
+import { TbankProvider } from './providers/tbank/provider'
 
 /**
  * Static singleton factory for creating payment providers
@@ -50,6 +51,8 @@ export class PaymentProviderFactory {
         return this.createPolarProvider(config, accountClient, useSandbox)
       case 'stripe':
         return this.createStripeProvider(config, accountClient)
+      case 'tbank':
+        return this.createTbankProvider(config, accountClient)
       default:
         return undefined
     }
@@ -81,6 +84,14 @@ export class PaymentProviderFactory {
       accountClient,
       useSandbox
     )
+  }
+
+  private createTbankProvider (config: Record<string, any>, accountClient: AccountClient): PaymentProvider {
+    if (config.tbankSubscriptionsUrl === undefined) {
+      throw new Error('TBank provider requires tbankSubscriptionsUrl in config')
+    }
+
+    return new TbankProvider(config.tbankSubscriptionsUrl, accountClient)
   }
 
   private createStripeProvider (config: Record<string, any>, accountClient: AccountClient): PaymentProvider {

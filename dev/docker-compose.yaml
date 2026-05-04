@@ -239,23 +239,30 @@ services:
       #   - 9235:9235
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9235
     restart: unless-stopped
-  # payment:
-  #   image: intabiafusion/payment
-  #   extra_hosts:
-  #     - 'host.docker.internal:host-gateway'
-  #   ports:
-  #     - 3040:3040
-  #   environment:
-  #     - SECRET=secret
-  #     - PORT=3040
-  #     - ACCOUNTS_URL=http://account:3000
-  #     - FRONT_URL=http://localhost:8087
-  #     - USE_SANDBOX=true
-  #     - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
-  #     - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
-  #     - POLAR_SUBSCRIPTION_PLANS=${POLAR_SUBSCRIPTION_PLANS}
-  #     # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-  #   restart: unless-stopped
+  payment:
+    image: intabiafusion/payment
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      account:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - PORT=4040
+      - ACCOUNTS_URL=http://account:3000
+      - FRONT_URL=http://localhost:8087
+      - USE_SANDBOX=true
+      - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      # Polar configuration (uncomment if using Polar)
+      # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
+      # - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
+      # - POLAR_SUBSCRIPTION_PLANS=${POLAR_SUBSCRIPTION_PLANS}
+      # Stripe configuration (uncomment if using Stripe)
+      # - STRIPE_API_KEY=${STRIPE_API_KEY}
+      # - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      # - STRIPE_SUBSCRIPTION_PLANS=${STRIPE_SUBSCRIPTION_PLANS}
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
   workspace:
     image: intabiafusion/workspace
     links:
@@ -1067,6 +1074,23 @@ services:
   #     - AMO_CRM_TOKEN=
   #     - AMO_CRM_RESPONSIBLE_USER_ID=
   #   restart: unless-stopped
+  tbank-subscriptions:
+    image: intabiafusion/tbank-subscriptions
+    depends_on:
+      account:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - PORT=4042
+      - ACCOUNTS_URL=http://account:3000
+      - FRONT_URL=http://localhost:8087
+      - TBANK_TERMINAL_KEY=1774599770012DEMO
+      - TBANK_PASSWORD=Qnm5Wa3DTTRaIzGu
+      - TBANK_URL=https://securepay.tinkoff.ru
+      - TBANK_SUBSCRIPTION_PLANS=start@tier:29900;standard@tier:59900;business@tier:99900
+      - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
   notifications:
     image: intabiafusion/notifications
     depends_on:

@@ -2232,6 +2232,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/pod-tbank-subscriptions",
+      "projectFolder": "services/payment/pod-tbank-subscriptions",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/pod-love",
       "projectFolder": "services/love",
       "shouldPublish": false

@@ -34,6 +34,9 @@ export interface Config {
   StripeWebhookSecret?: string
   StripeSubscriptionPlans?: string
 
+  // TBank configuration
+  TbankSubscriptionsUrl?: string
+
   ReconciliationIntervalMinutes?: number
 }
 
@@ -53,6 +56,7 @@ const config: Config = (() => {
     StripeApiKey: process.env.STRIPE_API_KEY,
     StripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     StripeSubscriptionPlans: process.env.STRIPE_SUBSCRIPTION_PLANS,
+    TbankSubscriptionsUrl: process.env.TBANK_SUBSCRIPTIONS_URL,
     ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES)
   }
 

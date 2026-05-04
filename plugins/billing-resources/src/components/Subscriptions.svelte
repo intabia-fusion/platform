@@ -415,9 +415,9 @@
   <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
     <div class="hulyComponent-content gapV-8">
       <div class="flex-col flex-gap-4">
-        <!-- <div class="section-title">
+        <div class="section-title">
           <Label label={plugin.string.ActivePlan} />
-        </div> -->
+        </div>
         <div class="current-tier-card w-full flex-gap-4">
           {#if loading || isCheckoutPolling}
             <Loading />
@@ -426,8 +426,8 @@
             {/if}
           {:else if currentTier === undefined}
             <div class="no-plan-container flex-col flex-gap-4">
-              <!-- <div class="fs-title text-lg"><Label label={plugin.string.NoActivePlan} /></div>
-              <div class="text-md"><Label label={plugin.string.SelectPlanToBegin} /></div> -->
+              <div class="fs-title text-lg"><Label label={plugin.string.NoActivePlan} /></div>
+              <div class="text-md"><Label label={plugin.string.SelectPlanToBegin} /></div>
 
               {#if usageInfo !== null}
                 <div class="usage-section">
@@ -436,7 +436,7 @@
               {/if}
             </div>
           {:else}
-            <!-- <div class="current-tier-card-title">
+            <div class="current-tier-card-title">
               <div class="flex-row-center">
                 <div class="fs-title"><Label label={currentTier.label} /></div>
                 {#if currentSubscription?.status === 'active'}
@@ -453,7 +453,7 @@
                   </span>
                 </div>
               {/if}
-            </div> -->
+            </div>
 
             {#if usageInfo !== null}
               <div class="usage-section">
@@ -461,7 +461,7 @@
               </div>
             {/if}
 
-            <!-- <div class="curr-tier-footer">
+            <div class="curr-tier-footer">
               {#if currentSubscription?.periodEnd}
                 {@const date = formatEndDate(currentSubscription.periodEnd)}
                 {#if isCurrentCanceled}
@@ -490,12 +490,12 @@
                   }}
                 />
               {/if}
-            </div> -->
+            </div>
           {/if}
         </div>
       </div>
 
-      <!-- <div class="flex-col flex-gap-4">
+      <div class="flex-col flex-gap-4">
         <div class="section-title">
           <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
         </div>
@@ -565,7 +565,7 @@
             {/each}
           </div>
         </Scroller>
-      </div> -->
+      </div>
     </div>
   </Scroller>
 {/if}

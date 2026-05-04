@@ -58,67 +58,51 @@ export function createModel (builder: Builder): void {
     billing.class.Tier,
     core.space.Model,
     {
-      label: billing.string.Common,
-      description: billing.string.CommonDescription,
+      label: billing.string.Start,
+      description: billing.string.StartDescription,
       storageLimitGB: 10,
       trafficLimitGB: 10,
-      meetingMinutesLimit: 600,
-      tokenLimit: 20,
-      priceMonthly: 0,
-      index: 0
-    },
-    billing.tier.Common
-  )
-
-  builder.createDoc(
-    billing.class.Tier,
-    core.space.Model,
-    {
-      label: billing.string.Rare,
-      description: billing.string.RareDescription,
-      storageLimitGB: 100,
-      trafficLimitGB: 100,
-      meetingMinutesLimit: 3000,
-      tokenLimit: 200,
-      priceMonthly: 19.99,
-      index: 1,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0,
+      priceMonthly: 299,
+      index: 0,
       color: 'Sky'
     },
-    billing.tier.Rare
+    billing.tier.Start
   )
 
   builder.createDoc(
     billing.class.Tier,
     core.space.Model,
     {
-      label: billing.string.Epic,
-      description: billing.string.EpicDescription,
-      storageLimitGB: 1000,
-      trafficLimitGB: 500,
-      meetingMinutesLimit: 15000,
-      tokenLimit: 2000,
-      priceMonthly: 99.99,
-      index: 2,
+      label: billing.string.Standard,
+      description: billing.string.StandardDescription,
+      storageLimitGB: 100,
+      trafficLimitGB: 100,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0,
+      priceMonthly: 599,
+      index: 1,
       color: 'Orchid'
     },
-    billing.tier.Epic
+    billing.tier.Standard
   )
 
   builder.createDoc(
     billing.class.Tier,
     core.space.Model,
     {
-      label: billing.string.Legendary,
-      description: billing.string.LegendaryDescription,
-      storageLimitGB: 10000,
-      trafficLimitGB: 2000,
-      meetingMinutesLimit: 60000,
-      tokenLimit: 5000,
-      priceMonthly: 399.99,
-      index: 3,
+      label: billing.string.Business,
+      description: billing.string.BusinessDescription,
+      storageLimitGB: 500,
+      trafficLimitGB: 500,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0,
+      priceMonthly: 999,
+      index: 2,
       color: 'Orange'
     },
-    billing.tier.Legendary
+    billing.tier.Business
   )
 
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
