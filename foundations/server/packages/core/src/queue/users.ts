@@ -41,7 +41,6 @@ export interface QueueUserLogout {
   socialIds: PersonId[]
 }
 
-
 export interface QueueUserNotifyStatusChanged {
   type: QueueUserEvent.notifyStatusChanged
   user: AccountUuid

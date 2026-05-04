@@ -400,6 +400,9 @@ export interface AccountDB {
     workspaceId: WorkspaceUuid,
     hasUnread: boolean
   ) => Promise<void>
+  batchWorkspaceBadgeStatuses: (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ) => Promise<void>
 }
 
 export interface DbCollection<T> {

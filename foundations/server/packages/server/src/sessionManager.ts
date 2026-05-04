@@ -556,7 +556,6 @@ export class TSessionManager implements SessionManager {
     return Array.from(workspace.sessions.values()).find((it) => it.session.getUser() === accountUuid)?.session
   }
 
-
   checkHealth (): SessionHealth {
     const now = Date.now()
 

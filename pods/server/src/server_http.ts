@@ -197,8 +197,6 @@ export function startHttpServer (
     }
   })
 
-
-
   app.get('/api/v1/profiling', (req, res) => {
     try {
       const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]

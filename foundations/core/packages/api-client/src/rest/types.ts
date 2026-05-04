@@ -44,8 +44,7 @@ import {
   type PersonUuid,
   type Ref,
   type SocialIdType,
-  type WithLookup,
-  type AccountUuid
+  type WithLookup
 } from '@hcengineering/core'
 import type { MarkupFormat, MarkupRef } from '../markup'
 
@@ -261,5 +260,4 @@ export interface RestClient extends ClientOperations {
     markup: MarkupRef,
     format: MarkupFormat
   ) => Promise<string>
-
 }

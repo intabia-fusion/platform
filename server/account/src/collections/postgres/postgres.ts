@@ -1398,4 +1398,26 @@ export class PostgresAccountDB implements AccountDB {
     `
     await this.accountWorkspaceBadgeStatus.unsafe(sql, [accountId, workspaceId, hasUnread, updatedOn])
   }
+
+  async batchWorkspaceBadgeStatuses (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ): Promise<void> {
+    if (data.length === 0) return
+    const updatedOn = Date.now()
+
+    const values: any[] = []
+    const rows = data
+      .map((d: any, i: number) => {
+        values.push(d.accountId, d.workspaceId, d.hasUnread, updatedOn)
+        return `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`
+      })
+      .join(', ')
+
+    const sql = `
+      INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
+      VALUES ${rows}
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
+    `
+    await this.accountWorkspaceBadgeStatus.unsafe(sql, values)
+  }
 }

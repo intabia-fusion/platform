@@ -999,4 +999,10 @@ export class MongoAccountDB implements AccountDB {
   ): Promise<void> {
     throw new Error('Not implemented')
   }
+
+  async batchWorkspaceBadgeStatuses (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ): Promise<void> {
+    throw new Error('Not implemented')
+  }
 }

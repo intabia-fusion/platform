@@ -32,7 +32,12 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic, type QueueTransactorMessage, type QueueUserMessage } from '@hcengineering/server-core'
+import {
+  QueueTopic,
+  type QueueTransactorMessage,
+  type QueueUserMessage,
+  type QueueOnlineUserTx
+} from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch, handleTransactorLifecycle } from './presence'
@@ -161,7 +166,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       await migrateFromOldAccounts(oldAccsUrl, db, oldAccsNs)
       console.log('Migrations verified/done')
     }
-
   })
 
   const transactorLifecycleConsumer = platformQueue.createConsumer<QueueTransactorMessage>(
@@ -173,12 +177,17 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     }
   )
 
+  const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
+    measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
+    QueueTopic.OnlineUserTx
+  )
+
   const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
     measureCtx.newChild('users-consumer', {}, { span: false }),
     QueueTopic.Users,
     'presence-tracker',
     async (ctx, msgs) => {
-      await handlePresenceBatch(ctx, msgs, accountsDb)
+      await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
     },
     { batchSize: 500, batchTimeout: 1000 }
   )

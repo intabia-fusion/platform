@@ -20,6 +20,8 @@ import core, {
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import notification, { ReadState } from '@hcengineering/notification'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
+import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
+import contact from '@hcengineering/contact'
 
 export class NotificationMiddleware extends BaseMiddleware {
   private readonly activeStates = new Map<Ref<ReadState>, ReadState>()
@@ -58,6 +60,17 @@ export class NotificationMiddleware extends BaseMiddleware {
         const createTx = tx as TxCreateDoc<ReadState>
         const state = TxProcessor.createDoc2Doc(createTx)
         this.activeStates.set(state._id, state)
+      }
+
+      if (tx._class === core.class.TxCreateDoc && tx.objectClass === pulse.class.WorkspacesNotification) {
+        const createTx = tx as TxCreateDoc<WorkspacesNotification>
+        const accountId = createTx.attributes?.account
+        if (accountId != null) {
+          const space = (await this.findAll(ctx, contact.class.PersonSpace, { account: accountId }))[0]
+          if (space != null) {
+            createTx.objectSpace = space._id
+          }
+        }
       }
 
       if (tx._class === core.class.TxCreateDoc && tx.objectClass === chunter.class.ThreadMessage) {

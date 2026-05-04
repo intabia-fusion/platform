@@ -17,7 +17,7 @@ import { MeasureContext, newMetrics, Tx } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import serverCore, { initStatisticsContext, QueueTopic, QueueUserMessage } from '@hcengineering/server-core'
+import serverCore, { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { Analytics } from '@hcengineering/analytics'
@@ -37,6 +37,7 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
+import { withRetry } from '@hcengineering/retry'
 
 import { Worker } from './worker'
 import config from './config'
@@ -80,40 +81,16 @@ async function main (): Promise<void> {
     }
   })
 
-  const userConsumer = queue.createConsumer<QueueUserMessage>(
-    ctx,
-    QueueTopic.Users,
-    queue.getClientId(),
-    async (ctx, queueMessage) => {
-      try {
-        const ws = queueMessage.workspace
-        const message = queueMessage.value
-
-        await worker.user(ctx, ws, message)
-      } catch (e) {
-        ctx.error('Failed to process user message', { e })
-        throw e
-      }
-    }
-  )
-
-  const sync = async (): Promise<void> => {
-    const success = await worker.syncSessions()
-
-    if (success) return
-    setTimeout(() => {
-      void sync()
-    }, 10 * 1000)
-  }
+  const sync = (): Promise<boolean> => withRetry(() => worker.initNotifyStatus())
 
   // Initial delay of 5 seconds to give other services a head start.
   setTimeout(() => {
-    void sync()
+    void sync
   }, 5 * 1000)
 
   const shutdown = (): void => {
     void worker.close()
-    void Promise.all([txConsumer.close(), userConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
+    void Promise.all([txConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 
   process.once('SIGINT', shutdown)

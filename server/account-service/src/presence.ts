@@ -13,8 +13,15 @@
 // limitations under the License.
 //
 
-import { type AccountDB, type AccountWorkspacePresence } from '@hcengineering/account'
-import { type MeasureContext } from '@hcengineering/core'
+import { type AccountDB, type AccountWorkspaceBadgeStatus, type AccountWorkspacePresence } from '@hcengineering/account'
+import core, {
+  type AccountUuid,
+  type MeasureContext,
+  type Ref,
+  generateId,
+  type TxCreateDoc,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import {
   QueueUserEvent,
   type QueueUserLogin,
@@ -22,8 +29,12 @@ import {
   type QueueUserMessage,
   QueueTransactorEvent,
   type QueueTransactorMessage,
-  type ConsumerMessage
+  type ConsumerMessage,
+  type QueueOnlineUserTx,
+  type PlatformQueueProducer
 } from '@hcengineering/server-core'
+import pulse, { type WorkspacesNotification } from '@hcengineering/pulse'
+import { type PersonSpace } from '@hcengineering/contact'
 
 export async function handleTransactorLifecycle (
   ctx: MeasureContext,
@@ -41,7 +52,8 @@ export async function handleTransactorLifecycle (
 export async function handlePresenceBatch (
   ctx: MeasureContext,
   msgs: ConsumerMessage<QueueUserMessage>[],
-  _db: Promise<[AccountDB, () => void]>
+  _db: Promise<[AccountDB, () => void]>,
+  onlineUserTxProducer?: PlatformQueueProducer<QueueOnlineUserTx>
 ): Promise<void> {
   const presences: AccountWorkspacePresence[] = msgs
     .filter((msg) => [QueueUserEvent.login, QueueUserEvent.logout].includes(msg.value.type))
@@ -62,10 +74,80 @@ export async function handlePresenceBatch (
   }
 
   const [db] = await _db
+  const usersWithBadgeUpdates = new Set<AccountUuid>()
+  const badgeUpdatesMap = new Map<string, { accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>()
+
   for (const msg of msgs) {
     if (msg.value.type === QueueUserEvent.notifyStatusChanged) {
       const { user, hasUnread } = msg.value
-      await db.setAccountWorkspaceBadgeStatus(user, msg.workspace, hasUnread)
+      badgeUpdatesMap.set(`${user}:${msg.workspace}`, {
+        accountId: user,
+        workspaceId: msg.workspace,
+        hasUnread
+      })
+      usersWithBadgeUpdates.add(user)
+    } else if (msg.value.type === QueueUserEvent.login) {
+      usersWithBadgeUpdates.add(msg.value.user)
+    }
+  }
+
+  if (badgeUpdatesMap.size > 0) {
+    await db.batchWorkspaceBadgeStatuses(Array.from(badgeUpdatesMap.values()))
+  }
+
+  if (usersWithBadgeUpdates.size > 0) {
+    const userIds = Array.from(usersWithBadgeUpdates)
+
+    // Batch fetch all statuses and presences for these users
+    const [allStatuses, allPresences] = await Promise.all([
+      db.accountWorkspaceBadgeStatus.find({ accountUuid: { $in: userIds } }),
+      db.userWorkspacePresence.find({ accountUuid: { $in: userIds }, online: true })
+    ])
+
+    // Group by user
+    const statusesByUser = new Map<AccountUuid, AccountWorkspaceBadgeStatus[]>()
+    for (const status of allStatuses) {
+      const arr = statusesByUser.get(status.accountUuid) ?? []
+      arr.push(status)
+      statusesByUser.set(status.accountUuid, arr)
+    }
+
+    const onlineWorkspacesByUser = new Map<AccountUuid, Set<WorkspaceUuid>>()
+    for (const p of allPresences) {
+      const set = onlineWorkspacesByUser.get(p.accountUuid) ?? new Set<WorkspaceUuid>()
+      set.add(p.workspaceUuid)
+      onlineWorkspacesByUser.set(p.accountUuid, set)
+    }
+
+    for (const user of userIds) {
+      const dbStatuses = statusesByUser.get(user) ?? []
+      const unreadStatusByWorkspace: Record<WorkspaceUuid, boolean> = {}
+      for (const s of dbStatuses) unreadStatusByWorkspace[s.workspaceUuid] = s.hasUnread
+
+      const onlineWorkspaces = onlineWorkspacesByUser.get(user) ?? new Set<WorkspaceUuid>()
+
+      if (onlineWorkspaces.size > 0 && onlineUserTxProducer !== undefined) {
+        // Send OnlineUserTx to each online workspace
+        const tx: TxCreateDoc<WorkspacesNotification> = {
+          _id: generateId(),
+          _class: core.class.TxCreateDoc,
+          objectId: generateId(),
+          objectClass: pulse.class.WorkspacesNotification,
+          objectSpace: core.space.Workspace as Ref<PersonSpace>, // Replace it with real person space in middleware
+          space: core.space.DerivedTx,
+          modifiedBy: core.account.System,
+          modifiedOn: Date.now(),
+          createdBy: core.account.System,
+          attributes: {
+            account: user,
+            ...unreadStatusByWorkspace
+          }
+        }
+
+        for (const wsUuid of onlineWorkspaces) {
+          await onlineUserTxProducer.send(ctx, wsUuid, [{ workspaceUuid: wsUuid, tx, account: user }])
+        }
+      }
     }
   }
 }

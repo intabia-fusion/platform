@@ -786,8 +786,6 @@ export interface SessionManager {
   getStatistics: () => WorkspaceStatistics[]
 
   checkHealth: () => SessionHealth
-
-
 }
 
 export const pingConst = 'ping'

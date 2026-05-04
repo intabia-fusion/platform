@@ -658,6 +658,4 @@ export class RestClientImpl implements RestClient {
   ): Promise<string> {
     return await this.getMarkupOps().fetchMarkup(objectClass, objectId, objectAttr, markup, format)
   }
-
-
 }

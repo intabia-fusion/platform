@@ -38,7 +38,7 @@ import {
   NotificationType,
   type NotificationTypeSetting
 } from '@hcengineering/notification'
-import { Employee, PersonSpace, SocialIdentity } from '@hcengineering/contact'
+import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 
@@ -110,12 +110,6 @@ export interface UserState {
    * This structure is used to form the attributes of the WorkspacesNotification event.
    */
   unreadStatusByWorkspace: Record<WorkspaceUuid, boolean>
-
-  /**
-   * A cache of the reference to the user's space (PersonSpace) for each workspace.
-   * This information is necessary for the correct addressing and saving of the WorkspacesNotification transaction.
-   */
-  spaceIdByWorkspace: Map<WorkspaceUuid, Ref<PersonSpace>>
 
   /**
    * The time of the last logout (sessions === 0) for the workspace.
