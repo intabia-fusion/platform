@@ -14,6 +14,9 @@
 //
 
 // Mock electron app before importing config
+import { readPackedConfig, PackedConfig } from '../../main/config'
+import * as fs from 'fs'
+
 jest.mock('electron', () => ({
   app: {
     getPath: jest.fn((name: string) => {
@@ -33,11 +36,6 @@ jest.mock('fs', () => ({
   mkdirSync: jest.fn()
 }))
 
-import { readPackedConfig, PackedConfig } from '../../main/config'
-import * as fs from 'fs'
-import { app } from 'electron'
-
-const mockApp = app as jest.Mocked<typeof app>
 const mockFs = fs as jest.Mocked<typeof fs>
 
 describe('config', () => {
