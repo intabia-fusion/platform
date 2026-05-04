@@ -67,7 +67,9 @@ async function fetchAnalytics (sort: 'time' | 'count' | 'avg', limit: number): P
 
 function formatTable (title: string, data: AnalyticsResponse): void {
   console.log(`\n=== ${title} ===`)
-  console.log(`services=${data.services} entries=${data.entries.length} generatedAt=${new Date(data.generatedAt).toISOString()}`)
+  console.log(
+    `services=${data.services} entries=${data.entries.length} generatedAt=${new Date(data.generatedAt).toISOString()}`
+  )
   console.log(['#', 'service', 'path', 'ops', 'total(ms)', 'avg(ms)'].join('\t'))
   data.entries.forEach((e, i) => {
     console.log([i + 1, e.service, e.path, e.operations, e.total, e.avg].join('\t'))

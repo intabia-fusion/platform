@@ -437,7 +437,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       ctx.body = json
       return
     }
-    const compressed = (await snappyCompress(buf))
+    const compressed = await snappyCompress(buf)
     // Custom header avoids browser auto-decoding ambiguity with
     // Content-Encoding values it does not recognise.
     ctx.set('X-Encoding', 'snappy')

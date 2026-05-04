@@ -22,7 +22,7 @@ const ACCEPT_HEADER: HeadersInit = { 'X-Accept-Encoding': 'snappy' }
 // GET a JSON resource from the stats service. If the server replies with
 // X-Encoding: snappy, transparently decompress before parsing.
 // Pass `signal` to cancel an in-flight fetch when starting a new one.
-export async function fetchStatsJson<T> (url: string, signal?: AbortSignal): Promise<T> {
+export async function fetchStatsJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, { headers: ACCEPT_HEADER, signal })
   if (!res.ok) {
     const body = await res.text().catch(() => '')

@@ -39,7 +39,7 @@
 
   let sort: 'time' | 'count' | 'avg' = 'time'
   let source: 'all' | 'client' | 'server' = 'all'
-  let limit: number = 100
+  let limit: string = '100'
   let entries: AnalyticsEntry[] = []
   let services = 0
   let generatedAt = 0
@@ -56,9 +56,9 @@
     { id: 'client', label: 'Client' }
   ]
   const limitItems = [
-    { id: 50, label: '50' },
-    { id: 100, label: '100' },
-    { id: 500, label: '500' }
+    { id: '50', label: '50' },
+    { id: '100', label: '100' },
+    { id: '500', label: '500' }
   ]
 
   let inflight: AbortController | undefined
