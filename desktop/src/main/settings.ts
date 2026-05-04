@@ -39,19 +39,19 @@ export class Settings {
   }
 
   isMinimizeToTrayEnabled (): boolean {
-    return (this.store as any).get(Settings.SETTINGS_KEY_MINIMIZE_TO_TRAY) as boolean ?? false
+    return ((this.store as any).get(Settings.SETTINGS_KEY_MINIMIZE_TO_TRAY) as boolean) ?? false
   }
 
   isAutoLaunchEnabled (): boolean {
-    return (this.store as any).get(Settings.SETTINGS_KEY_AUTO_LAUNCH) as boolean ?? false
+    return ((this.store as any).get(Settings.SETTINGS_KEY_AUTO_LAUNCH) as boolean) ?? false
   }
 
   setMinimizeToTrayEnabled (enabled: boolean): void {
-    (this.store as any).set(Settings.SETTINGS_KEY_MINIMIZE_TO_TRAY, enabled)
+    ;(this.store as any).set(Settings.SETTINGS_KEY_MINIMIZE_TO_TRAY, enabled)
   }
 
   setAutoLaunchEnabled (enabled: boolean): void {
-    (this.store as any).set(Settings.SETTINGS_KEY_AUTO_LAUNCH, enabled)
+    ;(this.store as any).set(Settings.SETTINGS_KEY_AUTO_LAUNCH, enabled)
   }
 
   setServerUrl (serverUrl: string): void {
@@ -64,7 +64,7 @@ export class Settings {
   }
 
   setWindowBounds (bounds: any): void {
-    (this.store as any).set(Settings.SETTINGS_KEY_WINDOW_BOUNDS, bounds)
+    ;(this.store as any).set(Settings.SETTINGS_KEY_WINDOW_BOUNDS, bounds)
   }
 
   private extractUrl (): string {
@@ -72,7 +72,7 @@ export class Settings {
       return process.env.FRONT_URL ?? 'http://huly.local:8087'
     }
     return (
-      (this.store as any).get(Settings.SETTINGS_KEY_SERVER) as string ??
+      ((this.store as any).get(Settings.SETTINGS_KEY_SERVER) as string) ??
       this.packedConfig?.server ??
       process.env.FRONT_URL ??
       'https://platform.intabia.ru'

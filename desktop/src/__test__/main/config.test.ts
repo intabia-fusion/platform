@@ -14,6 +14,8 @@
 //
 
 // Mock electron app before importing config
+import { readPackedConfig, PackedConfig } from '../../main/config'
+
 const mockApp = {
   getPath: jest.fn((name: string) => {
     if (name === 'userData') {
@@ -37,8 +39,6 @@ const mockFs = {
 }
 
 jest.mock('fs', () => mockFs)
-
-import { readPackedConfig, PackedConfig } from '../../main/config'
 
 describe('config', () => {
   let originalResourcesPath: string | undefined

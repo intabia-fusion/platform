@@ -77,8 +77,7 @@ export async function setupTitleBarMenu (ipcMain: IPCMainExposed, root: HTMLElem
 export class MenuBar {
   private static readonly lastUsedThemeKey = 'last-used-theme'
 
-  constructor (private readonly theme: ThemeManager) {
-  }
+  constructor (private readonly theme: ThemeManager) {}
 
   public setTheme (theme: ThemeVariantType): void {
     localStorage.setItem(MenuBar.lastUsedThemeKey, theme)
@@ -94,7 +93,8 @@ export function buildHulyApplicationMenu (minimizeToTrayEnabled: boolean, autoLa
   const menuBuilder = new MenuBuilder()
 
   const MenuFileIndex = 0
-  menuBuilder.addTopLevelMenu('File', 'f')
+  menuBuilder
+    .addTopLevelMenu('File', 'f')
     .addMenuItem(MenuFileIndex, 'Settings', 'settings', undefined, 's')
     .addMenuItem(MenuFileIndex, 'Select Workspace', 'select-workspace', undefined, 'w')
     .addMenuItem(MenuFileIndex, 'Logout', 'logout', undefined, 'l')
@@ -102,7 +102,8 @@ export function buildHulyApplicationMenu (minimizeToTrayEnabled: boolean, autoLa
     .addMenuItem(MenuFileIndex, 'Exit', 'exit', 'Alt+F4', 'x')
 
   const MenuEditIndex = 1
-  menuBuilder.addTopLevelMenu('Edit', 'e')
+  menuBuilder
+    .addTopLevelMenu('Edit', 'e')
     .addMenuItem(MenuEditIndex, 'Undo', 'undo', 'Ctrl+Z', 'u')
     .addMenuItem(MenuEditIndex, 'Redo', 'redo', 'Ctrl+Y', 'r')
     .addSeparator(MenuEditIndex)
@@ -114,13 +115,14 @@ export function buildHulyApplicationMenu (minimizeToTrayEnabled: boolean, autoLa
     .addMenuItem(MenuEditIndex, 'Select All', 'select-all', 'Ctrl+A', 'a')
 
   const MenuViewIndex = 2
-  menuBuilder.addTopLevelMenu('View', 'v')
+  menuBuilder
+    .addTopLevelMenu('View', 'v')
     .addMenuItem(MenuViewIndex, 'Reload', 'reload', 'Ctrl+R', 'r')
     .addMenuItem(MenuViewIndex, 'Force Reload', 'force-reload', 'Ctrl+Shift+R', 'o')
     .addMenuItem(MenuViewIndex, 'Toggle Developer Tools', 'toggle-devtools', 'Ctrl+Shift+I', 'd')
     .addSeparator(MenuViewIndex)
-    .addMenuItem(MenuViewIndex, 'Zoom In', 'zoom-in', 'Ctrl+\'+\'', 'i')
-    .addMenuItem(MenuViewIndex, 'Zoom Out', 'zoom-out', 'Ctrl+\'-\'', 'u')
+    .addMenuItem(MenuViewIndex, 'Zoom In', 'zoom-in', "Ctrl+'+'", 'i')
+    .addMenuItem(MenuViewIndex, 'Zoom Out', 'zoom-out', "Ctrl+'-'", 'u')
     .addMenuItem(MenuViewIndex, 'Actual Size', 'restore-size', 'Ctrl+0', 'a')
     .addSeparator(MenuViewIndex)
     .addMenuItem(MenuViewIndex, 'Toggle Fullscreen', 'toggle-fullscreen', 'F11', 'l')
@@ -129,7 +131,8 @@ export function buildHulyApplicationMenu (minimizeToTrayEnabled: boolean, autoLa
 
   const ToggleMinimizeToTrayLabel = minimizeToTrayEnabled ? LabelMinimizeToTrayEnabled : LabelMinimizeToTrayDisabled
   const ToggleAutoLaunchLabel = autoLaunchEnabled ? LabelAutoLaunchEnabled : LabelAutoLaunchDisabled
-  menuBuilder.addTopLevelMenu('System', 's')
+  menuBuilder
+    .addTopLevelMenu('System', 's')
     .addMenuItem(MenuWindowIndex, ToggleMinimizeToTrayLabel, 'toggle-minimize-to-tray', undefined, 'm')
     .addMenuItem(MenuWindowIndex, ToggleAutoLaunchLabel, 'toggle-auto-launch', undefined, 'a')
 
@@ -188,7 +191,7 @@ export class MenuBuilder {
         label,
         action,
         shortcut,
-        acceleratorChar: (acceleratorChar || label.charAt(0)).toLowerCase()
+        acceleratorChar: (acceleratorChar ?? label.charAt(0)).toLowerCase()
       }
       this.menus[topLevelMenuIndex].subMenus.push(item)
     }
@@ -239,7 +242,7 @@ export class MenuBuilder {
       dropdown.className = 'desktop-app-dropdown-menu'
       dropdown.id = `${topLevelMenu.label.toLowerCase()}-menu`
 
-      topLevelMenu.subMenus.forEach(item => {
+      topLevelMenu.subMenus.forEach((item) => {
         if (item.type === 'separator') {
           const separator = document.createElement('div')
           separator.className = 'desktop-app-dropdown-separator'
@@ -255,26 +258,24 @@ export class MenuBuilder {
           const itemAcceleratorSpan = document.createElement('span')
           itemAcceleratorSpan.className = 'desktop-app-accelerator'
 
-          if (item.acceleratorChar) {
+          if (item.acceleratorChar != null && item.acceleratorChar !== '') {
             const labelParts = this.splitLabelByAccelerator(item.label, item.acceleratorChar)
 
-            const actualChar = item.label.charAt(
-              item.label.toLowerCase().indexOf(item.acceleratorChar.toLowerCase())
-            )
+            const actualChar = item.label.charAt(item.label.toLowerCase().indexOf(item.acceleratorChar.toLowerCase()))
             itemAcceleratorSpan.textContent = actualChar
 
-            if (labelParts.before) {
+            if (labelParts.before !== '') {
               labelSpan.appendChild(document.createTextNode(labelParts.before))
             }
             labelSpan.appendChild(itemAcceleratorSpan)
-            if (labelParts.after) {
+            if (labelParts.after !== '') {
               labelSpan.appendChild(document.createTextNode(labelParts.after))
             }
           }
 
           menuItemButton.appendChild(labelSpan)
 
-          if (item.shortcut) {
+          if (item.shortcut != null && item.shortcut !== '') {
             const shortcutSpan = document.createElement('span')
             shortcutSpan.className = 'desktop-app-shortcut'
             shortcutSpan.textContent = item.shortcut
@@ -347,7 +348,7 @@ class MenuBarManager {
 
   private onButtonClick (id: string, callback: () => void): void {
     const button = this.root.querySelector(`#${id}`)
-    if (button) {
+    if (button != null) {
       button.addEventListener('click', callback)
     }
   }
@@ -373,17 +374,27 @@ class MenuBarManager {
       history.forward()
     })
 
-    document.addEventListener('keydown', (e) => { this.handleKeyDown(ipcMain, e) })
-    document.addEventListener('keyup', (e) => { this.handleKeyUp(e) })
-
-    this.topLevelMenus().forEach((button, index) => {
-      button.addEventListener('click', (e) => { this.handleTopLevelMenuButtonClick(e, index) })
+    document.addEventListener('keydown', (e) => {
+      this.handleKeyDown(ipcMain, e)
+    })
+    document.addEventListener('keyup', (e) => {
+      this.handleKeyUp(e)
     })
 
-    document.addEventListener('click', (e) => { this.handleDocumentClick(e) })
+    this.topLevelMenus().forEach((button, index) => {
+      button.addEventListener('click', (e) => {
+        this.handleTopLevelMenuButtonClick(e, index)
+      })
+    })
 
-    document.querySelectorAll<HTMLButtonElement>(this.DropdownItemStyle + '[data-action]').forEach(item => {
-      item.addEventListener('click', () => { this.handleMenuButtonClick(ipcMain, item) })
+    document.addEventListener('click', (e) => {
+      this.handleDocumentClick(e)
+    })
+
+    document.querySelectorAll<HTMLButtonElement>(this.DropdownItemStyle + '[data-action]').forEach((item) => {
+      item.addEventListener('click', () => {
+        this.handleMenuButtonClick(ipcMain, item)
+      })
     })
 
     ipcMain.onWindowFocusLoss(() => {
@@ -401,7 +412,7 @@ class MenuBarManager {
       this.root.classList.remove(this.StateStyleAltModeActive)
     }
 
-    this.root.querySelectorAll<HTMLElement>(this.DropdownMenuStyle).forEach(menu => {
+    this.root.querySelectorAll<HTMLElement>(this.DropdownMenuStyle).forEach((menu) => {
       menu.style.display = 'none'
     })
 
@@ -414,10 +425,10 @@ class MenuBarManager {
         button.classList.add(this.StateStyleAltMode)
         button.focus()
 
-        if (this.state.isTopLevelMenuExpanded && button.dataset.menu) {
+        if (this.state.isTopLevelMenuExpanded && button.dataset.menu != null && button.dataset.menu !== '') {
           const menuType = button.dataset.menu
           const dropdown: HTMLElement | null = this.root.querySelector(`#${menuType}-menu`)
-          if (dropdown) {
+          if (dropdown != null) {
             dropdown.style.display = 'block'
           }
         }
@@ -443,7 +454,7 @@ class MenuBarManager {
     const menuButton = topLevelMenus[index]
     const menuType = menuButton.dataset.menu
     const dropdown = this.root.querySelector(`#${menuType}-menu`)
-    if (dropdown) {
+    if (dropdown != null) {
       return dropdown.querySelectorAll<HTMLElement>(this.DropdownItemStyle)
     }
     return document.createDocumentFragment().querySelectorAll<HTMLElement>('*')
@@ -519,7 +530,11 @@ class MenuBarManager {
               const focused = children[this.state.FocusedChildMenuIndex]
               this.state.closeAll()
               this.renderState()
-              if (focused.dataset.action && isMenuBarAction(focused.dataset.action)) {
+              if (
+                focused.dataset.action != null &&
+                focused.dataset.action !== '' &&
+                isMenuBarAction(focused.dataset.action)
+              ) {
                 this.executeMenuAction(ipcMain, focused.dataset.action)
               }
               this.renderState()
@@ -539,7 +554,7 @@ class MenuBarManager {
           for (let i = 0; i < children.length; i++) {
             if (children[i].dataset.accelerator === key) {
               const action = children[i].dataset.action
-              if (action) {
+              if (action != null && action !== '') {
                 if (isMenuBarAction(action)) {
                   this.executeMenuAction(ipcMain, action)
                 }
@@ -583,7 +598,7 @@ class MenuBarManager {
 
   private handleMenuButtonClick (ipcMain: IPCMainExposed, item: HTMLButtonElement): void {
     const action = item.dataset.action
-    if (action) {
+    if (action != null && action !== '') {
       if (isMenuBarAction(action)) {
         this.executeMenuAction(ipcMain, action)
       }
@@ -599,7 +614,7 @@ class MenuBarManager {
 
   private handleDocumentClick (e: Event): void {
     const target = e.target as HTMLElement
-    if (!target.closest(this.MenuItemStyle)) {
+    if (target.closest(this.MenuItemStyle) == null) {
       this.state.closeAll()
       this.renderState()
     }

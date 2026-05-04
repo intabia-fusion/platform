@@ -28,7 +28,8 @@ export class TrayController {
   constructor (
     private readonly settings: Settings,
     private readonly activateWindow: WindowAction,
-    private readonly quitApplication: WindowAction) {
+    private readonly quitApplication: WindowAction
+  ) {
     this.defaultIcon = nativeImage.createFromPath(getFileInPublicBundledFolder('AppIcon.ico'))
     this.defaultIcon.setTemplateImage(true)
 
@@ -73,8 +74,12 @@ export class TrayController {
 
   private instantiateTray (): void {
     this.tray = createTray(
-      () => { this.activateWindow() },
-      () => { this.quitApplication() },
+      () => {
+        this.activateWindow()
+      },
+      () => {
+        this.quitApplication()
+      },
       this.defaultIcon
     )
     this.evaluateIcon(this.badgeCount)

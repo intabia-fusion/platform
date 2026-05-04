@@ -17,7 +17,8 @@
     "start-dev": "cross-env MODEL_VERSION=$(node ../common/scripts/show_version.js) VERSION=$(node ../common/scripts/show_tag.js) NODE_ENV=development electron --no-sandbox .",
     "test": "jest --passWithNoTests --silent --forceExit --verbose --detectOpenHandles",
     "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --no-cache",
-    "format": "format",
+    "format": "format src",
+    "_phase:format": "format src",
     "bump": "bump-package-version"
   },
   "devDependencies": {

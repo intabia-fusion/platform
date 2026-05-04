@@ -20,8 +20,8 @@ import { Settings } from './settings'
 export class OsIntegration {
   constructor (
     private readonly settings: Settings,
-    private readonly tray: TrayController) {
-  }
+    private readonly tray: TrayController
+  ) {}
 
   getTray (): TrayController {
     return this.tray

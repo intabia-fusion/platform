@@ -17,13 +17,13 @@ import { isMenuBarAction } from '../../ui/typesUtils'
 import { MenuBarActions } from '../../ui/types'
 
 describe('isMenuBarAction', () => {
-    test('yes', () => {
-        for (const action of MenuBarActions) {
-            expect(isMenuBarAction(action)).toBe(true)
-        }
-    })
+  test('yes', () => {
+    for (const action of MenuBarActions) {
+      expect(isMenuBarAction(action)).toBe(true)
+    }
+  })
 
-    test('no', () => {
-        expect(isMenuBarAction('some random string')).toBe(false)
-    })
+  test('no', () => {
+    expect(isMenuBarAction('some random string')).toBe(false)
+  })
 })

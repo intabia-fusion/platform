@@ -22,10 +22,7 @@ export class TitleBarMenuState {
   private readonly topLevelMenuCount: () => number
   private readonly menuItemsCount: (topLevelMenuIndex: number) => number
 
-  public constructor (
-    topLevelMenuCount: () => number,
-    menuItemsCount: (topLevelMenuIndex: number) => number
-  ) {
+  public constructor (topLevelMenuCount: () => number, menuItemsCount: (topLevelMenuIndex: number) => number) {
     this.topLevelMenuCount = topLevelMenuCount
     this.menuItemsCount = menuItemsCount
   }

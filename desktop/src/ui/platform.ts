@@ -58,7 +58,13 @@ import { recruitId } from '@hcengineering/recruit'
 import rekoni from '@hcengineering/rekoni'
 import { requestId } from '@hcengineering/request'
 import setting, { settingId } from '@hcengineering/setting'
-import support, { supportId, supportLink, reportBugLink, privacyPolicyLink, defaultSupportEmail } from '@hcengineering/support'
+import support, {
+  supportId,
+  supportLink,
+  reportBugLink,
+  privacyPolicyLink,
+  defaultSupportEmail
+} from '@hcengineering/support'
 import { surveyId } from '@hcengineering/survey'
 import { tagsId } from '@hcengineering/tags'
 import { taskId } from '@hcengineering/task'
@@ -357,7 +363,10 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)
   setMetadata(presentation.metadata.HulylakeUrl, config.HULYLAKE_URL ?? '')
 
-  const disabledFeatures = (config.DISABLED_FEATURES ?? '').split(',').map(it => it.trim()).filter(it => it.length > 0)
+  const disabledFeatures = (config.DISABLED_FEATURES ?? '')
+    .split(',')
+    .map((it) => it.trim())
+    .filter((it) => it.length > 0)
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))
 
   setMetadata(textEditor.metadata.Collaborator, config.COLLABORATOR ?? '')
@@ -531,7 +540,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
 
   setMetadata(client.metadata.FilterModel, 'ui')
   setMetadata(client.metadata.ExtraFilter, disabledFeatures)
-  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin, pulseId as Plugin])
+  setMetadata(client.metadata.ExtraPlugins, ['preference' as Plugin, pulseId])
 
   // Use binary response transfer for faster performance and small transfer sizes.
   setMetadata(client.metadata.UseBinaryProtocol, true)
