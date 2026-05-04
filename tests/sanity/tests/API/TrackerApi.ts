@@ -22,7 +22,13 @@ import {
 import core, { generateId, type Ref, type TxOperations } from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
 import task, { type TaskType } from '@hcengineering/task'
-import tracker, { IssuePriority, type Issue, type IssueStatus, type Project } from '@hcengineering/tracker'
+import tracker, {
+  IssuePriority,
+  type Component as TrackerComponent,
+  type Issue,
+  type IssueStatus,
+  type Project
+} from '@hcengineering/tracker'
 import { PlatformURI, PlatformUser, PlatformWs } from '../utils'
 
 export type StatusName = 'Backlog' | 'Todo' | 'In Progress' | 'Done' | 'Cancelled'
@@ -42,6 +48,8 @@ export interface CreateIssueOptions {
   rank?: string
   estimation?: number
   dueDate?: number | null
+  space?: Ref<Project>
+  component?: Ref<TrackerComponent> | null
 }
 
 export async function connectTracker (
@@ -54,6 +62,10 @@ export async function connectTracker (
   const workspaceToken = await getWorkspaceToken(baseUrl, { email: user, password, workspace }, config)
   const client = await createRestTxOperations(workspaceToken.endpoint, workspaceToken.workspaceId, workspaceToken.token)
   return { client, workspaceToken }
+}
+
+export async function findProjectByName (client: TxOperations, name: string): Promise<Project | undefined> {
+  return await client.findOne(tracker.class.Project, { name })
 }
 
 export async function getProjectContext (
@@ -95,15 +107,21 @@ export async function createIssue (
     throw new Error(`Unknown status: ${String(opts.status)}`)
   }
 
+  const space = opts.space ?? ctx.project._id
+  const projectForId =
+    space === ctx.project._id ? ctx.project : await client.findOne(tracker.class.Project, { _id: space })
+  if (projectForId === undefined) {
+    throw new Error(`Project ${space} not found`)
+  }
   const incResult = await client.updateDoc(
     tracker.class.Project,
     core.space.Space,
-    ctx.project._id,
+    space,
     { $inc: { sequence: 1 } },
     true
   )
   const number = (incResult as any).object.sequence as number
-  const identifier = `${ctx.project.identifier}-${number}`
+  const identifier = `${projectForId.identifier}-${number}`
 
   let parents: Issue['parents'] = []
   if (opts.parent !== undefined) {
@@ -118,7 +136,7 @@ export async function createIssue (
 
   await client.addCollection(
     tracker.class.Issue,
-    ctx.project._id,
+    space,
     opts.parent ?? tracker.ids.NoParent,
     tracker.class.Issue,
     'subIssues',
@@ -126,7 +144,7 @@ export async function createIssue (
       title: opts.title,
       description: null,
       assignee: opts.assignee ?? null,
-      component: null,
+      component: opts.component ?? null,
       milestone: null,
       number,
       status,
@@ -148,6 +166,27 @@ export async function createIssue (
     _id
   )
 
+  return _id
+}
+
+export async function createComponent (
+  client: TxOperations,
+  space: Ref<Project>,
+  label: string
+): Promise<Ref<TrackerComponent>> {
+  const _id: Ref<TrackerComponent> = generateId()
+  await client.createDoc(
+    tracker.class.Component,
+    space,
+    {
+      label,
+      description: null as any,
+      lead: null,
+      comments: 0,
+      attachments: 0
+    },
+    _id
+  )
   return _id
 }
 

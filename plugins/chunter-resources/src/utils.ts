@@ -506,3 +506,14 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
 
   await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
 }
+
+export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?: number | number[]): Promise<void> {
+  const client = getClient()
+  const curEmoji = channel?.emoji == null || Array.isArray(channel.emoji) ? channel.emoji?.join('') : channel.emoji
+  const newEmoji = emoji == null || Array.isArray(emoji) ? emoji?.join('') : emoji
+  if (channel.icon === icon && curEmoji === newEmoji) {
+    await client.update(channel, { $unset: { icon: true, emoji: true } })
+  } else {
+    await client.update(channel, { icon, emoji })
+  }
+}

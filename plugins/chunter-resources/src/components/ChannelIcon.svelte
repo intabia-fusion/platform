@@ -13,17 +13,70 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconSize } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonSize,
+    eventToHTMLElement,
+    Icon,
+    type IconComponent,
+    IconSize,
+    showPopup
+  } from '@hcengineering/ui'
   import chunter, { Channel } from '@hcengineering/chunter'
-  import Lock from './icons/Lock.svelte'
+  import { IconWithEmoji } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
+  import { IconPicker } from '@hcengineering/view-resources'
+
+  import { toggleChannelIcon } from '../utils'
 
   export let value: Channel | undefined
   export let size: IconSize = 'small'
+  export let buttonSize: ButtonSize = 'small'
   export let fill: string | undefined = 'currentColor'
+  export let editable: boolean = false
+
+  $: _editable = editable && value != null
+
+  async function chooseIcon (ev: MouseEvent): Promise<void> {
+    if (value === undefined) return
+    const { icon, emoji } = value
+    const update = async (result: any): Promise<void> => {
+      if (result !== undefined && result !== null && value !== undefined) {
+        await toggleChannelIcon(value, result.icon, result.color)
+      }
+    }
+    showPopup(IconPicker, { icon, color: emoji }, eventToHTMLElement(ev), update, update)
+  }
+
+  function getIconInfo (doc: Channel | undefined): { icon: IconComponent, props: Record<string, any> } {
+    if (doc === undefined) return { icon: chunter.icon.Hashtag, props: {} }
+    if (doc.emoji != null) {
+      return { icon: IconWithEmoji, props: { icon: doc.emoji } }
+    }
+
+    if (doc.icon !== undefined) {
+      return { icon: doc.icon, props: {} }
+    }
+
+    if (doc.private) {
+      return { icon: chunter.icon.Lock, props: {} }
+    }
+    return { icon: chunter.icon.Hashtag, props: {} }
+  }
+
+  $: iconData = getIconInfo(value)
 </script>
 
-{#if value?.private}
-  <Lock {size} {fill} />
+{#if _editable}
+  <Button
+    size={buttonSize}
+    kind={'ghost'}
+    noFocus
+    icon={iconData.icon}
+    iconProps={{ ...iconData.props, size }}
+    showTooltip={{ label: view.string.Icon, direction: 'bottom' }}
+    on:click={chooseIcon}
+  />
 {:else}
-  <Icon icon={chunter.icon.Hashtag} {size} {fill} />
+  <Icon icon={iconData.icon} iconProps={iconData.props} {size} />
 {/if}

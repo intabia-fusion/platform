@@ -239,9 +239,8 @@ test.describe('Tracker tests', () => {
       await page.click('button[data-id="btnSelectTaskType"]')
       await page.click(`.menu-item:has-text("${taskTypeName}")`)
 
-      const kanbanContainer = page.locator('.panel-container')
-      await expect(kanbanContainer).toContainText(issueBug)
-      await expect(kanbanContainer).not.toContainText(issueDefault)
+      await expect(page.locator('.panel-container').filter({ hasText: issueBug })).toBeVisible()
+      await expect(page.locator('.panel-container').filter({ hasText: issueDefault })).toHaveCount(0)
 
       const issuesPage = new IssuesPage(page)
       await page.click(ViewletSelectors.Table)

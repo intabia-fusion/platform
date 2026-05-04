@@ -51,6 +51,7 @@ import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpac
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { TActivityMessage } from '@hcengineering/model-activity'
 import attachment from '@hcengineering/model-attachment'
+import type { Asset } from '@hcengineering/platform'
 
 import chunter from './plugin'
 
@@ -78,6 +79,12 @@ export class TChannel extends TChunterSpace implements Channel {
   @Prop(TypeString(), chunter.string.Topic)
   @Index(IndexKind.FullText)
     topic?: string
+
+  @Hidden()
+    icon?: Asset
+
+  @Hidden()
+    emoji?: number | number[]
 }
 
 @Model(chunter.class.DirectMessage, chunter.class.ChunterSpace)

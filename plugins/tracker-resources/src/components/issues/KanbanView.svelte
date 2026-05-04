@@ -39,6 +39,7 @@
   import { DocWithRank, getStates } from '@hcengineering/task'
   import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
   import {
+    Component as TrackerComponent,
     Issue,
     IssuePriority,
     IssuesGrouping,
@@ -83,6 +84,7 @@
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'
+  import { componentStore } from '../../component'
   import { activeProjects, IssuePriorityColor } from '../../utils'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
@@ -169,7 +171,94 @@
   // Category information only
   let tasks: DocWithRank[] = []
 
-  $: groupByDocs = groupBy(tasks, groupByKey, categories)
+  // Optimistic overlay: pending field updates per doc id, applied to tasks on every rebuild
+  // until live-query snapshots catch up to the target values.
+  let pendingMoves = new Map<string, Record<string, unknown>>()
+
+  function applyPendingMoves (docs: DocWithRank[]): DocWithRank[] {
+    if (pendingMoves.size === 0) return docs
+    let needsResort = false
+    const result = docs.map((d) => {
+      const overlay = pendingMoves.get(d._id)
+      if (overlay === undefined) return d
+      // Check if snapshot already matches all overlay fields — if so, drop the entry.
+      let matches = true
+      for (const k of Object.keys(overlay)) {
+        if ((d as any)[k] !== overlay[k]) {
+          matches = false
+          break
+        }
+      }
+      if (matches) {
+        // Silently drop matched overlay — do NOT trigger a follow-up reactive
+        // tick by reassigning pendingMoves. The snapshot already carries the
+        // target values, so the next render is identical with or without the
+        // entry. Reassigning here causes a visible re-render flash because
+        // groupByDocs rebuilds twice in quick succession (once with overlay,
+        // once without) before the DOM stabilizes.
+        pendingMoves.delete(d._id)
+        return d
+      }
+      if ('rank' in overlay) needsResort = true
+      return { ...d, ...overlay } satisfies DocWithRank
+    })
+    if (needsResort && orderBy !== undefined) {
+      const [field, dir] = orderBy
+      result.sort((a, b) => {
+        const av = (a as any)[field]
+        const bv = (b as any)[field]
+        if (av === bv) return 0
+        return (av < bv ? -1 : 1) * dir
+      })
+    }
+    return result
+  }
+
+  function registerPendingMove (id: string, fields: Record<string, unknown>): void {
+    pendingMoves.set(id, { ...(pendingMoves.get(id) ?? {}), ...fields })
+    pendingMoves = pendingMoves
+  }
+
+  $: effectiveTasks = pendingMoves.size > 0 ? applyPendingMoves(tasks) : tasks
+
+  // Memoize groupByDocs by a cheap content hash so that downstream Kanban
+  // re-renders only when the partitioning actually changes. Without this,
+  // every batched live-query snapshot — even one that doesn't affect this
+  // view's grouping — triggers a full Kanban prop change and KanbanRow
+  // re-mounts. We hash via a 32-bit FNV-style accumulator over keys+ids;
+  // collision probability is negligible relative to user-visible reorderings.
+  let groupByDocs: Record<string | number, DocWithRank[]> = {}
+  let lastGroupHash = 0
+  $: {
+    const next = groupBy(effectiveTasks, groupByKey, categories)
+    const keys = Object.keys(next).sort()
+    let hash = 2166136261 >>> 0
+    const mix = (s: string): void => {
+      for (let i = 0; i < s.length; i++) {
+        hash = Math.imul(hash ^ s.charCodeAt(i), 16777619) >>> 0
+      }
+    }
+    // Mix swimLaneBy so that toggling swim lane (which changes per-doc projection
+    // fields like `priority`) busts the memo and forces a fresh groupByDocs even
+    // if ids/lengths inside categories did not change.
+    mix(swimLaneBy)
+    // Mix the swim-lane value of the first doc of each category so a projection
+    // refresh that adds the swim field to existing docs invalidates the memo.
+    for (const k of keys) {
+      mix(k)
+      const arr = (next as any)[k] ?? []
+      hash = Math.imul(hash ^ arr.length, 16777619) >>> 0
+      for (const item of arr) mix(item._id)
+      if (swimLaneBy !== 'none' && swimLaneBy !== '' && arr.length > 0) {
+        const v = arr[0][swimLaneBy]
+        mix(String(v))
+      }
+    }
+    if (hash !== lastGroupHash) {
+      lastGroupHash = hash
+      groupByDocs = next
+    }
+  }
 
   let fastDocs: DocWithRank[] = []
   let slowDocs: DocWithRank[] = []
@@ -302,21 +391,31 @@
     })
   }
 
-  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean } {
+  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean, title?: string } {
     if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
     if (swimLaneBy === 'attachedTo' && v === tracker.ids.NoParent) {
       return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
+    }
+    // Components with the same label may exist in different projects — group
+    // them under one swimlane keyed by the (case-folded, trimmed) label so the
+    // user sees a single "Chat" lane instead of one per project.
+    if (swimLaneBy === 'component') {
+      const c = $componentStore.get(v as Ref<TrackerComponent>)
+      if (c !== undefined) {
+        const label = c.label
+        return { key: 'component:' + label.toLowerCase().trim(), value: v, empty: false, title: label }
+      }
     }
     return { key: String(v), value: v, empty: false }
   }
 
   function buildGenericLanes (field: string, tasks: DocWithRank[]): SwimLane[] {
     if (field === 'none' || field === '') return []
-    const seen = new Map<string, { value: unknown, empty: boolean }>()
+    const seen = new Map<string, { value: unknown, empty: boolean, title?: string }>()
     for (const t of tasks) {
       const raw = getObjectValue(field, t)
       const n = normalizeSwimValue(raw)
-      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty })
+      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty, title: n.title })
     }
     // Priority has a fixed ordered set; preseed to keep empty lanes too.
     if (field === 'priority') {
@@ -327,10 +426,10 @@
     }
     const lanes: SwimLane[] = []
     let unassigned: SwimLane | undefined
-    for (const [key, { value, empty }] of seen) {
+    for (const [key, { value, empty, title }] of seen) {
       const lane: SwimLane = {
         _id: key,
-        title: empty ? emptyLabel : '',
+        title: empty ? emptyLabel : (title ?? ''),
         value,
         icon: field === 'priority' && !empty ? issuePriorities[value as IssuePriority]?.icon : undefined
       }
@@ -350,7 +449,7 @@
     return lanes
   }
 
-  $: swimLanes = buildGenericLanes(swimLaneBy, tasks)
+  $: swimLanes = buildGenericLanes(swimLaneBy, effectiveTasks)
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
@@ -366,7 +465,23 @@
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
     if (IMMUTABLE_SWIM_FIELDS.has(swimLaneBy)) return undefined
-    const update: DocumentUpdate<Item> = { [swimLaneBy]: swimLane.value } as unknown as DocumentUpdate<Item>
+    let value: unknown = swimLane.value
+    // Components are aggregated by label across projects; pick the ref that
+    // belongs to the dropped issue's project, or skip the update entirely if
+    // this lane has no matching component for the issue's project.
+    if (swimLaneBy === 'component') {
+      const docSpace = (doc as any).space
+      const lane = $componentStore.filter(
+        (c) =>
+          c.label.toLowerCase().trim() ===
+            ($componentStore.get(swimLane.value as Ref<TrackerComponent>)?.label ?? '').toLowerCase().trim() &&
+          c.space === docSpace
+      )
+      const match = lane.length > 0 ? lane[0]._id : undefined
+      if (match === undefined) return undefined
+      value = match
+    }
+    const update: DocumentUpdate<Item> = { [swimLaneBy]: value } as unknown as DocumentUpdate<Item>
     if (swimLaneBy === 'attachedTo') {
       ;(update as any).attachedToClass = tracker.class.Issue
     }
@@ -488,6 +603,10 @@
     bind:this={kanbanUI}
     {categories}
     {dontUpdateRank}
+    {orderBy}
+    onMoveCommit={(id, fields) => {
+      registerPendingMove(id, fields)
+    }}
     {_class}
     query={resultQuery}
     options={resultOptions}

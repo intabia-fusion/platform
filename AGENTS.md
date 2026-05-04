@@ -144,3 +144,27 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 // ... (rest unchanged)
 //
 ```
+
+## Sanity tests (Playwright)
+
+Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project; do NOT use `rushx uitest` without permission (it opens dev UI).
+
+Required: load `.env` and pass `LOCAL_URL`. Iteration loop must be fast — disable retries and html report server.
+
+```bash
+cd tests/sanity
+LOCAL_URL=http://localhost:3003/ DEV_URL= \
+  npx playwright test -c ./tests/playwright.config.ts \
+  tests/tracker/kanban.spec.ts \
+  --reporter=list \
+  --retries=0 \
+  --workers=1
+```
+
+Flags:
+- `--reporter=list` — no html server pops up at the end (config defaults include `html`).
+- `--retries=0` — fail fast, see first error and fix instead of waiting 3x for the same failure (config default is 2).
+- `--workers=1` — serial; sanity tests share workspace state.
+- `-g "<name>"` or append `:LINE` to the spec path to run a single test.
+
+Do not run the bare `npx playwright test` — without `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load and every test fails on login with `BadRequest`.

@@ -72,7 +72,7 @@
   bind:filters
   {object}
   icon={getObjectIcon(_class)}
-  iconProps={{ value: object, showStatus: true }}
+  iconProps={{ value: object, showStatus: true, editable: true }}
   label={title}
   intlLabel={chunter.string.Channel}
   {description}
