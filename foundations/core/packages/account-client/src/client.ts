@@ -271,6 +271,9 @@ export interface AccountClient {
     online?: boolean
   }) => Promise<AccountWorkspacePresence[]>
   getAccountWorkspaceBadgeStatuses: (account: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
+  setWorkspaceBadgeStatuses: (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ) => Promise<void>
 }
 
 /** @public */
@@ -1372,6 +1375,16 @@ class AccountClientImpl implements AccountClient {
       params: { account }
     }
     return await this.rpc(request)
+  }
+
+  async setWorkspaceBadgeStatuses (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ): Promise<void> {
+    const request = {
+      method: 'setWorkspaceBadgeStatuses' as const,
+      params: { data }
+    }
+    await this.rpc(request)
   }
 }
 

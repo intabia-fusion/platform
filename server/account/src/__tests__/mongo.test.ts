@@ -681,6 +681,8 @@ describe('MongoAccountDB', () => {
   let mockWorkspaceMembers: any
   let mockWorkspaceStatus: any
   let mockMigration: any
+  let mockUserWorkspacePresence: any
+  let mockAccountWorkspaceBadgeStatus: any
 
   beforeEach(() => {
     mockDb = {}
@@ -741,6 +743,14 @@ describe('MongoAccountDB', () => {
       findOne: jest.fn()
     }
 
+    mockUserWorkspacePresence = {
+      ensureIndices: jest.fn()
+    }
+
+    mockAccountWorkspaceBadgeStatus = {
+      ensureIndices: jest.fn()
+    }
+
     accountDb = new MongoAccountDB(mockDb)
 
     // Override the getters to return our mocks
@@ -751,7 +761,9 @@ describe('MongoAccountDB', () => {
       workspaceMembers: { get: () => mockWorkspaceMembers },
       workspaceStatus: { get: () => mockWorkspaceStatus },
       migration: { get: () => mockMigration },
-      shortLink: { get: () => mockShortLink }
+      shortLink: { get: () => mockShortLink },
+      userWorkspacePresence: { get: () => mockUserWorkspacePresence },
+      accountWorkspaceBadgeStatus: { get: () => mockAccountWorkspaceBadgeStatus }
     })
   })
 

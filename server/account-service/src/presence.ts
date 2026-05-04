@@ -53,7 +53,7 @@ export async function handlePresenceBatch (
   ctx: MeasureContext,
   msgs: ConsumerMessage<QueueUserMessage>[],
   _db: Promise<[AccountDB, () => void]>,
-  onlineUserTxProducer?: PlatformQueueProducer<QueueOnlineUserTx>
+  onlineUserTxProducer: PlatformQueueProducer<QueueOnlineUserTx>
 ): Promise<void> {
   const presences: AccountWorkspacePresence[] = msgs
     .filter((msg) => [QueueUserEvent.login, QueueUserEvent.logout].includes(msg.value.type))
@@ -125,7 +125,6 @@ export async function handlePresenceBatch (
       for (const s of dbStatuses) unreadStatusByWorkspace[s.workspaceUuid] = s.hasUnread
 
       const onlineWorkspaces = onlineWorkspacesByUser.get(user) ?? new Set<WorkspaceUuid>()
-
       if (onlineWorkspaces.size > 0 && onlineUserTxProducer !== undefined) {
         // Send OnlineUserTx to each online workspace
         const tx: TxCreateDoc<WorkspacesNotification> = {

@@ -1330,9 +1330,22 @@ export class PostgresAccountDB implements AccountDB {
       .map((k) => `"${k}" = EXCLUDED."${k}"`)
       .join(', ')
 
+    const selectColumns = Object.keys(snakeData)
+      .map((k) => {
+        if (k === 'account_uuid' || k === 'workspace_uuid') return `v."${k}"::uuid`
+        if (k === 'online') return `v."${k}"::boolean`
+        if (k === 'updated_on') return `v."${k}"::bigint`
+        return `v."${k}"`
+      })
+      .join(', ')
+
     const sql = `
       INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
-      VALUES (${values})
+      SELECT ${selectColumns} FROM (VALUES (${values})) AS v(${columns})
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm
+        WHERE wm.account_uuid = v.account_uuid::uuid AND wm.workspace_uuid = v.workspace_uuid::uuid
+      )
       ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
       WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
     `
@@ -1358,9 +1371,22 @@ export class PostgresAccountDB implements AccountDB {
       })
       .join(', ')
 
+    const selectColumns = keys
+      .map((k) => {
+        if (k === 'account_uuid' || k === 'workspace_uuid') return `v."${k}"::uuid`
+        if (k === 'online') return `v."${k}"::boolean`
+        if (k === 'updated_on') return `v."${k}"::bigint`
+        return `v."${k}"`
+      })
+      .join(', ')
+
     const sql = `
       INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
-      VALUES ${rows}
+      SELECT ${selectColumns} FROM (VALUES ${rows}) AS v(${columns})
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm
+        WHERE wm.account_uuid = v.account_uuid::uuid AND wm.workspace_uuid = v.workspace_uuid::uuid
+      )
       ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
       WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
     `
@@ -1393,7 +1419,11 @@ export class PostgresAccountDB implements AccountDB {
     const updatedOn = Date.now()
     const sql = `
       INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
-      VALUES ($1, $2, $3, $4)
+      SELECT $1::uuid, $2::uuid, $3::boolean, $4::bigint
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm 
+        WHERE wm.account_uuid = $1::uuid AND wm.workspace_uuid = $2::uuid
+      )
       ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
     `
     await this.accountWorkspaceBadgeStatus.unsafe(sql, [accountId, workspaceId, hasUnread, updatedOn])
@@ -1409,13 +1439,18 @@ export class PostgresAccountDB implements AccountDB {
     const rows = data
       .map((d: any, i: number) => {
         values.push(d.accountId, d.workspaceId, d.hasUnread, updatedOn)
-        return `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`
+        return `($${i * 4 + 1}::uuid, $${i * 4 + 2}::uuid, $${i * 4 + 3}::boolean, $${i * 4 + 4}::bigint)`
       })
       .join(', ')
 
     const sql = `
       INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
-      VALUES ${rows}
+      SELECT v.account_uuid, v.workspace_uuid, v.has_unread, v.updated_on
+      FROM (VALUES ${rows}) AS v(account_uuid, workspace_uuid, has_unread, updated_on)
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm 
+        WHERE wm.account_uuid = v.account_uuid AND wm.workspace_uuid = v.workspace_uuid
+      )
       ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
     `
     await this.accountWorkspaceBadgeStatus.unsafe(sql, values)

@@ -1181,6 +1181,7 @@ export type AccountServiceMethods =
   | 'upsertSubscription'
   | 'getPresence'
   | 'getAccountWorkspaceBadgeStatuses'
+  | 'setWorkspaceBadgeStatuses'
 
 /**
  * @public
@@ -1217,7 +1218,8 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     upsertSubscription: wrap(upsertSubscription),
     getPresence: wrap(getPresence),
-    getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses)
+    getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
+    setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses)
   }
 }
 
@@ -1231,4 +1233,17 @@ export async function getAccountWorkspaceBadgeStatuses (
   const { extra } = decodeTokenVerbose(ctx, token)
   verifyAllowedServices(['workspace', 'tool', 'aibot', 'notifications'], extra)
   return await db.getAccountWorkspaceBadgeStatuses(params.account)
+}
+
+export async function setWorkspaceBadgeStatuses (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }> }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // this is called by model migrations inside pod-server, and also by tools
+  verifyAllowedServices(['workspace', 'tool', 'aibot', 'notifications', 'server'], extra)
+  await db.batchWorkspaceBadgeStatuses(params.data)
 }

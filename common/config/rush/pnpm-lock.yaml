@@ -8756,6 +8756,9 @@ importers:
       '@hcengineering/preference':
         specifier: workspace:^0.7.0
         version: link:../../plugins/preference
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../plugins/setting
