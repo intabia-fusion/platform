@@ -30,7 +30,6 @@ import core, {
   DocumentUpdate,
   SocialIdType
 } from '@hcengineering/core'
-import drive, { createFile } from '@hcengineering/drive'
 import love, {
   MeetingMinutes,
   MeetingStatus,
@@ -120,23 +119,26 @@ export class WorkspaceClient {
     meetingMinutes?: Ref<MeetingMinutes>
   ): Promise<void> {
     this.ctx.info('Save recording', { workspace: this.workspace, meetingMinutes })
-    const current = await this.client.findOne(drive.class.Drive, { _id: love.space.Drive })
-    if (current === undefined) {
-      await this.client.createDoc(
-        drive.class.Drive,
-        core.space.Space,
-        {
-          private: false,
-          archived: false,
-          members: [],
-          name: 'Records',
-          description: 'Office records',
-          type: drive.spaceType.DefaultDrive,
-          autoJoin: true
-        },
-        love.space.Drive
-      )
-    }
+    // NOTE: Drive file creation is disabled - shared Drive bypasses room privacy ACL.
+    // Recording is still attached to MeetingMinutes (whose Space ACL respects room privacy).
+    // TODO: revisit drive integration with per-room privacy support.
+    // const current = await this.client.findOne(drive.class.Drive, { _id: love.space.Drive })
+    // if (current === undefined) {
+    //   await this.client.createDoc(
+    //     drive.class.Drive,
+    //     core.space.Space,
+    //     {
+    //       private: false,
+    //       archived: false,
+    //       members: [],
+    //       name: 'Records',
+    //       description: 'Office records',
+    //       type: drive.spaceType.DefaultDrive,
+    //       autoJoin: true
+    //     },
+    //     love.space.Drive
+    //   )
+    // }
     const data = {
       file: uuid as Ref<Blob>,
       size: blob.size,
@@ -149,7 +151,7 @@ export class WorkspaceClient {
         originalWidth: preset.width
       }
     }
-    await createFile(this.client, love.space.Drive, drive.ids.Root, { ...data, title: name })
+    // await createFile(this.client, love.space.Drive, drive.ids.Root, { ...data, title: name })
     await this.attachToMeetingMinutes({ ...data, name }, meetingMinutes)
   }
 
