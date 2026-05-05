@@ -463,6 +463,34 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         throw new Error('Only owners can change space owners')
       }
 
+      // Prevent leaving a space without any owner: an empty owners list makes the space
+      // unmanaged and would later let any member modify privacy/members.
+      if (hasOwnersUpdate) {
+        let nextOwners = new Set(space.owners)
+        if (Array.isArray(ops.owners)) {
+          nextOwners = new Set(ops.owners)
+        }
+        const pushOwners = ops.$push?.owners
+        if (pushOwners !== undefined) {
+          if (typeof pushOwners === 'object' && Array.isArray((pushOwners as any).$each)) {
+            for (const o of (pushOwners as any).$each as AccountUuid[]) nextOwners.add(o)
+          } else {
+            nextOwners.add(pushOwners as AccountUuid)
+          }
+        }
+        const pullOwners = ops.$pull?.owners
+        if (pullOwners !== undefined) {
+          if (typeof pullOwners === 'object' && Array.isArray((pullOwners as any).$in)) {
+            for (const o of (pullOwners as any).$in as AccountUuid[]) nextOwners.delete(o)
+          } else {
+            nextOwners.delete(pullOwners as AccountUuid)
+          }
+        }
+        if (nextOwners.size === 0) {
+          throw new Error('Space must keep at least one owner')
+        }
+      }
+
       // In private spaces with owners, only owners can change members.
       // Otherwise non-owners (or non-members) could push themselves or others into a private space.
       if (space.private && !isOwner) {
