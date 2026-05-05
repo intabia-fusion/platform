@@ -1,0 +1,32 @@
+# LiveKit configuration for sanity tests in CI (Linux).
+# Runs in docker with host network, so it can reach the compose stack via 127.0.0.1
+# and the love container can reach it via host.
+
+port: 7890
+
+# Webhook target - nginx on host port 8083 routes /_love to the love container.
+webhook:
+  urls: ['http://127.0.0.1:8083/_love/webhook']
+  api_key: whtestkey
+
+# Redis is published from compose on 6390 (host).
+redis:
+  address: 127.0.0.1:6390
+  db: 0
+
+turn:
+  enabled: false
+
+rtc:
+  udp_port: 7892
+  tcp_port: 7891
+  use_external_ip: false
+  enable_loopback_candidate: true
+
+keys:
+  testkey: testsecret_for_sanity_tests_min32chars
+  whtestkey: whtestsecret_for_sanity_tests_min32chars
+
+logging:
+  json: false
+  level: debug
