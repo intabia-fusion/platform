@@ -1,13 +1,21 @@
 import { test as setup, Page } from '@playwright/test'
 import path from 'path'
 
-import { PlatformUser, PlatformUserSecond, PlatformWs, PlatformURI, setTestOptions } from '../utils'
+import {
+  PlatformUser,
+  PlatformUserSecond,
+  PlatformUserThird,
+  PlatformWs,
+  PlatformURI,
+  setTestOptions
+} from '../utils'
 import { LoginPage } from '../model/login-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { existsSync } from 'fs'
 
 const authFile = path.join(__dirname, '../../.auth/storage.json')
 const authFileSecond = path.join(__dirname, '../../.auth/storageSecond.json')
+const authFileThird = path.join(__dirname, '../../.auth/storageThird.json')
 
 async function authenticate (page: Page, user: string, password: string): Promise<void> {
   const loginPage = new LoginPage(page)
@@ -35,5 +43,14 @@ if (!existsSync(authFileSecond)) {
     await setTestOptions(page)
 
     await page.context().storageState({ path: authFileSecond })
+  })
+}
+
+if (!existsSync(authFileThird)) {
+  setup('auth user3', async ({ page }) => {
+    await authenticate(page, PlatformUserThird, '1234')
+    await setTestOptions(page)
+
+    await page.context().storageState({ path: authFileThird })
   })
 }

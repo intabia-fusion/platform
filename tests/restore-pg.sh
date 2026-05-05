@@ -9,9 +9,11 @@
 # Re-assign user to workspace.
 ./tool-pg.sh assign-workspace user1 sanity-ws
 ./tool-pg.sh assign-workspace user2 sanity-ws
+./tool-pg.sh assign-workspace user3 sanity-ws
 
 ./tool-pg.sh assign-workspace user1 meetings-ws
 ./tool-pg.sh assign-workspace user2 meetings-ws
+./tool-pg.sh assign-workspace user3 meetings-ws
 
 ./tool-pg.sh set-user-role user1 sanity-ws OWNER
 ./tool-pg.sh set-user-role user2 sanity-ws OWNER

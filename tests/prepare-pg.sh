@@ -86,6 +86,7 @@ fi
 # Create user record in accounts
 ./tool-pg.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool-pg.sh create-account user2 -f Kainin -l Dirak -p 1234
+./tool-pg.sh create-account user3 -f Muffin -l Muram -p 1234
 ./tool-pg.sh create-account admin -f Super -l User -p 1234
 
 # Create workspace record in accounts
@@ -94,3 +95,51 @@ fi
 
 ./restore-pg.sh
 rm -rf ./sanity/.auth
+
+# Start LiveKit server in background. Writes pid/log to ./.livekit/.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIVEKIT_DIR="$SCRIPT_DIR/.livekit"
+LIVEKIT_PID="$LIVEKIT_DIR/livekit.pid"
+LIVEKIT_LOG="$LIVEKIT_DIR/livekit.log"
+mkdir -p "$LIVEKIT_DIR"
+
+# Stop previous instance — by pid file, by port, and by process name.
+if [ -f "$LIVEKIT_PID" ]; then
+    OLD_PID=$(cat "$LIVEKIT_PID" 2>/dev/null || true)
+    if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
+        echo "Stopping previous LiveKit by pid file (pid=$OLD_PID)..."
+        kill "$OLD_PID" 2>/dev/null || true
+    fi
+    rm -f "$LIVEKIT_PID"
+fi
+
+# Kill anything bound to the test LiveKit port (covers manually-started instances).
+PORT_PIDS=$(lsof -tiTCP:7890 -sTCP:LISTEN 2>/dev/null || true)
+if [ -n "$PORT_PIDS" ]; then
+    echo "Stopping LiveKit on port 7890 (pids=$PORT_PIDS)..."
+    echo "$PORT_PIDS" | xargs kill 2>/dev/null || true
+fi
+
+# Last-resort: kill livekit-server processes that point to our test config.
+CFG_PIDS=$(pgrep -f "livekit-test-config.yaml" 2>/dev/null || true)
+if [ -n "$CFG_PIDS" ]; then
+    echo "Stopping livekit-server bound to test config (pids=$CFG_PIDS)..."
+    echo "$CFG_PIDS" | xargs kill 2>/dev/null || true
+fi
+
+# Wait for graceful exit, then SIGKILL anything still on the port.
+sleep 1
+LEFTOVER=$(lsof -tiTCP:7890 -sTCP:LISTEN 2>/dev/null || true)
+if [ -n "$LEFTOVER" ]; then
+    echo "Force-killing LiveKit leftovers (pids=$LEFTOVER)..."
+    echo "$LEFTOVER" | xargs kill -9 2>/dev/null || true
+fi
+
+if command -v livekit-server >/dev/null 2>&1; then
+    echo "Starting LiveKit (log: $LIVEKIT_LOG)..."
+    nohup "$SCRIPT_DIR/run_livekit_test.sh" >"$LIVEKIT_LOG" 2>&1 &
+    echo $! > "$LIVEKIT_PID"
+    echo "LiveKit pid=$(cat "$LIVEKIT_PID")"
+else
+    echo "WARNING: livekit-server not installed; skipping LiveKit startup"
+fi
