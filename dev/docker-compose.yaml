@@ -4,6 +4,7 @@ services:
     pull_policy: never
     environment:
       - STREAM_ENDPOINT_URL=datalake://datalake:4030
+      - STREAM_BASE_URL=http://localhost:8087/_stream
       - STREAM_INSECURE=true
       - STREAM_SERVER_SECRET=secret
       - STREAM_MAX_PARALLEL_SCALING_COUNT=6

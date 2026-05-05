@@ -42,7 +42,7 @@
     }
 
     load (context: LoaderContext, config: LoaderConfiguration, callbacks: LoaderCallbacks<LoaderContext>): void {
-      const url = new URL(context.url)
+      const url = new URL(context.url, window.location.href)
       const pathname = url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname
       const blobId = pathname.split('/').pop()
       if (blobId !== undefined) {
