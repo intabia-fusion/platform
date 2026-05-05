@@ -617,6 +617,12 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         }
       }
 
+      // Public spaces are visible to everyone - do not restrict broadcast targets,
+      // otherwise non-member users won't get tx for new docs in public spaces until refresh.
+      if (!space.private) {
+        return collabTargets.length === 0 ? undefined : { target: collabTargets }
+      }
+
       const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
       const target = [...collabTargets, ...spaceTargets]
 
