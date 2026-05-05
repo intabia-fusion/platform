@@ -61,6 +61,7 @@ interface SpaceInfo {
   owners: Set<AccountUuid>
   private: boolean
   archived: boolean
+  autoJoin: boolean
 }
 
 /**
@@ -93,14 +94,17 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     return new SpaceSecurityMiddleware(context, next)
   }
 
-  private addSpace (space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived'>): void {
+  private addSpace (
+    space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived' | 'autoJoin'>
+  ): void {
     this.spacesMap.set(space._id, {
       _id: space._id,
       _class: space._class,
       members: new Set(space.members),
       owners: new Set(space.owners ?? []),
       private: space.private,
-      archived: space.archived ?? false
+      archived: space.archived ?? false,
+      autoJoin: space.autoJoin === true
     })
   }
 
@@ -124,7 +128,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
                   _class: 1,
                   _id: 1,
                   members: 1,
-                  owners: 1
+                  owners: 1,
+                  autoJoin: 1
                 }
               }
             )) ?? []
@@ -464,7 +469,20 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         const hasMembersUpdate =
           ops.members !== undefined || ops.$push?.members !== undefined || ops.$pull?.members !== undefined
         if (hasMembersUpdate) {
-          throw new Error('Only owners can change members of private spaces')
+          // Allow self-add into autoJoin spaces (system trigger pushes the new user
+          // into spaces marked as autoJoin during workspace join).
+          const pushVal = ops.$push?.members
+          const pushedSelfOnly =
+            pushVal !== undefined &&
+            (pushVal === account.uuid ||
+              (typeof pushVal === 'object' &&
+                (pushVal as any).$each?.length === 1 &&
+                (pushVal as any).$each[0] === account.uuid))
+          const onlyPushSelfToAutoJoin =
+            space.autoJoin && pushedSelfOnly && ops.members === undefined && ops.$pull?.members === undefined
+          if (!onlyPushSelfToAutoJoin) {
+            throw new Error('Only owners can change members of private spaces')
+          }
         }
       }
     }
