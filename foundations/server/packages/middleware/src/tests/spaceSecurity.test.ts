@@ -857,6 +857,35 @@ describe('SpaceSecurityMiddleware', () => {
       await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
     })
 
+    it('should throw when sole owner tries to remove themselves leaving owners empty', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true, owners: ['user1'] })])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+
+      const pullTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { owners: 'user1' as AccountUuid }
+      })
+      await expect(mw.tx(ctx, [pullTx])).rejects.toThrow('Space must keep at least one owner')
+
+      const replaceTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        owners: []
+      })
+      await expect(mw.tx(ctx, [replaceTx])).rejects.toThrow('Space must keep at least one owner')
+    })
+
+    it('should allow owner to step down when another owner remains', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: true, owners: ['user1', 'user2'] })
+      ])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+
+      const pullTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { owners: 'user1' as AccountUuid }
+      })
+      await expect(mw.tx(ctx, [pullTx])).resolves.not.toThrow()
+    })
+
     it('should throw when non-owner creates private space without being in owners', async () => {
       const mw = await createMiddleware([])
 
