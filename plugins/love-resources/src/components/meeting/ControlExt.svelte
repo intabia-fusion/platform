@@ -15,9 +15,9 @@
 <script lang="ts">
   import { IdMap, Ref, toIdMap } from '@hcengineering/core'
   import { isOffice, ParticipantInfo, Room, MeetingMinutes } from '@hcengineering/love'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata, translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip, themeStore } from '@hcengineering/ui'
   import type { Location } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import workbench from '@hcengineering/workbench'
@@ -178,7 +178,11 @@
     }
   }
 
-  // beforeUnload listener moved above and cleanup merged into onDestroy
+  let busyLbl: string = ''
+
+  $: translateCB(love.string.Busy, {}, $themeStore.language, (res) => {
+    busyLbl = res
+  })
 </script>
 
 <div class="flex-row-center flex-gap-2">
@@ -199,7 +203,7 @@
     {#if activeMeetings.length > 0}
       <div class="divider" />
     {/if}
-    <RoomButton label={love.string.Busy} participants={busyParticipants} />
+    <RoomButton label={busyLbl} participants={busyParticipants} />
   {/if}
   {#if reception !== undefined && receptionParticipants.length > 0}
     {#if activeMeetings.length > 0 || busyParticipants.length > 0}
