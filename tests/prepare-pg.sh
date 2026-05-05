@@ -135,7 +135,22 @@ if [ -n "$LEFTOVER" ]; then
     echo "$LEFTOVER" | xargs kill -9 2>/dev/null || true
 fi
 
-if command -v livekit-server >/dev/null 2>&1; then
+# LiveKit: on Linux use docker with host network (works in CI and local Linux).
+# On macOS network_mode: host is unsupported, fall back to local livekit-server.
+# Override with LIVEKIT_MODE=docker|local.
+LIVEKIT_MODE="${LIVEKIT_MODE:-}"
+if [ -z "$LIVEKIT_MODE" ]; then
+    case "$(uname -s)" in
+        Linux) LIVEKIT_MODE=docker ;;
+        *)     LIVEKIT_MODE=local ;;
+    esac
+fi
+
+if [ "$LIVEKIT_MODE" = "docker" ]; then
+    echo "Starting LiveKit in docker (host network)..."
+    docker compose -f docker-compose.livekit.yaml -p sanity-livekit down --remove-orphans 2>/dev/null || true
+    docker compose -f docker-compose.livekit.yaml -p sanity-livekit up -d --force-recreate
+elif command -v livekit-server >/dev/null 2>&1; then
     echo "Starting LiveKit (log: $LIVEKIT_LOG)..."
     nohup "$SCRIPT_DIR/run_livekit_test.sh" >"$LIVEKIT_LOG" 2>&1 &
     echo $! > "$LIVEKIT_PID"

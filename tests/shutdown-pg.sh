@@ -45,3 +45,6 @@ fi
 cd "$SCRIPT_DIR"
 docker compose ${COMPOSE_FILES} -p sanity kill
 docker compose ${COMPOSE_FILES} -p sanity down --volumes --remove-orphans
+
+# Stop LiveKit docker (CI/Linux) if it was started.
+docker compose -f docker-compose.livekit.yaml -p sanity-livekit down --remove-orphans 2>/dev/null || true
