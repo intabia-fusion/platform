@@ -391,29 +391,32 @@ async function main() {
   const packagesToValidate = []
   const packageByPath = new Map()
 
+  // Pre-compute --to filter once
+  const targetDeps = options.toPackage ? getAllDependencies(graph, options.toPackage) : null
+  const passesToFilter = (name) =>
+    !options.toPackage || name === options.toPackage || (targetDeps && targetDeps.has(name))
+
   for (const [name, node] of graph) {
-    if (node.phaseBuild === 'compile transpile src' ||
+    if (!passesToFilter(name)) continue
+
+    const isTranspilable =
+      node.phaseBuild === 'compile transpile src' ||
       node.phaseBuild === 'compile transpile tests' ||
-      node.phaseBuild === 'compile ui-esbuild') {
+      node.phaseBuild === 'compile ui-esbuild'
 
-      // Filter by --to if specified
-      if (options.toPackage) {
-        const targetDeps = getAllDependencies(graph, options.toPackage)
-        if (name !== options.toPackage && !targetDeps.has(name)) {
-          continue
-        }
-      }
-
+    if (isTranspilable) {
       packagesToWatch.push(name)
 
       const srcDir = node.phaseBuild === 'compile transpile tests' ? 'tests' : 'src'
       const srcPath = join(node.project.fullPath, srcDir)
       packageByPath.set(srcPath, name)
       packageByPath.set(node.project.fullPath, name)
+    }
 
-      if (options.doValidate && node.phaseValidate === 'compile validate') {
-        packagesToValidate.push(name)
-      }
+    // Validate selection mirrors compile_all: any package with phaseValidate.
+    // ui/ui-esbuild packages have phaseBuild='compile ui' but still need validation.
+    if (options.doValidate && node.phaseValidate === 'compile validate') {
+      packagesToValidate.push(name)
     }
   }
 
