@@ -66,13 +66,22 @@ function canCopyGuestLink (): boolean {
   return hasAccountRole(getCurrentAccount(), AccountRole.User)
 }
 
-async function canToggleRoomPrivacy (mm?: MeetingMinutes): Promise<boolean> {
+async function isRoomOwner (mm?: MeetingMinutes): Promise<boolean> {
   if (mm === undefined) return false
   const me = getCurrentEmployee()
   const currentPerson = await getPersonByPersonRef(me)
   const myAccount = currentPerson?.personUuid as AccountUuid | undefined
-  // Only owners can toggle privacy
   return myAccount !== undefined ? (mm.owners?.includes(myAccount) ?? false) : false
+}
+
+async function canCloseRoom (mm?: MeetingMinutes): Promise<boolean> {
+  if (mm === undefined || mm.private) return false
+  return await isRoomOwner(mm)
+}
+
+async function canOpenRoom (mm?: MeetingMinutes): Promise<boolean> {
+  if (mm === undefined || !mm.private) return false
+  return await isRoomOwner(mm)
 }
 
 export { setCustomCreateScreenTracks } from './utils'
@@ -118,7 +127,8 @@ export default async (): Promise<Resources> => ({
     CreateMeetingSchedule: createMeetingSchedule,
     CanShowRoomSettings: canShowRoomSettings,
     CanCopyGuestLink: canCopyGuestLink,
-    CanToggleRoomPrivacy: canToggleRoomPrivacy,
+    CanCloseRoom: canCloseRoom,
+    CanOpenRoom: canOpenRoom,
     MeetingMinutesTitleProvider: getMeetingMinutesTitle,
     UserMeetingInviteTitleProvider: getUserMeetingInviteTitle
   },
