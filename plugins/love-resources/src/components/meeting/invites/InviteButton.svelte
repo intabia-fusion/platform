@@ -25,7 +25,7 @@
   export let type: 'outgoing' | 'incoming'
   export let onClick: (e: MouseEvent, invite: UserMeetingInvite, person: Person) => void
 
-  $: label = type === 'incoming' ? love.string.YouInvite : love.string.KnockingLabel
+  $: label = type === 'incoming' ? love.string.KnockingLabel : love.string.YouInvite
 
   $: tooltipLabel =
     type === 'outgoing' ? getEmbeddedLabel(`Inviting ${person.name}`) : getEmbeddedLabel(`Invited by ${person.name}`)
