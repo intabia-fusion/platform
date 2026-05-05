@@ -550,7 +550,20 @@ export function createModel (builder: Builder): void {
     category: love.category.Office,
     input: 'focus',
     target: love.class.MeetingMinutes,
-    visibilityTester: love.function.CanToggleRoomPrivacy,
+    visibilityTester: love.function.CanCloseRoom,
+    context: {
+      mode: 'context'
+    }
+  })
+
+  createAction(builder, {
+    action: love.actionImpl.ToggleRoomPrivacy,
+    label: love.string.OpenRoom,
+    icon: love.icon.Open,
+    category: love.category.Office,
+    input: 'focus',
+    target: love.class.MeetingMinutes,
+    visibilityTester: love.function.CanOpenRoom,
     context: {
       mode: 'context'
     }
