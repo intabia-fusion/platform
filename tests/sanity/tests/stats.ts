@@ -16,7 +16,7 @@
 import { systemAccountUuid } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 
-const StatsUrl = process.env.STATS_URL ?? 'http://localhost:4901'
+const StatsUrl = process.env.STATS_URL ?? 'http://localhost:8083/_stats'
 const Secret = process.env.SERVER_SECRET ?? 'secret'
 
 interface AnalyticsEntry {

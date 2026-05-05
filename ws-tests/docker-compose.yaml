@@ -117,7 +117,7 @@ services:
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
-      - STREAM_URL=http://localhost:1081/recording
+      - STREAM_URL=http://stream:1080/recording
       - DB_URL=${DB_EU_URL}
       - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin
       - QUEUE_CONFIG=${QUEUE_CONFIG}
@@ -135,8 +135,8 @@ services:
     image: 'elasticsearch:8.19.1'
     command: >
       /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || ./bin/elasticsearch-plugin install --batch analysis-icu; exec /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
-    expose:
-      - 9201
+    ports:
+      - 9201:9200
     volumes:
       - elastic-plugins:/usr/share/elasticsearch/plugins
     depends_on:

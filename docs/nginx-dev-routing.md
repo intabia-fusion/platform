@@ -2,8 +2,8 @@
 
 ## Architecture
 
-All external traffic goes through nginx on port 8087/8088. Services no longer expose ports to the host except:
-- nginx: 8087 (both map to nginx:8087), 8080(webpack dev server)
+All external traffic goes through nginx on port 8087. Services no longer expose ports to the host except:
+- nginx: 8087, 8080 (webpack dev server)
 - transactor: 9229 (kept for direct WS connections and debug)
 - postgres: 5432, redis: 6379
 - mailpit: 8025
@@ -17,9 +17,10 @@ All external traffic goes through nginx on port 8087/8088. Services no longer ex
 | Path prefix | Backend |
 |---|---|
 | `/` | front:8080 (WebSocket, buffering off, 300s timeouts) |
-| `/_accounts` | account:3000 |
-| `/_transactor` | transactor:3332 (WebSocket) |
-| `/_collaborator` | collaborator0:3078 (WebSocket) |
+| `~ ^/eyJ` | transactor:3332 (base64-token WebSocket) |
+| `/_account` | account:3000 |
+| `/_tr` | transactor:3332 (WebSocket) |
+| `/_cl` | collaborator0:3078 (WebSocket) |
 | `/_rekoni` | rekoni:4004 |
 | `/_stats` | stats:4900 |
 | `/_datalake` | datalake:4030 |
@@ -44,7 +45,7 @@ All external traffic goes through nginx on port 8087/8088. Services no longer ex
 
 ## Env Var Changes (front service)
 
-- `ACCOUNTS_URL` -> `http://localhost:8087/_accounts`
+- `ACCOUNTS_URL` -> `http://localhost:8087/_account`
 - `ACCOUNTS_URL_INTERNAL=http://account:3000` (added, for server-side calls)
 - `STATS_URL` -> `http://stats:4900` (internal service name, not through nginx)
 - `STATS_API=http://localhost:8087/_stats` (added)
@@ -52,7 +53,7 @@ All external traffic goes through nginx on port 8087/8088. Services no longer ex
 
 ## Env Var Changes (account service)
 
-- `ACCOUNTS_URL` -> `http://localhost:8087/_accounts`
+- `ACCOUNTS_URL` -> `http://localhost:8087/_account`
 - `STATS_URL` -> `http://stats:4900` (internal)
 
 ## Env Var Changes (transactor service)
