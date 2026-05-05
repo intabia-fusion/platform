@@ -11,13 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  MeasureContext,
-  PersonUuid,
-  SortingOrder,
-  systemAccountUuid,
-  WorkspaceUuid
-} from '@hcengineering/core'
+import { MeasureContext, PersonUuid, SortingOrder, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import { getWorkspaceClient, type HulylakeWorkspaceClient, type JsonPatch } from '@hcengineering/hulylake-client'
 import { generateToken } from '@hcengineering/server-token'
 import {
@@ -37,8 +31,8 @@ import {
   MessagesGroup,
   MessagesGroupDoc,
   MessagesGroupsDoc,
-  Thread
-  , ComparisonOperator
+  Thread,
+  ComparisonOperator
 } from '@hcengineering/communication-types'
 import { v4 as uuid } from 'uuid'
 
@@ -62,8 +56,16 @@ export class Blob {
     }
   } as const
 
-  constructor (private readonly ctx: MeasureContext, private readonly workspace: WorkspaceUuid, private readonly metadata: Metadata) {
-    this.client = getWorkspaceClient(metadata.hulylakeUrl, workspace, generateToken(systemAccountUuid, workspace, undefined, metadata.secret))
+  constructor (
+    private readonly ctx: MeasureContext,
+    private readonly workspace: WorkspaceUuid,
+    private readonly metadata: Metadata
+  ) {
+    this.client = getWorkspaceClient(
+      metadata.hulylakeUrl,
+      workspace,
+      generateToken(systemAccountUuid, workspace, undefined, metadata.secret)
+    )
   }
 
   public async findMessagesGroups (params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
@@ -121,7 +123,9 @@ export class Blob {
           this.ctx.info('Received groups', { groups: JSON.stringify(res.body ?? {}, undefined, 2) })
         }
 
-        const groups = Object.values(res.body ?? {}).map(it => this.deserializeMessageGroup(it)).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+        const groups = Object.values(res.body ?? {})
+          .map((it) => this.deserializeMessageGroup(it))
+          .sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
         this.messageGroupsByCardId.set(cardId, groups)
         return groups
       } finally {
@@ -140,7 +144,7 @@ export class Blob {
     }
     const ts = date.getTime()
 
-    const match = all.find(g => g.fromDate.getTime() <= ts && g.toDate.getTime() >= ts)
+    const match = all.find((g) => g.fromDate.getTime() <= ts && g.toDate.getTime() >= ts)
     if (match != null) {
       if (cardId === LOG_CARD_ID) {
         this.ctx.info('math group', { date, match: JSON.stringify(match, undefined, 2) })
@@ -179,7 +183,14 @@ export class Blob {
 
     if (group == null) return
 
-    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count: g.count + 1, toDate: toDate ?? group.toDate, fromDate: fromDate ?? group.fromDate }) : g))
+    this.messageGroupsByCardId.set(
+      cardId,
+      groups.map((g) =>
+        g.blobId === blobId
+          ? { ...g, count: g.count + 1, toDate: toDate ?? group.toDate, fromDate: fromDate ?? group.fromDate }
+          : g
+      )
+    )
 
     const patches: JsonPatch[] = [
       {
@@ -187,20 +198,24 @@ export class Blob {
         path: `/${blobId}/count`,
         value: 1
       },
-      ...toDate != null
-        ? [{
-            op: 'replace',
-            path: `/${blobId}/toDate`,
-            value: toDate
-          } as const]
-        : [],
-      ...fromDate != null
-        ? [{
-            hop: 'add',
-            path: `/${blobId}/fromDate`,
-            value: fromDate
-          } as const]
-        : []
+      ...(toDate != null
+        ? [
+            {
+              op: 'replace',
+              path: `/${blobId}/toDate`,
+              value: toDate
+            } as const
+          ]
+        : []),
+      ...(fromDate != null
+        ? [
+            {
+              hop: 'add',
+              path: `/${blobId}/fromDate`,
+              value: fromDate
+            } as const
+          ]
+        : [])
     ]
     await this.client.patchJson(`${cardId}/messages/groups`, patches, undefined, this.retryOptions)
   }
@@ -213,7 +228,10 @@ export class Blob {
 
     const count = group.count - 1
     group.count = count
-    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count }) : g))
+    this.messageGroupsByCardId.set(
+      cardId,
+      groups.map((g) => (g.blobId === blobId ? { ...g, count } : g))
+    )
 
     const patches: JsonPatch[] = [
       {
@@ -255,8 +273,11 @@ export class Blob {
         await this.client.patchJson(`${cardId}/messages/groups`, patches, undefined, this.retryOptions)
         const group = this.deserializeMessageGroup(groupDoc)
         if (this.messageGroupsByCardId.has(cardId)) {
-          this.messageGroupsByCardId.set(cardId,
-            [...this.messageGroupsByCardId.get(cardId) ?? [], group].sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+          this.messageGroupsByCardId.set(
+            cardId,
+            [...(this.messageGroupsByCardId.get(cardId) ?? []), group].sort(
+              (a, b) => a.fromDate.getTime() - b.fromDate.getTime()
+            )
           )
         } else {
           this.messageGroupsByCardId.set(cardId, [group])
@@ -321,14 +342,25 @@ export class Blob {
         : [])
     ]
     await this.patchJson(cardId, group.blobId, patches)
-    void this.incrementMessagesCount(cardId, group.blobId, updateToDate ? message.created : undefined, updateFromDate ? message.created : undefined)
+    void this.incrementMessagesCount(
+      cardId,
+      group.blobId,
+      updateToDate ? message.created : undefined,
+      updateFromDate ? message.created : undefined
+    )
   }
 
-  async updateMessage (cardId: CardID, blobId: BlobID, messageId: MessageID, update: {
-    language?: string
-    content?: Markdown
-    extra?: MessageExtra
-  }, date: Date): Promise<void> {
+  async updateMessage (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    update: {
+      language?: string
+      content?: Markdown
+      extra?: MessageExtra
+    },
+    date: Date
+  ): Promise<void> {
     const patches: JsonPatch[] = []
 
     if (update.content != null) {
@@ -381,7 +413,14 @@ export class Blob {
     void this.decrementMessagesCount(cardId, blobId)
   }
 
-  async addReaction (cardId: CardID, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid, date: Date): Promise<void> {
+  async addReaction (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    emoji: string,
+    person: PersonUuid,
+    date: Date
+  ): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'add',
@@ -402,7 +441,13 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async removeReaction (cardId: CardID, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid): Promise<void> {
+  async removeReaction (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    emoji: string,
+    person: PersonUuid
+  ): Promise<void> {
     const patches: JsonPatch[] = [
       {
         hop: 'remove',
@@ -426,7 +471,12 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async removeAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, attachmentIds: AttachmentID[]): Promise<void> {
+  async removeAttachments (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    attachmentIds: AttachmentID[]
+  ): Promise<void> {
     const patches: JsonPatch[] = []
 
     for (const attachmentId of attachmentIds) {
@@ -440,11 +490,13 @@ export class Blob {
   }
 
   async setAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, attachments: Attachment[]): Promise<void> {
-    const patches: JsonPatch[] = [{
-      op: 'replace',
-      path: `/messages/${messageId}/attachments`,
-      value: {}
-    }]
+    const patches: JsonPatch[] = [
+      {
+        op: 'replace',
+        path: `/messages/${messageId}/attachments`,
+        value: {}
+      }
+    ]
 
     for (const attachment of attachments) {
       patches.push({
@@ -456,7 +508,13 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async updateAttachments (cardId: CardID, blobId: BlobID, messageId: MessageID, updates: AttachmentUpdateData[], date: Date): Promise<void> {
+  async updateAttachments (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    updates: AttachmentUpdateData[],
+    date: Date
+  ): Promise<void> {
     const patches: JsonPatch[] = []
     for (const update of updates) {
       const keys = Object.keys(update.params)
@@ -489,7 +547,13 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async updateThread (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, update: { threadType: CardType }): Promise<void> {
+  async updateThread (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    threadId: CardID,
+    update: { threadType: CardType }
+  ): Promise<void> {
     const patches: JsonPatch[] = [
       {
         op: 'add',
@@ -500,43 +564,54 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async addThreadReply (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid, date: Date): Promise<void> {
-    const patches: JsonPatch[] =
-      [
-        {
-          hop: 'inc',
-          path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
-          value: 1
-        },
-        {
-          op: 'add',
-          path: `/messages/${messageId}/threads/${threadId}/lastReply`,
-          value: date
-        },
-        {
-          hop: 'inc',
-          path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
-          value: 1
-        }
-      ]
+  async addThreadReply (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    threadId: CardID,
+    person: PersonUuid,
+    date: Date
+  ): Promise<void> {
+    const patches: JsonPatch[] = [
+      {
+        hop: 'inc',
+        path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
+        value: 1
+      },
+      {
+        op: 'add',
+        path: `/messages/${messageId}/threads/${threadId}/lastReply`,
+        value: date
+      },
+      {
+        hop: 'inc',
+        path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
+        value: 1
+      }
+    ]
 
     await this.patchJson(cardId, blobId, patches)
   }
 
-  async removeThreadReply (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID, person: PersonUuid): Promise<void> {
-    const patches: JsonPatch[] =
-      [
-        {
-          hop: 'inc',
-          path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
-          value: -1
-        },
-        {
-          hop: 'inc',
-          path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
-          value: -1
-        }
-      ]
+  async removeThreadReply (
+    cardId: CardID,
+    blobId: BlobID,
+    messageId: MessageID,
+    threadId: CardID,
+    person: PersonUuid
+  ): Promise<void> {
+    const patches: JsonPatch[] = [
+      {
+        hop: 'inc',
+        path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
+        value: -1
+      },
+      {
+        hop: 'inc',
+        path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
+        value: -1
+      }
+    ]
 
     await this.patchJson(cardId, blobId, patches)
   }

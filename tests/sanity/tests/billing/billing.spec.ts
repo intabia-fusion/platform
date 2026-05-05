@@ -6,7 +6,7 @@ import { generateTestData, PlatformURI } from '../utils'
 import { LoginPage } from '../model/login-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
 
-const BILLING_URL = process.env.BILLING_URL ?? 'http://localhost:4043'
+const BILLING_URL = process.env.BILLING_URL ?? 'http://localhost:8083/_billing'
 
 function getAdminHeaders (): Record<string, string> {
   const token = generateToken(systemAccountUuid, undefined, { service: 'billing', admin: 'true' }, 'secret')

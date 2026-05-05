@@ -22,7 +22,13 @@ import type {
   Label,
   FindCollaboratorsParams,
   Collaborator,
-  FindPeersParams, Peer, CardID, FindMessagesMetaParams, MessageMeta, MessagesGroup, FindMessagesGroupParams
+  FindPeersParams,
+  Peer,
+  CardID,
+  FindMessagesMetaParams,
+  MessageMeta,
+  MessagesGroup,
+  FindMessagesGroupParams
 } from '@hcengineering/communication-types'
 import type { Account, MeasureContext } from '@hcengineering/core'
 

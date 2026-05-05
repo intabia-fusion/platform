@@ -12,7 +12,14 @@
 // limitations under the License.
 
 import { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import { MessageEventType, NotificationEventType, SessionData, LabelEventType, CardEventType, PeerEventType } from '@hcengineering/communication-sdk-types'
+import {
+  MessageEventType,
+  NotificationEventType,
+  SessionData,
+  LabelEventType,
+  CardEventType,
+  PeerEventType
+} from '@hcengineering/communication-sdk-types'
 import { AccountUuid, CardType, Markdown, SocialID } from '@hcengineering/communication-types'
 import { StorageMiddleware } from '../../middleware/storage'
 import { Enriched, Middleware, MiddlewareContext } from '../../types'
@@ -195,8 +202,7 @@ describe('StorageMiddleware', () => {
 
       const result = await middleware.findNotificationContexts(session, params as any)
 
-      expect(mockClient.db.findNotificationContexts).toHaveBeenCalledWith(params
-      )
+      expect(mockClient.db.findNotificationContexts).toHaveBeenCalledWith(params)
       expect(result).toEqual(expectedResult)
     })
   })
@@ -532,7 +538,10 @@ describe('StorageMiddleware', () => {
 
       await middleware.event(session, event, false)
 
-      expect(mockClient.blob.removeAttachments).toHaveBeenCalledWith('card-123', 'blob-123', 'msg-123', ['att-1', 'att-2'])
+      expect(mockClient.blob.removeAttachments).toHaveBeenCalledWith('card-123', 'blob-123', 'msg-123', [
+        'att-1',
+        'att-2'
+      ])
       expect(mockNext.event).toHaveBeenCalled()
     })
 
@@ -692,13 +701,9 @@ describe('StorageMiddleware', () => {
 
       await middleware.event(session, event, false)
 
-      expect(mockClient.blob.updateThread).toHaveBeenCalledWith(
-        'card-123',
-        'blob-123',
-        'msg-123',
-        'thread-123',
-        { repliesCount: 5 }
-      )
+      expect(mockClient.blob.updateThread).toHaveBeenCalledWith('card-123', 'blob-123', 'msg-123', 'thread-123', {
+        repliesCount: 5
+      })
       expect(mockNext.event).toHaveBeenCalled()
     })
 
@@ -1037,13 +1042,7 @@ describe('StorageMiddleware', () => {
 
       await middleware.event(session, event, false)
 
-      expect(mockClient.db.createLabel).toHaveBeenCalledWith(
-        'card-123',
-        'task',
-        'label-123',
-        accountUuid,
-        event.date
-      )
+      expect(mockClient.db.createLabel).toHaveBeenCalledWith('card-123', 'task', 'label-123', accountUuid, event.date)
       expect(mockNext.event).toHaveBeenCalled()
     })
 
@@ -1107,12 +1106,7 @@ describe('StorageMiddleware', () => {
 
       await middleware.event(session, event, false)
 
-      expect(mockClient.db.removePeer).toHaveBeenCalledWith(
-        workspace,
-        'card-123',
-        'slack',
-        'channel-123'
-      )
+      expect(mockClient.db.removePeer).toHaveBeenCalledWith(workspace, 'card-123', 'slack', 'channel-123')
       expect(mockNext.event).toHaveBeenCalled()
     })
   })

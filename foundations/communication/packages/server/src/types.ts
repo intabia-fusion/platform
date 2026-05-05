@@ -14,20 +14,20 @@
 //
 
 import type { Account, MeasureContext } from '@hcengineering/core'
-import type {
-  EventResult,
-  Event,
-  SessionData, EventType
-} from '@hcengineering/communication-sdk-types'
+import type { EventResult, Event, SessionData, EventType } from '@hcengineering/communication-sdk-types'
 import type {
   CardID,
   Collaborator,
   FindCollaboratorsParams,
-  FindLabelsParams, FindMessagesGroupParams, FindMessagesMetaParams,
+  FindLabelsParams,
+  FindMessagesGroupParams,
+  FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   FindPeersParams,
-  Label, MessageMeta, MessagesGroup,
+  Label,
+  MessageMeta,
+  MessagesGroup,
   Notification,
   NotificationContext,
   Peer,

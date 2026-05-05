@@ -47,18 +47,19 @@ import {
 
 export interface DbAdapter {
   // MessageMeta
-  createMessageMeta: (
-    cardId: CardID,
-    id: MessageID,
-    creator: SocialID,
-    created: Date,
-    blob: BlobID
-  ) => Promise<boolean>
+  createMessageMeta: (cardId: CardID, id: MessageID, creator: SocialID, created: Date, blob: BlobID) => Promise<boolean>
   removeMessageMeta: (cardId: CardID, messageId: MessageID) => Promise<void>
   findMessagesMeta: (params: FindMessagesMetaParams) => Promise<MessageMeta[]>
 
   // ThreadsIndex
-  attachThreadMeta: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, socialId: SocialID, date: Date) => Promise<void>
+  attachThreadMeta: (
+    cardId: CardID,
+    messageId: MessageID,
+    threadId: CardID,
+    threadType: CardType,
+    socialId: SocialID,
+    date: Date
+  ) => Promise<void>
   removeThreadMeta: (query: ThreadMetaQuery) => Promise<void>
   updateThreadMeta: (query: ThreadMetaQuery, update: ThreadMetaUpdate) => Promise<void>
   findThreadMeta: (params: FindThreadMetaParams) => Promise<ThreadMeta[]>
@@ -73,14 +74,16 @@ export interface DbAdapter {
     date: Date,
     options?: { newValue?: boolean }
   ) => Promise<void>
-  removePeer: (workspaceId: WorkspaceUuid,
-    cardId: CardID,
-    kind: PeerKind,
-    value: string) => Promise<void>
+  removePeer: (workspaceId: WorkspaceUuid, cardId: CardID, kind: PeerKind, value: string) => Promise<void>
   findPeers: (params: FindPeersParams) => Promise<Peer[]>
 
   // Collaborators
-  addCollaborators: (cardId: CardID, cardType: CardType, collaborators: AccountUuid[], date: Date) => Promise<AccountUuid[]>
+  addCollaborators: (
+    cardId: CardID,
+    cardType: CardType,
+    collaborators: AccountUuid[],
+    date: Date
+  ) => Promise<AccountUuid[]>
   removeCollaborators: (query: CollaboratorQuery) => Promise<void>
   updateCollaborators: (query: CollaboratorQuery, update: CollaboratorUpdate) => Promise<void>
   getCollaboratorsCursor: (cardId: CardID, date: Date, size?: number) => AsyncIterable<Collaborator[]>
@@ -114,7 +117,13 @@ export interface DbAdapter {
   findNotificationContexts: (params: FindNotificationContextParams) => Promise<NotificationContext[]>
 
   // Labels
-  createLabel: (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date) => Promise<void>
+  createLabel: (
+    cardId: CardID,
+    cardType: CardType,
+    labelId: LabelID,
+    account: AccountUuid,
+    created: Date
+  ) => Promise<void>
   removeLabels: (query: LabelQuery) => Promise<void>
   updateLabels: (query: LabelQuery, update: LabelUpdate) => Promise<void>
   findLabels: (params: FindLabelsParams) => Promise<Label[]>
@@ -129,7 +138,7 @@ export interface DbAdapter {
 }
 
 export type ThreadMetaQuery = Partial<Pick<ThreadMeta, 'cardId' | 'threadId' | 'messageId'>>
-export type ThreadMetaUpdate = Partial<Pick<ThreadMeta, | 'threadType'>>
+export type ThreadMetaUpdate = Partial<Pick<ThreadMeta, 'threadType'>>
 
 export type LabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
 export type LabelUpdate = Partial<Pick<Label, 'cardType'>>

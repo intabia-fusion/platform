@@ -15,14 +15,17 @@
 
 import type {
   CardID,
-  Collaborator, FindCollaboratorsParams,
+  Collaborator,
+  FindCollaboratorsParams,
   FindLabelsParams,
   FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
-  Label, MessageMeta,
+  Label,
+  MessageMeta,
   Notification,
-  NotificationContext, WithTotal
+  NotificationContext,
+  WithTotal
 } from '@hcengineering/communication-types'
 
 import type { EventResult, Event } from './events/event'

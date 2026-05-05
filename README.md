@@ -190,17 +190,7 @@ sh ./scripts/build.sh
 
 By default, Docker volumes named dev_db, dev_elastic, and dev_files will be created for the MongoDB, Elasticsearch, and MinIO instances.
 
-Add the following lines to your hosts file:
-
-- **macOS / Linux:** `/etc/hosts`
-- **Windows:** `C:\Windows\System32\drivers\etc\hosts`
-
-```plain
-127.0.0.1 huly.local
-::1 huly.local
-```
-
-Accessing the URL <http://huly.local:8087> will lead you to the app in development mode.
+Accessing the URL <http://localhost:8087> will lead you to the app in development mode.
 
 Limitations:
 

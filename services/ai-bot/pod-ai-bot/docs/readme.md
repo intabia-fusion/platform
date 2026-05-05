@@ -36,7 +36,7 @@ The YAML configuration follows this schema:
 ```yaml
 # Account and Server Configuration
 accounts:
-  url: "http://huly.local:3000"  # URL of the accounts service
+  url: "http://localhost:3000"  # URL of the accounts service
   serverSecret: "secret"  # Server secret for authentication
   serviceId: "ai-bot-service"  # Service identifier (default: ai-bot-service)
 
@@ -107,9 +107,9 @@ storage:
 # Service Integration Configuration
 services:
   love:
-    endpoint: "http://huly.local:8096"  # Love service endpoint URL
+    endpoint: "http://localhost:8096"  # Love service endpoint URL
   billing:
-    url: "http://huly.local:4041"  # Billing service URL
+    url: "http://localhost:4041"  # Billing service URL
   datalab:
     apiKey: ""  # DataLab API key
 

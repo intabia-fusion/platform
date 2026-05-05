@@ -34,7 +34,15 @@ import type {
 } from '@hcengineering/communication-sdk-types'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
-import type { FindParams, QueryId, AnyQuery, MessageQueryParams, QueryOptions, MessageQueryOptions, NotificationContextQueryOptions } from './types'
+import type {
+  FindParams,
+  QueryId,
+  AnyQuery,
+  MessageQueryParams,
+  QueryOptions,
+  MessageQueryOptions,
+  NotificationContextQueryOptions
+} from './types'
 import { MessagesQuery } from './messages/query'
 import { NotificationQuery } from './notifications/query'
 import { NotificationContextsQuery } from './notification-contexts/query'
@@ -60,7 +68,7 @@ export class LiveQueries {
     this.client.onEvent = (event) => {
       this.eventQueue = this.eventQueue
         .then(() => this.onEvent(event))
-        .catch(err => {
+        .catch((err) => {
           console.error('Error handling event:', err)
         })
     }
@@ -70,7 +78,7 @@ export class LiveQueries {
   }
 
   async onEvent (event: Event): Promise<void> {
-    await Promise.all(Array.from(this.queries.values()).map(q => q.onEvent(event)))
+    await Promise.all(Array.from(this.queries.values()).map((q) => q.onEvent(event)))
   }
 
   async onRequest (event: Event, promise: Promise<EventResult>): Promise<void> {
@@ -79,7 +87,11 @@ export class LiveQueries {
     }
   }
 
-  queryMessages (params: MessageQueryParams, callback: PagedQueryCallback<Message>, options?: MessageQueryOptions): CreateQueryResult {
+  queryMessages (
+    params: MessageQueryParams,
+    callback: PagedQueryCallback<Message>,
+    options?: MessageQueryOptions
+  ): CreateQueryResult {
     return this.createAndStoreQuery<Message, MessageQueryParams, MessagesQuery>(
       params,
       callback,
@@ -99,7 +111,11 @@ export class LiveQueries {
     )
   }
 
-  queryNotificationContexts (params: FindNotificationContextParams, callback: any, options?: NotificationContextQueryOptions): CreateQueryResult {
+  queryNotificationContexts (
+    params: FindNotificationContextParams,
+    callback: any,
+    options?: NotificationContextQueryOptions
+  ): CreateQueryResult {
     return this.createAndStoreQuery<NotificationContext, FindNotificationContextParams, NotificationContextsQuery>(
       params,
       callback,
@@ -110,14 +126,22 @@ export class LiveQueries {
   }
 
   queryLabels (params: FindLabelsParams, callback: any): CreateQueryResult {
-    return this.createAndStoreQuery<Label, FindLabelsParams, LabelsQuery>(params, callback, undefined, LabelsQuery, (params) =>
-      this.findLabelsQuery(params)
+    return this.createAndStoreQuery<Label, FindLabelsParams, LabelsQuery>(
+      params,
+      callback,
+      undefined,
+      LabelsQuery,
+      (params) => this.findLabelsQuery(params)
     )
   }
 
   queryCollaborators (params: FindCollaboratorsParams, callback: any): CreateQueryResult {
-    return this.createAndStoreQuery<Collaborator, FindCollaboratorsParams, CollaboratorsQuery>(params, callback, undefined, CollaboratorsQuery, (params) =>
-      this.findCollaboratorsQuery(params)
+    return this.createAndStoreQuery<Collaborator, FindCollaboratorsParams, CollaboratorsQuery>(
+      params,
+      callback,
+      undefined,
+      CollaboratorsQuery,
+      (params) => this.findCollaboratorsQuery(params)
     )
   }
 
@@ -163,9 +187,17 @@ export class LiveQueries {
     return new QueryClass(this.client, this.hulylake, id, params, options, callback, undefined)
   }
 
-  private findQuery<T extends AnyQuery>(params: FindParams, QueryClass: new (...args: any[]) => T, options?: QueryOptions): T | undefined {
+  private findQuery<T extends AnyQuery>(
+    params: FindParams,
+    QueryClass: new (...args: any[]) => T,
+    options?: QueryOptions
+  ): T | undefined {
     for (const query of this.queries.values()) {
-      if (query instanceof QueryClass && this.compareParams(params, query.params) && this.compareOptions(options, query.options)) {
+      if (
+        query instanceof QueryClass &&
+        this.compareParams(params, query.params) &&
+        this.compareOptions(options, query.options)
+      ) {
         return query
       }
     }

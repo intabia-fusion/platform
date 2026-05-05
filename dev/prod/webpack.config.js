@@ -57,51 +57,174 @@ const StatoscopeWebpackPlugin = require('@statoscope/webpack-plugin').default;
 
 
 const devProxy = {
-  '/account': {
-    target: 'http://huly.local:3000',
+  '/_account': {
+    target: 'http://localhost:8087',
     changeOrigin: true,
-    pathRewrite: { '^/account': '' },
+    logLevel: 'debug'
+  },
+  '/_tr': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_cl': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_rekoni': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_stats': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_datalake': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_stream': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_preview': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_billing': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_ai': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_love': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_print': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_sign': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_export': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_link-preview': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_mail': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_fulltext': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
     logLevel: 'debug'
   },
   '/files': {
-    target: 'http://huly.local:8087',
+    target: 'http://localhost:8087',
     changeOrigin: true,
     logLevel: 'debug'
   },
   '/api/v1': {
-    target: 'http://huly.local:8087',
+    target: 'http://localhost:8087',
     changeOrigin: true,
     logLevel: 'debug'
   },
-  '/rekoni/recognize': {
-    target: 'http://huly.local:4004',
+  '/import': {
+    target: 'http://localhost:8087',
     changeOrigin: true,
-    pathRewrite: { '^/rekoni/recognize': '/recognize' },
     logLevel: 'debug'
   }
 }
 
 const devProxyTest = {
-  '/account': {
-    target: 'http://huly.local:3003',
+  '/_account': {
+    target: 'http://localhost:8083',
     changeOrigin: true,
-    pathRewrite: { '^/account': '' },
+    logLevel: 'debug'
+  },
+  '/_tr': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_cl': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  },
+  '/_rekoni': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_stats': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_datalake': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_stream': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_fulltext': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_billing': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
     logLevel: 'debug'
   },
   '/files': {
-    target: 'http://huly.local:8083',
+    target: 'http://localhost:8083',
     changeOrigin: true,
     logLevel: 'debug'
   },
   '/api/v1': {
-    target: 'http://huly.local:8083',
+    target: 'http://localhost:8083',
     changeOrigin: true,
     logLevel: 'debug'
   },
-  '/rekoni/recognize': {
-    target: 'http://huly.local:4004',
+  '/import': {
+    target: 'http://localhost:8083',
     changeOrigin: true,
-    pathRewrite: { '^/rekoni/recognize': '/recognize' },
     logLevel: 'debug'
   }
 }

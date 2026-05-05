@@ -1,12 +1,12 @@
 {
-  "huly.local:8080": {
+  "localhost:8080": {
     "key": "huly-dev",
     "title": "Platform",
     "protocol": "http",
     "defaultLanguage": "ru",
     "lastNameFirst": "true"
   },
-  "huly.local:8087": {
+  "localhost:8087": {
     "key": "huly",
     "title": "Platform",
     "protocol": "http",
@@ -20,13 +20,13 @@
     "defaultLanguage": "en",
     "lastNameFirst": "true"
   },
-  "huly.local:8081": {
+  "localhost:8081": {
     "key": "tracex-dev",
     "title": "TraceX",
     "protocol": "http",
     "defaultLanguage": "en"
   },
-  "huly.local:8088": {
+  "localhost:8088": {
     "key": "tracex",
     "title": "TraceX",
     "protocol": "http",

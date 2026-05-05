@@ -1,5 +1,5 @@
 {
-  "huly.local:8080": {
+  "localhost:8080": {
     "title": "Platform",
     "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
@@ -28,7 +28,7 @@
       }
     ]
   },
-  "huly.local:8087": {
+  "localhost:8087": {
     "title": "Platform",
     "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
@@ -53,7 +53,7 @@
       }
     ]
   },
-  "huly.local:8081": {
+  "localhost:8081": {
     "title": "TraceX",
     "languages": "en",
     "defaultLanguage": "en",
@@ -93,7 +93,7 @@
       }
     ]
   },
-  "huly.local:8088": {
+  "localhost:8088": {
     "title": "TraceX",
     "languages": "en",
     "defaultLanguage": "en",

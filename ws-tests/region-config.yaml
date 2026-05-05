@@ -5,16 +5,16 @@ regions:
   '':
     name: America
     transactors:
-      - external: ws://huly.local:3334
-        internal: ws://huly.local:3334
+      - external: ws://localhost:8083/_tr
+        internal: ws://transactor:3334
     collaborators:
-      - external: ws://huly.local:3079
-        internal: ws://huly.local:3079
+      - external: ws://localhost:8083/_cl
+        internal: ws://collaborator:3079
   europe:
     name: Europe
     transactors:
-      - external: ws://huly.local:3335
-        internal: ws://huly.local:3335
+      - external: ws://localhost:8083/_tr_europe
+        internal: ws://transactor-europe:3335
     collaborators:
-      - external: ws://huly.local:3079
-        internal: ws://huly.local:3079
+      - external: ws://localhost:8083/_cl
+        internal: ws://collaborator:3079

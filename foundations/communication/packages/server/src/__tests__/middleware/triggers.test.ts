@@ -12,11 +12,7 @@
 // limitations under the License.
 
 import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
-import {
-  MessageEventType,
-  type SessionData,
-  NotificationEventType
-} from '@hcengineering/communication-sdk-types'
+import { MessageEventType, type SessionData, NotificationEventType } from '@hcengineering/communication-sdk-types'
 import { type AccountUuid, type CardType, type Markdown, type SocialID } from '@hcengineering/communication-types'
 
 import { TriggersMiddleware } from '../../middleware/triggers'
@@ -656,10 +652,7 @@ describe('TriggersMiddleware', () => {
         _eventExtra: {}
       }
 
-      await Promise.all([
-        middleware.event(session, event1, false),
-        middleware.event(session, event2, false)
-      ])
+      await Promise.all([middleware.event(session, event1, false), middleware.event(session, event2, false)])
 
       expect(mockNext.event).toHaveBeenCalledTimes(2)
     })

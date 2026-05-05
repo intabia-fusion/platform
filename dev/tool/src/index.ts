@@ -200,8 +200,12 @@ export function devTool (
   }
 
   const transactorUrl = process.env.TRANSACTOR_URL
-  if (transactorUrl === undefined) {
-    console.error('please provide transactor url.')
+  if (
+    transactorUrl === undefined &&
+    process.env.REGION_CONFIG === undefined &&
+    process.env.REGION_CONFIG_JSON === undefined
+  ) {
+    console.error('please provide transactor url or REGION_CONFIG/REGION_CONFIG_JSON.')
   }
 
   setMetadata(accountPlugin.metadata.Transactors, transactorUrl)

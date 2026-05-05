@@ -94,5 +94,8 @@ export interface NotificationContextQueryOptions {
   message?: boolean
 }
 export type MessageQueryParams = OneMessageQueryParams | ManyMessagesQueryParams
-export interface MessageQueryOptions extends QueryOptions, FindMessagesOptions { autoExpand?: boolean, language?: string }
+export interface MessageQueryOptions extends QueryOptions, FindMessagesOptions {
+  autoExpand?: boolean
+  language?: string
+}
 export type NotificationQueryParams = FindNotificationsParams & { strict?: boolean }
