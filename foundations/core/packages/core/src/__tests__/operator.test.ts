@@ -77,6 +77,34 @@ describe('operator', () => {
       expect((doc as any).arr).toEqual([1, 10, 20, 2, 3])
     })
 
+    it('should push and slice with $slice: 0', () => {
+      const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: [1, 2, 3] } as unknown as Doc
+      const operator = _getOperator('$push')
+      operator(doc, { arr: { $each: [10, 20], $slice: 0 } })
+      expect((doc as any).arr).toEqual([])
+    })
+
+    it('should push and slice with positive $slice', () => {
+      const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: [1, 2, 3] } as unknown as Doc
+      const operator = _getOperator('$push')
+      operator(doc, { arr: { $each: [10, 20], $position: 0, $slice: 3 } })
+      expect((doc as any).arr).toEqual([10, 20, 1])
+    })
+
+    it('should push and slice with negative $slice', () => {
+      const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: [1, 2, 3] } as unknown as Doc
+      const operator = _getOperator('$push')
+      operator(doc, { arr: { $each: [10, 20], $position: 3, $slice: -3 } })
+      expect((doc as any).arr).toEqual([3, 10, 20])
+    })
+
+    it('should push to beginning if $position is not provided', () => {
+      const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: [1, 2, 3] } as unknown as Doc
+      const operator = _getOperator('$push')
+      operator(doc, { arr: { $each: [4, 5] } })
+      expect((doc as any).arr).toEqual([4, 5, 1, 2, 3])
+    })
+
     it('should push object to array', () => {
       const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: [] } as unknown as Doc
       const operator = _getOperator('$push')

@@ -36,6 +36,19 @@ function $push (document: Doc, keyval: Record<string, PropertyType>): void {
       if ('$each' in desc) {
         if (arr != null && Array.isArray(arr)) {
           arr.splice(desc.$position ?? 0, 0, ...desc.$each)
+          if (desc.$slice !== undefined) {
+            if (desc.$slice === 0) {
+              arr.splice(0, arr.length)
+            } else if (desc.$slice > 0) {
+              if (arr.length > desc.$slice) {
+                arr.splice(desc.$slice)
+              }
+            } else if (desc.$slice < 0) {
+              if (arr.length > -desc.$slice) {
+                arr.splice(0, arr.length + desc.$slice)
+              }
+            }
+          }
         }
       } else {
         arr.push(kvk)

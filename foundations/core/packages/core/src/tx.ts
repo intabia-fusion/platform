@@ -181,6 +181,7 @@ export type ArrayAsElement<T> = {
 export interface Position<X extends PropertyType> {
   $each: X[]
   $position: number
+  $slice?: number
 }
 
 /**
