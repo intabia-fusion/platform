@@ -457,6 +457,16 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       if (hasOwnersUpdate && !isOwner) {
         throw new Error('Only owners can change space owners')
       }
+
+      // In private spaces with owners, only owners can change members.
+      // Otherwise non-owners (or non-members) could push themselves or others into a private space.
+      if (space.private && !isOwner) {
+        const hasMembersUpdate =
+          ops.members !== undefined || ops.$push?.members !== undefined || ops.$pull?.members !== undefined
+        if (hasMembersUpdate) {
+          throw new Error('Only owners can change members of private spaces')
+        }
+      }
     }
 
     // Only owners can delete private spaces

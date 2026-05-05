@@ -103,24 +103,9 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
 
   const client = getClient()
 
-  // Add invited persons to MeetingMinutes members (for private Space access)
-  if (meetingId !== undefined) {
-    const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
-    if (meetingDoc !== undefined) {
-      const newMembers: AccountUuid[] = []
-      for (const personRef of validPersons) {
-        const person = await getPersonByPersonRef(personRef)
-        if (person?.personUuid != null && !meetingDoc.members.includes(person.personUuid as AccountUuid)) {
-          newMembers.push(person.personUuid as AccountUuid)
-        }
-      }
-      if (newMembers.length > 0) {
-        await client.update(meetingDoc, {
-          $push: { members: { $each: newMembers, $position: 0 } }
-        })
-      }
-    }
-  }
+  // Note: members are added to the MeetingMinutes on the server in OnUserMeetingInvite
+  // after the privacy/owner check passes — clients must not mutate members directly,
+  // otherwise non-owners could grant private-meeting access to arbitrary persons.
 
   for (const person of validPersons) {
     // Use per-person apply with notMatch to prevent duplicate pending invites

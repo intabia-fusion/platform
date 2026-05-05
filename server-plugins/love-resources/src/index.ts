@@ -337,22 +337,45 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       // Skip self-invites
       if (invite.from === invite.to) continue
 
-      // Check if meeting is private - only owners can invite
+      // Check if meeting is private - only owners can invite.
+      // Also resolve recipient's account so we can add them to meeting members on the server
+      // (clients are not allowed to push members of private spaces).
+      let inviteMeeting: MeetingMinutes | undefined
       if (invite.meeting !== undefined) {
-        const meeting = await control
+        inviteMeeting = await control
           .findAll(control.ctx, love.class.MeetingMinutes, { _id: invite.meeting }, { limit: 1 })
           .then((r) => r[0])
-        if (meeting?.private) {
+        if (inviteMeeting?.private === true) {
           // Get sender's account
           const senderEmployee = await control
             .findAll(control.ctx, contact.class.Person, { _id: invite.from }, { limit: 1 })
             .then((r) => r[0])
           const senderAccount = senderEmployee?.personUuid as AccountUuid | undefined
           // Only owners can invite to private meetings
-          if (senderAccount === undefined || meeting.owners === undefined || !meeting.owners.includes(senderAccount)) {
+          if (
+            senderAccount === undefined ||
+            inviteMeeting.owners === undefined ||
+            !inviteMeeting.owners.includes(senderAccount)
+          ) {
             // Skip this invite - sender is not an owner
             continue
           }
+        }
+      }
+
+      // Add recipient to MeetingMinutes members on the server (after owner-check passed)
+      // so the recipient can access the meeting space and receive knock/invite notifications.
+      if (inviteMeeting !== undefined) {
+        const recipientPerson = await control
+          .findAll(control.ctx, contact.class.Person, { _id: invite.to }, { limit: 1 })
+          .then((r) => r[0])
+        const recipientAccount = recipientPerson?.personUuid as AccountUuid | undefined
+        if (recipientAccount !== undefined && !inviteMeeting.members.includes(recipientAccount)) {
+          result.push(
+            control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, inviteMeeting.space, inviteMeeting._id, {
+              $push: { members: { $each: [recipientAccount], $position: 0 } }
+            })
+          )
         }
       }
 
