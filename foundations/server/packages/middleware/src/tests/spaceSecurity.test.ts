@@ -768,6 +768,95 @@ describe('SpaceSecurityMiddleware', () => {
       await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change space owners')
     })
 
+    it('should throw when non-owner tries to push members in private space with owners', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: true, owners: ['user1'] })
+      ])
+
+      // user2 is a member but NOT an owner — must not be able to grant access to others
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user3' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should throw when non-member tries to push members in private space with owners', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true, owners: ['user1'] })])
+
+      // user3 is neither owner nor member — must not be able to push themselves
+      const account = createAccount('user3')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user3' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should throw when non-owner tries to pull members in private space with owners', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2', 'user3'], { private: true, owners: ['user1'] })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { members: 'user3' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should throw when non-owner tries to replace members in private space with owners', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: true, owners: ['user1'] })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        members: ['user1' as AccountUuid, 'user2' as AccountUuid, 'user3' as AccountUuid]
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should allow owner to push members in private space', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true, owners: ['user1'] })])
+
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user2' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
+    })
+
+    it('should allow non-owner to push members in public space with owners', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: false, owners: ['user1'] })
+      ])
+
+      // Public space — members may freely change.
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user3' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
+    })
+
     it('should throw when non-owner creates private space without being in owners', async () => {
       const mw = await createMiddleware([])
 
