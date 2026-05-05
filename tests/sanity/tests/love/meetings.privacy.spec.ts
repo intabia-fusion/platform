@@ -9,11 +9,9 @@ const meetingsWs = 'meetings-ws'
 
 test.describe('meeting minutes privacy', () => {
   let officePage: OfficePage
-  let mmPage: MeetingMinutesPage
 
   test.beforeEach(async ({ page }) => {
     officePage = new OfficePage(page)
-    mmPage = new MeetingMinutesPage(page)
     await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
     await officePage.navigateToOffice()
     await expect(officePage.floorGrid()).toBeVisible({ timeout: 15000 })

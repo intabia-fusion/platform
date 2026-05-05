@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { PlatformSetting, PlatformURI } from '../utils'
 import { OfficePage } from '../model/love/office-page'
-import { MeetingMinutesPage } from '../model/love/meeting-minutes-page'
 
 test.use({
   storageState: PlatformSetting
