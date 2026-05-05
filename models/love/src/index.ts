@@ -316,6 +316,12 @@ export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
   meetingId!: Ref<MeetingMinutes>
 }
 
+// Placeholder class so that the legacy `meeting-minutes` table is created/kept
+// in the DB. Required to restore old backups that still ship this domain;
+// the migration `meeting-minutes-to-space` then moves data into DOMAIN_SPACE.
+@Model(love.class.LegacyMeetingMinutes, core.class.Doc, DOMAIN_MEETING_MINUTES)
+export class TLegacyMeetingMinutes extends TDoc {}
+
 export const DOMAIN_USER_MEETING_INVITE = 'user-meeting-invite' as Domain
 
 @Model(love.class.UserMeetingInvite, core.class.Doc, DOMAIN_USER_MEETING_INVITE)
@@ -358,7 +364,8 @@ export function createModel (builder: Builder): void {
     TMeeting,
     TMeetingMinutes,
     TMeetingSchedule,
-    TUserMeetingInvite
+    TUserMeetingInvite,
+    TLegacyMeetingMinutes
   )
 
   builder.createDoc(
