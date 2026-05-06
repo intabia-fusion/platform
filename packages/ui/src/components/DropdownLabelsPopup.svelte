@@ -133,6 +133,11 @@
               }
             }}
           >
+            {#if item.icon}
+              <div class="icon mr-1">
+                <svelte:component this={item.icon} size={'small'} {...item.iconProps ?? {}} />
+              </div>
+            {/if}
             <div class="label overflow-label flex-grow">{item.label}</div>
             <div class="check">
               {#if isSelected(selected, item)}

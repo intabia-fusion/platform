@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, getResource } from '@hcengineering/platform'
+  import { Asset, getResource } from '@hcengineering/platform'
   import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
@@ -39,8 +39,8 @@
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
   import TaskTypeKindEditor from '../taskTypes/TaskTypeKindEditor.svelte'
-  import TaskTypeRefEditor from '../taskTypes/TaskTypeRefEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -184,7 +184,13 @@
                     if (taskType === undefined) {
                       return
                     }
-                    void client.diffUpdate(taskType, { kind: evt.detail })
+                    const newKind = evt.detail
+                    // When switching to 'task' (no parent allowed), clear allowedAsChildOf
+                    if (newKind === 'task') {
+                      void client.diffUpdate(taskType, { kind: newKind, allowedAsChildOf: [] })
+                    } else {
+                      void client.diffUpdate(taskType, { kind: newKind })
+                    }
                   }}
                   {readonly}
                 />
@@ -234,25 +240,22 @@
                 editable={!readonly}
               />
             </div>
+          </div>
 
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <div class="flex-no-shrink trans-title uppercase">
-                <Label label={getEmbeddedLabel('Parent type restrictions')} />
-              </div>
-              {#if taskType.kind === 'subtask' || taskType.kind === 'both'}
-                <TaskTypeRefEditor
-                  label={getEmbeddedLabel('Allowed parents')}
-                  value={taskType.allowedAsChildOf}
-                  types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
-                  onChange={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                  }}
-                />
-              {/if}
+          {#if taskType.kind === 'subtask' || taskType.kind === 'both'}
+            <div class="hulyTableAttr-container">
+              <TaskTypeRefEditorTable
+                value={taskType.allowedAsChildOf}
+                types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
+                onChange={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
+                }}
+              />
             </div>
+          {/if}
 
             <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
               <ToggleWithLabel
@@ -267,7 +270,6 @@
                 }}
               />
             </div>
-          </div>
 
           <div class="hulyTableAttr-container">
             <div class="hulyTableAttr-header font-medium-12">

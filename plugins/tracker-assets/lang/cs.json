@@ -85,6 +85,8 @@
     "ChangeParent": "Změnit nadřazený úkol…",
     "RemoveParent": "Odebrat nadřazený úkol",
     "OpenParent": "Otevřít nadřazený úkol",
+    "ParentNotApplicable": "Úkoly tohoto typu nemají nadřazený úkol",
+    "NoParentIssuesExist": "Nebyly nalezeny žádné úkoly nadřazeného typu",
     "SubIssues": "Podúkoly",
     "SubIssuesList": "Podúkoly ({subIssues})",
     "ParentIssuesList": "Rodičovské úkoly ({parentIssues})",

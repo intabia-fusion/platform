@@ -85,6 +85,8 @@
     "ChangeParent": "Cambiar tarea principal...",
     "RemoveParent": "Eliminar tarea principal",
     "OpenParent": "Abrir tarea principal",
+    "ParentNotApplicable": "Las tareas de este tipo no tienen tarea principal",
+    "NoParentIssuesExist": "No se encontraron tareas del tipo principal",
     "SubIssues": "Subtareas",
     "SubIssuesList": "Subtareas ({subIssues})",
     "ParentIssuesList": "Tareas padre ({parentIssues})",

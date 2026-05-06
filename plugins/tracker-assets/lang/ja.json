@@ -85,6 +85,8 @@
     "ChangeParent": "親イシューを変更…",
     "RemoveParent": "親イシューを削除",
     "OpenParent": "親イシューを開く",
+    "ParentNotApplicable": "このタイプのタスクには親タスクがありません",
+    "NoParentIssuesExist": "親タイプのタスクが見つかりません",
     "SubIssues": "子イシュー",
     "SubIssuesList": "子イシュー ({subIssues})",
     "ParentIssuesList": "親タスク ({parentIssues})",

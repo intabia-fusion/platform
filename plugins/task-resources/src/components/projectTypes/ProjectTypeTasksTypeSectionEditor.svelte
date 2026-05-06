@@ -69,7 +69,7 @@
         if (disabled) {
           return
         }
-        $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor } }
+        $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor, taskTypes } }
       }}
     />
   </div>

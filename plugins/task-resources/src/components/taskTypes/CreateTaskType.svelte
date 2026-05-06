@@ -29,10 +29,12 @@
   import task from '../../plugin'
   import TaskTypeKindEditor from './TaskTypeKindEditor.svelte'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import TaskTypeRefEditor from './TaskTypeRefEditor.svelte'
 
   const client = getClient()
   export let type: ProjectType
   export let descriptor: ProjectTypeDescriptor
+  export let taskTypes: TaskType[]
   export let taskType: TaskType | undefined
 
   function defaultTaskType (type: ProjectType): Data<TaskType> {
@@ -67,6 +69,11 @@
 
   let { kind, name, targetClass, statusCategories, statuses, allowedAsChildOf } =
     taskType !== undefined ? { ...taskType } : { ...defaultTaskType(type) }
+
+  // When kind switches to 'task', clear allowedAsChildOf — a pure task cannot have parents
+  $: if (kind === 'task') {
+    allowedAsChildOf = []
+  }
 
   function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
@@ -201,6 +208,15 @@
           }}
         />
       </div>
+    {/if}
+    {#if kind === 'subtask' || kind === 'both'}
+      <TaskTypeRefEditor
+        value={allowedAsChildOf}
+        types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
+        onChange={(evt) => {
+          allowedAsChildOf = evt
+        }}
+      />
     {/if}
   </div>
 </Modal>

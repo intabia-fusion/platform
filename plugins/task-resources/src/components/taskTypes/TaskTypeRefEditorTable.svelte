@@ -18,6 +18,7 @@
   import {
     ButtonIcon,
     DropdownLabelsPopup,
+    DropdownTextItem,
     getFocusManager,
     Icon,
     IconAdd,
@@ -26,30 +27,34 @@
     showPopup
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import task from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import task from '../../plugin'
 
   export let value: Ref<TaskType>[] = []
   export let onChange: (value: Ref<TaskType>[]) => void
   export let types: TaskType[]
+  export let readonly: boolean = false
 
   let container: HTMLElement
   let opened: boolean = false
 
-  $: items = types.map((p) => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })) ?? []
+  $: items = types.map(
+    (p): DropdownTextItem => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })
+  )
   $: selectedItems = types.filter((p) => (value as string[])?.includes(p._id))
 
   const dispatch = createEventDispatcher()
   const mgr = getFocusManager()
 
   function removeItem (id: Ref<TaskType>): void {
+    if (readonly) return
     value = [...value].filter((v) => v !== id)
     onChange(value)
     dispatch('selected', value)
   }
 
   function openDropdown (): void {
-    if (opened) return
+    if (opened || readonly) return
     opened = true
     showPopup(
       DropdownLabelsPopup,
@@ -70,80 +75,44 @@
   }
 </script>
 
-<!-- Add button row -->
-<div class="ref-editor-wrapper">
-  <div class="hulyModal-content__settingsSet-line">
-    <span class="label">
-      <Label label={task.string.TaskParent} />
-    </span>
-    <div bind:this={container}>
-      <ButtonIcon
-        kind={'primary'}
-        icon={IconAdd}
-        size={'small'}
-        focusIndex={-1}
-        disabled={false}
-        pressed={opened}
-        on:click={openDropdown}
-      />
-    </div>
+<div class="hulyTableAttr-container">
+  <div class="hulyTableAttr-header font-medium-12">
+    <span><Label label={task.string.TaskParent} /></span>
+    {#if !readonly}
+      <div bind:this={container}>
+        <ButtonIcon kind={'primary'} icon={IconAdd} size={'small'} pressed={opened} on:click={openDropdown} />
+      </div>
+    {/if}
   </div>
-  <!-- Selected items -->
+
   {#each selectedItems as item (item._id)}
-    <div class="ref-editor-selected-item">
-      {#if item.icon}
-        <div class="icon">
+    <div class="hulyTableAttr-content class">
+      <div class="hulyTableAttr-content__row disableMouseOver">
+        <div class="row-item">
           <svelte:component this={TaskTypeIcon} value={item} size={'small'} />
+          <span class="label overflow-label">{item.name}</span>
         </div>
-      {/if}
-      <span class="ref-editor-selected-label">{item.name}</span>
-      <button
-        class="btn-close"
-        on:click={() => {
-          removeItem(item._id)
-        }}
-      >
-        <Icon icon={IconClose} size={'x-small'} />
-      </button>
+        {#if !readonly}
+          <button
+            class="btn-close"
+            on:click={() => {
+              removeItem(item._id)
+            }}
+          >
+            <Icon icon={IconClose} size={'x-small'} />
+          </button>
+        {/if}
+      </div>
     </div>
   {/each}
 </div>
 
 <style lang="scss">
-  .ref-editor-wrapper {
-    display: flex;
-    flex-direction: column;
-    border-bottom: 1px solid var(--theme-divider-color);
-
-    /* The inner settingsSet-line should not draw its own border */
-    .hulyModal-content__settingsSet-line {
-      border: none;
-    }
-  }
-
-  .ref-editor-selected-item {
+  .row-item {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    min-width: 0;
-    /* match horizontal padding of settingsSet-line */
-    padding: 1rem;
-
-    .icon {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-      color: var(--global-primary-TextColor);
-    }
-  }
-
-  .ref-editor-selected-label {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.875rem;
-    color: var(--global-primary-TextColor);
   }
 </style>

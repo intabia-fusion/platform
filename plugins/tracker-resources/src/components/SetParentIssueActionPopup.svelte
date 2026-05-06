@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AttachedData, Doc, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
+  import core, { AttachedData, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
   import { ObjectPopup, getClient } from '@hcengineering/presentation'
-  import { makeRank } from '@hcengineering/task'
+  import task, { makeRank, TaskType } from '@hcengineering/task'
   import { Issue, IssueDraft } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../plugin'
@@ -23,14 +23,50 @@
 
   export let value: Issue | AttachedData<Issue> | Issue[] | IssueDraft
   export let width: 'medium' | 'large' | 'full' = 'large'
+  export let kind: Ref<TaskType> | undefined
 
   const client = getClient()
   const dispatch = createEventDispatcher()
+
+  let allowedParentKinds: Ref<TaskType>[] | undefined = undefined
+
+  $: effectiveKind = kind ?? (!Array.isArray(value) && 'kind' in value ? value.kind : undefined)
+
+  $: if (effectiveKind !== undefined) {
+    void client.findOne(task.class.TaskType, { _id: effectiveKind }).then((taskType) => {
+      allowedParentKinds = taskType?.allowedAsChildOf
+    })
+  } else {
+    allowedParentKinds = undefined
+  }
+
   const options: FindOptions<Issue> = {
     lookup: {
       status: [tracker.class.IssueStatus, { category: core.class.StatusCategory }]
     },
     sort: { modifiedOn: SortingOrder.Descending }
+  }
+
+  // Filter shown issues to only those whose kind is allowed as parent of the task kind.
+  // allowedParentKinds === undefined  → no kind info, show all
+  // allowedParentKinds === []         → no parents configured, show nothing
+  // allowedParentKinds.length > 0     → filter by kinds, then check existence
+  $: docQuery = allowedParentKinds !== undefined ? { kind: { $in: allowedParentKinds } } : {}
+
+  // True once we know there are no issues of the allowed parent types in this space
+  let noParentIssuesExist: boolean = false
+
+  $: if (allowedParentKinds !== undefined && allowedParentKinds.length === 0) {
+    // No parent types configured at all
+    noParentIssuesExist = true
+  } else if (allowedParentKinds !== undefined && allowedParentKinds.length > 0) {
+    void client
+      .findOne(tracker.class.Issue, { kind: { $in: allowedParentKinds } }, { projection: { _id: 1 } })
+      .then((found) => {
+        noParentIssuesExist = found === undefined
+      })
+  } else {
+    noParentIssuesExist = false
   }
 
   async function onClose ({ detail: parentIssue }: CustomEvent<Issue | undefined | null>): Promise<void> {
@@ -96,11 +132,12 @@
 <ObjectPopup
   _class={tracker.class.Issue}
   {options}
+  {docQuery}
   {selected}
   category={tracker.completion.IssueCategory}
   multiSelect={false}
   allowDeselect={true}
-  placeholder={tracker.string.SetParent}
+  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
   create={undefined}
   {ignoreObjects}
   shadows={true}

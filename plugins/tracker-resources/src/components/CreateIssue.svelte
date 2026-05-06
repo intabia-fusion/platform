@@ -50,7 +50,7 @@
     SpaceSelector
   } from '@hcengineering/presentation'
   import tags, { type TagElement, TagReference } from '@hcengineering/tags'
-  import { TaskType } from '@hcengineering/task'
+  import task, { TaskType } from '@hcengineering/task'
   import { TaskKindSelector } from '@hcengineering/task-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import {
@@ -132,6 +132,26 @@
   let object = getDefaultObjectFromDraft() ?? getDefaultObject(id)
   let isAssigneeTouched = false
   let kind: Ref<TaskType> | undefined = undefined
+  let kindTaskType: TaskType | undefined = undefined
+
+  $: if (kind !== undefined) {
+    void client.findOne(task.class.TaskType, { _id: kind }).then((tt) => {
+      kindTaskType = tt
+      // Clear parent if it's no longer a valid parent type for the new kind.
+      // Only clear if a parent is actually set and its type is known.
+      if (parentIssue !== undefined && tt !== undefined) {
+        const allowed = tt.allowedAsChildOf ?? []
+        if (!allowed.includes(parentIssue.kind)) {
+          clearParentIssue()
+        }
+      }
+    })
+  } else {
+    kindTaskType = undefined
+  }
+
+  // True when the selected task type cannot have a parent at all
+  $: parentNotAllowed = kindTaskType !== undefined && (kindTaskType.allowedAsChildOf ?? []).length === 0
 
   let templateId: Ref<IssueTemplate> | undefined = draft?.template?.template
   let appliedTemplateId: Ref<IssueTemplate> | undefined = draft?.template?.template
@@ -608,7 +628,7 @@
   async function setParentIssue (): Promise<void> {
     showPopup(
       SetParentIssueActionPopup,
-      { value: { ...object, space: _space, attachedTo: parentIssue?._id } },
+      { value: { ...object, space: _space, attachedTo: parentIssue?._id }, kind },
       'top',
       (selectedIssue) => {
         if (selectedIssue !== undefined) {
@@ -1017,9 +1037,14 @@
     </div>
     <div id="parentissue-editor" class="new-line">
       <Button
+        disabled={parentNotAllowed}
         focusIndex={11}
         icon={tracker.icon.Parent}
-        label={object.parentIssue != null ? tracker.string.RemoveParent : tracker.string.SetParent}
+        label={parentNotAllowed
+          ? tracker.string.ParentNotApplicable
+          : object.parentIssue != null
+            ? tracker.string.RemoveParent
+            : tracker.string.SetParent}
         kind={'regular'}
         size={'large'}
         notSelected={object.parentIssue === undefined}

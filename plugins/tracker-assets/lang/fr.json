@@ -85,6 +85,8 @@
     "ChangeParent": "Changer le problème parent...",
     "RemoveParent": "Supprimer le problème parent",
     "OpenParent": "Ouvrir le problème parent",
+    "ParentNotApplicable": "Les tâches de ce type n'ont pas de tâche parente",
+    "NoParentIssuesExist": "Aucune tâche du type parent trouvée",
     "SubIssues": "Sub-issue",
     "SubIssuesList": "Sub-issue ({subIssues})",
     "ParentIssuesList": "Tâches parentes ({parentIssues})",
