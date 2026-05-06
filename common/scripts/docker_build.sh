@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
 version=$(git rev-parse HEAD)
 
