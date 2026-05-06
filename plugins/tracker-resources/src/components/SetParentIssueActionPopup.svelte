@@ -32,11 +32,15 @@
 
   $: effectiveKind = kind ?? (!Array.isArray(value) && 'kind' in value ? value.kind : undefined)
 
+  let effectiveTaskType: TaskType | undefined = undefined
+
   $: if (effectiveKind !== undefined) {
     void client.findOne(task.class.TaskType, { _id: effectiveKind }).then((taskType) => {
+      effectiveTaskType = taskType
       allowedParentKinds = taskType?.allowedAsChildOf
     })
   } else {
+    effectiveTaskType = undefined
     allowedParentKinds = undefined
   }
 
@@ -47,19 +51,20 @@
     sort: { modifiedOn: SortingOrder.Descending }
   }
 
-  // Filter shown issues to only those whose kind is allowed as parent of the task kind.
-  // allowedParentKinds === undefined  → no kind info, show all
-  // allowedParentKinds === []         → no parents configured, show nothing
-  // allowedParentKinds.length > 0     → filter by kinds, then check existence
-  $: docQuery = allowedParentKinds !== undefined ? { kind: { $in: allowedParentKinds } } : {}
+  // Only block when kind is explicitly 'task' — empty allowedAsChildOf on subtask/both means "any"
+  $: parentNotAllowed = effectiveTaskType !== undefined && effectiveTaskType.kind === 'task'
 
-  // True once we know there are no issues of the allowed parent types in this space
+  $: docQuery =
+    allowedParentKinds !== undefined && allowedParentKinds.length > 0
+      ? { kind: { $in: allowedParentKinds } }
+      : parentNotAllowed
+        ? { kind: { $in: [] } }
+        : {}
+
   let noParentIssuesExist: boolean = false
 
-  $: if (allowedParentKinds !== undefined && allowedParentKinds.length === 0) {
-    // No parent types configured at all
-    noParentIssuesExist = true
-  } else if (allowedParentKinds !== undefined && allowedParentKinds.length > 0) {
+  // Checking if parent issues exist
+  $: if (!parentNotAllowed && allowedParentKinds !== undefined && allowedParentKinds.length > 0) {
     void client
       .findOne(tracker.class.Issue, { kind: { $in: allowedParentKinds } }, { projection: { _id: 1 } })
       .then((found) => {
@@ -137,7 +142,11 @@
   category={tracker.completion.IssueCategory}
   multiSelect={false}
   allowDeselect={true}
-  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
+  placeholder={noParentIssuesExist
+    ? tracker.string.NoParentIssuesExist
+    : parentNotAllowed
+      ? tracker.string.ParentNotApplicable
+      : tracker.string.SetParent}
   create={undefined}
   {ignoreObjects}
   shadows={true}
