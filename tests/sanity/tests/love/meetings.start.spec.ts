@@ -36,7 +36,10 @@ test.describe('meeting minutes', () => {
     await expect(connect).toBeVisible({ timeout: 10000 })
   })
 
-  test('user1 starts meeting - user2 sees the MeetingMinutes link in real time (broadcast)', async ({ browser, page }) => {
+  test('user1 starts meeting - user2 sees the MeetingMinutes link in real time (broadcast)', async ({
+    browser,
+    page
+  }) => {
     await openLove(page)
     const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
     const page2 = await ctx.newPage()
