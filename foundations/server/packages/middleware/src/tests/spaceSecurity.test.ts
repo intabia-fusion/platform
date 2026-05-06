@@ -592,6 +592,69 @@ describe('SpaceSecurityMiddleware', () => {
       }
     })
 
+    it('should broadcast to ALL users for public spaces (no target restriction)', async () => {
+      // Public space with members [user1] - broadcast must NOT restrict to members,
+      // otherwise non-members miss tx for new docs in public spaces until refresh.
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false })])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc as any])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        generateId(),
+        {}
+      )
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      // For public spaces with no collaborator constraints we want every user to get the tx,
+      // so the resolver must return undefined (no target list = broadcast to all).
+      expect(result).toBeUndefined()
+    })
+
+    it('should still restrict private space broadcast to members only', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1', 'user2'], { private: true })])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc as any])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        generateId(),
+        {}
+      )
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      expect(result).toBeDefined()
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).toContain('user2' as AccountUuid)
+      expect(target).not.toContain('user3' as AccountUuid)
+    })
+
     it('should return undefined for unknown spaces', async () => {
       const mw = await createMiddleware([])
 

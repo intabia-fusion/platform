@@ -6,17 +6,15 @@ test.use({ storageState: PlatformSetting })
 
 const meetingsWs = 'meetings-ws'
 
-test.describe('meeting minutes knock/invite', () => {
-  let officePage: OfficePage
-
+test.describe('meeting minutes access', () => {
   test.beforeEach(async ({ page }) => {
-    officePage = new OfficePage(page)
+    const office = new OfficePage(page)
     await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
-    await officePage.navigateToOffice()
-    await expect(officePage.floorGrid()).toBeVisible({ timeout: 15000 })
+    await office.navigateToOffice()
+    await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
   })
 
-  test('user2 sees same floor (autoJoin worked for restored spaces)', async ({ browser }) => {
+  test('user2 sees the floor (autoJoin worked for restored spaces)', async ({ browser }) => {
     const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
     const page2 = await ctx.newPage()
     try {
@@ -47,8 +45,6 @@ test.describe('meeting minutes knock/invite', () => {
   })
 
   test('clicking a regular room opens its meeting panel', async ({ page }) => {
-    // Click a known seeded regular room and verify the meeting panel opens.
-    // Use data-id from RoomPreview.svelte. Skip if the room is missing in this workspace.
     const candidates = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
     let opened = false
     for (const name of candidates) {
