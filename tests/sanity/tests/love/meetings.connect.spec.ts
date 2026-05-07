@@ -31,6 +31,28 @@ async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
   return null
 }
 
+async function clickRoomByName (page: Page, name: string): Promise<void> {
+  await page.locator(`[data-id="room-${name}"]`).first().click()
+}
+
+async function startOrJoin (page: Page): Promise<void> {
+  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
+  await expect(connect).toBeVisible({ timeout: 10000 })
+  await connect.click()
+}
+
+async function inviteByLastName (page: Page, lastName: string): Promise<void> {
+  await page.locator('[data-id="invite-button"]').first().click()
+  const popup = page.locator('.hulyModal-container').last()
+  const search = popup.getByPlaceholder(/Search/i)
+  await expect(search).toBeVisible({ timeout: 5000 })
+  await search.fill(lastName)
+  await popup.locator('button.row').filter({ hasText: lastName }).first().click()
+  const ok = popup.locator('.hulyModal-footer').getByRole('button', { name: /^Invite$/i })
+  await expect(ok).toBeEnabled({ timeout: 5000 })
+  await ok.click()
+}
+
 async function waitConnected (page: Page): Promise<void> {
   // MeetingWidget renders only while $lkSessionConnected === true.
   await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
@@ -48,10 +70,7 @@ test.describe('meeting minutes - real connect', () => {
       const room = await clickFirstAvailableRoom(page)
       test.skip(room === null, 'No regular room available')
 
-      const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-      await expect(connect).toBeVisible({ timeout: 10000 })
-      await connect.click()
-
+      await startOrJoin(page)
       await waitConnected(page)
 
       // Sanity: invite button is present once we are inside the meeting.
@@ -59,6 +78,130 @@ test.describe('meeting minutes - real connect', () => {
     } finally {
       await page.close()
       await ctx.close()
+    }
+  })
+
+  test('user2 invites user3 — user3 sees knock popup, accepts and joins', async ({ browser }) => {
+    test.setTimeout(120000)
+
+    const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+    const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
+    const page2 = await ctx2.newPage()
+    const page3 = await ctx3.newPage()
+    try {
+      await openLove(page2)
+      await openLove(page3)
+
+      const room = await clickFirstAvailableRoom(page2)
+      test.skip(room === null, 'No regular room available')
+
+      await startOrJoin(page2)
+      await waitConnected(page2)
+
+      await inviteByLastName(page2, 'Muram')
+
+      // user2: outgoing invite trigger is shown in left bar
+      await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeVisible({ timeout: 10000 })
+
+      // user3: incoming invite trigger appears in left bar — click to open popup
+      const knockTrigger = page3.locator('[data-id="incoming-invite-trigger"]')
+      await expect(knockTrigger).toBeVisible({ timeout: 15000 })
+      await knockTrigger.click()
+      const knock = page3.locator('[data-id="invite-popup"]')
+      await expect(knock).toBeVisible({ timeout: 5000 })
+
+      // Accept
+      await page3.locator('[data-id="invite-join"]').click()
+
+      // user3 connects to LiveKit
+      await waitConnected(page3)
+
+      // After accept, both invite triggers (and popups) must disappear.
+      await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 10000 })
+      await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 10000 })
+    } finally {
+      await page2.close()
+      await page3.close()
+      await ctx2.close()
+      await ctx3.close()
+    }
+  })
+
+  test('user2 invites user3, but user3 joins via meeting link — outgoing popup goes away (bug 2)', async ({
+    browser
+  }) => {
+    test.setTimeout(120000)
+
+    const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+    const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
+    const page2 = await ctx2.newPage()
+    const page3 = await ctx3.newPage()
+    try {
+      await openLove(page2)
+      await openLove(page3)
+
+      const room = await clickFirstAvailableRoom(page2)
+      test.skip(room === null, 'No regular room available')
+
+      await startOrJoin(page2)
+      await waitConnected(page2)
+
+      await inviteByLastName(page2, 'Muram')
+
+      await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeVisible({ timeout: 15000 })
+      await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeVisible({ timeout: 10000 })
+
+      // user3 ignores knock and joins via the room — same UX as opening the
+      // meeting minutes link directly.
+      await clickRoomByName(page3, room as string)
+      await startOrJoin(page3)
+      await waitConnected(page3)
+
+      // Bug 2: invite triggers on both sides must clear once recipient is in
+      // the meeting, even though they did not click "Join" on the knock.
+      await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
+      await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 5000 })
+    } finally {
+      await page2.close()
+      await page3.close()
+      await ctx2.close()
+      await ctx3.close()
+    }
+  })
+
+  test('user3 joins the same room user2 started — both see the meeting widget', async ({ browser }) => {
+    test.setTimeout(120000)
+
+    const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+    const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
+    const page2 = await ctx2.newPage()
+    const page3 = await ctx3.newPage()
+    try {
+      await openLove(page2)
+      await openLove(page3)
+
+      const room = await clickFirstAvailableRoom(page2)
+      test.skip(room === null, 'No regular room available')
+
+      await startOrJoin(page2)
+      await waitConnected(page2)
+
+      // user3 opens the same room. After user2 started a meeting the button
+      // text flips from "Start meeting" to "Join meeting" — selector is the
+      // same data-id, so we can reuse startOrJoin.
+      await clickRoomByName(page3, room as string)
+      await startOrJoin(page3)
+      await waitConnected(page3)
+
+      // Both peers must remain connected; widget on user2 must not have closed
+      // when user3 joined.
+      await expect(page2.locator('[data-id="meeting-widget"]')).toBeVisible()
+      await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible()
+    } finally {
+      await page2.close()
+      await page3.close()
+      await ctx2.close()
+      await ctx3.close()
     }
   })
 })
