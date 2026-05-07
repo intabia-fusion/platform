@@ -126,7 +126,9 @@
       </div>
 
       {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
-        <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+        <div data-id="meeting-connect">
+          <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+        </div>
       {/if}
     </div>
   </div>

@@ -168,3 +168,5 @@ Flags:
 - `-g "<name>"` or append `:LINE` to the spec path to run a single test.
 
 Do not run the bare `npx playwright test` — without `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load and every test fails on login with `BadRequest`.
+
+For meeting/love-specific test setup (LiveKit, `meetings-ws`, page objects, data-id list), see [`docs/sanity-meetings-tests.md`](docs/sanity-meetings-tests.md).

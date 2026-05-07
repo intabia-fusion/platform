@@ -65,7 +65,7 @@
   }
 </script>
 
-<div class="antiPopup invite-popup flex-gap-4">
+<div class="antiPopup invite-popup flex-gap-4" data-id="invite-popup">
   <div class="popup-header">
     {#if person}
       <div class="inviter-info">
@@ -89,8 +89,12 @@
   </div>
 
   <div class="popup-actions">
-    <ModernButton label={love.string.Join} kind={'primary'} size={'medium'} on:click={handleJoin} />
-    <ModernButton label={love.string.Reject} kind={'secondary'} size={'medium'} on:click={handleReject} />
+    <div data-id="invite-join">
+      <ModernButton label={love.string.Join} kind={'primary'} size={'medium'} on:click={handleJoin} />
+    </div>
+    <div data-id="invite-reject">
+      <ModernButton label={love.string.Reject} kind={'secondary'} size={'medium'} on:click={handleReject} />
+    </div>
   </div>
 </div>
 

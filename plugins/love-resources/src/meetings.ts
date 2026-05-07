@@ -221,6 +221,24 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
 
   // Connection completed successfully: clear connecting flag
   myConnectingSessionId.set(null)
+
+  // We are now in the meeting - drop any incoming invite-response for this
+  // meeting so the knock popup/sound stops even if the user joined via the
+  // MeetingMinutes link instead of clicking "Join" on the invite popup.
+  try {
+    const client = getClient()
+    const invites = await client.findAll(love.class.UserMeetingInvite, {
+      kind: 'invite-response',
+      to: currentPerson._id,
+      meeting: mm._id,
+      status: 'pending'
+    })
+    for (const invite of invites) {
+      await client.remove(invite)
+    }
+  } catch (err: any) {
+    console.warn('[connectToMeeting] Failed to cleanup pending invites:', err)
+  }
 }
 
 async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void> {

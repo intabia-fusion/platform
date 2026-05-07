@@ -481,6 +481,13 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           docNotifyContext: contextId,
           user: receiverInfo.account,
           message: love.string.InvitingYou,
+          title: love.string.MeetingRequest,
+          body: love.string.InvitingYou,
+          intlParams: {
+            name: senderName,
+            senderName,
+            title: senderName
+          },
           props: {
             name: senderName,
             senderName
@@ -547,6 +554,18 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
               })
             )
           }
+        }
+      } else if (sourceDoc.kind === 'invite-response' && tx._class === core.class.TxRemoveDoc) {
+        // Recipient removed their invite-response (e.g. joined the meeting via
+        // MeetingMinutes link, not via the popup). Drop the matching
+        // invite-request on sender side so the outgoing popup goes away too.
+        const inviteRequests = await control.findAll(control.ctx, love.class.UserMeetingInvite, {
+          kind: 'invite-request',
+          from: sourceDoc.from,
+          to: sourceDoc.to
+        })
+        for (const request of inviteRequests) {
+          result.push(control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, request.space, request._id))
         }
       } else if (sourceDoc.kind === 'invite-response' && tx._class === core.class.TxUpdateDoc) {
         // Find invite-request for this pair

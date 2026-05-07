@@ -16,7 +16,14 @@ const config: PlaywrightTestConfig = {
       name: 'Platform',
       use: {
         testIdAttribute: 'data-id',
-        permissions: ['clipboard-read', 'clipboard-write'],
+        permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            '--autoplay-policy=no-user-gesture-required'
+          ]
+        },
         ...devices['Desktop Chrome'],
         screenshot: 'only-on-failure',
         viewport: {
