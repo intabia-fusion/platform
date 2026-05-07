@@ -255,7 +255,7 @@
     "EightHoursLength": "Sekiz Saat",
     "HourLabel": "s",
     "MinuteLabel": "dk",
-    "AlreadyReportedThisDay": "Bu gün için raporlandı: {hours} s",
+    "AlreadyReportedThisDay": "Bu günün toplamı: {hours}sa",
     "FixToEightHours": "8 saate ayarla",
     "Saved": "Kaydedildi...",
     "CreatedIssue": "Sorun oluşturuldu",
