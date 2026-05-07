@@ -8,7 +8,6 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
-import { OfficePage } from '../model/love/office-page'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']

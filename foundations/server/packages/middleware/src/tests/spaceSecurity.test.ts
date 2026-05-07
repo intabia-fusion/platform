@@ -537,6 +537,54 @@ describe('SpaceSecurityMiddleware', () => {
       const securityTxes = ctx.contextData.broadcast.txes.filter((tx: any) => tx._class === core.class.TxWorkspaceEvent)
       expect(securityTxes.length).toBeGreaterThan(0)
     })
+
+    it('should emit SecurityChange WITHOUT a target callback when private flips public->private', async () => {
+      // Receivers that need the refresh (non-members in other sessions) are
+      // not in this request's socialStringsToUsers, so the SecurityChange tx
+      // must be broadcast globally — i.e. without a per-tx target resolver.
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false, owners: ['user1'] })])
+
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        private: true
+      })
+
+      await mw.tx(ctx, [updateTx])
+
+      const securityTxes = ctx.contextData.broadcast.txes.filter(
+        (tx: any) => tx._class === core.class.TxWorkspaceEvent && tx.event === WorkspaceEvent.SecurityChange
+      )
+      expect(securityTxes.length).toBe(1)
+      const securityTxId = securityTxes[0]._id
+      // No targets resolver was registered for this tx id.
+      const targetEntries = Object.entries(ctx.contextData.broadcast.targets ?? {})
+      const matchingTarget = targetEntries.find(([k]) => k.includes(securityTxId))
+      expect(matchingTarget).toBeUndefined()
+    })
+
+    it('should emit SecurityChange WITHOUT a target callback when private flips private->public', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true, owners: ['user1'] })])
+
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        private: false
+      })
+
+      await mw.tx(ctx, [updateTx])
+
+      const securityTxes = ctx.contextData.broadcast.txes.filter(
+        (tx: any) => tx._class === core.class.TxWorkspaceEvent && tx.event === WorkspaceEvent.SecurityChange
+      )
+      expect(securityTxes.length).toBe(1)
+      const securityTxId = securityTxes[0]._id
+      const targetEntries = Object.entries(ctx.contextData.broadcast.targets ?? {})
+      const matchingTarget = targetEntries.find(([k]) => k.includes(securityTxId))
+      expect(matchingTarget).toBeUndefined()
+    })
   })
 
   describe('handleBroadcast - spaceSec target resolution', () => {

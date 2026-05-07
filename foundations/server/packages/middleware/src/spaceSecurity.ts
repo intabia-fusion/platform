@@ -283,6 +283,27 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     this.brodcastEvent(ctx, accounts, space._id)
   }
 
+  /**
+   * Broadcast a SecurityChange event for `space` to every active session.
+   * Use this for transitions that change visibility for arbitrary
+   * non-members (private<->public, archived<->unarchived) — those receivers
+   * are not in `socialStringsToUsers` of the current request, so the
+   * targeted broadcastAll cannot reach them.
+   */
+  private broadcastSecurityToAll (ctx: MeasureContext<SessionData>, space: SpaceInfo): void {
+    const tx: TxWorkspaceEvent = {
+      _class: core.class.TxWorkspaceEvent,
+      _id: generateId(),
+      event: WorkspaceEvent.SecurityChange,
+      modifiedBy: core.account.System,
+      modifiedOn: Date.now(),
+      objectSpace: space._id,
+      space: core.space.DerivedTx,
+      params: null
+    }
+    ctx.contextData.broadcast.txes.push(tx)
+  }
+
   private pushOwnersHandle (
     ctx: MeasureContext,
     addedOwners: AccountUuid | Position<AccountUuid>,
@@ -328,7 +349,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (space !== undefined) {
       if (updateDoc.operations.private !== undefined) {
         space.private = updateDoc.operations.private
-        this.broadcastAll(ctx, space)
+        // Visibility flip affects users that may not be in this request's
+        // session. Use the global broadcast so their clients refresh.
+        this.broadcastSecurityToAll(ctx, space)
       }
 
       if (updateDoc.operations.members !== undefined) {
@@ -343,7 +366,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       }
       if (updateDoc.operations.archived !== undefined) {
         space.archived = updateDoc.operations.archived
-        this.broadcastAll(ctx, space)
+        this.broadcastSecurityToAll(ctx, space)
       }
       // Handle owners updates
       if (updateDoc.operations.owners !== undefined) {
